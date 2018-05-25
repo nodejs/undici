@@ -21,5 +21,11 @@
     "snazzy": "^7.1.1",
     "standard": "^11.0.1",
     "tap": "^11.1.5"
+  },
+  "dependencies": {
+    "fastq": "^1.5.0",
+    "http-parser-js": "^0.4.12",
+    "readable-stream": "^2.3.6",
+    "syncthrough": "^0.5.0"
   }
 }
