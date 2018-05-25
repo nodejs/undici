@@ -25,24 +25,24 @@ class Undici {
       this.socket.cork()
       this.socket.write(req, 'ascii')
 
-      if (typeof body === 'string') {
-        // TODO move this to a headers block
+      if (typeof body === 'string' || body instanceof Uint8Array) {
         this.socket.write('content-length: ' + Buffer.byteLength(body) + '\r\n', 'ascii')
         this.socket.write('\r\n', 'ascii')
-        this.socket.write(body, 'utf8')
+        this.socket.write(body)
       }
+      // TODO support streams
 
       this.socket.write('\r\n', 'ascii')
       this.socket.uncork()
 
-      this._lastBody = new Readable({ read })
+      this._needHeaders = true
       this._lastCb = cb
       read()
     }, 1)
 
     this.q.pause()
 
-    this._lastHeaders = null
+    this._needHeaders = false
     this._lastBody = null
 
     this.socket.on('connect', () => {
@@ -50,9 +50,16 @@ class Undici {
     })
 
     this.parser[HTTPParser.kOnHeaders] = () => {}
-    this.parser[HTTPParser.kOnHeadersComplete] = (headers) => {
-      this._lastHeaders = headers
-      this._lastCb(null, { headers, body: this._lastBody })
+    this.parser[HTTPParser.kOnHeadersComplete] = ({ statusCode, headers }) => {
+      const cb = this._lastCb
+      this._needHeaders = false
+      this._lastBody = new Readable({ read })
+      this._lastCb = null
+      cb(null, {
+        statusCode,
+        headers: parseHeaders(headers),
+        body: this._lastBody
+      })
     }
 
     this.parser[HTTPParser.kOnBody] = (chunk, offset, length) => {
@@ -60,12 +67,17 @@ class Undici {
     }
 
     this.parser[HTTPParser.kOnMessageComplete] = () => {
-      this._lastBody.push(null)
+      const body = this._lastBody
       this._lastBody = null
-      this._lastHeaders = null
+      body.push(null)
     }
 
     const read = () => {
+      if (!this.socket) {
+        // TODO this should not happen
+        return
+      }
+
       var chunk = null
       var hasRead = false
       while ((chunk = this.socket.read()) !== null) {
@@ -73,7 +85,7 @@ class Undici {
         this.parser.execute(chunk)
       }
 
-      if (!hasRead) {
+      if (!hasRead || this._needHeaders) {
         this.socket.once('readable', read)
       }
     }
@@ -94,6 +106,19 @@ class Undici {
       this.socket = null
     }
   }
+}
+
+function parseHeaders (headers) {
+  const obj = {}
+  for (var i = 0; i < headers.length; i += 2) {
+    var key = headers[i]
+    if (!obj[key]) {
+      obj[key] = headers[i + 1]
+    } else {
+      obj[key].push(headers[i + 1])
+    }
+  }
+  return obj
 }
 
 module.exports = Undici
