@@ -19,10 +19,21 @@ class Undici {
 
     // TODO support http pipelining
     this.q = Q((request, cb) => {
-      var { method, path } = request
+      var { method, path, body } = request
       var req = `${method} ${path} HTTP/1.1\r\nHost: ${url.hostname}\r\nConnection: keep-alive\r\n`
 
-      this.socket.write(req + '\r\n', 'ascii')
+      this.socket.cork()
+      this.socket.write(req, 'ascii')
+
+      if (typeof body === 'string') {
+        // TODO move this to a headers block
+        this.socket.write('content-length: ' + Buffer.byteLength(body) + '\r\n', 'ascii')
+        this.socket.write('\r\n', 'ascii')
+        this.socket.write(body, 'utf8')
+      }
+
+      this.socket.write('\r\n', 'ascii')
+      this.socket.uncork()
 
       this._lastBody = new Readable({ read })
       this._lastCb = cb
@@ -69,6 +80,8 @@ class Undici {
   }
 
   call (opts, cb) {
+    // TODO validate body type
+    // TODO validate that the body is a string, buffer or stream
     this.q.push(opts, cb)
   }
 
