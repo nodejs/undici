@@ -23,6 +23,7 @@
     "tap": "^11.1.5"
   },
   "dependencies": {
+    "end-of-stream": "^1.4.1",
     "fastq": "^1.5.0",
     "http-parser-js": "^0.4.12",
     "readable-stream": "^2.3.6",

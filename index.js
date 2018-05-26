@@ -5,6 +5,8 @@ const net = require('net')
 const Q = require('fastq')
 const { HTTPParser } = require('http-parser-js')
 const { Readable } = require('readable-stream')
+const eos = require('end-of-stream')
+const syncthrough = require('syncthrough')
 
 class Undici {
   constructor (url) {
@@ -17,27 +19,59 @@ class Undici {
 
     this.parser = new HTTPParser(HTTPParser.RESPONSE)
 
+    const endRequest = () => {
+      this.socket.write('\r\n', 'ascii')
+      this.socket.uncork()
+      this._needHeaders = true
+      read()
+    }
+
     // TODO support http pipelining
     this.q = Q((request, cb) => {
-      var { method, path, body } = request
+      var { method, path, body, headers } = request
       var req = `${method} ${path} HTTP/1.1\r\nHost: ${url.hostname}\r\nConnection: keep-alive\r\n`
 
+      this._lastCb = cb
       this.socket.cork()
+
+      if (headers) {
+        const headerNames = Object.keys(headers)
+        for (var i = 0; i < headerNames.length; i++) {
+          var name = headerNames[i]
+          req += name + ': ' + headers[name] + '\r\n'
+        }
+      }
       this.socket.write(req, 'ascii')
 
       if (typeof body === 'string' || body instanceof Uint8Array) {
-        this.socket.write('content-length: ' + Buffer.byteLength(body) + '\r\n', 'ascii')
-        this.socket.write('\r\n', 'ascii')
+        this.socket.write(`content-length: ${Buffer.byteLength(body)}\r\n\r\n`, 'ascii')
         this.socket.write(body)
+      } else if (body && typeof body.pipe === 'function') {
+        if (headers && headers['content-length']) {
+          this.socket.write('\r\n', 'ascii')
+          body.pipe(this.socket, { end: false })
+          this.socket.uncork()
+          eos(body, () => {
+            // TODO handle err
+            endRequest()
+          })
+        } else {
+          this.socket.write('transfer-encoding: chunked\r\n', 'ascii')
+          var through = syncthrough(addTransferEncoding)
+          body.pipe(through)
+          through.pipe(this.socket, { end: false })
+          this.socket.uncork()
+          eos(body, () => {
+            // TODO handle err
+            this.socket.cork()
+            this.socket.write('\r\n0\r\n', 'ascii')
+            endRequest()
+          })
+        }
+        return
       }
-      // TODO support streams
 
-      this.socket.write('\r\n', 'ascii')
-      this.socket.uncork()
-
-      this._needHeaders = true
-      this._lastCb = cb
-      read()
+      endRequest()
     }, 1)
 
     this.q.pause()
@@ -119,6 +153,12 @@ function parseHeaders (headers) {
     }
   }
   return obj
+}
+
+function addTransferEncoding (chunk) {
+  var toWrite = '\r\n' + Buffer.byteLength(chunk).toString(16) + '\r\n'
+  this.push(toWrite)
+  return chunk
 }
 
 module.exports = Undici
