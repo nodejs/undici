@@ -9,7 +9,7 @@ const eos = require('end-of-stream')
 const syncthrough = require('syncthrough')
 
 class Undici {
-  constructor (url) {
+  constructor (url, opts = {}) {
     if (!(url instanceof URL)) {
       url = new URL(url)
     }
@@ -22,16 +22,17 @@ class Undici {
     const endRequest = () => {
       this.socket.write('\r\n', 'ascii')
       this.socket.uncork()
-      this._needHeaders = true
+      this._needHeaders++
       read()
     }
 
-    // TODO support http pipelining
+    const callbacks = []
+
     this.q = Q((request, cb) => {
       var { method, path, body, headers } = request
       var req = `${method} ${path} HTTP/1.1\r\nHost: ${url.hostname}\r\nConnection: keep-alive\r\n`
 
-      this._lastCb = cb
+      callbacks.push(cb)
       this.socket.cork()
 
       if (headers) {
@@ -72,11 +73,11 @@ class Undici {
       }
 
       endRequest()
-    }, 1)
+    }, opts.pipelining || 1)
 
     this.q.pause()
 
-    this._needHeaders = false
+    this._needHeaders = 0
     this._lastBody = null
 
     this.socket.on('connect', () => {
@@ -85,10 +86,9 @@ class Undici {
 
     this.parser[HTTPParser.kOnHeaders] = () => {}
     this.parser[HTTPParser.kOnHeadersComplete] = ({ statusCode, headers }) => {
-      const cb = this._lastCb
-      this._needHeaders = false
+      const cb = callbacks.shift()
+      this._needHeaders--
       this._lastBody = new Readable({ read })
-      this._lastCb = null
       cb(null, {
         statusCode,
         headers: parseHeaders(headers),
@@ -119,7 +119,7 @@ class Undici {
         this.parser.execute(chunk)
       }
 
-      if (!hasRead || this._needHeaders) {
+      if (!hasRead || this._needHeaders > 0) {
         this.socket.once('readable', read)
       }
     }

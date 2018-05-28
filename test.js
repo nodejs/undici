@@ -200,3 +200,50 @@ test('10 times GET', (t) => {
     }
   })
 })
+
+test('10 times GET with pipelining 5', (t) => {
+  const num = 10
+  t.plan(5 * num - 1)
+
+  let count = 0
+  let total = 0
+  const server = createServer((req, res) => {
+    const curr = total++
+    count++
+    total++
+    t.ok(count <= 5)
+    setTimeout(function () {
+      if (curr !== 0) {
+        t.ok(count > 1, 'count greater than 1')
+      }
+      res.end(req.url)
+    }, 10)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Undici(`http://localhost:${server.address().port}`, {
+      pipelining: 5
+    })
+    t.tearDown(client.close.bind(client))
+
+    for (var i = 0; i < num; i++) {
+      makeCall(i)
+    }
+
+    function makeCall (i) {
+      client.call({ path: '/' + i, method: 'GET' }, (err, { statusCode, headers, body }) => {
+        count--
+        t.error(err)
+        t.strictEqual(statusCode, 200)
+        const bufs = []
+        body.on('data', (buf) => {
+          bufs.push(buf)
+        })
+        body.on('end', () => {
+          t.strictEqual('/' + i, Buffer.concat(bufs).toString('utf8'))
+        })
+      })
+    }
+  })
+})
