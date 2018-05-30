@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const Undici = require('.')
+const { Client } = require('..')
 const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
 
@@ -17,7 +17,7 @@ test('basic get', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Undici(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
     client.call({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
@@ -61,7 +61,7 @@ test('basic POST with string', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Undici(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
     client.call({ path: '/', method: 'POST', body: expected }, (err, { statusCode, headers, body }) => {
@@ -87,7 +87,7 @@ test('basic POST with Buffer', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Undici(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
     client.call({ path: '/', method: 'POST', body: expected }, (err, { statusCode, headers, body }) => {
@@ -113,7 +113,7 @@ test('basic POST with stream', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Undici(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
     client.call({
@@ -146,7 +146,7 @@ test('basic POST with transfer encoding: chunked', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Undici(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
     client.call({
@@ -178,7 +178,7 @@ test('10 times GET', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Undici(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
     for (var i = 0; i < num; i++) {
@@ -222,7 +222,7 @@ test('10 times GET with pipelining 5', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Undici(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 5
     })
     t.tearDown(client.close.bind(client))
