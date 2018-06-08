@@ -232,18 +232,69 @@ test('10 times GET with pipelining 5', (t) => {
     }
 
     function makeCall (i) {
-      client.call({ path: '/' + i, method: 'GET' }, (err, { statusCode, headers, body }) => {
-        count--
-        t.error(err)
-        t.strictEqual(statusCode, 200)
-        const bufs = []
-        body.on('data', (buf) => {
-          bufs.push(buf)
-        })
-        body.on('end', () => {
-          t.strictEqual('/' + i, Buffer.concat(bufs).toString('utf8'))
-        })
-      })
+      makeCallAndExpectUrl(client, i, t, () => count--)
+    }
+  })
+})
+
+function makeCallAndExpectUrl (client, i, t, cb) {
+  return client.call({ path: '/' + i, method: 'GET' }, (err, { statusCode, headers, body }) => {
+    cb()
+    t.error(err)
+    t.strictEqual(statusCode, 200)
+    const bufs = []
+    body.on('data', (buf) => {
+      bufs.push(buf)
+    })
+    body.on('end', () => {
+      t.strictEqual('/' + i, Buffer.concat(bufs).toString('utf8'))
+    })
+  })
+}
+
+test('A client should enqueue as much as twice its pipelining factor', (t) => {
+  const num = 10
+  let sent = 0
+  t.plan(6 * num + 5)
+
+  let count = 0
+  let countGreaterThanOne = false
+  const server = createServer((req, res) => {
+    count++
+    t.ok(count <= 5)
+    setTimeout(function () {
+      countGreaterThanOne = countGreaterThanOne || count > 1
+      res.end(req.url)
+    }, 10)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
+    t.tearDown(client.close.bind(client))
+
+    for (; sent < 2;) {
+      t.notOk(client.full, 'client is not full')
+      t.ok(makeCall(), 'we can send more calls')
+    }
+
+    t.notOk(client.full, 'client is full')
+    t.notOk(makeCall(), 'we must stop now')
+    t.ok(client.full, 'client is full')
+
+    client.on('drain', () => {
+      t.ok(countGreaterThanOne, 'seen more than one parallel request')
+      const start = sent
+      for (; sent < start + 3 && sent < num;) {
+        t.notOk(client.full, 'client is not full')
+        t.ok(makeCall())
+      }
+    })
+
+    function makeCall () {
+      return makeCallAndExpectUrl(client, sent++, t, () => count--)
     }
   })
 })
