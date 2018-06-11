@@ -20,7 +20,7 @@ test('basic get', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    client.call({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
@@ -64,7 +64,7 @@ test('basic POST with string', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    client.call({ path: '/', method: 'POST', body: expected }, (err, { statusCode, headers, body }) => {
+    client.request({ path: '/', method: 'POST', body: expected }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       const bufs = []
@@ -90,7 +90,7 @@ test('basic POST with Buffer', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    client.call({ path: '/', method: 'POST', body: expected }, (err, { statusCode, headers, body }) => {
+    client.request({ path: '/', method: 'POST', body: expected }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       const bufs = []
@@ -116,7 +116,7 @@ test('basic POST with stream', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    client.call({
+    client.request({
       path: '/',
       method: 'POST',
       headers: {
@@ -149,7 +149,7 @@ test('basic POST with transfer encoding: chunked', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    client.call({
+    client.request({
       path: '/',
       method: 'POST',
       // no content-length header
@@ -182,11 +182,11 @@ test('10 times GET', (t) => {
     t.tearDown(client.close.bind(client))
 
     for (var i = 0; i < num; i++) {
-      makeCall(i)
+      makeRequest(i)
     }
 
-    function makeCall (i) {
-      client.call({ path: '/' + i, method: 'GET' }, (err, { statusCode, headers, body }) => {
+    function makeRequest (i) {
+      client.request({ path: '/' + i, method: 'GET' }, (err, { statusCode, headers, body }) => {
         t.error(err)
         t.strictEqual(statusCode, 200)
         const bufs = []
@@ -201,44 +201,51 @@ test('10 times GET', (t) => {
   })
 })
 
-test('10 times GET with pipelining 5', (t) => {
-  const num = 10
-  t.plan(5 * num - 1)
+test('20 times GET with pipelining 10', (t) => {
+  const num = 20
+  t.plan(3 * num + 1)
 
   let count = 0
-  let total = 0
+  let countGreaterThanOne = false
   const server = createServer((req, res) => {
-    const curr = total++
     count++
-    total++
-    t.ok(count <= 5)
     setTimeout(function () {
-      if (curr !== 0) {
-        t.ok(count > 1, 'count greater than 1')
-      }
+      countGreaterThanOne = countGreaterThanOne || count > 1
       res.end(req.url)
     }, 10)
   })
   t.tearDown(server.close.bind(server))
 
+  // needed to check for a warning on the maxListeners on the socket
+  process.on('warning', t.fail)
+  t.tearDown(() => {
+    process.removeListener('warning', t.fail)
+  })
+
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 5
+      pipelining: 10
     })
     t.tearDown(client.close.bind(client))
 
     for (var i = 0; i < num; i++) {
-      makeCall(i)
+      makeRequest(i)
     }
 
-    function makeCall (i) {
-      makeCallAndExpectUrl(client, i, t, () => count--)
+    function makeRequest (i) {
+      makeRequestAndExpectUrl(client, i, t, () => {
+        count--
+
+        if (i === num - 1) {
+          t.ok(countGreaterThanOne, 'seen more than one parallel request')
+        }
+      })
     }
   })
 })
 
-function makeCallAndExpectUrl (client, i, t, cb) {
-  return client.call({ path: '/' + i, method: 'GET' }, (err, { statusCode, headers, body }) => {
+function makeRequestAndExpectUrl (client, i, t, cb) {
+  return client.request({ path: '/' + i, method: 'GET' }, (err, { statusCode, headers, body }) => {
     cb()
     t.error(err)
     t.strictEqual(statusCode, 200)
@@ -277,11 +284,11 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
 
     for (; sent < 2;) {
       t.notOk(client.full, 'client is not full')
-      t.ok(makeCall(), 'we can send more calls')
+      t.ok(makeRequest(), 'we can send more requests')
     }
 
     t.notOk(client.full, 'client is full')
-    t.notOk(makeCall(), 'we must stop now')
+    t.notOk(makeRequest(), 'we must stop now')
     t.ok(client.full, 'client is full')
 
     client.on('drain', () => {
@@ -289,12 +296,12 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
       const start = sent
       for (; sent < start + 3 && sent < num;) {
         t.notOk(client.full, 'client is not full')
-        t.ok(makeCall())
+        t.ok(makeRequest())
       }
     })
 
-    function makeCall () {
-      return makeCallAndExpectUrl(client, sent++, t, () => count--)
+    function makeRequest () {
+      return makeRequestAndExpectUrl(client, sent++, t, () => count--)
     }
   })
 })
