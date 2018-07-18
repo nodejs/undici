@@ -4,6 +4,7 @@ const t = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { createHook, executionAsyncId } = require('async_hooks')
+const { readFile } = require('fs')
 
 const transactions = new Map()
 
@@ -30,11 +31,21 @@ const hook = createHook({
 
 hook.enable()
 
-t.plan(8)
+t.plan(16)
 
 const server = createServer((req, res) => {
   res.setHeader('content-type', 'text/plain')
-  res.end('hello')
+  readFile(__filename, (err, buf) => {
+    t.error(err)
+    const buf1 = buf.slice(0, buf.length / 2)
+    const buf2 = buf.slice(buf.length / 2)
+    // we split the file so that it's received in 2 chunks
+    // and it should restore the state on the second
+    res.write(buf1)
+    setTimeout(() => {
+      res.end(buf2)
+    }, 10)
+  })
 })
 t.tearDown(server.close.bind(server))
 
@@ -51,8 +62,15 @@ server.listen(0, () => {
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      body.resume()
       t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+
+      body.on('data', () => {
+        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+      })
+
+      body.on('end', () => {
+        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+      })
     })
   })
 
@@ -65,8 +83,15 @@ server.listen(0, () => {
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      body.resume()
       t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+
+      body.on('data', () => {
+        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+      })
+
+      body.on('end', () => {
+        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+      })
     })
   })
 })
