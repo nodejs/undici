@@ -17,6 +17,7 @@ npm i undici
 
 ## API
 
+<a name='client'></a>
 ### new undici.Client(url, opts)
 
 A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection.
@@ -35,6 +36,7 @@ Options:
   single TCP/TLS connection according to
   [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`.
 
+<a name='request'></a>
 #### `client.request(opts, cb(err, data))`
 
 Performs an HTTP request.
@@ -93,10 +95,12 @@ True if the number of requests waiting to be sent is greater
 than the pipelining factor. Keeping a client full ensures that once the
 inflight set of requests finishes there is a full batch ready to go.
 
+<a name='close'></a>
 #### `client.close()`
 
 Close the client as soon as all the enqueued requests are completed
 
+<a name='destroy'></a>
 #### `client.destroy(err)`
 
 Destroy the client abruptly with the given `err`. All the current and
@@ -104,14 +108,34 @@ enqueued requests will error.
 
 #### Events
 
+* `'drain'`, emitted when the queue is empty.
+
 ### undici.Pool
 
-#### `pool.request`
+A pool of [`Client`][] connected to the same upstream target.
+A pool creates a fixed number of [`Client`][]
 
-#### `pool.close`
+Options:
 
-#### Events
+* `connections`, the number of clients to create. Default `100`.
+* `pipelining`, the pipelining factor. Default `1`.
+* `timeout`, the timeout for each request. Default `30000` milliseconds.
+
+#### `pool.request(req, cb)`
+
+Calls [`client.request(req, cb)`][request] on one of the clients.
+
+#### `pool.close()`
+
+Calls [`client.close()`](#close) on all the clients.
+
+#### `pool.destroy()`
+
+Calls [`client.destroy()`](#destroy) on all the clients.
 
 ## License
 
 MIT
+
+[`Client`]: #client
+[request]: #request
