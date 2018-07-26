@@ -64,8 +64,9 @@ server.listen(0, () => {
       t.error(err)
       t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
 
-      body.on('data', () => {
+      body.once('data', () => {
         t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+        body.resume()
       })
 
       body.on('end', () => {
@@ -85,8 +86,9 @@ server.listen(0, () => {
       t.error(err)
       t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
 
-      body.on('data', () => {
+      body.once('data', () => {
         t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+        body.resume()
       })
 
       body.on('end', () => {
