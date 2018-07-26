@@ -1,5 +1,8 @@
 # undici
 
+[![Build
+Status](https://travis-ci.com/mcollina/undici.svg?branch=master)](https://travis-ci.com/mcollina/undici)
+
 An HTTP/1.1 client, written from scratch for Node.js.
 
 > Undici means eleven in Italian. 1.1 -> 11 -> Eleven -> Undici.
