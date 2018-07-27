@@ -88,6 +88,14 @@ client.request({
   client.close()
 })
 ```
+
+Promises and async await are supported as well!
+```js
+const { statusCode, headers, body } = await client.request({
+  path: '/',
+  method: 'GET'
+})
+```
 #### `client.pipelining`
 
 Property to set the pipelining factor.
