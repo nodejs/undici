@@ -19,6 +19,7 @@
   "devDependencies": {
     "https-pem": "^2.0.0",
     "pre-commit": "^1.2.2",
+    "proxyquire": "^2.0.1",
     "readable-stream": "^2.3.6",
     "snazzy": "^7.1.1",
     "standard": "^11.0.1",
