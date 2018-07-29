@@ -78,6 +78,63 @@ test('basic POST with string', (t) => {
   })
 })
 
+test('basic POST with empty string', (t) => {
+  t.plan(6)
+
+  const server = createServer(postServer(t, ''))
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'POST', body: '' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
+test('basic POST with string and content-length', (t) => {
+  t.plan(6)
+
+  const expected = readFileSync(__filename, 'utf8')
+
+  const server = createServer(postServer(t, expected))
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      headers: {
+        'content-length': Buffer.byteLength(expected)
+      },
+      body: expected
+    }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
 test('basic POST with Buffer', (t) => {
   t.plan(6)
 
