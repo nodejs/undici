@@ -20,7 +20,6 @@
     "https-pem": "^2.0.0",
     "pre-commit": "^1.2.2",
     "proxyquire": "^2.0.1",
-    "readable-stream": "^2.3.6",
     "snazzy": "^7.1.1",
     "standard": "^11.0.1",
     "tap": "^12.0.0"
@@ -28,6 +27,7 @@
   "dependencies": {
     "end-of-stream": "^1.4.1",
     "fastq": "^1.6.0",
+    "readable-stream": "^2.3.6",
     "http-parser-js": "^0.4.13",
     "retimer": "^1.1.0",
     "syncthrough": "^0.5.0"
