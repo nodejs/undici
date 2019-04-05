@@ -60,8 +60,12 @@ typings/
 # next.js build output
 .next
 
-# lock file
+# lock files
 package-lock.json
+yarn.lock
+
+# IDE files
+.idea
 
 *0x
 *clinic*

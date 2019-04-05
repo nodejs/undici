@@ -6,11 +6,12 @@ const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
 
 test('basic get', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
+    t.strictEqual('localhost', req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
@@ -30,6 +31,37 @@ test('basic get', (t) => {
       })
       body.on('end', () => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
+test('get with host header', (t) => {
+  t.plan(7)
+
+  const server = createServer((req, res) => {
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    t.strictEqual('example.com', req.headers.host)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello from ' + req.headers.host)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET', headers: { host: 'example.com' } }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.strictEqual('hello from example.com', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
