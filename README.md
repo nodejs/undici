@@ -51,6 +51,20 @@ Options:
 * `body`, it can be a `String`, a `Buffer` or a `stream.Readable`.
 * `headers`, an object with header-value pairs.
 
+Headers are represented by an object like this:
+
+```js
+{
+  'content-length': '123',
+  'content-type': 'text/plain',
+  connection: 'keep-alive',
+  host: 'mysite.com',
+  accept: '*/*'
+}
+```
+Keys are lowercased. Values are not modified.
+If you don't specify a `host` header, it will be derived from the `url` of the client instance.
+
 The `data` parameter in the callback is defined as follow:
 
 * `statusCode`
