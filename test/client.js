@@ -36,6 +36,31 @@ test('basic get', (t) => {
   })
 })
 
+test('basic head', (t) => {
+  t.plan(7)
+
+  const server = createServer((req, res) => {
+    t.strictEqual('/', req.url)
+    t.strictEqual('HEAD', req.method)
+    t.strictEqual('localhost', req.headers.host)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+      t.strictEqual(body, null)
+    })
+  })
+})
+
 test('get with host header', (t) => {
   t.plan(7)
 
@@ -63,6 +88,31 @@ test('get with host header', (t) => {
       body.on('end', () => {
         t.strictEqual('hello from example.com', Buffer.concat(bufs).toString('utf8'))
       })
+    })
+  })
+})
+
+test('head with host header', (t) => {
+  t.plan(7)
+
+  const server = createServer((req, res) => {
+    t.strictEqual('/', req.url)
+    t.strictEqual('HEAD', req.method)
+    t.strictEqual('example.com', req.headers.host)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello from ' + req.headers.host)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'HEAD', headers: { host: 'example.com' } }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+      t.strictEqual(body, null)
     })
   })
 })
@@ -290,6 +340,33 @@ test('10 times GET', (t) => {
   })
 })
 
+test('10 times HEAD', (t) => {
+  const num = 10
+  t.plan(3 * 10)
+
+  const server = createServer((req, res) => {
+    res.end(req.url)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    for (var i = 0; i < num; i++) {
+      makeRequest(i)
+    }
+
+    function makeRequest (i) {
+      client.request({ path: '/' + i, method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+        t.error(err)
+        t.strictEqual(statusCode, 200)
+        t.strictEqual(body, null)
+      })
+    }
+  })
+})
+
 test('20 times GET with pipelining 10', (t) => {
   const num = 20
   t.plan(3 * num + 1)
@@ -345,6 +422,58 @@ function makeRequestAndExpectUrl (client, i, t, cb) {
     body.on('end', () => {
       t.strictEqual('/' + i, Buffer.concat(bufs).toString('utf8'))
     })
+  })
+}
+
+test('20 times HEAD with pipelining 10', (t) => {
+  const num = 20
+  t.plan(3 * num + 1)
+
+  let count = 0
+  let countGreaterThanOne = false
+  const server = createServer((req, res) => {
+    count++
+    setTimeout(function () {
+      countGreaterThanOne = countGreaterThanOne || count > 1
+      res.end(req.url)
+    }, 10)
+  })
+  t.tearDown(server.close.bind(server))
+
+  // needed to check for a warning on the maxListeners on the socket
+  process.on('warning', t.fail)
+  t.tearDown(() => {
+    process.removeListener('warning', t.fail)
+  })
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 10
+    })
+    t.tearDown(client.close.bind(client))
+
+    for (let i = 0; i < num; i++) {
+      makeRequest(i)
+    }
+
+    function makeRequest (i) {
+      makeHeadRequestAndExpectUrl(client, i, t, () => {
+        count--
+
+        if (i === num - 1) {
+          t.ok(countGreaterThanOne, 'seen more than one parallel request')
+        }
+      })
+    }
+  })
+})
+
+function makeHeadRequestAndExpectUrl (client, i, t, cb) {
+  return client.request({ path: '/' + i, method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+    cb()
+    t.error(err)
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(body, null)
   })
 }
 
