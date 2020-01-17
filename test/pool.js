@@ -81,7 +81,7 @@ test('backpressure algorithm', (t) => {
     './client': FakeClient
   })
 
-  const pool = new Pool(`http://notanhost`)
+  const pool = new Pool('http://notanhost')
 
   t.strictEqual(total, 10)
 
