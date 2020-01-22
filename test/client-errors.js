@@ -235,3 +235,18 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
     })
   })
 })
+
+test('ECONNREFUSED on initial connection executes error callback', (t) => {
+  t.plan(3)
+
+  const client = new Client('http://localhost:12345', {
+    pipelining: 1
+  })
+  t.tearDown(client.close.bind(client))
+
+  client.request({ path: '/', method: 'GET' }, (err, data) => {
+    t.ok(err instanceof Error) // we are expecting an error
+    t.strictEqual(err.code, 'ECONNREFUSED')
+    t.strictEqual(null, data)
+  })
+})
