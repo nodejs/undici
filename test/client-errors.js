@@ -235,3 +235,31 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
     })
   })
 })
+
+test('invalid URL throws', (t) => {
+  t.plan(4)
+
+  try {
+    new Client(new URL('asd://asd')) // eslint-disable-line
+  } catch (err) {
+    t.strictEqual(err.message, 'invalid url')
+  }
+
+  try {
+    new Client(new URL('http://asd:200/somepath')) // eslint-disable-line
+  } catch (err) {
+    t.strictEqual(err.message, 'invalid url')
+  }
+
+  try {
+    new Client(new URL('http://asd:200?q=asd')) // eslint-disable-line
+  } catch (err) {
+    t.strictEqual(err.message, 'invalid url')
+  }
+
+  try {
+    new Client(new URL('http://asd:200#asd')) // eslint-disable-line
+  } catch (err) {
+    t.strictEqual(err.message, 'invalid url')
+  }
+})
