@@ -263,3 +263,64 @@ test('invalid URL throws', (t) => {
     t.strictEqual(err.message, 'invalid url')
   }
 })
+
+test('POST which fails should error response', (t) => {
+  t.plan(2)
+
+  const server = createServer()
+  server.once('request', (req, res) => {
+    req.on('data', () => {
+      res.destroy()
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    function checkError (err) {
+      // Different platforms error with different codes...
+      t.ok(err.code === 'EPIPE' || err.code === 'ECONNRESET')
+    }
+
+    {
+      const body = new Readable()
+      body._read = () => {
+        body.push('asd')
+      }
+      body.on('error', (err) => {
+        checkError(err)
+      })
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        body
+      }, (err) => {
+        checkError(err)
+      })
+    }
+
+    {
+      const body = new Readable()
+      body._read = () => {
+        body.push('asd')
+      }
+      body.on('error', (err) => {
+        checkError(err)
+      })
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        headers: {
+          'content-length': 100
+        },
+        body
+      }, (err) => {
+        checkError(err)
+      })
+    }
+  })
+})
