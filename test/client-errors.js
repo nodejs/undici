@@ -324,3 +324,38 @@ test('POST which fails should error response', (t) => {
     }
   })
 })
+
+test('client destroy cleanup', (t) => {
+  t.plan(2)
+
+  const _err = new Error('kaboom')
+  let client
+  const server = createServer()
+  server.once('request', (req, res) => {
+    req.on('data', () => {
+      client.destroy(_err)
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const body = new Readable()
+    body._read = () => {
+      body.push('asd')
+    }
+    body.on('error', (err) => {
+      t.strictEqual(err, _err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body
+    }, (err, data) => {
+      t.strictEqual(err, _err)
+    })
+  })
+})
