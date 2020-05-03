@@ -415,3 +415,34 @@ test('reset parser', (t) => {
     })
   })
 })
+
+test('throw invalid body GET & HEAD', (t) => {
+  t.plan(2)
+
+  const server = createServer()
+  server.once('request', (req, res) => {
+    res.write('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      body: 'asd'
+    }, (err) => {
+      t.ok(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'HEAD',
+      body: 'asd'
+    }, (err) => {
+      t.ok(err)
+    })
+  })
+})
