@@ -586,3 +586,36 @@ test('close should call callback once finished', (t) => {
     }
   })
 })
+
+test('destroyed socket requeue', (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    res.end(req.url)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+
+    t.ok(makeRequest())
+    t.ok(!makeRequest())
+
+    client.close((err) => {
+      t.error(err)
+    })
+
+    let count = 0
+
+    function makeRequest () {
+      return client.request({ path: '/', method: 'GET' }, (err, data) => {
+        if (count++ === 0) {
+          client.socket.destroy()
+        }
+        t.error(err)
+      })
+    }
+  })
+})
