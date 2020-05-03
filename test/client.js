@@ -574,12 +574,9 @@ test('close should call callback once finished', (t) => {
     client.on('drain', () => {
       t.fail()
     })
-    // TODO: This should pass without waiting for connect
-    client.socket.on('connect', () => {
-      client.close((err) => {
-        t.strictEqual(err, null)
-        t.strictEqual(client.closed, true)
-      })
+    client.close((err) => {
+      t.strictEqual(err, null)
+      t.strictEqual(client.closed, true)
     })
 
     function makeRequest () {
