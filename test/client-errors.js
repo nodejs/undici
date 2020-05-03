@@ -27,7 +27,7 @@ test('GET errors and reconnect with pipelining 1', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.ok(err instanceof Error) // we are expecting an error
@@ -78,7 +78,7 @@ test('GET errors and reconnect with pipelining 3', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     // all of these will error
     for (let i = 0; i < 3; i++) {
@@ -136,7 +136,7 @@ test('POST with a stream that errors and pipelining 1 should reconnect', (t) => 
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -204,7 +204,7 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -277,7 +277,7 @@ test('POST which fails should error response', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     function checkError (err) {
       // Different platforms error with different codes...
@@ -340,7 +340,7 @@ test('client destroy cleanup', (t) => {
 
   server.listen(0, () => {
     client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     const body = new Readable()
     body._read = () => {
@@ -374,7 +374,7 @@ test('GET errors body', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
