@@ -554,7 +554,7 @@ test('Set-Cookie', (t) => {
 })
 
 test('close should call callback once finished', (t) => {
-  t.plan(4)
+  t.plan(6)
 
   const server = createServer((req, res) => {
     setTimeout(function () {
@@ -569,6 +569,7 @@ test('close should call callback once finished', (t) => {
     })
 
     t.ok(makeRequest())
+    t.ok(!makeRequest())
 
     client.on('drain', () => {
       t.fail()
