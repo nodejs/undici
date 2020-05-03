@@ -25,10 +25,9 @@
     "tap": "^14.0.0"
   },
   "dependencies": {
-    "end-of-stream": "^1.4.1",
     "fastq": "^1.6.0",
-    "readable-stream": "^3.0.0",
     "http-parser-js": "^0.5.2",
+    "readable-stream": "^3.0.0",
     "retimer": "^2.0.0"
   }
 }
