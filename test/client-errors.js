@@ -415,3 +415,26 @@ test('reset parser', (t) => {
     })
   })
 })
+
+test('fail invalid body regexp', (t) => {
+  t.plan(1)
+
+  const server = createServer()
+  server.once('request', (req, res) => {
+    res.write('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: /asdasd/
+    }, (err, data) => {
+      t.ok(err)
+    })
+  })
+})
