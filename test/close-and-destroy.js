@@ -47,3 +47,34 @@ test('close waits for queued requests to finish', (t) => {
     })
   }
 })
+
+test('destroy invoked all pending callbacks', (t) => {
+  t.plan(4)
+
+  const server = createServer()
+
+  server.on('request', (req, res) => {
+    res.write('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.error(err)
+      data.body.on('error', (err) => {
+        t.ok(err)
+      })
+      client.destroy()
+    })
+    client.request({ path: '/', method: 'GET' }, (err) => {
+      t.ok(err)
+    })
+    client.request({ path: '/', method: 'GET' }, (err) => {
+      t.ok(err)
+    })
+  })
+})
