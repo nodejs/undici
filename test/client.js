@@ -552,3 +552,40 @@ test('Set-Cookie', (t) => {
     })
   })
 })
+
+test('close should call callback once finished', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    setTimeout(function () {
+      res.end(req.url)
+    }, 10)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+
+    t.ok(makeRequest())
+    t.ok(!makeRequest())
+
+    client.on('drain', () => {
+      t.fail()
+    })
+    // TODO: This should pass without waiting for connect
+    client.socket.on('connect', () => {
+      client.close((err) => {
+        t.strictEqual(err, null)
+        t.strictEqual(client.closed, true)
+      })
+    })
+
+    function makeRequest () {
+      return client.request({ path: '/', method: 'GET' }, (err, data) => {
+        t.error(err)
+      })
+    }
+  })
+})

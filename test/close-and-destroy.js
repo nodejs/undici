@@ -4,8 +4,8 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 
-test('close waits for the in-flight requests to finish', (t) => {
-  t.plan(10)
+test('close waits for queued requests to finish', (t) => {
+  t.plan(16)
 
   const server = createServer()
 
@@ -24,8 +24,8 @@ test('close waits for the in-flight requests to finish', (t) => {
       onRequest(err, data)
 
       client.request({ path: '/', method: 'GET' }, onRequest)
-      client.request({ path: '/', method: 'GET' }, reqClosed)
-      client.request({ path: '/', method: 'GET' }, reqClosed)
+      client.request({ path: '/', method: 'GET' }, onRequest)
+      client.request({ path: '/', method: 'GET' }, onRequest)
 
       // needed because the next element in the queue will be called
       // after the current function completes
@@ -45,9 +45,5 @@ test('close waits for the in-flight requests to finish', (t) => {
     body.on('end', () => {
       t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
     })
-  }
-
-  function reqClosed (err) {
-    t.equal(err.message, 'The client is closed')
   }
 })

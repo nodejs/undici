@@ -235,3 +235,127 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
     })
   })
 })
+
+test('invalid URL throws', (t) => {
+  t.plan(4)
+
+  try {
+    new Client(new URL('asd://asd')) // eslint-disable-line
+  } catch (err) {
+    t.strictEqual(err.message, 'invalid url')
+  }
+
+  try {
+    new Client(new URL('http://asd:200/somepath')) // eslint-disable-line
+  } catch (err) {
+    t.strictEqual(err.message, 'invalid url')
+  }
+
+  try {
+    new Client(new URL('http://asd:200?q=asd')) // eslint-disable-line
+  } catch (err) {
+    t.strictEqual(err.message, 'invalid url')
+  }
+
+  try {
+    new Client(new URL('http://asd:200#asd')) // eslint-disable-line
+  } catch (err) {
+    t.strictEqual(err.message, 'invalid url')
+  }
+})
+
+test('POST which fails should error response', (t) => {
+  t.plan(2)
+
+  const server = createServer()
+  server.once('request', (req, res) => {
+    req.on('data', () => {
+      res.destroy()
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    function checkError (err) {
+      // Different platforms error with different codes...
+      t.ok(err.code === 'EPIPE' || err.code === 'ECONNRESET')
+    }
+
+    {
+      const body = new Readable()
+      body._read = () => {
+        body.push('asd')
+      }
+      body.on('error', (err) => {
+        checkError(err)
+      })
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        body
+      }, (err) => {
+        checkError(err)
+      })
+    }
+
+    {
+      const body = new Readable()
+      body._read = () => {
+        body.push('asd')
+      }
+      body.on('error', (err) => {
+        checkError(err)
+      })
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        headers: {
+          'content-length': 100
+        },
+        body
+      }, (err) => {
+        checkError(err)
+      })
+    }
+  })
+})
+
+test('client destroy cleanup', (t) => {
+  t.plan(2)
+
+  const _err = new Error('kaboom')
+  let client
+  const server = createServer()
+  server.once('request', (req, res) => {
+    req.on('data', () => {
+      client.destroy(_err)
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const body = new Readable()
+    body._read = () => {
+      body.push('asd')
+    }
+    body.on('error', (err) => {
+      t.strictEqual(err, _err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body
+    }, (err, data) => {
+      t.strictEqual(err, _err)
+    })
+  })
+})
