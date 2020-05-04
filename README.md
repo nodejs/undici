@@ -122,16 +122,20 @@ than the pipelining factor. Keeping a client full ensures that once the
 inflight set of requests finishes there is a full batch ready to go.
 
 <a name='close'></a>
-#### `client.close(cb)`
+#### `client.close([callback])`
 
 Closes the client and gracefully waits fo enqueued requests to
 complete before invoking the callback.
 
-<a name='destroy'></a>
-#### `client.destroy(err)`
+Returns a promise if no callback is provided.
 
-Destroy the client abruptly with the given `err`. All the current and
-enqueued requests will be aborted and error.
+<a name='destroy'></a>
+#### `client.destroy([err][, callback])`
+
+Destroy the client abruptly with the given `err`. All the current and enqueued requests will be aborted and error.
+Waits until socket is closed before invoked the callback.
+
+Returns a promise if no callback is provided.
 
 #### Events
 
