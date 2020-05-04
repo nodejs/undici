@@ -586,3 +586,33 @@ test('close should call callback once finished', (t) => {
     }
   })
 })
+
+test('close should still reconnect', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    res.end(req.url)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+
+    t.ok(makeRequest())
+    t.ok(!makeRequest())
+
+    client.close((err) => {
+      t.strictEqual(err, null)
+      t.strictEqual(client.closed, true)
+    })
+    client.socket.destroy()
+
+    function makeRequest () {
+      return client.request({ path: '/', method: 'GET' }, (err, data) => {
+        t.error(err)
+      })
+    }
+  })
+})

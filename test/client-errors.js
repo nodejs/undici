@@ -265,7 +265,7 @@ test('invalid URL throws', (t) => {
 })
 
 test('POST which fails should error response', (t) => {
-  t.plan(2)
+  t.plan(4)
 
   const server = createServer()
   server.once('request', (req, res) => {
