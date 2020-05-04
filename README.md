@@ -104,6 +104,30 @@ client.request({
 })
 ```
 
+Abortion is supported by destroying the request or
+response body.
+
+```js
+// Abort while sending request.
+const body = new stream.Passthrough()
+const promise = client.request({
+  path: '/',
+  method: 'POST',
+  body
+})
+body.destroy()
+const { statusCode, headers } = await promise
+```
+
+```js
+// Abort while reading response.
+const { statusCode, headers, body } = await client.request({
+  path: '/',
+  method: 'GET'
+})
+body.destroy()
+```
+
 Promises and async await are supported as well!
 ```js
 const { statusCode, headers, body } = await client.request({
