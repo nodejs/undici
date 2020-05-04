@@ -70,7 +70,8 @@ The `data` parameter in the callback is defined as follow:
 * `statusCode`
 * `headers`
 * `body`, a  `stream.Readable` with the body to read. A user **must**
-  call `data.body.resume()`
+  either fully consume or destroy the body, or no further requests
+  will be processed.
 
 Example:
 
@@ -112,7 +113,7 @@ const { statusCode, headers, body } = await client.request({
 ```
 #### `client.pipelining`
 
-Property to set the pipelining factor.
+Property to get and set the pipelining factor.
 
 #### `client.full`
 
@@ -121,15 +122,16 @@ than the pipelining factor. Keeping a client full ensures that once the
 inflight set of requests finishes there is a full batch ready to go.
 
 <a name='close'></a>
-#### `client.close()`
+#### `client.close(cb)`
 
-Close the client as soon as all the enqueued requests are completed
+Closes the client and gracefully waits fo enqueued requests to
+complete before invoking the callback.
 
 <a name='destroy'></a>
 #### `client.destroy(err)`
 
 Destroy the client abruptly with the given `err`. All the current and
-enqueued requests will error.
+enqueued requests will be aborted and error.
 
 #### Events
 
