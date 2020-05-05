@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
+const net = require('net')
 const { Readable } = require('readable-stream')
 
 test('GET errors and reconnect with pipelining 1', (t) => {
@@ -436,6 +437,25 @@ test('fail invalid body regexp', (t) => {
       method: 'POST',
       body: /asdasd/
     }, (err, data) => {
+      t.ok(err)
+    })
+  })
+})
+
+test('parser error', (t) => {
+  t.plan(1)
+
+  const server = net.createServer()
+  server.once('connection', (socket) => {
+    socket.write('asd\n\r213123')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err) => {
       t.ok(err)
     })
   })
