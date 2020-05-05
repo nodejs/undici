@@ -489,3 +489,65 @@ test('aborted response errors', (t) => {
     })
   })
 })
+
+test('socket fail while writing request body', (t) => {
+  t.plan(1)
+
+  const server = createServer()
+  server.once('request', (req, res) => {
+    res.write('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+    const body = new Readable({ read () {} })
+    body.push('asd')
+
+    client.on('connect', () => {
+      client.socket.destroy('kaboom')
+    })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body
+    }, (err) => {
+      t.ok(err)
+    })
+  })
+})
+
+test('socket fail while ending request body', (t) => {
+  t.plan(2)
+
+  const server = createServer()
+  server.once('request', (req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: 'asd'
+    }, (err) => {
+      t.error(err)
+      const body = new Readable({ read () {} })
+      body.push(null)
+      client.request({
+        path: '/',
+        method: 'POST',
+        body
+      }, (err) => {
+        t.ok(err)
+      })
+      client.socket.destroy('kaboom')
+    })
+  })
+})
