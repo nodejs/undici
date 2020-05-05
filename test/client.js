@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
+const { finished } = require('readable-stream')
 
 test('basic get', (t) => {
   t.plan(7)
@@ -612,6 +613,44 @@ test('close should still reconnect', (t) => {
     function makeRequest () {
       return client.request({ path: '/', method: 'GET' }, (err, data) => {
         t.error(err)
+      })
+    }
+  })
+})
+
+test('close waits until socket is destroyed', (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    res.end(req.url)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+
+    makeRequest()
+
+    client.on('connect', () => {
+      let done = false
+      finished(client.socket, () => {
+        done = true
+      })
+      client.destroy(null, (err) => {
+        t.error(err)
+      })
+      client.close((err) => {
+        t.error(err)
+        t.strictEqual(client.closed, true)
+        t.strictEqual(done, true)
+      })
+    })
+
+    function makeRequest () {
+      return client.request({ path: '/', method: 'GET' }, (err, data) => {
+        t.ok(err)
       })
     }
   })

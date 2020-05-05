@@ -326,14 +326,16 @@ test('POST which fails should error response', (t) => {
 })
 
 test('client destroy cleanup', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const _err = new Error('kaboom')
   let client
   const server = createServer()
   server.once('request', (req, res) => {
-    req.on('data', () => {
-      client.destroy(_err)
+    req.once('data', () => {
+      client.destroy(_err, (err) => {
+        t.strictEqual(err, _err)
+      })
     })
   })
   t.tearDown(server.close.bind(server))
