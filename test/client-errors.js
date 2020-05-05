@@ -268,7 +268,7 @@ test('POST which fails should error response', (t) => {
   t.plan(4)
 
   const server = createServer()
-  server.once('request', (req, res) => {
+  server.on('request', (req, res) => {
     req.on('data', () => {
       res.destroy()
     })
