@@ -460,3 +460,32 @@ test('parser error', (t) => {
     })
   })
 })
+
+test('aborted response errors', (t) => {
+  t.plan(3)
+
+  const server = createServer()
+  server.once('request', (req, res) => {
+    // TODO: res.write will cause body to emit 'error' twice
+    // due to bug in readable-stream.
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      body.destroy()
+      body
+        .on('error', err => {
+          t.strictEqual(err.message, 'aborted')
+        })
+        .on('close', () => {
+          t.pass()
+        })
+    })
+  })
+})
