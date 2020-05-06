@@ -390,14 +390,13 @@ test('GET errors body', (t) => {
 })
 
 test('reset parser', (t) => {
-  t.plan(4)
+  t.plan(6)
 
   const server = createServer()
-  server.once('request', (req, res) => {
+  let res2
+  server.on('request', (req, res) => {
+    res2 = res
     res.write('asd')
-    setTimeout(() => {
-      res.destroy()
-    }, 19)
   })
   t.tearDown(server.close.bind(server))
 
@@ -405,16 +404,28 @@ test('reset parser', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+    client.request({ path: '/', method: 'GET' }, (err, { body }) => {
       t.error(err)
+      res2.destroy()
       body.resume()
       body.on('error', err => {
         t.ok(err)
       })
     })
-    client.on('reconnect', () => {
-      t.ok(!client.parser.chunk)
-      t.ok(!client.parser.offset)
+    client.once('reconnect', () => {
+      client.request({ path: '/', method: 'GET' }, (err, { body }) => {
+        t.error(err)
+        res2.destroy()
+        body.resume()
+        body.on('error', err => {
+          t.ok(err)
+        })
+      })
+
+      client.on('connect', () => {
+        t.ok(!client._parser.chunk)
+        t.ok(!client._parser.offset)
+      })
     })
   })
 })
