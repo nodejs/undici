@@ -4,7 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
-const { finished } = require('readable-stream')
+const { finished, Readable } = require('readable-stream')
 
 test('basic get', (t) => {
   t.plan(7)
@@ -653,5 +653,71 @@ test('close waits until socket is destroyed', (t) => {
         t.ok(err)
       })
     }
+  })
+})
+
+test('pipelined chunked POST ', (t) => {
+  t.plan(4 + 8 + 8)
+
+  let a = 0
+  let b = 0
+
+  const server = createServer((req, res) => {
+    req.on('data', chunk => {
+      // Make sure a and b don't interleave.
+      t.ok(a === 9 || b === 0)
+      res.write(chunk)
+    }).on('end', () => {
+      res.end()
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      body.resume()
+      t.error(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: new Readable({
+        read () {
+          this.push(++a > 8 ? null : 'a')
+        }
+      })
+    }, (err, { body }) => {
+      body.resume()
+      t.error(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      body.resume()
+      t.error(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: new Readable({
+        read () {
+          this.push(++b > 8 ? null : 'b')
+        }
+      })
+    }, (err, { body }) => {
+      body.resume()
+      t.error(err)
+    })
   })
 })

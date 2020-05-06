@@ -531,7 +531,7 @@ test('socket fail while writing request body', (t) => {
 })
 
 test('socket fail while ending request body', (t) => {
-  t.plan(2)
+  t.plan(1)
 
   const server = createServer()
   server.once('request', (req, res) => {
@@ -543,22 +543,18 @@ test('socket fail while ending request body', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
+    const _err = new Error('kaboom')
+    client.on('connect', () => {
+      client.socket.destroy(_err)
+    })
+    const body = new Readable({ read () {} })
+    body.push(null)
     client.request({
       path: '/',
       method: 'POST',
-      body: 'asd'
+      body
     }, (err) => {
-      t.error(err)
-      const body = new Readable({ read () {} })
-      body.push(null)
-      client.request({
-        path: '/',
-        method: 'POST',
-        body
-      }, (err) => {
-        t.ok(err)
-      })
-      client.socket.destroy('kaboom')
+      t.strictEqual(err, _err)
     })
   })
 })
