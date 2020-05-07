@@ -1,6 +1,6 @@
 'use strict'
 
-const t = require('tap')
+const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { createHook, executionAsyncId } = require('async_hooks')
@@ -31,68 +31,114 @@ const hook = createHook({
 
 hook.enable()
 
-t.plan(16)
+test('async hooks', (t) => {
+  t.plan(16)
 
-const server = createServer((req, res) => {
-  res.setHeader('content-type', 'text/plain')
-  readFile(__filename, (err, buf) => {
-    t.error(err)
-    const buf1 = buf.slice(0, buf.length / 2)
-    const buf2 = buf.slice(buf.length / 2)
-    // we split the file so that it's received in 2 chunks
-    // and it should restore the state on the second
-    res.write(buf1)
-    setTimeout(() => {
-      res.end(buf2)
-    }, 10)
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    readFile(__filename, (err, buf) => {
+      t.error(err)
+      const buf1 = buf.slice(0, buf.length / 2)
+      const buf2 = buf.slice(buf.length / 2)
+      // we split the file so that it's received in 2 chunks
+      // and it should restore the state on the second
+      res.write(buf1)
+      setTimeout(() => {
+        res.end(buf2)
+      }, 10)
+    })
   })
-})
-t.tearDown(server.close.bind(server))
+  t.tearDown(server.close.bind(server))
 
-server.listen(0, () => {
-  const client = new Client(`http://localhost:${server.address().port}`)
-  t.tearDown(client.close.bind(client))
-
-  client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-    t.error(err)
-    body.resume()
-    t.strictDeepEqual(getCurrentTransaction(), null)
-
-    setCurrentTransaction({ hello: 'world2' })
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+      body.resume()
+      t.strictDeepEqual(getCurrentTransaction(), null)
 
-      body.once('data', () => {
+      setCurrentTransaction({ hello: 'world2' })
+
+      client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+        t.error(err)
         t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
-        body.resume()
+
+        body.once('data', () => {
+          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+          body.resume()
+        })
+
+        body.on('end', () => {
+          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+        })
       })
+    })
 
-      body.on('end', () => {
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      body.resume()
+      t.strictDeepEqual(getCurrentTransaction(), null)
+
+      setCurrentTransaction({ hello: 'world' })
+
+      client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+        t.error(err)
+        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+
+        body.once('data', () => {
+          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+          body.resume()
+        })
+
+        body.on('end', () => {
+          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+        })
       })
     })
   })
+})
 
-  client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-    t.error(err)
-    body.resume()
-    t.strictDeepEqual(getCurrentTransaction(), null)
+test('async hooks client is destroyed', (t) => {
+  t.plan(7)
 
-    setCurrentTransaction({ hello: 'world' })
-
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    readFile(__filename, (err, buf) => {
       t.error(err)
-      t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+      const buf1 = buf.slice(0, buf.length / 2)
+      const buf2 = buf.slice(buf.length / 2)
+      // we split the file so that it's received in 2 chunks
+      // and it should restore the state on the second
+      res.write(buf1)
+      setTimeout(() => {
+        res.end(buf2)
+      }, 10)
+    })
+  })
+  t.tearDown(server.close.bind(server))
 
-      body.once('data', () => {
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
-        body.resume()
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, { body }) => {
+      t.error(err)
+      body.resume()
+      body.on('error', (err) => {
+        t.ok(err)
       })
+      t.strictDeepEqual(getCurrentTransaction(), null)
 
-      body.on('end', () => {
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+      setCurrentTransaction({ hello: 'world2' })
+
+      client.request({ path: '/', method: 'GET' }, (err) => {
+        t.strictEqual(err.message, 'The client is destroyed')
+        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+      })
+      client.destroy((err) => {
+        t.error(err)
       })
     })
   })
