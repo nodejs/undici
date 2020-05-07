@@ -118,7 +118,6 @@ test('POST with a stream that errors and pipelining 1 should reconnect', (t) => 
     req.on('data', (buf) => {
       bufs.push(buf)
     })
-    // req.socket.on('end', console.log.bind(console, 'end'))
 
     req.on('aborted', () => {
       // we will abruptly close the connection here
@@ -540,7 +539,9 @@ test('socket fail while ending request body', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
     t.tearDown(client.close.bind(client))
 
     const _err = new Error('kaboom')

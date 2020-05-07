@@ -513,7 +513,7 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
     client.on('drain', () => {
       t.ok(countGreaterThanOne, 'seen more than one parallel request')
       const start = sent
-      for (; sent < start + 3 && sent < num;) {
+      for (; sent < start + 2 && sent < num;) {
         t.notOk(client.full, 'client is not full')
         t.ok(makeRequest())
       }
@@ -653,6 +653,45 @@ test('close waits until socket is destroyed', (t) => {
         t.ok(err)
       })
     }
+  })
+})
+
+test('pipeline 1 is 1 active request', (t) => {
+  t.plan(7)
+
+  let res2
+  const server = createServer((req, res) => {
+    res.write('asd')
+    res2 = res
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    t.ok(client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.strictEqual(client.size, 1)
+      t.error(err)
+      t.notOk(client.request({
+        path: '/',
+        method: 'GET'
+      }, (err, data) => {
+        t.error(err)
+        finished(data.body, (err) => {
+          t.ok(err)
+        })
+        data.body.destroy()
+      }))
+      data.body.resume()
+      res2.end()
+    }))
+    t.strictEqual(client.size, 1)
   })
 })
 
