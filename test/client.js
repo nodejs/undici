@@ -583,6 +583,7 @@ test('close should call callback once finished', (t) => {
     function makeRequest () {
       return client.request({ path: '/', method: 'GET' }, (err, data) => {
         t.error(err)
+        data.body.resume()
       })
     }
   })
@@ -612,6 +613,7 @@ test('close should still reconnect', (t) => {
 
     function makeRequest () {
       return client.request({ path: '/', method: 'GET' }, (err, data) => {
+        data.body.resume()
         t.error(err)
       })
     }
@@ -716,6 +718,7 @@ test('pipelined chunked POST ', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
+    t.tearDown(client.close.bind(client))
 
     client.request({
       path: '/',

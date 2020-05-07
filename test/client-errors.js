@@ -453,7 +453,7 @@ test('fail invalid body regexp', (t) => {
 })
 
 test('parser error', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const server = net.createServer()
   server.once('connection', (socket) => {
@@ -467,6 +467,9 @@ test('parser error', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err) => {
       t.ok(err)
+      client.close((err) => {
+        t.error(err)
+      })
     })
   })
 })
