@@ -69,8 +69,8 @@ The `data` parameter in the callback is defined as follow:
 
 * `statusCode`
 * `headers`
-* `body`, a  `stream.Readable` with the body to read. A user **must**
-  either fully consume or destroy the body, or no further requests
+* `body`, `null` or a `stream.Readable` with the body to read. A user **must**
+  either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
 
 Example:
