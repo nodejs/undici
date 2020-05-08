@@ -185,7 +185,6 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
     req.on('data', (buf) => {
       bufs.push(buf)
     })
-    // req.socket.on('end', console.log.bind(console, 'end'))
 
     req.on('aborted', () => {
       // we will abruptly close the connection here
@@ -504,11 +503,10 @@ test('aborted response errors', (t) => {
 })
 
 test('socket fail while writing request body', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const server = createServer()
   server.once('request', (req, res) => {
-    res.write('asd')
   })
   t.tearDown(server.close.bind(server))
 
@@ -519,7 +517,9 @@ test('socket fail while writing request body', (t) => {
     body.push('asd')
 
     client.on('connect', () => {
-      client.socket.destroy('kaboom')
+      process.nextTick(() => {
+        client.socket.destroy('kaboom')
+      })
     })
 
     client.request({
@@ -529,11 +529,14 @@ test('socket fail while writing request body', (t) => {
     }, (err) => {
       t.ok(err)
     })
+    client.close((err) => {
+      t.ok(err)
+    })
   })
 })
 
 test('socket fail while ending request body', (t) => {
-  t.plan(1)
+  t.plan(3)
 
   const server = createServer()
   server.once('request', (req, res) => {
@@ -549,7 +552,9 @@ test('socket fail while ending request body', (t) => {
 
     const _err = new Error('kaboom')
     client.on('connect', () => {
-      client.socket.destroy(_err)
+      process.nextTick(() => {
+        client.socket.destroy(_err)
+      })
     })
     const body = new Readable({ read () {} })
     body.push(null)
@@ -559,6 +564,47 @@ test('socket fail while ending request body', (t) => {
       body
     }, (err) => {
       t.strictEqual(err, _err)
+    })
+    client.close((err) => {
+      console.error(1)
+      t.ok(err)
+      client.close((err) => {
+        console.error(2, err)
+        t.error(err)
+      })
+    })
+  })
+})
+
+test('queued request should not fail on socket destroy', (t) => {
+  t.plan(2)
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+      client.socket.destroy()
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err, data) => {
+        t.error(err)
+        data.body.resume()
+      })
     })
   })
 })
