@@ -836,3 +836,39 @@ test('ignore request header mutations', (t) => {
     headers.test = 'asd'
   })
 })
+
+test('drain when queue is empty', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.on('drain', () => {
+      t.strictEqual(client.size, 0)
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.resume()
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.resume()
+    })
+  })
+})
