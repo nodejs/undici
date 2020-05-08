@@ -810,3 +810,29 @@ test('aborted GET', (t) => {
     })
   })
 })
+
+test('ignore request header mutations', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.headers.test, 'test')
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const headers = { test: 'test' }
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers
+    }, (err, { body }) => {
+      t.error(err)
+      body.resume()
+    })
+    headers.test = 'asd'
+  })
+})
