@@ -608,3 +608,41 @@ test('queued request should not fail on socket destroy', (t) => {
     })
   })
 })
+
+test('queued request should fail on client destroy', (t) => {
+  t.plan(5)
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    let requestErrored = false
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+      client.destroy((err) => {
+        t.error(err)
+        t.strictEqual(requestErrored, true)
+      })
+    })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      requestErrored = true
+      t.ok(err)
+      t.strictEqual(data, null)
+    })
+  })
+})
