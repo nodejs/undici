@@ -763,3 +763,50 @@ test('pipelined chunked POST ', (t) => {
     })
   })
 })
+
+test('aborted GET', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    function write () {
+      while (res.write('asdasdasdasd')) {
+      }
+    }
+    res.once('drain', write)
+    write()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2,
+      maxAbortedPayload: 100
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.once('data', () => {
+        body.destroy()
+      }).once('error', (err) => {
+        t.ok(err)
+      })
+        // old Readable emits error twice
+        .on('error', () => {})
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.ok(err)
+    })
+
+    client.close((err) => {
+      t.error(err)
+    })
+  })
+})

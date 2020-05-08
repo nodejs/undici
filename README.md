@@ -32,8 +32,13 @@ address. The path is discarded.
 Options:
 
 - `timeout`, the timeout after which a request will time out, in
-  milliseconds. Default:
-  `30000` milliseconds.
+  milliseconds.
+  Default: `30e3` milliseconds (30s).
+
+- `maxAbortedPayload`, Maximum number of bytes read after which an
+  aborted response will close the connection. Closing the connection
+  will error other inflight requests in pipeline.
+  Default: `1e6` bytes (1MiB).
 
 - `pipelining`, the amount of concurrent requests to be sent over the
   single TCP/TLS connection according to
