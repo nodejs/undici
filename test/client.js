@@ -481,7 +481,8 @@ function makeHeadRequestAndExpectUrl (client, i, t, cb) {
 test('A client should enqueue as much as twice its pipelining factor', (t) => {
   const num = 10
   let sent = 0
-  t.plan(6 * num + 5)
+  // x * 6 + 1 t.ok + 5 drain
+  t.plan(num * 6 + 1 + 5)
 
   let count = 0
   let countGreaterThanOne = false
@@ -659,7 +660,7 @@ test('close waits until socket is destroyed', (t) => {
 })
 
 test('pipeline 1 is 1 active request', (t) => {
-  t.plan(7)
+  t.plan(8)
 
   let res2
   const server = createServer((req, res) => {
@@ -687,8 +688,12 @@ test('pipeline 1 is 1 active request', (t) => {
         t.error(err)
         finished(data.body, (err) => {
           t.ok(err)
+          client.close((err) => {
+            t.error(err)
+          })
         })
         data.body.destroy()
+        res2.end()
       }))
       data.body.resume()
       res2.end()
@@ -764,23 +769,76 @@ test('pipelined chunked POST ', (t) => {
   })
 })
 
-test('aborted GET', (t) => {
-  t.plan(4)
+test('aborted GET maxAbortedPayload reset', (t) => {
+  t.plan(5)
 
   const server = createServer((req, res) => {
-    function write () {
-      while (res.write('asdasdasdasd')) {
-      }
-    }
-    res.once('drain', write)
-    write()
+    res.end(Buffer.alloc(1e6 - 1))
   })
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2,
-      maxAbortedPayload: 100
+      maxAbortedPayload: 1e6
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.on('reconnect', () => {
+      t.fail()
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.once('data', (chunk) => {
+        body.destroy()
+      }).once('error', (err) => {
+        t.ok(err)
+      }).on('end', () => {
+        t.fail()
+      })
+    })
+
+    // Make sure read counter is reset.
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.once('data', (chunk) => {
+        body.destroy()
+      }).on('error', (err) => {
+        t.ok(err)
+      }).on('end', () => {
+        t.fail()
+      })
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.resume()
+    })
+  })
+})
+
+test('aborted GET maxAbortedPayload', (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    res.end(Buffer.alloc(100000 + 1, 'a'))
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1,
+      maxAbortedPayload: 100000
     })
     t.tearDown(client.close.bind(client))
 
@@ -798,11 +856,63 @@ test('aborted GET', (t) => {
         .on('error', () => {})
     })
 
+    client.on('reconnect', () => {
+      t.pass()
+    })
+
     client.request({
       path: '/',
       method: 'GET'
-    }, (err) => {
-      t.ok(err)
+    }, (err, { body }) => {
+      t.error(err)
+      body.resume()
+    })
+
+    client.close((err) => {
+      t.error(err)
+    })
+  })
+})
+
+test('aborted GET maxAbortedPayload less than HWM', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    res.end(Buffer.alloc(4 + 1, 'a'))
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1,
+      maxAbortedPayload: 4
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.once('data', () => {
+        body.destroy()
+      }).once('error', (err) => {
+        t.ok(err)
+      })
+        // old Readable emits error twice
+        .on('error', () => {})
+    })
+
+    client.on('reconnect', () => {
+      t.fail()
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.resume()
     })
 
     client.close((err) => {
