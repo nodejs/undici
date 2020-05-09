@@ -150,6 +150,15 @@ True if the number of requests waiting to be sent is greater
 than the pipelining factor. Keeping a client full ensures that once the
 inflight set of requests finishes there is a full batch ready to go.
 
+#### `client.closed`
+
+True after `client.close()` has been called.
+
+#### `client.destroyed`
+
+True after `client.destroyed()` has been called or `client.close()` has been
+called and the client shutdown has completed.
+
 <a name='close'></a>
 #### `client.close([callback])`
 
@@ -161,14 +170,16 @@ Returns a promise if no callback is provided.
 <a name='destroy'></a>
 #### `client.destroy([err][, callback])`
 
-Destroy the client abruptly with the given `err`. All the current and enqueued requests will be aborted and error.
-Waits until socket is closed before invoked the callback.
+Destroy the client abruptly with the given `err`. All the current and enqueued
+requests will be aborted and error. Waits until socket is closed before 
+invoking the callback.
 
 Returns a promise if no callback is provided.
 
 #### Events
 
-* `'drain'`, emitted when the queue is empty.
+* `'drain'`, emitted when the queue is empty unless the client
+  is closed or destroyed.
 
 ### undici.Pool
 

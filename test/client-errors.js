@@ -235,8 +235,8 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
   })
 })
 
-test('invalid URL throws', (t) => {
-  t.plan(4)
+test('invalid options throws', (t) => {
+  t.plan(6)
 
   try {
     new Client(new URL('asd://asd')) // eslint-disable-line
@@ -260,6 +260,22 @@ test('invalid URL throws', (t) => {
     new Client(new URL('http://asd:200#asd')) // eslint-disable-line
   } catch (err) {
     t.strictEqual(err.message, 'invalid url')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxAbortedPayload: 'asd'
+    })
+  } catch (err) {
+    t.strictEqual(err.message, 'invalid maxAbortedPayload')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), {  // eslint-disable-line
+      timeout: 'asd'
+    })
+  } catch (err) {
+    t.strictEqual(err.message, 'invalid timeout')
   }
 })
 
@@ -518,7 +534,7 @@ test('socket fail while writing request body', (t) => {
 
     client.on('connect', () => {
       process.nextTick(() => {
-        client.socket.destroy('kaboom')
+        client._socket.destroy('kaboom')
       })
     })
 
@@ -553,7 +569,7 @@ test('socket fail while ending request body', (t) => {
     const _err = new Error('kaboom')
     client.on('connect', () => {
       process.nextTick(() => {
-        client.socket.destroy(_err)
+        client._socket.destroy(_err)
       })
     })
     const body = new Readable({ read () {} })
@@ -595,7 +611,7 @@ test('queued request should not fail on socket destroy', (t) => {
     }, (err, data) => {
       t.error(err)
       data.body.resume()
-      client.socket.destroy()
+      client._socket.destroy()
       client.request({
         path: '/',
         method: 'GET'

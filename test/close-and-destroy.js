@@ -97,7 +97,7 @@ test('close waits until socket is destroyed', (t) => {
 
     client.on('connect', () => {
       let done = false
-      finished(client.socket, () => {
+      finished(client._socket, () => {
         done = true
       })
       client.destroy(null, (err) => {
@@ -138,7 +138,7 @@ test('close should still reconnect', (t) => {
       t.strictEqual(err, null)
       t.strictEqual(client.closed, true)
     })
-    client.socket.destroy()
+    client._socket.destroy()
 
     function makeRequest () {
       return client.request({ path: '/', method: 'GET' }, (err, data) => {
