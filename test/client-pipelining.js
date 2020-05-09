@@ -272,3 +272,56 @@ test('pipelined chunked POST ', (t) => {
     })
   })
 })
+
+test('errored POST body lets inflight complete', (t) => {
+  t.plan(6)
+
+  let serverRes
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.write('asd')
+    serverRes = res
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body
+        .resume()
+        .once('data', () => {
+          client.request({
+            path: '/',
+            method: 'POST',
+            body: new Readable({
+              read () {
+                this.destroy(new Error('kaboom'))
+              }
+            }).once('error', (err) => {
+              t.ok(err)
+            }).on('error', () => {
+              // Readable emits error twice...
+            })
+          }, (err, data) => {
+            t.ok(err)
+            t.strictEqual(data, null)
+          })
+          client.close((err) => {
+            t.ok(err)
+          })
+          serverRes.end()
+        })
+        .on('end', () => {
+          t.pass()
+        })
+    })
+  })
+})
