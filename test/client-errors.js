@@ -566,10 +566,8 @@ test('socket fail while ending request body', (t) => {
       t.strictEqual(err, _err)
     })
     client.close((err) => {
-      console.error(1)
       t.ok(err)
       client.close((err) => {
-        console.error(2, err)
         t.error(err)
       })
     })
