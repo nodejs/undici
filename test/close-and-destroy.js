@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
+const { finished } = require('readable-stream')
 
 test('close waits for queued requests to finish', (t) => {
   t.plan(16)
@@ -76,5 +77,109 @@ test('destroy invoked all pending callbacks', (t) => {
     client.request({ path: '/', method: 'GET' }, (err) => {
       t.ok(err)
     })
+  })
+})
+
+test('close waits until socket is destroyed', (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    res.end(req.url)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+
+    makeRequest()
+
+    client.on('connect', () => {
+      let done = false
+      finished(client.socket, () => {
+        done = true
+      })
+      client.destroy(null, (err) => {
+        t.error(err)
+      })
+      client.close((err) => {
+        t.error(err)
+        t.strictEqual(client.closed, true)
+        t.strictEqual(done, true)
+      })
+    })
+
+    function makeRequest () {
+      return client.request({ path: '/', method: 'GET' }, (err, data) => {
+        t.ok(err)
+      })
+    }
+  })
+})
+
+test('close should still reconnect', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    res.end(req.url)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+
+    t.ok(makeRequest())
+    t.ok(!makeRequest())
+
+    client.close((err) => {
+      t.strictEqual(err, null)
+      t.strictEqual(client.closed, true)
+    })
+    client.socket.destroy()
+
+    function makeRequest () {
+      return client.request({ path: '/', method: 'GET' }, (err, data) => {
+        data.body.resume()
+        t.error(err)
+      })
+    }
+  })
+})
+
+test('close should call callback once finished', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    setTimeout(function () {
+      res.end(req.url)
+    }, 10)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+
+    t.ok(makeRequest())
+    t.ok(!makeRequest())
+
+    client.on('drain', () => {
+      t.fail()
+    })
+    client.close((err) => {
+      t.strictEqual(err, null)
+      t.strictEqual(client.closed, true)
+    })
+
+    function makeRequest () {
+      return client.request({ path: '/', method: 'GET' }, (err, data) => {
+        t.error(err)
+        data.body.resume()
+      })
+    }
   })
 })
