@@ -56,7 +56,11 @@ test('basic head', (t) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
-      t.strictEqual(body, null)
+      body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
     })
   })
 })
@@ -112,7 +116,11 @@ test('head with host header', (t) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
-      t.strictEqual(body, null)
+      body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
     })
   })
 })
@@ -361,7 +369,11 @@ test('10 times HEAD', (t) => {
       client.request({ path: '/' + i, method: 'HEAD' }, (err, { statusCode, headers, body }) => {
         t.error(err)
         t.strictEqual(statusCode, 200)
-        t.strictEqual(body, null)
+        body
+          .resume()
+          .on('end', () => {
+            t.pass()
+          })
       })
     }
   })
