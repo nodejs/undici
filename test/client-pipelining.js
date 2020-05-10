@@ -325,3 +325,46 @@ test('errored POST body lets inflight complete', (t) => {
     })
   })
 })
+
+test('pipelining non-idempotent', (t) => {
+  t.plan(4)
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    setTimeout(() => {
+      res.end('asd')
+    }, 10)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
+    t.tearDown(client.close.bind(client))
+
+    let ended = false
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body
+        .resume()
+        .on('end', () => {
+          t.pass()
+          ended = true
+        })
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      idempotent: false
+    }, (err, data) => {
+      t.error(err)
+      t.strictEqual(ended, true)
+      data.body.resume()
+    })
+  })
+})
