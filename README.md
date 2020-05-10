@@ -55,6 +55,10 @@ Options:
 * `method`
 * `body`, it can be a `String`, a `Buffer` or a `stream.Readable`.
 * `headers`, an object with header-value pairs.
+* `idempotent`, whether the requests can be safely retried or not.
+  If `false` the request won't be sent until all preceeding
+  requests in the pipeline has completed.
+  Default: `true` if `method` is `HEAD` or `GET`.
 
 Headers are represented by an object like this:
 
