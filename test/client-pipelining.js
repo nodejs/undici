@@ -111,7 +111,11 @@ function makeHeadRequestAndExpectUrl (client, i, t, cb) {
     cb()
     t.error(err)
     t.strictEqual(statusCode, 200)
-    t.strictEqual(body, null)
+    body
+      .resume()
+      .on('end', () => {
+        t.pass()
+      })
   })
 }
 
