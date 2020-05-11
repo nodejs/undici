@@ -25,7 +25,6 @@
     "tap": "^14.0.0"
   },
   "dependencies": {
-    "fastq": "^1.6.0",
     "http-parser-js": "^0.5.2"
   }
 }
