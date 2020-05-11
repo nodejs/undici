@@ -30,7 +30,7 @@ test('GET errors and reconnect with pipelining 1', (t) => {
     })
     t.tearDown(client.destroy.bind(client))
 
-    client.request({ path: '/', method: 'GET' }, (err, data) => {
+    client.request({ path: '/', method: 'GET', idempotent: false }, (err, data) => {
       t.ok(err instanceof Error) // we are expecting an error
       t.strictEqual(null, data)
     })
@@ -83,14 +83,14 @@ test('GET errors and reconnect with pipelining 3', (t) => {
 
     // all of these will error
     for (let i = 0; i < 3; i++) {
-      client.request({ path: '/', method: 'GET' }, (err, data) => {
+      client.request({ path: '/', method: 'GET', idempotent: false }, (err, data) => {
         t.ok(err instanceof Error) // we are expecting an error
         t.strictEqual(null, data)
       })
     }
 
     // this will be queued up
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+    client.request({ path: '/', method: 'GET', idempotent: false }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
@@ -157,7 +157,7 @@ test('POST with a stream that errors and pipelining 1 should reconnect', (t) => 
     })
 
     // this will be queued up
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+    client.request({ path: '/', method: 'GET', idempotent: false }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
@@ -657,6 +657,49 @@ test('queued request should fail on client destroy', (t) => {
       requestErrored = true
       t.ok(err)
       t.strictEqual(data, null)
+    })
+  })
+})
+
+test('retry idempotent inflight', (t) => {
+  t.plan(3)
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 3
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: new Readable({
+        read () {
+          this.destroy(new Error('kaboom'))
+        }
+      })
+    }, (err) => {
+      t.ok(err)
+    })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
     })
   })
 })
