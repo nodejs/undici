@@ -296,7 +296,11 @@ test('POST which fails should error response', (t) => {
 
     function checkError (err) {
       // Different platforms error with different codes...
-      t.ok(err.code === 'EPIPE' || err.code === 'ECONNRESET')
+      t.ok(
+        err.code === 'EPIPE' ||
+        err.code === 'ECONNRESET' ||
+        err.message === 'other side closed'
+      )
     }
 
     {
