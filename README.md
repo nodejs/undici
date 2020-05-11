@@ -144,6 +144,15 @@ const { statusCode, headers, body } = await client.request({
   method: 'GET'
 })
 ```
+
+Non-idempotent requests will not be pipelined in order 
+to avoid indirect failures.
+
+Idempotent requests will be automatically retried if
+they fail due to indirect failure from the request
+at the head of the pipeline. This does not apply to
+idempotent requests with a stream request body.
+
 #### `client.pipelining`
 
 Property to get and set the pipelining factor.
