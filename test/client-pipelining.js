@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const { finished, Readable } = require('readable-stream')
+const { finished, Readable } = require('stream')
 
 test('20 times GET with pipelining 10', (t) => {
   const num = 20

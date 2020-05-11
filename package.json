@@ -26,7 +26,6 @@
   },
   "dependencies": {
     "fastq": "^1.6.0",
-    "http-parser-js": "^0.5.2",
-    "readable-stream": "^3.0.0"
+    "http-parser-js": "^0.5.2"
   }
 }

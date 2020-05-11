@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const { finished } = require('readable-stream')
+const { finished } = require('stream')
 
 test('close waits for queued requests to finish', (t) => {
   t.plan(16)

@@ -6,7 +6,7 @@ const { Pool } = require('..')
 const { createServer } = require('http')
 const { EventEmitter } = require('events')
 const { promisify } = require('util')
-const eos = require('readable-stream').finished
+const eos = require('stream').finished
 
 test('basic get', (t) => {
   t.plan(6)

@@ -4,7 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const net = require('net')
-const { Readable } = require('readable-stream')
+const { Readable } = require('stream')
 
 test('GET errors and reconnect with pipelining 1', (t) => {
   t.plan(9)
