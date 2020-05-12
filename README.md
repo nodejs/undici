@@ -153,6 +153,51 @@ they fail due to indirect failure from the request
 at the head of the pipeline. This does not apply to
 idempotent requests with a stream request body.
 
+<a name='stream'></a>
+#### `client.stream(opts, cb(err, data))`
+
+A faster version of `'request'`. Not promisified.
+
+Unlike `request` this method expects `callback`
+to return a `Writable` which the response will be
+written to. This improves performance by avoiding
+creating an intermediate `Readable` when the user
+expects to directly pipe the response to a 
+`Writable`.
+
+```js
+const { Client } = require('undici')
+const client = new Client(`http://localhost:3000`)
+const fs = require('fs')
+const { finished } = require('stream')
+
+client.stream({
+  path: '/',
+  method: 'GET'
+}, function (err, data) {
+  if (err) {
+    console.error('failure', err)
+    return
+  }
+  const {
+    statusCode,
+    headers
+  } = data
+
+  console.log('response received', statusCode)
+  console.log('headers', headers)
+  const dst = fs.createWriteStream('destination.raw')
+  finished(dst, (err) => {
+    if (err) {
+      console.error('failure', err)
+    } else {
+      console.log('success')
+    }
+  })
+  return dst
+})
+````
+
 #### `client.pipelining`
 
 Property to get and set the pipelining factor.
