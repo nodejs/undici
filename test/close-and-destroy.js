@@ -5,6 +5,10 @@ const { Client } = require('..')
 const { createServer } = require('http')
 const { finished } = require('stream')
 
+const {
+  kSocket
+} = require('../lib/symbols')
+
 test('close waits for queued requests to finish', (t) => {
   t.plan(16)
 
@@ -97,7 +101,7 @@ test('close waits until socket is destroyed', (t) => {
 
     client.on('connect', () => {
       let done = false
-      finished(client._socket, () => {
+      finished(client[kSocket], () => {
         done = true
       })
       client.destroy(null, (err) => {
@@ -138,7 +142,7 @@ test('close should still reconnect', (t) => {
       t.strictEqual(err, null)
       t.strictEqual(client.closed, true)
     })
-    client._socket.destroy()
+    client[kSocket].destroy()
 
     function makeRequest () {
       return client.request({ path: '/', method: 'GET' }, (err, data) => {

@@ -6,6 +6,11 @@ const { createServer } = require('http')
 const net = require('net')
 const { Readable } = require('stream')
 
+const {
+  kParser,
+  kSocket
+} = require('../lib/symbols')
+
 test('GET errors and reconnect with pipelining 1', (t) => {
   t.plan(9)
 
@@ -441,8 +446,8 @@ test('reset parser', (t) => {
       })
 
       client.on('connect', () => {
-        t.ok(!client._parser.chunk)
-        t.ok(!client._parser.offset)
+        t.ok(!client[kParser].chunk)
+        t.ok(!client[kParser].offset)
       })
     })
   })
@@ -539,7 +544,7 @@ test('socket fail while writing request body', (t) => {
 
     client.on('connect', () => {
       process.nextTick(() => {
-        client._socket.destroy('kaboom')
+        client[kSocket].destroy('kaboom')
       })
     })
 
@@ -574,7 +579,7 @@ test('socket fail while ending request body', (t) => {
     const _err = new Error('kaboom')
     client.on('connect', () => {
       process.nextTick(() => {
-        client._socket.destroy(_err)
+        client[kSocket].destroy(_err)
       })
     })
     const body = new Readable({ read () {} })
@@ -616,7 +621,7 @@ test('queued request should not fail on socket destroy', (t) => {
     }, (err, data) => {
       t.error(err)
       data.body.resume()
-      client._socket.destroy()
+      client[kSocket].destroy()
       client.request({
         path: '/',
         method: 'GET'
