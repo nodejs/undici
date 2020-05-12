@@ -372,3 +372,54 @@ test('pipelining non-idempotent', (t) => {
     })
   })
 })
+
+test('pipelining non-idempotent w body', (t) => {
+  t.plan(4)
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    setImmediate(() => {
+      res.end('asd')
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
+    t.tearDown(client.close.bind(client))
+
+    let ended = false
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: new Readable({
+        read () {
+          this.push('asd')
+          setImmediate(() => {
+            this.push(null)
+            ended = true
+          })
+        }
+      })
+    }, (err, data) => {
+      t.error(err)
+      data.body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      idempotent: false
+    }, (err, data) => {
+      t.error(err)
+      t.strictEqual(ended, true)
+      data.body.resume()
+    })
+  })
+})
