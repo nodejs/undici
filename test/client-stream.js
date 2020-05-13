@@ -177,3 +177,29 @@ test('stream GET remote destroy', (t) => {
     })
   })
 })
+
+test('stream unhandled exception', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.write('asd')
+    setImmediate(() => {
+      res.destroy()
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    t.expectUncaughtException()
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, (err, { statusCode, headers }) => {
+      t.error(err)
+      return new PassThrough()
+    })
+  })
+})
