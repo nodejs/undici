@@ -62,18 +62,25 @@ test('basic get with async/await', async (t) => {
 test('backpressure algorithm', (t) => {
   const seen = []
   let total = 0
-  let writeMore = false
 
   class FakeClient extends EventEmitter {
     constructor () {
       super()
 
       this.id = total++
+      this._full = false
+    }
+
+    get full () {
+      return this._full
+    }
+
+    get connected () {
+      return true
     }
 
     request (req, cb) {
-      seen.push({ req, cb, client: this })
-      return writeMore
+      seen.push({ req, cb, client: this, id: this.id })
     }
   }
 
@@ -85,41 +92,43 @@ test('backpressure algorithm', (t) => {
 
   t.strictEqual(total, 10)
 
-  writeMore = true
-
   pool.request({}, noop)
   pool.request({}, noop)
 
-  const d1 = seen.shift()
-  const d2 = seen.shift()
+  const d1 = seen.shift() // d1 = c0
+  t.strictEqual(d1.id, 0)
+  const d2 = seen.shift() // d1 = c0
+  t.strictEqual(d1.id, 0)
 
-  t.strictEqual(d1.client, d2.client)
+  t.strictEqual(d1.id, d2.id)
 
-  writeMore = false
-  pool.request({}, noop)
+  pool.request({}, noop) // d3 = c0
 
-  writeMore = true
-  pool.request({}, noop)
+  d1.client._full = true
+
+  pool.request({}, noop) // d4 = c1
 
   const d3 = seen.shift()
+  t.strictEqual(d3.id, 0)
   const d4 = seen.shift()
+  t.strictEqual(d4.id, 1)
 
-  t.strictEqual(d3.client, d2.client)
-  t.notStrictEqual(d3.client, d4.client)
+  t.strictEqual(d3.id, d2.id)
+  t.notStrictEqual(d3.id, d4.id)
 
-  d3.client.emit('drain')
+  pool.request({}, noop) // d5 = c1
 
-  writeMore = false
-  pool.request({}, noop)
+  d1.client._full = false
 
-  writeMore = true
-  pool.request({}, noop)
+  pool.request({}, noop) // d6 = c0
 
   const d5 = seen.shift()
+  t.strictEqual(d5.id, 1)
   const d6 = seen.shift()
+  t.strictEqual(d6.id, 0)
 
-  t.strictEqual(d5.client, d4.client)
-  t.strictEqual(d3.client, d6.client)
+  t.strictEqual(d5.id, d4.id)
+  t.strictEqual(d3.id, d6.id)
 
   t.end()
 })
