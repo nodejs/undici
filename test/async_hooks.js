@@ -32,7 +32,7 @@ const hook = createHook({
 hook.enable()
 
 test('async hooks', (t) => {
-  t.plan(16)
+  t.plan(23)
 
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
@@ -84,6 +84,28 @@ test('async hooks', (t) => {
       setCurrentTransaction({ hello: 'world' })
 
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+        t.error(err)
+        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+
+        body.once('data', () => {
+          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+          body.resume()
+        })
+
+        body.on('end', () => {
+          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+        })
+      })
+    })
+
+    client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      body.resume()
+      t.strictDeepEqual(getCurrentTransaction(), null)
+
+      setCurrentTransaction({ hello: 'world' })
+
+      client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
         t.error(err)
         t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
 
