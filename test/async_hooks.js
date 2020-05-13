@@ -165,3 +165,41 @@ test('async hooks client is destroyed', (t) => {
     })
   })
 })
+
+test('async hooks error and close', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    res.write('asd')
+    setImmediate(() => {
+      res.destroy()
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, { body }) => {
+      t.error(err)
+      body.resume()
+      body.on('error', (err) => {
+        t.ok(err)
+      })
+      t.strictDeepEqual(getCurrentTransaction(), null)
+
+      setCurrentTransaction({ hello: 'world2' })
+
+      client.request({ path: '/', method: 'GET' }, (err, data) => {
+        t.error(err)
+        data.body.on('error', () => {
+          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+        })
+        data.body.on('close', () => {
+          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+        })
+      })
+    })
+  })
+})
