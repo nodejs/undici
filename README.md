@@ -156,13 +156,13 @@ idempotent requests with a stream request body.
 <a name='stream'></a>
 #### `client.stream(opts, cb(err, data))`
 
-A faster version of `'request'`. Not promisified.
+A faster version of `request`. Not promisified.
 
 Unlike `request` this method expects `callback`
 to return a `Writable` which the response will be
 written to. This improves performance by avoiding
 creating an intermediate `Readable` when the user
-expects to directly pipe the response to a 
+expects to directly pipe the response body to a
 `Writable`.
 
 ```js
