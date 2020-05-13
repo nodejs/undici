@@ -45,7 +45,7 @@ Options:
   [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`.
 
 <a name='request'></a>
-#### `client.request(opts, cb(err, data))`
+#### `client.request(opts, callback(err, data))`
 
 Performs an HTTP request.
 
@@ -74,7 +74,7 @@ Headers are represented by an object like this:
 Keys are lowercased. Values are not modified.
 If you don't specify a `host` header, it will be derived from the `url` of the client instance.
 
-The `data` parameter in the callback is defined as follow:
+The `data` parameter in `callback` is defined as follow:
 
 * `statusCode`
 * `headers`
@@ -154,47 +154,40 @@ at the head of the pipeline. This does not apply to
 idempotent requests with a stream request body.
 
 <a name='stream'></a>
-#### `client.stream(opts, cb(err, data))`
+#### `client.stream(opts, factory(data), callback(err))`
 
-A faster version of `request`. Not promisified.
+A faster version of `request`.
 
-Unlike `request` this method expects `callback`
+Unlike `request` this method expects `factory`
 to return a `Writable` which the response will be
 written to. This improves performance by avoiding
 creating an intermediate `Readable` when the user
 expects to directly pipe the response body to a
 `Writable`.
 
+The `data` parameter in `factory` is defined as follow:
+
+* `statusCode`
+* `headers`
+
 ```js
 const { Client } = require('undici')
 const client = new Client(`http://localhost:3000`)
 const fs = require('fs')
-const { finished } = require('stream')
 
 client.stream({
   path: '/',
   method: 'GET'
-}, function (err, data) {
-  if (err) {
-    console.error('failure', err)
-    return
-  }
-  const {
-    statusCode,
-    headers
-  } = data
-
+}, ({ statusCode, headers }) => {
   console.log('response received', statusCode)
   console.log('headers', headers)
-  const dst = fs.createWriteStream('destination.raw')
-  finished(dst, (err) => {
-    if (err) {
-      console.error('failure', err)
-    } else {
-      console.log('success')
-    }
-  })
-  return dst
+  return fs.createWriteStream('destination.raw')
+}, (err) => {
+  if (err) {
+    console.error('failure', err)
+  } else {
+    console.log('success')
+  }
 })
 ````
 

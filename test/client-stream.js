@@ -24,9 +24,8 @@ test('stream get', (t) => {
     client.stream({
       path: '/',
       method: 'GET'
-    }, (err, { statusCode, headers }) => {
+    }, ({ statusCode, headers }) => {
       const pt = new PassThrough()
-      t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
@@ -37,6 +36,8 @@ test('stream get', (t) => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
       return pt
+    }, (err) => {
+      t.error(err)
     })
   })
 })
@@ -60,23 +61,25 @@ test('stream get skip body', (t) => {
     client.stream({
       path: '/',
       method: 'GET'
-    }, (err, { statusCode, headers }) => {
-      t.error(err)
+    }, ({ statusCode, headers }) => {
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
 
       // Don't return writable. Skip the body.
+    }, (err) => {
+      t.error(err)
     })
 
     client.stream({
       path: '/',
       method: 'GET'
-    }, (err, { statusCode, headers }) => {
-      t.error(err)
+    }, ({ statusCode, headers }) => {
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
 
       // Don't return writable. Skip the body.
+    }, (err) => {
+      t.error(err)
     })
   })
 })
@@ -100,8 +103,7 @@ test('stream GET destroy res', (t) => {
     client.stream({
       path: '/',
       method: 'GET'
-    }, (err, { statusCode, headers }) => {
-      t.error(err)
+    }, ({ statusCode, headers }) => {
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
 
@@ -114,13 +116,14 @@ test('stream GET destroy res', (t) => {
       })
 
       return pt
+    }, (err) => {
+      t.ok(err)
     })
 
     client.stream({
       path: '/',
       method: 'GET'
-    }, (err, { statusCode, headers }) => {
-      t.error(err)
+    }, ({ statusCode, headers }) => {
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
 
@@ -133,6 +136,8 @@ test('stream GET destroy res', (t) => {
       })
 
       return pt
+    }, (err) => {
+      t.error(err)
     })
   })
 })
@@ -155,25 +160,27 @@ test('stream GET remote destroy', (t) => {
     client.stream({
       path: '/',
       method: 'GET'
-    }, (err, { statusCode, headers }) => {
-      t.error(err)
+    }, () => {
       const pt = new PassThrough()
       pt.on('error', (err) => {
         t.ok(err)
       })
       return pt
+    }, (err) => {
+      t.ok(err)
     })
 
     client.stream({
       path: '/',
       method: 'GET'
-    }, (err) => {
-      t.error(err)
+    }, () => {
       const pt = new PassThrough()
       pt.on('error', (err) => {
         t.ok(err)
       })
       return pt
+    }, (err) => {
+      t.ok(err)
     })
   })
 })
