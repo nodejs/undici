@@ -184,3 +184,52 @@ test('stream GET remote destroy', (t) => {
     })
   })
 })
+
+test('stream response resume back pressure and non standard error', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    res.write(Buffer.alloc(1e3))
+    setImmediate(() => {
+      res.write(Buffer.alloc(1e7))
+      res.end()
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET',
+      maxAbortedPayload: 1e5
+    }, () => {
+      const pt = new PassThrough()
+      pt.on('data', () => {
+        pt.emit('error', new Error('kaboom'))
+      }).once('error', (err) => {
+        t.ok(err)
+      })
+      return pt
+    }, (err) => {
+      t.ok(err)
+    })
+
+    client.on('reconnect', () => {
+      t.pass()
+    })
+
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      const pt = new PassThrough()
+      pt.resume()
+      return pt
+    }, (err) => {
+      t.error(err)
+    })
+  })
+})
