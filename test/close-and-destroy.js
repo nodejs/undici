@@ -187,3 +187,22 @@ test('close should call callback once finished', (t) => {
     }
   })
 })
+
+test('closed and destroyed errors', (t) => {
+  t.plan(3)
+
+  const client = new Client('http://localhost:4000', {
+    pipelining: 1
+  })
+  client.request({ path: '/', method: 'GET' }, (err) => {
+    t.ok(err)
+  })
+  client.close()
+  client.request({}, (err) => {
+    t.ok(/closed/.test(err.message))
+    client.destroy()
+    client.request({}, (err) => {
+      t.ok(/destroyed/.test(err.message))
+    })
+  })
+})
