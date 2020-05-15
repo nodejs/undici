@@ -492,7 +492,6 @@ test('parser error', (t) => {
     client.request({ path: '/', method: 'GET' }, (err) => {
       t.ok(err)
       client.close((err) => {
-        // TODO: t.ok(err)
         t.error(err)
       })
     })
