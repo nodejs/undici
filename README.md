@@ -243,9 +243,13 @@ Options:
 * `pipelining`, the pipelining factor. Default `1`.
 * `timeout`, the timeout for each request. Default `30000` milliseconds.
 
-#### `pool.request(req, cb)`
+#### `pool.request(req, callback)`
 
-Calls [`client.request(req, cb)`][request] on one of the clients.
+Calls [`client.request(req, callback)`][request] on one of the clients.
+
+#### `pool.stream(req, factory, callback)`
+
+Calls [`client.stream(req, factory, callback)`][stream] on one of the clients.
 
 #### `pool.close()`
 
