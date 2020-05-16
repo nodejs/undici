@@ -152,17 +152,20 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
     t.notOk(makeRequest(), 'we must stop now')
     t.ok(client.full, 'client is full')
 
-    client.on('drain', () => {
-      t.ok(countGreaterThanOne, 'seen more than one parallel request')
-      const start = sent
-      for (; sent < start + 2 && sent < num;) {
-        t.notOk(client.full, 'client is not full')
-        t.ok(makeRequest())
-      }
-    })
-
-    function makeRequest () {
-      return makeRequestAndExpectUrl(client, sent++, t, () => count--)
+    function makeRequest (cb) {
+      return makeRequestAndExpectUrl(client, sent++, t, () => {
+        count--
+        process.nextTick(() => {
+          if (client.size === 0) {
+            t.ok(countGreaterThanOne, 'seen more than one parallel request')
+            const start = sent
+            for (; sent < start + 2 && sent < num;) {
+              t.notOk(client.full, 'client is not full')
+              t.ok(makeRequest())
+            }
+          }
+        })
+      })
     }
   })
 })

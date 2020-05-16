@@ -433,21 +433,19 @@ test('reset parser', (t) => {
       body.resume()
       body.on('error', err => {
         t.ok(err)
-      })
-    })
-    client.once('reconnect', () => {
-      client.request({ path: '/', method: 'GET' }, (err, { body }) => {
-        t.error(err)
-        res2.destroy()
-        body.resume()
-        body.on('error', err => {
-          t.ok(err)
+        client.request({ path: '/', method: 'GET' }, (err, { body }) => {
+          t.error(err)
+          res2.destroy()
+          body.resume()
+          body.on('error', err => {
+            t.ok(err)
+          })
         })
-      })
 
-      client.on('connect', () => {
-        t.ok(!client[kParser].chunk)
-        t.ok(!client[kParser].offset)
+        client[kSocket].on('connect', () => {
+          t.ok(!client[kParser].chunk)
+          t.ok(!client[kParser].offset)
+        })
       })
     })
   })
@@ -583,18 +581,17 @@ test('socket fail while writing request body', (t) => {
     const body = new Readable({ read () {} })
     body.push('asd')
 
-    client.on('connect', () => {
-      process.nextTick(() => {
-        client[kSocket].destroy('kaboom')
-      })
-    })
-
     client.request({
       path: '/',
       method: 'POST',
       body
     }, (err) => {
       t.ok(err)
+    })
+    client[kSocket].on('connect', () => {
+      process.nextTick(() => {
+        client[kSocket].destroy('kaboom')
+      })
     })
     client.close((err) => {
       t.ok(err)
@@ -618,11 +615,6 @@ test('socket fail while ending request body', (t) => {
     t.tearDown(client.close.bind(client))
 
     const _err = new Error('kaboom')
-    client.on('connect', () => {
-      process.nextTick(() => {
-        client[kSocket].destroy(_err)
-      })
-    })
     const body = new Readable({ read () {} })
     body.push(null)
     client.request({
@@ -631,6 +623,11 @@ test('socket fail while ending request body', (t) => {
       body
     }, (err) => {
       t.strictEqual(err, _err)
+    })
+    client[kSocket].on('connect', () => {
+      process.nextTick(() => {
+        client[kSocket].destroy(_err)
+      })
     })
     client.close((err) => {
       t.ok(err)

@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { PassThrough } = require('stream')
+const { kSocket } = require('../lib/symbols')
 
 test('stream get', (t) => {
   t.plan(7)
@@ -217,7 +218,7 @@ test('stream response resume back pressure and non standard error', (t) => {
       t.ok(err)
     })
 
-    client.on('reconnect', () => {
+    client[kSocket].on('close', () => {
       t.pass()
     })
 

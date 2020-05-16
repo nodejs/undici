@@ -99,7 +99,7 @@ test('close waits until socket is destroyed', (t) => {
 
     makeRequest()
 
-    client.on('connect', () => {
+    client[kSocket].on('connect', () => {
       let done = false
       finished(client[kSocket], () => {
         done = true
@@ -171,9 +171,6 @@ test('close should call callback once finished', (t) => {
     t.ok(makeRequest())
     t.ok(!makeRequest())
 
-    client.on('drain', () => {
-      t.fail()
-    })
     client.close((err) => {
       t.strictEqual(err, null)
       t.strictEqual(client.closed, true)

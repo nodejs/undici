@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
+const { kSocket } = require('../lib/symbols')
 
 test('basic get', (t) => {
   t.plan(7)
@@ -409,7 +410,7 @@ test('Set-Cookie', (t) => {
 })
 
 test('aborted GET maxAbortedPayload reset', (t) => {
-  t.plan(5)
+  t.plan(7)
 
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(1e6 - 1))
@@ -421,11 +422,7 @@ test('aborted GET maxAbortedPayload reset', (t) => {
       pipelining: 2,
       maxAbortedPayload: 1e6
     })
-    t.tearDown(client.close.bind(client))
-
-    client.on('reconnect', () => {
-      t.fail()
-    })
+    t.tearDown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -439,6 +436,10 @@ test('aborted GET maxAbortedPayload reset', (t) => {
       }).on('end', () => {
         t.fail()
       })
+    })
+
+    client[kSocket].on('close', () => {
+      t.strictEqual(client.destroyed, true)
     })
 
     // Make sure read counter is reset.
@@ -462,6 +463,9 @@ test('aborted GET maxAbortedPayload reset', (t) => {
     }, (err, { body }) => {
       t.error(err)
       body.resume()
+      client.close((err) => {
+        t.error(err)
+      })
     })
   })
 })
@@ -495,8 +499,8 @@ test('aborted GET maxAbortedPayload', (t) => {
         .on('error', () => {})
     })
 
-    client.on('reconnect', () => {
-      t.pass()
+    client[kSocket].on('close', () => {
+      t.strictEqual(client.destroyed, false)
     })
 
     client.request({
@@ -514,7 +518,7 @@ test('aborted GET maxAbortedPayload', (t) => {
 })
 
 test('aborted GET maxAbortedPayload less than HWM', (t) => {
-  t.plan(4)
+  t.plan(5)
 
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(4 + 1, 'a'))
@@ -526,7 +530,7 @@ test('aborted GET maxAbortedPayload less than HWM', (t) => {
       pipelining: 1,
       maxAbortedPayload: 4
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -542,8 +546,8 @@ test('aborted GET maxAbortedPayload less than HWM', (t) => {
         .on('error', () => {})
     })
 
-    client.on('reconnect', () => {
-      t.fail()
+    client[kSocket].on('close', () => {
+      t.strictEqual(client.destroyed, true)
     })
 
     client.request({
@@ -583,41 +587,5 @@ test('ignore request header mutations', (t) => {
       body.resume()
     })
     headers.test = 'asd'
-  })
-})
-
-test('drain when queue is empty', (t) => {
-  t.plan(3)
-
-  const server = createServer((req, res) => {
-    res.end()
-  })
-  t.tearDown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1
-    })
-    t.tearDown(client.close.bind(client))
-
-    client.on('drain', () => {
-      t.strictEqual(client.size, 0)
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.resume()
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.resume()
-    })
   })
 })

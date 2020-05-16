@@ -240,11 +240,6 @@ invoking the callback.
 
 Returns a promise if no callback is provided.
 
-#### Events
-
-* `'drain'`, emitted when the queue is empty unless the client
-  is closed or destroyed.
-
 ### undici.Pool
 
 A pool of [`Client`][] connected to the same upstream target.
