@@ -358,7 +358,7 @@ test('client destroy cleanup', (t) => {
   server.once('request', (req, res) => {
     req.once('data', () => {
       client.destroy(_err, (err) => {
-        t.strictEqual(err, _err)
+        t.error(err)
       })
     })
   })
