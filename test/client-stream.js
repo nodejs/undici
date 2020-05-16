@@ -108,12 +108,12 @@ test('stream GET destroy res', (t) => {
       t.strictEqual(headers['content-type'], 'text/plain')
 
       const pt = new PassThrough()
-      pt.on('error', (err) => {
-        t.ok(err)
-      })
-      setImmediate(() => {
-        pt.destroy(new Error('kaboom'))
-      })
+        .on('error', (err) => {
+          t.ok(err)
+        })
+        .on('data', () => {
+          pt.destroy(new Error('kaboom'))
+        })
 
       return pt
     }, (err) => {
@@ -228,6 +228,29 @@ test('stream response resume back pressure and non standard error', (t) => {
       const pt = new PassThrough()
       pt.resume()
       return pt
+    }, (err) => {
+      t.error(err)
+    })
+  })
+})
+
+test('stream waits only for writable side', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end(Buffer.alloc(1e3))
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      return new PassThrough()
     }, (err) => {
       t.error(err)
     })
