@@ -66,7 +66,7 @@ Options:
 
 * `path`
 * `method`
-* `body`, it can be a `String`, a `Buffer` or a `stream.Readable`.
+* `body`, it can be a `String`, a `Buffer`, `Uint8Array` or a `stream.Readable`.
 * `headers`, an object with header-value pairs.
 * `idempotent`, whether the requests can be safely retried or not.
   If `false` the request won't be sent until all preceeding

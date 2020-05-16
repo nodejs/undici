@@ -453,12 +453,11 @@ test('reset parser', (t) => {
   })
 })
 
-test('fail invalid body regexp', (t) => {
-  t.plan(1)
+test('validate request body', (t) => {
+  t.plan(6)
 
-  const server = createServer()
-  server.once('request', (req, res) => {
-    res.write('asd')
+  const server = createServer((req, res) => {
+    res.end('asd')
   })
   t.tearDown(server.close.bind(server))
 
@@ -472,6 +471,49 @@ test('fail invalid body regexp', (t) => {
       body: /asdasd/
     }, (err, data) => {
       t.ok(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: 0
+    }, (err, data) => {
+      t.ok(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: false
+    }, (err, data) => {
+      t.ok(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: ''
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: new Uint8Array()
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: Buffer.alloc(10)
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
     })
   })
 })
