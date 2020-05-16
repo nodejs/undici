@@ -20,14 +20,13 @@ npm i undici
 
 ## Benchmarks
 
-Machine: Intel i7-7700k, 4.5GHz, 4C/8T, 32GB RAM, NVMe SSD\
-Server: [H2O](https://github.com/h2o/h2o) 2.2.5\
-Configuration: HTTP/1.1 without TLS
+Machine: 2.7 GHz Quad-Core Intel Core i7
+Configuration: Node v14.2, HTTP/1.1 without TLS, 100 connections
 
 ```
-undici - stream  - pipe x 24,409 ops/sec ±1.70% (85 runs sampled)
-undici - request - pipe x 23,060 ops/sec ±1.11% (88 runs sampled)
-http - keepalive - pipe x 15,749 ops/sec ±3.18% (77 runs sampled)
+http - keepalive - pipe x 4,281 ops/sec ±14.18% (63 runs sampled)
+undici - request - pipe x 7,251 ops/sec ±12.16% (65 runs sampled)
+undici - stream - pipe x 9,239 ops/sec ±4.48% (68 runs sampled)
 ```
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js).
