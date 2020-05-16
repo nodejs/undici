@@ -38,50 +38,55 @@ const pool = undici(`http://${httpOptions.hostname}:${httpOptions.port}`, {
 
 const suite = new Benchmark.Suite()
 
-suite.add('undici - request - pipe', {
-  defer: true,
-  fn: deferred => {
-    pool.request(undiciOptions, (error, { body }) => {
-      if (error) {
-        throw error
-      }
+suite
+  .add('http - keepalive - pipe', {
+    defer: true,
+    fn: deferred => {
+      http.get(httpOptions, response => {
+        const stream = new PassThrough()
+        stream.once('finish', () => {
+          deferred.resolve()
+        })
 
-      const stream = new PassThrough()
-      stream.once('finish', () => {
-        deferred.resolve()
+        response.pipe(stream)
       })
+    }
+  })
+  .add('undici - request - pipe', {
+    defer: true,
+    fn: deferred => {
+      pool.request(undiciOptions, (error, { body }) => {
+        if (error) {
+          throw error
+        }
 
-      body.pipe(stream)
-    })
-  }
-}).add('undici - stream - pipe', {
-  defer: true,
-  fn: deferred => {
-    pool.stream(undiciOptions, () => {
-      const stream = new PassThrough()
-      stream.once('finish', () => {
-        deferred.resolve()
+        const stream = new PassThrough()
+        stream.once('finish', () => {
+          deferred.resolve()
+        })
+
+        body.pipe(stream)
       })
+    }
+  })
+  .add('undici - stream - pipe', {
+    defer: true,
+    fn: deferred => {
+      pool.stream(undiciOptions, () => {
+        const stream = new PassThrough()
+        stream.once('finish', () => {
+          deferred.resolve()
+        })
 
-      return stream
-    }, error => {
-      if (error) {
-        throw error
-      }
-    })
-  }
-}).add('http - keepalive - pipe', {
-  defer: true,
-  fn: deferred => {
-    http.get(httpOptions, response => {
-      const stream = new PassThrough()
-      stream.once('finish', () => {
-        deferred.resolve()
+        return stream
+      }, error => {
+        if (error) {
+          throw error
+        }
       })
-
-      response.pipe(stream)
-    })
-  }
-}).on('cycle', event => {
-  console.log(String(event.target))
-}).run()
+    }
+  })
+  .on('cycle', event => {
+    console.log(String(event.target))
+  })
+  .run()
