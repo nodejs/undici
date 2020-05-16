@@ -5,6 +5,7 @@ const { Client } = require('..')
 const { createServer } = require('http')
 const { createHook, executionAsyncId } = require('async_hooks')
 const { readFile } = require('fs')
+const { PassThrough } = require('stream')
 
 const transactions = new Map()
 
@@ -32,7 +33,7 @@ const hook = createHook({
 hook.enable()
 
 test('async hooks', (t) => {
-  t.plan(23)
+  t.plan(31)
 
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
@@ -117,6 +118,24 @@ test('async hooks', (t) => {
         body.on('end', () => {
           t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
         })
+      })
+    })
+
+    client.stream({ path: '/', method: 'GET' }, () => {
+      t.strictDeepEqual(getCurrentTransaction(), null)
+      return new PassThrough().resume()
+    }, (err) => {
+      t.error(err)
+      t.strictDeepEqual(getCurrentTransaction(), null)
+
+      setCurrentTransaction({ hello: 'world' })
+
+      client.stream({ path: '/', method: 'GET' }, () => {
+        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+        return new PassThrough().resume()
+      }, (err) => {
+        t.error(err)
+        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
       })
     })
   })
