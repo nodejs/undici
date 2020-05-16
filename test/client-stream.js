@@ -23,9 +23,9 @@ test('stream get', (t) => {
 
     client.stream({
       path: '/',
-      method: 'GET'
-    }, ({ statusCode, headers }) => {
-      const pt = new PassThrough()
+      method: 'GET',
+      opaque: new PassThrough()
+    }, ({ statusCode, headers, opaque: pt }) => {
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
