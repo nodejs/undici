@@ -18,6 +18,20 @@ Picture of Eleven
 npm i undici
 ```
 
+## Benchmarks
+
+Machine: Intel i7-7700k, 4.5GHz, 4C/8T, 32GB RAM, NVMe SSD
+Server: [H2O](https://github.com/h2o/h2o) 2.2.5
+Configuration: HTTP/1.1 without TLS
+
+```
+undici - stream  - pipe x 24,409 ops/sec ±1.70% (85 runs sampled)
+undici - request - pipe x 23,060 ops/sec ±1.11% (88 runs sampled)
+http - keepalive - pipe x 15,749 ops/sec ±3.18% (77 runs sampled)
+```
+
+The benchmark is a simple `hello world` [example](benchmarks/index.js).
+
 ## API
 
 <a name='client'></a>
