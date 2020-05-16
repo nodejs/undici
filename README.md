@@ -181,10 +181,17 @@ creating an intermediate `Readable` when the user
 expects to directly pipe the response body to a
 `Writable`.
 
+Options:
+
+* ... same as `request`.
+* `opaque`, passed as `opaque` to `factory`. Used
+  to avoid creating a closure.
+
 The `data` parameter in `factory` is defined as follow:
 
 * `statusCode`
 * `headers`
+* `opaque`
 
 Returns a promise if no callback is provided.
 
@@ -195,11 +202,12 @@ const fs = require('fs')
 
 client.stream({
   path: '/',
-  method: 'GET'
-}, ({ statusCode, headers }) => {
+  method: 'GET',
+  opaque: filename
+}, ({ statusCode, headers, opaque: filename }) => {
   console.log('response received', statusCode)
   console.log('headers', headers)
-  return fs.createWriteStream('destination.raw')
+  return fs.createWriteStream(filename)
 }, (err) => {
   if (err) {
     console.error('failure', err)
@@ -207,6 +215,26 @@ client.stream({
     console.log('success')
   }
 })
+```
+
+`opaque` makes it possible to avoid creating a closure
+for the `factory` method:
+
+```js
+function (req, res) {
+   return client.stream({ ...opts, opaque: res }, proxy)
+}
+```
+
+Instead of:
+
+```js
+function (req, res) {
+   return client.stream(opts, (data) => {
+     // Creates closure to capture `res`.
+     proxy({ ...data, opaque: res })
+   }
+}
 ```
 
 <a name='close'></a>
