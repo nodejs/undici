@@ -20,7 +20,10 @@ const httpOptions = {
   method: 'GET',
   path: '/',
   port: 3000,
-  agent: new http.Agent({ keepAlive: true })
+  agent: new http.Agent({
+    keepAlive: true,
+    maxSockets: 100
+  })
 }
 
 const undiciOptions = {
