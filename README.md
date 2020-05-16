@@ -20,8 +20,8 @@ npm i undici
 
 ## Benchmarks
 
-Machine: Intel i7-7700k, 4.5GHz, 4C/8T, 32GB RAM, NVMe SSD
-Server: [H2O](https://github.com/h2o/h2o) 2.2.5
+Machine: Intel i7-7700k, 4.5GHz, 4C/8T, 32GB RAM, NVMe SSD\
+Server: [H2O](https://github.com/h2o/h2o) 2.2.5\
 Configuration: HTTP/1.1 without TLS
 
 ```
