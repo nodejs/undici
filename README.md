@@ -324,13 +324,13 @@ Calls [`client.request(req, callback)`][request] on one of the clients.
 
 Calls [`client.stream(req, factory, callback)`][stream] on one of the clients.
 
-#### `pool.close()`
+#### `pool.close([callback])`
 
-Calls [`client.close()`](#close) on all the clients.
+Calls [`client.close(callback)`](#close) on all the clients.
 
-#### `pool.destroy()`
+#### `pool.destroy([err][, callback])`
 
-Calls [`client.destroy()`](#destroy) on all the clients.
+Calls [`client.destroy(err, callback)`](#destroy) on all the clients.
 
 ## License
 
