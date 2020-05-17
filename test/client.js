@@ -621,3 +621,26 @@ test('drain when queue is empty', (t) => {
     })
   })
 })
+
+test('url-like url', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client({
+      hostname: 'localhost',
+      port: server.address().port,
+      protocol: 'http'
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
+  })
+})
