@@ -479,7 +479,7 @@ test('aborted GET maxAbortedPayload', (t) => {
       pipelining: 1,
       maxAbortedPayload: 100000
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -526,7 +526,7 @@ test('aborted GET maxAbortedPayload less than HWM', (t) => {
       pipelining: 1,
       maxAbortedPayload: 4
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({
       path: '/',
