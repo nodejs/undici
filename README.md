@@ -24,9 +24,10 @@ Machine: 2.7 GHz Quad-Core Intel Core i7
 Configuration: Node v14.2, HTTP/1.1 without TLS, 100 connections
 
 ```
-http - keepalive - pipe x 4,281 ops/sec ±14.18% (63 runs sampled)
-undici - request - pipe x 7,251 ops/sec ±12.16% (65 runs sampled)
-undici - stream - pipe x 9,239 ops/sec ±4.48% (68 runs sampled)
+http - keepalive - pipe x 5,658 ops/sec ±10.96% (69 runs sampled)
+undici - pipeline - pipe x 6,378 ops/sec ±7.10% (71 runs sampled)
+undici - request - pipe x 9,334 ops/sec ±6.37% (70 runs sampled)
+undici - stream - pipe x 10,805 ops/sec ±1.94% (75 runs sampled)
 ```
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js).
@@ -235,6 +236,52 @@ function (req, res) {
      proxy({ ...data, opaque: res })
    }
 }
+```
+
+<a name='pipeline'></a>
+#### `client.pipeline(opts, handler(data))`
+
+For easy use with `stream.pipeline`.
+
+Options:
+
+* ... same as `request`.
+
+The `data` parameter in `handler` is defined as follow:
+
+* `statusCode`
+* `headers`
+* `opaque`, passed as `opaque` to `handler`. Used
+  to avoid creating a closure.
+
+The `handler` should validate the response and save any
+required state. If there is an error it should be thrown.
+
+```js
+const { Client } = require('undici')
+const client = new Client(`http://localhost:3000`)
+const fs = require('fs')
+const stream = require('stream')
+
+stream.pipeline(
+  fs.createReadStream('source.raw'),
+  client.pipeline({
+    path: '/',
+    method: 'PUT',
+  }, ({ statusCode }) => {
+    if (statusCode !== 201) {
+      throw new Error('invalid response')
+    }
+  }),
+  fs.createReadStream('response.raw'),
+  (err) => {
+    if (err) {
+      console.error('failed')
+    } else {
+      console.log('succeeded')
+    }
+  }
+)
 ```
 
 <a name='close'></a>
