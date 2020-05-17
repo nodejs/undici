@@ -9,7 +9,7 @@ const { promisify } = require('util')
 const eos = require('stream').finished
 
 test('basic get', (t) => {
-  t.plan(6)
+  t.plan(8)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -21,7 +21,7 @@ test('basic get', (t) => {
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
@@ -33,6 +33,12 @@ test('basic get', (t) => {
       })
       body.on('end', () => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+    client.close((err) => {
+      t.error(err)
+      client.destroy((err) => {
+        t.error(err)
       })
     })
   })
