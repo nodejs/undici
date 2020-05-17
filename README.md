@@ -244,13 +244,15 @@ Number of queued and inflight requests.
 
 #### `client.connected`
 
-True if the client has an active connection.
+True if the client has an active connection. The client will lazily
+create a connection when it receives a request and will destroy it
+if there is no activity for the duration of the `timeout` value.
 
 #### `client.full`
 
-True if the number of queued and inflight requests (`client.size`) is greater
-than the pipelining factor. Keeping a client full ensures that once the
-inflight set of requests finishes there is a full batch ready to go.
+True if `client.size` is greater than the `client.pipelining` factor. 
+Keeping a client full ensures that once a inflight requests finishes 
+the the pipeline will schedule new one and keep the pipeline saturated.
 
 #### `client.closed`
 
@@ -263,8 +265,14 @@ called and the client shutdown has completed.
 
 #### Events
 
-* `'drain'`, emitted when the queue is empty unless the client
-  is closed or destroyed.
+* `'drain'`, emitted when `client.size` decreases to `0` and the client
+  is not closed or destroyed.
+
+* `'connect'`, emitted when a socket has been created and 
+  connected. This will only happen if `client.size > 0`.
+
+* `'reconnect'`, emitted when socket has disconnected. The 
+  client will reconnect if or once `client.size > 0`.
 
 ### undici.Pool
 
