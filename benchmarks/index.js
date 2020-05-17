@@ -69,6 +69,26 @@ suite
       })
     }
   })
+  .add('undici - pipeline - pipe', {
+    defer: true,
+    fn: deferred => {
+      pool
+        .pipeline(undiciOptions, data => {
+          // Do nothing
+        })
+        .on('error', (err) => {
+          throw err
+        })
+        .end()
+        .pipe(new PassThrough())
+        .on('error', (err) => {
+          throw err
+        })
+        .once('finish', () => {
+          deferred.resolve()
+        })
+    }
+  })
   .add('undici - stream - pipe', {
     defer: true,
     fn: deferred => {
