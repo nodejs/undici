@@ -48,14 +48,15 @@ Options:
   milliseconds.
   Default: `30e3` milliseconds (30s).
 
-- `maxAbortedPayload`, Maximum number of bytes read after which an
+- `maxAbortedPayload`, the maximum number of bytes read after which an
   aborted response will close the connection. Closing the connection
-  will error other inflight requests in pipeline.
+  will error other inflight requests in the pipeline.
   Default: `1e6` bytes (1MiB).
 
 - `pipelining`, the amount of concurrent requests to be sent over the
   single TCP/TLS connection according to
-  [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`.
+  [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). 
+  Default: `1`.
 
 <a name='request'></a>
 #### `client.request(opts, callback(err, data))`
@@ -94,6 +95,8 @@ The `data` parameter in `callback` is defined as follow:
 * `body`, a `stream.Readable` with the body to read. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
+
+Returns a promise if no callback is provided.
 
 Example:
 
@@ -183,6 +186,8 @@ The `data` parameter in `factory` is defined as follow:
 * `statusCode`
 * `headers`
 
+Returns a promise if no callback is provided.
+
 ```js
 const { Client } = require('undici')
 const client = new Client(`http://localhost:3000`)
@@ -204,25 +209,6 @@ client.stream({
 })
 ```
 
-#### `client.pipelining`
-
-Property to get and set the pipelining factor.
-
-#### `client.full`
-
-True if the number of requests waiting to be sent is greater
-than the pipelining factor. Keeping a client full ensures that once the
-inflight set of requests finishes there is a full batch ready to go.
-
-#### `client.closed`
-
-True after `client.close()` has been called.
-
-#### `client.destroyed`
-
-True after `client.destroyed()` has been called or `client.close()` has been
-called and the client shutdown has completed.
-
 <a name='close'></a>
 #### `client.close([callback])`
 
@@ -240,6 +226,41 @@ invoking the callback.
 
 Returns a promise if no callback is provided.
 
+#### `client.pipelining`
+
+Property to get and set the pipelining factor.
+
+#### `client.pending`
+
+Number of queued requests.
+
+#### `client.running`
+
+Number of inflight requests.
+
+#### `client.size`
+
+Number of queued and inflight requests.
+
+#### `client.connected`
+
+True if the client has an active connection.
+
+#### `client.full`
+
+True if the number of queued and inflight requests (`client.size`) is greater
+than the pipelining factor. Keeping a client full ensures that once the
+inflight set of requests finishes there is a full batch ready to go.
+
+#### `client.closed`
+
+True after `client.close()` has been called.
+
+#### `client.destroyed`
+
+True after `client.destroyed()` has been called or `client.close()` has been
+called and the client shutdown has completed.
+
 #### Events
 
 * `'drain'`, emitted when the queue is empty unless the client
@@ -252,9 +273,12 @@ A pool creates a fixed number of [`Client`][]
 
 Options:
 
-* `connections`, the number of clients to create. Default `100`.
-* `pipelining`, the pipelining factor. Default `1`.
-* `timeout`, the timeout for each request. Default `30000` milliseconds.
+* `connections`, the number of clients to create. 
+  Default `100`.
+* `pipelining`, the pipelining factor. 
+  Default `1`.
+* `timeout`, the timeout for each request. 
+  Default `30e3` milliseconds (30s).
 
 #### `pool.request(req, callback)`
 
