@@ -235,7 +235,7 @@ test('stream response resume back pressure and non standard error', (t) => {
 })
 
 test('stream waits only for writable side', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(1e3))
@@ -246,13 +246,13 @@ test('stream waits only for writable side', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
+    const pt = new PassThrough()
     client.stream({
       path: '/',
       method: 'GET'
-    }, () => {
-      return new PassThrough()
-    }, (err) => {
+    }, () => pt, (err) => {
       t.error(err)
+      t.strictEqual(pt.destroyed, false)
     })
   })
 })
