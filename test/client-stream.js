@@ -256,3 +256,15 @@ test('stream waits only for writable side', (t) => {
     })
   })
 })
+
+test('stream factory must be a funciton', (t) => {
+  t.plan(1)
+
+  const client = new Client('http://localhost:5000')
+  client.stream({
+    path: '/',
+    method: 'GET'
+  }, null, (err) => {
+    t.ok(/factory/.test(err.message))
+  })
+})
