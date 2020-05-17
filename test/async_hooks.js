@@ -53,7 +53,7 @@ test('async hooks', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
@@ -162,7 +162,7 @@ test('async hooks client is destroyed', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { body }) => {
       t.error(err)

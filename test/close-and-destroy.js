@@ -3,11 +3,7 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const { finished } = require('stream')
-
-const {
-  kSocket
-} = require('../lib/symbols')
+const { kSocket } = require('../lib/symbols')
 
 test('close waits for queued requests to finish', (t) => {
   t.plan(16)
@@ -85,7 +81,7 @@ test('destroy invoked all pending callbacks', (t) => {
 })
 
 test('close waits until socket is destroyed', (t) => {
-  t.plan(5)
+  t.plan(4)
 
   const server = createServer((req, res) => {
     res.end(req.url)
@@ -99,13 +95,10 @@ test('close waits until socket is destroyed', (t) => {
 
     makeRequest()
 
-    client.on('connect', () => {
+    client.once('connect', () => {
       let done = false
-      finished(client[kSocket], () => {
+      client[kSocket].on('close', () => {
         done = true
-      })
-      client.destroy(null, (err) => {
-        t.error(err)
       })
       client.close((err) => {
         t.error(err)
@@ -116,7 +109,7 @@ test('close waits until socket is destroyed', (t) => {
 
     function makeRequest () {
       return client.request({ path: '/', method: 'GET' }, (err, data) => {
-        t.ok(err)
+        t.error(err)
       })
     }
   })
@@ -204,5 +197,15 @@ test('closed and destroyed errors', (t) => {
     client.request({}, (err) => {
       t.ok(/destroyed/.test(err.message))
     })
+  })
+})
+
+test('close after and destroy should error', (t) => {
+  t.plan(1)
+
+  const client = new Client('http://localhost:4000')
+  client.destroy()
+  client.close((err) => {
+    t.ok(/destroyed/.test(err.message))
   })
 })

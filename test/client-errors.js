@@ -425,7 +425,7 @@ test('reset parser', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { body }) => {
       t.error(err)
@@ -529,7 +529,7 @@ test('parser error', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err) => {
       t.ok(err)
@@ -579,7 +579,8 @@ test('socket fail while writing request body', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
+
     const body = new Readable({ read () {} })
     body.push('asd')
 
@@ -615,7 +616,7 @@ test('socket fail while ending request body', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     const _err = new Error('kaboom')
     client.on('connect', () => {
@@ -635,7 +636,7 @@ test('socket fail while ending request body', (t) => {
     client.close((err) => {
       t.ok(err)
       client.close((err) => {
-        t.error(err)
+        t.ok(err)
       })
     })
   })
@@ -654,7 +655,7 @@ test('queued request should not fail on socket destroy', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -687,7 +688,7 @@ test('queued request should fail on client destroy', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     let requestErrored = false
     client.request({
@@ -725,7 +726,7 @@ test('retry idempotent inflight', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({
       path: '/',

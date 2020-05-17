@@ -181,7 +181,7 @@ test('pipeline 1 is 1 active request', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     t.ok(client.request({
       path: '/',
@@ -292,7 +292,7 @@ test('errored POST body lets inflight complete', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client.request({
       path: '/',
