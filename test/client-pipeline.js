@@ -3,7 +3,12 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const { pipeline, Readable, Writable } = require('stream')
+const {
+  pipeline,
+  Readable,
+  Writable,
+  PassThrough
+} = require('stream')
 
 test('pipeline echo', (t) => {
   t.plan(2)
@@ -29,7 +34,8 @@ test('pipeline echo', (t) => {
       client.pipeline({
         path: '/',
         method: 'PUT'
-      }, ({ statusCode, headers }) => {
+      }, ({ body }) => {
+        return pipeline(body, new PassThrough(), () => {})
       }, (err) => {
         t.error(err)
       }),

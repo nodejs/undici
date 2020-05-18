@@ -251,8 +251,15 @@ The `data` parameter in `handler` is defined as follow:
 
 * `statusCode`
 * `headers`
-* `opaque`, passed as `opaque` to `handler`. Used
-  to avoid creating a closure.
+* `body`, a `stream.Readable` with the body to read. A user **must**
+  either fully consume or destroy the body unless there is an error, or no further requests
+  will be processed.
+
+Unlike `request` this method expects `handler`
+to return a `Writable` which the response will be
+written to. Usually it should just return the `body`
+argument unless some kind of transformation needs
+to be performed based on e.g. `headers` or `statusCode`.
 
 The `handler` should validate the response and save any
 required state. If there is an error it should be thrown.
@@ -268,10 +275,16 @@ stream.pipeline(
   client.pipeline({
     path: '/',
     method: 'PUT',
-  }, ({ statusCode }) => {
+  }, ({ statusCode, headers, body }) => {
     if (statusCode !== 201) {
       throw new Error('invalid response')
     }
+
+    if (isZipped(headers)) {
+      return pipeline(body, unzip(), () => {})
+    }
+
+    return body
   }),
   fs.createReadStream('response.raw'),
   (err) => {
