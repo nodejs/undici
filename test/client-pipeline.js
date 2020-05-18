@@ -60,9 +60,7 @@ test('pipeline invalid handler', (t) => {
   t.plan(1)
 
   const client = new Client('http://localhost:5000')
-  try {
-    client.pipeline({}, null)
-  } catch (err) {
+  client.pipeline({}, null).on('error', (err) => {
     t.ok(/handler/.test(err))
-  }
+  })
 })

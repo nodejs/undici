@@ -261,13 +261,10 @@ test('stream factory must be a funciton', (t) => {
   t.plan(1)
 
   const client = new Client('http://localhost:5000')
-  try {
-    client.stream({
-      path: '/',
-      method: 'GET'
-    }, null, () => {
-    })
-  } catch (err) {
+  client.stream({
+    path: '/',
+    method: 'GET'
+  }, null, (err) => {
     t.ok(/factory/.test(err.message))
-  }
+  })
 })
