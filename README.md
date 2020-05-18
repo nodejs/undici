@@ -24,10 +24,10 @@ Machine: 2.7 GHz Quad-Core Intel Core i7
 Configuration: Node v14.2, HTTP/1.1 without TLS, 100 connections
 
 ```
-http - keepalive - pipe x 5,120 ops/sec ±10.80% (65 runs sampled)
-undici - pipeline - pipe x 6,227 ops/sec ±11.44% (71 runs sampled)
-undici - request - pipe x 8,685 ops/sec ±8.96% (67 runs sampled)
-undici - stream - pipe x 11,453 ops/sec ±3.69% (79 runs sampled)
+http - keepalive - pipe x 5,348 ops/sec ±15.34% (65 runs sampled)
+undici - pipeline - pipe x 8,741 ops/sec ±2.03% (81 runs sampled)
+undici - request - pipe x 10,779 ops/sec ±7.40% (74 runs sampled)
+undici - stream - pipe x 12,749 ops/sec ±1.12% (79 runs sampled)
 ```
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js).
