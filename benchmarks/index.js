@@ -74,7 +74,7 @@ suite
     fn: deferred => {
       pool
         .pipeline(undiciOptions, data => {
-          // Do nothing
+          return data.body
         })
         .on('error', (err) => {
           throw err
