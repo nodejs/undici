@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client } = require('..')
+const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { PassThrough } = require('stream')
 
@@ -257,14 +257,86 @@ test('stream waits only for writable side', (t) => {
   })
 })
 
-test('stream factory must be a funciton', (t) => {
-  t.plan(1)
+test('stream args validation', (t) => {
+  t.plan(3)
 
   const client = new Client('http://localhost:5000')
   client.stream({
     path: '/',
     method: 'GET'
   }, null, (err) => {
-    t.ok(/factory/.test(err.message))
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+
+  client.stream(null, null, (err) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+
+  try {
+    client.stream(null, null, 'asd')
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  }
+})
+
+test('stream args validation promise', (t) => {
+  t.plan(2)
+
+  const client = new Client('http://localhost:5000')
+  client.stream({
+    path: '/',
+    method: 'GET'
+  }, null).catch((err) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+
+  client.stream(null, null).catch((err) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+})
+
+test('stream waits only for writable side', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      throw new Error('kaboom')
+    }, (err) => {
+      t.strictEqual(err.message, 'kaboom')
+    })
+  })
+})
+
+test('stream server side destroy', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.destroy()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      t.fail()
+    }, (err) => {
+      t.ok(err instanceof errors.SocketError)
+    })
   })
 })

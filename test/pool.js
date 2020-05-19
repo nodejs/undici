@@ -2,6 +2,7 @@
 
 const proxyquire = require('proxyquire')
 const { test } = require('tap')
+const undici = require('..')
 const { Pool } = require('..')
 const { createServer } = require('http')
 const { EventEmitter } = require('events')
@@ -20,7 +21,7 @@ test('basic get', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = undici(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
