@@ -357,7 +357,7 @@ called and the client shutdown has completed.
   is not closed or destroyed.
 
 * `'connect'`, emitted when a socket has been created and 
-  connected. This will only happen if `client.size > 0`.
+  connected. The client will connect once `client.size > 0`.
 
 * `'reconnect'`, emitted when socket has disconnected. The 
   client will reconnect if or once `client.size > 0`.
