@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client } = require('..')
+const { Client, errors } = require('..')
 const { createServer } = require('http')
 
 test('timeout with pipelining 1', (t) => {
@@ -29,7 +29,7 @@ test('timeout with pipelining 1', (t) => {
     t.tearDown(client.close.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
-      t.ok(err instanceof Error) // we are expecting an error
+      t.ok(err instanceof errors.TimeoutError) // we are expecting an error
       t.strictEqual(null, data)
     })
 
