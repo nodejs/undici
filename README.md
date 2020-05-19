@@ -183,7 +183,7 @@ expects to directly pipe the response body to a
 
 Options:
 
-* ... same as `request`.
+* ... same as [`client.request(opts, callback)`][request].
 * `opaque`, passed as `opaque` to `factory`. Used
   to avoid creating a closure.
 
@@ -244,7 +244,7 @@ For easy use with `stream.pipeline`.
 
 Options:
 
-* ... same as `request`.
+* ... same as [`client.request(opts, callback)`][request].
 
 The `data` parameter in `handler` is defined as follow:
 
@@ -369,17 +369,21 @@ A pool creates a fixed number of [`Client`][]
 
 Options:
 
-* ... same as `new Client`.
+* ... same as [`Client`][].
 * `connections`, the number of clients to create.
   Default `100`.
 
-#### `pool.request(req, callback)`
+#### `pool.request(opts, callback)`
 
-Calls [`client.request(req, callback)`][request] on one of the clients.
+Calls [`client.request(opts, callback)`][request] on one of the clients.
 
-#### `pool.stream(req, factory, callback)`
+#### `pool.stream(opts, factory, callback)`
 
-Calls [`client.stream(req, factory, callback)`][stream] on one of the clients.
+Calls [`client.stream(opts, factory, callback)`][stream] on one of the clients.
+
+#### `pool.pipeline(opts, handler)`
+
+Calls [`client.pipeline(opts, handler)`][pipeline] on one of the clients.
 
 #### `pool.close([callback])`
 
@@ -414,3 +418,5 @@ MIT
 
 [`Client`]: #client
 [request]: #request
+[stream]: #stream
+[pipeline]: #pipeline
