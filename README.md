@@ -56,7 +56,7 @@ Options:
 
 - `pipelining`, the amount of concurrent requests to be sent over the
   single TCP/TLS connection according to
-  [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). 
+  [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
   Default: `1`.
 
 <a name='request'></a>
@@ -162,7 +162,7 @@ const { statusCode, headers, body } = await client.request({
 })
 ```
 
-Non-idempotent requests will not be pipelined in order 
+Non-idempotent requests will not be pipelined in order
 to avoid indirect failures.
 
 Idempotent requests will be automatically retried if
@@ -309,7 +309,7 @@ Returns a promise if no callback is provided.
 #### `client.destroy([err][, callback])`
 
 Destroy the client abruptly with the given `err`. All the current and enqueued
-requests will be aborted and error. Waits until socket is closed before 
+requests will be aborted and error. Waits until socket is closed before
 invoking the callback.
 
 Returns a promise if no callback is provided.
@@ -338,8 +338,8 @@ if there is no activity for the duration of the `timeout` value.
 
 #### `client.full`
 
-True if `client.size` is greater than the `client.pipelining` factor. 
-Keeping a client full ensures that once a inflight requests finishes 
+True if `client.size` is greater than the `client.pipelining` factor.
+Keeping a client full ensures that once a inflight requests finishes
 the the pipeline will schedule new one and keep the pipeline saturated.
 
 #### `client.closed`
@@ -356,10 +356,10 @@ called and the client shutdown has completed.
 * `'drain'`, emitted when `client.size` decreases to `0` and the client
   is not closed or destroyed.
 
-* `'connect'`, emitted when a socket has been created and 
+* `'connect'`, emitted when a socket has been created and
   connected. The client will connect once `client.size > 0`.
 
-* `'reconnect'`, emitted when socket has disconnected. The 
+* `'reconnect'`, emitted when socket has disconnected. The
   client will reconnect if or once `client.size > 0`.
 
 <a name='pool'></a>
@@ -370,11 +370,11 @@ A pool creates a fixed number of [`Client`][]
 
 Options:
 
-* `connections`, the number of clients to create. 
+* `connections`, the number of clients to create.
   Default `100`.
-* `pipelining`, the pipelining factor. 
+* `pipelining`, the pipelining factor.
   Default `1`.
-* `timeout`, the timeout for each request. 
+* `timeout`, the timeout for each request.
   Default `30e3` milliseconds (30s).
 
 #### `pool.request(req, callback)`
@@ -392,6 +392,25 @@ Calls [`client.close(callback)`](#close) on all the clients.
 #### `pool.destroy([err][, callback])`
 
 Calls [`client.destroy(err, callback)`](#destroy) on all the clients.
+
+<a name='errors'></a>
+### `undici.errors`
+
+Undici exposes a variety of error objects that you can use to enhance your error handling.
+You can find all the error objects inside the `errors` key.
+
+```js
+const { errors } = require('undici')
+```
+
+| Error                  | Error Codes              | Description                                            |
+| ---------------------- |--------------------------|--------------------------------------------------------|
+| `ConfigurationError`   |  `UND_ERR_CONFIGURATION` | Generated when in case of a bad configuration.         |
+| `TimeoutError`         |  `UND_ERR_TIMEOUT`       | Generated when a request exceeds the `timeout` option. |
+| `RequestAbortedError`  |  `UND_ERR_ABORTED`       | Generated in case of an aborted request.               |
+| `ClientDestroyedError` |  `UND_ERR_DESTROYED`     | Generated when trying to use a destroyed client.       |
+| `ClientClosedError`    |  `UND_ERR_CLOSED`        | Generated when trying to use a closed client.          |
+| `SocketError`          |  `UND_ERR_SOCKET`        | Generated if there is an error with the socket.        |
 
 ## License
 
