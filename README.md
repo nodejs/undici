@@ -172,9 +172,9 @@ idempotent requests with a stream request body.
 <a name='stream'></a>
 #### `client.stream(opts, factory(data), callback(err))`
 
-A faster version of `request`.
+A faster version of [`request`][request].
 
-Unlike `request` this method expects `factory`
+Unlike [`request`][request] this method expects `factory`
 to return a `Writable` which the response will be
 written to. This improves performance by avoiding
 creating an intermediate `Readable` when the user
@@ -254,11 +254,10 @@ The `data` parameter in `handler` is defined as follow:
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
 
-Unlike `request` this method expects `handler`
-to return a `Writable` which the response will be
-written to. Usually it should just return the `body`
-argument unless some kind of transformation needs
-to be performed based on e.g. `headers` or `statusCode`.
+`handler` should return a `Writable` to which the response will be 
+written to. Usually it should just return the `body` argument unless 
+some kind of transformation needs to be performed based on e.g. 
+`headers` or `statusCode`.
 
 The `handler` should validate the response and save any
 required state. If there is an error it should be thrown.
