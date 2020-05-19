@@ -35,7 +35,7 @@ The benchmark is a simple `hello world` [example](benchmarks/index.js).
 ## API
 
 <a name='client'></a>
-### new undici.Client(url, opts)
+### `new undici.Client(url, opts)`
 
 A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection.
 Keepalive is enabled by default, and it cannot be turned off.
@@ -362,7 +362,8 @@ called and the client shutdown has completed.
 * `'reconnect'`, emitted when socket has disconnected. The 
   client will reconnect if or once `client.size > 0`.
 
-### undici.Pool
+<a name='pool'></a>
+### `new undici.Pool(url, opts)`
 
 A pool of [`Client`][] connected to the same upstream target.
 A pool creates a fixed number of [`Client`][]
