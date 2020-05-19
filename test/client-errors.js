@@ -246,28 +246,28 @@ test('invalid options throws', (t) => {
   try {
     new Client(new URL('asd://asd')) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.ConfigurationError)
+    t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid url')
   }
 
   try {
     new Client(new URL('http://asd:200/somepath')) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.ConfigurationError)
+    t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid url')
   }
 
   try {
     new Client(new URL('http://asd:200?q=asd')) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.ConfigurationError)
+    t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid url')
   }
 
   try {
     new Client(new URL('http://asd:200#asd')) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.ConfigurationError)
+    t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid url')
   }
 
@@ -276,7 +276,7 @@ test('invalid options throws', (t) => {
       maxAbortedPayload: 'asd'
     })
   } catch (err) {
-    t.ok(err instanceof errors.ConfigurationError)
+    t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid maxAbortedPayload')
   }
 
@@ -285,7 +285,7 @@ test('invalid options throws', (t) => {
       timeout: 'asd'
     })
   } catch (err) {
-    t.ok(err instanceof errors.ConfigurationError)
+    t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid timeout')
   }
 })
@@ -476,7 +476,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: /asdasd/
     }, (err, data) => {
-      t.ok(err instanceof errors.ConfigurationError)
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
 
     client.request({
@@ -484,7 +484,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: 0
     }, (err, data) => {
-      t.ok(err instanceof errors.ConfigurationError)
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
 
     client.request({
@@ -492,7 +492,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: false
     }, (err, data) => {
-      t.ok(err instanceof errors.ConfigurationError)
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
 
     client.request({
@@ -500,7 +500,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: ''
     }, (err, data) => {
-      t.error(err instanceof errors.ConfigurationError)
+      t.error(err instanceof errors.InvalidArgumentError)
       data.body.resume()
     })
 
@@ -509,7 +509,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: new Uint8Array()
     }, (err, data) => {
-      t.error(err instanceof errors.ConfigurationError)
+      t.error(err instanceof errors.InvalidArgumentError)
       data.body.resume()
     })
 
@@ -518,7 +518,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: Buffer.alloc(10)
     }, (err, data) => {
-      t.error(err instanceof errors.ConfigurationError)
+      t.error(err instanceof errors.InvalidArgumentError)
       data.body.resume()
     })
   })

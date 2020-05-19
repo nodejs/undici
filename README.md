@@ -405,9 +405,9 @@ const { errors } = require('undici')
 
 | Error                  | Error Codes              | Description                                            |
 | ---------------------- |--------------------------|--------------------------------------------------------|
-| `ConfigurationError`   |  `UND_ERR_CONFIGURATION` | Generated when in case of a bad configuration.         |
+| `InvalidArgumentError` |  `UND_ERR_INVALID_ARG`   | Generated when in case of a bad configuration.         |
 | `TimeoutError`         |  `UND_ERR_TIMEOUT`       | Generated when a request exceeds the `timeout` option. |
-| `RequestAbortedError`  |  `UND_ERR_ABORTED`       | Generated in case of an aborted request.               |
+| `RequestAbortedError`  |  `UND_ERR_ABORTED`       | Generated if the request has been aborted by the user  |
 | `ClientDestroyedError` |  `UND_ERR_DESTROYED`     | Generated when trying to use a destroyed client.       |
 | `ClientClosedError`    |  `UND_ERR_CLOSED`        | Generated when trying to use a closed client.          |
 | `SocketError`          |  `UND_ERR_SOCKET`        | Generated if there is an error with the socket.        |
