@@ -241,13 +241,13 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
 })
 
 test('invalid options throws', (t) => {
-  t.plan(12)
+  t.plan(18)
 
   try {
     new Client(new URL('asd://asd')) // eslint-disable-line
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid url')
+    t.strictEqual(err.message, 'invalid port')
   }
 
   try {
@@ -281,12 +281,37 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    new Client(new URL('http://localhost:200'), {  // eslint-disable-line
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
       timeout: 'asd'
     })
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid timeout')
+  }
+
+  try {
+    new Client({ // eslint-disable-line
+      protocol: 'asd'
+    })
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid protocol')
+  }
+
+  try {
+    new Client({ // eslint-disable-line
+      hostname: 1
+    })
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid hostname')
+  }
+
+  try {
+    new Client(1) // eslint-disable-line
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid url')
   }
 })
 
@@ -542,35 +567,6 @@ test('parser error', (t) => {
       client.close((err) => {
         t.error(err)
       })
-    })
-  })
-})
-
-test('aborted response errors', (t) => {
-  t.plan(3)
-
-  const server = createServer()
-  server.once('request', (req, res) => {
-    // TODO: res.write will cause body to emit 'error' twice
-    // due to bug in readable-stream.
-    res.end('asd')
-  })
-  t.tearDown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
-
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      body.destroy()
-      body
-        .on('error', err => {
-          t.ok(err instanceof errors.RequestAbortedError)
-        })
-        .on('close', () => {
-          t.pass()
-        })
     })
   })
 })
