@@ -369,12 +369,9 @@ A pool creates a fixed number of [`Client`][]
 
 Options:
 
+* ... same as `new Client`.
 * `connections`, the number of clients to create.
   Default `100`.
-* `pipelining`, the pipelining factor.
-  Default `1`.
-* `timeout`, the timeout for each request.
-  Default `30e3` milliseconds (30s).
 
 #### `pool.request(req, callback)`
 
