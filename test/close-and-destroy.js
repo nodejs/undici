@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client } = require('..')
+const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { kSocket } = require('../lib/symbols')
 
@@ -72,10 +72,10 @@ test('destroy invoked all pending callbacks', (t) => {
       client.destroy()
     })
     client.request({ path: '/', method: 'GET' }, (err) => {
-      t.ok(err)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
     client.request({ path: '/', method: 'GET' }, (err) => {
-      t.ok(err)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
 })
@@ -109,7 +109,7 @@ test('close waits until socket is destroyed', (t) => {
 
     function makeRequest () {
       return client.request({ path: '/', method: 'GET' }, (err, data) => {
-        t.error(err)
+        t.error(err instanceof errors.ClientClosedError)
       })
     }
   })
@@ -192,10 +192,10 @@ test('closed and destroyed errors', (t) => {
   })
   client.close()
   client.request({}, (err) => {
-    t.ok(/closed/.test(err.message))
+    t.ok(err instanceof errors.ClientClosedError)
     client.destroy()
     client.request({}, (err) => {
-      t.ok(/destroyed/.test(err.message))
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
 })
@@ -206,6 +206,6 @@ test('close after and destroy should error', (t) => {
   const client = new Client('http://localhost:4000')
   client.destroy()
   client.close((err) => {
-    t.ok(/destroyed/.test(err.message))
+    t.ok(err instanceof errors.ClientDestroyedError)
   })
 })

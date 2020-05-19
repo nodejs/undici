@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client } = require('..')
+const { Client, errors } = require('..')
 const { createServer } = require('http')
 const net = require('net')
 const { Readable } = require('stream')
@@ -241,29 +241,33 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
 })
 
 test('invalid options throws', (t) => {
-  t.plan(6)
+  t.plan(12)
 
   try {
     new Client(new URL('asd://asd')) // eslint-disable-line
   } catch (err) {
+    t.ok(err instanceof errors.ConfigurationError)
     t.strictEqual(err.message, 'invalid url')
   }
 
   try {
     new Client(new URL('http://asd:200/somepath')) // eslint-disable-line
   } catch (err) {
+    t.ok(err instanceof errors.ConfigurationError)
     t.strictEqual(err.message, 'invalid url')
   }
 
   try {
     new Client(new URL('http://asd:200?q=asd')) // eslint-disable-line
   } catch (err) {
+    t.ok(err instanceof errors.ConfigurationError)
     t.strictEqual(err.message, 'invalid url')
   }
 
   try {
     new Client(new URL('http://asd:200#asd')) // eslint-disable-line
   } catch (err) {
+    t.ok(err instanceof errors.ConfigurationError)
     t.strictEqual(err.message, 'invalid url')
   }
 
@@ -272,6 +276,7 @@ test('invalid options throws', (t) => {
       maxAbortedPayload: 'asd'
     })
   } catch (err) {
+    t.ok(err instanceof errors.ConfigurationError)
     t.strictEqual(err.message, 'invalid maxAbortedPayload')
   }
 
@@ -280,6 +285,7 @@ test('invalid options throws', (t) => {
       timeout: 'asd'
     })
   } catch (err) {
+    t.ok(err instanceof errors.ConfigurationError)
     t.strictEqual(err.message, 'invalid timeout')
   }
 })
@@ -470,7 +476,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: /asdasd/
     }, (err, data) => {
-      t.ok(err)
+      t.ok(err instanceof errors.ConfigurationError)
     })
 
     client.request({
@@ -478,7 +484,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: 0
     }, (err, data) => {
-      t.ok(err)
+      t.ok(err instanceof errors.ConfigurationError)
     })
 
     client.request({
@@ -486,7 +492,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: false
     }, (err, data) => {
-      t.ok(err)
+      t.ok(err instanceof errors.ConfigurationError)
     })
 
     client.request({
@@ -494,7 +500,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: ''
     }, (err, data) => {
-      t.error(err)
+      t.error(err instanceof errors.ConfigurationError)
       data.body.resume()
     })
 
@@ -503,7 +509,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: new Uint8Array()
     }, (err, data) => {
-      t.error(err)
+      t.error(err instanceof errors.ConfigurationError)
       data.body.resume()
     })
 
@@ -512,7 +518,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: Buffer.alloc(10)
     }, (err, data) => {
-      t.error(err)
+      t.error(err instanceof errors.ConfigurationError)
       data.body.resume()
     })
   })
@@ -560,7 +566,7 @@ test('aborted response errors', (t) => {
       body.destroy()
       body
         .on('error', err => {
-          t.strictEqual(err.message, 'aborted')
+          t.ok(err instanceof errors.RequestAbortedError)
         })
         .on('close', () => {
           t.pass()
