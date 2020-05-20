@@ -757,3 +757,24 @@ test('retry idempotent inflight', (t) => {
     })
   })
 })
+
+test('invalid opts', (t) => {
+  t.plan(5)
+
+  const client = new Client('http://localhost:5000')
+  client.request(null, (err) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+  client.pipeline(null).on('error', (err) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+  client.enqueue(null, (err) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+  client.enqueue({ path: '/', method: 'GET', signal: 1 }, (err) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+  client.enqueue({ path: '/', method: 'GET', signal: {} }, (err) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+})
