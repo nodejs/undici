@@ -58,6 +58,9 @@ Options:
   [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
   Default: `1`.
 
+- `tls`, an options object which in the case of `https` will be passed to
+  [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
+
 <a name='request'></a>
 #### `client.request(opts, callback(err, data))`
 
