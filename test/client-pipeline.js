@@ -183,7 +183,7 @@ test('pipeline backpressure', (t) => {
 })
 
 test('pipeline invalid handler return', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const server = createServer((req, res) => {
     req.pipe(res)
@@ -202,7 +202,20 @@ test('pipeline invalid handler return', (t) => {
       body.on('error', () => {})
     })
       .on('error', (err) => {
-        t.ok(err instanceof errors.InvalidArgumentError)
+        t.ok(err instanceof errors.InvalidReturnValueError)
+      })
+      .end()
+
+    client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => {
+      // TODO: Should body cause unhandled exception?
+      body.on('error', () => {})
+      return {}
+    })
+      .on('error', (err) => {
+        t.ok(err instanceof errors.InvalidReturnValueError)
       })
       .end()
   })
