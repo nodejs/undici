@@ -422,14 +422,15 @@ You can find all the error objects inside the `errors` key.
 const { errors } = require('undici')
 ```
 
-| Error                  | Error Codes              | Description                                            |
-| ---------------------- |--------------------------|--------------------------------------------------------|
-| `InvalidArgumentError` |  `UND_ERR_INVALID_ARG`   | Generated when in case of a bad configuration.         |
-| `TimeoutError`         |  `UND_ERR_TIMEOUT`       | Generated when a request exceeds the `timeout` option. |
-| `RequestAbortedError`  |  `UND_ERR_ABORTED`       | Generated if the request has been aborted by the user  |
-| `ClientDestroyedError` |  `UND_ERR_DESTROYED`     | Generated when trying to use a destroyed client.       |
-| `ClientClosedError`    |  `UND_ERR_CLOSED`        | Generated when trying to use a closed client.          |
-| `SocketError`          |  `UND_ERR_SOCKET`        | Generated if there is an error with the socket.        |
+| Error                     | Error Codes                       | Description                                |
+| --------------------------|-----------------------------------|--------------------------------------------|
+| `InvalidArgumentError`    |  `UND_ERR_INVALID_ARG`            | passed an invalid argument.                |
+| `InvalidReturnValueError` |  `UND_ERR_INVALID_RETURN_VALUE`   | returned an invalid value.                 |
+| `TimeoutError`            |  `UND_ERR_TIMEOUT`                | a request exceeds the `timeout` option.    |
+| `RequestAbortedError`     |  `UND_ERR_ABORTED`                | the request has been aborted by the user   |
+| `ClientDestroyedError`    |  `UND_ERR_DESTROYED`              | trying to use a destroyed client.          |
+| `ClientClosedError`       |  `UND_ERR_CLOSED`                 | trying to use a closed client.             |
+| `SocketError`             |  `UND_ERR_SOCKET`                 | there is an error with the socket.         |
 
 ## License
 
