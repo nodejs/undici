@@ -47,70 +47,63 @@ test('Abort before sending request (no body)', (t) => {
 test('Abort while waiting response (no body)', (t) => {
   t.plan(1)
 
+  const ee = new EventEmitter()
   const server = createServer((req, res) => {
-    setTimeout(() => {
-      res.setHeader('content-type', 'text/plain')
-      res.end('hello world')
-    }, 200)
+    ee.emit('abort')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello world')
   })
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    const ee = new EventEmitter()
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       t.ok(err instanceof errors.RequestAbortedError)
     })
-
-    setTimeout(() => {
-      ee.emit('abort')
-    }, 100)
   })
 })
 
 test('Abort while waiting response (write headers started) (no body)', (t) => {
   t.plan(1)
 
+  const ee = new EventEmitter()
   const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
     setTimeout(() => {
+      ee.emit('abort')
       res.end('hello world')
-    }, 200)
+    }, 100)
   })
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    const ee = new EventEmitter()
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       t.ok(err instanceof errors.RequestAbortedError)
     })
-
-    setTimeout(() => {
-      ee.emit('abort')
-    }, 100)
   })
 })
 
 test('Abort while waiting response (write headers and write body started) (no body)', (t) => {
   t.plan(2)
 
+  const ee = new EventEmitter()
   const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.write('hello')
     setTimeout(() => {
+      ee.emit('abort')
       res.end('world')
-    }, 200)
+    }, 100)
   })
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    const ee = new EventEmitter()
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
@@ -119,10 +112,6 @@ test('Abort while waiting response (write headers and write body started) (no bo
         t.ok(err instanceof errors.RequestAbortedError)
       })
     })
-
-    setTimeout(() => {
-      ee.emit('abort')
-    }, 100)
   })
 })
 
@@ -130,26 +119,21 @@ function waitingWithBody (body, type) {
   test(`Abort while waiting response (with body ${type})`, (t) => {
     t.plan(1)
 
+    const ee = new EventEmitter()
     const server = createServer((req, res) => {
-      setTimeout(() => {
-        res.setHeader('content-type', 'text/plain')
-        res.end('hello world')
-      }, 200)
+      ee.emit('abort')
+      res.setHeader('content-type', 'text/plain')
+      res.end('hello world')
     })
     t.teardown(server.close.bind(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
-      const ee = new EventEmitter()
       t.teardown(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
         t.ok(err instanceof errors.RequestAbortedError)
       })
-
-      setTimeout(() => {
-        ee.emit('abort')
-      }, 100)
     })
   })
 }
@@ -162,26 +146,23 @@ function writeHeadersStartedWithBody (body, type) {
   test(`Abort while waiting response (write headers started) (with body ${type})`, (t) => {
     t.plan(1)
 
+    const ee = new EventEmitter()
     const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       setTimeout(() => {
+        ee.emit('abort')
         res.end('hello world')
-      }, 200)
+      }, 100)
     })
     t.teardown(server.close.bind(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
-      const ee = new EventEmitter()
       t.teardown(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
         t.ok(err instanceof errors.RequestAbortedError)
       })
-
-      setTimeout(() => {
-        ee.emit('abort')
-      }, 100)
     })
   })
 }
@@ -194,18 +175,19 @@ function writeBodyStartedWithBody (body, type) {
   test(`Abort while waiting response (write headers and write body started) (with body ${type})`, (t) => {
     t.plan(2)
 
+    const ee = new EventEmitter()
     const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.write('hello')
       setTimeout(() => {
+        ee.emit('abort')
         res.end('world')
-      }, 200)
+      }, 100)
     })
     t.teardown(server.close.bind(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
-      const ee = new EventEmitter()
       t.teardown(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
@@ -214,10 +196,6 @@ function writeBodyStartedWithBody (body, type) {
           t.ok(err instanceof errors.RequestAbortedError)
         })
       })
-
-      setTimeout(() => {
-        ee.emit('abort')
-      }, 100)
     })
   })
 }
