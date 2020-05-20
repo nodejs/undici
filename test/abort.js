@@ -78,8 +78,8 @@ test('Abort while waiting response - event emitter (write headers started) (no b
   })
 })
 
-test('Abort while waiting response - event emitter (write headers (write body started) (no body)', (t) => {
-  t.plan(1)
+test('Abort while waiting response - event emitter (write headers and write body started) (no body)', (t) => {
+  t.plan(2)
 
   const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
@@ -96,7 +96,10 @@ test('Abort while waiting response - event emitter (write headers (write body st
     t.teardown(client.close.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.error(err)
+      response.body.on('error', err => {
+        t.ok(err instanceof errors.RequestAbortedError)
+      })
     })
 
     setTimeout(() => {
