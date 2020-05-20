@@ -69,6 +69,7 @@ Options:
 * `method`
 * `body`, it can be a `String`, a `Buffer`, `Uint8Array` or a `stream.Readable`.
 * `headers`, an object with header-value pairs.
+* `signal`, either an `AbortController` or an `EventEmitter`.
 * `idempotent`, whether the requests can be safely retried or not.
   If `false` the request won't be sent until all preceeding
   requests in the pipeline has completed.
@@ -129,38 +130,6 @@ client.request({
 })
 ```
 
-Abortion is supported by destroying the request or
-response body.
-
-```js
-// Abort while sending request.
-const body = new stream.Passthrough()
-const promise = client.request({
-  path: '/',
-  method: 'POST',
-  body
-})
-body.destroy()
-const { statusCode, headers } = await promise
-```
-
-```js
-// Abort while reading response.
-const { statusCode, headers, body } = await client.request({
-  path: '/',
-  method: 'GET'
-})
-body.destroy()
-```
-
-Promises and async await are supported as well!
-```js
-const { statusCode, headers, body } = await client.request({
-  path: '/',
-  method: 'GET'
-})
-```
-
 Non-idempotent requests will not be pipelined in order
 to avoid indirect failures.
 
@@ -168,6 +137,52 @@ Idempotent requests will be automatically retried if
 they fail due to indirect failure from the request
 at the head of the pipeline. This does not apply to
 idempotent requests with a stream request body.
+
+##### Aborting a request
+
+A request can may be aborted using either an `AbortController` or an `EventEmitter`.
+To use `AbortController`, you will need to `npm i abort-controller`.
+
+```js
+const { AbortController } = require('abort-controller')
+const { Client } = require('undici')
+
+const client = new Client'http://localhost:3000')
+const abortController = new AbortController()
+
+client.request({
+  path: '/',
+  method: 'GET',
+  signal: abortController.signal
+}, function (err, data) {
+  console.log(err) // RequestAbortedError
+  client.close()
+})
+
+abortController.abort()
+```
+
+Alternatively, any `EventEmitter` that emits an `'abort'` event may be used as an abort controller:
+
+```js
+const EventEmitter = require('events')
+const { Client } = require('undici')
+
+
+const client = new Client'http://localhost:3000')
+const ee = new EventEmitter()
+
+client.request({
+  path: '/',
+  method: 'GET',
+  signal: ee
+}, function (err, data) {
+  console.log(err) // RequestAbortedError
+  client.close()
+})
+
+ee.emit('abort')
+```
 
 <a name='stream'></a>
 #### `client.stream(opts, factory(data), callback(err))`
@@ -254,9 +269,9 @@ The `data` parameter in `handler` is defined as follow:
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
 
-`handler` should return a `Writable` to which the response will be 
-written to. Usually it should just return the `body` argument unless 
-some kind of transformation needs to be performed based on e.g. 
+`handler` should return a `Writable` to which the response will be
+written to. Usually it should just return the `body` argument unless
+some kind of transformation needs to be performed based on e.g.
 `headers` or `statusCode`.
 
 The `handler` should validate the response and save any
