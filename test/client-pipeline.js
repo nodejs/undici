@@ -66,7 +66,7 @@ test('pipeline invalid handler', (t) => {
 })
 
 test('pipeline invalid handler return after destroy should not error', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const server = createServer((req, res) => {
     req.pipe(res)
@@ -84,11 +84,14 @@ test('pipeline invalid handler return after destroy should not error', (t) => {
       method: 'GET'
     }, ({ body }) => {
       body.on('error', (err) => {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.strictEqual(err.message, 'asd')
       })
-      dup.destroy()
+      dup.destroy(new Error('asd'))
       return {}
     })
+      .on('error', (err) => {
+        t.strictEqual(err.message, 'asd')
+      })
       .on('close', () => {
         t.pass()
       })
@@ -280,7 +283,7 @@ test('pipeline throw handler', (t) => {
 })
 
 test('pipeline destroy and throw handler', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const server = createServer((req, res) => {
     req.pipe(res)
@@ -301,6 +304,9 @@ test('pipeline destroy and throw handler', (t) => {
       throw new Error('asd')
     })
       .end()
+      .on('error', (err) => {
+        t.ok(err instanceof errors.RequestAbortedError)
+      })
       .on('close', () => {
         t.pass()
       })
@@ -361,7 +367,7 @@ test('pipeline abort server res', (t) => {
 })
 
 test('pipeline abort duplex', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const server = createServer((req, res) => {
     res.end()
@@ -384,7 +390,9 @@ test('pipeline abort duplex', (t) => {
         method: 'PUT'
       }, () => {
         t.fail()
-      }).destroy()
+      }).destroy().on('error', (err) => {
+        t.ok(err instanceof errors.RequestAbortedError)
+      })
 
       client.on('reconnect', () => {
         t.pass()
