@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/mcollina/undici#readme",
   "devDependencies": {
+    "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
     "https-pem": "^2.0.0",
     "pre-commit": "^1.2.2",
