@@ -184,6 +184,8 @@ client.request({
 ee.emit('abort')
 ```
 
+Destroying the request or response body will have the same effect.
+
 <a name='stream'></a>
 #### `client.stream(opts, factory(data), callback(err))`
 
