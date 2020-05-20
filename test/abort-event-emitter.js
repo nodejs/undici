@@ -23,7 +23,7 @@ test('Abort before sending request (no body)', (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const ee = new EventEmitter()
-    t.teardown(client.close.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
       t.error(err)
@@ -58,7 +58,7 @@ test('Abort while waiting response (no body)', (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const ee = new EventEmitter()
-    t.teardown(client.close.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       t.ok(err instanceof errors.RequestAbortedError)
@@ -84,7 +84,7 @@ test('Abort while waiting response (write headers started) (no body)', (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const ee = new EventEmitter()
-    t.teardown(client.close.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       t.ok(err instanceof errors.RequestAbortedError)
@@ -111,7 +111,7 @@ test('Abort while waiting response (write headers and write body started) (no bo
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const ee = new EventEmitter()
-    t.teardown(client.close.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       t.error(err)
@@ -141,7 +141,7 @@ function waitingWithBody (body, type) {
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       const ee = new EventEmitter()
-      t.teardown(client.close.bind(client))
+      t.teardown(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
         t.ok(err instanceof errors.RequestAbortedError)
@@ -173,7 +173,7 @@ function writeHeadersStartedWithBody (body, type) {
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       const ee = new EventEmitter()
-      t.teardown(client.close.bind(client))
+      t.teardown(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
         t.ok(err instanceof errors.RequestAbortedError)
@@ -206,7 +206,7 @@ function writeBodyStartedWithBody (body, type) {
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       const ee = new EventEmitter()
-      t.teardown(client.close.bind(client))
+      t.teardown(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
         t.error(err)
