@@ -1,9 +1,10 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client } = require('..')
+const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
+const { Readable } = require('stream')
 
 test('basic get', (t) => {
   t.plan(7)
@@ -408,158 +409,6 @@ test('Set-Cookie', (t) => {
   })
 })
 
-test('aborted GET maxAbortedPayload reset', (t) => {
-  t.plan(5)
-
-  const server = createServer((req, res) => {
-    res.end(Buffer.alloc(1e6 - 1))
-  })
-  t.tearDown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 2,
-      maxAbortedPayload: 1e6
-    })
-    t.tearDown(client.close.bind(client))
-
-    client.on('reconnect', () => {
-      t.fail()
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.once('data', (chunk) => {
-        body.destroy()
-      }).once('error', (err) => {
-        t.ok(err)
-      }).on('end', () => {
-        t.fail()
-      })
-    })
-
-    // Make sure read counter is reset.
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.once('data', (chunk) => {
-        body.destroy()
-      }).on('error', (err) => {
-        t.ok(err)
-      }).on('end', () => {
-        t.fail()
-      })
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.resume()
-    })
-  })
-})
-
-test('aborted GET maxAbortedPayload', (t) => {
-  t.plan(5)
-
-  const server = createServer((req, res) => {
-    res.end(Buffer.alloc(100000 + 1, 'a'))
-  })
-  t.tearDown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1,
-      maxAbortedPayload: 100000
-    })
-    t.tearDown(client.destroy.bind(client))
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.once('data', () => {
-        body.destroy()
-      }).once('error', (err) => {
-        t.ok(err)
-      })
-        // old Readable emits error twice
-        .on('error', () => {})
-    })
-
-    client.on('reconnect', () => {
-      t.pass()
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.resume()
-    })
-
-    client.close((err) => {
-      t.error(err)
-    })
-  })
-})
-
-test('aborted GET maxAbortedPayload less than HWM', (t) => {
-  t.plan(4)
-
-  const server = createServer((req, res) => {
-    res.end(Buffer.alloc(4 + 1, 'a'))
-  })
-  t.tearDown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1,
-      maxAbortedPayload: 4
-    })
-    t.tearDown(client.destroy.bind(client))
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.once('data', () => {
-        body.destroy()
-      }).once('error', (err) => {
-        t.ok(err)
-      })
-        // old Readable emits error twice
-        .on('error', () => {})
-    })
-
-    client.on('reconnect', () => {
-      t.fail()
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.resume()
-    })
-
-    client.close((err) => {
-      t.error(err)
-    })
-  })
-})
-
 test('ignore request header mutations', (t) => {
   t.plan(2)
 
@@ -641,6 +490,180 @@ test('url-like url', (t) => {
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.error(err)
       data.body.resume()
+    })
+  })
+})
+
+test('multiple destroy callback', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client({
+      hostname: 'localhost',
+      port: server.address().port,
+      protocol: 'http'
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+      client.destroy(new Error(), (err) => {
+        t.error(err)
+      })
+      client.destroy(new Error(), (err) => {
+        t.error(err)
+      })
+    })
+  })
+})
+
+test('only one streaming req at a time', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 4
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err, data) => {
+        t.error(err)
+        data.body.resume()
+      })
+
+      client.request({
+        path: '/',
+        method: 'PUT',
+        idempotent: true,
+        body: new Readable({
+          read () {
+            t.strictEqual(client.size, 1)
+            this.push(null)
+          }
+        })
+      }, (err, data) => {
+        t.error(err)
+        data.body.resume()
+      })
+    })
+  })
+})
+
+test('300 requests succeed', (t) => {
+  t.plan(300 * 2)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    for (let n = 0; n < 300; ++n) {
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err, data) => {
+        t.error(err)
+        data.body.on('data', (chunk) => {
+          t.strictEqual(chunk.toString(), 'asd')
+        })
+      })
+    }
+  })
+})
+
+test('request args validation', (t) => {
+  t.plan(2)
+
+  const client = new Client('http://localhost:5000')
+
+  client.request(null, (err) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+
+  try {
+    client.request(null, 'asd')
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  }
+})
+
+test('request args validation promise', (t) => {
+  t.plan(1)
+
+  const client = new Client('http://localhost:5000')
+
+  client.request(null).catch((err) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+})
+
+test('increase pipelining', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    req.resume()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      if (!client.destroyed) {
+        t.fail()
+      }
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      if (!client.destroyed) {
+        t.fail()
+      }
+    })
+
+    t.strictEqual(client.running, 0)
+    client.on('connect', () => {
+      t.strictEqual(client.running, 0)
+      process.nextTick(() => {
+        t.strictEqual(client.running, 1)
+        client.pipelining = 3
+        t.strictEqual(client.running, 2)
+      })
     })
   })
 })
