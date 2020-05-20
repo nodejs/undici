@@ -70,10 +70,9 @@ test('Abort while waiting response (write headers started) (no body)', (t) => {
   const abortController = new AbortController()
   const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
-    setTimeout(() => {
-      abortController.abort()
-      res.end('hello world')
-    })
+    res.flushHeaders()
+    abortController.abort()
+    res.end('hello world')
   })
   t.teardown(server.close.bind(server))
 
@@ -148,10 +147,9 @@ function writeHeadersStartedWithBody (body, type) {
     const abortController = new AbortController()
     const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
-      setTimeout(() => {
-        abortController.abort()
-        res.end('hello world')
-      }, 100)
+      res.flushHeaders()
+      abortController.abort()
+      res.end('hello world')
     })
     t.teardown(server.close.bind(server))
 
