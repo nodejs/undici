@@ -95,10 +95,7 @@ test('Abort while waiting response (write headers and write body started) (no bo
   const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.write('hello')
-    setTimeout(() => {
-      ee.emit('abort')
-      res.end('world')
-    }, 100)
+    res.end('world')
   })
   t.teardown(server.close.bind(server))
 
@@ -108,6 +105,9 @@ test('Abort while waiting response (write headers and write body started) (no bo
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       t.error(err)
+      response.body.on('data', () => {
+        ee.emit('abort')
+      })
       response.body.on('error', err => {
         t.ok(err instanceof errors.RequestAbortedError)
       })
@@ -179,10 +179,7 @@ function writeBodyStartedWithBody (body, type) {
     const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.write('hello')
-      setTimeout(() => {
-        ee.emit('abort')
-        res.end('world')
-      }, 100)
+      res.end('world')
     })
     t.teardown(server.close.bind(server))
 
@@ -192,6 +189,9 @@ function writeBodyStartedWithBody (body, type) {
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
         t.error(err)
+        response.body.on('data', () => {
+          ee.emit('abort')
+        })
         response.body.on('error', err => {
           t.ok(err instanceof errors.RequestAbortedError)
         })
