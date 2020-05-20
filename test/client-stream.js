@@ -78,8 +78,8 @@ test('stream get skip body', (t) => {
       t.strictEqual(headers['content-type'], 'text/plain')
 
       // Don't return writable. Skip the body.
-    }, (err) => {
-      t.error(err)
+    }).then(() => {
+      t.pass()
     })
   })
 })
@@ -179,7 +179,7 @@ test('stream GET remote destroy', (t) => {
         t.ok(err)
       })
       return pt
-    }, (err) => {
+    }).catch((err) => {
       t.ok(err)
     })
   })

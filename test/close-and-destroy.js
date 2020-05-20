@@ -201,11 +201,14 @@ test('closed and destroyed errors', (t) => {
 })
 
 test('close after and destroy should error', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const client = new Client('http://localhost:4000')
   client.destroy()
   client.close((err) => {
+    t.ok(err instanceof errors.ClientDestroyedError)
+  })
+  client.close().catch((err) => {
     t.ok(err instanceof errors.ClientDestroyedError)
   })
 })

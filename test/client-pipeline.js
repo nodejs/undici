@@ -65,6 +65,37 @@ test('pipeline invalid handler', (t) => {
   })
 })
 
+test('pipeline invalid handler return after destroy should not error', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 3
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    const dup = client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => {
+      body.on('error', (err) => {
+        t.ok(err instanceof errors.RequestAbortedError)
+      })
+      dup.destroy()
+      return {}
+    })
+      .on('close', () => {
+        t.pass()
+      })
+      .end()
+  })
+})
+
 test('pipeline error body', (t) => {
   t.plan(2)
 
@@ -245,6 +276,34 @@ test('pipeline throw handler', (t) => {
         t.strictEqual(err.message, 'asd')
       })
       .end()
+  })
+})
+
+test('pipeline destroy and throw handler', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    const dup = client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => {
+      dup.destroy()
+      // TODO: Should body cause unhandled exception?
+      body.on('error', () => {})
+      throw new Error('asd')
+    })
+      .end()
+      .on('close', () => {
+        t.pass()
+      })
   })
 })
 
