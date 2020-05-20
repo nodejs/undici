@@ -195,11 +195,11 @@ Destroying the request or response body will have the same effect.
 A faster version of [`request`][request].
 
 Unlike [`request`][request] this method expects `factory`
-to return a `Writable` which the response will be
+to return a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) which the response will be
 written to. This improves performance by avoiding
-creating an intermediate `Readable` when the user
+creating an intermediate [`Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) when the user
 expects to directly pipe the response body to a
-`Writable`.
+[`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable).
 
 Options:
 
@@ -260,7 +260,7 @@ function (req, res) {
 <a name='pipeline'></a>
 #### `client.pipeline(opts, handler(data))`
 
-For easy use with `stream.pipeline`.
+For easy use with [`stream.pipeline`](https://nodejs.org/api/stream.html#stream_stream_pipeline_source_transforms_destination_callback).
 
 Options:
 
@@ -274,7 +274,7 @@ The `data` parameter in `handler` is defined as follow:
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
 
-`handler` should return a `Writable` to which the response will be
+`handler` should return a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) to which the response will be
 written to. Usually it should just return the `body` argument unless
 some kind of transformation needs to be performed based on e.g.
 `headers` or `statusCode`.
