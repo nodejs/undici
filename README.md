@@ -48,6 +48,10 @@ Options:
   milliseconds.
   Default: `30e3` milliseconds (30s).
 
+- `requestTimeout`, the timeout after which a request will time out, in
+  milliseconds.
+  Default: `30e3` milliseconds (30s).
+
 - `maxAbortedPayload`, the maximum number of bytes read after which an
   aborted response will close the connection. Closing the connection
   will error other inflight requests in the pipeline.
@@ -73,9 +77,9 @@ Options:
 * `body`, it can be a `String`, a `Buffer`, `Uint8Array` or a `stream.Readable`.
 * `headers`, an object with header-value pairs.
 * `signal`, either an `AbortController` or an `EventEmitter`.
-* `requestTimeout`, the timeout after which a requst will time out, in
+* `requestTimeout`, the timeout after which a request will time out, in
   milliseconds.
-  Default: `30e3` milliseconds (30s).
+  Default: Global client `requestTimeout`.
 * `idempotent`, whether the requests can be safely retried or not.
   If `false` the request won't be sent until all preceeding
   requests in the pipeline has completed.
