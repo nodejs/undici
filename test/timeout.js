@@ -24,12 +24,12 @@ test('timeout with pipelining 1', (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1,
-      timeout: 500
+      socketTimeout: 500
     })
     t.tearDown(client.close.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
-      t.ok(err instanceof errors.TimeoutError) // we are expecting an error
+      t.ok(err instanceof errors.SocketTimeoutError) // we are expecting an error
       t.strictEqual(null, data)
     })
 
