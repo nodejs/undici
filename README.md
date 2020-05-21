@@ -23,10 +23,10 @@ Machine: 2.7 GHz Quad-Core Intel Core i7
 Configuration: Node v14.2, HTTP/1.1 without TLS, 100 connections
 
 ```
-http - keepalive - pipe x 5,120 ops/sec ±10.80% (65 runs sampled)
-undici - pipeline - pipe x 6,227 ops/sec ±11.44% (71 runs sampled)
-undici - request - pipe x 8,685 ops/sec ±8.96% (67 runs sampled)
-undici - stream - pipe x 11,453 ops/sec ±3.69% (79 runs sampled)
+http - keepalive - pipe x 6,545 ops/sec ±12.47% (64 runs sampled)
+undici - pipeline - pipe x 9,560 ops/sec ±3.68% (77 runs sampled)
+undici - request - pipe x 9,797 ops/sec ±6.80% (77 runs sampled)
+undici - stream - pipe x 11,599 ops/sec ±0.89% (78 runs sampled)
 ```
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js).
@@ -57,6 +57,9 @@ Options:
   single TCP/TLS connection according to
   [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
   Default: `1`.
+
+- `tls`, an options object which in the case of `https` will be passed to
+  [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
 
 <a name='request'></a>
 #### `client.request(opts, callback(err, data))`
@@ -192,11 +195,11 @@ Destroying the request or response body will have the same effect.
 A faster version of [`request`][request].
 
 Unlike [`request`][request] this method expects `factory`
-to return a `Writable` which the response will be
+to return a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) which the response will be
 written to. This improves performance by avoiding
-creating an intermediate `Readable` when the user
+creating an intermediate [`Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) when the user
 expects to directly pipe the response body to a
-`Writable`.
+[`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable).
 
 Options:
 
@@ -257,7 +260,7 @@ function (req, res) {
 <a name='pipeline'></a>
 #### `client.pipeline(opts, handler(data))`
 
-For easy use with `stream.pipeline`.
+For easy use with [`stream.pipeline`](https://nodejs.org/api/stream.html#stream_stream_pipeline_source_transforms_destination_callback).
 
 Options:
 
@@ -271,7 +274,7 @@ The `data` parameter in `handler` is defined as follow:
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
 
-`handler` should return a `Writable` to which the response will be
+`handler` should return a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) to which the response will be
 written to. Usually it should just return the `body` argument unless
 some kind of transformation needs to be performed based on e.g.
 `headers` or `statusCode`.
@@ -419,14 +422,15 @@ You can find all the error objects inside the `errors` key.
 const { errors } = require('undici')
 ```
 
-| Error                  | Error Codes              | Description                                            |
-| ---------------------- |--------------------------|--------------------------------------------------------|
-| `InvalidArgumentError` |  `UND_ERR_INVALID_ARG`   | Generated when in case of a bad configuration.         |
-| `TimeoutError`         |  `UND_ERR_TIMEOUT`       | Generated when a request exceeds the `timeout` option. |
-| `RequestAbortedError`  |  `UND_ERR_ABORTED`       | Generated if the request has been aborted by the user  |
-| `ClientDestroyedError` |  `UND_ERR_DESTROYED`     | Generated when trying to use a destroyed client.       |
-| `ClientClosedError`    |  `UND_ERR_CLOSED`        | Generated when trying to use a closed client.          |
-| `SocketError`          |  `UND_ERR_SOCKET`        | Generated if there is an error with the socket.        |
+| Error                     | Error Codes                       | Description                                |
+| --------------------------|-----------------------------------|--------------------------------------------|
+| `InvalidArgumentError`    |  `UND_ERR_INVALID_ARG`            | passed an invalid argument.                |
+| `InvalidReturnValueError` |  `UND_ERR_INVALID_RETURN_VALUE`   | returned an invalid value.                 |
+| `TimeoutError`            |  `UND_ERR_TIMEOUT`                | a request exceeds the `timeout` option.    |
+| `RequestAbortedError`     |  `UND_ERR_ABORTED`                | the request has been aborted by the user   |
+| `ClientDestroyedError`    |  `UND_ERR_DESTROYED`              | trying to use a destroyed client.          |
+| `ClientClosedError`       |  `UND_ERR_CLOSED`                 | trying to use a closed client.             |
+| `SocketError`             |  `UND_ERR_SOCKET`                 | there is an error with the socket.         |
 
 ## License
 

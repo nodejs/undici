@@ -65,6 +65,40 @@ test('pipeline invalid handler', (t) => {
   })
 })
 
+test('pipeline invalid handler return after destroy should not error', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 3
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    const dup = client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => {
+      body.on('error', (err) => {
+        t.strictEqual(err.message, 'asd')
+      })
+      dup.destroy(new Error('asd'))
+      return {}
+    })
+      .on('error', (err) => {
+        t.strictEqual(err.message, 'asd')
+      })
+      .on('close', () => {
+        t.pass()
+      })
+      .end()
+  })
+})
+
 test('pipeline error body', (t) => {
   t.plan(2)
 
@@ -183,7 +217,7 @@ test('pipeline backpressure', (t) => {
 })
 
 test('pipeline invalid handler return', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const server = createServer((req, res) => {
     req.pipe(res)
@@ -202,7 +236,20 @@ test('pipeline invalid handler return', (t) => {
       body.on('error', () => {})
     })
       .on('error', (err) => {
-        t.ok(err instanceof errors.InvalidArgumentError)
+        t.ok(err instanceof errors.InvalidReturnValueError)
+      })
+      .end()
+
+    client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => {
+      // TODO: Should body cause unhandled exception?
+      body.on('error', () => {})
+      return {}
+    })
+      .on('error', (err) => {
+        t.ok(err instanceof errors.InvalidReturnValueError)
       })
       .end()
   })
@@ -232,6 +279,37 @@ test('pipeline throw handler', (t) => {
         t.strictEqual(err.message, 'asd')
       })
       .end()
+  })
+})
+
+test('pipeline destroy and throw handler', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    const dup = client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => {
+      dup.destroy()
+      // TODO: Should body cause unhandled exception?
+      body.on('error', () => {})
+      throw new Error('asd')
+    })
+      .end()
+      .on('error', (err) => {
+        t.ok(err instanceof errors.RequestAbortedError)
+      })
+      .on('close', () => {
+        t.pass()
+      })
   })
 })
 
@@ -289,7 +367,7 @@ test('pipeline abort server res', (t) => {
 })
 
 test('pipeline abort duplex', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const server = createServer((req, res) => {
     res.end()
@@ -312,7 +390,9 @@ test('pipeline abort duplex', (t) => {
         method: 'PUT'
       }, () => {
         t.fail()
-      }).destroy()
+      }).destroy().on('error', (err) => {
+        t.ok(err instanceof errors.RequestAbortedError)
+      })
 
       client.on('reconnect', () => {
         t.pass()

@@ -20,7 +20,7 @@ test('basic get', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
+  server.listen(0, async () => {
     const client = undici(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
@@ -36,12 +36,32 @@ test('basic get', (t) => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
+
     client.close((err) => {
       t.error(err)
       client.destroy((err) => {
         t.error(err)
       })
     })
+  })
+})
+
+test('basic get error async/await', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.destroy()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = undici(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    await client.request({ path: '/', method: 'GET' })
+      .catch((err) => {
+        t.ok(err)
+      })
   })
 })
 
@@ -56,7 +76,7 @@ test('basic get with async/await', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
   const client = new Pool(`http://localhost:${server.address().port}`)
-  t.tearDown(client.close.bind(client))
+  t.tearDown(client.destroy.bind(client))
 
   const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
   t.strictEqual(statusCode, 200)
@@ -64,6 +84,80 @@ test('basic get with async/await', async (t) => {
 
   body.resume()
   await promisify(eos)(body)
+
+  await client.close()
+  await client.destroy()
+})
+
+test('stream get async/await', async (t) => {
+  const server = createServer((req, res) => {
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+  const client = new Pool(`http://localhost:${server.address().port}`)
+  t.tearDown(client.destroy.bind(client))
+
+  await client.stream({ path: '/', method: 'GET' }, ({ statusCode, headers }) => {
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
+  })
+})
+
+test('stream get error async/await', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.destroy()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = undici(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    await client.stream({ path: '/', method: 'GET' }, () => {
+
+    })
+      .catch((err) => {
+        t.ok(err)
+      })
+  })
+})
+
+test('pipeline get', (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = undici(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    const bufs = []
+    client.pipeline({ path: '/', method: 'GET' }, ({ statusCode, headers, body }) => {
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+      return body
+    })
+      .end()
+      .on('data', (buf) => {
+        bufs.push(buf)
+      })
+      .on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+  })
 })
 
 test('backpressure algorithm', (t) => {
@@ -141,3 +235,38 @@ test('backpressure algorithm', (t) => {
 })
 
 function noop () {}
+
+test('full', (t) => {
+  t.plan(8 * 6)
+
+  const server = createServer((req, res) => {
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = undici(`http://localhost:${server.address().port}`, {
+      connections: 2,
+      pipelining: 2
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    for (let n = 0; n < 8; ++n) {
+      client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+        t.error(err)
+        t.strictEqual(statusCode, 200)
+        t.strictEqual(headers['content-type'], 'text/plain')
+        const bufs = []
+        body.on('data', (buf) => {
+          bufs.push(buf)
+        })
+        body.on('end', () => {
+          t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        })
+      })
+    }
+  })
+})

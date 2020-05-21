@@ -385,7 +385,7 @@ test('Set-Cookie', (t) => {
 
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
-    res.setHeader('Set-Cookie', ['a cookie', 'another cookie'])
+    res.setHeader('Set-Cookie', ['a cookie', 'another cookie', 'more cookies'])
     res.end('hello')
   })
   t.tearDown(server.close.bind(server))
@@ -397,7 +397,7 @@ test('Set-Cookie', (t) => {
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
-      t.strictDeepEqual(headers['Set-Cookie'], ['a cookie', 'another cookie'])
+      t.strictDeepEqual(headers['Set-Cookie'], ['a cookie', 'another cookie', 'more cookies'])
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
