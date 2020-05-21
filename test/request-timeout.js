@@ -290,3 +290,55 @@ test('Timeout with pipelining', (t) => {
     })
   })
 })
+
+test('Global option', { skip: 'buggy' }, (t) => {
+  t.plan(1)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      res.end('hello')
+    }, 100)
+    clock.tick(100)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { requestTimeout: 50 })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, response) => {
+      t.ok(err instanceof errors.RequestTimeoutError)
+    })
+
+    clock.tick(50)
+  })
+})
+
+test('Request options overrides global option', { skip: 'buggy' }, (t) => {
+  t.plan(1)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      res.end('hello')
+    }, 100)
+    clock.tick(100)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { requestTimeout: 100 })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET', requestTimeout: 50 }, (err, response) => {
+      t.ok(err instanceof errors.RequestTimeoutError)
+    })
+
+    clock.tick(50)
+  })
+})
