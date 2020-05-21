@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/mcollina/undici#readme",
   "devDependencies": {
+    "@sinonjs/fake-timers": "^6.0.1",
     "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
     "https-pem": "^2.0.0",
