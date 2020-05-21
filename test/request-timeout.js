@@ -291,7 +291,7 @@ test('Timeout with pipelining', (t) => {
   })
 })
 
-test('Global option', { skip: 'buggy' }, (t) => {
+test('Global option', (t) => {
   t.plan(1)
 
   const clock = FakeTimers.install()
@@ -317,7 +317,7 @@ test('Global option', { skip: 'buggy' }, (t) => {
   })
 })
 
-test('Request options overrides global option', { skip: 'buggy' }, (t) => {
+test('Request options overrides global option', (t) => {
   t.plan(1)
 
   const clock = FakeTimers.install()
@@ -340,5 +340,43 @@ test('Request options overrides global option', { skip: 'buggy' }, (t) => {
     })
 
     clock.tick(50)
+  })
+})
+
+test('client.destroy should cancel the timeout', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+
+    client.request({ path: '/', method: 'GET', requestTimeout: 100 }, (err, response) => {
+      t.ok(err instanceof errors.ClientDestroyedError)
+    })
+
+    client.destroy(err => t.error(err))
+  })
+})
+
+test('client.close should cancel the timeout', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+
+    client.request({ path: '/', method: 'GET', requestTimeout: 100 }, (err, response) => {
+      t.ok(err instanceof errors.ClientClosedError)
+    })
+
+    client.close()
   })
 })
