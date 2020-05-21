@@ -358,25 +358,34 @@ test('client.destroy should cancel the timeout', (t) => {
       t.ok(err instanceof errors.ClientDestroyedError)
     })
 
-    client.destroy(err => t.error(err))
+    client.destroy(err => {
+      t.error(err)
+    })
   })
 })
 
-test('client.close should cancel the timeout', (t) => {
-  t.plan(1)
+test('client.close should wait for the timeout', (t) => {
+  t.plan(2)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
 
   const server = createServer((req, res) => {
-    res.end('hello')
   })
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', requestTimeout: 100 }, (err, response) => {
-      t.ok(err instanceof errors.ClientClosedError)
+      t.ok(err instanceof errors.RequestTimeoutError)
     })
 
-    client.close()
+    client.close((err) => {
+      t.error(err)
+    })
+
+    clock.tick(100)
   })
 })
