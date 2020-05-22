@@ -389,3 +389,14 @@ test('client.close should wait for the timeout', (t) => {
     clock.tick(100)
   })
 })
+
+test('Validation', (t) => {
+  t.plan(1)
+
+  const client = new Client('http://localhost:3000')
+  t.teardown(client.destroy.bind(client))
+
+  client.request({ path: '/', method: 'GET', requestTimeout: 'foobar' }, (err, response) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+})
