@@ -4,8 +4,7 @@
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && tap test/*.js --no-coverage",
-    "coverage-ui": "tap test/*.js --coverage-report=html"
+    "test": "standard | snazzy && tap test/*.js"
   },
   "repository": {
     "type": "git",
