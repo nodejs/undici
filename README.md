@@ -49,7 +49,7 @@ Options:
   Default: `30e3` milliseconds (30s).
 
 - `requestTimeout`, the timeout after which a request will time out, in
-  milliseconds.
+  milliseconds. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 
 - `maxAbortedPayload`, the maximum number of bytes read after which an
@@ -78,7 +78,7 @@ Options:
 * `headers`, an object with header-value pairs.
 * `signal`, either an `AbortController` or an `EventEmitter`.
 * `requestTimeout`, the timeout after which a request will time out, in
-  milliseconds.
+  milliseconds.  Use `0` to disable it entirely.
   Default: Global client `requestTimeout`.
 * `idempotent`, whether the requests can be safely retried or not.
   If `false` the request won't be sent until all preceeding
