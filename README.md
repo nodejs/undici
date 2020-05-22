@@ -45,7 +45,7 @@ address. The path is discarded.
 Options:
 
 - `socketTimeout`, the timeout after which a socket will time out, in
-  milliseconds.
+  milliseconds. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 
 - `requestTimeout`, the timeout after which a request will time out, in
