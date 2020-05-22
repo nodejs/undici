@@ -400,3 +400,69 @@ test('Validation', (t) => {
     t.ok(err instanceof errors.InvalidArgumentError)
   })
 })
+
+test('Disable request timeout', (t) => {
+  t.plan(2)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      res.end('hello')
+    }, 32e3)
+    clock.tick(33e3)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { requestTimeout: 0 })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, response) => {
+      t.error(err)
+      const bufs = []
+      response.body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      response.body.on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+
+    clock.tick(31e3)
+  })
+})
+
+test('Disable request timeout for a single request', (t) => {
+  t.plan(2)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      res.end('hello')
+    }, 32e3)
+    clock.tick(33e3)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET', requestTimeout: 0 }, (err, response) => {
+      t.error(err)
+      const bufs = []
+      response.body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      response.body.on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+
+    clock.tick(31e3)
+  })
+})
