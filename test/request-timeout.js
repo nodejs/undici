@@ -6,6 +6,12 @@ const { createServer } = require('http')
 const EventEmitter = require('events')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { AbortController } = require('abort-controller')
+const {
+  pipeline,
+  Readable,
+  Writable,
+  PassThrough
+} = require('stream')
 
 test('request timeout', (t) => {
   t.plan(1)
@@ -464,5 +470,165 @@ test('Disable request timeout for a single request', (t) => {
     })
 
     clock.tick(31e3)
+  })
+})
+
+test('stream timeout', (t) => {
+  t.plan(1)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      res.end('hello')
+    }, 31e3)
+    clock.tick(31e3)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET',
+      opaque: new PassThrough()
+    }, (result) => {
+      t.fail('Should not be called')
+    }, (err) => {
+      t.ok(err instanceof errors.RequestTimeoutError)
+    })
+  })
+})
+
+test('stream custom timeout', (t) => {
+  t.plan(1)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      res.end('hello')
+    }, 31e3)
+    clock.tick(31e3)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { requestTimeout: 0 })
+    t.teardown(client.destroy.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET',
+      opaque: new PassThrough(),
+      requestTimeout: 30e3
+    }, (result) => {
+      t.fail('Should not be called')
+    }, (err) => {
+      t.ok(err instanceof errors.RequestTimeoutError)
+    })
+  })
+})
+
+test('pipeline timeout', (t) => {
+  t.plan(1)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      req.pipe(res)
+    }, 31e3)
+    clock.tick(31e3)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const buf = Buffer.alloc(1e6).toString()
+    pipeline(
+      new Readable({
+        read () {
+          this.push(buf)
+          this.push(null)
+        }
+      }),
+      client.pipeline({
+        path: '/',
+        method: 'PUT'
+      }, (result) => {
+        t.fail('Should not be called')
+      }, (e) => {
+        t.fail('Should not be called')
+      }),
+      new Writable({
+        write (chunk, encoding, callback) {
+          callback()
+        },
+        final (callback) {
+          callback()
+        }
+      }),
+      (err) => {
+        t.ok(err instanceof errors.RequestTimeoutError)
+      }
+    )
+  })
+})
+
+test('pipeline timeout', (t) => {
+  t.plan(1)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      req.pipe(res)
+    }, 31e3)
+    clock.tick(31e3)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { requestTimeout: 0 })
+    t.teardown(client.destroy.bind(client))
+
+    const buf = Buffer.alloc(1e6).toString()
+    pipeline(
+      new Readable({
+        read () {
+          this.push(buf)
+          this.push(null)
+        }
+      }),
+      client.pipeline({
+        path: '/',
+        method: 'PUT',
+        requestTimeout: 30e3
+      }, (result) => {
+        t.fail('Should not be called')
+      }, (e) => {
+        t.fail('Should not be called')
+      }),
+      new Writable({
+        write (chunk, encoding, callback) {
+          callback()
+        },
+        final (callback) {
+          callback()
+        }
+      }),
+      (err) => {
+        t.ok(err instanceof errors.RequestTimeoutError)
+      }
+    )
   })
 })
