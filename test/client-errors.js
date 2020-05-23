@@ -241,7 +241,7 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
 })
 
 test('invalid options throws', (t) => {
-  t.plan(18)
+  t.plan(20)
 
   try {
     new Client(new URL('asd://asd')) // eslint-disable-line
@@ -282,11 +282,20 @@ test('invalid options throws', (t) => {
 
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      timeout: 'asd'
+      socketTimeout: 'asd'
     })
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid timeout')
+    t.strictEqual(err.message, 'invalid socketTimeout')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      requestTimeout: 'asd'
+    })
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid requestTimeout')
   }
 
   try {

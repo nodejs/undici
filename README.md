@@ -44,8 +44,12 @@ address. The path is discarded.
 
 Options:
 
-- `timeout`, the timeout after which a request will time out, in
-  milliseconds.
+- `socketTimeout`, the timeout after which a socket will time out, in
+  milliseconds. Use `0` to disable it entirely.
+  Default: `30e3` milliseconds (30s).
+
+- `requestTimeout`, the timeout after which a request will time out, in
+  milliseconds. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 
 - `maxAbortedPayload`, the maximum number of bytes read after which an
@@ -73,6 +77,9 @@ Options:
 * `body`, it can be a `String`, a `Buffer`, `Uint8Array` or a `stream.Readable`.
 * `headers`, an object with header-value pairs.
 * `signal`, either an `AbortController` or an `EventEmitter`.
+* `requestTimeout`, the timeout after which a request will time out, in
+  milliseconds.  Use `0` to disable it entirely.
+  Default: Global client `requestTimeout`.
 * `idempotent`, whether the requests can be safely retried or not.
   If `false` the request won't be sent until all preceeding
   requests in the pipeline has completed.
@@ -426,7 +433,8 @@ const { errors } = require('undici')
 | --------------------------|-----------------------------------|--------------------------------------------|
 | `InvalidArgumentError`    |  `UND_ERR_INVALID_ARG`            | passed an invalid argument.                |
 | `InvalidReturnValueError` |  `UND_ERR_INVALID_RETURN_VALUE`   | returned an invalid value.                 |
-| `TimeoutError`            |  `UND_ERR_TIMEOUT`                | a request exceeds the `timeout` option.    |
+| `SocketTimeoutError`            |  `UND_ERR_SOCKET_TIMEOUT`                | a socket exceeds the `socketTimeout` option.    |
+| `RequestTimeoutError`            |  `UND_ERR_REQUEST_TIMEOUT`                | a request exceeds the `requestTimeout` option.    |
 | `RequestAbortedError`     |  `UND_ERR_ABORTED`                | the request has been aborted by the user   |
 | `ClientDestroyedError`    |  `UND_ERR_DESTROYED`              | trying to use a destroyed client.          |
 | `ClientClosedError`       |  `UND_ERR_CLOSED`                 | trying to use a closed client.             |
