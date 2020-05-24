@@ -3,14 +3,14 @@
 const proxyquire = require('proxyquire')
 const { test } = require('tap')
 const undici = require('..')
-const { Pool } = require('..')
+const { Pool, errors } = require('..')
 const { createServer } = require('http')
 const { EventEmitter } = require('events')
 const { promisify } = require('util')
 const eos = require('stream').finished
 
 test('basic get', (t) => {
-  t.plan(8)
+  t.plan(9)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -41,13 +41,16 @@ test('basic get', (t) => {
       t.error(err)
       client.destroy((err) => {
         t.error(err)
+        client.close((err) => {
+          t.ok(err instanceof errors.ClientDestroyedError)
+        })
       })
     })
   })
 })
 
 test('basic get error async/await', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const server = createServer((req, res) => {
     res.destroy()
@@ -62,6 +65,12 @@ test('basic get error async/await', (t) => {
       .catch((err) => {
         t.ok(err)
       })
+
+    await client.destroy()
+
+    await client.close().catch((err) => {
+      t.ok(err instanceof errors.ClientDestroyedError)
+    })
   })
 })
 
