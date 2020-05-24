@@ -164,9 +164,6 @@ test('close should call callback once finished', (t) => {
     t.ok(makeRequest())
     t.ok(!makeRequest())
 
-    client.on('drain', () => {
-      t.fail()
-    })
     client.close((err) => {
       t.strictEqual(err, null)
       t.strictEqual(client.closed, true)
