@@ -272,11 +272,14 @@ For easy use with [`stream.pipeline`](https://nodejs.org/api/stream.html#stream_
 Options:
 
 * ... same as [`client.request(opts, callback)`][request].
+* `opaque`, passed as `opaque` to `handler`. Used
+  to avoid creating a closure.
 
 The `data` parameter in `handler` is defined as follow:
 
 * `statusCode`
 * `headers`
+* `opaque`
 * `body`, a `stream.Readable` with the body to read. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
