@@ -378,9 +378,6 @@ called and the client shutdown has completed.
 
 #### Events
 
-* `'drain'`, emitted when `client.size` decreases to `0` and the client
-  is not closed or destroyed.
-
 * `'connect'`, emitted when a socket has been created and
   connected. The client will connect once `client.size > 0`.
 
