@@ -23,11 +23,13 @@ test('pipeline echo', (t) => {
     t.tearDown(client.close.bind(client))
 
     let res = ''
-    const buf = Buffer.alloc(1e6).toString()
+    const buf1 = Buffer.alloc(1e3).toString()
+    const buf2 = Buffer.alloc(1e6).toString()
     pipeline(
       new Readable({
         read () {
-          this.push(buf)
+          this.push(buf1)
+          this.push(buf2)
           this.push(null)
         }
       }),
@@ -45,7 +47,7 @@ test('pipeline echo', (t) => {
           callback()
         },
         final (callback) {
-          t.strictEqual(buf, res)
+          t.strictEqual(buf1 + buf2, res)
           callback()
         }
       }),
