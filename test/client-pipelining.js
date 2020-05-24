@@ -322,7 +322,7 @@ test('errored POST body lets inflight complete', (t) => {
             t.strictEqual(data, null)
           })
           client.close((err) => {
-            t.ok(err)
+            t.error(err)
           })
           serverRes.end()
         })

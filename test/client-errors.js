@@ -574,8 +574,7 @@ test('parser error', (t) => {
     client.request({ path: '/', method: 'GET' }, (err) => {
       t.ok(err)
       client.close((err) => {
-        // TODO: This should not error.
-        t.ok(err)
+        t.error(err)
       })
     })
   })
@@ -610,7 +609,7 @@ test('socket fail while writing request body', (t) => {
       t.ok(err)
     })
     client.close((err) => {
-      t.ok(err)
+      t.error(err)
     })
   })
 })
@@ -646,9 +645,9 @@ test('socket fail while ending request body', (t) => {
       t.strictEqual(err, _err)
     })
     client.close((err) => {
-      t.ok(err)
+      t.error(err)
       client.close((err) => {
-        t.ok(err)
+        t.ok(err instanceof errors.ClientDestroyedError)
       })
     })
   })
