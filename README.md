@@ -107,6 +107,8 @@ The `data` parameter in `callback` is defined as follow:
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
 
+`headers` is an object where all keys have been lowercased.
+
 Returns a promise if no callback is provided.
 
 Example:
@@ -220,6 +222,8 @@ The `data` parameter in `factory` is defined as follow:
 * `headers`
 * `opaque`
 
+`headers` is an object where all keys have been lowercased.
+
 Returns a promise if no callback is provided.
 
 ```js
@@ -288,6 +292,8 @@ The `data` parameter in `handler` is defined as follow:
 written to. Usually it should just return the `body` argument unless
 some kind of transformation needs to be performed based on e.g.
 `headers` or `statusCode`.
+
+`headers` is an object where all keys have been lowercased.
 
 The `handler` should validate the response and save any
 required state. If there is an error it should be thrown.

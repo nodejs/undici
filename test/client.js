@@ -13,7 +13,7 @@ test('basic get', (t) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual('localhost', req.headers.host)
-    res.setHeader('content-type', 'text/plain')
+    res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
   t.tearDown(server.close.bind(server))
@@ -397,7 +397,7 @@ test('Set-Cookie', (t) => {
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
-      t.strictDeepEqual(headers['Set-Cookie'], ['a cookie', 'another cookie', 'more cookies'])
+      t.strictDeepEqual(headers['set-cookie'], ['a cookie', 'another cookie', 'more cookies'])
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
