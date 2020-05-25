@@ -440,6 +440,10 @@ const { errors } = require('undici')
 | `ClientClosedError`       |  `UND_ERR_CLOSED`                 | trying to use a closed client.             |
 | `SocketError`             |  `UND_ERR_SOCKET`                 | there is an error with the socket.         |
 
+## Collaborators
+
+* [__Robert Nagy__](https://github.com/ronag), <https://www.npmjs.com/~ronag>
+
 ## License
 
 MIT

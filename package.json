@@ -11,6 +11,13 @@
     "url": "git+https://github.com/mcollina/undici.git"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
+  "contributors": [
+    {
+      "name": "Robert Nagy",
+      "url": "https://github.com/ronag",
+      "author": true
+    }
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/mcollina/undici/issues"
