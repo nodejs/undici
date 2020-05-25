@@ -241,14 +241,7 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
 })
 
 test('invalid options throws', (t) => {
-  t.plan(20)
-
-  try {
-    new Client(new URL('asd://asd')) // eslint-disable-line
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid port')
-  }
+  t.plan(18)
 
   try {
     new Client(new URL('http://asd:200/somepath')) // eslint-disable-line
@@ -790,5 +783,37 @@ test('invalid opts', (t) => {
     client.enqueue({ path: '/', method: 'GET', signal: {} }, null)
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
+  }
+})
+
+test('default port for http and https', (t) => {
+  t.plan(4)
+
+  try {
+    new Client(new URL('http://localhost:80')) // eslint-disable-line
+    t.pass('Should not throw')
+  } catch (err) {
+    t.fail(err)
+  }
+
+  try {
+    new Client(new URL('http://localhost')) // eslint-disable-line
+    t.pass('Should not throw')
+  } catch (err) {
+    t.fail(err)
+  }
+
+  try {
+    new Client(new URL('https://localhost:443')) // eslint-disable-line
+    t.pass('Should not throw')
+  } catch (err) {
+    t.fail(err)
+  }
+
+  try {
+    new Client(new URL('https://localhost')) // eslint-disable-line
+    t.pass('Should not throw')
+  } catch (err) {
+    t.fail(err)
   }
 })
