@@ -543,9 +543,7 @@ test('300 requests succeed', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1
-    })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
     for (let n = 0; n < 300; ++n) {
@@ -597,9 +595,7 @@ test('increase pipelining', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1
-    })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
     client.request({

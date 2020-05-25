@@ -17,9 +17,8 @@ test('close waits for queued requests to finish', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1
-    })
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, function (err, data) {
       onRequest(err, data)
@@ -63,12 +62,13 @@ test('destroy invoked all pending callbacks', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
+    t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.error(err)
       data.body.on('error', (err) => {
         t.ok(err)
-      })
+      }).resume()
       client.destroy()
     })
     client.request({ path: '/', method: 'GET' }, (err) => {
@@ -89,9 +89,8 @@ test('close waits until socket is destroyed', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1
-    })
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
 
     makeRequest()
 
@@ -124,9 +123,8 @@ test('close should still reconnect', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1
-    })
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
 
     t.ok(makeRequest())
     t.ok(!makeRequest())
@@ -150,16 +148,15 @@ test('close should call callback once finished', (t) => {
   t.plan(6)
 
   const server = createServer((req, res) => {
-    setTimeout(function () {
+    setImmediate(function () {
       res.end(req.url)
-    }, 10)
+    })
   })
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1
-    })
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
 
     t.ok(makeRequest())
     t.ok(!makeRequest())
@@ -179,15 +176,17 @@ test('close should call callback once finished', (t) => {
 })
 
 test('closed and destroyed errors', (t) => {
-  t.plan(3)
+  t.plan(4)
 
-  const client = new Client('http://localhost:4000', {
-    pipelining: 1
-  })
+  const client = new Client('http://localhost:4000')
+  t.tearDown(client.destroy.bind(client))
+
   client.request({ path: '/', method: 'GET' }, (err) => {
     t.ok(err)
   })
-  client.close()
+  client.close((err) => {
+    t.error(err)
+  })
   client.request({}, (err) => {
     t.ok(err instanceof errors.ClientClosedError)
     client.destroy()
@@ -201,6 +200,8 @@ test('close after and destroy should error', (t) => {
   t.plan(2)
 
   const client = new Client('http://localhost:4000')
+  t.tearDown(client.destroy.bind(client))
+
   client.destroy()
   client.close((err) => {
     t.ok(err instanceof errors.ClientDestroyedError)

@@ -394,11 +394,16 @@ test('pipelining non-idempotent w body', (t) => {
     t.tearDown(client.close.bind(client))
 
     let ended = false
+    let reading = false
     client.request({
       path: '/',
       method: 'POST',
       body: new Readable({
         read () {
+          if (reading) {
+            return
+          }
+          reading = true
           this.push('asd')
           setImmediate(() => {
             this.push(null)

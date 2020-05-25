@@ -329,7 +329,7 @@ test('POST which fails should error response', (t) => {
 
   const server = createServer()
   server.on('request', (req, res) => {
-    req.on('data', () => {
+    req.once('data', () => {
       res.destroy()
     })
   })
@@ -349,10 +349,8 @@ test('POST which fails should error response', (t) => {
     }
 
     {
-      const body = new Readable()
-      body._read = () => {
-        body.push('asd')
-      }
+      const body = new Readable({ read () {} })
+      body.push('asd')
       body.on('error', (err) => {
         checkError(err)
       })
@@ -367,10 +365,8 @@ test('POST which fails should error response', (t) => {
     }
 
     {
-      const body = new Readable()
-      body._read = () => {
-        body.push('asd')
-      }
+      const body = new Readable({ read () {} })
+      body.push('asd')
       body.on('error', (err) => {
         checkError(err)
       })
@@ -408,10 +404,8 @@ test('client destroy cleanup', (t) => {
     client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
-    const body = new Readable()
-    body._read = () => {
-      body.push('asd')
-    }
+    const body = new Readable({ read () {} })
+    body.push('asd')
     body.on('error', (err) => {
       t.strictEqual(err, _err)
     })
