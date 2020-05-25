@@ -25,7 +25,7 @@ test('multiple reconnect', (t) => {
   })
 
   let n = 0
-  client.on('reconnect', () => {
+  client.on('disconnect', () => {
     if (n++ === 1) {
       t.pass()
       server.listen(5555)

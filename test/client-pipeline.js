@@ -396,7 +396,7 @@ test('pipeline abort duplex', (t) => {
         t.ok(err instanceof errors.RequestAbortedError)
       })
 
-      client.on('reconnect', () => {
+      client.on('disconnect', () => {
         t.pass()
       })
     })
