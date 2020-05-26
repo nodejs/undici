@@ -4,7 +4,9 @@
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && tap test/*.js --100"
+    "lint": "standard | snazzy",
+    "test": "tap test/*.js --no-coverage",
+    "coverage": "standard | snazzy && tap test/*.js"
   },
   "repository": {
     "type": "git",
@@ -36,5 +38,8 @@
   },
   "dependencies": {
     "http-parser-js": "^0.5.2"
-  }
+  },
+  "pre-commit": [
+    "coverage"
+  ]
 }
