@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "standard | snazzy",
     "test": "tap test/*.js --no-coverage",
-    "coverage": "standard | snazzy && tap test/*.js --100 --no-ts --no-jsx --no-flow --no-esm"
+    "coverage": "standard | snazzy && tap test/*.js"
   },
   "repository": {
     "type": "git",
