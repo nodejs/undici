@@ -39,5 +39,7 @@
   "dependencies": {
     "http-parser-js": "^0.5.2"
   },
-  "pre-commit": ["coverage"]
+  "pre-commit": [
+    "coverage"
+  ]
 }

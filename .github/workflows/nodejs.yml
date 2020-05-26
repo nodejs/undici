@@ -30,4 +30,4 @@ jobs:
 
     - name: Unit test
       run: |
-        npm coverage
+        npm run coverage
