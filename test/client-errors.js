@@ -469,7 +469,7 @@ test('reset parser', (t) => {
         t.ok(err)
       })
     })
-    client.once('reconnect', () => {
+    client.once('disconnect', () => {
       client.request({ path: '/', method: 'GET' }, (err, { body }) => {
         t.error(err)
         res2.destroy()

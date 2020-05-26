@@ -390,8 +390,10 @@ called and the client shutdown has completed.
 * `'connect'`, emitted when a socket has been created and
   connected. The client will connect once `client.size > 0`.
 
-* `'reconnect'`, emitted when socket has disconnected. The
-  client will reconnect if or once `client.size > 0`.
+* `'disconnect'`, emitted when socket has disconnected. The
+  first argument of the event is the error which caused the
+  socket to disconnect. The client will reconnect if or once 
+  `client.size > 0`.
 
 <a name='pool'></a>
 ### `new undici.Pool(url, opts)`

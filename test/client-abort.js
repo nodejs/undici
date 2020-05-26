@@ -49,7 +49,7 @@ test('aborted GET maxAbortedPayload reset', (t) => {
     })
     t.tearDown(client.close.bind(client))
 
-    client.on('reconnect', () => {
+    client.on('disconnect', () => {
       t.fail()
     })
 
@@ -121,7 +121,7 @@ test('aborted GET maxAbortedPayload', (t) => {
         .on('error', () => {})
     })
 
-    client.on('reconnect', () => {
+    client.on('disconnect', () => {
       t.pass()
     })
 
@@ -168,7 +168,7 @@ test('aborted GET maxAbortedPayload less than HWM', (t) => {
         .on('error', () => {})
     })
 
-    client.on('reconnect', () => {
+    client.on('disconnect', () => {
       t.fail()
     })
 
