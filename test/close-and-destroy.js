@@ -107,9 +107,10 @@ test('close waits until socket is destroyed', (t) => {
     })
 
     function makeRequest () {
-      return client.request({ path: '/', method: 'GET' }, (err, data) => {
+      client.request({ path: '/', method: 'GET' }, (err, data) => {
         t.error(err instanceof errors.ClientClosedError)
       })
+      return !client.full
     }
   })
 })
@@ -136,10 +137,11 @@ test('close should still reconnect', (t) => {
     client[kSocket].destroy()
 
     function makeRequest () {
-      return client.request({ path: '/', method: 'GET' }, (err, data) => {
+      client.request({ path: '/', method: 'GET' }, (err, data) => {
         data.body.resume()
         t.error(err)
       })
+      return !client.full
     }
   })
 })
@@ -167,10 +169,11 @@ test('close should call callback once finished', (t) => {
     })
 
     function makeRequest () {
-      return client.request({ path: '/', method: 'GET' }, (err, data) => {
+      client.request({ path: '/', method: 'GET' }, (err, data) => {
         t.error(err)
         data.body.resume()
       })
+      return !client.full
     }
   })
 })

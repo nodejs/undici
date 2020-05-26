@@ -102,6 +102,7 @@ test('20 times HEAD with pipelining 10', (t) => {
           t.ok(countGreaterThanOne, 'seen more than one parallel request')
         }
       })
+      return !client.full
     }
   })
 })
@@ -145,15 +146,17 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
 
     for (; sent < 2;) {
       t.notOk(client.full, 'client is not full')
-      t.ok(makeRequest(), 'we can send more requests')
+      makeRequest()
+      t.ok(!client.full, 'we can send more requests')
     }
 
     t.notOk(client.full, 'client is full')
-    t.notOk(makeRequest(), 'we must stop now')
+    makeRequest()
+    t.ok(client.full, 'we must stop now')
     t.ok(client.full, 'client is full')
 
     function makeRequest () {
-      return makeRequestAndExpectUrl(client, sent++, t, () => {
+      makeRequestAndExpectUrl(client, sent++, t, () => {
         count--
         process.nextTick(() => {
           if (client.size === 0) {
@@ -166,6 +169,7 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
           }
         })
       })
+      return !client.full
     }
   })
 })
@@ -185,8 +189,7 @@ test('pipeline 1 is 1 active request', (t) => {
       pipelining: 1
     })
     t.tearDown(client.destroy.bind(client))
-
-    t.ok(client.request({
+    client.request({
       path: '/',
       method: 'GET'
     }, (err, data) => {
@@ -208,7 +211,8 @@ test('pipeline 1 is 1 active request', (t) => {
       }))
       data.body.resume()
       res2.end()
-    }))
+    })
+    t.ok(!client.full)
     t.strictEqual(client.size, 1)
   })
 })
