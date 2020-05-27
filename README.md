@@ -45,11 +45,12 @@ address. The path is discarded.
 Options:
 
 - `socketTimeout`, the timeout after which a socket will time out, in
-  milliseconds. Use `0` to disable it entirely.
-  Default: `30e3` milliseconds (30s).
+  milliseconds. Monitors time between activity on a connected socket.
+  Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 
 - `requestTimeout`, the timeout after which a request will time out, in
-  milliseconds. Use `0` to disable it entirely.
+  milliseconds. Monitors time between request being enqueued and receiving
+  a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 
 - `maxAbortedPayload`, the maximum number of bytes read after which an
@@ -78,8 +79,9 @@ Options:
 * `headers`, an object with header-value pairs.
 * `signal`, either an `AbortController` or an `EventEmitter`.
 * `requestTimeout`, the timeout after which a request will time out, in
-  milliseconds.  Use `0` to disable it entirely.
-  Default: Global client `requestTimeout`.
+  milliseconds. Monitors time between request being enqueued and receiving
+  a response. Use `0` to disable it entirely.
+  Default: `30e3` milliseconds (30s).
 * `idempotent`, whether the requests can be safely retried or not.
   If `false` the request won't be sent until all preceeding
   requests in the pipeline has completed.
