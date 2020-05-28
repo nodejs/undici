@@ -401,7 +401,6 @@ called and the client shutdown has completed.
 ### `new undici.Pool(url, opts)`
 
 A pool of [`Client`][] connected to the same upstream target.
-A pool creates a fixed number of [`Client`][]
 
 Options:
 
@@ -450,6 +449,62 @@ const { errors } = require('undici')
 | `ClientClosedError`       |  `UND_ERR_CLOSED`                 | trying to use a closed client.                 |
 | `SocketError`             |  `UND_ERR_SOCKET`                 | there is an error with the socket.             |
 | `NotSupportedError`       |  `UND_ERR_NOT_SUPPORTED`          | encountered unsupported functionality.         |
+
+## Specification Compliance
+
+This section documents parts of the HTTP/1.1 specification which Undici does 
+not support or does not fully implement.
+
+### Informational Responses
+
+Undici does not support 1xx informational responses and will either
+ignore or error them.
+
+#### Expect
+
+Undici does not support the `Expect` request header field. The request
+body is  always immediately sent and the `100 Continue` response will be 
+ignored.
+
+Refs: https://tools.ietf.org/html/rfc7231#section-5.1.1
+
+#### Upgrade
+
+Undici does not support the the `Upgrade` request header field. A 
+`101 Switching Protocols` response will cause an `UND_ERR_NOT_SUPPORTED` error.
+
+Refs: https://tools.ietf.org/html/rfc7230#section-6.7
+
+#### Hints
+
+Undici does not support early hints. A `103 Early Hint` response will
+be ignored.
+
+Refs: https://tools.ietf.org/html/rfc8297
+
+### Trailer
+
+Undici does not support the the `Trailer` response header field. Any response
+trailer headers will be ignored.
+
+Refs: https://tools.ietf.org/html/rfc7230#section-4.4
+
+### Pipelining
+
+Uncidi will only use pipelining if configured with a `pipelining` factor 
+greater than `1`.
+
+Undici always assumes that connections are persistent and will immediatly 
+pipeline requests, without checking whether the connection is persistent.
+Hence, automatic fallback to HTTP/1.0 or HTTP/1.1 without pipelining is 
+not supported.
+
+Undici will immediately pipeline when retrying requests afters a failed
+connection. However, Undici will not retry the first remaining requests in
+the prior pipeline and instead error the corresponding callback/promise/stream.
+
+Refs: https://tools.ietf.org/html/rfc2616#section-8.1.2.2
+Refs: https://tools.ietf.org/html/rfc7230#section-6.3.2
 
 ## Collaborators
 
