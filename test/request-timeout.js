@@ -39,6 +39,36 @@ test('request timeout', (t) => {
   })
 })
 
+test('request timeout immutable opts', (t) => {
+  t.plan(2)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      res.end('hello')
+    }, 100)
+    clock.tick(100)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      requestTimeout: 50
+    })
+    t.teardown(client.destroy.bind(client))
+
+    const opts = { path: '/', method: 'GET' }
+    client.request(opts, (err, response) => {
+      t.ok(err instanceof errors.RequestTimeoutError)
+      t.strictEqual(opts.requestTimeout, undefined)
+    })
+
+    clock.tick(50)
+  })
+})
+
 test('Subsequent request starves', (t) => {
   t.plan(2)
 
