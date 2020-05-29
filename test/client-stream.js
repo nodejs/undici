@@ -341,3 +341,26 @@ test('stream server side destroy', (t) => {
     })
   })
 })
+
+test('stream invalid return', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.write('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      return {}
+    }, (err) => {
+      t.ok(err instanceof errors.InvalidReturnValueError)
+    })
+  })
+})
