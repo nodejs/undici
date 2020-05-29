@@ -480,8 +480,8 @@ test('reset parser', (t) => {
       })
 
       client.on('connect', () => {
-        t.ok(!client[kParser].chunk)
-        t.ok(!client[kParser].offset)
+        t.ok(!client[kSocket][kParser].chunk)
+        t.ok(!client[kSocket][kParser].offset)
       })
     })
   })
