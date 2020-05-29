@@ -33,7 +33,8 @@ const undiciOptions = {
 
 const pool = undici(`http://${httpOptions.hostname}:${httpOptions.port}`, {
   connections: 100,
-  pipelining: 10
+  pipelining: 10,
+  requestTimeout: 0
 })
 
 const suite = new Benchmark.Suite()
