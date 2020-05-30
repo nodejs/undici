@@ -459,3 +459,32 @@ test('pipeline abort server res after headers', (t) => {
       .end()
   })
 })
+
+test('pipeline w/ write abort server res after headers', (t) => {
+  t.plan(1)
+
+  let _res
+  const server = createServer((req, res) => {
+    req.pipe(res)
+    _res = res
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.pipeline({
+      path: '/',
+      method: 'PUT'
+    }, (data) => {
+      _res.destroy()
+      return data.body
+    })
+      .on('error', (err) => {
+        t.ok(err instanceof errors.SocketError)
+      })
+      .resume()
+      .write('asd')
+  })
+})
