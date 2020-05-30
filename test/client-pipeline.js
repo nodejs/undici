@@ -426,7 +426,78 @@ test('pipeline abort piped res', (t) => {
       return pipeline(body, pt, () => {})
     })
       .on('error', (err) => {
+        // Node < 13 doesn't always detect premature close.
+        if (process.versions.node.split('.')[0] < 13) {
+          t.ok(err instanceof errors.RequestAbortedError)
+        } else {
+          t.strictEqual(err.code, 'ERR_STREAM_PREMATURE_CLOSE')
+        }
+      })
+      .end()
+  })
+})
+
+test('pipeline abort piped res 2', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.write('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => {
+      const pt = new PassThrough()
+      body.on('error', (err) => {
         t.ok(err instanceof errors.RequestAbortedError)
+      })
+      setImmediate(() => {
+        pt.destroy()
+      })
+      body.pipe(pt)
+      return pt
+    })
+      .on('error', (err) => {
+        t.ok(err instanceof errors.RequestAbortedError)
+      })
+      .end()
+  })
+})
+
+test('pipeline abort piped res 3', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.write('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => {
+      const pt = new PassThrough()
+      body.on('error', (err) => {
+        t.strictEqual(err.message, 'asd')
+      })
+      setImmediate(() => {
+        pt.destroy(new Error('asd'))
+      })
+      body.pipe(pt)
+      return pt
+    })
+      .on('error', (err) => {
+        t.strictEqual(err.message, 'asd')
       })
       .end()
   })
