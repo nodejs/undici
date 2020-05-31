@@ -559,3 +559,45 @@ test('pipeline w/ write abort server res after headers', (t) => {
       .write('asd')
   })
 })
+
+test('destroy in push', (t) => {
+  t.plan(3)
+
+  let _res
+  const server = createServer((req, res) => {
+    res.write('asd')
+    _res = res
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.pipeline({ path: '/', method: 'GET' }, ({ body }) => {
+      body.once('data', () => {
+        _res.write('asd')
+        body.on('data', (buf) => {
+          body.destroy()
+          _res.end()
+        }).on('error', (err) => {
+          t.ok(err)
+        })
+      })
+      return body
+    }).on('error', (err) => {
+      t.ok(err)
+    }).resume().end()
+
+    client.pipeline({ path: '/', method: 'GET' }, ({ body }) => {
+      let buf = ''
+      body.on('data', (chunk) => {
+        buf = chunk.toString()
+        _res.end()
+      }).on('end', () => {
+        t.strictEqual('asd', buf)
+      })
+      return body
+    }).resume().end()
+  })
+})

@@ -627,3 +627,43 @@ test('increase pipelining', (t) => {
     })
   })
 })
+
+test('destroy in push', (t) => {
+  t.plan(4)
+
+  let _res
+  const server = createServer((req, res) => {
+    res.write('asd')
+    _res = res
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, { body }) => {
+      t.error(err)
+      body.once('data', () => {
+        _res.write('asd')
+        body.on('data', (buf) => {
+          body.destroy()
+          _res.end()
+        }).on('error', (err) => {
+          t.ok(err)
+        })
+      })
+    })
+
+    client.request({ path: '/', method: 'GET' }, (err, { body }) => {
+      t.error(err)
+      let buf = ''
+      body.on('data', (chunk) => {
+        buf = chunk.toString()
+        _res.end()
+      }).on('end', () => {
+        t.strictEqual('asd', buf)
+      })
+    })
+  })
+})
