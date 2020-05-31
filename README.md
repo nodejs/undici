@@ -347,7 +347,7 @@ Returns a promise if no callback is provided.
 <a name='destroy'></a>
 #### `client.destroy([err][, callback])`
 
-Destroy the client abruptly with the given `err`. All the current and enqueued
+Destroy the client abruptly with the given `err`. All the pending and running
 requests will be aborted and error. Waits until socket is closed before
 invoking the callback.
 
@@ -367,7 +367,7 @@ Number of inflight requests.
 
 #### `client.size`
 
-Number of queued and inflight requests.
+Number of pending and running requests.
 
 #### `client.connected`
 
