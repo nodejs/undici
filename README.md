@@ -19,7 +19,7 @@ npm i undici
 
 ## Benchmarks
 
-Machine: 2.7 GHz Quad-Core Intel Core i7
+Machine: 2.7 GHz Quad-Core Intel Core i7<br/>
 Configuration: Node v14.2, HTTP/1.1 without TLS, 100 connections
 
 ```
@@ -506,7 +506,7 @@ Undici will immediately pipeline when retrying requests afters a failed
 connection. However, Undici will not retry the first remaining requests in
 the prior pipeline and instead error the corresponding callback/promise/stream.
 
-Refs: https://tools.ietf.org/html/rfc2616#section-8.1.2.2
+Refs: https://tools.ietf.org/html/rfc2616#section-8.1.2.2<br/>
 Refs: https://tools.ietf.org/html/rfc7230#section-6.3.2
 
 ## Collaborators
