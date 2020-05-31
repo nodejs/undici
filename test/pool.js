@@ -279,3 +279,28 @@ test('full', (t) => {
     }
   })
 })
+
+test('invalid options throws', (t) => {
+  t.plan(6)
+
+  try {
+    new Pool(null, { connections: 0 }) // eslint-disable-line
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid connections')
+  }
+
+  try {
+    new Pool(null, { connections: -1 }) // eslint-disable-line
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid connections')
+  }
+
+  try {
+    new Pool(null, { connections: true }) // eslint-disable-line
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid connections')
+  }
+})
