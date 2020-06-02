@@ -270,6 +270,7 @@ test('basic POST with stream', (t) => {
       headers: {
         'content-length': Buffer.byteLength(expected)
       },
+      requestTimeout: 0,
       body: createReadStream(__filename)
     }, (err, { statusCode, headers, body }) => {
       t.error(err)
