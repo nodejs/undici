@@ -127,12 +127,12 @@ client.request({
     // handle this in some way!
     return
   }
+
   const {
     statusCode,
     headers,
     body
   } = data
-
 
   console.log('response received', statusCode)
   console.log('headers', headers)
