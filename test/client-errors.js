@@ -8,7 +8,8 @@ const { Readable } = require('stream')
 
 const {
   kParser,
-  kSocket
+  kSocket,
+  kEnqueue
 } = require('../lib/symbols')
 
 test('GET errors and reconnect with pipelining 1', (t) => {
@@ -787,17 +788,17 @@ test('invalid opts', (t) => {
   client.pipeline(null).on('error', (err) => {
     t.ok(err instanceof errors.InvalidArgumentError)
   })
-  client.enqueue(null, (err) => {
+  client[kEnqueue](null, (err) => {
     t.ok(err instanceof errors.InvalidArgumentError)
   })
-  client.enqueue({ path: '/', method: 'GET', signal: 1 }, (err) => {
+  client[kEnqueue]({ path: '/', method: 'GET', signal: 1 }, (err) => {
     t.ok(err instanceof errors.InvalidArgumentError)
   })
-  client.enqueue({ path: '/', method: 'GET', signal: {} }, (err) => {
+  client[kEnqueue]({ path: '/', method: 'GET', signal: {} }, (err) => {
     t.ok(err instanceof errors.InvalidArgumentError)
   })
   try {
-    client.enqueue({ path: '/', method: 'GET', signal: {} }, null)
+    client[kEnqueue]({ path: '/', method: 'GET', signal: {} }, null)
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
   }
