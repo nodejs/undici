@@ -601,3 +601,15 @@ test('destroy in push', (t) => {
     }).resume().end()
   })
 })
+
+test('pipeline args validation', (t) => {
+  t.plan(2)
+
+  const client = new Client('http://localhost:5000')
+
+  const ret = client.pipeline(null, () => {})
+  ret.on('error', (err) => {
+    t.ok(/opts/.test(err.message))
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+})
