@@ -613,3 +613,28 @@ test('pipeline args validation', (t) => {
     t.ok(err instanceof errors.InvalidArgumentError)
   })
 })
+
+test('pipeline factory throw not unhandled', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.write('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, (data) => {
+      throw new Error('asd')
+    })
+      .on('error', (err) => {
+        t.ok(err)
+      })
+      .end()
+  })
+})
