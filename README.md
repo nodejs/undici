@@ -182,7 +182,6 @@ Alternatively, any `EventEmitter` that emits an `'abort'` event may be used as a
 const EventEmitter = require('events')
 const { Client } = require('undici')
 
-
 const client = new Client'http://localhost:3000')
 const ee = new EventEmitter()
 
