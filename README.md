@@ -39,8 +39,8 @@ The benchmark is a simple `hello world` [example](benchmarks/index.js).
 A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection.
 Keepalive is enabled by default, and it cannot be turned off.
 
-The `url` will be used to extract the protocol and the domain/IP
-address. The path is discarded.
+`url` can be a string or a [`URL`](https://nodejs.org/api/url.html#url_class_url) object.
+It should only include the protocol, the domain/IP address, and the port.
 
 Options:
 
@@ -289,8 +289,8 @@ The `data` parameter in `handler` is defined as follow:
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
 
-`handler` should return a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) to which the response will be
-written to. Usually it should just return the `body` argument unless
+`handler` should return a [`Readable`](https://nodejs.org/api/stream.html#stream_class_stream_readable) from which the result will be
+read. Usually it should just return the `body` argument unless
 some kind of transformation needs to be performed based on e.g.
 `headers` or `statusCode`.
 
@@ -324,7 +324,7 @@ stream.pipeline(
 
     return body
   }),
-  fs.createReadStream('response.raw'),
+  fs.createWriteStream('response.raw'),
   (err) => {
     if (err) {
       console.error('failed')
