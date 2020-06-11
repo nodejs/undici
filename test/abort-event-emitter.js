@@ -5,9 +5,10 @@ const EventEmitter = require('events')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { createReadStream } = require('fs')
+const { Readable } = require('stream')
 
 test('Abort before sending request (no body)', (t) => {
-  t.plan(3)
+  t.plan(4)
 
   let count = 0
   const server = createServer((req, res) => {
@@ -36,7 +37,16 @@ test('Abort before sending request (no body)', (t) => {
       })
     })
 
-    client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
+    const body = new Readable({ read () { } })
+    body.on('error', (err) => {
+      t.ok(err instanceof errors.RequestAbortedError)
+    })
+    client.request({
+      path: '/',
+      method: 'GET',
+      signal: ee,
+      body
+    }, (err, response) => {
       t.ok(err instanceof errors.RequestAbortedError)
     })
 
