@@ -5,6 +5,7 @@ const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
 const { Readable } = require('stream')
+const { kSocket } = require('../lib/symbols')
 
 test('basic get', (t) => {
   t.plan(7)
@@ -155,16 +156,17 @@ test('basic POST with string', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    client.request({ path: '/', method: 'POST', body: expected }, (err, { statusCode, headers, body }) => {
+    client.request({ path: '/', method: 'POST', body: expected }, (err, data) => {
       t.error(err)
-      t.strictEqual(statusCode, 200)
+      t.strictEqual(data.statusCode, 200)
       const bufs = []
-      body.on('data', (buf) => {
-        bufs.push(buf)
-      })
-      body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
-      })
+      data.body
+        .on('data', (buf) => {
+          bufs.push(buf)
+        })
+        .on('end', () => {
+          t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        })
     })
   })
 })
@@ -666,5 +668,27 @@ test('destroy in push', (t) => {
         t.strictEqual('asd', buf)
       })
     })
+  })
+})
+
+test('non recoverable socket error fails pending request', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.strictEqual(err.message, 'kaboom')
+    })
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.strictEqual(err.message, 'kaboom')
+    })
+    client[kSocket].destroy(new Error('kaboom'))
   })
 })
