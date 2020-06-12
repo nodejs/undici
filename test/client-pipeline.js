@@ -662,3 +662,32 @@ test('pipeline destroy before dispatch', (t) => {
       .destroy()
   })
 })
+
+test('pipeline legacy stream', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.write(Buffer.alloc(16e3))
+    setImmediate(() => {
+      res.end(Buffer.alloc(16e3))
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client
+      .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
+        const pt = new PassThrough()
+        pt.pause = null
+        return body.pipe(pt)
+      })
+      .resume()
+      .on('end', () => {
+        t.pass()
+      })
+      .end()
+  })
+})
