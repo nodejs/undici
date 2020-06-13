@@ -6,6 +6,7 @@ const { createServer } = require('http')
 const {
   pipeline,
   Readable,
+  Transform,
   Writable,
   PassThrough
 } = require('stream')
@@ -687,6 +688,34 @@ test('pipeline legacy stream', (t) => {
       .resume()
       .on('end', () => {
         t.pass()
+      })
+      .end()
+  })
+})
+
+test('pipeline objectMode', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify({ asd: 1 }))
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client
+      .pipeline({ path: '/', method: 'GET', objectMode: true }, ({ body }) => {
+        return pipeline(body, new Transform({
+          readableObjectMode: true,
+          transform (chunk, encoding, callback) {
+            callback(null, JSON.parse(chunk))
+          }
+        }), () => {})
+      })
+      .on('data', data => {
+        t.strictDeepEqual(data, { asd: 1 })
       })
       .end()
   })

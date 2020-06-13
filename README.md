@@ -276,6 +276,7 @@ For easy use with [`stream.pipeline`](https://nodejs.org/api/stream.html#stream_
 Options:
 
 * ... same as [`client.request(opts, callback)`][request].
+* `objectMode`, `true` if the `handler` will return an object stream.
 * `opaque`, passed as `opaque` to `handler`. Used
   to avoid creating a closure.
 
