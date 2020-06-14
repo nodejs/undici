@@ -19,7 +19,7 @@ const httpOptions = {
   hostname: 'localhost',
   method: 'GET',
   path: '/',
-  port: 3000,
+  port: 3009,
   agent: new http.Agent({
     keepAlive: true,
     maxSockets: 100
