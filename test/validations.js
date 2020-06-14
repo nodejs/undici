@@ -35,20 +35,14 @@ server.listen(0, () => {
   })
 
   test('method', (t) => {
-    t.plan(6)
+    t.plan(3)
 
     const client = new Client(url)
     t.tearDown(client.close.bind(client))
 
     client.request({ path: '/', method: null }, (err, res) => {
       t.ok(err instanceof errors.InvalidArgumentError)
-      t.strictEqual(err.message, 'method must be a valid method')
-      t.strictEqual(res, null)
-    })
-
-    client.request({ path: '/', method: 'WOOW' }, (err, res) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
-      t.strictEqual(err.message, 'method must be a valid method')
+      t.strictEqual(err.message, 'method must be a string')
       t.strictEqual(res, null)
     })
   })
