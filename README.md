@@ -41,6 +41,7 @@ Keepalive is enabled by default, and it cannot be turned off.
 
 `url` can be a string or a [`URL`](https://nodejs.org/api/url.html#url_class_url) object.
 It should only include the protocol, hostname, and the port.
+
 Options:
 
 - `socketTimeout`, the timeout after which a socket will time out, in
