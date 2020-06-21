@@ -6,6 +6,7 @@ const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
 const { Readable } = require('stream')
 const { kSocket } = require('../lib/symbols')
+const EE = require('events')
 
 test('basic get', (t) => {
   t.plan(7)
@@ -283,6 +284,53 @@ test('basic POST with stream', (t) => {
       })
       body.on('end', () => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
+test('basic POST with custom stream', (t) => {
+  t.plan(6)
+
+  const expected = readFileSync(__filename, 'utf8')
+
+  const server = createServer(postServer(t, expected))
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const body = new EE()
+    body.pipe = () => {}
+    client.request({
+      path: '/',
+      method: 'POST',
+      headers: {
+        'content-length': Buffer.byteLength(expected)
+      },
+      requestTimeout: 0,
+      body
+    }, (err, data) => {
+      t.error(err)
+      t.strictEqual(data.statusCode, 200)
+      const bufs = []
+      data.body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      data.body.on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+
+    body.on('close', () => {
+      body.emit('end')
+    })
+
+    client.on('connect', () => {
+      setImmediate(() => {
+        body.emit('data', expected)
+        body.emit('close')
       })
     })
   })
