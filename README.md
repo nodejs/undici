@@ -161,7 +161,7 @@ To use `AbortController`, you will need to `npm i abort-controller`.
 const { AbortController } = require('abort-controller')
 const { Client } = require('undici')
 
-const client = new Client'http://localhost:3000')
+const client = new Client('http://localhost:3000')
 const abortController = new AbortController()
 
 client.request({
