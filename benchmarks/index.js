@@ -1,5 +1,5 @@
 'use strict'
-const { PassThrough } = require('stream')
+const { Writable } = require('stream')
 const http = require('http')
 const Benchmark = require('benchmark')
 const undici = require('..')
@@ -44,7 +44,11 @@ suite
     defer: true,
     fn: deferred => {
       http.get(httpOptions, response => {
-        const stream = new PassThrough()
+        const stream = new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })
         stream.once('finish', () => {
           deferred.resolve()
         })
@@ -61,7 +65,11 @@ suite
           throw error
         }
 
-        const stream = new PassThrough()
+        const stream = new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })
         stream.once('finish', () => {
           deferred.resolve()
         })
@@ -81,7 +89,11 @@ suite
           throw err
         })
         .end()
-        .pipe(new PassThrough())
+        .pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        }))
         .on('error', (err) => {
           throw err
         })
@@ -94,7 +106,11 @@ suite
     defer: true,
     fn: deferred => {
       pool.stream(undiciOptions, () => {
-        const stream = new PassThrough()
+        const stream = new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })
         stream.once('finish', () => {
           deferred.resolve()
         })
