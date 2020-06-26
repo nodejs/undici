@@ -36,9 +36,6 @@
     "standard": "^14.0.0",
     "tap": "^14.0.0"
   },
-  "dependencies": {
-    "http-parser-js": "^0.5.2"
-  },
   "pre-commit": [
     "coverage"
   ]
