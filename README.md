@@ -56,7 +56,7 @@ Options:
 - `maxAbortedPayload`, the maximum number of bytes read after which an
   aborted response will close the connection. Closing the connection
   will error other inflight requests in the pipeline.
-  Default: `1e6` bytes (1MiB).
+  Default: `1048576` bytes (1MiB).
 
 - `pipelining`, the amount of concurrent requests to be sent over the
   single TCP/TLS connection according to
