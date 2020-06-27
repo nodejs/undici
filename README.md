@@ -69,7 +69,7 @@ Options:
 <a name='request'></a>
 #### `client.request(opts, callback(err, data))`
 
-Performs an HTTP request.
+Performs a HTTP request.
 
 Options:
 
