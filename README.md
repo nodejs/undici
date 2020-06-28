@@ -378,10 +378,6 @@ True if the client has an active connection. The client will lazily
 create a connection when it receives a request and will destroy it
 if there is no activity for the duration of the `timeout` value.
 
-#### `client.full`
-
-True if `client.size` is greater than the `client.pipelining` factor.
-
 #### `client.busy`
 
 True if pipeline is saturated or blocked. Indicicates whether dispatching
