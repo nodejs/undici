@@ -381,8 +381,13 @@ if there is no activity for the duration of the `timeout` value.
 #### `client.full`
 
 True if `client.size` is greater than the `client.pipelining` factor.
-Keeping a client full ensures that once a inflight requests finishes
-the the pipeline will schedule new one and keep the pipeline saturated.
+
+#### `client.busy`
+
+True if pipeline is saturated or blocked. Indicicates whether dispatching
+further requests is meaningful. Keeping a client busy ensures that once 
+a inflight requests finishes the the pipeline will schedule new one and 
+keep the pipeline saturated.
 
 #### `client.closed`
 

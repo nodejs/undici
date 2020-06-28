@@ -178,11 +178,11 @@ test('backpressure algorithm', (t) => {
       super()
 
       this.id = total++
-      this._full = false
+      this._busy = false
     }
 
-    get full () {
-      return this._full
+    get busy () {
+      return this._busy
     }
 
     get connected () {
@@ -214,7 +214,7 @@ test('backpressure algorithm', (t) => {
 
   pool.request({}, noop) // d3 = c0
 
-  d1.client._full = true
+  d1.client._busy = true
 
   pool.request({}, noop) // d4 = c1
 
@@ -228,7 +228,7 @@ test('backpressure algorithm', (t) => {
 
   pool.request({}, noop) // d5 = c1
 
-  d1.client._full = false
+  d1.client._busy = false
 
   pool.request({}, noop) // d6 = c0
 
@@ -245,7 +245,7 @@ test('backpressure algorithm', (t) => {
 
 function noop () {}
 
-test('full', (t) => {
+test('busy', (t) => {
   t.plan(8 * 6)
 
   const server = createServer((req, res) => {
