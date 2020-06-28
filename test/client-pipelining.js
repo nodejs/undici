@@ -160,7 +160,7 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
     function makeRequest () {
       makeRequestAndExpectUrl(client, sent++, t, () => {
         count--
-        process.nextTick(() => {
+        setImmediate(() => {
           if (client.size === 0) {
             t.ok(countGreaterThanOne, 'seen more than one parallel request')
             const start = sent

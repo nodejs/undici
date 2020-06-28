@@ -69,6 +69,10 @@ Options:
 - `maxHeaderSize`, the maximum length of request headers in bytes. 
   Default: `16384` (16KiB)
 
+- `headersTimeout`, the amount of time the parser will wait to receive the complete
+  HTTP headers (Node 14 and above only).
+  Default: `30e3` milliseconds (30s).
+
 <a name='request'></a>
 #### `client.request(opts, callback(err, data))`
 
