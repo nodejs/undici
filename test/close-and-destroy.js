@@ -110,7 +110,7 @@ test('close waits until socket is destroyed', (t) => {
       client.request({ path: '/', method: 'GET' }, (err, data) => {
         t.error(err instanceof errors.ClientClosedError)
       })
-      return !client.busy
+      return !client.full
     }
   })
 })
@@ -141,7 +141,7 @@ test('close should still reconnect', (t) => {
         data.body.resume()
         t.error(err)
       })
-      return !client.busy
+      return !client.full
     }
   })
 })
@@ -173,7 +173,7 @@ test('close should call callback once finished', (t) => {
         t.error(err)
         data.body.resume()
       })
-      return !client.busy
+      return !client.full
     }
   })
 })

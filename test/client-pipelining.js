@@ -145,12 +145,12 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
     t.tearDown(client.close.bind(client))
 
     for (; sent < 2;) {
-      t.notOk(client.busy, 'client is not busy')
+      t.notOk(client.full, 'client is not full')
       makeRequest()
-      t.ok(!client.busy, 'we can send more requests')
+      t.ok(!client.full, 'we can send more requests')
     }
 
-    t.notOk(client.busy, 'client is busy')
+    t.ok(client.busy, 'client is busy')
     t.notOk(client.full, 'client is full')
     makeRequest()
     t.ok(client.busy, 'we must stop now')
@@ -165,13 +165,13 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
             t.ok(countGreaterThanOne, 'seen more than one parallel request')
             const start = sent
             for (; sent < start + 2 && sent < num;) {
-              t.notOk(client.busy, 'client is not busy')
+              t.notOk(client.full, 'client is not full')
               t.ok(makeRequest())
             }
           }
         })
       })
-      return !client.busy
+      return !client.full
     }
   })
 })
@@ -215,7 +215,7 @@ test('pipeline 1 is 1 active request', (t) => {
       res2.end()
     })
     t.ok(!client.full)
-    t.ok(!client.busy)
+    t.ok(client.busy)
     t.strictEqual(client.size, 1)
   })
 })
