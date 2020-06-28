@@ -102,7 +102,7 @@ test('20 times HEAD with pipelining 10', (t) => {
           t.ok(countGreaterThanOne, 'seen more than one parallel request')
         }
       })
-      return !client.full
+      return !client.busy
     }
   })
 })
@@ -124,7 +124,7 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
   const num = 10
   let sent = 0
   // x * 6 + 1 t.ok + 5 drain
-  t.plan(num * 6 + 1 + 5)
+  t.plan(num * 6 + 1 + 5 + 2)
 
   let count = 0
   let countGreaterThanOne = false
@@ -145,14 +145,16 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
     t.tearDown(client.close.bind(client))
 
     for (; sent < 2;) {
-      t.notOk(client.full, 'client is not full')
+      t.notOk(client.busy, 'client is not busy')
       makeRequest()
-      t.ok(!client.full, 'we can send more requests')
+      t.ok(!client.busy, 'we can send more requests')
     }
 
+    t.notOk(client.busy, 'client is busy')
     t.notOk(client.full, 'client is full')
     makeRequest()
-    t.ok(client.full, 'we must stop now')
+    t.ok(client.busy, 'we must stop now')
+    t.ok(client.busy, 'client is busy')
     t.ok(client.full, 'client is full')
 
     function makeRequest () {
@@ -163,19 +165,19 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
             t.ok(countGreaterThanOne, 'seen more than one parallel request')
             const start = sent
             for (; sent < start + 2 && sent < num;) {
-              t.notOk(client.full, 'client is not full')
+              t.notOk(client.busy, 'client is not busy')
               t.ok(makeRequest())
             }
           }
         })
       })
-      return !client.full
+      return !client.busy
     }
   })
 })
 
 test('pipeline 1 is 1 active request', (t) => {
-  t.plan(8)
+  t.plan(9)
 
   let res2
   const server = createServer((req, res) => {
@@ -213,6 +215,7 @@ test('pipeline 1 is 1 active request', (t) => {
       res2.end()
     })
     t.ok(!client.full)
+    t.ok(!client.busy)
     t.strictEqual(client.size, 1)
   })
 })

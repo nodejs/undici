@@ -290,7 +290,7 @@ test('basic POST with stream', (t) => {
 })
 
 test('basic POST with custom stream', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   const expected = readFileSync(__filename, 'utf8')
 
@@ -322,6 +322,7 @@ test('basic POST with custom stream', (t) => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
+    t.strictDeepEqual(client.busy, true)
 
     body.on('close', () => {
       body.emit('end')
@@ -539,7 +540,7 @@ test('multiple destroy callback', (t) => {
 })
 
 test('only one streaming req at a time', (t) => {
-  t.plan(4)
+  t.plan(5)
 
   const server = createServer((req, res) => {
     req.pipe(res)
@@ -581,6 +582,7 @@ test('only one streaming req at a time', (t) => {
         t.error(err)
         data.body.resume()
       })
+      t.strictEqual(client.busy, true)
     })
   })
 })
