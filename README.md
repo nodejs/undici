@@ -66,6 +66,9 @@ Options:
 - `tls`, an options object which in the case of `https` will be passed to
   [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
 
+- `maxHeaderSize`, the maximum length of request headers in bytes. 
+  Default: `16384` (16KiB)
+
 <a name='request'></a>
 #### `client.request(opts, callback(err, data))`
 
