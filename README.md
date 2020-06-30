@@ -67,7 +67,7 @@ Options:
   [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
 
 - `maxHeaderSize`, the maximum length of request headers in bytes. 
-  Default: `16384` (16KiB)
+  Default: `16384` (16KiB).
 
 - `headersTimeout`, the amount of time the parser will wait to receive the complete
   HTTP headers (Node 14 and above only).
