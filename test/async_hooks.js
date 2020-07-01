@@ -149,14 +149,7 @@ test('async hooks client is destroyed', (t) => {
     res.setHeader('content-type', 'text/plain')
     readFile(__filename, (err, buf) => {
       t.error(err)
-      const buf1 = buf.slice(0, buf.length / 2)
-      const buf2 = buf.slice(buf.length / 2)
-      // we split the file so that it's received in 2 chunks
-      // and it should restore the state on the second
-      res.write(buf1)
-      setTimeout(() => {
-        res.end(buf2)
-      }, 10)
+      res.write('asd')
     })
   })
   t.tearDown(server.close.bind(server))
