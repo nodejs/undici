@@ -19,14 +19,14 @@ npm i undici
 
 ## Benchmarks
 
-Machine: 2.7 GHz Quad-Core Intel Core i7<br/>
-Configuration: Node v14.2, HTTP/1.1 without TLS, 100 connections
+Machine: 2.8GHz AMD EPYC 7402P<br/>
+Configuration: Node v14.4, HTTP/1.1 without TLS, 100 connections, Linux 5.4.12-1-lts
 
 ```
-http - keepalive - pipe x 6,545 ops/sec ±12.47% (64 runs sampled)
-undici - pipeline - pipe x 9,560 ops/sec ±3.68% (77 runs sampled)
-undici - request - pipe x 9,797 ops/sec ±6.80% (77 runs sampled)
-undici - stream - pipe x 11,599 ops/sec ±0.89% (78 runs sampled)
+http - keepalive - pipe x 5,768 ops/sec ±4.17% (71 runs sampled)
+undici - pipeline - pipe x 7,151 ops/sec ±2.59% (80 runs sampled)
+undici - request - pipe x 11,618 ops/sec ±4.43% (72 runs sampled)
+undici - stream - pipe x 12,592 ops/sec ±1.03% (81 runs sampled)
 ```
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js).
