@@ -37,7 +37,7 @@ test('ignore informational response', (t) => {
 })
 
 test('error 101', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const server = net.createServer((socket) => {
     socket.write('HTTP/1.1 101 Switching Protocols\r\n\r\n')
@@ -52,6 +52,9 @@ test('error 101', (t) => {
       method: 'GET'
     }, (err) => {
       t.ok(err instanceof errors.NotSupportedError)
+    })
+    client.on('disconnect', () => {
+      t.pass()
     })
   })
 })
