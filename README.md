@@ -23,10 +23,10 @@ Machine: AMD EPYC 7402P 24-Core Processor<br/>
 Configuration: Node v14.2, HTTP/1.1 without TLS, 100 connections
 
 ```
-http - keepalive - pipe x 5,768 ops/sec ±4.17% (71 runs sampled)
-undici - pipeline - pipe x 7,151 ops/sec ±2.59% (80 runs sampled)
-undici - request - pipe x 11,618 ops/sec ±4.43% (72 runs sampled)
-undici - stream - pipe x 12,592 ops/sec ±1.03% (81 runs sampled)
+http - keepalive - pipe x 4,182 ops/sec ±8.74% (66 runs sampled)
+undici - pipeline - pipe x 7,323 ops/sec ±3.29% (72 runs sampled)
+undici - request - pipe x 11,175 ops/sec ±6.25% (78 runs sampled)
+undici - stream - pipe x 12,339 ops/sec ±1.00% (86 runs sampled)
 ```
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js).
