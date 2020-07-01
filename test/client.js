@@ -9,7 +9,7 @@ const { kSocket } = require('../lib/symbols')
 const EE = require('events')
 
 test('basic get', (t) => {
-  t.plan(7)
+  t.plan(14)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -36,11 +36,23 @@ test('basic get', (t) => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
+    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
   })
 })
 
 test('basic head', (t) => {
-  t.plan(7)
+  t.plan(14)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -54,6 +66,17 @@ test('basic head', (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+      body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
+    })
 
     client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
       t.error(err)
