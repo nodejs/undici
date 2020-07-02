@@ -355,8 +355,9 @@ Returns a promise if no callback is provided.
 #### `client.destroy([err][, callback])`
 
 Destroy the client abruptly with the given `err`. All the pending and running
-requests will be aborted and error. Waits until socket is closed before
-invoking the callback.
+requests will be asynchronously aborted and error. Waits until socket is closed
+before invoking the callback. Since this operation is asynchronously dispatched
+there might still be some progress on dispatched requests.
 
 Returns a promise if no callback is provided.
 
