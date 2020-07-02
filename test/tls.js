@@ -51,7 +51,7 @@ test('tls get 3', (t) => {
   t.plan(9)
 
   const client = new Client('https://140.82.118.3')
-  t.tearDown(client.close.bind(client))
+  t.tearDown(client.destroy.bind(client))
 
   let didDisconnect = false
   client.request({
