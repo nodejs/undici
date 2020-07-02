@@ -7,7 +7,6 @@ const net = require('net')
 const { Readable } = require('stream')
 
 const {
-  kParser,
   kSocket,
   kEnqueue
 } = require('../lib/symbols')
@@ -477,47 +476,6 @@ test('GET errors body', (t) => {
       body.on('error', err => (
         t.ok(err)
       ))
-    })
-  })
-})
-
-test('reset parser', (t) => {
-  t.plan(6)
-
-  const server = createServer()
-  let res2
-  server.on('request', (req, res) => {
-    res2 = res
-    res.write('asd')
-  })
-  t.tearDown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
-
-    client.request({ path: '/', method: 'GET' }, (err, { body }) => {
-      t.error(err)
-      res2.destroy()
-      body.resume()
-      body.on('error', err => {
-        t.ok(err)
-      })
-    })
-    client.once('disconnect', () => {
-      client.request({ path: '/', method: 'GET' }, (err, { body }) => {
-        t.error(err)
-        res2.destroy()
-        body.resume()
-        body.on('error', err => {
-          t.ok(err)
-        })
-      })
-
-      client.on('connect', () => {
-        t.ok(!client[kSocket][kParser].chunk)
-        t.ok(!client[kSocket][kParser].offset)
-      })
     })
   })
 })
