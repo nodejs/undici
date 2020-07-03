@@ -20,9 +20,10 @@ if (process.platform !== 'win32') {
 
     server.listen('/var/tmp/test3.sock', () => {
       const client = new Client({
-        socketPath: '/var/tmp/test3.sock',
         hostname: 'localhost',
         protocol: 'http:'
+      }, {
+        socketPath: '/var/tmp/test3.sock'
       })
       t.tearDown(client.close.bind(client))
 
@@ -56,9 +57,10 @@ if (process.platform !== 'win32') {
 
     server.listen('/var/tmp/test4.sock', () => {
       const client = new Client({
-        socketPath: '/var/tmp/test4.sock',
         hostname: 'localhost',
         protocol: 'http:'
+      }, {
+        socketPath: '/var/tmp/test4.sock'
       })
       t.tearDown(client.close.bind(client))
 
