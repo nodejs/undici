@@ -39,8 +39,6 @@ test('pipeline echo', (t) => {
         method: 'PUT'
       }, ({ body }) => {
         return pipeline(body, new PassThrough(), () => {})
-      }, (err) => {
-        t.error(err)
       }),
       new Writable({
         write (chunk, encoding, callback) {
@@ -133,8 +131,6 @@ test('pipeline error body', (t) => {
           t.ok(err)
         })
         return pipeline(body, pt, () => {})
-      }, (err) => {
-        t.error(err)
       }),
       new PassThrough(),
       (err) => {
@@ -175,8 +171,6 @@ test('pipeline destroy body', (t) => {
           t.ok(err)
         })
         return pipeline(body, pt, () => {})
-      }, (err) => {
-        t.error(err)
       }),
       new PassThrough(),
       (err) => {
