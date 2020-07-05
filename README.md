@@ -478,7 +478,7 @@ ignored.
 
 Refs: https://tools.ietf.org/html/rfc7231#section-5.1.1
 
-#### Upgrade
+#### Switching Protocols
 
 Undici does not support the the `Upgrade` request header field. A 
 `101 Switching Protocols` response will cause an `UND_ERR_NOT_SUPPORTED` error.
