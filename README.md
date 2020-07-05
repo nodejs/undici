@@ -499,6 +499,13 @@ trailer headers will be ignored.
 
 Refs: https://tools.ietf.org/html/rfc7230#section-4.4
 
+### CONNECT
+
+Undici doea not support the http `CONNECT` method. Dispatching a `CONNECT`
+request will cause an `UND_ERR_NOT_SUPPORTED` error.
+
+Refs: https://tools.ietf.org/html/rfc7231#section-4.3.6
+
 ### Pipelining
 
 Uncidi will only use pipelining if configured with a `pipelining` factor 
