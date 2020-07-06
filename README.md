@@ -48,6 +48,9 @@ Options:
   milliseconds. Monitors time between activity on a connected socket.
   Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 
+- `socketPath`, an IPC endpoint, either Unix domain socket or Windows named pipe.
+  Default: `null`,
+
 - `requestTimeout`, the timeout after which a request will time out, in
   milliseconds. Monitors time between request being enqueued and receiving
   a response. Use `0` to disable it entirely.
@@ -65,6 +68,7 @@ Options:
 
 - `tls`, an options object which in the case of `https` will be passed to
   [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
+  Default: `null`,
 
 - `maxHeaderSize`, the maximum length of request headers in bytes. 
   Default: `16384` (16KiB).
