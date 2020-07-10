@@ -15,7 +15,7 @@ test('basic get', (t) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual('localhost', req.headers.host)
-    t.strictEqual('0', req.headers['content-length'])
+    t.strictEqual(undefined, req.headers['content-length'])
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
@@ -156,6 +156,7 @@ function postServer (t, expected) {
   return function (req, res) {
     t.strictEqual(req.url, '/')
     t.strictEqual(req.method, 'POST')
+    t.notSame(req.headers['content-length'], null)
 
     req.setEncoding('utf8')
     let data = ''
@@ -170,7 +171,7 @@ function postServer (t, expected) {
 }
 
 test('basic POST with string', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   const expected = readFileSync(__filename, 'utf8')
 
@@ -197,7 +198,7 @@ test('basic POST with string', (t) => {
 })
 
 test('basic POST with empty string', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   const server = createServer(postServer(t, ''))
   t.tearDown(server.close.bind(server))
@@ -221,7 +222,7 @@ test('basic POST with empty string', (t) => {
 })
 
 test('basic POST with string and content-length', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   const expected = readFileSync(__filename, 'utf8')
 
@@ -254,7 +255,7 @@ test('basic POST with string and content-length', (t) => {
 })
 
 test('basic POST with Buffer', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   const expected = readFileSync(__filename)
 
@@ -280,7 +281,7 @@ test('basic POST with Buffer', (t) => {
 })
 
 test('basic POST with stream', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   const expected = readFileSync(__filename, 'utf8')
 
@@ -314,7 +315,7 @@ test('basic POST with stream', (t) => {
 })
 
 test('basic POST with custom stream', (t) => {
-  t.plan(7)
+  t.plan(8)
 
   const expected = readFileSync(__filename, 'utf8')
 
@@ -362,22 +363,42 @@ test('basic POST with custom stream', (t) => {
 })
 
 test('basic POST with transfer encoding: chunked', (t) => {
-  t.plan(6)
+  t.plan(8)
 
-  const expected = readFileSync(__filename, 'utf8')
+  let body
+  const server = createServer(function (req, res) {
+    t.strictEqual(req.url, '/')
+    t.strictEqual(req.method, 'POST')
+    t.same(req.headers['content-length'], null)
+    t.strictEqual(req.headers['transfer-encoding'], 'chunked')
 
-  const server = createServer(postServer(t, expected))
+    body.push(null)
+
+    req.setEncoding('utf8')
+    let data = ''
+
+    req.on('data', function (d) { data += d })
+
+    req.on('end', () => {
+      t.strictEqual(data, 'asd')
+      res.end('hello')
+    })
+  })
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
+    body = new Readable({
+      read () { }
+    })
+    body.push('asd')
     client.request({
       path: '/',
       method: 'POST',
       // no content-length header
-      body: createReadStream(__filename)
+      body
     }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
