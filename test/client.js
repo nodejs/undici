@@ -9,12 +9,13 @@ const { kSocket } = require('../lib/symbols')
 const EE = require('events')
 
 test('basic get', (t) => {
-  t.plan(14)
+  t.plan(16)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual('localhost', req.headers.host)
+    t.strictEqual('0', req.headers['content-length'])
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
