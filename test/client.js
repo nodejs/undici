@@ -763,6 +763,8 @@ test('non recoverable socket error fails pending request', (t) => {
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.strictEqual(err.message, 'kaboom')
     })
-    client[kSocket].destroy(new Error('kaboom'))
+    client.on('connect', () => {
+      client[kSocket].destroy(new Error('kaboom'))
+    })
   })
 })
