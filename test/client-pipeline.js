@@ -14,12 +14,13 @@ const {
 test('pipeline get', (t) => {
   t.plan(14)
 
+  let count = 0
+
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual('localhost', req.headers.host)
-    // t.strictEqual('0', req.headers['content-length'])
-    t.strictEqual(undefined, req.headers['content-length']) // TODO: Known issue.
+    t.strictEqual(count++ === 0 ? '3' : undefined, req.headers['content-length'])
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
@@ -36,7 +37,7 @@ test('pipeline get', (t) => {
         t.strictEqual(headers['content-type'], 'text/plain')
         return body
       })
-        .end()
+        .end('asd')
         .on('data', (buf) => {
           bufs.push(buf)
         })
@@ -465,7 +466,7 @@ test('pipeline abort server res', (t) => {
 })
 
 test('pipeline abort duplex', (t) => {
-  t.plan(3)
+  t.plan(2)
 
   const server = createServer((req, res) => {
     res.end()
@@ -493,7 +494,7 @@ test('pipeline abort duplex', (t) => {
       })
 
       client.on('disconnect', () => {
-        t.pass()
+        t.fail()
       })
     })
   })
