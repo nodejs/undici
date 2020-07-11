@@ -57,27 +57,6 @@ suite
       })
     }
   })
-  .add('undici - request - pipe', {
-    defer: true,
-    fn: deferred => {
-      pool.request(undiciOptions, (error, { body }) => {
-        if (error) {
-          throw error
-        }
-
-        const stream = new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
-        })
-        stream.once('finish', () => {
-          deferred.resolve()
-        })
-
-        body.pipe(stream)
-      })
-    }
-  })
   .add('undici - pipeline - pipe', {
     defer: true,
     fn: deferred => {
@@ -100,6 +79,27 @@ suite
         .once('finish', () => {
           deferred.resolve()
         })
+    }
+  })
+  .add('undici - request - pipe', {
+    defer: true,
+    fn: deferred => {
+      pool.request(undiciOptions, (error, { body }) => {
+        if (error) {
+          throw error
+        }
+
+        const stream = new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })
+        stream.once('finish', () => {
+          deferred.resolve()
+        })
+
+        body.pipe(stream)
+      })
     }
   })
   .add('undici - stream - pipe', {
