@@ -619,9 +619,12 @@ test('only one streaming req at a time', (t) => {
         idempotent: true,
         body: new Readable({
           read () {
-            t.strictEqual(client.size, 1)
-            this.push(null)
+            setImmediate(() => {
+              this.push(null)
+            })
           }
+        }).on('resume', () => {
+          t.strictEqual(client.size, 1)
         })
       }, (err, data) => {
         t.error(err)
