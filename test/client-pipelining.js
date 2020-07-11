@@ -293,8 +293,8 @@ test('errored POST body lets inflight complete', (t) => {
   let serverRes
   const server = createServer()
   server.on('request', (req, res) => {
-    res.write('asd')
     serverRes = res
+    res.write('asd')
   })
   t.tearDown(server.close.bind(server))
 
