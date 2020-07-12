@@ -378,6 +378,7 @@ test('POST which fails should error response', (t) => {
       t.ok(
         err.code === 'EPIPE' ||
         err.code === 'ECONNRESET' ||
+        err.code === 'UND_ERR_SOCKET' ||
         err.message === 'other side closed'
       )
     }
