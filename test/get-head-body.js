@@ -6,7 +6,7 @@ const { createServer } = require('http')
 const { Readable } = require('stream')
 
 test('GET and HEAD with body should reset connection', (t) => {
-  t.plan(8 + 4)
+  t.plan(4 + 2)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -21,60 +21,58 @@ test('GET and HEAD with body should reset connection', (t) => {
       t.pass()
     })
 
-    for (const method of ['GET', 'HEAD']) {
-      client.request({
-        path: '/',
-        body: 'asd',
-        method
-      }, (err, data) => {
-        t.error(err)
-        data.body.resume()
-      })
+    client.request({
+      path: '/',
+      body: 'asd',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
 
-      const emptyBody = new Readable({
-        read () {}
-      })
-      emptyBody.push(null)
-      client.request({
-        path: '/',
-        body: emptyBody,
-        method
-      }, (err, data) => {
-        t.error(err)
-        data.body.resume()
-      })
+    const emptyBody = new Readable({
+      read () {}
+    })
+    emptyBody.push(null)
+    client.request({
+      path: '/',
+      body: emptyBody,
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
 
-      client.request({
-        path: '/',
-        body: new Readable({
-          read () {
-            this.push(null)
-          }
-        }),
-        method
-      }, (err, data) => {
-        t.error(err)
-        data.body.resume()
-      })
+    client.request({
+      path: '/',
+      body: new Readable({
+        read () {
+          this.push(null)
+        }
+      }),
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
 
-      client.request({
-        path: '/',
-        body: new Readable({
-          read () {
-            this.push('asd')
-            this.push(null)
-          }
-        }),
-        method
-      }, (err, data) => {
-        t.error(err)
-        data.body.resume()
-      })
-    }
+    client.request({
+      path: '/',
+      body: new Readable({
+        read () {
+          this.push('asd')
+          this.push(null)
+        }
+      }),
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
   })
 })
 
-test('GET and HEAD with body should work when target parses body as request', (t) => {
+test('GET with body should work when target parses body as request', (t) => {
   t.plan(4)
 
   // This URL will send double responses when receiving a
