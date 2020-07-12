@@ -28,7 +28,7 @@ test('invalid content-length', (t) => {
       },
       body: 'asd'
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.ok(err instanceof errors.ContentLengthMismatch)
     })
 
     client.request({
@@ -39,7 +39,7 @@ test('invalid content-length', (t) => {
       },
       body: 'asdasdasdasdasdasda'
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.ok(err instanceof errors.ContentLengthMismatch)
     })
 
     client.request({
@@ -50,7 +50,7 @@ test('invalid content-length', (t) => {
       },
       body: Buffer.alloc(9)
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.ok(err instanceof errors.ContentLengthMismatch)
     })
 
     client.request({
@@ -61,7 +61,7 @@ test('invalid content-length', (t) => {
       },
       body: Buffer.alloc(11)
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.ok(err instanceof errors.ContentLengthMismatch)
     })
 
     client.request({
@@ -71,7 +71,7 @@ test('invalid content-length', (t) => {
         'content-length': 10
       }
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.ok(err instanceof errors.ContentLengthMismatch)
     })
 
     client.request({
@@ -81,7 +81,7 @@ test('invalid content-length', (t) => {
         'content-length': 0
       }
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.ok(err instanceof errors.ContentLengthMismatch)
     })
 
     client.request({
@@ -97,7 +97,7 @@ test('invalid content-length', (t) => {
         }
       })
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.ok(err instanceof errors.ContentLengthMismatch)
     })
 
     client.request({
@@ -113,7 +113,60 @@ test('invalid content-length', (t) => {
         }
       })
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.ok(err instanceof errors.ContentLengthMismatch)
+    })
+  })
+})
+
+test('streaming invalid content-length', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.on('disconnect', () => {
+      t.pass()
+    })
+
+    client.request({
+      path: '/',
+      method: 'PUT',
+      headers: {
+        'content-length': 10
+      },
+      body: new Readable({
+        read () {
+          setImmediate(() => {
+            this.push('asdasdasdkajsdnasdkjasnd')
+            this.push(null)
+          })
+        }
+      })
+    }, (err, data) => {
+      t.ok(err instanceof errors.ContentLengthMismatch)
+    })
+
+    client.request({
+      path: '/',
+      method: 'PUT',
+      headers: {
+        'content-length': 10
+      },
+      body: new Readable({
+        read () {
+          setImmediate(() => {
+            this.push('asd')
+            this.push(null)
+          })
+        }
+      })
+    }, (err, data) => {
+      t.ok(err instanceof errors.ContentLengthMismatch)
     })
   })
 })

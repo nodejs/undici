@@ -463,6 +463,7 @@ const { errors } = require('undici')
 | `ClientClosedError`       |  `UND_ERR_CLOSED`                 | trying to use a closed client.                 |
 | `SocketError`             |  `UND_ERR_SOCKET`                 | there is an error with the socket.             |
 | `NotSupportedError`       |  `UND_ERR_NOT_SUPPORTED`          | encountered unsupported functionality.         |
+| `ContentLengthMismatch`   |  `UND_ERR_CONTENT_LENGTH_MISMATCH`| body does not match content-length header      |
 
 ## Specification Compliance
 
