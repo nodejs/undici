@@ -49,7 +49,7 @@ Options:
   Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 
 - `socketPath`, an IPC endpoint, either Unix domain socket or Windows named pipe.
-  Default: `null`,
+  Default: `null`.
 
 - `requestTimeout`, the timeout after which a request will time out, in
   milliseconds. Monitors time between request being enqueued and receiving
