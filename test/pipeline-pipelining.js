@@ -5,9 +5,10 @@ const { Client } = require('..')
 const { createServer } = require('http')
 
 test('pipeline pipelining', (t) => {
-  t.plan(4)
+  t.plan(7)
 
   const server = createServer((req, res) => {
+    t.strictDeepEqual(req.headers['transfer-encoding'], undefined)
     res.end()
   })
 
