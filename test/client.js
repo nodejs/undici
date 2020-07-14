@@ -585,7 +585,7 @@ test('multiple destroy callback', (t) => {
 })
 
 test('only one streaming req at a time', (t) => {
-  t.plan(5)
+  t.plan(6)
 
   const server = createServer((req, res) => {
     req.pipe(res)
@@ -620,6 +620,7 @@ test('only one streaming req at a time', (t) => {
         body: new Readable({
           read () {
             setImmediate(() => {
+              t.strictEqual(client.busy, true)
               this.push(null)
             })
           }
