@@ -5,7 +5,7 @@ const { Client } = require('..')
 const { createServer } = require('http')
 
 test('pipeline pipelining', (t) => {
-  t.plan(5)
+  t.plan(4)
 
   const server = createServer((req, res) => {
     res.end()
@@ -40,10 +40,7 @@ test('pipeline pipelining', (t) => {
           path: '/'
         }, ({ body }) => body).end().resume()
         t.strictEqual(client.busy, true)
-        t.strictEqual(client.running, 0)
-        process.nextTick(() => {
-          t.strictEqual(client.running, 2)
-        })
+        t.strictEqual(client.running, 2)
       })
   })
 })
