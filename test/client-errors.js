@@ -812,3 +812,38 @@ test('default port for http and https', (t) => {
     t.fail(err)
   }
 })
+
+test('CONNECT throws in next tick', (t) => {
+  t.plan(3)
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body
+        .on('end', () => {
+          let ticked = false
+          client.request({
+            path: '/',
+            method: 'CONNECT'
+          }, (err) => {
+            t.ok(err)
+            t.strictDeepEqual(ticked, true)
+          })
+          ticked = true
+        })
+        .resume()
+    })
+  })
+})

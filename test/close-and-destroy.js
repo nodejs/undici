@@ -80,6 +80,36 @@ test('destroy invoked all pending callbacks', (t) => {
   })
 })
 
+test('destroy invoked all pending callbacks ticked', (t) => {
+  t.plan(4)
+
+  const server = createServer()
+
+  server.on('request', (req, res) => {
+    res.write('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    let ticked = false
+    client.request({ path: '/', method: 'GET' }, (err) => {
+      t.strictEqual(ticked, true)
+      t.ok(err instanceof errors.ClientDestroyedError)
+    })
+    client.request({ path: '/', method: 'GET' }, (err) => {
+      t.strictEqual(ticked, true)
+      t.ok(err instanceof errors.ClientDestroyedError)
+    })
+    client.destroy()
+    ticked = true
+  })
+})
+
 test('close waits until socket is destroyed', (t) => {
   t.plan(4)
 
