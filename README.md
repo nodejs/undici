@@ -452,18 +452,19 @@ You can find all the error objects inside the `errors` key.
 const { errors } = require('undici')
 ```
 
-| Error                     | Error Codes                       | Description                                    |
-| --------------------------|-----------------------------------|------------------------------------------------|
-| `InvalidArgumentError`    |  `UND_ERR_INVALID_ARG`            | passed an invalid argument.                    |
-| `InvalidReturnValueError` |  `UND_ERR_INVALID_RETURN_VALUE`   | returned an invalid value.                     |
-| `SocketTimeoutError`      |  `UND_ERR_SOCKET_TIMEOUT`         | a socket exceeds the `socketTimeout` option.   |
-| `RequestTimeoutError`     |  `UND_ERR_REQUEST_TIMEOUT`        | a request exceeds the `requestTimeout` option. |
-| `RequestAbortedError`     |  `UND_ERR_ABORTED`                | the request has been aborted by the user       |
-| `ClientDestroyedError`    |  `UND_ERR_DESTROYED`              | trying to use a destroyed client.              |
-| `ClientClosedError`       |  `UND_ERR_CLOSED`                 | trying to use a closed client.                 |
-| `SocketError`             |  `UND_ERR_SOCKET`                 | there is an error with the socket.             |
-| `NotSupportedError`       |  `UND_ERR_NOT_SUPPORTED`          | encountered unsupported functionality.         |
-| `ContentLengthMismatch`   |  `UND_ERR_CONTENT_LENGTH_MISMATCH`| body does not match content-length header      |
+| Error                        | Error Codes                       | Description                                    |
+| -----------------------------|-----------------------------------|------------------------------------------------|
+| `InvalidArgumentError`       |  `UND_ERR_INVALID_ARG`            | passed an invalid argument.                    |
+| `InvalidReturnValueError`    |  `UND_ERR_INVALID_RETURN_VALUE`   | returned an invalid value.                     |
+| `SocketTimeoutError`         |  `UND_ERR_SOCKET_TIMEOUT`         | a socket exceeds the `socketTimeout` option.   |
+| `RequestTimeoutError`        |  `UND_ERR_REQUEST_TIMEOUT`        | a request exceeds the `requestTimeout` option. |
+| `RequestAbortedError`        |  `UND_ERR_ABORTED`                | the request has been aborted by the user       |
+| `ClientDestroyedError`       |  `UND_ERR_DESTROYED`              | trying to use a destroyed client.              |
+| `ClientClosedError`          |  `UND_ERR_CLOSED`                 | trying to use a closed client.                 |
+| `SocketError`                |  `UND_ERR_SOCKET`                 | there is an error with the socket.             |
+| `NotSupportedError`          |  `UND_ERR_NOT_SUPPORTED`          | encountered unsupported functionality.         |
+| `ContentLengthMismatchError` |  `UND_ERR_CONTENT_LENGTH_MISMATCH`| body does not match content-length header      |
+| `InformationalError`         |  `UND_ERR_INFO`                   | expected error with reason                     |
 
 ## Specification Compliance
 
