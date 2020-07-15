@@ -364,3 +364,29 @@ test('stream invalid return', (t) => {
     })
   })
 })
+
+test('stream body without destroy', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      const pt = new PassThrough({ autoDestroy: false })
+      pt.destroy = null
+      pt.resume()
+      return pt
+    }, (err) => {
+      t.error(err)
+    })
+  })
+})
