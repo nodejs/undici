@@ -241,7 +241,7 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
 })
 
 test('invalid options throws', (t) => {
-  t.plan(28)
+  t.plan(30)
 
   try {
     new Client({ port: 'foobar' }) // eslint-disable-line
@@ -278,6 +278,15 @@ test('invalid options throws', (t) => {
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid maxAbortedPayload')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      socketPath: 1
+    })
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid socketPath')
   }
 
   try {

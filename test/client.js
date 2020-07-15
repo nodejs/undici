@@ -9,23 +9,34 @@ const { kSocket } = require('../lib/symbols')
 const EE = require('events')
 
 test('basic get', (t) => {
-  t.plan(16)
+  t.plan(20)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual('localhost', req.headers.host)
+    t.strictEqual(undefined, req.headers.foo)
+    t.strictEqual('bar', req.headers.bar)
     t.strictEqual(undefined, req.headers['content-length'])
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
   t.tearDown(server.close.bind(server))
 
+  const reqHeaders = {
+    foo: undefined,
+    bar: 'bar'
+  }
+
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: reqHeaders
+    }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
@@ -37,7 +48,11 @@ test('basic get', (t) => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: reqHeaders
+    }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')

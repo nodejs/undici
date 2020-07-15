@@ -170,3 +170,72 @@ test('streaming invalid content-length', (t) => {
     })
   })
 })
+
+test('streaming data when content-length=0', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.on('disconnect', () => {
+      t.fail()
+    })
+
+    client.request({
+      path: '/',
+      method: 'PUT',
+      headers: {
+        'content-length': 0
+      },
+      body: new Readable({
+        read () {
+          setImmediate(() => {
+            this.push('asdasdasdkajsdnasdkjasnd')
+            this.push(null)
+          })
+        }
+      })
+    }, (err, data) => {
+      t.ok(err instanceof errors.ContentLengthMismatchError)
+    })
+  })
+})
+
+test('streaming no body data when content-length=0', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.on('disconnect', () => {
+      t.fail()
+    })
+
+    client.request({
+      path: '/',
+      method: 'PUT',
+      headers: {
+        'content-length': 0
+      }
+    }, (err, data) => {
+      t.error(err)
+      data.body
+        .on('data', () => {
+          t.fail()
+        })
+        .on('end', () => {
+          t.pass()
+        })
+    })
+  })
+})
