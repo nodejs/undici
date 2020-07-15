@@ -27,7 +27,7 @@ test('tls get 1', (t) => {
 test('tls get 2', (t) => {
   t.plan(4)
 
-  const client = new Client('https://140.82.118.3', {
+  const client = new Client('https://140.82.112.4', {
     tls: {
       servername: 'www.github.com'
     }
@@ -50,7 +50,7 @@ test('tls get 2', (t) => {
 test('tls get 3', (t) => {
   t.plan(9)
 
-  const client = new Client('https://140.82.118.3')
+  const client = new Client('https://140.82.112.4')
   t.tearDown(client.destroy.bind(client))
 
   let didDisconnect = false
@@ -97,7 +97,7 @@ test('tls get 3', (t) => {
 test('tls get 4', (t) => {
   t.plan(9)
 
-  const client = new Client('https://140.82.118.3', {
+  const client = new Client('https://140.82.112.4', {
     tls: {
       servername: 'www.github.com'
     },
@@ -109,7 +109,7 @@ test('tls get 4', (t) => {
     method: 'GET',
     path: '/',
     headers: {
-      host: '140.82.118.3'
+      host: '140.82.112.4'
     }
   }, (err, data) => {
     t.error(err)
