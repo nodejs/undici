@@ -64,18 +64,12 @@ suite
         .pipeline(undiciOptions, data => {
           return data.body
         })
-        .on('error', (err) => {
-          throw err
-        })
         .end()
         .pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
           }
         }))
-        .on('error', (err) => {
-          throw err
-        })
         .once('finish', () => {
           deferred.resolve()
         })
