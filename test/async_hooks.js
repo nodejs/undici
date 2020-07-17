@@ -6,7 +6,7 @@ const { createServer } = require('http')
 const { createHook, executionAsyncId } = require('async_hooks')
 const { readFile } = require('fs')
 const { PassThrough } = require('stream')
-const { AsyncResource } = require('async_hooks')
+// const { AsyncResource } = require('async_hooks')
 
 const transactions = new Map()
 
@@ -217,36 +217,36 @@ test('async hooks error and close', (t) => {
   })
 })
 
-test('async hooks pipeline close', (t) => {
-  t.plan(2)
+// test('async hooks pipeline close', (t) => {
+//   t.plan(2)
 
-  const server = createServer((req, res) => {
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer((req, res) => {
+//     res.end('hello')
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`)
+//     t.tearDown(client.close.bind(client))
 
-    setCurrentTransaction({ hello: 'world2' })
+//     setCurrentTransaction({ hello: 'world2' })
 
-    const ret = client
-      .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
-        return body
-      })
-      .on('close', () => {
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
-      })
-      .on('error', (err) => {
-        t.ok(err)
-      })
-      .end()
+//     const ret = client
+//       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
+//         return body
+//       })
+//       .on('close', () => {
+//         t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+//       })
+//       .on('error', (err) => {
+//         t.ok(err)
+//       })
+//       .end()
 
-    new AsyncResource('tmp')
-      .runInAsyncScope(() => {
-        setCurrentTransaction({ hello: 'world1' })
-        ret.destroy()
-      })
-  })
-})
+//     new AsyncResource('tmp')
+//       .runInAsyncScope(() => {
+//         setCurrentTransaction({ hello: 'world1' })
+//         ret.destroy()
+//       })
+//   })
+// })

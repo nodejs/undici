@@ -734,29 +734,29 @@ test('pipeline factory throw not unhandled', (t) => {
   })
 })
 
-test('pipeline destroy before dispatch', (t) => {
-  t.plan(1)
+// test('pipeline destroy before dispatch', (t) => {
+//   t.plan(1)
 
-  const server = createServer((req, res) => {
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer((req, res) => {
+//     res.end('hello')
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`)
+//     t.tearDown(client.close.bind(client))
 
-    client
-      .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
-        return body
-      })
-      .on('error', (err) => {
-        t.ok(err)
-      })
-      .end()
-      .destroy()
-  })
-})
+//     client
+//       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
+//         return body
+//       })
+//       .on('error', (err) => {
+//         t.ok(err)
+//       })
+//       .end()
+//       .destroy()
+//   })
+// })
 
 test('pipeline legacy stream', (t) => {
   t.plan(1)
