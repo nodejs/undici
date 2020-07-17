@@ -3,9 +3,10 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
+const { kConnect } = require('../lib/symbols')
 
 test('pipeline pipelining', (t) => {
-  t.plan(7)
+  t.plan(6)
 
   const server = createServer((req, res) => {
     t.strictDeepEqual(req.headers['transfer-encoding'], undefined)
@@ -23,25 +24,19 @@ test('pipeline pipelining', (t) => {
       t.fail()
     })
 
-    client.pipeline({
-      method: 'GET',
-      path: '/'
-    }, ({ body }) => body)
-      .end()
-      .resume()
-      .on('end', () => {
-        t.strictEqual(client.running, 0)
-        client.pipeline({
-          method: 'GET',
-          path: '/'
-        }, ({ body }) => body).end().resume()
-        t.strictEqual(client.busy, false)
-        client.pipeline({
-          method: 'GET',
-          path: '/'
-        }, ({ body }) => body).end().resume()
-        t.strictEqual(client.busy, true)
-        t.strictEqual(client.running, 2)
-      })
+    client[kConnect](() => {
+      t.strictEqual(client.running, 0)
+      client.pipeline({
+        method: 'GET',
+        path: '/'
+      }, ({ body }) => body).end().resume()
+      t.strictEqual(client.busy, false)
+      client.pipeline({
+        method: 'GET',
+        path: '/'
+      }, ({ body }) => body).end().resume()
+      t.strictEqual(client.busy, true)
+      t.strictEqual(client.running, 2)
+    })
   })
 })
