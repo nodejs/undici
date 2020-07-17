@@ -814,3 +814,28 @@ test('pipeline objectMode', (t) => {
       .end()
   })
 })
+
+test('pipeline invalid opts', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify({ asd: 1 }))
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.close((err) => {
+      t.error(err)
+    })
+    client
+      .pipeline({ path: '/', method: 'GET', objectMode: true }, ({ body }) => {
+        t.fail()
+      })
+      .on('error', (err) => {
+        t.ok(err)
+      })
+  })
+})
