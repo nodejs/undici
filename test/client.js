@@ -36,8 +36,10 @@ test('basic get', (t) => {
       path: '/',
       method: 'GET',
       headers: reqHeaders
-    }, (err, { statusCode, headers, body }) => {
+    }, (err, data) => {
+      console.error(err)
       t.error(err)
+      const { statusCode, headers, body } = data
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []

@@ -6,10 +6,7 @@ const { createServer } = require('http')
 const net = require('net')
 const { Readable } = require('stream')
 
-const {
-  kSocket,
-  kEnqueue
-} = require('../lib/symbols')
+const { kSocket } = require('../lib/symbols')
 
 test('GET errors and reconnect with pipelining 1', (t) => {
   t.plan(9)
@@ -765,7 +762,7 @@ test('retry idempotent inflight', (t) => {
 })
 
 test('invalid opts', (t) => {
-  t.plan(6)
+  t.plan(2)
 
   const client = new Client('http://localhost:5000')
   client.request(null, (err) => {
@@ -774,20 +771,6 @@ test('invalid opts', (t) => {
   client.pipeline(null).on('error', (err) => {
     t.ok(err instanceof errors.InvalidArgumentError)
   })
-  client[kEnqueue](null, (err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
-  })
-  client[kEnqueue]({ path: '/', method: 'GET', signal: 1 }, (err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
-  })
-  client[kEnqueue]({ path: '/', method: 'GET', signal: {} }, (err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
-  })
-  try {
-    client[kEnqueue]({ path: '/', method: 'GET', signal: {} }, null)
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-  }
 })
 
 test('default port for http and https', (t) => {
