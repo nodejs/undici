@@ -297,14 +297,16 @@ test('stream args validation promise', (t) => {
   })
 })
 
-test('stream waits only for writable side', (t) => {
-  t.plan(1)
+test('stream destroy if not readable', (t) => {
+  t.plan(2)
 
   const server = createServer((req, res) => {
     res.end()
   })
   t.tearDown(server.close.bind(server))
 
+  const pt = new PassThrough()
+  pt.readable = false
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
@@ -313,9 +315,10 @@ test('stream waits only for writable side', (t) => {
       path: '/',
       method: 'GET'
     }, () => {
-      throw new Error('kaboom')
+      return pt
     }, (err) => {
-      t.strictEqual(err.message, 'kaboom')
+      t.error(err)
+      t.strictEqual(pt.destroyed, true)
     })
   })
 })
