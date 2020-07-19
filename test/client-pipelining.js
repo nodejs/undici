@@ -63,63 +63,6 @@ function makeRequestAndExpectUrl (client, i, t, cb) {
   })
 }
 
-test('20 times HEAD with pipelining 10', (t) => {
-  const num = 20
-  t.plan(3 * num + 1)
-
-  let count = 0
-  let countGreaterThanOne = false
-  const server = createServer((req, res) => {
-    count++
-    setTimeout(function () {
-      countGreaterThanOne = countGreaterThanOne || count > 1
-      res.end(req.url)
-    }, 10)
-  })
-  t.tearDown(server.close.bind(server))
-
-  // needed to check for a warning on the maxListeners on the socket
-  process.on('warning', t.fail)
-  t.tearDown(() => {
-    process.removeListener('warning', t.fail)
-  })
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 10
-    })
-    t.tearDown(client.close.bind(client))
-
-    for (let i = 0; i < num; i++) {
-      makeRequest(i)
-    }
-
-    function makeRequest (i) {
-      makeHeadRequestAndExpectUrl(client, i, t, () => {
-        count--
-
-        if (i === num - 1) {
-          t.ok(countGreaterThanOne, 'seen more than one parallel request')
-        }
-      })
-      return !client.busy
-    }
-  })
-})
-
-function makeHeadRequestAndExpectUrl (client, i, t, cb) {
-  return client.request({ path: '/' + i, method: 'HEAD' }, (err, { statusCode, headers, body }) => {
-    cb()
-    t.error(err)
-    t.strictEqual(statusCode, 200)
-    body
-      .resume()
-      .on('end', () => {
-        t.pass()
-      })
-  })
-}
-
 test('A client should enqueue as much as twice its pipelining factor', (t) => {
   const num = 10
   let sent = 0
