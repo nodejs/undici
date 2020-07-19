@@ -186,7 +186,7 @@ test('stream GET remote destroy', (t) => {
 })
 
 test('stream response resume back pressure and non standard error', (t) => {
-  t.plan(5)
+  t.plan(6)
 
   const server = createServer((req, res) => {
     res.write(Buffer.alloc(1e3))
@@ -201,20 +201,21 @@ test('stream response resume back pressure and non standard error', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
+    const pt = new PassThrough()
     client.stream({
       path: '/',
       method: 'GET',
       maxAbortedPayload: 1e5
     }, () => {
-      const pt = new PassThrough()
       pt.on('data', () => {
         pt.emit('error', new Error('kaboom'))
       }).once('error', (err) => {
-        t.ok(err)
+        t.strictEqual(err.message, 'kaboom')
       })
       return pt
     }, (err) => {
       t.ok(err)
+      t.strictEqual(pt.destroyed, true)
     })
 
     client.on('disconnect', (err) => {
@@ -247,7 +248,7 @@ test('stream waits only for writable side', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    const pt = new PassThrough()
+    const pt = new PassThrough({ autoDestroy: false })
     client.stream({
       path: '/',
       method: 'GET'
