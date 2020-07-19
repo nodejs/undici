@@ -37,7 +37,6 @@ test('basic get', (t) => {
       method: 'GET',
       headers: reqHeaders
     }, (err, data) => {
-      console.error(err)
       t.error(err)
       const { statusCode, headers, body } = data
       t.strictEqual(statusCode, 200)
