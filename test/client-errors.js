@@ -7,6 +7,7 @@ const net = require('net')
 const { Readable } = require('stream')
 
 const { kSocket } = require('../lib/symbols')
+const { InvalidArgumentError } = require('../lib/errors')
 
 test('GET errors and reconnect with pipelining 1', (t) => {
   t.plan(9)
@@ -837,5 +838,23 @@ test('CONNECT throws in next tick', (t) => {
         })
         .resume()
     })
+  })
+})
+
+test('invalid signal', (t) => {
+  t.plan(3)
+
+  const client = new Client('http://localhost:3333')
+  t.teardown(client.destroy.bind(client))
+
+  client.request({ path: '/', method: 'GET', signal: {} }, (err) => {
+    t.ok(err instanceof InvalidArgumentError)
+  })
+  client.pipeline({ path: '/', method: 'GET', signal: {} }, () => {})
+    .on('error', (err) => {
+      t.ok(err instanceof InvalidArgumentError)
+    })
+  client.stream({ path: '/', method: 'GET', signal: {} }, () => {}, (err) => {
+    t.ok(err instanceof InvalidArgumentError)
   })
 })
