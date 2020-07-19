@@ -40,7 +40,10 @@ test('error 101', (t) => {
   t.plan(2)
 
   const server = net.createServer((socket) => {
-    socket.write('HTTP/1.1 101 Switching Protocols\r\n\r\n')
+    socket.write('HTTP/1.1 101 Switching Protocols\r\n')
+    socket.write('Upgrade: TLS/1.0, HTTP/1.1\r\n')
+    socket.write('Connection: Upgrade\r\n')
+    socket.write('\r\n')
   })
   t.teardown(server.close.bind(server))
   server.listen(0, () => {
@@ -49,7 +52,11 @@ test('error 101', (t) => {
 
     client.request({
       path: '/',
-      method: 'GET'
+      method: 'GET',
+      headers: {
+        Connection: 'upgrade',
+        Upgrade: 'example/1, foo/2'
+      }
     }, (err) => {
       t.ok(err instanceof errors.NotSupportedError)
     })
