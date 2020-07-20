@@ -9,24 +9,25 @@ const { kConnect } = require('../lib/symbols')
 test('request abort before headers', (t) => {
   t.plan(2)
 
-  let onRes
+  const signal = new EE()
   const server = createServer((req, res) => {
     res.end('hello')
-    onRes()
+    signal.emit('abort')
   })
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
-
-    const signal = new EE()
-    onRes = () => {
-      t.pass()
-      signal.emit('abort')
-    }
+    t.tearDown(client.close.bind(client))
 
     client[kConnect](() => {
+      client.request({
+        path: '/',
+        method: 'GET',
+        signal
+      }, (err) => {
+        t.ok(err instanceof errors.RequestAbortedError)
+      })
       client.request({
         path: '/',
         method: 'GET',
