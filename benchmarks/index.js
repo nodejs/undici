@@ -59,6 +59,18 @@ suite
       })
     }
   })
+  .add('http - noop', {
+    defer: true,
+    fn: deferred => {
+      http.get(httpOptions, response => {
+        response
+          .resume()
+          .on('end', () => {
+            deferred.resolve()
+          })
+      })
+    }
+  })
   .add('undici - pipeline', {
     defer: true,
     fn: deferred => {
