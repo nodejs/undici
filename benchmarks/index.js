@@ -3,6 +3,8 @@ const { Writable } = require('stream')
 const http = require('http')
 const Benchmark = require('benchmark')
 const undici = require('..')
+const { kEnqueue, kGetNext } = require('../lib/symbols')
+const Request = require('../lib/request')
 
 // # Start the h2o server (in h2o repository)
 // # Then change the port below to 8080
@@ -40,7 +42,7 @@ const pool = undici(`http://${httpOptions.hostname}:${httpOptions.port}`, {
 const suite = new Benchmark.Suite()
 
 suite
-  .add('http - keepalive - pipe', {
+  .add('http - keepalive', {
     defer: true,
     fn: deferred => {
       http.get(httpOptions, response => {
@@ -57,7 +59,7 @@ suite
       })
     }
   })
-  .add('undici - pipeline - pipe', {
+  .add('undici - pipeline', {
     defer: true,
     fn: deferred => {
       pool
@@ -75,7 +77,7 @@ suite
         })
     }
   })
-  .add('undici - request - pipe', {
+  .add('undici - request', {
     defer: true,
     fn: deferred => {
       pool.request(undiciOptions, (error, { body }) => {
@@ -96,7 +98,7 @@ suite
       })
     }
   })
-  .add('undici - stream - pipe', {
+  .add('undici - stream', {
     defer: true,
     fn: deferred => {
       pool.stream(undiciOptions, () => {
@@ -117,7 +119,64 @@ suite
       })
     }
   })
+  .add('undici - simple', {
+    defer: true,
+    fn: deferred => {
+      const stream = new Writable({
+        write (chunk, encoding, callback) {
+          callback()
+        }
+      })
+      stream.once('finish', () => {
+        deferred.resolve()
+      })
+      pool[kGetNext]()[kEnqueue](new SimpleRequest(undiciOptions, stream))
+    }
+  })
+  .add('undici - noop', {
+    defer: true,
+    fn: deferred => {
+      pool[kGetNext]()[kEnqueue](new NoopRequest(undiciOptions, deferred))
+    }
+  })
   .on('cycle', event => {
     console.log(String(event.target))
   })
   .run()
+
+class NoopRequest extends Request {
+  constructor (opts, deferred) {
+    super(opts)
+    this.deferred = deferred
+  }
+
+  onHeaders () {}
+
+  onBody () {}
+
+  onComplete () {
+    this.deferred.resolve()
+  }
+}
+
+class SimpleRequest extends Request {
+  constructor (opts, dst) {
+    super(opts)
+    this.dst = dst
+    this.dst.on('drain', () => {
+      this.resume()
+    })
+  }
+
+  onHeaders (statusCode, headers, resume) {
+    this.resume = resume
+  }
+
+  onBody (chunk, offset, length) {
+    return this.dst.write(chunk.slice(offset, offset + length))
+  }
+
+  onComplete () {
+    this.dst.end()
+  }
+}
