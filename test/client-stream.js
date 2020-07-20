@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { PassThrough } = require('stream')
+const EE = require('events')
 
 test('stream get', (t) => {
   t.plan(7)
@@ -391,6 +392,32 @@ test('stream body without destroy', (t) => {
       return pt
     }, (err) => {
       t.error(err)
+    })
+  })
+})
+
+test('stream factory abort', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    const signal = new EE()
+    client.stream({
+      path: '/',
+      method: 'GET',
+      signal
+    }, () => {
+      signal.emit('abort')
+      return new PassThrough()
+    }, (err) => {
+      t.ok(err instanceof errors.RequestAbortedError)
     })
   })
 })
