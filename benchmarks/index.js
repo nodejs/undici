@@ -142,13 +142,15 @@ suite
       stream.once('finish', () => {
         deferred.resolve()
       })
-      pool[kGetNext]()[kEnqueue](new SimpleRequest(undiciOptions, stream))
+      const client = pool[kGetNext]()
+      client[kEnqueue](new SimpleRequest(client, undiciOptions, stream))
     }
   })
   .add('undici - noop', {
     defer: true,
     fn: deferred => {
-      pool[kGetNext]()[kEnqueue](new NoopRequest(undiciOptions, deferred))
+      const client = pool[kGetNext]()
+      client[kEnqueue](new NoopRequest(client, undiciOptions, deferred))
     }
   })
   .on('cycle', event => {
@@ -157,38 +159,38 @@ suite
   .run()
 
 class NoopRequest extends Request {
-  constructor (opts, deferred) {
-    super(opts)
+  constructor (client, opts, deferred) {
+    super(opts, client)
     this.deferred = deferred
   }
 
-  onHeaders () {}
+  _onHeaders () {}
 
-  onBody () {}
+  _onBody () {}
 
-  onComplete () {
+  _onComplete () {
     this.deferred.resolve()
   }
 }
 
 class SimpleRequest extends Request {
-  constructor (opts, dst) {
-    super(opts)
+  constructor (client, opts, dst) {
+    super(opts, client)
     this.dst = dst
     this.dst.on('drain', () => {
       this.resume()
     })
   }
 
-  onHeaders (statusCode, headers, resume) {
+  _onHeaders (statusCode, headers, resume) {
     this.resume = resume
   }
 
-  onBody (chunk, offset, length) {
+  _onBody (chunk, offset, length) {
     return this.dst.write(chunk.slice(offset, offset + length))
   }
 
-  onComplete () {
+  _onComplete () {
     this.dst.end()
   }
 }
