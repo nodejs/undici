@@ -34,63 +34,63 @@ test('aborted response errors', (t) => {
   })
 })
 
-// test('aborted GET maxAbortedPayload reset', (t) => {
-//   t.plan(5)
+test('aborted GET maxAbortedPayload reset', (t) => {
+  t.plan(5)
 
-//   const server = createServer((req, res) => {
-//     res.end(Buffer.alloc(1e6 - 1))
-//   })
-//   t.tearDown(server.close.bind(server))
+  const server = createServer((req, res) => {
+    res.end(Buffer.alloc(1e6 - 1))
+  })
+  t.tearDown(server.close.bind(server))
 
-//   server.listen(0, () => {
-//     const client = new Client(`http://localhost:${server.address().port}`, {
-//       pipelining: 2,
-//       maxAbortedPayload: 1e6
-//     })
-//     t.tearDown(client.close.bind(client))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2,
+      maxAbortedPayload: 1e6
+    })
+    t.tearDown(client.close.bind(client))
 
-//     client.on('disconnect', () => {
-//       t.fail()
-//     })
+    client.on('disconnect', () => {
+      t.fail()
+    })
 
-//     client.request({
-//       path: '/',
-//       method: 'GET'
-//     }, (err, { body }) => {
-//       t.error(err)
-//       body.once('data', (chunk) => {
-//         body.destroy()
-//       }).once('error', (err) => {
-//         t.ok(err)
-//       }).on('end', () => {
-//         t.fail()
-//       })
-//     })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.once('data', (chunk) => {
+        body.destroy()
+      }).once('error', (err) => {
+        t.ok(err)
+      }).on('end', () => {
+        t.fail()
+      })
+    })
 
-//     // Make sure read counter is reset.
-//     client.request({
-//       path: '/',
-//       method: 'GET'
-//     }, (err, { body }) => {
-//       t.error(err)
-//       body.once('data', (chunk) => {
-//         body.destroy()
-//       }).on('error', (err) => {
-//         t.ok(err)
-//       }).on('end', () => {
-//         t.fail()
-//       })
-//     })
+    // Make sure read counter is reset.
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.once('data', (chunk) => {
+        body.destroy()
+      }).on('error', (err) => {
+        t.ok(err)
+      }).on('end', () => {
+        t.fail()
+      })
+    })
 
-//     client.request({
-//       path: '/',
-//       method: 'GET'
-//     }, (err, { body }) => {
-//       t.error(err)
-//       body.resume()
-//     })
-//   })
-// })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.resume()
+    })
+  })
+})
 
 test('aborted GET maxAbortedPayload', (t) => {
   t.plan(5)
