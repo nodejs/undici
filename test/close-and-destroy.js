@@ -220,10 +220,10 @@ test('closed and destroyed errors', (t) => {
   client.close((err) => {
     t.error(err)
   })
-  client.request({}, (err) => {
+  client.request({ path: '/', method: 'GET' }, (err) => {
     t.ok(err instanceof errors.ClientClosedError)
     client.destroy()
-    client.request({}, (err) => {
+    client.request({ path: '/', method: 'GET' }, (err) => {
       t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
