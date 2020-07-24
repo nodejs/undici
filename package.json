@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "standard | snazzy",
     "test": "tap test/*.js --no-coverage",
-    "coverage": "standard | snazzy && tap test/*.js"
+    "coverage": "standard | snazzy && tap test/*.js",
+    "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\""
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "@sinonjs/fake-timers": "^6.0.1",
     "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
+    "concurrently": "^5.2.0",
     "https-pem": "^2.0.0",
     "pre-commit": "^1.2.2",
     "proxyquire": "^2.0.1",
