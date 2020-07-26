@@ -421,3 +421,70 @@ test('stream factory abort', (t) => {
     })
   })
 })
+
+test('stream factory throw', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      throw new Error('asd')
+    }, (err) => {
+      t.strictEqual(err.message, 'asd')
+    })
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      throw new Error('asd')
+    }, (err) => {
+      t.strictEqual(err.message, 'asd')
+    })
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      return new PassThrough()
+    }, (err) => {
+      t.error(err)
+    })
+    client.on('disconnect', () => {
+      t.fail()
+    })
+  })
+})
+
+test('stream CONNECT throw', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'CONNECT'
+    }, () => {
+    }, (err) => {
+      t.ok(err instanceof errors.NotSupportedError)
+    })
+    client.on('disconnect', () => {
+      t.fail()
+    })
+  })
+})

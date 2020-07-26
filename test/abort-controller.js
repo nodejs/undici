@@ -200,3 +200,29 @@ function writeBodyStartedWithBody (body, type) {
 writeBodyStartedWithBody('hello', 'string')
 writeBodyStartedWithBody(createReadStream(__filename), 'stream')
 writeBodyStartedWithBody(new Uint8Array([42]), 'Uint8Array')
+
+test('cleanup listener', (t) => {
+  t.plan(4)
+
+  const abortController = new AbortController()
+  abortController.signal.addEventListener = (name) => t.strictEqual(name, 'abort')
+  abortController.signal.removeEventListener = (name) => t.strictEqual(name, 'abort')
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.write('hello')
+    res.end('world')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
+      t.error(err)
+      response.body.on('end', () => {
+        t.pass()
+      }).resume()
+    })
+  })
+})
