@@ -839,3 +839,57 @@ test('pipeline invalid opts', (t) => {
       })
   })
 })
+
+test('pipeline CONNECT throw', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.pipeline({
+      path: '/',
+      method: 'CONNECT'
+    }, () => {
+      t.fail()
+    }).on('error', (err) => {
+      t.ok(err instanceof errors.NotSupportedError)
+    })
+    client.on('disconnect', () => {
+      t.fail()
+    })
+  })
+})
+
+test('pipeline body without destroy', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => {
+      const pt = new PassThrough({ autoDestroy: false })
+      pt.destroy = null
+      return body.pipe(pt)
+    })
+      .end()
+      .on('end', () => {
+        t.pass()
+      })
+      .resume()
+  })
+})

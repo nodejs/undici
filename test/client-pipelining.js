@@ -381,3 +381,118 @@ test('pipelining non-idempotent w body', (t) => {
     })
   })
 })
+
+test('pipelining HEAD busy', (t) => {
+  t.plan(6)
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 10
+    })
+    t.tearDown(client.close.bind(client))
+
+    {
+      const body = new Readable({
+        read () { }
+      })
+      client.request({
+        path: '/',
+        method: 'GET',
+        body
+      }, (err, data) => {
+        t.error(err)
+        data.body
+          .resume()
+          .on('end', () => {
+            t.pass()
+          })
+      })
+      body.push(null)
+      t.strictEqual(client.busy, false)
+    }
+
+    {
+      const body = new Readable({
+        read () { }
+      })
+      client.request({
+        path: '/',
+        method: 'HEAD',
+        body
+      }, (err, data) => {
+        t.error(err)
+        data.body
+          .resume()
+          .on('end', () => {
+            t.pass()
+          })
+      })
+      body.push(null)
+      t.strictEqual(client.busy, true)
+    }
+  })
+})
+
+test('pipelining idempotent busy', (t) => {
+  t.plan(6)
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 10
+    })
+    t.tearDown(client.close.bind(client))
+
+    {
+      const body = new Readable({
+        read () { }
+      })
+      client.request({
+        path: '/',
+        method: 'GET',
+        body
+      }, (err, data) => {
+        t.error(err)
+        data.body
+          .resume()
+          .on('end', () => {
+            t.pass()
+          })
+      })
+      body.push(null)
+      t.strictEqual(client.busy, false)
+    }
+
+    {
+      const body = new Readable({
+        read () { }
+      })
+      client.request({
+        path: '/',
+        method: 'GET',
+        idempotent: false,
+        body
+      }, (err, data) => {
+        t.error(err)
+        data.body
+          .resume()
+          .on('end', () => {
+            t.pass()
+          })
+      })
+      body.push(null)
+      t.strictEqual(client.busy, true)
+    }
+  })
+})
