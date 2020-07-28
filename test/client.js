@@ -331,11 +331,13 @@ test('basic POST with stream', (t) => {
 })
 
 test('basic POST with custom stream', (t) => {
-  t.plan(8)
+  t.plan(4)
 
-  const expected = readFileSync(__filename, 'utf8')
-
-  const server = createServer(postServer(t, expected))
+  const server = createServer((req, res) => {
+    req.resume().on('end', () => {
+      res.end('hello')
+    })
+  })
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
@@ -347,9 +349,6 @@ test('basic POST with custom stream', (t) => {
     client.request({
       path: '/',
       method: 'POST',
-      headers: {
-        'content-length': Buffer.byteLength(expected)
-      },
       requestTimeout: 0,
       body
     }, (err, data) => {
@@ -371,8 +370,14 @@ test('basic POST with custom stream', (t) => {
 
     client.on('connect', () => {
       setImmediate(() => {
-        body.emit('data', expected)
-        body.emit('close')
+        body.emit('data', '')
+        while (!client[kSocket]._writableState.needDrain) {
+          body.emit('data', Buffer.alloc(4096))
+        }
+        client[kSocket].on('drain', () => {
+          body.emit('data', Buffer.alloc(4096))
+          body.emit('close')
+        })
       })
     })
   })
@@ -425,6 +430,49 @@ test('basic POST with transfer encoding: chunked', (t) => {
       body.on('end', () => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
+    })
+  })
+})
+
+test('basic POST with empty stream', (t) => {
+  t.plan(4)
+
+  const server = createServer(function (req, res) {
+    t.same(req.headers['content-length'], 0)
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const body = new Readable({
+      autoDestroy: false,
+      read () {
+      },
+      destroy (err, callback) {
+        callback(!this._readableState.endEmitted ? new Error('asd') : err)
+      }
+    }).on('end', () => {
+      process.nextTick(() => {
+        t.strictEqual(body.destroyed, true)
+      })
+    })
+    body.push(null)
+    client.request({
+      path: '/',
+      method: 'POST',
+      body
+    }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      body
+        .on('data', () => {
+          t.fail()
+        })
+        .on('end', () => {
+          t.pass()
+        })
     })
   })
 })
