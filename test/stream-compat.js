@@ -32,3 +32,42 @@ test('stream body without destroy', (t) => {
     signal.emit('abort')
   })
 })
+
+test('IncomingMessage', { only: true }, (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const proxyClient = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(proxyClient.destroy.bind(proxyClient))
+
+    const proxy = createServer((req, res) => {
+      proxyClient.request({
+        path: '/',
+        method: 'PUT',
+        body: req
+      }, (err, data) => {
+        t.error(err)
+        data.body.pipe(res)
+      })
+    })
+    t.teardown(proxy.close.bind(proxy))
+
+    proxy.listen(0, () => {
+      const client = new Client(`http://localhost:${proxy.address().port}`)
+      t.teardown(client.destroy.bind(client))
+
+      client.request({
+        path: '/',
+        method: 'PUT',
+        body: 'hello world'
+      }, (err, data) => {
+        t.error(err)
+      })
+    })
+  })
+})
