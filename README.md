@@ -53,7 +53,7 @@ Options:
 
 - `idleTimeout`, the timeout after which a socket with no active requests
   will be released and no longer re-used for subsequent requests. This value
-  is an upper bound and might be reduced by keep-alive hints from the server.
+  may be overriden by keep-alive hints from the server.
   Default: `4e3` milliseconds (4s).
 
 - `requestTimeout`, the timeout after which a request will time out, in
