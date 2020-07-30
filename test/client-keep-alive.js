@@ -10,7 +10,7 @@ test('keep-alive header', (t) => {
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
     socket.write('Content-Length: 0\r\n')
-    socket.write('Keep-Alive: timeout=1s\r\n')
+    socket.write('Keep-Alive: timeout=2s\r\n')
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
@@ -29,7 +29,7 @@ test('keep-alive header', (t) => {
       body.on('end', () => {
         const timeout = setTimeout(() => {
           t.fail()
-        }, 1e3)
+        }, 3e3)
         client.on('disconnect', () => {
           t.pass()
           clearTimeout(timeout)
