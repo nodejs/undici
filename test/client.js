@@ -857,31 +857,3 @@ test('non recoverable socket error fails pending request', (t) => {
     })
   })
 })
-
-test('connection header is overridden', (t) => {
-  t.plan(2)
-
-  const server = createServer((req, res) => {
-    t.strictEqual(req.headers.connection, 'keep-alive')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
-
-  const reqHeaders = {
-    connection: 'close'
-  }
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
-
-    client.request({
-      path: '/',
-      method: 'GET',
-      headers: reqHeaders
-    }, (err, { body }) => {
-      t.error(err)
-      body.resume()
-    })
-  })
-})
