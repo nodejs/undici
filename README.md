@@ -52,7 +52,8 @@ Options:
   Default: `null`.
 
 - `idleTimeout`, the timeout after which a socket with no active requests
-  will be released and no longer re-used for subsequent requests.
+  will be released and no longer re-used for subsequent requests. This value
+  is an upper bound and might be reduced by keep-alive hints from the server.
   Default: `30e3` milliseconds (30s).
 
 - `requestTimeout`, the timeout after which a request will time out, in
