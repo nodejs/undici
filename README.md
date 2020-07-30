@@ -44,20 +44,20 @@ It should only include the protocol, hostname, and the port.
 
 Options:
 
-- `socketTimeout`, the timeout after which a socket will time out, in
-  milliseconds. Monitors time between activity on a connected socket.
+- `socketTimeout`, the timeout after which a socket with active requests
+  will time out. Monitors time between activity on a connected socket.
   Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 
 - `socketPath`, an IPC endpoint, either Unix domain socket or Windows named pipe.
   Default: `null`.
 
-- `idleTimeout`, the timeout after which a socket with no active requests
-  will be released and no longer re-used for subsequent requests. This value
-  may be overriden by keep-alive hints from the server.
+- `idleTimeout`, the timeout after which a socket without active requests
+  will time out. Monitors time between activity on a connected socket.
+  This value may be overriden by keep-alive hints from the server.
   Default: `4e3` milliseconds (4s).
 
-- `requestTimeout`, the timeout after which a request will time out, in
-  milliseconds. Monitors time between request being enqueued and receiving
+- `requestTimeout`, the timeout after which a request will time out.
+  Monitors time between request being enqueued and receiving
   a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 
