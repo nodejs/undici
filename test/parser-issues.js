@@ -7,6 +7,7 @@ test('https://github.com/mcollina/undici/issues/268', (t) => {
 
   const server = net.createServer(socket => {
     socket.write('HTTP/1.1 200 OK\r\n')
+    socket.write('Connection: Keep-Alive\r\n')
     socket.write('Transfer-Encoding: chunked\r\n\r\n')
     setTimeout(() => {
       socket.write('1\r\n')
