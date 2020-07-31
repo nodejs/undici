@@ -352,6 +352,41 @@ stream.pipeline(
 )
 ```
 
+<a name='upgrade'></a>
+#### `client.upgrade(opts, callback(err, data))`
+
+Upgrade to a different protocol.
+
+Options:
+
+* ... same as [`client.request(opts, callback)`][request].
+* `method`
+  Default: `GET`
+* `protocol`, a string of comma separated protocols, in descending preference order.
+  Default: `Websocket`.
+
+The `data` parameter in `callback` is defined as follow:
+
+* `headers`
+* `socket`
+
+<a name='connect'></a>
+#### `client.connect(opts, callback(err, data))`
+
+Starts two-way communications with the requested resource.
+
+Options:
+
+* ... same as [`client.request(opts, callback)`][request].
+* `method` must be `CONNECT`.
+  Default: `CONNECT`
+
+The `data` parameter in `callback` is defined as follow:
+
+* `statusCode`
+* `headers`
+* `socket`
+
 <a name='close'></a>
 #### `client.close([callback])`
 
@@ -438,6 +473,14 @@ Calls [`client.stream(opts, factory, callback)`][stream] on one of the clients.
 #### `pool.pipeline(opts, handler)`
 
 Calls [`client.pipeline(opts, handler)`][pipeline] on one of the clients.
+
+#### `pool.upgrade(opts, callback)`
+
+Calls [`client.upgrade(opts, callback)`][upgrade] on one of the clients.
+
+#### `pool.connect(opts, callback)`
+
+Calls [`client.connect(opts, callback)`][connect] on one of the clients.
 
 #### `pool.close([callback])`
 
@@ -546,3 +589,5 @@ MIT
 [request]: #request
 [stream]: #stream
 [pipeline]: #pipeline
+[upgrade]: #upgrade
+[connect]: #connect
