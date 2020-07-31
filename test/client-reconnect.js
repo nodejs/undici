@@ -26,10 +26,12 @@ test('multiple reconnect', (t) => {
 
   let n = 0
   client.on('disconnect', () => {
-    if (n++ === 1) {
+    if (++n === 1) {
       t.pass()
       server.listen(5555)
     }
-    clock.tick(1000)
+    process.nextTick(() => {
+      clock.tick(1000)
+    })
   })
 })
