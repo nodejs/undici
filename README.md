@@ -232,15 +232,17 @@ expects to directly pipe the response body to a
 
 Options:
 
-* ... same as [`client.request(opts, callback)`][request].
+* ... same as [`client.request(opts[, callback])`][request].
 
 The `data` parameter in `factory` is defined as follow:
 
 * `statusCode: Number`
-* `headers: Object`
+* `headers: Object`, an object where all keys have been lowercased.
 * `opaque: any`
 
-`headers` is an object where all keys have been lowercased.
+The `data` parameter in `callback` is defined as follow:
+
+* `opaque`
 
 Returns a promise if no callback is provided.
 
@@ -358,6 +360,7 @@ Upgrade to a different protocol.
 Options:
 
 * `path: String`
+* `opaque: Any`
 * `method: String`
   Default: `GET`
 * `headers: Object|Null`, an object with header-value pairs.
@@ -375,6 +378,7 @@ The `data` parameter in `callback` is defined as follow:
 
 * `headers: Object`, an object where all keys have been lowercased.
 * `socket: Duplex`
+* `opaque`
 
 Returns a promise if no callback is provided.
 
@@ -386,6 +390,7 @@ Starts two-way communications with the requested resource.
 Options:
 
 * `path: String`
+* `opaque: Any`
 * `headers: Object|Null`, an object with header-value pairs.
   Default: `null`
 * `signal: AbortController|EventEmitter|Null`.
@@ -400,6 +405,7 @@ The `data` parameter in `callback` is defined as follow:
 * `statusCode: Number`
 * `headers: Object`, an object where all keys have been lowercased.
 * `socket: Duplex`
+* `opaque: Any`
 
 Returns a promise if no callback is provided.
 
@@ -478,11 +484,11 @@ Options:
 * `connections`, the number of clients to create.
   Default `100`.
 
-#### `pool.request(opts, callback): Promise|Void`
+#### `pool.request(opts[, callback]): Promise|Void`
 
 Calls [`client.request(opts, callback)`][request] on one of the clients.
 
-#### `pool.stream(opts, factory, callback): Promise|Void`
+#### `pool.stream(opts, factory[, callback]): Promise|Void`
 
 Calls [`client.stream(opts, factory, callback)`][stream] on one of the clients.
 
@@ -490,11 +496,11 @@ Calls [`client.stream(opts, factory, callback)`][stream] on one of the clients.
 
 Calls [`client.pipeline(opts, handler)`][pipeline] on one of the clients.
 
-#### `pool.upgrade(opts, callback): Promise|Void`
+#### `pool.upgrade(opts[, callback]): Promise|Void`
 
 Calls [`client.upgrade(opts, callback)`][upgrade] on one of the clients.
 
-#### `pool.connect(opts, callback): Promise|Void`
+#### `pool.connect(opts[, callback]): Promise|Void`
 
 Calls [`client.connect(opts, callback)`][connect] on one of the clients.
 
