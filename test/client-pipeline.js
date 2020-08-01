@@ -858,7 +858,7 @@ test('pipeline CONNECT throw', (t) => {
     }, () => {
       t.fail()
     }).on('error', (err) => {
-      t.ok(err instanceof errors.NotSupportedError)
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
     client.on('disconnect', () => {
       t.fail()
