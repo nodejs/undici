@@ -43,48 +43,6 @@ test('stream get', (t) => {
   })
 })
 
-test('stream get skip body', (t) => {
-  t.plan(12)
-
-  const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual('localhost', req.headers.host)
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
-
-    client.stream({
-      path: '/',
-      method: 'GET'
-    }, ({ statusCode, headers }) => {
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
-
-      // Don't return writable. Skip the body.
-    }, (err) => {
-      t.error(err)
-    })
-
-    client.stream({
-      path: '/',
-      method: 'GET'
-    }, ({ statusCode, headers }) => {
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
-
-      // Don't return writable. Skip the body.
-    }).then(() => {
-      t.pass()
-    })
-  })
-})
-
 test('stream GET destroy res', (t) => {
   t.plan(14)
 

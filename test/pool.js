@@ -7,6 +7,7 @@ const { Pool, errors } = require('..')
 const { createServer } = require('http')
 const { EventEmitter } = require('events')
 const { promisify } = require('util')
+const { PassThrough } = require('stream')
 const eos = require('stream').finished
 
 test('basic get', (t) => {
@@ -114,6 +115,7 @@ test('stream get async/await', async (t) => {
   await client.stream({ path: '/', method: 'GET' }, ({ statusCode, headers }) => {
     t.strictEqual(statusCode, 200)
     t.strictEqual(headers['content-type'], 'text/plain')
+    return new PassThrough()
   })
 })
 
