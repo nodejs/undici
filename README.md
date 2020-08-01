@@ -91,6 +91,7 @@ Options:
 
 * `path`
 * `method`
+* `opaque`
 * `body`, it can be a `String`, a `Buffer`, `Uint8Array` or a `stream.Readable`.
 * `headers`, an object with header-value pairs.
 * `signal`, either an `AbortController` or an `EventEmitter`.
@@ -120,6 +121,7 @@ If you don't specify a `host` header, it will be derived from the `url` of the c
 The `data` parameter in `callback` is defined as follow:
 
 * `statusCode`
+* `opaque`
 * `headers`
 * `body`, a `stream.Readable` with the body to read. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
@@ -230,8 +232,6 @@ expects to directly pipe the response body to a
 Options:
 
 * ... same as [`client.request(opts, callback)`][request].
-* `opaque`, passed as `opaque` to `factory`. Used
-  to avoid creating a closure.
 
 The `data` parameter in `factory` is defined as follow:
 
@@ -294,8 +294,6 @@ Options:
 
 * ... same as [`client.request(opts, callback)`][request].
 * `objectMode`, `true` if the `handler` will return an object stream.
-* `opaque`, passed as `opaque` to `handler`. Used
-  to avoid creating a closure.
 
 The `data` parameter in `handler` is defined as follow:
 
