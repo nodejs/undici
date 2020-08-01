@@ -83,7 +83,7 @@ Options:
   Default: `30e3` milliseconds (30s).
 
 <a name='request'></a>
-#### `client.request(opts, callback(err, data))`
+#### `client.request(opts[, callback(err, data)])`
 
 Performs a HTTP request.
 
@@ -122,12 +122,10 @@ The `data` parameter in `callback` is defined as follow:
 
 * `statusCode`
 * `opaque`
-* `headers`
+* `headers`, an object where all keys have been lowercased.
 * `body`, a `stream.Readable` with the body to read. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
-
-`headers` is an object where all keys have been lowercased.
 
 Returns a promise if no callback is provided.
 
@@ -218,7 +216,7 @@ ee.emit('abort')
 Destroying the request or response body will have the same effect.
 
 <a name='stream'></a>
-#### `client.stream(opts, factory(data), callback(err))`
+#### `client.stream(opts, factory(data), callback(err, data))`
 
 A faster version of [`request`][request].
 
@@ -231,15 +229,17 @@ expects to directly pipe the response body to a
 
 Options:
 
-* ... same as [`client.request(opts, callback)`][request].
+* ... same as [`client.request(opts[, callback])`][request].
 
 The `data` parameter in `factory` is defined as follow:
 
 * `statusCode`
-* `headers`
+* `headers`, an object where all keys have been lowercased.
 * `opaque`
 
-`headers` is an object where all keys have been lowercased.
+The `data` parameter in `callback` is defined as follow:
+
+* `opaque`
 
 Returns a promise if no callback is provided.
 
@@ -294,11 +294,12 @@ Options:
 
 * ... same as [`client.request(opts, callback)`][request].
 * `objectMode`, `true` if the `handler` will return an object stream.
+  Default: `false`.
 
 The `data` parameter in `handler` is defined as follow:
 
 * `statusCode`
-* `headers`
+* `headers`, an object where all keys have been lowercased.
 * `opaque`
 * `body`, a `stream.Readable` with the body to read. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
@@ -308,8 +309,6 @@ The `data` parameter in `handler` is defined as follow:
 read. Usually it should just return the `body` argument unless
 some kind of transformation needs to be performed based on e.g.
 `headers` or `statusCode`.
-
-`headers` is an object where all keys have been lowercased.
 
 The `handler` should validate the response and save any
 required state. If there is an error it should be thrown.
@@ -351,13 +350,14 @@ stream.pipeline(
 ```
 
 <a name='upgrade'></a>
-#### `client.upgrade(opts, callback(err, data))`
+#### `client.upgrade(opts[, callback(err, data)])`
 
 Upgrade to a different protocol.
 
 Options:
 
 * `path`
+* `opaque`
 * `method`
   Default: `GET`
 * `headers`, an object with header-value pairs.
@@ -373,15 +373,19 @@ The `data` parameter in `callback` is defined as follow:
 
 * `headers`
 * `socket`
+* `opaque`
+
+Returns a promise if no callback is provided.
 
 <a name='connect'></a>
-#### `client.connect(opts, callback(err, data))`
+#### `client.connect(opts[, callback(err, data)])`
 
 Starts two-way communications with the requested resource.
 
 Options:
 
 * `path`
+* `opaque`
 * `headers`, an object with header-value pairs.
 * `signal`, either an `AbortController` or an `EventEmitter`.
 * `requestTimeout`, the timeout after which a request will time out, in
@@ -394,6 +398,9 @@ The `data` parameter in `callback` is defined as follow:
 * `statusCode`
 * `headers`
 * `socket`
+* `opaque`
+
+Returns a promise if no callback is provided.
 
 <a name='close'></a>
 #### `client.close([callback])`
@@ -470,11 +477,11 @@ Options:
 * `connections`, the number of clients to create.
   Default `100`.
 
-#### `pool.request(opts, callback)`
+#### `pool.request(opts[, callback])`
 
 Calls [`client.request(opts, callback)`][request] on one of the clients.
 
-#### `pool.stream(opts, factory, callback)`
+#### `pool.stream(opts, factory[, callback])`
 
 Calls [`client.stream(opts, factory, callback)`][stream] on one of the clients.
 
@@ -482,11 +489,11 @@ Calls [`client.stream(opts, factory, callback)`][stream] on one of the clients.
 
 Calls [`client.pipeline(opts, handler)`][pipeline] on one of the clients.
 
-#### `pool.upgrade(opts, callback)`
+#### `pool.upgrade(opts[, callback])`
 
 Calls [`client.upgrade(opts, callback)`][upgrade] on one of the clients.
 
-#### `pool.connect(opts, callback)`
+#### `pool.connect(opts[, callback])`
 
 Calls [`client.connect(opts, callback)`][connect] on one of the clients.
 
