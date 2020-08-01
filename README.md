@@ -377,9 +377,13 @@ Starts two-way communications with the requested resource.
 
 Options:
 
-* ... same as [`client.request(opts, callback)`][request].
-* `method` must be `CONNECT`.
-  Default: `CONNECT`
+* `path`
+* `headers`, an object with header-value pairs.
+* `signal`, either an `AbortController` or an `EventEmitter`.
+* `requestTimeout`, the timeout after which a request will time out, in
+  milliseconds. Monitors time between request being enqueued and receiving
+  a response. Use `0` to disable it entirely.
+  Default: `30e3` milliseconds (30s).
 
 The `data` parameter in `callback` is defined as follow:
 
