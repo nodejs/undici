@@ -359,9 +359,15 @@ Upgrade to a different protocol.
 
 Options:
 
-* ... same as [`client.request(opts, callback)`][request].
+* `path`
 * `method`
   Default: `GET`
+* `headers`, an object with header-value pairs.
+* `signal`, either an `AbortController` or an `EventEmitter`.
+* `requestTimeout`, the timeout after which a request will time out, in
+  milliseconds. Monitors time between request being enqueued and receiving
+  a response. Use `0` to disable it entirely.
+  Default: `30e3` milliseconds (30s).
 * `protocol`, a string of comma separated protocols, in descending preference order.
   Default: `Websocket`.
 

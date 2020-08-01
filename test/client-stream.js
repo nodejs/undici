@@ -481,7 +481,7 @@ test('stream CONNECT throw', (t) => {
       method: 'CONNECT'
     }, () => {
     }, (err) => {
-      t.ok(err instanceof errors.NotSupportedError)
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
     client.on('disconnect', () => {
       t.fail()
