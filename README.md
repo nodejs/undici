@@ -44,62 +44,65 @@ It should only include the protocol, hostname, and the port.
 
 Options:
 
-- `socketTimeout`, the timeout after which a socket with active requests
+- `socketTimeout: Number`, the timeout after which a socket with active requests
   will time out. Monitors time between activity on a connected socket.
   Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 
-- `socketPath`, an IPC endpoint, either Unix domain socket or Windows named pipe.
+- `socketPath: String|Null`, an IPC endpoint, either Unix domain socket or Windows named pipe.
   Default: `null`.
 
-- `idleTimeout`, the timeout after which a socket without active requests
+- `idleTimeout: Number`, the timeout after which a socket without active requests
   will time out. Monitors time between activity on a connected socket.
   This value may be overriden by keep-alive hints from the server.
   Default: `4e3` milliseconds (4s).
 
-- `requestTimeout`, the timeout after which a request will time out.
+- `requestTimeout: Number`, the timeout after which a request will time out.
   Monitors time between request being enqueued and receiving
   a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 
-- `maxAbortedPayload`, the maximum number of bytes read after which an
+- `maxAbortedPayload: Number`, the maximum number of bytes read after which an
   aborted response will close the connection. Closing the connection
   will error other inflight requests in the pipeline.
   Default: `1048576` bytes (1MiB).
 
-- `pipelining`, the amount of concurrent requests to be sent over the
+- `pipelining: Number`, the amount of concurrent requests to be sent over the
   single TCP/TLS connection according to
   [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
   Default: `1`.
 
-- `tls`, an options object which in the case of `https` will be passed to
+- `tls: Object|Null`, an options object which in the case of `https` will be passed to
   [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
   Default: `null`.
 
-- `maxHeaderSize`, the maximum length of request headers in bytes. 
+- `maxHeaderSize: Number`, the maximum length of request headers in bytes. 
   Default: `16384` (16KiB).
 
-- `headersTimeout`, the amount of time the parser will wait to receive the complete
+- `headersTimeout: Number`, the amount of time the parser will wait to receive the complete
   HTTP headers (Node 14 and above only).
   Default: `30e3` milliseconds (30s).
 
 <a name='request'></a>
-#### `client.request(opts[, callback(err, data)])`
+#### `client.request(opts[, callback(err, data)]): Promise|Void`
 
 Performs a HTTP request.
 
 Options:
 
-* `path`
-* `method`
-* `opaque`
-* `body`, it can be a `String`, a `Buffer`, `Uint8Array` or a `stream.Readable`.
-* `headers`, an object with header-value pairs.
-* `signal`, either an `AbortController` or an `EventEmitter`.
-* `requestTimeout`, the timeout after which a request will time out, in
+* `path: String`
+* `method: String`
+* `opaque: Any`
+* `body: String|Buffer|Uint8Array|stream.Readable|Null`.
+  Default: `null`.
+* `headers: Object|Null`, an object with header-value pairs.
+  Default: `null`.
+* `signal: AbortController|EventEmitter|Null`.
+  Default: `null`.
+* `requestTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between request being enqueued and receiving
   a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
-* `idempotent`, whether the requests can be safely retried or not.
+* `idempotent: Boolean`, whether the requests can be safely retried or not.
   If `false` the request won't be sent until all preceeding
   requests in the pipeline has completed.
   Default: `true` if `method` is `HEAD` or `GET`.
@@ -120,10 +123,10 @@ If you don't specify a `host` header, it will be derived from the `url` of the c
 
 The `data` parameter in `callback` is defined as follow:
 
-* `statusCode`
-* `opaque`
-* `headers`, an object where all keys have been lowercased.
-* `body`, a `stream.Readable` with the body to read. A user **must**
+* `statusCode: Number`
+* `opaque: Any`
+* `headers: Object`, an object where all keys have been lowercased.
+* `body: stream.Readable` response payload. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
 
@@ -216,7 +219,7 @@ ee.emit('abort')
 Destroying the request or response body will have the same effect.
 
 <a name='stream'></a>
-#### `client.stream(opts, factory(data), callback(err, data))`
+#### `client.stream(opts, factory(data)[, callback(err)]): Promise|Void`
 
 A faster version of [`request`][request].
 
@@ -233,13 +236,13 @@ Options:
 
 The `data` parameter in `factory` is defined as follow:
 
-* `statusCode`
-* `headers`, an object where all keys have been lowercased.
-* `opaque`
+* `statusCode: Number`
+* `headers: Object`, an object where all keys have been lowercased.
+* `opaque: Any`
 
 The `data` parameter in `callback` is defined as follow:
 
-* `opaque`
+* `opaque: Any`
 
 Returns a promise if no callback is provided.
 
@@ -286,22 +289,22 @@ function (req, res) {
 ```
 
 <a name='pipeline'></a>
-#### `client.pipeline(opts, handler(data))`
+#### `client.pipeline(opts, handler(data)): Duplex`
 
 For easy use with [`stream.pipeline`](https://nodejs.org/api/stream.html#stream_stream_pipeline_source_transforms_destination_callback).
 
 Options:
 
 * ... same as [`client.request(opts, callback)`][request].
-* `objectMode`, `true` if the `handler` will return an object stream.
-  Default: `false`.
+* `objectMode: Boolean`, `true` if the `handler` will return an object stream.
+  Default: `false`
 
 The `data` parameter in `handler` is defined as follow:
 
-* `statusCode`
-* `headers`, an object where all keys have been lowercased.
-* `opaque`
-* `body`, a `stream.Readable` with the body to read. A user **must**
+* `statusCode: Number`
+* `headers: Object`, an object where all keys have been lowercased.
+* `opaque: Any`
+* `body: stream.Readable` response payload. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
 
@@ -350,60 +353,64 @@ stream.pipeline(
 ```
 
 <a name='upgrade'></a>
-#### `client.upgrade(opts[, callback(err, data)])`
+#### `client.upgrade(opts[, callback(err, data)]): Promise|Void`
 
 Upgrade to a different protocol.
 
 Options:
 
-* `path`
-* `opaque`
-* `method`
+* `path: String`
+* `opaque: Any`
+* `method: String`
   Default: `GET`
-* `headers`, an object with header-value pairs.
-* `signal`, either an `AbortController` or an `EventEmitter`.
-* `requestTimeout`, the timeout after which a request will time out, in
+* `headers: Object|Null`, an object with header-value pairs.
+  Default: `null`
+* `signal: AbortController|EventEmitter|Null`.
+  Default: `null`
+* `requestTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between request being enqueued and receiving
   a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
-* `protocol`, a string of comma separated protocols, in descending preference order.
+* `protocol: String`, a string of comma separated protocols, in descending preference order.
   Default: `Websocket`.
 
 The `data` parameter in `callback` is defined as follow:
 
-* `headers`
-* `socket`
+* `headers: Object`, an object where all keys have been lowercased.
+* `socket: Duplex`
 * `opaque`
 
 Returns a promise if no callback is provided.
 
 <a name='connect'></a>
-#### `client.connect(opts[, callback(err, data)])`
+#### `client.connect(opts[, callback(err, data)]): Promise|Void`
 
 Starts two-way communications with the requested resource.
 
 Options:
 
-* `path`
-* `opaque`
-* `headers`, an object with header-value pairs.
-* `signal`, either an `AbortController` or an `EventEmitter`.
-* `requestTimeout`, the timeout after which a request will time out, in
+* `path: String`
+* `opaque: Any`
+* `headers: Object|Null`, an object with header-value pairs.
+  Default: `null`
+* `signal: AbortController|EventEmitter|Null`.
+  Default: `null`
+* `requestTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between request being enqueued and receiving
   a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 
 The `data` parameter in `callback` is defined as follow:
 
-* `statusCode`
-* `headers`
-* `socket`
-* `opaque`
+* `statusCode: Number`
+* `headers: Object`, an object where all keys have been lowercased.
+* `socket: Duplex`
+* `opaque: Any`
 
 Returns a promise if no callback is provided.
 
 <a name='close'></a>
-#### `client.close([callback])`
+#### `client.close([callback]): Promise|Void`
 
 Closes the client and gracefully waits fo enqueued requests to
 complete before invoking the callback.
@@ -411,7 +418,7 @@ complete before invoking the callback.
 Returns a promise if no callback is provided.
 
 <a name='destroy'></a>
-#### `client.destroy([err][, callback])`
+#### `client.destroy([err][, callback]): Promise|Void`
 
 Destroy the client abruptly with the given `err`. All the pending and running
 requests will be asynchronously aborted and error. Waits until socket is closed
@@ -420,38 +427,38 @@ there might still be some progress on dispatched requests.
 
 Returns a promise if no callback is provided.
 
-#### `client.pipelining`
+#### `client.pipelining: Number`
 
 Property to get and set the pipelining factor.
 
-#### `client.pending`
+#### `client.pending: Number`
 
 Number of queued requests.
 
-#### `client.running`
+#### `client.running: Number`
 
 Number of inflight requests.
 
-#### `client.size`
+#### `client.size: Number`
 
 Number of pending and running requests.
 
-#### `client.connected`
+#### `client.connected: Boolean`
 
 True if the client has an active connection. The client will lazily
 create a connection when it receives a request and will destroy it
 if there is no activity for the duration of the `timeout` value.
 
-#### `client.busy`
+#### `client.busy: Boolean`
 
 True if pipeline is saturated or blocked. Indicicates whether dispatching
 further requests is meaningful.
 
-#### `client.closed`
+#### `client.closed: Boolean`
 
 True after `client.close()` has been called.
 
-#### `client.destroyed`
+#### `client.destroyed: Boolean`
 
 True after `client.destroyed()` has been called or `client.close()` has been
 called and the client shutdown has completed.
@@ -477,31 +484,31 @@ Options:
 * `connections`, the number of clients to create.
   Default `100`.
 
-#### `pool.request(opts[, callback])`
+#### `pool.request(opts[, callback]): Promise|Void`
 
 Calls [`client.request(opts, callback)`][request] on one of the clients.
 
-#### `pool.stream(opts, factory[, callback])`
+#### `pool.stream(opts, factory[, callback]): Promise|Void`
 
 Calls [`client.stream(opts, factory, callback)`][stream] on one of the clients.
 
-#### `pool.pipeline(opts, handler)`
+#### `pool.pipeline(opts, handler): Duplex`
 
 Calls [`client.pipeline(opts, handler)`][pipeline] on one of the clients.
 
-#### `pool.upgrade(opts[, callback])`
+#### `pool.upgrade(opts[, callback]): Promise|Void`
 
 Calls [`client.upgrade(opts, callback)`][upgrade] on one of the clients.
 
-#### `pool.connect(opts[, callback])`
+#### `pool.connect(opts[, callback]): Promise|Void`
 
 Calls [`client.connect(opts, callback)`][connect] on one of the clients.
 
-#### `pool.close([callback])`
+#### `pool.close([callback]): Promise|Void`
 
 Calls [`client.close(callback)`](#close) on all the clients.
 
-#### `pool.destroy([err][, callback])`
+#### `pool.destroy([err][, callback]): Promise|Void`
 
 Calls [`client.destroy(err, callback)`](#destroy) on all the clients.
 
