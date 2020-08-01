@@ -106,6 +106,9 @@ Options:
   If `false` the request won't be sent until all preceeding
   requests in the pipeline has completed.
   Default: `true` if `method` is `HEAD` or `GET`.
+* `onInfo(data)`, function invoked for informational
+  1xx responses. `100 Continue` is ignored and will not invoke `onInfo`.
+* `onTrailers(data)`, function invoked for trailers.
 
 Headers are represented by an object like this:
 
@@ -129,6 +132,17 @@ The `data` parameter in `callback` is defined as follow:
 * `body: stream.Readable` response payload. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
+
+The `data` parameter in `onInfo` is defined as follow:
+
+* `statusCode: Number`
+* `opaque: Any`
+* `headers: Object`, an object where all keys have been lowercased.
+
+The `data` parameter in `onTrailers` is defined as follow:
+
+* `opaque: Any`
+* `trailers: Object`, an object where all keys have been lowercased.
 
 Returns a promise if no callback is provided.
 
@@ -243,6 +257,7 @@ The `data` parameter in `factory` is defined as follow:
 The `data` parameter in `callback` is defined as follow:
 
 * `opaque: Any`
+* `trailers: Object`, an object where all keys have been lowercased.
 
 Returns a promise if no callback is provided.
 
