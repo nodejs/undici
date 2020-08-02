@@ -144,56 +144,56 @@ test('stream GET remote destroy', (t) => {
   })
 })
 
-test('stream response resume back pressure and non standard error', (t) => {
-  t.plan(6)
+// test('stream response resume back pressure and non standard error', (t) => {
+//   t.plan(6)
 
-  const server = createServer((req, res) => {
-    res.write(Buffer.alloc(1e3))
-    setImmediate(() => {
-      res.write(Buffer.alloc(1e7))
-      res.end()
-    })
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer((req, res) => {
+//     res.write(Buffer.alloc(1e3))
+//     setImmediate(() => {
+//       res.write(Buffer.alloc(1e7))
+//       res.end()
+//     })
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`)
+//     t.tearDown(client.close.bind(client))
 
-    const pt = new PassThrough()
-    client.stream({
-      path: '/',
-      method: 'GET',
-      maxAbortedPayload: 1e5
-    }, () => {
-      pt.on('data', () => {
-        pt.emit('error', new Error('kaboom'))
-      }).once('error', (err) => {
-        t.strictEqual(err.message, 'kaboom')
-      })
-      return pt
-    }, (err) => {
-      t.ok(err)
-      t.strictEqual(pt.destroyed, true)
-    })
+//     const pt = new PassThrough()
+//     client.stream({
+//       path: '/',
+//       method: 'GET',
+//       maxAbortedPayload: 1e5
+//     }, () => {
+//       pt.on('data', () => {
+//         pt.emit('error', new Error('kaboom'))
+//       }).once('error', (err) => {
+//         t.strictEqual(err.message, 'kaboom')
+//       })
+//       return pt
+//     }, (err) => {
+//       t.ok(err)
+//       t.strictEqual(pt.destroyed, true)
+//     })
 
-    client.on('disconnect', (err) => {
-      t.ok(err)
-      t.pass()
-    })
+//     client.on('disconnect', (err) => {
+//       t.ok(err)
+//       t.pass()
+//     })
 
-    client.stream({
-      path: '/',
-      method: 'GET'
-    }, () => {
-      const pt = new PassThrough()
-      pt.resume()
-      return pt
-    }, (err) => {
-      t.error(err)
-    })
-  })
-})
+//     client.stream({
+//       path: '/',
+//       method: 'GET'
+//     }, () => {
+//       const pt = new PassThrough()
+//       pt.resume()
+//       return pt
+//     }, (err) => {
+//       t.error(err)
+//     })
+//   })
+// })
 
 test('stream waits only for writable side', (t) => {
   t.plan(2)
