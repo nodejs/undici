@@ -56,6 +56,15 @@ Options:
   This value may be overriden by keep-alive hints from the server.
   Default: `4e3` milliseconds (4s).
 
+- `maxIdleTimeout: Number`, the maximum allowed `idleTimeout` when overriden by
+  keep-alive hints from the server.
+  Default: `600e3` milliseconds (10min).
+
+- `keepAliveTimeoutThreshold: Number`, a number subtracted from server keep-alive hints
+  when overriding `idleTimeout` to account for timing inaccuries caused by e.g.
+  transport latency.
+  Default: `1e3` milliseconds (1s).
+
 - `requestTimeout: Number`, the timeout after which a request will time out.
   Monitors time between request being enqueued and receiving
   a response. Use `0` to disable it entirely.
