@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
-const { PassThrough } = require('stream')
+const { PassThrough, Writable } = require('stream')
 const EE = require('events')
 
 test('stream get', (t) => {
@@ -473,6 +473,66 @@ test('stream abort after complete', (t) => {
     })
     client.on('disconnect', () => {
       t.fail()
+    })
+  })
+})
+
+test('trailers', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { Trailer: 'Content-MD5' })
+    res.addTrailers({ 'Content-MD5': 'test' })
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => new PassThrough(), (err, data) => {
+      t.strictDeepEqual({ 'content-md5': 'test' }, data.trailers)
+      t.error(err)
+    })
+  })
+})
+
+test('info', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.writeProcessing()
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    let recv = ''
+
+    client.stream({
+      path: '/',
+      method: 'POST',
+      body: 'hello',
+      onInfo: ({ statusCode }) => {
+        t.strictEqual(statusCode, 102)
+      }
+    }, () => {
+      return new Writable({
+        write (chunk, encoding, callback) {
+          recv += chunk
+          callback()
+        }
+      })
+    }, (err) => {
+      t.error(err)
+      t.strictEqual(recv, 'hello')
     })
   })
 })
