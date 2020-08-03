@@ -6,7 +6,7 @@ const { createServer } = require('http')
 const { kConnect } = require('../lib/symbols')
 
 test('pipeline pipelining', (t) => {
-  t.plan(6)
+  t.plan(10)
 
   const server = createServer((req, res) => {
     t.strictDeepEqual(req.headers['transfer-encoding'], undefined)
@@ -31,18 +31,25 @@ test('pipeline pipelining', (t) => {
         path: '/'
       }, ({ body }) => body).end().resume()
       t.strictEqual(client.busy, false)
+      t.strictDeepEqual(client.running, 0)
+      t.strictDeepEqual(client.pending, 1)
+
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
       t.strictEqual(client.busy, true)
-      t.strictEqual(client.running, 2)
+      t.strictDeepEqual(client.running, 0)
+      t.strictDeepEqual(client.pending, 2)
+      process.nextTick(() => {
+        t.strictEqual(client.running, 2)
+      })
     })
   })
 })
 
 test('pipeline pipelining retry', (t) => {
-  t.plan(6)
+  t.plan(13)
 
   let count = 0
   const server = createServer((req, res) => {
@@ -71,25 +78,33 @@ test('pipeline pipelining retry', (t) => {
       client.pipeline({
         method: 'GET',
         path: '/'
-      }, ({ body }) => body)
+      }, ({ body }) => body).end().resume()
         .on('error', (err) => {
           t.ok(err)
         })
-        .end()
-        .resume()
-      t.strictDeepEqual(client.running, 1)
+      t.strictEqual(client.busy, false)
+      t.strictDeepEqual(client.running, 0)
+      t.strictDeepEqual(client.pending, 1)
 
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.strictDeepEqual(client.running, 2)
+      t.strictEqual(client.busy, false)
+      t.strictDeepEqual(client.running, 0)
+      t.strictDeepEqual(client.pending, 2)
 
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.strictDeepEqual(client.running, 3)
+      t.strictEqual(client.busy, true)
+      t.strictDeepEqual(client.running, 0)
+      t.strictDeepEqual(client.pending, 3)
+
+      process.nextTick(() => {
+        t.strictEqual(client.running, 3)
+      })
 
       client.close(() => {
         t.pass()
