@@ -123,20 +123,20 @@ Values are not modified. If you don't specify a `host` header, it will be derive
 
 The `handler` parameter is defined as follow:
 
-* `_onConnect(resume): Void`
+* `onConnect(resume): Void`
   * `resume: Function`
-* `_onUpgrade(statusCode, headers, socket): Void`
+* `onUpgrade(statusCode, headers, socket): Void`
   * `statusCode: Number`,
   * `headers: Object`,
   * `socket: Duplex`
-* `_onInfo(statusCode, headers): Void`
+* `onInfo(statusCode, headers): Void`
   * `statusCode: Number`,
   * `headers: Object`,
-* `_onData(chunk): Null|Boolean`,
+* `onData(chunk): Null|Boolean`,
   * `chunk: Buferr`,
-* `_onComplete_(trailers: Object): Void`
+* `onComplete_(trailers: Object): Void`
   * `trailers: Object`,
-* `_onError(err): Void`
+* `onError(err): Void`
   * `err: Error`,
 
 <a name='request'></a>
