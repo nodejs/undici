@@ -157,14 +157,15 @@ test('stream response resume back pressure and non standard error', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      maxAbortedPayload: 1e5
+    })
     t.tearDown(client.close.bind(client))
 
     const pt = new PassThrough()
     client.stream({
       path: '/',
-      method: 'GET',
-      maxAbortedPayload: 1e5
+      method: 'GET'
     }, () => {
       pt.on('data', () => {
         pt.emit('error', new Error('kaboom'))
@@ -177,9 +178,12 @@ test('stream response resume back pressure and non standard error', (t) => {
       t.strictEqual(pt.destroyed, true)
     })
 
-    client.on('disconnect', (err) => {
+    client.once('disconnect', (err) => {
       t.ok(err)
       t.pass()
+      client.on('disconnect', () => {
+        t.fail()
+      })
     })
 
     client.stream({
