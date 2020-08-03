@@ -106,9 +106,6 @@ Options:
   If `false` the request won't be sent until all preceeding
   requests in the pipeline has completed.
   Default: `true` if `method` is `HEAD` or `GET`.
-* `onInfo(data)`, function invoked for informational
-  1xx responses. `100 Continue` is ignored and will not invoke `onInfo`.
-* `onTrailers(data)`, function invoked for trailers.
 
 Headers are represented by an object like this:
 
