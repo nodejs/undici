@@ -208,38 +208,38 @@ test('close should call callback once finished', (t) => {
   })
 })
 
-test('closed and destroyed errors', (t) => {
-  t.plan(4)
+// test('closed and destroyed errors', (t) => {
+//   t.plan(4)
 
-  const client = new Client('http://localhost:4000')
-  t.tearDown(client.destroy.bind(client))
+//   const client = new Client('http://localhost:4000')
+//   t.tearDown(client.destroy.bind(client))
 
-  client.request({ path: '/', method: 'GET' }, (err) => {
-    t.ok(err)
-  })
-  client.close((err) => {
-    t.error(err)
-  })
-  client.request({ path: '/', method: 'GET' }, (err) => {
-    t.ok(err instanceof errors.ClientClosedError)
-    client.destroy()
-    client.request({ path: '/', method: 'GET' }, (err) => {
-      t.ok(err instanceof errors.ClientDestroyedError)
-    })
-  })
-})
+//   client.request({ path: '/', method: 'GET' }, (err) => {
+//     t.ok(err)
+//   })
+//   client.close((err) => {
+//     t.error(err)
+//   })
+//   client.request({ path: '/', method: 'GET' }, (err) => {
+//     t.ok(err instanceof errors.ClientClosedError)
+//     client.destroy()
+//     client.request({ path: '/', method: 'GET' }, (err) => {
+//       t.ok(err instanceof errors.ClientDestroyedError)
+//     })
+//   })
+// })
 
-test('close after and destroy should error', (t) => {
-  t.plan(2)
+// test('close after and destroy should error', (t) => {
+//   t.plan(2)
 
-  const client = new Client('http://localhost:4000')
-  t.tearDown(client.destroy.bind(client))
+//   const client = new Client('http://localhost:4000')
+//   t.tearDown(client.destroy.bind(client))
 
-  client.destroy()
-  client.close((err) => {
-    t.ok(err instanceof errors.ClientDestroyedError)
-  })
-  client.close().catch((err) => {
-    t.ok(err instanceof errors.ClientDestroyedError)
-  })
-})
+//   client.destroy()
+//   client.close((err) => {
+//     t.ok(err instanceof errors.ClientDestroyedError)
+//   })
+//   client.close().catch((err) => {
+//     t.ok(err instanceof errors.ClientDestroyedError)
+//   })
+// })

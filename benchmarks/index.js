@@ -3,8 +3,7 @@ const { Writable } = require('stream')
 const http = require('http')
 const Benchmark = require('benchmark')
 const undici = require('..')
-const { kEnqueue, kGetNext } = require('../lib/symbols')
-const Request = require('../lib/request')
+const { kGetNext } = require('../lib/symbols')
 
 // # Start the h2o server (in h2o repository)
 // # Then change the port below to 8080
@@ -131,7 +130,7 @@ suite
       })
     }
   })
-  .add('undici - simple', {
+  .add('undici - dispatch', {
     defer: true,
     fn: deferred => {
       const stream = new Writable({
@@ -143,54 +142,20 @@ suite
         deferred.resolve()
       })
       const client = pool[kGetNext]()
-      client[kEnqueue](new SimpleRequest(client, undiciOptions, stream))
-    }
-  })
-  .add('undici - noop', {
-    defer: true,
-    fn: deferred => {
-      const client = pool[kGetNext]()
-      client[kEnqueue](new NoopRequest(client, undiciOptions, deferred))
+      client.dispatch(undiciOptions, {
+        _onConnect (resume) {
+          stream.on('drain', resume)
+        },
+        _onData (chunk, offset, length) {
+          return stream.write(chunk.slice(offset, offset + length))
+        },
+        _onComplete () {
+          stream.end()
+        }
+      })
     }
   })
   .on('cycle', event => {
     console.log(String(event.target))
   })
   .run()
-
-class NoopRequest extends Request {
-  constructor (client, opts, deferred) {
-    super(opts, client)
-    this.deferred = deferred
-  }
-
-  _onHeaders () {}
-
-  _onData () {}
-
-  _onComplete () {
-    this.deferred.resolve()
-  }
-}
-
-class SimpleRequest extends Request {
-  constructor (client, opts, dst) {
-    super(opts, client)
-    this.dst = dst
-    this.dst.on('drain', () => {
-      this.resume()
-    })
-  }
-
-  _onHeaders (statusCode, headers, resume) {
-    this.resume = resume
-  }
-
-  _onData (chunk, offset, length) {
-    return this.dst.write(chunk.slice(offset, offset + length))
-  }
-
-  _onComplete () {
-    this.dst.end()
-  }
-}
