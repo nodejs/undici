@@ -166,7 +166,7 @@ class NoopRequest extends Request {
 
   _onHeaders () {}
 
-  _onBody () {}
+  _onData () {}
 
   _onComplete () {
     this.deferred.resolve()
@@ -186,7 +186,7 @@ class SimpleRequest extends Request {
     this.resume = resume
   }
 
-  _onBody (chunk, offset, length) {
+  _onData (chunk, offset, length) {
     return this.dst.write(chunk.slice(offset, offset + length))
   }
 
