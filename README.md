@@ -82,10 +82,11 @@ Options:
   HTTP headers (Node 14 and above only).
   Default: `30e3` milliseconds (30s).
 
-<a name='request'></a>
-#### `client.request(opts[, callback(err, data)]): Promise|Void`
+<a name='dispatch'></a>
+#### `client.dispatch(opts, handler): Void`
 
-Performs a HTTP request.
+Performs a HTTP request. This is the low level API which all the succeeding
+API's are implemented on top of
 
 Options:
 
@@ -118,8 +119,34 @@ Headers are represented by an object like this:
   accept: '*/*'
 }
 ```
-Keys are lowercased. Values are not modified.
-If you don't specify a `host` header, it will be derived from the `url` of the client instance.
+Values are not modified. If you don't specify a `host` header, it will be derived from the `url` of the client instance.
+
+The `handler` parameter is defined as follow:
+
+* `_onConnect(resume): Void`
+  * `resume: Function`
+* `_onUpgrade(statusCode, headers, socket): Void`
+  * `statusCode: Number`,
+  * `headers: Object`,
+  * `socket: Duplex`
+* `_onInfo(statusCode, headers): Void`
+  * `statusCode: Number`,
+  * `headers: Object`,
+* `_onData(chunk): Null|Boolean`,
+  * `chunk: Buferr`,
+* `_onComplete_(trailers: Object): Void`
+  * `trailers: Object`,
+* `_onError(err): Void`
+  * `err: Error`,
+
+<a name='request'></a>
+#### `client.request(opts[, callback(err, data)]): Promise|Void`
+
+Performs a HTTP request.
+
+Options:
+
+* ... same as [`client.dispatch(opts, handler)`][dispatch].
 
 The `data` parameter in `callback` is defined as follow:
 
@@ -307,7 +334,7 @@ For easy use with [`stream.pipeline`](https://nodejs.org/api/stream.html#stream_
 
 Options:
 
-* ... same as [`client.request(opts, callback)`][request].
+* ... same as [`client.dispatch(opts, handler)`][dispatch].
 * `objectMode: Boolean`, `true` if the `handler` will return an object stream.
   Default: `false`
 
@@ -496,6 +523,10 @@ Options:
 * `connections`, the number of clients to create.
   Default `100`.
 
+#### `pool.dispatch(opts, handler): Void`
+
+Calls [`client.dispatch(opts, handler)`][dispatch] on one of the clients.
+
 #### `pool.request(opts[, callback]): Promise|Void`
 
 Calls [`client.request(opts, callback)`][request] on one of the clients.
@@ -624,4 +655,5 @@ MIT
 [stream]: #stream
 [pipeline]: #pipeline
 [upgrade]: #upgrade
+[dispatch]: #dispatch
 [connect]: #connect
