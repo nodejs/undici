@@ -9,6 +9,7 @@ test('ignore informational response', (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
+    res.writeProcessing()
     req.pipe(res)
   })
   t.teardown(server.close.bind(server))
@@ -19,9 +20,6 @@ test('ignore informational response', (t) => {
     client.request({
       path: '/',
       method: 'POST',
-      headers: {
-        Expect: '100-continue'
-      },
       body: 'hello'
     }, (err, response) => {
       t.error(err)
