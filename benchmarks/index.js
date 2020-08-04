@@ -143,11 +143,14 @@ suite
       })
       const client = pool[kGetNext]()
       client.dispatch(undiciOptions, {
-        _onConnect (resume) {
+        _onConnect ({ pause, resume }) {
+          this.pause = pause
           stream.on('drain', resume)
         },
         _onData (chunk, offset, length) {
-          return stream.write(chunk.slice(offset, offset + length))
+          if (!stream.write(chunk.slice(offset, offset + length))) {
+            this.pause()
+          }
         },
         _onComplete () {
           stream.end()

@@ -139,52 +139,52 @@ test('aborted GET maxAbortedPayload', (t) => {
   })
 })
 
-test('aborted GET maxAbortedPayload less than HWM', (t) => {
-  t.plan(4)
+// test('aborted GET maxAbortedPayload less than HWM', (t) => {
+//   t.plan(4)
 
-  const server = createServer((req, res) => {
-    res.end(Buffer.alloc(4 + 1, 'a'))
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer((req, res) => {
+//     res.end(Buffer.alloc(4 + 1, 'a'))
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1,
-      maxAbortedPayload: 4
-    })
-    t.tearDown(client.destroy.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`, {
+//       pipelining: 1,
+//       maxAbortedPayload: 4
+//     })
+//     t.tearDown(client.destroy.bind(client))
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.once('data', () => {
-        body.destroy()
-      }).once('error', (err) => {
-        t.ok(err)
-      })
-        // old Readable emits error twice
-        .on('error', () => {})
-    })
+//     client.request({
+//       path: '/',
+//       method: 'GET'
+//     }, (err, { body }) => {
+//       t.error(err)
+//       body.once('data', () => {
+//         body.destroy()
+//       }).once('error', (err) => {
+//         t.ok(err)
+//       })
+//         // old Readable emits error twice
+//         .on('error', () => {})
+//     })
 
-    client.on('disconnect', () => {
-      t.fail()
-    })
+//     client.on('disconnect', () => {
+//       t.fail()
+//     })
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.resume()
-    })
+//     client.request({
+//       path: '/',
+//       method: 'GET'
+//     }, (err, { body }) => {
+//       t.error(err)
+//       body.resume()
+//     })
 
-    client.close((err) => {
-      t.error(err)
-    })
-  })
-})
+//     client.close((err) => {
+//       t.error(err)
+//     })
+//   })
+// })
 
 test('aborted req', (t) => {
   t.plan(1)
