@@ -565,11 +565,6 @@ const { errors } = require('undici')
 This section documents parts of the HTTP/1.1 specification which Undici does 
 not support or does not fully implement.
 
-### Informational Responses
-
-Undici does not support 1xx informational responses and will either
-ignore or error them.
-
 #### Expect
 
 Undici does not support the `Expect` request header field. The request
@@ -577,34 +572,6 @@ body is  always immediately sent and the `100 Continue` response will be
 ignored.
 
 Refs: https://tools.ietf.org/html/rfc7231#section-5.1.1
-
-#### Switching Protocols
-
-Undici does not support the the `Upgrade` request header field. A 
-`101 Switching Protocols` response will cause an `UND_ERR_NOT_SUPPORTED` error.
-
-Refs: https://tools.ietf.org/html/rfc7230#section-6.7
-
-#### Hints
-
-Undici does not support early hints. A `103 Early Hint` response will
-be ignored.
-
-Refs: https://tools.ietf.org/html/rfc8297
-
-### Trailer
-
-Undici does not support the the `Trailer` response header field. Any response
-trailer headers will be ignored.
-
-Refs: https://tools.ietf.org/html/rfc7230#section-4.4
-
-### CONNECT
-
-Undici doea not support the http `CONNECT` method. Dispatching a `CONNECT`
-request will cause an `UND_ERR_NOT_SUPPORTED` error.
-
-Refs: https://tools.ietf.org/html/rfc7231#section-4.3.6
 
 ### Pipelining
 
