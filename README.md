@@ -23,10 +23,11 @@ Machine: 2.8GHz AMD EPYC 7402P<br/>
 Configuration: Node v14.4, HTTP/1.1 without TLS, 100 connections, Linux 5.4.12-1-lts
 
 ```
-http - keepalive x 5,521 ops/sec ±3.37% (73 runs sampled)
-undici - pipeline x 9,292 ops/sec ±4.28% (79 runs sampled)
-undici - request x 11,949 ops/sec ±0.99% (85 runs sampled)
-undici - stream x 12,223 ops/sec ±0.76% (85 runs sampled)
+http - keepalive x 5,826 ops/sec ±1.45% (275 runs sampled)
+undici - pipeline x 7,281 ops/sec ±1.68% (273 runs sampled)
+undici - request x 11,700 ops/sec ±0.56% (278 runs sampled)
+undici - stream x 12,684 ops/sec ±0.72% (280 runs sampled)
+undici - dispatch x 13,446 ops/sec ±0.37% (276 runs sampled)
 ```
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js).
@@ -451,6 +452,34 @@ there might still be some progress on dispatched requests.
 
 Returns a promise if no callback is provided.
 
+
+<a name='dispatch'></a>
+#### `client.dispatch(opts, handler): Promise|Void`
+
+This is the low level API which all the preceeding API's are implemented on top of.
+
+Options:
+
+* ... same as [`client.request(opts[, callback])`][request].
+
+The `handler` parameter is defined as follow:
+
+* `onUpgrade(statusCode, headers, socket): Void`, invoked when request is upgraded  either due to a `Upgrade` header or `CONNECT` method.
+  * `statusCode: Number`
+  * `headers: Object`
+  * `socket: Duplex`
+* `onHeaders(statusCode, headers, resume): Void`, invoked when statusCode and headers have been received. 
+  May be invoked multiple times due to 1xx informational headers.
+  * `statusCode: Number`
+  * `headers: Object`
+  * `resume(): Void`, resume `onData` after returning `false`.
+* `onData(chunk): Null|Boolean`, invoked when response payload data is received.
+  * `chunk: Buffer`
+* `onComplete(trailers): Void`, invoked when response payload and trailers have been received and the request has completed.
+  * `trailers: Object`
+* `onError(err): Void`, invoked when an error has occured.
+  * `err: Error`
+
 #### `client.pipelining: Number`
 
 Property to get and set the pipelining factor.
@@ -528,6 +557,10 @@ Calls [`client.upgrade(opts, callback)`][upgrade] on one of the clients.
 
 Calls [`client.connect(opts, callback)`][connect] on one of the clients.
 
+#### `pool.dispatch(opts, handler): Void`
+
+Calls [`client.dispatch(opts, handler)`][dispatch] on one of the clients.
+
 #### `pool.close([callback]): Promise|Void`
 
 Calls [`client.close(callback)`](#close) on all the clients.
@@ -604,3 +637,4 @@ MIT
 [pipeline]: #pipeline
 [upgrade]: #upgrade
 [connect]: #connect
+[dispatch]: #dispatch
