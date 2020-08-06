@@ -68,12 +68,12 @@ test('async hooks', (t) => {
         t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
 
         body.once('data', () => {
-          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+          t.pass()
           body.resume()
         })
 
         body.on('end', () => {
-          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+          t.pass()
         })
       })
     })
@@ -90,12 +90,12 @@ test('async hooks', (t) => {
         t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
 
         body.once('data', () => {
-          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+          t.pass()
           body.resume()
         })
 
         body.on('end', () => {
-          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+          t.pass()
         })
       })
     })
@@ -112,12 +112,12 @@ test('async hooks', (t) => {
         t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
 
         body.once('data', () => {
-          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+          t.pass()
           body.resume()
         })
 
         body.on('end', () => {
-          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+          t.pass()
         })
       })
     })
@@ -207,10 +207,10 @@ test('async hooks error and close', (t) => {
       client.request({ path: '/', method: 'GET' }, (err, data) => {
         t.error(err)
         data.body.on('error', () => {
-          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+          t.pass()
         })
         data.body.on('close', () => {
-          t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+          t.pass()
         })
       })
     })
@@ -236,7 +236,7 @@ test('async hooks pipeline close', (t) => {
         return body
       })
       .on('close', () => {
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+        t.pass()
       })
       .on('error', (err) => {
         t.ok(err)
