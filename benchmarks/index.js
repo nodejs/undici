@@ -41,6 +41,8 @@ const pool = undici(`http://${httpOptions.hostname}:${httpOptions.port}`, {
 
 const suite = new Benchmark.Suite()
 
+Benchmark.options.minSamples = 200
+
 suite
   .add('http - keepalive', {
     defer: true,
@@ -56,18 +58,6 @@ suite
         })
 
         response.pipe(stream)
-      })
-    }
-  })
-  .add('http - noop', {
-    defer: true,
-    fn: deferred => {
-      http.get(httpOptions, response => {
-        response
-          .resume()
-          .on('end', () => {
-            deferred.resolve()
-          })
       })
     }
   })
