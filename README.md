@@ -140,17 +140,6 @@ The `data` parameter in `callback` is defined as follow:
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
 
-The `data` parameter in `onInfo` is defined as follow:
-
-* `statusCode: Number`
-* `opaque: Any`
-* `headers: Object`, an object where all keys have been lowercased.
-
-The `data` parameter in `onTrailers` is defined as follow:
-
-* `opaque: Any`
-* `trailers: Object`, an object where all keys have been lowercased.
-
 Returns a promise if no callback is provided.
 
 Example:
