@@ -525,7 +525,7 @@ test('pipeline abort piped res', (t) => {
         if (process.versions.node.split('.')[0] < 13) {
           t.ok(err)
         } else {
-          t.strictEqual(err.code, 'ERR_STREAM_PREMATURE_CLOSE')
+          t.strictEqual(err.code, 'UND_ERR_ABORTED')
         }
       })
       .end()
