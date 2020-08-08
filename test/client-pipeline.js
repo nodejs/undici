@@ -108,54 +108,55 @@ test('pipeline echo', (t) => {
   })
 })
 
-test('pipeline ignore request body', (t) => {
-  t.plan(2)
+// TODO: https://github.com/nodejs/node/issues/34681
+// test('pipeline ignore request body', (t) => {
+//   t.plan(2)
 
-  let done
-  const server = createServer((req, res) => {
-    res.write('asd')
-    res.end()
-    done()
-  })
-  t.tearDown(server.close.bind(server))
+//   let done
+//   const server = createServer((req, res) => {
+//     res.write('asd')
+//     res.end()
+//     done()
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`)
+//     t.tearDown(client.close.bind(client))
 
-    let res = ''
-    const buf1 = Buffer.alloc(1e3).toString()
-    const buf2 = Buffer.alloc(1e6).toString()
-    pipeline(
-      new Readable({
-        read () {
-          this.push(buf1)
-          this.push(buf2)
-          done = () => this.push(null)
-        }
-      }),
-      client.pipeline({
-        path: '/',
-        method: 'PUT'
-      }, ({ body }) => {
-        return pipeline(body, new PassThrough(), () => {})
-      }),
-      new Writable({
-        write (chunk, encoding, callback) {
-          res += chunk.toString()
-          callback()
-        },
-        final (callback) {
-          t.strictEqual(res, 'asd')
-          callback()
-        }
-      }),
-      (err) => {
-        t.error(err)
-      }
-    )
-  })
-})
+//     let res = ''
+//     const buf1 = Buffer.alloc(1e3).toString()
+//     const buf2 = Buffer.alloc(1e6).toString()
+//     pipeline(
+//       new Readable({
+//         read () {
+//           this.push(buf1)
+//           this.push(buf2)
+//           done = () => this.push(null)
+//         }
+//       }),
+//       client.pipeline({
+//         path: '/',
+//         method: 'PUT'
+//       }, ({ body }) => {
+//         return pipeline(body, new PassThrough(), () => {})
+//       }),
+//       new Writable({
+//         write (chunk, encoding, callback) {
+//           res += chunk.toString()
+//           callback()
+//         },
+//         final (callback) {
+//           t.strictEqual(res, 'asd')
+//           callback()
+//         }
+//       }),
+//       (err) => {
+//         t.error(err)
+//       }
+//     )
+//   })
+// })
 
 test('pipeline invalid handler', (t) => {
   t.plan(1)
