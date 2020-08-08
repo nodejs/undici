@@ -29,9 +29,9 @@ test('timeout with pipelining 1', (t) => {
     })
     t.tearDown(client.close.bind(client))
 
-    client.request({ path: '/', method: 'GET' }, (err, data) => {
+    client.request({ path: '/', method: 'GET', opaque: 'asd' }, (err, data) => {
       t.ok(err instanceof errors.SocketTimeoutError) // we are expecting an error
-      t.strictEqual(null, data)
+      t.strictEqual(data.opaque, 'asd')
     })
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {

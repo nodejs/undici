@@ -33,9 +33,9 @@ test('GET errors and reconnect with pipelining 1', (t) => {
     })
     t.tearDown(client.destroy.bind(client))
 
-    client.request({ path: '/', method: 'GET', idempotent: false }, (err, data) => {
+    client.request({ path: '/', method: 'GET', idempotent: false, opaque: 'asd' }, (err, data) => {
       t.ok(err instanceof Error) // we are expecting an error
-      t.strictEqual(null, data)
+      t.strictEqual(data.opaque, 'asd')
     })
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
@@ -86,9 +86,9 @@ test('GET errors and reconnect with pipelining 3', (t) => {
 
     // all of these will error
     for (let i = 0; i < 3; i++) {
-      client.request({ path: '/', method: 'GET', idempotent: false }, (err, data) => {
+      client.request({ path: '/', method: 'GET', idempotent: false, opaque: 'asd' }, (err, data) => {
         t.ok(err instanceof Error) // we are expecting an error
-        t.strictEqual(null, data)
+        t.strictEqual(data.opaque, 'asd')
       })
     }
 
@@ -148,6 +148,7 @@ test('POST with a stream that errors and pipelining 1 should reconnect', (t) => 
         // higher than the length of the string
         'content-length': 42
       },
+      opaque: 'asd',
       body: new Readable({
         read () {
           this.push('a string')
@@ -156,7 +157,7 @@ test('POST with a stream that errors and pipelining 1 should reconnect', (t) => 
       })
     }, (err, data) => {
       t.strictEqual(err.message, 'kaboom')
-      t.strictEqual(data, null)
+      t.strictEqual(data.opaque, 'asd')
     })
 
     // this will be queued up
@@ -211,6 +212,7 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
     client.request({
       path: '/',
       method: 'POST',
+      opaque: 'asd',
       body: new Readable({
         read () {
           this.push('a string')
@@ -219,7 +221,7 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
       })
     }, (err, data) => {
       t.strictEqual(err.message, 'kaboom')
-      t.strictEqual(data, null)
+      t.strictEqual(data.opaque, 'asd')
     })
 
     // this will be queued up
@@ -710,11 +712,12 @@ test('queued request should fail on client destroy', (t) => {
     })
     client.request({
       path: '/',
-      method: 'GET'
+      method: 'GET',
+      opaque: 'asd'
     }, (err, data) => {
       requestErrored = true
       t.ok(err)
-      t.strictEqual(data, null)
+      t.strictEqual(data.opaque, 'asd')
     })
   })
 })

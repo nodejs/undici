@@ -258,6 +258,7 @@ test('errored POST body lets inflight complete', (t) => {
           client.request({
             path: '/',
             method: 'POST',
+            opaque: 'asd',
             body: new Readable({
               read () {
                 this.destroy(new Error('kaboom'))
@@ -269,7 +270,7 @@ test('errored POST body lets inflight complete', (t) => {
             })
           }, (err, data) => {
             t.ok(err)
-            t.strictEqual(data, null)
+            t.strictEqual(data.opaque, 'asd')
           })
           client.close((err) => {
             t.error(err)
