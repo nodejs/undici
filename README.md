@@ -101,7 +101,7 @@ Options:
 
 * `path: String`
 * `method: String`
-* `opaque: Any`
+* `opaque: Any`, applied as `this` in `callback`,
 * `body: String|Buffer|Uint8Array|stream.Readable|Null`.
   Default: `null`.
 * `headers: Object|Null`, an object with header-value pairs.
@@ -134,7 +134,6 @@ If you don't specify a `host` header, it will be derived from the `url` of the c
 The `data` parameter in `callback` is defined as follow:
 
 * `statusCode: Number`
-* `opaque: Any`
 * `headers: Object`, an object where all keys have been lowercased.
 * `body: stream.Readable` response payload. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
@@ -248,11 +247,10 @@ The `data` parameter in `factory` is defined as follow:
 
 * `statusCode: Number`
 * `headers: Object`, an object where all keys have been lowercased.
-* `opaque: Any`
+* `opaque: Any`, applied as `this` in `handler` and `callback`,
 
 The `data` parameter in `callback` is defined as follow:
 
-* `opaque: Any`
 * `trailers: Object`, an object where all keys have been lowercased.
 
 Returns a promise if no callback is provided.
@@ -265,16 +263,18 @@ const fs = require('fs')
 client.stream({
   path: '/',
   method: 'GET',
-  opaque: filename
-}, ({ statusCode, headers, opaque: filename }) => {
+  opaque: { filename }
+}, function ({ statusCode, headers }) {
+  const { filename } = this
   console.log('response received', statusCode)
   console.log('headers', headers)
   return fs.createWriteStream(filename)
-}, (err) => {
+}, function (err) {
+  const { filename } = this
   if (err) {
-    console.error('failure', err)
+    console.error('failure', filename, err)
   } else {
-    console.log('success')
+    console.log('success', filename)
   }
 })
 ```
@@ -294,7 +294,7 @@ Instead of:
 function (req, res) {
    return client.stream(opts, (data) => {
      // Creates closure to capture `res`.
-     proxy({ ...data, opaque: res })
+     proxy.call(res, data)
    }
 }
 ```
@@ -314,7 +314,7 @@ The `data` parameter in `handler` is defined as follow:
 
 * `statusCode: Number`
 * `headers: Object`, an object where all keys have been lowercased.
-* `opaque: Any`
+* `opaque: Any`, applied as `this` in `handler`,
 * `body: stream.Readable` response payload. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
@@ -371,7 +371,7 @@ Upgrade to a different protocol.
 Options:
 
 * `path: String`
-* `opaque: Any`
+* `opaque: Any`, applied as `this` in `callback`,
 * `method: String`
   Default: `GET`
 * `headers: Object|Null`, an object with header-value pairs.
@@ -389,7 +389,6 @@ The `data` parameter in `callback` is defined as follow:
 
 * `headers: Object`, an object where all keys have been lowercased.
 * `socket: Duplex`
-* `opaque`
 
 Returns a promise if no callback is provided.
 
@@ -401,7 +400,7 @@ Starts two-way communications with the requested resource.
 Options:
 
 * `path: String`
-* `opaque: Any`
+* `opaque: Any`, applied as `this` in `callback`,
 * `headers: Object|Null`, an object with header-value pairs.
   Default: `null`
 * `signal: AbortController|EventEmitter|Null`.
@@ -416,7 +415,6 @@ The `data` parameter in `callback` is defined as follow:
 * `statusCode: Number`
 * `headers: Object`, an object where all keys have been lowercased.
 * `socket: Duplex`
-* `opaque: Any`
 
 Returns a promise if no callback is provided.
 

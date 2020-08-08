@@ -26,17 +26,17 @@ test('stream get', (t) => {
       path: '/',
       method: 'GET',
       opaque: new PassThrough()
-    }, ({ statusCode, headers, opaque: pt }) => {
+    }, function ({ statusCode, headers }) {
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
-      pt.on('data', (buf) => {
+      this.on('data', (buf) => {
         bufs.push(buf)
       })
-      pt.on('end', () => {
+      this.on('end', () => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
-      return pt
+      return this
     }, (err) => {
       t.error(err)
     })
