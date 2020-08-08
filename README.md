@@ -434,25 +434,6 @@ The `data` parameter in `callback` is defined as follow:
 
 Returns a promise if no callback is provided.
 
-<a name='close'></a>
-#### `client.close([callback]): Promise|Void`
-
-Closes the client and gracefully waits fo enqueued requests to
-complete before invoking the callback.
-
-Returns a promise if no callback is provided.
-
-<a name='destroy'></a>
-#### `client.destroy([err][, callback]): Promise|Void`
-
-Destroy the client abruptly with the given `err`. All the pending and running
-requests will be asynchronously aborted and error. Waits until socket is closed
-before invoking the callback. Since this operation is asynchronously dispatched
-there might still be some progress on dispatched requests.
-
-Returns a promise if no callback is provided.
-
-
 <a name='dispatch'></a>
 #### `client.dispatch(opts, handler): Promise|Void`
 
@@ -479,6 +460,24 @@ The `handler` parameter is defined as follow:
   * `trailers: Object`
 * `onError(err): Void`, invoked when an error has occured.
   * `err: Error`
+
+<a name='close'></a>
+#### `client.close([callback]): Promise|Void`
+
+Closes the client and gracefully waits fo enqueued requests to
+complete before invoking the callback.
+
+Returns a promise if no callback is provided.
+
+<a name='destroy'></a>
+#### `client.destroy([err][, callback]): Promise|Void`
+
+Destroy the client abruptly with the given `err`. All the pending and running
+requests will be asynchronously aborted and error. Waits until socket is closed
+before invoking the callback. Since this operation is asynchronously dispatched
+there might still be some progress on dispatched requests.
+
+Returns a promise if no callback is provided.
 
 #### `client.pipelining: Number`
 
