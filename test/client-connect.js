@@ -61,3 +61,72 @@ test('upgrade invalid opts', (t) => {
     t.ok(err instanceof errors.InvalidArgumentError)
   }
 })
+
+test('connect wait for empty pipeline', (t) => {
+  t.plan(6)
+
+  let canConnect = false
+  const server = http.createServer((req, res) => {
+    res.end()
+    canConnect = true
+  })
+  server.on('connect', (req, socket, firstBodyChunk) => {
+    t.strictEqual(canConnect, true)
+    socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
+
+    let data = firstBodyChunk.toString()
+    socket.on('data', (buf) => {
+      data += buf.toString()
+    })
+
+    socket.on('end', () => {
+      socket.end(data)
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 3
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.error(err)
+    })
+    client.on('connect', () => {
+      process.nextTick(() => {
+        t.strictEqual(client.busy, false)
+
+        client.connect({
+          path: '/'
+        }, (err, { socket }) => {
+          t.error(err)
+          let recvData = ''
+          socket.on('data', (d) => {
+            recvData += d
+          })
+
+          socket.on('end', () => {
+            t.strictEqual(recvData.toString(), 'Body')
+          })
+
+          socket.write('Body')
+          socket.end()
+        })
+        t.strictEqual(client.busy, true)
+
+        // TODO: node server refuses connection after 'connect'?
+        // client.request({
+        //   path: '/',
+        //   method: 'GET'
+        // }, (err) => {
+        //   t.error(err)
+        // })
+      })
+    })
+  })
+})
