@@ -63,7 +63,7 @@ test('upgrade invalid opts', (t) => {
 })
 
 test('connect wait for empty pipeline', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   let canConnect = false
   const server = http.createServer((req, res) => {
@@ -97,7 +97,7 @@ test('connect wait for empty pipeline', (t) => {
     }, (err) => {
       t.error(err)
     })
-    client.on('connect', () => {
+    client.once('connect', () => {
       process.nextTick(() => {
         t.strictEqual(client.busy, false)
 
@@ -119,13 +119,12 @@ test('connect wait for empty pipeline', (t) => {
         })
         t.strictEqual(client.busy, true)
 
-        // TODO: node server refuses connection after 'connect'?
-        // client.request({
-        //   path: '/',
-        //   method: 'GET'
-        // }, (err) => {
-        //   t.error(err)
-        // })
+        client.request({
+          path: '/',
+          method: 'GET'
+        }, (err) => {
+          t.error(err)
+        })
       })
     })
   })
