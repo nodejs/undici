@@ -6,7 +6,6 @@ const { createServer } = require('http')
 const { createHook, executionAsyncId } = require('async_hooks')
 const { readFile } = require('fs')
 const { PassThrough } = require('stream')
-const { AsyncResource } = require('async_hooks')
 
 const transactions = new Map()
 
@@ -179,45 +178,7 @@ test('async hooks client is destroyed', (t) => {
   })
 })
 
-test('async hooks error and close', (t) => {
-  t.plan(6)
-
-  const server = createServer((req, res) => {
-    res.write('asd')
-    setImmediate(() => {
-      res.destroy()
-    })
-  })
-  t.tearDown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
-
-    client.request({ path: '/', method: 'GET' }, (err, { body }) => {
-      t.error(err)
-      body.resume()
-      body.on('error', (err) => {
-        t.ok(err)
-      })
-      t.strictDeepEqual(getCurrentTransaction(), null)
-
-      setCurrentTransaction({ hello: 'world2' })
-
-      client.request({ path: '/', method: 'GET' }, (err, data) => {
-        t.error(err)
-        data.body.on('error', () => {
-          t.pass()
-        })
-        data.body.on('close', () => {
-          t.pass()
-        })
-      })
-    })
-  })
-})
-
-test('async hooks pipeline close', (t) => {
+test('async hooks pipeline handler', (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -231,22 +192,15 @@ test('async hooks pipeline close', (t) => {
 
     setCurrentTransaction({ hello: 'world2' })
 
-    const ret = client
+    client
       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
+        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
         return body
       })
       .on('close', () => {
         t.pass()
       })
-      .on('error', (err) => {
-        t.ok(err)
-      })
+      .resume()
       .end()
-
-    new AsyncResource('tmp')
-      .runInAsyncScope(() => {
-        setCurrentTransaction({ hello: 'world1' })
-        ret.destroy()
-      })
   })
 })
