@@ -1,11 +1,11 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client } = require('..')
+const { Client, errors } = require('..')
 const http = require('http')
 
 test('basic connect', (t) => {
-  t.plan(2)
+  t.plan(1)
 
   const server = http.createServer((c) => {
     t.fail()
@@ -24,28 +24,40 @@ test('basic connect', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
+  server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    client.connect({
+    const { socket } = await client.connect({
       path: '/'
-    }, (err, data) => {
-      t.error(err)
-
-      const { socket } = data
-
-      let recvData = ''
-      socket.on('data', (d) => {
-        recvData += d
-      })
-
-      socket.on('end', () => {
-        t.strictEqual(recvData.toString(), 'Body')
-      })
-
-      socket.write('Body')
-      socket.end()
     })
+
+    let recvData = ''
+    socket.on('data', (d) => {
+      recvData += d
+    })
+
+    socket.on('end', () => {
+      t.strictEqual(recvData.toString(), 'Body')
+    })
+
+    socket.write('Body')
+    socket.end()
   })
+})
+
+test('upgrade invalid opts', (t) => {
+  t.plan(2)
+
+  const client = new Client('http://localhost:5432')
+
+  client.connect(null, err => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+
+  try {
+    client.connect(null, null)
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  }
 })

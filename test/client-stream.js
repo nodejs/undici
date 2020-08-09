@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
-const { PassThrough } = require('stream')
+const { PassThrough, Writable } = require('stream')
 const EE = require('events')
 
 test('stream get', (t) => {
@@ -39,6 +39,41 @@ test('stream get', (t) => {
       return pt
     }, (err) => {
       t.error(err)
+    })
+  })
+})
+
+test('stream promise get', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    t.strictEqual('localhost', req.headers.host)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    await client.stream({
+      path: '/',
+      method: 'GET',
+      opaque: new PassThrough()
+    }, ({ statusCode, headers, opaque: pt }) => {
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+      const bufs = []
+      pt.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      pt.on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+      return pt
     })
   })
 })
@@ -501,6 +536,67 @@ test('trailers', (t) => {
     }, () => new PassThrough(), (err, data) => {
       t.strictDeepEqual({ 'content-md5': 'test' }, data.trailers)
       t.error(err)
+    })
+  })
+})
+
+test('stream ignore 1xx', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.writeProcessing()
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    let buf = ''
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => new Writable({
+      write (chunk, encoding, callback) {
+        buf += chunk
+        callback()
+      }
+    }), (err, data) => {
+      t.error(err)
+      t.strictEqual(buf, 'hello')
+    })
+  })
+})
+
+test('stream backpressure', (t) => {
+  t.plan(2)
+
+  const expected = Buffer.alloc(1e6).toString()
+
+  const server = createServer((req, res) => {
+    res.writeProcessing()
+    res.end(expected)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    let buf = ''
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => new Writable({
+      highWaterMark: 1,
+      write (chunk, encoding, callback) {
+        buf += chunk
+        process.nextTick(callback)
+      }
+    }), (err, data) => {
+      t.error(err)
+      t.strictEqual(buf, expected)
     })
   })
 })
