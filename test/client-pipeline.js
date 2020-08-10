@@ -925,7 +925,7 @@ test('pipeline ignore 1xx', (t) => {
 test('pipeline backpressure', (t) => {
   t.plan(1)
 
-  const expected = Buffer.alloc(1e6).toString()
+  const expected = Buffer.alloc(1e7).toString()
 
   const server = createServer((req, res) => {
     res.writeProcessing()
