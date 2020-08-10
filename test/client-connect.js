@@ -47,7 +47,64 @@ test('basic connect', (t) => {
   })
 })
 
-test('upgrade invalid opts', (t) => {
+test('connect >=300 should not error', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((c) => {
+    t.fail()
+  })
+  server.on('connect', (req, socket, firstBodyChunk) => {
+    socket.write('HTTP/1.1 300 Connection established\r\n\r\n')
+
+    let data = firstBodyChunk.toString()
+    socket.on('data', (buf) => {
+      data += buf.toString()
+    })
+
+    socket.on('end', () => {
+      socket.end(data)
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    const { statusCode, socket } = await client.connect({
+      path: '/'
+    })
+    t.strictEqual(statusCode, 300)
+    socket.destroy()
+  })
+})
+
+test('connect error', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((c) => {
+    t.fail()
+  })
+  server.on('connect', (req, socket, firstBodyChunk) => {
+    socket.destroy()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    try {
+      await client.connect({
+        path: '/'
+      })
+    } catch (err) {
+      t.ok(err)
+    }
+  })
+})
+
+test('connect invalid opts', (t) => {
   t.plan(2)
 
   const client = new Client('http://localhost:5432')
