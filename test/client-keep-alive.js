@@ -22,8 +22,7 @@ test('keep-alive header', (t) => {
 
     client.request({
       path: '/',
-      method: 'GET',
-      idleTimeout: 30e3
+      method: 'GET'
     }, (err, { body }) => {
       t.error(err)
       body.on('end', () => {
@@ -57,8 +56,7 @@ test('keep-alive header 1', (t) => {
 
     client.request({
       path: '/',
-      method: 'GET',
-      idleTimeout: 30e3
+      method: 'GET'
     }, (err, { body }) => {
       t.error(err)
       body.on('end', () => {
@@ -87,19 +85,57 @@ test('keep-alive not timeout', (t) => {
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      idleTimeout: 1e3
+    })
     t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
-      method: 'GET',
-      idleTimeout: 4e3
+      method: 'GET'
     }, (err, { body }) => {
       t.error(err)
       body.on('end', () => {
         const timeout = setTimeout(() => {
           t.fail()
-        }, 5e3)
+        }, 2e3)
+        client.on('disconnect', () => {
+          t.pass()
+          clearTimeout(timeout)
+        })
+      }).resume()
+    })
+  })
+})
+
+test('keep-alive threshold', (t) => {
+  t.plan(2)
+
+  const server = createServer((socket) => {
+    socket.write('HTTP/1.1 200 OK\r\n')
+    socket.write('Content-Length: 0\r\n')
+    socket.write('Keep-Alive: timeout=30s\r\n')
+    socket.write('Connection: keep-alive\r\n')
+    socket.write('\r\n\r\n')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      idleTimeout: 30e3,
+      keepAliveTimeoutThreshold: 29e3
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.on('end', () => {
+        const timeout = setTimeout(() => {
+          t.fail()
+        }, 2e3)
         client.on('disconnect', () => {
           t.pass()
           clearTimeout(timeout)
