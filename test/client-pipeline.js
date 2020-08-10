@@ -893,3 +893,68 @@ test('pipeline body without destroy', (t) => {
       .resume()
   })
 })
+
+test('pipeline ignore 1xx', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.writeProcessing()
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    let buf = ''
+    client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => body)
+      .on('data', (chunk) => {
+        buf += chunk
+      })
+      .on('end', () => {
+        t.strictEqual(buf, 'hello')
+      })
+      .end()
+  })
+})
+
+test('pipeline backpressure', (t) => {
+  t.plan(1)
+
+  const expected = Buffer.alloc(1e6).toString()
+
+  const server = createServer((req, res) => {
+    res.writeProcessing()
+    res.end(expected)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    let buf = ''
+    client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ body }) => body.pipe(new Transform({
+      highWaterMark: 1,
+      transform (chunk, encoding, callback) {
+        process.nextTick(() => {
+          callback(null, chunk)
+        })
+      }
+    })))
+      .on('data', chunk => {
+        buf += chunk
+      })
+      .on('end', () => {
+        t.strictEqual(buf, expected)
+      })
+      .end()
+  })
+})
