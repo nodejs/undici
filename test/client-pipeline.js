@@ -941,20 +941,21 @@ test('pipeline backpressure', (t) => {
     client.pipeline({
       path: '/',
       method: 'GET'
-    }, ({ body }) => body.pipe(new Transform({
-      highWaterMark: 1,
-      transform (chunk, encoding, callback) {
-        process.nextTick(() => {
-          callback(null, chunk)
-        })
-      }
-    })))
+    }, ({ body }) => body)
+      .end()
+      .pipe(new Transform({
+        highWaterMark: 1,
+        transform (chunk, encoding, callback) {
+          process.nextTick(() => {
+            callback(null, chunk)
+          })
+        }
+      }))
       .on('data', chunk => {
         buf += chunk
       })
       .on('end', () => {
         t.strictEqual(buf, expected)
       })
-      .end()
   })
 })
