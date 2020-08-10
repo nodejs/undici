@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client, errors } = require('..')
 const net = require('net')
 const http = require('http')
+const EE = require('events')
 
 test('basic upgrade', (t) => {
   t.plan(3)
@@ -264,5 +265,36 @@ test('upgrade wait for empty pipeline', (t) => {
         })
       })
     })
+  })
+})
+
+test('upgrade aborted', (t) => {
+  t.plan(3)
+
+  const server = http.createServer((req, res) => {
+    t.fail()
+  })
+  server.on('upgrade', (req, c, firstBodyChunk) => {
+    t.fail()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 3
+    })
+    t.tearDown(client.close.bind(client))
+
+    const signal = new EE()
+    client.upgrade({
+      path: '/',
+      signal,
+      opaque: 'asd'
+    }, (err, { opaque }) => {
+      t.strictEqual(opaque, 'asd')
+      t.ok(err instanceof errors.RequestAbortedError)
+    })
+    t.strictEqual(client.busy, true)
+    signal.emit('abort')
   })
 })

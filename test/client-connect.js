@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const http = require('http')
+const EE = require('events')
 
 test('basic connect', (t) => {
   t.plan(1)
@@ -127,5 +128,36 @@ test('connect wait for empty pipeline', (t) => {
         })
       })
     })
+  })
+})
+
+test('connect aborted', (t) => {
+  t.plan(3)
+
+  const server = http.createServer((req, res) => {
+    t.fail()
+  })
+  server.on('connect', (req, c, firstBodyChunk) => {
+    t.fail()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 3
+    })
+    t.tearDown(client.close.bind(client))
+
+    const signal = new EE()
+    client.connect({
+      path: '/',
+      signal,
+      opaque: 'asd'
+    }, (err, { opaque }) => {
+      t.strictEqual(opaque, 'asd')
+      t.ok(err instanceof errors.RequestAbortedError)
+    })
+    t.strictEqual(client.busy, true)
+    signal.emit('abort')
   })
 })
