@@ -9,6 +9,7 @@ const { EventEmitter } = require('events')
 const { promisify } = require('util')
 const { PassThrough } = require('stream')
 const eos = require('stream').finished
+const net = require('net')
 
 test('basic get', (t) => {
   t.plan(9)
@@ -305,4 +306,123 @@ test('invalid options throws', (t) => {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid connections')
   }
+})
+
+test('pool upgrade promise', (t) => {
+  t.plan(2)
+
+  const server = net.createServer((c) => {
+    c.on('data', (d) => {
+      c.write('HTTP/1.1 101\r\n')
+      c.write('hello: world\r\n')
+      c.write('connection: upgrade\r\n')
+      c.write('upgrade: websocket\r\n')
+      c.write('\r\n')
+      c.write('Body')
+    })
+
+    c.on('end', () => {
+      c.end()
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const { headers, socket } = await client.upgrade({
+      path: '/',
+      method: 'GET',
+      protocol: 'Websocket'
+    })
+
+    let recvData = ''
+    socket.on('data', (d) => {
+      recvData += d
+    })
+
+    socket.on('close', () => {
+      t.strictEqual(recvData.toString(), 'Body')
+    })
+
+    t.deepEqual(headers, {
+      hello: 'world',
+      connection: 'upgrade',
+      upgrade: 'websocket'
+    })
+    socket.end()
+  })
+})
+
+test('pool connect', (t) => {
+  t.plan(1)
+
+  const server = createServer((c) => {
+    t.fail()
+  })
+  server.on('connect', (req, socket, firstBodyChunk) => {
+    socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
+
+    let data = firstBodyChunk.toString()
+    socket.on('data', (buf) => {
+      data += buf.toString()
+    })
+
+    socket.on('end', () => {
+      socket.end(data)
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const { socket } = await client.connect({
+      path: '/'
+    })
+
+    let recvData = ''
+    socket.on('data', (d) => {
+      recvData += d
+    })
+
+    socket.on('end', () => {
+      t.strictEqual(recvData.toString(), 'Body')
+    })
+
+    socket.write('Body')
+    socket.end()
+  })
+})
+
+test('pool dispatch', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    let buf = ''
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      _onHeaders (statusCode, headers) {
+        t.strictEqual(statusCode, 200)
+      },
+      _onData (chunk) {
+        buf += chunk
+      },
+      _onComplete () {
+        t.strictEqual(buf, 'asd')
+      }
+    })
+  })
 })

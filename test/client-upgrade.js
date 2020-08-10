@@ -298,3 +298,35 @@ test('upgrade aborted', (t) => {
     signal.emit('abort')
   })
 })
+
+test('basic aborted after res', (t) => {
+  t.plan(1)
+
+  const signal = new EE()
+  const server = http.createServer()
+  server.on('upgrade', (req, c, head) => {
+    c.write('HTTP/1.1 101\r\n')
+    c.write('hello: world\r\n')
+    c.write('connection: upgrade\r\n')
+    c.write('upgrade: websocket\r\n')
+    c.write('\r\n')
+    c.write('Body')
+    c.end()
+    signal.emit('abort')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.upgrade({
+      path: '/',
+      method: 'GET',
+      protocol: 'Websocket',
+      signal
+    }, (err) => {
+      t.ok(err instanceof errors.RequestAbortedError)
+    })
+  })
+})

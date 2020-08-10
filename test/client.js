@@ -857,3 +857,32 @@ test('non recoverable socket error fails pending request', (t) => {
     })
   })
 })
+
+test('POST empty with error', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const body = new Readable({
+      read () {
+      }
+    })
+    body.push(null)
+    client.on('connect', () => {
+      process.nextTick(() => {
+        body.emit('error', new Error('asd'))
+      })
+    })
+
+    client.request({ path: '/', method: 'POST', body }, (err, data) => {
+      t.strictEqual(err.message, 'asd')
+    })
+  })
+})
