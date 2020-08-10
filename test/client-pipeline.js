@@ -2,6 +2,7 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
+const EE = require('events')
 const { createServer } = require('http')
 const {
   pipeline,
@@ -956,6 +957,37 @@ test('pipeline backpressure', (t) => {
       })
       .on('end', () => {
         t.strictEqual(buf, expected)
+      })
+  })
+})
+
+test('pipeline abort after headers', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.writeProcessing()
+    res.write('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    const signal = new EE()
+    client.pipeline({
+      path: '/',
+      method: 'GET',
+      signal
+    }, ({ body }) => {
+      process.nextTick(() => {
+        signal.emit('abort')
+      })
+      return body
+    })
+      .end()
+      .on('error', (err) => {
+        t.ok(err instanceof errors.RequestAbortedError)
       })
   })
 })
