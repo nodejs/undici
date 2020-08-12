@@ -12,7 +12,7 @@ test('basic get', (t) => {
   t.plan(20)
 
   const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
+    t.strictEqual('/asd/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual('localhost', req.headers.host)
     t.strictEqual(undefined, req.headers.foo)
@@ -29,7 +29,7 @@ test('basic get', (t) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}/asd`)
     t.tearDown(client.close.bind(client))
 
     client.request({
