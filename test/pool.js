@@ -414,13 +414,13 @@ test('pool dispatch', (t) => {
       path: '/',
       method: 'GET'
     }, {
-      _onHeaders (statusCode, headers) {
+      onHeaders (statusCode, headers) {
         t.strictEqual(statusCode, 200)
       },
-      _onData (chunk) {
+      onData (chunk) {
         buf += chunk
       },
-      _onComplete () {
+      onComplete () {
         t.strictEqual(buf, 'asd')
       }
     })

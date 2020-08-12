@@ -152,15 +152,15 @@ class NoopRequest {
     this.deferred = deferred
   }
 
-  _onHeaders () {
+  onHeaders () {
 
   }
 
-  _onData (chunk) {
+  onData (chunk) {
     return true
   }
 
-  _onComplete (trailers) {
+  onComplete (trailers) {
     this.deferred.resolve()
   }
 }
@@ -170,15 +170,15 @@ class SimpleRequest {
     this.dst = dst
   }
 
-  _onHeaders (statusCode, headers, resume) {
+  onHeaders (statusCode, headers, resume) {
     this.dst.on('drain', resume)
   }
 
-  _onData (chunk) {
+  onData (chunk) {
     return this.dst.write(chunk)
   }
 
-  _onComplete () {
+  onComplete () {
     this.dst.end()
   }
 }
