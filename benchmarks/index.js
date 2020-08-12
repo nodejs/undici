@@ -3,7 +3,6 @@ const { Writable } = require('stream')
 const http = require('http')
 const Benchmark = require('benchmark')
 const undici = require('..')
-const { kGetNext } = require('../lib/symbols')
 
 // # Start the h2o server (in h2o repository)
 // # Then change the port below to 8080
@@ -131,15 +130,13 @@ suite
       stream.once('finish', () => {
         deferred.resolve()
       })
-      const client = pool[kGetNext]()
-      client.dispatch(undiciOptions, new SimpleRequest(stream))
+      pool.dispatch(undiciOptions, new SimpleRequest(stream))
     }
   })
   .add('undici - noop', {
     defer: true,
     fn: deferred => {
-      const client = pool[kGetNext]()
-      client.dispatch(undiciOptions, new NoopRequest(deferred))
+      pool.dispatch(undiciOptions, new NoopRequest(deferred))
     }
   })
   .on('cycle', event => {
