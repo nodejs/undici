@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "tap test/*.js --no-coverage",
+    "test": "tap test/*.js --no-coverage && jest test/jest/test",
     "coverage": "standard | snazzy && tap test/*.js",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\""
   },
@@ -32,6 +32,7 @@
     "benchmark": "^2.1.4",
     "concurrently": "^5.2.0",
     "https-pem": "^2.0.0",
+    "jest": "^26.4.0",
     "pre-commit": "^1.2.2",
     "proxyquire": "^2.0.1",
     "snazzy": "^8.0.0",
