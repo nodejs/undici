@@ -570,6 +570,35 @@ test('Set-Cookie', (t) => {
   })
 })
 
+test('Set-Cookie with a single cookie', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.setHeader('Set-Cookie', 'a single cookie')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      t.strictDeepEqual(headers['set-cookie'], ['a single cookie'])
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
 test('ignore request header mutations', (t) => {
   t.plan(2)
 
