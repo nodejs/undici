@@ -466,3 +466,62 @@ test('300 requests succeed', (t) => {
     }
   })
 })
+
+test('pool connect error', (t) => {
+  t.plan(1)
+
+  const server = createServer((c) => {
+    t.fail()
+  })
+  server.on('connect', (req, socket, firstBodyChunk) => {
+    socket.destroy()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    try {
+      await client.connect({
+        path: '/'
+      })
+    } catch (err) {
+      t.ok(err)
+    }
+  })
+})
+
+test('pool upgrade error', (t) => {
+  t.plan(1)
+
+  const server = net.createServer((c) => {
+    c.on('data', (d) => {
+      c.write('HTTP/1.1 101\r\n')
+      c.write('hello: world\r\n')
+      c.write('connection: upgrade\r\n')
+      c.write('\r\n')
+      c.write('Body')
+    })
+
+    c.on('end', () => {
+      c.end()
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    try {
+      await client.upgrade({
+        path: '/',
+        method: 'GET',
+        protocol: 'Websocket'
+      })
+    } catch (err) {
+      t.ok(err)
+    }
+  })
+})
