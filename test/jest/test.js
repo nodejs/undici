@@ -13,7 +13,7 @@ test('should work in jest', async () => {
     res.end('hello')
   })
   await new Promise((resolve, reject) => {
-    server.listen(0, async () => {
+    server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       client.request({
         path: '/',
@@ -22,7 +22,7 @@ test('should work in jest', async () => {
           'Content-Type': 'application/json'
         },
         body: '{}'
-      }, async (err, result) => {
+      }, (err, result) => {
         server.close()
         client.close()
         if (err) {
