@@ -426,3 +426,43 @@ test('pool dispatch', (t) => {
     })
   })
 })
+
+test('pool pipeline args validation', (t) => {
+  t.plan(2)
+
+  const client = new Pool('http://localhost:5000')
+
+  const ret = client.pipeline(null, () => {})
+  ret.on('error', (err) => {
+    t.ok(/opts/.test(err.message))
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+})
+
+test('300 requests succeed', (t) => {
+  t.plan(300 * 2)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    for (let n = 0; n < 300; ++n) {
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err, data) => {
+        t.error(err)
+        data.body.on('data', (chunk) => {
+          t.strictEqual(chunk.toString(), 'asd')
+        })
+      })
+    }
+  })
+})
