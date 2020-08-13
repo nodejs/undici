@@ -72,7 +72,7 @@ test('basic head', (t) => {
   t.plan(14)
 
   const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
+    t.strictEqual('/asd/123', req.url)
     t.strictEqual('HEAD', req.method)
     t.strictEqual('localhost', req.headers.host)
     res.setHeader('content-type', 'text/plain')
@@ -81,10 +81,10 @@ test('basic head', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}/asd/`)
     t.tearDown(client.close.bind(client))
 
-    client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+    client.request({ path: '/123', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
@@ -95,7 +95,7 @@ test('basic head', (t) => {
         })
     })
 
-    client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+    client.request({ path: '/123', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')

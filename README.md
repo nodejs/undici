@@ -41,8 +41,8 @@ A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection.
 Keepalive is enabled by default, and it cannot be turned off.
 
 `url` can be a string or a [`URL`](https://nodejs.org/api/url.html#url_class_url) object.
-It should only include the pathname, protocol, hostname, and the port. If pathname is
-provided it will always be prepended to any request path.
+It should only include the pathname, protocol, hostname, and the port. If `pathname` is
+provided it will always be joined with any request path.
 
 Options:
 
