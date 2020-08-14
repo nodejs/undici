@@ -503,9 +503,9 @@ test('pool upgrade error', (t) => {
       c.write('\r\n')
       c.write('Body')
     })
-
-    c.on('end', () => {
-      c.end()
+    c.on('error', () => {
+      // Whether we get an error, end or close is undefined.
+      // Ignore error.
     })
   })
   t.tearDown(server.close.bind(server))
