@@ -5,6 +5,7 @@ const { Client } = require('..')
 const { createServer } = require('http')
 const { finished, Readable } = require('stream')
 const { kConnect } = require('../lib/symbols')
+const EE = require('events')
 
 test('20 times GET with pipelining 10', (t) => {
   const num = 20
@@ -444,7 +445,7 @@ test('pipelining HEAD busy', (t) => {
 })
 
 test('pipelining idempotent busy', (t) => {
-  t.plan(9)
+  t.plan(12)
 
   const server = createServer()
   server.on('request', (req, res) => {
@@ -496,6 +497,24 @@ test('pipelining idempotent busy', (t) => {
             })
         })
         body.push(null)
+        t.strictEqual(client.busy, false)
+      }
+
+      {
+        const signal = new EE()
+        const body = new Readable({
+          read () { }
+        })
+        client.request({
+          path: '/',
+          method: 'GET',
+          body,
+          signal
+        }, (err, data) => {
+          t.ok(err)
+        })
+        t.strictEqual(client.busy, true)
+        signal.emit('abort')
         t.strictEqual(client.busy, false)
       }
 
