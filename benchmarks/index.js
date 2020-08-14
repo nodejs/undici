@@ -42,97 +42,97 @@ const suite = new Benchmark.Suite()
 Benchmark.options.minSamples = 200
 
 suite
-  // .add('http - keepalive', {
-  //   defer: true,
-  //   fn: deferred => {
-  //     http.get(httpOptions, response => {
-  //       const stream = new Writable({
-  //         write (chunk, encoding, callback) {
-  //           callback()
-  //         }
-  //       })
-  //       stream.once('finish', () => {
-  //         deferred.resolve()
-  //       })
+  .add('http - keepalive', {
+    defer: true,
+    fn: deferred => {
+      http.get(httpOptions, response => {
+        const stream = new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })
+        stream.once('finish', () => {
+          deferred.resolve()
+        })
 
-  //       response.pipe(stream)
-  //     })
-  //   }
-  // })
-  // .add('undici - pipeline', {
-  //   defer: true,
-  //   fn: deferred => {
-  //     pool
-  //       .pipeline(undiciOptions, data => {
-  //         return data.body
-  //       })
-  //       .end()
-  //       .pipe(new Writable({
-  //         write (chunk, encoding, callback) {
-  //           callback()
-  //         }
-  //       }))
-  //       .once('finish', () => {
-  //         deferred.resolve()
-  //       })
-  //   }
-  // })
-  // .add('undici - request', {
-  //   defer: true,
-  //   fn: deferred => {
-  //     pool.request(undiciOptions, (error, { body }) => {
-  //       if (error) {
-  //         throw error
-  //       }
+        response.pipe(stream)
+      })
+    }
+  })
+  .add('undici - pipeline', {
+    defer: true,
+    fn: deferred => {
+      pool
+        .pipeline(undiciOptions, data => {
+          return data.body
+        })
+        .end()
+        .pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        }))
+        .once('finish', () => {
+          deferred.resolve()
+        })
+    }
+  })
+  .add('undici - request', {
+    defer: true,
+    fn: deferred => {
+      pool.request(undiciOptions, (error, { body }) => {
+        if (error) {
+          throw error
+        }
 
-  //       const stream = new Writable({
-  //         write (chunk, encoding, callback) {
-  //           callback()
-  //         }
-  //       })
-  //       stream.once('finish', () => {
-  //         deferred.resolve()
-  //       })
+        const stream = new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })
+        stream.once('finish', () => {
+          deferred.resolve()
+        })
 
-  //       body.pipe(stream)
-  //     })
-  //   }
-  // })
-  // .add('undici - stream', {
-  //   defer: true,
-  //   fn: deferred => {
-  //     pool.stream(undiciOptions, () => {
-  //       const stream = new Writable({
-  //         write (chunk, encoding, callback) {
-  //           callback()
-  //         }
-  //       })
-  //       stream.once('finish', () => {
-  //         deferred.resolve()
-  //       })
+        body.pipe(stream)
+      })
+    }
+  })
+  .add('undici - stream', {
+    defer: true,
+    fn: deferred => {
+      pool.stream(undiciOptions, () => {
+        const stream = new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })
+        stream.once('finish', () => {
+          deferred.resolve()
+        })
 
-  //       return stream
-  //     }, error => {
-  //       if (error) {
-  //         throw error
-  //       }
-  //     })
-  //   }
-  // })
-  // .add('undici - dispatch', {
-  //   defer: true,
-  //   fn: deferred => {
-  //     const stream = new Writable({
-  //       write (chunk, encoding, callback) {
-  //         callback()
-  //       }
-  //     })
-  //     stream.once('finish', () => {
-  //       deferred.resolve()
-  //     })
-  //     pool.dispatch(undiciOptions, new SimpleRequest(stream))
-  //   }
-  // })
+        return stream
+      }, error => {
+        if (error) {
+          throw error
+        }
+      })
+    }
+  })
+  .add('undici - dispatch', {
+    defer: true,
+    fn: deferred => {
+      const stream = new Writable({
+        write (chunk, encoding, callback) {
+          callback()
+        }
+      })
+      stream.once('finish', () => {
+        deferred.resolve()
+      })
+      pool.dispatch(undiciOptions, new SimpleRequest(stream))
+    }
+  })
   .add('undici - noop', {
     defer: true,
     fn: deferred => {
