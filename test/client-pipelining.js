@@ -386,7 +386,7 @@ test('pipelining non-idempotent w body', (t) => {
 })
 
 test('pipelining HEAD busy', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   const server = createServer()
   server.on('request', (req, res) => {
@@ -401,6 +401,11 @@ test('pipelining HEAD busy', (t) => {
     t.tearDown(client.close.bind(client))
 
     client[kConnect](() => {
+      let ended = false
+      client.once('disconnect', () => {
+        t.strictEqual(ended, true)
+      })
+
       {
         const body = new Readable({
           read () { }
@@ -434,6 +439,7 @@ test('pipelining HEAD busy', (t) => {
           data.body
             .resume()
             .on('end', () => {
+              ended = true
               t.pass()
             })
         })
