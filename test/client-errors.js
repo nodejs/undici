@@ -251,6 +251,13 @@ test('invalid options throws', (t) => {
   }
 
   try {
+    new Client(new URL('http://asd:200/somepath')) // eslint-disable-line
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid url')
+  }
+
+  try {
     new Client(new URL('http://asd:200?q=asd')) // eslint-disable-line
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
@@ -361,15 +368,6 @@ test('invalid options throws', (t) => {
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid hostname')
-  }
-
-  try {
-    new Client({ // eslint-disable-line
-      pathname: ''
-    })
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid pathname')
   }
 
   try {
