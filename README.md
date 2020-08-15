@@ -102,11 +102,11 @@ Options:
 * `path: String`
 * `method: String`
 * `opaque: Any`
-* `body: String|Buffer|Uint8Array|stream.Readable|Null`.
+* `body: String|Buffer|Uint8Array|stream.Readable|Null`
   Default: `null`.
 * `headers: Object|Null`, an object with header-value pairs.
   Default: `null`.
-* `signal: AbortController|EventEmitter|Null`.
+* `signal: AbortController|EventEmitter|Null`
   Default: `null`.
 * `requestTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between request being enqueued and receiving
