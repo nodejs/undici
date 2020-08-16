@@ -440,7 +440,7 @@ test('pool pipeline args validation', (t) => {
 })
 
 test('300 requests succeed', (t) => {
-  t.plan(300 * 2)
+  t.plan(300 * 3)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -461,6 +461,8 @@ test('300 requests succeed', (t) => {
         t.error(err)
         data.body.on('data', (chunk) => {
           t.strictEqual(chunk.toString(), 'asd')
+        }).on('end', () => {
+          t.pass()
         })
       })
     }
