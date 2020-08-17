@@ -71,6 +71,12 @@ Options:
   a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 
+- `busyTimeout: Number`, the timeout after which a client is busy and
+  it is not considered useful to enqueue further requests in the pipeline.
+  Monitors time between when the last request was sent to the pipeline and the 
+  call to `busy`.
+  Default: `10e3` milliseconds (10s).
+
 - `maxAbortedPayload: Number`, the maximum number of bytes read after which an
   aborted response will close the connection. Closing the connection
   will error other inflight requests in the pipeline.
