@@ -70,7 +70,7 @@ test('request timeout immutable opts', (t) => {
 })
 
 test('Subsequent request starves', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const clock = FakeTimers.install()
   t.teardown(clock.uninstall.bind(clock))
@@ -89,6 +89,11 @@ test('Subsequent request starves', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
       t.error(err)
+      response.body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
     })
 
     client.request({ path: '/', method: 'GET', requestTimeout: 50 }, (err, response) => {

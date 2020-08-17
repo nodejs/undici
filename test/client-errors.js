@@ -687,7 +687,7 @@ test('socket fail while ending request body', (t) => {
 })
 
 test('queued request should not fail on socket destroy', (t) => {
-  t.plan(2)
+  t.plan(4)
 
   const server = createServer()
   server.on('request', (req, res) => {
@@ -706,21 +706,25 @@ test('queued request should not fail on socket destroy', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.resume().on('error', () => {
+        t.pass()
+      })
       client[kSocket].destroy()
       client.request({
         path: '/',
         method: 'GET'
       }, (err, data) => {
         t.error(err)
-        data.body.resume()
+        data.body.resume().on('end', () => {
+          t.pass()
+        })
       })
     })
   })
 })
 
 test('queued request should fail on client destroy', (t) => {
-  t.plan(5)
+  t.plan(6)
 
   const server = createServer()
   server.on('request', (req, res) => {
@@ -741,6 +745,9 @@ test('queued request should fail on client destroy', (t) => {
     }, (err, data) => {
       t.error(err)
       data.body.resume()
+        .on('error', () => {
+          t.pass()
+        })
       client.destroy((err) => {
         t.error(err)
         t.strictEqual(requestErrored, true)
@@ -771,7 +778,7 @@ test('retry idempotent inflight', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.destroy.bind(client))
+    t.tearDown(client.close.bind(client))
 
     client.request({
       path: '/',

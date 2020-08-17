@@ -620,7 +620,7 @@ test('url-like url', (t) => {
 })
 
 test('multiple destroy callback', (t) => {
-  t.plan(3)
+  t.plan(4)
 
   const server = createServer((req, res) => {
     res.end()
@@ -637,7 +637,11 @@ test('multiple destroy callback', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body
+        .resume()
+        .on('error', () => {
+          t.pass()
+        })
       client.destroy(new Error(), (err) => {
         t.error(err)
       })
@@ -649,7 +653,7 @@ test('multiple destroy callback', (t) => {
 })
 
 test('only one streaming req at a time', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   const server = createServer((req, res) => {
     req.pipe(res)
@@ -693,7 +697,11 @@ test('only one streaming req at a time', (t) => {
         })
       }, (err, data) => {
         t.error(err)
-        data.body.resume()
+        data.body
+          .resume()
+          .on('end', () => {
+            t.pass()
+          })
       })
       t.strictEqual(client.busy, true)
     })
@@ -701,7 +709,7 @@ test('only one streaming req at a time', (t) => {
 })
 
 test('300 requests succeed', (t) => {
-  t.plan(300 * 2)
+  t.plan(300 * 3)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -720,6 +728,8 @@ test('300 requests succeed', (t) => {
         t.error(err)
         data.body.on('data', (chunk) => {
           t.strictEqual(chunk.toString(), 'asd')
+        }).on('end', () => {
+          t.pass()
         })
       })
     }

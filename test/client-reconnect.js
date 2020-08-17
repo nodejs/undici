@@ -6,7 +6,7 @@ const { createServer } = require('http')
 const FakeTimers = require('@sinonjs/fake-timers')
 
 test('multiple reconnect', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const clock = FakeTimers.install()
   t.teardown(clock.uninstall.bind(clock))
@@ -21,7 +21,11 @@ test('multiple reconnect', (t) => {
 
   client.request({ path: '/', method: 'GET' }, (err, data) => {
     t.error(err)
-    data.body.resume()
+    data.body
+      .resume()
+      .on('end', () => {
+        t.pass()
+      })
   })
 
   let n = 0
