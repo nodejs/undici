@@ -24,10 +24,10 @@ Configuration: Node v14.4, HTTP/1.1 without TLS, 100 connections, Linux 5.4.12-1
 
 ```
 http - keepalive x 5,634 ops/sec ±2.53% (274 runs sampled)
-undici - pipeline x 8,609 ops/sec ±2.98% (276 runs sampled)
-undici - request x 12,964 ops/sec ±0.74% (278 runs sampled)
-undici - stream x 14,068 ops/sec ±0.61% (279 runs sampled)
-undici - dispatch x 14,722 ops/sec ±0.63% (276 runs sampled)
+undici - pipeline x 8,642 ops/sec ±3.08% (276 runs sampled)
+undici - request x 12,681 ops/sec ±0.51% (279 runs sampled)
+undici - stream x 14,006 ops/sec ±0.53% (280 runs sampled)
+undici - dispatch x 15,002 ops/sec ±0.39% (278 runs sampled)
 ```
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js).
@@ -438,7 +438,7 @@ The `handler` parameter is defined as follow:
 * `onHeaders(statusCode, headers, resume): Void`, invoked when statusCode and headers have been received. 
   May be invoked multiple times due to 1xx informational headers.
   * `statusCode: Number`
-  * `headers: Object`
+  * `headers: Array`, an array of key-value pairs. Keys are not automatically lowercased.
   * `resume(): Void`, resume `onData` after returning `false`.
 * `onData(chunk): Null|Boolean`, invoked when response payload data is received.
   * `chunk: Buffer`
