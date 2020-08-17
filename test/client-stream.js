@@ -516,6 +516,36 @@ test('stream abort after complete', (t) => {
   })
 })
 
+test('stream abort before dispatch', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    const pt = new PassThrough()
+    const signal = new EE()
+    client.stream({
+      path: '/',
+      method: 'GET',
+      signal
+    }, () => {
+      return pt
+    }, (err) => {
+      t.ok(err instanceof errors.RequestAbortedError)
+    })
+    signal.emit('abort')
+    client.on('disconnect', () => {
+      t.fail()
+    })
+  })
+})
+
 test('trailers', (t) => {
   t.plan(2)
 

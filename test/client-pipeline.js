@@ -412,15 +412,19 @@ test('pipeline destroy and throw handler', (t) => {
 })
 
 test('pipeline abort res', (t) => {
-  t.plan(1)
+  t.plan(2)
 
+  let _res
   const server = createServer((req, res) => {
     res.write('asd')
+    _res = res
   })
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      maxAbortedPayload: 3
+    })
     t.tearDown(client.destroy.bind(client))
 
     client.pipeline({
@@ -429,6 +433,14 @@ test('pipeline abort res', (t) => {
     }, ({ body }) => {
       setImmediate(() => {
         body.destroy()
+        _res.write('asdasdadasd')
+        const timeout = setTimeout(() => {
+          t.fail()
+        }, 100)
+        client.on('disconnect', () => {
+          clearTimeout(timeout)
+          t.pass()
+        })
       })
       return body
     })
@@ -967,11 +979,16 @@ test('pipeline abort after headers', (t) => {
   const server = createServer((req, res) => {
     res.writeProcessing()
     res.write('asd')
+    setImmediate(() => {
+      res.write('asd')
+    })
   })
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      maxAbortedPayload: 3
+    })
     t.tearDown(client.destroy.bind(client))
 
     const signal = new EE()

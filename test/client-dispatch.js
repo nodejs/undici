@@ -58,7 +58,7 @@ test('basic dispatch get', (t) => {
         bufs.push(buf)
       },
       onComplete (trailers) {
-        t.strictEqual(Array.isArray(trailers), true)
+        t.strictEqual(trailers, null)
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       },
       onError () {
