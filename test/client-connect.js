@@ -218,3 +218,40 @@ test('connect aborted', (t) => {
     signal.emit('abort')
   })
 })
+
+test('basic connect error', (t) => {
+  t.plan(2)
+
+  const server = http.createServer((c) => {
+    t.fail()
+  })
+  server.on('connect', (req, socket, firstBodyChunk) => {
+    socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
+
+    let data = firstBodyChunk.toString()
+    socket.on('data', (buf) => {
+      data += buf.toString()
+    })
+
+    socket.on('end', () => {
+      socket.end(data)
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const _err = new Error()
+    client.connect({
+      path: '/'
+    }, (err, { socket }) => {
+      t.error(err)
+      socket.on('error', (err) => {
+        t.strictEqual(err, _err)
+      })
+      throw _err
+    })
+  })
+})
