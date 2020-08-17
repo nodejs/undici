@@ -330,3 +330,37 @@ test('basic aborted after res', (t) => {
     })
   })
 })
+
+test('basic upgrade error', (t) => {
+  t.plan(2)
+
+  const server = net.createServer((c) => {
+    c.on('data', (d) => {
+      c.write('HTTP/1.1 101\r\n')
+      c.write('hello: world\r\n')
+      c.write('connection: upgrade\r\n')
+      c.write('upgrade: websocket\r\n')
+      c.write('\r\n')
+      c.write('Body')
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const _err = new Error()
+    client.upgrade({
+      path: '/',
+      method: 'GET',
+      protocol: 'Websocket'
+    }, (err, data) => {
+      t.error(err)
+      data.socket.on('error', (err) => {
+        t.strictEqual(err, _err)
+      })
+      throw _err
+    })
+  })
+})
