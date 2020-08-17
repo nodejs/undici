@@ -126,3 +126,102 @@ test('trailers dispatch get', (t) => {
     })
   })
 })
+
+test('dispatch onHeaders error', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const _err = new Error()
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onHeaders (statusCode, headers) {
+        throw _err
+      },
+      onData (buf) {
+        t.fail()
+      },
+      onComplete (trailers) {
+        t.fail()
+      },
+      onError (err) {
+        t.strictEqual(err, _err)
+      }
+    })
+  })
+})
+
+test('dispatch onComplete error', (t) => {
+  t.plan(2)
+
+  const server = http.createServer((req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const _err = new Error()
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onHeaders (statusCode, headers) {
+        t.pass()
+      },
+      onData (buf) {
+        t.fail()
+      },
+      onComplete (trailers) {
+        throw _err
+      },
+      onError (err) {
+        t.strictEqual(err, _err)
+      }
+    })
+  })
+})
+
+test('dispatch onData error', (t) => {
+  t.plan(2)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const _err = new Error()
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onHeaders (statusCode, headers) {
+        t.pass()
+      },
+      onData (buf) {
+        throw _err
+      },
+      onComplete (trailers) {
+        t.fail()
+      },
+      onError (err) {
+        t.strictEqual(err, _err)
+      }
+    })
+  })
+})
