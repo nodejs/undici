@@ -2,6 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
+const { kConnect } = require('../lib/symbols')
 const { createServer } = require('net')
 
 test('keep-alive header', (t) => {
@@ -183,9 +184,14 @@ test('keep-alive max keepalive', (t) => {
 })
 
 test('connection close', (t) => {
-  t.plan(2)
+  t.plan(4)
 
+  let close = false
   const server = createServer((socket) => {
+    if (close) {
+      return
+    }
+    close = true
     socket.write('HTTP/1.1 200 OK\r\n')
     socket.write('Content-Length: 0\r\n')
     socket.write('Connection: close\r\n')
@@ -194,23 +200,44 @@ test('connection close', (t) => {
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
     t.teardown(client.destroy.bind(client))
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.on('end', () => {
-        const timeout = setTimeout(() => {
-          t.fail()
-        }, 3e3)
-        client.on('disconnect', () => {
-          t.pass()
-          clearTimeout(timeout)
-        })
-      }).resume()
+    client[kConnect](() => {
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err, { body }) => {
+        t.error(err)
+        body.on('end', () => {
+          const timeout = setTimeout(() => {
+            t.fail()
+          }, 3e3)
+          client.once('disconnect', () => {
+            close = false
+            t.pass()
+            clearTimeout(timeout)
+          })
+        }).resume()
+      })
+
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err, { body }) => {
+        t.error(err)
+        body.on('end', () => {
+          const timeout = setTimeout(() => {
+            t.fail()
+          }, 3e3)
+          client.once('disconnect', () => {
+            t.pass()
+            clearTimeout(timeout)
+          })
+        }).resume()
+      })
     })
   })
 })
