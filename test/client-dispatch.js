@@ -21,7 +21,7 @@ test('dispatch invalid opts', (t) => {
 })
 
 test('basic dispatch get', (t) => {
-  t.plan(11)
+  t.plan(10)
 
   const server = http.createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -50,7 +50,6 @@ test('basic dispatch get', (t) => {
       headers: reqHeaders
     }, {
       onHeaders (statusCode, headers) {
-        t.strictEqual(headers.length, 6)
         t.strictEqual(statusCode, 200)
         t.strictEqual(Array.isArray(headers), true)
       },
@@ -69,7 +68,7 @@ test('basic dispatch get', (t) => {
 })
 
 test('trailers dispatch get', (t) => {
-  t.plan(13)
+  t.plan(12)
 
   const server = http.createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -101,7 +100,6 @@ test('trailers dispatch get', (t) => {
       headers: reqHeaders
     }, {
       onHeaders (statusCode, headers) {
-        t.strictEqual(headers.length, 10)
         t.strictEqual(statusCode, 200)
         t.strictEqual(Array.isArray(headers), true)
         {
