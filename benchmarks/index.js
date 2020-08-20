@@ -149,7 +149,11 @@ class NoopRequest {
     this.deferred = deferred
   }
 
-  onHeaders () {
+  onConnect (abort) {
+
+  }
+
+  onHeaders (statusCode, headers, resume) {
 
   }
 
@@ -165,6 +169,9 @@ class NoopRequest {
 class SimpleRequest {
   constructor (dst) {
     this.dst = dst
+  }
+
+  onConnect (abort) {
   }
 
   onHeaders (statusCode, headers, resume) {

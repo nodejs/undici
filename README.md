@@ -431,16 +431,18 @@ Options:
 
 The `handler` parameter is defined as follow:
 
+* `onConnect(abort)`, invoked before request is dispatched on socket.
+  * `abort(): Void`, abort request.
 * `onUpgrade(statusCode, headers, socket): Void`, invoked when request is upgraded  either due to a `Upgrade` header or `CONNECT` method.
   * `statusCode: Number`
   * `headers: Array|Null`
   * `socket: Duplex`
-* `onHeaders(statusCode, headers, resume): Void`, invoked when statusCode and headers have been received. 
+* `onHeaders(statusCode, headers, resume): Void`, invoked when statusCode and headers have been received.
   May be invoked multiple times due to 1xx informational headers.
   * `statusCode: Number`
   * `headers: Array|Null`, an array of key-value pairs. Keys are not automatically lowercased.
   * `resume(): Void`, resume `onData` after returning `false`.
-* `onData(chunk): Null|Boolean`, invoked when response payload data is received.
+* `onData(chunk): Boolean`, invoked when response payload data is received.
   * `chunk: Buffer`
 * `onComplete(trailers): Void`, invoked when response payload and trailers have been received and the request has completed.
   * `trailers: Array|Null`
