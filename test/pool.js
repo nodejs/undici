@@ -414,6 +414,8 @@ test('pool dispatch', (t) => {
       path: '/',
       method: 'GET'
     }, {
+      onConnect () {
+      },
       onHeaders (statusCode, headers) {
         t.strictEqual(statusCode, 200)
       },

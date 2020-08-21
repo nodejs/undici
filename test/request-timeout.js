@@ -2,6 +2,7 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
+const { kConnect } = require('../lib/symbols')
 const { createServer } = require('http')
 const EventEmitter = require('events')
 const FakeTimers = require('@sinonjs/fake-timers')
@@ -665,5 +666,39 @@ test('pipeline timeout', (t) => {
         t.ok(err instanceof errors.RequestTimeoutError)
       }
     )
+  })
+})
+
+test('client.close should not deadlock', (t) => {
+  t.plan(2)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      socketTimeout: 200
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client[kConnect](() => {
+      client.request({
+        path: '/',
+        method: 'GET',
+        requestTimeout: 100
+      }, (err, response) => {
+        t.ok(err instanceof errors.RequestTimeoutError)
+      })
+
+      client.close((err) => {
+        t.error(err)
+      })
+
+      clock.tick(100)
+    })
   })
 })

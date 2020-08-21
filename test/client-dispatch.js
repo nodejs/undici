@@ -49,6 +49,8 @@ test('basic dispatch get', (t) => {
       method: 'GET',
       headers: reqHeaders
     }, {
+      onConnect () {
+      },
       onHeaders (statusCode, headers) {
         t.strictEqual(statusCode, 200)
         t.strictEqual(Array.isArray(headers), true)
@@ -99,6 +101,8 @@ test('trailers dispatch get', (t) => {
       method: 'GET',
       headers: reqHeaders
     }, {
+      onConnect () {
+      },
       onHeaders (statusCode, headers) {
         t.strictEqual(statusCode, 200)
         t.strictEqual(Array.isArray(headers), true)
@@ -142,6 +146,8 @@ test('dispatch onHeaders error', (t) => {
       path: '/',
       method: 'GET'
     }, {
+      onConnect () {
+      },
       onHeaders (statusCode, headers) {
         throw _err
       },
@@ -175,6 +181,8 @@ test('dispatch onComplete error', (t) => {
       path: '/',
       method: 'GET'
     }, {
+      onConnect () {
+      },
       onHeaders (statusCode, headers) {
         t.pass()
       },
@@ -208,6 +216,8 @@ test('dispatch onData error', (t) => {
       path: '/',
       method: 'GET'
     }, {
+      onConnect () {
+      },
       onHeaders (statusCode, headers) {
         t.pass()
       },
