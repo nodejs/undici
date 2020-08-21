@@ -67,7 +67,7 @@ Options:
   Default: `1e3` milliseconds (1s).
 
 - `requestTimeout: Number`, the timeout after which a request will time out.
-  Monitors time between request being enqueued and receiving
+  Monitors time between request is dispatched on socket and receiving
   a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 
