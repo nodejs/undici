@@ -431,7 +431,8 @@ Options:
 
 The `handler` parameter is defined as follow:
 
-* `onConnect(abort)`, invoked before request is dispatched on socket.
+* `onConnect(abort)`, invoked before request is dispatched on socket. 
+  May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
   * `abort(): Void`, abort request.
 * `onUpgrade(statusCode, headers, socket): Void`, invoked when request is upgraded  either due to a `Upgrade` header or `CONNECT` method.
   * `statusCode: Number`
