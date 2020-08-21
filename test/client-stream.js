@@ -192,9 +192,7 @@ test('stream response resume back pressure and non standard error', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      maxAbortedPayload: 1e5
-    })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
     const pt = new PassThrough()

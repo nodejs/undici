@@ -423,7 +423,7 @@ test('pipeline abort res', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      maxAbortedPayload: 3
+      abortedTimeout: 50
     })
     t.tearDown(client.destroy.bind(client))
 
@@ -986,9 +986,7 @@ test('pipeline abort after headers', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      maxAbortedPayload: 3
-    })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
     const signal = new EE()

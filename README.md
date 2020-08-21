@@ -71,10 +71,10 @@ Options:
   a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 
-- `maxAbortedPayload: Number`, the maximum number of bytes read after which an
-  aborted response will close the connection. Closing the connection
+- `abortedTimeout: Number`, the timeout after which an aborted request will
+  stop reading from the server and close the connection. Closing the connection
   will error other inflight requests in the pipeline.
-  Default: `1048576` bytes (1MiB).
+  Default: `1e3` milliseconds (1s).
 
 - `pipelining: Number`, the amount of concurrent requests to be sent over the
   single TCP/TLS connection according to
