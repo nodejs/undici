@@ -312,6 +312,9 @@ test('basic aborted after res', (t) => {
     c.write('\r\n')
     c.write('Body')
     c.end()
+    c.on('error', () => {
+
+    })
     signal.emit('abort')
   })
   t.tearDown(server.close.bind(server))
