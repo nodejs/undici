@@ -192,7 +192,7 @@ test('backpressure algorithm', (t) => {
       return true
     }
 
-    request (req, cb) {
+    dispatch (req, cb) {
       seen.push({ req, cb, client: this, id: this.id })
     }
   }
