@@ -297,6 +297,9 @@ test('connect call onUpgrade once', (t) => {
     let recvData = ''
     let count = 0
     client.dispatch({
+      method: 'CONNECT',
+      path: '/'
+    }, {
       onConnect () {
       },
       onUpgrade (statusCode, headers, socket) {
@@ -321,7 +324,7 @@ test('connect call onUpgrade once', (t) => {
       },
       onError () {
         t.fail()
-      },
+      }
     })
   })
 })
