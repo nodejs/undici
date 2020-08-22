@@ -303,7 +303,7 @@ test('connect call onUpgrade once', (t) => {
       onConnect () {
       },
       onUpgrade (statusCode, headers, socket) {
-        t.ok(count++ < 1)
+        t.strictEqual(count++, 0)
 
         socket.on('data', (d) => {
           recvData += d
