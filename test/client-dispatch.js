@@ -233,3 +233,39 @@ test('dispatch onData error', (t) => {
     })
   })
 })
+
+test('dispatch onConnect error', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const _err = new Error()
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+        throw _err
+      },
+      onHeaders (statusCode, headers) {
+        t.fail()
+      },
+      onData (buf) {
+        t.fail()
+      },
+      onComplete (trailers) {
+        t.fail()
+      },
+      onError (err) {
+        t.strictEqual(err, _err)
+      }
+    })
+  })
+})
