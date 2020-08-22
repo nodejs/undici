@@ -877,9 +877,7 @@ test('POST empty with error', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      abortedTimeout: 1000e3
-    })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
     const body = new Readable({

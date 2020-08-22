@@ -453,9 +453,6 @@ test('stream factory throw', (t) => {
     }, (err) => {
       t.error(err)
     })
-    client.on('disconnect', () => {
-      t.fail()
-    })
   })
 })
 
