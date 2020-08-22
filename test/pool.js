@@ -198,7 +198,7 @@ test('backpressure algorithm', (t) => {
   }
 
   const Pool = proxyquire('../lib/pool', {
-    './client': FakeClient
+    './core/client': FakeClient
   })
 
   const pool = new Pool('http://notanhost')

@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const { kConnect } = require('../lib/symbols')
+const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('http')
 const EventEmitter = require('events')
 const FakeTimers = require('@sinonjs/fake-timers')

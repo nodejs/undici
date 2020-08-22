@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
-const { kSocket } = require('../lib/symbols')
+const { kSocket } = require('../lib/core/symbols')
 
 test('close waits for queued requests to finish', (t) => {
   t.plan(16)

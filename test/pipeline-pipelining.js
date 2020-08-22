@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const { kConnect } = require('../lib/symbols')
+const { kConnect } = require('../lib/core/symbols')
 
 test('pipeline pipelining', (t) => {
   t.plan(10)

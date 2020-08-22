@@ -5,7 +5,7 @@ const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
 const { Readable } = require('stream')
-const { kSocket } = require('../lib/symbols')
+const { kSocket } = require('../lib/core/symbols')
 const EE = require('events')
 
 test('basic get', (t) => {

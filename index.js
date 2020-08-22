@@ -1,8 +1,14 @@
 'use strict'
 
-const Client = require('./lib/client')
+const Client = require('./lib/core/client')
+const errors = require('./lib/core/errors')
 const Pool = require('./lib/pool')
-const errors = require('./lib/errors')
+
+Client.prototype.request = require('./lib/client-request').request
+Client.prototype.stream = require('./lib/client-stream').stream
+Client.prototype.pipeline = require('./lib/client-pipeline').pipeline
+Client.prototype.upgrade = require('./lib/client-upgrade').upgrade
+Client.prototype.connect = require('./lib/client-connect').connect
 
 function undici (url, opts) {
   return new Pool(url, opts)

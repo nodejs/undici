@@ -4,7 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { finished, Readable } = require('stream')
-const { kConnect } = require('../lib/symbols')
+const { kConnect } = require('../lib/core/symbols')
 const EE = require('events')
 
 test('20 times GET with pipelining 10', (t) => {

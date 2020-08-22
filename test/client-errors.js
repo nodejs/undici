@@ -6,8 +6,7 @@ const { createServer } = require('http')
 const net = require('net')
 const { Readable } = require('stream')
 
-const { kSocket } = require('../lib/symbols')
-const { InvalidArgumentError } = require('../lib/errors')
+const { kSocket } = require('../lib/core/symbols')
 
 test('GET errors and reconnect with pipelining 1', (t) => {
   t.plan(9)
@@ -241,33 +240,29 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
 })
 
 test('invalid options throws', (t) => {
-  t.plan(36)
+  t.plan(32)
 
   try {
     new Client({ port: 'foobar' }) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid port')
   }
 
   try {
     new Client(new URL('http://asd:200/somepath')) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid url')
   }
 
   try {
     new Client(new URL('http://asd:200?q=asd')) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid url')
   }
 
   try {
     new Client(new URL('http://asd:200#asd')) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid url')
   }
 
@@ -885,13 +880,13 @@ test('invalid signal', (t) => {
   t.teardown(client.destroy.bind(client))
 
   client.request({ path: '/', method: 'GET', signal: {} }, (err) => {
-    t.ok(err instanceof InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
   client.pipeline({ path: '/', method: 'GET', signal: {} }, () => {})
     .on('error', (err) => {
-      t.ok(err instanceof InvalidArgumentError)
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
   client.stream({ path: '/', method: 'GET', signal: {} }, () => {}, (err) => {
-    t.ok(err instanceof InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 })
