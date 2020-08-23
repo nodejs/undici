@@ -240,7 +240,7 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
 })
 
 test('invalid options throws', (t) => {
-  t.plan(36)
+  t.plan(38)
 
   try {
     new Client({ port: 'foobar' }) // eslint-disable-line
@@ -390,6 +390,13 @@ test('invalid options throws', (t) => {
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid callback')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { keepAlive: 'true' }) // eslint-disable-line
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid keepAlive')
   }
 })
 
