@@ -28,13 +28,13 @@ const httpOptions = {
 
 const undiciOptions = {
   path: '/',
-  method: 'GET'
+  method: 'GET',
+  requestTimeout: 0
 }
 
 const pool = undici(`http://${httpOptions.hostname}:${httpOptions.port}`, {
   connections: 100,
-  pipelining: 10,
-  requestTimeout: 0
+  pipelining: 10
 })
 
 const suite = new Benchmark.Suite()
