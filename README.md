@@ -69,11 +69,6 @@ Options:
   transport latency.
   Default: `1e3` milliseconds (1s).
 
-- `requestTimeout: Number`, the timeout after which a request will time out.
-  Monitors time between request is dispatched on socket and receiving
-  a response. Use `0` to disable it entirely.
-  Default: `30e3` milliseconds (30s).
-
 - `pipelining: Number`, the amount of concurrent requests to be sent over the
   single TCP/TLS connection according to
   [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
@@ -425,7 +420,19 @@ This is the low level API which all the preceeding API's are implemented on top 
 
 Options:
 
-* ... same as [`client.request(opts[, callback])`][request].
+* `path: String`
+* `method: String`
+* `opaque: Any`
+* `body: String|Buffer|Uint8Array|stream.Readable|Null`
+  Default: `null`.
+* `headers: Object|Null`, an object with header-value pairs.
+  Default: `null`.
+* `signal: AbortController|EventEmitter|Null`
+  Default: `null`.
+* `idempotent: Boolean`, whether the requests can be safely retried or not.
+  If `false` the request won't be sent until all preceeding
+  requests in the pipeline has completed.
+  Default: `true` if `method` is `HEAD` or `GET`.
 
 The `handler` parameter is defined as follow:
 
