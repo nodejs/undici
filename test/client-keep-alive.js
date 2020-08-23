@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('net')
+const http = require('http')
 
 test('keep-alive header', (t) => {
   t.plan(2)
@@ -238,6 +239,43 @@ test('connection close', (t) => {
           })
         }).resume()
       })
+    })
+  })
+})
+
+test('Disable keep alive', (t) => {
+  t.plan(7)
+
+  const ports = []
+  const server = http.createServer((req, res) => {
+    t.false(ports.includes(req.socket.remotePort))
+    ports.push(req.socket.remotePort)
+    t.match(req.headers, { connection: 'close' })
+    res.writeHead(200, { connection: 'close' })
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { keepAlive: false })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.on('end', () => {
+        client.request({
+          path: '/',
+          method: 'GET'
+        }, (err, { body }) => {
+          t.error(err)
+          body.on('end', () => {
+            t.pass()
+          }).resume()
+        })
+      }).resume()
     })
   })
 })
