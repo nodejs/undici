@@ -4,7 +4,7 @@ const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
 const EE = require('events')
-const { kConnect } = require('../lib/symbols')
+const { kConnect } = require('../lib/core/symbols')
 
 test('request abort before headers', (t) => {
   t.plan(2)

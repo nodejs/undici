@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { kSocket } = require('../lib/symbols')
+const { kSocket } = require('../lib/core/symbols')
 const { Readable } = require('stream')
 
 test('tls get 1', (t) => {

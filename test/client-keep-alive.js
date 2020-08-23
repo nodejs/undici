@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { kConnect } = require('../lib/symbols')
+const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('net')
 
 test('keep-alive header', (t) => {

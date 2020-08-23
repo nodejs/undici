@@ -192,21 +192,21 @@ test('backpressure algorithm', (t) => {
       return true
     }
 
-    request (req, cb) {
+    dispatch (req, cb) {
       seen.push({ req, cb, client: this, id: this.id })
     }
   }
 
   const Pool = proxyquire('../lib/pool', {
-    './client': FakeClient
+    './core/client': FakeClient
   })
 
   const pool = new Pool('http://notanhost')
 
   t.strictEqual(total, 10)
 
-  pool.request({}, noop)
-  pool.request({}, noop)
+  pool.dispatch({}, noop)
+  pool.dispatch({}, noop)
 
   const d1 = seen.shift() // d1 = c0
   t.strictEqual(d1.id, 0)
@@ -215,11 +215,11 @@ test('backpressure algorithm', (t) => {
 
   t.strictEqual(d1.id, d2.id)
 
-  pool.request({}, noop) // d3 = c0
+  pool.dispatch({}, noop) // d3 = c0
 
   d1.client._busy = true
 
-  pool.request({}, noop) // d4 = c1
+  pool.dispatch({}, noop) // d4 = c1
 
   const d3 = seen.shift()
   t.strictEqual(d3.id, 0)
@@ -229,11 +229,11 @@ test('backpressure algorithm', (t) => {
   t.strictEqual(d3.id, d2.id)
   t.notStrictEqual(d3.id, d4.id)
 
-  pool.request({}, noop) // d5 = c1
+  pool.dispatch({}, noop) // d5 = c1
 
   d1.client._busy = false
 
-  pool.request({}, noop) // d6 = c0
+  pool.dispatch({}, noop) // d6 = c0
 
   const d5 = seen.shift()
   t.strictEqual(d5.id, 1)
