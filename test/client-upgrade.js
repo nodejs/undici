@@ -346,6 +346,9 @@ test('basic upgrade error', (t) => {
       c.write('\r\n')
       c.write('Body')
     })
+    c.on('error', () => {
+
+    })
   })
   t.tearDown(server.close.bind(server))
 
