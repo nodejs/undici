@@ -57,7 +57,10 @@ Options:
   This value may be overriden by *keep-alive* hints from the server.
   Default: `4e3` milliseconds (4s).
 
-- `maxKeepAliveTimeout: Number`, the maximum allowed `idleTimeout` when overriden by
+- `keepAlive: Boolean`, enable or disable keep alive connections.
+  Default: `true`.
+
+- `keepAliveMaxTimeout: Number`, the maximum allowed `idleTimeout` when overriden by
   *keep-alive* hints from the server.
   Default: `600e3` milliseconds (10min).
 
@@ -80,7 +83,7 @@ Options:
   [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
   Default: `null`.
 
-- `maxHeaderSize: Number`, the maximum length of request headers in bytes. 
+- `maxHeaderSize: Number`, the maximum length of request headers in bytes.
   Default: `16384` (16KiB).
 
 - `headersTimeout: Number`, the amount of time the parser will wait to receive the complete
@@ -426,7 +429,7 @@ Options:
 
 The `handler` parameter is defined as follow:
 
-* `onConnect(abort)`, invoked before request is dispatched on socket. 
+* `onConnect(abort)`, invoked before request is dispatched on socket.
   May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
   * `abort(): Void`, abort request.
 * `onUpgrade(statusCode, headers, socket): Void`, invoked when request is upgraded  either due to a `Upgrade` header or `CONNECT` method.
@@ -506,7 +509,7 @@ called and the client shutdown has completed.
 
 * `'disconnect'`, emitted when socket has disconnected. The
   first argument of the event is the error which caused the
-  socket to disconnect. The client will reconnect if or once 
+  socket to disconnect. The client will reconnect if or once
   `client.size > 0`.
 
 <a name='pool'></a>
@@ -578,25 +581,25 @@ const { errors } = require('undici')
 
 ## Specification Compliance
 
-This section documents parts of the HTTP/1.1 specification which Undici does 
+This section documents parts of the HTTP/1.1 specification which Undici does
 not support or does not fully implement.
 
 #### Expect
 
 Undici does not support the `Expect` request header field. The request
-body is  always immediately sent and the `100 Continue` response will be 
+body is  always immediately sent and the `100 Continue` response will be
 ignored.
 
 Refs: https://tools.ietf.org/html/rfc7231#section-5.1.1
 
 ### Pipelining
 
-Uncidi will only use pipelining if configured with a `pipelining` factor 
+Uncidi will only use pipelining if configured with a `pipelining` factor
 greater than `1`.
 
-Undici always assumes that connections are persistent and will immediatly 
+Undici always assumes that connections are persistent and will immediatly
 pipeline requests, without checking whether the connection is persistent.
-Hence, automatic fallback to HTTP/1.0 or HTTP/1.1 without pipelining is 
+Hence, automatic fallback to HTTP/1.0 or HTTP/1.1 without pipelining is
 not supported.
 
 Undici will immediately pipeline when retrying requests afters a failed

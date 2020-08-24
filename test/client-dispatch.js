@@ -269,3 +269,62 @@ test('dispatch onConnect error', (t) => {
     })
   })
 })
+
+test('connect call onUpgrade once', (t) => {
+  t.plan(2)
+
+  const server = http.createServer((c) => {
+    t.fail()
+  })
+  server.on('connect', (req, socket, firstBodyChunk) => {
+    socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
+
+    let data = firstBodyChunk.toString()
+    socket.on('data', (buf) => {
+      data += buf.toString()
+    })
+
+    socket.on('end', () => {
+      socket.end(data)
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    let recvData = ''
+    let count = 0
+    client.dispatch({
+      method: 'CONNECT',
+      path: '/'
+    }, {
+      onConnect () {
+      },
+      onUpgrade (statusCode, headers, socket) {
+        t.strictEqual(count++, 0)
+
+        socket.on('data', (d) => {
+          recvData += d
+        })
+
+        socket.on('end', () => {
+          t.strictEqual(recvData.toString(), 'Body')
+        })
+
+        socket.write('Body')
+        socket.end()
+      },
+      onData (buf) {
+        t.fail()
+      },
+      onComplete (trailers) {
+        t.fail()
+      },
+      onError () {
+        t.fail()
+      }
+    })
+  })
+})
