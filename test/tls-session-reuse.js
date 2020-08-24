@@ -90,9 +90,8 @@ test('TLS should reuse sessions', t => {
         }
         client.request(options, (err, data) => {
           t.error(err)
+          clientSessions[options.name] = client[kSocket].getSession()
           data.body.resume().on('end', () => {
-            clientSessions[options.name] = client[kSocket].getSession()
-
             if (queue.length !== 0) {
               return request()
             }
