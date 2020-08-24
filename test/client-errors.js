@@ -299,20 +299,20 @@ test('invalid options throws', (t) => {
 
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      maxKeepAliveTimeout: 'asd'
+      keepAliveMaxTimeout: 'asd'
     }) // eslint-disable-line
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid maxKeepAliveTimeout')
+    t.strictEqual(err.message, 'invalid keepAliveMaxTimeout')
   }
 
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      maxKeepAliveTimeout: 0
+      keepAliveMaxTimeout: 0
     }) // eslint-disable-line
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid maxKeepAliveTimeout')
+    t.strictEqual(err.message, 'invalid keepAliveMaxTimeout')
   }
 
   try {
