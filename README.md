@@ -60,7 +60,7 @@ Options:
 - `keepAlive: Boolean`, enable or disable keep alive connections.
   Default: `true`.
 
-- `maxKeepAliveTimeout: Number`, the maximum allowed `idleTimeout` when overriden by
+- `keepAliveMaxTimeout: Number`, the maximum allowed `idleTimeout` when overriden by
   *keep-alive* hints from the server.
   Default: `600e3` milliseconds (10min).
 
