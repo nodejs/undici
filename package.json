@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mcollina/undici.git"
+    "url": "git+https://github.com/nodejs/undici.git"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "contributors": [
@@ -23,9 +23,9 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mcollina/undici/issues"
+    "url": "https://github.com/nodejs/undici/issues"
   },
-  "homepage": "https://github.com/mcollina/undici#readme",
+  "homepage": "https://github.com/nodejs/undici#readme",
   "devDependencies": {
     "@sinonjs/fake-timers": "^6.0.1",
     "abort-controller": "^3.0.0",
