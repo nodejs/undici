@@ -240,8 +240,6 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
 })
 
 test('invalid options throws', (t) => {
-  t.plan(36)
-
   try {
     new Client({ port: 'foobar' }) // eslint-disable-line
   } catch (err) {
@@ -391,6 +389,17 @@ test('invalid options throws', (t) => {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid callback')
   }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      tls: { maxCachedSessions: '42' }
+    })
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'invalid tlsMaxCachedSessions')
+  }
+
+  t.end()
 })
 
 test('POST which fails should error response', (t) => {
