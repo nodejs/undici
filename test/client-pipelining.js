@@ -3,9 +3,10 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const { finished, Readable } = require('stream')
-const { kConnect } = require('../lib/core/symbols')
-const EE = require('events')
+const { finished } = require('stream')
+// const { Readable } = require('stream')
+// const { kConnect } = require('../lib/core/symbols')
+// const EE = require('events')
 
 test('20 times GET with pipelining 10', (t) => {
   const num = 20
@@ -165,126 +166,126 @@ test('pipeline 1 is 1 active request', (t) => {
   })
 })
 
-test('pipelined chunked POST ', (t) => {
-  t.plan(4 + 8 + 8)
+// test('pipelined chunked POST ', (t) => {
+//   t.plan(4 + 8 + 8)
 
-  let a = 0
-  let b = 0
+//   let a = 0
+//   let b = 0
 
-  const server = createServer((req, res) => {
-    req.on('data', chunk => {
-      // Make sure a and b don't interleave.
-      t.ok(a === 9 || b === 0)
-      res.write(chunk)
-    }).on('end', () => {
-      res.end()
-    })
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer((req, res) => {
+//     req.on('data', chunk => {
+//       // Make sure a and b don't interleave.
+//       t.ok(a === 9 || b === 0)
+//       res.write(chunk)
+//     }).on('end', () => {
+//       res.end()
+//     })
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 2
-    })
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`, {
+//       pipelining: 2
+//     })
+//     t.tearDown(client.close.bind(client))
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      body.resume()
-      t.error(err)
-    })
+//     client.request({
+//       path: '/',
+//       method: 'GET'
+//     }, (err, { body }) => {
+//       body.resume()
+//       t.error(err)
+//     })
 
-    client.request({
-      path: '/',
-      method: 'POST',
-      body: new Readable({
-        read () {
-          this.push(++a > 8 ? null : 'a')
-        }
-      })
-    }, (err, { body }) => {
-      body.resume()
-      t.error(err)
-    })
+//     client.request({
+//       path: '/',
+//       method: 'POST',
+//       body: new Readable({
+//         read () {
+//           this.push(++a > 8 ? null : 'a')
+//         }
+//       })
+//     }, (err, { body }) => {
+//       body.resume()
+//       t.error(err)
+//     })
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      body.resume()
-      t.error(err)
-    })
+//     client.request({
+//       path: '/',
+//       method: 'GET'
+//     }, (err, { body }) => {
+//       body.resume()
+//       t.error(err)
+//     })
 
-    client.request({
-      path: '/',
-      method: 'POST',
-      body: new Readable({
-        read () {
-          this.push(++b > 8 ? null : 'b')
-        }
-      })
-    }, (err, { body }) => {
-      body.resume()
-      t.error(err)
-    })
-  })
-})
+//     client.request({
+//       path: '/',
+//       method: 'POST',
+//       body: new Readable({
+//         read () {
+//           this.push(++b > 8 ? null : 'b')
+//         }
+//       })
+//     }, (err, { body }) => {
+//       body.resume()
+//       t.error(err)
+//     })
+//   })
+// })
 
-test('errored POST body lets inflight complete', (t) => {
-  t.plan(6)
+// test('errored POST body lets inflight complete', (t) => {
+//   t.plan(6)
 
-  let serverRes
-  const server = createServer()
-  server.on('request', (req, res) => {
-    serverRes = res
-    res.write('asd')
-  })
-  t.tearDown(server.close.bind(server))
+//   let serverRes
+//   const server = createServer()
+//   server.on('request', (req, res) => {
+//     serverRes = res
+//     res.write('asd')
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 2
-    })
-    t.tearDown(client.destroy.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`, {
+//       pipelining: 2
+//     })
+//     t.tearDown(client.destroy.bind(client))
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, data) => {
-      t.error(err)
-      data.body
-        .resume()
-        .once('data', () => {
-          client.request({
-            path: '/',
-            method: 'POST',
-            opaque: 'asd',
-            body: new Readable({
-              read () {
-                this.destroy(new Error('kaboom'))
-              }
-            }).once('error', (err) => {
-              t.ok(err)
-            }).on('error', () => {
-              // Readable emits error twice...
-            })
-          }, (err, data) => {
-            t.ok(err)
-            t.strictEqual(data.opaque, 'asd')
-          })
-          client.close((err) => {
-            t.error(err)
-          })
-          serverRes.end()
-        })
-        .on('end', () => {
-          t.pass()
-        })
-    })
-  })
-})
+//     client.request({
+//       path: '/',
+//       method: 'GET'
+//     }, (err, data) => {
+//       t.error(err)
+//       data.body
+//         .resume()
+//         .once('data', () => {
+//           client.request({
+//             path: '/',
+//             method: 'POST',
+//             opaque: 'asd',
+//             body: new Readable({
+//               read () {
+//                 this.destroy(new Error('kaboom'))
+//               }
+//             }).once('error', (err) => {
+//               t.ok(err)
+//             }).on('error', () => {
+//               // Readable emits error twice...
+//             })
+//           }, (err, data) => {
+//             t.ok(err)
+//             t.strictEqual(data.opaque, 'asd')
+//           })
+//           client.close((err) => {
+//             t.error(err)
+//           })
+//           serverRes.end()
+//         })
+//         .on('end', () => {
+//           t.pass()
+//         })
+//     })
+//   })
+// })
 
 test('pipelining non-idempotent', (t) => {
   t.plan(4)
@@ -329,286 +330,286 @@ test('pipelining non-idempotent', (t) => {
   })
 })
 
-test('pipelining non-idempotent w body', (t) => {
-  t.plan(4)
+// test('pipelining non-idempotent w body', (t) => {
+//   t.plan(4)
 
-  const server = createServer()
-  server.on('request', (req, res) => {
-    setImmediate(() => {
-      res.end('asd')
-    })
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer()
+//   server.on('request', (req, res) => {
+//     setImmediate(() => {
+//       res.end('asd')
+//     })
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 2
-    })
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`, {
+//       pipelining: 2
+//     })
+//     t.tearDown(client.close.bind(client))
 
-    let ended = false
-    let reading = false
-    client.request({
-      path: '/',
-      method: 'POST',
-      body: new Readable({
-        read () {
-          if (reading) {
-            return
-          }
-          reading = true
-          this.push('asd')
-          setImmediate(() => {
-            this.push(null)
-            ended = true
-          })
-        }
-      })
-    }, (err, data) => {
-      t.error(err)
-      data.body
-        .resume()
-        .on('end', () => {
-          t.pass()
-        })
-    })
+//     let ended = false
+//     let reading = false
+//     client.request({
+//       path: '/',
+//       method: 'POST',
+//       body: new Readable({
+//         read () {
+//           if (reading) {
+//             return
+//           }
+//           reading = true
+//           this.push('asd')
+//           setImmediate(() => {
+//             this.push(null)
+//             ended = true
+//           })
+//         }
+//       })
+//     }, (err, data) => {
+//       t.error(err)
+//       data.body
+//         .resume()
+//         .on('end', () => {
+//           t.pass()
+//         })
+//     })
 
-    client.request({
-      path: '/',
-      method: 'GET',
-      idempotent: false
-    }, (err, data) => {
-      t.error(err)
-      t.strictEqual(ended, true)
-      data.body.resume()
-    })
-  })
-})
+//     client.request({
+//       path: '/',
+//       method: 'GET',
+//       idempotent: false
+//     }, (err, data) => {
+//       t.error(err)
+//       t.strictEqual(ended, true)
+//       data.body.resume()
+//     })
+//   })
+// })
 
-test('pipelining HEAD busy', (t) => {
-  t.plan(7)
+// test('pipelining HEAD busy', (t) => {
+//   t.plan(7)
 
-  const server = createServer()
-  server.on('request', (req, res) => {
-    res.end('asd')
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer()
+//   server.on('request', (req, res) => {
+//     res.end('asd')
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 10
-    })
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`, {
+//       pipelining: 10
+//     })
+//     t.tearDown(client.close.bind(client))
 
-    client[kConnect](() => {
-      let ended = false
-      client.once('disconnect', () => {
-        t.strictEqual(ended, true)
-      })
+//     client[kConnect](() => {
+//       let ended = false
+//       client.once('disconnect', () => {
+//         t.strictEqual(ended, true)
+//       })
 
-      {
-        const body = new Readable({
-          read () { }
-        })
-        client.request({
-          path: '/',
-          method: 'GET',
-          body
-        }, (err, data) => {
-          t.error(err)
-          data.body
-            .resume()
-            .on('end', () => {
-              t.pass()
-            })
-        })
-        body.push(null)
-        t.strictEqual(client.busy, false)
-      }
+//       {
+//         const body = new Readable({
+//           read () { }
+//         })
+//         client.request({
+//           path: '/',
+//           method: 'GET',
+//           body
+//         }, (err, data) => {
+//           t.error(err)
+//           data.body
+//             .resume()
+//             .on('end', () => {
+//               t.pass()
+//             })
+//         })
+//         body.push(null)
+//         t.strictEqual(client.busy, false)
+//       }
 
-      {
-        const body = new Readable({
-          read () { }
-        })
-        client.request({
-          path: '/',
-          method: 'HEAD',
-          body
-        }, (err, data) => {
-          t.error(err)
-          data.body
-            .resume()
-            .on('end', () => {
-              ended = true
-              t.pass()
-            })
-        })
-        body.push(null)
-        t.strictEqual(client.busy, true)
-      }
-    })
-  })
-})
+//       {
+//         const body = new Readable({
+//           read () { }
+//         })
+//         client.request({
+//           path: '/',
+//           method: 'HEAD',
+//           body
+//         }, (err, data) => {
+//           t.error(err)
+//           data.body
+//             .resume()
+//             .on('end', () => {
+//               ended = true
+//               t.pass()
+//             })
+//         })
+//         body.push(null)
+//         t.strictEqual(client.busy, true)
+//       }
+//     })
+//   })
+// })
 
-test('pipelining empty pipeline before reset', (t) => {
-  t.plan(7)
+// test('pipelining empty pipeline before reset', (t) => {
+//   t.plan(7)
 
-  let c = 0
-  const server = createServer()
-  server.on('request', (req, res) => {
-    if (c++ === 0) {
-      res.end('asd')
-    } else {
-      setTimeout(() => {
-        res.end('asd')
-      }, 100)
-    }
-  })
-  t.tearDown(server.close.bind(server))
+//   let c = 0
+//   const server = createServer()
+//   server.on('request', (req, res) => {
+//     if (c++ === 0) {
+//       res.end('asd')
+//     } else {
+//       setTimeout(() => {
+//         res.end('asd')
+//       }, 100)
+//     }
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 10
-    })
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`, {
+//       pipelining: 10
+//     })
+//     t.tearDown(client.close.bind(client))
 
-    client[kConnect](() => {
-      let ended = false
-      client.once('disconnect', () => {
-        t.strictEqual(ended, true)
-      })
+//     client[kConnect](() => {
+//       let ended = false
+//       client.once('disconnect', () => {
+//         t.strictEqual(ended, true)
+//       })
 
-      const body = new Readable({
-        read () { }
-      })
+//       const body = new Readable({
+//         read () { }
+//       })
 
-      client.request({
-        path: '/',
-        method: 'GET'
-      }, (err, data) => {
-        t.error(err)
-        data.body
-          .resume()
-          .on('end', () => {
-            t.pass()
-            body.push(null)
-          })
-      })
-      t.strictEqual(client.busy, false)
+//       client.request({
+//         path: '/',
+//         method: 'GET'
+//       }, (err, data) => {
+//         t.error(err)
+//         data.body
+//           .resume()
+//           .on('end', () => {
+//             t.pass()
+//             body.push(null)
+//           })
+//       })
+//       t.strictEqual(client.busy, false)
 
-      client.request({
-        path: '/',
-        method: 'HEAD',
-        body: 'asd'
-      }, (err, data) => {
-        t.error(err)
-        data.body
-          .resume()
-          .on('end', () => {
-            ended = true
-            t.pass()
-          })
-      })
-      t.strictEqual(client.busy, true)
-      t.strictEqual(client.running, 2)
-    })
-  })
-})
+//       client.request({
+//         path: '/',
+//         method: 'HEAD',
+//         body: 'asd'
+//       }, (err, data) => {
+//         t.error(err)
+//         data.body
+//           .resume()
+//           .on('end', () => {
+//             ended = true
+//             t.pass()
+//           })
+//       })
+//       t.strictEqual(client.busy, true)
+//       t.strictEqual(client.running, 2)
+//     })
+//   })
+// })
 
-test('pipelining idempotent busy', (t) => {
-  t.plan(12)
+// test('pipelining idempotent busy', (t) => {
+//   t.plan(12)
 
-  const server = createServer()
-  server.on('request', (req, res) => {
-    res.end('asd')
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer()
+//   server.on('request', (req, res) => {
+//     res.end('asd')
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 10
-    })
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`, {
+//       pipelining: 10
+//     })
+//     t.tearDown(client.close.bind(client))
 
-    {
-      const body = new Readable({
-        read () { }
-      })
-      client.request({
-        path: '/',
-        method: 'GET',
-        body
-      }, (err, data) => {
-        t.error(err)
-        data.body
-          .resume()
-          .on('end', () => {
-            t.pass()
-          })
-      })
-      body.push(null)
-      t.strictEqual(client.busy, true)
-    }
+//     {
+//       const body = new Readable({
+//         read () { }
+//       })
+//       client.request({
+//         path: '/',
+//         method: 'GET',
+//         body
+//       }, (err, data) => {
+//         t.error(err)
+//         data.body
+//           .resume()
+//           .on('end', () => {
+//             t.pass()
+//           })
+//       })
+//       body.push(null)
+//       t.strictEqual(client.busy, true)
+//     }
 
-    client[kConnect](() => {
-      {
-        const body = new Readable({
-          read () { }
-        })
-        client.request({
-          path: '/',
-          method: 'GET',
-          body
-        }, (err, data) => {
-          t.error(err)
-          data.body
-            .resume()
-            .on('end', () => {
-              t.pass()
-            })
-        })
-        body.push(null)
-        t.strictEqual(client.busy, false)
-      }
+//     client[kConnect](() => {
+//       {
+//         const body = new Readable({
+//           read () { }
+//         })
+//         client.request({
+//           path: '/',
+//           method: 'GET',
+//           body
+//         }, (err, data) => {
+//           t.error(err)
+//           data.body
+//             .resume()
+//             .on('end', () => {
+//               t.pass()
+//             })
+//         })
+//         body.push(null)
+//         t.strictEqual(client.busy, false)
+//       }
 
-      {
-        const signal = new EE()
-        const body = new Readable({
-          read () { }
-        })
-        client.request({
-          path: '/',
-          method: 'GET',
-          body,
-          signal
-        }, (err, data) => {
-          t.ok(err)
-        })
-        t.strictEqual(client.busy, true)
-        signal.emit('abort')
-        t.strictEqual(client.busy, false)
-      }
+//       {
+//         const signal = new EE()
+//         const body = new Readable({
+//           read () { }
+//         })
+//         client.request({
+//           path: '/',
+//           method: 'GET',
+//           body,
+//           signal
+//         }, (err, data) => {
+//           t.ok(err)
+//         })
+//         t.strictEqual(client.busy, true)
+//         signal.emit('abort')
+//         t.strictEqual(client.busy, false)
+//       }
 
-      {
-        const body = new Readable({
-          read () { }
-        })
-        client.request({
-          path: '/',
-          method: 'GET',
-          idempotent: false,
-          body
-        }, (err, data) => {
-          t.error(err)
-          data.body
-            .resume()
-            .on('end', () => {
-              t.pass()
-            })
-        })
-        body.push(null)
-        t.strictEqual(client.busy, true)
-      }
-    })
-  })
-})
+//       {
+//         const body = new Readable({
+//           read () { }
+//         })
+//         client.request({
+//           path: '/',
+//           method: 'GET',
+//           idempotent: false,
+//           body
+//         }, (err, data) => {
+//           t.error(err)
+//           data.body
+//             .resume()
+//             .on('end', () => {
+//               t.pass()
+//             })
+//         })
+//         body.push(null)
+//         t.strictEqual(client.busy, true)
+//       }
+//     })
+//   })
+// })
