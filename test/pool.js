@@ -248,40 +248,40 @@ test('backpressure algorithm', (t) => {
 
 function noop () {}
 
-test('busy', (t) => {
-  t.plan(8 * 6)
+// test('busy', (t) => {
+//   t.plan(8 * 6)
 
-  const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer((req, res) => {
+//     t.strictEqual('/', req.url)
+//     t.strictEqual('GET', req.method)
+//     res.setHeader('content-type', 'text/plain')
+//     res.end('hello')
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const client = undici(`http://localhost:${server.address().port}`, {
-      connections: 2,
-      pipelining: 2
-    })
-    t.tearDown(client.destroy.bind(client))
+//   server.listen(0, async () => {
+//     const client = undici(`http://localhost:${server.address().port}`, {
+//       connections: 2,
+//       pipelining: 2
+//     })
+//     t.tearDown(client.destroy.bind(client))
 
-    for (let n = 0; n < 8; ++n) {
-      client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-        t.error(err)
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'text/plain')
-        const bufs = []
-        body.on('data', (buf) => {
-          bufs.push(buf)
-        })
-        body.on('end', () => {
-          t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
-        })
-      })
-    }
-  })
-})
+//     for (let n = 0; n < 8; ++n) {
+//       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+//         t.error(err)
+//         t.strictEqual(statusCode, 200)
+//         t.strictEqual(headers['content-type'], 'text/plain')
+//         const bufs = []
+//         body.on('data', (buf) => {
+//           bufs.push(buf)
+//         })
+//         body.on('end', () => {
+//           t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+//         })
+//       })
+//     }
+//   })
+// })
 
 test('invalid options throws', (t) => {
   t.plan(6)
@@ -441,35 +441,35 @@ test('pool pipeline args validation', (t) => {
   })
 })
 
-test('300 requests succeed', (t) => {
-  t.plan(300 * 3)
+// test('300 requests succeed', (t) => {
+//   t.plan(300 * 3)
 
-  const server = createServer((req, res) => {
-    res.end('asd')
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer((req, res) => {
+//     res.end('asd')
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
-      connections: 1
-    })
-    t.tearDown(client.destroy.bind(client))
+//   server.listen(0, () => {
+//     const client = new Pool(`http://localhost:${server.address().port}`, {
+//       connections: 1
+//     })
+//     t.tearDown(client.destroy.bind(client))
 
-    for (let n = 0; n < 300; ++n) {
-      client.request({
-        path: '/',
-        method: 'GET'
-      }, (err, data) => {
-        t.error(err)
-        data.body.on('data', (chunk) => {
-          t.strictEqual(chunk.toString(), 'asd')
-        }).on('end', () => {
-          t.pass()
-        })
-      })
-    }
-  })
-})
+//     for (let n = 0; n < 300; ++n) {
+//       client.request({
+//         path: '/',
+//         method: 'GET'
+//       }, (err, data) => {
+//         t.error(err)
+//         data.body.on('data', (chunk) => {
+//           t.strictEqual(chunk.toString(), 'asd')
+//         }).on('end', () => {
+//           t.pass()
+//         })
+//       })
+//     }
+//   })
+// })
 
 test('pool connect error', (t) => {
   t.plan(1)
