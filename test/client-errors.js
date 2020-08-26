@@ -391,15 +391,6 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      tls: { maxCachedSessions: '42' }
-    })
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid tlsMaxCachedSessions')
-  }
-
-  try {
     new Client(new URL('http://localhost:200'), { keepAlive: 'true' }) // eslint-disable-line
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
