@@ -47,37 +47,31 @@ test('TLS should reuse sessions', t => {
       const queue = [{
         name: 'first',
         method: 'GET',
-        path: '/',
-        port: server.address().port
+        path: '/'
       }, {
         name: 'first-reuse',
         method: 'GET',
-        path: '/',
-        port: server.address().port
+        path: '/'
       }, {
         name: 'cipher-change',
         method: 'GET',
         path: '/',
         // Choose different cipher to use different cache entry
-        ciphers: 'AES256-SHA',
-        port: server.address().port
+        ciphers: 'AES256-SHA'
       }, {
         // Change the ticket key to ensure session is updated in cache
         name: 'before-drop',
         method: 'GET',
-        path: '/drop-key',
-        port: server.address().port
+        path: '/drop-key'
       }, {
         // Ticket will be updated starting from this
         name: 'after-drop',
         method: 'GET',
-        path: '/',
-        port: server.address().port
+        path: '/'
       }, {
         name: 'after-drop-reuse',
         method: 'GET',
-        path: '/',
-        port: server.address().port
+        path: '/'
       }]
 
       function request () {
