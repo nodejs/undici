@@ -8,13 +8,15 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { kSocket, kTLSOpts } = require('../lib/core/symbols')
 
+const nodeMajor = Number(process.versions.node.split('.')[0])
+
 const options = {
   key: readFileSync(join(__dirname, 'fixtures', 'key.pem'), 'utf8'),
   cert: readFileSync(join(__dirname, 'fixtures', 'cert.pem'), 'utf8')
 }
 const ca = readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
 
-test('TLS should reuse sessions', t => {
+test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
   const clientSessions = {}
   let serverRequests = 0
 
