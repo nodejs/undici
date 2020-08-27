@@ -426,7 +426,7 @@ test('basic POST with iterator', (t) => {
   })
 })
 
-test('basic POST with generator', { skip: true }, (t) => {
+test('basic POST with generator', (t) => {
   t.plan(3)
 
   const expected = 'hello'
