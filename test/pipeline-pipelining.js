@@ -30,7 +30,7 @@ test('pipeline pipelining', (t) => {
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.strictEqual(client.busy, false)
+      t.strictEqual(client.busy, true)
       t.strictDeepEqual(client.running, 0)
       t.strictDeepEqual(client.pending, 1)
 
@@ -82,7 +82,7 @@ test('pipeline pipelining retry', (t) => {
         .on('error', (err) => {
           t.ok(err)
         })
-      t.strictEqual(client.busy, false)
+      t.strictEqual(client.busy, true)
       t.strictDeepEqual(client.running, 0)
       t.strictDeepEqual(client.pending, 1)
 
@@ -90,7 +90,7 @@ test('pipeline pipelining retry', (t) => {
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.strictEqual(client.busy, false)
+      t.strictEqual(client.busy, true)
       t.strictDeepEqual(client.running, 0)
       t.strictDeepEqual(client.pending, 2)
 
