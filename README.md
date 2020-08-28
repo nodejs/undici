@@ -523,6 +523,9 @@ Options:
 * `connections`, the number of clients to create.
   Default `100`.
 
+`Pool` does not guarantee that requests are dispatched in
+order of invocation.
+
 #### `pool.request(opts[, callback]): Promise|Void`
 
 Calls [`client.request(opts, callback)`][request] on one of the clients.
