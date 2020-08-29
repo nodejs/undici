@@ -746,7 +746,7 @@ test('pipeline factory throw not unhandled', (t) => {
 })
 
 test('pipeline destroy before dispatch', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const server = createServer((req, res) => {
     res.end('hello')
@@ -755,7 +755,7 @@ test('pipeline destroy before dispatch', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client
       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
@@ -766,6 +766,10 @@ test('pipeline destroy before dispatch', (t) => {
       })
       .end()
       .destroy()
+
+    client.close(() => {
+      t.pass()
+    })
   })
 })
 
