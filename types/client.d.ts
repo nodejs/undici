@@ -1,10 +1,16 @@
 import { URL } from 'url'
 import { TlsOptions } from 'tls'
+import { Readable } from 'stream'
+import { EventEmitter } from 'events'
+import Errors from './errors'
 
 export = Client
 
 declare class Client {
-	constructor(url: string | URL, options: Client.Options)
+	constructor(url: string | URL, options: Client.Options);
+
+	request(options: Client.RequestOptions): PromiseLike<Client.ResponseData>;
+	request(options: Client.RequestOptions, callback: (err: Error | null, data: Client.ResponseData) => void): void;
 }
 
 declare namespace Client {
@@ -31,5 +37,85 @@ declare namespace Client {
 		maxHeaderSize?: number;
 		/** The amount of time the parser will wait to receive the complete HTTP headers (Node 14 and above only). Default: `30e3` milliseconds (30s). */
 		headersTimeout?: number;
+	}
+
+	export interface RequestOptions {
+		path: string;
+		method: string;
+		opaque?: unknown;
+		body?: string | Buffer | Uint8Array | Readable | null;
+		headers?: Headers | null;
+		signal?: AbortController | EventEmitter | null;
+		/** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
+		requestTimeout?: number;
+		/** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed. Default: `true` if `method` is `HEAD` or `GET`. */
+		idempotent?: boolean;
+	}
+
+	export interface ResponseData {
+		statusCode: number;
+		headers: Headers;
+		body: Readable;
+		opaque?: unknown;
+	}
+
+	export interface Headers {
+		'accept'?: string;
+		'accept-language'?: string;
+		'accept-patch'?: string;
+		'accept-ranges'?: string;
+		'access-control-allow-credentials'?: string;
+		'access-control-allow-headers'?: string;
+		'access-control-allow-methods'?: string;
+		'access-control-allow-origin'?: string;
+		'access-control-expose-headers'?: string;
+		'access-control-max-age'?: string;
+		'access-control-request-headers'?: string;
+		'access-control-request-method'?: string;
+		'age'?: string;
+		'allow'?: string;
+		'alt-svc'?: string;
+		'authorization'?: string;
+		'cache-control'?: string;
+		'connection'?: string;
+		'content-disposition'?: string;
+		'content-encoding'?: string;
+		'content-language'?: string;
+		'content-length'?: string;
+		'content-location'?: string;
+		'content-range'?: string;
+		'content-type'?: string;
+		'cookie'?: string;
+		'date'?: string;
+		'expect'?: string;
+		'expires'?: string;
+		'forwarded'?: string;
+		'from'?: string;
+		'host'?: string;
+		'if-match'?: string;
+		'if-modified-since'?: string;
+		'if-none-match'?: string;
+		'if-unmodified-since'?: string;
+		'last-modified'?: string;
+		'location'?: string;
+		'origin'?: string;
+		'pragma'?: string;
+		'proxy-authenticate'?: string;
+		'proxy-authorization'?: string;
+		'public-key-pins'?: string;
+		'range'?: string;
+		'referer'?: string;
+		'retry-after'?: string;
+		'set-cookie'?: string[];
+		'strict-transport-security'?: string;
+		'tk'?: string;
+		'trailer'?: string;
+		'transfer-encoding'?: string;
+		'upgrade'?: string;
+		'user-agent'?: string;
+		'vary'?: string;
+		'via'?: string;
+		'warning'?: string;
+		'www-authenticate'?: string;
 	}
 }
