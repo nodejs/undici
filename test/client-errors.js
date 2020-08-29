@@ -885,19 +885,24 @@ test('CONNECT throws in next tick', (t) => {
 })
 
 test('invalid signal', (t) => {
-  t.plan(3)
+  t.plan(6)
 
   const client = new Client('http://localhost:3333')
   t.teardown(client.destroy.bind(client))
 
   client.request({ path: '/', method: 'GET', signal: {} }, (err) => {
+    t.strictEqual(ticked, true)
     t.ok(err instanceof errors.InvalidArgumentError)
   })
+  let ticked = false
   client.pipeline({ path: '/', method: 'GET', signal: {} }, () => {})
     .on('error', (err) => {
+      t.strictEqual(ticked, true)
       t.ok(err instanceof errors.InvalidArgumentError)
     })
   client.stream({ path: '/', method: 'GET', signal: {} }, () => {}, (err) => {
+    t.strictEqual(ticked, true)
     t.ok(err instanceof errors.InvalidArgumentError)
   })
+  ticked = true
 })

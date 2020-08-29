@@ -529,3 +529,57 @@ test('pool upgrade error', (t) => {
     }
   })
 })
+
+test('pool dispatch error', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1,
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.strictEqual(statusCode, 200)
+      },
+      onData (chunk) {
+      },
+      onComplete () {
+        t.pass()
+      }
+    })
+
+    client.dispatch({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'transfer-encoding': 'fail'
+      }
+    }, {
+      onConnect () {
+        t.fail()
+      },
+      onHeaders (statusCode, headers) {
+        t.fail()
+      },
+      onData (chunk) {
+        t.fail()
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      }
+    })
+  })
+})
