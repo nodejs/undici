@@ -1,13 +1,12 @@
 import tap from 'tap'
 
-const { test } = tap
-
 import { createServer } from 'http'
 
 import { Client, errors } from '../wrapper.mjs'
 
-test('imported Client works with basic GET', (t) => {
+const { test } = tap
 
+test('imported Client works with basic GET', (t) => {
   t.plan(10)
 
   const server = createServer((req, res) => {
@@ -51,7 +50,6 @@ test('imported Client works with basic GET', (t) => {
     })
   })
 })
-
 
 test('imported errors work with request args validation', (t) => {
   t.plan(2)
