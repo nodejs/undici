@@ -6,7 +6,7 @@
   "module": "wrapper.mjs",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "tap test/*.js --no-coverage && jest test/jest/test",
+    "test": "tap test/*.{mjs,js} --no-coverage && jest test/jest/test",
     "coverage": "standard | snazzy && tap test/*.js",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\""
   },
