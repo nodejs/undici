@@ -890,11 +890,11 @@ test('invalid signal', (t) => {
   const client = new Client('http://localhost:3333')
   t.teardown(client.destroy.bind(client))
 
+  let ticked = false
   client.request({ path: '/', method: 'GET', signal: {} }, (err) => {
     t.strictEqual(ticked, true)
     t.ok(err instanceof errors.InvalidArgumentError)
   })
-  let ticked = false
   client.pipeline({ path: '/', method: 'GET', signal: {} }, () => {})
     .on('error', (err) => {
       t.strictEqual(ticked, true)
