@@ -18,7 +18,7 @@ test('request abort before headers', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client[kConnect](() => {
       client.request({
