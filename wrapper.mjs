@@ -1,4 +1,4 @@
-import undici from './index'
+import undici from './index.js'
 
 export const Client = undici.Client
 
