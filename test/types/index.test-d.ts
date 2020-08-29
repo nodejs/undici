@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import Undici, { Pool, Client } from '../..'
+import Undici, { Pool, Client, Errors } from '../..'
 
 expectAssignable<Pool>(Undici('', {}))
 expectAssignable<Pool>(new Undici.Pool('', {}))

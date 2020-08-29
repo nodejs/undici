@@ -1,7 +1,8 @@
 import Pool from './types/pool'
 import Client from './types/client'
+import Errors from './types/errors'
 
-export { Pool, Client }
+export { Pool, Client, Errors }
 export default Undici
 
 declare function Undici(url: string, opts: Pool.Options): Pool
