@@ -516,7 +516,7 @@ Options:
 
 * ... same as [`Client`][].
 * `connections`, the number of clients to create.
-  Default `100`.
+  Default `10`.
 
 `Pool` does not guarantee that requests are dispatched in
 order of invocation.
