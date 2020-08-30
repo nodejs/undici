@@ -332,15 +332,6 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      requestTimeout: 'asd'
-    })
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid requestTimeout')
-  }
-
-  try {
     new Client({ // eslint-disable-line
       protocol: 'asd'
     })

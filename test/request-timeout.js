@@ -40,36 +40,6 @@ test('request timeout', (t) => {
   })
 })
 
-test('request timeout immutable opts', (t) => {
-  t.plan(2)
-
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
-
-  const server = createServer((req, res) => {
-    setTimeout(() => {
-      res.end('hello')
-    }, 100)
-    clock.tick(100)
-  })
-  t.teardown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      requestTimeout: 50
-    })
-    t.teardown(client.destroy.bind(client))
-
-    const opts = { path: '/', method: 'GET' }
-    client.request(opts, (err, response) => {
-      t.ok(err instanceof errors.RequestTimeoutError)
-      t.strictEqual(opts.requestTimeout, undefined)
-    })
-
-    clock.tick(50)
-  })
-})
-
 test('Subsequent request starves', (t) => {
   t.plan(3)
 
@@ -315,10 +285,10 @@ test('Global option', (t) => {
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { requestTimeout: 50 })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    client.request({ path: '/', method: 'GET' }, (err, response) => {
+    client.request({ path: '/', method: 'GET', requestTimeout: 50 }, (err, response) => {
       t.ok(err instanceof errors.RequestTimeoutError)
     })
 
@@ -341,7 +311,7 @@ test('Request options overrides global option', (t) => {
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { requestTimeout: 100 })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', requestTimeout: 50 }, (err, response) => {
@@ -429,10 +399,10 @@ test('Disable request timeout', (t) => {
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { requestTimeout: 0 })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    client.request({ path: '/', method: 'GET' }, (err, response) => {
+    client.request({ path: '/', method: 'GET', requestTimeout: 0 }, (err, response) => {
       t.error(err)
       const bufs = []
       response.body.on('data', (buf) => {
@@ -525,7 +495,7 @@ test('stream custom timeout', (t) => {
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { requestTimeout: 0 })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
     client.stream({
@@ -605,7 +575,7 @@ test('pipeline timeout', (t) => {
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { requestTimeout: 0 })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
     const buf = Buffer.alloc(1e6).toString()

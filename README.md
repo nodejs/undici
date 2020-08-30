@@ -69,11 +69,6 @@ Options:
   transport latency.
   Default: `1e3` milliseconds (1s).
 
-- `requestTimeout: Number`, the timeout after which a request will time out.
-  Monitors time between request is dispatched on socket and receiving
-  a response. Use `0` to disable it entirely.
-  Default: `30e3` milliseconds (30s).
-
 - `pipelining: Number`, the amount of concurrent requests to be sent over the
   single TCP/TLS connection according to
   [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
