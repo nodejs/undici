@@ -269,7 +269,7 @@ test('upgrade wait for empty pipeline', (t) => {
 })
 
 test('upgrade aborted', (t) => {
-  t.plan(3)
+  t.plan(4)
 
   const server = http.createServer((req, res) => {
     t.fail()
@@ -296,6 +296,10 @@ test('upgrade aborted', (t) => {
     })
     t.strictEqual(client.busy, true)
     signal.emit('abort')
+
+    client.close(() => {
+      t.pass()
+    })
   })
 })
 
@@ -367,6 +371,35 @@ test('basic upgrade error', (t) => {
         t.strictEqual(err, _err)
       })
       throw _err
+    })
+  })
+})
+
+test('upgrade invalid signal', (t) => {
+  t.plan(2)
+
+  const server = net.createServer(() => {
+    t.fail()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.on('disconnect', () => {
+      t.fail()
+    })
+
+    client.upgrade({
+      path: '/',
+      method: 'GET',
+      protocol: 'Websocket',
+      signal: 'error',
+      opaque: 'asd'
+    }, (err, { opaque }) => {
+      t.strictEqual(opaque, 'asd')
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
   })
 })
