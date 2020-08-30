@@ -819,7 +819,7 @@ test('pool request constructor error destroy body', (t) => {
 })
 
 test('pool close waits for all requests', (t) => {
-  t.plan(4)
+  t.plan(5)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -845,6 +845,10 @@ test('pool close waits for all requests', (t) => {
       method: 'GET'
     }, (err) => {
       t.error(err)
+    })
+
+    client.close(() => {
+      t.pass()
     })
 
     client.close(() => {
