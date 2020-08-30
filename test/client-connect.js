@@ -199,11 +199,15 @@ test('connect aborted', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
+  server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
+
+    client.on('disconnect', () => {
+      t.fail()
+    })
 
     const signal = new EE()
     client.connect({

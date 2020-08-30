@@ -586,7 +586,7 @@ test('pipelining idempotent busy', (t) => {
         })
         t.strictEqual(client.busy, true)
         signal.emit('abort')
-        t.strictEqual(client.busy, false)
+        t.strictEqual(client.busy, true)
       }
 
       {

@@ -7,9 +7,10 @@ const { Pool, errors } = require('..')
 const { createServer } = require('http')
 const { EventEmitter } = require('events')
 const { promisify } = require('util')
-const { PassThrough } = require('stream')
+const { PassThrough, Readable } = require('stream')
 const eos = require('stream').finished
 const net = require('net')
+const EE = require('events')
 
 test('basic get', (t) => {
   t.plan(9)
@@ -581,5 +582,238 @@ test('pool dispatch error', (t) => {
         t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       }
     })
+  })
+})
+
+test('pool request abort in queue', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1,
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.strictEqual(statusCode, 200)
+      },
+      onData (chunk) {
+      },
+      onComplete () {
+        t.pass()
+      }
+    })
+
+    const signal = new EE()
+    client.request({
+      path: '/',
+      method: 'GET',
+      signal
+    }, (err) => {
+      t.strictEqual(err.code, 'UND_ERR_ABORTED')
+    })
+    signal.emit('abort')
+  })
+})
+
+test('pool stream abort in queue', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1,
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.strictEqual(statusCode, 200)
+      },
+      onData (chunk) {
+      },
+      onComplete () {
+        t.pass()
+      }
+    })
+
+    const signal = new EE()
+    client.stream({
+      path: '/',
+      method: 'GET',
+      signal
+    }, ({ body }) => body, (err) => {
+      t.strictEqual(err.code, 'UND_ERR_ABORTED')
+    })
+    signal.emit('abort')
+  })
+})
+
+test('pool pipeline abort in queue', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1,
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.strictEqual(statusCode, 200)
+      },
+      onData (chunk) {
+      },
+      onComplete () {
+        t.pass()
+      }
+    })
+
+    const signal = new EE()
+    client.pipeline({
+      path: '/',
+      method: 'GET',
+      signal
+    }, ({ body }) => body).end().on('error', (err) => {
+      t.strictEqual(err.code, 'UND_ERR_ABORTED')
+    })
+    signal.emit('abort')
+  })
+})
+
+test('pool stream constructor error destroy body', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1,
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    {
+      const body = new Readable({
+        read () {
+        }
+      })
+      client.stream({
+        path: '/',
+        method: 'GET',
+        body,
+        headers: {
+          'transfer-encoding': 'fail'
+        }
+      }, () => {
+        t.fail()
+      }, (err) => {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(body.destroyed, true)
+      })
+    }
+
+    {
+      const body = new Readable({
+        read () {
+        }
+      })
+      client.stream({
+        path: '/',
+        method: 'CONNECT',
+        body
+      }, () => {
+        t.fail()
+      }, (err) => {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(body.destroyed, true)
+      })
+    }
+  })
+})
+
+test('pool request constructor error destroy body', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1,
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    {
+      const body = new Readable({
+        read () {
+        }
+      })
+      client.request({
+        path: '/',
+        method: 'GET',
+        body,
+        headers: {
+          'transfer-encoding': 'fail'
+        }
+      }, (err) => {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(body.destroyed, true)
+      })
+    }
+
+    {
+      const body = new Readable({
+        read () {
+        }
+      })
+      client.request({
+        path: '/',
+        method: 'CONNECT',
+        body
+      }, (err) => {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(body.destroyed, true)
+      })
+    }
   })
 })

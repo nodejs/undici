@@ -283,7 +283,7 @@ test('upgrade aborted', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     const signal = new EE()
     client.upgrade({
