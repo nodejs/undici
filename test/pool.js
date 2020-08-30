@@ -826,7 +826,7 @@ test('pool close waits for all requests', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
+  server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
@@ -872,7 +872,7 @@ test('pool destroyed', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
+  server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
