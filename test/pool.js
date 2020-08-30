@@ -863,3 +863,28 @@ test('pool close waits for all requests', (t) => {
     })
   })
 })
+
+test('pool destroyed', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1,
+      pipelining: 1
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    client.destroy()
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.ok(err instanceof errors.ClientDestroyedError)
+    })
+  })
+})
