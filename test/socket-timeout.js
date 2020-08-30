@@ -66,12 +66,11 @@ test('Disable socket timeout', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      socketTimeout: 0,
-      requestTimeout: 0
+      socketTimeout: 0
     })
     t.tearDown(client.close.bind(client))
 
-    client.request({ path: '/', method: 'GET' }, (err, result) => {
+    client.request({ path: '/', method: 'GET', requestTimeout: 0 }, (err, result) => {
       t.error(err)
       const bufs = []
       result.body.on('data', (buf) => {
