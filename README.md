@@ -416,11 +416,30 @@ Returns a promise if no callback is provided.
 <a name='dispatch'></a>
 #### `client.dispatch(opts, handler): Promise|Void`
 
-This is the low level API which all the preceeding API's are implemented on top of.
+This is the low level API which all the preceeding APIs are implemented on top of.
+
+This API is expected to evolve through semver-major versions and is less stable
+than the preceeding higher level APIs. It is primarily intended for library developers
+who implement higher level APIs on top of this.
 
 Options:
 
-* ... same as [`client.request(opts[, callback])`][request].
+* `path: String`
+* `method: String`
+* `body: String|Buffer|Uint8Array|stream.Readable|Null`
+  Default: `null`.
+* `headers: Object|Null`, an object with header-value pairs.
+  Default: `null`.
+* `signal: AbortController|EventEmitter|Null`
+  Default: `null`.
+* `requestTimeout: Number`, the timeout after which a request will time out, in
+  milliseconds. Monitors time between request being enqueued and receiving
+  a response. Use `0` to disable it entirely.
+  Default: `30e3` milliseconds (30s).
+* `idempotent: Boolean`, whether the requests can be safely retried or not.
+  If `false` the request won't be sent until all preceeding
+  requests in the pipeline has completed.
+  Default: `true` if `method` is `HEAD` or `GET`.
 
 The `handler` parameter is defined as follow:
 
@@ -442,6 +461,9 @@ The `handler` parameter is defined as follow:
   * `trailers: Array|Null`
 * `onError(err): Void`, invoked when an error has occured.
   * `err: Error`
+
+The caller is responsible for handling the `body` argument, in terms of `'error'` events and `destroy()`:ing up until
+the `onConnect` handler has been invoked.
 
 <a name='close'></a>
 #### `client.close([callback]): Promise|Void`
@@ -498,6 +520,9 @@ True after `client.destroyed()` has been called or `client.close()` has been
 called and the client shutdown has completed.
 
 #### Events
+
+* `'drain'`, emitted when pipeline is no longer fully
+  saturated.
 
 * `'connect'`, emitted when a socket has been created and
   connected. The client will connect once `client.size > 0`.
