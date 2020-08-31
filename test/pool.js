@@ -888,3 +888,46 @@ test('pool destroyed', (t) => {
     })
   })
 })
+
+test('pool destroy fails queued requests', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1,
+      pipelining: 1
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    const _err = new Error()
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.strictEqual(err, _err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.strictEqual(err, _err)
+    })
+
+    client.destroy(_err, () => {
+      t.pass()
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.ok(err instanceof errors.ClientDestroyedError)
+    })
+  })
+})
