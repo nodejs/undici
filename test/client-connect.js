@@ -189,7 +189,7 @@ test('connect wait for empty pipeline', (t) => {
 })
 
 test('connect aborted', (t) => {
-  t.plan(3)
+  t.plan(4)
 
   const server = http.createServer((req, res) => {
     t.fail()
@@ -199,11 +199,15 @@ test('connect aborted', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
+  server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
+
+    client.on('disconnect', () => {
+      t.fail()
+    })
 
     const signal = new EE()
     client.connect({
@@ -216,6 +220,10 @@ test('connect aborted', (t) => {
     })
     t.strictEqual(client.busy, true)
     signal.emit('abort')
+
+    client.close(() => {
+      t.pass()
+    })
   })
 })
 
@@ -253,5 +261,69 @@ test('basic connect error', (t) => {
       })
       throw _err
     })
+  })
+})
+
+test('connect invalid signal', (t) => {
+  t.plan(2)
+
+  const server = http.createServer((req, res) => {
+    t.fail()
+  })
+  server.on('connect', (req, c, firstBodyChunk) => {
+    t.fail()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.on('disconnect', () => {
+      t.fail()
+    })
+
+    client.connect({
+      path: '/',
+      signal: 'error',
+      opaque: 'asd'
+    }, (err, { opaque }) => {
+      t.strictEqual(opaque, 'asd')
+      t.ok(err instanceof errors.InvalidArgumentError)
+    })
+  })
+})
+
+test('connect aborted after connect', (t) => {
+  t.plan(3)
+
+  const signal = new EE()
+  const server = http.createServer((req, res) => {
+    t.fail()
+  })
+  server.on('connect', (req, c, firstBodyChunk) => {
+    signal.emit('abort')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 3
+    })
+    t.tearDown(client.destroy.bind(client))
+
+    client.on('disconnect', () => {
+      t.fail()
+    })
+
+    client.connect({
+      path: '/',
+      signal,
+      opaque: 'asd'
+    }, (err, { opaque }) => {
+      t.strictEqual(opaque, 'asd')
+      t.ok(err instanceof errors.RequestAbortedError)
+    })
+    t.strictEqual(client.busy, true)
   })
 })

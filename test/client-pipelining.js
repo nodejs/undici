@@ -423,7 +423,7 @@ test('pipelining HEAD busy', (t) => {
             })
         })
         body.push(null)
-        t.strictEqual(client.busy, false)
+        t.strictEqual(client.busy, true)
       }
 
       {
@@ -568,7 +568,7 @@ test('pipelining idempotent busy', (t) => {
             })
         })
         body.push(null)
-        t.strictEqual(client.busy, false)
+        t.strictEqual(client.busy, true)
       }
 
       {
@@ -586,7 +586,7 @@ test('pipelining idempotent busy', (t) => {
         })
         t.strictEqual(client.busy, true)
         signal.emit('abort')
-        t.strictEqual(client.busy, false)
+        t.strictEqual(client.busy, true)
       }
 
       {

@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
-const { PassThrough, Writable } = require('stream')
+const { PassThrough, Writable, Readable } = require('stream')
 const EE = require('events')
 
 test('stream get', (t) => {
@@ -623,5 +623,31 @@ test('stream backpressure', (t) => {
       t.error(err)
       t.strictEqual(buf, expected)
     })
+  })
+})
+
+test('stream body destroyed on invalid callback', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    const body = new Readable({
+      read () {}
+    })
+    try {
+      client.stream({
+        path: '/',
+        method: 'GET',
+        body
+      }, () => {}, null)
+    } catch (err) {
+      t.strictEqual(body.destroyed, true)
+    }
   })
 })

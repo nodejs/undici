@@ -332,15 +332,6 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      requestTimeout: 'asd'
-    })
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid requestTimeout')
-  }
-
-  try {
     new Client({ // eslint-disable-line
       protocol: 'asd'
     })
@@ -885,19 +876,26 @@ test('CONNECT throws in next tick', (t) => {
 })
 
 test('invalid signal', (t) => {
-  t.plan(3)
+  t.plan(8)
 
   const client = new Client('http://localhost:3333')
   t.teardown(client.destroy.bind(client))
 
-  client.request({ path: '/', method: 'GET', signal: {} }, (err) => {
+  let ticked = false
+  client.request({ path: '/', method: 'GET', signal: {}, opaque: 'asd' }, (err, { opaque }) => {
+    t.strictEqual(ticked, true)
+    t.strictEqual(opaque, 'asd')
     t.ok(err instanceof errors.InvalidArgumentError)
   })
   client.pipeline({ path: '/', method: 'GET', signal: {} }, () => {})
     .on('error', (err) => {
+      t.strictEqual(ticked, true)
       t.ok(err instanceof errors.InvalidArgumentError)
     })
-  client.stream({ path: '/', method: 'GET', signal: {} }, () => {}, (err) => {
+  client.stream({ path: '/', method: 'GET', signal: {}, opaque: 'asd' }, () => {}, (err, { opaque }) => {
+    t.strictEqual(ticked, true)
+    t.strictEqual(opaque, 'asd')
     t.ok(err instanceof errors.InvalidArgumentError)
   })
+  ticked = true
 })

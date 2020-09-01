@@ -1,6 +1,6 @@
 # undici
 
-![Node CI](https://github.com/mcollina/undici/workflows/Node%20CI/badge.svg)  [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)
+![Node CI](https://github.com/mcollina/undici/workflows/Node%20CI/badge.svg)  [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/) [![npm version](https://badge.fury.io/js/undici.svg)](https://badge.fury.io/js/undici)
 
 A HTTP/1.1 client, written from scratch for Node.js.
 
@@ -23,11 +23,11 @@ Machine: 2.8GHz AMD EPYC 7402P<br/>
 Configuration: Node v14.4, HTTP/1.1 without TLS, 100 connections, Linux 5.4.12-1-lts
 
 ```
-http - keepalive x 5,634 ops/sec ±2.53% (274 runs sampled)
-undici - pipeline x 8,642 ops/sec ±3.08% (276 runs sampled)
-undici - request x 12,681 ops/sec ±0.51% (279 runs sampled)
-undici - stream x 14,006 ops/sec ±0.53% (280 runs sampled)
-undici - dispatch x 15,002 ops/sec ±0.39% (278 runs sampled)
+http - keepalive x 5,882 ops/sec ±1.87% (274 runs sampled)
+undici - pipeline x 9,189 ops/sec ±2.02% (272 runs sampled)
+undici - request x 12,623 ops/sec ±0.89% (277 runs sampled)
+undici - stream x 14,136 ops/sec ±0.61% (280 runs sampled)
+undici - dispatch x 14,883 ops/sec ±0.44% (281 runs sampled)
 ```
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js).
@@ -68,11 +68,6 @@ Options:
   when overriding `idleTimeout` to account for timing inaccuries caused by e.g.
   transport latency.
   Default: `1e3` milliseconds (1s).
-
-- `requestTimeout: Number`, the timeout after which a request will time out.
-  Monitors time between request is dispatched on socket and receiving
-  a response. Use `0` to disable it entirely.
-  Default: `30e3` milliseconds (30s).
 
 - `pipelining: Number`, the amount of concurrent requests to be sent over the
   single TCP/TLS connection according to
@@ -421,11 +416,30 @@ Returns a promise if no callback is provided.
 <a name='dispatch'></a>
 #### `client.dispatch(opts, handler): Promise|Void`
 
-This is the low level API which all the preceeding API's are implemented on top of.
+This is the low level API which all the preceeding APIs are implemented on top of.
+
+This API is expected to evolve through semver-major versions and is less stable
+than the preceeding higher level APIs. It is primarily intended for library developers
+who implement higher level APIs on top of this.
 
 Options:
 
-* ... same as [`client.request(opts[, callback])`][request].
+* `path: String`
+* `method: String`
+* `body: String|Buffer|Uint8Array|stream.Readable|Null`
+  Default: `null`.
+* `headers: Object|Null`, an object with header-value pairs.
+  Default: `null`.
+* `signal: AbortController|EventEmitter|Null`
+  Default: `null`.
+* `requestTimeout: Number`, the timeout after which a request will time out, in
+  milliseconds. Monitors time between request being enqueued and receiving
+  a response. Use `0` to disable it entirely.
+  Default: `30e3` milliseconds (30s).
+* `idempotent: Boolean`, whether the requests can be safely retried or not.
+  If `false` the request won't be sent until all preceeding
+  requests in the pipeline has completed.
+  Default: `true` if `method` is `HEAD` or `GET`.
 
 The `handler` parameter is defined as follow:
 
@@ -447,6 +461,9 @@ The `handler` parameter is defined as follow:
   * `trailers: Array|Null`
 * `onError(err): Void`, invoked when an error has occured.
   * `err: Error`
+
+The caller is responsible for handling the `body` argument, in terms of `'error'` events and `destroy()`:ing up until
+the `onConnect` handler has been invoked.
 
 <a name='close'></a>
 #### `client.close([callback]): Promise|Void`
@@ -504,6 +521,9 @@ called and the client shutdown has completed.
 
 #### Events
 
+* `'drain'`, emitted when pipeline is no longer fully
+  saturated.
+
 * `'connect'`, emitted when a socket has been created and
   connected. The client will connect once `client.size > 0`.
 
@@ -521,7 +541,10 @@ Options:
 
 * ... same as [`Client`][].
 * `connections`, the number of clients to create.
-  Default `100`.
+  Default `10`.
+
+`Pool` does not guarantee that requests are dispatched in
+order of invocation.
 
 #### `pool.request(opts[, callback]): Promise|Void`
 

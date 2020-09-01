@@ -9,15 +9,15 @@ test('dispatch invalid opts', (t) => {
 
   const client = new Client('http://localhost:5000')
 
-  try {
-    client.dispatch({
-      path: '/',
-      method: 'GET',
-      upgrade: 1
-    })
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-  }
+  client.dispatch({
+    path: '/',
+    method: 'GET',
+    upgrade: 1
+  }, {
+    onError (err) {
+      t.ok(err instanceof errors.InvalidArgumentError)
+    }
+  })
 })
 
 test('basic dispatch get', (t) => {

@@ -755,7 +755,7 @@ test('pipeline destroy before dispatch', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.tearDown(client.destroy.bind(client))
 
     client
       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {

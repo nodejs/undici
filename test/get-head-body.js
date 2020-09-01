@@ -73,26 +73,26 @@ test('GET and HEAD with body should reset connection', (t) => {
   })
 })
 
-test('GET with body should work when target parses body as request', (t) => {
-  t.plan(4)
+// TODO: Avoid external dependency.
+// test('GET with body should work when target parses body as request', (t) => {
+//   t.plan(4)
 
-  // This URL will send double responses when receiving a
-  // GET request with body.
-  // TODO: Avoid external dependency.
-  const client = new Client('http://feeds.bbci.co.uk')
-  t.teardown(client.close.bind(client))
+//   // This URL will send double responses when receiving a
+//   // GET request with body.
+//   const client = new Client('http://feeds.bbci.co.uk')
+//   t.teardown(client.close.bind(client))
 
-  client.request({ method: 'GET', path: '/news/rss.xml', body: 'asd' }, (err, data) => {
-    t.error(err)
-    t.strictEqual(data.statusCode, 200)
-    data.body.resume()
-  })
-  client.request({ method: 'GET', path: '/news/rss.xml', body: 'asd' }, (err, data) => {
-    t.error(err)
-    t.strictEqual(data.statusCode, 200)
-    data.body.resume()
-  })
-})
+//   client.request({ method: 'GET', path: '/news/rss.xml', body: 'asd' }, (err, data) => {
+//     t.error(err)
+//     t.strictEqual(data.statusCode, 200)
+//     data.body.resume()
+//   })
+//   client.request({ method: 'GET', path: '/news/rss.xml', body: 'asd' }, (err, data) => {
+//     t.error(err)
+//     t.strictEqual(data.statusCode, 200)
+//     data.body.resume()
+//   })
+// })
 
 test('HEAD should reset connection', (t) => {
   t.plan(9)
