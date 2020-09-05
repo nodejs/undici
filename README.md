@@ -430,8 +430,6 @@ Options:
   Default: `null`.
 * `headers: Object|Null`, an object with header-value pairs.
   Default: `null`.
-* `signal: AbortController|EventEmitter|Null`
-  Default: `null`.
 * `requestTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between request being enqueued and receiving
   a response. Use `0` to disable it entirely.
