@@ -38,7 +38,6 @@ The benchmark is a simple `hello world` [example](benchmarks/index.js) without p
 ### `new undici.Client(url, opts)`
 
 A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection.
-Keepalive is enabled by default, and it cannot be turned off.
 
 `url` can be a string or a [`URL`](https://nodejs.org/api/url.html#url_class_url) object.
 It should only include the protocol, hostname, and the port.
