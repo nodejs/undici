@@ -23,14 +23,14 @@ Machine: 2.8GHz AMD EPYC 7402P<br/>
 Configuration: Node v14.4, HTTP/1.1 without TLS, 100 connections, Linux 5.4.12-1-lts
 
 ```
-http - keepalive x 5,882 ops/sec ±1.87% (274 runs sampled)
-undici - pipeline x 9,189 ops/sec ±2.02% (272 runs sampled)
-undici - request x 12,623 ops/sec ±0.89% (277 runs sampled)
-undici - stream x 14,136 ops/sec ±0.61% (280 runs sampled)
-undici - dispatch x 14,883 ops/sec ±0.44% (281 runs sampled)
+http - keepalive x 5,857 ops/sec ±1.98% (276 runs sampled)
+undici - pipeline x 8,688 ops/sec ±1.87% (276 runs sampled)
+undici - request x 12,651 ops/sec ±1.07% (280 runs sampled)
+undici - stream x 14,315 ops/sec ±0.57% (280 runs sampled)
+undici - dispatch x 15,148 ops/sec ±0.50% (278 runs sampled)
 ```
 
-The benchmark is a simple `hello world` [example](benchmarks/index.js).
+The benchmark is a simple `hello world` [example](benchmarks/index.js) without pipelining.
 
 ## API
 

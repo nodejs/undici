@@ -2,13 +2,9 @@
 const { Writable } = require('stream')
 const http = require('http')
 const Benchmark = require('benchmark')
-const undici = require('..')
+const { Client } = require('..')
 
-// # Start the h2o server (in h2o repository)
-// # Then change the port below to 8080
-// h2o -c examples/h2o/h2o.conf
-//
-// # Alternatively start the Node.js server
+// # Start the Node.js server
 // node benchmarks/server.js
 //
 // # Start the benchmarks
@@ -32,10 +28,7 @@ const undiciOptions = {
   requestTimeout: 0
 }
 
-const pool = undici(`http://${httpOptions.hostname}:${httpOptions.port}`, {
-  connections: 100,
-  pipelining: 10
-})
+const pool = new Client(`http://${httpOptions.hostname}:${httpOptions.port}`)
 
 const suite = new Benchmark.Suite()
 
@@ -45,17 +38,16 @@ suite
   .add('http - keepalive', {
     defer: true,
     fn: deferred => {
-      http.get(httpOptions, response => {
-        const stream = new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
-        })
-        stream.once('finish', () => {
-          deferred.resolve()
-        })
-
-        response.pipe(stream)
+      http.get(httpOptions, (res) => {
+        res
+          .pipe(new Writable({
+            write (chunk, encoding, callback) {
+              callback()
+            }
+          }))
+          .on('finish', () => {
+            deferred.resolve()
+          })
       })
     }
   })
@@ -72,7 +64,7 @@ suite
             callback()
           }
         }))
-        .once('finish', () => {
+        .on('finish', () => {
           deferred.resolve()
         })
     }
@@ -80,21 +72,20 @@ suite
   .add('undici - request', {
     defer: true,
     fn: deferred => {
-      pool.request(undiciOptions, (error, { body }) => {
-        if (error) {
-          throw error
+      pool.request(undiciOptions, (err, { body }) => {
+        if (err) {
+          throw err
         }
 
-        const stream = new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
-        })
-        stream.once('finish', () => {
-          deferred.resolve()
-        })
-
-        body.pipe(stream)
+        body
+          .pipe(new Writable({
+            write (chunk, encoding, callback) {
+              callback()
+            }
+          }))
+          .on('finish', () => {
+            deferred.resolve()
+          })
       })
     }
   })
@@ -102,19 +93,17 @@ suite
     defer: true,
     fn: deferred => {
       pool.stream(undiciOptions, () => {
-        const stream = new Writable({
+        return new Writable({
           write (chunk, encoding, callback) {
             callback()
           }
         })
-        stream.once('finish', () => {
-          deferred.resolve()
-        })
-
-        return stream
-      }, error => {
-        if (error) {
-          throw error
+          .on('finish', () => {
+            deferred.resolve()
+          })
+      }, (err) => {
+        if (err) {
+          throw err
         }
       })
     }
@@ -122,15 +111,7 @@ suite
   .add('undici - dispatch', {
     defer: true,
     fn: deferred => {
-      const stream = new Writable({
-        write (chunk, encoding, callback) {
-          callback()
-        }
-      })
-      stream.once('finish', () => {
-        deferred.resolve()
-      })
-      pool.dispatch(undiciOptions, new SimpleRequest(stream))
+      pool.dispatch(undiciOptions, new SimpleRequest(deferred))
     }
   })
   .add('undici - noop', {
@@ -164,11 +145,21 @@ class NoopRequest {
   onComplete (trailers) {
     this.deferred.resolve()
   }
+
+  onError (err) {
+    throw err
+  }
 }
 
 class SimpleRequest {
-  constructor (dst) {
-    this.dst = dst
+  constructor (deferred) {
+    this.dst = new Writable({
+      write (chunk, encoding, callback) {
+        callback()
+      }
+    }).on('finish', () => {
+      deferred.resolve()
+    })
   }
 
   onConnect (abort) {
@@ -184,5 +175,9 @@ class SimpleRequest {
 
   onComplete () {
     this.dst.end()
+  }
+
+  onError (err) {
+    throw err
   }
 }
