@@ -80,19 +80,17 @@ suite
     defer: true,
     fn: deferred => {
       Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
-        client.request(undiciOptions, (err, { body }) => {
-          if (err) {
-            throw err
-          }
-
-          body
-            .pipe(new Writable({
-              write (chunk, encoding, callback) {
-                callback()
-              }
-            }))
-            .on('close', resolve)
-        })
+        client
+          .request(undiciOptions)
+          .then(({ body }) => {
+            body
+              .pipe(new Writable({
+                write (chunk, encoding, callback) {
+                  callback()
+                }
+              }))
+              .on('close', resolve)
+          })
       }))).then(() => deferred.resolve())
     }
   })
