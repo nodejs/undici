@@ -37,7 +37,8 @@ The benchmark is a simple `hello world` [example](benchmarks/index.js) without p
 <a name='client'></a>
 ### `new undici.Client(url, opts)`
 
-A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection.
+A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection. Pipelining is disabled
+by default.
 
 `url` can be a string or a [`URL`](https://nodejs.org/api/url.html#url_class_url) object.
 It should only include the protocol, hostname, and the port.
@@ -69,8 +70,10 @@ Options:
   Default: `1e3` milliseconds (1s).
 
 - `pipelining: Number`, the amount of concurrent requests to be sent over the
-  single TCP/TLS connection according to
-  [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
+  single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
+  Carefully consider your workload and environment before enabling concurrent requests
+  as pipelining may reduce performance if used incorrectly. Pipelining is sensitive 
+  to network stack settings as well as head of line blocking caused by e.g. long running requests.
   Default: `1`.
 
 - `tls: Object|Null`, an options object which in the case of `https` will be passed to
