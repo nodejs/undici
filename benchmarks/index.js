@@ -126,10 +126,11 @@ suite
       }))).then(() => deferred.resolve())
     }
   })
-  .on('cycle', event => {
-    // TODO: Multiple results by 10x to get opts/sec since we do 10 requests
+  .on('cycle', ({ target }) => {
+    // Multiply results by 10x to get opts/sec since we do 10 requests
     // per run.
-    console.log(String(event.target))
+    target.hz *= 10
+    console.log(String(target))
   })
   .on('complete', () => {
     client.destroy()
