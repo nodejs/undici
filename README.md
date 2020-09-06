@@ -22,6 +22,7 @@ npm i undici
 Machine: 2.8GHz AMD EPYC 7402P<br/>
 Configuration: Node v14.4, HTTP/1.1 without TLS, 100 connections, Linux 5.4.12-1-lts
 
+Node 14
 ```
 http - keepalive x 677 ops/sec ±7.70% (75 runs sampled)
 undici - pipeline x 1,627 ops/sec ±5.88% (79 runs sampled)
@@ -30,7 +31,17 @@ undici - stream x 2,144 ops/sec ±0.84% (86 runs sampled)
 undici - dispatch x 2,295 ops/sec ±1.00% (83 runs sampled)
 ```
 
-The benchmark is a simple `hello world` [example](benchmarks/index.js) with pipelining and unix sockets.
+Node 15
+```
+http - keepalive x 1,337 ops/sec ±6.17% (71 runs sampled)
+undici - pipeline x 3,387 ops/sec ±1.37% (80 runs sampled)
+undici - request x 4,117 ops/sec ±3.25% (77 runs sampled)
+undici - stream x 4,543 ops/sec ±1.30% (80 runs sampled)
+undici - dispatch x 5,434 ops/sec ±2.08% (77 runs sampled)
+```
+
+The benchmark is a simple `hello world` [example](benchmarks/index.js) with
+single connection, pipelining and unix sockets.
 
 ## API
 
