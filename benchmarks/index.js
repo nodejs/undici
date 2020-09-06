@@ -28,8 +28,12 @@ const undiciOptions = {
   requestTimeout: 0
 }
 
-const pool = new Client(`http://${httpOptions.hostname}:${httpOptions.port}`, {
+const client = new Client(`http://${httpOptions.hostname}:${httpOptions.port}`, {
   pipelining: 5
+})
+
+client.on('disconnect', (err) => {
+  throw err
 })
 
 const suite = new Benchmark.Suite()
@@ -57,7 +61,7 @@ suite
     defer: true,
     fn: deferred => {
       Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
-        pool
+        client
           .pipeline(undiciOptions, data => {
             return data.body
           })
@@ -75,7 +79,7 @@ suite
     defer: true,
     fn: deferred => {
       Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
-        pool.request(undiciOptions, (err, { body }) => {
+        client.request(undiciOptions, (err, { body }) => {
           if (err) {
             throw err
           }
@@ -95,7 +99,7 @@ suite
     defer: true,
     fn: deferred => {
       Promise.all(Array.from(Array(10)).map(() => {
-        return pool.stream(undiciOptions, () => {
+        return client.stream(undiciOptions, () => {
           return new Writable({
             write (chunk, encoding, callback) {
               callback()
@@ -109,7 +113,7 @@ suite
     defer: true,
     fn: deferred => {
       Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
-        pool.dispatch(undiciOptions, new SimpleRequest(resolve))
+        client.dispatch(undiciOptions, new SimpleRequest(resolve))
       }))).then(() => deferred.resolve())
     }
   })
@@ -117,7 +121,7 @@ suite
     defer: true,
     fn: deferred => {
       Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
-        pool.dispatch(undiciOptions, new NoopRequest(resolve))
+        client.dispatch(undiciOptions, new NoopRequest(resolve))
       }))).then(() => deferred.resolve())
     }
   })
