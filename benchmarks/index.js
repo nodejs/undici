@@ -12,7 +12,7 @@ const { Client } = require('..')
 
 const httpOptions = {
   protocol: 'http:',
-  hostname: 'localhost',
+  hostname: process.argv[2] || 'localhost',
   method: 'GET',
   path: '/',
   port: 3009,
