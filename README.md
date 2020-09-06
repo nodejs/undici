@@ -40,7 +40,7 @@ undici - stream x 40,543 ops/sec ±1.30% (80 runs sampled)
 undici - dispatch x 50,434 ops/sec ±2.08% (77 runs sampled)
 ```
 
-The benchmark is a simple `hello world` [example](benchmarks/index.js) with
+The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
 single connection, pipelining and unix sockets.
 
 ## API
