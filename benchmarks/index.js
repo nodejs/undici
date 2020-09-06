@@ -131,6 +131,9 @@ suite
     // per run.
     console.log(String(event.target))
   })
+  .on('complete', () => {
+    client.destroy()
+  })
   .run()
 
 class NoopRequest {
