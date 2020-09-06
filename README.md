@@ -20,7 +20,6 @@ npm i undici
 ## Benchmarks
 
 Machine: 2.8GHz AMD EPYC 7402P<br/>
-Configuration: Node v14.4, HTTP/1.1 without TLS, 100 connections, Linux 5.4.12-1-lts
 
 Node 14
 ```
