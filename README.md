@@ -20,17 +20,27 @@ npm i undici
 ## Benchmarks
 
 Machine: 2.8GHz AMD EPYC 7402P<br/>
-Configuration: Node v14.4, HTTP/1.1 without TLS, 100 connections, Linux 5.4.12-1-lts
 
+Node 14
 ```
-http - keepalive x 5,857 ops/sec ±1.98% (276 runs sampled)
-undici - pipeline x 8,688 ops/sec ±1.87% (276 runs sampled)
-undici - request x 12,651 ops/sec ±1.07% (280 runs sampled)
-undici - stream x 14,315 ops/sec ±0.57% (280 runs sampled)
-undici - dispatch x 15,148 ops/sec ±0.50% (278 runs sampled)
+http - keepalive x 6,770 ops/sec ±7.70% (75 runs sampled)
+undici - pipeline x 10,627 ops/sec ±5.88% (79 runs sampled)
+undici - request x 10,902 ops/sec ±1.28% (85 runs sampled)
+undici - stream x 20,144 ops/sec ±0.84% (86 runs sampled)
+undici - dispatch x 20,295 ops/sec ±1.00% (83 runs sampled)
 ```
 
-The benchmark is a simple `hello world` [example](benchmarks/index.js) without pipelining.
+Node 15
+```
+http - keepalive x 10,337 ops/sec ±6.17% (71 runs sampled)
+undici - pipeline x 30,387 ops/sec ±1.37% (80 runs sampled)
+undici - request x 40,117 ops/sec ±3.25% (77 runs sampled)
+undici - stream x 40,543 ops/sec ±1.30% (80 runs sampled)
+undici - dispatch x 50,434 ops/sec ±2.08% (77 runs sampled)
+```
+
+The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
+single connection, pipelining and unix sockets.
 
 ## API
 
