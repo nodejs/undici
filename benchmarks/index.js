@@ -12,10 +12,10 @@ const { Client } = require('..')
 
 const httpOptions = {
   protocol: 'http:',
-  hostname: process.argv[2] || 'localhost',
+  hostname: 'localhost',
+  socketPath: '/var/tmp/undici.sock',
   method: 'GET',
   path: '/',
-  port: 3009,
   agent: new http.Agent({
     keepAlive: true,
     maxSockets: 1
@@ -28,8 +28,9 @@ const undiciOptions = {
   requestTimeout: 0
 }
 
-const client = new Client(`http://${httpOptions.hostname}:${httpOptions.port}`, {
-  pipelining: 10
+const client = new Client(`http://${httpOptions.hostname}`, {
+  pipelining: 10,
+  socketPath: '/var/tmp/undici.sock'
 })
 
 client.on('disconnect', (err) => {
