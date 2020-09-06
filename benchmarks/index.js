@@ -38,7 +38,7 @@ client.on('disconnect', (err) => {
 
 const suite = new Benchmark.Suite()
 
-Benchmark.options.minSamples = 200
+// Benchmark.options.minSamples = 200
 
 suite
   .add('http - keepalive', {
