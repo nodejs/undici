@@ -29,7 +29,7 @@ const undiciOptions = {
 }
 
 const client = new Client(`http://${httpOptions.hostname}:${httpOptions.port}`, {
-  pipelining: 5
+  pipelining: 10
 })
 
 client.on('disconnect', (err) => {
