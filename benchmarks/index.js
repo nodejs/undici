@@ -39,7 +39,7 @@ client.on('disconnect', (err) => {
 
 const suite = new Benchmark.Suite()
 
-// Benchmark.options.minSamples = 200
+Benchmark.options.minSamples = 200
 
 suite
   .add('http - keepalive', {
@@ -127,6 +127,8 @@ suite
     }
   })
   .on('cycle', event => {
+    // TODO: Multiple results by 10x to get opts/sec since we do 10 requests
+    // per run.
     console.log(String(event.target))
   })
   .run()
