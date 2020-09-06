@@ -73,7 +73,7 @@ Options:
   single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
   Carefully consider your workload and environment before enabling concurrent requests
   as pipelining may reduce performance if used incorrectly. Pipelining is sensitive 
-  to network stack settings as well as head of line blocking caused by long running requests.
+  to network stack settings as well as head of line blocking caused by e.g. long running requests.
   Default: `1`.
 
 - `tls: Object|Null`, an options object which in the case of `https` will be passed to
