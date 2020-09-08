@@ -899,3 +899,31 @@ test('invalid signal', (t) => {
   })
   ticked = true
 })
+
+test('invalid body chunk does not crash', (t) => {
+  t.plan(1)
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      body: new Readable({
+        objectMode: true,
+        read () {
+          this.push({})
+        }
+      }),
+      method: 'GET'
+    }, (err) => {
+      t.strictEqual(err.code, 'ERR_INVALID_ARG_TYPE')
+    })
+  })
+})
