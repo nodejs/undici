@@ -7,7 +7,7 @@ const http = require('http')
 const EE = require('events')
 
 test('basic upgrade', (t) => {
-  t.plan(3)
+  t.plan(5)
 
   const server = net.createServer((c) => {
     c.on('data', (d) => {
@@ -29,12 +29,16 @@ test('basic upgrade', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
+    const signal = new EE()
     client.upgrade({
+      signal,
       path: '/',
       method: 'GET',
       protocol: 'Websocket'
     }, (err, data) => {
       t.error(err)
+
+      t.strictEqual(signal.listenerCount('abort'), 0)
 
       const { headers, socket } = data
 
@@ -54,6 +58,7 @@ test('basic upgrade', (t) => {
       })
       socket.end()
     })
+    t.strictEqual(signal.listenerCount('abort'), 1)
   })
 })
 
@@ -269,7 +274,7 @@ test('upgrade wait for empty pipeline', (t) => {
 })
 
 test('upgrade aborted', (t) => {
-  t.plan(4)
+  t.plan(6)
 
   const server = http.createServer((req, res) => {
     t.fail()
@@ -293,8 +298,10 @@ test('upgrade aborted', (t) => {
     }, (err, { opaque }) => {
       t.strictEqual(opaque, 'asd')
       t.ok(err instanceof errors.RequestAbortedError)
+      t.strictEqual(signal.listenerCount('abort'), 0)
     })
     t.strictEqual(client.busy, true)
+    t.strictEqual(signal.listenerCount('abort'), 1)
     signal.emit('abort')
 
     client.close(() => {

@@ -8,7 +8,7 @@ const { kConnect } = require('../lib/core/symbols')
 const { Readable } = require('stream')
 
 test('request abort before headers', (t) => {
-  t.plan(2)
+  t.plan(6)
 
   const signal = new EE()
   const server = createServer((req, res) => {
@@ -28,14 +28,19 @@ test('request abort before headers', (t) => {
         signal
       }, (err) => {
         t.ok(err instanceof errors.RequestAbortedError)
+        t.strictEqual(signal.listenerCount('abort'), 0)
       })
+      t.strictEqual(signal.listenerCount('abort'), 1)
+
       client.request({
         path: '/',
         method: 'GET',
         signal
       }, (err) => {
         t.ok(err instanceof errors.RequestAbortedError)
+        t.strictEqual(signal.listenerCount('abort'), 0)
       })
+      t.strictEqual(signal.listenerCount('abort'), 2)
     })
   })
 })

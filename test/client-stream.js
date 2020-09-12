@@ -7,7 +7,7 @@ const { PassThrough, Writable, Readable } = require('stream')
 const EE = require('events')
 
 test('stream get', (t) => {
-  t.plan(7)
+  t.plan(9)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -22,7 +22,9 @@ test('stream get', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
+    const signal = new EE()
     client.stream({
+      signal,
       path: '/',
       method: 'GET',
       opaque: new PassThrough()
@@ -38,8 +40,10 @@ test('stream get', (t) => {
       })
       return pt
     }, (err) => {
+      t.strictEqual(signal.listenerCount('abort'), 0)
       t.error(err)
     })
+    t.strictEqual(signal.listenerCount('abort'), 1)
   })
 })
 
@@ -392,7 +396,7 @@ test('stream body without destroy', (t) => {
 })
 
 test('stream factory abort', (t) => {
-  t.plan(1)
+  t.plan(3)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -412,8 +416,10 @@ test('stream factory abort', (t) => {
       signal.emit('abort')
       return new PassThrough()
     }, (err) => {
+      t.strictEqual(signal.listenerCount('abort'), 0)
       t.ok(err instanceof errors.RequestAbortedError)
     })
+    t.strictEqual(signal.listenerCount('abort'), 1)
   })
 })
 

@@ -6,7 +6,7 @@ const http = require('http')
 const EE = require('events')
 
 test('basic connect', (t) => {
-  t.plan(1)
+  t.plan(3)
 
   const server = http.createServer((c) => {
     t.fail()
@@ -29,9 +29,14 @@ test('basic connect', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    const { socket } = await client.connect({
+    const signal = new EE()
+    const promise = client.connect({
+      signal,
       path: '/'
     })
+    t.strictEqual(signal.listenerCount('abort'), 1)
+    const { socket } = await promise
+    t.strictEqual(signal.listenerCount('abort'), 0)
 
     let recvData = ''
     socket.on('data', (d) => {
@@ -189,7 +194,7 @@ test('connect wait for empty pipeline', (t) => {
 })
 
 test('connect aborted', (t) => {
-  t.plan(4)
+  t.plan(6)
 
   const server = http.createServer((req, res) => {
     t.fail()
@@ -216,9 +221,11 @@ test('connect aborted', (t) => {
       opaque: 'asd'
     }, (err, { opaque }) => {
       t.strictEqual(opaque, 'asd')
+      t.strictEqual(signal.listenerCount('abort'), 0)
       t.ok(err instanceof errors.RequestAbortedError)
     })
     t.strictEqual(client.busy, true)
+    t.strictEqual(signal.listenerCount('abort'), 1)
     signal.emit('abort')
 
     client.close(() => {
