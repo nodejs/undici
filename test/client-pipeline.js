@@ -13,7 +13,7 @@ const {
 } = require('stream')
 
 test('pipeline get', (t) => {
-  t.plan(14)
+  t.plan(17)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -31,9 +31,11 @@ test('pipeline get', (t) => {
 
     {
       const bufs = []
-      client.pipeline({ path: '/', method: 'GET' }, ({ statusCode, headers, body }) => {
+      const signal = new EE()
+      client.pipeline({ signal, path: '/', method: 'GET' }, ({ statusCode, headers, body }) => {
         t.strictEqual(statusCode, 200)
         t.strictEqual(headers['content-type'], 'text/plain')
+        t.strictEqual(signal.listenerCount('abort'), 1)
         return body
       })
         .end()
@@ -43,6 +45,10 @@ test('pipeline get', (t) => {
         .on('end', () => {
           t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
         })
+        .on('close', () => {
+          t.strictEqual(signal.listenerCount('abort'), 0)
+        })
+      t.strictEqual(signal.listenerCount('abort'), 1)
     }
 
     {

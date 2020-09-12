@@ -9,7 +9,7 @@ const { kSocket } = require('../lib/core/symbols')
 const EE = require('events')
 
 test('basic get', (t) => {
-  t.plan(20)
+  t.plan(23)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -32,7 +32,9 @@ test('basic get', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
+    const signal = new EE()
     client.request({
+      signal,
       path: '/',
       method: 'GET',
       headers: reqHeaders
@@ -40,15 +42,19 @@ test('basic get', (t) => {
       t.error(err)
       const { statusCode, headers, body } = data
       t.strictEqual(statusCode, 200)
+      t.strictEqual(signal.listenerCount('abort'), 1)
       t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
+        t.strictEqual(signal.listenerCount('abort'), 0)
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
+    t.strictEqual(signal.listenerCount('abort'), 1)
+
     client.request({
       path: '/',
       method: 'GET',
