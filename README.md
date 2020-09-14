@@ -109,7 +109,7 @@ Options:
 * `opaque: Any`
 * `body: String|Buffer|Uint8Array|stream.Readable|Null`
   Default: `null`.
-* `headers: Object|Null`, an object with header-value pairs.
+* `headers: Object|Array|Null`, an object with header-value pairs or an array with header-value pairs bi-indexed (`['header1', 'value1', 'header2', 'value2']`).
   Default: `null`.
 * `signal: AbortController|EventEmitter|Null`
   Default: `null`.
@@ -133,6 +133,19 @@ Headers are represented by an object like this:
   accept: '*/*'
 }
 ```
+
+Or an array like this:
+
+```js
+[
+  'content-length', '123',
+  'content-type', 'text/plain',
+  'connection', 'keep-alive',
+  'host', 'mysite.com',
+  'accept', '*/*'
+]
+```
+
 Keys are lowercased. Values are not modified.
 If you don't specify a `host` header, it will be derived from the `url` of the client instance.
 
