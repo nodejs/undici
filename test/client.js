@@ -427,6 +427,50 @@ test('basic POST with iterator', (t) => {
   })
 })
 
+test('basic POST with async iterator', (t) => {
+  t.plan(3)
+
+  const expected = 'hello'
+
+  const server = createServer((req, res) => {
+    req.resume().on('end', () => {
+      res.end(expected)
+    })
+  })
+  t.tearDown(server.close.bind(server))
+
+  const iterable = {
+    [Symbol.asyncIterator]: async function * () {
+      for (let i = 0; i < expected.length - 1; i++) {
+        yield expected[i]
+      }
+      return expected[expected.length - 1]
+    }
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      requestTimeout: 0,
+      body: iterable
+    }, (err, { statusCode, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
 test('basic POST with transfer encoding: chunked', (t) => {
   t.plan(8)
 
