@@ -19,24 +19,24 @@ npm i undici
 
 ## Benchmarks
 
-Machine: 2.8GHz AMD EPYC 7402P<br/>
+Machine: AMD EPYC 7502P<br/>
 
 Node 14
 ```
-http - keepalive x 6,770 ops/sec ±7.70% (75 runs sampled)
-undici - pipeline x 10,627 ops/sec ±5.88% (79 runs sampled)
-undici - request x 10,902 ops/sec ±1.28% (85 runs sampled)
-undici - stream x 20,144 ops/sec ±0.84% (86 runs sampled)
-undici - dispatch x 20,295 ops/sec ±1.00% (83 runs sampled)
+http - keepalive x 7,179 ops/sec ±2.32% (272 runs sampled)
+undici - pipeline x 16,843 ops/sec ±0.98% (279 runs sampled)
+undici - request x 18,738 ops/sec ±0.67% (276 runs sampled)
+undici - stream x 21,215 ops/sec ±0.66% (278 runs sampled)
+undici - dispatch x 23,540 ops/sec ±0.62% (278 runs sampled)
 ```
 
 Node 15
 ```
-http - keepalive x 10,337 ops/sec ±6.17% (71 runs sampled)
-undici - pipeline x 30,387 ops/sec ±1.37% (80 runs sampled)
-undici - request x 40,117 ops/sec ±3.25% (77 runs sampled)
-undici - stream x 40,543 ops/sec ±1.30% (80 runs sampled)
-undici - dispatch x 50,434 ops/sec ±2.08% (77 runs sampled)
+http - keepalive x 12,028 ops/sec ±2.60% (265 runs sampled)
+undici - pipeline x 31,321 ops/sec ±0.77% (276 runs sampled)
+undici - request x 36,612 ops/sec ±0.71% (277 runs sampled)
+undici - stream x 41,291 ops/sec ±0.90% (268 runs sampled)
+undici - dispatch x 47,319 ops/sec ±1.17% (263 runs sampled)
 ```
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
