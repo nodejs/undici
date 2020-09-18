@@ -45,3 +45,24 @@ test('fail if headers array is odd', (t) => {
     })
   })
 })
+
+test('fail if headers is not an object or an array', (t) => {
+  t.plan(2)
+  const headers = 'not an object or an array'
+
+  const server = createServer((req, res) => { res.end() })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: headers
+    }, (err) => {
+      t.ok(err instanceof errors.InvalidArgumentError)
+      t.strictEqual(err.message, 'headers must be an object or an array')
+    })
+  })
+})

@@ -433,6 +433,34 @@ test('basic POST with iterator', (t) => {
   })
 })
 
+test('basic POST with iterator with invalid data', (t) => {
+  t.plan(2)
+
+  const server = createServer(() => {})
+  t.tearDown(server.close.bind(server))
+
+  const iterable = {
+    [Symbol.iterator]: function * () {
+      yield 0
+    }
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      requestTimeout: 0,
+      body: iterable
+    }, err => {
+      t.ok(err instanceof TypeError)
+      t.strictEqual(err.message, 'The "string" argument must be of type string or an instance of Buffer or ArrayBuffer. Received type number (0)')
+    })
+  })
+})
+
 test('basic POST with async iterator', (t) => {
   t.plan(3)
 
