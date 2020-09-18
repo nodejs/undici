@@ -4,4 +4,4 @@ const { createServer } = require('http')
 
 createServer((req, res) => {
   res.end('hello world')
-}).listen(3009)
+}).listen('/var/tmp/undici.sock')

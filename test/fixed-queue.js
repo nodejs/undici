@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 
-const FixedQueue = require('../lib/core/node/fixed-queue')
+const FixedQueue = require('../lib/node/fixed-queue')
 
 test('fixed queue 1', (t) => {
   t.plan(5)

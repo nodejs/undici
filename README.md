@@ -19,26 +19,36 @@ npm i undici
 
 ## Benchmarks
 
-Machine: 2.8GHz AMD EPYC 7402P<br/>
-Configuration: Node v14.4, HTTP/1.1 without TLS, 100 connections, Linux 5.4.12-1-lts
+Machine: AMD EPYC 7502P<br/>
 
+Node 14
 ```
-http - keepalive x 5,882 ops/sec ±1.87% (274 runs sampled)
-undici - pipeline x 9,189 ops/sec ±2.02% (272 runs sampled)
-undici - request x 12,623 ops/sec ±0.89% (277 runs sampled)
-undici - stream x 14,136 ops/sec ±0.61% (280 runs sampled)
-undici - dispatch x 14,883 ops/sec ±0.44% (281 runs sampled)
+http - keepalive x 7,179 ops/sec ±2.32% (272 runs sampled)
+undici - pipeline x 16,843 ops/sec ±0.98% (279 runs sampled)
+undici - request x 18,738 ops/sec ±0.67% (276 runs sampled)
+undici - stream x 21,215 ops/sec ±0.66% (278 runs sampled)
+undici - dispatch x 23,540 ops/sec ±0.62% (278 runs sampled)
 ```
 
-The benchmark is a simple `hello world` [example](benchmarks/index.js).
+Node 15
+```
+http - keepalive x 12,028 ops/sec ±2.60% (265 runs sampled)
+undici - pipeline x 31,321 ops/sec ±0.77% (276 runs sampled)
+undici - request x 36,612 ops/sec ±0.71% (277 runs sampled)
+undici - stream x 41,291 ops/sec ±0.90% (268 runs sampled)
+undici - dispatch x 47,319 ops/sec ±1.17% (263 runs sampled)
+```
+
+The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
+single unix socket with pipelining.
 
 ## API
 
 <a name='client'></a>
 ### `new undici.Client(url, opts)`
 
-A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection.
-Keepalive is enabled by default, and it cannot be turned off.
+A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection. Pipelining is disabled
+by default.
 
 `url` can be a string or a [`URL`](https://nodejs.org/api/url.html#url_class_url) object.
 It should only include the protocol, hostname, and the port.
@@ -70,8 +80,10 @@ Options:
   Default: `1e3` milliseconds (1s).
 
 - `pipelining: Number`, the amount of concurrent requests to be sent over the
-  single TCP/TLS connection according to
-  [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
+  single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
+  Carefully consider your workload and environment before enabling concurrent requests
+  as pipelining may reduce performance if used incorrectly. Pipelining is sensitive 
+  to network stack settings as well as head of line blocking caused by e.g. long running requests.
   Default: `1`.
 
 - `tls: Object|Null`, an options object which in the case of `https` will be passed to
@@ -97,7 +109,7 @@ Options:
 * `opaque: Any`
 * `body: String|Buffer|Uint8Array|stream.Readable|Null`
   Default: `null`.
-* `headers: Object|Null`, an object with header-value pairs.
+* `headers: Object|Array|Null`, an object with header-value pairs or an array with header-value pairs bi-indexed (`['header1', 'value1', 'header2', 'value2']`).
   Default: `null`.
 * `signal: AbortController|EventEmitter|Null`
   Default: `null`.
@@ -121,6 +133,19 @@ Headers are represented by an object like this:
   accept: '*/*'
 }
 ```
+
+Or an array like this:
+
+```js
+[
+  'content-length', '123',
+  'content-type', 'text/plain',
+  'connection', 'keep-alive',
+  'host', 'mysite.com',
+  'accept', '*/*'
+]
+```
+
 Keys are lowercased. Values are not modified.
 If you don't specify a `host` header, it will be derived from the `url` of the client instance.
 
@@ -204,7 +229,7 @@ Alternatively, any `EventEmitter` that emits an `'abort'` event may be used as a
 const EventEmitter = require('events')
 const { Client } = require('undici')
 
-const client = new Client'http://localhost:3000')
+const client = new Client('http://localhost:3000')
 const ee = new EventEmitter()
 
 client.request({
@@ -429,8 +454,6 @@ Options:
 * `body: String|Buffer|Uint8Array|stream.Readable|Null`
   Default: `null`.
 * `headers: Object|Null`, an object with header-value pairs.
-  Default: `null`.
-* `signal: AbortController|EventEmitter|Null`
   Default: `null`.
 * `requestTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between request being enqueued and receiving

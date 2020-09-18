@@ -2,13 +2,9 @@
 const { Writable } = require('stream')
 const http = require('http')
 const Benchmark = require('benchmark')
-const undici = require('..')
+const { Client } = require('..')
 
-// # Start the h2o server (in h2o repository)
-// # Then change the port below to 8080
-// h2o -c examples/h2o/h2o.conf
-//
-// # Alternatively start the Node.js server
+// # Start the Node.js server
 // node benchmarks/server.js
 //
 // # Start the benchmarks
@@ -17,24 +13,28 @@ const undici = require('..')
 const httpOptions = {
   protocol: 'http:',
   hostname: 'localhost',
+  socketPath: '/var/tmp/undici.sock',
   method: 'GET',
   path: '/',
-  port: 3009,
   agent: new http.Agent({
     keepAlive: true,
-    maxSockets: 100
+    maxSockets: 1
   })
 }
 
 const undiciOptions = {
   path: '/',
-  method: 'GET'
+  method: 'GET',
+  requestTimeout: 0
 }
 
-const pool = undici(`http://${httpOptions.hostname}:${httpOptions.port}`, {
-  connections: 100,
+const client = new Client(`http://${httpOptions.hostname}`, {
   pipelining: 10,
-  requestTimeout: 0
+  socketPath: '/var/tmp/undici.sock'
+})
+
+client.on('disconnect', (err) => {
+  throw err
 })
 
 const suite = new Benchmark.Suite()
@@ -45,108 +45,99 @@ suite
   .add('http - keepalive', {
     defer: true,
     fn: deferred => {
-      http.get(httpOptions, response => {
-        const stream = new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
+      Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
+        http.get(httpOptions, (res) => {
+          res
+            .pipe(new Writable({
+              write (chunk, encoding, callback) {
+                callback()
+              }
+            }))
+            .on('close', resolve)
         })
-        stream.once('finish', () => {
-          deferred.resolve()
-        })
-
-        response.pipe(stream)
-      })
+      }))).then(() => deferred.resolve())
     }
   })
   .add('undici - pipeline', {
     defer: true,
     fn: deferred => {
-      pool
-        .pipeline(undiciOptions, data => {
-          return data.body
-        })
-        .end()
-        .pipe(new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
-        }))
-        .once('finish', () => {
-          deferred.resolve()
-        })
+      Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
+        client
+          .pipeline(undiciOptions, data => {
+            return data.body
+          })
+          .end()
+          .pipe(new Writable({
+            write (chunk, encoding, callback) {
+              callback()
+            }
+          }))
+          .on('close', resolve)
+      }))).then(() => deferred.resolve())
     }
   })
   .add('undici - request', {
     defer: true,
     fn: deferred => {
-      pool.request(undiciOptions, (error, { body }) => {
-        if (error) {
-          throw error
-        }
-
-        const stream = new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
-        })
-        stream.once('finish', () => {
-          deferred.resolve()
-        })
-
-        body.pipe(stream)
-      })
+      Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
+        client
+          .request(undiciOptions)
+          .then(({ body }) => {
+            body
+              .pipe(new Writable({
+                write (chunk, encoding, callback) {
+                  callback()
+                }
+              }))
+              .on('close', resolve)
+          })
+      }))).then(() => deferred.resolve())
     }
   })
   .add('undici - stream', {
     defer: true,
     fn: deferred => {
-      pool.stream(undiciOptions, () => {
-        const stream = new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
+      Promise.all(Array.from(Array(10)).map(() => {
+        return client.stream(undiciOptions, () => {
+          return new Writable({
+            write (chunk, encoding, callback) {
+              callback()
+            }
+          })
         })
-        stream.once('finish', () => {
-          deferred.resolve()
-        })
-
-        return stream
-      }, error => {
-        if (error) {
-          throw error
-        }
-      })
+      })).then(() => deferred.resolve())
     }
   })
   .add('undici - dispatch', {
     defer: true,
     fn: deferred => {
-      const stream = new Writable({
-        write (chunk, encoding, callback) {
-          callback()
-        }
-      })
-      stream.once('finish', () => {
-        deferred.resolve()
-      })
-      pool.dispatch(undiciOptions, new SimpleRequest(stream))
+      Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
+        client.dispatch(undiciOptions, new SimpleRequest(resolve))
+      }))).then(() => deferred.resolve())
     }
   })
   .add('undici - noop', {
     defer: true,
     fn: deferred => {
-      pool.dispatch(undiciOptions, new NoopRequest(deferred))
+      Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
+        client.dispatch(undiciOptions, new NoopRequest(resolve))
+      }))).then(() => deferred.resolve())
     }
   })
-  .on('cycle', event => {
-    console.log(String(event.target))
+  .on('cycle', ({ target }) => {
+    // Multiply results by 10x to get opts/sec since we do 10 requests
+    // per run.
+    target.hz *= 10
+    console.log(String(target))
+  })
+  .on('complete', () => {
+    client.destroy()
   })
   .run()
 
 class NoopRequest {
-  constructor (deferred) {
-    this.deferred = deferred
+  constructor (resolve) {
+    this.resolve = resolve
   }
 
   onConnect (abort) {
@@ -162,13 +153,21 @@ class NoopRequest {
   }
 
   onComplete (trailers) {
-    this.deferred.resolve()
+    this.resolve()
+  }
+
+  onError (err) {
+    throw err
   }
 }
 
 class SimpleRequest {
-  constructor (dst) {
-    this.dst = dst
+  constructor (resolve) {
+    this.dst = new Writable({
+      write (chunk, encoding, callback) {
+        callback()
+      }
+    }).on('close', resolve)
   }
 
   onConnect (abort) {
@@ -184,5 +183,9 @@ class SimpleRequest {
 
   onComplete () {
     this.dst.end()
+  }
+
+  onError (err) {
+    throw err
   }
 }
