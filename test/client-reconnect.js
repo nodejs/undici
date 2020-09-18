@@ -6,36 +6,42 @@ const { createServer } = require('http')
 const FakeTimers = require('@sinonjs/fake-timers')
 
 test('multiple reconnect', (t) => {
-  t.plan(3)
+  t.plan(5)
 
+  let n = 0
   const clock = FakeTimers.install()
   t.teardown(clock.uninstall.bind(clock))
 
   const server = createServer((req, res) => {
-    res.end()
+    n === 0 ? res.destroy() : res.end('ok')
   })
   t.tearDown(server.close.bind(server))
 
-  const client = new Client('http://localhost:5555')
-  t.tearDown(client.destroy.bind(client))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
 
-  client.request({ path: '/', method: 'GET' }, (err, data) => {
-    t.error(err)
-    data.body
-      .resume()
-      .on('end', () => {
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.ok(err)
+      t.is(err.code, 'UND_ERR_SOCKET')
+    })
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.error(err)
+      data.body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
+    })
+
+    client.on('disconnect', () => {
+      if (++n === 1) {
         t.pass()
+      }
+      process.nextTick(() => {
+        clock.tick(1000)
       })
-  })
-
-  let n = 0
-  client.on('disconnect', () => {
-    if (++n === 1) {
-      t.pass()
-      server.listen(5555)
-    }
-    process.nextTick(() => {
-      clock.tick(1000)
     })
   })
 })
