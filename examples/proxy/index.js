@@ -19,7 +19,7 @@ async function run () {
             for (const name of res.getHeaderNames()) {
               res.removeHeader(name)
             }
-            res.writeHead(err.statusCode || 500)
+            res.statusCode = err.statusCode || 500
             res.end()
           }
         })

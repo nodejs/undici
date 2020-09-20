@@ -3,13 +3,13 @@ const { pipeline } = require('stream')
 const createError = require('http-errors')
 
 module.exports = async function proxy (ctx, client) {
-  const { req, socket } = ctx
+  const { req, socket, proxyName } = ctx
 
   const headers = getHeaders({
     headers: req.rawHeaders,
     httpVersion: req.httpVersion,
     socket: req.socket,
-    proxyName: ctx.proxyName
+    proxyName
   })
 
   if (socket) {
@@ -112,6 +112,8 @@ class WSHandler {
   }
 
   onUpgrade (statusCode, headers, socket) {
+    // TODO: Check statusCode?
+
     if (this.head && this.head.length) {
       socket.unshift(this.head)
     }
@@ -125,17 +127,12 @@ class WSHandler {
       proxyName: this.proxyName,
       httpVersion: this.httpVersion
     })
+
     for (let n = 0; n < headers.length; n += 2) {
       const key = headers[n + 0]
       const val = headers[n + 1]
 
-      if (!Array.isArray(val)) {
-        head += `\r\n${key}: ${val}`
-      } else {
-        for (let i = 0; i < val.length; i++) {
-          head += `\r\n${key}: ${val[i]}`
-        }
-      }
+      head += `\r\n${key}: ${val}`
     }
     head += '\r\n\r\n'
 
@@ -213,11 +210,12 @@ function getHeaders ({
       `proto=${socket.encrypted ? 'https' : 'http'}`,
       `host=${printIp(authority || host || '')}`
     ].join(';'))
-  } else {
-    result.push('forwarded', forwarded)
+  } else if (forwarded) {
+    // The forwarded header should not be included in response.
+    throw new createError.BadGateway()
   }
 
-  if (httpVersion && proxyName) {
+  if (proxyName) {
     if (via) {
       if (via.split(',').some(name => name.endsWith(proxyName))) {
         throw new createError.LoopDetected()
