@@ -5,12 +5,19 @@ const createError = require('http-errors')
 module.exports = async function proxy (ctx, client) {
   const { req, socket } = ctx
 
+  const headers = getHeaders({
+    headers: req.rawHeaders,
+    httpVersion: req.httpVersion,
+    socket: req.socket,
+    proxyName: ctx.proxyName
+  })
+
   if (socket) {
     const handler = new WSHandler(ctx)
     client.dispatch({
       method: req.method,
       path: req.url,
-      headers: getHeaders(ctx),
+      headers,
       upgrade: 'Websocket'
     }, handler)
     return handler.promise
@@ -19,7 +26,7 @@ module.exports = async function proxy (ctx, client) {
     client.dispatch({
       method: req.method,
       path: req.url,
-      headers: getHeaders(ctx),
+      headers,
       body: req
     }, handler)
     return handler.promise
@@ -28,8 +35,9 @@ module.exports = async function proxy (ctx, client) {
 
 class HTTPHandler {
   constructor (ctx) {
-    const { req, res } = ctx
+    const { req, res, proxyName } = ctx
 
+    this.proxyName = proxyName
     this.req = req
     this.res = res
     this.resume = null
@@ -55,7 +63,11 @@ class HTTPHandler {
 
     this.resume = resume
     this.res.on('drain', resume)
-    writeHead(this.res, statusCode, getHeaders({ headers }))
+    writeHead(this.res, statusCode, getHeaders({
+      headers,
+      proxyName: this.proxyName,
+      httpVersion: this.httpVersion
+    }))
   }
 
   onData (chunk) {
@@ -76,10 +88,12 @@ class HTTPHandler {
 
 class WSHandler {
   constructor (ctx) {
-    const { socket, head } = ctx
+    const { req, socket, proxyName, head } = ctx
 
     setupSocket(socket)
 
+    this.proxyName = proxyName
+    this.httpVersion = req.httpVersion
     this.socket = socket
     this.head = head
     this.abort = null
@@ -106,7 +120,11 @@ class WSHandler {
 
     let head = 'HTTP/1.1 101 Switching Protocols\r\nconnection: upgrade\r\nupgrade: websocket'
 
-    headers = getHeaders({ headers })
+    headers = getHeaders({
+      headers,
+      proxyName: this.proxyName,
+      httpVersion: this.httpVersion
+    })
     for (let n = 0; n < headers.length; n += 2) {
       const key = headers[n + 0]
       const val = headers[n + 1]
@@ -140,13 +158,12 @@ const HOP_EXPR = /^(te|host|upgrade|trailers|connection|keep-alive|http2-setting
 // Removes hop-by-hop and pseudo headers.
 // Updates via and forwarded headers.
 // Only hop-by-hop headers may be set using the Connection general header.
-function getHeaders (ctx) {
-  const {
-    proxyName,
-    req,
-    headers = req ? req.rawHeaders : undefined
-  } = ctx
-
+function getHeaders ({
+  headers,
+  proxyName,
+  httpVersion,
+  socket
+}) {
   let via = ''
   let forwarded = ''
   let host = ''
@@ -189,26 +206,23 @@ function getHeaders (ctx) {
     }
   }
 
-  if (req) {
-    const { socket, httpVersion } = req
-
+  if (socket) {
     result.push('forwarded', (forwarded ? forwarded + ', ' : '') + [
       `by=${printIp(socket.localAddress, socket.localPort)}`,
       `for=${printIp(socket.remoteAddress, socket.remotePort)}`,
       `proto=${socket.encrypted ? 'https' : 'http'}`,
       `host=${printIp(authority || host || '')}`
     ].join(';'))
+  }
 
-    // TODO (fix): Should also apply to responses.
-    if (proxyName) {
-      if (via) {
-        if (via.split(',').some(name => name.endsWith(proxyName))) {
-          throw new createError.LoopDetected()
-        }
-        via += ', '
+  if (httpVersion && proxyName) {
+    if (via) {
+      if (via.split(',').some(name => name.endsWith(proxyName))) {
+        throw new createError.LoopDetected()
       }
-      via += `${httpVersion} ${proxyName}`
+      via += ', '
     }
+    via += `${httpVersion} ${proxyName}`
   }
 
   if (via) {
