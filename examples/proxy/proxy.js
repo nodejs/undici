@@ -213,6 +213,8 @@ function getHeaders ({
       `proto=${socket.encrypted ? 'https' : 'http'}`,
       `host=${printIp(authority || host || '')}`
     ].join(';'))
+  } else {
+    result.push('forwarded', forwarded)
   }
 
   if (httpVersion && proxyName) {
