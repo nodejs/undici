@@ -1,6 +1,6 @@
 {
   "name": "undici",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
   "main": "index.js",
   "module": "wrapper.mjs",
