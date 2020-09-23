@@ -5,7 +5,7 @@ const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { Readable } = require('stream')
 
-test('invalid content-length', (t) => {
+test('request invalid content-length', (t) => {
   t.plan(8)
 
   const server = createServer((req, res) => {
@@ -118,7 +118,7 @@ test('invalid content-length', (t) => {
   })
 })
 
-test('streaming invalid content-length', (t) => {
+test('request streaming invalid content-length', (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -171,7 +171,7 @@ test('streaming invalid content-length', (t) => {
   })
 })
 
-test('streaming data when content-length=0', (t) => {
+test('request streaming data when content-length=0', (t) => {
   t.plan(1)
 
   const server = createServer((req, res) => {
@@ -206,7 +206,7 @@ test('streaming data when content-length=0', (t) => {
   })
 })
 
-test('streaming no body data when content-length=0', (t) => {
+test('request streaming no body data when content-length=0', (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -236,6 +236,43 @@ test('streaming no body data when content-length=0', (t) => {
         .on('end', () => {
           t.pass()
         })
+    })
+  })
+})
+
+test('response invalid content length with close', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, {
+      'content-length': 10
+    })
+    res.end('123')
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAlive: false
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.on('disconnect', (err) => {
+      t.strictEqual(err.code, 'UND_ERR_SOCKET')
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body
+        .on('end', () => {
+          t.fail()
+        })
+        .on('error', (err) => {
+          t.strictEqual(err.code, 'UND_ERR_SOCKET')
+        })
+        .resume()
     })
   })
 })
