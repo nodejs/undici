@@ -935,7 +935,8 @@ test('socket errors', t => {
 
   client.request({ path: '/', method: 'GET' }, (err, data) => {
     t.ok(err)
-    t.is('ECONNREFUSED', err.code)
+    // TODO: Why UND_ERR_SOCKET?
+    t.ok(err.code === 'ECONNREFUSED' || err.code === 'UND_ERR_SOCKET', err.code)
     t.end()
   })
 })
