@@ -565,8 +565,8 @@ test('trailers', (t) => {
       path: '/',
       method: 'GET'
     }, () => new PassThrough(), (err, data) => {
-      t.strictDeepEqual({ 'content-md5': 'test' }, data.trailers)
       t.error(err)
+      t.strictDeepEqual(data.trailers, { 'content-md5': 'test' })
     })
   })
 })
