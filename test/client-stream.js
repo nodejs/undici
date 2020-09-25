@@ -657,3 +657,47 @@ test('stream body destroyed on invalid callback', (t) => {
     }
   })
 })
+
+test('stream needDrain', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end(Buffer.alloc(4096))
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(() => {
+      console.error(3)
+      client.destroy()
+    })
+
+    const dst = new PassThrough()
+    dst.pause()
+
+    while (dst.write(Buffer.alloc(4096))) {
+
+    }
+
+    const orgWrite = dst.write
+    dst.write = () => t.fail()
+    const p = client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      return dst
+    })
+
+    setTimeout(() => {
+      dst.write = (...args) => {
+        orgWrite.call(dst, ...args)
+      }
+      dst.resume()
+    }, 1e3)
+
+    await p
+
+    t.pass()
+  })
+})
