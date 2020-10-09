@@ -21,7 +21,7 @@ test('dispatch invalid opts', (t) => {
 })
 
 test('basic dispatch get', (t) => {
-  t.plan(10)
+  t.plan(11)
 
   const server = http.createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -29,6 +29,7 @@ test('basic dispatch get', (t) => {
     t.strictEqual('localhost', req.headers.host)
     t.strictEqual(undefined, req.headers.foo)
     t.strictEqual('bar', req.headers.bar)
+    t.strictEqual('null', req.headers.baz)
     t.strictEqual(undefined, req.headers['content-length'])
     res.end('hello')
   })
@@ -36,7 +37,8 @@ test('basic dispatch get', (t) => {
 
   const reqHeaders = {
     foo: undefined,
-    bar: 'bar'
+    bar: 'bar',
+    baz: null
   }
 
   server.listen(0, () => {
