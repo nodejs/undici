@@ -7,10 +7,11 @@ const http = require('http')
 const EE = require('events')
 
 test('basic upgrade', (t) => {
-  t.plan(5)
+  t.plan(6)
 
   const server = net.createServer((c) => {
     c.on('data', (d) => {
+      t.ok(/upgrade: websocket/i.test(d))
       c.write('HTTP/1.1 101\r\n')
       c.write('hello: world\r\n')
       c.write('connection: upgrade\r\n')
