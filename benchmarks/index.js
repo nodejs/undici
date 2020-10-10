@@ -53,7 +53,7 @@ suite
                 callback()
               }
             }))
-            .on('close', resolve)
+            .on('finish', resolve)
         })
       }))).then(() => deferred.resolve())
     }
@@ -72,7 +72,7 @@ suite
               callback()
             }
           }))
-          .on('close', resolve)
+          .on('finish', resolve)
       }))).then(() => deferred.resolve())
     }
   })
@@ -89,7 +89,7 @@ suite
                   callback()
                 }
               }))
-              .on('close', resolve)
+              .on('finish', resolve)
           })
       }))).then(() => deferred.resolve())
     }
@@ -167,7 +167,7 @@ class SimpleRequest {
       write (chunk, encoding, callback) {
         callback()
       }
-    }).on('close', resolve)
+    }).on('finish', resolve)
   }
 
   onConnect (abort) {
