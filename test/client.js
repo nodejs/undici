@@ -433,8 +433,54 @@ test('basic POST with iterator', (t) => {
   })
 })
 
-test('basic POST with iterator with invalid data', (t) => {
+test('destroy socket without completing iterator', (t) => {
   t.plan(2)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  const iterable = {
+    [Symbol.iterator]: function * () {
+      yield 'a'
+      yield 'b'
+      yield 'c'
+      yield 'd'
+      return 'e'
+    }
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      requestTimeout: 0,
+      body: iterable
+    }, (err, { statusCode, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      let i = 0
+      const bufs = []
+      body.on('data', (buf) => {
+        if (i === 2) {
+          body.destroy()
+        }
+        bufs.push(buf)
+        i++
+      })
+      body.on('end', () => {
+        t.strictEqual('ab', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
+test('basic POST with iterator with invalid data', (t) => {
+  t.plan(1)
 
   const server = createServer(() => {})
   t.tearDown(server.close.bind(server))
@@ -456,7 +502,6 @@ test('basic POST with iterator with invalid data', (t) => {
       body: iterable
     }, err => {
       t.ok(err instanceof TypeError)
-      t.strictEqual(err.message, 'The "string" argument must be of type string or an instance of Buffer or ArrayBuffer. Received type number (0)')
     })
   })
 })
