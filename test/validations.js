@@ -52,12 +52,12 @@ server.listen(0, () => {
 
     client.request({ path: '/', method: 'POST', body: 42 }, (err, res) => {
       t.ok(err instanceof errors.InvalidArgumentError)
-      t.strictEqual(err.message, 'body must be a string, a Buffer, a Readable stream, or an iterable')
+      t.strictEqual(err.message, 'body must be a string, a Buffer, a Readable stream, an iterable, or an async iterable')
     })
 
     client.request({ path: '/', method: 'POST', body: { hello: 'world' } }, (err, res) => {
       t.ok(err instanceof errors.InvalidArgumentError)
-      t.strictEqual(err.message, 'body must be a string, a Buffer, a Readable stream, or an iterable')
+      t.strictEqual(err.message, 'body must be a string, a Buffer, a Readable stream, an iterable, or an async iterable')
     })
   })
 })
