@@ -927,3 +927,16 @@ test('invalid body chunk does not crash', (t) => {
     })
   })
 })
+
+test('socket errors', t => {
+  t.plan(2)
+  const client = new Client('http://localhost:5554')
+  t.tearDown(client.destroy.bind(client))
+
+  client.request({ path: '/', method: 'GET' }, (err, data) => {
+    t.ok(err)
+    // TODO: Why UND_ERR_SOCKET?
+    t.ok(err.code === 'ECONNREFUSED' || err.code === 'UND_ERR_SOCKET', err.code)
+    t.end()
+  })
+})

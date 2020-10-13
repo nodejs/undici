@@ -1,12 +1,12 @@
 {
   "name": "undici",
-  "version": "2.0.1",
+  "version": "2.0.7",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
   "main": "index.js",
   "module": "wrapper.mjs",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "tap test/*.{mjs,js} --no-coverage && jest test/jest/test",
+    "test": "tap test/*.js --no-coverage && jest test/jest/test",
     "coverage": "standard | snazzy && tap test/*.js",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\""
   },

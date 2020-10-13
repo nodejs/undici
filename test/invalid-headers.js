@@ -21,6 +21,14 @@ test('invalid headers', (t) => {
   client.request({
     path: '/',
     method: 'GET',
+    headers: 1
+  }, (err, data) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET',
     headers: {
       'transfer-encoding': 'chunked'
     }
@@ -63,16 +71,6 @@ test('invalid headers', (t) => {
     method: 'GET',
     headers: {
       foo: {}
-    }
-  }, (err, data) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
-  })
-
-  client.request({
-    path: '/',
-    method: 'GET',
-    headers: {
-      asd: null
     }
   }, (err, data) => {
     t.ok(err instanceof errors.InvalidArgumentError)

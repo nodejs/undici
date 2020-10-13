@@ -473,7 +473,7 @@ The `handler` parameter is defined as follow:
   * `statusCode: Number`
   * `headers: Array|Null`
   * `socket: Duplex`
-* `onHeaders(statusCode, headers, resume): Void`, invoked when statusCode and headers have been received.
+* `onHeaders(statusCode, headers, resume): Boolean`, invoked when statusCode and headers have been received.
   May be invoked multiple times due to 1xx informational headers.
   * `statusCode: Number`
   * `headers: Array|Null`, an array of key-value pairs. Keys are not automatically lowercased.
@@ -624,6 +624,7 @@ const { errors } = require('undici')
 | `NotSupportedError`          |  `UND_ERR_NOT_SUPPORTED`          | encountered unsupported functionality.         |
 | `ContentLengthMismatchError` |  `UND_ERR_CONTENT_LENGTH_MISMATCH`| body does not match content-length header      |
 | `InformationalError`         |  `UND_ERR_INFO`                   | expected error with reason                     |
+| `TrailerMismatchError`       |  `UND_ERR_TRAILER_MISMATCH`       | trailers did not match specification           |
 
 ## Specification Compliance
 
