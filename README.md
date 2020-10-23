@@ -21,15 +21,6 @@ npm i undici
 
 Machine: AMD EPYC 7502P<br/>
 
-Node 14
-```
-http - keepalive x 7,179 ops/sec ±2.32% (272 runs sampled)
-undici - pipeline x 16,843 ops/sec ±0.98% (279 runs sampled)
-undici - request x 18,738 ops/sec ±0.67% (276 runs sampled)
-undici - stream x 21,215 ops/sec ±0.66% (278 runs sampled)
-undici - dispatch x 23,540 ops/sec ±0.62% (278 runs sampled)
-```
-
 Node 15
 ```
 http - keepalive x 12,028 ops/sec ±2.60% (265 runs sampled)
