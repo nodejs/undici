@@ -78,10 +78,6 @@ Options:
 - `maxHeaderSize: Number`, the maximum length of request headers in bytes.
   Default: `16384` (16KiB).
 
-- `headersTimeout: Number`, the amount of time the parser will wait to receive the complete
-  HTTP headers (Node 14 and above only).
-  Default: `30e3` milliseconds (30s).
-
 <a name='request'></a>
 #### `client.request(opts[, callback(err, data)]): Promise|Void`
 
@@ -98,9 +94,8 @@ Options:
   Default: `null`.
 * `signal: AbortController|EventEmitter|Null`
   Default: `null`.
-* `requestTimeout: Number`, the timeout after which a request will time out, in
-  milliseconds. Monitors time between request being enqueued and receiving
-  a response. Use `0` to disable it entirely.
+- `headersTimeout: Number`, the amount of time the parser will wait to receive the complete
+  HTTP headers (Node 14 and above only).
   Default: `30e3` milliseconds (30s).
 - `bodyTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between receiving a body data. 
@@ -603,7 +598,6 @@ const { errors } = require('undici')
 | -----------------------------|-----------------------------------|------------------------------------------------|
 | `InvalidArgumentError`       |  `UND_ERR_INVALID_ARG`            | passed an invalid argument.                    |
 | `InvalidReturnValueError`    |  `UND_ERR_INVALID_RETURN_VALUE`   | returned an invalid value.                     |
-| `RequestTimeoutError`        |  `UND_ERR_REQUEST_TIMEOUT`        | a request exceeds the `requestTimeout` option. |
 | `RequestAbortedError`        |  `UND_ERR_ABORTED`                | the request has been aborted by the user       |
 | `ClientDestroyedError`       |  `UND_ERR_DESTROYED`              | trying to use a destroyed client.              |
 | `ClientClosedError`          |  `UND_ERR_CLOSED`                 | trying to use a closed client.                 |
