@@ -46,12 +46,12 @@ It should only include the protocol, hostname, and the port.
 
 Options:
 
-- `socketTimeout: Number`, the timeout after which a socket with active requests
-  will time out. Monitors time between activity on a connected socket.
-  Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
-
 - `socketPath: String|Null`, an IPC endpoint, either Unix domain socket or Windows named pipe.
   Default: `null`.
+
+- `bodyTimeout: Number`, the timeout after which a socket with active requests
+  will time out. Monitors time between activity on an active socket.
+  Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 
 - `idleTimeout: Number`, the timeout after which a socket without active requests
   will time out. Monitors time between activity on a connected socket.
@@ -604,7 +604,6 @@ const { errors } = require('undici')
 | -----------------------------|-----------------------------------|------------------------------------------------|
 | `InvalidArgumentError`       |  `UND_ERR_INVALID_ARG`            | passed an invalid argument.                    |
 | `InvalidReturnValueError`    |  `UND_ERR_INVALID_RETURN_VALUE`   | returned an invalid value.                     |
-| `SocketTimeoutError`         |  `UND_ERR_SOCKET_TIMEOUT`         | a socket exceeds the `socketTimeout` option.   |
 | `RequestTimeoutError`        |  `UND_ERR_REQUEST_TIMEOUT`        | a request exceeds the `requestTimeout` option. |
 | `RequestAbortedError`        |  `UND_ERR_ABORTED`                | the request has been aborted by the user       |
 | `ClientDestroyedError`       |  `UND_ERR_DESTROYED`              | trying to use a destroyed client.              |

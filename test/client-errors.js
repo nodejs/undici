@@ -324,11 +324,11 @@ test('invalid options throws', (t) => {
 
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      socketTimeout: 'asd'
+      bodyTimeout: 'asd'
     })
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid socketTimeout')
+    t.strictEqual(err.message, 'invalid bodyTimeout')
   }
 
   try {

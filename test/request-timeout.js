@@ -622,7 +622,7 @@ test('client.close should not deadlock', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      socketTimeout: 200
+      bodyTimeout: 200
     })
     t.teardown(client.destroy.bind(client))
 
