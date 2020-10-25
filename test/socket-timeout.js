@@ -25,12 +25,13 @@ test('timeout with pipelining 1', (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1,
+      headersTimeout: 500,
       bodyTimeout: 500
     })
     t.tearDown(client.close.bind(client))
 
     client.request({ path: '/', method: 'GET', opaque: 'asd' }, (err, data) => {
-      t.ok(err instanceof errors.BodyTimeoutError) // we are expecting an error
+      t.ok(err instanceof errors.HeadersTimeoutError) // we are expecting an error
       t.strictEqual(data.opaque, 'asd')
     })
 
