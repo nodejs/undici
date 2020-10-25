@@ -49,10 +49,6 @@ Options:
 - `socketPath: String|Null`, an IPC endpoint, either Unix domain socket or Windows named pipe.
   Default: `null`.
 
-- `bodyTimeout: Number`, the timeout after which a socket with active requests
-  will time out. Monitors time between activity on an active socket.
-  Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
-
 - `idleTimeout: Number`, the timeout after which a socket without active requests
   will time out. Monitors time between activity on a connected socket.
   This value may be overriden by *keep-alive* hints from the server.
@@ -106,6 +102,9 @@ Options:
   milliseconds. Monitors time between request being enqueued and receiving
   a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
+- `bodyTimeout: Number`, the timeout after which a request will time out, in
+  milliseconds. Monitors time between receiving a body data. 
+  Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 * `idempotent: Boolean`, whether the requests can be safely retried or not.
   If `false` the request won't be sent until all preceeding
   requests in the pipeline has completed.
