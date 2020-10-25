@@ -279,3 +279,45 @@ test('Disable keep alive', (t) => {
     })
   })
 })
+
+test('Disable keep alive concurrency 1', (t) => {
+  t.plan(8)
+
+  const ports = []
+  const server = http.createServer((req, res) => {
+    t.false(ports.includes(req.socket.remotePort))
+    ports.push(req.socket.remotePort)
+    t.match(req.headers, { connection: 'close' })
+    res.writeHead(200, { connection: 'close' })
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAlive: false,
+      pipelining: 2
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.on('end', () => {
+        t.pass()
+      }).resume()
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.on('end', () => {
+        t.pass()
+      }).resume()
+    })
+  })
+})
