@@ -58,9 +58,6 @@ Options:
   This value may be overriden by *keep-alive* hints from the server.
   Default: `4e3` milliseconds (4s).
 
-- `keepAlive: Boolean`, enable or disable keep alive connections.
-  Default: `true`.
-
 - `keepAliveMaxTimeout: Number`, the maximum allowed `idleTimeout` when overriden by
   *keep-alive* hints from the server.
   Default: `600e3` milliseconds (10min).
@@ -75,6 +72,7 @@ Options:
   Carefully consider your workload and environment before enabling concurrent requests
   as pipelining may reduce performance if used incorrectly. Pipelining is sensitive 
   to network stack settings as well as head of line blocking caused by e.g. long running requests.
+  Set to `0` to disable keep-alive connections.
   Default: `1`.
 
 - `tls: Object|Null`, an options object which in the case of `https` will be passed to
