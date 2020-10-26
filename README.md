@@ -94,9 +94,9 @@ Options:
   Default: `null`.
 * `signal: AbortController|EventEmitter|Null`
   Default: `null`.
-- `headersTimeout: Number`, the amount of time the parser will wait to receive the complete
-  HTTP headers.
-  Default: `30e3` milliseconds (30s).
+- `headersTimeout: Number`, the timeout after which a request will time out, in
+  milliseconds. Monitors time between receiving a complete headers. 
+  Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 - `bodyTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between receiving a body data. 
   Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
