@@ -49,17 +49,17 @@ Options:
 - `socketPath: String|Null`, an IPC endpoint, either Unix domain socket or Windows named pipe.
   Default: `null`.
 
-- `idleTimeout: Number`, the timeout after which a socket without active requests
+- `keepAliveTimeout: Number`, the timeout after which a socket without active requests
   will time out. Monitors time between activity on a connected socket.
   This value may be overriden by *keep-alive* hints from the server.
   Default: `4e3` milliseconds (4s).
 
-- `keepAliveMaxTimeout: Number`, the maximum allowed `idleTimeout` when overriden by
+- `keepAliveMaxTimeout: Number`, the maximum allowed `keepAliveTimeout` when overriden by
   *keep-alive* hints from the server.
   Default: `600e3` milliseconds (10min).
 
 - `keepAliveTimeoutThreshold: Number`, a number subtracted from server *keep-alive* hints
-  when overriding `idleTimeout` to account for timing inaccuries caused by e.g.
+  when overriding `keepAliveTimeout` to account for timing inaccuries caused by e.g.
   transport latency.
   Default: `1e3` milliseconds (1s).
 
