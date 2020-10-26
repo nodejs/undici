@@ -25,7 +25,8 @@ const httpOptions = {
 const undiciOptions = {
   path: '/',
   method: 'GET',
-  requestTimeout: 0
+  headersTimeout: 0,
+  bodyTimeout: 0
 }
 
 const client = new Client(`http://${httpOptions.hostname}`, {
