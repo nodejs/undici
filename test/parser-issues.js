@@ -20,14 +20,13 @@ test('https://github.com/mcollina/undici/issues/268', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      headersTimeout: 1e3
-    })
+    const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
     client.request({
       method: 'GET',
-      path: '/nxt/_changes?feed=continuous&heartbeat=5000'
+      path: '/nxt/_changes?feed=continuous&heartbeat=5000',
+      headersTimeout: 1e3
     }, (err, data) => {
       t.error(err)
       data.body
