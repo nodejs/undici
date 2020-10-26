@@ -388,6 +388,13 @@ test('invalid options throws', (t) => {
     t.strictEqual(err.message, 'invalid keepAlive')
   }
 
+  try {
+    new Client(new URL('http://localhost:200'), { socketTimeout: 30e3 }) // eslint-disable-line
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'unsupported socketTimeout')
+  }
+
   t.end()
 })
 
