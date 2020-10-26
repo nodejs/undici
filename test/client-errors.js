@@ -294,12 +294,12 @@ test('invalid options throws', (t) => {
 
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      idleTimeout: 'asd'
+      keepAliveTimeout: 'asd'
     }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid idleTimeout')
+    t.strictEqual(err.message, 'invalid keepAliveTimeout')
   }
 
   try {
@@ -405,6 +405,13 @@ test('invalid options throws', (t) => {
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'unsupported maxKeepAliveTimeout, use keepAliveMaxTimeout instead')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { idleTimeout: 30e3 }) // eslint-disable-line
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'unsupported idleTimeout, use keepAliveTimeout instead')
   }
 
   t.end()
