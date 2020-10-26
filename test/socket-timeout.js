@@ -24,18 +24,25 @@ test('timeout with pipelining 1', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1,
-      headersTimeout: 500,
-      bodyTimeout: 500
+      pipelining: 1
     })
     t.tearDown(client.close.bind(client))
 
-    client.request({ path: '/', method: 'GET', opaque: 'asd' }, (err, data) => {
+    client.request({
+      path: '/',
+      method: 'GET',
+      opaque: 'asd',
+      headersTimeout: 500
+    }, (err, data) => {
       t.ok(err instanceof errors.HeadersTimeoutError) // we are expecting an error
       t.strictEqual(data.opaque, 'asd')
     })
 
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+    client.request({
+      path: '/',
+      method: 'GET',
+      bodyTimeout: 500
+    }, (err, { statusCode, headers, body }) => {
       t.error(err)
       t.strictEqual(statusCode, 200)
       t.strictEqual(headers['content-type'], 'text/plain')
@@ -71,7 +78,7 @@ test('Disable socket timeout', (t) => {
     })
     t.tearDown(client.close.bind(client))
 
-    client.request({ path: '/', method: 'GET', requestTimeout: 0 }, (err, result) => {
+    client.request({ path: '/', method: 'GET', headersTimeout: 0, bodyTimeout: 0 }, (err, result) => {
       t.error(err)
       const bufs = []
       result.body.on('data', (buf) => {
