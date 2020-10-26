@@ -284,16 +284,6 @@ test('invalid options throws', (t) => {
 
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      headersTimeout: 'asd'
-    }) // eslint-disable-line
-    t.fail()
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid headersTimeout')
-  }
-
-  try {
-    new Client(new URL('http://localhost:200'), { // eslint-disable-line
       keepAliveTimeout: 'asd'
     }) // eslint-disable-line
     t.fail()
@@ -330,16 +320,6 @@ test('invalid options throws', (t) => {
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'invalid keepAliveTimeoutThreshold')
-  }
-
-  try {
-    new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      socketTimeout: 'asd'
-    })
-    t.fail()
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid socketTimeout')
   }
 
   try {
