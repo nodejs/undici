@@ -257,7 +257,7 @@ test('Disable keep alive', (t) => {
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { keepAlive: false })
+    const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 0 })
     t.teardown(client.destroy.bind(client))
 
     client.request({
