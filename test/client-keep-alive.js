@@ -88,7 +88,7 @@ test('keep-alive not timeout', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      idleTimeout: 1e3
+      keepAliveTimeout: 1e3
     })
     t.teardown(client.destroy.bind(client))
 
@@ -124,7 +124,7 @@ test('keep-alive threshold', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      idleTimeout: 30e3,
+      keepAliveTimeout: 30e3,
       keepAliveTimeoutThreshold: 29e3
     })
     t.teardown(client.destroy.bind(client))
@@ -161,7 +161,7 @@ test('keep-alive max keepalive', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      idleTimeout: 30e3,
+      keepAliveTimeout: 30e3,
       keepAliveMaxTimeout: 1e3
     })
     t.teardown(client.destroy.bind(client))
