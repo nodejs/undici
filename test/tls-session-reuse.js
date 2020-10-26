@@ -32,7 +32,7 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
 
     server.listen(0, function () {
       const client = new Client(`https://localhost:${server.address().port}`, {
-        keepAlive: false,
+        pipelining: 0,
         tls: {
           ca,
           rejectUnauthorized: false,
