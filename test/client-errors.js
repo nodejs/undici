@@ -398,6 +398,15 @@ test('invalid options throws', (t) => {
     t.strictEqual(err.message, 'invalid callback')
   }
 
+  try {
+    const client = new Client(new URL('http://localhost:200'), { maxKeepAliveTimeout: 1e3 })
+    client.close(null)
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'unsupported maxKeepAliveTimeout, use keepAliveMaxTimeout instead')
+  }
+
   t.end()
 })
 
