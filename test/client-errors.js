@@ -392,7 +392,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { idleTimeout: 30e3 }) // eslint-disable-line
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported idleTimeout')
+    t.strictEqual(err.message, 'unsupported idleTimeout, use keepAliveTimeout instead')
   }
 
   t.end()
