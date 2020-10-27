@@ -63,7 +63,7 @@ class HTTPHandler {
 
     this.resume = resume
     this.res.on('drain', resume)
-    writeHead(this.res, statusCode, getHeaders({
+    this.res.writeHead(statusCode, getHeaders({
       headers,
       proxyName: this.proxyName,
       httpVersion: this.httpVersion
@@ -251,26 +251,4 @@ function printIp (address, port) {
     str = `"${str}"`
   }
   return str
-}
-
-function writeHead (res, statusCode, headers) {
-  // TODO (perf): res.writeHead should support Array and/or string.
-  const obj = {}
-  for (var i = 0; i < headers.length; i += 2) {
-    var key = headers[i]
-    var val = obj[key]
-    if (!val) {
-      obj[key] = headers[i + 1]
-    } else {
-      if (!Array.isArray(val)) {
-        val = [val]
-        obj[key] = val
-      }
-      val.push(headers[i + 1])
-    }
-  }
-
-  res.writeHead(statusCode, obj)
-
-  return res
 }
