@@ -75,6 +75,9 @@ class HTTPHandler {
   }
 
   onComplete () {
+    this.res.off('close', this.abort)
+    this.res.off('drain', this.resume)
+
     this.res.end()
     this.callback()
   }
@@ -82,6 +85,7 @@ class HTTPHandler {
   onError (err) {
     this.res.off('close', this.abort)
     this.res.off('drain', this.resume)
+
     this.callback(err)
   }
 }
@@ -112,6 +116,8 @@ class WSHandler {
   }
 
   onUpgrade (statusCode, headers, socket) {
+    this.socket.off('close', this.abort)
+
     // TODO: Check statusCode?
 
     if (this.head && this.head.length) {
@@ -138,6 +144,7 @@ class WSHandler {
 
   onError (err) {
     this.socket.off('close', this.abort)
+
     this.callback(err)
   }
 }
