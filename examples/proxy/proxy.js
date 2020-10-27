@@ -120,23 +120,18 @@ class WSHandler {
 
     setupSocket(socket)
 
-    let head = 'HTTP/1.1 101 Switching Protocols\r\nconnection: upgrade\r\nupgrade: websocket'
-
     headers = getHeaders({
       headers,
       proxyName: this.proxyName,
       httpVersion: this.httpVersion
     })
 
+    let head = ''
     for (let n = 0; n < headers.length; n += 2) {
-      const key = headers[n + 0]
-      const val = headers[n + 1]
-
-      head += `\r\n${key}: ${val}`
+      head += `\r\n${headers[n + 0]}: ${headers[n + 1]}`
     }
-    head += '\r\n\r\n'
 
-    this.socket.write(head)
+    this.socket.write(`HTTP/1.1 101 Switching Protocols\r\nconnection: upgrade\r\nupgrade: websocket${head}\r\n\r\n`)
 
     pipeline(socket, this.socket, socket, this.callback)
   }
