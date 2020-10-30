@@ -21,7 +21,7 @@ if (process.platform !== 'win32') {
 
     server.listen('/var/tmp/test3.sock', () => {
       const client = new Client({
-        hostname: 'localhost',
+        host: 'localhost',
         protocol: 'http:'
       }, {
         socketPath: '/var/tmp/test3.sock'
@@ -58,7 +58,7 @@ if (process.platform !== 'win32') {
 
     server.listen('/var/tmp/test3.sock', () => {
       const client = new Pool({
-        hostname: 'localhost',
+        host: 'localhost',
         protocol: 'http:'
       }, {
         socketPath: '/var/tmp/test3.sock'

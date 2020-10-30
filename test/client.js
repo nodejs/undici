@@ -14,7 +14,7 @@ test('basic get', (t) => {
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual('localhost', req.headers.host)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     t.strictEqual(undefined, req.headers.foo)
     t.strictEqual('bar', req.headers.bar)
     t.strictEqual(undefined, req.headers['content-length'])
@@ -80,7 +80,7 @@ test('basic head', (t) => {
   const server = createServer((req, res) => {
     t.strictEqual('/123', req.url)
     t.strictEqual('HEAD', req.method)
-    t.strictEqual('localhost', req.headers.host)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })

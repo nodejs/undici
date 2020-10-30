@@ -8,7 +8,7 @@ test('should work in jest', async () => {
   const server = createServer((req, res) => {
     expect(req.url).toBe('/')
     expect(req.method).toBe('POST')
-    expect(req.headers.host).toBe('localhost')
+    expect(req.headers.host).toBe(`localhost:${server.address().port}`)
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })

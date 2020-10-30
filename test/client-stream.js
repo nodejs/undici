@@ -12,7 +12,7 @@ test('stream get', (t) => {
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual('localhost', req.headers.host)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
@@ -53,7 +53,7 @@ test('stream promise get', (t) => {
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual('localhost', req.headers.host)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
@@ -88,7 +88,7 @@ test('stream GET destroy res', (t) => {
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual('localhost', req.headers.host)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
