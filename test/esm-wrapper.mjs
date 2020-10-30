@@ -12,7 +12,7 @@ test('imported Client works with basic GET', (t) => {
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual('localhost', req.headers.host)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     t.strictEqual(undefined, req.headers.foo)
     t.strictEqual('bar', req.headers.bar)
     t.strictEqual(undefined, req.headers['content-length'])
