@@ -51,15 +51,15 @@ Options:
 
 - `keepAliveTimeout: Number`, the timeout after which a socket without active requests
   will time out. Monitors time between activity on a connected socket.
-  This value may be overriden by *keep-alive* hints from the server.
+  This value may be overridden by *keep-alive* hints from the server.
   Default: `4e3` milliseconds (4s).
 
-- `keepAliveMaxTimeout: Number`, the maximum allowed `keepAliveTimeout` when overriden by
+- `keepAliveMaxTimeout: Number`, the maximum allowed `keepAliveTimeout` when overridden by
   *keep-alive* hints from the server.
   Default: `600e3` milliseconds (10min).
 
 - `keepAliveTimeoutThreshold: Number`, a number subtracted from server *keep-alive* hints
-  when overriding `keepAliveTimeout` to account for timing inaccuries caused by e.g.
+  when overriding `keepAliveTimeout` to account for timing inaccuracies caused by e.g.
   transport latency.
   Default: `1e3` milliseconds (1s).
 
@@ -101,7 +101,7 @@ Options:
   milliseconds. Monitors time between receiving a body data. 
   Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 * `idempotent: Boolean`, whether the requests can be safely retried or not.
-  If `false` the request won't be sent until all preceeding
+  If `false` the request won't be sent until all preceding
   requests in the pipeline has completed.
   Default: `true` if `method` is `HEAD` or `GET`.
 
@@ -424,10 +424,10 @@ Returns a promise if no callback is provided.
 <a name='dispatch'></a>
 #### `client.dispatch(opts, handler): Promise|Void`
 
-This is the low level API which all the preceeding APIs are implemented on top of.
+This is the low level API which all the preceding APIs are implemented on top of.
 
 This API is expected to evolve through semver-major versions and is less stable
-than the preceeding higher level APIs. It is primarily intended for library developers
+than the preceding higher level APIs. It is primarily intended for library developers
 who implement higher level APIs on top of this.
 
 Options:
@@ -443,7 +443,7 @@ Options:
   a response. Use `0` to disable it entirely.
   Default: `30e3` milliseconds (30s).
 * `idempotent: Boolean`, whether the requests can be safely retried or not.
-  If `false` the request won't be sent until all preceeding
+  If `false` the request won't be sent until all preceding
   requests in the pipeline has completed.
   Default: `true` if `method` is `HEAD` or `GET`.
 
@@ -465,7 +465,7 @@ The `handler` parameter is defined as follow:
   * `chunk: Buffer`
 * `onComplete(trailers): Void`, invoked when response payload and trailers have been received and the request has completed.
   * `trailers: Array|Null`
-* `onError(err): Void`, invoked when an error has occured.
+* `onError(err): Void`, invoked when an error has occurred.
   * `err: Error`
 
 The caller is responsible for handling the `body` argument, in terms of `'error'` events and `destroy()`:ing up until
@@ -513,7 +513,7 @@ if there is no activity for the duration of the `timeout` value.
 
 #### `client.busy: Boolean`
 
-True if pipeline is saturated or blocked. Indicicates whether dispatching
+True if pipeline is saturated or blocked. Indicates whether dispatching
 further requests is meaningful.
 
 #### `client.closed: Boolean`
@@ -625,7 +625,7 @@ Refs: https://tools.ietf.org/html/rfc7231#section-5.1.1
 Uncidi will only use pipelining if configured with a `pipelining` factor
 greater than `1`.
 
-Undici always assumes that connections are persistent and will immediatly
+Undici always assumes that connections are persistent and will immediately
 pipeline requests, without checking whether the connection is persistent.
 Hence, automatic fallback to HTTP/1.0 or HTTP/1.1 without pipelining is
 not supported.
