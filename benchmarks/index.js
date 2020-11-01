@@ -2,7 +2,7 @@
 const { Writable } = require('stream')
 const http = require('http')
 const Benchmark = require('benchmark')
-const { Client } = require('..')
+const { Client, Pool } = require('..')
 
 // # Start the Node.js server
 // node benchmarks/server.js
@@ -10,15 +10,40 @@ const { Client } = require('..')
 // # Start the benchmarks
 // node benchmarks/index.js
 
-const httpOptions = {
+const connections = parseInt(process.env.CONNECTIONS, 10) || 50
+const parallelRequests = parseInt(process.env.PARALLEL, 10) || 10
+const pipelining = parseInt(process.env.PIPELINING, 10) || 10
+const dest = {}
+
+if (process.env.PORT) {
+  dest.port = process.env.PORT
+  dest.url = `http://localhost:${process.env.PORT}`
+} else {
+  dest.url = 'http://localhost'
+  dest.socketPath = '/var/tmp/undici.sock'
+}
+
+const httpNoAgent = {
   protocol: 'http:',
   hostname: 'localhost',
-  socketPath: '/var/tmp/undici.sock',
   method: 'GET',
   path: '/',
+  ...dest
+}
+
+const httpOptions = {
+  ...httpNoAgent,
   agent: new http.Agent({
     keepAlive: true,
     maxSockets: 1
+  })
+}
+
+const httpOptionsMultiSocket = {
+  ...httpNoAgent,
+  agent: new http.Agent({
+    keepAlive: true,
+    maxSockets: connections
   })
 }
 
@@ -29,25 +54,59 @@ const undiciOptions = {
   bodyTimeout: 0
 }
 
-const client = new Client(`http://${httpOptions.hostname}`, {
-  pipelining: 10,
-  socketPath: '/var/tmp/undici.sock'
+const client = new Client(httpOptions.url, {
+  pipelining,
+  ...dest
 })
 
-client.on('disconnect', (err) => {
-  throw err
+const pool = new Pool(httpOptions.url, {
+  pipelining,
+  connections,
+  ...dest
 })
 
 const suite = new Benchmark.Suite()
 
-Benchmark.options.minSamples = 200
+// Benchmark.options.minSamples = 200
 
 suite
+  .add('http - no agent ', {
+    defer: true,
+    fn: deferred => {
+      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
+        http.get(httpOptions, (res) => {
+          res
+            .pipe(new Writable({
+              write (chunk, encoding, callback) {
+                callback()
+              }
+            }))
+            .on('finish', resolve)
+        })
+      }))).then(() => deferred.resolve())
+    }
+  })
   .add('http - keepalive', {
     defer: true,
     fn: deferred => {
-      Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
+      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
         http.get(httpOptions, (res) => {
+          res
+            .pipe(new Writable({
+              write (chunk, encoding, callback) {
+                callback()
+              }
+            }))
+            .on('finish', resolve)
+        })
+      }))).then(() => deferred.resolve())
+    }
+  })
+  .add('http - keepalive - multiple sockets', {
+    defer: true,
+    fn: deferred => {
+      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
+        http.get(httpOptionsMultiSocket, (res) => {
           res
             .pipe(new Writable({
               write (chunk, encoding, callback) {
@@ -62,7 +121,7 @@ suite
   .add('undici - pipeline', {
     defer: true,
     fn: deferred => {
-      Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
+      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
         client
           .pipeline(undiciOptions, data => {
             return data.body
@@ -80,8 +139,26 @@ suite
   .add('undici - request', {
     defer: true,
     fn: deferred => {
-      Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
+      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
         client
+          .request(undiciOptions)
+          .then(({ body }) => {
+            body
+              .pipe(new Writable({
+                write (chunk, encoding, callback) {
+                  callback()
+                }
+              }))
+              .on('finish', resolve)
+          })
+      }))).then(() => deferred.resolve())
+    }
+  })
+  .add('undici - pool - request - multiple sockets', {
+    defer: true,
+    fn: deferred => {
+      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
+        pool
           .request(undiciOptions)
           .then(({ body }) => {
             body
@@ -98,7 +175,7 @@ suite
   .add('undici - stream', {
     defer: true,
     fn: deferred => {
-      Promise.all(Array.from(Array(10)).map(() => {
+      Promise.all(Array.from(Array(parallelRequests)).map(() => {
         return client.stream(undiciOptions, () => {
           return new Writable({
             write (chunk, encoding, callback) {
@@ -112,7 +189,7 @@ suite
   .add('undici - dispatch', {
     defer: true,
     fn: deferred => {
-      Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
+      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
         client.dispatch(undiciOptions, new SimpleRequest(resolve))
       }))).then(() => deferred.resolve())
     }
@@ -120,15 +197,15 @@ suite
   .add('undici - noop', {
     defer: true,
     fn: deferred => {
-      Promise.all(Array.from(Array(10)).map(() => new Promise((resolve) => {
+      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
         client.dispatch(undiciOptions, new NoopRequest(resolve))
       }))).then(() => deferred.resolve())
     }
   })
   .on('cycle', ({ target }) => {
-    // Multiply results by 10x to get opts/sec since we do 10 requests
+    // Multiply results by parallelRequests to get opts/sec since we do mutiple requests
     // per run.
-    target.hz *= 10
+    target.hz *= parallelRequests
     console.log(String(target))
   })
   .on('complete', () => {
