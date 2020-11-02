@@ -92,7 +92,7 @@ Options:
   Default: `null`.
 * `headers: Object|Array|Null`, an object with header-value pairs or an array with header-value pairs bi-indexed (`['header1', 'value1', 'header2', 'value2']`).
   Default: `null`.
-* `signal: AbortController|EventEmitter|Null`
+* `signal: AbortSignal|EventEmitter|Null`
   Default: `null`.
 - `headersTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between receiving a complete headers. 
@@ -185,10 +185,10 @@ idempotent requests with a stream request body.
 ##### Aborting a request
 
 A request can may be aborted using either an `AbortController` or an `EventEmitter`.
-To use `AbortController`, you will need to `npm i abort-controller`.
+To use `AbortController` in Node.js versions earlier than 15, you will need to
+install a shim - `npm i abort-controller`.
 
 ```js
-const { AbortController } = require('abort-controller')
 const { Client } = require('undici')
 
 const client = new Client('http://localhost:3000')
@@ -377,7 +377,7 @@ Options:
   Default: `GET`
 * `headers: Object|Null`, an object with header-value pairs.
   Default: `null`
-* `signal: AbortController|EventEmitter|Null`.
+* `signal: AbortSignal|EventEmitter|Null`.
   Default: `null`
 * `requestTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between request being enqueued and receiving
@@ -405,7 +405,7 @@ Options:
 * `opaque: Any`
 * `headers: Object|Null`, an object with header-value pairs.
   Default: `null`
-* `signal: AbortController|EventEmitter|Null`.
+* `signal: AbortSignal|EventEmitter|Null`.
   Default: `null`
 * `requestTimeout: Number`, the timeout after which a request will time out, in
   milliseconds. Monitors time between request being enqueued and receiving
