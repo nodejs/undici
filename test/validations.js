@@ -23,12 +23,12 @@ server.listen(0, () => {
 
     client.request({ path: null, method: 'GET' }, (err, res) => {
       t.ok(err instanceof errors.InvalidArgumentError)
-      t.strictEqual(err.message, 'path must be a valid path')
+      t.strictEqual(err.message, 'path must be a string')
     })
 
     client.request({ path: 'aaa', method: 'GET' }, (err, res) => {
       t.ok(err instanceof errors.InvalidArgumentError)
-      t.strictEqual(err.message, 'path must be a valid path')
+      t.strictEqual(err.message, 'path must be an absolute URL or start with a slash')
     })
   })
 
