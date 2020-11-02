@@ -3,6 +3,8 @@ const { Writable } = require('stream')
 const http = require('http')
 const Benchmark = require('benchmark')
 const { Client, Pool } = require('..')
+const os = require('os')
+const path = require('path')
 
 // # Start the Node.js server
 // node benchmarks/server.js
@@ -20,7 +22,7 @@ if (process.env.PORT) {
   dest.url = `http://localhost:${process.env.PORT}`
 } else {
   dest.url = 'http://localhost'
-  dest.socketPath = '/var/tmp/undici.sock'
+  dest.socketPath = path.join(os.tmpdir(), 'undici.sock')
 }
 
 const httpNoAgent = {
