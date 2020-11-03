@@ -3,7 +3,7 @@ import Client from './client'
 export = Pool
 
 declare class Pool extends Client {
-	constructor(url: string, options: Pool.Options)
+	constructor(url: string, options?: Pool.Options)
 }
 
 declare namespace Pool {

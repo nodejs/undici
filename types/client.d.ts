@@ -3,12 +3,12 @@ import { TlsOptions } from 'tls'
 import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
 import { AbortController } from 'abort-controller'
-import Errors from './errors'
 
 export = Client
 
+/** A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection. Pipelining is disabled by default. */
 declare class Client extends EventEmitter {
-	constructor(url: string | URL, options: Client.Options);
+	constructor(url: string | URL, options?: Client.Options);
 
 	/** Property to get and set the pipelining factor. */
 	pipelining: number;
@@ -27,12 +27,15 @@ declare class Client extends EventEmitter {
 	/** True after `client.destroyed()` has been called or `client.close()` has been called and the client shutdown has completed. */
 	destroyed: boolean;
 
+	/** Performs a HTTP request */
 	request(options: Client.RequestOptions): PromiseLike<Client.ResponseData>;
 	request(options: Client.RequestOptions, callback: (err: Error | null, data: Client.ResponseData) => void): void;
 
+	/** A faster version of `Client.request` */
 	stream(options: Client.RequestOptions, factory: Client.StreamFactory): PromiseLike<Client.StreamData>;
 	stream(options: Client.RequestOptions, factory: Client.StreamFactory, callback: (err: Error | null, data: Client.StreamData) => void): void;
 
+	/** For easy use with `stream.pipeline` */
 	pipeline(options: Client.PipelineOptions, handler: Client.PipelineHandler): Duplex
 
 	/** Upgrade to a different protocol */
@@ -44,16 +47,17 @@ declare class Client extends EventEmitter {
 	connect(options: Client.ConnectOptions, callback: (err: Error | null, data: Client.ConnectData) => void): void;
 
 	/** This is the low level API which all the preceding APIs are implemented on top of. This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this. */
-	dispatch(options: Client.DispatchOptions): PromiseLike<void>;
-	dispatch(options: Client.DispatchOptions, handler: Client.DispatchHandler): void;
+	dispatch(options: Client.DispatchOptions, handlers: Client.DispatchHandlers): PromiseLike<void> | void;
 
 	/** Closes the client and gracefully waits for enqueued requests to complete before invoking the callback (or returnning a promise if no callback is provided). */
 	close(): PromiseLike<void>;
 	close(callback: () => void): void;
 
 	/** Destroy the client abruptly with the given err. All the pending and running requests will be asynchronously aborted and error. Waits until socket is closed before invoking the callback (or returnning a promise if no callback is provided). Since this operation is asynchronously dispatched there might still be some progress on dispatched requests. */
-	destroy(err?: Error | null): PromiseLike<void>;
-	destory(err: Error | null, callback: () => void): void;
+	destroy(): PromiseLike<void>;
+	destroy(err: Error | null): PromiseLike<void>;
+	destroy(callback: () => void): void;
+	destroy(err: Error | null, callback: () => void): void;
 }
 
 declare namespace Client {
@@ -86,9 +90,11 @@ declare namespace Client {
 		path: string;
 		method: string;
 		opaque?: unknown;
+		/** Default: `null` */
 		body?: string | Buffer | Uint8Array | Readable | null;
 		/** an object with header-value pairs or an array with header-value pairs bi-indexed (`['header1', 'value1', 'header2', 'value2']`). Default: `null`. */
 		headers?: Headers | string[] | null;
+		/** Default: `null` */
 		signal?: AbortController | EventEmitter | null;
 		/** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
 		requestTimeout?: number;
@@ -165,25 +171,35 @@ declare namespace Client {
 		opaque: unknown;
 	}
 
-	export type StreamFactory = (data: { statusCode: number, headers: Headers, opaque: unknown }) => Writable
+	export interface StreamFactoryData {
+		statusCode: number;
+		headers: Headers;
+		opaque: unknown
+	}
+	export type StreamFactory = (data: StreamFactoryData) => Writable
 
-	export type PipelineHandler = (data: { statusCode: number, headers: Headers, opaque: unknown, body: Readable }) => Readable
+	export interface PipelineHandlerData {
+		statusCode: number;
+		headers: Headers;
+		opaque: unknown;
+		body: Readable
+	}
 
-	export type DispatchHandler = (handlers: DispatchHandlers) => void;
+	export type PipelineHandler = (data: PipelineHandlerData) => Readable
 
 	export interface DispatchHandlers {
 		/** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
-		onConnect(abort: AbortController): void;
+		onConnect?(abort: AbortController): void;
 		/** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method */
-		onUpgrade(statusCode: number, headers: string[] | null, socket: Duplex): void;
+		onUpgrade?(statusCode: number, headers: string[] | null, socket: Duplex): void;
 		/** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
-		onHeaders(statusCode: number, headers: string[] | null, resume: () => void): boolean;
+		onHeaders?(statusCode: number, headers: string[] | null, resume: () => void): boolean;
 		/** Invoked when response payload data is received */
-		onData(chunk: Buffer): boolean;
+		onData?(chunk: Buffer): boolean;
 		/** Invoked when response payload and trailers have been received and the request has completed. */
-		onComplete(trailers: string[] | null): void;
+		onComplete?(trailers: string[] | null): void;
 		/** Invoked when an error has occurred. */
-		onError(err: Error): void;
+		onError?(err: Error): void;
 	}
 
 	export interface Headers {
