@@ -2,7 +2,7 @@ import Client from './client'
 
 export = Pool
 
-declare class Pool {
+declare class Pool extends Client {
 	constructor(url: string, options: Pool.Options)
 }
 

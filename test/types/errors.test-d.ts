@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import Errors from '../../types/errors'
+import { Errors } from '../..'
 
 expectAssignable<Errors.UndiciError>(new Errors.UndiciError())
 
@@ -59,6 +59,7 @@ expectAssignable<'NotSupportedError'>(new Errors.NotSupportedError().name)
 expectAssignable<'UND_ERR_NOT_SUPPORTED'>(new Errors.NotSupportedError().code)
 
 {
+	// @ts-ignore
 	function f (): Errors.HeadersTimeoutError | Errors.SocketTimeoutError { return }
 
 	const e = f()

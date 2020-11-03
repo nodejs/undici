@@ -1,6 +1,5 @@
 import { expectAssignable } from 'tsd'
-import { Errors } from '../..'
-import Client from '../../types/client'
+import { Errors, Client } from '../..'
 
 expectAssignable<Client>(new Client('', {}))
 

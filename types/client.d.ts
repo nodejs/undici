@@ -2,6 +2,7 @@ import { URL } from 'url'
 import { TlsOptions } from 'tls'
 import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
+import { AbortController } from 'abort-controller'
 import Errors from './errors'
 
 export = Client
