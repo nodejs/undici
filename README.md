@@ -474,7 +474,7 @@ the `onConnect` handler has been invoked.
 <a name='close'></a>
 #### `client.close([callback]): Promise|Void`
 
-Closes the client and gracefully waits fo enqueued requests to
+Closes the client and gracefully waits for enqueued requests to
 complete before invoking the callback.
 
 Returns a promise if no callback is provided.
