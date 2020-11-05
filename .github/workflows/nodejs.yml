@@ -31,3 +31,7 @@ jobs:
     - name: Unit test
       run: |
         npm run coverage
+
+    - name: Test types
+      run: |
+        npm run test:typescript

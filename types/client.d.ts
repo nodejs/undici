@@ -3,6 +3,7 @@ import { TlsOptions } from 'tls'
 import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
 import { AbortController } from 'abort-controller'
+import { IncomingHttpHeaders } from 'http'
 
 export = Client
 
@@ -93,7 +94,7 @@ declare namespace Client {
 		/** Default: `null` */
 		body?: string | Buffer | Uint8Array | Readable | null;
 		/** an object with header-value pairs or an array with header-value pairs bi-indexed (`['header1', 'value1', 'header2', 'value2']`). Default: `null`. */
-		headers?: Headers | string[] | null;
+		headers?: IncomingHttpHeaders | string[] | null;
 		/** Default: `null` */
 		signal?: AbortController | EventEmitter | null;
 		/** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
@@ -113,7 +114,7 @@ declare namespace Client {
 		/** Default: `'GET'` */
 		method?: string;
 		/** Default: `null` */
-		headers?: Headers | null;
+		headers?: IncomingHttpHeaders | null;
 		/** Default: `null` */
 		signal?: AbortController | EventEmitter | null;
 		/** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
@@ -126,7 +127,7 @@ declare namespace Client {
 		path: string;
 		opaque?: unknown;
 		/** Default: `null` */
-		headers?: Headers | null;
+		headers?: IncomingHttpHeaders | null;
 		/** Default: `null` */
 		signal?: AbortController | EventEmitter | null;
 		/** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
@@ -139,7 +140,7 @@ declare namespace Client {
 		/** Default: `null` */
 		body?: string | Buffer | Uint8Array | Readable | null;
 		/** Default: `null` */
-		headers?: Headers | null;
+		headers?: IncomingHttpHeaders | null;
 		/** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
 		requestTimeout?: number;
 		/** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed. Default: `true` if `method` is `HEAD` or `GET`. */
@@ -148,7 +149,7 @@ declare namespace Client {
 
 	export interface ResponseData {
 		statusCode: number;
-		headers: Headers;
+		headers: IncomingHttpHeaders;
 		body: Readable;
 		opaque?: unknown;
 	}
@@ -159,28 +160,28 @@ declare namespace Client {
 	}
 
 	export interface UpgradeData {
-		headers: Headers;
+		headers: IncomingHttpHeaders;
 		socket: Duplex;
 		opaque: unknown;
 	}
 
 	export interface ConnectData {
 		statusCode: number;
-		headers: Headers;
+		headers: IncomingHttpHeaders;
 		socket: Duplex;
 		opaque: unknown;
 	}
 
 	export interface StreamFactoryData {
 		statusCode: number;
-		headers: Headers;
+		headers: IncomingHttpHeaders;
 		opaque: unknown
 	}
 	export type StreamFactory = (data: StreamFactoryData) => Writable
 
 	export interface PipelineHandlerData {
 		statusCode: number;
-		headers: Headers;
+		headers: IncomingHttpHeaders;
 		opaque: unknown;
 		body: Readable
 	}
@@ -200,65 +201,5 @@ declare namespace Client {
 		onComplete?(trailers: string[] | null): void;
 		/** Invoked when an error has occurred. */
 		onError?(err: Error): void;
-	}
-
-	export interface Headers {
-		'accept'?: string;
-		'accept-language'?: string;
-		'accept-patch'?: string;
-		'accept-ranges'?: string;
-		'access-control-allow-credentials'?: string;
-		'access-control-allow-headers'?: string;
-		'access-control-allow-methods'?: string;
-		'access-control-allow-origin'?: string;
-		'access-control-expose-headers'?: string;
-		'access-control-max-age'?: string;
-		'access-control-request-headers'?: string;
-		'access-control-request-method'?: string;
-		'age'?: string;
-		'allow'?: string;
-		'alt-svc'?: string;
-		'authorization'?: string;
-		'cache-control'?: string;
-		'connection'?: string;
-		'content-disposition'?: string;
-		'content-encoding'?: string;
-		'content-language'?: string;
-		'content-length'?: string;
-		'content-location'?: string;
-		'content-range'?: string;
-		'content-type'?: string;
-		'cookie'?: string;
-		'date'?: string;
-		'expect'?: string;
-		'expires'?: string;
-		'forwarded'?: string;
-		'from'?: string;
-		'host'?: string;
-		'if-match'?: string;
-		'if-modified-since'?: string;
-		'if-none-match'?: string;
-		'if-unmodified-since'?: string;
-		'last-modified'?: string;
-		'location'?: string;
-		'origin'?: string;
-		'pragma'?: string;
-		'proxy-authenticate'?: string;
-		'proxy-authorization'?: string;
-		'public-key-pins'?: string;
-		'range'?: string;
-		'referer'?: string;
-		'retry-after'?: string;
-		'set-cookie'?: string[];
-		'strict-transport-security'?: string;
-		'tk'?: string;
-		'trailer'?: string;
-		'transfer-encoding'?: string;
-		'upgrade'?: string;
-		'user-agent'?: string;
-		'vary'?: string;
-		'via'?: string;
-		'warning'?: string;
-		'www-authenticate'?: string;
 	}
 }
