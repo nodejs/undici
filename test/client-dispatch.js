@@ -330,3 +330,185 @@ test('connect call onUpgrade once', (t) => {
     })
   })
 })
+
+test('dispatch onConnect missing', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onHeaders (statusCode, headers) {
+        t.pass('should not throw')
+      },
+      onData (buf) {
+        t.pass('should not throw')
+      },
+      onComplete (trailers) {
+        t.pass('should not throw')
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      }
+    })
+  })
+})
+
+test('dispatch onHeaders missing', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onData (buf) {
+        t.pass('should not throw')
+      },
+      onComplete (trailers) {
+        t.pass('should not throw')
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      }
+    })
+  })
+})
+
+test('dispatch onData missing', (t) => {
+  t.plan(2)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.pass('should not throw')
+      },
+      onComplete (trailers) {
+        t.pass('should not throw')
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      }
+    })
+  })
+})
+
+test('dispatch onComplete missing', (t) => {
+  t.plan(3)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.pass('should not throw')
+      },
+      onData (buf) {
+        t.pass('should not throw')
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      }
+    })
+  })
+})
+
+test('dispatch onError missing', (t) => {
+  t.plan(2)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    try {
+      client.dispatch({
+        path: '/',
+        method: 'GET'
+      }, {
+        onConnect () {
+        },
+        onHeaders (statusCode, headers) {
+          t.pass('should not throw')
+        },
+        onData (buf) {
+          t.pass('should not throw')
+        },
+        onComplete (trailers) {
+          t.pass('should not throw')
+        }
+      })
+    } catch (err) {
+      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+    }
+
+    try {
+      const _err = new Error()
+      client.dispatch({
+        path: '/',
+        method: 'GET'
+      }, {
+        onConnect () {
+        },
+        onHeaders (statusCode, headers) {
+          t.pass('should not throw')
+        },
+        onData (buf) {
+          throw _err
+        },
+        onComplete (trailers) {
+          t.fail()
+        }
+      })
+    } catch (err) {
+      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+    }
+  })
+})
