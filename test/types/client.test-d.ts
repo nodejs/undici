@@ -63,7 +63,7 @@ expectAssignable<Client>(new Client('', {}))
 	}))
 
 	// dispatch
-	expectAssignable<PromiseLike<void> | void>(client.dispatch({ path: '', method: '' }, {}))
+	expectAssignable<void>(client.dispatch({ path: '', method: '' }, {}))
 
 	// close
 	expectAssignable<PromiseLike<void>>(client.close())

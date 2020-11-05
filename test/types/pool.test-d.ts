@@ -63,7 +63,7 @@ expectAssignable<Pool>(new Pool('', {}))
 	}))
 
 	// dispatch
-	expectAssignable<PromiseLike<void> | void>(pool.dispatch({ path: '', method: '' }, {}))
+	expectAssignable<void>(pool.dispatch({ path: '', method: '' }, {}))
 
 	// close
 	expectAssignable<PromiseLike<void>>(pool.close())
