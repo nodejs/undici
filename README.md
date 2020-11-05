@@ -422,7 +422,7 @@ The `data` parameter in `callback` is defined as follow:
 Returns a promise if no callback is provided.
 
 <a name='dispatch'></a>
-#### `client.dispatch(opts, handler): Promise|Void`
+#### `client.dispatch(opts, handler): Void`
 
 This is the low level API which all the preceding APIs are implemented on top of.
 

@@ -48,7 +48,7 @@ declare class Client extends EventEmitter {
 	connect(options: Client.ConnectOptions, callback: (err: Error | null, data: Client.ConnectData) => void): void;
 
 	/** This is the low level API which all the preceding APIs are implemented on top of. This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this. */
-	dispatch(options: Client.DispatchOptions, handlers: Client.DispatchHandlers): PromiseLike<void> | void;
+	dispatch(options: Client.DispatchOptions, handlers: Client.DispatchHandlers): void;
 
 	/** Closes the client and gracefully waits for enqueued requests to complete before invoking the callback (or returnning a promise if no callback is provided). */
 	close(): PromiseLike<void>;
