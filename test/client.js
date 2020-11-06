@@ -625,6 +625,32 @@ test('url-like url', (t) => {
   })
 })
 
+test('an absolute url as path', (t) => {
+  t.plan(2)
+
+  const path = 'http://example.com'
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.url, path)
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client({
+      hostname: 'localhost',
+      port: server.address().port,
+      protocol: 'http'
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path, method: 'GET' }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
+  })
+})
+
 test('multiple destroy callback', (t) => {
   t.plan(4)
 
