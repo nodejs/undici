@@ -457,7 +457,7 @@ test('dispatch onComplete missing', (t) => {
 })
 
 test('dispatch onError missing', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const server = http.createServer((req, res) => {
     res.end('ad')
@@ -483,28 +483,6 @@ test('dispatch onError missing', (t) => {
         },
         onComplete (trailers) {
           t.pass('should not throw')
-        }
-      })
-    } catch (err) {
-      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-    }
-
-    try {
-      const _err = new Error()
-      client.dispatch({
-        path: '/',
-        method: 'GET'
-      }, {
-        onConnect () {
-        },
-        onHeaders (statusCode, headers) {
-          t.pass('should not throw')
-        },
-        onData (buf) {
-          throw _err
-        },
-        onComplete (trailers) {
-          t.fail()
         }
       })
     } catch (err) {

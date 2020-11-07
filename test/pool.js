@@ -206,47 +206,43 @@ test('backpressure algorithm', (t) => {
 
   t.strictEqual(total, 10)
 
-  try {
-    pool.dispatch({}, noop)
-    pool.dispatch({}, noop)
+  pool.dispatch({}, noop)
+  pool.dispatch({}, noop)
 
-    const d1 = seen.shift() // d1 = c0
-    t.strictEqual(d1.id, 0)
-    const d2 = seen.shift() // d1 = c0
-    t.strictEqual(d1.id, 0)
+  const d1 = seen.shift() // d1 = c0
+  t.strictEqual(d1.id, 0)
+  const d2 = seen.shift() // d1 = c0
+  t.strictEqual(d1.id, 0)
 
-    t.strictEqual(d1.id, d2.id)
+  t.strictEqual(d1.id, d2.id)
 
-    pool.dispatch({}, noop) // d3 = c0
+  pool.dispatch({}, noop) // d3 = c0
 
-    d1.client._busy = true
+  d1.client._busy = true
 
-    pool.dispatch({}, noop) // d4 = c1
+  pool.dispatch({}, noop) // d4 = c1
 
-    const d3 = seen.shift()
-    t.strictEqual(d3.id, 0)
-    const d4 = seen.shift()
-    t.strictEqual(d4.id, 1)
+  const d3 = seen.shift()
+  t.strictEqual(d3.id, 0)
+  const d4 = seen.shift()
+  t.strictEqual(d4.id, 1)
 
-    t.strictEqual(d3.id, d2.id)
-    t.notStrictEqual(d3.id, d4.id)
+  t.strictEqual(d3.id, d2.id)
+  t.notStrictEqual(d3.id, d4.id)
 
-    pool.dispatch({}, noop) // d5 = c1
+  pool.dispatch({}, noop) // d5 = c1
 
-    d1.client._busy = false
+  d1.client._busy = false
 
-    pool.dispatch({}, noop) // d6 = c0
+  pool.dispatch({}, noop) // d6 = c0
 
-    const d5 = seen.shift()
-    t.strictEqual(d5.id, 1)
-    const d6 = seen.shift()
-    t.strictEqual(d6.id, 0)
+  const d5 = seen.shift()
+  t.strictEqual(d5.id, 1)
+  const d6 = seen.shift()
+  t.strictEqual(d6.id, 0)
 
-    t.strictEqual(d5.id, d4.id)
-    t.strictEqual(d3.id, d6.id)
-  } catch (err) {
-    t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-  }
+  t.strictEqual(d5.id, d4.id)
+  t.strictEqual(d3.id, d6.id)
 
   t.end()
 })
@@ -403,7 +399,7 @@ test('pool connect', (t) => {
 })
 
 test('pool dispatch', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -415,27 +411,22 @@ test('pool dispatch', (t) => {
     t.tearDown(client.close.bind(client))
 
     let buf = ''
-
-    try {
-      client.dispatch({
-        path: '/',
-        method: 'GET'
-      }, {
-        onConnect () {
-        },
-        onHeaders (statusCode, headers) {
-          t.strictEqual(statusCode, 200)
-        },
-        onData (chunk) {
-          buf += chunk
-        },
-        onComplete () {
-          t.strictEqual(buf, 'asd')
-        }
-      })
-    } catch (err) {
-      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-    }
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.strictEqual(statusCode, 200)
+      },
+      onData (chunk) {
+        buf += chunk
+      },
+      onComplete () {
+        t.strictEqual(buf, 'asd')
+      }
+    })
   })
 })
 
@@ -541,7 +532,7 @@ test('pool upgrade error', (t) => {
 })
 
 test('pool dispatch error', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -555,25 +546,21 @@ test('pool dispatch error', (t) => {
     })
     t.tearDown(client.close.bind(client))
 
-    try {
-      client.dispatch({
-        path: '/',
-        method: 'GET'
-      }, {
-        onConnect () {
-        },
-        onHeaders (statusCode, headers) {
-          t.strictEqual(statusCode, 200)
-        },
-        onData (chunk) {
-        },
-        onComplete () {
-          t.pass()
-        }
-      })
-    } catch (err) {
-      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-    }
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.strictEqual(statusCode, 200)
+      },
+      onData (chunk) {
+      },
+      onComplete () {
+        t.pass()
+      }
+    })
 
     client.dispatch({
       path: '/',
@@ -599,7 +586,7 @@ test('pool dispatch error', (t) => {
 })
 
 test('pool request abort in queue', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -613,25 +600,21 @@ test('pool request abort in queue', (t) => {
     })
     t.tearDown(client.close.bind(client))
 
-    try {
-      client.dispatch({
-        path: '/',
-        method: 'GET'
-      }, {
-        onConnect () {
-        },
-        onHeaders (statusCode, headers) {
-          t.strictEqual(statusCode, 200)
-        },
-        onData (chunk) {
-        },
-        onComplete () {
-          t.pass()
-        }
-      })
-    } catch (err) {
-      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-    }
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.strictEqual(statusCode, 200)
+      },
+      onData (chunk) {
+      },
+      onComplete () {
+        t.pass()
+      }
+    })
 
     const signal = new EE()
     client.request({
@@ -646,7 +629,7 @@ test('pool request abort in queue', (t) => {
 })
 
 test('pool stream abort in queue', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -660,25 +643,21 @@ test('pool stream abort in queue', (t) => {
     })
     t.tearDown(client.close.bind(client))
 
-    try {
-      client.dispatch({
-        path: '/',
-        method: 'GET'
-      }, {
-        onConnect () {
-        },
-        onHeaders (statusCode, headers) {
-          t.strictEqual(statusCode, 200)
-        },
-        onData (chunk) {
-        },
-        onComplete () {
-          t.pass()
-        }
-      })
-    } catch (err) {
-      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-    }
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.strictEqual(statusCode, 200)
+      },
+      onData (chunk) {
+      },
+      onComplete () {
+        t.pass()
+      }
+    })
 
     const signal = new EE()
     client.stream({
@@ -693,7 +672,7 @@ test('pool stream abort in queue', (t) => {
 })
 
 test('pool pipeline abort in queue', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -707,25 +686,21 @@ test('pool pipeline abort in queue', (t) => {
     })
     t.tearDown(client.close.bind(client))
 
-    try {
-      client.dispatch({
-        path: '/',
-        method: 'GET'
-      }, {
-        onConnect () {
-        },
-        onHeaders (statusCode, headers) {
-          t.strictEqual(statusCode, 200)
-        },
-        onData (chunk) {
-        },
-        onComplete () {
-          t.pass()
-        }
-      })
-    } catch (err) {
-      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-    }
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.strictEqual(statusCode, 200)
+      },
+      onData (chunk) {
+      },
+      onComplete () {
+        t.pass()
+      }
+    })
 
     const signal = new EE()
     client.pipeline({
