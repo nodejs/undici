@@ -422,7 +422,7 @@ The `data` parameter in `callback` is defined as follow:
 Returns a promise if no callback is provided.
 
 <a name='dispatch'></a>
-#### `client.dispatch(opts, handler): Promise|Void`
+#### `client.dispatch(opts, handler): Void`
 
 This is the low level API which all the preceding APIs are implemented on top of.
 
@@ -474,7 +474,7 @@ the `onConnect` handler has been invoked.
 <a name='close'></a>
 #### `client.close([callback]): Promise|Void`
 
-Closes the client and gracefully waits fo enqueued requests to
+Closes the client and gracefully waits for enqueued requests to
 complete before invoking the callback.
 
 Returns a promise if no callback is provided.
