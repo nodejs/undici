@@ -3,10 +3,12 @@
   "version": "2.1.1",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
   "main": "index.js",
+  "types": "index.d.ts",
   "module": "wrapper.mjs",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "tap test/*.js --no-coverage && jest test/jest/test",
+    "test": "tap test/*.{mjs,js} --no-coverage && jest test/jest/test",
+    "test:typescript": "tsd",
     "coverage": "standard | snazzy && tap test/*.js",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\""
   },
@@ -29,6 +31,7 @@
   "homepage": "https://github.com/nodejs/undici#readme",
   "devDependencies": {
     "@sinonjs/fake-timers": "^6.0.1",
+    "@types/node": "^14.6.2",
     "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
     "concurrently": "^5.2.0",
@@ -38,9 +41,16 @@
     "proxyquire": "^2.0.1",
     "snazzy": "^8.0.0",
     "standard": "^14.3.4",
-    "tap": "^14.10.8"
+    "tap": "^14.10.8",
+    "tsd": "^0.13.1"
   },
   "pre-commit": [
     "coverage"
-  ]
+  ],
+  "tsd": {
+    "directory": "test/types",
+    "compilerOptions": {
+      "esModuleInterop": true
+    }
+  }
 }
