@@ -666,7 +666,7 @@ test('stream needDrain', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
+  server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(() => {
       client.destroy()
@@ -688,15 +688,15 @@ test('stream needDrain', (t) => {
       return dst
     })
 
-    setTimeout(() => {
+    setImmediate(() => {
       dst.write = (...args) => {
         orgWrite.call(dst, ...args)
       }
       dst.resume()
-    }, 1e3)
+    })
 
-    await p
-
-    t.pass()
+    p.then(() => {
+      t.pass()
+    })
   })
 })
