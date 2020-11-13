@@ -669,7 +669,6 @@ test('stream needDrain', (t) => {
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(() => {
-      console.error(3)
       client.destroy()
     })
 
