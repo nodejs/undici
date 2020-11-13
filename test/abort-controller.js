@@ -18,6 +18,27 @@ if (global.AbortController) {
   })
 }
 for (const { AbortControllerImpl, controllerName } of controllers) {
+  test(`Abort ${controllerName} before creating request`, (t) => {
+    t.plan(1)
+
+    const server = createServer((req, res) => {
+      t.fail()
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`)
+      const abortController = new AbortControllerImpl()
+      t.teardown(client.destroy.bind(client))
+
+      abortController.abort()
+
+      client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
+        t.ok(err instanceof errors.RequestAbortedError)
+      })
+    })
+  })
+
   test(`Abort ${controllerName} before sending request (no body)`, (t) => {
     t.plan(3)
 
