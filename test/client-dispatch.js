@@ -304,6 +304,9 @@ test('connect call onUpgrade once', (t) => {
     }, {
       onConnect () {
       },
+      onHeaders (statusCode, headers) {
+        t.pass('should not throw')
+      },
       onUpgrade (statusCode, headers, socket) {
         t.strictEqual(count++, 0)
 
@@ -395,7 +398,7 @@ test('dispatch onHeaders missing', (t) => {
 })
 
 test('dispatch onData missing', (t) => {
-  t.plan(2)
+  t.plan(1)
 
   const server = http.createServer((req, res) => {
     res.end('ad')
@@ -426,7 +429,7 @@ test('dispatch onData missing', (t) => {
 })
 
 test('dispatch onComplete missing', (t) => {
-  t.plan(3)
+  t.plan(1)
 
   const server = http.createServer((req, res) => {
     res.end('ad')
@@ -457,7 +460,7 @@ test('dispatch onComplete missing', (t) => {
 })
 
 test('dispatch onError missing', (t) => {
-  t.plan(3)
+  t.plan(1)
 
   const server = http.createServer((req, res) => {
     res.end('ad')
