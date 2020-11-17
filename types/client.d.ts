@@ -2,8 +2,17 @@ import { URL } from 'url'
 import { TlsOptions } from 'tls'
 import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
-import { AbortController } from 'abort-controller'
 import { IncomingHttpHeaders } from 'http'
+
+/**
+ * Issue https://github.com/nodejs/undici/issues/480
+ * 
+ * AbortController is not a dependency of Undici. It is a new feature in Node 15, and requires a shim to use in prior Node versions.
+ * For now, this type will be assigned as `unknown`. When @types/node ships a definition for it we will modify this definition.
+ * Until then, TS devs should also rely on the shim `abort-controller` if they want the correct type definitions.
+ */
+type AbortController = { abort: unknown };
+type AbortSignal = unknown;
 
 export = Client
 
@@ -37,7 +46,7 @@ declare class Client extends EventEmitter {
 	stream(options: Client.RequestOptions, factory: Client.StreamFactory, callback: (err: Error | null, data: Client.StreamData) => void): void;
 
 	/** For easy use with `stream.pipeline` */
-	pipeline(options: Client.PipelineOptions, handler: Client.PipelineHandler): Duplex
+	pipeline(options: Client.PipelineOptions, handler: Client.PipelineHandler): Duplex;
 
 	/** Upgrade to a different protocol */
 	upgrade(options: Client.UpgradeOptions): PromiseLike<Client.UpgradeData>;
@@ -96,7 +105,7 @@ declare namespace Client {
 		/** an object with header-value pairs or an array with header-value pairs bi-indexed (`['header1', 'value1', 'header2', 'value2']`). Default: `null`. */
 		headers?: IncomingHttpHeaders | string[] | null;
 		/** Default: `null` */
-		signal?: AbortController | EventEmitter | null;
+		signal?: AbortSignal | EventEmitter | null;
 		/** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
 		requestTimeout?: number;
 		/** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed. Default: `true` if `method` is `HEAD` or `GET`. */
@@ -105,7 +114,7 @@ declare namespace Client {
 
 	export interface PipelineOptions extends RequestOptions {
 		/** `true` if the `handler` will return an object stream. Default: `false` */
-		objectMode?: boolean
+		objectMode?: boolean;
 	}
 
 	export interface UpgradeOptions {
@@ -116,7 +125,7 @@ declare namespace Client {
 		/** Default: `null` */
 		headers?: IncomingHttpHeaders | null;
 		/** Default: `null` */
-		signal?: AbortController | EventEmitter | null;
+		signal?: AbortSignal | EventEmitter | null;
 		/** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
 		requestTimeout?: number;
 		/** A string of comma separated protocols, in descending preference order. Default: `'Websocket'` */
@@ -129,7 +138,7 @@ declare namespace Client {
 		/** Default: `null` */
 		headers?: IncomingHttpHeaders | null;
 		/** Default: `null` */
-		signal?: AbortController | EventEmitter | null;
+		signal?: AbortSignal | EventEmitter | null;
 		/** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
 		requestTimeout?: number;
 	}
@@ -175,7 +184,7 @@ declare namespace Client {
 	export interface StreamFactoryData {
 		statusCode: number;
 		headers: IncomingHttpHeaders;
-		opaque: unknown
+		opaque: unknown;
 	}
 	export type StreamFactory = (data: StreamFactoryData) => Writable
 
@@ -183,14 +192,14 @@ declare namespace Client {
 		statusCode: number;
 		headers: IncomingHttpHeaders;
 		opaque: unknown;
-		body: Readable
+		body: Readable;
 	}
 
 	export type PipelineHandler = (data: PipelineHandlerData) => Readable
 
 	export interface DispatchHandlers {
 		/** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
-		onConnect?(abort: AbortController): void;
+		onConnect?(abort: AbortController['abort']): void;
 		/** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method */
 		onUpgrade?(statusCode: number, headers: string[] | null, socket: Duplex): void;
 		/** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
