@@ -30,8 +30,11 @@ jobs:
 
     - name: Unit test
       run: |
-        npm run coverage
+        npm run coverage:ci
 
     - name: Test types
       run: |
         npm run test:typescript
+
+    - name: Coverage report
+      uses: codecov/codecov-action@v1
