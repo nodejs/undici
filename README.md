@@ -95,10 +95,10 @@ Options:
 * `signal: AbortSignal|EventEmitter|Null`
   Default: `null`.
 - `headersTimeout: Number`, the timeout after which a request will time out, in
-  milliseconds. Monitors time between receiving a complete headers. 
+  milliseconds. Monitors time between receiving a complete headers.
   Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 - `bodyTimeout: Number`, the timeout after which a request will time out, in
-  milliseconds. Monitors time between receiving a body data. 
+  milliseconds. Monitors time between receiving a body data.
   Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 * `idempotent: Boolean`, whether the requests can be safely retried or not.
   If `false` the request won't be sent until all preceding
@@ -379,10 +379,9 @@ Options:
   Default: `null`
 * `signal: AbortSignal|EventEmitter|Null`.
   Default: `null`
-* `requestTimeout: Number`, the timeout after which a request will time out, in
-  milliseconds. Monitors time between request being enqueued and receiving
-  a response. Use `0` to disable it entirely.
-  Default: `30e3` milliseconds (30s).
+- `headersTimeout: Number`, the timeout after which a request will time out, in
+  milliseconds. Monitors time between receiving a complete headers.
+  Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 * `protocol: String`, a string of comma separated protocols, in descending preference order.
   Default: `Websocket`.
 
@@ -407,10 +406,9 @@ Options:
   Default: `null`
 * `signal: AbortSignal|EventEmitter|Null`.
   Default: `null`
-* `requestTimeout: Number`, the timeout after which a request will time out, in
-  milliseconds. Monitors time between request being enqueued and receiving
-  a response. Use `0` to disable it entirely.
-  Default: `30e3` milliseconds (30s).
+- `headersTimeout: Number`, the timeout after which a request will time out, in
+  milliseconds. Monitors time between receiving a complete headers.
+  Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 
 The `data` parameter in `callback` is defined as follow:
 
@@ -438,10 +436,12 @@ Options:
   Default: `null`.
 * `headers: Object|Null`, an object with header-value pairs.
   Default: `null`.
-* `requestTimeout: Number`, the timeout after which a request will time out, in
-  milliseconds. Monitors time between request being enqueued and receiving
-  a response. Use `0` to disable it entirely.
-  Default: `30e3` milliseconds (30s).
+- `headersTimeout: Number`, the timeout after which a request will time out, in
+  milliseconds. Monitors time between receiving a complete headers.
+  Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
+- `bodyTimeout: Number`, the timeout after which a request will time out, in
+  milliseconds. Monitors time between receiving a body data.
+  Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 * `idempotent: Boolean`, whether the requests can be safely retried or not.
   If `false` the request won't be sent until all preceding
   requests in the pipeline has completed.
