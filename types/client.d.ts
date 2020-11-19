@@ -4,14 +4,6 @@ import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
 import { IncomingHttpHeaders } from 'http'
 
-/**
- * Issue https://github.com/nodejs/undici/issues/480
- *
- * AbortController is not a dependency of Undici. It is a new feature in Node 15, and requires a shim to use in prior Node versions.
- * For now, this type will be assigned as `unknown`. When @types/node ships a definition for it we will modify this definition.
- * Until then, TS devs should also rely on the shim `abort-controller` if they want the correct type definitions.
- */
-type AbortController = { abort: unknown };
 type AbortSignal = unknown;
 
 export = Client
@@ -72,20 +64,14 @@ declare class Client extends EventEmitter {
 
 declare namespace Client {
   export interface Options {
-    /** the timeout after which a socket with active requests will time out. Monitors time between activity on a connected socket. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    socketTimeout?: number;
     /** an IPC endpoint, either Unix domain socket or Windows named pipe. Default: `null`. */
     socketPath?: string | null;
     /** the timeout after which a socket without active requests will time out. Monitors time between activity on a connected socket. This value may be overriden by *keep-alive* hints from the server. Default: `4e3` milliseconds (4s). */
-    idleTimeout?: number;
-    /** enable or disable keep alive connections. Default: `true`. */
-    keepAlive?: boolean;
+    keepAliveTimeout?: number;
     /** the maximum allowed `idleTimeout` when overriden by *keep-alive* hints from the server. Default: `600e3` milliseconds (10min). */
     keepAliveMaxTimeout?: number;
     /** A number subtracted from server *keep-alive* hints when overriding `idleTimeout` to account for timing inaccuries caused by e.g. transport latency. Default: `1e3` milliseconds (1s). */
     keepAliveTimeoutThreshold?: number;
-    /** The timeout after which a request will time out. Monitors time between request is dispatched on socket and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    requestTimeout?: number;
     /** The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`. */
     pipelining?: number;
     /** An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback). Default: `null`. */
@@ -96,20 +82,25 @@ declare namespace Client {
     headersTimeout?: number;
   }
 
-  export interface RequestOptions {
+  export interface DispatchOptions {
     path: string;
     method: string;
-    opaque?: unknown;
     /** Default: `null` */
     body?: string | Buffer | Uint8Array | Readable | null;
-    /** an object with header-value pairs or an array with header-value pairs bi-indexed (`['header1', 'value1', 'header2', 'value2']`). Default: `null`. */
-    headers?: IncomingHttpHeaders | string[] | null;
     /** Default: `null` */
-    signal?: AbortSignal | EventEmitter | null;
-    /** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    requestTimeout?: number;
+    headers?: IncomingHttpHeaders | null;
+    /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Default: `30e3` milliseconds (30s). */
+    headersTimeout?: number;
+    /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving a body data. Use 0 to disable it entirely. Default: `30e3` milliseconds (30s). */
+    bodyTimeout?: number;
     /** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed. Default: `true` if `method` is `HEAD` or `GET`. */
     idempotent?: boolean;
+  }
+
+  export interface RequestOptions extends DispatchOptions {
+    opaque?: unknown;
+    /** Default: `null` */
+    signal?: AbortSignal | EventEmitter | null;
   }
 
   export interface PipelineOptions extends RequestOptions {
@@ -119,41 +110,25 @@ declare namespace Client {
 
   export interface UpgradeOptions {
     path: string;
-    opaque?: unknown;
-    /** Default: `'GET'` */
     method?: string;
     /** Default: `null` */
     headers?: IncomingHttpHeaders | null;
-    /** Default: `null` */
-    signal?: AbortSignal | EventEmitter | null;
-    /** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    requestTimeout?: number;
+    /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Default: `30e3` milliseconds (30s). */
+    headersTimeout?: number;
     /** A string of comma separated protocols, in descending preference order. Default: `'Websocket'` */
     protocol?: string;
+    /** Default: `null` */
+    signal?: AbortSignal | EventEmitter | null;
   }
 
   export interface ConnectOptions {
     path: string;
-    opaque?: unknown;
     /** Default: `null` */
     headers?: IncomingHttpHeaders | null;
+    /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Default: `30e3` milliseconds (30s). */
+    headersTimeout?: number;
     /** Default: `null` */
     signal?: AbortSignal | EventEmitter | null;
-    /** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    requestTimeout?: number;
-  }
-
-  export interface DispatchOptions {
-    path: string;
-    method: string;
-    /** Default: `null` */
-    body?: string | Buffer | Uint8Array | Readable | null;
-    /** Default: `null` */
-    headers?: IncomingHttpHeaders | null;
-    /** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    requestTimeout?: number;
-    /** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed. Default: `true` if `method` is `HEAD` or `GET`. */
-    idempotent?: boolean;
   }
 
   export interface ResponseData {
@@ -199,7 +174,7 @@ declare namespace Client {
 
   export interface DispatchHandlers {
     /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
-    onConnect?(abort: AbortController['abort']): void;
+    onConnect?(abort: () => void): void;
     /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method */
     onUpgrade?(statusCode: number, headers: string[] | null, socket: Duplex): void;
     /** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */

@@ -13,11 +13,6 @@ expectAssignable<Errors.SocketTimeoutError>(new Errors.SocketTimeoutError())
 expectAssignable<'SocketTimeoutError'>(new Errors.SocketTimeoutError().name)
 expectAssignable<'UND_ERR_SOCKET_TIMEOUT'>(new Errors.SocketTimeoutError().code)
 
-expectAssignable<Errors.UndiciError>(new Errors.RequestTimeoutError())
-expectAssignable<Errors.RequestTimeoutError>(new Errors.RequestTimeoutError())
-expectAssignable<'RequestTimeoutError'>(new Errors.RequestTimeoutError().name)
-expectAssignable<'UND_ERR_REQUEST_TIMEOUT'>(new Errors.RequestTimeoutError().code)
-
 expectAssignable<Errors.UndiciError>(new Errors.InvalidReturnError())
 expectAssignable<Errors.InvalidReturnError>(new Errors.InvalidReturnError())
 expectAssignable<'InvalidReturnError'>(new Errors.InvalidReturnError().name)
