@@ -84,8 +84,6 @@ declare namespace Client {
     keepAliveMaxTimeout?: number;
     /** A number subtracted from server *keep-alive* hints when overriding `idleTimeout` to account for timing inaccuries caused by e.g. transport latency. Default: `1e3` milliseconds (1s). */
     keepAliveTimeoutThreshold?: number;
-    /** The timeout after which a request will time out. Monitors time between request is dispatched on socket and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    requestTimeout?: number;
     /** The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`. */
     pipelining?: number;
     /** An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback). Default: `null`. */
@@ -107,7 +105,7 @@ declare namespace Client {
     /** Default: `null` */
     signal?: AbortSignal | EventEmitter | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    requestTimeout?: number;
+    headersTimeout  ?: number;
     /** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed. Default: `true` if `method` is `HEAD` or `GET`. */
     idempotent?: boolean;
   }
@@ -127,7 +125,7 @@ declare namespace Client {
     /** Default: `null` */
     signal?: AbortSignal | EventEmitter | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    requestTimeout?: number;
+    headersTimeout  ?: number;
     /** A string of comma separated protocols, in descending preference order. Default: `'Websocket'` */
     protocol?: string;
   }
@@ -140,7 +138,7 @@ declare namespace Client {
     /** Default: `null` */
     signal?: AbortSignal | EventEmitter | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    requestTimeout?: number;
+    headersTimeout  ?: number;
   }
 
   export interface DispatchOptions {
@@ -151,7 +149,7 @@ declare namespace Client {
     /** Default: `null` */
     headers?: IncomingHttpHeaders | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between request being enqueued and receiving a response. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
-    requestTimeout?: number;
+    headersTimeout  ?: number;
     /** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed. Default: `true` if `method` is `HEAD` or `GET`. */
     idempotent?: boolean;
   }

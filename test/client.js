@@ -320,7 +320,7 @@ test('basic POST with stream', (t) => {
       headers: {
         'content-length': Buffer.byteLength(expected)
       },
-      requestTimeout: 0,
+      headersTimeout: 0,
       body: createReadStream(__filename)
     }, (err, { statusCode, headers, body }) => {
       t.error(err)
@@ -355,7 +355,7 @@ test('basic POST with custom stream', (t) => {
     client.request({
       path: '/',
       method: 'POST',
-      requestTimeout: 0,
+      headersTimeout: 0,
       body
     }, (err, data) => {
       t.error(err)

@@ -15,12 +15,6 @@ declare namespace Errors {
     code: 'UND_ERR_SOCKET_TIMEOUT';
   }
 
-  /** A request exceeds the `requestTimeout` option. */
-  export class RequestTimeoutError extends UndiciError {
-    name: 'RequestTimeoutError';
-    code: 'UND_ERR_REQUEST_TIMEOUT';
-  }
-
   /** Passed an invalid argument. */
   export class InvalidArgumentError extends UndiciError {
     name: 'InvalidArgumentError';
