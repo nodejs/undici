@@ -40,6 +40,34 @@ test('request timeout', (t) => {
   })
 })
 
+test('body timeout', (t) => {
+  t.plan(2)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    res.write('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET', bodyTimeout: 50 }, (err, { body }) => {
+      t.error(err)
+      body.on('data', () => {
+        clock.tick(100)
+      }).on('error', (err) => {
+        t.ok(err instanceof errors.BodyTimeoutError)
+      })
+    })
+
+    clock.tick(50)
+  })
+})
+
 test('Subsequent request starves', (t) => {
   t.plan(3)
 

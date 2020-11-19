@@ -5,7 +5,7 @@ const { Client, errors } = require('..')
 const http = require('http')
 
 test('dispatch invalid opts', (t) => {
-  t.plan(1)
+  t.plan(3)
 
   const client = new Client('http://localhost:5000')
 
@@ -13,6 +13,26 @@ test('dispatch invalid opts', (t) => {
     path: '/',
     method: 'GET',
     upgrade: 1
+  }, {
+    onError (err) {
+      t.ok(err instanceof errors.InvalidArgumentError)
+    }
+  })
+
+  client.dispatch({
+    path: '/',
+    method: 'GET',
+    headersTimeout: 'asd'
+  }, {
+    onError (err) {
+      t.ok(err instanceof errors.InvalidArgumentError)
+    }
+  })
+
+  client.dispatch({
+    path: '/',
+    method: 'GET',
+    bodyTimeout: 'asd'
   }, {
     onError (err) {
       t.ok(err instanceof errors.InvalidArgumentError)
