@@ -59,14 +59,14 @@ expectAssignable<'NotSupportedError'>(new Errors.NotSupportedError().name)
 expectAssignable<'UND_ERR_NOT_SUPPORTED'>(new Errors.NotSupportedError().code)
 
 {
-	// @ts-ignore
-	function f (): Errors.HeadersTimeoutError | Errors.SocketTimeoutError { return }
+  // @ts-ignore
+  function f (): Errors.HeadersTimeoutError | Errors.SocketTimeoutError { return }
 
-	const e = f()
+  const e = f()
 
-	if (e.code === 'UND_ERR_HEADERS_TIMEOUT') {
-		expectAssignable<Errors.HeadersTimeoutError>(e)
-	} else if (e.code === 'UND_ERR_SOCKET_TIMEOUT') {
-		expectAssignable<Errors.SocketTimeoutError>(e)
-	}
+  if (e.code === 'UND_ERR_HEADERS_TIMEOUT') {
+    expectAssignable<Errors.HeadersTimeoutError>(e)
+  } else if (e.code === 'UND_ERR_SOCKET_TIMEOUT') {
+    expectAssignable<Errors.SocketTimeoutError>(e)
+  }
 }
