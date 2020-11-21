@@ -6,7 +6,8 @@ const https = require('https')
 const crypto = require('crypto')
 const { test } = require('tap')
 const { Client } = require('..')
-const { kSocket, kTLSOpts } = require('../lib/core/symbols')
+const { kSocket } = require('../lib/core/symbols')
+const Connector = require('../lib/core/connector')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
@@ -20,6 +21,15 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
   const clientSessions = {}
   let serverRequests = 0
 
+  const connector = new Connector({
+    tls: {
+      ca,
+      rejectUnauthorized: false,
+      maxCachedSessions: 1,
+      servername: 'agent1'
+    }
+  })
+
   t.test('Prepare request', t => {
     t.plan(7)
     const server = https.createServer(options, (req, res) => {
@@ -32,13 +42,8 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
 
     server.listen(0, function () {
       const client = new Client(`https://localhost:${server.address().port}`, {
-        pipelining: 0,
-        tls: {
-          ca,
-          rejectUnauthorized: false,
-          maxCachedSessions: 1,
-          servername: 'agent1'
-        }
+        connector,
+        pipelining: 0
       })
 
       t.teardown(() => {
@@ -80,9 +85,9 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
         const options = queue.shift()
         if (options.ciphers) {
           // Choose different cipher to use different cache entry
-          client[kTLSOpts].ciphers = options.ciphers
+          connector.tls.ciphers = options.ciphers
         } else {
-          delete client[kTLSOpts].ciphers
+          delete connector.tls.ciphers
         }
         client.request(options, (err, data) => {
           t.error(err)
