@@ -8,6 +8,10 @@ const { Readable } = require('stream')
 const { kSocket } = require('../lib/core/symbols')
 const EE = require('events')
 
+setTimeout(() => {
+  throw new Error('timeout')
+}, 2e3).unref()
+
 test('basic get', (t) => {
   t.plan(23)
 
