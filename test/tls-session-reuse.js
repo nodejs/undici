@@ -21,15 +21,6 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
   const clientSessions = {}
   let serverRequests = 0
 
-  const connector = new Connector({
-    tls: {
-      ca,
-      rejectUnauthorized: false,
-      maxCachedSessions: 1,
-      servername: 'agent1'
-    }
-  })
-
   t.test('Prepare request', t => {
     t.plan(7)
     const server = https.createServer(options, (req, res) => {
@@ -41,6 +32,16 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
     })
 
     server.listen(0, function () {
+      const connector = new Connector({
+        url: new URL(`https://localhost:${server.address().port}`),
+        tls: {
+          ca,
+          rejectUnauthorized: false,
+          maxCachedSessions: 1,
+          servername: 'agent1'
+        }
+      })
+
       const client = new Client(`https://localhost:${server.address().port}`, {
         connector,
         pipelining: 0
