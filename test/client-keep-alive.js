@@ -5,6 +5,7 @@ const { Client } = require('..')
 const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('net')
 const http = require('http')
+const FakeTimers = require('@sinonjs/fake-timers')
 
 test('keep-alive header', (t) => {
   t.plan(2)
@@ -43,6 +44,9 @@ test('keep-alive header', (t) => {
 test('keep-alive header 0', (t) => {
   t.plan(2)
 
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
     socket.write('Content-Length: 0\r\n')
@@ -64,13 +68,10 @@ test('keep-alive header 0', (t) => {
     }, (err, { body }) => {
       t.error(err)
       body.on('end', () => {
-        const timeout = setTimeout(() => {
-          t.fail()
-        }, 600)
         client.on('disconnect', () => {
           t.pass()
-          clearTimeout(timeout)
         })
+        clock.tick(600)
       }).resume()
     })
   })
