@@ -29,7 +29,9 @@ test('basic get', (t) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
     t.tearDown(client.close.bind(client))
 
     const signal = new EE()
