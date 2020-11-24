@@ -324,6 +324,9 @@ test('connect call onUpgrade once', (t) => {
     }, {
       onConnect () {
       },
+      onHeaders (statusCode, headers) {
+        t.pass('should not throw')
+      },
       onUpgrade (statusCode, headers, socket) {
         t.strictEqual(count++, 0)
 
@@ -348,5 +351,165 @@ test('connect call onUpgrade once', (t) => {
         t.fail()
       }
     })
+  })
+})
+
+test('dispatch onConnect missing', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onHeaders (statusCode, headers) {
+        t.pass('should not throw')
+      },
+      onData (buf) {
+        t.pass('should not throw')
+      },
+      onComplete (trailers) {
+        t.pass('should not throw')
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      }
+    })
+  })
+})
+
+test('dispatch onHeaders missing', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onData (buf) {
+        t.pass('should not throw')
+      },
+      onComplete (trailers) {
+        t.pass('should not throw')
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      }
+    })
+  })
+})
+
+test('dispatch onData missing', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.pass('should not throw')
+      },
+      onComplete (trailers) {
+        t.pass('should not throw')
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      }
+    })
+  })
+})
+
+test('dispatch onComplete missing', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+        t.pass('should not throw')
+      },
+      onData (buf) {
+        t.pass('should not throw')
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      }
+    })
+  })
+})
+
+test('dispatch onError missing', (t) => {
+  t.plan(1)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    try {
+      client.dispatch({
+        path: '/',
+        method: 'GET'
+      }, {
+        onConnect () {
+        },
+        onHeaders (statusCode, headers) {
+          t.pass('should not throw')
+        },
+        onData (buf) {
+          t.pass('should not throw')
+        },
+        onComplete (trailers) {
+          t.pass('should not throw')
+        }
+      })
+    } catch (err) {
+      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+    }
   })
 })
