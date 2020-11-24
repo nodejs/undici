@@ -426,8 +426,7 @@ test('pool dispatch', (t) => {
       onComplete () {
         t.strictEqual(buf, 'asd')
       },
-      onError (err) {
-        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      onError () {
       }
     })
   })
@@ -563,8 +562,7 @@ test('pool dispatch error', (t) => {
       onComplete () {
         t.pass()
       },
-      onError (err) {
-        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      onError () {
       }
     })
 
@@ -620,8 +618,7 @@ test('pool request abort in queue', (t) => {
       onComplete () {
         t.pass()
       },
-      onError (err) {
-        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      onError () {
       }
     })
 
@@ -666,8 +663,7 @@ test('pool stream abort in queue', (t) => {
       onComplete () {
         t.pass()
       },
-      onError (err) {
-        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      onError () {
       }
     })
 
@@ -712,8 +708,7 @@ test('pool pipeline abort in queue', (t) => {
       onComplete () {
         t.pass()
       },
-      onError (err) {
-        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      onError () {
       }
     })
 
