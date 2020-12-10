@@ -137,6 +137,8 @@ The `data` parameter in `callback` is defined as follow:
 * `statusCode: Number`
 * `opaque: Any`
 * `headers: Object`, an object where all keys have been lowercased.
+* `trailers: Object`, an object where all keys have been lowercased. This object start out
+  as empty and will be mutated to contain trailers after `body` has emitted `'end'`.
 * `body: stream.Readable` response payload. A user **must**
   either fully consume or destroy the body unless there is an error, or no further requests
   will be processed.
@@ -161,6 +163,7 @@ client.request({
   const {
     statusCode,
     headers,
+    trailers,
     body
   } = data
 
@@ -169,6 +172,9 @@ client.request({
 
   body.setEncoding('utf8')
   body.on('data', console.log)
+  body.on('end', () => {
+    console.log('trailers', trailers)
+  })
 
   client.close()
 })
