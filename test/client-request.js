@@ -70,3 +70,32 @@ test('request body destroyed on invalid callback', (t) => {
     }
   })
 })
+
+test('trailers', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { Trailer: 'Content-MD5' })
+    res.addTrailers({ 'Content-MD5': 'test' })
+    res.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    const { body, trailers } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+
+    t.strictDeepEqual(trailers, {})
+
+    body
+      .on('data', () => t.fail())
+      .on('end', () => {
+        t.strictDeepEqual(trailers, { 'content-md5': 'test' })
+      })
+  })
+})
