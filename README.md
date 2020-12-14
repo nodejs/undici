@@ -190,7 +190,7 @@ idempotent requests with a stream request body.
 
 ##### Aborting a request
 
-A request can may be aborted using either an `AbortController` or an `EventEmitter`.
+A request can be aborted using either an `AbortController` or an `EventEmitter`.
 To use `AbortController` in Node.js versions earlier than 15, you will need to
 install a shim - `npm i abort-controller`.
 
