@@ -68,42 +68,6 @@ test('body timeout', (t) => {
   })
 })
 
-test('Subsequent request starves', (t) => {
-  t.plan(3)
-
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
-
-  const server = createServer((req, res) => {
-    setTimeout(() => {
-      res.end('hello')
-    }, 100)
-    clock.tick(50)
-  })
-  t.teardown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 2
-    })
-    t.teardown(client.destroy.bind(client))
-
-    client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.error(err)
-      response.body
-        .resume()
-        .on('end', () => {
-          t.pass()
-        })
-    })
-
-    client.request({ path: '/', method: 'GET', headersTimeout: 50 }, (err, response) => {
-      t.ok(err instanceof errors.HeadersTimeoutError)
-      clock.tick(100)
-    })
-  })
-})
-
 test('With EE signal', (t) => {
   t.plan(1)
 
