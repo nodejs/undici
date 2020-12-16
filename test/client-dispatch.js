@@ -513,3 +513,61 @@ test('dispatch onError missing', (t) => {
     }
   })
 })
+
+test('dispatch CONNECT onUpgrade missing', (t) => {
+  t.plan(2)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.destroy.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET',
+      upgrade: 'Websocket'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(err.message, 'invalid onUpgrade method')
+      }
+    })
+  })
+})
+
+test('dispatch upgrade onUpgrade missing', (t) => {
+  t.plan(2)
+
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET',
+      upgrade: 'Websocket'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers) {
+      },
+      onError (err) {
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(err.message, 'invalid onUpgrade method')
+      }
+    })
+  })
+})
