@@ -151,7 +151,9 @@ test('POST with a stream that errors and pipelining 1 should reconnect', (t) => 
       body: new Readable({
         read () {
           this.push('a string')
-          this.destroy(new Error('kaboom'))
+          setImmediate(() => {
+            this.destroy(new Error('kaboom'))
+          })
         }
       })
     }, (err, data) => {
