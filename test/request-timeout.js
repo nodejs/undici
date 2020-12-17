@@ -331,11 +331,38 @@ test('client.close should wait for the timeout', (t) => {
 })
 
 test('Validation', (t) => {
-  t.plan(1)
+  t.plan(4)
 
   try {
     const client = new Client('http://localhost:3000', {
       headersTimeout: 'foobar'
+    })
+    t.teardown(client.destroy.bind(client))
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  }
+
+  try {
+    const client = new Client('http://localhost:3000', {
+      headersTimeout: -1
+    })
+    t.teardown(client.destroy.bind(client))
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  }
+
+  try {
+    const client = new Client('http://localhost:3000', {
+      bodyTimeout: 'foobar'
+    })
+    t.teardown(client.destroy.bind(client))
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  }
+
+  try {
+    const client = new Client('http://localhost:3000', {
+      bodyTimeout: -1
     })
     t.teardown(client.destroy.bind(client))
   } catch (err) {
