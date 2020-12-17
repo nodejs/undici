@@ -388,6 +388,15 @@ test('invalid options throws', (t) => {
   }
 
   try {
+    const client = new Client(new URL('http://localhost:200'), { keepAlive: false })
+    client.close(null)
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'unsupported keepAlive')
+  }
+
+  try {
     new Client(new URL('http://localhost:200'), { idleTimeout: 30e3 }) // eslint-disable-line
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)

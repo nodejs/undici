@@ -252,7 +252,7 @@ test('response invalid content length with close', (t) => {
   t.teardown(server.close.bind(server))
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAlive: false
+      pipelining: 0
     })
     t.teardown(client.destroy.bind(client))
 
