@@ -659,7 +659,7 @@ test('stream body destroyed on invalid callback', (t) => {
 })
 
 test('stream needDrain', (t) => {
-  t.plan(1)
+  t.plan(3)
 
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(4096))
@@ -675,6 +675,14 @@ test('stream needDrain', (t) => {
     const dst = new PassThrough()
     dst.pause()
 
+    if (dst.writableNeedDrain === undefined) {
+      Object.defineProperty(dst, 'writableNeedDrain', {
+        get () {
+          return this._writableState.needDrain
+        }
+      })
+    }
+
     while (dst.write(Buffer.alloc(4096))) {
 
     }
@@ -685,14 +693,70 @@ test('stream needDrain', (t) => {
       path: '/',
       method: 'GET'
     }, () => {
+      t.strictEqual(dst._writableState.needDrain, true)
+      t.strictEqual(dst.writableNeedDrain, true)
+
+      setImmediate(() => {
+        dst.write = (...args) => {
+          orgWrite.call(dst, ...args)
+        }
+        dst.resume()
+      })
+
       return dst
     })
 
-    setImmediate(() => {
-      dst.write = (...args) => {
-        orgWrite.call(dst, ...args)
-      }
-      dst.resume()
+    p.then(() => {
+      t.pass()
+    })
+  })
+})
+
+test('stream legacy needDrain', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end(Buffer.alloc(4096))
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(() => {
+      client.destroy()
+    })
+
+    const dst = new PassThrough()
+    dst.pause()
+
+    if (dst.writableNeedDrain !== undefined) {
+      Object.defineProperty(dst, 'writableNeedDrain', {
+        get () {
+        }
+      })
+    }
+
+    while (dst.write(Buffer.alloc(4096))) {
+
+    }
+
+    const orgWrite = dst.write
+    dst.write = () => t.fail()
+    const p = client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      t.strictEqual(dst._writableState.needDrain, true)
+      t.strictEqual(dst.writableNeedDrain, undefined)
+
+      setImmediate(() => {
+        dst.write = (...args) => {
+          orgWrite.call(dst, ...args)
+        }
+        dst.resume()
+      })
+
+      return dst
     })
 
     p.then(() => {
