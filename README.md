@@ -64,11 +64,11 @@ Options:
   Default: `1e3` milliseconds (1s).
 
 - `headersTimeout: Number`, the timeout after which a request will time out, in
-  milliseconds. Monitors time between receiving a complete headers.
+  milliseconds. Monitors time between receiving complete headers.
   Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 
 - `bodyTimeout: Number`, the timeout after which a request will time out, in
-  milliseconds. Monitors time between receiving a body data.
+  milliseconds. Monitors time between receiving body data.
   Use `0` to disable it entirely. Default: `30e3` milliseconds (30s).
 
 - `pipelining: Number`, the amount of concurrent requests to be sent over the
