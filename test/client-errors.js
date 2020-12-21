@@ -361,7 +361,7 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    const client = new Client(new URL('http://localhost:200'))
+    const client = new Client(new URL('http://localhost:200')) // eslint-disable-line
     client.destroy(null, null)
     t.fail()
   } catch (err) {
@@ -370,8 +370,8 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    const client = new Client(new URL('http://localhost:200'))
-    client.close(null)
+    const client = new Client(new URL('http://localhost:200')) // eslint-disable-line
+    client.close(null, null)
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
@@ -379,8 +379,7 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    const client = new Client(new URL('http://localhost:200'), { maxKeepAliveTimeout: 1e3 })
-    client.close(null)
+    new Client(new URL('http://localhost:200'), { maxKeepAliveTimeout: 1e3 }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
@@ -388,16 +387,16 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    const client = new Client(new URL('http://localhost:200'), { keepAlive: false })
-    client.close(null)
+    new Client(new URL('http://localhost:200'), { keepAlive: false }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported keepAlive')
+    t.strictEqual(err.message, 'unsupported keepAlive, use pipelining=0 instead')
   }
 
   try {
     new Client(new URL('http://localhost:200'), { idleTimeout: 30e3 }) // eslint-disable-line
+    t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.strictEqual(err.message, 'unsupported idleTimeout, use keepAliveTimeout instead')
@@ -405,16 +404,10 @@ test('invalid options throws', (t) => {
 
   try {
     new Client(new URL('http://localhost:200'), { socketTimeout: 30e3 }) // eslint-disable-line
+    t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported socketTimeout')
-  }
-
-  try {
-    new Client(new URL('http://localhost:200'), { headersTimeout: 30e3 }) // eslint-disable-line
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported headersTimeout')
+    t.strictEqual(err.message, 'unsupported socketTimeout, use headersTimeout & bodyTimeout instead')
   }
 
   t.end()
