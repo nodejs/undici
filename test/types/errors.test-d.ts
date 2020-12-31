@@ -1,67 +1,67 @@
 import { expectAssignable } from 'tsd'
-import { Errors } from '../..'
+import { errors } from '../..'
 
-expectAssignable<Errors.UndiciError>(new Errors.UndiciError())
+expectAssignable<errors.UndiciError>(new errors.UndiciError())
 
-expectAssignable<Errors.UndiciError>(new Errors.HeadersTimeoutError())
-expectAssignable<Errors.HeadersTimeoutError>(new Errors.HeadersTimeoutError())
-expectAssignable<'HeadersTimeoutError'>(new Errors.HeadersTimeoutError().name)
-expectAssignable<'UND_ERR_HEADERS_TIMEOUT'>(new Errors.HeadersTimeoutError().code)
+expectAssignable<errors.UndiciError>(new errors.HeadersTimeoutError())
+expectAssignable<errors.HeadersTimeoutError>(new errors.HeadersTimeoutError())
+expectAssignable<'HeadersTimeoutError'>(new errors.HeadersTimeoutError().name)
+expectAssignable<'UND_ERR_HEADERS_TIMEOUT'>(new errors.HeadersTimeoutError().code)
 
-expectAssignable<Errors.UndiciError>(new Errors.SocketTimeoutError())
-expectAssignable<Errors.SocketTimeoutError>(new Errors.SocketTimeoutError())
-expectAssignable<'SocketTimeoutError'>(new Errors.SocketTimeoutError().name)
-expectAssignable<'UND_ERR_SOCKET_TIMEOUT'>(new Errors.SocketTimeoutError().code)
+expectAssignable<errors.UndiciError>(new errors.SocketTimeoutError())
+expectAssignable<errors.SocketTimeoutError>(new errors.SocketTimeoutError())
+expectAssignable<'SocketTimeoutError'>(new errors.SocketTimeoutError().name)
+expectAssignable<'UND_ERR_SOCKET_TIMEOUT'>(new errors.SocketTimeoutError().code)
 
-expectAssignable<Errors.UndiciError>(new Errors.InvalidReturnError())
-expectAssignable<Errors.InvalidReturnError>(new Errors.InvalidReturnError())
-expectAssignable<'InvalidReturnError'>(new Errors.InvalidReturnError().name)
-expectAssignable<'UND_ERR_INVALID_RETURN_VALUE'>(new Errors.InvalidReturnError().code)
+expectAssignable<errors.UndiciError>(new errors.InvalidReturnError())
+expectAssignable<errors.InvalidReturnError>(new errors.InvalidReturnError())
+expectAssignable<'InvalidReturnError'>(new errors.InvalidReturnError().name)
+expectAssignable<'UND_ERR_INVALID_RETURN_VALUE'>(new errors.InvalidReturnError().code)
 
-expectAssignable<Errors.UndiciError>(new Errors.RequestAbortedError())
-expectAssignable<Errors.RequestAbortedError>(new Errors.RequestAbortedError())
-expectAssignable<'RequestAbortedError'>(new Errors.RequestAbortedError().name)
-expectAssignable<'UND_ERR_ABORTED'>(new Errors.RequestAbortedError().code)
+expectAssignable<errors.UndiciError>(new errors.RequestAbortedError())
+expectAssignable<errors.RequestAbortedError>(new errors.RequestAbortedError())
+expectAssignable<'RequestAbortedError'>(new errors.RequestAbortedError().name)
+expectAssignable<'UND_ERR_ABORTED'>(new errors.RequestAbortedError().code)
 
-expectAssignable<Errors.UndiciError>(new Errors.InformationalError())
-expectAssignable<Errors.InformationalError>(new Errors.InformationalError())
-expectAssignable<'InformationalError'>(new Errors.InformationalError().name)
-expectAssignable<'UND_ERR_INFO'>(new Errors.InformationalError().code)
+expectAssignable<errors.UndiciError>(new errors.InformationalError())
+expectAssignable<errors.InformationalError>(new errors.InformationalError())
+expectAssignable<'InformationalError'>(new errors.InformationalError().name)
+expectAssignable<'UND_ERR_INFO'>(new errors.InformationalError().code)
 
-expectAssignable<Errors.UndiciError>(new Errors.ContentLengthMismatchError())
-expectAssignable<Errors.ContentLengthMismatchError>(new Errors.ContentLengthMismatchError())
-expectAssignable<'ContentLengthMismatchError'>(new Errors.ContentLengthMismatchError().name)
-expectAssignable<'UND_ERR_CONTENT_LENGTH_MISMATCH'>(new Errors.ContentLengthMismatchError().code)
+expectAssignable<errors.UndiciError>(new errors.ContentLengthMismatchError())
+expectAssignable<errors.ContentLengthMismatchError>(new errors.ContentLengthMismatchError())
+expectAssignable<'ContentLengthMismatchError'>(new errors.ContentLengthMismatchError().name)
+expectAssignable<'UND_ERR_CONTENT_LENGTH_MISMATCH'>(new errors.ContentLengthMismatchError().code)
 
-expectAssignable<Errors.UndiciError>(new Errors.ClientDestroyedError())
-expectAssignable<Errors.ClientDestroyedError>(new Errors.ClientDestroyedError())
-expectAssignable<'ClientDestroyedError'>(new Errors.ClientDestroyedError().name)
-expectAssignable<'UND_ERR_DESTROYED'>(new Errors.ClientDestroyedError().code)
+expectAssignable<errors.UndiciError>(new errors.ClientDestroyedError())
+expectAssignable<errors.ClientDestroyedError>(new errors.ClientDestroyedError())
+expectAssignable<'ClientDestroyedError'>(new errors.ClientDestroyedError().name)
+expectAssignable<'UND_ERR_DESTROYED'>(new errors.ClientDestroyedError().code)
 
-expectAssignable<Errors.UndiciError>(new Errors.ClientClosedError())
-expectAssignable<Errors.ClientClosedError>(new Errors.ClientClosedError())
-expectAssignable<'ClientClosedError'>(new Errors.ClientClosedError().name)
-expectAssignable<'UND_ERR_CLOSED'>(new Errors.ClientClosedError().code)
+expectAssignable<errors.UndiciError>(new errors.ClientClosedError())
+expectAssignable<errors.ClientClosedError>(new errors.ClientClosedError())
+expectAssignable<'ClientClosedError'>(new errors.ClientClosedError().name)
+expectAssignable<'UND_ERR_CLOSED'>(new errors.ClientClosedError().code)
 
-expectAssignable<Errors.UndiciError>(new Errors.SocketError())
-expectAssignable<Errors.SocketError>(new Errors.SocketError())
-expectAssignable<'SocketError'>(new Errors.SocketError().name)
-expectAssignable<'UND_ERR_SOCKET'>(new Errors.SocketError().code)
+expectAssignable<errors.UndiciError>(new errors.SocketError())
+expectAssignable<errors.SocketError>(new errors.SocketError())
+expectAssignable<'SocketError'>(new errors.SocketError().name)
+expectAssignable<'UND_ERR_SOCKET'>(new errors.SocketError().code)
 
-expectAssignable<Errors.UndiciError>(new Errors.NotSupportedError())
-expectAssignable<Errors.NotSupportedError>(new Errors.NotSupportedError())
-expectAssignable<'NotSupportedError'>(new Errors.NotSupportedError().name)
-expectAssignable<'UND_ERR_NOT_SUPPORTED'>(new Errors.NotSupportedError().code)
+expectAssignable<errors.UndiciError>(new errors.NotSupportedError())
+expectAssignable<errors.NotSupportedError>(new errors.NotSupportedError())
+expectAssignable<'NotSupportedError'>(new errors.NotSupportedError().name)
+expectAssignable<'UND_ERR_NOT_SUPPORTED'>(new errors.NotSupportedError().code)
 
 {
   // @ts-ignore
-  function f (): Errors.HeadersTimeoutError | Errors.SocketTimeoutError { return }
+  function f (): errors.HeadersTimeoutError | errors.SocketTimeoutError { return }
 
   const e = f()
 
   if (e.code === 'UND_ERR_HEADERS_TIMEOUT') {
-    expectAssignable<Errors.HeadersTimeoutError>(e)
+    expectAssignable<errors.HeadersTimeoutError>(e)
   } else if (e.code === 'UND_ERR_SOCKET_TIMEOUT') {
-    expectAssignable<Errors.SocketTimeoutError>(e)
+    expectAssignable<errors.SocketTimeoutError>(e)
   }
 }
