@@ -38,11 +38,11 @@ single unix socket with pipelining.
 <a name='client'></a>
 ### `new undici.Client(url, opts)`
 
-A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection. Pipelining is disabled
+A basic HTTP/1.1 client, mapped on top of a single TCP/TLS connection. Pipelining is disabled
 by default.
 
 `url` can be a string or a [`URL`](https://nodejs.org/api/url.html#url_class_url) object.
-It should only include the protocol, hostname, and the port.
+It should only include the protocol, hostname, and port.
 
 Options:
 
