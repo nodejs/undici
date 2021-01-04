@@ -1,9 +1,11 @@
 import { Duplex, Readable, Writable } from 'stream'
 import { expectAssignable } from 'tsd'
 import { Client, Pool } from '../..'
+import { URL } from 'url'
 
 expectAssignable<Pool>(new Pool(''))
 expectAssignable<Pool>(new Pool('', {}))
+expectAssignable<Pool>(new Pool(new URL('http://localhost'), {}))
 
 {
   const pool = new Pool('', {})
