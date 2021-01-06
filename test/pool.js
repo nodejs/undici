@@ -3,7 +3,7 @@
 const proxyquire = require('proxyquire')
 const { test } = require('tap')
 const undici = require('..')
-const { Pool, errors } = require('..')
+const { Client, Pool, errors } = require('..')
 const { createServer } = require('http')
 const { EventEmitter } = require('events')
 const { promisify } = require('util')
@@ -11,6 +11,46 @@ const { PassThrough, Readable } = require('stream')
 const eos = require('stream').finished
 const net = require('net')
 const EE = require('events')
+
+test('connect/disconnect event(s)', (t) => {
+  const clients = 2
+
+  t.plan(clients * 3)
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, {
+      Connection: 'keep-alive',
+      'Keep-Alive': 'timeout=1s'
+    })
+    res.end('ok')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const pool = new Pool(`http://localhost:${server.address().port}`, {
+      connections: clients,
+      keepAliveTimeoutThreshold: 100
+    })
+    t.tearDown(pool.close.bind(pool))
+
+    pool.on('connect', (client) => {
+      t.strictEqual(client instanceof Client, true)
+    })
+    pool.on('disconnect', (client) => {
+      t.strictEqual(client instanceof Client, true)
+    })
+
+    for (let i = 0; i < clients; i++) {
+      pool.request({
+        path: '/',
+        method: 'GET'
+      }, (err, { headers, body }) => {
+        t.error(err)
+        body.resume()
+      })
+    }
+  })
+})
 
 test('basic get', (t) => {
   t.plan(9)

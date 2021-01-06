@@ -580,6 +580,14 @@ Calls [`client.close(callback)`](#close) on all the clients.
 
 Calls [`client.destroy(err, callback)`](#destroy) on all the clients.
 
+#### Events
+
+* `'connect'`, emitted when a client has connected, the `Client`
+    instance is passed as argument.
+
+* `'disconnect'`, emitted when a client has disconnected, the `Client`
+    instance is passed as argument.
+
 <a name='errors'></a>
 ### `undici.errors`
 
