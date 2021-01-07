@@ -28,7 +28,11 @@ jobs:
       run: |
         npm install
 
-    - name: Unit test
+    - name: Unit test (no coverage)
+      run: |
+        npm test
+
+    - name: Unit test (coverage)
       run: |
         npm run coverage:ci
 

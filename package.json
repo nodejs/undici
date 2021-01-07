@@ -7,7 +7,7 @@
   "module": "wrapper.mjs",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "tap test/*.{mjs,js} --no-coverage && jest test/jest/test",
+    "test": "tap test/*.js --no-coverage && jest test/jest/test",
     "test:typescript": "tsd",
     "coverage": "standard | snazzy && tap test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
