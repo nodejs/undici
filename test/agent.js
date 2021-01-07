@@ -5,7 +5,7 @@ const { Agent, request, stream, pipeline, setGlobalAgent } = require('../lib/age
 const { PassThrough } = require('stream')
 const { InvalidArgumentError, InvalidReturnValueError } = require('../lib/core/errors')
 
-if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
+if (nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
   tap.test('setGlobalAgent', t => {
     t.plan(2)
 
