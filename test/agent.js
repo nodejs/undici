@@ -8,40 +8,40 @@ const { InvalidArgumentError, InvalidReturnValueError } = require('../lib/core/e
 if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
   tap.test('setGlobalAgent', t => {
     t.plan(2)
-  
+
     t.test('fails if agent does not implement `get` method', t => {
       t.plan(1)
       t.throw(() => setGlobalAgent({ get: 'not a function' }), InvalidArgumentError)
     })
-  
+
     t.test('sets global agent', t => {
       t.plan(2)
       t.notThrow(() => setGlobalAgent(new Agent()))
       t.notThrow(() => setGlobalAgent({ get: () => {} }))
     })
-  
+
     t.tearDown(() => {
       // reset globalAgent to a fresh Agent instance for later tests
       setGlobalAgent(new Agent())
     })
   })
-  
+
   tap.test('Agent', t => {
     t.plan(4)
-  
+
     t.notThrow(() => new Agent())
     t.notThrow(() => new Agent({ connections: 5 }))
     t.throw(() => new Agent().get(), InvalidArgumentError)
     t.throw(() => new Agent().get(''), InvalidArgumentError)
   })
-  
+
   tap.test('request a resource', t => {
     t.plan(4)
-  
+
     t.test('with globalAgent', t => {
       t.plan(6)
       const wanted = 'payload'
-  
+
       const server = http.createServer((req, res) => {
         t.strictEqual('/', req.url)
         t.strictEqual('GET', req.method)
@@ -49,9 +49,9 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
-  
+
       t.tearDown(server.close.bind(server))
-  
+
       server.listen(0, () => {
         request(`http://localhost:${server.address().port}`)
           .then(({ statusCode, headers, body }) => {
@@ -70,11 +70,11 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
           })
       })
     })
-  
+
     t.test('with local agent', t => {
       t.plan(6)
       const wanted = 'payload'
-  
+
       const server = http.createServer((req, res) => {
         t.strictEqual('/', req.url)
         t.strictEqual('GET', req.method)
@@ -82,11 +82,11 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
-  
+
       t.tearDown(server.close.bind(server))
-  
+
       const agent = new Agent()
-  
+
       server.listen(0, () => {
         request(`http://localhost:${server.address().port}`, { agent })
           .then(({ statusCode, headers, body }) => {
@@ -105,7 +105,7 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
           })
       })
     })
-  
+
     t.test('fails with invalid URL', t => {
       t.plan(4)
       t.throw(() => request(), InvalidArgumentError, 'throws on missing url argument')
@@ -113,7 +113,7 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
       t.throw(() => request({}), InvalidArgumentError, 'throws on missing url.origin argument')
       t.throw(() => request({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
     })
-  
+
     t.test('fails with invalid client', t => {
       t.plan(1)
       const agent = {
@@ -122,14 +122,14 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
       t.throw(() => request('https://example.com', { agent }), InvalidReturnValueError)
     })
   })
-  
+
   tap.test('stream a resource', t => {
     t.plan(4)
-  
+
     t.test('with globalAgent', t => {
       t.plan(6)
       const wanted = 'payload'
-  
+
       const server = http.createServer((req, res) => {
         t.strictEqual('/', req.url)
         t.strictEqual('GET', req.method)
@@ -137,9 +137,9 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
-  
+
       t.tearDown(server.close.bind(server))
-  
+
       server.listen(0, () => {
         stream(
           `http://localhost:${server.address().port}`,
@@ -164,11 +164,11 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
         )
       })
     })
-  
+
     t.test('with a local agent', t => {
       t.plan(6)
       const wanted = 'payload'
-  
+
       const server = http.createServer((req, res) => {
         t.strictEqual('/', req.url)
         t.strictEqual('GET', req.method)
@@ -176,11 +176,11 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
-  
+
       t.tearDown(server.close.bind(server))
-  
+
       const agent = new Agent()
-  
+
       server.listen(0, () => {
         stream(
           `http://localhost:${server.address().port}`,
@@ -206,7 +206,7 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
         )
       })
     })
-  
+
     t.test('fails with invalid URL', t => {
       t.plan(4)
       t.throw(() => stream(), InvalidArgumentError, 'throws on missing url argument')
@@ -214,7 +214,7 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
       t.throw(() => stream({}), InvalidArgumentError, 'throws on missing url.origin argument')
       t.throw(() => stream({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
     })
-  
+
     t.test('fails with invalid client', t => {
       t.plan(1)
       const agent = {
@@ -223,14 +223,14 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
       t.throw(() => stream('https://example.com', { agent }), InvalidReturnValueError)
     })
   })
-  
+
   tap.test('pipeline a resource', t => {
     t.plan(4)
-  
+
     t.test('with globalAgent', t => {
       t.plan(6)
       const wanted = 'payload'
-  
+
       const server = http.createServer((req, res) => {
         t.strictEqual('/', req.url)
         t.strictEqual('GET', req.method)
@@ -238,12 +238,12 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
-  
+
       t.tearDown(server.close.bind(server))
-  
+
       server.listen(0, () => {
         const bufs = []
-  
+
         pipeline(
           `http://localhost:${server.address().port}`,
           {},
@@ -265,11 +265,11 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
           })
       })
     })
-  
+
     t.test('with a local agent', t => {
       t.plan(6)
       const wanted = 'payload'
-  
+
       const server = http.createServer((req, res) => {
         t.strictEqual('/', req.url)
         t.strictEqual('GET', req.method)
@@ -277,14 +277,14 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
-  
+
       t.tearDown(server.close.bind(server))
-  
+
       const agent = new Agent()
-  
+
       server.listen(0, () => {
         const bufs = []
-  
+
         pipeline(
           `http://localhost:${server.address().port}`,
           { agent },
@@ -306,7 +306,7 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
           })
       })
     })
-  
+
     t.test('fails with invalid URL', t => {
       t.plan(4)
       t.throw(() => pipeline(), InvalidArgumentError, 'throws on missing url argument')
@@ -314,7 +314,7 @@ if (!nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
       t.throw(() => pipeline({}), InvalidArgumentError, 'throws on missing url.origin argument')
       t.throw(() => pipeline({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
     })
-  
+
     t.test('fails with invalid client', t => {
       t.plan(1)
       const agent = {
