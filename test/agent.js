@@ -1,12 +1,15 @@
 const tap = require('tap')
 const http = require('http')
-const { nodeMajorVersionIsGreaterThanOrEqualTo } = require('../lib/core/util')
 const { Agent, request, stream, pipeline, setGlobalAgent } = require('../lib/agent')
 const { PassThrough } = require('stream')
 const { InvalidArgumentError, InvalidReturnValueError } = require('../lib/core/errors')
 
-if (nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
-  tap.test('setGlobalAgent', t => {
+const SKIP = typeof WeakRef === 'undefined' || typeof FinalizationRegistry === 'undefined'
+
+tap.test('Agent', { skip: SKIP }, t => {
+  t.plan(5)
+
+  t.test('setGlobalAgent', t => {
     t.plan(2)
 
     t.test('fails if agent does not implement `get` method', t => {
@@ -26,7 +29,7 @@ if (nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
     })
   })
 
-  tap.test('Agent', t => {
+  t.test('Agent', t => {
     t.plan(4)
 
     t.notThrow(() => new Agent())
@@ -35,7 +38,7 @@ if (nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
     t.throw(() => new Agent().get(''), InvalidArgumentError)
   })
 
-  tap.test('request a resource', t => {
+  t.test('request a resource', t => {
     t.plan(4)
 
     t.test('with globalAgent', t => {
@@ -123,7 +126,7 @@ if (nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
     })
   })
 
-  tap.test('stream a resource', t => {
+  t.test('stream a resource', t => {
     t.plan(4)
 
     t.test('with globalAgent', t => {
@@ -224,7 +227,7 @@ if (nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
     })
   })
 
-  tap.test('pipeline a resource', t => {
+  t.test('pipeline a resource', t => {
     t.plan(4)
 
     t.test('with globalAgent', t => {
@@ -323,4 +326,4 @@ if (nodeMajorVersionIsGreaterThanOrEqualTo(14)) {
       t.throw(() => pipeline('https://example.com', { agent }), InvalidReturnValueError)
     })
   })
-}
+})
