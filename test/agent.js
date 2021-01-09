@@ -1,3 +1,5 @@
+'use strict'
+
 const tap = require('tap')
 const http = require('http')
 const { Agent, request, stream, pipeline, setGlobalAgent } = require('../lib/agent')
