@@ -603,6 +603,68 @@ const { errors } = require('undici')
 | `InformationalError`         |  `UND_ERR_INFO`                   | expected error with reason                     |
 | `TrailerMismatchError`       |  `UND_ERR_TRAILER_MISMATCH`       | trailers did not match specification           |
 
+### `new undici.Agent(opts)`
+
+* opts `undici.Pool.options` - options passed through to Pool constructor
+
+Returns: `Agent`
+
+Requires: Node.js v14+
+
+Returns a new Agent instance for use with pool based requests or the following top-level methods `request`, `pipeline`, and `stream`.
+
+#### `agent.get(origin): Pool`
+
+* origin `string` - A pool origin to be retrieved from the Agent.
+
+Requires: Node.js v14+
+
+This method retrieves Pool instances from the Agent. If the pool does not exist it is automatically added. You do not need to manually close these pools as they are automatically removed using a WeakCache based on WeakRef and FinalizationRegistry.
+
+The following methods `request`, `pipeline`, and `stream` utilize this feature.
+
+### `undici.setGlobalAgent(agent)`
+
+* agent `Agent` 
+
+Sets the globalAgent used by `request`, `pipeline`, and `stream` methods.
+
+Requires: Node.js v14+
+
+The agent must only **implement** the Agent class; not necessary extend from it.
+
+### `undici.request(url[, opts]): Promise`
+
+* url `string | URL | object`
+* opts ` { agent: Agent } & client.request.opts `
+
+Calls `pool.request(opts)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
+
+Returns a promise with the result of the `request` method.
+
+### `undici.stream(url, opts, factory): Promise`
+
+* url `string | URL | object`
+* opts ` { agent: Agent } & client.stream.opts `
+* factory `client.stream.factory`
+
+See [client.stream](#clientstreamopts-factorydata-callbackerr-promisevoid) for details on the `opts` and `factory` arguments.
+
+Calls `pool.stream(opts, factory)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
+
+Result is returned in the factory function. See [client.stream](#clientstreamopts-factorydata-callbackerr-promisevoid) for more details.
+
+### `undici.pipeline(url, opts, handler): Duplex`
+
+* url `string | URL | object`
+* opts ` { agent: Agent } & client.pipeline.opts `
+* handler `client.pipieline.handler`
+
+See [client.pipeline](#clientpipelineopts-handlerdata-duplex) for details on the `opts` and `handler` arguments.
+
+Calls `pool.pipeline(opts, factory)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
+
+See [client.pipeline](#clientpipelineopts-handlerdata-duplex) for more details.
 ## Specification Compliance
 
 This section documents parts of the HTTP/1.1 specification which Undici does
