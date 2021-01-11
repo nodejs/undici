@@ -1,9 +1,11 @@
 import { Duplex, Readable, Writable } from 'stream'
 import { expectAssignable } from 'tsd'
 import { Client } from '../..'
+import { URL } from 'url'
 
 expectAssignable<Client>(new Client(''))
 expectAssignable<Client>(new Client('', {}))
+expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
 
 {
   const client = new Client('')

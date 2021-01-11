@@ -91,7 +91,47 @@ test('basic get', (t) => {
     })
   })
 })
+test('URL as arg', (t) => {
+  t.plan(9)
 
+  const server = createServer((req, res) => {
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const url = new URL('http://localhost')
+    url.port = server.address().port
+    const client = undici(url)
+    t.tearDown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+
+    client.close((err) => {
+      t.error(err)
+      client.destroy((err) => {
+        t.error(err)
+        client.close((err) => {
+          t.ok(err instanceof errors.ClientDestroyedError)
+        })
+      })
+    })
+  })
+})
 test('basic get error async/await', (t) => {
   t.plan(2)
 
