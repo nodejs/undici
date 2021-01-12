@@ -33,6 +33,28 @@ undici - dispatch x 47,319 ops/sec ±1.17% (263 runs sampled)
 The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
 single unix socket with pipelining.
 
+## Quick Start
+
+```js
+import { request } from 'undici'
+
+const {
+  statusCode,
+  headers,
+  trailers,
+  body
+} = await request('http://localhost:3000/foo')
+
+console.log('response received', statusCode)
+console.log('headers', headers)
+
+for await (const data of body) {
+  console.log('data', chunk)
+}
+
+console.log('trailers', trailers)
+```
+
 ## API
 
 <a name='client'></a>
