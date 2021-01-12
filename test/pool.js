@@ -284,8 +284,6 @@ test('backpressure algorithm', (t) => {
 
   const pool = new Pool('http://notanhost')
 
-  t.strictEqual(total, 10)
-
   pool.dispatch({}, noop)
   pool.dispatch({}, noop)
 
@@ -323,6 +321,8 @@ test('backpressure algorithm', (t) => {
 
   t.strictEqual(d5.id, d4.id)
   t.strictEqual(d3.id, d6.id)
+
+  t.strictEqual(total, 2)
 
   t.end()
 })
@@ -365,14 +365,7 @@ test('busy', (t) => {
 })
 
 test('invalid options throws', (t) => {
-  t.plan(6)
-
-  try {
-    new Pool(null, { connections: 0 }) // eslint-disable-line
-  } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid connections')
-  }
+  t.plan(4)
 
   try {
     new Pool(null, { connections: -1 }) // eslint-disable-line
