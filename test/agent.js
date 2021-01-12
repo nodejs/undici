@@ -41,7 +41,7 @@ tap.test('Agent', { skip: SKIP }, t => {
   })
 
   t.test('request a resource', t => {
-    t.plan(4)
+    t.plan(5)
 
     t.test('with globalAgent', t => {
       t.plan(6)
@@ -117,6 +117,13 @@ tap.test('Agent', { skip: SKIP }, t => {
       t.throw(() => request(''), TypeError, 'throws on invalid url')
       t.throw(() => request({}), InvalidArgumentError, 'throws on missing url.origin argument')
       t.throw(() => request({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+    })
+
+    t.test('fails with unsupported opts.path', t => {
+      t.plan(3)
+      t.throw(() => request('https://example.com', { path: 'asd' }), InvalidArgumentError, 'throws on opts.path argument')
+      t.throw(() => request('https://example.com', { path: '' }), InvalidArgumentError, 'throws on opts.path argument')
+      t.throw(() => request('https://example.com', { path: 0 }), InvalidArgumentError, 'throws on opts.path argument')
     })
 
     t.test('fails with invalid client', t => {
