@@ -635,7 +635,10 @@ The following methods `request`, `pipeline`, and `stream` utilize this feature.
 
 * agent `Agent` 
 
-Sets the globalAgent used by `request`, `pipeline`, and `stream` methods.
+Sets the global agent used by `request`, `pipeline`, and `stream` methods.
+
+The default global agent creates `undici.Pool`s with no max number of
+connections.
 
 Requires: Node.js v14+
 
