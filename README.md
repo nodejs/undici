@@ -671,6 +671,8 @@ The agent must only **implement** the `Agent` API; not necessary extend from it.
 * url `string | URL | object`
 * opts `{ agent: Agent } & client.request.opts`
 
+`url` may contain path. `opts` may not contain path.
+
 Calls `pool.request(opts)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
 
 Returns a promise with the result of the `request` method.
@@ -680,6 +682,8 @@ Returns a promise with the result of the `request` method.
 * url `string | URL | object`
 * opts `{ agent: Agent } & client.stream.opts`
 * factory `client.stream.factory`
+
+`url` may contain path. `opts` may not contain path.
 
 See [client.stream](#clientstreamopts-factorydata-callbackerr-promisevoid) for details on the `opts` and `factory` arguments.
 
@@ -693,6 +697,8 @@ Result is returned in the factory function. See [client.stream](#clientstreamopt
 * opts `{ agent: Agent } & client.pipeline.opts`
 * handler `client.pipeline.handler`
 
+`url` may contain path. `opts` may not contain path.
+
 See [client.pipeline](#clientpipelineopts-handlerdata-duplex) for details on the `opts` and `handler` arguments.
 
 Calls `pool.pipeline(opts, factory)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
@@ -704,10 +710,14 @@ See [client.pipeline](#clientpipelineopts-handlerdata-duplex) for more details.
 * url `string | URL | object`
 * opts `{ agent: Agent } & client.upgrade.opts`
 
+`url` may contain path. `opts` may not contain path.
+
 ### `client.connect(opts[, callback(err, data)]): Promise|Void`
 
 * url `string | URL | object`
 * opts `{ agent: Agent } & client.connect.opts`
+
+`url` may contain path. `opts` may not contain path.
 
 ## Specification Compliance
 
