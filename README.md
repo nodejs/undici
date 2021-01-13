@@ -671,7 +671,7 @@ The agent must only **implement** the `Agent` API; not necessary extend from it.
 * url `string | URL | object`
 * opts `{ agent: Agent } & client.request.opts`
 
-`url` may contain path. `opts` may not contain path.
+`url` may contain path. `opts` may not contain path. `opts.method` is `GET` by default.
 
 Calls `pool.request(opts)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
 
