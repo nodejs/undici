@@ -664,12 +664,12 @@ connections.
 
 Requires: Node.js v14+
 
-The agent must only **implement** the Agent class; not necessary extend from it.
+The agent must only **implement** the `Agent` API; not necessary extend from it.
 
 ### `undici.request(url[, opts]): Promise`
 
 * url `string | URL | object`
-* opts ` { agent: Agent } & client.request.opts `
+* opts `{ agent: Agent } & client.request.opts`
 
 Calls `pool.request(opts)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
 
@@ -678,7 +678,7 @@ Returns a promise with the result of the `request` method.
 ### `undici.stream(url, opts, factory): Promise`
 
 * url `string | URL | object`
-* opts ` { agent: Agent } & client.stream.opts `
+* opts `{ agent: Agent } & client.stream.opts`
 * factory `client.stream.factory`
 
 See [client.stream](#clientstreamopts-factorydata-callbackerr-promisevoid) for details on the `opts` and `factory` arguments.
@@ -690,14 +690,25 @@ Result is returned in the factory function. See [client.stream](#clientstreamopt
 ### `undici.pipeline(url, opts, handler): Duplex`
 
 * url `string | URL | object`
-* opts ` { agent: Agent } & client.pipeline.opts `
-* handler `client.pipieline.handler`
+* opts `{ agent: Agent } & client.pipeline.opts`
+* handler `client.pipeline.handler`
 
 See [client.pipeline](#clientpipelineopts-handlerdata-duplex) for details on the `opts` and `handler` arguments.
 
 Calls `pool.pipeline(opts, factory)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
 
 See [client.pipeline](#clientpipelineopts-handlerdata-duplex) for more details.
+
+### `client.upgrade(opts[, callback(err, data)]): Promise|Void`
+
+* url `string | URL | object`
+* opts `{ agent: Agent } & client.upgrade.opts`
+
+### `client.connect(opts[, callback(err, data)]): Promise|Void`
+
+* url `string | URL | object`
+* opts `{ agent: Agent } & client.connect.opts`
+
 ## Specification Compliance
 
 This section documents parts of the HTTP/1.1 specification which Undici does
