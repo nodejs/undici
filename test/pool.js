@@ -56,7 +56,7 @@ test('connect/disconnect event(s)', (t) => {
 })
 
 test('basic get', (t) => {
-  t.plan(9)
+  t.plan(13)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -83,8 +83,11 @@ test('basic get', (t) => {
       })
     })
 
+    t.strictEqual(client.destroyed, false)
+    t.strictEqual(client.closed, false)
     client.close((err) => {
       t.error(err)
+      t.strictEqual(client.destroyed, true)
       client.destroy((err) => {
         t.error(err)
         client.close((err) => {
@@ -92,8 +95,10 @@ test('basic get', (t) => {
         })
       })
     })
+    t.strictEqual(client.closed, true)
   })
 })
+
 test('URL as arg', (t) => {
   t.plan(9)
 
@@ -135,6 +140,7 @@ test('URL as arg', (t) => {
     })
   })
 })
+
 test('basic get error async/await', (t) => {
   t.plan(2)
 
@@ -333,7 +339,7 @@ test('backpressure algorithm', (t) => {
 function noop () {}
 
 test('busy', (t) => {
-  t.plan(8 * 6)
+  t.plan(8 * 8 + 2 + 2)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -348,9 +354,19 @@ test('busy', (t) => {
       connections: 2,
       pipelining: 2
     })
+    let connected = 0
+    client.on('drain', () => {
+      t.pass()
+    })
+    client.on('connect', () => {
+      t.strictEqual(client.connected, ++connected)
+    })
+
     t.tearDown(client.destroy.bind(client))
 
-    for (let n = 0; n < 8; ++n) {
+    t.strictEqual(client.connections, 2)
+
+    for (let n = 1; n <= 8; ++n) {
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
         t.error(err)
         t.strictEqual(statusCode, 200)
@@ -363,6 +379,8 @@ test('busy', (t) => {
           t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
+      t.strictEqual(client.pending, Math.max(n - 2, 0))
+      t.strictEqual(client.busy, n > 2)
     }
   })
 })
@@ -976,7 +994,7 @@ test('pool destroyed', (t) => {
 })
 
 test('pool destroy fails queued requests', (t) => {
-  t.plan(4)
+  t.plan(6)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -1005,9 +1023,11 @@ test('pool destroy fails queued requests', (t) => {
       t.strictEqual(err, _err)
     })
 
+    t.strictEqual(client.destroyed, false)
     client.destroy(_err, () => {
       t.pass()
     })
+    t.strictEqual(client.destroyed, true)
 
     client.request({
       path: '/',
