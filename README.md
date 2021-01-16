@@ -676,9 +676,9 @@ Requires: Node.js v14+
 
 Returns a new Agent instance for use with pool based requests or the following top-level methods `request`, `pipeline`, and `stream`.
 
-#### `agent.get(url): Pool`
+#### `agent.get(origin): Pool`
 
-* url `string` - A pool url to be retrieved from the Agent.
+* origin `string` - A pool origin to be retrieved from the Agent.
 
 Requires: Node.js v14+
 
