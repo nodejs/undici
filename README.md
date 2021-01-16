@@ -49,7 +49,7 @@ console.log('response received', statusCode)
 console.log('headers', headers)
 
 for await (const data of body) {
-  console.log('data', chunk)
+  console.log('data', data)
 }
 
 console.log('trailers', trailers)
