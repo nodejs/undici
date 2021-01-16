@@ -339,7 +339,7 @@ test('backpressure algorithm', (t) => {
 function noop () {}
 
 test('busy', (t) => {
-  t.plan(8 * 8 + 2 + 2)
+  t.plan(8 * 8 + 2 + 1)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -363,8 +363,6 @@ test('busy', (t) => {
     })
 
     t.tearDown(client.destroy.bind(client))
-
-    t.strictEqual(client.connections, 2)
 
     for (let n = 1; n <= 8; ++n) {
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {

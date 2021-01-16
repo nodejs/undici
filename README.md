@@ -570,6 +570,28 @@ Options:
 `Pool` does not guarantee that requests are dispatched in
 order of invocation.
 
+#### `pool.connected: Integer`
+
+Number of active connections in pool.
+
+#### `pool.pending: Number`
+
+Number of queued requests.
+
+#### `pool.busy: Boolean`
+
+True if pool is saturated or blocked. Indicates whether dispatching
+further requests is meaningful.
+
+#### `pool.closed: Boolean`
+
+True after `pool.close()` has been called.
+
+#### `pool.destroyed: Boolean`
+
+True after `pool.destroyed()` has been called or `pool.close()` has been
+called and the client shutdown has completed.
+
 #### `pool.request(opts[, callback]): Promise|Void`
 
 Calls [`client.request(opts, callback)`][request] on one of the clients.
@@ -603,6 +625,9 @@ Calls [`client.close(callback)`](#close) on all the clients.
 Calls [`client.destroy(err, callback)`](#destroy) on all the clients.
 
 #### Events
+
+* `'drain'`, emitted when pool is no longer fully
+  saturated.
 
 * `'connect'`, emitted when a client has connected, the `Client`
     instance is passed as argument.
