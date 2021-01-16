@@ -15,7 +15,7 @@ const EE = require('events')
 test('connect/disconnect event(s)', (t) => {
   const clients = 2
 
-  t.plan(clients * 3)
+  t.plan(clients * 6)
 
   const server = createServer((req, res) => {
     res.writeHead(200, {
@@ -36,8 +36,11 @@ test('connect/disconnect event(s)', (t) => {
     pool.on('connect', (client) => {
       t.strictEqual(client instanceof Client, true)
     })
-    pool.on('disconnect', (client) => {
-      t.strictEqual(client instanceof Client, true)
+    pool.on('disconnect', (client, error) => {
+      t.true(client instanceof Client)
+      t.true(error instanceof errors.InformationalError)
+      t.strictEqual(error.code, 'UND_ERR_INFO')
+      t.strictEqual(error.message, 'socket idle timeout')
     })
 
     for (let i = 0; i < clients; i++) {
