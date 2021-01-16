@@ -607,8 +607,8 @@ Calls [`client.destroy(err, callback)`](#destroy) on all the clients.
 * `'connect'`, emitted when a client has connected, the `Client`
     instance is passed as argument.
 
-* `'disconnect'`, emitted when a client has disconnected, the `Client`
-    instance is passed as argument.
+* `'disconnect'`, emitted when a client has disconnected. The first argument is the
+   `Client` instance, the second is the the error that caused the disconnection.
 
 <a name='errors'></a>
 ### `undici.errors`
