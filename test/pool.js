@@ -56,7 +56,7 @@ test('connect/disconnect event(s)', (t) => {
 })
 
 test('basic get', (t) => {
-  t.plan(13)
+  t.plan(14)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -69,6 +69,8 @@ test('basic get', (t) => {
   server.listen(0, async () => {
     const client = undici(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
+
+    t.strictEqual(client.url.origin, `http://localhost:${server.address().port}`)
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
