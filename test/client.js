@@ -9,7 +9,7 @@ const { kSocket } = require('../lib/core/symbols')
 const EE = require('events')
 
 test('basic get', (t) => {
-  t.plan(23)
+  t.plan(24)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -33,6 +33,8 @@ test('basic get', (t) => {
       keepAliveTimeout: 300e3
     })
     t.tearDown(client.close.bind(client))
+
+    t.strictEqual(client.url.origin, `http://localhost:${server.address().port}`)
 
     const signal = new EE()
     client.request({
@@ -616,7 +618,7 @@ test('url-like url', (t) => {
     const client = new Client({
       hostname: 'localhost',
       port: server.address().port,
-      protocol: 'http'
+      protocol: 'http:'
     })
     t.tearDown(client.close.bind(client))
 
@@ -642,7 +644,7 @@ test('an absolute url as path', (t) => {
     const client = new Client({
       hostname: 'localhost',
       port: server.address().port,
-      protocol: 'http'
+      protocol: 'http:'
     })
     t.tearDown(client.close.bind(client))
 
@@ -665,7 +667,7 @@ test('multiple destroy callback', (t) => {
     const client = new Client({
       hostname: 'localhost',
       port: server.address().port,
-      protocol: 'http'
+      protocol: 'http:'
     })
     t.tearDown(client.destroy.bind(client))
 

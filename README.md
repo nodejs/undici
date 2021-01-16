@@ -507,6 +507,10 @@ there might still be some progress on dispatched requests.
 
 Returns a promise if no callback is provided.
 
+#### `client.url: URL`
+
+Returns url passed to `undici.Pool(url, opts)`.
+
 #### `client.pipelining: Number`
 
 Property to get and set the pipelining factor.
@@ -569,6 +573,10 @@ Options:
 
 `Pool` does not guarantee that requests are dispatched in
 order of invocation.
+
+#### `pool.url: URL`
+
+Returns url passed to `undici.Pool(url, opts)`.
 
 #### `pool.connected: Integer`
 
@@ -668,9 +676,9 @@ Requires: Node.js v14+
 
 Returns a new Agent instance for use with pool based requests or the following top-level methods `request`, `pipeline`, and `stream`.
 
-#### `agent.get(origin): Pool`
+#### `agent.get(url): Pool`
 
-* origin `string` - A pool origin to be retrieved from the Agent.
+* url `string` - A pool url to be retrieved from the Agent.
 
 Requires: Node.js v14+
 
