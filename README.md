@@ -643,29 +643,7 @@ Calls [`client.destroy(err, callback)`](#destroy) on all the clients.
 * `'disconnect'`, emitted when a client has disconnected. The first argument is the
    `Client` instance, the second is the the error that caused the disconnection.
 
-<a name='errors'></a>
-### `undici.errors`
-
-Undici exposes a variety of error objects that you can use to enhance your error handling.
-You can find all the error objects inside the `errors` key.
-
-```js
-const { errors } = require('undici')
-```
-
-| Error                        | Error Codes                       | Description                                    |
-| -----------------------------|-----------------------------------|------------------------------------------------|
-| `InvalidArgumentError`       |  `UND_ERR_INVALID_ARG`            | passed an invalid argument.                    |
-| `InvalidReturnValueError`    |  `UND_ERR_INVALID_RETURN_VALUE`   | returned an invalid value.                     |
-| `RequestAbortedError`        |  `UND_ERR_ABORTED`                | the request has been aborted by the user       |
-| `ClientDestroyedError`       |  `UND_ERR_DESTROYED`              | trying to use a destroyed client.              |
-| `ClientClosedError`          |  `UND_ERR_CLOSED`                 | trying to use a closed client.                 |
-| `SocketError`                |  `UND_ERR_SOCKET`                 | there is an error with the socket.             |
-| `NotSupportedError`          |  `UND_ERR_NOT_SUPPORTED`          | encountered unsupported functionality.         |
-| `ContentLengthMismatchError` |  `UND_ERR_CONTENT_LENGTH_MISMATCH`| body does not match content-length header      |
-| `InformationalError`         |  `UND_ERR_INFO`                   | expected error with reason                     |
-| `TrailerMismatchError`       |  `UND_ERR_TRAILER_MISMATCH`       | trailers did not match specification           |
-
+<a name='agent'></a>
 ### `new undici.Agent(opts)`
 
 * opts `undici.Pool.options` - options passed through to Pool constructor
@@ -751,6 +729,29 @@ See [client.pipeline](#clientpipelineopts-handlerdata-duplex) for more details.
 * opts `{ agent: Agent } & client.connect.opts`
 
 `url` may contain path. `opts` may not contain path.
+
+<a name='errors'></a>
+### `undici.errors`
+
+Undici exposes a variety of error objects that you can use to enhance your error handling.
+You can find all the error objects inside the `errors` key.
+
+```js
+const { errors } = require('undici')
+```
+
+| Error                        | Error Codes                       | Description                                    |
+| -----------------------------|-----------------------------------|------------------------------------------------|
+| `InvalidArgumentError`       |  `UND_ERR_INVALID_ARG`            | passed an invalid argument.                    |
+| `InvalidReturnValueError`    |  `UND_ERR_INVALID_RETURN_VALUE`   | returned an invalid value.                     |
+| `RequestAbortedError`        |  `UND_ERR_ABORTED`                | the request has been aborted by the user       |
+| `ClientDestroyedError`       |  `UND_ERR_DESTROYED`              | trying to use a destroyed client.              |
+| `ClientClosedError`          |  `UND_ERR_CLOSED`                 | trying to use a closed client.                 |
+| `SocketError`                |  `UND_ERR_SOCKET`                 | there is an error with the socket.             |
+| `NotSupportedError`          |  `UND_ERR_NOT_SUPPORTED`          | encountered unsupported functionality.         |
+| `ContentLengthMismatchError` |  `UND_ERR_CONTENT_LENGTH_MISMATCH`| body does not match content-length header      |
+| `InformationalError`         |  `UND_ERR_INFO`                   | expected error with reason                     |
+| `TrailerMismatchError`       |  `UND_ERR_TRAILER_MISMATCH`       | trailers did not match specification           |
 
 ## Specification Compliance
 
