@@ -678,6 +678,22 @@ This method retrieves Pool instances from the Agent. If the pool does not exist 
 
 The following methods `request`, `pipeline`, and `stream` utilize this feature.
 
+#### `agent.close([callback]): Promise|Void`
+
+Closes the agent and gracefully waits for enqueued requests to
+complete before invoking the callback.
+
+Returns a promise if no callback is provided.
+
+#### `agent.destroy([err][, callback]): Promise|Void`
+
+Destroy the agent abruptly with the given `err`. All the pending and running
+requests will be asynchronously aborted and error. Waits until socket is closed
+before invoking the callback. Since this operation is asynchronously dispatched
+there might still be some progress on dispatched requests.
+
+Returns a promise if no callback is provided.
+
 ### `undici.setGlobalAgent(agent)`
 
 * agent `Agent` 
