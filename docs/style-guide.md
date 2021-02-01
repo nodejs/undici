@@ -1,6 +1,6 @@
 # Documentation Style Guide
 
-The docs in this repo are enforced by this style guide. The purpose of this guide is to make sure the documentation is easily readable by all levels of developers.
+The docs in this repo are enforced by this style guide. The purpose of this guide is to make sure the documentation is easily readable by all levels of developers. Derived from the Electron project [documentation](https://github.com/electron/electron/tree/master/docs) process.
 
 ## Rules
 

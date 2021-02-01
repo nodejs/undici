@@ -18,4 +18,73 @@ Extends: `EventEmitter`
 
 ## Instance Methods
 
+### `Client.close()` - overloaded
+
+Closes the client and gracefully waits for enqueued requests to complete before invoking the callback (or returnning a promise if no callback is provided).
+
+#### `Client.close()`
+
+Returns: `Promise<void>`
+
+#### `Client.close(callback)`
+
+* **callback** `() => void`
+
+### `Client.connect()` - overloaded
+
+Starts two-way communications with the requested resource.
+
+#### `Client.connect(options)`
+
+* **options** `ConnectOptions`
+
+Returns: `Promise<ConnectData>`
+
+#### `Client.connect(options, callback)`
+
+* **options** `ConnectOptions`
+* **callback** `(err: Error, data: ConnectData) => void`
+
+#### Object: ConnectOptions
+
+* **path** `string`
+* **headers** `IncomingHttpHeaders | null` (optional) - Default: `null`
+* **headersTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Defaults to 30 seconds.
+* **signal** `AbortSignal | EventEmitter | null` (optional) - Default: `null`
+
+#### Object: ConnectData
+
+* **statusCode** `number`
+* **headers** `IncomingHttpHeaders`
+* **socket** `Duplex`
+* **opaque** `unknown`
+
+### `Client.destroy()`
+
+### `Client.dispatch()`
+
+### `Client.pipeline()`
+
+### `Client.request()`
+
+### `Client.stream()`
+
+### `Client.upgrade()`
+
 ## Instance Properties
+
+### `Client.busy`
+
+### `Client.closed`
+
+### `Client.connected`
+
+### `Client.destroyed`
+
+### `Client.pending`
+
+### `Client.pipelining`
+
+### `Client.running`
+
+### `Client.size`
