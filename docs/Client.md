@@ -18,7 +18,7 @@ Extends: `EventEmitter`
 
 ## Instance Methods
 
-### `Client.close()` - overloaded
+### `Client.close()` _(overloaded)_
 
 Closes the client and gracefully waits for enqueued requests to complete before invoking the callback (or returnning a promise if no callback is provided).
 
@@ -28,13 +28,17 @@ Returns: `Promise<void>`
 
 #### `Client.close(callback)`
 
+Arguments:
+
 * **callback** `() => void`
 
-### `Client.connect()` - overloaded
+### `Client.connect()` _(overloaded)_
 
 Starts two-way communications with the requested resource.
 
 #### `Client.connect(options)`
+
+Arguments:
 
 * **options** `ConnectOptions`
 
@@ -42,17 +46,19 @@ Returns: `Promise<ConnectData>`
 
 #### `Client.connect(options, callback)`
 
+Arguments:
+
 * **options** `ConnectOptions`
 * **callback** `(err: Error, data: ConnectData) => void`
 
-#### Object: ConnectOptions
+#### Interface: ConnectOptions
 
 * **path** `string`
 * **headers** `IncomingHttpHeaders | null` (optional) - Default: `null`
 * **headersTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Defaults to 30 seconds.
 * **signal** `AbortSignal | EventEmitter | null` (optional) - Default: `null`
 
-#### Object: ConnectData
+#### Interface: ConnectData
 
 * **statusCode** `number`
 * **headers** `IncomingHttpHeaders`
