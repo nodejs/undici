@@ -18,21 +18,21 @@ Extends: `EventEmitter`
 
 ## Instance Methods
 
-### `Client.close()` _(overloaded)_
+### `Client.close()` _(2 overloads)_
 
 Closes the client and gracefully waits for enqueued requests to complete before invoking the callback (or returnning a promise if no callback is provided).
 
-#### `Client.close()`
+#### (1) `Client.close()`
 
 Returns: `Promise<void>`
 
-#### `Client.close(callback)`
+#### (2) `Client.close(callback)`
 
 Arguments:
 
 * **callback** `() => void`
 
-### `Client.connect()` _(overloaded)_
+### `Client.connect()` _(2 overloads)_
 
 Starts two-way communications with the requested resource.
 
