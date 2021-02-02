@@ -5,7 +5,6 @@ const http = require('http')
 const { Agent, request, stream, pipeline, setGlobalAgent } = require('../lib/agent')
 const { PassThrough } = require('stream')
 const { InvalidArgumentError, InvalidReturnValueError } = require('../lib/core/errors')
-const { kAgentCache, kSocket } = require('../lib/core/symbols')
 const { errors } = require('..')
 
 const SKIP = typeof WeakRef === 'undefined' || typeof FinalizationRegistry === 'undefined'
@@ -61,7 +60,7 @@ tap.test('Agent', { skip: SKIP }, t => {
         const agent = new Agent()
 
         const origin = `http://localhost:${server.address().port}`
-        
+
         request(origin, { agent })
           .then(() => {
             t.pass('first request should resolve')
@@ -100,7 +99,7 @@ tap.test('Agent', { skip: SKIP }, t => {
         const agent = new Agent()
 
         const origin = `http://localhost:${server.address().port}`
-        
+
         request(origin, { agent })
           .then(() => {
             t.fail()
