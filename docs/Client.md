@@ -51,14 +51,14 @@ Arguments:
 * **options** `ConnectOptions`
 * **callback** `(err: Error, data: ConnectData) => void`
 
-#### Interface: ConnectOptions
+#### Parameter: ConnectOptions
 
 * **path** `string`
 * **headers** `IncomingHttpHeaders | null` (optional) - Default: `null`
 * **headersTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Defaults to 30 seconds.
 * **signal** `AbortSignal | EventEmitter | null` (optional) - Default: `null`
 
-#### Interface: ConnectData
+#### Parameter: ConnectData
 
 * **statusCode** `number`
 * **headers** `IncomingHttpHeaders`
@@ -105,7 +105,7 @@ Arguments:
 
 Returns: `void`
 
-#### Interface: DispatchOptions
+#### Parameter: DispatchOptions
 
 * **path** `string`
 * **method** `string`
@@ -115,7 +115,7 @@ Returns: `void`
 * **bodyTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 30 seconds.
 * **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed.
 
-#### Interface: DispatchHandlers
+#### Parameter: DispatchHandlers
 
 * **onConnect** `(abort: () => void) => void` (optional) - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
 * **onUpgrade** `(statusCode: number, headers: string[] | null, socket: Duplex) => void` (optional) - Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method.
