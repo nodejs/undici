@@ -4,6 +4,8 @@ Extends: `EventEmitter`
 
 ## `new Client(url, [options])`
 
+Arguments:
+
 * **url** `URL | string`
 * **options** `object` (optional)
   * **bodyTimeout** `number | null` (optional) - Default: `30e3` -
@@ -15,6 +17,8 @@ Extends: `EventEmitter`
   * **pipelining** `number | null` (optional) - Default: `1` - The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
   * **socketPath** `string | null` (optional) - Default: `null` - An IPC endpoint, either Unix domain socket or Windows named pipe.
   * **tls** `TlsOptions | null` (optional) - Default: `null` - An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
+
+Returns: `Client`
 
 ## Instance Methods
 
@@ -51,14 +55,14 @@ Arguments:
 * **options** `ConnectOptions`
 * **callback** `(err: Error, data: ConnectData) => void`
 
-#### Parameter: ConnectOptions
+#### Parameter: `ConnectOptions`
 
 * **path** `string`
 * **headers** `IncomingHttpHeaders | null` (optional) - Default: `null`
 * **headersTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Defaults to 30 seconds.
 * **signal** `AbortSignal | EventEmitter | null` (optional) - Default: `null`
 
-#### Parameter: ConnectData
+#### Parameter: `ConnectData`
 
 * **statusCode** `number`
 * **headers** `IncomingHttpHeaders`
@@ -105,7 +109,7 @@ Arguments:
 
 Returns: `void`
 
-#### Parameter: DispatchOptions
+#### Parameter: `DispatchOptions`
 
 * **path** `string`
 * **method** `string`
@@ -115,7 +119,7 @@ Returns: `void`
 * **bodyTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 30 seconds.
 * **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed.
 
-#### Parameter: DispatchHandlers
+#### Parameter: `DispatchHandlers`
 
 * **onConnect** `(abort: () => void) => void` (optional) - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
 * **onUpgrade** `(statusCode: number, headers: string[] | null, socket: Duplex) => void` (optional) - Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method.
@@ -124,9 +128,60 @@ Returns: `void`
 * **onComplete** `(trailers: string[] | null) => void` (optional) - Invoked when response payload and trailers have been received and the request has completed.
 * **onError** `(error: Error) => void` (optional) - Invoked when an error has occurred.
 
-### `Client.pipeline()`
+### `Client.pipeline(options, handler)`
 
-### `Client.request()`
+Arguments:
+
+* **options** `PipelineOptions`
+* **handler** `(data: PipelineHandlerData) => Readable`
+
+Returns: `Duplex`
+
+#### Parameter: PipelineOptions
+
+Extends: `RequestOptions`
+
+* **objectMode** `boolean` (optional) - Default: `false` - Set to `true` if the `handler` will return an object stream.
+
+#### Parameter: PipelineHandlerData
+
+* **statusCode** `number`
+* **headers** `IncomingHttpHeaders`
+* **opaque** `unknown`
+* **body** `Readable`
+
+### `Client.request()` _(2 overloads)_
+
+Performs a HTTP request
+
+#### (1) `Client.request(options)`
+
+Arguments:
+
+* **options** `RequestOptions`
+
+Returns: `Promise<ResponseData>`
+
+#### (2) `Client.request(options, callback)`
+
+Arguments:
+
+* **options** `RequestOptions`
+* **callback** `(error: Error | null, data: ResponseData) => void`
+
+#### Parameter: `RequestOptions`
+
+Extends: `DispatchOptions`
+
+* **opaque** `unknown` (optional)
+* **signal** `AbortSignal | EventEmitter | null` (optional) - Default: `null`
+
+#### Parameter: `ResponseData`
+
+* **statusCode** `number`
+* **headers** `IncomingHttpHeaders`
+* **body** `Readable`
+* **opaque** `unknown`
 
 ### `Client.stream()`
 
