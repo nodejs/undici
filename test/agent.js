@@ -105,7 +105,7 @@ tap.test('Agent', { skip: SKIP }, t => {
             t.fail()
           })
           .catch(err => {
-            t.error(err instanceof errors.ClientDestroyedError)
+            t.ok(err instanceof errors.ClientDestroyedError)
           })
 
         const pool = agent.get(origin)
@@ -116,7 +116,7 @@ tap.test('Agent', { skip: SKIP }, t => {
                 t.fail()
               })
               .catch(err => {
-                t.error(err instanceof errors.ClientDestroyedError)
+                t.ok(err instanceof errors.ClientDestroyedError)
               })
           })
         })
