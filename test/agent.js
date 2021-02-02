@@ -67,35 +67,24 @@ tap.test('Agent', { skip: SKIP }, t => {
             t.pass()
           })
           .catch(err => {
-            t.error(err instanceof errors.ClientClosedError)
+            t.fail()
           })
 
-        agent.close().then(() => {
-          request(origin, { agent })
-            .then(() => {
-              t.fail()
-            })
-            .catch(err => {
-              t.error(err instanceof errors.ClientClosedError)
-            })
+        const pool = agent.get(origin)
+        pool.once('connect', () => {
+          agent.close().then(() => {
+            request(origin, { agent })
+              .then(() => {
+                t.fail()
+              })
+              .catch(err => {
+                t.error(err instanceof errors.ClientClosedError)
+              })
+          })
         })
-
-        // i'd expect this to work but it isn't - possibly my own misunderstanding; I want to keep it in to further investigate in the future - @ethan-arrowood
-        // const pool = agent.get(origin)
-        // pool.once('connect', () => {
-        //   let closed = false
-        //   pool.on('disconnect', () => {
-        //     console.log('DISCONNECT')
-        //     closed = true
-        //   })
-        //   agent.close().then(() => {
-        //     console.log('CLOSE CB')
-        //     t.ok(closed, 'pool should be disconnected')
-        //   })
-        // })
       })
     })
-    t.test('agent should destroy internal pools', t => {
+    t.test('agent should destroy internal pools', { skip: true }, t => {
       t.plan(2)
 
       const wanted = 'payload'
@@ -117,32 +106,21 @@ tap.test('Agent', { skip: SKIP }, t => {
             t.pass()
           })
           .catch(err => {
-            t.error(err instanceof errors.ClientDestroyError)
+            t.fail()
           })
 
-        agent.destroy().then(() => {
-          request(origin, { agent })
-            .then(() => {
-              t.fail()
-            })
-            .catch(err => {
-              t.error(err instanceof errors.ClientDestroyError)
-            })
+        const pool = agent.get(origin)
+        pool.once('connect', () => {
+          agent.destroy().then(() => {
+            request(origin, { agent })
+              .then(() => {
+                t.fail()
+              })
+              .catch(err => {
+                t.error(err instanceof errors.ClientDestroyedError)
+              })
+          })
         })
-
-        // i'd expect this to work but it isn't - possibly my own misunderstanding; I want to keep it in to further investigate in the future - @ethan-arrowood
-        // const pool = agent.get(origin)
-        // pool.once('connect', () => {
-        //   let closed = false
-        //   pool.on('disconnect', () => {
-        //     console.log('DISCONNECT')
-        //     closed = true
-        //   })
-        //   agent.close().then(() => {
-        //     console.log('CLOSE CB')
-        //     t.ok(closed, 'pool should be disconnected')
-        //   })
-        // })
       })
     })
   })
