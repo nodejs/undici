@@ -36,7 +36,7 @@ Arguments:
 
 Starts two-way communications with the requested resource.
 
-#### `Client.connect(options)`
+#### (1) `Client.connect(options)`
 
 Arguments:
 
@@ -44,7 +44,7 @@ Arguments:
 
 Returns: `Promise<ConnectData>`
 
-#### `Client.connect(options, callback)`
+#### (2) `Client.connect(options, callback)`
 
 Arguments:
 
@@ -65,9 +65,64 @@ Arguments:
 * **socket** `Duplex`
 * **opaque** `unknown`
 
-### `Client.destroy()`
+### `Client.destroy()` _(4 overloads)_
 
-### `Client.dispatch()`
+Destroy the client abruptly with the given error. All the pending and running requests will be asynchronously aborted and error. Waits until socket is closed before invoking the callback (or returnning a promise if no callback is provided). Since this operation is asynchronously dispatched there might still be some progress on dispatched requests.
+
+#### (1) `Client.destroy()`
+
+Returns: `Promise<void>`
+
+#### (2) `Client.destroy(error)`
+
+Arguments:
+
+* **error** `Error | null`
+
+Returns: `Promise<void>`
+
+#### (3) `Client.destroy(callback)`
+
+Arguments:
+
+* **callback** `() => void`
+
+#### (4) `Client.destroy(error, callback)`
+
+Arguments:
+
+* **error** `Error | null`
+* **callback** `() => void`
+
+### `Client.dispatch(options, handlers)`
+
+This is the low level API which all the preceding APIs are implemented on top of. This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this.
+
+Arguments:
+
+* **options** `DispatchOptions`
+* **handlers** `DispatchHandlers`
+
+Returns: `void`
+
+#### Interface: DispatchOptions
+
+* **path** `string`
+* **method** `string`
+* **body** `string | Buffer | Uint8Array | Readable | null` (optional) - Default: `null`
+* **headers** `IncomingHttpHeaders | null` (optional) - Default: `null`
+* **headersTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use `0` to disable it entirely. Defaults to 30 seconds.
+* **bodyTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 30 seconds.
+* **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed.
+
+#### Interface: DispatchHandlers
+
+* **onConnect** `(abort: () => void) => void` (optional) - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
+* **onUpgrade** `(statusCode: number, headers: string[] | null, socket: Duplex) => void` (optional) - Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method.
+* **onHeaders** `(statusCode: number, headers: string[] | null, resume: () => void) => boolean` (optional) - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers.
+* **onData** `(chunk: Buffer) => boolean` (optional) - Invoked when response payload data is received.
+* **onComplete** `(trailers: string[] | null) => void` (optional) - Invoked when response payload and trailers have been received and the request has completed.
+* **onError** `(error: Error) => void` (optional) - Invoked when an error has occurred.
 
 ### `Client.pipeline()`
 
