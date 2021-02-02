@@ -64,10 +64,10 @@ tap.test('Agent', { skip: SKIP }, t => {
         
         request(origin, { agent })
           .then(() => {
-            t.pass()
+            t.pass('first request should resolve')
           })
           .catch(err => {
-            t.fail()
+            t.fail(err)
           })
 
         const pool = agent.get(origin)
@@ -75,7 +75,7 @@ tap.test('Agent', { skip: SKIP }, t => {
           agent.close().then(() => {
             request(origin, { agent })
               .then(() => {
-                t.fail()
+                t.fail('second request should not resolve')
               })
               .catch(err => {
                 t.error(err instanceof errors.ClientClosedError)
@@ -84,7 +84,7 @@ tap.test('Agent', { skip: SKIP }, t => {
         })
       })
     })
-    t.test('agent should destroy internal pools', { skip: true }, t => {
+    t.test('agent should destroy internal pools', t => {
       t.plan(2)
 
       const wanted = 'payload'
@@ -103,10 +103,10 @@ tap.test('Agent', { skip: SKIP }, t => {
         
         request(origin, { agent })
           .then(() => {
-            t.pass()
+            t.fail()
           })
           .catch(err => {
-            t.fail()
+            t.error(err instanceof errors.ClientDestroyedError)
           })
 
         const pool = agent.get(origin)
