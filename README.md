@@ -664,6 +664,14 @@ This method retrieves Pool instances from the Agent. If the pool does not exist 
 
 The following methods `request`, `pipeline`, and `stream` utilize this feature.
 
+#### `agent.close(): Promise`
+
+Returns a `Promise.all` operation closing all of the pool instances in the Agent instance. This calls `pool.close` under the hood.
+
+#### `agent.destroy(): Promise`
+
+Returns a `Promise.all` operation destroying all of the pool instances in the Agent instance. This calls `pool.destroy` under the hood.
+
 ### `undici.setGlobalAgent(agent)`
 
 * agent `Agent` 
