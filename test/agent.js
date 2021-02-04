@@ -7,9 +7,7 @@ const { PassThrough } = require('stream')
 const { InvalidArgumentError, InvalidReturnValueError } = require('../lib/core/errors')
 const { errors } = require('..')
 
-const SKIP = typeof WeakRef === 'undefined' || typeof FinalizationRegistry === 'undefined'
-
-tap.test('Agent', { skip: SKIP }, t => {
+tap.test('Agent', t => {
   t.plan(6)
 
   t.test('setGlobalAgent', t => {
