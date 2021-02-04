@@ -650,15 +650,11 @@ Calls [`client.destroy(err, callback)`](#destroy) on all the clients.
 
 Returns: `Agent`
 
-Requires: Node.js v14+
-
 Returns a new Agent instance for use with pool based requests or the following top-level methods `request`, `pipeline`, and `stream`.
 
 #### `agent.get(origin): Pool`
 
 * origin `string` - A pool origin to be retrieved from the Agent.
-
-Requires: Node.js v14+
 
 This method retrieves Pool instances from the Agent. If the pool does not exist it is automatically added. You do not need to manually close these pools as they are automatically removed using a WeakCache based on WeakRef and FinalizationRegistry.
 
@@ -672,8 +668,6 @@ Sets the global agent used by `request`, `pipeline`, and `stream` methods.
 
 The default global agent creates `undici.Pool`s with no max number of
 connections.
-
-Requires: Node.js v14+
 
 The agent must only **implement** the `Agent` API; not necessary extend from it.
 
