@@ -2,6 +2,8 @@
 
 Extends: `EventEmitter`
 
+A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection. Pipelining is disabled by default.
+
 ## `new Client(url, [options])`
 
 Arguments:
@@ -183,24 +185,128 @@ Extends: `DispatchOptions`
 * **body** `Readable`
 * **opaque** `unknown`
 
-### `Client.stream()`
+### `Client.stream()` _(2 overloads)_
 
-### `Client.upgrade()`
+A faster version of `Client.request`
+
+#### (1) `Client.stream(options, factory)`
+
+Arguments:
+
+* **options** `RequestOptions`
+* **factory** `(data: StreamFactoryData) => Writable`
+
+Returns: `Promise<StreamData>`
+
+#### (2) `Client.stream(options, factory, callback)`
+
+Arguments:
+
+* **options** `RequestOptions`
+* **factory** `(data: StreamFactoryData) => Writable`
+* **callback** `(error: Error | null, data: StreamData) => void`
+
+#### Parameter: `StreamFactoryData`
+
+* **statusCode** `number`
+* **headers** `IncomingHttpHeaders`
+* **opaque** `unknown`
+
+#### Parameter: `StreamData`
+
+* **opaque** `unknown`
+* **trailers** `Record<string, unknown>`
+
+### `Client.upgrade()` _(2 overloads)_
+
+#### (1) `Client.upgrade(options)`
+
+Arguments:
+
+* **options** `UpgradeOptions`
+
+Returns: `Promise<UpgradeData>`
+
+#### (2) `Client.upgrade(options, callback)
+
+Arguments:
+
+* **options** `UpgradeOptions`
+* **callback** `(error: Error | null, data: UpgradeData) => void`
+
+#### Parameter: `UpgradeOptions`
+
+* **path** `string`
+* **method** `string` (optional)
+* **headers** `IncomingHttpHeaders | null` (optional) - Default: `null`
+* **headersTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Defaults to 30 seconds.
+* **protocol** `string` (optional) - Default: `'Websocket'` - A string of comma separated protocols, in descending preference order.
+* **signal** `AbortSignal | EventEmitter | null` (optional) - Default: `null`
 
 ## Instance Properties
 
 ### `Client.busy`
 
+* `boolean`
+
+True if pipeline is saturated or blocked. Indicates whether dispatching further requests is meaningful.
+
 ### `Client.closed`
+
+* `boolean`
+
+True after `client.close()` has been called.
 
 ### `Client.connected`
 
+* `boolean`
+
+True if the client has an active connection. The client will lazily create a connection when it receives a request and will destroy it if there is no activity for the duration of the `timeout` value.
+
 ### `Client.destroyed`
+
+* `destroyed`
+
+True after `client.destroyed()` has been called or `client.close()` has been called and the client shutdown has completed.
 
 ### `Client.pending`
 
+* `number`
+
+Number of queued requests.
+
 ### `Client.pipelining`
+
+* `number`
+
+Property to get and set the pipelining factor.
 
 ### `Client.running`
 
+* `number`
+
+Number of inflight requests.
+
 ### `Client.size`
+
+* `number`
+
+Number of pending and running requests.
+
+## Instance Events
+
+### Event: `'connect'`
+
+Emitted when a socket has been created and connected. The client will connect once `Client.size > 0`.
+
+### Event: `'disconnect'`
+
+Returns:
+
+* **error** `Error`
+
+Emitted when socket has disconnected. The first argument of the event is the error which caused the socket to disconnect. The client will reconnect if or once `Client.size > 0`.
+
+### Event: `'drain'`
+
+Emitted when pipeline is no longer fully saturated.
