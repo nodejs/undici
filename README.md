@@ -130,7 +130,7 @@ Options:
   Default: `true` if `method` is `HEAD` or `GET`.
 * `polling: Boolean`, whether the requests is long polling and not expected
   to finish in a timely fashion.
-  Default: `false`.
+  Default: `true` if `accept` header is `text/event-stream`.
 
 Headers are represented by an object like this:
 
