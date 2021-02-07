@@ -41,13 +41,46 @@ Closes the client and gracefully waits for enqueued requests to complete before 
 
 #### (1) `Client.close()`
 
-Returns: `Promise<void>`
+Returns: `Promise<null>`
 
 #### (2) `Client.close(callback)`
 
 Arguments:
 
-* **callback** `() => void`
+* **callback** `(error: Error | null, data: null) => void`
+
+#### Example:
+
+```js
+'use strict'
+const { createServer } = 'http'
+const { Client } = 'undici'
+
+const server = createServer((request, response) => {
+  response.end('undici')
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  const request = client.request({
+    path: '/',
+    method: 'GET'
+  })
+
+  client.close()
+    .then(() => {
+      // This waits for the previous request to complete
+      console.log('Client closed')
+      server.close()
+    })
+
+  request.then(({ body }) => {
+    body.setEncoding('utf8')
+    body.on('data', console.log) // This logs before 'Client closed'
+  })
+})
+```
 
 ### `Client.connect()` _(2 overloads)_
 
