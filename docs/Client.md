@@ -8,7 +8,7 @@ A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection. Pipelining i
 
 Arguments:
 
-* **url** `URL | string`
+* **url** `URL | string` - It should only include the protocol, hostname, and port.
 * **options** `object` (optional)
   * **bodyTimeout** `number | null` (optional) - Default: `30e3` -
   * **headersTimeout** `number | null` (optional) - Default: `30e3` - Node.js v14+ - The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 30 seconds.
@@ -16,7 +16,7 @@ Arguments:
   * **keepAliveTimeout** `number | null` (optional) - Default: `4e3` - The timeout after which a socket without active requests will time out. Monitors time between activity on a connected socket. This value may be overriden by *keep-alive* hints from the server. Defaults to 4 seconds.
   * **keepAliveTimeoutThreshold** `number | null` (optional) - Default: `1e3` - A number subtracted from server *keep-alive* hints when overriding `idleTimeout` to account for timing inaccuries caused by e.g. transport latency. Defaults to 1 second.
   * **maxHeaderSize** `number | null` (optional) - Default: `16384` - The maximum length of request headers in bytes. Defaults to 16KiB.
-  * **pipelining** `number | null` (optional) - Default: `1` - The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2).
+  * **pipelining** `number | null` (optional) - Default: `1` - The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Carefully consider your workload and environment before enabling concurrent requests as pipelining may reduce performance if used incorrectly. Pipelining is sensitive to network stack settings as well as head of line blocking caused by e.g. long running requests. Set to `0` to disable keep-alive connections.
   * **socketPath** `string | null` (optional) - Default: `null` - An IPC endpoint, either Unix domain socket or Windows named pipe.
   * **tls** `TlsOptions | null` (optional) - Default: `null` - An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
 
@@ -102,7 +102,9 @@ Arguments:
 
 ### `Client.dispatch(options, handlers)`
 
-This is the low level API which all the preceding APIs are implemented on top of. This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this.
+This is the low level API which all the preceding APIs are implemented on top of.
+
+This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this.
 
 Arguments:
 
@@ -111,24 +113,104 @@ Arguments:
 
 Returns: `void`
 
+#### Example 1 - Basic GET request:
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+const server = createServer((request, response) => {
+  response.end('Hello, World!')
+})
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  const data = []
+
+  client.dispatch({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-foo': 'bar'
+    }
+  }, {
+    onConnect: () => {
+      console.log('Connected!')
+    },
+    onError: (error) => {
+      console.error(error)
+    },
+    onHeaders: (statusCode, headers) => {
+      console.log(`onHeaders | statusCode: ${statusCode} | headers: ${headers}`)
+    },
+    onData: (chunk) => {
+      console.log('onData : chunk received')
+      data.push(chunk)
+    },
+    onComplete: (trailers) => {
+      console.log(`onComplete | trailers: ${trailers}`)
+      const res = Buffer.concat(data).toString('utf8')
+      console.log(`Data: ${res}`)
+      client.close()
+      server.close()
+    }
+  })
+})
+```
+
+#### Example 2 - Upgrade Request:
+
+> ⚠️ Incomplete
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+const server = createServer((request, response) => {
+  response.end('Hello, World!')
+})
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  client.dispatch({
+    path: '/',
+    method: 'CONNECT',
+  }, {
+    onConnect: () => {},
+    onError: (error) => {},
+    onUpgrade: () => {}
+  })
+
+  client.dispatch({
+    path: '/',
+    upgrade: 'Websocket'
+  }, {
+    onConnect: () => {},
+    onError: (error) => {},
+    onUpgrade: () => {}
+  })
+})
+```
+
 #### Parameter: `DispatchOptions`
 
 * **path** `string`
 * **method** `string`
-* **body** `string | Buffer | Uint8Array | Readable | null` (optional) - Default: `null`
-* **headers** `IncomingHttpHeaders | null` (optional) - Default: `null`
-* **headersTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use `0` to disable it entirely. Defaults to 30 seconds.
-* **bodyTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 30 seconds.
+* **body** `string | Buffer | Uint8Array | stream.Readable | null` (optional) - Default: `null`
+* **headers** `http.IncomingHttpHeaders | null` (optional) - Default: `null`
 * **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed.
+* **upgrade** `string | null` (optional) - Default: `method === 'CONNECT' || null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.
 
 #### Parameter: `DispatchHandlers`
 
-* **onConnect** `(abort: () => void) => void` (optional) - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
-* **onUpgrade** `(statusCode: number, headers: string[] | null, socket: Duplex) => void` (optional) - Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method.
-* **onHeaders** `(statusCode: number, headers: string[] | null, resume: () => void) => boolean` (optional) - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers.
-* **onData** `(chunk: Buffer) => boolean` (optional) - Invoked when response payload data is received.
-* **onComplete** `(trailers: string[] | null) => void` (optional) - Invoked when response payload and trailers have been received and the request has completed.
-* **onError** `(error: Error) => void` (optional) - Invoked when an error has occurred.
+* **onConnect** `(abort: () => void) => void` - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
+* **onError** `(error: Error) => void` - Invoked when an error has occurred.
+* **onUpgrade** `(statusCode: number, headers: string[] | null, socket: Duplex) => void` (optional) - Invoked when request is upgraded. Required if `DispatchOptions.upgrade` is defined or `DispatchOptions.method === 'CONNECT'`.
+* **onHeaders** `(statusCode: number, headers: string[] | null, resume: () => void) => boolean` - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. Not required for `upgrade` requests.
+* **onData** `(chunk: Buffer) => boolean` - Invoked when response payload data is received. Not required for `upgrade` requests.
+* **onComplete** `(trailers: string[] | null) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
 
 ### `Client.pipeline(options, handler)`
 
