@@ -380,7 +380,7 @@ test('busy', (t) => {
         })
       })
       t.strictEqual(client.pending, n)
-      t.strictEqual(client.busy, n > 2)
+      t.strictEqual(client.busy, n >= 2)
       t.strictEqual(client.size, n)
       t.strictEqual(client.running, 0)
     }
