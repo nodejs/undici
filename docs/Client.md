@@ -99,14 +99,14 @@ Returns: `Promise<ConnectData>`
 Arguments:
 
 * **options** `ConnectOptions`
-* **callback** `(err: Error, data: ConnectData) => void`
+* **callback** `(err: Error | null, data: ConnectData | null) => void`
 
 #### Parameter: `ConnectOptions`
 
 * **path** `string`
-* **headers** `IncomingHttpHeaders | null` (optional) - Default: `null`
-* **headersTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Defaults to 30 seconds.
-* **signal** `AbortSignal | EventEmitter | null` (optional) - Default: `null`
+* **headers** `http.IncomingHttpHeaders | null` (optional) - Default: `null`
+* **signal** `AbortSignal | events.EventEmitter | null` (optional) - Default: `null`
+* **opaque** `unknown` (optional) - This argument parameter is passed through to `ConnectData`
 
 #### Parameter: `ConnectData`
 
@@ -114,6 +114,50 @@ Arguments:
 * **headers** `IncomingHttpHeaders`
 * **socket** `Duplex`
 * **opaque** `unknown`
+
+#### Example:
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('.')
+
+const server = createServer((request, response) => {
+  throw Error('should never get here')
+})
+
+server.on('connect', (req, socket, firstBodyChunk) => {
+  socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
+
+  let data = firstBodyChunk.toString()
+  socket.on('data', (buf) => {
+    data += buf.toString()
+  })
+
+  socket.on('end', () => {
+    socket.end(data)
+  })
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  client
+    .connect({ path: '/' })
+    .then(({ socket }) => {
+      const wanted = 'Body'
+      let data = ''
+      socket.on('data', d => { data += d })
+      socket.on('end', () => {
+        console.log(`Data received: ${data.toString()} | Data wanted: ${wanted}`)
+        client.close()
+        server.close()
+      })
+      socket.write(wanted)
+      socket.end()
+    })
+})
+```
 
 ### `Client.destroy()` _(4 overloads)_
 
