@@ -1,8 +1,10 @@
 # Class: Client
 
-Extends: `EventEmitter`
+Extends: `events.EventEmitter`
 
 A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection. Pipelining is disabled by default.
+
+Imports: `http`, `stream`, `events`
 
 ## `new Client(url, [options])`
 
@@ -21,6 +23,15 @@ Arguments:
   * **tls** `TlsOptions | null` (optional) - Default: `null` - An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
 
 Returns: `Client`
+
+#### Example:
+
+```js
+'use strict'
+const { Client } = require('undici')
+
+const client = Client('http://localhost:3000')
+```
 
 ## Instance Methods
 
