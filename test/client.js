@@ -7,6 +7,7 @@ const { readFileSync, createReadStream } = require('fs')
 const { Readable } = require('stream')
 const { kSocket } = require('../lib/core/symbols')
 const EE = require('events')
+const { kConnect } = require('../lib/core/symbols')
 
 test('basic get', (t) => {
   t.plan(24)
@@ -929,6 +930,32 @@ test('POST empty with error', (t) => {
 
     client.request({ path: '/', method: 'POST', body }, (err, data) => {
       t.strictEqual(err.message, 'asd')
+    })
+  })
+})
+
+test('busy', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    client[kConnect](() => {
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err) => {
+        t.error(err)
+      })
+      t.strictEqual(client.busy, true)
     })
   })
 })
