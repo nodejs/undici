@@ -433,6 +433,95 @@ server.listen(() => {
 })
 ```
 
+#### Example 2 - Aborting a request
+
+> Node.js v15+ is required to run this example
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+const server = createServer((request, response) => {
+  response.end('Hello, World!')
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+  const abortController = new AbortController()
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    signal: abortController.signal
+  }).catch(error => {
+    console.error(error) // should print an RequestAbortedError
+    client.close()
+    server.close()
+  })
+
+  abortController.abort()
+
+})
+```
+
+Alternatively, any `EventEmitter` that emits an `'abort'` event may be used as an abort controller:
+
+```js
+'use strict'
+const EventEmitter = require('events')
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+const server = createServer((request, response) => {
+  response.end('Hello, World!')
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+  const ee = new EventEmitter()
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    signal: ee
+  }).catch(error => {
+    console.error(error) // should print an RequestAbortedError
+    client.close()
+    server.close()
+  })
+
+  ee.emit('abort')
+})
+```
+
+Destroying the request or response body will have the same effect.
+
+> ⚠️ Example incomplete
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+const server = createServer((request, response) => {
+  response.end('Hello, World!')
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  client.request({
+    path: '/',
+    method: 'GET',
+  }).catch(error => {
+    console.error(error) // should print an RequestAbortedError
+    client.close()
+    server.close()
+  })
+})
+```
+
 ### `Client.stream()` _(2 overloads)_
 
 A faster version of `Client.request`
