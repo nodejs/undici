@@ -49,12 +49,12 @@ Arguments:
 
 * **callback** `(error: Error | null, data: null) => void`
 
-#### Example:
+#### Example - Request resolves before Client closes
 
 ```js
 'use strict'
-const { createServer } = 'http'
-const { Client } = 'undici'
+const { createServer } = require('http')
+const { Client } = require('undici')
 
 const server = createServer((request, response) => {
   response.end('undici')
@@ -115,7 +115,7 @@ Arguments:
 * **socket** `Duplex`
 * **opaque** `unknown`
 
-#### Example:
+#### Example - Connect request with echo
 
 ```js
 'use strict'
@@ -187,6 +187,39 @@ Arguments:
 
 * **error** `Error | null`
 * **callback** `() => void`
+
+#### Example - Request is aborted when Client is destroyed
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+const server = createServer((request, response) => {
+  response.end('undici')
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  const request = client.request({
+    path: '/',
+    method: 'GET'
+  })
+
+  client.destroy()
+    .then(() => {
+      // Still waits for requests to complete
+      console.log('Client destroyed')
+      server.close()
+    })
+
+  // The request promise will reject with an Undici Client Destroyed error
+  request.catch(error => {
+    console.error(error)
+  })
+})
+```
 
 ### `Client.dispatch(options, handlers)`
 
