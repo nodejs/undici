@@ -24,7 +24,7 @@ Arguments:
 
 Returns: `Client`
 
-#### Example:
+### Example - Basic Client instantiation
 
 ```js
 'use strict'
@@ -104,15 +104,15 @@ Arguments:
 #### Parameter: `ConnectOptions`
 
 * **path** `string`
-* **headers** `http.IncomingHttpHeaders | null` (optional) - Default: `null`
+* **headers** `UndiciHeaders` (optional) - Default: `null`
 * **signal** `AbortSignal | events.EventEmitter | null` (optional) - Default: `null`
 * **opaque** `unknown` (optional) - This argument parameter is passed through to `ConnectData`
 
 #### Parameter: `ConnectData`
 
 * **statusCode** `number`
-* **headers** `IncomingHttpHeaders`
-* **socket** `Duplex`
+* **headers** `http.IncomingHttpHeaders`
+* **socket** `stream.Duplex`
 * **opaque** `unknown`
 
 #### Example - Connect request with echo
@@ -120,7 +120,7 @@ Arguments:
 ```js
 'use strict'
 const { createServer } = require('http')
-const { Client } = require('.')
+const { Client } = require('undici')
 
 const server = createServer((request, response) => {
   throw Error('should never get here')
@@ -234,7 +234,7 @@ Arguments:
 
 Returns: `void`
 
-#### Example 1 - Basic GET request:
+#### Example 1 - Dispatch GET request
 
 ```js
 'use strict'
@@ -280,7 +280,7 @@ server.listen(() => {
 })
 ```
 
-#### Example 2 - Upgrade Request:
+#### Example 2 - Dispatch Upgrade Request
 
 > ⚠️ Incomplete
 
@@ -320,7 +320,7 @@ server.listen(() => {
 * **path** `string`
 * **method** `string`
 * **body** `string | Buffer | Uint8Array | stream.Readable | null` (optional) - Default: `null`
-* **headers** `http.IncomingHttpHeaders | null` (optional) - Default: `null`
+* **headers** `UndiciHeaders` (optional) - Default: `null`
 * **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed.
 * **upgrade** `string | null` (optional) - Default: `method === 'CONNECT' || null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.
 
@@ -357,7 +357,15 @@ Extends: `RequestOptions`
 
 ### `Client.request()` _(2 overloads)_
 
-Performs a HTTP request
+Performs a HTTP request.
+
+Non-idempotent requests will not be pipelined in order
+to avoid indirect failures.
+
+Idempotent requests will be automatically retried if
+they fail due to indirect failure from the request
+at the head of the pipeline. This does not apply to
+idempotent requests with a stream request body.
 
 #### (1) `Client.request(options)`
 
@@ -376,17 +384,54 @@ Arguments:
 
 #### Parameter: `RequestOptions`
 
-Extends: `DispatchOptions`
+Extends: [`DispatchOptions`](#parameter-dispatchoptions)
 
-* **opaque** `unknown` (optional)
-* **signal** `AbortSignal | EventEmitter | null` (optional) - Default: `null`
+* **opaque** `unknown` (optional) - Default: `null` - Used for passing through context to `ResponseData`
+* **signal** `AbortSignal | events.EventEmitter | null` (optional) - Default: `null`
+
+The `RequestOptions.method` property should not be value `'CONNECT'`.
 
 #### Parameter: `ResponseData`
 
 * **statusCode** `number`
-* **headers** `IncomingHttpHeaders`
-* **body** `Readable`
+* **headers** `http.IncomingHttpHeaders`
+* **body** `stream.Readable`
+* **trailers** `Record<string, string>` - This object starts out
+  as empty and will be mutated to contain trailers after `body` has emitted `'end'`.
 * **opaque** `unknown`
+
+#### Example 1 - Basic GET Request
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+const server = createServer((request, response) => {
+  response.end('Hello, World!')
+})
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }).then(({ body, headesr, statusCode, trailers }) => {
+    console.log(`response received ${statusCode}`)
+    console.log('headers', headers)
+    body.setEncoding('utf8')
+    body.on('data', console.log)
+    body.on('end', () => {
+      console.log('trailers', trailers)
+    })
+
+    client.close()
+    server.close()
+  }).catch(error => {
+    console.error(error)
+  })
+})
+```
 
 ### `Client.stream()` _(2 overloads)_
 
@@ -513,3 +558,35 @@ Emitted when socket has disconnected. The first argument of the event is the err
 ### Event: `'drain'`
 
 Emitted when pipeline is no longer fully saturated.
+
+## Type: `UndiciHeaders`
+
+* `http.IncomingHttpHeaders | string[] | null`
+
+Header arguments such as `options.headers` in [`Client.dispatch`](./Client.md#client-dispatchoptions-handlers) can be specified in two forms; either as an object specified by the `http.IncomingHttpHeaders` type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
+
+Keys are lowercase and values are not modified. If you don't specify a `host` header, it will be derived from the `url` of the [Client](#class-client) instance.
+
+### Example 1 - Object
+
+```js
+{
+  'content-length': '123',
+  'content-type': 'text/plain',
+  connection: 'keep-alive',
+  host: 'mysite.com',
+  accept: '*/*'
+}
+```
+
+### Example 2 - Array
+
+```js
+[
+  'content-length', '123',
+  'content-type', 'text/plain',
+  'connection', 'keep-alive',
+  'host', 'mysite.com',
+  'accept', '*/*'
+]
+```
