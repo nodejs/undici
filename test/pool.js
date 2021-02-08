@@ -341,7 +341,7 @@ test('backpressure algorithm', (t) => {
 function noop () {}
 
 test('busy', (t) => {
-  t.plan(8 * 8 + 2 + 1)
+  t.plan(8 * 10 + 2 + 1)
 
   const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
@@ -379,8 +379,10 @@ test('busy', (t) => {
           t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
-      t.strictEqual(client.pending, Math.max(n - 2, 0))
-      t.strictEqual(client.busy, n > 2)
+      t.strictEqual(client.pending, n)
+      t.strictEqual(client.busy, n >= 2)
+      t.strictEqual(client.size, n)
+      t.strictEqual(client.running, 0)
     }
   })
 })
