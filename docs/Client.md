@@ -524,14 +524,16 @@ server.listen(() => {
 
 ### `Client.stream()` _(2 overloads)_
 
-A faster version of `Client.request`
+A faster version of `Client.request`. This method expects the second argument `factory` to return a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream which the response will be written to. This improves performance by avoiding creating an intermediate [`Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) stream when the user expects to directly pipe the response body to a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream.
+
+As demonstrated in [Example 1 - Basic GET stream request](#example-1---basic-get-stream-request), it is strongly recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works extremely well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](#example-2---stream-to-fastify-response) for more details.
 
 #### (1) `Client.stream(options, factory)`
 
 Arguments:
 
 * **options** `RequestOptions`
-* **factory** `(data: StreamFactoryData) => Writable`
+* **factory** `(data: StreamFactoryData) => stream.Writable`
 
 Returns: `Promise<StreamData>`
 
@@ -540,19 +542,113 @@ Returns: `Promise<StreamData>`
 Arguments:
 
 * **options** `RequestOptions`
-* **factory** `(data: StreamFactoryData) => Writable`
+* **factory** `(data: StreamFactoryData) => stream.Writable`
 * **callback** `(error: Error | null, data: StreamData) => void`
 
 #### Parameter: `StreamFactoryData`
 
 * **statusCode** `number`
-* **headers** `IncomingHttpHeaders`
+* **headers** `http.IncomingHttpHeaders`
 * **opaque** `unknown`
 
 #### Parameter: `StreamData`
 
 * **opaque** `unknown`
-* **trailers** `Record<string, unknown>`
+* **trailers** `Record<string, string>`
+
+#### Example 1 - Basic GET stream request
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
+const stream = require('stream')
+
+const { PassThrough } = require('stream')
+
+const server = createServer((request, response) => {
+  response.end('Hello, World!')
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  const pt = new PassThrough()
+  const bufs = []
+
+  client.stream({
+    path: '/',
+    method: 'GET',
+    opaque: { bufs, pt }
+  }, ({ statusCode, headers, opaque: { pt, bufs } }) => {
+    console.log(`response received ${statusCode}`)
+    console.log('headers', headers)
+    pt.on('data', buf => {
+      bufs.push(buf)
+    })
+    return pt
+  }).then(({ opaque: { bufs } }) => {
+
+    console.log(Buffer.concat(bufs).toString('utf8'))
+
+    client.close()
+    server.close()
+  }).catch(error => {
+    console.error(error)
+  })
+})
+```
+
+#### Example 2 - Stream to Fastify Response
+
+In this example, a (fake) request is made to the fastify server using `fastify.inject()`. This request then executes the fastify route handler which makes a subsequent request to the raw Node.js http server using `undici.client.stream()`. The fastify response is passed to the `opaque` option so that undici can tap into the underlying writable stream using `response.raw`. This methodology demonstrates how one could use undici and fastify together to create fast-as-possible requests from one backend server to another.
+
+```js
+'use strict'
+
+const { createServer } = require('http')
+const undici = require('undici')
+const fastify = require('fastify')
+
+const nodeServer = createServer((request, response) => {
+  response.end('Hello, World! From Node.js HTTP Server')
+})
+
+const fastifyServer = fastify()
+
+nodeServer.listen(0, () => {
+  console.log('Node Server listening')
+
+  const client = new undici.Client(`http://localhost:${nodeServer.address().port}`)
+
+  fastifyServer.route({
+    url: '/',
+    method: 'GET',
+    handler: async (request, response) => {
+      client.stream({
+        path: '/',
+        method: 'GET',
+        opaque: response
+      }, ({ opaque }) => opaque.raw)
+    }
+  })
+
+  fastifyServer.listen(0, () => {
+    console.log('Fastify Server listening')
+    fastifyServer.inject({
+      path: '/',
+      method: 'GET'
+    }).then(({ statusCode, body }) => {
+      console.log(`response received ${statusCode}`)
+      console.log('body:', body)
+
+      client.close()
+      fastifyServer.close()
+      nodeServer.close()
+    })
+  })
+})
+```
 
 ### `Client.upgrade()` _(2 overloads)_
 
