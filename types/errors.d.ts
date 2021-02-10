@@ -9,6 +9,12 @@ declare namespace Errors {
     code: 'UND_ERR_HEADERS_TIMEOUT';
   }
 
+  /** A body exceeds the `bodyTimeout` option. */
+  export class BodyTimeoutError extends UndiciError {
+    name: 'BodyTimeoutError';
+    code: 'UND_ERR_BODY_TIMEOUT';
+  }
+
   /** A socket exceeds the `socketTimeout` option. */
   export class SocketTimeoutError extends UndiciError {
     name: 'SocketTimeoutError';
