@@ -564,7 +564,7 @@ called and the client shutdown has completed.
 ### `new undici.Pool(url, opts)`
 
 A pool of [`Client`][] connected to the same upstream target.
-Implements the exact same api as [`Client`][] with a few minor
+Implements the same api as [`Client`][] with a few minor
 differences.
 
 Options:
