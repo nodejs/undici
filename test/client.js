@@ -959,3 +959,36 @@ test('busy', (t) => {
     })
   })
 })
+
+test('connected', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 1
+    })
+    t.tearDown(client.close.bind(client))
+
+    client.on('connect', self => {
+      t.strictEqual(client, self)
+    })
+    client.on('disconnect', self => {
+      t.strictEqual(client, self)
+    })
+
+    client[kConnect](() => {
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err) => {
+        t.error(err)
+      })
+      t.strictEqual(client.connected, 1)
+    })
+  })
+})
