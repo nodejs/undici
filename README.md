@@ -115,6 +115,8 @@ Options:
 
 Performs a HTTP request.
 
+Requests are not guaranteeed to be dispatched in order of invocation.
+
 Options:
 
 * `path: String`
