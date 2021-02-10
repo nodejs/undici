@@ -527,9 +527,9 @@ Number of inflight requests.
 
 Number of pending and running requests.
 
-#### `client.connected: Boolean`
+#### `client.connected: Boolean|Integer`
 
-True if the client has an active connection. The client will lazily
+Thruthy if the client has an active connection. The client will lazily
 create a connection when it receives a request and will destroy it
 if there is no activity for the duration of the `timeout` value.
 
