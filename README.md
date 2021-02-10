@@ -529,7 +529,7 @@ Number of inflight requests.
 
 Number of pending and running requests.
 
-#### `client.connected: Boolean|Integer`
+#### `client.connected: Number`
 
 Thruthy if the client has an active connection. The client will lazily
 create a connection when it receives a request and will destroy it
@@ -555,19 +555,20 @@ called and the client shutdown has completed.
   saturated.
 
 * `'connect'`, emitted when a socket has been created and
-  connected. The client will connect once `client.size > 0`.
+  connected. The first argument is the  `Client` instance. 
+  The client will connect once `client.size > 0`.
 
 * `'disconnect'`, emitted when socket has disconnected. The
   first argument of the event is the error which caused the
-  socket to disconnect. The client will reconnect if or once
+  socket to disconnect. The second argument is the
+   `Client` instance. The client will reconnect if or once
   `client.size > 0`.
 
 <a name='pool'></a>
 ### `new undici.Pool(url, opts)`
 
 A pool of [`Client`][] connected to the same upstream target.
-Implements the same api as [`Client`][] with a few minor
-differences.
+Implements the same api as [`Client`][].
 
 Requests are not guaranteeed to be dispatched in order of invocation.
 
@@ -576,14 +577,6 @@ Options:
 * ... same as [`Client`][].
 * `connections`, the number of clients to create.
   Default `10`.
-
-#### Events
-
-* `'connect'`, emitted when a client has connected. The first argument is the
-   `Client` instance
-
-* `'disconnect'`, emitted when a client has disconnected. The first argument is the
-   `Client` instance, the second is the the error that caused the disconnection.
 
 <a name='agent'></a>
 ### `new undici.Agent(opts)`
