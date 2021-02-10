@@ -564,6 +564,8 @@ called and the client shutdown has completed.
 ### `new undici.Pool(url, opts)`
 
 A pool of [`Client`][] connected to the same upstream target.
+Implements the exact same api as [`Client`][] with a few minor
+differences.
 
 Options:
 
@@ -574,71 +576,17 @@ Options:
 `Pool` does not guarantee that requests are dispatched in
 order of invocation.
 
-#### `pool.url: URL`
-
-Returns url passed to `undici.Pool(url, opts)`.
-
 #### `pool.connected: Integer`
 
 Number of active connections in pool.
 
-#### `pool.pending: Number`
-
-Number of queued requests.
-
-#### `pool.busy: Boolean`
-
-True if pool is saturated or blocked. Indicates whether dispatching
-further requests is meaningful.
-
-#### `pool.closed: Boolean`
-
-True after `pool.close()` has been called.
-
-#### `pool.destroyed: Boolean`
-
-True after `pool.destroyed()` has been called or `pool.close()` has been
-called and the client shutdown has completed.
-
-#### `pool.request(opts[, callback]): Promise|Void`
-
-Calls [`client.request(opts, callback)`][request] on one of the clients.
-
-#### `pool.stream(opts, factory[, callback]): Promise|Void`
-
-Calls [`client.stream(opts, factory, callback)`][stream] on one of the clients.
-
-#### `pool.pipeline(opts, handler): Duplex`
-
-Calls [`client.pipeline(opts, handler)`][pipeline] on one of the clients.
-
-#### `pool.upgrade(opts[, callback]): Promise|Void`
-
-Calls [`client.upgrade(opts, callback)`][upgrade] on one of the clients.
-
-#### `pool.connect(opts[, callback]): Promise|Void`
-
-Calls [`client.connect(opts, callback)`][connect] on one of the clients.
-
-#### `pool.dispatch(opts, handler): Void`
-
-Calls [`client.dispatch(opts, handler)`][dispatch] on one of the clients.
-
-#### `pool.close([callback]): Promise|Void`
-
-Calls [`client.close(callback)`](#close) on all the clients.
-
-#### `pool.destroy([err][, callback]): Promise|Void`
-
-Calls [`client.destroy(err, callback)`](#destroy) on all the clients.
+This might be changed to a `Boolean` in future
+semver major version.
 
 #### Events
 
-* `'drain'`, emitted when pool is no longer fully
-  saturated.
-
-* `'connect'`, emitted when a client has connected, the `Client`
-    instance is passed as argument.
+* `'connect'`, emitted when a client has connected. The first argument is the
+   `Client` instance
 
 * `'disconnect'`, emitted when a client has disconnected. The first argument is the
    `Client` instance, the second is the the error that caused the disconnection.
