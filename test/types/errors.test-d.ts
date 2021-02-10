@@ -8,6 +8,11 @@ expectAssignable<errors.HeadersTimeoutError>(new errors.HeadersTimeoutError())
 expectAssignable<'HeadersTimeoutError'>(new errors.HeadersTimeoutError().name)
 expectAssignable<'UND_ERR_HEADERS_TIMEOUT'>(new errors.HeadersTimeoutError().code)
 
+expectAssignable<errors.UndiciError>(new errors.BodyTimeoutError())
+expectAssignable<errors.BodyTimeoutError>(new errors.BodyTimeoutError())
+expectAssignable<'BodyTimeoutError'>(new errors.BodyTimeoutError().name)
+expectAssignable<'UND_ERR_BODY_TIMEOUT'>(new errors.BodyTimeoutError().code)
+
 expectAssignable<errors.UndiciError>(new errors.SocketTimeoutError())
 expectAssignable<errors.SocketTimeoutError>(new errors.SocketTimeoutError())
 expectAssignable<'SocketTimeoutError'>(new errors.SocketTimeoutError().name)
