@@ -961,7 +961,7 @@ test('busy', (t) => {
 })
 
 test('connected', (t) => {
-  t.plan(4)
+  t.plan(5)
 
   const server = createServer((req, res) => {
     req.pipe(res)
@@ -981,6 +981,7 @@ test('connected', (t) => {
       t.strictEqual(client, self)
     })
 
+    t.strictEqual(client.connected, 0)
     client[kConnect](() => {
       client.request({
         path: '/',
