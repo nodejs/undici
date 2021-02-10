@@ -576,13 +576,6 @@ Options:
 `Pool` does not guarantee that requests are dispatched in
 order of invocation.
 
-#### `pool.connected: Integer`
-
-Number of active connections in pool.
-
-This might be changed to a `Boolean` in future
-semver major version.
-
 #### Events
 
 * `'connect'`, emitted when a client has connected. The first argument is the
