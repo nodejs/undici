@@ -63,6 +63,8 @@ console.log('trailers', trailers)
 A basic HTTP/1.1 client, mapped on top of a single TCP/TLS connection. Pipelining is disabled
 by default.
 
+Requests are not guaranteeed to be dispatched in order of invocation.
+
 `url` can be a string or a [`URL`](https://nodejs.org/api/url.html#url_class_url) object.
 It should only include the protocol, hostname, and port.
 
@@ -567,14 +569,13 @@ A pool of [`Client`][] connected to the same upstream target.
 Implements the same api as [`Client`][] with a few minor
 differences.
 
+Requests are not guaranteeed to be dispatched in order of invocation.
+
 Options:
 
 * ... same as [`Client`][].
 * `connections`, the number of clients to create.
   Default `10`.
-
-`Pool` does not guarantee that requests are dispatched in
-order of invocation.
 
 #### Events
 
