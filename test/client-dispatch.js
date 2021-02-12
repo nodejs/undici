@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const { Client, Pool, errors } = require('..')
 const http = require('http')
+const { PassThrough } = require('stream')
 
 test('dispatch invalid opts', (t) => {
   t.plan(3)
@@ -610,7 +611,7 @@ test('ensure promise callback runs before onError', t => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    let called = false
+    const stream = new PassThrough()
     new Promise(resolve => client.dispatch({
       path: '/',
       method: 'POST',
@@ -630,10 +631,12 @@ test('ensure promise callback runs before onError', t => {
       },
       onError (err) {
         t.ok(err)
-        t.strictEqual(called, true)
+        stream.destroy(err)
       }
     })).then(() => {
-      called = true
+      stream.on('error', (err) => {
+        t.ok(err)
+      })
     })
   })
 })
