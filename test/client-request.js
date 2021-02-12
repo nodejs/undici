@@ -38,7 +38,7 @@ test('request abort before headers', (t) => {
         signal
       }, (err) => {
         t.ok(err instanceof errors.RequestAbortedError)
-        t.strictEqual(signal.listenerCount('abort'), 0)
+        t.strictEqual(signal.listenerCount('abort'), 1)
       })
       t.strictEqual(signal.listenerCount('abort'), 2)
     })
