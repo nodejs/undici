@@ -454,6 +454,8 @@ This API is expected to evolve through semver-major versions and is less stable
 than the preceding higher level APIs. It is primarily intended for library developers
 who implement higher level APIs on top of this.
 
+Multiple handler methods may be invoked in the same tick.
+
 Options:
 
 * `path: String`
