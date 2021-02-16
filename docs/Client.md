@@ -745,7 +745,7 @@ nodeServer.listen(0, () => {
   fastifyServer.route({
     url: '/',
     method: 'GET',
-    handler: async (request, response) => {
+    handler: (request, response) => {
       client.stream({
         path: '/',
         method: 'GET',
