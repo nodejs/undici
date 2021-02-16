@@ -6,6 +6,72 @@ A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection. Pipelining i
 
 Imports: `http`, `stream`, `events`
 
+- [Class: Client](#class-client)
+  - [`new Client(url, [options])`](#new-clienturl-options)
+    - [Example - Basic Client instantiation](#example---basic-client-instantiation)
+  - [Instance Methods](#instance-methods)
+    - [`Client.close()` _(2 overloads)_](#clientclose-2-overloads)
+      - [(1) `Client.close()`](#1-clientclose)
+      - [(2) `Client.close(callback)`](#2-clientclosecallback)
+      - [Example - Request resolves before Client closes](#example---request-resolves-before-client-closes)
+    - [`Client.connect()` _(2 overloads)_](#clientconnect-2-overloads)
+      - [(1) `Client.connect(options)`](#1-clientconnectoptions)
+      - [(2) `Client.connect(options, callback)`](#2-clientconnectoptions-callback)
+      - [Parameter: `ConnectOptions`](#parameter-connectoptions)
+      - [Parameter: `ConnectData`](#parameter-connectdata)
+      - [Example - Connect request with echo](#example---connect-request-with-echo)
+    - [`Client.destroy()` _(4 overloads)_](#clientdestroy-4-overloads)
+      - [(1) `Client.destroy()`](#1-clientdestroy)
+      - [(2) `Client.destroy(error)`](#2-clientdestroyerror)
+      - [(3) `Client.destroy(callback)`](#3-clientdestroycallback)
+      - [(4) `Client.destroy(error, callback)`](#4-clientdestroyerror-callback)
+      - [Example - Request is aborted when Client is destroyed](#example---request-is-aborted-when-client-is-destroyed)
+    - [`Client.dispatch(options, handlers)`](#clientdispatchoptions-handlers)
+      - [Example 1 - Dispatch GET request](#example-1---dispatch-get-request)
+      - [Example 2 - Dispatch Upgrade Request](#example-2---dispatch-upgrade-request)
+      - [Parameter: `DispatchOptions`](#parameter-dispatchoptions)
+      - [Parameter: `DispatchHandlers`](#parameter-dispatchhandlers)
+    - [`Client.pipeline(options, handler)`](#clientpipelineoptions-handler)
+      - [Parameter: PipelineOptions](#parameter-pipelineoptions)
+      - [Parameter: PipelineHandlerData](#parameter-pipelinehandlerdata)
+      - [Example 1 - Pipeline Echo](#example-1---pipeline-echo)
+    - [`Client.request()` _(2 overloads)_](#clientrequest-2-overloads)
+      - [(1) `Client.request(options)`](#1-clientrequestoptions)
+      - [(2) `Client.request(options, callback)`](#2-clientrequestoptions-callback)
+      - [Parameter: `RequestOptions`](#parameter-requestoptions)
+      - [Parameter: `ResponseData`](#parameter-responsedata)
+      - [Example 1 - Basic GET Request](#example-1---basic-get-request)
+      - [Example 2 - Aborting a request](#example-2---aborting-a-request)
+    - [`Client.stream()` _(2 overloads)_](#clientstream-2-overloads)
+      - [(1) `Client.stream(options, factory)`](#1-clientstreamoptions-factory)
+      - [(2) `Client.stream(options, factory, callback)`](#2-clientstreamoptions-factory-callback)
+      - [Parameter: `StreamFactoryData`](#parameter-streamfactorydata)
+      - [Parameter: `StreamData`](#parameter-streamdata)
+      - [Example 1 - Basic GET stream request](#example-1---basic-get-stream-request)
+      - [Example 2 - Stream to Fastify Response](#example-2---stream-to-fastify-response)
+    - [`Client.upgrade()` _(2 overloads)_](#clientupgrade-2-overloads)
+      - [(1) `Client.upgrade(options)`](#1-clientupgradeoptions)
+      - [(2) `Client.upgrade(options, callback)](#2-clientupgradeoptions-callback)
+      - [Parameter: `UpgradeOptions`](#parameter-upgradeoptions)
+      - [Parameter: `UpgradeData`](#parameter-upgradedata)
+      - [Example 1 - Basic Upgrade Request](#example-1---basic-upgrade-request)
+  - [Instance Properties](#instance-properties)
+    - [`Client.busy`](#clientbusy)
+    - [`Client.closed`](#clientclosed)
+    - [`Client.connected`](#clientconnected)
+    - [`Client.destroyed`](#clientdestroyed)
+    - [`Client.pending`](#clientpending)
+    - [`Client.pipelining`](#clientpipelining)
+    - [`Client.running`](#clientrunning)
+    - [`Client.size`](#clientsize)
+  - [Instance Events](#instance-events)
+    - [Event: `'connect'`](#event-connect)
+    - [Event: `'disconnect'`](#event-disconnect)
+    - [Event: `'drain'`](#event-drain)
+  - [Type: `UndiciHeaders`](#type-undiciheaders)
+    - [Example 1 - Object](#example-1---object)
+    - [Example 2 - Array](#example-2---array)
+
 ## `new Client(url, [options])`
 
 Arguments:
@@ -335,16 +401,18 @@ server.listen(() => {
 
 ### `Client.pipeline(options, handler)`
 
+For easy use with [stream.pipeline](https://nodejs.org/api/stream.html#stream_stream_pipeline_source_transforms_destination_callback). The `handler` argument should return a `Readable` from which the result will be read. Usually it should just return the `body` argument unless some kind of transformation needs to be performed based on e.g. `headers` or `statusCode`. The `handler` should validate the response and save any required state. If there is an error, it should be thrown. The function returns a `Duplex` which writes to the request and reads from the response.
+
 Arguments:
 
 * **options** `PipelineOptions`
-* **handler** `(data: PipelineHandlerData) => Readable`
+* **handler** `(data: PipelineHandlerData) => stream.Readable`
 
-Returns: `Duplex`
+Returns: `stream.Duplex`
 
 #### Parameter: PipelineOptions
 
-Extends: `RequestOptions`
+Extends: [`RequestOptions`](#parameter-requestoptions)
 
 * **objectMode** `boolean` (optional) - Default: `false` - Set to `true` if the `handler` will return an object stream.
 
@@ -353,7 +421,62 @@ Extends: `RequestOptions`
 * **statusCode** `number`
 * **headers** `IncomingHttpHeaders`
 * **opaque** `unknown`
-* **body** `Readable`
+* **body** `stream.Readable`
+
+#### Example 1 - Pipeline Echo
+
+```js
+'use strict'
+const { Readable, Writable, PassThrough, pipeline } = require('stream')
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+
+const server = createServer((request, response) => {
+  request.pipe(response)
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  let res = ''
+
+  pipeline(
+    new Readable({
+      read () {
+        this.push(Buffer.from('undici'))
+        this.push(null)
+      }
+    }),
+    client.pipeline({
+      path: '/',
+      method: 'GET'
+    }, ({ statusCode, headers, body }) => {
+      console.log(`response received ${statusCode}`)
+      console.log('headers', headers)
+      return pipeline(body, new PassThrough(), () => {})
+    }),
+    new Writable({
+      write (chunk, _, callback) {
+        res += chunk.toString()
+        callback()
+      },
+      final (callback) {
+        console.log(`Response pipelined to writable: ${res}`)
+        callback()
+      }
+    }),
+    error => {
+      if (error) {
+        console.error(error)
+      }
+
+      client.close()
+      server.close()
+    }
+  )
+})
+```
 
 ### `Client.request()` _(2 overloads)_
 
@@ -652,6 +775,8 @@ nodeServer.listen(0, () => {
 
 ### `Client.upgrade()` _(2 overloads)_
 
+Upgrade the client to a different protocol.
+
 #### (1) `Client.upgrade(options)`
 
 Arguments:
@@ -670,11 +795,46 @@ Arguments:
 #### Parameter: `UpgradeOptions`
 
 * **path** `string`
-* **method** `string` (optional)
-* **headers** `IncomingHttpHeaders | null` (optional) - Default: `null`
-* **headersTimeout** `number` (optional) - Default: `30e3` - The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Defaults to 30 seconds.
+* **method** `string` (optional) - Default: `'GET'`
+* **headers** `UndiciHeaders` (optional) - Default: `null`
 * **protocol** `string` (optional) - Default: `'Websocket'` - A string of comma separated protocols, in descending preference order.
 * **signal** `AbortSignal | EventEmitter | null` (optional) - Default: `null`
+
+#### Parameter: `UpgradeData`
+
+* **headers** `http.IncomingHeaders`
+* **socket** `stream.Duplex`
+* **opaque** `unknown`
+
+#### Example 1 - Basic Upgrade Request
+
+```js
+'use strict'
+const { Client } = require('undici')
+const { createServer } = require('http')
+
+const server = createServer((request, response) => {
+  response.statusCode = 101
+  response.setHeader('connection', 'upgrade')
+  response.setHeader('upgrade', request.headers.upgrade)
+  response.end()
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  client
+    .upgrade({ path: '/' })
+    .then(({ headers, socket }) => {
+      socket.on('end', () => {
+        console.log(`upgrade: ${headers.upgrade}`)
+        client.close()
+        server.close()
+      })
+      socket.end()
+    })
+})
+```
 
 ## Instance Properties
 

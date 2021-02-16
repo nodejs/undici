@@ -36,6 +36,7 @@
     "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
     "concurrently": "^5.2.0",
+    "fastify": "^3.11.0",
     "https-pem": "^2.0.0",
     "jest": "^26.4.0",
     "pre-commit": "^1.2.2",
