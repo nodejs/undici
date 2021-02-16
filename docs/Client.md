@@ -49,9 +49,7 @@ Imports: `http`, `stream`, `events`
       - [Parameter: `StreamData`](#parameter-streamdata)
       - [Example 1 - Basic GET stream request](#example-1---basic-get-stream-request)
       - [Example 2 - Stream to Fastify Response](#example-2---stream-to-fastify-response)
-    - [`Client.upgrade()` _(2 overloads)_](#clientupgrade-2-overloads)
-      - [(1) `Client.upgrade(options)`](#1-clientupgradeoptions)
-      - [(2) `Client.upgrade(options, callback)](#2-clientupgradeoptions-callback)
+    - [`Client.upgrade(options[, callback])`](#clientupgradeoptions-callback)
       - [Parameter: `UpgradeOptions`](#parameter-upgradeoptions)
       - [Parameter: `UpgradeData`](#parameter-upgradedata)
       - [Example 1 - Basic Upgrade Request](#example-1---basic-upgrade-request)
@@ -773,24 +771,17 @@ nodeServer.listen(0, () => {
 })
 ```
 
-### `Client.upgrade()` _(2 overloads)_
+### `Client.upgrade(options[, callback])`
 
 Upgrade the client to a different protocol.
 
-#### (1) `Client.upgrade(options)`
-
 Arguments:
 
 * **options** `UpgradeOptions`
+  
+* **callback** `(error: Error | null, data: UpgradeData) => void` (optional) - If a callback is not provided, a promise is returned
 
-Returns: `Promise<UpgradeData>`
-
-#### (2) `Client.upgrade(options, callback)
-
-Arguments:
-
-* **options** `UpgradeOptions`
-* **callback** `(error: Error | null, data: UpgradeData) => void`
+Returns: `void | Promise<UpgradeData>` - Only returns a `Promise` if no `callback` argument was passed
 
 #### Parameter: `UpgradeOptions`
 
