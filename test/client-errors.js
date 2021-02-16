@@ -410,6 +410,14 @@ test('invalid options throws', (t) => {
     t.strictEqual(err.message, 'unsupported socketTimeout, use headersTimeout & bodyTimeout instead')
   }
 
+  try {
+    new Client(new URL('http://localhost:200'), { requestTimeout: 30e3 }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.strictEqual(err.message, 'unsupported requestTimeout, use headersTimeout & bodyTimeout instead')
+  }
+
   t.end()
 })
 
