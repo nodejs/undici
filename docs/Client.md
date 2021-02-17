@@ -824,6 +824,11 @@ server.listen(() => {
       })
       socket.end()
     })
+    .catch(error => {
+      console.error(error)
+      client.close()
+      server.close()
+    })
 })
 ```
 
