@@ -637,9 +637,7 @@ Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback
 'use strict'
 const { createServer } = require('http')
 const { Client } = require('undici')
-const stream = require('stream')
-
-const { PassThrough } = require('stream')
+const { Writable } = require('stream')
 
 const server = createServer((request, response) => {
   response.end('Hello, World!')
@@ -648,23 +646,23 @@ const server = createServer((request, response) => {
 server.listen(() => {
   const client = new Client(`http://localhost:${server.address().port}`)
 
-  const pt = new PassThrough()
   const bufs = []
 
   client.stream({
     path: '/',
     method: 'GET',
-    opaque: { bufs, pt }
-  }, ({ statusCode, headers, opaque: { pt, bufs } }) => {
+    opaque: { bufs }
+  }, ({ statusCode, headers, opaque: { bufs } }) => {
     console.log(`response received ${statusCode}`)
     console.log('headers', headers)
-    pt.on('data', buf => {
-      bufs.push(buf)
+    return new Writable({
+      write (chunk, encoding, callback) {
+        bufs.push(chunk)
+        callback()
+      }
     })
-    return pt
   }).then(({ opaque: { bufs } }) => {
-
-    console.log(Buffer.concat(bufs).toString('utf8'))
+    console.log(Buffer.concat(bufs).toString('utf-8'))
 
     client.close()
     server.close()
