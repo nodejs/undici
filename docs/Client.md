@@ -577,8 +577,6 @@ server.listen(() => {
 
 Destroying the request or response body will have the same effect.
 
-> ⚠️ Example incomplete
-
 ```js
 'use strict'
 const { createServer } = require('http')
@@ -594,6 +592,8 @@ server.listen(() => {
   client.request({
     path: '/',
     method: 'GET',
+  }).then(({ body }) => {
+    body.destroy()
   }).catch(error => {
     console.error(error) // should print an RequestAbortedError
     client.close()
