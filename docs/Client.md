@@ -10,21 +10,13 @@ Imports: `http`, `stream`, `events`
   - [`new Client(url, [options])`](#new-clienturl-options)
     - [Example - Basic Client instantiation](#example---basic-client-instantiation)
   - [Instance Methods](#instance-methods)
-    - [`Client.close()` _(2 overloads)_](#clientclose-2-overloads)
-      - [(1) `Client.close()`](#1-clientclose)
-      - [(2) `Client.close(callback)`](#2-clientclosecallback)
+    - [`Client.close([ callback ])`](#clientclose-callback-)
       - [Example - Request resolves before Client closes](#example---request-resolves-before-client-closes)
-    - [`Client.connect()` _(2 overloads)_](#clientconnect-2-overloads)
-      - [(1) `Client.connect(options)`](#1-clientconnectoptions)
-      - [(2) `Client.connect(options, callback)`](#2-clientconnectoptions-callback)
+    - [`Client.connect(options [, callback])`](#clientconnectoptions--callback)
       - [Parameter: `ConnectOptions`](#parameter-connectoptions)
       - [Parameter: `ConnectData`](#parameter-connectdata)
       - [Example - Connect request with echo](#example---connect-request-with-echo)
-    - [`Client.destroy()` _(4 overloads)_](#clientdestroy-4-overloads)
-      - [(1) `Client.destroy()`](#1-clientdestroy)
-      - [(2) `Client.destroy(error)`](#2-clientdestroyerror)
-      - [(3) `Client.destroy(callback)`](#3-clientdestroycallback)
-      - [(4) `Client.destroy(error, callback)`](#4-clientdestroyerror-callback)
+    - [`Client.destroy(error)`](#clientdestroyerror)
       - [Example - Request is aborted when Client is destroyed](#example---request-is-aborted-when-client-is-destroyed)
     - [`Client.dispatch(options, handlers)`](#clientdispatchoptions-handlers)
       - [Example 1 - Dispatch GET request](#example-1---dispatch-get-request)
@@ -35,16 +27,12 @@ Imports: `http`, `stream`, `events`
       - [Parameter: PipelineOptions](#parameter-pipelineoptions)
       - [Parameter: PipelineHandlerData](#parameter-pipelinehandlerdata)
       - [Example 1 - Pipeline Echo](#example-1---pipeline-echo)
-    - [`Client.request()` _(2 overloads)_](#clientrequest-2-overloads)
-      - [(1) `Client.request(options)`](#1-clientrequestoptions)
-      - [(2) `Client.request(options, callback)`](#2-clientrequestoptions-callback)
+    - [`Client.request(options [, callback])`](#clientrequestoptions--callback)
       - [Parameter: `RequestOptions`](#parameter-requestoptions)
       - [Parameter: `ResponseData`](#parameter-responsedata)
       - [Example 1 - Basic GET Request](#example-1---basic-get-request)
       - [Example 2 - Aborting a request](#example-2---aborting-a-request)
-    - [`Client.stream()` _(2 overloads)_](#clientstream-2-overloads)
-      - [(1) `Client.stream(options, factory)`](#1-clientstreamoptions-factory)
-      - [(2) `Client.stream(options, factory, callback)`](#2-clientstreamoptions-factory-callback)
+    - [`Client.stream(options, factory [, callback])`](#clientstreamoptions-factory--callback)
       - [Parameter: `StreamFactoryData`](#parameter-streamfactorydata)
       - [Parameter: `StreamData`](#parameter-streamdata)
       - [Example 1 - Basic GET stream request](#example-1---basic-get-stream-request)
@@ -66,7 +54,7 @@ Imports: `http`, `stream`, `events`
     - [Event: `'connect'`](#event-connect)
     - [Event: `'disconnect'`](#event-disconnect)
     - [Event: `'drain'`](#event-drain)
-  - [Type: `UndiciHeaders`](#type-undiciheaders)
+  - [Parameter: `UndiciHeaders`](#parameter-undiciheaders)
     - [Example 1 - Object](#example-1---object)
     - [Example 2 - Array](#example-2---array)
 
@@ -99,19 +87,15 @@ const client = Client('http://localhost:3000')
 
 ## Instance Methods
 
-### `Client.close()` _(2 overloads)_
+### `Client.close([ callback ])` 
 
-Closes the client and gracefully waits for enqueued requests to complete before invoking the callback (or returnning a promise if no callback is provided).
-
-#### (1) `Client.close()`
-
-Returns: `Promise<null>`
-
-#### (2) `Client.close(callback)`
+Closes the client and gracefully waits for enqueued requests to complete before resolving.
 
 Arguments:
 
-* **callback** `(error: Error | null, data: null) => void`
+* **callback** `(error: Error | null, data: null) => void` (optional) - If a `callback` is not provided, a `Promise` is returned
+
+Returns: `void | Promise<null>` - Only returns a `Promise` if no `callback` argument was passed
 
 #### Example - Request resolves before Client closes
 
@@ -146,24 +130,16 @@ server.listen(() => {
 })
 ```
 
-### `Client.connect()` _(2 overloads)_
+### `Client.connect(options [, callback])`
 
 Starts two-way communications with the requested resource.
 
-#### (1) `Client.connect(options)`
-
 Arguments:
 
 * **options** `ConnectOptions`
+* **callback** `(err: Error | null, data: ConnectData | null) => void` (optional) - If a `callback` is not provided, a `Promise` is returned
 
-Returns: `Promise<ConnectData>`
-
-#### (2) `Client.connect(options, callback)`
-
-Arguments:
-
-* **options** `ConnectOptions`
-* **callback** `(err: Error | null, data: ConnectData | null) => void`
+Returns: `void | Promise<ConnectData>` - Only returns a `Promise` if no `callback` argument was passed
 
 #### Parameter: `ConnectOptions`
 
@@ -223,34 +199,25 @@ server.listen(() => {
 })
 ```
 
-### `Client.destroy()` _(4 overloads)_
+### `Client.destroy([error][, callback])`
 
 Destroy the client abruptly with the given error. All the pending and running requests will be asynchronously aborted and error. Waits until socket is closed before invoking the callback (or returnning a promise if no callback is provided). Since this operation is asynchronously dispatched there might still be some progress on dispatched requests.
 
-#### (1) `Client.destroy()`
+Both arguments are optional; the method can be called in four different ways:
 
-Returns: `Promise<void>`
-
-#### (2) `Client.destroy(error)`
-
-Arguments:
-
-* **error** `Error | null`
-
-Returns: `Promise<void>`
-
-#### (3) `Client.destroy(callback)`
+```js
+client.destroy() // -> Promise
+client.destroy(new Error()) // -> Promise
+client.destroy(() => {}) // -> void
+client.destroy(new Error(), () => {}) // -> void
+```
 
 Arguments:
 
-* **callback** `() => void`
+* **error** `Error | null` (optional)
+* **callback** `() => void` (optional) - If a `callback` is not provided, a `Promise` is returned
 
-#### (4) `Client.destroy(error, callback)`
-
-Arguments:
-
-* **error** `Error | null`
-* **callback** `() => void`
+Returns: `void | Promise<void>` - Only returns a `Promise` if no `callback` argument was passed
 
 #### Example - Request is aborted when Client is destroyed
 
@@ -476,7 +443,7 @@ server.listen(() => {
 })
 ```
 
-### `Client.request()` _(2 overloads)_
+### `Client.request(options [, callback])`
 
 Performs a HTTP request.
 
@@ -488,20 +455,12 @@ they fail due to indirect failure from the request
 at the head of the pipeline. This does not apply to
 idempotent requests with a stream request body.
 
-#### (1) `Client.request(options)`
-
 Arguments:
 
 * **options** `RequestOptions`
+* **callback** `(error: Error | null, data: ResponseData) => void` (optional) - If a `callback` is not provided, a `Promise` is returned
 
-Returns: `Promise<ResponseData>`
-
-#### (2) `Client.request(options, callback)`
-
-Arguments:
-
-* **options** `RequestOptions`
-* **callback** `(error: Error | null, data: ResponseData) => void`
+Returns: `void | Promise<ResponseData>` - Only returns a `Promise` if no `callback` argument was passed
 
 #### Parameter: `RequestOptions`
 
@@ -643,28 +602,19 @@ server.listen(() => {
 })
 ```
 
-### `Client.stream()` _(2 overloads)_
+### `Client.stream(options, factory [, callback])`
 
 A faster version of `Client.request`. This method expects the second argument `factory` to return a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream which the response will be written to. This improves performance by avoiding creating an intermediate [`Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) stream when the user expects to directly pipe the response body to a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream.
 
 As demonstrated in [Example 1 - Basic GET stream request](#example-1---basic-get-stream-request), it is strongly recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works extremely well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](#example-2---stream-to-fastify-response) for more details.
 
-#### (1) `Client.stream(options, factory)`
-
 Arguments:
 
 * **options** `RequestOptions`
 * **factory** `(data: StreamFactoryData) => stream.Writable`
+* **callback** `(error: Error | null, data: StreamData) => void` (optional) - If a `callback` is not provided, a `Promise` is returned
 
-Returns: `Promise<StreamData>`
-
-#### (2) `Client.stream(options, factory, callback)`
-
-Arguments:
-
-* **options** `RequestOptions`
-* **factory** `(data: StreamFactoryData) => stream.Writable`
-* **callback** `(error: Error | null, data: StreamData) => void`
+Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback` argument was passed
 
 #### Parameter: `StreamFactoryData`
 
@@ -779,7 +729,7 @@ Arguments:
 
 * **options** `UpgradeOptions`
   
-* **callback** `(error: Error | null, data: UpgradeData) => void` (optional) - If a callback is not provided, a promise is returned
+* **callback** `(error: Error | null, data: UpgradeData) => void` (optional) - If a `callback` is not provided, a `Promise` is returned
 
 Returns: `void | Promise<UpgradeData>` - Only returns a `Promise` if no `callback` argument was passed
 
@@ -838,25 +788,25 @@ server.listen(() => {
 
 * `boolean`
 
-True if pipeline is saturated or blocked. Indicates whether dispatching further requests is meaningful.
+`true` if pipeline is saturated or blocked. Indicates whether dispatching further requests is meaningful.
 
 ### `Client.closed`
 
 * `boolean`
 
-True after `client.close()` has been called.
+`true` after `client.close()` has been called.
 
 ### `Client.connected`
 
 * `boolean`
 
-True if the client has an active connection. The client will lazily create a connection when it receives a request and will destroy it if there is no activity for the duration of the `timeout` value.
+`true` if the client has an active connection. The client will lazily create a connection when it receives a request and will destroy it if there is no activity for the duration of the `timeout` value.
 
 ### `Client.destroyed`
 
-* `destroyed`
+* `boolean`
 
-True after `client.destroyed()` has been called or `client.close()` has been called and the client shutdown has completed.
+`true` after `client.destroyed()` has been called or `client.close()` has been called and the client shutdown has completed.
 
 ### `Client.pending`
 
@@ -900,7 +850,7 @@ Emitted when socket has disconnected. The first argument of the event is the err
 
 Emitted when pipeline is no longer fully saturated.
 
-## Type: `UndiciHeaders`
+## Parameter: `UndiciHeaders`
 
 * `http.IncomingHttpHeaders | string[] | null`
 
