@@ -392,7 +392,6 @@ test('upgrade disconnect', (t) => {
 
   t.tearDown(server.close.bind(server))
 
-
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
