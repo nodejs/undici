@@ -849,7 +849,35 @@ Emitted when a socket has been created and connected. The client will connect on
 #### Example - Client connect event
 
 ```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
 
+const server = createServer((request, response) => {
+  response.end('Hello, World!')
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  client.on('connect', client => {
+    console.log(`Connected to ${client.url}`) // should print before the request body statement
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET',
+  }).then(({ body }) => {
+    body.setEncoding('utf8')
+    body.on('data', console.log)
+    client.close()
+    server.close()
+  }).catch(error => {
+    console.error(error)
+    client.close()
+    server.close()
+  })
+})
 ```
 
 ### Event: `'disconnect'`
@@ -863,7 +891,30 @@ Emitted when socket has disconnected. The first argument of the event is the err
 #### Example - Client disconnect event
 
 ```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
 
+const server = createServer((request, response) => {
+  response.destroy()
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  client.on('disconnect', client => {
+    console.log(`Disconnected from ${client.url}`) // should print before the SocketError
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET',
+  }).catch(error => {
+    console.error(error.message)
+    client.close()
+    server.close()
+  })
+})
 ```
 
 ### Event: `'drain'`
@@ -873,7 +924,36 @@ Emitted when pipeline is no longer [`busy`](#clientbusy).
 #### Example - Client drain event
 
 ```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
 
+const server = createServer((request, response) => {
+  response.end('Hello, World!')
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  client.on('drain', () => {
+    console.log('drain event')
+    console.log(`Is Client busy: ${client.busy}`)
+    client.close()
+    server.close()
+  })
+
+  const requests = [
+    client.request({ path: '/', method: 'GET' }),
+    client.request({ path: '/', method: 'GET' }),
+    client.request({ path: '/', method: 'GET' })
+  ]
+
+  console.log(`Is Client busy: ${client.busy}`)
+
+  Promise.all(requests).then(() => {
+    console.log('requests completed')
+  })
+})
 ```
 
 ## Parameter: `UndiciHeaders`
