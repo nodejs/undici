@@ -93,7 +93,7 @@ Closes the client and gracefully waits for enqueued requests to complete before 
 
 Arguments:
 
-* **callback** `(error: Error | null, data: null) => void` (optional) - If a `callback` is not provided, a `Promise` is returned
+* **callback** `(error: Error | null, data: null) => void` (optional)
 
 Returns: `void | Promise<null>` - Only returns a `Promise` if no `callback` argument was passed
 
@@ -137,7 +137,7 @@ Starts two-way communications with the requested resource.
 Arguments:
 
 * **options** `ConnectOptions`
-* **callback** `(err: Error | null, data: ConnectData | null) => void` (optional) - If a `callback` is not provided, a `Promise` is returned
+* **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
 
 Returns: `void | Promise<ConnectData>` - Only returns a `Promise` if no `callback` argument was passed
 
@@ -215,7 +215,7 @@ client.destroy(new Error(), () => {}) // -> void
 Arguments:
 
 * **error** `Error | null` (optional)
-* **callback** `() => void` (optional) - If a `callback` is not provided, a `Promise` is returned
+* **callback** `() => void` (optional)
 
 Returns: `void | Promise<void>` - Only returns a `Promise` if no `callback` argument was passed
 
@@ -458,7 +458,7 @@ idempotent requests with a stream request body.
 Arguments:
 
 * **options** `RequestOptions`
-* **callback** `(error: Error | null, data: ResponseData) => void` (optional) - If a `callback` is not provided, a `Promise` is returned
+* **callback** `(error: Error | null, data: ResponseData) => void` (optional)
 
 Returns: `void | Promise<ResponseData>` - Only returns a `Promise` if no `callback` argument was passed
 
@@ -606,13 +606,13 @@ server.listen(() => {
 
 A faster version of `Client.request`. This method expects the second argument `factory` to return a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream which the response will be written to. This improves performance by avoiding creating an intermediate [`Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) stream when the user expects to directly pipe the response body to a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream.
 
-As demonstrated in [Example 1 - Basic GET stream request](#example-1---basic-get-stream-request), it is strongly recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works extremely well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](#example-2---stream-to-fastify-response) for more details.
+As demonstrated in [Example 1 - Basic GET stream request](#example-1---basic-get-stream-request), it is recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](#example-2---stream-to-fastify-response) for more details.
 
 Arguments:
 
 * **options** `RequestOptions`
 * **factory** `(data: StreamFactoryData) => stream.Writable`
-* **callback** `(error: Error | null, data: StreamData) => void` (optional) - If a `callback` is not provided, a `Promise` is returned
+* **callback** `(error: Error | null, data: StreamData) => void` (optional)
 
 Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback` argument was passed
 
@@ -729,7 +729,7 @@ Arguments:
 
 * **options** `UpgradeOptions`
   
-* **callback** `(error: Error | null, data: UpgradeData) => void` (optional) - If a `callback` is not provided, a `Promise` is returned
+* **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
 
 Returns: `void | Promise<UpgradeData>` - Only returns a `Promise` if no `callback` argument was passed
 
