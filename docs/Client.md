@@ -52,8 +52,11 @@ Imports: `http`, `stream`, `events`
     - [`Client.size`](#clientsize)
   - [Instance Events](#instance-events)
     - [Event: `'connect'`](#event-connect)
+      - [Example - Client connect event](#example---client-connect-event)
     - [Event: `'disconnect'`](#event-disconnect)
+      - [Example - Client disconnect event](#example---client-disconnect-event)
     - [Event: `'drain'`](#event-drain)
+      - [Example - Client drain event](#example---client-drain-event)
   - [Parameter: `UndiciHeaders`](#parameter-undiciheaders)
     - [Example 1 - Object](#example-1---object)
     - [Example 2 - Array](#example-2---array)
@@ -490,6 +493,7 @@ const { Client } = require('undici')
 const server = createServer((request, response) => {
   response.end('Hello, World!')
 })
+
 server.listen(() => {
   const client = new Client(`http://localhost:${server.address().port}`)
 
@@ -836,19 +840,41 @@ Number of pending and running requests.
 
 ### Event: `'connect'`
 
+Parameters:
+
+* **client** `Client`
+
 Emitted when a socket has been created and connected. The client will connect once `Client.size > 0`.
+
+#### Example - Client connect event
+
+```js
+
+```
 
 ### Event: `'disconnect'`
 
-Returns:
+Parameters:
 
 * **error** `Error`
 
 Emitted when socket has disconnected. The first argument of the event is the error which caused the socket to disconnect. The client will reconnect if or once `Client.size > 0`.
 
+#### Example - Client disconnect event
+
+```js
+
+```
+
 ### Event: `'drain'`
 
-Emitted when pipeline is no longer fully saturated.
+Emitted when pipeline is no longer [`busy`](#clientbusy).
+
+#### Example - Client drain event
+
+```js
+
+```
 
 ## Parameter: `UndiciHeaders`
 
@@ -856,7 +882,9 @@ Emitted when pipeline is no longer fully saturated.
 
 Header arguments such as `options.headers` in [`Client.dispatch`](./Client.md#client-dispatchoptions-handlers) can be specified in two forms; either as an object specified by the `http.IncomingHttpHeaders` type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
 
-Keys are lowercase and values are not modified. If you don't specify a `host` header, it will be derived from the `url` of the [Client](#class-client) instance.
+Keys are lowercase and values are not modified. 
+
+Response headers will derive a `host` from the `url` of the [Client](#class-client) instance if no `host` header was previously specified.
 
 ### Example 1 - Object
 
