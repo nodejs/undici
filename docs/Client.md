@@ -806,9 +806,9 @@ server.listen(() => {
 
 ### `Client.connected`
 
-* `boolean`
+* `number`
 
-`true` if the client has an active connection. The client will lazily create a connection when it receives a request and will destroy it if there is no activity for the duration of the `timeout` value.
+Number of acive client connections. The client will lazily create a connection when it receives a request and will destroy it if there is no activity for the duration of the `timeout` value.
 
 ### `Client.destroyed`
 
@@ -848,7 +848,7 @@ Parameters:
 
 * **client** `Client`
 
-Emitted when a socket has been created and connected. The client will connect once `Client.size > 0`.
+Emitted when a socket has been created and connected. The client will connect once `client.size > 0`.
 
 #### Example - Client connect event
 
@@ -888,9 +888,10 @@ server.listen(() => {
 
 Parameters:
 
+* **client** `Client`
 * **error** `Error`
 
-Emitted when socket has disconnected. The first argument of the event is the error which caused the socket to disconnect. The client will reconnect if or once `Client.size > 0`.
+Emitted when socket has disconnected. The error argument of the event is the error which caused the socket to disconnect. The client will reconnect if or once `client.size > 0`.
 
 #### Example - Client disconnect event
 
