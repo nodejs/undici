@@ -383,6 +383,35 @@ test('basic upgrade error', (t) => {
   })
 })
 
+test('upgrade disconnect', (t) => {
+  t.plan(3)
+
+  const server = net.createServer(connection => {
+    connection.destroy()
+  })
+
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.on('disconnect', (self, error) => {
+      t.strictEqual(client, self)
+      t.ok(error instanceof Error)
+    })
+
+    client
+      .upgrade({ path: '/', method: 'GET' })
+      .then(() => {
+        t.fail()
+      })
+      .catch(error => {
+        t.ok(error instanceof Error)
+      })
+  })
+})
+
 test('upgrade invalid signal', (t) => {
   t.plan(2)
 
