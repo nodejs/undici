@@ -19,10 +19,10 @@ Imports: `http`, `stream`, `events`
     - [`Client.destroy(error)`](#clientdestroyerror)
       - [Example - Request is aborted when Client is destroyed](#example---request-is-aborted-when-client-is-destroyed)
     - [`Client.dispatch(options, handlers)`](#clientdispatchoptions-handlers)
-      - [Example 1 - Dispatch GET request](#example-1---dispatch-get-request)
-      - [Example 2 - Dispatch Upgrade Request](#example-2---dispatch-upgrade-request)
       - [Parameter: `DispatchOptions`](#parameter-dispatchoptions)
       - [Parameter: `DispatchHandlers`](#parameter-dispatchhandlers)
+      - [Example 1 - Dispatch GET request](#example-1---dispatch-get-request)
+      - [Example 2 - Dispatch Upgrade Request](#example-2---dispatch-upgrade-request)
     - [`Client.pipeline(options, handler)`](#clientpipelineoptions-handler)
       - [Parameter: PipelineOptions](#parameter-pipelineoptions)
       - [Parameter: PipelineHandlerData](#parameter-pipelinehandlerdata)
@@ -85,7 +85,7 @@ Returns: `Client`
 'use strict'
 const { Client } = require('undici')
 
-const client = Client('http://localhost:3000')
+const client = new Client('http://localhost:3000')
 ```
 
 ## Instance Methods
@@ -268,6 +268,24 @@ Arguments:
 
 Returns: `void`
 
+#### Parameter: `DispatchOptions`
+
+* **path** `string`
+* **method** `string`
+* **body** `string | Buffer | Uint8Array | stream.Readable | null` (optional) - Default: `null`
+* **headers** `UndiciHeaders` (optional) - Default: `null`
+* **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed.
+* **upgrade** `string | null` (optional) - Default: `method === 'CONNECT' || null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.
+
+#### Parameter: `DispatchHandlers`
+
+* **onConnect** `(abort: () => void) => void` - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
+* **onError** `(error: Error) => void` - Invoked when an error has occurred.
+* **onUpgrade** `(statusCode: number, headers: string[] | null, socket: Duplex) => void` (optional) - Invoked when request is upgraded. Required if `DispatchOptions.upgrade` is defined or `DispatchOptions.method === 'CONNECT'`.
+* **onHeaders** `(statusCode: number, headers: string[] | null, resume: () => void) => boolean` - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. Not required for `upgrade` requests.
+* **onData** `(chunk: Buffer) => boolean` - Invoked when response payload data is received. Not required for `upgrade` requests.
+* **onComplete** `(trailers: string[] | null) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
+
 #### Example 1 - Dispatch GET request
 
 ```js
@@ -348,24 +366,6 @@ server.listen(() => {
   })
 })
 ```
-
-#### Parameter: `DispatchOptions`
-
-* **path** `string`
-* **method** `string`
-* **body** `string | Buffer | Uint8Array | stream.Readable | null` (optional) - Default: `null`
-* **headers** `UndiciHeaders` (optional) - Default: `null`
-* **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed.
-* **upgrade** `string | null` (optional) - Default: `method === 'CONNECT' || null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.
-
-#### Parameter: `DispatchHandlers`
-
-* **onConnect** `(abort: () => void) => void` - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
-* **onError** `(error: Error) => void` - Invoked when an error has occurred.
-* **onUpgrade** `(statusCode: number, headers: string[] | null, socket: Duplex) => void` (optional) - Invoked when request is upgraded. Required if `DispatchOptions.upgrade` is defined or `DispatchOptions.method === 'CONNECT'`.
-* **onHeaders** `(statusCode: number, headers: string[] | null, resume: () => void) => boolean` - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. Not required for `upgrade` requests.
-* **onData** `(chunk: Buffer) => boolean` - Invoked when response payload data is received. Not required for `upgrade` requests.
-* **onComplete** `(trailers: string[] | null) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
 
 ### `Client.pipeline(options, handler)`
 
@@ -687,18 +687,18 @@ const nodeServer = createServer((request, response) => {
   response.end('Hello, World! From Node.js HTTP Server')
 })
 
-const fastifyServer = fastify()
-
-nodeServer.listen(0, () => {
+nodeServer.listen(() => {
   console.log('Node Server listening')
 
-  const client = new undici.Client(`http://localhost:${nodeServer.address().port}`)
+  const nodeServerUndiciClient = new undici.Client(`http://localhost:${nodeServer.address().port}`)
+
+  const fastifyServer = fastify()
 
   fastifyServer.route({
     url: '/',
     method: 'GET',
     handler: (request, response) => {
-      client.stream({
+      nodeServerUndiciClient.stream({
         path: '/',
         method: 'GET',
         opaque: response
@@ -706,20 +706,26 @@ nodeServer.listen(0, () => {
     }
   })
 
-  fastifyServer.listen(0, () => {
-    console.log('Fastify Server listening')
-    fastifyServer.inject({
-      path: '/',
-      method: 'GET'
-    }).then(({ statusCode, body }) => {
-      console.log(`response received ${statusCode}`)
-      console.log('body:', body)
+  fastifyServer
+    .listen()
+    .then(() => {
+      console.log('Fastify Server listening')
+      const fastifyServerUndiciClient = new undici.Client(`http://localhost:${fastifyServer.server.address().port}`)
 
-      client.close()
-      fastifyServer.close()
-      nodeServer.close()
+      fastifyServerUndiciClient.request({
+        path: '/',
+        method: 'GET'
+      }).then(({ statusCode, body }) => {
+        console.log(`response received ${statusCode}`)
+        body.setEncoding('utf8')
+        body.on('data', console.log)
+
+        nodeServerUndiciClient.close()
+        fastifyServerUndiciClient.close()
+        fastifyServer.close()
+        nodeServer.close()
+      })
     })
-  })
 })
 ```
 
