@@ -334,35 +334,50 @@ server.listen(() => {
 
 #### Example 2 - Dispatch Upgrade Request
 
-> ⚠️ Incomplete
-
 ```js
 'use strict'
 const { createServer } = require('http')
 const { Client } = require('undici')
 
 const server = createServer((request, response) => {
-  response.end('Hello, World!')
+  response.end()
 })
+
+server.on('upgrade', (request, socket, head) => {
+  console.log('Node.js Server - upgrade event')
+  socket.write('HTTP/1.1 101 Web Socket Protocol Handshake\r\n')
+  socket.write('Upgrade: WebSocket\r\n')
+  socket.write('Connection: Upgrade\r\n')
+  socket.write('\r\n')
+  socket.end()
+})
+
 server.listen(() => {
   const client = new Client(`http://localhost:${server.address().port}`)
 
   client.dispatch({
     path: '/',
-    method: 'CONNECT',
+    method: 'GET',
+    upgrade: 'websocket'
   }, {
-    onConnect: () => {},
-    onError: (error) => {},
-    onUpgrade: () => {}
-  })
-
-  client.dispatch({
-    path: '/',
-    upgrade: 'Websocket'
-  }, {
-    onConnect: () => {},
-    onError: (error) => {},
-    onUpgrade: () => {}
+    onConnect: () => {
+      console.log('Undici Client - onConnect')
+    },
+    onError: (error) => {
+      console.log('onError') // shouldn't print
+    },
+    onUpgrade: (statusCode, headers, socket) => {
+      console.log('Undici Client - onUpgrade')
+      console.log(`onUpgrade Headers: ${headers}`)
+      socket.on('data', buffer => {
+        console.log(buffer.toString('utf8'))
+      })
+      socket.on('end', () => {
+        client.close()
+        server.close()
+      })
+      socket.end()
+    }
   })
 })
 ```
