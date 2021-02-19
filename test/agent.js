@@ -5,10 +5,11 @@ const http = require('http')
 const { Agent, request, stream, pipeline, setGlobalAgent } = require('../lib/agent')
 const { PassThrough } = require('stream')
 const { InvalidArgumentError, InvalidReturnValueError } = require('../lib/core/errors')
-const { errors } = require('..')
+const { Client, Pool, errors } = require('../index')
+const { promisify } = require('util')
 
 tap.test('Agent', t => {
-  t.plan(6)
+  t.plan(9)
 
   t.test('setGlobalAgent', t => {
     t.plan(2)
@@ -120,6 +121,118 @@ tap.test('Agent', t => {
         })
       })
     })
+  })
+
+  t.test('Agent connect/disconnect event(s)', t => {
+    t.plan(2)
+
+    t.test('multiple connections', t => {
+      const connections = 3
+      t.plan(6 * connections)
+
+      const server = http.createServer((req, res) => {
+        res.writeHead(200, {
+          Connection: 'keep-alive',
+          'Keep-Alive': 'timeout=1s'
+        })
+        res.end('ok')
+      })
+      t.tearDown(server.close.bind(server))
+
+      server.listen(0, async () => {
+        const origin = `http://localhost:${server.address().port}`
+        const agent = new Agent({ connections })
+
+        t.tearDown(agent.close.bind(agent))
+
+        agent.on('connect', (client) => {
+          t.ok(client)
+        })
+        agent.on('disconnect', (client, error) => {
+          t.ok(client)
+          t.true(error instanceof errors.InformationalError)
+          t.strictEqual(error.code, 'UND_ERR_INFO')
+          t.strictEqual(error.message, 'reset')
+        })
+
+        for (let i = 0; i < connections; i++) {
+          await request(origin, { agent })
+            .then(() => {
+              t.pass('should pass')
+            })
+            .catch(err => {
+              t.fail(err)
+            })
+        }
+      })
+    })
+
+    t.test('remove disconnect listeners when destroyed', t => {
+      t.plan(3)
+
+      const server = http.createServer((req, res) => {
+        res.writeHead(200, {
+          Connection: 'keep-alive',
+          'Keep-Alive': 'timeout=1s'
+        })
+        res.end('ok')
+      })
+      t.tearDown(server.close.bind(server))
+
+      server.listen(0, async () => {
+        const origin = `http://localhost:${server.address().port}`
+        const agent = new Agent()
+
+        t.tearDown(agent.close.bind(agent))
+
+        const pool = agent.get(origin)
+        t.true(pool.listeners('disconnect').length === 1)
+
+        agent.on('disconnect', () => {
+          t.true(pool.listeners('disconnect').length === 0)
+        })
+
+        await request(origin, { agent })
+          .then(() => {
+            t.pass('should pass')
+          })
+          .catch(err => {
+            t.fail(err)
+          })
+      })
+    })
+  })
+
+  t.test('check if pool', async t => {
+    t.plan(1)
+
+    const server = http.createServer()
+    t.tearDown(server.close.bind(server))
+    await promisify(server.listen.bind(server))(0)
+
+    const origin = `http://localhost:${server.address().port}`
+    const agent = new Agent()
+
+    t.tearDown(agent.close.bind(agent))
+
+    const pool = agent.get(origin)
+    t.true(pool instanceof Pool)
+  })
+
+  t.test('check if client', async t => {
+    t.plan(1)
+
+    const server = http.createServer()
+    t.tearDown(server.close.bind(server))
+    await promisify(server.listen.bind(server))(0)
+
+    const origin = `http://localhost:${server.address().port}`
+    const agent = new Agent({ connections: 1 })
+
+    t.tearDown(agent.close.bind(agent))
+
+    const pool = agent.get(origin)
+    t.true(pool instanceof Client)
   })
 
   t.test('request a resource', t => {
