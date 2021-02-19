@@ -5,10 +5,11 @@ const http = require('http')
 const { Agent, request, stream, pipeline, setGlobalAgent } = require('../lib/agent')
 const { PassThrough } = require('stream')
 const { InvalidArgumentError, InvalidReturnValueError } = require('../lib/core/errors')
-const { errors } = require('..')
+const { Client, Pool, errors } = require('../index')
+const { promisify } = require('util')
 
 tap.test('Agent', t => {
-  t.plan(7)
+  t.plan(9)
 
   t.test('setGlobalAgent', t => {
     t.plan(2)
@@ -200,6 +201,38 @@ tap.test('Agent', t => {
           })
       })
     })
+  })
+
+  t.test('check if pool', async t => {
+    t.plan(1)
+
+    const server = http.createServer()
+    t.tearDown(server.close.bind(server))
+    await promisify(server.listen.bind(server))(0)
+
+    const origin = `http://localhost:${server.address().port}`
+    const agent = new Agent()
+
+    t.tearDown(agent.close.bind(agent))
+
+    const pool = agent.get(origin)
+    t.true(pool instanceof Pool)
+  })
+
+  t.test('check if client', async t => {
+    t.plan(1)
+
+    const server = http.createServer()
+    t.tearDown(server.close.bind(server))
+    await promisify(server.listen.bind(server))(0)
+
+    const origin = `http://localhost:${server.address().port}`
+    const agent = new Agent({ connections: 1 })
+
+    t.tearDown(agent.close.bind(agent))
+
+    const pool = agent.get(origin)
+    t.true(pool instanceof Client)
   })
 
   t.test('request a resource', t => {
