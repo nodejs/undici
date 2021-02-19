@@ -123,35 +123,74 @@ tap.test('Agent', t => {
   })
 
   t.test('Agent connect/disconnect event(s)', t => {
-    const connections = 3
-    t.plan(6 * connections)
+    t.plan(2)
 
-    const server = http.createServer((req, res) => {
-      res.writeHead(200, {
-        Connection: 'keep-alive',
-        'Keep-Alive': 'timeout=1s'
+    t.test('multiple connections', t => {
+      const connections = 3
+      t.plan(6 * connections)
+
+      const server = http.createServer((req, res) => {
+        res.writeHead(200, {
+          Connection: 'keep-alive',
+          'Keep-Alive': 'timeout=1s'
+        })
+        res.end('ok')
       })
-      res.end('ok')
+      t.tearDown(server.close.bind(server))
+
+      server.listen(0, async () => {
+        const origin = `http://localhost:${server.address().port}`
+        const agent = new Agent({ connections })
+
+        t.tearDown(agent.close.bind(agent))
+
+        agent.on('connect', (client) => {
+          t.ok(client)
+        })
+        agent.on('disconnect', (client, error) => {
+          t.ok(client)
+          t.true(error instanceof errors.InformationalError)
+          t.strictEqual(error.code, 'UND_ERR_INFO')
+          t.strictEqual(error.message, 'reset')
+        })
+
+        for (let i = 0; i < connections; i++) {
+          await request(origin, { agent })
+            .then(() => {
+              t.pass('should pass')
+            })
+            .catch(err => {
+              t.fail(err)
+            })
+        }
+      })
     })
-    t.tearDown(server.close.bind(server))
 
-    server.listen(0, async () => {
-      const origin = `http://localhost:${server.address().port}`
-      const agent = new Agent({ connections })
+    t.test('remove disconnect listeners when destroyed', t => {
+      t.plan(3)
 
-      t.tearDown(agent.close.bind(agent))
-
-      agent.on('connect', (client) => {
-        t.ok(client)
+      const server = http.createServer((req, res) => {
+        res.writeHead(200, {
+          Connection: 'keep-alive',
+          'Keep-Alive': 'timeout=1s'
+        })
+        res.end('ok')
       })
-      agent.on('disconnect', (client, error) => {
-        t.ok(client)
-        t.true(error instanceof errors.InformationalError)
-        t.strictEqual(error.code, 'UND_ERR_INFO')
-        t.strictEqual(error.message, 'reset')
-      })
+      t.tearDown(server.close.bind(server))
 
-      for (let i = 0; i < connections; i++) {
+      server.listen(0, async () => {
+        const origin = `http://localhost:${server.address().port}`
+        const agent = new Agent()
+
+        t.tearDown(agent.close.bind(agent))
+
+        const pool = agent.get(origin)
+        t.true(pool.listeners('disconnect').length === 1)
+
+        agent.on('disconnect', () => {
+          t.true(pool.listeners('disconnect').length === 0)
+        })
+
         await request(origin, { agent })
           .then(() => {
             t.pass('should pass')
@@ -159,7 +198,7 @@ tap.test('Agent', t => {
           .catch(err => {
             t.fail(err)
           })
-      }
+      })
     })
   })
 
