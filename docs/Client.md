@@ -65,13 +65,13 @@ Imports: `http`, `stream`, `events`
 
 Arguments:
 
-* **url** `URL | string` - It should only include the protocol, hostname, and port.
+* **url** `URL | string` - It should only include the **protocol, hostname, and port**.
 * **options** `object` (optional)
-  * **bodyTimeout** `number | null` (optional) - Default: `30e3` -
-  * **headersTimeout** `number | null` (optional) - Default: `30e3` - Node.js v14+ - The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 30 seconds.
-  * **keepAliveMaxTimeout** `number | null` (optional) - Default: `600e3` - The maximum allowed `idleTimeout` when overriden by *keep-alive* hints from the server. Defaults to 10 minutes.
-  * **keepAliveTimeout** `number | null` (optional) - Default: `4e3` - The timeout after which a socket without active requests will time out. Monitors time between activity on a connected socket. This value may be overriden by *keep-alive* hints from the server. Defaults to 4 seconds.
-  * **keepAliveTimeoutThreshold** `number | null` (optional) - Default: `1e3` - A number subtracted from server *keep-alive* hints when overriding `idleTimeout` to account for timing inaccuries caused by e.g. transport latency. Defaults to 1 second.
+  * **bodyTimeout** `number | null` (optional) - Default: `30e3` - the timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 30 seconds.
+  * **headersTimeout** `number | null` (optional) - Default: `30e3` - The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 30 seconds.
+  * **keepAliveMaxTimeout** `number | null` (optional) - Default: `600e3` - The maximum allowed `keepAliveTimeout` when overriden by *keep-alive* hints from the server. Defaults to 10 minutes.
+  * **keepAliveTimeout** `number | null` (optional) - Default: `4e3` - The timeout after which a socket without active requests will time out. Monitors time between activity on a connected socket. This value may be overriden by *keep-alive* hints from the server. See [MDN: HTTP - Headers - Keep-Alive directives](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Keep-Alive#directives) for more details. Defaults to 4 seconds.
+  * **keepAliveTimeoutThreshold** `number | null` (optional) - Default: `1e3` - A number subtracted from server *keep-alive* hints when overriding `keepAliveTimeout` to account for timing inaccuries caused by e.g. transport latency. Defaults to 1 second.
   * **maxHeaderSize** `number | null` (optional) - Default: `16384` - The maximum length of request headers in bytes. Defaults to 16KiB.
   * **pipelining** `number | null` (optional) - Default: `1` - The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Carefully consider your workload and environment before enabling concurrent requests as pipelining may reduce performance if used incorrectly. Pipelining is sensitive to network stack settings as well as head of line blocking caused by e.g. long running requests. Set to `0` to disable keep-alive connections.
   * **socketPath** `string | null` (optional) - Default: `null` - An IPC endpoint, either Unix domain socket or Windows named pipe.
@@ -80,6 +80,8 @@ Arguments:
 Returns: `Client`
 
 ### Example - Basic Client instantiation
+
+This will instantiate the undici Client, but it will not connect to the origin until something is queued. Consider using `client.connect` to prematurely connect to the origin, or just call `client.request`.
 
 ```js
 'use strict'
@@ -135,7 +137,7 @@ server.listen(() => {
 
 ### `Client.connect(options [, callback])`
 
-Starts two-way communications with the requested resource.
+Starts two-way communications with the requested resource using [HTTP CONNECT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT).
 
 Arguments:
 
@@ -169,10 +171,10 @@ const server = createServer((request, response) => {
   throw Error('should never get here')
 })
 
-server.on('connect', (req, socket, firstBodyChunk) => {
+server.on('connect', (req, socket, head) => {
   socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
 
-  let data = firstBodyChunk.toString()
+  let data = head.toString()
   socket.on('data', (buf) => {
     data += buf.toString()
   })
@@ -623,7 +625,7 @@ server.listen(() => {
 
 ### `Client.stream(options, factory [, callback])`
 
-A faster version of `Client.request`. This method expects the second argument `factory` to return a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream which the response will be written to. This improves performance by avoiding creating an intermediate [`Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) stream when the user expects to directly pipe the response body to a [`Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream.
+A faster version of `Client.request`. This method expects the second argument `factory` to return a [`stream.Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream which the response will be written to. This improves performance by avoiding creating an intermediate [`stream.Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) stream when the user expects to directly pipe the response body to a [`stream.Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream.
 
 As demonstrated in [Example 1 - Basic GET stream request](#example-1---basic-get-stream-request), it is recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](#example-2---stream-to-fastify-response) for more details.
 
@@ -746,7 +748,7 @@ nodeServer.listen(() => {
 
 ### `Client.upgrade(options[, callback])`
 
-Upgrade the client to a different protocol.
+Upgrade the client to a different protocol. Visit [MDN - HTTP - Protocal upgrade mechanism](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) for more details.
 
 Arguments:
 
