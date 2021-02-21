@@ -21,17 +21,17 @@ declare function setGlobalAgent<AgentImplementation extends Agent>(agent: AgentI
 
 declare function request(
   url: string | URL | UrlObject,
-  opts?: { agent?: Agent } & Client.RequestOptions,
+  opts?: { agent?: Agent } & Omit<Client.RequestOptions, 'path'>,
 ): PromiseLike<Client.ResponseData>;
 
 declare function stream(
   url: string | URL | UrlObject,
-  opts: { agent?: Agent } & Client.RequestOptions,
+  opts: { agent?: Agent } & Omit<Client.RequestOptions, 'path'>,
   factory: Client.StreamFactory
 ): PromiseLike<Client.StreamData>;
 
 declare function pipeline(
   url: string | URL | UrlObject,
-  opts: { agent?: Agent } & Client.PipelineOptions,
+  opts: { agent?: Agent } & Omit<Client.PipelineOptions, 'path'>,
   handler: Client.PipelineHandler
 ): Duplex;
