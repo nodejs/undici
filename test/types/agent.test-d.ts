@@ -18,7 +18,7 @@ expectAssignable<Agent>(new Agent({}))
 
 {
   expectAssignable<PromiseLike<Client.ResponseData>>(request(''))
-  expectAssignable<PromiseLike<Client.StreamData>>(stream('', { path: '', method: '' }, data => {
+  expectAssignable<PromiseLike<Client.StreamData>>(stream('', { method: '' }, data => {
     expectAssignable<Client.StreamFactoryData>(data)
     return new Writable()
   }))
@@ -26,7 +26,7 @@ expectAssignable<Agent>(new Agent({}))
 }
 
 {
-  expectAssignable<Duplex>(pipeline('', { path: '', method: '' }, data => {
+  expectAssignable<Duplex>(pipeline('', { method: '' }, data => {
     expectAssignable<Client.PipelineHandlerData>(data)
     return new Readable()
   }))
