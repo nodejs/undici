@@ -8,6 +8,7 @@ Imports: `http`, `stream`, `events`
 
 - [Class: Client](#class-client)
   - [`new Client(url, [options])`](#new-clienturl-options)
+    - [Paramter: `ClientOptions`](#parameter-clientoptions)
     - [Example - Basic Client instantiation](#example---basic-client-instantiation)
   - [Instance Methods](#instance-methods)
     - [`Client.close([ callback ])`](#clientclose-callback-)
@@ -50,6 +51,7 @@ Imports: `http`, `stream`, `events`
     - [`Client.pipelining`](#clientpipelining)
     - [`Client.running`](#clientrunning)
     - [`Client.size`](#clientsize)
+    - [`Client.url`](#clienturl)
   - [Instance Events](#instance-events)
     - [Event: `'connect'`](#event-connect)
       - [Example - Client connect event](#example---client-connect-event)
@@ -66,18 +68,21 @@ Imports: `http`, `stream`, `events`
 Arguments:
 
 * **url** `URL | string` - It should only include the **protocol, hostname, and port**.
-* **options** `object` (optional)
-  * **bodyTimeout** `number | null` (optional) - Default: `30e3` - the timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 30 seconds.
-  * **headersTimeout** `number | null` (optional) - Default: `30e3` - The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 30 seconds.
-  * **keepAliveMaxTimeout** `number | null` (optional) - Default: `600e3` - The maximum allowed `keepAliveTimeout` when overriden by *keep-alive* hints from the server. Defaults to 10 minutes.
-  * **keepAliveTimeout** `number | null` (optional) - Default: `4e3` - The timeout after which a socket without active requests will time out. Monitors time between activity on a connected socket. This value may be overriden by *keep-alive* hints from the server. See [MDN: HTTP - Headers - Keep-Alive directives](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Keep-Alive#directives) for more details. Defaults to 4 seconds.
-  * **keepAliveTimeoutThreshold** `number | null` (optional) - Default: `1e3` - A number subtracted from server *keep-alive* hints when overriding `keepAliveTimeout` to account for timing inaccuries caused by e.g. transport latency. Defaults to 1 second.
-  * **maxHeaderSize** `number | null` (optional) - Default: `16384` - The maximum length of request headers in bytes. Defaults to 16KiB.
-  * **pipelining** `number | null` (optional) - Default: `1` - The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Carefully consider your workload and environment before enabling concurrent requests as pipelining may reduce performance if used incorrectly. Pipelining is sensitive to network stack settings as well as head of line blocking caused by e.g. long running requests. Set to `0` to disable keep-alive connections.
-  * **socketPath** `string | null` (optional) - Default: `null` - An IPC endpoint, either Unix domain socket or Windows named pipe.
-  * **tls** `TlsOptions | null` (optional) - Default: `null` - An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
+* **options** `ClientOptions` (optional)
 
 Returns: `Client`
+
+### Parameter: `ClientOptions`
+
+* **bodyTimeout** `number | null` (optional) - Default: `30e3` - the timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 30 seconds.
+* **headersTimeout** `number | null` (optional) - Default: `30e3` - The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 30 seconds.
+* **keepAliveMaxTimeout** `number | null` (optional) - Default: `600e3` - The maximum allowed `keepAliveTimeout` when overriden by *keep-alive* hints from the server. Defaults to 10 minutes.
+* **keepAliveTimeout** `number | null` (optional) - Default: `4e3` - The timeout after which a socket without active requests will time out. Monitors time between activity on a connected socket. This value may be overriden by *keep-alive* hints from the server. See [MDN: HTTP - Headers - Keep-Alive directives](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Keep-Alive#directives) for more details. Defaults to 4 seconds.
+* **keepAliveTimeoutThreshold** `number | null` (optional) - Default: `1e3` - A number subtracted from server *keep-alive* hints when overriding `keepAliveTimeout` to account for timing inaccuries caused by e.g. transport latency. Defaults to 1 second.
+* **maxHeaderSize** `number | null` (optional) - Default: `16384` - The maximum length of request headers in bytes. Defaults to 16KiB.
+* **pipelining** `number | null` (optional) - Default: `1` - The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Carefully consider your workload and environment before enabling concurrent requests as pipelining may reduce performance if used incorrectly. Pipelining is sensitive to network stack settings as well as head of line blocking caused by e.g. long running requests. Set to `0` to disable keep-alive connections.
+* **socketPath** `string | null` (optional) - Default: `null` - An IPC endpoint, either Unix domain socket or Windows named pipe.
+* **tls** `TlsOptions | null` (optional) - Default: `null` - An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
 
 ### Example - Basic Client instantiation
 
@@ -856,6 +861,12 @@ Number of inflight requests.
 * `number`
 
 Number of pending and running requests.
+
+### `Client.url`
+
+* `URL` - _readonly_
+
+The URL of the Client instance.
 
 ## Instance Events
 
