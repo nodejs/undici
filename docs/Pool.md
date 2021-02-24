@@ -17,7 +17,7 @@ Arguments:
 
 Extends: [`ClientOptions`](./Client.md#parameter-clientoptions)
 
-* **connections** `number | null` (optional) - Default: `null` - The number of `Client` instances to create.
+* **connections** `number | null` (optional) - Default: `null` - The number of `Client` instances to create. When set to `null`, the `Pool` instance will create an unlimited amount of `Client` instances.
 
 ## Instance Properties
 
@@ -41,6 +41,11 @@ Implements [Client.destroyed](./Client.md#clientdestroyed)
 
 Implements [Client.pending](./Client.md#clientpending)
 
+<!-- TODO: https://github.com/nodejs/undici/issues/561 
+### `Pool.pipelining`
+
+Implements [Client.pipelining](./Client.md#clientpipelining) -->
+
 ### `Pool.running`
 
 Implements [Client.running](./Client.md#clientrunning)
@@ -57,24 +62,46 @@ Implements [Client.url](./Client.md#clienturl)
 
 ### `Pool.close(callback)`
 
-### `Pool.connect(options, handler)`
+Implements [`Client.close([ callback ])`](./Client.md#clientclose-callback-)
 
-### `Pool.destroy(error, callback)`
+### `Pool.connect(options [, callback])`
 
-### `Pool.dispatch(options, handler)`
+Implements [`Client.connect(options [, callback])`](./Client.md#clientconnectoptions--callback)
+
+### `Pool.destroy(error)`
+
+Implements [`Client.destroy(error)`](./Client.md#clientdestroyerror)
+
+### `Pool.dispatch(options, handlers)`
+
+Implements [`Client.dispatch(options, handlers)`](./Client.md#clientdispatchoptions-handlers)
 
 ### `Pool.pipeline(options, handler)`
 
-### `Pool.request(options, handler)`
+Implements [`Client.pipeline(options, handler)`](./Client.md#clientpipelineoptions-handler)
 
-### `Pool.stream(options, handler)`
+### `Pool.request(options [, callback])`
 
-### `Pool.upgrade(options, handler)`
+Implements [`Client.request(options [, callback])`](./Client.md#clientrequestoptions--callback)
+
+### `Pool.stream(options, factory, [, callback])`
+
+Implements [`Client.stream(options, factory [, callback])`](./Client.md#clientstreamoptions-factory--callback)
+
+### `Pool.upgrade(options [, callback])`
+
+Implements [`Client.upgrade(options[, callback])`](./Client.md#clientupgradeoptions-callback)
 
 ## Instance Events
 
 ### Event: `'connect'`
 
+Implements [Client Event: `'connect'`](./Client.md#event-connect)
+
 ### Event: `'disconnect'`
 
+Implements [Client Event: `'disconnect'`](./Client.md#event-connect)
+
 ### Event: `'drain'`
+
+Implements [Client Event: `'drain'`](./Client.md#event-connect)
