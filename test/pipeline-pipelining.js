@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { kConnect } = require('../lib/core/symbols')
+const util = require('../lib/core/util')
 
 test('pipeline pipelining', (t) => {
   t.plan(10)
@@ -41,7 +42,7 @@ test('pipeline pipelining', (t) => {
       t.strictEqual(client.busy, true)
       t.strictDeepEqual(client.running, 0)
       t.strictDeepEqual(client.pending, 2)
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         t.strictEqual(client.running, 2)
       })
     })
@@ -102,7 +103,7 @@ test('pipeline pipelining retry', (t) => {
       t.strictDeepEqual(client.running, 0)
       t.strictDeepEqual(client.pending, 3)
 
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         t.strictEqual(client.running, 3)
       })
 

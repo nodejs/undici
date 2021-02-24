@@ -7,6 +7,7 @@ const { readFileSync, createReadStream } = require('fs')
 const { Readable } = require('stream')
 const { kSocket } = require('../lib/core/symbols')
 const EE = require('events')
+const util = require('../lib/core/util')
 const { kConnect } = require('../lib/core/symbols')
 
 test('basic get', (t) => {
@@ -466,7 +467,7 @@ test('basic POST with empty stream', (t) => {
         callback(!this._readableState.endEmitted ? new Error('asd') : err)
       }
     }).on('end', () => {
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         t.strictEqual(body.destroyed, true)
       })
     })
@@ -832,7 +833,7 @@ test('increase pipelining', (t) => {
     t.strictEqual(client.running, 0)
     client.on('connect', () => {
       t.strictEqual(client.running, 0)
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         t.strictEqual(client.running, 1)
         client.pipelining = 3
         t.strictEqual(client.running, 2)
@@ -923,7 +924,7 @@ test('POST empty with error', (t) => {
     })
     body.push(null)
     client.on('connect', () => {
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         body.emit('error', new Error('asd'))
       })
     })

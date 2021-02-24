@@ -5,6 +5,7 @@ const { Client, errors } = require('..')
 const net = require('net')
 const http = require('http')
 const EE = require('events')
+const util = require('../lib/core/util')
 
 test('basic upgrade', (t) => {
   t.plan(6)
@@ -242,7 +243,7 @@ test('upgrade wait for empty pipeline', (t) => {
       t.error(err)
     })
     client.once('connect', () => {
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         t.strictEqual(client.busy, false)
 
         client.upgrade({

@@ -7,6 +7,7 @@ const net = require('net')
 const { Readable } = require('stream')
 
 const { kSocket } = require('../lib/core/symbols')
+const util = require('../lib/core/util')
 
 test('GET errors and reconnect with pipelining 1', (t) => {
   t.plan(9)
@@ -639,7 +640,7 @@ test('socket fail while writing request body', (t) => {
     body.push('asd')
 
     client.on('connect', () => {
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         client[kSocket].destroy('kaboom')
       })
     })
@@ -674,7 +675,7 @@ test('socket fail while ending request body', (t) => {
 
     const _err = new Error('kaboom')
     client.on('connect', () => {
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         client[kSocket].destroy(_err)
       })
     })

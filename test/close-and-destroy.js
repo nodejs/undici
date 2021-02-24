@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { kSocket } = require('../lib/core/symbols')
+const util = require('../lib/core/util')
 
 test('close waits for queued requests to finish', (t) => {
   t.plan(16)
@@ -29,7 +30,7 @@ test('close waits for queued requests to finish', (t) => {
 
       // needed because the next element in the queue will be called
       // after the current function completes
-      process.nextTick(function () {
+      util.queueMicrotask(function () {
         client.close()
       })
     })

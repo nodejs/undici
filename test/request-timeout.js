@@ -7,6 +7,7 @@ const { createServer } = require('http')
 const EventEmitter = require('events')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { AbortController } = require('abort-controller')
+const util = require('../lib/core/util')
 const {
   pipeline,
   Readable,
@@ -323,7 +324,7 @@ test('client.close should wait for the timeout', (t) => {
     })
 
     client.on('connect', () => {
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         clock.tick(100)
       })
     })

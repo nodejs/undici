@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { Readable } = require('stream')
+const util = require('../lib/core/util')
 
 test('socket close listener does not leak', (t) => {
   t.plan(32)
@@ -18,7 +19,7 @@ test('socket close listener does not leak', (t) => {
   const makeBody = () => {
     return new Readable({
       read () {
-        process.nextTick(() => {
+        util.queueMicrotask(() => {
           this.push(null)
         })
       }

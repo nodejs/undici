@@ -2,6 +2,7 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
+const util = require('../lib/core/util')
 const { createServer } = require('http')
 const { PassThrough, Writable, Readable } = require('stream')
 const EE = require('events')
@@ -623,7 +624,7 @@ test('stream backpressure', (t) => {
       highWaterMark: 1,
       write (chunk, encoding, callback) {
         buf += chunk
-        process.nextTick(callback)
+        util.queueMicrotask(callback)
       }
     }), (err, data) => {
       t.error(err)

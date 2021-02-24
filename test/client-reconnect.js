@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const FakeTimers = require('@sinonjs/fake-timers')
+const util = require('../lib/core/util')
 
 test('multiple reconnect', (t) => {
   t.plan(5)
@@ -39,7 +40,7 @@ test('multiple reconnect', (t) => {
       if (++n === 1) {
         t.pass()
       }
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         clock.tick(1000)
       })
     })

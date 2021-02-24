@@ -2,6 +2,7 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
+const util = require('../lib/core/util')
 const EE = require('events')
 const { createServer } = require('http')
 const {
@@ -231,7 +232,7 @@ test('pipeline error body', (t) => {
         method: 'PUT'
       }, ({ body }) => {
         const pt = new PassThrough()
-        process.nextTick(() => {
+        util.queueMicrotask(() => {
           pt.destroy(new Error('asd'))
         })
         body.on('error', (err) => {
@@ -271,7 +272,7 @@ test('pipeline destroy body', (t) => {
         method: 'PUT'
       }, ({ body }) => {
         const pt = new PassThrough()
-        process.nextTick(() => {
+        util.queueMicrotask(() => {
           pt.destroy()
         })
         body.on('error', (err) => {
@@ -999,7 +1000,7 @@ test('pipeline abort after headers', (t) => {
       method: 'GET',
       signal
     }, ({ body }) => {
-      process.nextTick(() => {
+      util.queueMicrotask(() => {
         signal.emit('abort')
       })
       return body
