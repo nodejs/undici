@@ -59,7 +59,7 @@ test('resume error', (t) => {
         client[kSocket]._handle.readStart = () => -100
 
         data.body.on('error', (err) => {
-          t.strictEqual(err.code, -100)
+          t.strictEqual(err.code, 'EPROTO')
         })
 
         setTimeout(() => {
