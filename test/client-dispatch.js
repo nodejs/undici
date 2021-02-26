@@ -3,7 +3,6 @@
 const { test } = require('tap')
 const { Client, Pool, errors } = require('..')
 const http = require('http')
-const { PassThrough } = require('stream')
 
 test('dispatch invalid opts', (t) => {
   t.plan(3)
@@ -596,47 +595,5 @@ test('dispatch pool onError missing', (t) => {
       t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       t.strictEqual(err.message, 'invalid onError method')
     }
-  })
-})
-
-test('ensure promise callback runs before onError', t => {
-  t.plan(2)
-
-  const server = http.createServer((req, res) => {
-    res.end()
-  })
-  t.tearDown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
-
-    const stream = new PassThrough()
-    new Promise(resolve => client.dispatch({
-      path: '/',
-      method: 'POST',
-      body: Buffer.alloc(1e6)
-    }, {
-      onConnect () {
-
-      },
-      onHeaders () {
-        resolve()
-      },
-      onData () {
-
-      },
-      onComplete () {
-        throw new Error()
-      },
-      onError (err) {
-        t.ok(err)
-        stream.destroy(err)
-      }
-    })).then(() => {
-      stream.on('error', (err) => {
-        t.ok(err)
-      })
-    })
   })
 })
