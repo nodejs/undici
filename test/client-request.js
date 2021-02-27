@@ -72,7 +72,7 @@ test('request body destroyed on invalid callback', (t) => {
 })
 
 test('trailers', (t) => {
-  t.plan(2)
+  t.plan(1)
 
   const server = createServer((req, res) => {
     res.writeHead(200, { Trailer: 'Content-MD5' })
@@ -89,8 +89,6 @@ test('trailers', (t) => {
       path: '/',
       method: 'GET'
     })
-
-    t.strictDeepEqual(trailers, {})
 
     body
       .on('data', () => t.fail())

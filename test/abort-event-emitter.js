@@ -104,7 +104,6 @@ test('Abort while waiting response (write headers and write body started) (no bo
   const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.write('hello')
-    res.end('world')
   })
   t.teardown(server.close.bind(server))
 
@@ -187,7 +186,6 @@ function writeBodyStartedWithBody (body, type) {
     const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.write('hello')
-      res.end('world')
     })
     t.teardown(server.close.bind(server))
 

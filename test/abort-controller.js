@@ -126,7 +126,6 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.write('hello')
-      res.end('world')
     })
     t.teardown(server.close.bind(server))
 
@@ -209,7 +208,6 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       const server = createServer((req, res) => {
         res.writeHead(200, { 'content-type': 'text/plain' })
         res.write('hello')
-        res.end('world')
       })
       t.teardown(server.close.bind(server))
 
