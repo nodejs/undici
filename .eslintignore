@@ -1,0 +1,9 @@
+.*
+coverage
+examples
+docs
+test
+types
+node_modules
+*.ts
+*.md

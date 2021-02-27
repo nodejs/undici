@@ -6,10 +6,9 @@
   "types": "index.d.ts",
   "module": "wrapper.mjs",
   "scripts": {
-    "lint": "standard | snazzy",
     "test": "tap test/*.js --no-coverage && jest test/jest/test",
     "test:typescript": "tsd",
-    "coverage": "standard | snazzy && tap test/*.js",
+    "coverage": "tap test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\""
   },
@@ -36,9 +35,17 @@
     "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
     "concurrently": "^5.2.0",
+    "eslint": "^7.20.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
     "https-pem": "^2.0.0",
+    "husky": "=4",
     "jest": "^26.4.0",
+    "lint-staged": ">=10",
     "pre-commit": "^1.2.2",
+    "prettier": "2.2.1",
     "proxy": "^1.0.2",
     "proxyquire": "^2.0.1",
     "snazzy": "^8.0.0",
@@ -46,13 +53,42 @@
     "tap": "^14.10.8",
     "tsd": "^0.13.1"
   },
-  "pre-commit": [
-    "coverage"
-  ],
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
+  },
+  "eslintConfig": {
+    "extends": [
+      "standard",
+      "prettier",
+      "prettier/prettier"
+    ],
+    "rules": {
+      "quotes": [
+        "error",
+        "single",
+        {
+          "avoidEscape": true,
+          "allowTemplateLiterals": true
+        }
+      ]
+    }
+  },
   "tsd": {
     "directory": "test/types",
     "compilerOptions": {
       "esModuleInterop": true
     }
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged && npm run coverage"
+    }
+  },
+  "lint-staged": {
+    "*.{js,css,md}": [
+      "eslint",
+      "prettier --write"
+    ]
   }
 }
