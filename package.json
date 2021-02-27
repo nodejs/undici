@@ -9,7 +9,7 @@
     "test": "tap test/*.js --no-coverage && jest test/jest/test",
     "test:typescript": "tsd",
     "coverage": "tap test/*.js",
-    "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
+    "coverage:ci": "eslint . && npm run coverage -- --coverage-report=lcovonly",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\""
   },
   "repository": {
