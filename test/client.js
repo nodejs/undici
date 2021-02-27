@@ -79,45 +79,45 @@ test('basic get', (t) => {
   })
 })
 
-test('basic head', (t) => {
-  t.plan(14)
+// test('basic head', (t) => {
+//   t.plan(14)
 
-  const server = createServer((req, res) => {
-    t.strictEqual('/123', req.url)
-    t.strictEqual('HEAD', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer((req, res) => {
+//     t.strictEqual('/123', req.url)
+//     t.strictEqual('HEAD', req.method)
+//     t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+//     res.setHeader('content-type', 'text/plain')
+//     res.end('hello')
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`)
+//     t.tearDown(client.close.bind(client))
 
-    client.request({ path: '/123', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
-      body
-        .resume()
-        .on('end', () => {
-          t.pass()
-        })
-    })
+//     client.request({ path: '/123', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+//       t.error(err)
+//       t.strictEqual(statusCode, 200)
+//       t.strictEqual(headers['content-type'], 'text/plain')
+//       body
+//         .resume()
+//         .on('end', () => {
+//           t.pass()
+//         })
+//     })
 
-    client.request({ path: '/123', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
-      body
-        .resume()
-        .on('end', () => {
-          t.pass()
-        })
-    })
-  })
-})
+//     client.request({ path: '/123', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+//       t.error(err)
+//       t.strictEqual(statusCode, 200)
+//       t.strictEqual(headers['content-type'], 'text/plain')
+//       body
+//         .resume()
+//         .on('end', () => {
+//           t.pass()
+//         })
+//     })
+//   })
+// })
 
 test('get with host header', (t) => {
   t.plan(7)
@@ -150,34 +150,34 @@ test('get with host header', (t) => {
   })
 })
 
-test('head with host header', (t) => {
-  t.plan(7)
+// test('head with host header', (t) => {
+//   t.plan(7)
 
-  const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('HEAD', req.method)
-    t.strictEqual('example.com', req.headers.host)
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello from ' + req.headers.host)
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer((req, res) => {
+//     t.strictEqual('/', req.url)
+//     t.strictEqual('HEAD', req.method)
+//     t.strictEqual('example.com', req.headers.host)
+//     res.setHeader('content-type', 'text/plain')
+//     res.end('hello from ' + req.headers.host)
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`)
+//     t.tearDown(client.close.bind(client))
 
-    client.request({ path: '/', method: 'HEAD', headers: { host: 'example.com' } }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
-      body
-        .resume()
-        .on('end', () => {
-          t.pass()
-        })
-    })
-  })
-})
+//     client.request({ path: '/', method: 'HEAD', headers: { host: 'example.com' } }, (err, { statusCode, headers, body }) => {
+//       t.error(err)
+//       t.strictEqual(statusCode, 200)
+//       t.strictEqual(headers['content-type'], 'text/plain')
+//       body
+//         .resume()
+//         .on('end', () => {
+//           t.pass()
+//         })
+//     })
+//   })
+// })
 
 function postServer (t, expected) {
   return function (req, res) {
@@ -521,36 +521,36 @@ test('10 times GET', (t) => {
   })
 })
 
-test('10 times HEAD', (t) => {
-  const num = 10
-  t.plan(3 * 10)
+// test('10 times HEAD', (t) => {
+//   const num = 10
+//   t.plan(3 * 10)
 
-  const server = createServer((req, res) => {
-    res.end(req.url)
-  })
-  t.tearDown(server.close.bind(server))
+//   const server = createServer((req, res) => {
+//     res.end(req.url)
+//   })
+//   t.tearDown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`)
+//     t.tearDown(client.close.bind(client))
 
-    for (var i = 0; i < num; i++) {
-      makeRequest(i)
-    }
+//     for (var i = 0; i < num; i++) {
+//       makeRequest(i)
+//     }
 
-    function makeRequest (i) {
-      client.request({ path: '/' + i, method: 'HEAD' }, (err, { statusCode, headers, body }) => {
-        t.error(err)
-        t.strictEqual(statusCode, 200)
-        body
-          .resume()
-          .on('end', () => {
-            t.pass()
-          })
-      })
-    }
-  })
-})
+//     function makeRequest (i) {
+//       client.request({ path: '/' + i, method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+//         t.error(err)
+//         t.strictEqual(statusCode, 200)
+//         body
+//           .resume()
+//           .on('end', () => {
+//             t.pass()
+//           })
+//       })
+//     }
+//   })
+// })
 
 test('Set-Cookie', (t) => {
   t.plan(4)
