@@ -30,41 +30,41 @@ const httpNoAgent = {
   hostname: 'localhost',
   method: 'GET',
   path: '/',
-  ...dest
+  ...dest,
 }
 
 const httpOptions = {
   ...httpNoAgent,
   agent: new http.Agent({
     keepAlive: true,
-    maxSockets: 1
-  })
+    maxSockets: 1,
+  }),
 }
 
 const httpOptionsMultiSocket = {
   ...httpNoAgent,
   agent: new http.Agent({
     keepAlive: true,
-    maxSockets: connections
-  })
+    maxSockets: connections,
+  }),
 }
 
 const undiciOptions = {
   path: '/',
   method: 'GET',
   headersTimeout: 0,
-  bodyTimeout: 0
+  bodyTimeout: 0,
 }
 
 const client = new Client(httpOptions.url, {
   pipelining,
-  ...dest
+  ...dest,
 })
 
 const pool = new Pool(httpOptions.url, {
   pipelining,
   connections,
-  ...dest
+  ...dest,
 })
 
 const suite = new Benchmark.Suite()
@@ -74,135 +74,185 @@ const suite = new Benchmark.Suite()
 suite
   .add('http - no agent ', {
     defer: true,
-    fn: deferred => {
-      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
-        http.get(httpOptions, (res) => {
-          res
-            .pipe(new Writable({
-              write (chunk, encoding, callback) {
-                callback()
-              }
-            }))
-            .on('finish', resolve)
-        })
-      }))).then(() => deferred.resolve())
-    }
+    fn: (deferred) => {
+      Promise.all(
+        Array.from(Array(parallelRequests)).map(
+          () =>
+            new Promise((resolve) => {
+              http.get(httpOptions, (res) => {
+                res
+                  .pipe(
+                    new Writable({
+                      write(chunk, encoding, callback) {
+                        callback()
+                      },
+                    })
+                  )
+                  .on('finish', resolve)
+              })
+            })
+        )
+      ).then(() => deferred.resolve())
+    },
   })
   .add('http - keepalive', {
     defer: true,
-    fn: deferred => {
-      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
-        http.get(httpOptions, (res) => {
-          res
-            .pipe(new Writable({
-              write (chunk, encoding, callback) {
-                callback()
-              }
-            }))
-            .on('finish', resolve)
-        })
-      }))).then(() => deferred.resolve())
-    }
+    fn: (deferred) => {
+      Promise.all(
+        Array.from(Array(parallelRequests)).map(
+          () =>
+            new Promise((resolve) => {
+              http.get(httpOptions, (res) => {
+                res
+                  .pipe(
+                    new Writable({
+                      write(chunk, encoding, callback) {
+                        callback()
+                      },
+                    })
+                  )
+                  .on('finish', resolve)
+              })
+            })
+        )
+      ).then(() => deferred.resolve())
+    },
   })
   .add('http - keepalive - multiple sockets', {
     defer: true,
-    fn: deferred => {
-      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
-        http.get(httpOptionsMultiSocket, (res) => {
-          res
-            .pipe(new Writable({
-              write (chunk, encoding, callback) {
-                callback()
-              }
-            }))
-            .on('finish', resolve)
-        })
-      }))).then(() => deferred.resolve())
-    }
+    fn: (deferred) => {
+      Promise.all(
+        Array.from(Array(parallelRequests)).map(
+          () =>
+            new Promise((resolve) => {
+              http.get(httpOptionsMultiSocket, (res) => {
+                res
+                  .pipe(
+                    new Writable({
+                      write(chunk, encoding, callback) {
+                        callback()
+                      },
+                    })
+                  )
+                  .on('finish', resolve)
+              })
+            })
+        )
+      ).then(() => deferred.resolve())
+    },
   })
   .add('undici - pipeline', {
     defer: true,
-    fn: deferred => {
-      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
-        client
-          .pipeline(undiciOptions, data => {
-            return data.body
-          })
-          .end()
-          .pipe(new Writable({
-            write (chunk, encoding, callback) {
-              callback()
-            }
-          }))
-          .on('finish', resolve)
-      }))).then(() => deferred.resolve())
-    }
+    fn: (deferred) => {
+      Promise.all(
+        Array.from(Array(parallelRequests)).map(
+          () =>
+            new Promise((resolve) => {
+              client
+                .pipeline(undiciOptions, (data) => {
+                  return data.body
+                })
+                .end()
+                .pipe(
+                  new Writable({
+                    write(chunk, encoding, callback) {
+                      callback()
+                    },
+                  })
+                )
+                .on('finish', resolve)
+            })
+        )
+      ).then(() => deferred.resolve())
+    },
   })
   .add('undici - request', {
     defer: true,
-    fn: deferred => {
-      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
-        client
-          .request(undiciOptions)
-          .then(({ body }) => {
-            body
-              .pipe(new Writable({
-                write (chunk, encoding, callback) {
-                  callback()
-                }
-              }))
-              .on('finish', resolve)
-          })
-      }))).then(() => deferred.resolve())
-    }
+    fn: (deferred) => {
+      Promise.all(
+        Array.from(Array(parallelRequests)).map(
+          () =>
+            new Promise((resolve) => {
+              client.request(undiciOptions).then(({ body }) => {
+                body
+                  .pipe(
+                    new Writable({
+                      write(chunk, encoding, callback) {
+                        callback()
+                      },
+                    })
+                  )
+                  .on('finish', resolve)
+              })
+            })
+        )
+      ).then(() => deferred.resolve())
+    },
   })
   .add('undici - pool - request - multiple sockets', {
     defer: true,
-    fn: deferred => {
-      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
-        pool
-          .request(undiciOptions)
-          .then(({ body }) => {
-            body
-              .pipe(new Writable({
-                write (chunk, encoding, callback) {
-                  callback()
-                }
-              }))
-              .on('finish', resolve)
-          })
-      }))).then(() => deferred.resolve())
-    }
+    fn: (deferred) => {
+      Promise.all(
+        Array.from(Array(parallelRequests)).map(
+          () =>
+            new Promise((resolve) => {
+              pool.request(undiciOptions).then(({ body }) => {
+                body
+                  .pipe(
+                    new Writable({
+                      write(chunk, encoding, callback) {
+                        callback()
+                      },
+                    })
+                  )
+                  .on('finish', resolve)
+              })
+            })
+        )
+      ).then(() => deferred.resolve())
+    },
   })
   .add('undici - stream', {
     defer: true,
-    fn: deferred => {
-      Promise.all(Array.from(Array(parallelRequests)).map(() => {
-        return client.stream(undiciOptions, () => {
-          return new Writable({
-            write (chunk, encoding, callback) {
-              callback()
-            }
+    fn: (deferred) => {
+      Promise.all(
+        Array.from(Array(parallelRequests)).map(() => {
+          return client.stream(undiciOptions, () => {
+            return new Writable({
+              write(chunk, encoding, callback) {
+                callback()
+              },
+            })
           })
         })
-      })).then(() => deferred.resolve())
-    }
+      ).then(() => deferred.resolve())
+    },
   })
   .add('undici - dispatch', {
     defer: true,
-    fn: deferred => {
-      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
-        client.dispatch(undiciOptions, new SimpleRequest(resolve))
-      }))).then(() => deferred.resolve())
-    }
+    fn: (deferred) => {
+      Promise.all(
+        Array.from(Array(parallelRequests)).map(
+          () =>
+            new Promise((resolve) => {
+              client.dispatch(undiciOptions, new SimpleRequest(resolve))
+            })
+        )
+      ).then(() => deferred.resolve())
+    },
   })
   .add('undici - noop', {
     defer: true,
-    fn: deferred => {
-      Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
-        client.dispatch(undiciOptions, new NoopRequest(resolve))
-      }))).then(() => deferred.resolve())
-    }
+    fn: (deferred) => {
+      Promise.all(
+        Array.from(Array(parallelRequests)).map(
+          () =>
+            new Promise((resolve) => {
+              client.dispatch(undiciOptions, new NoopRequest(resolve))
+            })
+        )
+      ).then(() => deferred.resolve())
+    },
   })
   .on('cycle', ({ target }) => {
     // Multiply results by parallelRequests to get opts/sec since we do mutiple requests
@@ -216,56 +266,51 @@ suite
   .run()
 
 class NoopRequest {
-  constructor (resolve) {
+  constructor(resolve) {
     this.resolve = resolve
   }
 
-  onConnect (abort) {
+  onConnect(abort) {}
 
-  }
+  onHeaders(statusCode, headers, resume) {}
 
-  onHeaders (statusCode, headers, resume) {
-
-  }
-
-  onData (chunk) {
+  onData(chunk) {
     return true
   }
 
-  onComplete (trailers) {
+  onComplete(trailers) {
     this.resolve()
   }
 
-  onError (err) {
+  onError(err) {
     throw err
   }
 }
 
 class SimpleRequest {
-  constructor (resolve) {
+  constructor(resolve) {
     this.dst = new Writable({
-      write (chunk, encoding, callback) {
+      write(chunk, encoding, callback) {
         callback()
-      }
+      },
     }).on('finish', resolve)
   }
 
-  onConnect (abort) {
-  }
+  onConnect(abort) {}
 
-  onHeaders (statusCode, headers, resume) {
+  onHeaders(statusCode, headers, resume) {
     this.dst.on('drain', resume)
   }
 
-  onData (chunk) {
+  onData(chunk) {
     return this.dst.write(chunk)
   }
 
-  onComplete () {
+  onComplete() {
     this.dst.end()
   }
 
-  onError (err) {
+  onError(err) {
     throw err
   }
 }
