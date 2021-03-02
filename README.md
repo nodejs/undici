@@ -577,8 +577,8 @@ Requests are not guaranteeed to be dispatched in order of invocation.
 Options:
 
 * ... same as [`Client`][].
-* `connections`, the number of clients to create.
-  Default `10`.
+* `connections`, the max number of clients to create. `null` if no limit.
+  Default `null`.
 
 <a name='agent'></a>
 ### `new undici.Agent(opts)`
