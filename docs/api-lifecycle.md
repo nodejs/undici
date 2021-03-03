@@ -43,22 +43,20 @@ Calling [`Client.destroy()`](#clientdestroyerror) transitions directly to the [*
 
 ### processing
 
-The **processing** state is machine within itself. It initializes to the [**processing.running**](#running) state. The [`Client.dispatch()`](#clientdispatchoptions-handlers), [`Client.close()`](#clientclose-callback-), and [`Client.destroy()`](#clientdestroyerror) can be called at any time while the `Client` is in this state. `Client.dispatch()` will add more requests to the queue while existing requests continue to be processed. `Client.close()` will transition to the **processing.closing** state. And `Client.destroy()` will transition to **destroyed**.
+The **processing** state is a state machine within itself. It initializes to the [**processing.running**](#running) state. The [`Client.dispatch()`](#clientdispatchoptions-handlers), [`Client.close()`](#clientclose-callback-), and [`Client.destroy()`](#clientdestroyerror) can be called at any time while the `Client` is in this state. `Client.dispatch()` will add more requests to the queue while existing requests continue to be processed. `Client.close()` will transition to the [**processing.closing**](#closing) state. And `Client.destroy()` will transition to [**destroyed**](#destroyed).
 
 #### running
 
-In the **processing.running** sub-state, queued requests are being processed one at a time (unless pipelining has been enabled). If a request body requires draining, the *needDrain* event transitions to the **prcoessing.busy** sub-state.
+In the **processing.running** sub-state, queued requests are being processed in a FIFO order. If a request body requires draining, the *needDrain* event transitions to the [**processing.busy**](#busy) sub-state. The *close* event transitions the Client to the [**process.closing**](#closing) sub-state. If all queued requests are processed and neither [`Client.close()`](#clientclose-callback-) nor [`Client.destroy()`](#clientdestroyerror) are called, then the [**processing**](#processing) machine will trigger a *keepalive* event transitioning the `Client` back to the [**pending**](#pending) state. During this time, the `Client` is waiting for the socket connection to timeout, and once it does, it triggers the *timeout* event and transitions to the [**idle**](#idle) state.
+
 #### busy
+
+This sub-state is only entered when a request body is an instance of [Stream]() and requires draining. The `Client` cannot process additional requests while in this state and must wait until the currently processing request body is completely drained before transitioning back to [**processing.running**](#running).
 
 #### closing
 
+This sub-state is only entered when a `Client` instance has queued requests and the [`Client.close()`](#clientclose-callback-) method is called. In this state, the `Client` instance continues to process requests as usual, with the one exception that no additional requests can be queued. Once all of the queued requests are processed, the `Client` will trigger the *done* event gracefully entering the [**destroyed**](#destroyed) state without an error.
+
 ### destroyed
 
-
-<!-- Old description ## Processing state
-
-A `Client` transitions to the **processing** state during the [`Client.dispatch()`](#clientdispatchoptions-handlers) method. The [`Client.connect()`](#clientconnectoptions--callback), [`Client.pipeline()`](#clientpipelineoptions-handler), [`Client.request()`](#clientrequestoptions--callback), [`Client.stream()`](#clientstreamoptions-factory--callback), and [`Client.upgrade()`](#clientupgradeoptions-callback) methods are all based on [`Client.dispatch()`](#clientdispatchoptions-handlers); thus, they all cause a **processing** state transition when called.
-
-Upon entering this state, the `Client` establishes a socket connection and emits the [`'connect'`](Client.md#event-connect) event signalling a connection was successfully established with the `origin` provided during `Client` instantiation.
-
-While in this state, the `Client` is actively processing requests stored in the internal queue. If pipelining is enabled, the `Client` is processing the requests in parallel. Once all of the requests have been processed, the `Client` will remain in this state until the end of the `keepAliveTimeout`. Once the socket connection timeout ends, the `Client` emits a [`'disconnect'`](#event-disconnect) event and returns to the **idle** state. More requests may be queued, and the `Client` will once again transition to the **processing** state. -->
+The **destroyed** state is a final state for the `Client` instance. Once in this state, a `Client` is nonfunctional. Calling any other `Client` methods will result in an `ClientDestroyedError`.
