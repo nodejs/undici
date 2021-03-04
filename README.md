@@ -110,6 +110,8 @@ Options:
 - `maxHeaderSize: Number`, the maximum length of request headers in bytes.
   Default: `16384` (16KiB).
 
+- `strictContentLength: Boolean`, whether to treat request content length mismatches as errors. If true, an error is thrown when the request content-length header doesn't match the length of the request body. Default: `true`.
+
 <a name='request'></a>
 #### `client.request(opts[, callback(err, data)]): Promise|Void`
 
