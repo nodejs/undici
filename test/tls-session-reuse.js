@@ -134,7 +134,7 @@ test('A client should reuse its TLS session', { skip: nodeMajor < 11 }, t => {
 test('A pool should be able to reuse TLS sessions between clients', { skip: nodeMajor < 11 }, t => {
   let serverRequests = 0
 
-  const REQ_COUNT = 100
+  const REQ_COUNT = 10
   t.test('Prepare request', t => {
     t.plan(4 + REQ_COUNT * 2)
     const server = https.createServer(options, (req, res) => {
