@@ -6,7 +6,7 @@ const https = require('https')
 const crypto = require('crypto')
 const { test } = require('tap')
 const { Client, Pool } = require('..')
-const { kSocket, kTLSOpts } = require('../lib/core/symbols')
+const { kSocket, kTLSOpts, kTLSSessionCache } = require('../lib/core/symbols')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
@@ -84,9 +84,7 @@ test('A client should reuse its TLS session', { skip: nodeMajor < 11 }, t => {
         } else {
           delete client[kTLSOpts].ciphers
         }
-        const s = delayStart()
         client.request(options, (err, data) => {
-          console.log(options.name, delayEnd(s))
           t.error(err)
           clientSessions[options.name] = client[kSocket].getSession()
           data.body.resume().on('end', () => {
@@ -133,32 +131,22 @@ test('A client should reuse its TLS session', { skip: nodeMajor < 11 }, t => {
   t.end()
 })
 
-const delayStart = () => {
-  return process.hrtime()
-}
-
-const delayEnd = (delayStart) => {
-  const hrduration = process.hrtime(delayStart)
-  return hrduration[0] * 1e3 + hrduration[1] / 1e6
-}
-
 test('A pool should be able to reuse TLS sessions between clients', { skip: nodeMajor < 11 }, t => {
-  const clientSessions = {}
   let serverRequests = 0
 
+  const REQ_COUNT = 100
   t.test('Prepare request', t => {
-    t.plan(1)
+    t.plan(5 + REQ_COUNT * 2)
     const server = https.createServer(options, (req, res) => {
-      if (req.url === '/drop-key') {
-        server.setTicketKeys(crypto.randomBytes(48))
-      }
       serverRequests++
       res.end()
     })
+    server.on('error', err => console.error(err))
 
-    server.listen(0, function () {
-      const pool = new Pool(`https://localhost:${server.address().port}`, {
+    server.listen(0, async () => {
+      const poolWithSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
         pipelining: 0,
+        connections: 100,
         tls: {
           ca,
           rejectUnauthorized: false,
@@ -167,81 +155,72 @@ test('A pool should be able to reuse TLS sessions between clients', { skip: node
           reuseSessions: true
         }
       })
+      const poolWithoutSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
+        pipelining: 0,
+        connections: 100,
+        tls: {
+          ca,
+          rejectUnauthorized: false,
+          maxCachedSessions: 1,
+          servername: 'agent1',
+          reuseSessions: false
+        }
+      })
 
       t.teardown(() => {
-        pool.close()
+        poolWithSessionReuse.close()
+        poolWithoutSessionReuse.close()
         server.close()
       })
 
-      const queue = [{
-        name: 'first',
-        method: 'GET',
-        path: '/drop-key'
-      }]
-      let delays = 0
-      function request (options) {
-        // if (options.ciphers) {
-        //   // Choose different cipher to use different cache entry
-        //   pool[kTLSOpts].ciphers = options.ciphers
-        // } else {
-        //   delete pool[kTLSOpts].ciphers
-        // }
+      function request (pool, expectedSessionPoolMaxSize) {
         return new Promise((resolve, reject) => {
-          const s = delayStart()
-          pool.request(options, (err, data) => {
-            delays += delayEnd(s)
+          const s = startDelay()
+          pool.request({
+            method: 'GET',
+            path: '/'
+          }, (err, data) => {
+            const responseTime = endDelay(s)
             if (err) return reject(err)
-            clientSessions[options.name] = pool.getCachedTLSSession()
-            // console.log(clientSessions)
+            const numberOfCachedSessionsInPool = pool[kTLSSessionCache].size()
+            t.ok(numberOfCachedSessionsInPool <= expectedSessionPoolMaxSize, `Expected the pool to cache no more then ${expectedSessionPoolMaxSize} sessions but got ${numberOfCachedSessionsInPool}`)
             data.body.resume().on('end', () => {
-              resolve()
+              resolve(responseTime)
             })
           })
         })
       }
 
-      let req = 99
-      request(queue[0]).then(() => {
+      async function runRequests (pool, numIterations, expectedSessionPoolMaxSize) {
         const requests = []
-        while (req--) {
-          requests.push(request(queue[0]))
+        // For the session reuse, we first need one client to connect to receive a valid tls session to reuse
+        const responseTime = await request(pool, expectedSessionPoolMaxSize)
+        while (numIterations--) {
+          requests.push(request(pool, expectedSessionPoolMaxSize))
         }
-        Promise.all(requests).then(() => {
-          console.log(delays / 100)
-          t.pass()
-        })
-      })
-    })
-  })
+        return await Promise.all(requests).then(responseTimes => responseTimes.concat([responseTime]))
+      }
 
-  t.test('Verify cached sessions', t => {
-    t.plan(1)
-    t.strictEqual(serverRequests, 100)
-    // t.strictEqual(
-    //   clientSessions.first.toString('hex'),
-    //   clientSessions['first-reuse'].toString('hex')
-    // )
-    // t.notStrictEqual(
-    //   clientSessions.first.toString('hex'),
-    //   clientSessions['cipher-change'].toString('hex')
-    // )
-    // t.notStrictEqual(
-    //   clientSessions.first.toString('hex'),
-    //   clientSessions['before-drop'].toString('hex')
-    // )
-    // t.notStrictEqual(
-    //   clientSessions['cipher-change'].toString('hex'),
-    //   clientSessions['before-drop'].toString('hex')
-    // )
-    // t.notStrictEqual(
-    //   clientSessions['before-drop'].toString('hex'),
-    //   clientSessions['after-drop'].toString('hex')
-    // )
-    // t.strictEqual(
-    //   clientSessions['after-drop'].toString('hex'),
-    //   clientSessions['after-drop-reuse'].toString('hex')
-    // )
+      const responseTimesWithoutSessionReuse = await runRequests(poolWithoutSessionReuse, REQ_COUNT, REQ_COUNT)
+      const responseTimesWithSessionReuse = await runRequests(poolWithSessionReuse, REQ_COUNT, 1)
+
+      const averageResponseTimeWithSessionReuse = responseTimesWithSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithSessionReuse.length
+      const averageResponseTimeWithoutSessionReuse = responseTimesWithoutSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithoutSessionReuse.length
+      t.ok(averageResponseTimeWithSessionReuse < averageResponseTimeWithoutSessionReuse, `Average request response time should be lower with session reuse enabled (${averageResponseTimeWithSessionReuse}ms) than without (${averageResponseTimeWithoutSessionReuse}ms)`)
+
+      t.strictEqual(serverRequests, 2 + REQ_COUNT * 2)
+      t.pass()
+    })
   })
 
   t.end()
 })
+
+const startDelay = () => {
+  return process.hrtime()
+}
+
+const endDelay = (hrtimeStart) => {
+  const hrduration = process.hrtime(hrtimeStart)
+  return hrduration[0] * 1e3 + hrduration[1] / 1e6
+}
