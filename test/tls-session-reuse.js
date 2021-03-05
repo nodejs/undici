@@ -5,7 +5,7 @@ const { join } = require('path')
 const https = require('https')
 const crypto = require('crypto')
 const { test } = require('tap')
-const { Client } = require('..')
+const { Client, Pool } = require('..')
 const { kSocket, kTLSOpts } = require('../lib/core/symbols')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
@@ -16,7 +16,7 @@ const options = {
 }
 const ca = readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
 
-test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
+test('A client should reuse its TLS session', { skip: nodeMajor < 11 }, t => {
   const clientSessions = {}
   let serverRequests = 0
 
@@ -84,7 +84,9 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
         } else {
           delete client[kTLSOpts].ciphers
         }
+        const s = delayStart()
         client.request(options, (err, data) => {
+          console.log(options.name, delayEnd(s))
           t.error(err)
           clientSessions[options.name] = client[kSocket].getSession()
           data.body.resume().on('end', () => {
@@ -126,6 +128,119 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
       clientSessions['after-drop'].toString('hex'),
       clientSessions['after-drop-reuse'].toString('hex')
     )
+  })
+
+  t.end()
+})
+
+const delayStart = () => {
+  return process.hrtime()
+}
+
+const delayEnd = (delayStart) => {
+  const hrduration = process.hrtime(delayStart)
+  return hrduration[0] * 1e3 + hrduration[1] / 1e6
+}
+
+test('A pool should be able to reuse TLS sessions between clients', { skip: nodeMajor < 11 }, t => {
+  const clientSessions = {}
+  let serverRequests = 0
+
+  t.test('Prepare request', t => {
+    t.plan(1)
+    const server = https.createServer(options, (req, res) => {
+      if (req.url === '/drop-key') {
+        server.setTicketKeys(crypto.randomBytes(48))
+      }
+      serverRequests++
+      res.end()
+    })
+
+    server.listen(0, function () {
+      const pool = new Pool(`https://localhost:${server.address().port}`, {
+        pipelining: 0,
+        tls: {
+          ca,
+          rejectUnauthorized: false,
+          maxCachedSessions: 1,
+          servername: 'agent1',
+          reuseSessions: true
+        }
+      })
+
+      t.teardown(() => {
+        pool.close()
+        server.close()
+      })
+
+      const queue = [{
+        name: 'first',
+        method: 'GET',
+        path: '/drop-key'
+      }]
+      let delays = 0
+      function request (options) {
+        // if (options.ciphers) {
+        //   // Choose different cipher to use different cache entry
+        //   pool[kTLSOpts].ciphers = options.ciphers
+        // } else {
+        //   delete pool[kTLSOpts].ciphers
+        // }
+        return new Promise((resolve, reject) => {
+          const s = delayStart()
+          pool.request(options, (err, data) => {
+            delays += delayEnd(s)
+            if (err) return reject(err)
+            clientSessions[options.name] = pool.getCachedTLSSession()
+            // console.log(clientSessions)
+            data.body.resume().on('end', () => {
+              resolve()
+            })
+          })
+        })
+      }
+
+      let req = 99
+      request(queue[0]).then(() => {
+        const requests = []
+        while (req--) {
+          requests.push(request(queue[0]))
+        }
+        Promise.all(requests).then(() => {
+          console.log(delays / 100)
+          t.pass()
+        })
+      })
+    })
+  })
+
+  t.test('Verify cached sessions', t => {
+    t.plan(1)
+    t.strictEqual(serverRequests, 100)
+    // t.strictEqual(
+    //   clientSessions.first.toString('hex'),
+    //   clientSessions['first-reuse'].toString('hex')
+    // )
+    // t.notStrictEqual(
+    //   clientSessions.first.toString('hex'),
+    //   clientSessions['cipher-change'].toString('hex')
+    // )
+    // t.notStrictEqual(
+    //   clientSessions.first.toString('hex'),
+    //   clientSessions['before-drop'].toString('hex')
+    // )
+    // t.notStrictEqual(
+    //   clientSessions['cipher-change'].toString('hex'),
+    //   clientSessions['before-drop'].toString('hex')
+    // )
+    // t.notStrictEqual(
+    //   clientSessions['before-drop'].toString('hex'),
+    //   clientSessions['after-drop'].toString('hex')
+    // )
+    // t.strictEqual(
+    //   clientSessions['after-drop'].toString('hex'),
+    //   clientSessions['after-drop-reuse'].toString('hex')
+    // )
   })
 
   t.end()
