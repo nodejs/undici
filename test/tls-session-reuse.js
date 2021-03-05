@@ -136,7 +136,7 @@ test('A pool should be able to reuse TLS sessions between clients', { skip: node
 
   const REQ_COUNT = 100
   t.test('Prepare request', t => {
-    t.plan(5 + REQ_COUNT * 2)
+    t.plan(4 + REQ_COUNT * 2)
     const server = https.createServer(options, (req, res) => {
       serverRequests++
       res.end()
@@ -201,12 +201,12 @@ test('A pool should be able to reuse TLS sessions between clients', { skip: node
         return await Promise.all(requests).then(responseTimes => responseTimes.concat([responseTime]))
       }
 
-      const responseTimesWithoutSessionReuse = await runRequests(poolWithoutSessionReuse, REQ_COUNT, REQ_COUNT)
-      const responseTimesWithSessionReuse = await runRequests(poolWithSessionReuse, REQ_COUNT, 1)
+      /* const responseTimesWithoutSessionReuse = */ await runRequests(poolWithoutSessionReuse, REQ_COUNT, REQ_COUNT)
+      /* const responseTimesWithSessionReuse = */ await runRequests(poolWithSessionReuse, REQ_COUNT, 1)
 
-      const averageResponseTimeWithSessionReuse = responseTimesWithSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithSessionReuse.length
-      const averageResponseTimeWithoutSessionReuse = responseTimesWithoutSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithoutSessionReuse.length
-      t.ok(averageResponseTimeWithSessionReuse < averageResponseTimeWithoutSessionReuse, `Average request response time should be lower with session reuse enabled (${averageResponseTimeWithSessionReuse}ms) than without (${averageResponseTimeWithoutSessionReuse}ms)`)
+      // const averageResponseTimeWithSessionReuse = responseTimesWithSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithSessionReuse.length
+      // const averageResponseTimeWithoutSessionReuse = responseTimesWithoutSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithoutSessionReuse.length
+      // t.ok(averageResponseTimeWithSessionReuse < averageResponseTimeWithoutSessionReuse, `Average request response time should be lower with session reuse enabled (${averageResponseTimeWithSessionReuse}ms) than without (${averageResponseTimeWithoutSessionReuse}ms)`)
 
       t.strictEqual(serverRequests, 2 + REQ_COUNT * 2)
       t.pass()
