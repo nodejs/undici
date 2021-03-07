@@ -33,7 +33,7 @@ test('stream body without destroy', (t) => {
   })
 })
 
-test('IncomingMessage', { only: true }, (t) => {
+test('IncomingMessage', (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
