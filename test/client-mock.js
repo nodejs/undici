@@ -40,7 +40,7 @@ test('mockDispatch - should handle a single interceptor', (t) => {
   t.ok(1)
 })
 
-test('ClientMock - basic intercept', (t) => {
+test('ClientMock - basic intercept', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -51,46 +51,46 @@ test('ClientMock - basic intercept', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
+  const baseUrl = `http://localhost:${server.address().port}`
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    mockClient.intercept({
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
+
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo?hello=there&see=ya',
+    method: 'POST',
+    body: 'form1=data1&form2=data2'
+  }).reply(200, { foo: 'bar' }, {
+    headers: {
+      'content-type': 'application/json'
+    },
+    trailers: { 'Content-MD5': 'test' }
+  })
+
+  try {
+    const { statusCode, headers, trailers, body } = await client.request({
       path: '/foo?hello=there&see=ya',
       method: 'POST',
       body: 'form1=data1&form2=data2'
-    }).reply(200, { foo: 'bar' }, {
-      headers: {
-        'content-type': 'application/json'
-      },
-      trailers: { 'Content-MD5': 'test' }
     })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'application/json')
+    t.deepEqual(trailers, { 'content-md5': 'test' })
 
-    try {
-      const { statusCode, headers, trailers, body } = await client.request({
-        path: '/foo?hello=there&see=ya',
-        method: 'POST',
-        body: 'form1=data1&form2=data2'
-      })
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'application/json')
-      t.deepEqual(trailers, { 'content-md5': 'test' })
-
-      const jsonResponse = JSON.parse(await getResponse(body))
-      t.deepEqual(jsonResponse, {
-        foo: 'bar'
-      })
-    } catch (err) {
-      t.fail(err)
-    }
-  })
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.deepEqual(jsonResponse, {
+      foo: 'bar'
+    })
+  } catch (err) {
+    t.fail(err)
+  }
 })
 
-test('ClientMock - basic intercept with request', (t) => {
+test('ClientMock - basic intercept with request', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -101,33 +101,33 @@ test('ClientMock - basic intercept with request', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    mockClient.intercept({
-      path: '/foo',
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'POST'
+  }).reply(200, { foo: 'bar' })
+
+  try {
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'POST'
-    }).reply(200, { foo: 'bar' })
+    })
+    t.strictEqual(statusCode, 200)
 
-    try {
-      const { statusCode, body } = await request(`${baseUrl}/foo`, {
-        method: 'POST'
-      })
-      t.strictEqual(statusCode, 200)
-
-      const jsonResponse = JSON.parse(await getResponse(body))
-      t.deepEqual(jsonResponse, {
-        foo: 'bar'
-      })
-    } catch (err) {
-      t.fail(err)
-    }
-  })
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.deepEqual(jsonResponse, {
+      foo: 'bar'
+    })
+  } catch (err) {
+    t.fail(err)
+  }
 })
 
-test('ClientMock - should handle multiple responses for an interceptor', (t) => {
+test('ClientMock - should handle multiple responses for an interceptor', async (t) => {
   t.plan(6)
 
   const server = createServer((req, res) => {
@@ -138,61 +138,61 @@ test('ClientMock - should handle multiple responses for an interceptor', (t) => 
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
+  const baseUrl = `http://localhost:${server.address().port}`
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    const interceptor = mockClient.intercept({
-      path: '/foo',
-      method: 'POST'
-    })
-    interceptor.reply(200, { foo: 'bar' }, {
-      headers: {
-        'content-type': 'application/json'
-      }
-    })
-    interceptor.reply(200, { hello: 'there' }, {
-      headers: {
-        'content-type': 'application/json'
-      }
-    })
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
 
-    try {
-      {
-        const { statusCode, headers, body } = await client.request({
-          path: '/foo',
-          method: 'POST'
-        })
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'application/json')
-
-        const jsonResponse = JSON.parse(await getResponse(body))
-        t.deepEqual(jsonResponse, {
-          foo: 'bar'
-        })
-      }
-
-      {
-        const { statusCode, headers, body } = await client.request({
-          path: '/foo',
-          method: 'POST'
-        })
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'application/json')
-
-        const jsonResponse = JSON.parse(await getResponse(body))
-        t.deepEqual(jsonResponse, {
-          hello: 'there'
-        })
-      }
-    } catch (err) {
-      t.fail(err)
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  const interceptor = mockClient.intercept({
+    path: '/foo',
+    method: 'POST'
+  })
+  interceptor.reply(200, { foo: 'bar' }, {
+    headers: {
+      'content-type': 'application/json'
     }
   })
+  interceptor.reply(200, { hello: 'there' }, {
+    headers: {
+      'content-type': 'application/json'
+    }
+  })
+
+  try {
+    {
+      const { statusCode, headers, body } = await client.request({
+        path: '/foo',
+        method: 'POST'
+      })
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'application/json')
+
+      const jsonResponse = JSON.parse(await getResponse(body))
+      t.deepEqual(jsonResponse, {
+        foo: 'bar'
+      })
+    }
+
+    {
+      const { statusCode, headers, body } = await client.request({
+        path: '/foo',
+        method: 'POST'
+      })
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'application/json')
+
+      const jsonResponse = JSON.parse(await getResponse(body))
+      t.deepEqual(jsonResponse, {
+        hello: 'there'
+      })
+    }
+  } catch (err) {
+    t.fail(err)
+  }
 })
 
 test('ClientMock - should handle basic concurrency for requests are called in the order of their definition', { jobs: 5 }, async (t) => {
@@ -231,7 +231,7 @@ test('ClientMock - should handle basic concurrency for requests are called in th
   ))
 })
 
-test('ClientMock - should call original dispatch if request not found', (t) => {
+test('ClientMock - should call original dispatch if request not found', async (t) => {
   t.plan(5)
 
   const server = createServer((req, res) => {
@@ -242,36 +242,36 @@ test('ClientMock - should call original dispatch if request not found', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
+  const baseUrl = `http://localhost:${server.address().port}`
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    mockClient.intercept({
-      path: '/foo',
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
+
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'POST'
+  }).reply(200, { foo: 'bar' })
+
+  try {
+    const { statusCode, headers, body } = await client.request({
+      path: '/wrong',
       method: 'POST'
-    }).reply(200, { foo: 'bar' })
+    })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
 
-    try {
-      const { statusCode, headers, body } = await client.request({
-        path: '/wrong',
-        method: 'POST'
-      })
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
-
-      const response = await getResponse(body)
-      t.strictEqual(response, 'hello')
-    } catch (err) {
-      t.fail(err)
-    }
-  })
+    const response = await getResponse(body)
+    t.strictEqual(response, 'hello')
+  } catch (err) {
+    t.fail(err)
+  }
 })
 
-test('ClientMock - should handle string responses', (t) => {
+test('ClientMock - should handle string responses', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -282,35 +282,35 @@ test('ClientMock - should handle string responses', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
+  const baseUrl = `http://localhost:${server.address().port}`
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    mockClient.intercept({
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
+
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'POST'
+  }).reply(200, 'hello')
+
+  try {
+    const { statusCode, body } = await client.request({
       path: '/foo',
       method: 'POST'
-    }).reply(200, 'hello')
+    })
+    t.strictEqual(statusCode, 200)
 
-    try {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
-        method: 'POST'
-      })
-      t.strictEqual(statusCode, 200)
-
-      const response = await getResponse(body)
-      t.strictEqual(response, 'hello')
-    } catch (err) {
-      t.fail(err)
-    }
-  })
+    const response = await getResponse(body)
+    t.strictEqual(response, 'hello')
+  } catch (err) {
+    t.fail(err)
+  }
 })
 
-test('ClientMock - handle delays to simulate work', (t) => {
+test('ClientMock - handle delays to simulate work', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -321,35 +321,35 @@ test('ClientMock - handle delays to simulate work', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
+  const baseUrl = `http://localhost:${server.address().port}`
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    mockClient.intercept({
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
+
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'POST'
+  }).reply(200, 'hello').delay(100)
+
+  try {
+    const { statusCode, body } = await client.request({
       path: '/foo',
       method: 'POST'
-    }).reply(200, 'hello').delay(100)
+    })
+    t.strictEqual(statusCode, 200)
 
-    try {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
-        method: 'POST'
-      })
-      t.strictEqual(statusCode, 200)
-
-      const response = await getResponse(body)
-      t.strictEqual(response, 'hello')
-    } catch (err) {
-      t.fail(err)
-    }
-  })
+    const response = await getResponse(body)
+    t.strictEqual(response, 'hello')
+  } catch (err) {
+    t.fail(err)
+  }
 })
 
-test('ClientMock - handle persists for requests that can be intercepted multiple times', (t) => {
+test('ClientMock - handle persists for requests that can be intercepted multiple times', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -360,48 +360,48 @@ test('ClientMock - handle persists for requests that can be intercepted multiple
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
+  const baseUrl = `http://localhost:${server.address().port}`
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    mockClient.intercept({
-      path: '/foo',
-      method: 'POST'
-    }).reply(200, 'hello').delay(1).persist()
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
 
-    try {
-      {
-        const { statusCode, body } = await client.request({
-          path: '/foo',
-          method: 'POST'
-        })
-        t.strictEqual(statusCode, 200)
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'POST'
+  }).reply(200, 'hello').delay(1).persist()
 
-        const response = await getResponse(body)
-        t.strictEqual(response, 'hello')
-      }
+  try {
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'POST'
+      })
+      t.strictEqual(statusCode, 200)
 
-      {
-        const { statusCode, body } = await client.request({
-          path: '/foo',
-          method: 'POST'
-        })
-        t.strictEqual(statusCode, 200)
-
-        const response = await getResponse(body)
-        t.strictEqual(response, 'hello')
-      }
-    } catch (err) {
-      t.fail(err)
+      const response = await getResponse(body)
+      t.strictEqual(response, 'hello')
     }
-  })
+
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'POST'
+      })
+      t.strictEqual(statusCode, 200)
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'hello')
+    }
+  } catch (err) {
+    t.fail(err)
+  }
 })
 
-test('ClientMock - should persist requests', (t) => {
+test('ClientMock - should persist requests', async (t) => {
   t.plan(8)
 
   const server = createServer((req, res) => {
@@ -412,64 +412,64 @@ test('ClientMock - should persist requests', (t) => {
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
+  const baseUrl = `http://localhost:${server.address().port}`
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    mockClient.intercept({
-      path: '/foo?hello=there&see=ya',
-      method: 'POST',
-      body: 'form1=data1&form2=data2'
-    }).reply(200, { foo: 'bar' }, {
-      headers: {
-        'content-type': 'application/json'
-      },
-      trailers: { 'Content-MD5': 'test' }
-    }).persist()
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
 
-    try {
-      {
-        const { statusCode, headers, trailers, body } = await client.request({
-          path: '/foo?hello=there&see=ya',
-          method: 'POST',
-          body: 'form1=data1&form2=data2'
-        })
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'application/json')
-        t.deepEqual(trailers, { 'content-md5': 'test' })
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo?hello=there&see=ya',
+    method: 'POST',
+    body: 'form1=data1&form2=data2'
+  }).reply(200, { foo: 'bar' }, {
+    headers: {
+      'content-type': 'application/json'
+    },
+    trailers: { 'Content-MD5': 'test' }
+  }).persist()
 
-        const jsonResponse = JSON.parse(await getResponse(body))
-        t.deepEqual(jsonResponse, {
-          foo: 'bar'
-        })
-      }
+  try {
+    {
+      const { statusCode, headers, trailers, body } = await client.request({
+        path: '/foo?hello=there&see=ya',
+        method: 'POST',
+        body: 'form1=data1&form2=data2'
+      })
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'application/json')
+      t.deepEqual(trailers, { 'content-md5': 'test' })
 
-      {
-        const { statusCode, headers, trailers, body } = await client.request({
-          path: '/foo?hello=there&see=ya',
-          method: 'POST',
-          body: 'form1=data1&form2=data2'
-        })
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'application/json')
-        t.deepEqual(trailers, { 'content-md5': 'test' })
-
-        const jsonResponse = JSON.parse(await getResponse(body))
-        t.deepEqual(jsonResponse, {
-          foo: 'bar'
-        })
-      }
-    } catch (err) {
-      t.fail(err)
+      const jsonResponse = JSON.parse(await getResponse(body))
+      t.deepEqual(jsonResponse, {
+        foo: 'bar'
+      })
     }
-  })
+
+    {
+      const { statusCode, headers, trailers, body } = await client.request({
+        path: '/foo?hello=there&see=ya',
+        method: 'POST',
+        body: 'form1=data1&form2=data2'
+      })
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'application/json')
+      t.deepEqual(trailers, { 'content-md5': 'test' })
+
+      const jsonResponse = JSON.parse(await getResponse(body))
+      t.deepEqual(jsonResponse, {
+        foo: 'bar'
+      })
+    }
+  } catch (err) {
+    t.fail(err)
+  }
 })
 
-test('ClientMock - handle persists for requests that can be intercepted multiple times', (t) => {
+test('ClientMock - handle persists for requests that can be intercepted multiple times', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -480,48 +480,48 @@ test('ClientMock - handle persists for requests that can be intercepted multiple
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
+  const baseUrl = `http://localhost:${server.address().port}`
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    mockClient.intercept({
-      path: '/foo',
-      method: 'POST'
-    }).reply(200, 'hello').delay(1).persist()
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
 
-    try {
-      {
-        const { statusCode, body } = await client.request({
-          path: '/foo',
-          method: 'POST'
-        })
-        t.strictEqual(statusCode, 200)
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'POST'
+  }).reply(200, 'hello').delay(1).persist()
 
-        const response = await getResponse(body)
-        t.strictEqual(response, 'hello')
-      }
+  try {
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'POST'
+      })
+      t.strictEqual(statusCode, 200)
 
-      {
-        const { statusCode, body } = await client.request({
-          path: '/foo',
-          method: 'POST'
-        })
-        t.strictEqual(statusCode, 200)
-
-        const response = await getResponse(body)
-        t.strictEqual(response, 'hello')
-      }
-    } catch (err) {
-      t.fail(err)
+      const response = await getResponse(body)
+      t.strictEqual(response, 'hello')
     }
-  })
+
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'POST'
+      })
+      t.strictEqual(statusCode, 200)
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'hello')
+    }
+  } catch (err) {
+    t.fail(err)
+  }
 })
 
-test('ClientMock - calling close on a MockClient should not affect other MockClients', (t) => {
+test('ClientMock - calling close on a MockClient should not affect other MockClients', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -532,60 +532,60 @@ test('ClientMock - calling close on a MockClient should not affect other MockCli
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
+  const baseUrl = `http://localhost:${server.address().port}`
 
-    const mockClientToClose = new MockClient(baseUrl)
-    t.tearDown(mockClientToClose.close.bind(mockClientToClose))
-    mockClientToClose.intercept({
-      path: '/foo',
-      method: 'GET'
-    }).reply(200, 'should-not-be-returned')
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    mockClient.intercept({
-      path: '/foo',
-      method: 'GET'
-    }).reply(200, 'foo')
-    mockClient.intercept({
-      path: '/bar',
-      method: 'POST'
-    }).reply(200, 'bar')
+  const mockClientToClose = new MockClient(baseUrl)
+  t.tearDown(mockClientToClose.close.bind(mockClientToClose))
+  mockClientToClose.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'should-not-be-returned')
 
-    try {
-      mockClientToClose.close()
-      {
-        const { statusCode, body } = await client.request({
-          path: '/foo',
-          method: 'GET'
-        })
-        t.strictEqual(statusCode, 200)
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo')
+  mockClient.intercept({
+    path: '/bar',
+    method: 'POST'
+  }).reply(200, 'bar')
 
-        const response = await getResponse(body)
-        t.strictEqual(response, 'foo')
-      }
+  try {
+    mockClientToClose.close()
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
 
-      {
-        const { statusCode, body } = await client.request({
-          path: '/bar',
-          method: 'POST'
-        })
-        t.strictEqual(statusCode, 200)
-
-        const response = await getResponse(body)
-        t.strictEqual(response, 'bar')
-      }
-    } catch (err) {
-      t.fail(err)
+      const response = await getResponse(body)
+      t.strictEqual(response, 'foo')
     }
-  })
+
+    {
+      const { statusCode, body } = await client.request({
+        path: '/bar',
+        method: 'POST'
+      })
+      t.strictEqual(statusCode, 200)
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'bar')
+    }
+  } catch (err) {
+    t.fail(err)
+  }
 })
 
-test('ClientMock validation - calling close on a MockClient should not affect other MockClients', (t) => {
+test('ClientMock validation - calling close on a MockClient should not affect other MockClients', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -596,55 +596,55 @@ test('ClientMock validation - calling close on a MockClient should not affect ot
   })
   t.tearDown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const baseUrl = `http://localhost:${server.address().port}`
+  await promisify(server.listen.bind(server))(0)
 
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
+  const baseUrl = `http://localhost:${server.address().port}`
 
-    const mockClientToClose = new MockClient(baseUrl)
-    t.tearDown(mockClientToClose.close.bind(mockClientToClose))
-    mockClientToClose.intercept({
-      path: '/foo',
-      method: 'GET'
-    }).reply(200, 'should-not-be-returned')
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
 
-    const mockClient = new MockClient(baseUrl)
-    t.tearDown(mockClient.close.bind(mockClient))
-    mockClient.intercept({
-      path: '/foo',
-      method: 'GET'
-    }).reply(200, 'foo')
-    mockClient.intercept({
-      path: '/bar',
-      method: 'POST'
-    }).reply(200, 'bar')
+  const mockClientToClose = new MockClient(baseUrl)
+  t.tearDown(mockClientToClose.close.bind(mockClientToClose))
+  mockClientToClose.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'should-not-be-returned')
 
-    try {
-      mockClientToClose.close()
-      {
-        const { statusCode, body } = await client.request({
-          path: '/foo',
-          method: 'GET'
-        })
-        t.strictEqual(statusCode, 200)
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo')
+  mockClient.intercept({
+    path: '/bar',
+    method: 'POST'
+  }).reply(200, 'bar')
 
-        const response = await getResponse(body)
-        t.strictEqual(response, 'foo')
-      }
+  try {
+    mockClientToClose.close()
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
 
-      {
-        const { statusCode, body } = await client.request({
-          path: '/bar',
-          method: 'POST'
-        })
-        t.strictEqual(statusCode, 200)
-
-        const response = await getResponse(body)
-        t.strictEqual(response, 'bar')
-      }
-    } catch (err) {
-      t.fail(err)
+      const response = await getResponse(body)
+      t.strictEqual(response, 'foo')
     }
-  })
+
+    {
+      const { statusCode, body } = await client.request({
+        path: '/bar',
+        method: 'POST'
+      })
+      t.strictEqual(statusCode, 200)
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'bar')
+    }
+  } catch (err) {
+    t.fail(err)
+  }
 })
