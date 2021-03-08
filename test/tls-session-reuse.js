@@ -6,7 +6,7 @@ const https = require('https')
 const crypto = require('crypto')
 const { test } = require('tap')
 const { Client, Pool } = require('..')
-const { kSocket, kTLSOpts, kTLSSessionCache } = require('../lib/core/symbols')
+const { kSocket, kTLSOpts, kTLSSession } = require('../lib/core/symbols')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
@@ -135,8 +135,10 @@ test('A pool should be able to reuse TLS sessions between clients', { skip: node
   let serverRequests = 0
 
   const REQ_COUNT = 10
+  const ASSERT_PERFORMANCE_GAIN = false
+
   t.test('Prepare request', t => {
-    t.plan(4 + REQ_COUNT * 2)
+    t.plan(2 + REQ_COUNT + (ASSERT_PERFORMANCE_GAIN ? 1 : 0))
     const server = https.createServer(options, (req, res) => {
       serverRequests++
       res.end()
@@ -173,7 +175,7 @@ test('A pool should be able to reuse TLS sessions between clients', { skip: node
         server.close()
       })
 
-      function request (pool, expectedSessionPoolMaxSize) {
+      function request (pool, expectTLSSessionCache) {
         return new Promise((resolve, reject) => {
           const s = startDelay()
           pool.request({
@@ -182,8 +184,9 @@ test('A pool should be able to reuse TLS sessions between clients', { skip: node
           }, (err, data) => {
             const responseTime = endDelay(s)
             if (err) return reject(err)
-            const numberOfCachedSessionsInPool = pool[kTLSSessionCache].size()
-            t.ok(numberOfCachedSessionsInPool <= expectedSessionPoolMaxSize, `Expected the pool to cache no more then ${expectedSessionPoolMaxSize} sessions but got ${numberOfCachedSessionsInPool}`)
+            if (expectTLSSessionCache) {
+              t.ok(pool[kTLSSession], 'Expected the session to be cached')
+            }
             data.body.resume().on('end', () => {
               resolve(responseTime)
             })
@@ -191,22 +194,25 @@ test('A pool should be able to reuse TLS sessions between clients', { skip: node
         })
       }
 
-      async function runRequests (pool, numIterations, expectedSessionPoolMaxSize) {
+      async function runRequests (pool, numIterations, expectTLSSessionCache) {
         const requests = []
         // For the session reuse, we first need one client to connect to receive a valid tls session to reuse
-        const responseTime = await request(pool, expectedSessionPoolMaxSize)
+        const responseTime = await request(pool, false)
         while (numIterations--) {
-          requests.push(request(pool, expectedSessionPoolMaxSize))
+          requests.push(request(pool, expectTLSSessionCache))
         }
         return await Promise.all(requests).then(responseTimes => responseTimes.concat([responseTime]))
       }
 
-      /* const responseTimesWithoutSessionReuse = */ await runRequests(poolWithoutSessionReuse, REQ_COUNT, REQ_COUNT)
-      /* const responseTimesWithSessionReuse = */ await runRequests(poolWithSessionReuse, REQ_COUNT, 1)
+      const responseTimesWithoutSessionReuse = await runRequests(poolWithoutSessionReuse, REQ_COUNT, false)
+      const responseTimesWithSessionReuse = await runRequests(poolWithSessionReuse, REQ_COUNT, true)
 
-      // const averageResponseTimeWithSessionReuse = responseTimesWithSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithSessionReuse.length
-      // const averageResponseTimeWithoutSessionReuse = responseTimesWithoutSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithoutSessionReuse.length
-      // t.ok(averageResponseTimeWithSessionReuse < averageResponseTimeWithoutSessionReuse, `Average request response time should be lower with session reuse enabled (${averageResponseTimeWithSessionReuse}ms) than without (${averageResponseTimeWithoutSessionReuse}ms)`)
+      const averageResponseTimeWithSessionReuse = responseTimesWithSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithSessionReuse.length
+      const averageResponseTimeWithoutSessionReuse = responseTimesWithoutSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithoutSessionReuse.length
+
+      if (ASSERT_PERFORMANCE_GAIN) {
+        t.ok(averageResponseTimeWithSessionReuse < averageResponseTimeWithoutSessionReuse, `Average request response time should be lower with session reuse enabled (${averageResponseTimeWithSessionReuse}ms) than without (${averageResponseTimeWithoutSessionReuse}ms)`)
+      }
 
       t.strictEqual(serverRequests, 2 + REQ_COUNT * 2)
       t.pass()
