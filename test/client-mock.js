@@ -4,7 +4,7 @@ const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
 const { Client, MockClient, cleanAllMocks, request } = require('..')
-const { mockDispatch } = require('../lib/client-mock')
+const { mockDispatch, addMockDispatch, getMockDispatch, deleteMockDispatch } = require('../lib/client-mock')
 const { kUrl } = require('../lib/core/symbols')
 
 async function getResponse (body) {
@@ -38,6 +38,48 @@ test('mockDispatch - should handle a single interceptor', (t) => {
     onComplete: () => {}
   })
   t.ok(1)
+})
+
+test('addMockDispatch - should add mock dispatch', (t) => {
+  t.plan(1)
+
+  const key = {
+    url: 'url',
+    path: 'path',
+    method: 'method',
+    body: 'body'
+  }
+  t.tearDown(() => deleteMockDispatch(key))
+  try {
+    addMockDispatch(key, { foo: 'bar' })
+    const result = getMockDispatch(key)
+    t.deepEqual(result, {
+      url: 'url',
+      path: 'path',
+      method: 'method',
+      body: 'body',
+      replies: [{ foo: 'bar', error: null, persist: false, times: null, consumed: false }]
+    })
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('deleteMockDispatch - should do nothing if not able to find mock dispatch', (t) => {
+  t.plan(1)
+
+  const key = {
+    url: 'url',
+    path: 'path',
+    method: 'method',
+    body: 'body'
+  }
+  try {
+    deleteMockDispatch(key, { foo: 'bar' })
+    t.ok('deleted mockDispatch')
+  } catch (err) {
+    t.fail(err.message)
+  }
 })
 
 test('ClientMock - basic intercept', async (t) => {
@@ -86,7 +128,7 @@ test('ClientMock - basic intercept', async (t) => {
       foo: 'bar'
     })
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -123,7 +165,7 @@ test('ClientMock - basic intercept with request', async (t) => {
       foo: 'bar'
     })
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -191,7 +233,7 @@ test('ClientMock - should handle multiple responses for an interceptor', async (
       })
     }
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -225,7 +267,7 @@ test('ClientMock - should handle basic concurrency for requests are called in th
           foo: `bar ${idx}`
         })
       } catch (err) {
-        innerTest.fail(err)
+        innerTest.fail(err.message)
       }
     })
   ))
@@ -267,7 +309,7 @@ test('ClientMock - should call original dispatch if request not found', async (t
     const response = await getResponse(body)
     t.strictEqual(response, 'hello')
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -306,7 +348,7 @@ test('ClientMock - should handle string responses', async (t) => {
     const response = await getResponse(body)
     t.strictEqual(response, 'hello')
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -345,7 +387,7 @@ test('ClientMock - handle delays to simulate work', async (t) => {
     const response = await getResponse(body)
     t.strictEqual(response, 'hello')
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -397,7 +439,7 @@ test('ClientMock - handle persists for requests that can be intercepted multiple
       t.strictEqual(response, 'hello')
     }
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -465,7 +507,7 @@ test('ClientMock - should persist requests', async (t) => {
       })
     }
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -517,7 +559,7 @@ test('ClientMock - handle persists for requests that can be intercepted multiple
       t.strictEqual(response, 'hello')
     }
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -581,7 +623,7 @@ test('ClientMock - calling close on a MockClient should not affect other MockCli
       t.strictEqual(response, 'bar')
     }
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -645,11 +687,11 @@ test('ClientMock validation - calling close on a MockClient should not affect ot
       t.strictEqual(response, 'bar')
     }
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
-test('cleanAll - removes all register mockDispatches', async (t) => {
+test('cleanAllMocks - removes all registered mockDispatches', async (t) => {
   t.plan(5)
 
   const server = createServer((req, res) => {
@@ -689,7 +731,7 @@ test('cleanAll - removes all register mockDispatches', async (t) => {
       t.strictEqual(response, 'hello')
     }
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -787,7 +829,7 @@ test('ClientMock - should support setting a reply to respond a set amount of tim
       t.strictEqual(response, 'hello')
     }
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
 
@@ -850,6 +892,6 @@ test('ClientMock - persist overrides times', async (t) => {
       t.strictEqual(response, 'foo')
     }
   } catch (err) {
-    t.fail(err)
+    t.fail(err.message)
   }
 })
