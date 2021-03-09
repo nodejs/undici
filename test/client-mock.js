@@ -726,3 +726,130 @@ test('ClientMock - should handle replyWithError', async (t) => {
     t.strictEqual(err.message, 'kaboom')
   }
 })
+
+test('ClientMock - should support setting a reply to respond a set amount of times', async (t) => {
+  t.plan(9)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.url, '/foo')
+    t.strictEqual(req.method, 'GET')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
+
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo').times(2)
+
+  try {
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'foo')
+    }
+
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'foo')
+    }
+
+    {
+      const { statusCode, headers, body } = await client.request({
+        path: '/foo',
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'hello')
+    }
+  } catch (err) {
+    t.fail(err)
+  }
+})
+
+test('ClientMock - persist overrides times', async (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
+
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo').times(2).persist()
+
+  try {
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'foo')
+    }
+
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'foo')
+    }
+
+    {
+      const { statusCode, body } = await client.request({
+        path: '/foo',
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'foo')
+    }
+  } catch (err) {
+    t.fail(err)
+  }
+})
