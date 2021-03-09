@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
-const { Client, MockClient, request } = require('..')
+const { Client, MockClient, cleanAllMocks, request } = require('..')
 const { mockDispatch } = require('../lib/client-mock')
 const { kUrl } = require('../lib/core/symbols')
 
@@ -646,5 +646,83 @@ test('ClientMock validation - calling close on a MockClient should not affect ot
     }
   } catch (err) {
     t.fail(err)
+  }
+})
+
+test('cleanAll - removes all register mockDispatches', async (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.method, 'GET')
+    t.strictEqual(req.url, '/foo')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
+
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  try {
+    cleanAllMocks()
+
+    {
+      const { statusCode, headers, body } = await client.request({
+        path: '/foo',
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'hello')
+    }
+  } catch (err) {
+    t.fail(err)
+  }
+})
+
+test('ClientMock - should handle replyWithError', async (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const client = new Client(baseUrl)
+  t.tearDown(client.close.bind(client))
+
+  const mockClient = new MockClient(baseUrl)
+  t.tearDown(mockClient.close.bind(mockClient))
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).replyWithError(new Error('kaboom'))
+
+  try {
+    await client.request({ path: '/foo', method: 'GET' })
+
+    t.fail('should not be called')
+  } catch (err) {
+    t.strictEqual(err.message, 'kaboom')
   }
 })

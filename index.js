@@ -4,7 +4,7 @@ const Client = require('./lib/core/client')
 const errors = require('./lib/core/errors')
 const Pool = require('./lib/pool')
 const { Agent, request, stream, pipeline, setGlobalAgent } = require('./lib/agent')
-const { MockClient } = require('./lib/client-mock')
+const { MockClient, cleanAllMocks } = require('./lib/client-mock')
 
 Client.prototype.request = require('./lib/client-request')
 Client.prototype.stream = require('./lib/client-stream')
@@ -26,5 +26,6 @@ undici.stream = stream
 undici.pipeline = pipeline
 undici.setGlobalAgent = setGlobalAgent
 undici.MockClient = MockClient
+undici.cleanAllMocks = cleanAllMocks
 
 module.exports = undici
