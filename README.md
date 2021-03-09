@@ -726,6 +726,7 @@ Refs: https://tools.ietf.org/html/rfc7230#section-6.3.2
 
 ## Collaborators
 
+* [__Daniele Belardi__](https://github.com/dnlup), <https://www.npmjs.com/~dnlup>
 * [__Matteo Collina__](https://github.com/mcollina), <https://www.npmjs.com/~matteo.collina>
 * [__Robert Nagy__](https://github.com/ronag), <https://www.npmjs.com/~ronag>
 
