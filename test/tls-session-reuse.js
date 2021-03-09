@@ -16,7 +16,9 @@ const options = {
 }
 const ca = readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
 
-test('A client should reuse its TLS session', { skip: nodeMajor < 11 }, t => {
+test('A client should reuse its TLS session', {
+  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
+}, t => {
   const clientSessions = {}
   let serverRequests = 0
 
@@ -131,7 +133,9 @@ test('A client should reuse its TLS session', { skip: nodeMajor < 11 }, t => {
   t.end()
 })
 
-test('A pool should be able to reuse TLS sessions between clients', { skip: nodeMajor < 11 }, t => {
+test('A pool should be able to reuse TLS sessions between clients', {
+  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
+}, t => {
   let serverRequests = 0
 
   const REQ_COUNT = 10
