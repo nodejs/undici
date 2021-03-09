@@ -7,7 +7,7 @@ An Undici [Client](Client.md) can be best described as a state machine. The foll
 ## State Transition Overview
 
 * A `Client` begins in the **idle** state with no socket connection and no requests in queue.
-  * The *connect* event transitions the `Client` to the **pending** state where requests can be queued prior to processing
+  * The *connect* event transitions the `Client` to the **pending** state where requests can be queued prior to processing.
   * The *close* and *destroy* events transition the `Client` to the **destroyed** state. Since there are no requests in the queue, the *close* event immediately transitions to the **destroyed** state.
 * The **pending** state indicates the underlying socket connection has been successfully established and requests are queueing.
   * The *process* event transitions the `Client` to the **processing** state where requests are processed.
