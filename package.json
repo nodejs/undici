@@ -12,7 +12,7 @@
     "coverage": "standard | snazzy && tap test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\"",
-    "serve-website": "docsify serve docs"
+    "serve-website": "docsify serve ."
   },
   "repository": {
     "type": "git",
