@@ -5,8 +5,8 @@ const { join } = require('path')
 const https = require('https')
 const crypto = require('crypto')
 const { test } = require('tap')
-const { Client } = require('..')
-const { kSocket, kTLSOpts } = require('../lib/core/symbols')
+const { Client, Pool } = require('..')
+const { kSocket, kTLSOpts, kTLSSession } = require('../lib/core/symbols')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
@@ -16,7 +16,9 @@ const options = {
 }
 const ca = readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
 
-test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
+test('A client should reuse its TLS session', {
+  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
+}, t => {
   const clientSessions = {}
   let serverRequests = 0
 
@@ -130,3 +132,105 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
 
   t.end()
 })
+
+test('A pool should be able to reuse TLS sessions between clients', {
+  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
+}, t => {
+  let serverRequests = 0
+
+  const REQ_COUNT = 10
+  const ASSERT_PERFORMANCE_GAIN = false
+
+  t.test('Prepare request', t => {
+    t.plan(2 + REQ_COUNT + (ASSERT_PERFORMANCE_GAIN ? 1 : 0))
+    const server = https.createServer(options, (req, res) => {
+      serverRequests++
+      res.end()
+    })
+    server.on('error', err => console.error(err))
+
+    server.listen(0, async () => {
+      const poolWithSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
+        pipelining: 0,
+        connections: 100,
+        tls: {
+          ca,
+          rejectUnauthorized: false,
+          maxCachedSessions: 1,
+          servername: 'agent1',
+          reuseSessions: true
+        }
+      })
+      const poolWithoutSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
+        pipelining: 0,
+        connections: 100,
+        tls: {
+          ca,
+          rejectUnauthorized: false,
+          maxCachedSessions: 1,
+          servername: 'agent1',
+          reuseSessions: false
+        }
+      })
+
+      t.teardown(() => {
+        poolWithSessionReuse.close()
+        poolWithoutSessionReuse.close()
+        server.close()
+      })
+
+      function request (pool, expectTLSSessionCache) {
+        return new Promise((resolve, reject) => {
+          const s = startDelay()
+          pool.request({
+            method: 'GET',
+            path: '/'
+          }, (err, data) => {
+            const responseTime = endDelay(s)
+            if (err) return reject(err)
+            if (expectTLSSessionCache) {
+              t.ok(pool[kTLSSession], 'Expected the session to be cached')
+            }
+            data.body.resume().on('end', () => {
+              resolve(responseTime)
+            })
+          })
+        })
+      }
+
+      async function runRequests (pool, numIterations, expectTLSSessionCache) {
+        const requests = []
+        // For the session reuse, we first need one client to connect to receive a valid tls session to reuse
+        const responseTime = await request(pool, false)
+        while (numIterations--) {
+          requests.push(request(pool, expectTLSSessionCache))
+        }
+        return await Promise.all(requests).then(responseTimes => responseTimes.concat([responseTime]))
+      }
+
+      const responseTimesWithoutSessionReuse = await runRequests(poolWithoutSessionReuse, REQ_COUNT, false)
+      const responseTimesWithSessionReuse = await runRequests(poolWithSessionReuse, REQ_COUNT, true)
+
+      const averageResponseTimeWithSessionReuse = responseTimesWithSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithSessionReuse.length
+      const averageResponseTimeWithoutSessionReuse = responseTimesWithoutSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithoutSessionReuse.length
+
+      if (ASSERT_PERFORMANCE_GAIN) {
+        t.ok(averageResponseTimeWithSessionReuse < averageResponseTimeWithoutSessionReuse, `Average request response time should be lower with session reuse enabled (${averageResponseTimeWithSessionReuse}ms) than without (${averageResponseTimeWithoutSessionReuse}ms)`)
+      }
+
+      t.strictEqual(serverRequests, 2 + REQ_COUNT * 2)
+      t.pass()
+    })
+  })
+
+  t.end()
+})
+
+const startDelay = () => {
+  return process.hrtime()
+}
+
+const endDelay = (hrtimeStart) => {
+  const hrduration = process.hrtime(hrtimeStart)
+  return hrduration[0] * 1e3 + hrduration[1] / 1e6
+}
