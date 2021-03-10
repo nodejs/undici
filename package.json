@@ -11,7 +11,8 @@
     "test:typescript": "tsd",
     "coverage": "standard | snazzy && tap test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
-    "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\""
+    "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\"",
+    "serve-website": "docsify serve ."
   },
   "repository": {
     "type": "git",
@@ -36,6 +37,7 @@
     "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
     "concurrently": "^5.2.0",
+    "docsify-cli": "^4.4.2",
     "https-pem": "^2.0.0",
     "jest": "^26.4.0",
     "pre-commit": "^1.2.2",

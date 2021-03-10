@@ -2,7 +2,7 @@
 
 Extends: `events.EventEmitter`
 
-A pool of [Client](./Client.md) instances connected to the same upstream target. Implements the same api as [Client](./Client.md).
+A pool of [Client](Client.md) instances connected to the same upstream target. Implements the same api as [Client](./Client.md).
 
 Requests are not guaranteed to be dispatched in order of invocation.
 
