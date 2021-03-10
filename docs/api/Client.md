@@ -41,7 +41,7 @@ const client = new Client('http://localhost:3000')
 
 ## Instance Methods
 
-### `Client.close([ callback ])` 
+### `Client.close([ callback ])`
 
 Closes the client and gracefully waits for enqueued requests to complete before resolving.
 
