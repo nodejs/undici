@@ -51,7 +51,7 @@ In the **processing.running** sub-state, queued requests are being processed in 
 
 #### busy
 
-This sub-state is only entered when a request body is an instance of [Stream]() and requires draining. The `Client` cannot process additional requests while in this state and must wait until the currently processing request body is completely drained before transitioning back to [**processing.running**](#running).
+This sub-state is only entered when a request body is an instance of [Stream](https://nodejs.org/api/stream.html) and requires draining. The `Client` cannot process additional requests while in this state and must wait until the currently processing request body is completely drained before transitioning back to [**processing.running**](#running).
 
 #### closing
 
