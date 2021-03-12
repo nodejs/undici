@@ -67,3 +67,19 @@ See [client.pipeline](docs/api/Client.md#clientpipelining) for details on the `o
 Calls `pool.pipeline(opts, factory)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
 
 See [client.pipeline](docs/api/Client.md#clientpipelining) for more details.
+
+# RequestAgent
+
+Extends: `Agent`
+
+An agent which will automatically follow redirects.
+
+When used, the option `maxRedirections` can be additionally provided to top level `request`, `stream` and `pipeline`. The option must be a boolean or a number:
+
+* If omitted or set to `true`, up to 10 redirects are followed.
+
+* If set to `false`, redirects are not followed.
+
+* If set to a positive number, it specifies the maximum number of redirections to follow.
+
+The data returned by the top-level method (via callback or promise) will contain the additional property `redirections` that lists all the followed redirections, in order.

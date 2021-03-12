@@ -17,8 +17,8 @@ expectAssignable<Agent>(new Agent({}))
 }
 
 {
-  expectAssignable<PromiseLike<Client.ResponseData>>(request(''))
-  expectAssignable<PromiseLike<Client.StreamData>>(stream('', { method: '' }, data => {
+  expectAssignable<PromiseLike<Client.ResponseData>>(request('', { maxRedirects: 1 }))
+  expectAssignable<PromiseLike<Client.StreamData>>(stream('', { method: '', maxRedirects: 1 }, data => {
     expectAssignable<Client.StreamFactoryData>(data)
     return new Writable()
   }))
@@ -26,7 +26,7 @@ expectAssignable<Agent>(new Agent({}))
 }
 
 {
-  expectAssignable<Duplex>(pipeline('', { method: '' }, data => {
+  expectAssignable<Duplex>(pipeline('', { method: '', maxRedirects: 1 }, data => {
     expectAssignable<Client.PipelineHandlerData>(data)
     return new Readable()
   }))
