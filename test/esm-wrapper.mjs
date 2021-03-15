@@ -2,7 +2,7 @@ import tap from 'tap'
 
 import { createServer } from 'http'
 
-import { Client, errors } from '../wrapper.mjs'
+import { Client, errors, Pool, Agent, request, stream, pipeline, setGlobalAgent } from '../index.js'
 
 const { test } = tap
 
@@ -75,4 +75,15 @@ test('imported errors work with request args validation promise', (t) => {
   client.request(null).catch((err) => {
     t.ok(err instanceof errors.InvalidArgumentError)
   })
+})
+
+test('name dexports', (t) => {
+  t.is(typeof Client, 'function')
+  t.is(typeof Pool, 'function')
+  t.is(typeof Agent, 'function')
+  t.is(typeof request, 'function')
+  t.is(typeof stream, 'function')
+  t.is(typeof pipeline, 'function')
+  t.is(typeof setGlobalAgent, 'function')
+  t.end()
 })
