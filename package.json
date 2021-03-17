@@ -4,7 +4,6 @@
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
   "main": "index.js",
   "types": "index.d.ts",
-  "module": "wrapper.mjs",
   "scripts": {
     "lint": "standard | snazzy",
     "test": "tap test/*.js --no-coverage && jest test/jest/test",
@@ -44,6 +43,7 @@
     "proxy": "^1.0.2",
     "proxyquire": "^2.0.1",
     "sinon": "^9.2.4",
+    "semver": "^5.7.1",
     "snazzy": "^8.0.0",
     "standard": "^14.3.4",
     "tap": "^14.10.8",
