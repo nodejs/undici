@@ -4,6 +4,7 @@ const Client = require('./lib/core/client')
 const errors = require('./lib/core/errors')
 const Pool = require('./lib/pool')
 const { Agent, request, stream, pipeline, setGlobalAgent } = require('./lib/agent')
+const RedirectPool = require('./lib/redirect-pool')
 
 Client.prototype.request = require('./lib/client-request')
 Client.prototype.stream = require('./lib/client-stream')
@@ -18,6 +19,7 @@ function undici (url, opts) {
 module.exports = undici
 
 module.exports.Pool = Pool
+module.exports.RedirectPool = RedirectPool
 module.exports.Client = Client
 module.exports.errors = errors
 

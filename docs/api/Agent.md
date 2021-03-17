@@ -2,11 +2,18 @@
 
 ## `new undici.Agent(opts)`
 
-* opts `undici.Pool.options` - options passed through to Pool constructor
+* opts `AgentOptions` - options passed through to Pool constructor
 
 Returns: `Agent`
 
 Returns a new Agent instance for use with pool based requests or the following top-level methods `request`, `pipeline`, and `stream`.
+
+### Parameter: `AgentOptions`
+
+Extends: [`PoolOptions`](docs/api/Pool.md#parameter-pooloptions)
+
+* **clientClass** `Class extends Client` (optional) - The class to instantiate clients.
+* **poolClass** `Class extends Pool` (optional) - The class to use to instantiate pools.
 
 ## `agent.get(origin): Pool`
 

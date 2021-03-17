@@ -1,5 +1,5 @@
-import Client from './client'
 import { URL } from 'url'
+import Client from './client'
 
 export = Pool
 

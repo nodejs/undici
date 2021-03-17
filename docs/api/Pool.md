@@ -105,3 +105,19 @@ Implements [Client Event: `'disconnect'`](docs/api/Client.md#event-connect)
 ### Event: `'drain'`
 
 Implements [Client Event: `'drain'`](docs/api/Client.md#event-connect)
+
+# Class: RedirectPool
+
+Extends: `Pool`
+
+A pool which will automatically follow redirections.
+
+When used, the option `maxRedirections` can be additionally provided to top level `request`, `stream` and `pipeline`. The option must be a boolean or a number:
+
+* If omitted or set to `true`, up to 10 redirections are followed.
+
+* If set to `false`, redirections are not followed.
+
+* If set to a positive number, it specifies the maximum number of redirections to follow.
+
+The data returned by the top-level method (via callback or promise) will contain the additional property `redirections` that lists all the followed redirections, in order.
