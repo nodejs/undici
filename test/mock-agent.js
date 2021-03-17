@@ -3,80 +3,12 @@
 const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
-const { Client, MockAgent } = require('..')
+const { request } = require('..')
+const MockAgent = require('../lib/mock/mock-agent')
 const { getResponse } = require('../lib/mock/mock-utils')
-const { kUrl } = require('../lib/core/symbols')
-const { kDispatch, kDispatches } = require('../lib/mock/mock-symbols')
-const MockClient = require('../lib/mock/mock-client')
-const { InvalidArgumentError } = require('../lib/core/errors')
+const { kAgentCache } = require('../lib/core/symbols')
 
-test('MockClient - constructor', t => {
-  t.plan(2)
-
-  t.test('fails if opts.agent does not implement `get` method', t => {
-    t.plan(1)
-    t.throw(() => new MockClient('http://localhost:9999', { agent: { get: 'not a function' } }), InvalidArgumentError)
-  })
-
-  t.test('sets agent', t => {
-    t.plan(1)
-    const mockAgent = new MockAgent({ connections: 1 })
-    t.tearDown(mockAgent.close.bind(mockAgent))
-
-    t.notThrow(() => new MockClient('http://localhost:9999', { agent: new MockAgent({ connections: 1 }) }))
-  })
-})
-
-test('MockClient - [kDispatch] should handle a single interceptor', async (t) => {
-  t.plan(1)
-
-  const server = createServer((req, res) => {
-    res.setHeader('content-type', 'text/plain')
-    res.end('should not be called')
-    t.fail('should not be called')
-    t.end()
-  })
-  t.tearDown(server.close.bind(server))
-
-  await promisify(server.listen.bind(server))(0)
-
-  const baseUrl = `http://localhost:${server.address().port}`
-
-  const mockAgent = new MockAgent({ connections: 1 })
-
-  t.tearDown(mockAgent.close.bind(mockAgent))
-  const mockClient = mockAgent.get(baseUrl)
-
-  try {
-    this[kUrl] = new URL('http://localhost:9999')
-    this[kDispatches] = [
-      {
-        path: '/foo',
-        method: 'GET',
-        data: {
-          statusCode: 200,
-          data: 'hello',
-          headers: {},
-          trailers: {},
-          error: null
-        }
-      }
-    ]
-    const result = mockClient[kDispatch].call(this, {
-      path: '/foo',
-      method: 'GET'
-    }, {
-      onHeaders: (_statusCode, _headers, resume) => resume(),
-      onData: () => {},
-      onComplete: () => {}
-    })
-    t.strictEqual(result, true)
-  } catch (err) {
-    t.fail(err.message)
-  }
-})
-
-test('MockClient - basic intercept', async (t) => {
+test('MockAgent - basic intercept with request', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -91,14 +23,106 @@ test('MockClient - basic intercept', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+  const mockPool = mockAgent.get(baseUrl)
+
+  mockPool.intercept({
+    path: '/foo?hello=there&see=ya',
+    method: 'POST',
+    body: 'form1=data1&form2=data2'
+  }).reply(200, { foo: 'bar' }, {
+    headers: {
+      'content-type': 'application/json'
+    },
+    trailers: { 'Content-MD5': 'test' }
+  })
+
+  try {
+    const { statusCode, headers, trailers, body } = await request(`${baseUrl}/foo?hello=there&see=ya`, {
+      method: 'POST',
+      body: 'form1=data1&form2=data2'
+    })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'application/json')
+    t.deepEqual(trailers, { 'content-md5': 'test' })
+
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.deepEqual(jsonResponse, {
+      foo: 'bar'
+    })
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('MockAgent - should support local agents', async (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+  const mockPool = mockAgent.get(baseUrl)
+
+  mockPool.intercept({
+    path: '/foo?hello=there&see=ya',
+    method: 'POST',
+    body: 'form1=data1&form2=data2'
+  }).reply(200, { foo: 'bar' }, {
+    headers: {
+      'content-type': 'application/json'
+    },
+    trailers: { 'Content-MD5': 'test' }
+  })
+
+  try {
+    const { statusCode, headers, trailers, body } = await request(`${baseUrl}/foo?hello=there&see=ya`, {
+      method: 'POST',
+      body: 'form1=data1&form2=data2',
+      agent: mockAgent
+    })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'application/json')
+    t.deepEqual(trailers, { 'content-md5': 'test' })
+
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.deepEqual(jsonResponse, {
+      foo: 'bar'
+    })
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('MockAgent - basic Client intercept with request', async (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   t.tearDown(mockAgent.close.bind(mockAgent))
-
   const mockClient = mockAgent.get(baseUrl)
-
   mockClient.intercept({
     path: '/foo?hello=there&see=ya',
     method: 'POST',
@@ -111,8 +135,7 @@ test('MockClient - basic intercept', async (t) => {
   })
 
   try {
-    const { statusCode, headers, trailers, body } = await client.request({
-      path: '/foo?hello=there&see=ya',
+    const { statusCode, headers, trailers, body } = await request(`${baseUrl}/foo?hello=there&see=ya`, {
       method: 'POST',
       body: 'form1=data1&form2=data2'
     })
@@ -129,7 +152,7 @@ test('MockClient - basic intercept', async (t) => {
   }
 })
 
-test('MockClient - basic intercept with multiple clients', async (t) => {
+test('MockAgent - basic intercept with multiple pools', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -144,34 +167,30 @@ test('MockClient - basic intercept with multiple clients', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
-  const mockClient1 = mockAgent.get(baseUrl)
-  const mockClient2 = mockAgent.get('http://localhost:9999')
+  const mockPool1 = mockAgent.get(baseUrl)
+  const mockPool2 = mockAgent.get('http://localhost:9999')
 
-  mockClient1.intercept({
+  mockPool1.intercept({
     path: '/foo?hello=there&see=ya',
     method: 'POST',
     body: 'form1=data1&form2=data2'
-  }).reply(200, { foo: 'bar' }, {
+  }).reply(200, { foo: 'bar-1' }, {
     headers: {
       'content-type': 'application/json'
     },
     trailers: { 'Content-MD5': 'test' }
   })
 
-  mockClient2.intercept({
+  mockPool2.intercept({
     path: '/foo?hello=there&see=ya',
     method: 'GET',
     body: 'form1=data1&form2=data2'
-  }).reply(200, { foo: 'bar' })
+  }).reply(200, { foo: 'bar-2' })
 
   try {
-    const { statusCode, headers, trailers, body } = await client.request({
-      path: '/foo?hello=there&see=ya',
+    const { statusCode, headers, trailers, body } = await request(`${baseUrl}/foo?hello=there&see=ya`, {
       method: 'POST',
       body: 'form1=data1&form2=data2'
     })
@@ -181,147 +200,14 @@ test('MockClient - basic intercept with multiple clients', async (t) => {
 
     const jsonResponse = JSON.parse(await getResponse(body))
     t.deepEqual(jsonResponse, {
-      foo: 'bar'
+      foo: 'bar-1'
     })
   } catch (err) {
     t.fail(err.message)
   }
 })
 
-test('MockClient - should support multiple urls', async (t) => {
-  t.plan(4)
-
-  const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  {
-    const server = createServer((req, res) => {
-      res.setHeader('content-type', 'text/plain')
-      res.end('should not be called')
-      t.fail('should not be called')
-      t.end()
-    })
-    t.tearDown(server.close.bind(server))
-
-    await promisify(server.listen.bind(server))(0)
-    const baseUrl = `http://localhost:${server.address().port}`
-
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
-
-    const mockClient = mockAgent.get(baseUrl)
-    mockClient.intercept({
-      path: '/foo',
-      method: 'GET'
-    }).reply(200, { foo: 'bar' })
-
-    try {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
-        method: 'GET'
-      })
-      t.strictEqual(statusCode, 200)
-
-      const jsonResponse = JSON.parse(await getResponse(body))
-      t.deepEqual(jsonResponse, {
-        foo: 'bar'
-      })
-    } catch (err) {
-      t.fail(err.message)
-    }
-  }
-
-  {
-    const server = createServer((req, res) => {
-      res.setHeader('content-type', 'text/plain')
-      res.end('should not be called')
-      t.fail('should not be called')
-      t.end()
-    })
-    t.tearDown(server.close.bind(server))
-
-    await promisify(server.listen.bind(server))(0)
-    const baseUrl = `http://localhost:${server.address().port}`
-
-    const client = new Client(baseUrl)
-    t.tearDown(client.close.bind(client))
-
-    const mockClient = mockAgent.get(baseUrl)
-    mockClient.intercept({
-      path: '/bar',
-      method: 'POST'
-    }).reply(200, { foo: 'bar' })
-
-    try {
-      const { statusCode, body } = await client.request({
-        path: '/bar',
-        method: 'POST'
-      })
-      t.strictEqual(statusCode, 200)
-
-      const jsonResponse = JSON.parse(await getResponse(body))
-      t.deepEqual(jsonResponse, {
-        foo: 'bar'
-      })
-    } catch (err) {
-      t.fail(err.message)
-    }
-  }
-})
-
-test('MockClient - should select first matching client from multiple intercepts on the same client', async (t) => {
-  t.plan(2)
-
-  const server = createServer((req, res) => {
-    res.setHeader('content-type', 'text/plain')
-    res.end('should not be called')
-    t.fail('should not be called')
-    t.end()
-  })
-  t.tearDown(server.close.bind(server))
-
-  await promisify(server.listen.bind(server))(0)
-  const baseUrl = `http://localhost:${server.address().port}`
-
-  const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockClient1 = mockAgent.get(baseUrl)
-  mockClient1.intercept({
-    path: '/wrong-1',
-    method: 'GET'
-  }).reply(200, 'wrong-1')
-
-  const mockClient2 = mockAgent.get(baseUrl)
-  mockClient2.intercept({
-    path: '/wrong-2',
-    method: 'GET'
-  }).reply(200, 'wrong-2')
-
-  const mockClient3 = mockAgent.get(baseUrl)
-  mockClient3.intercept({
-    path: '/foo',
-    method: 'GET'
-  }).reply(200, 'foo')
-
-  try {
-    const { statusCode, body } = await client.request({
-      path: '/foo',
-      method: 'GET'
-    })
-    t.strictEqual(statusCode, 200)
-
-    const response = await getResponse(body)
-    t.strictEqual(response, 'foo')
-  } catch (err) {
-    t.fail(err.message)
-  }
-})
-
-test('MockClient - should handle multiple responses for an interceptor', async (t) => {
+test('MockAgent - should handle multiple responses for an interceptor', async (t) => {
   t.plan(6)
 
   const server = createServer((req, res) => {
@@ -336,15 +222,12 @@ test('MockClient - should handle multiple responses for an interceptor', async (
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
+  const mockPool = mockAgent.get(baseUrl)
 
-  const mockClient = mockAgent.get(baseUrl)
-
-  const interceptor = mockClient.intercept({
+  const interceptor = mockPool.intercept({
     path: '/foo',
     method: 'POST'
   })
@@ -361,8 +244,7 @@ test('MockClient - should handle multiple responses for an interceptor', async (
 
   try {
     {
-      const { statusCode, headers, body } = await client.request({
-        path: '/foo',
+      const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
         method: 'POST'
       })
       t.strictEqual(statusCode, 200)
@@ -375,8 +257,7 @@ test('MockClient - should handle multiple responses for an interceptor', async (
     }
 
     {
-      const { statusCode, headers, body } = await client.request({
-        path: '/foo',
+      const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
         method: 'POST'
       })
       t.strictEqual(statusCode, 200)
@@ -392,9 +273,7 @@ test('MockClient - should handle multiple responses for an interceptor', async (
   }
 })
 
-test('MockClient - should call original dispatch if request not found', async (t) => {
-  t.plan(5)
-
+test('MockAgent - should call original Pool dispatch if request not found', async (t) => {
   const server = createServer((req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
@@ -407,34 +286,58 @@ test('MockClient - should call original dispatch if request not found', async (t
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
-    path: '/wrong',
-    method: 'GET'
-  }).reply(200, { foo: 'bar' })
+  const agent = new MockAgent()
+  t.tearDown(agent.close.bind(agent))
 
   try {
-    const { statusCode, headers, body } = await client.request({
-      path: '/foo',
-      method: 'GET'
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
+      method: 'GET',
+      agent
     })
     t.strictEqual(statusCode, 200)
     t.strictEqual(headers['content-type'], 'text/plain')
 
     const response = await getResponse(body)
     t.strictEqual(response, 'hello')
+    t.ok(1)
   } catch (err) {
     t.fail(err.message)
   }
 })
 
-test('MockClient - should handle string responses', async (t) => {
+test('MockAgent - should call original Client dispatch if request not found', async (t) => {
+  const server = createServer((req, res) => {
+    t.strictEqual(req.url, '/foo')
+    t.strictEqual(req.method, 'GET')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const agent = new MockAgent({ connections: 1 })
+  t.tearDown(agent.close.bind(agent))
+
+  try {
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
+      method: 'GET',
+      agent
+    })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
+
+    const response = await getResponse(body)
+    t.strictEqual(response, 'hello')
+    t.ok(1)
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('MockAgent - should handle string responses', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -449,21 +352,17 @@ test('MockClient - should handle string responses', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'POST'
   }).reply(200, 'hello')
 
   try {
-    const { statusCode, body } = await client.request({
-      path: '/foo',
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'POST'
     })
     t.strictEqual(statusCode, 200)
@@ -475,10 +374,10 @@ test('MockClient - should handle string responses', async (t) => {
   }
 })
 
-test('MockClient - should handle basic concurrency for requests', { jobs: 5 }, async (t) => {
+test('MockAgent - should handle basic concurrency for requests', { jobs: 5 }, async (t) => {
   t.plan(5)
 
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   await Promise.all([...Array(5).keys()].map(idx =>
@@ -487,18 +386,14 @@ test('MockClient - should handle basic concurrency for requests', { jobs: 5 }, a
 
       const baseUrl = 'http://localhost:9999'
 
-      const client = new Client(baseUrl)
-      innerTest.tearDown(client.close.bind(client))
-
-      const mockClient = mockAgent.get(baseUrl)
-      mockClient.intercept({
+      const mockPool = mockAgent.get(baseUrl)
+      mockPool.intercept({
         path: '/foo',
         method: 'POST'
       }).reply(200, { foo: `bar ${idx}` })
 
       try {
-        const { statusCode, body } = await client.request({
-          path: '/foo',
+        const { statusCode, body } = await request(`${baseUrl}/foo`, {
           method: 'POST'
         })
         innerTest.strictEqual(statusCode, 200)
@@ -514,7 +409,7 @@ test('MockClient - should handle basic concurrency for requests', { jobs: 5 }, a
   ))
 })
 
-test('MockClient - handle delays to simulate work', async (t) => {
+test('MockAgent - handle delays to simulate work', async (t) => {
   t.plan(3)
 
   const server = createServer((req, res) => {
@@ -529,14 +424,11 @@ test('MockClient - handle delays to simulate work', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'POST'
   }).reply(200, 'hello').delay(50)
@@ -544,8 +436,7 @@ test('MockClient - handle delays to simulate work', async (t) => {
   try {
     const start = process.hrtime()
 
-    const { statusCode, body } = await client.request({
-      path: '/foo',
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'POST'
     })
     t.strictEqual(statusCode, 200)
@@ -559,7 +450,7 @@ test('MockClient - handle delays to simulate work', async (t) => {
   }
 })
 
-test('MockClient - should persist requests', async (t) => {
+test('MockAgent - should persist requests', async (t) => {
   t.plan(8)
 
   const server = createServer((req, res) => {
@@ -574,15 +465,11 @@ test('MockClient - should persist requests', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo?hello=there&see=ya',
     method: 'POST',
     body: 'form1=data1&form2=data2'
@@ -595,8 +482,7 @@ test('MockClient - should persist requests', async (t) => {
 
   try {
     {
-      const { statusCode, headers, trailers, body } = await client.request({
-        path: '/foo?hello=there&see=ya',
+      const { statusCode, headers, trailers, body } = await request(`${baseUrl}/foo?hello=there&see=ya`, {
         method: 'POST',
         body: 'form1=data1&form2=data2'
       })
@@ -611,8 +497,7 @@ test('MockClient - should persist requests', async (t) => {
     }
 
     {
-      const { statusCode, headers, trailers, body } = await client.request({
-        path: '/foo?hello=there&see=ya',
+      const { statusCode, headers, trailers, body } = await request(`${baseUrl}/foo?hello=there&see=ya`, {
         method: 'POST',
         body: 'form1=data1&form2=data2'
       })
@@ -630,7 +515,7 @@ test('MockClient - should persist requests', async (t) => {
   }
 })
 
-test('MockClient - handle persists with delayed requests', async (t) => {
+test('MockAgent - handle persists with delayed requests', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -645,22 +530,18 @@ test('MockClient - handle persists with delayed requests', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'POST'
   }).reply(200, 'hello').delay(1).persist()
 
   try {
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'POST'
       })
       t.strictEqual(statusCode, 200)
@@ -670,8 +551,7 @@ test('MockClient - handle persists with delayed requests', async (t) => {
     }
 
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'POST'
       })
       t.strictEqual(statusCode, 200)
@@ -684,7 +564,7 @@ test('MockClient - handle persists with delayed requests', async (t) => {
   }
 })
 
-test('MockClient - calling close on a MockClient should not affect other MockClients', async (t) => {
+test('MockAgent - calling close on a mock pool should not affect other mock pools', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -699,34 +579,30 @@ test('MockClient - calling close on a MockClient should not affect other MockCli
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClientToClose = mockAgent.get('http://localhost:9999')
-  mockClientToClose.intercept({
+  const mockPoolToClose = mockAgent.get('http://localhost:9999')
+  mockPoolToClose.intercept({
     path: '/foo',
     method: 'GET'
   }).reply(200, 'should-not-be-returned')
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).reply(200, 'foo')
-  mockClient.intercept({
+  mockPool.intercept({
     path: '/bar',
     method: 'POST'
   }).reply(200, 'bar')
 
   try {
-    await mockClientToClose.close()
+    await mockPoolToClose.close()
 
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -736,8 +612,7 @@ test('MockClient - calling close on a MockClient should not affect other MockCli
     }
 
     {
-      const { statusCode, body } = await client.request({
-        path: '/bar',
+      const { statusCode, body } = await request(`${baseUrl}/bar`, {
         method: 'POST'
       })
       t.strictEqual(statusCode, 200)
@@ -750,7 +625,92 @@ test('MockClient - calling close on a MockClient should not affect other MockCli
   }
 })
 
-test('MockClient - should handle replyWithError', async (t) => {
+test('MockAgent - close removes all registered mock clients', async (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.method, 'GET')
+    t.strictEqual(req.url, '/foo')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent({ connections: 1 })
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockClient = mockAgent.get(baseUrl)
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  try {
+    await mockAgent.close()
+
+    {
+      const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'hello')
+    }
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('MockAgent - close removes all registered mock pools', async (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.method, 'GET')
+    t.strictEqual(req.url, '/foo')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  try {
+    await mockAgent.close()
+    t.strictEqual(mockAgent[kAgentCache].size, 0)
+
+    {
+      const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
+        method: 'GET'
+      })
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+
+      const response = await getResponse(body)
+      t.strictEqual(response, 'hello')
+    }
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('MockAgent - should handle replyWithError', async (t) => {
   t.plan(1)
 
   const server = createServer((req, res) => {
@@ -765,20 +725,17 @@ test('MockClient - should handle replyWithError', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).replyWithError(new Error('kaboom'))
 
   try {
-    await client.request({ path: '/foo', method: 'GET' })
+    await request(`${baseUrl}/foo`, { method: 'GET' })
 
     t.fail('should not be called')
   } catch (err) {
@@ -786,7 +743,7 @@ test('MockClient - should handle replyWithError', async (t) => {
   }
 })
 
-test('MockClient - should support setting a reply to respond a set amount of times', async (t) => {
+test('MockAgent - should support setting a reply to respond a set amount of times', async (t) => {
   t.plan(9)
 
   const server = createServer((req, res) => {
@@ -801,22 +758,18 @@ test('MockClient - should support setting a reply to respond a set amount of tim
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).reply(200, 'foo').times(2)
 
   try {
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -826,8 +779,7 @@ test('MockClient - should support setting a reply to respond a set amount of tim
     }
 
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -837,8 +789,7 @@ test('MockClient - should support setting a reply to respond a set amount of tim
     }
 
     {
-      const { statusCode, headers, body } = await client.request({
-        path: '/foo',
+      const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -852,7 +803,7 @@ test('MockClient - should support setting a reply to respond a set amount of tim
   }
 })
 
-test('MockClient - persist overrides times', async (t) => {
+test('MockAgent - persist overrides times', async (t) => {
   t.plan(6)
 
   const server = createServer((req, res) => {
@@ -867,22 +818,18 @@ test('MockClient - persist overrides times', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).reply(200, 'foo').times(2).persist()
 
   try {
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -892,8 +839,7 @@ test('MockClient - persist overrides times', async (t) => {
     }
 
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -903,8 +849,7 @@ test('MockClient - persist overrides times', async (t) => {
     }
 
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -917,7 +862,7 @@ test('MockClient - persist overrides times', async (t) => {
   }
 })
 
-test('MockClient - matcher should not find mock dispatch if path is of unsupported type', async (t) => {
+test('MockAgent - matcher should not find mock dispatch if path is of unsupported type', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -931,21 +876,17 @@ test('MockClient - matcher should not find mock dispatch if path is of unsupport
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: {},
     method: 'GET'
   }).reply(200, 'foo')
 
   try {
-    const { statusCode, body } = await client.request({
-      path: '/foo',
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -957,7 +898,7 @@ test('MockClient - matcher should not find mock dispatch if path is of unsupport
   }
 })
 
-test('MockClient - should match path with regex', async (t) => {
+test('MockAgent - should match path with regex', async (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
@@ -972,22 +913,18 @@ test('MockClient - should match path with regex', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: new RegExp('foo'),
     method: 'GET'
   }).reply(200, 'foo').persist()
 
   try {
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -997,8 +934,7 @@ test('MockClient - should match path with regex', async (t) => {
     }
 
     {
-      const { statusCode, body } = await client.request({
-        path: '/hello/foobar',
+      const { statusCode, body } = await request(`${baseUrl}/hello/foobar`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -1011,7 +947,7 @@ test('MockClient - should match path with regex', async (t) => {
   }
 })
 
-test('MockClient - should match path with function', async (t) => {
+test('MockAgent - should match path with function', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -1026,21 +962,17 @@ test('MockClient - should match path with function', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: (value) => value === '/foo',
     method: 'GET'
   }).reply(200, 'foo')
 
   try {
-    const { statusCode, body } = await client.request({
-      path: '/foo',
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -1052,7 +984,7 @@ test('MockClient - should match path with function', async (t) => {
   }
 })
 
-test('MockClient - should match method with regex', async (t) => {
+test('MockAgent - should match method with regex', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -1067,21 +999,17 @@ test('MockClient - should match method with regex', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: new RegExp('^GET$')
   }).reply(200, 'foo')
 
   try {
-    const { statusCode, body } = await client.request({
-      path: '/foo',
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -1093,7 +1021,7 @@ test('MockClient - should match method with regex', async (t) => {
   }
 })
 
-test('MockClient - should match method with function', async (t) => {
+test('MockAgent - should match method with function', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -1108,21 +1036,17 @@ test('MockClient - should match method with function', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: (value) => value === 'GET'
   }).reply(200, 'foo')
 
   try {
-    const { statusCode, body } = await client.request({
-      path: '/foo',
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -1134,7 +1058,7 @@ test('MockClient - should match method with function', async (t) => {
   }
 })
 
-test('MockClient - should match body with regex', async (t) => {
+test('MockAgent - should match body with regex', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -1149,22 +1073,18 @@ test('MockClient - should match body with regex', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET',
     body: new RegExp('hello')
   }).reply(200, 'foo')
 
   try {
-    const { statusCode, body } = await client.request({
-      path: '/foo',
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'GET',
       body: 'hello=there'
     })
@@ -1177,7 +1097,7 @@ test('MockClient - should match body with regex', async (t) => {
   }
 })
 
-test('MockClient - should match body with function', async (t) => {
+test('MockAgent - should match body with function', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -1192,22 +1112,18 @@ test('MockClient - should match body with function', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET',
     body: (value) => value.startsWith('hello')
   }).reply(200, 'foo')
 
   try {
-    const { statusCode, body } = await client.request({
-      path: '/foo',
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'GET',
       body: 'hello=there'
     })
@@ -1220,7 +1136,7 @@ test('MockClient - should match body with function', async (t) => {
   }
 })
 
-test('MockClient - should match url with regex', async (t) => {
+test('MockAgent - should match url with regex', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -1235,21 +1151,17 @@ test('MockClient - should match url with regex', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(new RegExp(baseUrl))
-  mockClient.intercept({
+  const mockPool = mockAgent.get(new RegExp(baseUrl))
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).reply(200, 'foo')
 
   try {
-    const { statusCode, body } = await client.request({
-      path: '/foo',
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -1261,7 +1173,7 @@ test('MockClient - should match url with regex', async (t) => {
   }
 })
 
-test('MockClient - should match url with function', async (t) => {
+test('MockAgent - should match url with function', async (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -1276,21 +1188,17 @@ test('MockClient - should match url with function', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get((value) => baseUrl === value)
-  mockClient.intercept({
+  const mockPool = mockAgent.get((value) => baseUrl === value)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).reply(200, 'foo')
 
   try {
-    const { statusCode, body } = await client.request({
-      path: '/foo',
+    const { statusCode, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -1302,7 +1210,7 @@ test('MockClient - should match url with function', async (t) => {
   }
 })
 
-test('MockClient - handle default reply headers', async (t) => {
+test('MockAgent - handle default reply headers', async (t) => {
   t.plan(3)
 
   const server = createServer((req, res) => {
@@ -1317,21 +1225,17 @@ test('MockClient - handle default reply headers', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).defaultReplyHeaders({ foo: 'bar' }).reply(200, 'foo', { headers: { hello: 'there' } })
 
   try {
-    const { statusCode, headers, body } = await client.request({
-      path: '/foo',
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -1347,7 +1251,7 @@ test('MockClient - handle default reply headers', async (t) => {
   }
 })
 
-test('MockClient - handle default reply trailers', async (t) => {
+test('MockAgent - handle default reply trailers', async (t) => {
   t.plan(3)
 
   const server = createServer((req, res) => {
@@ -1362,21 +1266,17 @@ test('MockClient - handle default reply trailers', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).defaultReplyTrailers({ foo: 'bar' }).reply(200, 'foo', { trailers: { hello: 'there' } })
 
   try {
-    const { statusCode, trailers, body } = await client.request({
-      path: '/foo',
+    const { statusCode, trailers, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -1392,7 +1292,7 @@ test('MockClient - handle default reply trailers', async (t) => {
   }
 })
 
-test('MockClient - return calculated content-length if specified', async (t) => {
+test('MockAgent - return calculated content-length if specified', async (t) => {
   t.plan(3)
 
   const server = createServer((req, res) => {
@@ -1407,21 +1307,17 @@ test('MockClient - return calculated content-length if specified', async (t) => 
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).replyContentLength().reply(200, 'foo', { headers: { hello: 'there' } })
 
   try {
-    const { statusCode, headers, body } = await client.request({
-      path: '/foo',
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -1437,7 +1333,7 @@ test('MockClient - return calculated content-length if specified', async (t) => 
   }
 })
 
-test('MockClient - return calculated content-length for object response if specified', async (t) => {
+test('MockAgent - return calculated content-length for object response if specified', async (t) => {
   t.plan(3)
 
   const server = createServer((req, res) => {
@@ -1452,21 +1348,17 @@ test('MockClient - return calculated content-length for object response if speci
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).replyContentLength().reply(200, { foo: 'bar' }, { headers: { hello: 'there' } })
 
   try {
-    const { statusCode, headers, body } = await client.request({
-      path: '/foo',
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -1482,7 +1374,7 @@ test('MockClient - return calculated content-length for object response if speci
   }
 })
 
-test('MockClient - should activate and deactivate mock clients', async (t) => {
+test('MockAgent - should activate and deactivate mock clients', async (t) => {
   t.plan(9)
 
   const server = createServer((req, res) => {
@@ -1497,22 +1389,18 @@ test('MockClient - should activate and deactivate mock clients', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).reply(200, 'foo').persist()
 
   try {
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -1524,8 +1412,7 @@ test('MockClient - should activate and deactivate mock clients', async (t) => {
     mockAgent.deactivate()
 
     {
-      const { statusCode, headers, body } = await client.request({
-        path: '/foo',
+      const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -1538,8 +1425,7 @@ test('MockClient - should activate and deactivate mock clients', async (t) => {
     mockAgent.activate()
 
     {
-      const { statusCode, body } = await client.request({
-        path: '/foo',
+      const { statusCode, body } = await request(`${baseUrl}/foo`, {
         method: 'GET'
       })
       t.strictEqual(statusCode, 200)
@@ -1552,289 +1438,7 @@ test('MockClient - should activate and deactivate mock clients', async (t) => {
   }
 })
 
-test('MockClient - enableNetConnect should allow all original dispatches to be called if dispatch not found', async (t) => {
-  t.plan(5)
-
-  const server = createServer((req, res) => {
-    t.strictEqual(req.url, '/foo')
-    t.strictEqual(req.method, 'GET')
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
-
-  await promisify(server.listen.bind(server))(0)
-
-  const baseUrl = `http://localhost:${server.address().port}`
-
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
-    path: '/wrong',
-    method: 'GET'
-  }).reply(200, 'foo')
-
-  try {
-    mockAgent.enableNetConnect()
-
-    const { statusCode, headers, body } = await client.request({
-      path: '/foo',
-      method: 'GET'
-    })
-    t.strictEqual(statusCode, 200)
-    t.strictEqual(headers['content-type'], 'text/plain')
-
-    const response = await getResponse(body)
-    t.strictEqual(response, 'hello')
-  } catch (err) {
-    t.fail(err.message)
-  }
-})
-
-test('MockClient - enableNetConnect with a host string should allow all original dispatches to be called if mockDispatch not found', async (t) => {
-  t.plan(5)
-
-  const server = createServer((req, res) => {
-    t.strictEqual(req.url, '/foo')
-    t.strictEqual(req.method, 'GET')
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
-
-  await promisify(server.listen.bind(server))(0)
-
-  const baseUrl = `http://localhost:${server.address().port}`
-
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
-    path: '/wrong',
-    method: 'GET'
-  }).reply(200, 'foo')
-
-  try {
-    mockAgent.enableNetConnect(`localhost:${server.address().port}`)
-
-    const { statusCode, headers, body } = await client.request({
-      path: '/foo',
-      method: 'GET'
-    })
-    t.strictEqual(statusCode, 200)
-    t.strictEqual(headers['content-type'], 'text/plain')
-
-    const response = await getResponse(body)
-    t.strictEqual(response, 'hello')
-  } catch (err) {
-    t.fail(err.message)
-  }
-})
-
-test('MockClient - enableNetConnect when called with host string multiple times should allow all original dispatches to be called if mockDispatch not found', async (t) => {
-  t.plan(5)
-
-  const server = createServer((req, res) => {
-    t.strictEqual(req.url, '/foo')
-    t.strictEqual(req.method, 'GET')
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
-
-  await promisify(server.listen.bind(server))(0)
-
-  const baseUrl = `http://localhost:${server.address().port}`
-
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
-    path: '/wrong',
-    method: 'GET'
-  }).reply(200, 'foo')
-
-  try {
-    mockAgent.enableNetConnect('example.com:9999')
-    mockAgent.enableNetConnect(`localhost:${server.address().port}`)
-
-    const { statusCode, headers, body } = await client.request({
-      path: '/foo',
-      method: 'GET'
-    })
-    t.strictEqual(statusCode, 200)
-    t.strictEqual(headers['content-type'], 'text/plain')
-
-    const response = await getResponse(body)
-    t.strictEqual(response, 'hello')
-  } catch (err) {
-    t.fail(err.message)
-  }
-})
-
-test('MockClient - enableNetConnect with a host regex should allow all original dispatches to be called if mockDispatch not found', async (t) => {
-  t.plan(5)
-
-  const server = createServer((req, res) => {
-    t.strictEqual(req.url, '/foo')
-    t.strictEqual(req.method, 'GET')
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
-
-  await promisify(server.listen.bind(server))(0)
-
-  const baseUrl = `http://localhost:${server.address().port}`
-
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
-    path: '/wrong',
-    method: 'GET'
-  }).reply(200, 'foo')
-
-  try {
-    mockAgent.enableNetConnect(new RegExp(`localhost:${server.address().port}`))
-
-    const { statusCode, headers, body } = await client.request({
-      path: '/foo',
-      method: 'GET'
-    })
-    t.strictEqual(statusCode, 200)
-    t.strictEqual(headers['content-type'], 'text/plain')
-
-    const response = await getResponse(body)
-    t.strictEqual(response, 'hello')
-  } catch (err) {
-    t.fail(err.message)
-  }
-})
-
-test('MockClient - enableNetConnect with a function should allow all original dispatches to be called if mockDispatch not found', async (t) => {
-  t.plan(5)
-
-  const server = createServer((req, res) => {
-    t.strictEqual(req.url, '/foo')
-    t.strictEqual(req.method, 'GET')
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
-
-  await promisify(server.listen.bind(server))(0)
-
-  const baseUrl = `http://localhost:${server.address().port}`
-
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
-    path: '/wrong',
-    method: 'GET'
-  }).reply(200, 'foo')
-
-  try {
-    mockAgent.enableNetConnect((value) => value === `localhost:${server.address().port}`)
-
-    const { statusCode, headers, body } = await client.request({
-      path: '/foo',
-      method: 'GET'
-    })
-    t.strictEqual(statusCode, 200)
-    t.strictEqual(headers['content-type'], 'text/plain')
-
-    const response = await getResponse(body)
-    t.strictEqual(response, 'hello')
-  } catch (err) {
-    t.fail(err.message)
-  }
-})
-
-test('MockClient - enableNetConnect with an unknown input should throw', async (t) => {
-  t.plan(1)
-
-  const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  const mockClient = mockAgent.get('http://localhost:9999')
-  mockClient.intercept({
-    path: '/wrong',
-    method: 'GET'
-  }).reply(200, 'foo')
-
-  try {
-    mockAgent.enableNetConnect({})
-
-    t.fail('should not complete')
-  } catch (err) {
-    t.strictEqual(err.message, 'Unsupported matcher. Must be one of String|Function|RegExp.')
-  }
-})
-
-test('MockClient - disableNetConnect should throw if dispatch not found by net connect', async (t) => {
-  t.plan(1)
-
-  const server = createServer((req, res) => {
-    t.strictEqual(req.url, '/foo')
-    t.strictEqual(req.method, 'GET')
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
-
-  await promisify(server.listen.bind(server))(0)
-
-  const baseUrl = `http://localhost:${server.address().port}`
-
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
-    path: '/wrong',
-    method: 'GET'
-  }).reply(200, 'foo')
-
-  try {
-    mockAgent.disableNetConnect()
-
-    await client.request({
-      path: '/foo',
-      method: 'GET'
-    })
-    t.fail('should not complete the request')
-  } catch (err) {
-    t.strictEqual(err.message, `Unable to find mock dispatch and real dispatches are disabled for http://localhost:${server.address().port}`)
-  }
-})
-
-test('MockClient - should be able to turn off mocking with environment variable', async (t) => {
+test('MockAgent - should be able to turn off mocking with environment variable', async (t) => {
   t.plan(5)
 
   process.env.UNDICI_MOCK_OFF = 'true'
@@ -1854,21 +1458,17 @@ test('MockClient - should be able to turn off mocking with environment variable'
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const client = new Client(baseUrl)
-  t.tearDown(client.close.bind(client))
-
-  const mockAgent = new MockAgent({ connections: 1 })
+  const mockAgent = new MockAgent()
   t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockClient = mockAgent.get(baseUrl)
-  mockClient.intercept({
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).reply(200, 'foo')
 
   try {
-    const { statusCode, headers, body } = await client.request({
-      path: '/foo',
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
       method: 'GET'
     })
     t.strictEqual(statusCode, 200)
@@ -1878,5 +1478,263 @@ test('MockClient - should be able to turn off mocking with environment variable'
     t.strictEqual(response, 'hello')
   } catch (err) {
     t.fail(err.message)
+  }
+})
+
+test('MockAgent - enableNetConnect should allow all original dispatches to be called if dispatch not found', async (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.url, '/foo')
+    t.strictEqual(req.method, 'GET')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/wrong',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  try {
+    mockAgent.enableNetConnect()
+
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
+      method: 'GET'
+    })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
+
+    const response = await getResponse(body)
+    t.strictEqual(response, 'hello')
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('MockAgent - enableNetConnect with a host string should allow all original dispatches to be called if mockDispatch not found', async (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.url, '/foo')
+    t.strictEqual(req.method, 'GET')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/wrong',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  try {
+    mockAgent.enableNetConnect(`localhost:${server.address().port}`)
+
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
+      method: 'GET'
+    })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
+
+    const response = await getResponse(body)
+    t.strictEqual(response, 'hello')
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('MockAgent - enableNetConnect when called with host string multiple times should allow all original dispatches to be called if mockDispatch not found', async (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.url, '/foo')
+    t.strictEqual(req.method, 'GET')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/wrong',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  try {
+    mockAgent.enableNetConnect('example.com:9999')
+    mockAgent.enableNetConnect(`localhost:${server.address().port}`)
+
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
+      method: 'GET'
+    })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
+
+    const response = await getResponse(body)
+    t.strictEqual(response, 'hello')
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('MockAgent - enableNetConnect with a host regex should allow all original dispatches to be called if mockDispatch not found', async (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.url, '/foo')
+    t.strictEqual(req.method, 'GET')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/wrong',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  try {
+    mockAgent.enableNetConnect(new RegExp(`localhost:${server.address().port}`))
+
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
+      method: 'GET'
+    })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
+
+    const response = await getResponse(body)
+    t.strictEqual(response, 'hello')
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('MockAgent - enableNetConnect with a function should allow all original dispatches to be called if mockDispatch not found', async (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.url, '/foo')
+    t.strictEqual(req.method, 'GET')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/wrong',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  try {
+    mockAgent.enableNetConnect((value) => value === `localhost:${server.address().port}`)
+
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
+      method: 'GET'
+    })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
+
+    const response = await getResponse(body)
+    t.strictEqual(response, 'hello')
+  } catch (err) {
+    t.fail(err.message)
+  }
+})
+
+test('MockAgent - enableNetConnect with an unknown input should throw', async (t) => {
+  t.plan(1)
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get('http://localhost:9999')
+  mockPool.intercept({
+    path: '/wrong',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  try {
+    mockAgent.enableNetConnect({})
+
+    t.fail('should not complete')
+  } catch (err) {
+    t.strictEqual(err.message, 'Unsupported matcher. Must be one of String|Function|RegExp.')
+  }
+})
+
+test('MockAgent - disableNetConnect should throw if dispatch not found by net connect', async (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.strictEqual(req.url, '/foo')
+    t.strictEqual(req.method, 'GET')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/wrong',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  try {
+    mockAgent.disableNetConnect()
+
+    await request(`${baseUrl}/foo`, {
+      method: 'GET'
+    })
+    t.fail('should not complete the request')
+  } catch (err) {
+    t.strictEqual(err.message, `Unable to find mock dispatch and real dispatches are disabled for http://localhost:${server.address().port}`)
   }
 })

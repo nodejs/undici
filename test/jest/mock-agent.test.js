@@ -1,18 +1,16 @@
 'use strict'
 
 const { afterEach } = require('tap')
-const { Client } = require('../..')
+const { request } = require('../..')
 const MockAgent = require('../../lib/mock/mock-agent')
 const { getResponse } = require('../../lib/mock/mock-utils')
 
 /* global describe, it, expect */
 
-describe('MockClient', () => {
-  let client
+describe('MockAgent', () => {
   let mockAgent
 
   afterEach(() => {
-    client.close()
     mockAgent.close()
   })
 
@@ -20,9 +18,8 @@ describe('MockClient', () => {
     expect.assertions(4)
 
     const baseUrl = 'http://localhost:9999'
-    client = new Client(baseUrl)
 
-    mockAgent = new MockAgent({ connections: 1 })
+    mockAgent = new MockAgent()
     const mockClient = mockAgent.get(baseUrl)
 
     mockClient.intercept({
@@ -36,8 +33,7 @@ describe('MockClient', () => {
       trailers: { 'Content-MD5': 'test' }
     })
 
-    const { statusCode, headers, trailers, body } = await client.request({
-      path: '/foo?hello=there&see=ya',
+    const { statusCode, headers, trailers, body } = await request(`${baseUrl}/foo?hello=there&see=ya`, {
       method: 'POST',
       body: 'form1=data1&form2=data2'
     })
