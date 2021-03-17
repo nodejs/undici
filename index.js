@@ -6,6 +6,7 @@ const Pool = require('./lib/pool')
 const { Agent, request, stream, pipeline, setGlobalAgent } = require('./lib/agent')
 const MockClient = require('./lib/mock/mock-client')
 const MockAgent = require('./lib/mock/mock-agent')
+const MockPool = require('./lib/mock/mock-pool')
 
 Client.prototype.request = require('./lib/client-request')
 Client.prototype.stream = require('./lib/client-stream')
@@ -17,16 +18,18 @@ function undici (url, opts) {
   return new Pool(url, opts)
 }
 
-undici.Pool = Pool
-undici.Client = Client
-undici.errors = errors
-
-undici.Agent = Agent
-undici.request = request
-undici.stream = stream
-undici.pipeline = pipeline
-undici.setGlobalAgent = setGlobalAgent
-undici.MockClient = MockClient
-undici.MockAgent = MockAgent
-
 module.exports = undici
+
+module.exports.Pool = Pool
+module.exports.Client = Client
+module.exports.errors = errors
+
+module.exports.Agent = Agent
+module.exports.request = request
+module.exports.stream = stream
+module.exports.pipeline = pipeline
+module.exports.setGlobalAgent = setGlobalAgent
+
+module.exports.MockClient = MockClient
+module.exports.MockPool = MockPool
+module.exports.MockAgent = MockAgent
