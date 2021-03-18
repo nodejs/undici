@@ -3,8 +3,7 @@
 const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
-const { request } = require('..')
-const MockAgent = require('../lib/mock/mock-agent')
+const { request, setGlobalAgent, MockAgent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kAgentCache } = require('../lib/core/symbols')
 
@@ -24,6 +23,7 @@ test('MockAgent - basic intercept with request', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
   const mockPool = mockAgent.get(baseUrl)
 
@@ -72,6 +72,7 @@ test('MockAgent - should support local agents', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
   const mockPool = mockAgent.get(baseUrl)
 
@@ -121,7 +122,9 @@ test('MockAgent - basic Client intercept with request', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
+
   const mockClient = mockAgent.get(baseUrl)
   mockClient.intercept({
     path: '/foo?hello=there&see=ya',
@@ -168,6 +171,7 @@ test('MockAgent - basic intercept with multiple pools', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
   const mockPool1 = mockAgent.get(baseUrl)
   const mockPool2 = mockAgent.get('http://localhost:9999')
@@ -223,6 +227,7 @@ test('MockAgent - should handle multiple responses for an interceptor', async (t
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -286,13 +291,13 @@ test('MockAgent - should call original Pool dispatch if request not found', asyn
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const agent = new MockAgent()
-  t.tearDown(agent.close.bind(agent))
+  const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
+  t.tearDown(mockAgent.close.bind(mockAgent))
 
   try {
     const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
-      method: 'GET',
-      agent
+      method: 'GET'
     })
     t.strictEqual(statusCode, 200)
     t.strictEqual(headers['content-type'], 'text/plain')
@@ -318,13 +323,13 @@ test('MockAgent - should call original Client dispatch if request not found', as
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  const agent = new MockAgent({ connections: 1 })
-  t.tearDown(agent.close.bind(agent))
+  const mockAgent = new MockAgent({ connections: 1 })
+  setGlobalAgent(mockAgent)
+  t.tearDown(mockAgent.close.bind(mockAgent))
 
   try {
     const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
-      method: 'GET',
-      agent
+      method: 'GET'
     })
     t.strictEqual(statusCode, 200)
     t.strictEqual(headers['content-type'], 'text/plain')
@@ -353,6 +358,7 @@ test('MockAgent - should handle string responses', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -378,6 +384,7 @@ test('MockAgent - should handle basic concurrency for requests', { jobs: 5 }, as
   t.plan(5)
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   await Promise.all([...Array(5).keys()].map(idx =>
@@ -425,6 +432,7 @@ test('MockAgent - handle delays to simulate work', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -466,6 +474,7 @@ test('MockAgent - should persist requests', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -531,6 +540,7 @@ test('MockAgent - handle persists with delayed requests', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -580,6 +590,7 @@ test('MockAgent - calling close on a mock pool should not affect other mock pool
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPoolToClose = mockAgent.get('http://localhost:9999')
@@ -641,6 +652,7 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockClient = mockAgent.get(baseUrl)
@@ -683,6 +695,7 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -726,6 +739,7 @@ test('MockAgent - should handle replyWithError', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -759,6 +773,7 @@ test('MockAgent - should support setting a reply to respond a set amount of time
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -819,6 +834,7 @@ test('MockAgent - persist overrides times', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -877,6 +893,7 @@ test('MockAgent - matcher should not find mock dispatch if path is of unsupporte
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -914,6 +931,7 @@ test('MockAgent - should match path with regex', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -963,6 +981,7 @@ test('MockAgent - should match path with function', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1000,6 +1019,7 @@ test('MockAgent - should match method with regex', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1037,6 +1057,7 @@ test('MockAgent - should match method with function', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1074,6 +1095,7 @@ test('MockAgent - should match body with regex', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1113,6 +1135,7 @@ test('MockAgent - should match body with function', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1152,6 +1175,7 @@ test('MockAgent - should match url with regex', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(new RegExp(baseUrl))
@@ -1189,6 +1213,7 @@ test('MockAgent - should match url with function', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get((value) => baseUrl === value)
@@ -1226,6 +1251,7 @@ test('MockAgent - handle default reply headers', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1267,6 +1293,7 @@ test('MockAgent - handle default reply trailers', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1308,6 +1335,7 @@ test('MockAgent - return calculated content-length if specified', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1349,6 +1377,7 @@ test('MockAgent - return calculated content-length for object response if specif
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1390,6 +1419,7 @@ test('MockAgent - should activate and deactivate mock clients', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1438,49 +1468,6 @@ test('MockAgent - should activate and deactivate mock clients', async (t) => {
   }
 })
 
-test('MockAgent - should be able to turn off mocking with environment variable', async (t) => {
-  t.plan(5)
-
-  process.env.UNDICI_MOCK_OFF = 'true'
-  t.teardown(() => {
-    process.env.UNDICI_MOCK_OFF = 'false'
-  })
-
-  const server = createServer((req, res) => {
-    t.strictEqual(req.url, '/foo')
-    t.strictEqual(req.method, 'GET')
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.tearDown(server.close.bind(server))
-
-  await promisify(server.listen.bind(server))(0)
-
-  const baseUrl = `http://localhost:${server.address().port}`
-
-  const mockAgent = new MockAgent()
-  t.tearDown(mockAgent.close.bind(mockAgent))
-
-  const mockPool = mockAgent.get(baseUrl)
-  mockPool.intercept({
-    path: '/foo',
-    method: 'GET'
-  }).reply(200, 'foo')
-
-  try {
-    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
-      method: 'GET'
-    })
-    t.strictEqual(statusCode, 200)
-    t.strictEqual(headers['content-type'], 'text/plain')
-
-    const response = await getResponse(body)
-    t.strictEqual(response, 'hello')
-  } catch (err) {
-    t.fail(err.message)
-  }
-})
-
 test('MockAgent - enableNetConnect should allow all original dispatches to be called if dispatch not found', async (t) => {
   t.plan(5)
 
@@ -1497,6 +1484,7 @@ test('MockAgent - enableNetConnect should allow all original dispatches to be ca
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1537,6 +1525,7 @@ test('MockAgent - enableNetConnect with a host string should allow all original 
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1577,6 +1566,7 @@ test('MockAgent - enableNetConnect when called with host string multiple times s
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1618,6 +1608,7 @@ test('MockAgent - enableNetConnect with a host regex should allow all original d
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1658,6 +1649,7 @@ test('MockAgent - enableNetConnect with a function should allow all original dis
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
@@ -1686,6 +1678,7 @@ test('MockAgent - enableNetConnect with an unknown input should throw', async (t
   t.plan(1)
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get('http://localhost:9999')
@@ -1719,6 +1712,7 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
+  setGlobalAgent(mockAgent)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)

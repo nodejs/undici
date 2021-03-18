@@ -1,8 +1,7 @@
 'use strict'
 
 const { afterEach } = require('tap')
-const { request } = require('../..')
-const MockAgent = require('../../lib/mock/mock-agent')
+const { request, setGlobalAgent, MockAgent } = require('../..')
 const { getResponse } = require('../../lib/mock/mock-utils')
 
 /* global describe, it, expect */
@@ -20,6 +19,7 @@ describe('MockAgent', () => {
     const baseUrl = 'http://localhost:9999'
 
     mockAgent = new MockAgent()
+    setGlobalAgent(mockAgent)
     const mockClient = mockAgent.get(baseUrl)
 
     mockClient.intercept({
