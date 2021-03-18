@@ -1,12 +1,11 @@
 'use strict'
 
 const { test } = require('tap')
-const { createServer } = require('http')
-const { promisify } = require('util')
 const { MockAgent, MockPool } = require('..')
 const { kUrl } = require('../lib/core/symbols')
 const { kDispatches } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
+const MockInterceptor = require('../lib/mock/mock-interceptor')
 
 test('MockPool - constructor', t => {
   t.plan(2)
@@ -22,29 +21,21 @@ test('MockPool - constructor', t => {
   })
 })
 
-test('MockPool - [kDispatch] should handle a single interceptor', async (t) => {
+test('MockPool - dispatch', t => {
   t.plan(1)
 
-  const server = createServer((req, res) => {
-    res.setHeader('content-type', 'text/plain')
-    res.end('should not be called')
-    t.fail('should not be called')
-    t.end()
-  })
-  t.tearDown(server.close.bind(server))
+  t.test('should handle a single interceptor', (t) => {
+    t.plan(1)
 
-  await promisify(server.listen.bind(server))(0)
+    const baseUrl = 'http://localhost:9999'
 
-  const baseUrl = `http://localhost:${server.address().port}`
+    const mockAgent = new MockAgent()
+    t.tearDown(mockAgent.close.bind(mockAgent))
 
-  const mockAgent = new MockAgent()
+    const mockPool = mockAgent.get(baseUrl)
 
-  t.tearDown(mockAgent.close.bind(mockAgent))
-  const mockPool = mockAgent.get(baseUrl)
-
-  try {
     this[kUrl] = new URL('http://localhost:9999')
-    this[kDispatches] = [
+    mockPool[kDispatches] = [
       {
         path: '/foo',
         method: 'GET',
@@ -57,16 +48,59 @@ test('MockPool - [kDispatch] should handle a single interceptor', async (t) => {
         }
       }
     ]
-    mockPool.dispatch.call(this, {
+
+    t.notThrow(() => mockPool.dispatch({
       path: '/foo',
       method: 'GET'
     }, {
       onHeaders: (_statusCode, _headers, resume) => resume(),
       onData: () => {},
       onComplete: () => {}
-    })
-    t.ok('called')
-  } catch (err) {
-    t.fail(err.message)
-  }
+    }))
+  })
+})
+
+test('MockPool - intercept should return a MockInterceptor', (t) => {
+  t.plan(1)
+
+  const baseUrl = 'http://localhost:9999'
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+
+  const interceptor = mockPool.intercept({
+    path: '/foo',
+    method: 'GET'
+  })
+
+  t.true(interceptor instanceof MockInterceptor)
+})
+
+test('MockPool - close should run without error', async (t) => {
+  t.plan(1)
+
+  const baseUrl = 'http://localhost:9999'
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+
+  mockPool[kDispatches] = [
+    {
+      path: '/foo',
+      method: 'GET',
+      data: {
+        statusCode: 200,
+        data: 'hello',
+        headers: {},
+        trailers: {},
+        error: null
+      }
+    }
+  ]
+
+  await t.resolves(mockPool.close())
 })

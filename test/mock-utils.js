@@ -12,12 +12,8 @@ test('deleteMockDispatch - should do nothing if not able to find mock dispatch',
     method: 'method',
     body: 'body'
   }
-  try {
-    deleteMockDispatch([], key)
-    t.ok('deleted mockDispatch')
-  } catch (err) {
-    t.fail(err.message)
-  }
+
+  t.notThrow(() => deleteMockDispatch([], key))
 })
 
 test('getMockDispatch', (t) => {
@@ -32,19 +28,16 @@ test('getMockDispatch', (t) => {
         consumed: false
       }
     ]
-    try {
-      const result = getMockDispatch(dispatches, {
-        path: 'path',
-        method: 'method'
-      })
-      t.deepEqual(result, {
-        path: 'path',
-        method: 'method',
-        consumed: false
-      })
-    } catch (error) {
-      t.fail(error)
-    }
+
+    const result = getMockDispatch(dispatches, {
+      path: 'path',
+      method: 'method'
+    })
+    t.deepEqual(result, {
+      path: 'path',
+      method: 'method',
+      consumed: false
+    })
   })
 
   t.test('it should skip consumed dispatches', (t) => {
@@ -61,19 +54,16 @@ test('getMockDispatch', (t) => {
         consumed: false
       }
     ]
-    try {
-      const result = getMockDispatch(dispatches, {
-        path: 'path',
-        method: 'method'
-      })
-      t.deepEqual(result, {
-        path: 'path',
-        method: 'method',
-        consumed: false
-      })
-    } catch (error) {
-      t.fail(error)
-    }
+
+    const result = getMockDispatch(dispatches, {
+      path: 'path',
+      method: 'method'
+    })
+    t.deepEqual(result, {
+      path: 'path',
+      method: 'method',
+      consumed: false
+    })
   })
 
   t.test('it should return undefined is dispatch not found', (t) => {
@@ -85,14 +75,11 @@ test('getMockDispatch', (t) => {
         consumed: false
       }
     ]
-    try {
-      const result = getMockDispatch(dispatches, {
-        path: 'wrong',
-        method: 'wrong'
-      })
-      t.strictEqual(result, undefined)
-    } catch (error) {
-      t.fail(error)
-    }
+
+    const result = getMockDispatch(dispatches, {
+      path: 'wrong',
+      method: 'wrong'
+    })
+    t.strictEqual(result, undefined)
   })
 })
