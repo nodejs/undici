@@ -12,8 +12,7 @@ Returns a new Agent instance for use with pool based requests or the following t
 
 Extends: [`PoolOptions`](docs/api/Pool.md#parameter-pooloptions)
 
-* **clientClass** `Class extends Client` (optional) - The class to instantiate clients.
-* **poolClass** `Class extends Pool` (optional) - The class to use to instantiate pools.
+* **factory** `(url: string, options?: Client.Options): Pool` (optional) - A factory which returns the pool to use for the request.
 
 ## `agent.get(origin): Pool`
 
