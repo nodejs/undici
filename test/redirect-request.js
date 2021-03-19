@@ -426,7 +426,7 @@ t.test('should handle errors (callback)', t => {
       agent: new Agent({ factory: redirectPoolFactory })
     },
     error => {
-      t.is(error.code, 'EADDRNOTAVAIL')
+      t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
     }
   )
 })
@@ -437,7 +437,7 @@ t.test('should handle errors (promise)', async t => {
   try {
     await request('http://localhost:0', { agent: new Agent({ factory: redirectPoolFactory }) })
     throw new Error('Did not throw')
-  } catch (e) {
-    t.is(e.code, 'EADDRNOTAVAIL')
+  } catch (error) {
+    t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
   }
 })
