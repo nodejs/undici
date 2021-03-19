@@ -11,17 +11,8 @@ export {
   pipeline,
 }
 
-
-interface ClientConstructor {
-  new(url: string | URL, options?: Client.Options): Client;
-}
-
-interface PoolConstructor {
-  new(url: string | URL, options?: Pool.Options): Pool;
-}
-
 declare class Agent {
-  constructor(opts?: Pool.Options & { clientClass?: ClientConstructor, poolClass?: PoolConstructor })
+  constructor(opts?: Pool.Options & { factory?: (url: string, opts: Pool.Options) => Pool })
   get(origin: string): Pool;
 }
 

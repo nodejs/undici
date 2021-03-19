@@ -1,7 +1,7 @@
 'use strict'
 
 const t = require('tap')
-const { request, Agent, RedirectPool } = require('..')
+const { request, Agent, RedirectPool, redirectPoolFactory } = require('..')
 const { createServer } = require('http')
 
 function defaultHandler(req, res) {
@@ -81,7 +81,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
   const serverRoot = await startServer(t)
 
   const { statusCode, headers, body: bodyStream, redirections } = await request(`http://${serverRoot}/300`, {
-    agent: new Agent({ poolClass: RedirectPool })
+    agent: new Agent({ factory: redirectPoolFactory })
   })
 
   for await (const b of bodyStream) {
@@ -108,7 +108,7 @@ t.test('should follow redirection after a HTTP 301', async t => {
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${serverRoot}/301`, {
     method: 'POST',
-    agent: new Agent({ poolClass: RedirectPool })
+    agent: new Agent({ factory: redirectPoolFactory })
   })
 
   for await (const b of bodyStream) {
@@ -128,7 +128,7 @@ t.test('should follow redirection after a HTTP 302', async t => {
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${serverRoot}/302`, {
     method: 'PUT',
-    agent: new Agent({ poolClass: RedirectPool })
+    agent: new Agent({ factory: redirectPoolFactory })
   })
 
   for await (const b of bodyStream) {
@@ -148,7 +148,7 @@ t.test('should follow redirection after a HTTP 303 changing method to GET', asyn
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${serverRoot}/303`, {
     method: 'PATCH',
-    agent: new Agent({ poolClass: RedirectPool })
+    agent: new Agent({ factory: redirectPoolFactory })
   })
 
   for await (const b of bodyStream) {
@@ -184,7 +184,7 @@ t.test('should remove Host and request body related headers when following HTTP 
       'X-Bar',
       '4'
     ],
-    agent: new Agent({ poolClass: RedirectPool })
+    agent: new Agent({ factory: redirectPoolFactory })
   })
 
   for await (const b of bodyStream) {
@@ -213,7 +213,7 @@ t.test('should remove Host and request body related headers when following HTTP 
       Host: 'localhost',
       'X-Bar': '4'
     },
-    agent: new Agent({ poolClass: RedirectPool })
+    agent: new Agent({ factory: redirectPoolFactory })
   })
 
   for await (const b of bodyStream) {
@@ -233,7 +233,7 @@ t.test('should follow redirection after a HTTP 307', async t => {
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${serverRoot}/307`, {
     method: 'DELETE',
-    agent: new Agent({ poolClass: RedirectPool })
+    agent: new Agent({ factory: redirectPoolFactory })
   })
 
   for await (const b of bodyStream) {
@@ -253,7 +253,7 @@ t.test('should follow redirection after a HTTP 308', async t => {
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${serverRoot}/308`, {
     method: 'OPTIONS',
-    agent: new Agent({ poolClass: RedirectPool })
+    agent: new Agent({ factory: redirectPoolFactory })
   })
 
   for await (const b of bodyStream) {
@@ -281,7 +281,7 @@ t.only('should ignore HTTP 3xx response bodies', async t => {
   })
 
   const { statusCode, headers, body: bodyStream, redirections } = await request(`http://${serverRoot}/`, {
-    agent: new Agent({ poolClass: RedirectPool })
+    agent: new Agent({ factory: redirectPoolFactory })
   })
 
   for await (const b of bodyStream) {
@@ -301,7 +301,7 @@ t.test('should follow a redirect chain up to the allowed number of times', async
   const serverRoot = await startServer(t)
 
   const { statusCode, headers, body: bodyStream, redirections } = await request(`http://${serverRoot}/300`, {
-    agent: new Agent({ poolClass: RedirectPool }),
+    agent: new Agent({ factory: redirectPoolFactory }),
     maxRedirections: 2
   })
 
@@ -312,27 +312,6 @@ t.test('should follow a redirect chain up to the allowed number of times', async
   t.is(statusCode, 300)
   t.is(headers.location, `http://${serverRoot}/300/4`)
   t.deepEqual(redirections, [`http://${serverRoot}/300`, `http://${serverRoot}/300/1`, `http://${serverRoot}/300/2`])
-  t.equal(body.length, 0)
-})
-
-t.test('should not follow redirections when disabled', async t => {
-  t.plan(4)
-
-  let body = ''
-  const serverRoot = await startServer(t)
-
-  const { statusCode, headers, body: bodyStream, redirections } = await request(`http://${serverRoot}/300`, {
-    agent: new Agent({ poolClass: RedirectPool }),
-    maxRedirections: false
-  })
-
-  for await (const b of bodyStream) {
-    body += b
-  }
-
-  t.is(statusCode, 300)
-  t.is(headers.location, `http://${serverRoot}/300/1`)
-  t.notOk(redirections)
   t.equal(body.length, 0)
 })
 
@@ -378,7 +357,7 @@ t.test('should follow redirections when going cross origin', async t => {
 
   const { statusCode, headers, body: bodyStream, redirections } = await request(`http://${server1}`, {
     method: 'POST',
-    agent: new Agent({ poolClass: RedirectPool })
+    agent: new Agent({ factory: redirectPoolFactory })
   })
 
   for await (const b of bodyStream) {
@@ -424,7 +403,7 @@ t.test('when a Location response header is NOT present', async t => {
       let body = ''
 
       const { statusCode, headers, body: bodyStream } = await request(`http://${serverRoot}/${code}`, {
-        agent: new Agent({ poolClass: RedirectPool })
+        agent: new Agent({ factory: redirectPoolFactory })
       })
 
       for await (const b of bodyStream) {
@@ -444,7 +423,7 @@ t.test('should handle errors (callback)', t => {
   request(
     'http://localhost:0',
     {
-      agent: new Agent({ poolClass: RedirectPool })
+      agent: new Agent({ factory: redirectPoolFactory })
     },
     error => {
       t.is(error.code, 'EADDRNOTAVAIL')
@@ -456,7 +435,7 @@ t.test('should handle errors (promise)', async t => {
   t.plan(1)
 
   try {
-    await request('http://localhost:0', { agent: new Agent({ poolClass: RedirectPool }) })
+    await request('http://localhost:0', { agent: new Agent({ factory: redirectPoolFactory }) })
     throw new Error('Did not throw')
   } catch (e) {
     t.is(e.code, 'EADDRNOTAVAIL')

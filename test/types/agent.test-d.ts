@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import { Pool, Agent, setGlobalAgent, request, stream, pipeline, Client, RedirectPool } from '../..'
+import { Pool, Agent, setGlobalAgent, request, stream, pipeline, Client, redirectPoolFactory } from '../..'
 import { Writable, Readable, Duplex } from 'stream'
 
 expectAssignable<Agent>(new Agent())
@@ -13,8 +13,7 @@ expectAssignable<Agent>(new Agent({}))
 
 {
   expectAssignable<void>(setGlobalAgent(new Agent()))
-  expectAssignable<void>(setGlobalAgent(new Agent({ poolClass: RedirectPool })))
-  expectAssignable<void>(setGlobalAgent({ get: origin => new Pool(origin) }))
+  expectAssignable<void>(setGlobalAgent(new Agent({ factory: redirectPoolFactory })))
 }
 
 {

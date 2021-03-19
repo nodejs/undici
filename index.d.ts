@@ -1,10 +1,10 @@
 import Pool from './types/pool'
-import RedirectPool from './types/redirect-pool'
+import {RedirectPool, redirectPoolFactory } from './types/redirect-pool'
 import Client from './types/client'
 import errors from './types/errors'
 import { Agent, setGlobalAgent, request, stream, pipeline } from './types/agent'
 
-export { Pool, RedirectPool, Client, errors, Agent, setGlobalAgent, request, stream, pipeline }
+export { Pool, RedirectPool, Client, errors, Agent, redirectPoolFactory, setGlobalAgent, request, stream, pipeline }
 export default Undici
 
 declare function Undici(url: string, opts: Pool.Options): Pool
@@ -15,6 +15,7 @@ declare namespace Undici {
   var Client: typeof import('./types/client');
   var errors: typeof import('./types/errors');
   var Agent: typeof import('./types/agent').Agent;
+  var redirectPoolFactory: typeof import('./types/redirect-pool').redirectPoolFactory;
   var setGlobalAgent: typeof import('./types/agent').setGlobalAgent;
   var request: typeof import('./types/agent').request;
   var stream: typeof import('./types/agent').stream;
