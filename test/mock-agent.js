@@ -3,15 +3,16 @@
 const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
-const { request, setGlobalAgent, MockAgent } = require('..')
+const { request, setGlobalAgent, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kAgentCache } = require('../lib/core/symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
+const { kAgent } = require('../lib/mock/mock-symbols')
 
-test('MockPool - constructor', t => {
-  t.plan(2)
+test('MockAgent - constructor', t => {
+  t.plan(4)
 
   t.test('sets up mock agent', t => {
     t.plan(1)
@@ -21,6 +22,22 @@ test('MockPool - constructor', t => {
   t.test('sets up mock agent with single connection', t => {
     t.plan(1)
     t.notThrow(() => new MockAgent({ connections: 1 }))
+  })
+
+  t.test('should error passed agent is not valid', t => {
+    t.plan(2)
+    t.throw(() => new MockAgent({ agent: {} }), new InvalidArgumentError('Argument opts.agent must implement Agent'))
+    t.throw(() => new MockAgent({ agent: { get: '' } }), new InvalidArgumentError('Argument opts.agent must implement Agent'))
+  })
+
+  t.test('should be able to specify the agent to mock', t => {
+    t.plan(1)
+    const agent = new Agent()
+    t.tearDown(agent.close.bind(agent))
+    const mockAgent = new MockAgent({ agent })
+    t.tearDown(mockAgent.close.bind(mockAgent))
+
+    t.strictEqual(mockAgent[kAgent], agent)
   })
 })
 
@@ -161,6 +178,54 @@ test('MockAgent - should support local agents', async (t) => {
     method: 'POST',
     body: 'form1=data1&form2=data2',
     agent: mockAgent
+  })
+  t.strictEqual(statusCode, 200)
+  t.strictEqual(headers['content-type'], 'application/json')
+  t.deepEqual(trailers, { 'content-md5': 'test' })
+
+  const jsonResponse = JSON.parse(await getResponse(body))
+  t.deepEqual(jsonResponse, {
+    foo: 'bar'
+  })
+})
+
+test('MockAgent - should support specifying custom agents to mock', async (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const agent = new Agent()
+  t.tearDown(agent.close.bind(agent))
+
+  const mockAgent = new MockAgent({ agent })
+  setGlobalAgent(mockAgent)
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/foo?hello=there&see=ya',
+    method: 'POST',
+    body: 'form1=data1&form2=data2'
+  }).reply(200, { foo: 'bar' }, {
+    headers: {
+      'content-type': 'application/json'
+    },
+    trailers: { 'Content-MD5': 'test' }
+  })
+
+  const { statusCode, headers, trailers, body } = await request(`${baseUrl}/foo?hello=there&see=ya`, {
+    method: 'POST',
+    body: 'form1=data1&form2=data2'
   })
   t.strictEqual(statusCode, 200)
   t.strictEqual(headers['content-type'], 'application/json')
