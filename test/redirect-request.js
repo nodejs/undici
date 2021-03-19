@@ -1,10 +1,10 @@
 'use strict'
 
 const t = require('tap')
-const { request, Agent, RedirectPool, redirectPoolFactory } = require('..')
+const { request, Agent, redirectPoolFactory } = require('..')
 const { createServer } = require('http')
 
-function defaultHandler(req, res) {
+function defaultHandler (req, res) {
   // Parse the path and normalize arguments
   let [code, redirections] = req.url
     .slice(1)
@@ -42,7 +42,7 @@ function defaultHandler(req, res) {
   res.end('')
 }
 
-function startServer(t, handler = defaultHandler) {
+function startServer (t, handler = defaultHandler) {
   return new Promise(resolve => {
     const server = createServer(handler)
 
@@ -291,7 +291,7 @@ t.only('should ignore HTTP 3xx response bodies', async t => {
   t.is(statusCode, 200)
   t.notOk(headers.location)
   t.deepEqual(redirections, [`http://${serverRoot}/`])
-  t.is(body, `FINAL`)
+  t.is(body, 'FINAL')
 })
 
 t.test('should follow a redirect chain up to the allowed number of times', async t => {
