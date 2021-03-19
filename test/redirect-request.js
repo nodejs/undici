@@ -22,12 +22,14 @@ function defaultHandler (req, res) {
   // On 303, the method must be GET or HEAD after the first redirect
   if (code === 303 && redirections > 0 && req.method !== 'GET' && req.method !== 'HEAD') {
     res.statusCode = 400
+    res.setHeader('Connection', 'close')
     res.end('Did not switch to GET')
     return
   }
 
   // End the chain at some point
   if (redirections === 5) {
+    res.setHeader('Connection', 'close')
     res.end(
       `${req.method} :: ${Object.entries(req.headers)
         .map(([k, v]) => `${k}@${v}`)
@@ -38,6 +40,7 @@ function defaultHandler (req, res) {
 
   // Redirect by default
   res.statusCode = code
+  res.setHeader('Connection', 'close')
   res.setHeader('Location', `http://localhost:${this.address().port}/${code}/${++redirections}`)
   res.end('')
 }
@@ -60,6 +63,7 @@ t.test('should not follow redirection by default if not using RedirectPool', asy
   let body = ''
   const serverRoot = await startServer(t, (req, res) => {
     res.statusCode = 301
+    res.setHeader('Connection', 'close')
     res.setHeader('Location', serverRoot)
     res.end('')
   })
@@ -69,9 +73,9 @@ t.test('should not follow redirection by default if not using RedirectPool', asy
     body += b
   }
 
-  t.is(statusCode, 301)
-  t.is(headers.location, serverRoot)
-  t.equal(body.length, 0)
+  t.strictEqual(statusCode, 301)
+  t.strictEqual(headers.location, serverRoot)
+  t.strictEqual(body.length, 0)
 })
 
 t.test('should follow redirection after a HTTP 300', async t => {
@@ -88,7 +92,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
     body += b
   }
 
-  t.is(statusCode, 200)
+  t.strictEqual(statusCode, 200)
   t.notOk(headers.location)
   t.deepEqual(redirections, [
     `http://${serverRoot}/300`,
@@ -97,7 +101,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
     `http://${serverRoot}/300/3`,
     `http://${serverRoot}/300/4`
   ])
-  t.is(body, `GET :: connection@keep-alive host@${serverRoot}`)
+  t.strictEqual(body, `GET :: connection@keep-alive host@${serverRoot}`)
 })
 
 t.test('should follow redirection after a HTTP 301', async t => {
@@ -115,9 +119,9 @@ t.test('should follow redirection after a HTTP 301', async t => {
     body += b
   }
 
-  t.is(statusCode, 200)
+  t.strictEqual(statusCode, 200)
   t.notOk(headers.location)
-  t.is(body, `POST :: connection@keep-alive host@${serverRoot} content-length@0`)
+  t.strictEqual(body, `POST :: connection@keep-alive host@${serverRoot} content-length@0`)
 })
 
 t.test('should follow redirection after a HTTP 302', async t => {
@@ -135,9 +139,9 @@ t.test('should follow redirection after a HTTP 302', async t => {
     body += b
   }
 
-  t.is(statusCode, 200)
+  t.strictEqual(statusCode, 200)
   t.notOk(headers.location)
-  t.is(body, `PUT :: connection@keep-alive host@${serverRoot} content-length@0`)
+  t.strictEqual(body, `PUT :: connection@keep-alive host@${serverRoot} content-length@0`)
 })
 
 t.test('should follow redirection after a HTTP 303 changing method to GET', async t => {
@@ -155,9 +159,9 @@ t.test('should follow redirection after a HTTP 303 changing method to GET', asyn
     body += b
   }
 
-  t.is(statusCode, 200)
+  t.strictEqual(statusCode, 200)
   t.notOk(headers.location)
-  t.is(body, `GET :: connection@keep-alive host@${serverRoot}`)
+  t.strictEqual(body, `GET :: connection@keep-alive host@${serverRoot}`)
 })
 
 t.test('should remove Host and request body related headers when following HTTP 303 (array)', async t => {
@@ -191,9 +195,9 @@ t.test('should remove Host and request body related headers when following HTTP 
     body += b
   }
 
-  t.is(statusCode, 200)
+  t.strictEqual(statusCode, 200)
   t.notOk(headers.location)
-  t.is(body, `GET :: connection@keep-alive host@${serverRoot} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+  t.strictEqual(body, `GET :: connection@keep-alive host@${serverRoot} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
 })
 
 t.test('should remove Host and request body related headers when following HTTP 303 (object)', async t => {
@@ -220,9 +224,9 @@ t.test('should remove Host and request body related headers when following HTTP 
     body += b
   }
 
-  t.is(statusCode, 200)
+  t.strictEqual(statusCode, 200)
   t.notOk(headers.location)
-  t.is(body, `GET :: connection@keep-alive host@${serverRoot} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+  t.strictEqual(body, `GET :: connection@keep-alive host@${serverRoot} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
 })
 
 t.test('should follow redirection after a HTTP 307', async t => {
@@ -240,9 +244,9 @@ t.test('should follow redirection after a HTTP 307', async t => {
     body += b
   }
 
-  t.is(statusCode, 200)
+  t.strictEqual(statusCode, 200)
   t.notOk(headers.location)
-  t.is(body, `DELETE :: connection@keep-alive host@${serverRoot}`)
+  t.strictEqual(body, `DELETE :: connection@keep-alive host@${serverRoot}`)
 })
 
 t.test('should follow redirection after a HTTP 308', async t => {
@@ -260,23 +264,25 @@ t.test('should follow redirection after a HTTP 308', async t => {
     body += b
   }
 
-  t.is(statusCode, 200)
+  t.strictEqual(statusCode, 200)
   t.notOk(headers.location)
-  t.is(body, `OPTIONS :: connection@keep-alive host@${serverRoot}`)
+  t.strictEqual(body, `OPTIONS :: connection@keep-alive host@${serverRoot}`)
 })
 
-t.only('should ignore HTTP 3xx response bodies', async t => {
+t.test('should ignore HTTP 3xx response bodies', async t => {
   t.plan(4)
 
   let body = ''
   const serverRoot = await startServer(t, (req, res) => {
     if (req.url === '/') {
       res.statusCode = 301
+      res.setHeader('Connection', 'close')
       res.setHeader('Location', `http://${serverRoot}/end`)
       res.end('REDIRECT')
       return
     }
 
+    res.setHeader('Connection', 'close')
     res.end('FINAL')
   })
 
@@ -288,10 +294,10 @@ t.only('should ignore HTTP 3xx response bodies', async t => {
     body += b
   }
 
-  t.is(statusCode, 200)
+  t.strictEqual(statusCode, 200)
   t.notOk(headers.location)
   t.deepEqual(redirections, [`http://${serverRoot}/`])
-  t.is(body, 'FINAL')
+  t.strictEqual(body, 'FINAL')
 })
 
 t.test('should follow a redirect chain up to the allowed number of times', async t => {
@@ -309,26 +315,29 @@ t.test('should follow a redirect chain up to the allowed number of times', async
     body += b
   }
 
-  t.is(statusCode, 300)
-  t.is(headers.location, `http://${serverRoot}/300/4`)
+  t.strictEqual(statusCode, 300)
+  t.strictEqual(headers.location, `http://${serverRoot}/300/4`)
   t.deepEqual(redirections, [`http://${serverRoot}/300`, `http://${serverRoot}/300/1`, `http://${serverRoot}/300/2`])
-  t.equal(body.length, 0)
+  t.strictEqual(body.length, 0)
 })
 
 t.test('should follow redirections when going cross origin', async t => {
   const server1 = await startServer(t, (req, res) => {
     if (req.url === '/') {
       res.statusCode = 301
+      res.setHeader('Connection', 'close')
       res.setHeader('Location', `http://${server2}/`)
       res.end('')
       return
     }
 
+    res.setHeader('Connection', 'close')
     res.end(req.method)
   })
 
   const server2 = await startServer(t, (req, res) => {
     res.statusCode = 301
+    res.setHeader('Connection', 'close')
 
     if (req.url === '/') {
       res.setHeader('Location', `http://${server3}/`)
@@ -341,6 +350,7 @@ t.test('should follow redirections when going cross origin', async t => {
 
   const server3 = await startServer(t, (req, res) => {
     res.statusCode = 301
+    res.setHeader('Connection', 'close')
 
     if (req.url === '/') {
       res.setHeader('Location', `http://${server2}/end`)
@@ -364,7 +374,7 @@ t.test('should follow redirections when going cross origin', async t => {
     body += b
   }
 
-  t.is(statusCode, 200)
+  t.strictEqual(statusCode, 200)
   t.notOk(headers.location)
   t.deepEqual(redirections, [
     `http://${server1}/`,
@@ -373,7 +383,7 @@ t.test('should follow redirections when going cross origin', async t => {
     `http://${server2}/end`,
     `http://${server3}/end`
   ])
-  t.is(body, 'POST')
+  t.strictEqual(body, 'POST')
 })
 
 t.test('when a Location response header is NOT present', async t => {
@@ -391,6 +401,7 @@ t.test('when a Location response header is NOT present', async t => {
     }
 
     res.statusCode = code
+    res.setHeader('Connection', 'close')
     res.end('')
   })
 
@@ -410,9 +421,9 @@ t.test('when a Location response header is NOT present', async t => {
         body += b
       }
 
-      t.is(statusCode, code)
+      t.strictEqual(statusCode, code)
       t.notOk(headers.location)
-      t.equal(body.length, 0)
+      t.strictEqual(body.length, 0)
     })
   }
 })

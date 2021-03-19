@@ -12,7 +12,51 @@ Returns a new Agent instance for use with pool based requests or the following t
 
 Extends: [`PoolOptions`](docs/api/Pool.md#parameter-pooloptions)
 
-* **factory** `(url: string, options?: Client.Options): Pool` (optional) - A factory which returns the pool to use for the request.
+* factory `(url: string, options?: Client.Options): Pool` (optional) - A factory which returns the pool to use for the request.
+
+#### Example - Use `factory` to use a RedirectPool which follow redirects
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Agent, request, RedirectPool } = require('.')
+
+const server = createServer((request, response) => {
+  response.setHeader('Connection', `close`)
+
+  if (request.url === '/') {
+    response.statusCode = 301
+    response.setHeader('Location', `http://localhost:${server.address().port}/end`)
+    response.end('')
+    return
+  }
+
+  response.end('undici')
+})
+
+server.listen(() => {
+  request(
+    `http://localhost:${server.address().port}`,
+    {
+      agent: new Agent({
+        /*
+          Optionally, a redirectPoolFactory is also exported by undici:
+
+          factory: redirectPoolFactory
+        */
+        factory(origin, opts) {
+          return new RedirectPool(origin, opts)
+        }
+      })
+    },
+    (error, {body}) => {
+      body.setEncoding('utf8')
+      body.on('data', console.log) // This will output 'undici'
+      body.on('end', server.close.bind(server))
+    }
+  )
+})
+```
 
 ## `agent.get(origin): Pool`
 
