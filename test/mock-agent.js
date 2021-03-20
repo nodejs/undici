@@ -123,9 +123,7 @@ test('MockAgent - basic intercept with request', async (t) => {
     method: 'POST',
     body: 'form1=data1&form2=data2'
   }).reply(200, { foo: 'bar' }, {
-    headers: {
-      'content-type': 'application/json'
-    },
+    headers: { 'content-type': 'application/json' },
     trailers: { 'Content-MD5': 'test' }
   })
 
@@ -159,7 +157,7 @@ test('MockAgent - should support local agents', async (t) => {
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
-  setGlobalAgent(mockAgent)
+
   t.tearDown(mockAgent.close.bind(mockAgent))
   const mockPool = mockAgent.get(baseUrl)
 
@@ -858,9 +856,7 @@ test('MockAgent - should support setting a reply to respond a set amount of time
   }).reply(200, 'foo').times(2)
 
   {
-    const { statusCode, body } = await request(`${baseUrl}/foo`, {
-      method: 'GET'
-    })
+    const { statusCode, body } = await request(`${baseUrl}/foo`)
     t.strictEqual(statusCode, 200)
 
     const response = await getResponse(body)
@@ -868,9 +864,7 @@ test('MockAgent - should support setting a reply to respond a set amount of time
   }
 
   {
-    const { statusCode, body } = await request(`${baseUrl}/foo`, {
-      method: 'GET'
-    })
+    const { statusCode, body } = await request(`${baseUrl}/foo`)
     t.strictEqual(statusCode, 200)
 
     const response = await getResponse(body)
@@ -878,9 +872,7 @@ test('MockAgent - should support setting a reply to respond a set amount of time
   }
 
   {
-    const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
-      method: 'GET'
-    })
+    const { statusCode, headers, body } = await request(`${baseUrl}/foo`)
     t.strictEqual(statusCode, 200)
     t.strictEqual(headers['content-type'], 'text/plain')
 

@@ -78,6 +78,40 @@ test('MockClient - intercept should return a MockInterceptor', (t) => {
   t.true(interceptor instanceof MockInterceptor)
 })
 
+test('MockClient - intercept validation', (t) => {
+  t.plan(3)
+
+  t.test('it should error if no options specified in the intercept', t => {
+    t.plan(1)
+    const mockAgent = new MockAgent({ connections: 1 })
+    t.tearDown(mockAgent.close.bind(mockAgent))
+
+    const mockPool = mockAgent.get('http://localhost:9999')
+
+    t.throw(() => mockPool.intercept(), new InvalidArgumentError('opts must be an object'))
+  })
+
+  t.test('it should error if no path specified in the intercept', t => {
+    t.plan(1)
+    const mockAgent = new MockAgent({ connections: 1 })
+    t.tearDown(mockAgent.close.bind(mockAgent))
+
+    const mockPool = mockAgent.get('http://localhost:9999')
+
+    t.throw(() => mockPool.intercept({}), new InvalidArgumentError('opts.path must be defined'))
+  })
+
+  t.test('it should error if no method specified in the intercept', t => {
+    t.plan(1)
+    const mockAgent = new MockAgent({ connections: 1 })
+    t.tearDown(mockAgent.close.bind(mockAgent))
+
+    const mockPool = mockAgent.get('http://localhost:9999')
+
+    t.throw(() => mockPool.intercept({ path: '/foo' }), new InvalidArgumentError('opts.method must be defined'))
+  })
+})
+
 test('MockClient - close should run without error', async (t) => {
   t.plan(1)
 
