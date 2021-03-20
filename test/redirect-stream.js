@@ -3,7 +3,7 @@
 const t = require('tap')
 const { stream, Agent, redirectPoolFactory } = require('..')
 const { createServer } = require('http')
-const { Writable } = require('stream')
+const { Readable, Writable } = require('stream')
 
 function defaultHandler (req, res) {
   // Parse the path and normalize arguments
@@ -31,11 +31,19 @@ function defaultHandler (req, res) {
   // End the chain at some point
   if (redirections === 5) {
     res.setHeader('Connection', 'close')
-    res.end(
+    res.write(
       `${req.method} :: ${Object.entries(req.headers)
         .map(([k, v]) => `${k}@${v}`)
         .join(' ')}`
     )
+
+    if (parseInt(req.headers['content-length']) > 0) {
+      res.write(' :: ')
+      req.pipe(res)
+    } else {
+      res.end('')
+    }
+
     return
   }
 
@@ -126,7 +134,7 @@ t.test('should follow redirection after a HTTP 301', async t => {
 
   await stream(
     `http://${serverRoot}/301`,
-    { method: 'POST', opaque: body, agent: new Agent({ factory: redirectPoolFactory }) },
+    { method: 'POST', body: 'REQUEST', opaque: body, agent: new Agent({ factory: redirectPoolFactory }) },
     ({ statusCode, headers, redirections, opaque }) => {
       t.strictEqual(statusCode, 200)
       t.notOk(headers.location)
@@ -135,7 +143,7 @@ t.test('should follow redirection after a HTTP 301', async t => {
     }
   )
 
-  t.strictEqual(body.join(''), `POST :: connection@keep-alive host@${serverRoot} content-length@0`)
+  t.strictEqual(body.join(''), `POST :: connection@keep-alive host@${serverRoot} content-length@7 :: REQUEST`)
 })
 
 t.test('should follow redirection after a HTTP 302', async t => {
@@ -146,7 +154,7 @@ t.test('should follow redirection after a HTTP 302', async t => {
 
   await stream(
     `http://${serverRoot}/302`,
-    { method: 'PUT', opaque: body, agent: new Agent({ factory: redirectPoolFactory }) },
+    { method: 'PUT', body: Buffer.from('REQUEST'), opaque: body, agent: new Agent({ factory: redirectPoolFactory }) },
     ({ statusCode, headers, redirections, opaque }) => {
       t.strictEqual(statusCode, 200)
       t.notOk(headers.location)
@@ -155,7 +163,7 @@ t.test('should follow redirection after a HTTP 302', async t => {
     }
   )
 
-  t.strictEqual(body.join(''), `PUT :: connection@keep-alive host@${serverRoot} content-length@0`)
+  t.strictEqual(body.join(''), `PUT :: connection@keep-alive host@${serverRoot} content-length@7 :: REQUEST`)
 })
 
 t.test('should follow redirection after a HTTP 303 changing method to GET', async t => {
@@ -453,6 +461,39 @@ t.test('when a Location response header is NOT present', async t => {
 
       t.strictEqual(body.length, 0)
     })
+  }
+})
+
+t.test('should not allow Readable request bodies when using RedirectPool', async t => {
+  t.plan(1)
+
+  const body = []
+
+  try {
+    await stream(
+      'http://localhost:0',
+      {
+        method: 'POST',
+        body: new Readable({
+          read () {
+            this.push(Buffer.from('REQUEST'))
+            this.push(null)
+          }
+        }),
+        opaque: body,
+        agent: new Agent({ factory: redirectPoolFactory })
+      },
+      ({ statusCode, headers, redirections, opaque }) => {
+        t.strictEqual(statusCode, 200)
+        t.notOk(headers.location)
+
+        return createWritable(opaque)
+      }
+    )
+
+    throw new Error('Did not throw')
+  } catch (error) {
+    t.strictEqual(error.message, 'body cannot be a stream when using RedirectPool')
   }
 })
 
