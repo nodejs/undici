@@ -19,7 +19,7 @@ Extends: [`PoolOptions`](docs/api/Pool.md#parameter-pooloptions)
 ```js
 'use strict'
 const { createServer } = require('http')
-const { Agent, request, RedirectPool } = require('.')
+const { Agent, request, RedirectPool } = require('undici')
 
 const server = createServer((request, response) => {
   response.setHeader('Connection', `close`)
