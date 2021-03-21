@@ -5,7 +5,7 @@ const { MockAgent, MockClient } = require('..')
 const { kUrl } = require('../lib/core/symbols')
 const { kDispatches } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
-const MockInterceptor = require('../lib/mock/mock-interceptor')
+const { MockInterceptor } = require('../lib/mock/mock-interceptor')
 
 test('MockClient - constructor', t => {
   t.plan(2)

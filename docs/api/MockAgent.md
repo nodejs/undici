@@ -183,6 +183,60 @@ for await (const data of body) {
 console.log('trailers', trailers) // {"Content-MD5":"test"}
 ```
 
+#### Example - Mocked request with origin regex
+
+```js
+'use strict'
+const { MockAgent } = require('undici')
+
+const mockAgent = new MockAgent()
+setGlobalAgent(mockAgent)
+
+const mockPool = mockAgent.get(new RegExp('http://localhost:3000'))
+mockPool.intercept({
+  path: '/foo',
+  method: 'GET',
+}).reply(200, 'foo')
+
+const {
+  statusCode,
+  body
+} = await request('http://localhost:3000/foo')
+
+console.log('response received', statusCode) // 200
+
+for await (const data of body) {
+  console.log('data', data) // 'foo'
+}
+```
+
+#### Example - Mocked request with origin function
+
+```js
+'use strict'
+const { MockAgent } = require('undici')
+
+const mockAgent = new MockAgent()
+setGlobalAgent(mockAgent)
+
+const mockPool = mockAgent.get((origin) => 'http://localhost:3000' === origin))
+mockPool.intercept({
+  path: '/foo',
+  method: 'GET',
+}).reply(200, 'foo')
+
+const {
+  statusCode,
+  body
+} = await request('http://localhost:3000/foo')
+
+console.log('response received', statusCode) // 200
+
+for await (const data of body) {
+  console.log('data', data) // 'foo'
+}
+```
+
 ### `MockAgent.close()`
 
 Closes the mock agent and waits for registered mock pools and clients to also close before resolving.
