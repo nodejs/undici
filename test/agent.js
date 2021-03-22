@@ -2,7 +2,7 @@
 
 const tap = require('tap')
 const http = require('http')
-const { Agent, request, stream, pipeline, setGlobalAgent } = require('../lib/agent')
+const { Agent, request, stream, pipeline, setGlobalAgent } = require('../index')
 const { PassThrough } = require('stream')
 const { InvalidArgumentError, InvalidReturnValueError } = require('../lib/core/errors')
 const { Client, Pool, errors } = require('../index')
