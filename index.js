@@ -18,6 +18,7 @@ function undici (url, opts) {
 undici.Pool = Pool
 undici.Client = Client
 undici.errors = errors
+undici.redirect = require('./lib/redirect')
 
 undici.Agent = Agent
 undici.request = request
