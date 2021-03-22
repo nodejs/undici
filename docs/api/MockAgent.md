@@ -250,6 +250,7 @@ Returns: `Promise<void>`
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
+setGlobalAgent(mockAgent)
 
 await mockAgent.close()
 ```
@@ -267,6 +268,7 @@ Returns: `void`
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
+setGlobalAgent(mockAgent)
 
 mockAgent.deactivate()
 ```
@@ -284,6 +286,7 @@ Returns: `void`
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
+setGlobalAgent(mockAgent)
 
 mockAgent.deactivate()
 // No mocking will occur
@@ -311,6 +314,7 @@ Returns: `void`
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
+setGlobalAgent(mockAgent)
 
 mockAgent.enableNetConnect()
 
@@ -325,6 +329,7 @@ await request('http://example.com')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
+setGlobalAgent(mockAgent)
 
 mockAgent.enableNetConnect('example-1.com')
 mockAgent.enableNetConnect('example-2.com:8080')
@@ -346,6 +351,7 @@ await request('http://example-3.com')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
+setGlobalAgent(mockAgent)
 
 mockAgent.enableNetConnect(new RegExp('example.com'))
 
@@ -360,6 +366,7 @@ await request('http://example.com')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
+setGlobalAgent(mockAgent)
 
 mockAgent.enableNetConnect((value) => value === 'example.com')
 
