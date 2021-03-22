@@ -54,15 +54,15 @@ Returns: `MockInterceptor` corresponding to the input options.
 
 ### Parameter: `MockPoolInterceptOptions`
 
-* **path** `string | RegExp | (value) => boolean` - a matcher for the HTTP request path.
-* **method** `string | RegExp | (value) => boolean` - a matcher for the HTTP request method.
-* **body** `string | RegExp | (value) => boolean` - (optional) - a matcher for the HTTP request body.
+* **path** `string | RegExp | (path: string) => boolean` - a matcher for the HTTP request path.
+* **method** `string | RegExp | (method: string) => boolean` - a matcher for the HTTP request method.
+* **body** `string | RegExp | (body: string) => boolean` - (optional) - a matcher for the HTTP request body.
 
 ### Return: `MockInterceptor`
 
 We can define the behaviour of an intercepted request with the following options.
 
-* **reply** `(statusCode: number, replyData: string | object, responseOptions: MockResponseOptions) => MockScope` - define a reply for a matching request.
+* **reply** `(statusCode: number, replyData: string | object, responseOptions?: MockResponseOptions) => MockScope` - define a reply for a matching request. Default for `responseOptions` is `{}`.
 * **replyWithError** `(error: Error) => MockScope` - define an error for a matching request to throw.
 * **defaultReplyHeaders** `(headers: Record<string, string>) => MockInterceptor` - define default headers to be included in subsequent replies. These are in addition to headers on a specific reply.
 * **defaultReplyTrailers** `(trailers: Record<string, string>) => MockInterceptor` - define default trailers to be included in subsequent replies. These are in addition to trailers on a specific reply.
@@ -81,7 +81,7 @@ A `MockScope` is associated with a single `MockInterceptor`. With this, we can c
 
 * **delay** `(waitInMs: number) => MockScope` - delay the associated reply by a set amount in ms.
 * **persist** `() => MockScope` - any matching request will always reply with the defined response indefinitely.
-* **times** `() => MockScope` - any matching request will reply with the defined response a fixed amount of times. This is overridden by **persist**.
+* **times** `(repeatTimes: number) => MockScope` - any matching request will reply with the defined response a fixed amount of times. This is overridden by **persist**.
 
 #### Example - Basic Mocked Request
 
