@@ -11,7 +11,8 @@
     "coverage": "standard | snazzy && tap test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\"",
-    "serve-website": "docsify serve ."
+    "serve-website": "docsify serve .",
+    "prepare": "husky install"
   },
   "repository": {
     "type": "git",
@@ -38,6 +39,7 @@
     "concurrently": "^5.2.0",
     "docsify-cli": "^4.4.2",
     "https-pem": "^2.0.0",
+    "husky": "^5.2.0",
     "jest": "^26.4.0",
     "pre-commit": "^1.2.2",
     "proxy": "^1.0.2",
@@ -49,9 +51,6 @@
     "tap": "^14.10.8",
     "tsd": "^0.13.1"
   },
-  "pre-commit": [
-    "coverage"
-  ],
   "tsd": {
     "directory": "test/types",
     "compilerOptions": {
