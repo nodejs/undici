@@ -2,6 +2,23 @@
   "name": "undici",
   "version": "3.3.1",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
+  "homepage": "https://github.com/nodejs/undici#readme",
+  "bugs": {
+    "url": "https://github.com/nodejs/undici/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nodejs/undici.git"
+  },
+  "license": "MIT",
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "contributors": [
+    {
+      "name": "Robert Nagy",
+      "url": "https://github.com/ronag",
+      "author": true
+    }
+  ],
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
@@ -14,23 +31,6 @@
     "serve-website": "docsify serve .",
     "prepare": "husky install"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nodejs/undici.git"
-  },
-  "author": "Matteo Collina <hello@matteocollina.com>",
-  "contributors": [
-    {
-      "name": "Robert Nagy",
-      "url": "https://github.com/ronag",
-      "author": true
-    }
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/nodejs/undici/issues"
-  },
-  "homepage": "https://github.com/nodejs/undici#readme",
   "devDependencies": {
     "@sinonjs/fake-timers": "^6.0.1",
     "@types/node": "^14.6.2",
@@ -44,8 +44,8 @@
     "pre-commit": "^1.2.2",
     "proxy": "^1.0.2",
     "proxyquire": "^2.0.1",
-    "sinon": "^9.2.4",
     "semver": "^5.7.1",
+    "sinon": "^9.2.4",
     "snazzy": "^8.0.0",
     "standard": "^14.3.4",
     "tap": "^14.10.8",
