@@ -37,85 +37,85 @@ test('Agent', t => {
   t.throw(() => new Agent().get(''), InvalidArgumentError)
 })
 
-// test('agent should close internal pools', t => {
-//   t.plan(2)
+test('agent should close internal pools', t => {
+  t.plan(2)
 
-//   const wanted = 'payload'
+  const wanted = 'payload'
 
-//   const server = http.createServer((req, res) => {
-//     res.setHeader('Content-Type', 'text/plain')
-//     res.end(wanted)
-//   })
+  const server = http.createServer((req, res) => {
+    res.setHeader('Content-Type', 'text/plain')
+    res.end(wanted)
+  })
 
-//   t.tearDown(server.close.bind(server))
+  t.tearDown(server.close.bind(server))
 
-//   server.listen(0, () => {
-//     const agent = new Agent()
+  server.listen(0, () => {
+    const agent = new Agent()
 
-//     const origin = `http://localhost:${server.address().port}`
+    const origin = `http://localhost:${server.address().port}`
 
-//     request(origin, { agent })
-//       .then(() => {
-//         t.pass('first request should resolve')
-//       })
-//       .catch(err => {
-//         t.fail(err)
-//       })
+    request(origin, { agent })
+      .then(() => {
+        t.pass('first request should resolve')
+      })
+      .catch(err => {
+        t.fail(err)
+      })
 
-//     const pool = agent.get(origin)
-//     pool.once('connect', () => {
-//       agent.close().then(() => {
-//         request(origin, { agent })
-//           .then(() => {
-//             t.fail('second request should not resolve')
-//           })
-//           .catch(err => {
-//             t.error(err instanceof errors.ClientClosedError)
-//           })
-//       })
-//     })
-//   })
-// })
+    const pool = agent.get(origin)
+    pool.once('connect', () => {
+      agent.close().then(() => {
+        request(origin, { agent })
+          .then(() => {
+            t.fail('second request should not resolve')
+          })
+          .catch(err => {
+            t.error(err instanceof errors.ClientClosedError)
+          })
+      })
+    })
+  })
+})
 
-// test('agent should destroy internal pools', t => {
-//   t.plan(2)
+test('agent should destroy internal pools', t => {
+  t.plan(2)
 
-//   const wanted = 'payload'
+  const wanted = 'payload'
 
-//   const server = http.createServer((req, res) => {
-//     res.setHeader('Content-Type', 'text/plain')
-//     res.end(wanted)
-//   })
+  const server = http.createServer((req, res) => {
+    res.setHeader('Content-Type', 'text/plain')
+    res.end(wanted)
+  })
 
-//   t.tearDown(server.close.bind(server))
+  t.tearDown(server.close.bind(server))
 
-//   server.listen(0, () => {
-//     const agent = new Agent()
+  server.listen(0, () => {
+    const agent = new Agent()
 
-//     const origin = `http://localhost:${server.address().port}`
+    const origin = `http://localhost:${server.address().port}`
 
-//     request(origin, { agent })
-//       .then(() => {
-//         t.fail()
-//       })
-//       .catch(err => {
-//         t.ok(err instanceof errors.ClientDestroyedError)
-//       })
+    request(origin, { agent })
+      .then(() => {
+        t.fail()
+      })
+      .catch(err => {
+        t.ok(err instanceof errors.ClientDestroyedError)
+      })
 
-//     const pool = agent.get(origin)
-//     pool.once('connect', () => {
-//       agent.destroy().then(() => {
-//         request(origin, { agent })
-//           .then(() => {
-//             t.fail()
-//           })
-//           .catch(err => {
-//             t.ok(err instanceof errors.ClientDestroyedError)
-//           })
-//       })
-//     })
-//   })
-// })
+    const pool = agent.get(origin)
+    pool.once('connect', () => {
+      agent.destroy().then(() => {
+        request(origin, { agent })
+          .then(() => {
+            t.fail()
+          })
+          .catch(err => {
+            t.ok(err instanceof errors.ClientDestroyedError)
+          })
+      })
+    })
+  })
+})
 
 test('multiple connections', t => {
   const connections = 3
@@ -158,40 +158,40 @@ test('multiple connections', t => {
   })
 })
 
-// t.test('remove disconnect listeners when destroyed', t => {
-//   t.plan(3)
+test('remove disconnect listeners when destroyed', t => {
+  t.plan(3)
 
-//   const server = http.createServer((req, res) => {
-//     res.writeHead(200, {
-//       Connection: 'keep-alive',
-//       'Keep-Alive': 'timeout=1s'
-//     })
-//     res.end('ok')
-//   })
-//   t.tearDown(server.close.bind(server))
+  const server = http.createServer((req, res) => {
+    res.writeHead(200, {
+      Connection: 'keep-alive',
+      'Keep-Alive': 'timeout=1s'
+    })
+    res.end('ok')
+  })
+  t.tearDown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const origin = `http://localhost:${server.address().port}`
-//     const agent = new Agent()
+  server.listen(0, async () => {
+    const origin = `http://localhost:${server.address().port}`
+    const agent = new Agent()
 
-//     t.tearDown(agent.close.bind(agent))
+    t.tearDown(agent.close.bind(agent))
 
-//     const pool = agent.get(origin)
-//     t.true(pool.listeners('disconnect').length === 1)
+    const pool = agent.get(origin)
+    t.true(pool.listeners('disconnect').length === 1)
 
-//     agent.on('disconnect', () => {
-//       t.true(pool.listeners('disconnect').length === 0)
-//     })
+    agent.on('disconnect', () => {
+      t.true(pool.listeners('disconnect').length === 0)
+    })
 
-//     await request(origin, { agent })
-//       .then(() => {
-//         t.pass('should pass')
-//       })
-//       .catch(err => {
-//         t.fail(err)
-//       })
-//   })
-// })
+    await request(origin, { agent })
+      .then(() => {
+        t.pass('should pass')
+      })
+      .catch(err => {
+        t.fail(err)
+      })
+  })
+})
 
 test('check if pool', async t => {
   t.plan(1)
