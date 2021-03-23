@@ -111,6 +111,6 @@ See [client.pipeline](docs/api/Client.md#clientpipelining) for more details.
 
 TODO: document
 
-### `Client.upgrade(options[, callback])`
+### `undici.upgrade(options[, callback])`
 
 TODO: document
