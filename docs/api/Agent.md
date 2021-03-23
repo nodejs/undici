@@ -107,7 +107,7 @@ Calls `pool.pipeline(opts, factory)` on the pool returned from either the global
 
 See [client.pipeline](docs/api/Client.md#clientpipelining) for more details.
 
-### `undici.connect(options [, callback])`
+### `undici.connect(options[, callback])`
 
 TODO: document
 
