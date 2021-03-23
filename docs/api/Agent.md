@@ -11,7 +11,7 @@ Returns: `Agent`
 
 Returns a new Agent instance used for dispatching requests.
 
-### `Agent.get(options)`
+### `Agent.get(origin)`
 
 * origin `string` - A origin to be retrieved from the Agent.
 
