@@ -289,7 +289,7 @@ test('backpressure algorithm', (t) => {
     }
   }
 
-  const Pool = proxyquire('../lib/pool', {
+  const Pool = proxyquire('../lib/client-pool', {
     './core/client': FakeClient
   })
 

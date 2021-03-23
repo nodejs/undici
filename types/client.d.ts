@@ -80,6 +80,8 @@ declare namespace Client {
     maxHeaderSize?: number;
     /** The amount of time the parser will wait to receive the complete HTTP headers (Node 14 and above only). Default: `30e3` milliseconds (30s). */
     headersTimeout?: number;
+    /** If `true`, an error is thrown when the request content-length header doesn't match the length of the request body. Default: `true` */
+    strictContentLength?: boolean
   }
 
   export interface DispatchOptions {

@@ -9,7 +9,7 @@ declare class Pool extends Client {
 
 declare namespace Pool {
   export interface Options extends Client.Options {
-    /** The number of clients to create. Default `100`. */
+    /** The max number of clients to create. `null` if no limit. Default `null`. */
     connections?: number
   }
 }
