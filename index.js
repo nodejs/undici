@@ -34,7 +34,7 @@ function dispatchFromAgent (fn) {
     }
 
     const { origin, pathname, search } = util.parseURL(url)
-    const path = search ? `${pathname || '/'}${search || ''}` : pathname
+    const path = `${pathname || '/'}${search || ''}`
 
     return fn.call(agent, { ...opts, origin, method, path }, ...additionalArgs)
   }
