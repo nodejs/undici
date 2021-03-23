@@ -2,7 +2,10 @@
 
 ## `new undici.Agent(opts)`
 
-TODO: document opts (e.g. factory).
+Arguments:
+
+* **factory** - Default: `(origin, opts) => new Pool(origin, opts)`
+* // TODO: document rest opts?
 
 Returns: `Agent`
 
@@ -10,10 +13,10 @@ Returns a new Agent instance used for dispatching requests.
 
 ### `Agent.get(options)`
 
-* origin `string` - A pool origin to be retrieved from the Agent.
-Dispatches a request.
+* origin `string` - A origin to be retrieved from the Agent.
 
-This method retrieves Pool instances from the Agent. If the pool does not exist it is automatically added.
+This method retrieves Client instances from the Agent. If the client does not exist it is automatically added by calling
+the `factory` method passed through the `Agent` constructor.
 
 ### `Agent.dispatch(options, handlers)`
 
@@ -103,6 +106,7 @@ See [client.pipeline](docs/api/Client.md#clientpipelining) for details on the `o
 Calls `pool.pipeline(opts, factory)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
 
 See [client.pipeline](docs/api/Client.md#clientpipelining) for more details.
+
 ### `undici.connect(options [, callback])`
 
 TODO: document
