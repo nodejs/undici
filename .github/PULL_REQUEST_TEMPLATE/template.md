@@ -13,11 +13,11 @@ justifiable with the above section. If it is, you may omit this section. -->
 
 ### Features
 
-<!-- List the new features here (if applicable) -->
+<!-- List the new features here (if applicable), or write N/A if not -->
 
 ### Bug Fixes
 
-<!-- List the fixed bugs here (if applicable) -->
+<!-- List the fixed bugs here (if applicable), or write N/A if not -->
 
 ### Breaking Changes and Deprecations
 
@@ -25,6 +25,8 @@ justifiable with the above section. If it is, you may omit this section. -->
 deprecations (removed features) here -->
 
 ## Status
+
+KEY: S = Skipped, x = complete
 
 - [ ] Tested
 - [ ] Benchmarked (**optional**)
