@@ -386,7 +386,8 @@ test('Disable request timeout', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      headersTimeout: 0
+      headersTimeout: 0,
+      connectTimeout: 0
     })
     t.teardown(client.destroy.bind(client))
 
@@ -421,7 +422,8 @@ test('Disable request timeout for a single request', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      headersTimeout: 0
+      headersTimeout: 0,
+      connectTimeout: 0
     })
     t.teardown(client.destroy.bind(client))
 
@@ -455,7 +457,7 @@ test('stream timeout', (t) => {
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, { connectTimeout: 0 })
     t.teardown(client.destroy.bind(client))
 
     client.stream({
