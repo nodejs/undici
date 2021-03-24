@@ -1,3 +1,5 @@
+'use strict'
+
 const { Readable, Writable } = require('stream')
 
 function createReadable (data) {
