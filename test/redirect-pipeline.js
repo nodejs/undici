@@ -1,7 +1,7 @@
 'use strict'
 
 const t = require('tap')
-const { pipeline: undiciPipeline, RedirectAgent } = require('..')
+const { pipeline: undiciPipeline } = require('..')
 const { pipeline: streamPipelineCb } = require('stream')
 const { promisify } = require('util')
 const { createReadable, createWritable } = require('./utils/stream')
@@ -37,7 +37,7 @@ t.test('should not follow redirects when using RedirectAgent within pipeline', a
 
   await streamPipeline(
     createReadable('REQUEST'),
-    undiciPipeline(`http://${serverRoot}/`, { agent: new RedirectAgent() }, ({ statusCode, headers, body }) => {
+    undiciPipeline(`http://${serverRoot}/`, { maxRedirections: 1 }, ({ statusCode, headers, body }) => {
       t.strictEqual(statusCode, 302)
       t.strictEqual(headers.location, `http://${serverRoot}/302/1`)
 

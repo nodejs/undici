@@ -76,6 +76,7 @@ TODO: document
 
 * url `string | URL | object`
 * opts `{ agent: Agent } & client.request.opts`
+* // TODO: document maxRedirections?
 
 `url` may contain path. `opts` may not contain path. `opts.method` is `GET` by default.
 Calls `pool.request(opts)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
@@ -87,6 +88,7 @@ Returns a promise with the result of the `request` method.
 * url `string | URL | object`
 * opts `{ agent: Agent } & client.stream.opts`
 * factory `client.stream.factory`
+* // TODO: document maxRedirections?
 
 `url` may contain path. `opts` may not contain path.
 See [client.stream](docs/api/Client.md#clientstreamoptions-factory--callback) for details on the `opts` and `factory` arguments.
@@ -98,6 +100,7 @@ Result is returned in the factory function. See [client.stream](docs/api/Client.
 * url `string | URL | object`
 * opts `{ agent: Agent } & client.pipeline.opts`
 * handler `client.pipeline.handler`
+* // TODO: document maxRedirections?
 
 `url` may contain path. `opts` may not contain path.
 

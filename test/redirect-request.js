@@ -1,7 +1,7 @@
 'use strict'
 
 const t = require('tap')
-const { request, RedirectAgent } = require('..')
+const { request } = require('..')
 const {
   startRedirectingServer,
   startRedirectingWithBodyServer,
@@ -33,7 +33,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
   const server = await startRedirectingServer(t)
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${server}/300`, {
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -65,7 +65,7 @@ t.test('should follow redirection after a HTTP 301', async t => {
   const { statusCode, headers, body: bodyStream } = await request(`http://${server}/301`, {
     method: 'POST',
     body: 'REQUEST',
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -86,7 +86,7 @@ t.test('should follow redirection after a HTTP 302', async t => {
   const { statusCode, headers, body: bodyStream } = await request(`http://${server}/302`, {
     method: 'PUT',
     body: Buffer.from('REQUEST'),
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -107,7 +107,7 @@ t.test('should follow redirection after a HTTP 303 changing method to GET', asyn
   const { statusCode, headers, body: bodyStream } = await request(`http://${server}/303`, {
     method: 'PATCH',
     body: 'REQUEST',
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -143,7 +143,7 @@ t.test('should remove Host and request body related headers when following HTTP 
       'X-Bar',
       '4'
     ],
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -172,7 +172,7 @@ t.test('should remove Host and request body related headers when following HTTP 
       Host: 'localhost',
       'X-Bar': '4'
     },
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -192,7 +192,7 @@ t.test('should follow redirection after a HTTP 307', async t => {
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${server}/307`, {
     method: 'DELETE',
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -212,7 +212,7 @@ t.test('should follow redirection after a HTTP 308', async t => {
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${server}/308`, {
     method: 'OPTIONS',
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -231,7 +231,7 @@ t.test('should ignore HTTP 3xx response bodies', async t => {
   const server = await startRedirectingWithBodyServer(t)
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${server}/`, {
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -255,7 +255,6 @@ t.test('should follow a redirect chain up to the allowed number of times', async
   const server = await startRedirectingServer(t)
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${server}/300`, {
-    agent: new RedirectAgent(),
     maxRedirections: 2
   })
 
@@ -281,7 +280,7 @@ t.test('should follow redirections when going cross origin', async t => {
 
   const { statusCode, headers, body: bodyStream } = await request(`http://${server1}`, {
     method: 'POST',
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -315,7 +314,7 @@ t.test('when a Location response header is NOT present', async t => {
       let body = ''
 
       const { statusCode, headers, body: bodyStream } = await request(`http://${server}/${code}`, {
-        agent: new RedirectAgent()
+        maxRedirections: 10
       })
 
       for await (const b of bodyStream) {
@@ -335,7 +334,6 @@ t.test('should not allow invalid maxRedirections arguments', async t => {
   try {
     await request('http://localhost:0', {
       method: 'GET',
-      agent: new RedirectAgent(),
       maxRedirections: 'INVALID'
     })
 
@@ -354,7 +352,7 @@ t.test('should not follow redirects when using Readable request bodies', async t
   const { statusCode, headers, body: bodyStream } = await request(`http://${server}/301`, {
     method: 'POST',
     body: createReadable('REQUEST'),
-    agent: new RedirectAgent()
+    maxRedirections: 10
   })
 
   for await (const b of bodyStream) {
@@ -372,7 +370,7 @@ t.test('should handle errors (callback)', t => {
   request(
     'http://localhost:0',
     {
-      agent: new RedirectAgent()
+      maxRedirections: 10
     },
     error => {
       t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
@@ -384,7 +382,7 @@ t.test('should handle errors (promise)', async t => {
   t.plan(1)
 
   try {
-    await request('http://localhost:0', { agent: new RedirectAgent() })
+    await request('http://localhost:0', { maxRedirections: 10 })
     throw new Error('Did not throw')
   } catch (error) {
     t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)

@@ -4,7 +4,6 @@ const Client = require('./lib/core/client')
 const errors = require('./lib/core/errors')
 const Pool = require('./lib/client-pool')
 const { Agent, getGlobalAgent, setGlobalAgent } = require('./lib/agent')
-const { RedirectAgent } = require('./lib/agent-redirect')
 const util = require('./lib/core/util')
 const { InvalidArgumentError } = require('./lib/core/errors')
 const api = require('./lib/api')
@@ -23,7 +22,6 @@ module.exports.Client = Client
 module.exports.errors = errors
 
 module.exports.Agent = Agent
-module.exports.RedirectAgent = RedirectAgent
 module.exports.setGlobalAgent = setGlobalAgent
 module.exports.getGlobalAgent = getGlobalAgent
 

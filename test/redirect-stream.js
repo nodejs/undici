@@ -1,7 +1,7 @@
 'use strict'
 
 const t = require('tap')
-const { stream, RedirectAgent } = require('..')
+const { stream } = require('..')
 const {
   startRedirectingServer,
   startRedirectingWithBodyServer,
@@ -34,7 +34,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
 
   await stream(
     `http://${server}/300`,
-    { opaque: body, agent: new RedirectAgent() },
+    { opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 200)
       t.notOk(headers.location)
@@ -65,7 +65,7 @@ t.test('should follow redirection after a HTTP 301', async t => {
 
   await stream(
     `http://${server}/301`,
-    { method: 'POST', body: 'REQUEST', opaque: body, agent: new RedirectAgent() },
+    { method: 'POST', body: 'REQUEST', opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 200)
       t.notOk(headers.location)
@@ -85,7 +85,7 @@ t.test('should follow redirection after a HTTP 302', async t => {
 
   await stream(
     `http://${server}/302`,
-    { method: 'PUT', body: Buffer.from('REQUEST'), opaque: body, agent: new RedirectAgent() },
+    { method: 'PUT', body: Buffer.from('REQUEST'), opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 200)
       t.notOk(headers.location)
@@ -105,7 +105,7 @@ t.test('should follow redirection after a HTTP 303 changing method to GET', asyn
 
   await stream(
     `http://${server}/303`,
-    { opaque: body, agent: new RedirectAgent() },
+    { opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 200)
       t.notOk(headers.location)
@@ -144,7 +144,7 @@ t.test('should remove Host and request body related headers when following HTTP 
         '4'
       ],
       opaque: body,
-      agent: new RedirectAgent()
+      maxRedirections: 10
     },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 200)
@@ -177,7 +177,7 @@ t.test('should remove Host and request body related headers when following HTTP 
         'X-Bar': '4'
       },
       opaque: body,
-      agent: new RedirectAgent()
+      maxRedirections: 10
     },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 200)
@@ -198,7 +198,7 @@ t.test('should follow redirection after a HTTP 307', async t => {
 
   await stream(
     `http://${server}/307`,
-    { method: 'DELETE', opaque: body, agent: new RedirectAgent() },
+    { method: 'DELETE', opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 200)
       t.notOk(headers.location)
@@ -218,7 +218,7 @@ t.test('should follow redirection after a HTTP 308', async t => {
 
   await stream(
     `http://${server}/308`,
-    { method: 'OPTIONS', opaque: body, agent: new RedirectAgent() },
+    { method: 'OPTIONS', opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 200)
       t.notOk(headers.location)
@@ -236,7 +236,7 @@ t.test('should ignore HTTP 3xx response bodies', async t => {
   const body = []
   const server = await startRedirectingWithBodyServer(t)
 
-  await stream(`http://${server}/`, { opaque: body, agent: new RedirectAgent() }, ({ statusCode, headers, opaque }) => {
+  await stream(`http://${server}/`, { opaque: body, maxRedirections: 10 }, ({ statusCode, headers, opaque }) => {
     t.strictEqual(statusCode, 200)
     t.notOk(headers.location)
     /*
@@ -259,7 +259,7 @@ t.test('should follow a redirect chain up to the allowed number of times', async
 
   await stream(
     `http://${server}/300`,
-    { opaque: body, agent: new RedirectAgent(), maxRedirections: 2 },
+    { opaque: body, maxRedirections: 2 },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 300)
       t.strictEqual(headers.location, `http://${server}/300/3`)
@@ -284,7 +284,7 @@ t.test('should follow redirections when going cross origin', async t => {
 
   await stream(
     `http://${server1}`,
-    { method: 'POST', opaque: body, agent: new RedirectAgent() },
+    { method: 'POST', opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 200)
       t.notOk(headers.location)
@@ -319,7 +319,7 @@ t.test('when a Location response header is NOT present', async t => {
 
       await stream(
         `http://${server}/${code}`,
-        { opaque: body, agent: new RedirectAgent() },
+        { opaque: body, maxRedirections: 10 },
         ({ statusCode, headers, opaque }) => {
           t.strictEqual(statusCode, code)
           t.notOk(headers.location)
@@ -345,7 +345,7 @@ t.test('should not follow redirects when using Readable request bodies', async t
       method: 'POST',
       body: createReadable('REQUEST'),
       opaque: body,
-      agent: new RedirectAgent()
+      maxRedirections: 10
     },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 302)
@@ -365,7 +365,7 @@ t.test('should handle errors (callback)', t => {
 
   stream(
     'http://localhost:0',
-    { opaque: body, agent: new RedirectAgent() },
+    { opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
       return createWritable(opaque)
     },
@@ -384,7 +384,7 @@ t.test('should handle errors (promise)', async t => {
   try {
     await stream(
       'http://localhost:0',
-      { opaque: body, agent: new RedirectAgent() },
+      { opaque: body, maxRedirections: 10 },
       ({ statusCode, headers, opaque }) => {
         return createWritable(opaque)
       }
