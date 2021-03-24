@@ -6,7 +6,7 @@ if (!semver.satisfies(process.version, '>= v14.13.0 || ^12.20.0')) {
 } else {
   ;(async () => {
     try {
-      await import('./esm-wrapper.mjs')
+      await import('./utils/esm-wrapper.mjs')
     } catch (e) {
       if (e.message === 'Not supported') {
         require('tap') // shows skipped

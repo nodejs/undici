@@ -1,8 +1,6 @@
-import tap from 'tap'
-
 import { createServer } from 'http'
-
-import { Client, errors, Pool, Agent, request, stream, pipeline, setGlobalAgent } from '../index.js'
+import tap from 'tap'
+import { Agent, Client, errors, pipeline, Pool, request, setGlobalAgent, stream } from '../../index.js'
 
 const { test } = tap
 
