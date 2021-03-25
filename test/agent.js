@@ -484,3 +484,16 @@ test('fails with invalid URL', t => {
   t.throw(() => pipeline({}), InvalidArgumentError, 'throws on missing url.origin argument')
   t.throw(() => pipeline({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
 })
+
+test('constructor validations', t => {
+  t.plan(2)
+  t.throw(() => new Agent({ factory: 'ASD' }), InvalidArgumentError, 'throws on invalid opts argument')
+  t.throw(() => new Agent({ maxRedirections: 'ASD' }), InvalidArgumentError, 'throws on invalid opts argument')
+})
+
+test('dispatch validations', t => {
+  const agent = new Agent()
+
+  t.plan(1)
+  t.throw(() => agent.dispatch('ASD'), InvalidArgumentError, 'throws on invalid opts argument')
+})

@@ -25,7 +25,7 @@
     "lint": "standard | snazzy",
     "test": "tap test/*.js --no-coverage && jest test/jest/test",
     "test:typescript": "tsd",
-    "coverage": "standard | snazzy && tap test/*.js",
+    "coverage": "standard | snazzy && tap --no-browser --coverage-report=lcovonly --coverage-report=html test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\"",
     "serve-website": "docsify serve .",

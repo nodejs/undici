@@ -33,7 +33,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
   const server = await startRedirectingServer(t)
 
   await stream(
-    `http://${server}/300`,
+    `http://${server}/300?key=value`,
     { opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 200)
@@ -54,7 +54,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
     }
   )
 
-  t.strictEqual(body.join(''), `GET :: connection@keep-alive host@${server}`)
+  t.strictEqual(body.join(''), `GET key=value :: connection@keep-alive host@${server}`)
 })
 
 t.test('should follow redirection after a HTTP 301', async t => {

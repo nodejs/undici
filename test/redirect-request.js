@@ -2,6 +2,9 @@
 
 const t = require('tap')
 const { request } = require('..')
+const RedirectHandler = require('../lib/agent/redirect')
+const { InvalidArgumentError } = require('../lib/core/errors')
+const { nop } = require('../lib/core/util')
 const {
   startRedirectingServer,
   startRedirectingWithBodyServer,
@@ -32,7 +35,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
   let body = ''
   const server = await startRedirectingServer(t)
 
-  const { statusCode, headers, body: bodyStream } = await request(`http://${server}/300`, {
+  const { statusCode, headers, body: bodyStream } = await request(`http://${server}/300?key=value`, {
     maxRedirections: 10
   })
 
@@ -53,7 +56,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
       `http://${server}/300/4`
     ]
   */
-  t.strictEqual(body, `GET :: connection@keep-alive host@${server}`)
+  t.strictEqual(body, `GET key=value :: connection@keep-alive host@${server}`)
 })
 
 t.test('should follow redirection after a HTTP 301', async t => {
@@ -387,4 +390,14 @@ t.test('should handle errors (promise)', async t => {
   } catch (error) {
     t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
   }
+})
+
+t.test('should complain for invalid headers', async t => {
+  t.plan(1)
+
+  const handler = new RedirectHandler('AGENT', { headers: 'ASD', origin: 'http://localhost' })
+
+  t.throw(() => {
+    handler.onHeaders(301, ['location', 'http://localhost'], nop)
+  }, InvalidArgumentError, 'throws on invalid headers')
 })
