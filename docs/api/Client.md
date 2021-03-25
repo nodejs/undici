@@ -6,63 +6,6 @@ A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection. Pipelining i
 
 Imports: `http`, `stream`, `events`
 
-- [Class: Client](#class-client)
-  - [`new Client(url, [options])`](#new-clienturl-options)
-    - [Paramter: `ClientOptions`](#parameter-clientoptions)
-    - [Example - Basic Client instantiation](#example---basic-client-instantiation)
-  - [Instance Methods](#instance-methods)
-    - [`Client.close([ callback ])`](#clientclose-callback-)
-      - [Example - Request resolves before Client closes](#example---request-resolves-before-client-closes)
-    - [`Client.connect(options [, callback])`](#clientconnectoptions--callback)
-      - [Parameter: `ConnectOptions`](#parameter-connectoptions)
-      - [Parameter: `ConnectData`](#parameter-connectdata)
-      - [Example - Connect request with echo](#example---connect-request-with-echo)
-    - [`Client.destroy(error)`](#clientdestroyerror)
-      - [Example - Request is aborted when Client is destroyed](#example---request-is-aborted-when-client-is-destroyed)
-    - [`Client.dispatch(options, handlers)`](#clientdispatchoptions-handlers)
-      - [Parameter: `DispatchOptions`](#parameter-dispatchoptions)
-      - [Parameter: `DispatchHandlers`](#parameter-dispatchhandlers)
-      - [Example 1 - Dispatch GET request](#example-1---dispatch-get-request)
-      - [Example 2 - Dispatch Upgrade Request](#example-2---dispatch-upgrade-request)
-    - [`Client.pipeline(options, handler)`](#clientpipelineoptions-handler)
-      - [Parameter: PipelineOptions](#parameter-pipelineoptions)
-      - [Parameter: PipelineHandlerData](#parameter-pipelinehandlerdata)
-      - [Example 1 - Pipeline Echo](#example-1---pipeline-echo)
-    - [`Client.request(options [, callback])`](#clientrequestoptions--callback)
-      - [Parameter: `RequestOptions`](#parameter-requestoptions)
-      - [Parameter: `ResponseData`](#parameter-responsedata)
-      - [Example 1 - Basic GET Request](#example-1---basic-get-request)
-      - [Example 2 - Aborting a request](#example-2---aborting-a-request)
-    - [`Client.stream(options, factory [, callback])`](#clientstreamoptions-factory--callback)
-      - [Parameter: `StreamFactoryData`](#parameter-streamfactorydata)
-      - [Parameter: `StreamData`](#parameter-streamdata)
-      - [Example 1 - Basic GET stream request](#example-1---basic-get-stream-request)
-      - [Example 2 - Stream to Fastify Response](#example-2---stream-to-fastify-response)
-    - [`Client.upgrade(options[, callback])`](#clientupgradeoptions-callback)
-      - [Parameter: `UpgradeOptions`](#parameter-upgradeoptions)
-      - [Parameter: `UpgradeData`](#parameter-upgradedata)
-      - [Example 1 - Basic Upgrade Request](#example-1---basic-upgrade-request)
-  - [Instance Properties](#instance-properties)
-    - [`Client.busy`](#clientbusy)
-    - [`Client.closed`](#clientclosed)
-    - [`Client.connected`](#clientconnected)
-    - [`Client.destroyed`](#clientdestroyed)
-    - [`Client.pending`](#clientpending)
-    - [`Client.pipelining`](#clientpipelining)
-    - [`Client.running`](#clientrunning)
-    - [`Client.size`](#clientsize)
-    - [`Client.url`](#clienturl)
-  - [Instance Events](#instance-events)
-    - [Event: `'connect'`](#event-connect)
-      - [Example - Client connect event](#example---client-connect-event)
-    - [Event: `'disconnect'`](#event-disconnect)
-      - [Example - Client disconnect event](#example---client-disconnect-event)
-    - [Event: `'drain'`](#event-drain)
-      - [Example - Client drain event](#example---client-drain-event)
-  - [Parameter: `UndiciHeaders`](#parameter-undiciheaders)
-    - [Example 1 - Object](#example-1---object)
-    - [Example 2 - Array](#example-2---array)
-
 ## `new Client(url, [options])`
 
 Arguments:
@@ -83,6 +26,7 @@ Returns: `Client`
 * **pipelining** `number | null` (optional) - Default: `1` - The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Carefully consider your workload and environment before enabling concurrent requests as pipelining may reduce performance if used incorrectly. Pipelining is sensitive to network stack settings as well as head of line blocking caused by e.g. long running requests. Set to `0` to disable keep-alive connections.
 * **socketPath** `string | null` (optional) - Default: `null` - An IPC endpoint, either Unix domain socket or Windows named pipe.
 * **tls** `TlsOptions | null` (optional) - Default: `null` - An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
+* **strictContentLength** `Boolean` (optional) - Default: `true` - Whether to treat request content length mismatches as errors. If true, an error is thrown when the request content-length header doesn't match the length of the request body.
 
 ### Example - Basic Client instantiation
 
@@ -97,7 +41,7 @@ const client = new Client('http://localhost:3000')
 
 ## Instance Methods
 
-### `Client.close([ callback ])` 
+### `Client.close([ callback ])`
 
 Closes the client and gracefully waits for enqueued requests to complete before resolving.
 

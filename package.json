@@ -2,23 +2,15 @@
   "name": "undici",
   "version": "3.3.1",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "module": "wrapper.mjs",
-  "scripts": {
-    "build": "node build/llhttp.js",
-    "lint": "standard | snazzy",
-    "test": "tap test/*.js --no-coverage && jest test/jest/test",
-    "test:typescript": "tsd",
-    "coverage": "standard | snazzy && tap test/*.js",
-    "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
-    "prebench": "node -e \"try { require('fs').unlinkSync(require('path').join(require('os').tmpdir(), 'undici.sock')) } catch (_) {}\"",
-    "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\""
+  "homepage": "https://github.com/nodejs/undici#readme",
+  "bugs": {
+    "url": "https://github.com/nodejs/undici/issues"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nodejs/undici.git"
   },
+  "license": "MIT",
   "author": "Matteo Collina <hello@matteocollina.com>",
   "contributors": [
     {
@@ -27,30 +19,40 @@
       "author": true
     }
   ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/nodejs/undici/issues"
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "node build/llhttp.js",
+    "lint": "standard | snazzy",
+    "test": "tap test/*.js --no-coverage && jest test/jest/test",
+    "test:typescript": "tsd",
+    "coverage": "standard | snazzy && tap test/*.js",
+    "prebench": "node -e \"try { require('fs').unlinkSync(require('path').join(require('os').tmpdir(), 'undici.sock')) } catch (_) {}\"",
+    "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
+    "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\"",
+    "serve-website": "docsify serve .",
+    "prepare": "husky install"
   },
-  "homepage": "https://github.com/nodejs/undici#readme",
   "devDependencies": {
     "@sinonjs/fake-timers": "^6.0.1",
     "@types/node": "^14.6.2",
     "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
     "concurrently": "^5.2.0",
+    "docsify-cli": "^4.4.2",
     "https-pem": "^2.0.0",
+    "husky": "^5.2.0",
     "jest": "^26.4.0",
     "pre-commit": "^1.2.2",
     "proxy": "^1.0.2",
     "proxyquire": "^2.0.1",
+    "semver": "^5.7.1",
+    "sinon": "^9.2.4",
     "snazzy": "^8.0.0",
     "standard": "^14.3.4",
     "tap": "^14.10.8",
     "tsd": "^0.13.1"
   },
-  "pre-commit": [
-    "coverage"
-  ],
   "standard": {
     "ignore": [
       "lib/llhttp/constants.js"
