@@ -21,6 +21,12 @@
   ],
   "main": "index.js",
   "types": "index.d.ts",
+  "files": [
+    "index.(js|d.ts)",
+    "lib",
+    "types",
+    "docs"
+  ],
   "scripts": {
     "prebuild-wasm": "docker build -t llhttp_wasm_builder .",
     "build-wasm": "node build_wasm.js --docker",
