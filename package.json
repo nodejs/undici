@@ -2,6 +2,23 @@
   "name": "undici",
   "version": "3.3.1",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
+  "homepage": "https://github.com/nodejs/undici#readme",
+  "bugs": {
+    "url": "https://github.com/nodejs/undici/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nodejs/undici.git"
+  },
+  "license": "MIT",
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "contributors": [
+    {
+      "name": "Robert Nagy",
+      "url": "https://github.com/ronag",
+      "author": true
+    }
+  ],
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
@@ -17,25 +34,9 @@
     "coverage": "standard | snazzy && tap test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\"",
-    "serve-website": "docsify serve ."
+    "serve-website": "docsify serve .",
+    "prepare": "husky install"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nodejs/undici.git"
-  },
-  "author": "Matteo Collina <hello@matteocollina.com>",
-  "contributors": [
-    {
-      "name": "Robert Nagy",
-      "url": "https://github.com/ronag",
-      "author": true
-    }
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/nodejs/undici/issues"
-  },
-  "homepage": "https://github.com/nodejs/undici#readme",
   "devDependencies": {
     "@sinonjs/fake-timers": "^6.0.1",
     "@types/node": "^14.6.2",
@@ -44,20 +45,18 @@
     "concurrently": "^5.2.0",
     "docsify-cli": "^4.4.2",
     "https-pem": "^2.0.0",
+    "husky": "^5.2.0",
     "jest": "^26.4.0",
     "pre-commit": "^1.2.2",
     "proxy": "^1.0.2",
     "proxyquire": "^2.0.1",
-    "sinon": "^9.2.4",
     "semver": "^5.7.1",
+    "sinon": "^9.2.4",
     "snazzy": "^8.0.0",
     "standard": "^14.3.4",
     "tap": "^14.10.8",
     "tsd": "^0.13.1"
   },
-  "pre-commit": [
-    "coverage"
-  ],
   "tsd": {
     "directory": "test/types",
     "compilerOptions": {
