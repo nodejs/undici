@@ -22,11 +22,14 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
+    "prebuild-wasm": "docker build -t llhttp_wasm_builder .",
+    "build-wasm": "node build_wasm.js --docker",
     "lint": "standard | snazzy",
     "test": "tap test/*.js --no-coverage && jest test/jest/test",
     "test:typescript": "tsd",
     "coverage": "standard | snazzy && tap test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
+    "prebench": "node -e \"try { require('fs').unlinkSync(require('path').join(require('os').tmpdir(), 'undici.sock')) } catch (_) {}\"",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\"",
     "serve-website": "docsify serve .",
     "prepare": "husky install"
@@ -50,6 +53,12 @@
     "standard": "^14.3.4",
     "tap": "^14.10.8",
     "tsd": "^0.13.1"
+  },
+  "standard": {
+    "ignore": [
+      "lib/llhttp/constants.js",
+      "lib/llhttp/utils.js"
+    ]
   },
   "tsd": {
     "directory": "test/types",
