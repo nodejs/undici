@@ -2,7 +2,6 @@
 
 const proxyquire = require('proxyquire')
 const { test } = require('tap')
-const undici = require('..')
 const { Client, Pool, errors } = require('..')
 const { createServer } = require('http')
 const { EventEmitter } = require('events')
@@ -33,10 +32,10 @@ test('connect/disconnect event(s)', (t) => {
     })
     t.tearDown(pool.close.bind(pool))
 
-    pool.on('connect', (client) => {
+    pool.on('connect', (origin, [pool, client]) => {
       t.strictEqual(client instanceof Client, true)
     })
-    pool.on('disconnect', (client, error) => {
+    pool.on('disconnect', (origin, [pool, client], error) => {
       t.true(client instanceof Client)
       t.true(error instanceof errors.InformationalError)
       t.strictEqual(error.code, 'UND_ERR_INFO')
@@ -67,7 +66,7 @@ test('basic get', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, async () => {
-    const client = undici(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
     t.strictEqual(client.url.origin, `http://localhost:${server.address().port}`)
@@ -115,7 +114,7 @@ test('URL as arg', (t) => {
   server.listen(0, async () => {
     const url = new URL('http://localhost')
     url.port = server.address().port
-    const client = undici(url)
+    const client = new Pool(url)
     t.tearDown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
@@ -152,7 +151,7 @@ test('basic get error async/await', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, async () => {
-    const client = undici(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
     await client.request({ path: '/', method: 'GET' })
@@ -221,7 +220,7 @@ test('stream get error async/await', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, async () => {
-    const client = undici(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
     await client.stream({ path: '/', method: 'GET' }, () => {
@@ -245,7 +244,7 @@ test('pipeline get', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, async () => {
-    const client = undici(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://localhost:${server.address().port}`)
     t.tearDown(client.destroy.bind(client))
 
     const bufs = []
@@ -268,48 +267,46 @@ test('backpressure algorithm', (t) => {
   const seen = []
   let total = 0
 
+  let writeMore = true
+
   class FakeClient extends EventEmitter {
     constructor () {
       super()
 
       this.id = total++
-      this._busy = false
     }
 
-    get busy () {
-      return this._busy
-    }
-
-    get connected () {
-      return true
-    }
-
-    dispatch (req, cb) {
-      seen.push({ req, cb, client: this, id: this.id })
+    dispatch (req, handler) {
+      seen.push({ req, client: this, id: this.id })
+      return writeMore
     }
   }
 
-  const Pool = proxyquire('../lib/client-pool', {
-    './core/client': FakeClient
+  const Pool = proxyquire('../lib/pool', {
+    './client': FakeClient
   })
 
-  const noopHandler = {}
+  const noopHandler = {
+    onError (err) {
+      throw err
+    }
+  }
 
-  const pool = new Pool('http://notanhost')
+  const pool = new Pool('http://notahost')
 
   pool.dispatch({}, noopHandler)
   pool.dispatch({}, noopHandler)
 
   const d1 = seen.shift() // d1 = c0
   t.strictEqual(d1.id, 0)
-  const d2 = seen.shift() // d1 = c0
-  t.strictEqual(d1.id, 0)
+  const d2 = seen.shift() // d2 = c0
+  t.strictEqual(d2.id, 0)
 
   t.strictEqual(d1.id, d2.id)
 
-  pool.dispatch({}, noopHandler) // d3 = c0
+  writeMore = false
 
-  d1.client._busy = true
+  pool.dispatch({}, noopHandler) // d3 = c0
 
   pool.dispatch({}, noopHandler) // d4 = c1
 
@@ -321,9 +318,13 @@ test('backpressure algorithm', (t) => {
   t.strictEqual(d3.id, d2.id)
   t.notStrictEqual(d3.id, d4.id)
 
+  writeMore = true
+
+  d4.client.emit('drain', new URL('http://notahost'))
+
   pool.dispatch({}, noopHandler) // d5 = c1
 
-  d1.client._busy = false
+  d3.client.emit('drain', new URL('http://notahost'))
 
   pool.dispatch({}, noopHandler) // d6 = c0
 
@@ -352,7 +353,7 @@ test('busy', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, async () => {
-    const client = undici(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 2,
       pipelining: 2
     })

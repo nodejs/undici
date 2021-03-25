@@ -2,7 +2,7 @@
 
 const t = require('tap')
 const { request } = require('..')
-const RedirectHandler = require('../lib/agent/redirect')
+const RedirectHandler = require('../lib/handler/redirect')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { nop } = require('../lib/core/util')
 const {

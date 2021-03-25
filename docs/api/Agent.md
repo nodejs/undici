@@ -1,119 +1,95 @@
 # Agent
 
-## `new undici.Agent(opts)`
+Extends: `undici.Dispatcher`
+
+Agent allow dispatching requests against multiple different origins.
+
+Requests are not guaranteed to be dispatched in order of invocation.
+
+## `new undici.Agent([options])`
 
 Arguments:
 
-* **factory** - Default: `(origin, opts) => new Pool(origin, opts)`
-* // TODO: document rest opts?
+* **options** `AgentOptions` (optional)
 
 Returns: `Agent`
 
-Returns a new Agent instance used for dispatching requests.
+### Parameter: `AgentOptions`
 
-### `Agent.get(origin)`
+Extends: [`ClientOptions`](docs/api/Pool.md#parameter-pooloptions)
 
-* origin `string` - A origin to be retrieved from the Agent.
+* **factory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Pool(origin, opts)` 
+* **maxRedirections** `Integer` - Default: `0`.
 
-This method retrieves Client instances from the Agent. If the client does not exist it is automatically added by calling
-the `factory` method passed through the `Agent` constructor.
+## Instance Properties
+
+### `Agent.closed`
+
+Implements [Client.closed](docs/api/Client.md#clientclosed)
+
+### `Agent.connected`
+
+Implements [Client.connected](docs/api/Client.md#clientconnected)
+
+### `Agent.destroyed`
+
+Implements [Client.destroyed](docs/api/Client.md#clientdestroyed)
+
+### `Agent.pending`
+
+Implements [Client.pending](docs/api/Client.md#clientpending)
+
+### `Agent.running`
+
+Implements [Client.running](docs/api/Client.md#clientrunning)
+
+### `Agent.size`
+
+Implements [Client.size](docs/api/Client.md#clientsize)
+
+## Instance Methods
+
+### `Agent.close([callback])`
+
+Implements [`Dispatcher.close([callback])`](docs/api/Dispatcher.md#clientclose-callback-).
+
+### `Agent.destroy([error, callback])`
+
+Implements [`Dispatcher.destroy([error, callback])`](docs/api/Dispatcher.md#dispatcher-callback-).
+
+### `Agent.dispatch(options, handlers: AgentDispatchOptions)`
+
+Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
+
+#### Parameter: `AgentDispatchOptions`
+
+Extends: [`DispatchOptions``](docs/api/Dispatcher.md#parameter-dispatchoptions)
+
+* **origin** `string | URL`
+* **maxRedirections** `Integer`.
+
+Implements [`Dispatcher.destroy([error, callback])`](docs/api/Dispatcher.md#dispatcher-callback-).
+
+### `Agent.connect(options[, callback])`
+
+See [`Dispatcher.connect(options[, callback])`](docs/api/Dispatcher.md#clientconnectoptions--callback).
 
 ### `Agent.dispatch(options, handlers)`
 
-Dispatches a request.
+Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
 
-This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this.
+### `Agent.pipeline(options, handler)`
 
-Arguments:
+See [`Dispatcher.pipeline(options, handler)`](docs/api/Dispatcher.md#clientpipelineoptions-handler).
 
-* **options** `DispatchOptions`
-* **handlers** `DispatchHandlers`
+### `Agent.request(options[, callback])`
 
-Returns: `void`
+See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
 
-#### Parameter: `DispatchOptions`
+### `Agent.stream(options, factory[, callback])`
 
-* **origin** `string | URL`
-* **path** `string`
-* **method** `string`
-* **body** `string | Buffer | Uint8Array | stream.Readable | null` (optional) - Default: `null`
-* **headers** `UndiciHeaders` (optional) - Default: `null`
-* **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed.
-* **upgrade** `string | null` (optional) - Default: `method === 'CONNECT' || null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.
+See [`Dispatcher.stream(options, factory[, callback])`](docs/api/Dispatcher.md#clientstreamoptions-factory--callback).
 
-#### Parameter: `DispatchHandlers`
+### `Agent.upgrade(options[, callback])`
 
-* **onConnect** `(abort: () => void) => void` - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
-* **onError** `(error: Error) => void` - Invoked when an error has occurred.
-* **onUpgrade** `(statusCode: number, headers: string[] | null, socket: Duplex) => void` (optional) - Invoked when request is upgraded. Required if `DispatchOptions.upgrade` is defined or `DispatchOptions.method === 'CONNECT'`.
-* **onHeaders** `(statusCode: number, headers: string[] | null, resume: () => void) => boolean` - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. Not required for `upgrade` requests.
-* **onData** `(chunk: Buffer) => boolean` - Invoked when response payload data is received. Not required for `upgrade` requests.
-* **onComplete** `(trailers: string[] | null) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
-
-## `agent.close(): Promise`
-
-Returns a `Promise.all` operation closing all of the pool instances in the Agent instance. This calls `pool.close` under the hood.
-
-## `agent.destroy(): Promise`
-
-Returns a `Promise.all` operation destroying all of the pool instances in the Agent instance. This calls `pool.destroy` under the hood.
-
-## `undici.setGlobalAgent(agent)`
-
-* agent `Agent`
-
-Sets the global agent used by `request`, `pipeline`, and `stream` methods.
-The default global agent creates `undici.Pool`s with no max number of
-connections.
-
-The agent must only **implement** the `Agent` API; not necessary extend from it.
-
-## `undici.getGlobalAgent(agent)`
-
-TODO: document
-
-## `undici.request(url[, opts]): Promise`
-
-* url `string | URL | object`
-* opts `{ agent: Agent } & client.request.opts`
-* // TODO: document maxRedirections?
-
-`url` may contain path. `opts` may not contain path. `opts.method` is `GET` by default.
-Calls `pool.request(opts)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
-
-Returns a promise with the result of the `request` method.
-
-## `undici.stream(url, opts, factory): Promise`
-
-* url `string | URL | object`
-* opts `{ agent: Agent } & client.stream.opts`
-* factory `client.stream.factory`
-* // TODO: document maxRedirections?
-
-`url` may contain path. `opts` may not contain path.
-See [client.stream](docs/api/Client.md#clientstreamoptions-factory--callback) for details on the `opts` and `factory` arguments.
-Calls `pool.stream(opts, factory)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
-Result is returned in the factory function. See [client.stream](docs/api/Client.md#clientstreamoptions-factory--callback) for more details.
-
-## `undici.pipeline(url, opts, handler): Duplex`
-
-* url `string | URL | object`
-* opts `{ agent: Agent } & client.pipeline.opts`
-* handler `client.pipeline.handler`
-* // TODO: document maxRedirections?
-
-`url` may contain path. `opts` may not contain path.
-
-See [client.pipeline](docs/api/Client.md#clientpipelining) for details on the `opts` and `handler` arguments.
-
-Calls `pool.pipeline(opts, factory)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
-
-See [client.pipeline](docs/api/Client.md#clientpipelining) for more details.
-
-### `undici.connect(options[, callback])`
-
-TODO: document
-
-### `undici.upgrade(options[, callback])`
-
-TODO: document
+See [`Dispatcher.upgrade(options[, callback])`](docs/api/Dispatcher.md#clientupgradeoptions-callback).
