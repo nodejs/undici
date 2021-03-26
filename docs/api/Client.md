@@ -6,7 +6,7 @@ A basic HTTP/1.1 client, mapped on top a single TCP/TLS connection. Pipelining i
 
 Imports: `http`, `stream`, `events`
 
-## `new Client(url, [options])`
+## `new Client(url[, options])`
 
 Arguments:
 
@@ -41,7 +41,7 @@ const client = new Client('http://localhost:3000')
 
 ## Instance Methods
 
-### `Client.close([ callback ])`
+### `Client.close([callback])`
 
 Closes the client and gracefully waits for enqueued requests to complete before resolving.
 
@@ -84,7 +84,7 @@ server.listen(() => {
 })
 ```
 
-### `Client.connect(options [, callback])`
+### `Client.connect(options[, callback])`
 
 Starts two-way communications with the requested resource using [HTTP CONNECT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT).
 
@@ -412,7 +412,7 @@ server.listen(() => {
 })
 ```
 
-### `Client.request(options [, callback])`
+### `Client.request(options[, callback])`
 
 Performs a HTTP request.
 
@@ -572,7 +572,7 @@ server.listen(() => {
 })
 ```
 
-### `Client.stream(options, factory [, callback])`
+### `Client.stream(options, factory[, callback])`
 
 A faster version of `Client.request`. This method expects the second argument `factory` to return a [`stream.Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream which the response will be written to. This improves performance by avoiding creating an intermediate [`stream.Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) stream when the user expects to directly pipe the response body to a [`stream.Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream.
 
