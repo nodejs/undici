@@ -486,9 +486,11 @@ test('fails with invalid URL', t => {
 })
 
 test('constructor validations', t => {
-  t.plan(2)
+  t.plan(4)
   t.throw(() => new Agent({ factory: 'ASD' }), InvalidArgumentError, 'throws on invalid opts argument')
   t.throw(() => new Agent({ maxRedirections: 'ASD' }), InvalidArgumentError, 'throws on invalid opts argument')
+  t.throw(() => new Agent({ maxRedirections: -1 }), InvalidArgumentError, 'throws on invalid opts argument')
+  t.throw(() => new Agent({ maxRedirections: null }), InvalidArgumentError, 'throws on invalid opts argument')
 })
 
 test('dispatch validations', t => {
