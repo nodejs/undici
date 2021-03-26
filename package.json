@@ -60,6 +60,9 @@
     "tap": "^14.10.8",
     "tsd": "^0.13.1"
   },
+  "engines": {
+    "node": ">=12.18"
+  },
   "standard": {
     "ignore": [
       "lib/llhttp/constants.js",
