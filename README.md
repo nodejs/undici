@@ -87,7 +87,14 @@ the prior pipeline and instead error the corresponding callback/promise/stream.
 
 ## Collaborators
 
+* [__Ethan Arrowood__](https://github.com/Ethan-Arrowood/), <https://www.npmjs.com/~ethan_arrowood>
 * [__Daniele Belardi__](https://github.com/dnlup), <https://www.npmjs.com/~dnlup>
+* [__Tomas Della Vedova__](https://github.com/delvedor), <https://www.npmjs.com/~delvedor>
+* [__Matteo Collina__](https://github.com/mcollina), <https://www.npmjs.com/~matteo.collina>
+* [__Robert Nagy__](https://github.com/ronag), <https://www.npmjs.com/~ronag>
+
+### Releasers
+
 * [__Matteo Collina__](https://github.com/mcollina), <https://www.npmjs.com/~matteo.collina>
 * [__Robert Nagy__](https://github.com/ronag), <https://www.npmjs.com/~ronag>
 
