@@ -17,10 +17,17 @@ function startServer (t, handler) {
 async function startRedirectingServer (t) {
   const server = await startServer(t, (req, res) => {
     // Parse the path and normalize arguments
-    let [code, redirections] = req.url
+    let [code, redirections, query] = req.url
       .slice(1)
-      .split('/')
-      .map(r => parseInt(r, 10))
+      .split(/[/?]/)
+
+    if (req.url.indexOf('?') !== -1 && !query) {
+      query = redirections
+      redirections = 0
+    }
+
+    code = parseInt(code, 10)
+    redirections = parseInt(redirections, 10)
 
     if (isNaN(code) || code < 0) {
       code = 302
@@ -42,7 +49,7 @@ async function startRedirectingServer (t) {
     if (redirections === 5) {
       res.setHeader('Connection', 'close')
       res.write(
-        `${req.method} :: ${Object.entries(req.headers)
+        `${req.method}${query ? ` ${query}` : ''} :: ${Object.entries(req.headers)
           .map(([k, v]) => `${k}@${v}`)
           .join(' ')}`
       )
@@ -60,7 +67,7 @@ async function startRedirectingServer (t) {
     // Redirect by default
     res.statusCode = code
     res.setHeader('Connection', 'close')
-    res.setHeader('Location', `http://${server}/${code}/${++redirections}`)
+    res.setHeader('Location', `http://${server}/${code}/${++redirections}${query ? `?${query}` : ''}`)
     res.end('')
   })
 
