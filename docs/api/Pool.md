@@ -6,7 +6,7 @@ A pool of [Client](docs/api/Client.md) instances connected to the same upstream 
 
 Requests are not guaranteed to be dispatched in order of invocation.
 
-## `new Pool(url, [options])`
+## `new Pool(url[, options])`
 
 Arguments:
 
@@ -64,7 +64,7 @@ Implements [Client.url](docs/api/Client.md#clienturl)
 
 Implements [`Client.close([ callback ])`](docs/api/Client.md#clientclose-callback-)
 
-### `Pool.connect(options [, callback])`
+### `Pool.connect(options[, callback])`
 
 Implements [`Client.connect(options [, callback])`](docs/api/Client.md#clientconnectoptions--callback)
 
@@ -80,15 +80,15 @@ Implements [`Client.dispatch(options, handlers)`](docs/api/Client.md#clientdispa
 
 Implements [`Client.pipeline(options, handler)`](docs/api/Client.md#clientpipelineoptions-handler)
 
-### `Pool.request(options [, callback])`
+### `Pool.request(options[, callback])`
 
 Implements [`Client.request(options [, callback])`](docs/api/Client.md#clientrequestoptions--callback)
 
-### `Pool.stream(options, factory, [, callback])`
+### `Pool.stream(options, factory[, callback])`
 
 Implements [`Client.stream(options, factory [, callback])`](docs/api/Client.md#clientstreamoptions-factory--callback)
 
-### `Pool.upgrade(options [, callback])`
+### `Pool.upgrade(options[, callback])`
 
 Implements [`Client.upgrade(options[, callback])`](docs/api/Client.md#clientupgradeoptions-callback)
 
