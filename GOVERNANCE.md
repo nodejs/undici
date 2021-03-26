@@ -1,7 +1,6 @@
 ### Undici Working Group
 
-The Node.js Undici is governed by a Working Group
-(WG)
+The Node.js Undici project is governed by a Working Group (WG)
 that is responsible for high-level guidance of the project.
 
 The WG has final authority over this project including:
