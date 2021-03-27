@@ -19,7 +19,7 @@ test('stream body without destroy', (t) => {
 
     const signal = new EE()
     const body = new Readable({ read () {} })
-    delete body.destroy
+    body.destroy = undefined
     body.on('error', (err) => {
       t.ok(err)
     })
