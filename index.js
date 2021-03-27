@@ -5,7 +5,7 @@ const errors = require('./lib/core/errors')
 const Pool = require('./lib/client-pool')
 const { Agent, getGlobalAgent, setGlobalAgent } = require('./lib/agent')
 const util = require('./lib/core/util')
-const { InvalidArgumentError, InvalidReturnValueError } = require('./lib/core/errors')
+const { InvalidArgumentError } = require('./lib/core/errors')
 const api = require('./lib/api')
 
 Object.assign(Client.prototype, api)
@@ -25,27 +25,21 @@ module.exports.Agent = Agent
 module.exports.setGlobalAgent = setGlobalAgent
 module.exports.getGlobalAgent = getGlobalAgent
 
-function dispatchFromAgent (requestType) {
+function dispatchFromAgent (fn) {
   return (url, { agent = getGlobalAgent(), method = 'GET', ...opts } = {}, ...additionalArgs) => {
     if (opts.path != null) {
       throw new InvalidArgumentError('unsupported opts.path')
     }
 
     const { origin, pathname, search } = util.parseURL(url)
-    const path = `${pathname || '/'}${search || ''}`
+    const path = `${pathname}${search || ''}`
 
-    const client = agent.get(origin)
-
-    if (client && typeof client[requestType] !== 'function') {
-      throw new InvalidReturnValueError(`Client returned from Agent.get() does not implement method ${requestType}`)
-    }
-
-    return client[requestType]({ ...opts, method, path }, ...additionalArgs)
+    return fn.call(agent, { ...opts, origin, method, path }, ...additionalArgs)
   }
 }
 
-module.exports.request = dispatchFromAgent('request')
-module.exports.stream = dispatchFromAgent('stream')
-module.exports.pipeline = dispatchFromAgent('pipeline')
-module.exports.connect = dispatchFromAgent('connect')
-module.exports.upgrade = dispatchFromAgent('upgrade')
+module.exports.request = dispatchFromAgent(api.request)
+module.exports.stream = dispatchFromAgent(api.stream)
+module.exports.pipeline = dispatchFromAgent(api.pipeline)
+module.exports.connect = dispatchFromAgent(api.connect)
+module.exports.upgrade = dispatchFromAgent(api.upgrade)
