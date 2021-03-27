@@ -293,10 +293,12 @@ test('backpressure algorithm', (t) => {
     './core/client': FakeClient
   })
 
+  const noopHandler = {}
+
   const pool = new Pool('http://notanhost')
 
-  pool.dispatch({}, noop)
-  pool.dispatch({}, noop)
+  pool.dispatch({}, noopHandler)
+  pool.dispatch({}, noopHandler)
 
   const d1 = seen.shift() // d1 = c0
   t.strictEqual(d1.id, 0)
@@ -305,11 +307,11 @@ test('backpressure algorithm', (t) => {
 
   t.strictEqual(d1.id, d2.id)
 
-  pool.dispatch({}, noop) // d3 = c0
+  pool.dispatch({}, noopHandler) // d3 = c0
 
   d1.client._busy = true
 
-  pool.dispatch({}, noop) // d4 = c1
+  pool.dispatch({}, noopHandler) // d4 = c1
 
   const d3 = seen.shift()
   t.strictEqual(d3.id, 0)
@@ -319,11 +321,11 @@ test('backpressure algorithm', (t) => {
   t.strictEqual(d3.id, d2.id)
   t.notStrictEqual(d3.id, d4.id)
 
-  pool.dispatch({}, noop) // d5 = c1
+  pool.dispatch({}, noopHandler) // d5 = c1
 
   d1.client._busy = false
 
-  pool.dispatch({}, noop) // d6 = c0
+  pool.dispatch({}, noopHandler) // d6 = c0
 
   const d5 = seen.shift()
   t.strictEqual(d5.id, 1)
@@ -337,8 +339,6 @@ test('backpressure algorithm', (t) => {
 
   t.end()
 })
-
-function noop () {}
 
 test('busy', (t) => {
   t.plan(8 * 10 + 2 + 1)
