@@ -4,3 +4,12 @@ bench
 test
 images
 lib
+.clinic
+.nyc_output
+coverage
+docs
+docsify
+types
+.husky
+examples
+benchmarks
