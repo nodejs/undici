@@ -41,7 +41,7 @@ tap.test('Agent', t => {
   })
 
   t.test('Agent close and destroy', t => {
-    t.plan(2)
+    t.plan(4)
 
     t.test('agent should close internal pools', t => {
       t.plan(2)
@@ -82,6 +82,47 @@ tap.test('Agent', t => {
         })
       })
     })
+
+    t.test('agent should call callback after closing internal pools', t => {
+      t.plan(2)
+
+      const wanted = 'payload'
+
+      const server = http.createServer((req, res) => {
+        res.setHeader('Content-Type', 'text/plain')
+        res.end(wanted)
+      })
+
+      t.tearDown(server.close.bind(server))
+
+      server.listen(0, () => {
+        const agent = new Agent()
+
+        const origin = `http://localhost:${server.address().port}`
+
+        request(origin, { agent })
+          .then(() => {
+            t.pass('first request should resolve')
+          })
+          .catch(err => {
+            t.fail(err)
+          })
+
+        const pool = agent.get(origin)
+        pool.once('connect', () => {
+          agent.close(() => {
+            request(origin, { agent })
+              .then(() => {
+                t.fail('second request should not resolve')
+              })
+              .catch(err => {
+                t.error(err instanceof errors.ClientClosedError)
+              })
+          })
+        })
+      })
+    })
+
     t.test('agent should destroy internal pools', t => {
       t.plan(2)
 
@@ -110,6 +151,46 @@ tap.test('Agent', t => {
         const pool = agent.get(origin)
         pool.once('connect', () => {
           agent.destroy().then(() => {
+            request(origin, { agent })
+              .then(() => {
+                t.fail()
+              })
+              .catch(err => {
+                t.ok(err instanceof errors.ClientDestroyedError)
+              })
+          })
+        })
+      })
+    })
+
+    t.test('agent should destroy internal pools and call callback', t => {
+      t.plan(2)
+
+      const wanted = 'payload'
+
+      const server = http.createServer((req, res) => {
+        res.setHeader('Content-Type', 'text/plain')
+        res.end(wanted)
+      })
+
+      t.tearDown(server.close.bind(server))
+
+      server.listen(0, () => {
+        const agent = new Agent()
+
+        const origin = `http://localhost:${server.address().port}`
+
+        request(origin, { agent })
+          .then(() => {
+            t.fail()
+          })
+          .catch(err => {
+            t.ok(err instanceof errors.ClientDestroyedError)
+          })
+
+        const pool = agent.get(origin)
+        pool.once('connect', () => {
+          agent.destroy(() => {
             request(origin, { agent })
               .then(() => {
                 t.fail()
