@@ -41,7 +41,7 @@ tap.test('Agent', t => {
   })
 
   t.test('Agent close and destroy', t => {
-    t.plan(4)
+    t.plan(6)
 
     t.test('agent should close internal pools', t => {
       t.plan(2)
@@ -123,6 +123,16 @@ tap.test('Agent', t => {
       })
     })
 
+    t.test('agent close throws when callback is not a function', t => {
+      t.plan(1)
+      const agent = new Agent()
+      try {
+        agent.close({})
+      } catch (err) {
+        t.ok(err instanceof errors.InvalidArgumentError)
+      }
+    })
+
     t.test('agent should destroy internal pools', t => {
       t.plan(2)
 
@@ -201,6 +211,16 @@ tap.test('Agent', t => {
           })
         })
       })
+    })
+
+    t.test('agent destroy throws when callback is not a function', t => {
+      t.plan(1)
+      const agent = new Agent()
+      try {
+        agent.destroy(new Error('mock error'), {})
+      } catch (err) {
+        t.ok(err instanceof errors.InvalidArgumentError)
+      }
     })
   })
 
