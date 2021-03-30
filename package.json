@@ -28,8 +28,8 @@
     "docs"
   ],
   "scripts": {
-    "prebuild-wasm": "docker build -t llhttp_wasm_builder .",
-    "build-wasm": "node build_wasm.js --docker",
+    "prebuild-wasm": "docker build -t llhttp_wasm_builder -f build/Dockerfile .",
+    "build-wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
     "test": "tap test/*.js --no-coverage && jest test/jest/test",
     "test:typescript": "tsd",

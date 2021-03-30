@@ -1,15 +1,19 @@
 'use strict'
 
 const { execSync } = require('child_process')
-const { join } = require('path')
+const { join, resolve } = require('path')
 const { WASI_ROOT } = process.env
+
+const ROOT = resolve(__dirname, '../')
+const WASM_SRC = resolve(__dirname, '../deps/llhttp')
+const WASM_OUT = resolve(__dirname, '../lib/llhttp')
 
 if (process.argv[2] === '--docker') {
   let cmd = 'docker run --rm -it'
   if (process.platform === 'linux') {
     cmd += ` --user ${process.getuid()}:${process.getegid()}`
   }
-  cmd += ` --mount type=bind,source=${__dirname}/lib/llhttp,target=/home/node/undici/lib/llhttp llhttp_wasm_builder node build_wasm.js`
+  cmd += ` --mount type=bind,source=${ROOT}/lib/llhttp,target=/home/node/undici/lib/llhttp llhttp_wasm_builder node build/wasm.js`
   execSync(cmd, { stdio: 'inherit' })
   process.exit(0)
 }
@@ -17,8 +21,6 @@ if (process.argv[2] === '--docker') {
 if (!WASI_ROOT) {
   throw new Error('Please setup the WASI_ROOT env variable.')
 }
-
-const WASM_OUT = join(__dirname, 'lib', 'llhttp')
 
 // Build wasm binary
 execSync(`${WASI_ROOT}/bin/clang \
@@ -37,6 +39,6 @@ execSync(`${WASI_ROOT}/bin/clang \
  -Wl,--export-table \
  -Wl,--export=malloc \
  -Wl,--export=free \
- ${join(__dirname, 'deps', 'llhttp', 'src')}/*.c \
- -I${join(__dirname, 'deps', 'llhttp', 'include')} \
+ ${join(WASM_SRC, 'src')}/*.c \
+ -I${join(WASM_SRC, 'include')} \
  -o ${join(WASM_OUT, 'llhttp.wasm')}`, { stdio: 'inherit' })
