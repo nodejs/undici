@@ -17,6 +17,6 @@ WORKDIR /home/node/undici
 
 COPY . .
 
-RUN npm ci
+RUN npm i
 
 USER node
