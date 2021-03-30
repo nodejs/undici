@@ -59,15 +59,14 @@ test('agent should close internal pools', t => {
       })
 
     dispatcher.once('connect', () => {
-      dispatcher.close().then(() => {
-        request(origin, { dispatcher })
-          .then(() => {
-            t.fail('second request should not resolve')
-          })
-          .catch(err => {
-            t.ok(err instanceof errors.ClientClosedError)
-          })
-      })
+      dispatcher.close()
+        .then(() => request(origin, { dispatcher }))
+        .then(() => {
+          t.fail('second request should not resolve')
+        })
+        .catch(err => {
+          t.ok(err instanceof errors.ClientClosedError)
+        })
     })
   })
 })
@@ -98,15 +97,14 @@ test('agent should destroy internal pools', t => {
       })
 
     dispatcher.once('connect', () => {
-      dispatcher.destroy().then(() => {
-        request(origin, { dispatcher })
-          .then(() => {
-            t.fail()
-          })
-          .catch(err => {
-            t.ok(err instanceof errors.ClientDestroyedError)
-          })
-      })
+      dispatcher.destroy()
+        .then(() => request(origin, { dispatcher }))
+        .then(() => {
+          t.fail()
+        })
+        .catch(err => {
+          t.ok(err instanceof errors.ClientDestroyedError)
+        })
     })
   })
 })
