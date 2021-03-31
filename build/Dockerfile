@@ -15,7 +15,10 @@ RUN mkdir /home/node/undici
 
 WORKDIR /home/node/undici
 
-COPY . .
+COPY package.json .
+COPY build build
+COPY deps deps
+COPY lib lib
 
 RUN npm i
 
