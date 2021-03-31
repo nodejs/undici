@@ -1,6 +1,6 @@
 import { createServer } from 'http'
 import tap from 'tap'
-import { Agent, Client, errors, pipeline, Pool, request, setGlobalAgent, stream } from '../../index.js'
+import { Agent, Client, errors, pipeline, Pool, request, setGlobalDispatcher, stream } from '../../index.js'
 
 const { test } = tap
 
@@ -82,6 +82,6 @@ test('name dexports', (t) => {
   t.is(typeof request, 'function')
   t.is(typeof stream, 'function')
   t.is(typeof pipeline, 'function')
-  t.is(typeof setGlobalAgent, 'function')
+  t.is(typeof setGlobalDispatcher, 'function')
   t.end()
 })

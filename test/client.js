@@ -1001,7 +1001,7 @@ test('busy', (t) => {
 })
 
 test('connected', (t) => {
-  t.plan(5)
+  t.plan(7)
 
   const server = createServer((req, res) => {
     req.pipe(res)
@@ -1009,15 +1009,18 @@ test('connected', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const url = new URL(`http://localhost:${server.address().port}`)
+    const client = new Client(url, {
       pipelining: 1
     })
     t.tearDown(client.close.bind(client))
 
-    client.on('connect', self => {
+    client.on('connect', (origin, [self]) => {
+      t.strictEqual(origin, url)
       t.strictEqual(client, self)
     })
-    client.on('disconnect', self => {
+    client.on('disconnect', (origin, [self]) => {
+      t.strictEqual(origin, url)
       t.strictEqual(client, self)
     })
 
