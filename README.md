@@ -55,7 +55,11 @@ for await (const data of body) {
 console.log('trailers', trailers)
 ```
 
-## `undici.request(url[, options]): Promise`
+## Common API Methods
+
+This section documents our most commonly used API methods. Additional APIs are documented in their own files within the [docs](./docs/) folder and are accessible via the navigation list on the left side of the docs site.
+
+### `undici.request(url[, options]): Promise`
 
 Arguments:
 
@@ -73,7 +77,7 @@ Calls `options.dispatcher.request(options)`.
 
 See [Dispatcher.request] for more details.
 
-## `undici.stream(url, options, factory): Promise`
+### `undici.stream(url, options, factory): Promise`
 
 Arguments:
 
@@ -91,7 +95,7 @@ Calls `options.dispatcher.stream(options, factory)`.
 
 See [Dispatcher.stream](docs/api/Dispatcher.md#dispatcherstream) for more details.
 
-## `undici.pipeline(url, options, handler): Duplex`
+### `undici.pipeline(url, options, handler): Duplex`
 
 Arguments:
 
@@ -147,13 +151,13 @@ Calls `options.dispatcher.upgrade(options)`.
 
 See [Dispatcher.upgrade](docs/api/Dispatcher.md#clientpipelining) for more details.
 
-## `undici.setGlobalDispatcher(dispatcher)`
+### `undici.setGlobalDispatcher(dispatcher)`
 
 * dispatcher `Dispatcher`
 
 Sets the global dispatcher used by global API methods.
 
-## `undici.getGlobalDispatcher()`
+### `undici.getGlobalDispatcher()`
 
 Gets the global dispatcher used by global API methods.
 
