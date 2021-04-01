@@ -10,13 +10,21 @@ const { InvalidArgumentError, ClientClosedError } = require('../lib/core/errors'
 const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
 const { kAgent } = require('../lib/mock/mock-symbols')
+const Dispatcher = require('../lib/dispatcher')
 
 test('MockAgent - constructor', t => {
-  t.plan(4)
+  t.plan(5)
 
   t.test('sets up mock agent', t => {
     t.plan(1)
     t.notThrow(() => new MockAgent())
+  })
+
+  t.test('should implement the Dispatcher API', t => {
+    t.plan(1)
+
+    const mockAgent = new MockAgent()
+    t.true(mockAgent instanceof Dispatcher)
   })
 
   t.test('sets up mock agent with single connection', t => {
@@ -784,7 +792,7 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
 
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
-    res.end('hello')
+    res.end('should not be called')
     t.fail('should not be called')
     t.end()
   })
@@ -819,7 +827,7 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
 
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
-    res.end('hello')
+    res.end('should not be called')
     t.fail('should not be called')
     t.end()
   })

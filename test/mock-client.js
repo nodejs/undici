@@ -1,14 +1,18 @@
 'use strict'
 
 const { test } = require('tap')
-const { MockAgent, MockClient } = require('..')
+const { createServer } = require('http')
+const { promisify } = require('util')
+const { MockAgent, MockClient, setGlobalDispatcher, request } = require('..')
 const { kUrl } = require('../lib/core/symbols')
 const { kDispatches } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { MockInterceptor } = require('../lib/mock/mock-interceptor')
+const { getResponse } = require('../lib/mock/mock-utils')
+const Dispatcher = require('../lib/dispatcher')
 
 test('MockClient - constructor', t => {
-  t.plan(2)
+  t.plan(3)
 
   t.test('fails if opts.agent does not implement `get` method', t => {
     t.plan(1)
@@ -18,6 +22,13 @@ test('MockClient - constructor', t => {
   t.test('sets agent', t => {
     t.plan(1)
     t.notThrow(() => new MockClient('http://localhost:9999', { agent: new MockAgent({ connections: 1 }) }))
+  })
+
+  t.test('should implement the Dispatcher API', t => {
+    t.plan(1)
+
+    const mockClient = new MockClient('http://localhost:9999', { agent: new MockAgent({ connections: 1 }) })
+    t.true(mockClient instanceof Dispatcher)
   })
 })
 
@@ -136,4 +147,76 @@ test('MockClient - close should run without error', async (t) => {
   ]
 
   await t.resolves(mockClient.close())
+})
+
+test('MockClient - should be able to set as globalDispatcher', async (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent({ connections: 1 })
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockClient = mockAgent.get(baseUrl)
+  t.true(mockClient instanceof MockClient)
+  setGlobalDispatcher(mockClient)
+
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'hello')
+
+  const { statusCode, body } = await request(`${baseUrl}/foo`, {
+    method: 'GET'
+  })
+  t.strictEqual(statusCode, 200)
+
+  const response = await getResponse(body)
+  t.deepEqual(response, 'hello')
+})
+
+test('MockClient - should be able to use as a local dispatcher', async (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent({ connections: 1 })
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockClient = mockAgent.get(baseUrl)
+  t.true(mockClient instanceof MockClient)
+
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'hello')
+
+  const { statusCode, body } = await request(`${baseUrl}/foo`, {
+    method: 'GET',
+    dispatcher: mockClient
+  })
+  t.strictEqual(statusCode, 200)
+
+  const response = await getResponse(body)
+  t.deepEqual(response, 'hello')
 })
