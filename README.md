@@ -55,6 +55,110 @@ for await (const data of body) {
 console.log('trailers', trailers)
 ```
 
+## `undici.request(url[, options]): Promise`
+
+Arguments:
+
+* **url** `string | URL | object`
+* **options** [`RequestOptions`]
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher]
+  * **method** `String` - Default: `GET`
+* **maxRedirections** `Integer` - Default: `0`
+
+Returns a promise with the result of the `Dispatcher.request` method.
+
+`url` may contain pathname. `options` may not contain path.
+
+Calls `options.dispatcher.request(options)`.
+
+See [Dispatcher.request] for more details.
+
+## `undici.stream(url, options, factory): Promise`
+
+Arguments:
+
+* **url** `string | URL | object`
+* **options** [`StreamOptions`]
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher]
+  * **method** `String` - Default: `GET`
+* **factory** `Dispatcher.stream.factory`
+
+Returns a promise with the result of the `Dispatcher.stream` method.
+
+`url` may contain pathname. `options` may not contain path.
+
+Calls `options.dispatcher.stream(options, factory)`.
+
+See [Dispatcher.stream](docs/api/Dispatcher.md#dispatcherstream) for more details.
+
+## `undici.pipeline(url, options, handler): Duplex`
+
+Arguments:
+
+* **url** `string | URL | object`
+* **options** [`PipelineOptions`]
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher]
+  * **method** `String` - Default: `GET`
+* **handler** `Dispatcher.pipeline.handler`
+
+Returns: `stream.Duplex`
+
+`url` may contain pathname. `options` may not contain path.
+
+Calls `options.dispatch.pipeline(options, handler)`.
+
+See [Dispatcher.pipeline](docs/api/Dispatcher.md#dispatcherpipeline) for more details.
+
+### `undici.connect(options[, callback])`
+
+Starts two-way communications with the requested resource using [HTTP CONNECT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT).
+
+Arguments:
+
+* **options** [`ConnectOptions`]
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher]
+  * **method** `String` - Default: `GET`
+* **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
+
+Returns a promise with the result of the `Dispatcher.connect` method.
+
+`url` may contain pathname. `options` may not contain path.
+
+Calls `options.dispatch.connect(options)`.
+
+See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnect) for more details.
+
+### `undici.upgrade(options[, callback])`
+
+Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) for more details.
+
+Arguments:
+
+* **options** [`UpgradeOptions`]
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher]
+  * **method** `String` - Default: `GET`
+* **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
+
+Returns a promise with the result of the `Dispatcher.upgrade` method.
+
+`url` may contain pathname. `options` may not contain path.
+
+Calls `options.dispatcher.upgrade(options)`.
+
+See [Dispatcher.upgrade](docs/api/Dispatcher.md#clientpipelining) for more details.
+
+## `undici.setGlobalDispatcher(dispatcher)`
+
+* dispatcher `Dispatcher`
+
+Sets the global dispatcher used by global API methods.
+
+## `undici.getGlobalDispatcher()`
+
+Gets the global dispatcher used by global API methods.
+
+Returns: `Dispatcher`
+
 ## Specification Compliance
 
 This section documents parts of the HTTP/1.1 specification which Undici does
@@ -87,6 +191,7 @@ the prior pipeline and instead error the corresponding callback/promise/stream.
 
 ## Collaborators
 
+* [__Ethan Arrowood__](https://github.com/ethan-arrowood), <https://www.npmjs.com/~ethan_arrowood>
 * [__Daniele Belardi__](https://github.com/dnlup), <https://www.npmjs.com/~dnlup>
 * [__Matteo Collina__](https://github.com/mcollina), <https://www.npmjs.com/~matteo.collina>
 * [__Robert Nagy__](https://github.com/ronag), <https://www.npmjs.com/~ronag>

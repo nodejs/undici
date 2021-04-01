@@ -119,6 +119,46 @@ test('basic head', (t) => {
   })
 })
 
+test('basic head (IPv6)', (t) => {
+  t.plan(14)
+
+  const server = createServer((req, res) => {
+    t.strictEqual('/123', req.url)
+    t.strictEqual('HEAD', req.method)
+    t.strictEqual(`[::1]:${server.address().port}`, req.headers.host)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, '::', () => {
+    const client = new Client(`http://[::1]:${server.address().port}`)
+    t.tearDown(client.close.bind(client))
+
+    client.request({ path: '/123', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+      body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
+    })
+
+    client.request({ path: '/123', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
+      body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
+    })
+  })
+})
+
 test('get with host header', (t) => {
   t.plan(7)
 
@@ -961,7 +1001,7 @@ test('busy', (t) => {
 })
 
 test('connected', (t) => {
-  t.plan(5)
+  t.plan(7)
 
   const server = createServer((req, res) => {
     req.pipe(res)
@@ -969,15 +1009,18 @@ test('connected', (t) => {
   t.tearDown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const url = new URL(`http://localhost:${server.address().port}`)
+    const client = new Client(url, {
       pipelining: 1
     })
     t.tearDown(client.close.bind(client))
 
-    client.on('connect', self => {
+    client.on('connect', (origin, [self]) => {
+      t.strictEqual(origin, url)
       t.strictEqual(client, self)
     })
-    client.on('disconnect', self => {
+    client.on('disconnect', (origin, [self]) => {
+      t.strictEqual(origin, url)
       t.strictEqual(client, self)
     })
 
