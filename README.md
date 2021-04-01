@@ -7,9 +7,7 @@ A HTTP/1.1 client, written from scratch for Node.js.
 > Undici means eleven in Italian. 1.1 -> 11 -> Eleven -> Undici.
 It is also a Stranger Things reference.
 
-<!--
-Picture of Eleven
--->
+Have a question about using Undici? Open a [Q&A Discussion](https://github.com/nodejs/undici/discussions/new) or join our official OpenJS [Slack](https://openjs-foundation.slack.com/archives/C01QF9Q31QD) channel.
 
 ## Install
 
