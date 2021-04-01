@@ -1,6 +1,6 @@
 # Class: MockPool
 
-Extends: `Pool`
+Extends: `undici.Pool`
 
 A mock Pool class that implements the Pool API and is used by MockAgent to intercept real requests and return mocked responses.
 
@@ -90,7 +90,7 @@ A `MockScope` is associated with a single `MockInterceptor`. With this, we can c
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 // MockPool
 const mockPool = mockAgent.get('http://localhost:3000')
@@ -119,7 +119,7 @@ for await (const data of body) {
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -146,7 +146,7 @@ const result2 = await request('http://localhost:3000/hello')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 mockPool.intercept({
@@ -185,7 +185,7 @@ console.log('trailers', trailers) // {"Content-MD5":"test"}
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -209,7 +209,7 @@ const result = await request('http://localhost:3000/foo', {
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -231,7 +231,7 @@ await request('http://localhost:3000/foo', {
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -252,7 +252,7 @@ const { headers } = await request('http://localhost:3000/foo')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -273,7 +273,7 @@ const { trailers } = await request('http://localhost:3000/foo')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -293,7 +293,7 @@ const { headers } = await request('http://localhost:3000/foo')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -313,7 +313,7 @@ const { headers } = await request('http://localhost:3000/foo')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -338,7 +338,7 @@ const result2 = await request('http://localhost:3000/foo')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -373,4 +373,36 @@ const mockAgent = new MockAgent({ connections: 1 })
 const mockPool = mockAgent.get('http://localhost:3000')
 
 await mockPool.close()
+```
+
+### `MockPool.dispatch(options, handlers)`
+
+Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
+
+### `MockPool.request(options[, callback])`
+
+See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
+
+#### Example - MockPool request
+
+```js
+'use strict'
+const { MockAgent } = require('undici')
+
+const mockAgent = new MockAgent()
+
+const mockClient = mockAgent.get('http://localhost:3000')
+mockClient.intercept({
+  path: '/foo',
+  method: 'GET',
+}).reply(200, 'foo')
+
+const {
+  statusCode,
+  body
+} = await mockClient.request({
+  origin: 'http://localhost:3000',
+  path: '/foo',
+  method: 'GET'
+})
 ```

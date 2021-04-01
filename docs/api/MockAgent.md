@@ -1,5 +1,7 @@
 # Class: MockAgent
 
+Extends: `undici.Dispatcher`
+
 A mocked Agent class that implements the Agent API. It allows one to intercept HTTP requests made through undici and return mocked responses instead.
 
 ## `new MockAgent([options])`
@@ -12,7 +14,7 @@ Returns: `MockAgent`
 
 ### Parameter: `MockAgentOptions`
 
-Extends: `AgentOptions`
+Extends: [`AgentOptions`](docs/api/Agent.md#parameter-agentoptions)
 
 * **agent** `Agent` (optional) - Default: `new Agent([options])` - a custom agent encapsulated by the MockAgent.
 
@@ -70,7 +72,7 @@ Returns: `MockClient | MockPool`.
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -91,7 +93,7 @@ for await (const data of body) {
 }
 ```
 
-#### Example - Basic Mocked Request with local agent
+#### Example - Basic Mocked Request with local mock agent dispatcher
 
 ```js
 'use strict'
@@ -108,7 +110,59 @@ mockPool.intercept({
 const {
   statusCode,
   body
-} = await request('http://localhost:3000/foo', { agent: mockAgent })
+} = await request('http://localhost:3000/foo', { dispatcher: mockAgent })
+
+console.log('response received', statusCode) // 200
+
+for await (const data of body) {
+  console.log('data', data) // 'foo'
+}
+```
+
+#### Example - Basic Mocked Request with local mock pool dispatcher
+
+```js
+'use strict'
+const { MockAgent } = require('undici')
+
+const mockAgent = new MockAgent()
+
+const mockPool = mockAgent.get('http://localhost:3000')
+mockPool.intercept({
+  path: '/foo',
+  method: 'GET',
+}).reply(200, 'foo')
+
+const {
+  statusCode,
+  body
+} = await request('http://localhost:3000/foo', { dispatcher: mockPool })
+
+console.log('response received', statusCode) // 200
+
+for await (const data of body) {
+  console.log('data', data) // 'foo'
+}
+```
+
+#### Example - Basic Mocked Request with local mock client dispatcher
+
+```js
+'use strict'
+const { MockAgent } = require('undici')
+
+const mockAgent = new MockAgent({ connections: 1 })
+
+const mockClient = mockAgent.get('http://localhost:3000')
+mockClient.intercept({
+  path: '/foo',
+  method: 'GET',
+}).reply(200, 'foo')
+
+const {
+  statusCode,
+  body
+} = await request('http://localhost:3000/foo', { dispatcher: mockClient })
 
 console.log('response received', statusCode) // 200
 
@@ -124,7 +178,7 @@ for await (const data of body) {
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
@@ -151,7 +205,7 @@ const result2 = await request('http://localhost:3000/hello')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 mockPool.intercept({
@@ -190,7 +244,7 @@ console.log('trailers', trailers) // {"Content-MD5":"test"}
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get(new RegExp('http://localhost:3000'))
 mockPool.intercept({
@@ -217,7 +271,7 @@ for await (const data of body) {
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get((origin) => 'http://localhost:3000' === origin))
 mockPool.intercept({
@@ -250,9 +304,48 @@ Returns: `Promise<void>`
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 await mockAgent.close()
+```
+
+### `MockAgent.dispatch(options, handlers: MockAgentDispatchOptions)`
+
+Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
+
+#### Parameter: `MockAgentDispatchOptions`
+
+Extends: [`DispatchOptions``](docs/api/Dispatcher.md#parameter-dispatchoptions)
+
+* **origin** `string | URL`
+* **maxRedirections** `Integer`.
+
+### `MockAgent.request(options[, callback])`
+
+See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
+
+#### Example - MockAgent request
+
+```js
+'use strict'
+const { MockAgent } = require('undici')
+
+const mockAgent = new MockAgent()
+
+const mockPool = mockAgent.get('http://localhost:3000')
+mockPool.intercept({
+  path: '/foo',
+  method: 'GET',
+}).reply(200, 'foo')
+
+const {
+  statusCode,
+  body
+} = await mockAgent.request({
+  origin: 'http://localhost:3000',
+  path: '/foo',
+  method: 'GET'
+})
 ```
 
 ### `MockAgent.deactivate()`
@@ -268,7 +361,7 @@ Returns: `void`
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 mockAgent.deactivate()
 ```
@@ -286,7 +379,7 @@ Returns: `void`
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 mockAgent.deactivate()
 // No mocking will occur
@@ -314,7 +407,7 @@ Returns: `void`
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 mockAgent.enableNetConnect()
 
@@ -329,7 +422,7 @@ await request('http://example.com')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 mockAgent.enableNetConnect('example-1.com')
 mockAgent.enableNetConnect('example-2.com:8080')
@@ -351,7 +444,7 @@ await request('http://example-3.com')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 mockAgent.enableNetConnect(new RegExp('example.com'))
 
@@ -366,7 +459,7 @@ await request('http://example.com')
 const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
-setGlobalAgent(mockAgent)
+setGlobalDispatcher(mockAgent)
 
 mockAgent.enableNetConnect((value) => value === 'example.com')
 

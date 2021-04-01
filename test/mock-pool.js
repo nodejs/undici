@@ -221,3 +221,48 @@ test('MockPool - should be able to use as a local dispatcher', async (t) => {
   const response = await getResponse(body)
   t.deepEqual(response, 'hello')
 })
+
+test('MockPool - basic intercept with MockPool.request', async (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  t.tearDown(mockAgent.close.bind(mockAgent))
+  const mockPool = mockAgent.get(baseUrl)
+  t.true(mockPool instanceof MockPool)
+
+  mockPool.intercept({
+    path: '/foo?hello=there&see=ya',
+    method: 'POST',
+    body: 'form1=data1&form2=data2'
+  }).reply(200, { foo: 'bar' }, {
+    headers: { 'content-type': 'application/json' },
+    trailers: { 'Content-MD5': 'test' }
+  })
+
+  const { statusCode, headers, trailers, body } = await mockPool.request({
+    origin: baseUrl,
+    path: '/foo?hello=there&see=ya',
+    method: 'POST',
+    body: 'form1=data1&form2=data2'
+  })
+  t.strictEqual(statusCode, 200)
+  t.strictEqual(headers['content-type'], 'application/json')
+  t.deepEqual(trailers, { 'content-md5': 'test' })
+
+  const jsonResponse = JSON.parse(await getResponse(body))
+  t.deepEqual(jsonResponse, {
+    foo: 'bar'
+  })
+})

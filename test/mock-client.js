@@ -97,9 +97,9 @@ test('MockClient - intercept validation', (t) => {
     const mockAgent = new MockAgent({ connections: 1 })
     t.tearDown(mockAgent.close.bind(mockAgent))
 
-    const mockPool = mockAgent.get('http://localhost:9999')
+    const mockClient = mockAgent.get('http://localhost:9999')
 
-    t.throw(() => mockPool.intercept(), new InvalidArgumentError('opts must be an object'))
+    t.throw(() => mockClient.intercept(), new InvalidArgumentError('opts must be an object'))
   })
 
   t.test('it should error if no path specified in the intercept', t => {
@@ -107,9 +107,9 @@ test('MockClient - intercept validation', (t) => {
     const mockAgent = new MockAgent({ connections: 1 })
     t.tearDown(mockAgent.close.bind(mockAgent))
 
-    const mockPool = mockAgent.get('http://localhost:9999')
+    const mockClient = mockAgent.get('http://localhost:9999')
 
-    t.throw(() => mockPool.intercept({}), new InvalidArgumentError('opts.path must be defined'))
+    t.throw(() => mockClient.intercept({}), new InvalidArgumentError('opts.path must be defined'))
   })
 
   t.test('it should error if no method specified in the intercept', t => {
@@ -117,9 +117,9 @@ test('MockClient - intercept validation', (t) => {
     const mockAgent = new MockAgent({ connections: 1 })
     t.tearDown(mockAgent.close.bind(mockAgent))
 
-    const mockPool = mockAgent.get('http://localhost:9999')
+    const mockClient = mockAgent.get('http://localhost:9999')
 
-    t.throw(() => mockPool.intercept({ path: '/foo' }), new InvalidArgumentError('opts.method must be defined'))
+    t.throw(() => mockClient.intercept({ path: '/foo' }), new InvalidArgumentError('opts.method must be defined'))
   })
 })
 
@@ -219,4 +219,49 @@ test('MockClient - should be able to use as a local dispatcher', async (t) => {
 
   const response = await getResponse(body)
   t.deepEqual(response, 'hello')
+})
+
+test('MockClient - basic intercept with MockClient.request', async (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent({ connections: 1 })
+  t.tearDown(mockAgent.close.bind(mockAgent))
+  const mockClient = mockAgent.get(baseUrl)
+  t.true(mockClient instanceof MockClient)
+
+  mockClient.intercept({
+    path: '/foo?hello=there&see=ya',
+    method: 'POST',
+    body: 'form1=data1&form2=data2'
+  }).reply(200, { foo: 'bar' }, {
+    headers: { 'content-type': 'application/json' },
+    trailers: { 'Content-MD5': 'test' }
+  })
+
+  const { statusCode, headers, trailers, body } = await mockClient.request({
+    origin: baseUrl,
+    path: '/foo?hello=there&see=ya',
+    method: 'POST',
+    body: 'form1=data1&form2=data2'
+  })
+  t.strictEqual(statusCode, 200)
+  t.strictEqual(headers['content-type'], 'application/json')
+  t.deepEqual(trailers, { 'content-md5': 'test' })
+
+  const jsonResponse = JSON.parse(await getResponse(body))
+  t.deepEqual(jsonResponse, {
+    foo: 'bar'
+  })
 })
