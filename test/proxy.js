@@ -15,7 +15,7 @@ test('connect through proxy', async (t) => {
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
+    t.equal(req.url, '/hello?foo=bar')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -32,8 +32,8 @@ test('connect through proxy', async (t) => {
   for await (const chunk of response.body) {
     data += chunk
   }
-  t.strictEqual(response.statusCode, 200)
-  t.deepEqual(JSON.parse(data), { hello: 'world' })
+  t.equal(response.statusCode, 200)
+  t.same(JSON.parse(data), { hello: 'world' })
 
   server.close()
   proxy.close()
@@ -54,7 +54,7 @@ test('connect through proxy with auth', async (t) => {
   }
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
+    t.equal(req.url, '/hello?foo=bar')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -74,8 +74,8 @@ test('connect through proxy with auth', async (t) => {
   for await (const chunk of response.body) {
     data += chunk
   }
-  t.strictEqual(response.statusCode, 200)
-  t.deepEqual(JSON.parse(data), { hello: 'world' })
+  t.equal(response.statusCode, 200)
+  t.same(JSON.parse(data), { hello: 'world' })
 
   server.close()
   proxy.close()
@@ -92,7 +92,7 @@ test('connect through proxy (with pool)', async (t) => {
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
+    t.equal(req.url, '/hello?foo=bar')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -109,8 +109,8 @@ test('connect through proxy (with pool)', async (t) => {
   for await (const chunk of response.body) {
     data += chunk
   }
-  t.strictEqual(response.statusCode, 200)
-  t.deepEqual(JSON.parse(data), { hello: 'world' })
+  t.equal(response.statusCode, 200)
+  t.same(JSON.parse(data), { hello: 'world' })
 
   server.close()
   proxy.close()

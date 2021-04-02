@@ -24,9 +24,9 @@ t.test('should not follow redirection by default if not using RedirectAgent', as
     body += b
   }
 
-  t.strictEqual(statusCode, 302)
-  t.strictEqual(headers.location, `http://${server}/302/1`)
-  t.strictEqual(body.length, 0)
+  t.equal(statusCode, 302)
+  t.equal(headers.location, `http://${server}/302/1`)
+  t.equal(body.length, 0)
 })
 
 t.test('should follow redirection after a HTTP 300', async t => {
@@ -43,7 +43,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
     body += b
   }
 
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
   t.notOk(headers.location)
   /*
     TODO: Test for the redirect history once added to the callback data.
@@ -56,7 +56,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
       `http://${server}/300/4`
     ]
   */
-  t.strictEqual(body, `GET key=value :: connection@keep-alive host@${server}`)
+  t.equal(body, `GET key=value :: connection@keep-alive host@${server}`)
 })
 
 t.test('should follow redirection after a HTTP 301', async t => {
@@ -75,9 +75,9 @@ t.test('should follow redirection after a HTTP 301', async t => {
     body += b
   }
 
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
   t.notOk(headers.location)
-  t.strictEqual(body, `POST :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
+  t.equal(body, `POST :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
 })
 
 t.test('should follow redirection after a HTTP 302', async t => {
@@ -96,9 +96,9 @@ t.test('should follow redirection after a HTTP 302', async t => {
     body += b
   }
 
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
   t.notOk(headers.location)
-  t.strictEqual(body, `PUT :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
+  t.equal(body, `PUT :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
 })
 
 t.test('should follow redirection after a HTTP 303 changing method to GET', async t => {
@@ -117,9 +117,9 @@ t.test('should follow redirection after a HTTP 303 changing method to GET', asyn
     body += b
   }
 
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
   t.notOk(headers.location)
-  t.strictEqual(body, `GET :: connection@keep-alive host@${server}`)
+  t.equal(body, `GET :: connection@keep-alive host@${server}`)
 })
 
 t.test('should remove Host and request body related headers when following HTTP 303 (array)', async t => {
@@ -153,9 +153,9 @@ t.test('should remove Host and request body related headers when following HTTP 
     body += b
   }
 
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
   t.notOk(headers.location)
-  t.strictEqual(body, `GET :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+  t.equal(body, `GET :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
 })
 
 t.test('should remove Host and request body related headers when following HTTP 303 (object)', async t => {
@@ -182,9 +182,9 @@ t.test('should remove Host and request body related headers when following HTTP 
     body += b
   }
 
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
   t.notOk(headers.location)
-  t.strictEqual(body, `GET :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+  t.equal(body, `GET :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
 })
 
 t.test('should follow redirection after a HTTP 307', async t => {
@@ -202,9 +202,9 @@ t.test('should follow redirection after a HTTP 307', async t => {
     body += b
   }
 
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
   t.notOk(headers.location)
-  t.strictEqual(body, `DELETE :: connection@keep-alive host@${server}`)
+  t.equal(body, `DELETE :: connection@keep-alive host@${server}`)
 })
 
 t.test('should follow redirection after a HTTP 308', async t => {
@@ -222,9 +222,9 @@ t.test('should follow redirection after a HTTP 308', async t => {
     body += b
   }
 
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
   t.notOk(headers.location)
-  t.strictEqual(body, `OPTIONS :: connection@keep-alive host@${server}`)
+  t.equal(body, `OPTIONS :: connection@keep-alive host@${server}`)
 })
 
 t.test('should ignore HTTP 3xx response bodies', async t => {
@@ -241,14 +241,14 @@ t.test('should ignore HTTP 3xx response bodies', async t => {
     body += b
   }
 
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
   t.notOk(headers.location)
   /*
     TODO: Test for the redirect history once added to the callback data.
 
     [`http://${server}/`]
   */
-  t.strictEqual(body, 'FINAL')
+  t.equal(body, 'FINAL')
 })
 
 t.test('should follow a redirect chain up to the allowed number of times', async t => {
@@ -265,14 +265,14 @@ t.test('should follow a redirect chain up to the allowed number of times', async
     body += b
   }
 
-  t.strictEqual(statusCode, 300)
-  t.strictEqual(headers.location, `http://${server}/300/3`)
+  t.equal(statusCode, 300)
+  t.equal(headers.location, `http://${server}/300/3`)
   /*
     TODO: Test for the redirect history once added to the callback data.
 
     [`http://${server}/300`, `http://${server}/300/1`]
   */
-  t.strictEqual(body.length, 0)
+  t.equal(body.length, 0)
 })
 
 t.test('should follow redirections when going cross origin', async t => {
@@ -290,7 +290,7 @@ t.test('should follow redirections when going cross origin', async t => {
     body += b
   }
 
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
   t.notOk(headers.location)
   /*
     TODO: Test for the redirect history once added to the callback data.
@@ -303,7 +303,7 @@ t.test('should follow redirections when going cross origin', async t => {
       `http://${server3}/end`
     ]
   */
-  t.strictEqual(body, 'POST')
+  t.equal(body, 'POST')
 })
 
 t.test('when a Location response header is NOT present', async t => {
@@ -324,9 +324,9 @@ t.test('when a Location response header is NOT present', async t => {
         body += b
       }
 
-      t.strictEqual(statusCode, code)
+      t.equal(statusCode, code)
       t.notOk(headers.location)
-      t.strictEqual(body.length, 0)
+      t.equal(body.length, 0)
     })
   }
 })
@@ -342,7 +342,7 @@ t.test('should not allow invalid maxRedirections arguments', async t => {
 
     throw new Error('Did not throw')
   } catch (error) {
-    t.strictEqual(error.message, 'maxRedirections must be a positive number')
+    t.equal(error.message, 'maxRedirections must be a positive number')
   }
 })
 
@@ -362,9 +362,9 @@ t.test('should not follow redirects when using Readable request bodies', async t
     body += b
   }
 
-  t.strictEqual(statusCode, 301)
-  t.strictEqual(headers.location, `http://${server}/301/1`)
-  t.strictEqual(body.length, 0)
+  t.equal(statusCode, 301)
+  t.equal(headers.location, `http://${server}/301/1`)
+  t.equal(body.length, 0)
 })
 
 t.test('should handle errors (callback)', t => {
@@ -397,7 +397,7 @@ t.test('should complain for invalid headers', async t => {
 
   const handler = new RedirectHandler('AGENT', { headers: 'ASD', origin: 'http://localhost' })
 
-  t.throw(() => {
+  t.throws(() => {
     handler.onHeaders(301, ['location', 'http://localhost'], nop)
   }, InvalidArgumentError, 'throws on invalid headers')
 })

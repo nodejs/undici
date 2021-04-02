@@ -28,7 +28,7 @@ test('ignore informational response', (t) => {
         bufs.push(buf)
       })
       response.body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
@@ -52,7 +52,7 @@ test('error 103 body', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.strictEqual(err.code, 'HPE_INVALID_CONSTANT')
+      t.equal(err.code, 'HPE_INVALID_CONSTANT')
     })
     client.on('disconnect', () => {
       t.pass()
@@ -76,7 +76,7 @@ test('error 100 body', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.strictEqual(err.message, 'bad response')
+      t.equal(err.message, 'bad response')
     })
     client.on('disconnect', () => {
       t.pass()

@@ -18,15 +18,15 @@ t.test('should not follow redirection by default if not using RedirectAgent', as
   await streamPipeline(
     createReadable('REQUEST'),
     undiciPipeline(`http://${serverRoot}/`, {}, ({ statusCode, headers, body }) => {
-      t.strictEqual(statusCode, 302)
-      t.strictEqual(headers.location, `http://${serverRoot}/302/1`)
+      t.equal(statusCode, 302)
+      t.equal(headers.location, `http://${serverRoot}/302/1`)
 
       return body
     }),
     createWritable(body)
   )
 
-  t.strictEqual(body.length, 0)
+  t.equal(body.length, 0)
 })
 
 t.test('should not follow redirects when using RedirectAgent within pipeline', async t => {
@@ -38,13 +38,13 @@ t.test('should not follow redirects when using RedirectAgent within pipeline', a
   await streamPipeline(
     createReadable('REQUEST'),
     undiciPipeline(`http://${serverRoot}/`, { maxRedirections: 1 }, ({ statusCode, headers, body }) => {
-      t.strictEqual(statusCode, 302)
-      t.strictEqual(headers.location, `http://${serverRoot}/302/1`)
+      t.equal(statusCode, 302)
+      t.equal(headers.location, `http://${serverRoot}/302/1`)
 
       return body
     }),
     createWritable(body)
   )
 
-  t.strictEqual(body.length, 0)
+  t.equal(body.length, 0)
 })

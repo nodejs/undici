@@ -23,20 +23,20 @@ test('basic connect', (t) => {
       socket.end(data)
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const signal = new EE()
     const promise = client.connect({
       signal,
       path: '/'
     })
-    t.strictEqual(signal.listenerCount('abort'), 1)
+    t.equal(signal.listenerCount('abort'), 1)
     const { socket } = await promise
-    t.strictEqual(signal.listenerCount('abort'), 0)
+    t.equal(signal.listenerCount('abort'), 0)
 
     let recvData = ''
     socket.on('data', (d) => {
@@ -44,7 +44,7 @@ test('basic connect', (t) => {
     })
 
     socket.on('end', () => {
-      t.strictEqual(recvData.toString(), 'Body')
+      t.equal(recvData.toString(), 'Body')
     })
 
     socket.write('Body')
@@ -70,16 +70,16 @@ test('connect >=300 should not error', (t) => {
       socket.end(data)
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const { statusCode, socket } = await client.connect({
       path: '/'
     })
-    t.strictEqual(statusCode, 300)
+    t.equal(statusCode, 300)
     socket.destroy()
   })
 })
@@ -93,11 +93,11 @@ test('connect error', (t) => {
   server.on('connect', (req, socket, firstBodyChunk) => {
     socket.destroy()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     try {
       await client.connect({
@@ -134,7 +134,7 @@ test('connect wait for empty pipeline', (t) => {
     canConnect = true
   })
   server.on('connect', (req, socket, firstBodyChunk) => {
-    t.strictEqual(canConnect, true)
+    t.equal(canConnect, true)
     socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
 
     let data = firstBodyChunk.toString()
@@ -146,13 +146,13 @@ test('connect wait for empty pipeline', (t) => {
       socket.end(data)
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.request({
       path: '/',
@@ -162,7 +162,7 @@ test('connect wait for empty pipeline', (t) => {
     })
     client.once('connect', () => {
       process.nextTick(() => {
-        t.strictEqual(client.busy, false)
+        t.equal(client.busy, false)
 
         client.connect({
           path: '/'
@@ -174,13 +174,13 @@ test('connect wait for empty pipeline', (t) => {
           })
 
           socket.on('end', () => {
-            t.strictEqual(recvData.toString(), 'Body')
+            t.equal(recvData.toString(), 'Body')
           })
 
           socket.write('Body')
           socket.end()
         })
-        t.strictEqual(client.busy, true)
+        t.equal(client.busy, true)
 
         client.request({
           path: '/',
@@ -202,13 +202,13 @@ test('connect aborted', (t) => {
   server.on('connect', (req, c, firstBodyChunk) => {
     t.fail()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.on('disconnect', () => {
       t.fail()
@@ -220,12 +220,12 @@ test('connect aborted', (t) => {
       signal,
       opaque: 'asd'
     }, (err, { opaque }) => {
-      t.strictEqual(opaque, 'asd')
-      t.strictEqual(signal.listenerCount('abort'), 0)
+      t.equal(opaque, 'asd')
+      t.equal(signal.listenerCount('abort'), 0)
       t.ok(err instanceof errors.RequestAbortedError)
     })
-    t.strictEqual(client.busy, true)
-    t.strictEqual(signal.listenerCount('abort'), 1)
+    t.equal(client.busy, true)
+    t.equal(signal.listenerCount('abort'), 1)
     signal.emit('abort')
 
     client.close(() => {
@@ -252,11 +252,11 @@ test('basic connect error', (t) => {
       socket.end(data)
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const _err = new Error()
     client.connect({
@@ -264,7 +264,7 @@ test('basic connect error', (t) => {
     }, (err, { socket }) => {
       t.error(err)
       socket.on('error', (err) => {
-        t.strictEqual(err, _err)
+        t.equal(err, _err)
       })
       throw _err
     })
@@ -280,11 +280,11 @@ test('connect invalid signal', (t) => {
   server.on('connect', (req, c, firstBodyChunk) => {
     t.fail()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.on('disconnect', () => {
       t.fail()
@@ -295,7 +295,7 @@ test('connect invalid signal', (t) => {
       signal: 'error',
       opaque: 'asd'
     }, (err, { opaque }) => {
-      t.strictEqual(opaque, 'asd')
+      t.equal(opaque, 'asd')
       t.ok(err instanceof errors.InvalidArgumentError)
     })
   })
@@ -311,13 +311,13 @@ test('connect aborted after connect', (t) => {
   server.on('connect', (req, c, firstBodyChunk) => {
     signal.emit('abort')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.on('disconnect', () => {
       t.fail()
@@ -328,9 +328,9 @@ test('connect aborted after connect', (t) => {
       signal,
       opaque: 'asd'
     }, (err, { opaque }) => {
-      t.strictEqual(opaque, 'asd')
+      t.equal(opaque, 'asd')
       t.ok(err instanceof errors.RequestAbortedError)
     })
-    t.strictEqual(client.busy, true)
+    t.equal(client.busy, true)
   })
 })

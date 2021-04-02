@@ -25,13 +25,13 @@ test('socket back-pressure', (t) => {
   server.on('request', (req, res) => {
     src.pipe(res)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', opaque: 'asd' }, (err, data) => {
       t.error(err)

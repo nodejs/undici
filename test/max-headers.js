@@ -30,7 +30,7 @@ test('handle a lot of headers', (t) => {
       for (let n = 0; n < 64; ++n) {
         headers2[n] = data.headers[n]
       }
-      t.strictDeepEqual(headers2, headers)
+      t.strictSame(headers2, headers)
       data.body
         .resume()
         .on('end', () => {

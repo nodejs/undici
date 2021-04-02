@@ -10,7 +10,7 @@ test('connect-timeout', t => {
   const client = new Client('http://localhost:9000', {
     connectTimeout: 1e3
   })
-  t.tearDown(client.close.bind(client))
+  t.teardown(client.close.bind(client))
 
   // Never connect
   net.connect = function (options) {
