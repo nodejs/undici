@@ -1036,3 +1036,30 @@ test('connected', (t) => {
     })
   })
 })
+
+test('emit disconnect after destory', t => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.tearDown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const url = new URL(`http://localhost:${server.address().port}`)
+    const client = new Client(url)
+
+    t.strictEqual(client.connected, 0)
+    client[kConnect](() => {
+      t.strictEqual(client.connected, 1)
+      let disconnected = false
+      client.on('disconnect', () => {
+        disconnected = true
+        t.pass()
+      })
+      client.destroy(() => {
+        t.strictEqual(disconnected, true)
+      })
+    })
+  })
+})
