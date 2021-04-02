@@ -12,16 +12,16 @@ test('setGlobalDispatcher', t => {
 
   t.test('fails if agent does not implement `get` method', t => {
     t.plan(1)
-    t.throw(() => setGlobalDispatcher({ dispatch: 'not a function' }), InvalidArgumentError)
+    t.throws(() => setGlobalDispatcher({ dispatch: 'not a function' }), InvalidArgumentError)
   })
 
   t.test('sets global agent', t => {
     t.plan(2)
-    t.notThrow(() => setGlobalDispatcher(new Agent()))
-    t.notThrow(() => setGlobalDispatcher({ dispatch: () => {} }))
+    t.doesNotThrow(() => setGlobalDispatcher(new Agent()))
+    t.doesNotThrow(() => setGlobalDispatcher({ dispatch: () => {} }))
   })
 
-  t.tearDown(() => {
+  t.teardown(() => {
     // reset globalAgent to a fresh Agent instance for later tests
     setGlobalDispatcher(new Agent())
   })
@@ -30,7 +30,7 @@ test('setGlobalDispatcher', t => {
 test('Agent', t => {
   t.plan(1)
 
-  t.notThrow(() => new Agent())
+  t.doesNotThrow(() => new Agent())
 })
 
 test('agent should close internal pools', t => {
@@ -43,7 +43,7 @@ test('agent should close internal pools', t => {
     res.end(wanted)
   })
 
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const dispatcher = new Agent()
@@ -81,7 +81,7 @@ test('agent should destroy internal pools', t => {
     res.end(wanted)
   })
 
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const dispatcher = new Agent()
@@ -120,22 +120,22 @@ test('multiple connections', t => {
     })
     res.end('ok')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const origin = `http://localhost:${server.address().port}`
     const dispatcher = new Agent({ connections })
 
-    t.tearDown(dispatcher.close.bind(dispatcher))
+    t.teardown(dispatcher.close.bind(dispatcher))
 
     dispatcher.on('connect', (origin, [dispatcher]) => {
       t.ok(dispatcher)
     })
     dispatcher.on('disconnect', (origin, [dispatcher], error) => {
       t.ok(dispatcher)
-      t.true(error instanceof errors.InformationalError)
-      t.strictEqual(error.code, 'UND_ERR_INFO')
-      t.strictEqual(error.message, 'reset')
+      t.ok(error instanceof errors.InformationalError)
+      t.equal(error.code, 'UND_ERR_INFO')
+      t.equal(error.message, 'reset')
     })
 
     for (let i = 0; i < connections; i++) {
@@ -155,26 +155,26 @@ test('with globalAgent', t => {
   const wanted = 'payload'
 
   const server = http.createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
 
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     request(`http://localhost:${server.address().port}`)
       .then(({ statusCode, headers, body }) => {
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'text/plain')
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
         })
       })
       .catch(err => {
@@ -188,28 +188,28 @@ test('with local agent', t => {
   const wanted = 'payload'
 
   const server = http.createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
 
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   const dispatcher = new Agent()
 
   server.listen(0, () => {
     request(`http://localhost:${server.address().port}`, { dispatcher })
       .then(({ statusCode, headers, body }) => {
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'text/plain')
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
         })
       })
       .catch(err => {
@@ -220,17 +220,17 @@ test('with local agent', t => {
 
 test('fails with invalid URL', t => {
   t.plan(4)
-  t.throw(() => request(), InvalidArgumentError, 'throws on missing url argument')
-  t.throw(() => request(''), TypeError, 'throws on invalid url')
-  t.throw(() => request({}), InvalidArgumentError, 'throws on missing url.origin argument')
-  t.throw(() => request({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+  t.throws(() => request(), InvalidArgumentError, 'throws on missing url argument')
+  t.throws(() => request(''), TypeError, 'throws on invalid url')
+  t.throws(() => request({}), InvalidArgumentError, 'throws on missing url.origin argument')
+  t.throws(() => request({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
 })
 
 test('fails with unsupported opts.path', t => {
   t.plan(3)
-  t.throw(() => request('https://example.com', { path: 'asd' }), InvalidArgumentError, 'throws on opts.path argument')
-  t.throw(() => request('https://example.com', { path: '' }), InvalidArgumentError, 'throws on opts.path argument')
-  t.throw(() => request('https://example.com', { path: 0 }), InvalidArgumentError, 'throws on opts.path argument')
+  t.throws(() => request('https://example.com', { path: 'asd' }), InvalidArgumentError, 'throws on opts.path argument')
+  t.throws(() => request('https://example.com', { path: '' }), InvalidArgumentError, 'throws on opts.path argument')
+  t.throws(() => request('https://example.com', { path: 0 }), InvalidArgumentError, 'throws on opts.path argument')
 })
 
 test('with globalAgent', t => {
@@ -238,14 +238,14 @@ test('with globalAgent', t => {
   const wanted = 'payload'
 
   const server = http.createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
 
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     stream(
@@ -254,14 +254,14 @@ test('with globalAgent', t => {
         opaque: new PassThrough()
       },
       ({ statusCode, headers, opaque: pt }) => {
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'text/plain')
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
         const bufs = []
         pt.on('data', (buf) => {
           bufs.push(buf)
         })
         pt.on('end', () => {
-          t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
         })
         pt.on('error', () => {
           t.fail()
@@ -277,14 +277,14 @@ test('with a local agent', t => {
   const wanted = 'payload'
 
   const server = http.createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
 
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   const dispatcher = new Agent()
 
@@ -296,14 +296,14 @@ test('with a local agent', t => {
         opaque: new PassThrough()
       },
       ({ statusCode, headers, opaque: pt }) => {
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'text/plain')
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
         const bufs = []
         pt.on('data', (buf) => {
           bufs.push(buf)
         })
         pt.on('end', () => {
-          t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
         })
         pt.on('error', () => {
           t.fail()
@@ -316,10 +316,10 @@ test('with a local agent', t => {
 
 test('fails with invalid URL', t => {
   t.plan(4)
-  t.throw(() => stream(), InvalidArgumentError, 'throws on missing url argument')
-  t.throw(() => stream(''), TypeError, 'throws on invalid url')
-  t.throw(() => stream({}), InvalidArgumentError, 'throws on missing url.origin argument')
-  t.throw(() => stream({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+  t.throws(() => stream(), InvalidArgumentError, 'throws on missing url argument')
+  t.throws(() => stream(''), TypeError, 'throws on invalid url')
+  t.throws(() => stream({}), InvalidArgumentError, 'throws on missing url.origin argument')
+  t.throws(() => stream({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
 })
 
 test('with globalAgent', t => {
@@ -327,14 +327,14 @@ test('with globalAgent', t => {
   const wanted = 'payload'
 
   const server = http.createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
 
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const bufs = []
@@ -343,8 +343,8 @@ test('with globalAgent', t => {
       `http://localhost:${server.address().port}`,
       {},
       ({ statusCode, headers, body }) => {
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'text/plain')
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
         return body
       }
     )
@@ -353,7 +353,7 @@ test('with globalAgent', t => {
         bufs.push(buf)
       })
       .on('end', () => {
-        t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+        t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
       })
       .on('error', () => {
         t.fail()
@@ -366,14 +366,14 @@ test('with a local agent', t => {
   const wanted = 'payload'
 
   const server = http.createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
 
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   const dispatcher = new Agent()
 
@@ -384,8 +384,8 @@ test('with a local agent', t => {
       `http://localhost:${server.address().port}`,
       { dispatcher },
       ({ statusCode, headers, body }) => {
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'text/plain')
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
         return body
       }
     )
@@ -394,7 +394,7 @@ test('with a local agent', t => {
         bufs.push(buf)
       })
       .on('end', () => {
-        t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+        t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
       })
       .on('error', () => {
         t.fail()
@@ -404,23 +404,23 @@ test('with a local agent', t => {
 
 test('fails with invalid URL', t => {
   t.plan(4)
-  t.throw(() => pipeline(), InvalidArgumentError, 'throws on missing url argument')
-  t.throw(() => pipeline(''), TypeError, 'throws on invalid url')
-  t.throw(() => pipeline({}), InvalidArgumentError, 'throws on missing url.origin argument')
-  t.throw(() => pipeline({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+  t.throws(() => pipeline(), InvalidArgumentError, 'throws on missing url argument')
+  t.throws(() => pipeline(''), TypeError, 'throws on invalid url')
+  t.throws(() => pipeline({}), InvalidArgumentError, 'throws on missing url.origin argument')
+  t.throws(() => pipeline({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
 })
 
 test('constructor validations', t => {
   t.plan(4)
-  t.throw(() => new Agent({ factory: 'ASD' }), InvalidArgumentError, 'throws on invalid opts argument')
-  t.throw(() => new Agent({ maxRedirections: 'ASD' }), InvalidArgumentError, 'throws on invalid opts argument')
-  t.throw(() => new Agent({ maxRedirections: -1 }), InvalidArgumentError, 'throws on invalid opts argument')
-  t.throw(() => new Agent({ maxRedirections: null }), InvalidArgumentError, 'throws on invalid opts argument')
+  t.throws(() => new Agent({ factory: 'ASD' }), InvalidArgumentError, 'throws on invalid opts argument')
+  t.throws(() => new Agent({ maxRedirections: 'ASD' }), InvalidArgumentError, 'throws on invalid opts argument')
+  t.throws(() => new Agent({ maxRedirections: -1 }), InvalidArgumentError, 'throws on invalid opts argument')
+  t.throws(() => new Agent({ maxRedirections: null }), InvalidArgumentError, 'throws on invalid opts argument')
 })
 
 test('dispatch validations', t => {
   const dispatcher = new Agent()
 
   t.plan(1)
-  t.throw(() => dispatcher.dispatch('ASD'), InvalidArgumentError, 'throws on invalid opts argument')
+  t.throws(() => dispatcher.dispatch('ASD'), InvalidArgumentError, 'throws on invalid opts argument')
 })

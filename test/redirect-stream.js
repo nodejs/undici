@@ -17,13 +17,13 @@ t.test('should not follow redirection by default if not using RedirectAgent', as
   const server = await startRedirectingServer(t)
 
   await stream(`http://${server}`, { opaque: body }, ({ statusCode, headers, opaque }) => {
-    t.strictEqual(statusCode, 302)
-    t.strictEqual(headers.location, `http://${server}/302/1`)
+    t.equal(statusCode, 302)
+    t.equal(headers.location, `http://${server}/302/1`)
 
     return createWritable(opaque)
   })
 
-  t.strictEqual(body.length, 0)
+  t.equal(body.length, 0)
 })
 
 t.test('should follow redirection after a HTTP 300', async t => {
@@ -36,7 +36,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
     `http://${server}/300?key=value`,
     { opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
       t.notOk(headers.location)
       /*
         TODO: Test for the redirect history once added to the callback data.
@@ -54,7 +54,7 @@ t.test('should follow redirection after a HTTP 300', async t => {
     }
   )
 
-  t.strictEqual(body.join(''), `GET key=value :: connection@keep-alive host@${server}`)
+  t.equal(body.join(''), `GET key=value :: connection@keep-alive host@${server}`)
 })
 
 t.test('should follow redirection after a HTTP 301', async t => {
@@ -67,14 +67,14 @@ t.test('should follow redirection after a HTTP 301', async t => {
     `http://${server}/301`,
     { method: 'POST', body: 'REQUEST', opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
       t.notOk(headers.location)
 
       return createWritable(opaque)
     }
   )
 
-  t.strictEqual(body.join(''), `POST :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
+  t.equal(body.join(''), `POST :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
 })
 
 t.test('should follow redirection after a HTTP 302', async t => {
@@ -87,14 +87,14 @@ t.test('should follow redirection after a HTTP 302', async t => {
     `http://${server}/302`,
     { method: 'PUT', body: Buffer.from('REQUEST'), opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
       t.notOk(headers.location)
 
       return createWritable(opaque)
     }
   )
 
-  t.strictEqual(body.join(''), `PUT :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
+  t.equal(body.join(''), `PUT :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
 })
 
 t.test('should follow redirection after a HTTP 303 changing method to GET', async t => {
@@ -107,14 +107,14 @@ t.test('should follow redirection after a HTTP 303 changing method to GET', asyn
     `http://${server}/303`,
     { opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
       t.notOk(headers.location)
 
       return createWritable(opaque)
     }
   )
 
-  t.strictEqual(body.join(''), `GET :: connection@keep-alive host@${server}`)
+  t.equal(body.join(''), `GET :: connection@keep-alive host@${server}`)
 })
 
 t.test('should remove Host and request body related headers when following HTTP 303 (array)', async t => {
@@ -147,14 +147,14 @@ t.test('should remove Host and request body related headers when following HTTP 
       maxRedirections: 10
     },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
       t.notOk(headers.location)
 
       return createWritable(opaque)
     }
   )
 
-  t.strictEqual(body.join(''), `GET :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+  t.equal(body.join(''), `GET :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
 })
 
 t.test('should remove Host and request body related headers when following HTTP 303 (object)', async t => {
@@ -180,14 +180,14 @@ t.test('should remove Host and request body related headers when following HTTP 
       maxRedirections: 10
     },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
       t.notOk(headers.location)
 
       return createWritable(opaque)
     }
   )
 
-  t.strictEqual(body.join(''), `GET :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+  t.equal(body.join(''), `GET :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
 })
 
 t.test('should follow redirection after a HTTP 307', async t => {
@@ -200,14 +200,14 @@ t.test('should follow redirection after a HTTP 307', async t => {
     `http://${server}/307`,
     { method: 'DELETE', opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
       t.notOk(headers.location)
 
       return createWritable(opaque)
     }
   )
 
-  t.strictEqual(body.join(''), `DELETE :: connection@keep-alive host@${server}`)
+  t.equal(body.join(''), `DELETE :: connection@keep-alive host@${server}`)
 })
 
 t.test('should follow redirection after a HTTP 308', async t => {
@@ -220,14 +220,14 @@ t.test('should follow redirection after a HTTP 308', async t => {
     `http://${server}/308`,
     { method: 'OPTIONS', opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
       t.notOk(headers.location)
 
       return createWritable(opaque)
     }
   )
 
-  t.strictEqual(body.join(''), `OPTIONS :: connection@keep-alive host@${server}`)
+  t.equal(body.join(''), `OPTIONS :: connection@keep-alive host@${server}`)
 })
 
 t.test('should ignore HTTP 3xx response bodies', async t => {
@@ -237,7 +237,7 @@ t.test('should ignore HTTP 3xx response bodies', async t => {
   const server = await startRedirectingWithBodyServer(t)
 
   await stream(`http://${server}/`, { opaque: body, maxRedirections: 10 }, ({ statusCode, headers, opaque }) => {
-    t.strictEqual(statusCode, 200)
+    t.equal(statusCode, 200)
     t.notOk(headers.location)
     /*
       TODO: Test for the redirect history once added to the callback data.
@@ -248,7 +248,7 @@ t.test('should ignore HTTP 3xx response bodies', async t => {
     return createWritable(opaque)
   })
 
-  t.strictEqual(body.join(''), 'FINAL')
+  t.equal(body.join(''), 'FINAL')
 })
 
 t.test('should follow a redirect chain up to the allowed number of times', async t => {
@@ -261,8 +261,8 @@ t.test('should follow a redirect chain up to the allowed number of times', async
     `http://${server}/300`,
     { opaque: body, maxRedirections: 2 },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 300)
-      t.strictEqual(headers.location, `http://${server}/300/3`)
+      t.equal(statusCode, 300)
+      t.equal(headers.location, `http://${server}/300/3`)
       /*
         TODO: Test for the redirect history once added to the callback data.
 
@@ -273,7 +273,7 @@ t.test('should follow a redirect chain up to the allowed number of times', async
     }
   )
 
-  t.strictEqual(body.length, 0)
+  t.equal(body.length, 0)
 })
 
 t.test('should follow redirections when going cross origin', async t => {
@@ -286,7 +286,7 @@ t.test('should follow redirections when going cross origin', async t => {
     `http://${server1}`,
     { method: 'POST', opaque: body, maxRedirections: 10 },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
       t.notOk(headers.location)
       /*
         TODO: Test for the redirect history once added to the callback data.
@@ -304,7 +304,7 @@ t.test('should follow redirections when going cross origin', async t => {
     }
   )
 
-  t.strictEqual(body.join(''), 'POST')
+  t.equal(body.join(''), 'POST')
 })
 
 t.test('when a Location response header is NOT present', async t => {
@@ -321,14 +321,14 @@ t.test('when a Location response header is NOT present', async t => {
         `http://${server}/${code}`,
         { opaque: body, maxRedirections: 10 },
         ({ statusCode, headers, opaque }) => {
-          t.strictEqual(statusCode, code)
+          t.equal(statusCode, code)
           t.notOk(headers.location)
 
           return createWritable(opaque)
         }
       )
 
-      t.strictEqual(body.length, 0)
+      t.equal(body.length, 0)
     })
   }
 })
@@ -348,14 +348,14 @@ t.test('should not follow redirects when using Readable request bodies', async t
       maxRedirections: 10
     },
     ({ statusCode, headers, opaque }) => {
-      t.strictEqual(statusCode, 302)
-      t.strictEqual(headers.location, `http://${server}/302/1`)
+      t.equal(statusCode, 302)
+      t.equal(headers.location, `http://${server}/302/1`)
 
       return createWritable(opaque)
     }
   )
 
-  t.strictEqual(body.length, 0)
+  t.equal(body.length, 0)
 })
 
 t.test('should handle errors (callback)', t => {
@@ -371,7 +371,7 @@ t.test('should handle errors (callback)', t => {
     },
     error => {
       t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
-      t.strictEqual(body.length, 0)
+      t.equal(body.length, 0)
     }
   )
 })
@@ -393,6 +393,6 @@ t.test('should handle errors (promise)', async t => {
     throw new Error('Did not throw')
   } catch (error) {
     t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
-    t.strictEqual(body.length, 0)
+    t.equal(body.length, 0)
   }
 })
