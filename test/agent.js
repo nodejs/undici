@@ -233,6 +233,11 @@ test('fails with unsupported opts.path', t => {
   t.throws(() => request('https://example.com', { path: 0 }), InvalidArgumentError, 'throws on opts.path argument')
 })
 
+test('fails with unsupported opts.agent', t => {
+  t.plan(1)
+  t.throw(() => request('https://example.com', { agent: new Agent() }), InvalidArgumentError, 'throws on opts.path argument')
+})
+
 test('with globalAgent', t => {
   t.plan(6)
   const wanted = 'payload'
@@ -273,7 +278,7 @@ test('with globalAgent', t => {
 })
 
 test('with a local agent', t => {
-  t.plan(6)
+  t.plan(9)
   const wanted = 'payload'
 
   const server = http.createServer((req, res) => {
@@ -287,6 +292,14 @@ test('with a local agent', t => {
   t.teardown(server.close.bind(server))
 
   const dispatcher = new Agent()
+
+  dispatcher.on('connect', (origin, [dispatcher]) => {
+    t.ok(dispatcher)
+    t.strictEqual(dispatcher.running, 0)
+    process.nextTick(() => {
+      t.strictEqual(dispatcher.running, 1)
+    })
+  })
 
   server.listen(0, () => {
     stream(
@@ -421,6 +434,16 @@ test('constructor validations', t => {
 test('dispatch validations', t => {
   const dispatcher = new Agent()
 
-  t.plan(1)
-  t.throws(() => dispatcher.dispatch('ASD'), InvalidArgumentError, 'throws on invalid opts argument')
+  const noopHandler = {
+    onError (err) {
+      throw err
+    }
+  }
+
+  t.plan(5)
+  t.throw(() => dispatcher.dispatch('ASD'), InvalidArgumentError, 'throws on missing handler')
+  t.throw(() => dispatcher.dispatch('ASD', noopHandler), InvalidArgumentError, 'throws on invalid opts argument type')
+  t.throw(() => dispatcher.dispatch({}, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
+  t.throw(() => dispatcher.dispatch({ origin: '' }, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
+  t.throw(() => dispatcher.dispatch({}, {}), InvalidArgumentError, 'throws on invalid handler.onError')
 })
