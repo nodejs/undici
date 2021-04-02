@@ -146,8 +146,8 @@ test('MockAgent - dispatch', t => {
   })
 })
 
-test('MockAgent - .close should clean up registered pools or clients', async (t) => {
-  t.plan(2)
+test('MockAgent - .close should clean up registered pools', async (t) => {
+  t.plan(5)
 
   const baseUrl = 'http://localhost:9999'
 
@@ -155,10 +155,32 @@ test('MockAgent - .close should clean up registered pools or clients', async (t)
   t.tearDown(mockAgent.close.bind(mockAgent))
 
   // Register a pool
-  mockAgent.get(baseUrl)
+  const mockPool = mockAgent.get(baseUrl)
+  t.true(mockPool instanceof MockPool)
 
+  t.strictEqual(mockPool.connected, 1)
   t.strictEqual(mockAgent[kClients].size, 1)
   await mockAgent.close()
+  t.strictEqual(mockPool.connected, 0)
+  t.strictEqual(mockAgent[kClients].size, 0)
+})
+
+test('MockAgent - .close should clean up registered clients', async (t) => {
+  t.plan(5)
+
+  const baseUrl = 'http://localhost:9999'
+
+  const mockAgent = new MockAgent({ connections: 1 })
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  // Register a pool
+  const mockClient = mockAgent.get(baseUrl)
+  t.true(mockClient instanceof MockClient)
+
+  t.strictEqual(mockClient.connected, 1)
+  t.strictEqual(mockAgent[kClients].size, 1)
+  await mockAgent.close()
+  t.strictEqual(mockClient.connected, 0)
   t.strictEqual(mockAgent[kClients].size, 0)
 })
 
