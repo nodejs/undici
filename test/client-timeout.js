@@ -10,13 +10,13 @@ test('refresh timeout on pause', (t) => {
   const server = createServer((req, res) => {
     res.flushHeaders()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       bodyTimeout: 500
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.dispatch({
       path: '/',
