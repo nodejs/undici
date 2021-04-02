@@ -7,9 +7,7 @@ A HTTP/1.1 client, written from scratch for Node.js.
 > Undici means eleven in Italian. 1.1 -> 11 -> Eleven -> Undici.
 It is also a Stranger Things reference.
 
-<!--
-Picture of Eleven
--->
+Have a question about using Undici? Open a [Q&A Discussion](https://github.com/nodejs/undici/discussions/new) or join our official OpenJS [Slack](https://openjs-foundation.slack.com/archives/C01QF9Q31QD) channel.
 
 ## Install
 
@@ -55,7 +53,11 @@ for await (const data of body) {
 console.log('trailers', trailers)
 ```
 
-## `undici.request(url[, options]): Promise`
+## Common API Methods
+
+This section documents our most commonly used API methods. Additional APIs are documented in their own files within the [docs](./docs/) folder and are accessible via the navigation list on the left side of the docs site.
+
+### `undici.request(url[, options]): Promise`
 
 Arguments:
 
@@ -73,7 +75,7 @@ Calls `options.dispatcher.request(options)`.
 
 See [Dispatcher.request] for more details.
 
-## `undici.stream(url, options, factory): Promise`
+### `undici.stream(url, options, factory): Promise`
 
 Arguments:
 
@@ -91,7 +93,7 @@ Calls `options.dispatcher.stream(options, factory)`.
 
 See [Dispatcher.stream](docs/api/Dispatcher.md#dispatcherstream) for more details.
 
-## `undici.pipeline(url, options, handler): Duplex`
+### `undici.pipeline(url, options, handler): Duplex`
 
 Arguments:
 
@@ -147,13 +149,13 @@ Calls `options.dispatcher.upgrade(options)`.
 
 See [Dispatcher.upgrade](docs/api/Dispatcher.md#clientpipelining) for more details.
 
-## `undici.setGlobalDispatcher(dispatcher)`
+### `undici.setGlobalDispatcher(dispatcher)`
 
 * dispatcher `Dispatcher`
 
 Sets the global dispatcher used by global API methods.
 
-## `undici.getGlobalDispatcher()`
+### `undici.getGlobalDispatcher()`
 
 Gets the global dispatcher used by global API methods.
 
