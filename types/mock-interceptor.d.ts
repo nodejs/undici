@@ -26,8 +26,8 @@ declare class MockInterceptor {
   /** Set default reply headers on the interceptor for subsequent mocked replies. */
   defaultReplyHeaders(headers: IncomingHttpHeaders): MockInterceptor;
   /** Set default reply trailers on the interceptor for subsequent mocked replies. */
-  defaultReplyTrailers(trailers: IncomingHttpHeaders): MockInterceptor;
-  /** Set automcatically calculated content-length header on subsequent mocked replies. */
+  defaultReplyTrailers(trailers: Record<string, string>): MockInterceptor;
+  /** Set automatically calculated content-length header on subsequent mocked replies. */
   replyContentLength(): MockInterceptor;
 }
 
@@ -48,9 +48,9 @@ declare namespace MockInterceptor {
     data: MockDispatchData<TData, TError>;
   }
   export interface MockDispatchData<TData extends object = object, TError extends Error = Error> extends MockResponseOptions {
-    statusCode: number;
-    data: TData | string;
     error: TError | null;
+    statusCode?: number;
+    data?: TData | string;
   }
   export interface MockResponseOptions {
     headers?: IncomingHttpHeaders;
