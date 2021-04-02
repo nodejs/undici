@@ -11,6 +11,7 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
 {
   const agent = new Agent()
 
+  // properties
   expectAssignable<number>(agent.pending)
   expectAssignable<number>(agent.running)
   expectAssignable<number>(agent.size)
