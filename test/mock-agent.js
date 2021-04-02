@@ -184,6 +184,37 @@ test('MockAgent - .close should clean up registered clients', async (t) => {
   t.strictEqual(mockAgent[kClients].size, 0)
 })
 
+test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.tearDown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const agent = new Agent()
+  t.tearDown(agent.close.bind(agent))
+
+  const mockAgent = new MockAgent({ agent })
+  t.tearDown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'hello')
+
+  // The MockAgent should encapsulate the input agent clients
+  t.strictEqual(mockAgent[kClients].size, agent[kClients].size)
+})
+
 test('MockAgent - basic intercept with MockAgent.request', async (t) => {
   t.plan(4)
 
