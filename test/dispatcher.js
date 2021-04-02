@@ -11,12 +11,12 @@ test('dispatcher implementation', (t) => {
   t.plan(6)
 
   const dispatcher = new Dispatcher()
-  t.throw(() => dispatcher.dispatch(), Error, 'throws on unimplemented dispatch')
-  t.throw(() => dispatcher.close(), Error, 'throws on unimplemented close')
-  t.throw(() => dispatcher.destroy(), Error, 'throws on unimplemented destroy')
+  t.throws(() => dispatcher.dispatch(), Error, 'throws on unimplemented dispatch')
+  t.throws(() => dispatcher.close(), Error, 'throws on unimplemented close')
+  t.throws(() => dispatcher.destroy(), Error, 'throws on unimplemented destroy')
 
   const poorImplementation = new PoorImplementation()
-  t.throw(() => poorImplementation.dispatch(), Error, 'throws on unimplemented dispatch')
-  t.throw(() => poorImplementation.close(), Error, 'throws on unimplemented close')
-  t.throw(() => poorImplementation.destroy(), Error, 'throws on unimplemented destroy')
+  t.throws(() => poorImplementation.dispatch(), Error, 'throws on unimplemented dispatch')
+  t.throws(() => poorImplementation.close(), Error, 'throws on unimplemented close')
+  t.throws(() => poorImplementation.destroy(), Error, 'throws on unimplemented destroy')
 })

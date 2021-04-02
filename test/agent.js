@@ -235,7 +235,7 @@ test('fails with unsupported opts.path', t => {
 
 test('fails with unsupported opts.agent', t => {
   t.plan(1)
-  t.throw(() => request('https://example.com', { agent: new Agent() }), InvalidArgumentError, 'throws on opts.path argument')
+  t.throws(() => request('https://example.com', { agent: new Agent() }), InvalidArgumentError, 'throws on opts.path argument')
 })
 
 test('with globalAgent', t => {
@@ -441,9 +441,9 @@ test('dispatch validations', t => {
   }
 
   t.plan(5)
-  t.throw(() => dispatcher.dispatch('ASD'), InvalidArgumentError, 'throws on missing handler')
-  t.throw(() => dispatcher.dispatch('ASD', noopHandler), InvalidArgumentError, 'throws on invalid opts argument type')
-  t.throw(() => dispatcher.dispatch({}, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
-  t.throw(() => dispatcher.dispatch({ origin: '' }, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
-  t.throw(() => dispatcher.dispatch({}, {}), InvalidArgumentError, 'throws on invalid handler.onError')
+  t.throws(() => dispatcher.dispatch('ASD'), InvalidArgumentError, 'throws on missing handler')
+  t.throws(() => dispatcher.dispatch('ASD', noopHandler), InvalidArgumentError, 'throws on invalid opts argument type')
+  t.throws(() => dispatcher.dispatch({}, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
+  t.throws(() => dispatcher.dispatch({ origin: '' }, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
+  t.throws(() => dispatcher.dispatch({}, {}), InvalidArgumentError, 'throws on invalid handler.onError')
 })
