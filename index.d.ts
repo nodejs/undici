@@ -1,3 +1,4 @@
+import Dispatcher from './types/dispatcher'
 import Pool from './types/pool'
 import Client from './types/client'
 import errors from './types/errors'
@@ -6,12 +7,13 @@ import MockClient from './types/mock-client'
 import MockPool from './types/mock-pool'
 import MockAgent from './types/mock-agent'
 
-export { Pool, Client, errors, Agent, setGlobalAgent, request, stream, pipeline, MockClient, MockPool, MockAgent }
+export { Dispatcher, Pool, Client, errors, Agent, setGlobalAgent, request, stream, pipeline, MockClient, MockPool, MockAgent }
 export default Undici
 
 declare function Undici(url: string, opts: Pool.Options): Pool
 
 declare namespace Undici {
+  var Dispatcher: typeof import('./types/dispatcher')
   var Pool: typeof import('./types/pool');
   var Client: typeof import('./types/client');
   var errors: typeof import('./types/errors');
