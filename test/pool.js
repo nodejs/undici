@@ -409,7 +409,7 @@ test('invalid options throws', (t) => {
     new Pool(null, { factory: '' }) // eslint-disable-line
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'factory must be a function.')
+    t.equal(err.message, 'factory must be a function.')
   }
 })
 

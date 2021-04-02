@@ -295,9 +295,9 @@ test('with a local agent', t => {
 
   dispatcher.on('connect', (origin, [dispatcher]) => {
     t.ok(dispatcher)
-    t.strictEqual(dispatcher.running, 0)
+    t.equal(dispatcher.running, 0)
     process.nextTick(() => {
-      t.strictEqual(dispatcher.running, 1)
+      t.equal(dispatcher.running, 1)
     })
   })
 
