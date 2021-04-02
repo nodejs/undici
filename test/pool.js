@@ -389,7 +389,7 @@ test('busy', (t) => {
 })
 
 test('invalid options throws', (t) => {
-  t.plan(4)
+  t.plan(6)
 
   try {
     new Pool(null, { connections: -1 }) // eslint-disable-line
@@ -404,6 +404,20 @@ test('invalid options throws', (t) => {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.equal(err.message, 'invalid connections')
   }
+
+  try {
+    new Pool(null, { factory: '' }) // eslint-disable-line
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'factory must be a function.')
+  }
+})
+
+test('invalid pool dispatch options', (t) => {
+  t.plan(2)
+  const pool = new Pool('http://notahost')
+  t.throws(() => pool.dispatch({}), errors.InvalidArgumentError, 'throws on invalid handler')
+  t.throws(() => pool.dispatch({}, {}), errors.InvalidArgumentError, 'throws on invalid handler')
 })
 
 test('pool upgrade promise', (t) => {
