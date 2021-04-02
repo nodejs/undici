@@ -8,6 +8,9 @@ const Agent = require('./lib/agent')
 const util = require('./lib/core/util')
 const { InvalidArgumentError } = require('./lib/core/errors')
 const api = require('./lib/api')
+const MockClient = require('./lib/mock/mock-client')
+const MockAgent = require('./lib/mock/mock-agent')
+const MockPool = require('./lib/mock/mock-pool')
 
 Object.assign(Dispatcher.prototype, api)
 
@@ -56,3 +59,7 @@ module.exports.stream = makeDispatcher(api.stream)
 module.exports.pipeline = makeDispatcher(api.pipeline)
 module.exports.connect = makeDispatcher(api.connect)
 module.exports.upgrade = makeDispatcher(api.upgrade)
+
+module.exports.MockClient = MockClient
+module.exports.MockPool = MockPool
+module.exports.MockAgent = MockAgent
