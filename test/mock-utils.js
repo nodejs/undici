@@ -13,7 +13,7 @@ test('deleteMockDispatch - should do nothing if not able to find mock dispatch',
     body: 'body'
   }
 
-  t.notThrow(() => deleteMockDispatch([], key))
+  t.doesNotThrow(() => deleteMockDispatch([], key))
 })
 
 test('getMockDispatch', (t) => {
@@ -33,7 +33,7 @@ test('getMockDispatch', (t) => {
       path: 'path',
       method: 'method'
     })
-    t.deepEqual(result, {
+    t.same(result, {
       path: 'path',
       method: 'method',
       consumed: false
@@ -59,7 +59,7 @@ test('getMockDispatch', (t) => {
       path: 'path',
       method: 'method'
     })
-    t.deepEqual(result, {
+    t.same(result, {
       path: 'path',
       method: 'method',
       consumed: false
@@ -80,6 +80,6 @@ test('getMockDispatch', (t) => {
       path: 'wrong',
       method: 'wrong'
     })
-    t.strictEqual(result, undefined)
+    t.equal(result, undefined)
   })
 })

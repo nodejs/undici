@@ -14,7 +14,7 @@ test('MockInterceptor - reply', t => {
       method: ''
     }, [])
     const result = mockInterceptor.reply(200, 'hello')
-    t.true(result instanceof MockScope)
+    t.ok(result instanceof MockScope)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -24,9 +24,9 @@ test('MockInterceptor - reply', t => {
       path: '',
       method: ''
     }, [])
-    t.throw(() => mockInterceptor.reply(), new InvalidArgumentError('statusCode must be defined'))
-    t.throw(() => mockInterceptor.reply(200), new InvalidArgumentError('data must be defined'))
-    t.throw(() => mockInterceptor.reply(200, '', 'hello'), new InvalidArgumentError('responseOptions must be an object'))
+    t.throws(() => mockInterceptor.reply(), new InvalidArgumentError('statusCode must be defined'))
+    t.throws(() => mockInterceptor.reply(200), new InvalidArgumentError('data must be defined'))
+    t.throws(() => mockInterceptor.reply(200, '', 'hello'), new InvalidArgumentError('responseOptions must be an object'))
   })
 })
 
@@ -40,7 +40,7 @@ test('MockInterceptor - replyWithError', t => {
       method: ''
     }, [])
     const result = mockInterceptor.replyWithError(new Error('kaboom'))
-    t.true(result instanceof MockScope)
+    t.ok(result instanceof MockScope)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -50,7 +50,7 @@ test('MockInterceptor - replyWithError', t => {
       path: '',
       method: ''
     }, [])
-    t.throw(() => mockInterceptor.replyWithError(), new InvalidArgumentError('error must be defined'))
+    t.throws(() => mockInterceptor.replyWithError(), new InvalidArgumentError('error must be defined'))
   })
 })
 
@@ -64,7 +64,7 @@ test('MockInterceptor - defaultReplyHeaders', t => {
       method: ''
     }, [])
     const result = mockInterceptor.defaultReplyHeaders({})
-    t.true(result instanceof MockInterceptor)
+    t.ok(result instanceof MockInterceptor)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -74,7 +74,7 @@ test('MockInterceptor - defaultReplyHeaders', t => {
       path: '',
       method: ''
     }, [])
-    t.throw(() => mockInterceptor.defaultReplyHeaders(), new InvalidArgumentError('headers must be defined'))
+    t.throws(() => mockInterceptor.defaultReplyHeaders(), new InvalidArgumentError('headers must be defined'))
   })
 })
 
@@ -88,7 +88,7 @@ test('MockInterceptor - defaultReplyTrailers', t => {
       method: ''
     }, [])
     const result = mockInterceptor.defaultReplyTrailers({})
-    t.true(result instanceof MockInterceptor)
+    t.ok(result instanceof MockInterceptor)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -98,7 +98,7 @@ test('MockInterceptor - defaultReplyTrailers', t => {
       path: '',
       method: ''
     }, [])
-    t.throw(() => mockInterceptor.defaultReplyTrailers(), new InvalidArgumentError('trailers must be defined'))
+    t.throws(() => mockInterceptor.defaultReplyTrailers(), new InvalidArgumentError('trailers must be defined'))
   })
 })
 
@@ -112,6 +112,6 @@ test('MockInterceptor - replyContentLength', t => {
       method: ''
     }, [])
     const result = mockInterceptor.defaultReplyTrailers({})
-    t.true(result instanceof MockInterceptor)
+    t.ok(result instanceof MockInterceptor)
   })
 })
