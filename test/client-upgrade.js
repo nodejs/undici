@@ -396,9 +396,9 @@ test('upgrade disconnect', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.close.bind(client))
 
-    client.on('disconnect', (origin, [self], error) => {
+    client.on('disconnect', ({ targets: [self], err }) => {
       t.equal(client, self)
-      t.ok(error instanceof Error)
+      t.ok(err instanceof Error)
     })
 
     client

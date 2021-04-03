@@ -1015,12 +1015,12 @@ test('connected', (t) => {
     })
     t.teardown(client.close.bind(client))
 
-    client.on('connect', (origin, [self]) => {
-      t.equal(origin, url)
+    client.on('connect', ({ url: _url, targets: [self] }) => {
+      t.equal(_url, url)
       t.equal(client, self)
     })
-    client.on('disconnect', (origin, [self]) => {
-      t.equal(origin, url)
+    client.on('disconnect', ({ url: _url, targets: [self] }) => {
+      t.equal(_url, url)
       t.equal(client, self)
     })
 

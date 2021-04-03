@@ -128,14 +128,14 @@ test('multiple connections', t => {
 
     t.teardown(dispatcher.close.bind(dispatcher))
 
-    dispatcher.on('connect', (origin, [dispatcher]) => {
+    dispatcher.on('connect', ({ targets: [dispatcher] }) => {
       t.ok(dispatcher)
     })
-    dispatcher.on('disconnect', (origin, [dispatcher], error) => {
+    dispatcher.on('disconnect', ({ targets: [dispatcher], err }) => {
       t.ok(dispatcher)
-      t.ok(error instanceof errors.InformationalError)
-      t.equal(error.code, 'UND_ERR_INFO')
-      t.equal(error.message, 'reset')
+      t.ok(err instanceof errors.InformationalError)
+      t.equal(err.code, 'UND_ERR_INFO')
+      t.equal(err.message, 'reset')
     })
 
     for (let i = 0; i < connections; i++) {
@@ -293,7 +293,7 @@ test('with a local agent', t => {
 
   const dispatcher = new Agent()
 
-  dispatcher.on('connect', (origin, [dispatcher]) => {
+  dispatcher.on('connect', ({ targets: [dispatcher] }) => {
     t.ok(dispatcher)
     t.equal(dispatcher.running, 0)
     process.nextTick(() => {

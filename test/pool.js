@@ -32,14 +32,14 @@ test('connect/disconnect event(s)', (t) => {
     })
     t.teardown(pool.close.bind(pool))
 
-    pool.on('connect', (origin, [pool, client]) => {
+    pool.on('connect', ({ targets: [pool, client] }) => {
       t.equal(client instanceof Client, true)
     })
-    pool.on('disconnect', (origin, [pool, client], error) => {
+    pool.on('disconnect', ({ targets: [pool, client], err }) => {
       t.ok(client instanceof Client)
-      t.ok(error instanceof errors.InformationalError)
-      t.equal(error.code, 'UND_ERR_INFO')
-      t.equal(error.message, 'socket idle timeout')
+      t.ok(err instanceof errors.InformationalError)
+      t.equal(err.code, 'UND_ERR_INFO')
+      t.equal(err.message, 'socket idle timeout')
     })
 
     for (let i = 0; i < clients; i++) {
@@ -320,11 +320,11 @@ test('backpressure algorithm', (t) => {
 
   writeMore = true
 
-  d4.client.emit('drain', new URL('http://notahost'))
+  d4.client.emit('drain', { url: new URL('http://notahost') })
 
   pool.dispatch({}, noopHandler) // d5 = c1
 
-  d3.client.emit('drain', new URL('http://notahost'))
+  d3.client.emit('drain', { url: new URL('http://notahost') })
 
   pool.dispatch({}, noopHandler) // d6 = c0
 

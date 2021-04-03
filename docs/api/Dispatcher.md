@@ -734,21 +734,25 @@ Returns: `Boolean`, `false` if user should wait for `'drain'` event before calli
 
 Parameters:
 
-* **origin** `URL`
-* **targets** `Array<Dispatcher>`
+* `Object`
+  * **url** `URL`
+  * **targets** `Array<Dispatcher>`
 
 ### Event: `'disconnect'`
 
 Parameters:
 
-* **origin** `URL`
-* **targets** `Array<Dispatcher>`
-* **error** `Error`
+* `Object`
+  * **url** `URL`
+  * **targets** `Array<Dispatcher>`
+  * **error** `Error`
 
 ### Event: `'drain'`
 
 Parameters:
 
-* **origin** `URL`
+* `Object`
+  * **url** `URL`
+  * **targets** `Array<Dispatcher>`
 
 Emitted when dispatcher is no longer busy.

@@ -256,7 +256,7 @@ test('response invalid content length with close', (t) => {
     })
     t.teardown(client.destroy.bind(client))
 
-    client.on('disconnect', (origin, client, err) => {
+    client.on('disconnect', ({ err }) => {
       t.equal(err.code, 'UND_ERR_SOCKET')
     })
 
