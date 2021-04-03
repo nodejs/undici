@@ -76,7 +76,7 @@ suite
     defer: true,
     fn: deferred => {
       Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
-        http.get(httpOptions, (res) => {
+        http.get(httpNoAgent, (res) => {
           res
             .pipe(new Writable({
               write (chunk, encoding, callback) {
