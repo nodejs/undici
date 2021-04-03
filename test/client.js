@@ -1043,22 +1043,22 @@ test('emit disconnect after destory', t => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const url = new URL(`http://localhost:${server.address().port}`)
     const client = new Client(url)
 
-    t.strictEqual(client.connected, 0)
+    t.equal(client.connected, 0)
     client[kConnect](() => {
-      t.strictEqual(client.connected, 1)
+      t.equal(client.connected, 1)
       let disconnected = false
       client.on('disconnect', () => {
         disconnected = true
         t.pass()
       })
       client.destroy(() => {
-        t.strictEqual(disconnected, true)
+        t.equal(disconnected, true)
       })
     })
   })

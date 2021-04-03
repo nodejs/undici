@@ -481,9 +481,6 @@ test('stream CONNECT throw', (t) => {
     }, (err) => {
       t.ok(err instanceof errors.InvalidArgumentError)
     })
-    client.on('disconnect', () => {
-      t.fail()
-    })
   })
 })
 
@@ -510,9 +507,6 @@ test('stream abort after complete', (t) => {
     }, (err) => {
       t.error(err)
       signal.emit('abort')
-    })
-    client.on('disconnect', () => {
-      t.fail()
     })
   })
 })
@@ -541,9 +535,6 @@ test('stream abort before dispatch', (t) => {
       t.ok(err instanceof errors.RequestAbortedError)
     })
     signal.emit('abort')
-    client.on('disconnect', () => {
-      t.fail()
-    })
   })
 })
 

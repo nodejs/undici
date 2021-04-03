@@ -20,10 +20,6 @@ test('pipeline pipelining', (t) => {
     })
     t.teardown(client.close.bind(client))
 
-    client.on('disconnect', () => {
-      t.fail()
-    })
-
     client[kConnect](() => {
       t.equal(client.running, 0)
       client.pipeline({
