@@ -309,16 +309,9 @@ setGlobalDispatcher(mockAgent)
 await mockAgent.close()
 ```
 
-### `MockAgent.dispatch(options, handlers: MockAgentDispatchOptions)`
+### `MockAgent.dispatch(options, handlers)`
 
-Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
-
-#### Parameter: `MockAgentDispatchOptions`
-
-Extends: [`DispatchOptions``](docs/api/Dispatcher.md#parameter-dispatchoptions)
-
-* **origin** `string | URL`
-* **maxRedirections** `Integer`.
+Implements [`Agent.dispatch(options, handlers)`](docs/api/Agent.md#parameter-agentdispatchoptions).
 
 ### `MockAgent.request(options[, callback])`
 

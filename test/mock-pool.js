@@ -16,19 +16,19 @@ test('MockPool - constructor', t => {
 
   t.test('fails if opts.agent does not implement `get` method', t => {
     t.plan(1)
-    t.throw(() => new MockPool('http://localhost:9999', { agent: { get: 'not a function' } }), InvalidArgumentError)
+    t.throws(() => new MockPool('http://localhost:9999', { agent: { get: 'not a function' } }), InvalidArgumentError)
   })
 
   t.test('sets agent', t => {
     t.plan(1)
-    t.notThrow(() => new MockPool('http://localhost:9999', { agent: new MockAgent() }))
+    t.doesNotThrow(() => new MockPool('http://localhost:9999', { agent: new MockAgent() }))
   })
 
   t.test('should implement the Dispatcher API', t => {
     t.plan(1)
 
     const mockPool = new MockPool('http://localhost:9999', { agent: new MockAgent() })
-    t.true(mockPool instanceof Dispatcher)
+    t.ok(mockPool instanceof Dispatcher)
   })
 })
 
@@ -41,7 +41,7 @@ test('MockPool - dispatch', t => {
     const baseUrl = 'http://localhost:9999'
 
     const mockAgent = new MockAgent()
-    t.tearDown(mockAgent.close.bind(mockAgent))
+    t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockPool = mockAgent.get(baseUrl)
 
@@ -60,7 +60,7 @@ test('MockPool - dispatch', t => {
       }
     ]
 
-    t.notThrow(() => mockPool.dispatch({
+    t.doesNotThrow(() => mockPool.dispatch({
       path: '/foo',
       method: 'GET'
     }, {
@@ -77,7 +77,7 @@ test('MockPool - intercept should return a MockInterceptor', (t) => {
   const baseUrl = 'http://localhost:9999'
 
   const mockAgent = new MockAgent()
-  t.tearDown(mockAgent.close.bind(mockAgent))
+  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
 
@@ -86,7 +86,7 @@ test('MockPool - intercept should return a MockInterceptor', (t) => {
     method: 'GET'
   })
 
-  t.true(interceptor instanceof MockInterceptor)
+  t.ok(interceptor instanceof MockInterceptor)
 })
 
 test('MockPool - intercept validation', (t) => {
@@ -95,31 +95,31 @@ test('MockPool - intercept validation', (t) => {
   t.test('it should error if no options specified in the intercept', t => {
     t.plan(1)
     const mockAgent = new MockAgent()
-    t.tearDown(mockAgent.close.bind(mockAgent))
+    t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockPool = mockAgent.get('http://localhost:9999')
 
-    t.throw(() => mockPool.intercept(), new InvalidArgumentError('opts must be an object'))
+    t.throws(() => mockPool.intercept(), new InvalidArgumentError('opts must be an object'))
   })
 
   t.test('it should error if no path specified in the intercept', t => {
     t.plan(1)
     const mockAgent = new MockAgent()
-    t.tearDown(mockAgent.close.bind(mockAgent))
+    t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockPool = mockAgent.get('http://localhost:9999')
 
-    t.throw(() => mockPool.intercept({}), new InvalidArgumentError('opts.path must be defined'))
+    t.throws(() => mockPool.intercept({}), new InvalidArgumentError('opts.path must be defined'))
   })
 
   t.test('it should error if no method specified in the intercept', t => {
     t.plan(1)
     const mockAgent = new MockAgent()
-    t.tearDown(mockAgent.close.bind(mockAgent))
+    t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockPool = mockAgent.get('http://localhost:9999')
 
-    t.throw(() => mockPool.intercept({ path: '/foo' }), new InvalidArgumentError('opts.method must be defined'))
+    t.throws(() => mockPool.intercept({ path: '/foo' }), new InvalidArgumentError('opts.method must be defined'))
   })
 })
 
@@ -129,7 +129,7 @@ test('MockPool - close should run without error', async (t) => {
   const baseUrl = 'http://localhost:9999'
 
   const mockAgent = new MockAgent()
-  t.tearDown(mockAgent.close.bind(mockAgent))
+  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
 
@@ -159,17 +159,17 @@ test('MockPool - should be able to set as globalDispatcher', async (t) => {
     t.fail('should not be called')
     t.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   await promisify(server.listen.bind(server))(0)
 
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
-  t.tearDown(mockAgent.close.bind(mockAgent))
+  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
-  t.true(mockPool instanceof MockPool)
+  t.ok(mockPool instanceof MockPool)
   setGlobalDispatcher(mockPool)
 
   mockPool.intercept({
@@ -180,10 +180,10 @@ test('MockPool - should be able to set as globalDispatcher', async (t) => {
   const { statusCode, body } = await request(`${baseUrl}/foo`, {
     method: 'GET'
   })
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
 
   const response = await getResponse(body)
-  t.deepEqual(response, 'hello')
+  t.same(response, 'hello')
 })
 
 test('MockPool - should be able to use as a local dispatcher', async (t) => {
@@ -195,17 +195,17 @@ test('MockPool - should be able to use as a local dispatcher', async (t) => {
     t.fail('should not be called')
     t.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   await promisify(server.listen.bind(server))(0)
 
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
-  t.tearDown(mockAgent.close.bind(mockAgent))
+  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
-  t.true(mockPool instanceof MockPool)
+  t.ok(mockPool instanceof MockPool)
 
   mockPool.intercept({
     path: '/foo',
@@ -216,10 +216,10 @@ test('MockPool - should be able to use as a local dispatcher', async (t) => {
     method: 'GET',
     dispatcher: mockPool
   })
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
 
   const response = await getResponse(body)
-  t.deepEqual(response, 'hello')
+  t.same(response, 'hello')
 })
 
 test('MockPool - basic intercept with MockPool.request', async (t) => {
@@ -231,16 +231,16 @@ test('MockPool - basic intercept with MockPool.request', async (t) => {
     t.fail('should not be called')
     t.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   await promisify(server.listen.bind(server))(0)
 
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent()
-  t.tearDown(mockAgent.close.bind(mockAgent))
+  t.teardown(mockAgent.close.bind(mockAgent))
   const mockPool = mockAgent.get(baseUrl)
-  t.true(mockPool instanceof MockPool)
+  t.ok(mockPool instanceof MockPool)
 
   mockPool.intercept({
     path: '/foo?hello=there&see=ya',
@@ -257,12 +257,12 @@ test('MockPool - basic intercept with MockPool.request', async (t) => {
     method: 'POST',
     body: 'form1=data1&form2=data2'
   })
-  t.strictEqual(statusCode, 200)
-  t.strictEqual(headers['content-type'], 'application/json')
-  t.deepEqual(trailers, { 'content-md5': 'test' })
+  t.equal(statusCode, 200)
+  t.equal(headers['content-type'], 'application/json')
+  t.same(trailers, { 'content-md5': 'test' })
 
   const jsonResponse = JSON.parse(await getResponse(body))
-  t.deepEqual(jsonResponse, {
+  t.same(jsonResponse, {
     foo: 'bar'
   })
 })

@@ -95,7 +95,7 @@ See [`Dispatcher.upgrade(options[, callback])`](docs/api/Dispatcher.md#clientupg
 
 * `number`
 
-Number of acive client connections. The client will lazily create a connection when it receives a request and will destroy it if there is no activity for the duration of the `timeout` value.
+Number of active client connections. The client will lazily create a connection when it receives a request and will destroy it if there is no activity for the duration of the `timeout` value.
 
 ### `Client.destroyed`
 

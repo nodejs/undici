@@ -17,7 +17,7 @@ Returns: `MockPool`
 
 Extends: `PoolOptions`
 
-* **agent** `Agent` (optional) - Default: `new Agent([options])` - a custom agent encapsulated by the MockAgent.
+* **agent** `Agent` - the agent to associate this MockPool with.
 
 ### Example - Basic MockPool instantiation
 
