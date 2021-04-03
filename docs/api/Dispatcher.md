@@ -745,7 +745,7 @@ Parameters:
 * `Object`
   * **url** `URL`
   * **targets** `Array<Dispatcher>`
-  * **error** `Error`
+  * **err** `Error`
 
 ### Event: `'drain'`
 
