@@ -65,9 +65,6 @@ test('pipeline pipelining retry', (t) => {
 
     client.once('disconnect', () => {
       t.pass()
-      client.on('disconnect', () => {
-        t.fail()
-      })
     })
 
     client[kConnect](() => {

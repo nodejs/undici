@@ -184,7 +184,7 @@ test('stream GET remote destroy', (t) => {
 })
 
 test('stream response resume back pressure and non standard error', (t) => {
-  t.plan(6)
+  t.plan(5)
 
   const server = createServer((req, res) => {
     res.write(Buffer.alloc(1e3))
@@ -217,10 +217,6 @@ test('stream response resume back pressure and non standard error', (t) => {
 
     client.once('disconnect', (err) => {
       t.ok(err)
-      t.pass()
-      client.on('disconnect', () => {
-        t.fail()
-      })
     })
 
     client.stream({

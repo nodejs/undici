@@ -451,7 +451,7 @@ test('pipelining HEAD busy', (t) => {
 })
 
 test('pipelining empty pipeline before reset', (t) => {
-  t.plan(7)
+  t.plan(8)
 
   let c = 0
   const server = createServer()
