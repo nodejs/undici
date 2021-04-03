@@ -1,6 +1,18 @@
 import { createServer } from 'http'
 import tap from 'tap'
-import { Agent, Client, errors, pipeline, Pool, request, setGlobalDispatcher, stream } from '../../index.js'
+import {
+  Agent,
+  Client,
+  errors,
+  pipeline,
+  Pool,
+  request,
+  connect,
+  upgrade,
+  setGlobalDispatcher,
+  getGlobalDispatcher,
+  stream
+} from '../../index.js'
 
 const { test } = tap
 
@@ -75,13 +87,16 @@ test('imported errors work with request args validation promise', (t) => {
   })
 })
 
-test('name dexports', (t) => {
+test('named exports', (t) => {
   t.equal(typeof Client, 'function')
   t.equal(typeof Pool, 'function')
   t.equal(typeof Agent, 'function')
   t.equal(typeof request, 'function')
   t.equal(typeof stream, 'function')
   t.equal(typeof pipeline, 'function')
+  t.equal(typeof connect, 'function')
+  t.equal(typeof upgrade, 'function')
   t.equal(typeof setGlobalDispatcher, 'function')
+  t.equal(typeof getGlobalDispatcher, 'function')
   t.end()
 })
