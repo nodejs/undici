@@ -16,19 +16,19 @@ test('MockClient - constructor', t => {
 
   t.test('fails if opts.agent does not implement `get` method', t => {
     t.plan(1)
-    t.throw(() => new MockClient('http://localhost:9999', { agent: { get: 'not a function' } }), InvalidArgumentError)
+    t.throws(() => new MockClient('http://localhost:9999', { agent: { get: 'not a function' } }), InvalidArgumentError)
   })
 
   t.test('sets agent', t => {
     t.plan(1)
-    t.notThrow(() => new MockClient('http://localhost:9999', { agent: new MockAgent({ connections: 1 }) }))
+    t.doesNotThrow(() => new MockClient('http://localhost:9999', { agent: new MockAgent({ connections: 1 }) }))
   })
 
   t.test('should implement the Dispatcher API', t => {
     t.plan(1)
 
     const mockClient = new MockClient('http://localhost:9999', { agent: new MockAgent({ connections: 1 }) })
-    t.true(mockClient instanceof Dispatcher)
+    t.ok(mockClient instanceof Dispatcher)
   })
 })
 
@@ -41,7 +41,7 @@ test('MockClient - dispatch', t => {
     const baseUrl = 'http://localhost:9999'
 
     const mockAgent = new MockAgent({ connections: 1 })
-    t.tearDown(mockAgent.close.bind(mockAgent))
+    t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockClient = mockAgent.get(baseUrl)
 
@@ -60,7 +60,7 @@ test('MockClient - dispatch', t => {
       }
     ]
 
-    t.notThrow(() => mockClient.dispatch({
+    t.doesNotThrow(() => mockClient.dispatch({
       path: '/foo',
       method: 'GET'
     }, {
@@ -77,7 +77,7 @@ test('MockClient - intercept should return a MockInterceptor', (t) => {
   const baseUrl = 'http://localhost:9999'
 
   const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
+  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockClient = mockAgent.get(baseUrl)
 
@@ -86,7 +86,7 @@ test('MockClient - intercept should return a MockInterceptor', (t) => {
     method: 'GET'
   })
 
-  t.true(interceptor instanceof MockInterceptor)
+  t.ok(interceptor instanceof MockInterceptor)
 })
 
 test('MockClient - intercept validation', (t) => {
@@ -95,31 +95,31 @@ test('MockClient - intercept validation', (t) => {
   t.test('it should error if no options specified in the intercept', t => {
     t.plan(1)
     const mockAgent = new MockAgent({ connections: 1 })
-    t.tearDown(mockAgent.close.bind(mockAgent))
+    t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockClient = mockAgent.get('http://localhost:9999')
 
-    t.throw(() => mockClient.intercept(), new InvalidArgumentError('opts must be an object'))
+    t.throws(() => mockClient.intercept(), new InvalidArgumentError('opts must be an object'))
   })
 
   t.test('it should error if no path specified in the intercept', t => {
     t.plan(1)
     const mockAgent = new MockAgent({ connections: 1 })
-    t.tearDown(mockAgent.close.bind(mockAgent))
+    t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockClient = mockAgent.get('http://localhost:9999')
 
-    t.throw(() => mockClient.intercept({}), new InvalidArgumentError('opts.path must be defined'))
+    t.throws(() => mockClient.intercept({}), new InvalidArgumentError('opts.path must be defined'))
   })
 
   t.test('it should error if no method specified in the intercept', t => {
     t.plan(1)
     const mockAgent = new MockAgent({ connections: 1 })
-    t.tearDown(mockAgent.close.bind(mockAgent))
+    t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockClient = mockAgent.get('http://localhost:9999')
 
-    t.throw(() => mockClient.intercept({ path: '/foo' }), new InvalidArgumentError('opts.method must be defined'))
+    t.throws(() => mockClient.intercept({ path: '/foo' }), new InvalidArgumentError('opts.method must be defined'))
   })
 })
 
@@ -129,7 +129,7 @@ test('MockClient - close should run without error', async (t) => {
   const baseUrl = 'http://localhost:9999'
 
   const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
+  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockClient = mockAgent.get(baseUrl)
   mockClient[kDispatches] = [
@@ -158,17 +158,17 @@ test('MockClient - should be able to set as globalDispatcher', async (t) => {
     t.fail('should not be called')
     t.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   await promisify(server.listen.bind(server))(0)
 
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
+  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockClient = mockAgent.get(baseUrl)
-  t.true(mockClient instanceof MockClient)
+  t.ok(mockClient instanceof MockClient)
   setGlobalDispatcher(mockClient)
 
   mockClient.intercept({
@@ -179,10 +179,10 @@ test('MockClient - should be able to set as globalDispatcher', async (t) => {
   const { statusCode, body } = await request(`${baseUrl}/foo`, {
     method: 'GET'
   })
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
 
   const response = await getResponse(body)
-  t.deepEqual(response, 'hello')
+  t.same(response, 'hello')
 })
 
 test('MockClient - should be able to use as a local dispatcher', async (t) => {
@@ -194,17 +194,17 @@ test('MockClient - should be able to use as a local dispatcher', async (t) => {
     t.fail('should not be called')
     t.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   await promisify(server.listen.bind(server))(0)
 
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
+  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockClient = mockAgent.get(baseUrl)
-  t.true(mockClient instanceof MockClient)
+  t.ok(mockClient instanceof MockClient)
 
   mockClient.intercept({
     path: '/foo',
@@ -215,10 +215,10 @@ test('MockClient - should be able to use as a local dispatcher', async (t) => {
     method: 'GET',
     dispatcher: mockClient
   })
-  t.strictEqual(statusCode, 200)
+  t.equal(statusCode, 200)
 
   const response = await getResponse(body)
-  t.deepEqual(response, 'hello')
+  t.same(response, 'hello')
 })
 
 test('MockClient - basic intercept with MockClient.request', async (t) => {
@@ -230,16 +230,16 @@ test('MockClient - basic intercept with MockClient.request', async (t) => {
     t.fail('should not be called')
     t.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   await promisify(server.listen.bind(server))(0)
 
   const baseUrl = `http://localhost:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
-  t.tearDown(mockAgent.close.bind(mockAgent))
+  t.teardown(mockAgent.close.bind(mockAgent))
   const mockClient = mockAgent.get(baseUrl)
-  t.true(mockClient instanceof MockClient)
+  t.ok(mockClient instanceof MockClient)
 
   mockClient.intercept({
     path: '/foo?hello=there&see=ya',
@@ -256,12 +256,12 @@ test('MockClient - basic intercept with MockClient.request', async (t) => {
     method: 'POST',
     body: 'form1=data1&form2=data2'
   })
-  t.strictEqual(statusCode, 200)
-  t.strictEqual(headers['content-type'], 'application/json')
-  t.deepEqual(trailers, { 'content-md5': 'test' })
+  t.equal(statusCode, 200)
+  t.equal(headers['content-type'], 'application/json')
+  t.same(trailers, { 'content-md5': 'test' })
 
   const jsonResponse = JSON.parse(await getResponse(body))
-  t.deepEqual(jsonResponse, {
+  t.same(jsonResponse, {
     foo: 'bar'
   })
 })

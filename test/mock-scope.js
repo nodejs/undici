@@ -14,7 +14,7 @@ test('MockScope - delay', t => {
       method: ''
     }, [])
     const result = mockScope.delay(200)
-    t.true(result instanceof MockScope)
+    t.ok(result instanceof MockScope)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -24,10 +24,10 @@ test('MockScope - delay', t => {
       path: '',
       method: ''
     }, [])
-    t.throw(() => mockScope.delay(), new InvalidArgumentError('waitInMs must be a valid integer > 0'))
-    t.throw(() => mockScope.delay(200.1), new InvalidArgumentError('waitInMs must be a valid integer > 0'))
-    t.throw(() => mockScope.delay(0), new InvalidArgumentError('waitInMs must be a valid integer > 0'))
-    t.throw(() => mockScope.delay(-1), new InvalidArgumentError('waitInMs must be a valid integer > 0'))
+    t.throws(() => mockScope.delay(), new InvalidArgumentError('waitInMs must be a valid integer > 0'))
+    t.throws(() => mockScope.delay(200.1), new InvalidArgumentError('waitInMs must be a valid integer > 0'))
+    t.throws(() => mockScope.delay(0), new InvalidArgumentError('waitInMs must be a valid integer > 0'))
+    t.throws(() => mockScope.delay(-1), new InvalidArgumentError('waitInMs must be a valid integer > 0'))
   })
 })
 
@@ -41,7 +41,7 @@ test('MockScope - persist', t => {
       method: ''
     }, [])
     const result = mockScope.persist()
-    t.true(result instanceof MockScope)
+    t.ok(result instanceof MockScope)
   })
 })
 
@@ -55,7 +55,7 @@ test('MockScope - times', t => {
       method: ''
     }, [])
     const result = mockScope.times(200)
-    t.true(result instanceof MockScope)
+    t.ok(result instanceof MockScope)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -65,9 +65,9 @@ test('MockScope - times', t => {
       path: '',
       method: ''
     }, [])
-    t.throw(() => mockScope.times(), new InvalidArgumentError('repeatTimes must be a valid integer > 0'))
-    t.throw(() => mockScope.times(200.1), new InvalidArgumentError('repeatTimes must be a valid integer > 0'))
-    t.throw(() => mockScope.times(0), new InvalidArgumentError('repeatTimes must be a valid integer > 0'))
-    t.throw(() => mockScope.times(-1), new InvalidArgumentError('repeatTimes must be a valid integer > 0'))
+    t.throws(() => mockScope.times(), new InvalidArgumentError('repeatTimes must be a valid integer > 0'))
+    t.throws(() => mockScope.times(200.1), new InvalidArgumentError('repeatTimes must be a valid integer > 0'))
+    t.throws(() => mockScope.times(0), new InvalidArgumentError('repeatTimes must be a valid integer > 0'))
+    t.throws(() => mockScope.times(-1), new InvalidArgumentError('repeatTimes must be a valid integer > 0'))
   })
 })
