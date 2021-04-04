@@ -103,28 +103,28 @@ test('A client should reuse its TLS session', {
 
   t.test('Verify cached sessions', t => {
     t.plan(7)
-    t.strictEqual(serverRequests, 6)
-    t.strictEqual(
+    t.equal(serverRequests, 6)
+    t.equal(
       clientSessions.first.toString('hex'),
       clientSessions['first-reuse'].toString('hex')
     )
-    t.notStrictEqual(
+    t.not(
       clientSessions.first.toString('hex'),
       clientSessions['cipher-change'].toString('hex')
     )
-    t.notStrictEqual(
+    t.not(
       clientSessions.first.toString('hex'),
       clientSessions['before-drop'].toString('hex')
     )
-    t.notStrictEqual(
+    t.not(
       clientSessions['cipher-change'].toString('hex'),
       clientSessions['before-drop'].toString('hex')
     )
-    t.notStrictEqual(
+    t.not(
       clientSessions['before-drop'].toString('hex'),
       clientSessions['after-drop'].toString('hex')
     )
-    t.strictEqual(
+    t.equal(
       clientSessions['after-drop'].toString('hex'),
       clientSessions['after-drop-reuse'].toString('hex')
     )
@@ -218,7 +218,7 @@ test('A pool should be able to reuse TLS sessions between clients', {
         t.ok(averageResponseTimeWithSessionReuse < averageResponseTimeWithoutSessionReuse, `Average request response time should be lower with session reuse enabled (${averageResponseTimeWithSessionReuse}ms) than without (${averageResponseTimeWithoutSessionReuse}ms)`)
       }
 
-      t.strictEqual(serverRequests, 2 + REQ_COUNT * 2)
+      t.equal(serverRequests, 2 + REQ_COUNT * 2)
       t.pass()
     })
   })

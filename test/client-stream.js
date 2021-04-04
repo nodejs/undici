@@ -10,17 +10,17 @@ test('stream get', (t) => {
   t.plan(9)
 
   const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const signal = new EE()
     client.stream({
@@ -29,21 +29,21 @@ test('stream get', (t) => {
       method: 'GET',
       opaque: new PassThrough()
     }, ({ statusCode, headers, opaque: pt }) => {
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
       pt.on('data', (buf) => {
         bufs.push(buf)
       })
       pt.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
       return pt
     }, (err) => {
-      t.strictEqual(signal.listenerCount('abort'), 0)
+      t.equal(signal.listenerCount('abort'), 0)
       t.error(err)
     })
-    t.strictEqual(signal.listenerCount('abort'), 1)
+    t.equal(signal.listenerCount('abort'), 1)
   })
 })
 
@@ -51,31 +51,31 @@ test('stream promise get', (t) => {
   t.plan(6)
 
   const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     await client.stream({
       path: '/',
       method: 'GET',
       opaque: new PassThrough()
     }, ({ statusCode, headers, opaque: pt }) => {
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
       pt.on('data', (buf) => {
         bufs.push(buf)
       })
       pt.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
       return pt
     })
@@ -86,24 +86,24 @@ test('stream GET destroy res', (t) => {
   t.plan(14)
 
   const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.stream({
       path: '/',
       method: 'GET'
     }, ({ statusCode, headers }) => {
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
 
       const pt = new PassThrough()
         .on('error', (err) => {
@@ -122,15 +122,15 @@ test('stream GET destroy res', (t) => {
       path: '/',
       method: 'GET'
     }, ({ statusCode, headers }) => {
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
 
       let ret = ''
       const pt = new PassThrough()
       pt.on('data', chunk => {
         ret += chunk
       }).on('end', () => {
-        t.strictEqual(ret, 'hello')
+        t.equal(ret, 'hello')
       })
 
       return pt
@@ -149,11 +149,11 @@ test('stream GET remote destroy', (t) => {
       res.destroy()
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.stream({
       path: '/',
@@ -193,11 +193,11 @@ test('stream response resume back pressure and non standard error', (t) => {
       res.end()
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const pt = new PassThrough()
     client.stream({
@@ -207,12 +207,12 @@ test('stream response resume back pressure and non standard error', (t) => {
       pt.on('data', () => {
         pt.emit('error', new Error('kaboom'))
       }).once('error', (err) => {
-        t.strictEqual(err.message, 'kaboom')
+        t.equal(err.message, 'kaboom')
       })
       return pt
     }, (err) => {
       t.ok(err)
-      t.strictEqual(pt.destroyed, true)
+      t.equal(pt.destroyed, true)
     })
 
     client.once('disconnect', (err) => {
@@ -242,11 +242,11 @@ test('stream waits only for writable side', (t) => {
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(1e3))
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const pt = new PassThrough({ autoDestroy: false })
     client.stream({
@@ -254,7 +254,7 @@ test('stream waits only for writable side', (t) => {
       method: 'GET'
     }, () => pt, (err) => {
       t.error(err)
-      t.strictEqual(pt.destroyed, false)
+      t.equal(pt.destroyed, false)
     })
   })
 })
@@ -303,13 +303,13 @@ test('stream destroy if not readable', (t) => {
   const server = createServer((req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   const pt = new PassThrough()
   pt.readable = false
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -318,7 +318,7 @@ test('stream destroy if not readable', (t) => {
       return pt
     }, (err) => {
       t.error(err)
-      t.strictEqual(pt.destroyed, true)
+      t.equal(pt.destroyed, true)
     })
   })
 })
@@ -329,11 +329,11 @@ test('stream server side destroy', (t) => {
   const server = createServer((req, res) => {
     res.destroy()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -352,11 +352,11 @@ test('stream invalid return', (t) => {
   const server = createServer((req, res) => {
     res.write('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -375,11 +375,11 @@ test('stream body without destroy', (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -401,11 +401,11 @@ test('stream factory abort', (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const signal = new EE()
     client.stream({
@@ -416,10 +416,10 @@ test('stream factory abort', (t) => {
       signal.emit('abort')
       return new PassThrough()
     }, (err) => {
-      t.strictEqual(signal.listenerCount('abort'), 0)
+      t.equal(signal.listenerCount('abort'), 0)
       t.ok(err instanceof errors.RequestAbortedError)
     })
-    t.strictEqual(signal.listenerCount('abort'), 1)
+    t.equal(signal.listenerCount('abort'), 1)
   })
 })
 
@@ -429,11 +429,11 @@ test('stream factory throw', (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -441,7 +441,7 @@ test('stream factory throw', (t) => {
     }, () => {
       throw new Error('asd')
     }, (err) => {
-      t.strictEqual(err.message, 'asd')
+      t.equal(err.message, 'asd')
     })
     client.stream({
       path: '/',
@@ -449,7 +449,7 @@ test('stream factory throw', (t) => {
     }, () => {
       throw new Error('asd')
     }, (err) => {
-      t.strictEqual(err.message, 'asd')
+      t.equal(err.message, 'asd')
     })
     client.stream({
       path: '/',
@@ -468,11 +468,11 @@ test('stream CONNECT throw', (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -493,11 +493,11 @@ test('stream abort after complete', (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const pt = new PassThrough()
     const signal = new EE()
@@ -523,11 +523,11 @@ test('stream abort before dispatch', (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const pt = new PassThrough()
     const signal = new EE()
@@ -555,18 +555,18 @@ test('trailers', (t) => {
     res.addTrailers({ 'Content-MD5': 'test' })
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.stream({
       path: '/',
       method: 'GET'
     }, () => new PassThrough(), (err, data) => {
       t.error(err)
-      t.strictDeepEqual(data.trailers, { 'content-md5': 'test' })
+      t.strictSame(data.trailers, { 'content-md5': 'test' })
     })
   })
 })
@@ -578,11 +578,11 @@ test('stream ignore 1xx', (t) => {
     res.writeProcessing()
     res.end('hello')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     let buf = ''
     client.stream({
@@ -595,7 +595,7 @@ test('stream ignore 1xx', (t) => {
       }
     }), (err, data) => {
       t.error(err)
-      t.strictEqual(buf, 'hello')
+      t.equal(buf, 'hello')
     })
   })
 })
@@ -609,11 +609,11 @@ test('stream backpressure', (t) => {
     res.writeProcessing()
     res.end(expected)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     let buf = ''
     client.stream({
@@ -627,7 +627,7 @@ test('stream backpressure', (t) => {
       }
     }), (err, data) => {
       t.error(err)
-      t.strictEqual(buf, expected)
+      t.equal(buf, expected)
     })
   })
 })
@@ -637,11 +637,11 @@ test('stream body destroyed on invalid callback', (t) => {
 
   const server = createServer((req, res) => {
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const body = new Readable({
       read () {}
@@ -653,7 +653,7 @@ test('stream body destroyed on invalid callback', (t) => {
         body
       }, () => {}, null)
     } catch (err) {
-      t.strictEqual(body.destroyed, true)
+      t.equal(body.destroyed, true)
     }
   })
 })
@@ -664,11 +664,11 @@ test('stream needDrain', (t) => {
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(4096))
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(() => {
+    t.teardown(() => {
       client.destroy()
     })
 
@@ -693,8 +693,8 @@ test('stream needDrain', (t) => {
       path: '/',
       method: 'GET'
     }, () => {
-      t.strictEqual(dst._writableState.needDrain, true)
-      t.strictEqual(dst.writableNeedDrain, true)
+      t.equal(dst._writableState.needDrain, true)
+      t.equal(dst.writableNeedDrain, true)
 
       setImmediate(() => {
         dst.write = (...args) => {
@@ -718,11 +718,11 @@ test('stream legacy needDrain', (t) => {
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(4096))
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(() => {
+    t.teardown(() => {
       client.destroy()
     })
 
@@ -746,8 +746,8 @@ test('stream legacy needDrain', (t) => {
       path: '/',
       method: 'GET'
     }, () => {
-      t.strictEqual(dst._writableState.needDrain, true)
-      t.strictEqual(dst.writableNeedDrain, undefined)
+      t.equal(dst._writableState.needDrain, true)
+      t.equal(dst.writableNeedDrain, undefined)
 
       setImmediate(() => {
         dst.write = (...args) => {

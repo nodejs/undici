@@ -1,45 +1,65 @@
 'use strict'
 
-const Client = require('./lib/core/client')
+const Client = require('./lib/client')
+const Dispatcher = require('./lib/dispatcher')
 const errors = require('./lib/core/errors')
-const Pool = require('./lib/client-pool')
-const { Agent, getGlobalAgent, setGlobalAgent } = require('./lib/agent')
+const Pool = require('./lib/pool')
+const Agent = require('./lib/agent')
 const util = require('./lib/core/util')
 const { InvalidArgumentError } = require('./lib/core/errors')
 const api = require('./lib/api')
+const MockClient = require('./lib/mock/mock-client')
+const MockAgent = require('./lib/mock/mock-agent')
+const MockPool = require('./lib/mock/mock-pool')
 
-Object.assign(Client.prototype, api)
-Object.assign(Pool.prototype, api)
+Object.assign(Dispatcher.prototype, api)
 
-function undici (url, opts) {
-  return new Pool(url, opts)
-}
-
-module.exports = undici
-
-module.exports.Pool = Pool
+module.exports.Dispatcher = Dispatcher
 module.exports.Client = Client
+module.exports.Pool = Pool
+module.exports.Agent = Agent
+
 module.exports.errors = errors
 
-module.exports.Agent = Agent
-module.exports.setGlobalAgent = setGlobalAgent
-module.exports.getGlobalAgent = getGlobalAgent
+let globalDispatcher = new Agent()
 
-function dispatchFromAgent (fn) {
-  return (url, { agent = getGlobalAgent(), method = 'GET', ...opts } = {}, ...additionalArgs) => {
+function setGlobalDispatcher (agent) {
+  if (!agent || typeof agent.dispatch !== 'function') {
+    throw new InvalidArgumentError('Argument agent must implement Agent')
+  }
+  globalDispatcher = agent
+}
+
+function getGlobalDispatcher () {
+  return globalDispatcher
+}
+
+function makeDispatcher (fn) {
+  return (url, { agent, dispatcher = getGlobalDispatcher(), method = 'GET', ...opts } = {}, ...additionalArgs) => {
     if (opts.path != null) {
       throw new InvalidArgumentError('unsupported opts.path')
+    }
+
+    if (agent) {
+      throw new InvalidArgumentError('unsupported opts.agent. Did you mean opts.client?')
     }
 
     const { origin, pathname, search } = util.parseURL(url)
     const path = search ? `${pathname}${search}` : pathname
 
-    return fn.call(agent, { ...opts, origin, method, path }, ...additionalArgs)
+    return fn.call(dispatcher, { ...opts, origin, method, path }, ...additionalArgs)
   }
 }
 
-module.exports.request = dispatchFromAgent(api.request)
-module.exports.stream = dispatchFromAgent(api.stream)
-module.exports.pipeline = dispatchFromAgent(api.pipeline)
-module.exports.connect = dispatchFromAgent(api.connect)
-module.exports.upgrade = dispatchFromAgent(api.upgrade)
+module.exports.setGlobalDispatcher = setGlobalDispatcher
+module.exports.getGlobalDispatcher = getGlobalDispatcher
+
+module.exports.request = makeDispatcher(api.request)
+module.exports.stream = makeDispatcher(api.stream)
+module.exports.pipeline = makeDispatcher(api.pipeline)
+module.exports.connect = makeDispatcher(api.connect)
+module.exports.upgrade = makeDispatcher(api.upgrade)
+
+module.exports.MockClient = MockClient
+module.exports.MockPool = MockPool
+module.exports.MockAgent = MockAgent
