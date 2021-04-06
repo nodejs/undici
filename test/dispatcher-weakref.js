@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 
-const provider = require('../lib/compat/weakref-provider')
+const provider = require('../lib/compat/dispatcher-weakref')
 
 let originalWeakRef
 
@@ -23,7 +23,7 @@ test('WeakRef provider', (t) => {
     class GlobalWeakRef {};
     global.WeakRef = GlobalWeakRef
 
-    const result = provider.provide()
+    const result = provider().WeakRef
 
     t.equal(result, GlobalWeakRef)
   })
@@ -35,7 +35,7 @@ test('WeakRef provider', (t) => {
 
     t.beforeEach(() => {
       global.WeakRef = undefined
-      WeakRefImpl = provider.provide()
+      WeakRefImpl = provider().WeakRef
     })
 
     t.afterEach(() => {
