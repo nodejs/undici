@@ -45,20 +45,20 @@
     "@types/node": "^14.6.2",
     "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
-    "concurrently": "^5.2.0",
+    "concurrently": "^6.0.0",
     "docsify-cli": "^4.4.2",
     "https-pem": "^2.0.0",
-    "husky": "^5.2.0",
+    "husky": "^6.0.0",
     "jest": "^26.4.0",
     "pre-commit": "^1.2.2",
     "proxy": "^1.0.2",
     "proxyquire": "^2.0.1",
-    "semver": "^5.7.1",
-    "sinon": "^9.2.4",
-    "snazzy": "^8.0.0",
-    "standard": "^14.3.4",
+    "semver": "^7.3.5",
+    "sinon": "^10.0.0",
+    "snazzy": "^9.0.0",
+    "standard": "^16.0.3",
     "tap": "^15.0.0",
-    "tsd": "^0.13.1"
+    "tsd": "^0.14.0"
   },
   "engines": {
     "node": ">=12.18"

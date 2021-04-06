@@ -1143,7 +1143,7 @@ test('MockAgent - should match path with regex', async (t) => {
 
   const mockPool = mockAgent.get(baseUrl)
   mockPool.intercept({
-    path: new RegExp('foo'),
+    path: /foo/,
     method: 'GET'
   }).reply(200, 'foo').persist()
 
@@ -1224,7 +1224,7 @@ test('MockAgent - should match method with regex', async (t) => {
   const mockPool = mockAgent.get(baseUrl)
   mockPool.intercept({
     path: '/foo',
-    method: new RegExp('^GET$')
+    method: /^GET$/
   }).reply(200, 'foo')
 
   const { statusCode, body } = await request(`${baseUrl}/foo`, {
@@ -1293,7 +1293,7 @@ test('MockAgent - should match body with regex', async (t) => {
   mockPool.intercept({
     path: '/foo',
     method: 'GET',
-    body: new RegExp('hello')
+    body: /hello/
   }).reply(200, 'foo')
 
   const { statusCode, body } = await request(`${baseUrl}/foo`, {
