@@ -68,6 +68,60 @@ test('body timeout', (t) => {
   })
 })
 
+test('overridden request timeout', (t) => {
+  t.plan(1)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      res.end('hello')
+    }, 100)
+    clock.tick(100)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 500 })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET', headersTimeout: 50 }, (err, response) => {
+      t.ok(err instanceof errors.HeadersTimeoutError)
+    })
+
+    clock.tick(50)
+  })
+})
+
+test('overridden body timeout', (t) => {
+  t.plan(2)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+    res.write('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { bodyTimeout: 500 })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET', bodyTimeout: 50 }, (err, { body }) => {
+      t.error(err)
+      body.on('data', () => {
+        clock.tick(100)
+      }).on('error', (err) => {
+        t.ok(err instanceof errors.BodyTimeoutError)
+      })
+    })
+
+    clock.tick(50)
+  })
+})
+
 test('With EE signal', (t) => {
   t.plan(1)
 
