@@ -45,50 +45,50 @@ test('refresh timeout on pause', (t) => {
   })
 })
 
-// test('start headers timeout after request body', (t) => {
-//   t.plan(2)
+test('start headers timeout after request body', (t) => {
+  t.plan(2)
 
-//   const clock = FakeTimers.install()
-//   t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
 
-//   const server = createServer((req, res) => {
-//   })
-//   t.teardown(server.close.bind(server))
+  const server = createServer((req, res) => {
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, () => {
-//     const client = new Client(`http://localhost:${server.address().port}`, {
-//       bodyTimeout: 0,
-//       headersTimeout: 100
-//     })
-//     t.teardown(client.destroy.bind(client))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0,
+      headersTimeout: 100
+    })
+    t.teardown(client.destroy.bind(client))
 
-//     const body = new Readable({ read () {} })
-//     client.dispatch({
-//       path: '/',
-//       body,
-//       method: 'GET'
-//     }, {
-//       onConnect () {
-//         clock.tick(200)
-//         queueMicrotask(() => {
-//           body.push(null)
-//           body.on('end', () => {
-//             clock.tick(200)
-//           })
-//         })
-//       },
-//       onHeaders (statusCode, headers, resume) {
-//       },
-//       onData () {
+    const body = new Readable({ read () {} })
+    client.dispatch({
+      path: '/',
+      body,
+      method: 'GET'
+    }, {
+      onConnect () {
+        clock.tick(200)
+        queueMicrotask(() => {
+          body.push(null)
+          body.on('end', () => {
+            clock.tick(200)
+          })
+        })
+      },
+      onHeaders (statusCode, headers, resume) {
+      },
+      onData () {
 
-//       },
-//       onComplete () {
+      },
+      onComplete () {
 
-//       },
-//       onError (err) {
-//         t.equal(body.readableEnded, true)
-//         t.ok(err instanceof errors.HeadersTimeoutError)
-//       }
-//     })
-//   })
-// })
+      },
+      onError (err) {
+        t.equal(body.readableEnded, true)
+        t.ok(err instanceof errors.HeadersTimeoutError)
+      }
+    })
+  })
+})
