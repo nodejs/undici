@@ -593,7 +593,7 @@ test('stream backpressure', (t) => {
   const expected = Buffer.alloc(1e6).toString()
 
   const server = createServer((req, res) => {
-    // res.writeProcessing()
+    res.writeProcessing()
     res.end(expected)
   })
   t.teardown(server.close.bind(server))
