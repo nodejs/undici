@@ -86,7 +86,7 @@ test('start headers timeout after request body', (t) => {
 
       },
       onError (err) {
-        t.equals(body.readableEnded, true)
+        t.equal(body.readableEnded, true)
         t.ok(err instanceof errors.HeadersTimeoutError)
       }
     })
