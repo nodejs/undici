@@ -210,10 +210,6 @@ test('connect aborted', (t) => {
     })
     t.teardown(client.destroy.bind(client))
 
-    client.on('disconnect', () => {
-      t.fail()
-    })
-
     const signal = new EE()
     client.connect({
       path: '/',
@@ -318,10 +314,6 @@ test('connect aborted after connect', (t) => {
       pipelining: 3
     })
     t.teardown(client.destroy.bind(client))
-
-    client.on('disconnect', () => {
-      t.fail()
-    })
 
     client.connect({
       path: '/',

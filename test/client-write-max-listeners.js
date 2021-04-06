@@ -38,10 +38,6 @@ test('socket close listener does not leak', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    client.on('disconnect', () => {
-      t.fail()
-    })
-
     for (let n = 0; n < 16; ++n) {
       client.request({ path: '/', method: 'GET', body: makeBody() }, onRequest)
     }

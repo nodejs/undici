@@ -70,7 +70,7 @@ test('tls get 3', (t) => {
       .on('end', () => {
         t.pass()
       })
-    client.on('disconnect', () => {
+    client.once('disconnect', () => {
       t.pass()
       didDisconnect = true
     })

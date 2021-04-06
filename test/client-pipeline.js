@@ -507,10 +507,6 @@ test('pipeline abort duplex', (t) => {
       }).destroy().on('error', (err) => {
         t.ok(err instanceof errors.RequestAbortedError)
       })
-
-      client.on('disconnect', () => {
-        t.fail()
-      })
     })
   })
 })

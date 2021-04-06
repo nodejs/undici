@@ -184,7 +184,7 @@ test('stream GET remote destroy', (t) => {
 })
 
 test('stream response resume back pressure and non standard error', (t) => {
-  t.plan(6)
+  t.plan(5)
 
   const server = createServer((req, res) => {
     res.write(Buffer.alloc(1e3))
@@ -217,10 +217,6 @@ test('stream response resume back pressure and non standard error', (t) => {
 
     client.once('disconnect', (err) => {
       t.ok(err)
-      t.pass()
-      client.on('disconnect', () => {
-        t.fail()
-      })
     })
 
     client.stream({
@@ -481,9 +477,6 @@ test('stream CONNECT throw', (t) => {
     }, (err) => {
       t.ok(err instanceof errors.InvalidArgumentError)
     })
-    client.on('disconnect', () => {
-      t.fail()
-    })
   })
 })
 
@@ -510,9 +503,6 @@ test('stream abort after complete', (t) => {
     }, (err) => {
       t.error(err)
       signal.emit('abort')
-    })
-    client.on('disconnect', () => {
-      t.fail()
     })
   })
 })
@@ -541,9 +531,6 @@ test('stream abort before dispatch', (t) => {
       t.ok(err instanceof errors.RequestAbortedError)
     })
     signal.emit('abort')
-    client.on('disconnect', () => {
-      t.fail()
-    })
   })
 })
 
