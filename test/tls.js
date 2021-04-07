@@ -4,7 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { kSocket } = require('../lib/core/symbols')
 const { Readable } = require('stream')
-const { kBusy, kPending, kRunning, kSize } = require('../lib/core/symbols')
+const { kRunning } = require('../lib/core/symbols')
 
 test('tls get 1', (t) => {
   t.plan(4)

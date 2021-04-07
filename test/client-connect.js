@@ -4,7 +4,7 @@ const { test } = require('tap')
 const { Client, errors } = require('..')
 const http = require('http')
 const EE = require('events')
-const { kBusy, kPending, kRunning, kSize } = require('../lib/core/symbols')
+const { kBusy } = require('../lib/core/symbols')
 
 test('basic connect', (t) => {
   t.plan(3)

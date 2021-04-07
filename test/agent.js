@@ -6,7 +6,7 @@ const { Agent, request, stream, pipeline, setGlobalDispatcher } = require('../')
 const { PassThrough } = require('stream')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { errors } = require('../index')
-const { kBusy, kPending, kRunning, kSize } = require('../lib/core/symbols')
+const { kRunning } = require('../lib/core/symbols')
 
 test('setGlobalDispatcher', t => {
   t.plan(2)

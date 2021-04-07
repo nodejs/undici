@@ -5,7 +5,7 @@ const { Client } = require('..')
 const { createServer } = require('http')
 const { Readable } = require('stream')
 const { kConnect } = require('../lib/core/symbols')
-const { kBusy, kPending, kRunning, kSize } = require('../lib/core/symbols')
+const { kBusy } = require('../lib/core/symbols')
 
 test('GET and HEAD with body should reset connection', (t) => {
   t.plan(4 + 2)

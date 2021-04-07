@@ -4,7 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { kConnect } = require('../lib/core/symbols')
-const { kBusy, kPending, kRunning, kSize } = require('../lib/core/symbols')
+const { kBusy, kPending, kRunning } = require('../lib/core/symbols')
 
 test('pipeline pipelining', (t) => {
   t.plan(10)

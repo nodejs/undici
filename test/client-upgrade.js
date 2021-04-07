@@ -5,7 +5,7 @@ const { Client, errors } = require('..')
 const net = require('net')
 const http = require('http')
 const EE = require('events')
-const { kBusy, kPending, kRunning, kSize } = require('../lib/core/symbols')
+const { kBusy } = require('../lib/core/symbols')
 
 test('basic upgrade', (t) => {
   t.plan(6)
