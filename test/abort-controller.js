@@ -64,7 +64,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
           bufs.push(buf)
         })
         response.body.on('end', () => {
-          t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
 

@@ -49,22 +49,22 @@ test('async hooks', (t) => {
       }, 10)
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
       body.resume()
-      t.strictDeepEqual(getCurrentTransaction(), null)
+      t.strictSame(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world2' })
 
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
         t.error(err)
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+        t.strictSame(getCurrentTransaction(), { hello: 'world2' })
 
         body.once('data', () => {
           t.pass()
@@ -80,13 +80,13 @@ test('async hooks', (t) => {
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
       body.resume()
-      t.strictDeepEqual(getCurrentTransaction(), null)
+      t.strictSame(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world' })
 
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
         t.error(err)
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+        t.strictSame(getCurrentTransaction(), { hello: 'world' })
 
         body.once('data', () => {
           t.pass()
@@ -102,13 +102,13 @@ test('async hooks', (t) => {
     client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
       t.error(err)
       body.resume()
-      t.strictDeepEqual(getCurrentTransaction(), null)
+      t.strictSame(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world' })
 
       client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
         t.error(err)
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+        t.strictSame(getCurrentTransaction(), { hello: 'world' })
 
         body.once('data', () => {
           t.pass()
@@ -122,20 +122,20 @@ test('async hooks', (t) => {
     })
 
     client.stream({ path: '/', method: 'GET' }, () => {
-      t.strictDeepEqual(getCurrentTransaction(), null)
+      t.strictSame(getCurrentTransaction(), null)
       return new PassThrough().resume()
     }, (err) => {
       t.error(err)
-      t.strictDeepEqual(getCurrentTransaction(), null)
+      t.strictSame(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world' })
 
       client.stream({ path: '/', method: 'GET' }, () => {
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+        t.strictSame(getCurrentTransaction(), { hello: 'world' })
         return new PassThrough().resume()
       }, (err) => {
         t.error(err)
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world' })
+        t.strictSame(getCurrentTransaction(), { hello: 'world' })
       })
     })
   })
@@ -151,11 +151,11 @@ test('async hooks client is destroyed', (t) => {
       res.write('asd')
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { body }) => {
       t.error(err)
@@ -163,13 +163,13 @@ test('async hooks client is destroyed', (t) => {
       body.on('error', (err) => {
         t.ok(err)
       })
-      t.strictDeepEqual(getCurrentTransaction(), null)
+      t.strictSame(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world2' })
 
       client.request({ path: '/', method: 'GET' }, (err) => {
-        t.strictEqual(err.message, 'The client is destroyed')
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+        t.equal(err.message, 'The client is destroyed')
+        t.strictSame(getCurrentTransaction(), { hello: 'world2' })
       })
       client.destroy((err) => {
         t.error(err)
@@ -184,17 +184,17 @@ test('async hooks pipeline handler', (t) => {
   const server = createServer((req, res) => {
     res.end('hello')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     setCurrentTransaction({ hello: 'world2' })
 
     client
       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
-        t.strictDeepEqual(getCurrentTransaction(), { hello: 'world2' })
+        t.strictSame(getCurrentTransaction(), { hello: 'world2' })
         return body
       })
       .on('close', () => {

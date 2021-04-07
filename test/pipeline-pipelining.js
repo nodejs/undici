@@ -9,7 +9,7 @@ test('pipeline pipelining', (t) => {
   t.plan(10)
 
   const server = createServer((req, res) => {
-    t.strictDeepEqual(req.headers['transfer-encoding'], undefined)
+    t.strictSame(req.headers['transfer-encoding'], undefined)
     res.end()
   })
 
@@ -20,29 +20,25 @@ test('pipeline pipelining', (t) => {
     })
     t.teardown(client.close.bind(client))
 
-    client.on('disconnect', () => {
-      t.fail()
-    })
-
     client[kConnect](() => {
-      t.strictEqual(client.running, 0)
+      t.equal(client.running, 0)
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.strictEqual(client.busy, true)
-      t.strictDeepEqual(client.running, 0)
-      t.strictDeepEqual(client.pending, 1)
+      t.equal(client.busy, true)
+      t.strictSame(client.running, 0)
+      t.strictSame(client.pending, 1)
 
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.strictEqual(client.busy, true)
-      t.strictDeepEqual(client.running, 0)
-      t.strictDeepEqual(client.pending, 2)
+      t.equal(client.busy, true)
+      t.strictSame(client.running, 0)
+      t.strictSame(client.pending, 2)
       process.nextTick(() => {
-        t.strictEqual(client.running, 2)
+        t.equal(client.running, 2)
       })
     })
   })
@@ -69,9 +65,6 @@ test('pipeline pipelining retry', (t) => {
 
     client.once('disconnect', () => {
       t.pass()
-      client.on('disconnect', () => {
-        t.fail()
-      })
     })
 
     client[kConnect](() => {
@@ -82,28 +75,28 @@ test('pipeline pipelining retry', (t) => {
         .on('error', (err) => {
           t.ok(err)
         })
-      t.strictEqual(client.busy, true)
-      t.strictDeepEqual(client.running, 0)
-      t.strictDeepEqual(client.pending, 1)
+      t.equal(client.busy, true)
+      t.strictSame(client.running, 0)
+      t.strictSame(client.pending, 1)
 
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.strictEqual(client.busy, true)
-      t.strictDeepEqual(client.running, 0)
-      t.strictDeepEqual(client.pending, 2)
+      t.equal(client.busy, true)
+      t.strictSame(client.running, 0)
+      t.strictSame(client.pending, 2)
 
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.strictEqual(client.busy, true)
-      t.strictDeepEqual(client.running, 0)
-      t.strictDeepEqual(client.pending, 3)
+      t.equal(client.busy, true)
+      t.strictSame(client.running, 0)
+      t.strictSame(client.pending, 3)
 
       process.nextTick(() => {
-        t.strictEqual(client.running, 3)
+        t.equal(client.running, 3)
       })
 
       client.close(() => {
