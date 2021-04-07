@@ -44,6 +44,8 @@ npm i
 
 #### Run the wasm build script
 
+> This requires [docker](https://www.docker.com/) installed on your machine.
+
 ```bash
 npm run build-wasm
 ```
