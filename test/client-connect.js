@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client, errors } = require('..')
 const http = require('http')
 const EE = require('events')
+const { kBusy, kPending, kRunning, kSize } = require('../lib/core/symbols')
 
 test('basic connect', (t) => {
   t.plan(3)
@@ -162,7 +163,7 @@ test('connect wait for empty pipeline', (t) => {
     })
     client.once('connect', () => {
       process.nextTick(() => {
-        t.equal(client.busy, false)
+        t.equal(client[kBusy], false)
 
         client.connect({
           path: '/'
@@ -180,7 +181,7 @@ test('connect wait for empty pipeline', (t) => {
           socket.write('Body')
           socket.end()
         })
-        t.equal(client.busy, true)
+        t.equal(client[kBusy], true)
 
         client.request({
           path: '/',
@@ -220,7 +221,7 @@ test('connect aborted', (t) => {
       t.equal(signal.listenerCount('abort'), 0)
       t.ok(err instanceof errors.RequestAbortedError)
     })
-    t.equal(client.busy, true)
+    t.equal(client[kBusy], true)
     t.equal(signal.listenerCount('abort'), 1)
     signal.emit('abort')
 
@@ -323,6 +324,6 @@ test('connect aborted after connect', (t) => {
       t.equal(opaque, 'asd')
       t.ok(err instanceof errors.RequestAbortedError)
     })
-    t.equal(client.busy, true)
+    t.equal(client[kBusy], true)
   })
 })

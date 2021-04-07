@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const { kConnect } = require('../lib/core/symbols')
+const { kBusy, kPending, kRunning, kSize } = require('../lib/core/symbols')
 
 test('pipeline pipelining', (t) => {
   t.plan(10)
@@ -21,24 +22,24 @@ test('pipeline pipelining', (t) => {
     t.teardown(client.close.bind(client))
 
     client[kConnect](() => {
-      t.equal(client.running, 0)
+      t.equal(client[kRunning], 0)
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.equal(client.busy, true)
-      t.strictSame(client.running, 0)
-      t.strictSame(client.pending, 1)
+      t.equal(client[kBusy], true)
+      t.strictSame(client[kRunning], 0)
+      t.strictSame(client[kPending], 1)
 
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.equal(client.busy, true)
-      t.strictSame(client.running, 0)
-      t.strictSame(client.pending, 2)
+      t.equal(client[kBusy], true)
+      t.strictSame(client[kRunning], 0)
+      t.strictSame(client[kPending], 2)
       process.nextTick(() => {
-        t.equal(client.running, 2)
+        t.equal(client[kRunning], 2)
       })
     })
   })
@@ -75,28 +76,28 @@ test('pipeline pipelining retry', (t) => {
         .on('error', (err) => {
           t.ok(err)
         })
-      t.equal(client.busy, true)
-      t.strictSame(client.running, 0)
-      t.strictSame(client.pending, 1)
+      t.equal(client[kBusy], true)
+      t.strictSame(client[kRunning], 0)
+      t.strictSame(client[kPending], 1)
 
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.equal(client.busy, true)
-      t.strictSame(client.running, 0)
-      t.strictSame(client.pending, 2)
+      t.equal(client[kBusy], true)
+      t.strictSame(client[kRunning], 0)
+      t.strictSame(client[kPending], 2)
 
       client.pipeline({
         method: 'GET',
         path: '/'
       }, ({ body }) => body).end().resume()
-      t.equal(client.busy, true)
-      t.strictSame(client.running, 0)
-      t.strictSame(client.pending, 3)
+      t.equal(client[kBusy], true)
+      t.strictSame(client[kRunning], 0)
+      t.strictSame(client[kPending], 3)
 
       process.nextTick(() => {
-        t.equal(client.running, 3)
+        t.equal(client[kRunning], 3)
       })
 
       client.close(() => {
