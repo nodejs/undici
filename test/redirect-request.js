@@ -30,12 +30,12 @@ t.test('should not follow redirection by default if not using RedirectAgent', as
 })
 
 t.test('should follow redirection after a HTTP 300', async t => {
-  t.plan(3)
+  t.plan(4)
 
   let body = ''
   const server = await startRedirectingServer(t)
 
-  const { statusCode, headers, body: bodyStream } = await request(`http://${server}/300?key=value`, {
+  const { statusCode, headers, body: bodyStream, context: { history } } = await request(`http://${server}/300?key=value`, {
     maxRedirections: 10
   })
 
@@ -45,17 +45,13 @@ t.test('should follow redirection after a HTTP 300', async t => {
 
   t.equal(statusCode, 200)
   t.notOk(headers.location)
-  /*
-    TODO: Test for the redirect history once added to the callback data.
-
-    [
-      `http://${server}/300`,
-      `http://${server}/300/1`,
-      `http://${server}/300/2`,
-      `http://${server}/300/3`,
-      `http://${server}/300/4`
-    ]
-  */
+  t.same(history, [
+    `http://${server}/300?key=value`,
+    `http://${server}/300/1?key=value`,
+    `http://${server}/300/2?key=value`,
+    `http://${server}/300/3?key=value`,
+    `http://${server}/300/4?key=value`
+  ])
   t.equal(body, `GET key=value :: connection@keep-alive host@${server}`)
 })
 
@@ -228,12 +224,12 @@ t.test('should follow redirection after a HTTP 308', async t => {
 })
 
 t.test('should ignore HTTP 3xx response bodies', async t => {
-  t.plan(3)
+  t.plan(4)
 
   let body = ''
   const server = await startRedirectingWithBodyServer(t)
 
-  const { statusCode, headers, body: bodyStream } = await request(`http://${server}/`, {
+  const { statusCode, headers, body: bodyStream, context: { history } } = await request(`http://${server}/`, {
     maxRedirections: 10
   })
 
@@ -243,21 +239,17 @@ t.test('should ignore HTTP 3xx response bodies', async t => {
 
   t.equal(statusCode, 200)
   t.notOk(headers.location)
-  /*
-    TODO: Test for the redirect history once added to the callback data.
-
-    [`http://${server}/`]
-  */
+  t.same(history, [`http://${server}/`])
   t.equal(body, 'FINAL')
 })
 
 t.test('should follow a redirect chain up to the allowed number of times', async t => {
-  t.plan(3)
+  t.plan(4)
 
   let body = ''
   const server = await startRedirectingServer(t)
 
-  const { statusCode, headers, body: bodyStream } = await request(`http://${server}/300`, {
+  const { statusCode, headers, body: bodyStream, context: { history } } = await request(`http://${server}/300`, {
     maxRedirections: 2
   })
 
@@ -267,21 +259,17 @@ t.test('should follow a redirect chain up to the allowed number of times', async
 
   t.equal(statusCode, 300)
   t.equal(headers.location, `http://${server}/300/3`)
-  /*
-    TODO: Test for the redirect history once added to the callback data.
-
-    [`http://${server}/300`, `http://${server}/300/1`]
-  */
+  t.same(history, [`http://${server}/300`, `http://${server}/300/1`])
   t.equal(body.length, 0)
 })
 
 t.test('should follow redirections when going cross origin', async t => {
-  t.plan(3)
+  t.plan(4)
 
-  const [server1] = await startRedirectingChainServers(t)
+  const [server1, server2, server3] = await startRedirectingChainServers(t)
   let body = ''
 
-  const { statusCode, headers, body: bodyStream } = await request(`http://${server1}`, {
+  const { statusCode, headers, body: bodyStream, context: { history } } = await request(`http://${server1}`, {
     method: 'POST',
     maxRedirections: 10
   })
@@ -292,17 +280,13 @@ t.test('should follow redirections when going cross origin', async t => {
 
   t.equal(statusCode, 200)
   t.notOk(headers.location)
-  /*
-    TODO: Test for the redirect history once added to the callback data.
-
-    [
-      `http://${server1}/`,
-      `http://${server2}/`,
-      `http://${server3}/`,
-      `http://${server2}/end`,
-      `http://${server3}/end`
-    ]
-  */
+  t.same(history, [
+    `http://${server1}/`,
+    `http://${server2}/`,
+    `http://${server3}/`,
+    `http://${server2}/end`,
+    `http://${server3}/end`
+  ])
   t.equal(body, 'POST')
 })
 
@@ -395,9 +379,13 @@ t.test('should handle errors (promise)', async t => {
 t.test('should complain for invalid headers', async t => {
   t.plan(1)
 
-  const handler = new RedirectHandler('AGENT', { headers: 'ASD', origin: 'http://localhost' })
+  const handler = new RedirectHandler('AGENT', { headers: 'ASD', origin: 'http://localhost' }, { context: {} })
 
-  t.throws(() => {
-    handler.onHeaders(301, ['location', 'http://localhost'], nop)
-  }, InvalidArgumentError, 'throws on invalid headers')
+  t.throws(
+    () => {
+      handler.onHeaders(301, ['location', 'http://localhost'], nop)
+    },
+    InvalidArgumentError,
+    'throws on invalid headers'
+  )
 })

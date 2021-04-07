@@ -65,7 +65,7 @@ Arguments:
 * **options** [`RequestOptions`]
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher]
   * **method** `String` - Default: `GET`
-* **maxRedirections** `Integer` - Default: `0`
+  * **maxRedirections** `Integer` - Default: `0`
 
 Returns a promise with the result of the `Dispatcher.request` method.
 
@@ -83,6 +83,7 @@ Arguments:
 * **options** [`StreamOptions`]
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher]
   * **method** `String` - Default: `GET`
+  * **maxRedirections** `Integer` - Default: `0`
 * **factory** `Dispatcher.stream.factory`
 
 Returns a promise with the result of the `Dispatcher.stream` method.

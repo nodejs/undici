@@ -19,7 +19,7 @@ Returns: `Agent`
 Extends: [`ClientOptions`](docs/api/Pool.md#parameter-pooloptions)
 
 * **factory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Pool(origin, opts)` 
-* **maxRedirections** `Integer` - Default: `0`.
+* **maxRedirections** `Integer` - Default: `0`. The number of HTTP redirection to follow. Redirections history will be available in `context.history` in the response callback (or the response resolved value).
 
 ## Instance Properties
 
