@@ -8,8 +8,6 @@ export = MockClient
 /** MockClient extends the Client API and allows one to mock requests. */
 declare class MockClient extends Client {
   constructor(origin: string, options: MockClient.Options);
-  /** Number of connected mock clients */
-  connected: number
   /** Intercepts any matching requests that use the same origin as this mock client. */
   intercept(options: MockInterceptor.Options): MockInterceptor;
   /** Dispatches a mocked request. */

@@ -6,14 +6,10 @@ export = Agent
 
 declare class Agent extends Dispatcher{
   constructor(opts?: Agent.Options)
-  /** Number of queued requests. */
-  pending: number;
-  /** Number of inflight requests. */
-  running: number;
-  /** Number of pending and running requests. */
-  size: number;
-  /** Number of active client connections. */
-  connected: number;
+  /** `true` after `dispatcher.close()` has been called. */
+  closed: boolean;
+  /** `true` after `dispatcher.destroyed()` has been called or `dispatcher.close()` has been called and the dispatcher shutdown has completed. */
+  destroyed: boolean;
   /** Dispatches a request. */
   dispatch(options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandlers): void;
 }

@@ -8,8 +8,6 @@ export = MockAgent
 /** A mocked Agent class that implements the Agent API. It allows one to intercept HTTP requests made through undici and return mocked responses instead. */
 declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.Options> extends Dispatcher {
   constructor(options?: MockAgent.Options)
-  /** Number of active mock client connections. */
-  connected: number;
   /** Creates and retrieves mock Dispatcher instances which can then be used to intercept HTTP requests. If the number of connections on the mock agent is set to 1, a MockClient instance is returned. Otherwise a MockPool instance is returned. */
   get<TDispatcher extends Dispatcher>(origin: string): TDispatcher;
   get<TDispatcher extends Dispatcher>(origin: RegExp): TDispatcher;

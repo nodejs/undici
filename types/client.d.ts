@@ -9,22 +9,10 @@ declare class Client extends Dispatcher {
   constructor(url: string | URL, options?: Client.Options);
   /** Property to get and set the pipelining factor. */
   pipelining: number;
-  /** Number of queued requests. */
-  pending: number;
-  /** Number of inflight requests. */
-  running: number;
-  /** Number of pending and running requests. */
-  size: number;
-  /** Number of active client connections. The client will lazily create a connection when it receives a request and will destroy it if there is no activity for the duration of the `timeout` value. */
-  connected: number;
-  /** `true` if pipeline is saturated or blocked. Indicates whether dispatching further requests is meaningful. */
-  busy: boolean;
   /** `true` after `client.close()` has been called. */
   closed: boolean;
   /** `true` after `client.destroyed()` has been called or `client.close()` has been called and the client shutdown has completed. */
   destroyed: boolean;
-  /** The URL of the Client instance. */
-  readonly url: URL;
 }
 
 declare namespace Client {
