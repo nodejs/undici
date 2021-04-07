@@ -33,6 +33,55 @@ test('Agent', t => {
   t.doesNotThrow(() => new Agent())
 })
 
+test('agent should call callback after closing internal pools', t => {
+  t.plan(2)
+
+  const wanted = 'payload'
+
+  const server = http.createServer((req, res) => {
+    res.setHeader('Content-Type', 'text/plain')
+    res.end(wanted)
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const dispatcher = new Agent()
+
+    const origin = `http://localhost:${server.address().port}`
+
+    request(origin, { dispatcher })
+      .then(() => {
+        t.pass('first request should resolve')
+      })
+      .catch(err => {
+        t.fail(err)
+      })
+
+    dispatcher.once('connect', () => {
+      dispatcher.close(() => {
+        request(origin, { dispatcher })
+          .then(() => {
+            t.fail('second request should not resolve')
+          })
+          .catch(err => {
+            t.ok(err instanceof errors.ClientClosedError)
+          })
+      })
+    })
+  })
+})
+
+test('agent close throws when callback is not a function', t => {
+  t.plan(1)
+  const dispatcher = new Agent()
+  try {
+    dispatcher.close({})
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  }
+})
+
 test('agent should close internal pools', t => {
   t.plan(2)
 
@@ -69,6 +118,55 @@ test('agent should close internal pools', t => {
         })
     })
   })
+})
+
+test('agent should destroy internal pools and call callback', t => {
+  t.plan(2)
+
+  const wanted = 'payload'
+
+  const server = http.createServer((req, res) => {
+    res.setHeader('Content-Type', 'text/plain')
+    res.end(wanted)
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const dispatcher = new Agent()
+
+    const origin = `http://localhost:${server.address().port}`
+
+    request(origin, { dispatcher })
+      .then(() => {
+        t.fail()
+      })
+      .catch(err => {
+        t.ok(err instanceof errors.ClientDestroyedError)
+      })
+
+    dispatcher.once('connect', () => {
+      dispatcher.destroy(() => {
+        request(origin, { dispatcher })
+          .then(() => {
+            t.fail()
+          })
+          .catch(err => {
+            t.ok(err instanceof errors.ClientDestroyedError)
+          })
+      })
+    })
+  })
+})
+
+test('agent destroy throws when callback is not a function', t => {
+  t.plan(1)
+  const dispatcher = new Agent()
+  try {
+    dispatcher.destroy(new Error('mock error'), {})
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  }
 })
 
 test('agent should destroy internal pools', t => {
