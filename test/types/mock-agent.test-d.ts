@@ -8,9 +8,6 @@ expectAssignable<MockAgent>(new MockAgent({}))
   const mockAgent = new MockAgent()
   expectAssignable<void>(setGlobalDispatcher(mockAgent))
 
-  // properties
-  expectAssignable<number>(mockAgent.connected)
-
   // get
   expectAssignable<MockPool>(mockAgent.get(''))
   expectAssignable<MockPool>(mockAgent.get(new RegExp('')))
@@ -27,7 +24,7 @@ expectAssignable<MockAgent>(new MockAgent({}))
 
   // activate
   expectAssignable<void>(mockAgent.activate())
-  
+
   // enableNetConnect
   expectAssignable<void>(mockAgent.enableNetConnect())
   expectAssignable<void>(mockAgent.enableNetConnect(''))

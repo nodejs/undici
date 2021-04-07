@@ -7,7 +7,7 @@ const { readFileSync, createReadStream } = require('fs')
 const { Readable } = require('stream')
 const { kSocket } = require('../lib/core/symbols')
 const EE = require('events')
-const { kConnect } = require('../lib/core/symbols')
+const { kUrl, kSize, kConnect, kBusy, kConnected, kRunning } = require('../lib/core/symbols')
 
 test('basic get', (t) => {
   t.plan(24)
@@ -35,7 +35,7 @@ test('basic get', (t) => {
     })
     t.teardown(client.close.bind(client))
 
-    t.equal(client.url.origin, `http://localhost:${server.address().port}`)
+    t.equal(client[kUrl].origin, `http://localhost:${server.address().port}`)
 
     const signal = new EE()
     client.request({
@@ -413,7 +413,7 @@ test('basic POST with custom stream', (t) => {
         t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
-    t.strictSame(client.busy, true)
+    t.strictSame(client[kBusy], true)
 
     body.on('close', () => {
       body.emit('end')
@@ -765,12 +765,12 @@ test('only one streaming req at a time', (t) => {
         body: new Readable({
           read () {
             setImmediate(() => {
-              t.equal(client.busy, true)
+              t.equal(client[kBusy], true)
               this.push(null)
             })
           }
         }).on('resume', () => {
-          t.equal(client.size, 1)
+          t.equal(client[kSize], 1)
         })
       }, (err, data) => {
         t.error(err)
@@ -780,7 +780,7 @@ test('only one streaming req at a time', (t) => {
             t.pass()
           })
       })
-      t.equal(client.busy, true)
+      t.equal(client[kBusy], true)
     })
   })
 })
@@ -869,13 +869,13 @@ test('increase pipelining', (t) => {
       }
     })
 
-    t.equal(client.running, 0)
+    t.equal(client[kRunning], 0)
     client.on('connect', () => {
-      t.equal(client.running, 0)
+      t.equal(client[kRunning], 0)
       process.nextTick(() => {
-        t.equal(client.running, 1)
+        t.equal(client[kRunning], 1)
         client.pipelining = 3
-        t.equal(client.running, 2)
+        t.equal(client[kRunning], 2)
       })
     })
   })
@@ -995,7 +995,7 @@ test('busy', (t) => {
       }, (err) => {
         t.error(err)
       })
-      t.equal(client.busy, true)
+      t.equal(client[kBusy], true)
     })
   })
 })
@@ -1024,7 +1024,7 @@ test('connected', (t) => {
       t.equal(client, self)
     })
 
-    t.equal(client.connected, 0)
+    t.equal(client[kConnected], 0)
     client[kConnect](() => {
       client.request({
         path: '/',
@@ -1032,7 +1032,7 @@ test('connected', (t) => {
       }, (err) => {
         t.error(err)
       })
-      t.equal(client.connected, 1)
+      t.equal(client[kConnected], 1)
     })
   })
 })
@@ -1049,9 +1049,9 @@ test('emit disconnect after destory', t => {
     const url = new URL(`http://localhost:${server.address().port}`)
     const client = new Client(url)
 
-    t.equal(client.connected, 0)
+    t.equal(client[kConnected], 0)
     client[kConnect](() => {
-      t.equal(client.connected, 1)
+      t.equal(client[kConnected], 1)
       let disconnected = false
       client.on('disconnect', () => {
         disconnected = true

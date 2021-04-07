@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
-const { kSocket } = require('../lib/core/symbols')
+const { kSocket, kSize } = require('../lib/core/symbols')
 
 test('close waits for queued requests to finish', (t) => {
   t.plan(16)
@@ -140,7 +140,7 @@ test('close waits until socket is destroyed', (t) => {
       client.request({ path: '/', method: 'GET' }, (err, data) => {
         t.error(err instanceof errors.ClientClosedError)
       })
-      return client.size <= client.pipelining
+      return client[kSize] <= client.pipelining
     }
   })
 })
@@ -171,7 +171,7 @@ test('close should still reconnect', (t) => {
         data.body.resume()
         t.error(err)
       })
-      return client.size <= client.pipelining
+      return client[kSize] <= client.pipelining
     }
   })
 })
@@ -203,7 +203,7 @@ test('close should call callback once finished', (t) => {
         t.error(err)
         data.body.resume()
       })
-      return client.size <= client.pipelining
+      return client[kSize] <= client.pipelining
     }
   })
 })

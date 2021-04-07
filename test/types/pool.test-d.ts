@@ -14,14 +14,8 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   const pool = new Pool('', {})
 
   // properties
-  expectAssignable<number>(pool.pending)
-  expectAssignable<number>(pool.running)
-  expectAssignable<number>(pool.size)
-  expectAssignable<number>(pool.connected)
-  expectAssignable<boolean>(pool.busy)
   expectAssignable<boolean>(pool.closed)
   expectAssignable<boolean>(pool.destroyed)
-  expectAssignable<URL>(pool.url)
 
   // request
   expectAssignable<PromiseLike<Dispatcher.ResponseData>>(pool.request({ origin: '', path: '', method: '' }))

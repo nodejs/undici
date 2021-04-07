@@ -12,14 +12,8 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
 
   // properties
   expectAssignable<number>(client.pipelining)
-  expectAssignable<number>(client.pending)
-  expectAssignable<number>(client.running)
-  expectAssignable<number>(client.size)
-  expectAssignable<number>(client.connected)
-  expectAssignable<boolean>(client.busy)
   expectAssignable<boolean>(client.closed)
   expectAssignable<boolean>(client.destroyed)
-  expectAssignable<URL>(client.url)
 
   // request
   expectAssignable<PromiseLike<Dispatcher.ResponseData>>(client.request({ origin: '', path: '', method: '' }))

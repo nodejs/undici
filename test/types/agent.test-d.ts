@@ -12,10 +12,8 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   const agent = new Agent()
 
   // properties
-  expectAssignable<number>(agent.pending)
-  expectAssignable<number>(agent.running)
-  expectAssignable<number>(agent.size)
-  expectAssignable<number>(agent.connected)
+  expectAssignable<boolean>(agent.closed)
+  expectAssignable<boolean>(agent.destroyed)
 
   // request
   expectAssignable<PromiseLike<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: '' }))

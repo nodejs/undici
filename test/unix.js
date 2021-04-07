@@ -5,6 +5,7 @@ const { Client, Pool } = require('..')
 const http = require('http')
 const https = require('https')
 const pem = require('https-pem')
+const fs = require('fs')
 
 if (process.platform !== 'win32') {
   test('http unix get', (t) => {
@@ -18,6 +19,12 @@ if (process.platform !== 'win32') {
       res.end('hello')
     })
     t.teardown(server.close.bind(server))
+
+    try {
+      fs.unlinkSync('/var/tmp/test3.sock')
+    } catch (err) {
+
+    }
 
     server.listen('/var/tmp/test3.sock', () => {
       const client = new Client({
@@ -56,6 +63,12 @@ if (process.platform !== 'win32') {
     })
     t.teardown(server.close.bind(server))
 
+    try {
+      fs.unlinkSync('/var/tmp/test3.sock')
+    } catch (err) {
+
+    }
+
     server.listen('/var/tmp/test3.sock', () => {
       const client = new Pool({
         hostname: 'localhost',
@@ -91,6 +104,12 @@ if (process.platform !== 'win32') {
       res.end('hello')
     })
     t.teardown(server.close.bind(server))
+
+    try {
+      fs.unlinkSync('/var/tmp/test3.sock')
+    } catch (err) {
+
+    }
 
     server.listen('/var/tmp/test8.sock', () => {
       const client = new Client({

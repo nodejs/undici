@@ -5,9 +5,6 @@ import { MockInterceptor } from '../../types/mock-interceptor'
 {
   const mockClient: MockClient = new MockAgent({ connections: 1 }).get('')
 
-  // properties
-  expectAssignable<number>(mockClient.connected)
-
   // intercept
   expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: '' }))
   expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: '', body: '' }))
