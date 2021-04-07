@@ -214,6 +214,7 @@ void llhttp_set_lenient_headers(llhttp_t* parser, int enabled) {
   }
 }
 
+
 void llhttp_set_lenient_chunked_length(llhttp_t* parser, int enabled) {
   if (enabled) {
     parser->lenient_flags |= LENIENT_CHUNKED_LENGTH;
@@ -222,6 +223,14 @@ void llhttp_set_lenient_chunked_length(llhttp_t* parser, int enabled) {
   }
 }
 
+
+void llhttp_set_lenient_keep_alive(llhttp_t* parser, int enabled) {
+  if (enabled) {
+    parser->lenient_flags |= LENIENT_KEEP_ALIVE;
+  } else {
+    parser->lenient_flags &= ~LENIENT_KEEP_ALIVE;
+  }
+}
 
 /* Callbacks */
 
@@ -324,7 +333,7 @@ int llhttp__on_chunk_complete(llhttp_t* s, const char* p, const char* endp) {
 }
 
 
-/* Private https://github.com/dnlup/llhttp/blob/undici_wasm/wasm.js*/
+/* Private */
 
 
 void llhttp__debug(llhttp_t* s, const char* p, const char* endp,

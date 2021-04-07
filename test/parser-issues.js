@@ -38,3 +38,26 @@ test('https://github.com/mcollina/undici/issues/268', (t) => {
     })
   })
 })
+
+test('parser fail', (t) => {
+  t.plan(3)
+
+  const server = net.createServer(socket => {
+    socket.write('HTT/1.1 200 OK\r\n')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      method: 'GET',
+      path: '/'
+    }, (err, data) => {
+      t.ok(err)
+      t.equal(err.code, 'HPE_INVALID_CONSTANT')
+      t.equal(err.message, 'Expected HTTP/')
+    })
+  })
+})

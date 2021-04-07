@@ -61,3 +61,108 @@ test('aborted req', (t) => {
     })
   })
 })
+
+test('abort', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.dispatch({
+      method: 'GET',
+      path: '/'
+    }, {
+      onConnect (abort) {
+        setImmediate(abort)
+      },
+      onHeaders () {
+        t.fail()
+      },
+      onData () {
+        t.fail()
+      },
+      onComplete () {
+        t.fail()
+      },
+      onError (err) {
+        t.ok(err instanceof errors.RequestAbortedError)
+      }
+    })
+
+    client.on('disconnect', () => {
+      t.pass()
+    })
+  })
+})
+
+test('abort pipelined', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
+    t.teardown(client.destroy.bind(client))
+
+    let counter = 0
+    client.dispatch({
+      method: 'GET',
+      path: '/'
+    }, {
+      onConnect (abort) {
+        // This request will be retried
+        if (counter++ === 1) {
+          abort()
+        }
+        t.pass()
+      },
+      onHeaders () {
+        t.fail()
+      },
+      onData () {
+        t.fail()
+      },
+      onComplete () {
+        t.fail()
+      },
+      onError (err) {
+        t.ok(err instanceof errors.RequestAbortedError)
+      }
+    })
+
+    client.dispatch({
+      method: 'GET',
+      path: '/'
+    }, {
+      onConnect (abort) {
+        abort()
+      },
+      onHeaders () {
+        t.fail()
+      },
+      onData () {
+        t.fail()
+      },
+      onComplete () {
+        t.fail()
+      },
+      onError (err) {
+        t.ok(err instanceof errors.RequestAbortedError)
+      }
+    })
+
+    client.on('disconnect', () => {
+      t.pass()
+    })
+  })
+})

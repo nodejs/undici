@@ -170,6 +170,17 @@ test('agent destroy throws when callback is not a function', t => {
   }
 })
 
+test('agent close/destroy callback with error', t => {
+  t.plan(4)
+  const dispatcher = new Agent()
+  t.equal(dispatcher.closed, false)
+  dispatcher.close()
+  t.equal(dispatcher.closed, true)
+  t.equal(dispatcher.destroyed, false)
+  dispatcher.destroy(new Error('mock error'))
+  t.equal(dispatcher.destroyed, true)
+})
+
 test('agent should destroy internal pools', t => {
   t.plan(2)
 
