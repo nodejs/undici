@@ -188,6 +188,9 @@ Undici will immediately pipeline when retrying requests afters a failed
 connection. However, Undici will not retry the first remaining requests in
 the prior pipeline and instead error the corresponding callback/promise/stream.
 
+Undici will abort all running requests in the pipeline when any of them are
+aborted.
+
 * Refs: https://tools.ietf.org/html/rfc2616#section-8.1.2.2
 * Refs: https://tools.ietf.org/html/rfc7230#section-6.3.2
 

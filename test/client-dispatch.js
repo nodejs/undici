@@ -416,10 +416,10 @@ test('dispatch onHeaders missing', (t) => {
       onConnect () {
       },
       onData (buf) {
-        t.pass('should not throw')
+        t.fail('should not throw')
       },
       onComplete (trailers) {
-        t.pass('should not throw')
+        t.fail('should not throw')
       },
       onError (err) {
         t.equal(err.code, 'UND_ERR_INVALID_ARG')
@@ -447,10 +447,10 @@ test('dispatch onData missing', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.pass('should not throw')
+        t.fail('should not throw')
       },
       onComplete (trailers) {
-        t.pass('should not throw')
+        t.fail('should not throw')
       },
       onError (err) {
         t.equal(err.code, 'UND_ERR_INVALID_ARG')
@@ -478,10 +478,10 @@ test('dispatch onComplete missing', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.pass('should not throw')
+        t.fail()
       },
       onData (buf) {
-        t.pass('should not throw')
+        t.fail()
       },
       onError (err) {
         t.equal(err.code, 'UND_ERR_INVALID_ARG')
@@ -510,13 +510,13 @@ test('dispatch onError missing', (t) => {
         onConnect () {
         },
         onHeaders (statusCode, headers) {
-          t.pass('should not throw')
+          t.fail()
         },
         onData (buf) {
-          t.pass('should not throw')
+          t.fail()
         },
         onComplete (trailers) {
-          t.pass('should not throw')
+          t.fail()
         }
       })
     } catch (err) {
