@@ -92,12 +92,14 @@ declare namespace Dispatcher {
     body: Readable;
     trailers: Record<string, string>;
     opaque: unknown;
+    context: object;
   }
   export interface PipelineHandlerData {
     statusCode: number;
     headers: IncomingHttpHeaders;
     opaque: unknown;
     body: Readable;
+    context: object;
   }
   export interface StreamData {
     opaque: unknown;
@@ -112,6 +114,7 @@ declare namespace Dispatcher {
     statusCode: number;
     headers: IncomingHttpHeaders;
     opaque: unknown;
+    context: object;
   }
   export type StreamFactory = (data: StreamFactoryData) => Writable;
   export interface DispatchHandlers {
