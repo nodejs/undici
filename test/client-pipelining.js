@@ -6,6 +6,7 @@ const { createServer } = require('http')
 const { finished, Readable } = require('stream')
 const { kConnect } = require('../lib/core/symbols')
 const EE = require('events')
+const { kBusy, kRunning, kSize } = require('../lib/core/symbols')
 
 test('20 times GET with pipelining 10', (t) => {
   const num = 20
@@ -90,33 +91,33 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
     t.teardown(client.close.bind(client))
 
     for (; sent < 2;) {
-      t.notOk(client.size > client.pipelining, 'client is not full')
+      t.notOk(client[kSize] > client.pipelining, 'client is not full')
       makeRequest()
-      t.ok(client.size <= client.pipelining, 'we can send more requests')
+      t.ok(client[kSize] <= client.pipelining, 'we can send more requests')
     }
 
-    t.ok(client.busy, 'client is busy')
-    t.notOk(client.size > client.pipelining, 'client is full')
+    t.ok(client[kBusy], 'client is busy')
+    t.notOk(client[kSize] > client.pipelining, 'client is full')
     makeRequest()
-    t.ok(client.busy, 'we must stop now')
-    t.ok(client.busy, 'client is busy')
-    t.ok(client.size > client.pipelining, 'client is full')
+    t.ok(client[kBusy], 'we must stop now')
+    t.ok(client[kBusy], 'client is busy')
+    t.ok(client[kSize] > client.pipelining, 'client is full')
 
     function makeRequest () {
       makeRequestAndExpectUrl(client, sent++, t, () => {
         count--
         setImmediate(() => {
-          if (client.size === 0) {
+          if (client[kSize] === 0) {
             t.ok(countGreaterThanOne, 'seen more than one parallel request')
             const start = sent
             for (; sent < start + 2 && sent < num;) {
-              t.notOk(client.size > client.pipelining, 'client is not full')
+              t.notOk(client[kSize] > client.pipelining, 'client is not full')
               t.ok(makeRequest())
             }
           }
         })
       })
-      return client.size <= client.pipelining
+      return client[kSize] <= client.pipelining
     }
   })
 })
@@ -140,7 +141,7 @@ test('pipeline 1 is 1 active request', (t) => {
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      t.equal(client.size, 1)
+      t.equal(client[kSize], 1)
       t.error(err)
       t.notOk(client.request({
         path: '/',
@@ -159,9 +160,9 @@ test('pipeline 1 is 1 active request', (t) => {
       data.body.resume()
       res2.end()
     })
-    t.ok(client.size <= client.pipelining)
-    t.ok(client.busy)
-    t.equal(client.size, 1)
+    t.ok(client[kSize] <= client.pipelining)
+    t.ok(client[kBusy])
+    t.equal(client[kSize], 1)
   })
 })
 
@@ -423,7 +424,7 @@ test('pipelining HEAD busy', (t) => {
             })
         })
         body.push(null)
-        t.equal(client.busy, true)
+        t.equal(client[kBusy], true)
       }
 
       {
@@ -444,7 +445,7 @@ test('pipelining HEAD busy', (t) => {
             })
         })
         body.push(null)
-        t.equal(client.busy, true)
+        t.equal(client[kBusy], true)
       }
     })
   })
@@ -494,7 +495,7 @@ test('pipelining empty pipeline before reset', (t) => {
             body.push(null)
           })
       })
-      t.equal(client.busy, false)
+      t.equal(client[kBusy], false)
 
       client.request({
         path: '/',
@@ -509,8 +510,8 @@ test('pipelining empty pipeline before reset', (t) => {
             t.pass()
           })
       })
-      t.equal(client.busy, true)
-      t.equal(client.running, 2)
+      t.equal(client[kBusy], true)
+      t.equal(client[kRunning], 2)
     })
   })
 })
@@ -547,7 +548,7 @@ test('pipelining idempotent busy', (t) => {
           })
       })
       body.push(null)
-      t.equal(client.busy, true)
+      t.equal(client[kBusy], true)
     }
 
     client[kConnect](() => {
@@ -568,7 +569,7 @@ test('pipelining idempotent busy', (t) => {
             })
         })
         body.push(null)
-        t.equal(client.busy, true)
+        t.equal(client[kBusy], true)
       }
 
       {
@@ -584,9 +585,9 @@ test('pipelining idempotent busy', (t) => {
         }, (err, data) => {
           t.ok(err)
         })
-        t.equal(client.busy, true)
+        t.equal(client[kBusy], true)
         signal.emit('abort')
-        t.equal(client.busy, true)
+        t.equal(client[kBusy], true)
       }
 
       {
@@ -607,7 +608,7 @@ test('pipelining idempotent busy', (t) => {
             })
         })
         body.push(null)
-        t.equal(client.busy, true)
+        t.equal(client[kBusy], true)
       }
     })
   })

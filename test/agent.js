@@ -6,6 +6,7 @@ const { Agent, request, stream, pipeline, setGlobalDispatcher } = require('../')
 const { PassThrough } = require('stream')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { errors } = require('../index')
+const { kRunning } = require('../lib/core/symbols')
 
 test('setGlobalDispatcher', t => {
   t.plan(2)
@@ -404,9 +405,9 @@ test('with a local agent', t => {
 
   dispatcher.on('connect', (origin, [dispatcher]) => {
     t.ok(dispatcher)
-    t.equal(dispatcher.running, 0)
+    t.equal(dispatcher[kRunning], 0)
     process.nextTick(() => {
-      t.equal(dispatcher.running, 1)
+      t.equal(dispatcher[kRunning], 1)
     })
   })
 

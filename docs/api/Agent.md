@@ -27,25 +27,9 @@ Extends: [`ClientOptions`](docs/api/Pool.md#parameter-pooloptions)
 
 Implements [Client.closed](docs/api/Client.md#clientclosed)
 
-### `Agent.connected`
-
-Implements [Client.connected](docs/api/Client.md#clientconnected)
-
 ### `Agent.destroyed`
 
 Implements [Client.destroyed](docs/api/Client.md#clientdestroyed)
-
-### `Agent.pending`
-
-Implements [Client.pending](docs/api/Client.md#clientpending)
-
-### `Agent.running`
-
-Implements [Client.running](docs/api/Client.md#clientrunning)
-
-### `Agent.size`
-
-Implements [Client.size](docs/api/Client.md#clientsize)
 
 ## Instance Methods
 

@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { kSocket } = require('../lib/core/symbols')
 const { Readable } = require('stream')
+const { kRunning } = require('../lib/core/symbols')
 
 test('tls get 1', (t) => {
   t.plan(4)
@@ -113,7 +114,7 @@ test('tls get 4', (t) => {
     }
   }, (err, data) => {
     t.error(err)
-    t.equal(client.running, 1)
+    t.equal(client[kRunning], 1)
     t.equal(data.statusCode, 301)
     t.equal(client[kSocket].authorized, true)
 
