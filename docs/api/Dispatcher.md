@@ -327,6 +327,7 @@ Extends: [`RequestOptions`](#parameter-requestoptions)
 * **headers** `IncomingHttpHeaders`
 * **opaque** `unknown`
 * **body** `stream.Readable`
+* **context** `object`
 
 #### Example 1 - Pipeline Echo
 
@@ -419,6 +420,7 @@ The `RequestOptions.method` property should not be value `'CONNECT'`.
 * **trailers** `Record<string, string>` - This object starts out
   as empty and will be mutated to contain trailers after `body` has emitted `'end'`.
 * **opaque** `unknown`
+* **context** `object`
 
 #### Example 1 - Basic GET Request
 
@@ -567,6 +569,7 @@ Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback
 
 * **opaque** `unknown`
 * **trailers** `Record<string, string>`
+* **context** `object`
 
 #### Example 1 - Basic GET stream request
 
