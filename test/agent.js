@@ -6,6 +6,7 @@ const { Agent, request, stream, pipeline, setGlobalDispatcher } = require('../')
 const { PassThrough } = require('stream')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { errors } = require('../index')
+const { kRunning } = require('../lib/core/symbols')
 
 test('setGlobalDispatcher', t => {
   t.plan(2)
@@ -167,6 +168,17 @@ test('agent destroy throws when callback is not a function', t => {
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
   }
+})
+
+test('agent close/destroy callback with error', t => {
+  t.plan(4)
+  const dispatcher = new Agent()
+  t.equal(dispatcher.closed, false)
+  dispatcher.close()
+  t.equal(dispatcher.closed, true)
+  t.equal(dispatcher.destroyed, false)
+  dispatcher.destroy(new Error('mock error'))
+  t.equal(dispatcher.destroyed, true)
 })
 
 test('agent should destroy internal pools', t => {
@@ -393,9 +405,9 @@ test('with a local agent', t => {
 
   dispatcher.on('connect', (origin, [dispatcher]) => {
     t.ok(dispatcher)
-    t.equal(dispatcher.running, 0)
+    t.equal(dispatcher[kRunning], 0)
     process.nextTick(() => {
-      t.equal(dispatcher.running, 1)
+      t.equal(dispatcher[kRunning], 1)
     })
   })
 

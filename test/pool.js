@@ -7,6 +7,7 @@ const { createServer } = require('http')
 const { EventEmitter } = require('events')
 const { promisify } = require('util')
 const { PassThrough, Readable } = require('stream')
+const { kBusy, kPending, kRunning, kSize, kUrl } = require('../lib/core/symbols')
 const eos = require('stream').finished
 const net = require('net')
 const EE = require('events')
@@ -69,7 +70,7 @@ test('basic get', (t) => {
     const client = new Pool(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    t.equal(client.url.origin, `http://localhost:${server.address().port}`)
+    t.equal(client[kUrl].origin, `http://localhost:${server.address().port}`)
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
@@ -357,14 +358,12 @@ test('busy', (t) => {
       connections: 2,
       pipelining: 2
     })
-    let connected = 0
     client.on('drain', () => {
       t.pass()
     })
     client.on('connect', () => {
-      t.equal(client.connected, ++connected)
+      t.pass()
     })
-
     t.teardown(client.destroy.bind(client))
 
     for (let n = 1; n <= 8; ++n) {
@@ -380,10 +379,10 @@ test('busy', (t) => {
           t.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
-      t.equal(client.pending, n)
-      t.equal(client.busy, n >= 2)
-      t.equal(client.size, n)
-      t.equal(client.running, 0)
+      t.equal(client[kPending], n)
+      t.equal(client[kBusy], n >= 2)
+      t.equal(client[kSize], n)
+      t.equal(client[kRunning], 0)
     }
   })
 })

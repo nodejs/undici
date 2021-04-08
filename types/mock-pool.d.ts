@@ -8,8 +8,6 @@ export = MockPool
 /** MockPool extends the Pool API and allows one to mock requests. */
 declare class MockPool extends Pool {
   constructor(origin: string, options: MockPool.Options);
-  /** Number of connected mock clients */
-  connected: number
   /** Intercepts any matching requests that use the same origin as this mock pool. */
   intercept(options: MockInterceptor.Options): MockInterceptor;
   /** Dispatches a mocked request. */

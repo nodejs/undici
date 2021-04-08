@@ -30,29 +30,9 @@ Implements [Client.busy](docs/api/Client.md#clientbusy)
 
 Implements [Client.closed](docs/api/Client.md#clientclosed)
 
-### `Pool.connected`
-
-Implements [Client.connected](docs/api/Client.md#clientconnected)
-
 ### `Pool.destroyed`
 
 Implements [Client.destroyed](docs/api/Client.md#clientdestroyed)
-
-### `Pool.pending`
-
-Implements [Client.pending](docs/api/Client.md#clientpending)
-
-### `Pool.running`
-
-Implements [Client.running](docs/api/Client.md#clientrunning)
-
-### `Pool.size`
-
-Implements [Client.size](docs/api/Client.md#clientsize)
-
-### `Pool.url`
-
-Implements [Client.url](docs/api/Client.md#clienturl).
 
 ## Instance Methods
 

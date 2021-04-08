@@ -91,47 +91,17 @@ See [`Dispatcher.upgrade(options[, callback])`](docs/api/Dispatcher.md#clientupg
 
 `true` after `client.close()` has been called.
 
-### `Client.connected`
-
-* `number`
-
-Number of active client connections. The client will lazily create a connection when it receives a request and will destroy it if there is no activity for the duration of the `timeout` value.
-
 ### `Client.destroyed`
 
 * `boolean`
 
 `true` after `client.destroyed()` has been called or `client.close()` has been called and the client shutdown has completed.
 
-### `Client.pending`
-
-* `number`
-
-Number of queued requests.
-
 ### `Client.pipelining`
 
 * `number`
 
 Property to get and set the pipelining factor.
-
-### `Client.running`
-
-* `number`
-
-Number of inflight requests.
-
-### `Client.size`
-
-* `number`
-
-Number of pending and running requests.
-
-### `Client.url`
-
-* `URL` - _readonly_
-
-The URL of the Client instance.
 
 ## Instance Events
 

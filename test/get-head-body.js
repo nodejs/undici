@@ -5,6 +5,7 @@ const { Client } = require('..')
 const { createServer } = require('http')
 const { Readable } = require('stream')
 const { kConnect } = require('../lib/core/symbols')
+const { kBusy } = require('../lib/core/symbols')
 
 test('GET and HEAD with body should reset connection', (t) => {
   t.plan(4 + 2)
@@ -117,7 +118,7 @@ test('HEAD should reset connection', (t) => {
       t.error(err)
       data.body.resume()
     })
-    t.equal(client.busy, true)
+    t.equal(client[kBusy], true)
 
     client.request({
       path: '/',
@@ -137,10 +138,10 @@ test('HEAD should reset connection', (t) => {
               t.pass()
             })
           })
-          t.equal(client.busy, true)
+          t.equal(client[kBusy], true)
         })
       })
     })
-    t.equal(client.busy, true)
+    t.equal(client[kBusy], true)
   })
 })
