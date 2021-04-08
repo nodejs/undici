@@ -140,8 +140,8 @@ test('trailers dispatch get', (t) => {
         t.equal(statusCode, 200)
         t.equal(Array.isArray(headers), true)
         {
-          const contentTypeIdx = headers.findIndex(x => x === 'Content-Type')
-          t.equal(headers[contentTypeIdx + 1], 'text/plain')
+          const contentTypeIdx = headers.findIndex(x => x.toString() === 'Content-Type')
+          t.equal(headers[contentTypeIdx + 1].toString(), 'text/plain')
         }
       },
       onData (buf) {
@@ -150,8 +150,8 @@ test('trailers dispatch get', (t) => {
       onComplete (trailers) {
         t.equal(Array.isArray(trailers), true)
         {
-          const contentMD5Idx = trailers.findIndex(x => x === 'Content-MD5')
-          t.equal(trailers[contentMD5Idx + 1], 'test')
+          const contentMD5Idx = trailers.findIndex(x => x.toString() === 'Content-MD5')
+          t.equal(trailers[contentMD5Idx + 1].toString(), 'test')
         }
         t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       },
