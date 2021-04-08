@@ -5,7 +5,7 @@ const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
 const { Readable } = require('stream')
-const { kSocket } = require('../lib/core/symbols')
+const { kParser, kSocket } = require('../lib/core/symbols')
 const EE = require('events')
 const { kUrl, kSize, kConnect, kBusy, kConnected, kRunning } = require('../lib/core/symbols')
 
@@ -1064,8 +1064,8 @@ test('emit disconnect after destory', t => {
   })
 })
 
-test('parser dinamic allocation', { only: true }, t => {
-  t.plan(3)
+test('parser dinamic allocation', t => {
+  t.plan(5)
   const chunksSent = []
   const server = createServer((req, res) => {
     let counter = 0
@@ -1088,8 +1088,14 @@ test('parser dinamic allocation', { only: true }, t => {
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
       t.error(err)
       t.equal(statusCode, 200)
+      t.equal(client[kSocket][kParser].bufferSize, 8192)
       const chunksReceived = []
+      let counter = 0
       body.on('data', chunk => {
+        counter++
+        if (counter === 3) {
+          t.equal(client[kSocket][kParser].bufferSize, 16384)
+        }
         chunksReceived.push(chunk)
       })
       body.on('end', () => {
