@@ -1064,7 +1064,7 @@ test('emit disconnect after destory', t => {
   })
 })
 
-test('parser dinamic allocation', { only: true }, t => {
+test('parser dinamic allocation', t => {
   t.plan(3)
   const chunksSent = []
   const server = createServer((req, res) => {
