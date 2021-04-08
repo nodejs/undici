@@ -153,6 +153,7 @@ async function startRedirectingChainServers (t) {
 }
 
 module.exports = {
+  startServer,
   startRedirectingServer,
   startRedirectingWithBodyServer,
   startRedirectingWithoutLocationServer,

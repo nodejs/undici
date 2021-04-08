@@ -53,8 +53,8 @@ test('basic connect', (t) => {
   })
 })
 
-test('connect >=300 should not error', (t) => {
-  t.plan(1)
+test('connect >=300 should error', (t) => {
+  t.plan(2)
 
   const server = http.createServer((c) => {
     t.fail()
@@ -77,11 +77,14 @@ test('connect >=300 should not error', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    const { statusCode, socket } = await client.connect({
-      path: '/'
-    })
-    t.equal(statusCode, 300)
-    socket.destroy()
+    try {
+      await client.connect({
+        path: '/'
+      })
+    } catch (err) {
+      t.equal(err.code, 'UND_ERR_SOCKET')
+      t.equal(err.message, 'bad connect')
+    }
   })
 })
 
