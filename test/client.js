@@ -1094,7 +1094,7 @@ test('parser dynamic allocation', t => {
       body.on('data', chunk => {
         counter++
         if (counter === 3) {
-          t.equal(client[kSocket][kParser].bufferSize, 16384)
+          t.ok(client[kSocket][kParser].bufferSize > 8192)
         }
         chunksReceived.push(chunk)
       })
