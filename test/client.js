@@ -1063,3 +1063,38 @@ test('emit disconnect after destory', t => {
     })
   })
 })
+
+test('parser dinamic allocation', { only: true }, t => {
+  t.plan(3)
+  const chunksSent = []
+  const server = createServer((req, res) => {
+    let counter = 0
+    const t = setInterval(() => {
+      counter++
+      const payload = Buffer.alloc(counter * 4096).fill(0)
+      chunksSent.push(payload)
+      if (counter === 3) {
+        clearInterval(t)
+        res.end(payload)
+      } else {
+        res.write(payload)
+      }
+    }, 20)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
+      t.error(err)
+      t.equal(statusCode, 200)
+      const chunksReceived = []
+      body.on('data', chunk => {
+        chunksReceived.push(chunk)
+      })
+      body.on('end', () => {
+        t.same(Buffer.concat(chunksReceived), Buffer.concat(chunksSent))
+      })
+    })
+  })
+})
