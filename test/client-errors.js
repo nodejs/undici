@@ -994,3 +994,29 @@ test('socket errors', t => {
     t.end()
   })
 })
+
+test('headers overflow', t => {
+  t.plan(2)
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.writeHead(200, {
+      'x-test-1': '1',
+      'x-test-2': '2'
+    })
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      maxHeaderSize: 10
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.ok(err)
+      t.equal(err.code, 'UND_ERR_HEADERS_OVERFLOW')
+      t.end()
+    })
+  })
+})
