@@ -5,9 +5,31 @@ const { Client, Pool, errors } = require('..')
 const http = require('http')
 
 test('dispatch invalid opts', (t) => {
-  t.plan(4)
+  t.plan(8)
 
   const client = new Client('http://localhost:5000')
+
+  try {
+    client.dispatch({
+      path: '/',
+      method: 'GET',
+      upgrade: 1
+    }, null)
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'handler')
+  }
+
+  try {
+    client.dispatch({
+      path: '/',
+      method: 'GET',
+      upgrade: 1
+    }, 'asd')
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'handler')
+  }
 
   client.dispatch({
     path: '/',

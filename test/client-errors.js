@@ -418,6 +418,30 @@ test('invalid options throws', (t) => {
     t.equal(err.message, 'unsupported requestTimeout, use headersTimeout & bodyTimeout instead')
   }
 
+  try {
+    new Client(new URL('http://localhost:200'), { connectTimeout: -1 }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid connectTimeout')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectTimeout: Infinity }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid connectTimeout')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectTimeout: 'asd' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid connectTimeout')
+  }
+
   t.end()
 })
 
