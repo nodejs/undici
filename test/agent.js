@@ -557,3 +557,41 @@ test('dispatch validations', t => {
   t.throws(() => dispatcher.dispatch({ origin: '' }, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
   t.throws(() => dispatcher.dispatch({}, {}), InvalidArgumentError, 'throws on invalid handler.onError')
 })
+
+test('drain', t => {
+  t.plan(2)
+
+  const dispatcher = new Agent({
+    connections: 1,
+    pipelining: 1
+  })
+
+  dispatcher.on('drain', () => {
+    t.pass()
+  })
+
+  class Handler {
+    onConnect () {}
+    onHeaders () {}
+    onData () {}
+    onComplete () {}
+    onError () {
+      t.fail()
+    }
+  }
+
+  const server = http.createServer((req, res) => {
+    res.setHeader('Content-Type', 'text/plain')
+    res.end('asd')
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    t.equal(dispatcher.dispatch({
+      origin: `http://localhost:${server.address().port}`,
+      method: 'GET',
+      path: '/'
+    }, new Handler()), false)
+  })
+})
