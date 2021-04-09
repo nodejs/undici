@@ -1064,7 +1064,7 @@ test('emit disconnect after destory', t => {
   })
 })
 
-test('parser dinamic allocation', t => {
+test('parser dynamic allocation', t => {
   t.plan(5)
   const chunksSent = []
   const server = createServer((req, res) => {
@@ -1085,6 +1085,7 @@ test('parser dinamic allocation', t => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
       t.error(err)
       t.equal(statusCode, 200)
@@ -1094,13 +1095,78 @@ test('parser dinamic allocation', t => {
       body.on('data', chunk => {
         counter++
         if (counter === 3) {
-          t.equal(client[kSocket][kParser].bufferSize, 16384)
+          t.ok(client[kSocket][kParser].bufferSize > 8192)
         }
         chunksReceived.push(chunk)
       })
       body.on('end', () => {
         t.same(Buffer.concat(chunksReceived), Buffer.concat(chunksSent))
       })
+    })
+  })
+})
+
+test('end response before request', t => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const readable = new Readable({
+      read () {
+        this.push('asd')
+      }
+    })
+    const { body } = await client.request({
+      method: 'GET',
+      path: '/',
+      body: readable
+    })
+    body
+      .on('error', () => {
+        t.fail()
+      })
+      .on('end', () => {
+        t.pass()
+      })
+      .resume()
+    client.on('disconnect', (url, targets, err) => {
+      t.equal(err.code, 'UND_ERR_INFO')
+    })
+  })
+})
+
+test('parser pause with no body timeout', (t) => {
+  t.plan(2)
+  const server = createServer((req, res) => {
+    let counter = 0
+    const t = setInterval(() => {
+      counter++
+      const payload = Buffer.alloc(counter * 4096).fill(0)
+      if (counter === 3) {
+        clearInterval(t)
+        res.end(payload)
+      } else {
+        res.write(payload)
+      }
+    }, 20)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
+      t.error(err)
+      t.equal(statusCode, 200)
+      body.resume()
     })
   })
 })
