@@ -6,7 +6,208 @@ Dispatcher is the core API used to dispatch requests.
 
 Requests are not guaranteed to be dispatched in order of invocation.
 
+## Instance Methods
+
+### `Dispatcher.close([callback]): Promise`
+
+Closes the dispatcher and gracefully waits for enqueued requests to complete before resolving.
+
+Arguments:
+
+* **callback** `(error: Error | null, data: null) => void` (optional)
+
+Returns: `void | Promise<null>` - Only returns a `Promise` if no `callback` argument was passed
+
+```js
+dispatcher.close() // -> Promise
+dispatcher.close(() => {}) // -> void
+```
+
+#### Example - Request resolves before Client closes
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+const server = createServer((request, response) => {
+  response.end('undici')
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  const request = client.request({
+    path: '/',
+    method: 'GET'
+  })
+
+  client.close()
+    .then(() => {
+      // This waits for the previous request to complete
+      console.log('Client closed')
+      server.close()
+    })
+
+  request.then(({ body }) => {
+    body.setEncoding('utf8')
+    body.on('data', console.log) // This logs before 'Client closed'
+  })
+})
+```
+
+### `Dispatcher.connect(options[, callback])`
+
+Starts two-way communications with the requested resource using [HTTP CONNECT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT).
+
+Arguments:
+
+* **options** `ConnectOptions`
+* **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
+
+Returns: `void | Promise<ConnectData>` - Only returns a `Promise` if no `callback` argument was passed
+
+#### Parameter: `ConnectOptions`
+
+* **path** `string`
+* **headers** `UndiciHeaders` (optional) - Default: `null`
+* **signal** `AbortSignal | events.EventEmitter | null` (optional) - Default: `null`
+* **opaque** `unknown` (optional) - This argument parameter is passed through to `ConnectData`
+
+#### Parameter: `ConnectData`
+
+* **statusCode** `number`
+* **headers** `http.IncomingHttpHeaders`
+* **socket** `stream.Duplex`
+* **opaque** `unknown`
+
+#### Example - Connect request with echo
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+const server = createServer((request, response) => {
+  throw Error('should never get here')
+})
+
+server.on('connect', (req, socket, head) => {
+  socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
+
+  let data = head.toString()
+  socket.on('data', (buf) => {
+    data += buf.toString()
+  })
+
+  socket.on('end', () => {
+    socket.end(data)
+  })
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  client
+    .connect({ path: '/' })
+    .then(({ socket }) => {
+      const wanted = 'Body'
+      let data = ''
+      socket.on('data', d => { data += d })
+      socket.on('end', () => {
+        console.log(`Data received: ${data.toString()} | Data wanted: ${wanted}`)
+        client.close()
+        server.close()
+      })
+      socket.write(wanted)
+      socket.end()
+    })
+})
+```
+
+### `Dispatcher.destroy([error, callback]): Promise`
+
+Destroy the dispatcher abruptly with the given error. All the pending and running requests will be asynchronously aborted and error. Since this operation is asynchronously dispatched there might still be some progress on dispatched requests.
+
+Both arguments are optional; the method can be called in four different ways:
+
+Arguments:
+
+* **error** `Error | null` (optional)
+* **callback** `(error: Error | null, data: null) => void` (optional)
+
+Returns: `void | Promise<void>` - Only returns a `Promise` if no `callback` argument was passed
+
+```js
+dispatcher.destroy() // -> Promise
+dispatcher.destroy(new Error()) // -> Promise
+dispatcher.destroy(() => {}) // -> void
+dispatcher.destroy(new Error(), () => {}) // -> void
+```
+
+#### Example - Request is aborted when Client is destroyed
+
+```js
+'use strict'
+const { createServer } = require('http')
+const { Client } = require('undici')
+
+const server = createServer((request, response) => {
+  response.end('undici')
+})
+
+server.listen(() => {
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  const request = client.request({
+    path: '/',
+    method: 'GET'
+  })
+
+  client.destroy()
+    .then(() => {
+      // Still waits for requests to complete
+      console.log('Client destroyed')
+      server.close()
+    })
+
+  // The request promise will reject with an Undici Client Destroyed error
+  request.catch(error => {
+    console.error(error)
+  })
+})
+```
+
 ### `Dispatcher.dispatch(options, handler)`
+
+This is the low level API which all the preceding APIs are implemented on top of.
+This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this.
+
+Arguments:
+
+* **options** `DispatchOptions`
+* **handlers** `DispatchHandlers`
+
+Returns: `void`
+
+#### Parameter: `DispatchOptions`
+
+* **path** `string`
+* **method** `string`
+* **body** `string | Buffer | Uint8Array | stream.Readable | null` (optional) - Default: `null`
+* **headers** `UndiciHeaders` (optional) - Default: `null`
+* **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed.
+* **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceding requests in the pipeline has completed.
+* **upgrade** `string | null` (optional) - Default: `method === 'CONNECT' || null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.
+
+#### Parameter: `DispatchHandlers`
+
+* **onConnect** `(abort: () => void) => void` - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
+* **onError** `(error: Error) => void` - Invoked when an error has occurred.
+* **onUpgrade** `(statusCode: number, headers: string[] | null, socket: Duplex) => void` (optional) - Invoked when request is upgraded. Required if `DispatchOptions.upgrade` is defined or `DispatchOptions.method === 'CONNECT'`.
+* **onHeaders** `(statusCode: number, headers: string[] | null, resume: () => void) => boolean` - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. Not required for `upgrade` requests.
+* **onData** `(chunk: Buffer) => boolean` - Invoked when response payload data is received. Not required for `upgrade` requests.
+* **onComplete** `(trailers: string[] | null) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
 
 #### Example 1 - Dispatch GET request
 
@@ -101,74 +302,6 @@ server.listen(() => {
       socket.end()
     }
   })
-})
-```
-### `Dispatcher.connect(options[, callback])`
-
-Starts two-way communications with the requested resource using [HTTP CONNECT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT).
-
-Arguments:
-
-* **options** `ConnectOptions`
-* **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
-
-Returns: `void | Promise<ConnectData>` - Only returns a `Promise` if no `callback` argument was passed
-
-#### Parameter: `ConnectOptions`
-
-* **path** `string`
-* **headers** `UndiciHeaders` (optional) - Default: `null`
-* **signal** `AbortSignal | events.EventEmitter | null` (optional) - Default: `null`
-* **opaque** `unknown` (optional) - This argument parameter is passed through to `ConnectData`
-
-#### Parameter: `ConnectData`
-
-* **statusCode** `number`
-* **headers** `http.IncomingHttpHeaders`
-* **socket** `stream.Duplex`
-* **opaque** `unknown`
-
-#### Example - Connect request with echo
-
-```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
-
-const server = createServer((request, response) => {
-  throw Error('should never get here')
-})
-
-server.on('connect', (req, socket, head) => {
-  socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
-
-  let data = head.toString()
-  socket.on('data', (buf) => {
-    data += buf.toString()
-  })
-
-  socket.on('end', () => {
-    socket.end(data)
-  })
-})
-
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
-
-  client
-    .connect({ path: '/' })
-    .then(({ socket }) => {
-      const wanted = 'Body'
-      let data = ''
-      socket.on('data', d => { data += d })
-      socket.on('end', () => {
-        console.log(`Data received: ${data.toString()} | Data wanted: ${wanted}`)
-        client.close()
-        server.close()
-      })
-      socket.write(wanted)
-      socket.end()
-    })
 })
 ```
 
@@ -595,139 +728,6 @@ server.listen(() => {
 })
 ```
 
-## `Dispatcher.close([callback]): Promise`
-
-Closes the dispatcher and gracefully waits for enqueued requests to complete before resolving.
-
-Arguments:
-
-* **callback** `(error: Error | null, data: null) => void` (optional)
-
-Returns: `void | Promise<null>` - Only returns a `Promise` if no `callback` argument was passed
-
-```js
-dispatcher.close() // -> Promise
-dispatcher.close(() => {}) // -> void
-```
-
-#### Example - Request resolves before Client closes
-
-```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
-
-const server = createServer((request, response) => {
-  response.end('undici')
-})
-
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
-
-  const request = client.request({
-    path: '/',
-    method: 'GET'
-  })
-
-  client.close()
-    .then(() => {
-      // This waits for the previous request to complete
-      console.log('Client closed')
-      server.close()
-    })
-
-  request.then(({ body }) => {
-    body.setEncoding('utf8')
-    body.on('data', console.log) // This logs before 'Client closed'
-  })
-})
-```
-
-## `Dispatcher.destroy([error, callback]): Promise`
-
-Destroy the dispatcher abruptly with the given error. All the pending and running requests will be asynchronously aborted and error. Since this operation is asynchronously dispatched there might still be some progress on dispatched requests.
-
-Both arguments are optional; the method can be called in four different ways:
-
-Arguments:
-
-* **error** `Error | null` (optional)
-* **callback** `(error: Error | null, data: null) => void` (optional)
-
-Returns: `void | Promise<void>` - Only returns a `Promise` if no `callback` argument was passed
-
-```js
-dispatcher.destroy() // -> Promise
-dispatcher.destroy(new Error()) // -> Promise
-dispatcher.destroy(() => {}) // -> void
-dispatcher.destroy(new Error(), () => {}) // -> void
-```
-
-#### Example - Request is aborted when Client is destroyed
-
-```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
-
-const server = createServer((request, response) => {
-  response.end('undici')
-})
-
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
-
-  const request = client.request({
-    path: '/',
-    method: 'GET'
-  })
-
-  client.destroy()
-    .then(() => {
-      // Still waits for requests to complete
-      console.log('Client destroyed')
-      server.close()
-    })
-
-  // The request promise will reject with an Undici Client Destroyed error
-  request.catch(error => {
-    console.error(error)
-  })
-})
-```
-
-### `Dispatcher.dispatch(options, handlers)`
-
-Dispatches a request.
-
-This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this.
-
-Arguments:
-
-* **options** `DispatchOptions`
-* **handlers** `DispatchHandlers`
-
-Returns: `Boolean`, `false` if user should wait for `'drain'` event before calling `Dispatcher.dispatch` again.
-
-#### Parameter: `DispatchOptions`
-
-* **origin** `string | URL`
-* **path** `string`
-* **method** `string`
-* **body** `string | Buffer | Uint8Array | stream.Readable | null` (optional) - Default: `null`
-* **headers** `UndiciHeaders` (optional) - Default: `null`
-* **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceding requests in the pipeline has completed.
-* **upgrade** `string | null` (optional) - Default: `method === 'CONNECT' || null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.
-
-#### Parameter: `DispatchHandlers`
-
-* **onConnect** `(abort: () => void) => void` - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
-* **onError** `(error: Error) => void` - Invoked when an error has occurred.
-* **onUpgrade** `(statusCode: number, headers: string[] | null, socket: Duplex) => void` (optional) - Invoked when request is upgraded. Required if `DispatchOptions.upgrade` is defined or `DispatchOptions.method === 'CONNECT'`.
-* **onHeaders** `(statusCode: number, headers: Buffer[] | null, resume: () => void) => boolean` - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. Not required for `upgrade` requests.
-* **onData** `(chunk: Buffer) => boolean` - Invoked when response payload data is received. Not required for `upgrade` requests.
-* **onComplete** `(trailers: string[] | null) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
-
 ## Instance Events
 
 ### Event: `'connect'`
@@ -752,3 +752,37 @@ Parameters:
 * **origin** `URL`
 
 Emitted when dispatcher is no longer busy.
+
+## Parameter: `UndiciHeaders`
+
+* `http.IncomingHttpHeaders | string[] | null`
+
+Header arguments such as `options.headers` in [`Client.dispatch`](./Client.md#client-dispatchoptions-handlers) can be specified in two forms; either as an object specified by the `http.IncomingHttpHeaders` type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
+
+Keys are lowercase and values are not modified. 
+
+Response headers will derive a `host` from the `url` of the [Client](#class-client) instance if no `host` header was previously specified.
+
+### Example 1 - Object
+
+```js
+{
+  'content-length': '123',
+  'content-type': 'text/plain',
+  connection: 'keep-alive',
+  host: 'mysite.com',
+  accept: '*/*'
+}
+```
+
+### Example 2 - Array
+
+```js
+[
+  'content-length', '123',
+  'content-type', 'text/plain',
+  'connection', 'keep-alive',
+  'host', 'mysite.com',
+  'accept', '*/*'
+]
+```
