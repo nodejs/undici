@@ -1085,6 +1085,7 @@ test('parser dynamic allocation', t => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
       t.error(err)
       t.equal(statusCode, 200)
@@ -1135,6 +1136,37 @@ test('end response before request', t => {
       .resume()
     client.on('disconnect', (url, targets, err) => {
       t.equal(err.code, 'UND_ERR_INFO')
+    })
+  })
+})
+
+test('parser pause with no body timeout', (t) => {
+  t.plan(2)
+  const server = createServer((req, res) => {
+    let counter = 0
+    const t = setInterval(() => {
+      counter++
+      const payload = Buffer.alloc(counter * 4096).fill(0)
+      if (counter === 3) {
+        clearInterval(t)
+        res.end(payload)
+      } else {
+        res.write(payload)
+      }
+    }, 20)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
+      t.error(err)
+      t.equal(statusCode, 200)
+      body.resume()
     })
   })
 })
