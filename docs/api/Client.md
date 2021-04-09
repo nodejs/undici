@@ -231,37 +231,3 @@ server.listen(() => {
   })
 })
 ```
-
-## Parameter: `UndiciHeaders`
-
-* `http.IncomingHttpHeaders | string[] | null`
-
-Header arguments such as `options.headers` in [`Client.dispatch`](./Client.md#client-dispatchoptions-handlers) can be specified in two forms; either as an object specified by the `http.IncomingHttpHeaders` type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
-
-Keys are lowercase and values are not modified. 
-
-Response headers will derive a `host` from the `url` of the [Client](#class-client) instance if no `host` header was previously specified.
-
-### Example 1 - Object
-
-```js
-{
-  'content-length': '123',
-  'content-type': 'text/plain',
-  connection: 'keep-alive',
-  host: 'mysite.com',
-  accept: '*/*'
-}
-```
-
-### Example 2 - Array
-
-```js
-[
-  'content-length', '123',
-  'content-type', 'text/plain',
-  'connection', 'keep-alive',
-  'host', 'mysite.com',
-  'accept', '*/*'
-]
-```
