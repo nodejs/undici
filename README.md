@@ -65,7 +65,7 @@ Arguments:
 * **options** [`RequestOptions`](./docs/api/Dispatcher.md#parameter-requestoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
   * **method** `String` - Default: `GET`
-* **maxRedirections** `Integer` - Default: `0`
+  * **maxRedirections** `Integer` - Default: `0`
 
 Returns a promise with the result of the `Dispatcher.request` method.
 
