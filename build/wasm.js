@@ -25,7 +25,8 @@ if (!WASI_ROOT) {
 // Build wasm binary
 execSync(`${WASI_ROOT}/bin/clang \
  --sysroot=${WASI_ROOT}/share/wasi-sysroot \
- -target wasm32-unknown-wasi \
+ -target wasm32-wasi \
+ -msimd128 \
  -Ofast \
  -fno-exceptions \
  -fvisibility=hidden \
