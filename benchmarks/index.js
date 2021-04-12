@@ -15,6 +15,9 @@ const path = require('path')
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const parallelRequests = parseInt(process.env.PARALLEL, 10) || 10
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
+
+Benchmark.options.minSamples = parseInt(process.env.SAMPLES, 10) || 100
+
 const dest = {}
 
 if (process.env.PORT) {
@@ -68,8 +71,6 @@ const pool = new Pool(httpOptions.url, {
 })
 
 const suite = new Benchmark.Suite()
-
-// Benchmark.options.minSamples = 200
 
 suite
   .add('http - no agent ', {
