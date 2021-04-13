@@ -74,8 +74,6 @@ const pool = new Pool(httpOptions.url, {
 
 const suite = new Benchmark.Suite()
 
-// Benchmark.options.minSamples = 200
-
 suite
   .add('http - no agent ', {
     defer: true,
