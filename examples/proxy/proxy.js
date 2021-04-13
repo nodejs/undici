@@ -134,7 +134,7 @@ class WSHandler {
 
     let head = ''
     for (let n = 0; n < headers.length; n += 2) {
-      head += `\r\n${headers[n + 0]}: ${headers[n + 1]}`
+      head += `\r\n${headers[n]}: ${headers[n + 1]}`
     }
 
     this.socket.write(`HTTP/1.1 101 Switching Protocols\r\nconnection: upgrade\r\nupgrade: websocket${head}\r\n\r\n`)
@@ -170,7 +170,7 @@ function getHeaders ({
   let connection = ''
 
   for (let n = 0; n < headers.length; n += 2) {
-    const key = headers[n + 0]
+    const key = headers[n]
     const val = headers[n + 1]
 
     if (!via && key.length === 3 && key.toLowerCase() === 'via') {
@@ -193,7 +193,7 @@ function getHeaders ({
 
   const result = []
   for (let n = 0; n < headers.length; n += 2) {
-    const key = headers[n + 0]
+    const key = headers[n]
     const val = headers[n + 1]
 
     if (
