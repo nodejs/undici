@@ -889,7 +889,7 @@ test('pool stream constructor error destroy body', (t) => {
 })
 
 test('pool request constructor error destroy body', (t) => {
-  t.plan(6)
+  t.plan(4)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -929,22 +929,6 @@ test('pool request constructor error destroy body', (t) => {
       client.request({
         path: '/',
         method: 'CONNECT',
-        body
-      }, (err) => {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
-        t.equal(body.destroyed, true)
-      })
-    }
-
-    {
-      const body = new Readable({
-        read () {
-        }
-      })
-      client.request({
-        origin: 'asd',
-        path: '/',
-        method: 'GET',
         body
       }, (err) => {
         t.equal(err.code, 'UND_ERR_INVALID_ARG')
