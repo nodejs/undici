@@ -35,19 +35,27 @@ function getGlobalDispatcher () {
 }
 
 function makeDispatcher (fn) {
-  return (url, { agent, dispatcher = getGlobalDispatcher(), method = 'GET', ...opts } = {}, ...additionalArgs) => {
-    if (opts.path != null) {
-      throw new InvalidArgumentError('unsupported opts.path')
+  return (url, opts = {}, ...additionalArgs) => {
+    if (url && typeof url === 'object' && !(url instanceof URL)) {
+      additionalArgs = [opts, ...additionalArgs]
+      opts = url
+    } else if (opts && opts.path != null && url.pathname !== '/') {
+      throw new InvalidArgumentError('cannot combine url.pathname and opts.path')
     }
+
+    const { agent, dispatcher = getGlobalDispatcher() } = opts
 
     if (agent) {
       throw new InvalidArgumentError('unsupported opts.agent. Did you mean opts.client?')
     }
 
-    const { origin, pathname, search } = util.parseURL(url)
-    const path = search ? `${pathname}${search}` : pathname
+    url = util.parseURL(url)
 
-    return fn.call(dispatcher, { ...opts, origin, method, path }, ...additionalArgs)
+    const path = url.search ? `${url.pathname}${url.search}` : url.pathname
+    const origin = url.origin
+    const method = opts.method ? opts.method : opts.body ? 'PUT' : 'GET'
+
+    return fn.call(dispatcher, { ...opts, origin, path, method }, ...additionalArgs)
   }
 }
 
