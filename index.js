@@ -35,7 +35,7 @@ function getGlobalDispatcher () {
 }
 
 function makeDispatcher (fn) {
-  return (url, opts = {}, ...additionalArgs) => {
+  return (url, opts, ...additionalArgs) => {
     if (url && typeof url === 'object' && !(url instanceof URL)) {
       additionalArgs = [opts, ...additionalArgs]
       opts = url
@@ -43,6 +43,7 @@ function makeDispatcher (fn) {
       throw new InvalidArgumentError('cannot combine url.pathname and opts.path')
     }
 
+    opts = opts || {}
     const { agent, dispatcher = getGlobalDispatcher() } = opts
 
     if (agent) {
