@@ -111,7 +111,7 @@ Calls `options.dispatch.pipeline(options, handler)`.
 
 See [Dispatcher.pipeline](docs/api/Dispatcher.md#dispatcherpipeline) for more details.
 
-### `undici.connect(url, options[, callback])`
+### `undici.connect(url, options): Promise`
 
 Starts two-way communications with the requested resource using [HTTP CONNECT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT).
 
@@ -131,7 +131,7 @@ Calls `options.dispatch.connect(options)`.
 
 See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnect) for more details.
 
-### `undici.upgrade(url, options[, callback])`
+### `undici.upgrade(url, options): Promise`
 
 Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) for more details.
 
