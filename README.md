@@ -111,12 +111,13 @@ Calls `options.dispatch.pipeline(options, handler)`.
 
 See [Dispatcher.pipeline](docs/api/Dispatcher.md#dispatcherpipeline) for more details.
 
-### `undici.connect(options[, callback])`
+### `undici.connect(url, options[, callback])`
 
 Starts two-way communications with the requested resource using [HTTP CONNECT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT).
 
 Arguments:
 
+* **url** `string | URL | object`
 * **options** [`ConnectOptions`](docs/api/Dispatcher.md#parameter-connectoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
   * **method** `String` - Default: `GET`
@@ -130,12 +131,13 @@ Calls `options.dispatch.connect(options)`.
 
 See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnect) for more details.
 
-### `undici.upgrade(options[, callback])`
+### `undici.upgrade(url, options[, callback])`
 
 Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) for more details.
 
 Arguments:
 
+* **url** `string | URL | object`
 * **options** [`UpgradeOptions`](docs/api/Dispatcher.md#parameter-upgradeoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
   * **method** `String` - Default: `GET`
