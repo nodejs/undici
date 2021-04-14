@@ -87,8 +87,6 @@ Arguments:
 
 Returns a promise with the result of the `Dispatcher.stream` method.
 
-`url` may contain pathname. `options` may not contain path.
-
 Calls `options.dispatcher.stream(options, factory)`.
 
 See [Dispatcher.stream](docs/api/Dispatcher.md#dispatcherstream) for more details.
@@ -104,8 +102,6 @@ Arguments:
 * **handler** `Dispatcher.pipeline.handler`
 
 Returns: `stream.Duplex`
-
-`url` may contain pathname. `options` may not contain path.
 
 Calls `options.dispatch.pipeline(options, handler)`.
 
@@ -124,8 +120,6 @@ Arguments:
 
 Returns a promise with the result of the `Dispatcher.connect` method.
 
-`url` may contain pathname. `options` may not contain path.
-
 Calls `options.dispatch.connect(options)`.
 
 See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnect) for more details.
@@ -142,8 +136,6 @@ Arguments:
 * **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
 
 Returns a promise with the result of the `Dispatcher.upgrade` method.
-
-`url` may contain pathname. `options` may not contain path.
 
 Calls `options.dispatcher.upgrade(options)`.
 
