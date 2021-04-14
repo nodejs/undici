@@ -329,23 +329,23 @@ test('with local agent', t => {
 })
 
 test('fails with invalid URL', t => {
-  t.plan(4)
   t.throws(() => request(), InvalidArgumentError, 'throws on missing url argument')
   t.throws(() => request(''), TypeError, 'throws on invalid url')
   t.throws(() => request({}), InvalidArgumentError, 'throws on missing url.origin argument')
   t.throws(() => request({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+  t.end()
 })
 
 test('fails with unsupported opts.path', t => {
-  t.plan(3)
-  t.throws(() => request('https://example.com', { path: 'asd' }), InvalidArgumentError, 'throws on opts.path argument')
-  t.throws(() => request('https://example.com', { path: '' }), InvalidArgumentError, 'throws on opts.path argument')
+  // t.throws(() => request('https://example.com/foo', { path: 'asd' }), InvalidArgumentError, 'throws on opts.path argument')
+  // t.throws(() => request('https://example.com/foo', { path: '' }), InvalidArgumentError, 'throws on opts.path argument')
   t.throws(() => request('https://example.com', { path: 0 }), InvalidArgumentError, 'throws on opts.path argument')
+  t.end()
 })
 
 test('fails with unsupported opts.agent', t => {
-  t.plan(1)
   t.throws(() => request('https://example.com', { agent: new Agent() }), InvalidArgumentError, 'throws on opts.path argument')
+  t.end()
 })
 
 test('with globalAgent', t => {
@@ -623,3 +623,28 @@ test('drain', t => {
 //     }
 //   })
 // })
+
+test('global api', t => {
+  t.plan(7)
+
+  const server = http.createServer((req, res) => {
+    t.equal(req.method, 'GET')
+    t.equal(req.url, '/foo')
+    res.end()
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const origin = `http://localhost:${server.address().port}`
+    await request(origin, { path: '/foo' })
+    await request(`${origin}/foo`)
+    await request({ origin, path: '/foo' })
+
+    try {
+      await request(`${origin}/foo`, { path: '/foo' })
+    } catch (err) {
+      t.ok(err)
+    }
+  })
+})

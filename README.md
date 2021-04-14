@@ -57,14 +57,14 @@ console.log('trailers', trailers)
 
 This section documents our most commonly used API methods. Additional APIs are documented in their own files within the [docs](./docs/) folder and are accessible via the navigation list on the left side of the docs site.
 
-### `undici.request(url[, options]): Promise`
+### `undici.request([url, options]): Promise`
 
 Arguments:
 
 * **url** `string | URL | object`
 * **options** [`RequestOptions`](./docs/api/Dispatcher.md#parameter-requestoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
-  * **method** `String` - Default: `GET`
+  * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
   * **maxRedirections** `Integer` - Default: `0`
 
 Returns a promise with the result of the `Dispatcher.request` method.
@@ -75,43 +75,39 @@ Calls `options.dispatcher.request(options)`.
 
 See [Dispatcher.request](./docs/api/Dispatcher.md#dispatcherrequestoptions-callback) for more details.
 
-### `undici.stream(url, options, factory): Promise`
+### `undici.stream([url, options, ]factory): Promise`
 
 Arguments:
 
 * **url** `string | URL | object`
 * **options** [`StreamOptions`](./docs/api/Dispatcher.md#parameter-streamoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
-  * **method** `String` - Default: `GET`
+  * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
 * **factory** `Dispatcher.stream.factory`
 
 Returns a promise with the result of the `Dispatcher.stream` method.
-
-`url` may contain pathname. `options` may not contain path.
 
 Calls `options.dispatcher.stream(options, factory)`.
 
 See [Dispatcher.stream](docs/api/Dispatcher.md#dispatcherstream) for more details.
 
-### `undici.pipeline(url, options, handler): Duplex`
+### `undici.pipeline([url, options, ]handler): Duplex`
 
 Arguments:
 
 * **url** `string | URL | object`
 * **options** [`PipelineOptions`](docs/api/Dispatcher.md#parameter-pipelineoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
-  * **method** `String` - Default: `GET`
+  * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
 * **handler** `Dispatcher.pipeline.handler`
 
 Returns: `stream.Duplex`
-
-`url` may contain pathname. `options` may not contain path.
 
 Calls `options.dispatch.pipeline(options, handler)`.
 
 See [Dispatcher.pipeline](docs/api/Dispatcher.md#dispatcherpipeline) for more details.
 
-### `undici.connect(url, options): Promise`
+### `undici.connect([url, options]): Promise`
 
 Starts two-way communications with the requested resource using [HTTP CONNECT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT).
 
@@ -120,18 +116,15 @@ Arguments:
 * **url** `string | URL | object`
 * **options** [`ConnectOptions`](docs/api/Dispatcher.md#parameter-connectoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
-  * **method** `String` - Default: `GET`
 * **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
 
 Returns a promise with the result of the `Dispatcher.connect` method.
-
-`url` may contain pathname. `options` may not contain path.
 
 Calls `options.dispatch.connect(options)`.
 
 See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnect) for more details.
 
-### `undici.upgrade(url, options): Promise`
+### `undici.upgrade([url, options]): Promise`
 
 Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) for more details.
 
@@ -140,12 +133,9 @@ Arguments:
 * **url** `string | URL | object`
 * **options** [`UpgradeOptions`](docs/api/Dispatcher.md#parameter-upgradeoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
-  * **method** `String` - Default: `GET`
 * **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
 
 Returns a promise with the result of the `Dispatcher.upgrade` method.
-
-`url` may contain pathname. `options` may not contain path.
 
 Calls `options.dispatcher.upgrade(options)`.
 
