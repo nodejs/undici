@@ -328,23 +328,14 @@ test('with local agent', t => {
   })
 })
 
-test('fails with invalid URL', t => {
+test('fails with invalid args', t => {
   t.throws(() => request(), InvalidArgumentError, 'throws on missing url argument')
-  t.throws(() => request(''), TypeError, 'throws on invalid url')
+  t.throws(() => request(''), InvalidArgumentError, 'throws on invalid url')
   t.throws(() => request({}), InvalidArgumentError, 'throws on missing url.origin argument')
   t.throws(() => request({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
-  t.end()
-})
-
-test('fails with unsupported opts.path', t => {
-  // t.throws(() => request('https://example.com/foo', { path: 'asd' }), InvalidArgumentError, 'throws on opts.path argument')
-  // t.throws(() => request('https://example.com/foo', { path: '' }), InvalidArgumentError, 'throws on opts.path argument')
   t.throws(() => request('https://example.com', { path: 0 }), InvalidArgumentError, 'throws on opts.path argument')
-  t.end()
-})
-
-test('fails with unsupported opts.agent', t => {
   t.throws(() => request('https://example.com', { agent: new Agent() }), InvalidArgumentError, 'throws on opts.path argument')
+  t.throws(() => request('https://example.com', 'asd'), InvalidArgumentError, 'throws on non object opts argument')
   t.end()
 })
 
@@ -440,7 +431,7 @@ test('with a local agent', t => {
 test('fails with invalid URL', t => {
   t.plan(4)
   t.throws(() => stream(), InvalidArgumentError, 'throws on missing url argument')
-  t.throws(() => stream(''), TypeError, 'throws on invalid url')
+  t.throws(() => stream(''), InvalidArgumentError, 'throws on invalid url')
   t.throws(() => stream({}), InvalidArgumentError, 'throws on missing url.origin argument')
   t.throws(() => stream({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
 })
@@ -528,7 +519,7 @@ test('with a local agent', t => {
 test('fails with invalid URL', t => {
   t.plan(4)
   t.throws(() => pipeline(), InvalidArgumentError, 'throws on missing url argument')
-  t.throws(() => pipeline(''), TypeError, 'throws on invalid url')
+  t.throws(() => pipeline(''), InvalidArgumentError, 'throws on invalid url')
   t.throws(() => pipeline({}), InvalidArgumentError, 'throws on missing url.origin argument')
   t.throws(() => pipeline({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
 })
@@ -625,12 +616,17 @@ test('drain', t => {
 // })
 
 test('global api', t => {
-  t.plan(7)
+  t.plan(6 * 2)
 
   const server = http.createServer((req, res) => {
-    t.equal(req.method, 'GET')
-    t.equal(req.url, '/foo')
-    res.end()
+    if (req.url === '/bar') {
+      t.equal(req.method, 'PUT')
+      t.equal(req.url, '/bar')
+    } else {
+      t.equal(req.method, 'GET')
+      t.equal(req.url, '/foo')
+    }
+    req.pipe(res)
   })
 
   t.teardown(server.close.bind(server))
@@ -640,11 +636,19 @@ test('global api', t => {
     await request(origin, { path: '/foo' })
     await request(`${origin}/foo`)
     await request({ origin, path: '/foo' })
-
-    try {
-      await request(`${origin}/foo`, { path: '/foo' })
-    } catch (err) {
-      t.ok(err)
-    }
+    await stream({ origin, path: '/foo' }, () => new PassThrough())
+    await request({ protocol: 'http:', hostname: 'localhost', port: server.address().port, path: '/foo' })
+    await request(`${origin}/bar`, { body: 'asd' })
   })
+})
+
+test('global api throws', t => {
+  const origin = 'http://asd'
+  t.throws(() => request(`${origin}/foo`, { path: '/foo' }), InvalidArgumentError)
+  t.throws(() => request({ origin, path: 0 }, { path: '/foo' }), InvalidArgumentError)
+  t.throws(() => request({ origin, pathname: 0 }, { path: '/foo' }), InvalidArgumentError)
+  t.throws(() => request({ origin: 0 }, { path: '/foo' }), InvalidArgumentError)
+  t.throws(() => request(0), InvalidArgumentError)
+  t.throws(() => request(1), InvalidArgumentError)
+  t.end()
 })

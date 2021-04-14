@@ -358,25 +358,7 @@ t.test('should not follow redirects when using Readable request bodies', async t
   t.equal(body.length, 0)
 })
 
-t.test('should handle errors (callback)', t => {
-  t.plan(2)
-
-  const body = []
-
-  stream(
-    'http://localhost:0',
-    { opaque: body, maxRedirections: 10 },
-    ({ statusCode, headers, opaque }) => {
-      return createWritable(opaque)
-    },
-    error => {
-      t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
-      t.equal(body.length, 0)
-    }
-  )
-})
-
-t.test('should handle errors (promise)', async t => {
+t.test('should handle errors', async t => {
   t.plan(2)
 
   const body = []

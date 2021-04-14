@@ -35,15 +35,33 @@ function getGlobalDispatcher () {
 }
 
 function makeDispatcher (fn) {
-  return (url, opts, ...additionalArgs) => {
-    // TODO (perf): url & opts handling could be faster.
-
-    if (url && typeof url === 'object' && !(url instanceof URL)) {
-      additionalArgs = [opts, ...additionalArgs]
-      opts = { ...url, path: null }
+  return (url, opts, handler) => {
+    if (typeof opts === 'function') {
+      handler = opts
+      opts = null
     }
 
-    opts = opts || {}
+    if (!url || (typeof url !== 'string' && typeof url !== 'object' && !(url instanceof URL))) {
+      throw new InvalidArgumentError('invalid url')
+    }
+
+    if (opts != null && typeof opts !== 'object') {
+      throw new InvalidArgumentError('invalid opts')
+    }
+
+    if (opts && opts.path != null) {
+      if (typeof opts.path !== 'string') {
+        throw new InvalidArgumentError('invalid opts.path')
+      }
+
+      url = new URL(opts.path, util.parseOrigin(url))
+    } else {
+      if (!opts) {
+        opts = typeof url === 'object' ? url : {}
+      }
+
+      url = util.parseURL(url)
+    }
 
     const { agent, dispatcher = getGlobalDispatcher() } = opts
 
@@ -51,25 +69,12 @@ function makeDispatcher (fn) {
       throw new InvalidArgumentError('unsupported opts.agent. Did you mean opts.client?')
     }
 
-    url = util.parseURL(url)
-
-    if (opts.path != null && (typeof opts.path !== 'string' || url.pathname !== '/')) {
-      throw new InvalidArgumentError('invalid path')
-    }
-
-    if (opts.path != null && url.pathname && url.pathname !== '/') {
-      throw new InvalidArgumentError('cannot combine url.pathname and opts.path')
-    }
-
-    if (opts.path) {
-      url = new URL(opts.path, url)
-    }
-
-    const path = url.search ? `${url.pathname}${url.search}` : url.pathname
-    const origin = url.origin
-    const method = opts.method ? opts.method : opts.body ? 'PUT' : 'GET'
-
-    return fn.call(dispatcher, { ...opts, origin, path, method }, ...additionalArgs)
+    return fn.call(dispatcher, {
+      ...opts,
+      origin: url.origin,
+      path: url.search ? `${url.pathname}${url.search}` : url.pathname,
+      method: opts.method ? opts.method : opts.body ? 'PUT' : 'GET'
+    }, handler)
   }
 }
 
