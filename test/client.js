@@ -1071,7 +1071,7 @@ test('parser dynamic allocation', t => {
     let counter = 0
     const t = setInterval(() => {
       counter++
-      const payload = Buffer.alloc(counter * 4096).fill(0)
+      const payload = Buffer.alloc(counter * 16382).fill(0)
       chunksSent.push(payload)
       if (counter === 3) {
         clearInterval(t)
@@ -1089,13 +1089,13 @@ test('parser dynamic allocation', t => {
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
       t.error(err)
       t.equal(statusCode, 200)
-      t.equal(client[kSocket][kParser].bufferSize, 8192)
+      t.equal(client[kSocket][kParser].bufferSize, 20480)
       const chunksReceived = []
       let counter = 0
       body.on('data', chunk => {
         counter++
         if (counter === 3) {
-          t.ok(client[kSocket][kParser].bufferSize > 8192)
+          t.ok(client[kSocket][kParser].bufferSize > 20480)
         }
         chunksReceived.push(chunk)
       })
