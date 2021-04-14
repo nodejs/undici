@@ -69,7 +69,9 @@ test('start headers timeout after request body', (t) => {
       method: 'GET'
     }, {
       onConnect () {
-        clock.tick(200)
+        process.nextTick(() => {
+          clock.tick(200)
+        })
         queueMicrotask(() => {
           body.push(null)
           body.on('end', () => {
@@ -88,6 +90,43 @@ test('start headers timeout after request body', (t) => {
       onError (err) {
         t.equal(body.readableEnded, true)
         t.ok(err instanceof errors.HeadersTimeoutError)
+      }
+    })
+  })
+})
+
+test('parser resume with no body timeout', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers, resume) {
+        setTimeout(resume, 100)
+        return false
+      },
+      onData () {
+
+      },
+      onComplete () {
+        t.pass()
+      },
+      onError (err) {
+        t.error(err)
       }
     })
   })

@@ -43,11 +43,11 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@sinonjs/fake-timers": "^6.0.1",
-    "@types/node": "^14.6.2",
+    "@sinonjs/fake-timers": "^7.0.5",
+    "@types/node": "^14.14.39",
     "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
-    "concurrently": "^6.0.0",
+    "concurrently": "^6.0.2",
     "docsify-cli": "^4.4.2",
     "https-pem": "^2.0.0",
     "husky": "^6.0.0",
