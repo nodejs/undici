@@ -28,9 +28,14 @@ void llhttp_init(llhttp_t* parser, llhttp_type_t type,
 
 extern int wasm_on_header_field(llhttp_t* p, const char* at, size_t length);
 extern int wasm_on_header_value(llhttp_t* p, const char* at, size_t length);
-extern int wasm_on_headers_complete(llhttp_t * p);
+extern int wasm_on_headers_complete(llhttp_t * p, int status_code, uint8_t upgrade, int should_keep_alive);
 extern int wasm_on_body(llhttp_t* p, const char* at, size_t length);
 extern int wasm_on_message_complete(llhttp_t * p);
+
+int on_headers_complete(llhttp_t * p)
+{
+  return wasm_on_headers_complete(p, p->status_code, p->upgrade, llhttp_should_keep_alive(p));
+}
 
 const llhttp_settings_t wasm_settings = {
   NULL,
@@ -38,7 +43,7 @@ const llhttp_settings_t wasm_settings = {
   NULL,
   wasm_on_header_field,
   wasm_on_header_value,
-  wasm_on_headers_complete,
+  on_headers_complete,
   wasm_on_body,
   wasm_on_message_complete,
   NULL,
@@ -54,32 +59,6 @@ llhttp_t* llhttp_alloc(llhttp_type_t type) {
 
 void llhttp_free(llhttp_t* parser) {
   free(parser);
-}
-
-/* Some getters required to get stuff from the parser */
-
-uint8_t llhttp_get_type(llhttp_t* parser) {
-  return parser->type;
-}
-
-uint8_t llhttp_get_http_major(llhttp_t* parser) {
-  return parser->http_major;
-}
-
-uint8_t llhttp_get_http_minor(llhttp_t* parser) {
-  return parser->http_minor;
-}
-
-uint8_t llhttp_get_method(llhttp_t* parser) {
-  return parser->method;
-}
-
-int llhttp_get_status_code(llhttp_t* parser) {
-  return parser->status_code;
-}
-
-uint8_t llhttp_get_upgrade(llhttp_t* parser) {
-  return parser->upgrade;
 }
 
 #endif  // defined(__wasm__)
