@@ -1,15 +1,13 @@
 # undici
 
-![Node CI](https://github.com/mcollina/undici/workflows/Node%20CI/badge.svg)  [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/) [![npm version](https://badge.fury.io/js/undici.svg)](https://badge.fury.io/js/undici) [![codecov](https://codecov.io/gh/nodejs/undici/branch/master/graph/badge.svg)](https://codecov.io/gh/nodejs/undici)
+[![Node CI](https://github.com/nodejs/undici/actions/workflows/nodejs.yml/badge.svg)](https://github.com/nodejs/undici/actions/workflows/nodejs.yml) [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/) [![npm version](https://badge.fury.io/js/undici.svg)](https://badge.fury.io/js/undici) [![codecov](https://codecov.io/gh/nodejs/undici/branch/main/graph/badge.svg?token=yZL6LtXkOA)](https://codecov.io/gh/nodejs/undici)
 
 A HTTP/1.1 client, written from scratch for Node.js.
 
 > Undici means eleven in Italian. 1.1 -> 11 -> Eleven -> Undici.
 It is also a Stranger Things reference.
 
-<!--
-Picture of Eleven
--->
+Have a question about using Undici? Open a [Q&A Discussion](https://github.com/nodejs/undici/discussions/new) or join our official OpenJS [Slack](https://openjs-foundation.slack.com/archives/C01QF9Q31QD) channel.
 
 ## Install
 
@@ -55,6 +53,106 @@ for await (const data of body) {
 console.log('trailers', trailers)
 ```
 
+## Common API Methods
+
+This section documents our most commonly used API methods. Additional APIs are documented in their own files within the [docs](./docs/) folder and are accessible via the navigation list on the left side of the docs site.
+
+### `undici.request([url, options]): Promise`
+
+Arguments:
+
+* **url** `string | URL | object`
+* **options** [`RequestOptions`](./docs/api/Dispatcher.md#parameter-requestoptions)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+  * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
+  * **maxRedirections** `Integer` - Default: `0`
+
+Returns a promise with the result of the `Dispatcher.request` method.
+
+`url` may contain pathname. `options` may not contain path.
+
+Calls `options.dispatcher.request(options)`.
+
+See [Dispatcher.request](./docs/api/Dispatcher.md#dispatcherrequestoptions-callback) for more details.
+
+### `undici.stream([url, options, ]factory): Promise`
+
+Arguments:
+
+* **url** `string | URL | object`
+* **options** [`StreamOptions`](./docs/api/Dispatcher.md#parameter-streamoptions)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+  * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
+* **factory** `Dispatcher.stream.factory`
+
+Returns a promise with the result of the `Dispatcher.stream` method.
+
+Calls `options.dispatcher.stream(options, factory)`.
+
+See [Dispatcher.stream](docs/api/Dispatcher.md#dispatcherstream) for more details.
+
+### `undici.pipeline([url, options, ]handler): Duplex`
+
+Arguments:
+
+* **url** `string | URL | object`
+* **options** [`PipelineOptions`](docs/api/Dispatcher.md#parameter-pipelineoptions)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+  * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
+* **handler** `Dispatcher.pipeline.handler`
+
+Returns: `stream.Duplex`
+
+Calls `options.dispatch.pipeline(options, handler)`.
+
+See [Dispatcher.pipeline](docs/api/Dispatcher.md#dispatcherpipeline) for more details.
+
+### `undici.connect([url, options]): Promise`
+
+Starts two-way communications with the requested resource using [HTTP CONNECT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT).
+
+Arguments:
+
+* **url** `string | URL | object`
+* **options** [`ConnectOptions`](docs/api/Dispatcher.md#parameter-connectoptions)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+* **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
+
+Returns a promise with the result of the `Dispatcher.connect` method.
+
+Calls `options.dispatch.connect(options)`.
+
+See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnect) for more details.
+
+### `undici.upgrade([url, options]): Promise`
+
+Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) for more details.
+
+Arguments:
+
+* **url** `string | URL | object`
+* **options** [`UpgradeOptions`](docs/api/Dispatcher.md#parameter-upgradeoptions)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+* **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
+
+Returns a promise with the result of the `Dispatcher.upgrade` method.
+
+Calls `options.dispatcher.upgrade(options)`.
+
+See [Dispatcher.upgrade](docs/api/Dispatcher.md#dispatcherupgradeoptions-callback) for more details.
+
+### `undici.setGlobalDispatcher(dispatcher)`
+
+* dispatcher `Dispatcher`
+
+Sets the global dispatcher used by global API methods.
+
+### `undici.getGlobalDispatcher()`
+
+Gets the global dispatcher used by global API methods.
+
+Returns: `Dispatcher`
+
 ## Specification Compliance
 
 This section documents parts of the HTTP/1.1 specification which Undici does
@@ -82,12 +180,15 @@ Undici will immediately pipeline when retrying requests afters a failed
 connection. However, Undici will not retry the first remaining requests in
 the prior pipeline and instead error the corresponding callback/promise/stream.
 
+Undici will abort all running requests in the pipeline when any of them are
+aborted.
+
 * Refs: https://tools.ietf.org/html/rfc2616#section-8.1.2.2
 * Refs: https://tools.ietf.org/html/rfc7230#section-6.3.2
 
 ## Collaborators
 
-* [__Ethan Arrowood__](https://github.com/Ethan-Arrowood/), <https://www.npmjs.com/~ethan_arrowood>
+* [__Ethan Arrowood__](https://github.com/ethan-arrowood), <https://www.npmjs.com/~ethan_arrowood>
 * [__Daniele Belardi__](https://github.com/dnlup), <https://www.npmjs.com/~dnlup>
 * [__Tomas Della Vedova__](https://github.com/delvedor), <https://www.npmjs.com/~delvedor>
 * [__Matteo Collina__](https://github.com/mcollina), <https://www.npmjs.com/~matteo.collina>

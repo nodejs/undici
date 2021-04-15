@@ -1,8 +1,8 @@
 {
   "name": "undici",
-  "version": "3.3.1",
+  "version": "4.0.0-alpha.3",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
-  "homepage": "https://github.com/nodejs/undici#readme",
+  "homepage": "https://undici.nodejs.org",
   "bugs": {
     "url": "https://github.com/nodejs/undici/issues"
   },
@@ -28,37 +28,39 @@
     "docs"
   ],
   "scripts": {
-    "prebuild-wasm": "docker build -t llhttp_wasm_builder .",
-    "build-wasm": "node build_wasm.js --docker",
+    "prebuild:wasm": "docker build -t llhttp_wasm_builder -f build/Dockerfile .",
+    "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
+    "lint:fix": "standard --fix | snazzy",
     "test": "tap test/*.js --no-coverage && jest test/jest/test",
+    "test:tdd": "tap test/*.js -w --no-coverage-report",
     "test:typescript": "tsd",
     "coverage": "standard | snazzy && tap test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
     "prebench": "node -e \"try { require('fs').unlinkSync(require('path').join(require('os').tmpdir(), 'undici.sock')) } catch (_) {}\"",
     "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\"",
-    "serve-website": "docsify serve .",
+    "serve:website": "docsify serve .",
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@sinonjs/fake-timers": "^6.0.1",
-    "@types/node": "^14.6.2",
+    "@sinonjs/fake-timers": "^7.0.5",
+    "@types/node": "^14.14.39",
     "abort-controller": "^3.0.0",
     "benchmark": "^2.1.4",
-    "concurrently": "^5.2.0",
+    "concurrently": "^6.0.2",
     "docsify-cli": "^4.4.2",
     "https-pem": "^2.0.0",
-    "husky": "^5.2.0",
+    "husky": "^6.0.0",
     "jest": "^26.4.0",
     "pre-commit": "^1.2.2",
     "proxy": "^1.0.2",
     "proxyquire": "^2.0.1",
-    "semver": "^5.7.1",
-    "sinon": "^9.2.4",
-    "snazzy": "^8.0.0",
-    "standard": "^14.3.4",
-    "tap": "^14.10.8",
-    "tsd": "^0.13.1"
+    "semver": "^7.3.5",
+    "sinon": "^10.0.0",
+    "snazzy": "^9.0.0",
+    "standard": "^16.0.3",
+    "tap": "^15.0.0",
+    "tsd": "^0.14.0"
   },
   "engines": {
     "node": ">=12.18"

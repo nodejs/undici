@@ -6,6 +6,7 @@ const { createServer } = require('http')
 const { finished, Readable } = require('stream')
 const { kConnect } = require('../lib/core/symbols')
 const EE = require('events')
+const { kBusy, kRunning, kSize } = require('../lib/core/symbols')
 
 test('20 times GET with pipelining 10', (t) => {
   const num = 20
@@ -20,11 +21,11 @@ test('20 times GET with pipelining 10', (t) => {
       res.end(req.url)
     }, 10)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   // needed to check for a warning on the maxListeners on the socket
   process.on('warning', t.fail)
-  t.tearDown(() => {
+  t.teardown(() => {
     process.removeListener('warning', t.fail)
   })
 
@@ -32,9 +33,9 @@ test('20 times GET with pipelining 10', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 10
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
-    for (var i = 0; i < num; i++) {
+    for (let i = 0; i < num; i++) {
       makeRequest(i)
     }
 
@@ -54,13 +55,13 @@ function makeRequestAndExpectUrl (client, i, t, cb) {
   return client.request({ path: '/' + i, method: 'GET' }, (err, { statusCode, headers, body }) => {
     cb()
     t.error(err)
-    t.strictEqual(statusCode, 200)
+    t.equal(statusCode, 200)
     const bufs = []
     body.on('data', (buf) => {
       bufs.push(buf)
     })
     body.on('end', () => {
-      t.strictEqual('/' + i, Buffer.concat(bufs).toString('utf8'))
+      t.equal('/' + i, Buffer.concat(bufs).toString('utf8'))
     })
   })
 }
@@ -81,42 +82,42 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
       res.end(req.url)
     }, 10)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     for (; sent < 2;) {
-      t.notOk(client.size > client.pipelining, 'client is not full')
+      t.notOk(client[kSize] > client.pipelining, 'client is not full')
       makeRequest()
-      t.ok(client.size <= client.pipelining, 'we can send more requests')
+      t.ok(client[kSize] <= client.pipelining, 'we can send more requests')
     }
 
-    t.ok(client.busy, 'client is busy')
-    t.notOk(client.size > client.pipelining, 'client is full')
+    t.ok(client[kBusy], 'client is busy')
+    t.notOk(client[kSize] > client.pipelining, 'client is full')
     makeRequest()
-    t.ok(client.busy, 'we must stop now')
-    t.ok(client.busy, 'client is busy')
-    t.ok(client.size > client.pipelining, 'client is full')
+    t.ok(client[kBusy], 'we must stop now')
+    t.ok(client[kBusy], 'client is busy')
+    t.ok(client[kSize] > client.pipelining, 'client is full')
 
     function makeRequest () {
       makeRequestAndExpectUrl(client, sent++, t, () => {
         count--
         setImmediate(() => {
-          if (client.size === 0) {
+          if (client[kSize] === 0) {
             t.ok(countGreaterThanOne, 'seen more than one parallel request')
             const start = sent
             for (; sent < start + 2 && sent < num;) {
-              t.notOk(client.size > client.pipelining, 'client is not full')
+              t.notOk(client[kSize] > client.pipelining, 'client is not full')
               t.ok(makeRequest())
             }
           }
         })
       })
-      return client.size <= client.pipelining
+      return client[kSize] <= client.pipelining
     }
   })
 })
@@ -129,18 +130,18 @@ test('pipeline 1 is 1 active request', (t) => {
     res.write('asd')
     res2 = res
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
     client.request({
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      t.strictEqual(client.size, 1)
+      t.equal(client[kSize], 1)
       t.error(err)
       t.notOk(client.request({
         path: '/',
@@ -159,9 +160,9 @@ test('pipeline 1 is 1 active request', (t) => {
       data.body.resume()
       res2.end()
     })
-    t.ok(client.size <= client.pipelining)
-    t.ok(client.busy)
-    t.strictEqual(client.size, 1)
+    t.ok(client[kSize] <= client.pipelining)
+    t.ok(client[kBusy])
+    t.equal(client[kSize], 1)
   })
 })
 
@@ -180,13 +181,13 @@ test('pipelined chunked POST ', (t) => {
       res.end()
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.request({
       path: '/',
@@ -241,13 +242,13 @@ test('errored POST body lets inflight complete', (t) => {
     serverRes = res
     res.write('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -272,7 +273,7 @@ test('errored POST body lets inflight complete', (t) => {
             })
           }, (err, data) => {
             t.ok(err)
-            t.strictEqual(data.opaque, 'asd')
+            t.equal(data.opaque, 'asd')
           })
           client.close((err) => {
             t.error(err)
@@ -295,13 +296,13 @@ test('pipelining non-idempotent', (t) => {
       res.end('asd')
     }, 10)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     let ended = false
     client.request({
@@ -323,7 +324,7 @@ test('pipelining non-idempotent', (t) => {
       idempotent: false
     }, (err, data) => {
       t.error(err)
-      t.strictEqual(ended, true)
+      t.equal(ended, true)
       data.body.resume()
     })
   })
@@ -338,13 +339,13 @@ test('pipelining non-idempotent w body', (t) => {
       res.end('asd')
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     let ended = false
     let reading = false
@@ -379,7 +380,7 @@ test('pipelining non-idempotent w body', (t) => {
       idempotent: false
     }, (err, data) => {
       t.error(err)
-      t.strictEqual(ended, true)
+      t.equal(ended, true)
       data.body.resume()
     })
   })
@@ -392,18 +393,18 @@ test('pipelining HEAD busy', (t) => {
   server.on('request', (req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 10
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client[kConnect](() => {
       let ended = false
       client.once('disconnect', () => {
-        t.strictEqual(ended, true)
+        t.equal(ended, true)
       })
 
       {
@@ -423,7 +424,7 @@ test('pipelining HEAD busy', (t) => {
             })
         })
         body.push(null)
-        t.strictEqual(client.busy, true)
+        t.equal(client[kBusy], true)
       }
 
       {
@@ -444,14 +445,14 @@ test('pipelining HEAD busy', (t) => {
             })
         })
         body.push(null)
-        t.strictEqual(client.busy, true)
+        t.equal(client[kBusy], true)
       }
     })
   })
 })
 
 test('pipelining empty pipeline before reset', (t) => {
-  t.plan(7)
+  t.plan(8)
 
   let c = 0
   const server = createServer()
@@ -464,18 +465,18 @@ test('pipelining empty pipeline before reset', (t) => {
       }, 100)
     }
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 10
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client[kConnect](() => {
       let ended = false
       client.once('disconnect', () => {
-        t.strictEqual(ended, true)
+        t.equal(ended, true)
       })
 
       const body = new Readable({
@@ -494,7 +495,7 @@ test('pipelining empty pipeline before reset', (t) => {
             body.push(null)
           })
       })
-      t.strictEqual(client.busy, false)
+      t.equal(client[kBusy], false)
 
       client.request({
         path: '/',
@@ -509,8 +510,8 @@ test('pipelining empty pipeline before reset', (t) => {
             t.pass()
           })
       })
-      t.strictEqual(client.busy, true)
-      t.strictEqual(client.running, 2)
+      t.equal(client[kBusy], true)
+      t.equal(client[kRunning], 2)
     })
   })
 })
@@ -522,13 +523,13 @@ test('pipelining idempotent busy', (t) => {
   server.on('request', (req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 10
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     {
       const body = new Readable({
@@ -547,7 +548,7 @@ test('pipelining idempotent busy', (t) => {
           })
       })
       body.push(null)
-      t.strictEqual(client.busy, true)
+      t.equal(client[kBusy], true)
     }
 
     client[kConnect](() => {
@@ -568,7 +569,7 @@ test('pipelining idempotent busy', (t) => {
             })
         })
         body.push(null)
-        t.strictEqual(client.busy, true)
+        t.equal(client[kBusy], true)
       }
 
       {
@@ -584,9 +585,9 @@ test('pipelining idempotent busy', (t) => {
         }, (err, data) => {
           t.ok(err)
         })
-        t.strictEqual(client.busy, true)
+        t.equal(client[kBusy], true)
         signal.emit('abort')
-        t.strictEqual(client.busy, true)
+        t.equal(client[kBusy], true)
       }
 
       {
@@ -607,7 +608,7 @@ test('pipelining idempotent busy', (t) => {
             })
         })
         body.push(null)
-        t.strictEqual(client.busy, true)
+        t.equal(client[kBusy], true)
       }
     })
   })

@@ -1,8 +1,8 @@
 # Class: Pool
 
-Extends: `events.EventEmitter`
+Extends: `undici.Dispatcher`
 
-A pool of [Client](docs/api/Client.md) instances connected to the same upstream target. Implements the same api as [Client](docs/api/Client.md).
+A pool of [Client](docs/api/Client.md) instances connected to the same upstream target.
 
 Requests are not guaranteed to be dispatched in order of invocation.
 
@@ -17,6 +17,7 @@ Arguments:
 
 Extends: [`ClientOptions`](docs/api/Client.md#parameter-clientoptions)
 
+* **factory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Client(origin, opts)`
 * **connections** `number | null` (optional) - Default: `null` - The number of `Client` instances to create. When set to `null`, the `Pool` instance will create an unlimited amount of `Client` instances.
 
 ## Instance Properties
@@ -29,79 +30,54 @@ Implements [Client.busy](docs/api/Client.md#clientbusy)
 
 Implements [Client.closed](docs/api/Client.md#clientclosed)
 
-### `Pool.connected`
-
-Implements [Client.connected](docs/api/Client.md#clientconnected)
-
 ### `Pool.destroyed`
 
 Implements [Client.destroyed](docs/api/Client.md#clientdestroyed)
 
-### `Pool.pending`
-
-Implements [Client.pending](docs/api/Client.md#clientpending)
-
-<!-- TODO: https://github.com/nodejs/undici/issues/561 
-### `Pool.pipelining`
-
-Implements [Client.pipelining](docs/api/Client.md#clientpipelining) -->
-
-### `Pool.running`
-
-Implements [Client.running](docs/api/Client.md#clientrunning)
-
-### `Pool.size`
-
-Implements [Client.size](docs/api/Client.md#clientsize)
-
-### `Pool.url`
-
-Implements [Client.url](docs/api/Client.md#clienturl)
-
 ## Instance Methods
 
-### `Pool.close(callback)`
+### `Pool.close([callback])`
 
-Implements [`Client.close([ callback ])`](docs/api/Client.md#clientclose-callback-)
+Implements [`Dispatcher.close([callback])`](docs/api/Dispatcher.md#clientclose-callback-).
+
+### `Pool.destroy([error, callback])`
+
+Implements [`Dispatcher.destroy([error, callback])`](docs/api/Dispatcher.md#dispatcher-callback-).
 
 ### `Pool.connect(options[, callback])`
 
-Implements [`Client.connect(options [, callback])`](docs/api/Client.md#clientconnectoptions--callback)
-
-### `Pool.destroy(error)`
-
-Implements [`Client.destroy(error)`](docs/api/Client.md#clientdestroyerror)
+See [`Dispatcher.connect(options[, callback])`](docs/api/Dispatcher.md#clientconnectoptions--callback).
 
 ### `Pool.dispatch(options, handlers)`
 
-Implements [`Client.dispatch(options, handlers)`](docs/api/Client.md#clientdispatchoptions-handlers)
+Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
 
 ### `Pool.pipeline(options, handler)`
 
-Implements [`Client.pipeline(options, handler)`](docs/api/Client.md#clientpipelineoptions-handler)
+See [`Dispatcher.pipeline(options, handler)`](docs/api/Dispatcher.md#clientpipelineoptions-handler).
 
 ### `Pool.request(options[, callback])`
 
-Implements [`Client.request(options [, callback])`](docs/api/Client.md#clientrequestoptions--callback)
+See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
 
 ### `Pool.stream(options, factory[, callback])`
 
-Implements [`Client.stream(options, factory [, callback])`](docs/api/Client.md#clientstreamoptions-factory--callback)
+See [`Dispatcher.stream(options, factory[, callback])`](docs/api/Dispatcher.md#clientstreamoptions-factory--callback).
 
 ### `Pool.upgrade(options[, callback])`
 
-Implements [`Client.upgrade(options[, callback])`](docs/api/Client.md#clientupgradeoptions-callback)
+See [`Dispatcher.upgrade(options[, callback])`](docs/api/Dispatcher.md#clientupgradeoptions-callback).
 
 ## Instance Events
 
 ### Event: `'connect'`
 
-Implements [Client Event: `'connect'`](docs/api/Client.md#event-connect)
+See [Dispatcher Event: `'connect'`](docs/api/Dispatcher.md#event-connect).
 
 ### Event: `'disconnect'`
 
-Implements [Client Event: `'disconnect'`](docs/api/Client.md#event-connect)
+See [Dispatcher Event: `'disconnect'`](docs/api/Dispatcher.md#event-connect).
 
 ### Event: `'drain'`
 
-Implements [Client Event: `'drain'`](docs/api/Client.md#event-connect)
+See [Dispatcher Event: `'drain'`](docs/api/Dispatcher.md#event-connect).

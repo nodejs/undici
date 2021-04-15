@@ -66,6 +66,7 @@ yarn.lock
 
 # IDE files
 .idea
+.vscode
 
 *0x
 *clinic*

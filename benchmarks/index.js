@@ -15,6 +15,11 @@ const path = require('path')
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const parallelRequests = parseInt(process.env.PARALLEL, 10) || 10
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
+const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
+const bodyTimeout = parseInt(process.env.BODY_TIMEOUT, 10) || 0
+
+Benchmark.options.minSamples = parseInt(process.env.SAMPLES, 10) || 100
+
 const dest = {}
 
 if (process.env.PORT) {
@@ -52,8 +57,8 @@ const httpOptionsMultiSocket = {
 const undiciOptions = {
   path: '/',
   method: 'GET',
-  headersTimeout: 0,
-  bodyTimeout: 0
+  headersTimeout,
+  bodyTimeout
 }
 
 const client = new Client(httpOptions.url, {
@@ -69,14 +74,12 @@ const pool = new Pool(httpOptions.url, {
 
 const suite = new Benchmark.Suite()
 
-// Benchmark.options.minSamples = 200
-
 suite
   .add('http - no agent ', {
     defer: true,
     fn: deferred => {
       Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise((resolve) => {
-        http.get(httpOptions, (res) => {
+        http.get(httpNoAgent, (res) => {
           res
             .pipe(new Writable({
               write (chunk, encoding, callback) {

@@ -5,6 +5,7 @@ const { Client, errors } = require('..')
 const net = require('net')
 const http = require('http')
 const EE = require('events')
+const { kBusy } = require('../lib/core/symbols')
 
 test('basic upgrade', (t) => {
   t.plan(6)
@@ -24,11 +25,11 @@ test('basic upgrade', (t) => {
       c.end()
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const signal = new EE()
     client.upgrade({
@@ -39,7 +40,7 @@ test('basic upgrade', (t) => {
     }, (err, data) => {
       t.error(err)
 
-      t.strictEqual(signal.listenerCount('abort'), 0)
+      t.equal(signal.listenerCount('abort'), 0)
 
       const { headers, socket } = data
 
@@ -49,17 +50,17 @@ test('basic upgrade', (t) => {
       })
 
       socket.on('close', () => {
-        t.strictEqual(recvData.toString(), 'Body')
+        t.equal(recvData.toString(), 'Body')
       })
 
-      t.deepEqual(headers, {
+      t.same(headers, {
         hello: 'world',
         connection: 'upgrade',
         upgrade: 'websocket'
       })
       socket.end()
     })
-    t.strictEqual(signal.listenerCount('abort'), 1)
+    t.equal(signal.listenerCount('abort'), 1)
   })
 })
 
@@ -80,11 +81,11 @@ test('basic upgrade promise', (t) => {
       c.end()
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const { headers, socket } = await client.upgrade({
       path: '/',
@@ -98,10 +99,10 @@ test('basic upgrade promise', (t) => {
     })
 
     socket.on('close', () => {
-      t.strictEqual(recvData.toString(), 'Body')
+      t.equal(recvData.toString(), 'Body')
     })
 
-    t.deepEqual(headers, {
+    t.same(headers, {
       hello: 'world',
       connection: 'upgrade',
       upgrade: 'websocket'
@@ -126,11 +127,11 @@ test('upgrade error', (t) => {
       // Ignore error.
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     try {
       await client.upgrade({
@@ -173,11 +174,11 @@ test('basic upgrade2', (t) => {
     c.write('Body')
     c.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.upgrade({
       path: '/',
@@ -188,7 +189,7 @@ test('basic upgrade2', (t) => {
 
       const { headers, socket } = data
 
-      t.strictEqual(socket._readableState.flowing, null)
+      t.equal(socket._readableState.flowing, null)
 
       let recvData = ''
       data.socket.on('data', (d) => {
@@ -196,10 +197,10 @@ test('basic upgrade2', (t) => {
       })
 
       socket.on('close', () => {
-        t.strictEqual(recvData.toString(), 'Body')
+        t.equal(recvData.toString(), 'Body')
       })
 
-      t.deepEqual(headers, {
+      t.same(headers, {
         hello: 'world',
         connection: 'upgrade',
         upgrade: 'websocket'
@@ -218,7 +219,7 @@ test('upgrade wait for empty pipeline', (t) => {
     canConnect = true
   })
   server.on('upgrade', (req, c, firstBodyChunk) => {
-    t.strictEqual(canConnect, true)
+    t.equal(canConnect, true)
     c.write('HTTP/1.1 101\r\n')
     c.write('hello: world\r\n')
     c.write('connection: upgrade\r\n')
@@ -227,13 +228,13 @@ test('upgrade wait for empty pipeline', (t) => {
     c.write('Body')
     c.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.request({
       path: '/',
@@ -243,7 +244,7 @@ test('upgrade wait for empty pipeline', (t) => {
     })
     client.once('connect', () => {
       process.nextTick(() => {
-        t.strictEqual(client.busy, false)
+        t.equal(client[kBusy], false)
 
         client.upgrade({
           path: '/'
@@ -255,13 +256,13 @@ test('upgrade wait for empty pipeline', (t) => {
           })
 
           socket.on('end', () => {
-            t.strictEqual(recvData.toString(), 'Body')
+            t.equal(recvData.toString(), 'Body')
           })
 
           socket.write('Body')
           socket.end()
         })
-        t.strictEqual(client.busy, true)
+        t.equal(client[kBusy], true)
 
         client.request({
           path: '/',
@@ -283,13 +284,13 @@ test('upgrade aborted', (t) => {
   server.on('upgrade', (req, c, firstBodyChunk) => {
     t.fail()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const signal = new EE()
     client.upgrade({
@@ -297,12 +298,12 @@ test('upgrade aborted', (t) => {
       signal,
       opaque: 'asd'
     }, (err, { opaque }) => {
-      t.strictEqual(opaque, 'asd')
+      t.equal(opaque, 'asd')
       t.ok(err instanceof errors.RequestAbortedError)
-      t.strictEqual(signal.listenerCount('abort'), 0)
+      t.equal(signal.listenerCount('abort'), 0)
     })
-    t.strictEqual(client.busy, true)
-    t.strictEqual(signal.listenerCount('abort'), 1)
+    t.equal(client[kBusy], true)
+    t.equal(signal.listenerCount('abort'), 1)
     signal.emit('abort')
 
     client.close(() => {
@@ -329,11 +330,11 @@ test('basic aborted after res', (t) => {
     })
     signal.emit('abort')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.upgrade({
       path: '/',
@@ -362,11 +363,11 @@ test('basic upgrade error', (t) => {
 
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const _err = new Error()
     client.upgrade({
@@ -376,7 +377,7 @@ test('basic upgrade error', (t) => {
     }, (err, data) => {
       t.error(err)
       data.socket.on('error', (err) => {
-        t.strictEqual(err, _err)
+        t.equal(err, _err)
       })
       throw _err
     })
@@ -390,14 +391,14 @@ test('upgrade disconnect', (t) => {
     connection.destroy()
   })
 
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
-    client.on('disconnect', (self, error) => {
-      t.strictEqual(client, self)
+    client.on('disconnect', (origin, [self], error) => {
+      t.equal(client, self)
       t.ok(error instanceof Error)
     })
 
@@ -418,11 +419,11 @@ test('upgrade invalid signal', (t) => {
   const server = net.createServer(() => {
     t.fail()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.on('disconnect', () => {
       t.fail()
@@ -435,7 +436,7 @@ test('upgrade invalid signal', (t) => {
       signal: 'error',
       opaque: 'asd'
     }, (err, { opaque }) => {
-      t.strictEqual(opaque, 'asd')
+      t.equal(opaque, 'asd')
       t.ok(err instanceof errors.InvalidArgumentError)
     })
   })

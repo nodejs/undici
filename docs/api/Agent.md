@@ -1,69 +1,79 @@
 # Agent
 
-## `new undici.Agent(opts)`
+Extends: `undici.Dispatcher`
 
-* opts `undici.Pool.options` - options passed through to Pool constructor
+Agent allow dispatching requests against multiple different origins.
+
+Requests are not guaranteed to be dispatched in order of invocation.
+
+## `new undici.Agent([options])`
+
+Arguments:
+
+* **options** `AgentOptions` (optional)
 
 Returns: `Agent`
 
-Returns a new Agent instance for use with pool based requests or the following top-level methods `request`, `pipeline`, and `stream`.
+### Parameter: `AgentOptions`
 
-## `agent.get(origin): Pool`
+Extends: [`ClientOptions`](docs/api/Pool.md#parameter-pooloptions)
 
-* origin `string` - A pool origin to be retrieved from the Agent.
+* **factory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Pool(origin, opts)` 
+* **maxRedirections** `Integer` - Default: `0`.
 
-This method retrieves Pool instances from the Agent. If the pool does not exist it is automatically added. You do not need to manually close these pools as they are automatically removed using a WeakCache based on WeakRef and FinalizationRegistry.
-The following methods `request`, `pipeline`, and `stream` utilize this feature.
+## Instance Properties
 
-## `agent.close(): Promise`
+### `Agent.closed`
 
-Returns a `Promise.all` operation closing all of the pool instances in the Agent instance. This calls `pool.close` under the hood.
+Implements [Client.closed](docs/api/Client.md#clientclosed)
 
-## `agent.destroy(): Promise`
+### `Agent.destroyed`
 
-Returns a `Promise.all` operation destroying all of the pool instances in the Agent instance. This calls `pool.destroy` under the hood.
+Implements [Client.destroyed](docs/api/Client.md#clientdestroyed)
 
-## `undici.setGlobalAgent(agent)`
+## Instance Methods
 
-* agent `Agent`
+### `Agent.close([callback])`
 
-Sets the global agent used by `request`, `pipeline`, and `stream` methods.
-The default global agent creates `undici.Pool`s with no max number of
-connections.
+Implements [`Dispatcher.close([callback])`](docs/api/Dispatcher.md#clientclose-callback-).
 
-The agent must only **implement** the `Agent` API; not necessary extend from it.
+### `Agent.destroy([error, callback])`
 
-## `undici.request(url[, opts]): Promise`
+Implements [`Dispatcher.destroy([error, callback])`](docs/api/Dispatcher.md#dispatcher-callback-).
 
-* url `string | URL | object`
-* opts `{ agent: Agent } & client.request.opts`
+### `Agent.dispatch(options, handlers: AgentDispatchOptions)`
 
-`url` may contain path. `opts` may not contain path. `opts.method` is `GET` by default.
-Calls `pool.request(opts)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
+Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
 
-Returns a promise with the result of the `request` method.
+#### Parameter: `AgentDispatchOptions`
 
-## `undici.stream(url, opts, factory): Promise`
+Extends: [`DispatchOptions``](docs/api/Dispatcher.md#parameter-dispatchoptions)
 
-* url `string | URL | object`
-* opts `{ agent: Agent } & client.stream.opts`
-* factory `client.stream.factory`
+* **origin** `string | URL`
+* **maxRedirections** `Integer`.
 
-`url` may contain path. `opts` may not contain path.
-See [client.stream](docs/api/Client.md#clientstreamoptions-factory--callback) for details on the `opts` and `factory` arguments.
-Calls `pool.stream(opts, factory)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
-Result is returned in the factory function. See [client.stream](docs/api/Client.md#clientstreamoptions-factory--callback) for more details.
+Implements [`Dispatcher.destroy([error, callback])`](docs/api/Dispatcher.md#dispatcher-callback-).
 
-## `undici.pipeline(url, opts, handler): Duplex`
+### `Agent.connect(options[, callback])`
 
-* url `string | URL | object`
-* opts `{ agent: Agent } & client.pipeline.opts`
-* handler `client.pipeline.handler`
+See [`Dispatcher.connect(options[, callback])`](docs/api/Dispatcher.md#clientconnectoptions--callback).
 
-`url` may contain path. `opts` may not contain path.
+### `Agent.dispatch(options, handlers)`
 
-See [client.pipeline](docs/api/Client.md#clientpipelining) for details on the `opts` and `handler` arguments.
+Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
 
-Calls `pool.pipeline(opts, factory)` on the pool returned from either the globalAgent (see [setGlobalAgent](#undicisetglobalagentagent)) or the agent passed to the `opts` argument.
+### `Agent.pipeline(options, handler)`
 
-See [client.pipeline](docs/api/Client.md#clientpipelining) for more details.
+See [`Dispatcher.pipeline(options, handler)`](docs/api/Dispatcher.md#clientpipelineoptions-handler).
+
+### `Agent.request(options[, callback])`
+
+See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
+
+### `Agent.stream(options, factory[, callback])`
+
+See [`Dispatcher.stream(options, factory[, callback])`](docs/api/Dispatcher.md#clientstreamoptions-factory--callback).
+
+### `Agent.upgrade(options[, callback])`
+
+See [`Dispatcher.upgrade(options[, callback])`](docs/api/Dispatcher.md#clientupgradeoptions-callback).

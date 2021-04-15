@@ -1,51 +1,92 @@
 'use strict'
 
-const Client = require('./lib/core/client')
+const Client = require('./lib/client')
+const Dispatcher = require('./lib/dispatcher')
 const errors = require('./lib/core/errors')
-const Pool = require('./lib/client-pool')
-const { Agent, getGlobalAgent, setGlobalAgent } = require('./lib/agent')
+const Pool = require('./lib/pool')
+const Agent = require('./lib/agent')
 const util = require('./lib/core/util')
-const { InvalidArgumentError, InvalidReturnValueError } = require('./lib/core/errors')
+const { InvalidArgumentError } = require('./lib/core/errors')
 const api = require('./lib/api')
+const MockClient = require('./lib/mock/mock-client')
+const MockAgent = require('./lib/mock/mock-agent')
+const MockPool = require('./lib/mock/mock-pool')
 
-Object.assign(Client.prototype, api)
-Object.assign(Pool.prototype, api)
+Object.assign(Dispatcher.prototype, api)
 
-function undici (url, opts) {
-  return new Pool(url, opts)
-}
-
-module.exports = undici
-
-module.exports.Pool = Pool
+module.exports.Dispatcher = Dispatcher
 module.exports.Client = Client
+module.exports.Pool = Pool
+module.exports.Agent = Agent
+
 module.exports.errors = errors
 
-module.exports.Agent = Agent
-module.exports.setGlobalAgent = setGlobalAgent
-module.exports.getGlobalAgent = getGlobalAgent
+let globalDispatcher = new Agent()
 
-function dispatchFromAgent (requestType) {
-  return (url, { agent = getGlobalAgent(), method = 'GET', ...opts } = {}, ...additionalArgs) => {
-    if (opts.path != null) {
-      throw new InvalidArgumentError('unsupported opts.path')
+function setGlobalDispatcher (agent) {
+  if (!agent || typeof agent.dispatch !== 'function') {
+    throw new InvalidArgumentError('Argument agent must implement Agent')
+  }
+  globalDispatcher = agent
+}
+
+function getGlobalDispatcher () {
+  return globalDispatcher
+}
+
+function makeDispatcher (fn) {
+  return (url, opts, handler) => {
+    if (typeof opts === 'function') {
+      handler = opts
+      opts = null
     }
 
-    const { origin, pathname, search } = util.parseURL(url)
-    const path = `${pathname || '/'}${search || ''}`
-
-    const client = agent.get(origin)
-
-    if (client && typeof client[requestType] !== 'function') {
-      throw new InvalidReturnValueError(`Client returned from Agent.get() does not implement method ${requestType}`)
+    if (!url || (typeof url !== 'string' && typeof url !== 'object' && !(url instanceof URL))) {
+      throw new InvalidArgumentError('invalid url')
     }
 
-    return client[requestType]({ ...opts, method, path }, ...additionalArgs)
+    if (opts != null && typeof opts !== 'object') {
+      throw new InvalidArgumentError('invalid opts')
+    }
+
+    if (opts && opts.path != null) {
+      if (typeof opts.path !== 'string') {
+        throw new InvalidArgumentError('invalid opts.path')
+      }
+
+      url = new URL(opts.path, util.parseOrigin(url))
+    } else {
+      if (!opts) {
+        opts = typeof url === 'object' ? url : {}
+      }
+
+      url = util.parseURL(url)
+    }
+
+    const { agent, dispatcher = getGlobalDispatcher() } = opts
+
+    if (agent) {
+      throw new InvalidArgumentError('unsupported opts.agent. Did you mean opts.client?')
+    }
+
+    return fn.call(dispatcher, {
+      ...opts,
+      origin: url.origin,
+      path: url.search ? `${url.pathname}${url.search}` : url.pathname,
+      method: opts.method ? opts.method : opts.body ? 'PUT' : 'GET'
+    }, handler)
   }
 }
 
-module.exports.request = dispatchFromAgent('request')
-module.exports.stream = dispatchFromAgent('stream')
-module.exports.pipeline = dispatchFromAgent('pipeline')
-module.exports.connect = dispatchFromAgent('connect')
-module.exports.upgrade = dispatchFromAgent('upgrade')
+module.exports.setGlobalDispatcher = setGlobalDispatcher
+module.exports.getGlobalDispatcher = getGlobalDispatcher
+
+module.exports.request = makeDispatcher(api.request)
+module.exports.stream = makeDispatcher(api.stream)
+module.exports.pipeline = makeDispatcher(api.pipeline)
+module.exports.connect = makeDispatcher(api.connect)
+module.exports.upgrade = makeDispatcher(api.upgrade)
+
+module.exports.MockClient = MockClient
+module.exports.MockPool = MockPool
+module.exports.MockAgent = MockAgent

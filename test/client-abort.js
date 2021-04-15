@@ -14,11 +14,11 @@ test('aborted response errors', (t) => {
     // due to bug in readable-stream.
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
@@ -40,11 +40,11 @@ test('aborted req', (t) => {
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(4 + 1, 'a'))
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       method: 'POST',
@@ -58,6 +58,111 @@ test('aborted req', (t) => {
       })
     }, (err) => {
       t.ok(err instanceof errors.RequestAbortedError)
+    })
+  })
+})
+
+test('abort', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.dispatch({
+      method: 'GET',
+      path: '/'
+    }, {
+      onConnect (abort) {
+        setImmediate(abort)
+      },
+      onHeaders () {
+        t.fail()
+      },
+      onData () {
+        t.fail()
+      },
+      onComplete () {
+        t.fail()
+      },
+      onError (err) {
+        t.ok(err instanceof errors.RequestAbortedError)
+      }
+    })
+
+    client.on('disconnect', () => {
+      t.pass()
+    })
+  })
+})
+
+test('abort pipelined', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 2
+    })
+    t.teardown(client.destroy.bind(client))
+
+    let counter = 0
+    client.dispatch({
+      method: 'GET',
+      path: '/'
+    }, {
+      onConnect (abort) {
+        // This request will be retried
+        if (counter++ === 1) {
+          abort()
+        }
+        t.pass()
+      },
+      onHeaders () {
+        t.fail()
+      },
+      onData () {
+        t.fail()
+      },
+      onComplete () {
+        t.fail()
+      },
+      onError (err) {
+        t.ok(err instanceof errors.RequestAbortedError)
+      }
+    })
+
+    client.dispatch({
+      method: 'GET',
+      path: '/'
+    }, {
+      onConnect (abort) {
+        abort()
+      },
+      onHeaders () {
+        t.fail()
+      },
+      onData () {
+        t.fail()
+      },
+      onComplete () {
+        t.fail()
+      },
+      onError (err) {
+        t.ok(err instanceof errors.RequestAbortedError)
+      }
+    })
+
+    client.on('disconnect', () => {
+      t.pass()
     })
   })
 })

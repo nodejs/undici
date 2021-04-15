@@ -1,8 +1,8 @@
 #ifndef INCLUDE_LLHTTP_H_
 #define INCLUDE_LLHTTP_H_
 
-#define LLHTTP_VERSION_MAJOR 4
-#define LLHTTP_VERSION_MINOR 0
+#define LLHTTP_VERSION_MAJOR 5
+#define LLHTTP_VERSION_MINOR 1
 #define LLHTTP_VERSION_PATCH 0
 
 #ifndef LLHTTP_STRICT_MODE
@@ -79,7 +79,8 @@ enum llhttp_errno {
   HPE_CB_CHUNK_COMPLETE = 20,
   HPE_PAUSED = 21,
   HPE_PAUSED_UPGRADE = 22,
-  HPE_USER = 23
+  HPE_PAUSED_H2_UPGRADE = 23,
+  HPE_USER = 24
 };
 typedef enum llhttp_errno llhttp_errno_t;
 
@@ -98,7 +99,8 @@ typedef enum llhttp_flags llhttp_flags_t;
 
 enum llhttp_lenient_flags {
   LENIENT_HEADERS = 0x1,
-  LENIENT_CHUNKED_LENGTH = 0x2
+  LENIENT_CHUNKED_LENGTH = 0x2,
+  LENIENT_KEEP_ALIVE = 0x4
 };
 typedef enum llhttp_lenient_flags llhttp_lenient_flags_t;
 
@@ -190,7 +192,8 @@ typedef enum llhttp_method llhttp_method_t;
   XX(20, CB_CHUNK_COMPLETE, CB_CHUNK_COMPLETE) \
   XX(21, PAUSED, PAUSED) \
   XX(22, PAUSED_UPGRADE, PAUSED_UPGRADE) \
-  XX(23, USER, USER) \
+  XX(23, PAUSED_H2_UPGRADE, PAUSED_H2_UPGRADE) \
+  XX(24, USER, USER) \
 
 
 #define HTTP_METHOD_MAP(XX) \
@@ -322,24 +325,6 @@ llhttp_t* llhttp_alloc(llhttp_type_t type);
 
 LLHTTP_EXPORT
 void llhttp_free(llhttp_t* parser);
-
-LLHTTP_EXPORT
-uint8_t llhttp_get_type(llhttp_t* parser);
-
-LLHTTP_EXPORT
-uint8_t llhttp_get_http_major(llhttp_t* parser);
-
-LLHTTP_EXPORT
-uint8_t llhttp_get_http_minor(llhttp_t* parser);
-
-LLHTTP_EXPORT
-uint8_t llhttp_get_method(llhttp_t* parser);
-
-LLHTTP_EXPORT
-int llhttp_get_status_code(llhttp_t* parser);
-
-LLHTTP_EXPORT
-uint8_t llhttp_get_upgrade(llhttp_t* parser);
 
 #endif  // defined(__wasm__)
 
@@ -482,6 +467,20 @@ void llhttp_set_lenient_headers(llhttp_t* parser, int enabled);
  */
 LLHTTP_EXPORT
 void llhttp_set_lenient_chunked_length(llhttp_t* parser, int enabled);
+
+
+/* Enables/disables lenient handling of `Connection: close` and HTTP/1.0
+ * requests responses.
+ *
+ * Normally `llhttp` would error on (in strict mode) or discard (in loose mode)
+ * the HTTP request/response after the request/response with `Connection: close`
+ * and `Content-Length`. This is important to prevent cache poisoning attacks,
+ * but might interact badly with outdated and insecure clients. With this flag
+ * the extra request/response will be parsed normally.
+ *
+ * **(USE AT YOUR OWN RISK)**
+ */
+void llhttp_set_lenient_keep_alive(llhttp_t* parser, int enabled);
 
 #ifdef __cplusplus
 }  /* extern "C" */

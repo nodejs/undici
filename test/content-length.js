@@ -16,10 +16,6 @@ test('request invalid content-length', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    client.on('disconnect', () => {
-      t.fail()
-    })
-
     client.request({
       path: '/',
       method: 'PUT',
@@ -129,8 +125,11 @@ test('request streaming invalid content-length', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    client.on('disconnect', () => {
+    client.once('disconnect', () => {
       t.pass()
+      client.once('disconnect', () => {
+        t.pass()
+      })
     })
 
     client.request({
@@ -182,10 +181,6 @@ test('request streaming data when content-length=0', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    client.on('disconnect', () => {
-      t.fail()
-    })
-
     client.request({
       path: '/',
       method: 'PUT',
@@ -216,10 +211,6 @@ test('request streaming no body data when content-length=0', (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
-
-    client.on('disconnect', () => {
-      t.fail()
-    })
 
     client.request({
       path: '/',
@@ -256,8 +247,8 @@ test('response invalid content length with close', (t) => {
     })
     t.teardown(client.destroy.bind(client))
 
-    client.on('disconnect', (client, err) => {
-      t.strictEqual(err.code, 'UND_ERR_SOCKET')
+    client.on('disconnect', (origin, client, err) => {
+      t.equal(err.code, 'UND_ERR_SOCKET')
     })
 
     client.request({
@@ -270,7 +261,7 @@ test('response invalid content length with close', (t) => {
           t.fail()
         })
         .on('error', (err) => {
-          t.strictEqual(err.code, 'UND_ERR_SOCKET')
+          t.equal(err.code, 'UND_ERR_SOCKET')
         })
         .resume()
     })

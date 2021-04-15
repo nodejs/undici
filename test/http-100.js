@@ -28,7 +28,7 @@ test('ignore informational response', (t) => {
         bufs.push(buf)
       })
       response.body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
@@ -52,7 +52,7 @@ test('error 103 body', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.strictEqual(err.code, 'HPE_INVALID_CONSTANT')
+      t.equal(err.code, 'HPE_INVALID_CONSTANT')
     })
     client.on('disconnect', () => {
       t.pass()
@@ -76,10 +76,42 @@ test('error 100 body', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.strictEqual(err.message, 'bad response')
+      t.equal(err.message, 'bad response')
     })
     client.on('disconnect', () => {
       t.pass()
+    })
+  })
+})
+
+test('1xx response without timeouts', { only: true }, t => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.writeProcessing()
+    setTimeout(() => req.pipe(res), 2000)
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0,
+      headersTimeout: 0
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body: 'hello'
+    }, (err, response) => {
+      t.error(err)
+      const bufs = []
+      response.body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      response.body.on('end', () => {
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+      })
     })
   })
 })

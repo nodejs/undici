@@ -1,6 +1,6 @@
 # Connecting through a proxy
 
-Conneting through a proxy is possible by properly configuring the `Client` or `Pool` constructor and request.
+Connecting through a proxy is possible by properly configuring the `Client` or `Pool` constructor and request.
 
 The proxy url should be passed to the `Client` or `Pool` constructor, while the upstream server url
 should be added to every request call in the `path`.

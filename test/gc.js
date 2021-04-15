@@ -27,9 +27,9 @@ test('gc should collect the client if, and only if, there are no active sockets'
   let disconnected = false
 
   const registry = new FinalizationRegistry((data) => {
-    t.strictEqual(data, 'test')
-    t.strictEqual(disconnected, true)
-    t.strictEqual(weakRef.deref(), undefined)
+    t.equal(data, 'test')
+    t.equal(disconnected, true)
+    t.equal(weakRef.deref(), undefined)
   })
 
   server.listen(0, () => {
@@ -69,9 +69,9 @@ test('gc should collect the pool if, and only if, there are no active sockets', 
   let disconnected = false
 
   const registry = new FinalizationRegistry((data) => {
-    t.strictEqual(data, 'test')
-    t.strictEqual(disconnected, true)
-    t.strictEqual(weakRef.deref(), undefined)
+    t.equal(data, 'test')
+    t.equal(disconnected, true)
+    t.equal(weakRef.deref(), undefined)
   })
 
   server.listen(0, () => {

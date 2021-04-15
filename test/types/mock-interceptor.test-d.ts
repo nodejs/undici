@@ -1,0 +1,46 @@
+import { expectAssignable } from 'tsd'
+import { MockAgent, MockPool } from '../..'
+import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
+
+{
+  const mockPool: MockPool = new MockAgent().get('')
+  const mockInterceptor = mockPool.intercept({ path: '', method: '' })
+
+  // reply
+  expectAssignable<MockScope>(mockInterceptor.reply(200, ''))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, {}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, {}, {}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { headers: { foo: 'bar' }}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { trailers: { foo: 'bar' }}))
+  expectAssignable<MockScope<{ foo: string }>>(mockInterceptor.reply<{ foo: string }>(200, { foo: 'bar' }))
+
+  // replyWithError
+  class CustomError extends Error {
+    hello(): void {}
+  }
+  expectAssignable<MockScope>(mockInterceptor.replyWithError(new Error('')))
+  expectAssignable<MockScope>(mockInterceptor.replyWithError<CustomError>(new CustomError('')))
+
+  // defaultReplyHeaders
+  expectAssignable<MockInterceptor>(mockInterceptor.defaultReplyHeaders({ foo: 'bar' }))
+  
+  // defaultReplyTrailers
+  expectAssignable<MockInterceptor>(mockInterceptor.defaultReplyTrailers({ foo: 'bar' }))
+
+  // replyContentLength
+  expectAssignable<MockInterceptor>(mockInterceptor.replyContentLength())
+}
+
+{
+  const mockPool: MockPool = new MockAgent().get('')
+  const mockScope = mockPool.intercept({ path: '', method: '' }).reply(200, '')
+
+  // delay
+  expectAssignable<MockScope>(mockScope.delay(1))
+
+  // persist
+  expectAssignable<MockScope>(mockScope.persist())
+
+  // times
+  expectAssignable<MockScope>(mockScope.times(2))
+}

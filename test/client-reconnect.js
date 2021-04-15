@@ -15,15 +15,15 @@ test('multiple reconnect', (t) => {
   const server = createServer((req, res) => {
     n === 0 ? res.destroy() : res.end('ok')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.ok(err)
-      t.is(err.code, 'UND_ERR_SOCKET')
+      t.equal(err.code, 'UND_ERR_SOCKET')
     })
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {

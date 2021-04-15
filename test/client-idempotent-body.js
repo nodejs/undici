@@ -13,17 +13,17 @@ test('idempotent retry', (t) => {
     req.on('data', data => {
       buf += data
     }).on('end', () => {
-      t.strictDeepEqual(buf, body)
+      t.strictSame(buf, body)
       res.end()
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const _err = new Error()
 
@@ -36,7 +36,7 @@ test('idempotent retry', (t) => {
       }, () => {
         throw _err
       }, (err) => {
-        t.strictEqual(err, _err)
+        t.equal(err, _err)
       })
     }
   })
