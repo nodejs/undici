@@ -53,11 +53,13 @@ const llhttp_settings_t wasm_settings = {
 
 llhttp_t* llhttp_alloc(llhttp_type_t type) {
   llhttp_t* parser = malloc(sizeof(llhttp_t));
+  memset(parser, 0, sizeof(llhttp_t));
   llhttp_init(parser, type, &wasm_settings);
   return parser;
 }
 
 void llhttp_free(llhttp_t* parser) {
+  memset(parser, 0, sizeof(llhttp_t));
   free(parser);
 }
 
