@@ -1037,7 +1037,7 @@ test('connected', (t) => {
   })
 })
 
-test('emit disconnect after destory', t => {
+test('emit disconnect after destroy', t => {
   t.plan(4)
 
   const server = createServer((req, res) => {
