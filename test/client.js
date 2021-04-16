@@ -1064,48 +1064,6 @@ test('emit disconnect after destroy', t => {
   })
 })
 
-test('parser dynamic allocation', t => {
-  t.plan(5)
-  const chunksSent = []
-  const server = createServer((req, res) => {
-    let counter = 0
-    const t = setInterval(() => {
-      counter++
-      const payload = Buffer.alloc(counter * 16382).fill(0)
-      chunksSent.push(payload)
-      if (counter === 3) {
-        clearInterval(t)
-        res.end(payload)
-      } else {
-        res.write(payload)
-      }
-    }, 20)
-  })
-  t.teardown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
-      t.error(err)
-      t.equal(statusCode, 200)
-      t.equal(client[kSocket][kParser].bufferSize, 20480)
-      const chunksReceived = []
-      let counter = 0
-      body.on('data', chunk => {
-        counter++
-        if (counter === 3) {
-          t.ok(client[kSocket][kParser].bufferSize > 20480)
-        }
-        chunksReceived.push(chunk)
-      })
-      body.on('end', () => {
-        t.same(Buffer.concat(chunksReceived), Buffer.concat(chunksSent))
-      })
-    })
-  })
-})
-
 test('end response before request', t => {
   t.plan(2)
 
