@@ -20,7 +20,7 @@ npm i undici
 AMD EPYC 7502P 32 Core, Node 15
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js) using
- unix socket with pipelining.
+ unix sockets with pipelining.
 
 ### Connections 1
 
