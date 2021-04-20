@@ -37,8 +37,10 @@
     "test:typescript": "tsd",
     "coverage": "standard | snazzy && tap test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
-    "prebench": "node -e \"try { require('fs').unlinkSync(require('path').join(require('os').tmpdir(), 'undici.sock')) } catch (_) {}\"",
-    "bench": "npx concurrently -k -s first \"node benchmarks/server.js\" \"node -e 'setTimeout(() => {}, 1000)' && node benchmarks\"",
+    "bench": "concurrently -k -s first npm:bench:server npm:bench:run",
+    "bench:server": "node benchmarks/server.js",
+    "prebench:run": "node benchmarks/wait.js",
+    "bench:run": "node benchmarks/single-socket.js && node benchmarks/multiple-sockets.js",
     "serve:website": "docsify serve .",
     "prepare": "husky install"
   },
@@ -46,8 +48,8 @@
     "@sinonjs/fake-timers": "^7.0.5",
     "@types/node": "^14.14.39",
     "abort-controller": "^3.0.0",
-    "benchmark": "^2.1.4",
     "concurrently": "^6.0.2",
+    "cronometro": "^0.8.0",
     "docsify-cli": "^4.4.2",
     "https-pem": "^2.0.0",
     "husky": "^6.0.0",
@@ -60,7 +62,8 @@
     "snazzy": "^9.0.0",
     "standard": "^16.0.3",
     "tap": "^15.0.0",
-    "tsd": "^0.14.0"
+    "tsd": "^0.14.0",
+    "wait-on": "^5.3.0"
   },
   "engines": {
     "node": ">=12.18"
