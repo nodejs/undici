@@ -17,19 +17,36 @@ npm i undici
 
 ## Benchmarks
 
-Machine: AMD EPYC 7502P
+AMD EPYC 7502P 32 Core, Node 15
 
-Node 15
-```
-http - keepalive x 12,028 ops/sec ±2.60% (265 runs sampled)
-undici - pipeline x 31,321 ops/sec ±0.77% (276 runs sampled)
-undici - request x 36,612 ops/sec ±0.71% (277 runs sampled)
-undici - stream x 41,291 ops/sec ±0.90% (268 runs sampled)
-undici - dispatch x 47,319 ops/sec ±1.17% (263 runs sampled)
-```
+The benchmark is a simple `hello world` [example](benchmarks/index.js) using
+ unix socket with pipelining.
 
-The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
-single unix socket with pipelining.
+Connections 1
+
+| Slower tests            │ Samples │        Result │ Tolerance │ Difference with slowest 
+|-------------------------|---------|---------------|-----------|------------------------|
+| http - no keepalive     |      99 |  66.66 op/sec |  ± 0.99 % |                        |
+| http - keepalive        |      99 |  69.63 op/sec |  ± 0.94 % | + 4.46 %               | 
+| undici - pipeline       |     100 | 446.97 op/sec |  ± 3.04 % | + 570.55 %             | 
+| undici - stream         |     100 | 465.31 op/sec |  ± 5.56 % | + 598.07 %             |
+| undici - request        |     100 | 486.62 op/sec |  ± 2.56 % | + 630.04 %             |
+| undici - pool - request |     100 | 491.90 op/sec |  ± 2.50 % | + 637.95 %             |
+| undici - dispatch       |     100 | 553.45 op/sec |  ± 2.67 % | + 730.29 %             |
+|-------------------------|---------|---------------|-----------|------------------------|
+
+Connections 32
+
+| Slower tests            │ Samples │        Result │ Tolerance │ Difference with slowest 
+|-------------------------|---------|---------------|-----------|------------------------|
+| http - no keepalive     |      99 |  31.96 op/sec |  ± 0.96 % |                        |
+| http - keepalive        |      99 |  33.74 op/sec |  ± 0.88 % | + 5.56 %               |
+| undici - pipeline       |     100 |  54.90 op/sec |  ± 1.06 % | + 71.78 %              |
+| undici - request        |     100 |  82.67 op/sec |  ± 1.69 % | + 158.65 %             |
+| undici - pool - request |     100 |  82.93 op/sec |  ± 1.66 % | + 159.48 %             |
+| undici - stream         |     100 |  94.95 op/sec |  ± 1.49 % | + 197.06 %             |
+| undici - dispatch       |     100 | 110.69 op/sec |  ± 1.57 % | + 246.33 %             |
+|-------------------------|---------|---------------|-----------|------------------------|
 
 ## Quick Start
 
