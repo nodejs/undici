@@ -158,21 +158,6 @@ cronometro(
         })
       })
     },
-    'undici - pool - request' () {
-      return makeParallelRequests(resolve => {
-        dispatcher.request(undiciOptions).then(({ body }) => {
-          body
-            .pipe(
-              new Writable({
-                write (chunk, encoding, callback) {
-                  callback()
-                }
-              })
-            )
-            .on('finish', resolve)
-        })
-      })
-    },
     'undici - stream' () {
       return makeParallelRequests(resolve => {
         return dispatcher
