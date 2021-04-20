@@ -9,7 +9,7 @@ const path = require('path')
 const { Pool, Client } = require('..')
 
 const samples = parseInt(process.env.SAMPLES, 10) || 100
-const connections = parseInt(process.env.CONNECTIONS, 10) || 50
+const connections = parseInt(process.env.CONNECTIONS, 10) || os.cpus().length
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
 const parallelRequests = parseInt(process.env.PARALLEL, 10) || (connections * pipelining)
 const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
