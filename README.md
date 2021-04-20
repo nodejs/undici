@@ -33,7 +33,7 @@ number of unix sockets (connections) with a pipelining depth of 10.
 | undici - request        |     100 | 486.62 op/sec |  ± 2.56 % | + 630.04 %              |
 | undici - dispatch       |     100 | 553.45 op/sec |  ± 2.67 % | + 730.29 %              |
 
-### Connections 32
+### Connections 50
 
 | Slower tests            | Samples | Result        | Tolerance | Difference with slowest |
 |-------------------------|---------|---------------|-----------|-------------------------|
