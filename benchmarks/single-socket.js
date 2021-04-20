@@ -201,11 +201,6 @@ cronometro(
       return makeParallelRequests(resolve => {
         client.dispatch(undiciOptions, new SimpleRequest(resolve))
       })
-    },
-    'undici - noop' () {
-      return makeParallelRequests(resolve => {
-        client.dispatch(undiciOptions, new NoopRequest(resolve))
-      })
     }
   },
   {
