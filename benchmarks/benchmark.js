@@ -6,18 +6,12 @@ const http = require('http')
 const os = require('os')
 const path = require('path')
 
-const { Client } = require('..')
+const { Pool, Client } = require('..')
 
-// # Start the Node.js server
-// node benchmarks/server.js
-//
-// # Start the benchmarks
-// node benchmarks/index.js
-
-// Parse and normalize parameters
 const samples = parseInt(process.env.SAMPLES, 10) || 100
-const parallelRequests = parseInt(process.env.PARALLEL, 10) || 10
+const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
+const parallelRequests = parseInt(process.env.PARALLEL, 10) || (connections * pipelining)
 const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
 const bodyTimeout = parseInt(process.env.BODY_TIMEOUT, 10) || 0
 const dest = {}
@@ -42,7 +36,7 @@ const httpNoKeepAliveOptions = {
   ...httpBaseOptions,
   agent: new http.Agent({
     keepAlive: false,
-    maxSockets: 1
+    maxSockets: connections
   })
 }
 
@@ -50,7 +44,7 @@ const httpKeepAliveOptions = {
   ...httpBaseOptions,
   agent: new http.Agent({
     keepAlive: true,
-    maxSockets: 1
+    maxSockets: connections
   })
 }
 
@@ -61,32 +55,12 @@ const undiciOptions = {
   bodyTimeout
 }
 
-const client = new Client(httpBaseOptions.url, {
+const Class = connections > 1 ? Pool : Client
+const dispatcher = new Class(httpBaseOptions.url, {
   pipelining,
+  connections,
   ...dest
 })
-
-class NoopRequest {
-  constructor (resolve) {
-    this.resolve = resolve
-  }
-
-  onConnect (abort) {}
-
-  onHeaders (statusCode, headers, resume) {}
-
-  onData (chunk) {
-    return true
-  }
-
-  onComplete (trailers) {
-    this.resolve()
-  }
-
-  onError (err) {
-    throw err
-  }
-}
 
 class SimpleRequest {
   constructor (resolve) {
@@ -154,7 +128,7 @@ cronometro(
     },
     'undici - pipeline' () {
       return makeParallelRequests(resolve => {
-        client
+        dispatcher
           .pipeline(undiciOptions, data => {
             return data.body
           })
@@ -171,7 +145,22 @@ cronometro(
     },
     'undici - request' () {
       return makeParallelRequests(resolve => {
-        client.request(undiciOptions).then(({ body }) => {
+        dispatcher.request(undiciOptions).then(({ body }) => {
+          body
+            .pipe(
+              new Writable({
+                write (chunk, encoding, callback) {
+                  callback()
+                }
+              })
+            )
+            .on('finish', resolve)
+        })
+      })
+    },
+    'undici - pool - request' () {
+      return makeParallelRequests(resolve => {
+        dispatcher.request(undiciOptions).then(({ body }) => {
           body
             .pipe(
               new Writable({
@@ -186,7 +175,7 @@ cronometro(
     },
     'undici - stream' () {
       return makeParallelRequests(resolve => {
-        return client
+        return dispatcher
           .stream(undiciOptions, () => {
             return new Writable({
               write (chunk, encoding, callback) {
@@ -199,7 +188,7 @@ cronometro(
     },
     'undici - dispatch' () {
       return makeParallelRequests(resolve => {
-        client.dispatch(undiciOptions, new SimpleRequest(resolve))
+        dispatcher.dispatch(undiciOptions, new SimpleRequest(resolve))
       })
     }
   },
@@ -215,6 +204,6 @@ cronometro(
       throw err
     }
 
-    client.destroy()
+    dispatcher.destroy()
   }
 )
