@@ -15,16 +15,16 @@ tap.test('Agent', t => {
 
     t.test('fails if agent does not implement `get` method', t => {
       t.plan(1)
-      t.throw(() => setGlobalAgent({ get: 'not a function' }), InvalidArgumentError)
+      t.throws(() => setGlobalAgent({ get: 'not a function' }), InvalidArgumentError)
     })
 
     t.test('sets global agent', t => {
       t.plan(2)
-      t.notThrow(() => setGlobalAgent(new Agent()))
-      t.notThrow(() => setGlobalAgent({ get: () => {} }))
+      t.doesNotThrow(() => setGlobalAgent(new Agent()))
+      t.doesNotThrow(() => setGlobalAgent({ get: () => {} }))
     })
 
-    t.tearDown(() => {
+    t.teardown(() => {
       // reset globalAgent to a fresh Agent instance for later tests
       setGlobalAgent(new Agent())
     })
@@ -33,10 +33,10 @@ tap.test('Agent', t => {
   t.test('Agent', t => {
     t.plan(4)
 
-    t.notThrow(() => new Agent())
-    t.notThrow(() => new Agent({ connections: 5 }))
-    t.throw(() => new Agent().get(), InvalidArgumentError)
-    t.throw(() => new Agent().get(''), InvalidArgumentError)
+    t.doesNotThrow(() => new Agent())
+    t.doesNotThrow(() => new Agent({ connections: 5 }))
+    t.throws(() => new Agent().get(), InvalidArgumentError)
+    t.throws(() => new Agent().get(''), InvalidArgumentError)
   })
 
   t.test('Agent close and destroy', t => {
@@ -52,7 +52,7 @@ tap.test('Agent', t => {
         res.end(wanted)
       })
 
-      t.tearDown(server.close.bind(server))
+      t.teardown(server.close.bind(server))
 
       server.listen(0, () => {
         const agent = new Agent()
@@ -91,7 +91,7 @@ tap.test('Agent', t => {
         res.end(wanted)
       })
 
-      t.tearDown(server.close.bind(server))
+      t.teardown(server.close.bind(server))
 
       server.listen(0, () => {
         const agent = new Agent()
@@ -130,26 +130,26 @@ tap.test('Agent', t => {
       const wanted = 'payload'
 
       const server = http.createServer((req, res) => {
-        t.strictEqual('/', req.url)
-        t.strictEqual('GET', req.method)
-        t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+        t.equal('/', req.url)
+        t.equal('GET', req.method)
+        t.equal(`localhost:${server.address().port}`, req.headers.host)
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
 
-      t.tearDown(server.close.bind(server))
+      t.teardown(server.close.bind(server))
 
       server.listen(0, () => {
         request(`http://localhost:${server.address().port}`)
           .then(({ statusCode, headers, body }) => {
-            t.strictEqual(statusCode, 200)
-            t.strictEqual(headers['content-type'], 'text/plain')
+            t.equal(statusCode, 200)
+            t.equal(headers['content-type'], 'text/plain')
             const bufs = []
             body.on('data', (buf) => {
               bufs.push(buf)
             })
             body.on('end', () => {
-              t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+              t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
             })
           })
           .catch(err => {
@@ -163,28 +163,28 @@ tap.test('Agent', t => {
       const wanted = 'payload'
 
       const server = http.createServer((req, res) => {
-        t.strictEqual('/', req.url)
-        t.strictEqual('GET', req.method)
-        t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+        t.equal('/', req.url)
+        t.equal('GET', req.method)
+        t.equal(`localhost:${server.address().port}`, req.headers.host)
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
 
-      t.tearDown(server.close.bind(server))
+      t.teardown(server.close.bind(server))
 
       const agent = new Agent()
 
       server.listen(0, () => {
         request(`http://localhost:${server.address().port}`, { agent })
           .then(({ statusCode, headers, body }) => {
-            t.strictEqual(statusCode, 200)
-            t.strictEqual(headers['content-type'], 'text/plain')
+            t.equal(statusCode, 200)
+            t.equal(headers['content-type'], 'text/plain')
             const bufs = []
             body.on('data', (buf) => {
               bufs.push(buf)
             })
             body.on('end', () => {
-              t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+              t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
             })
           })
           .catch(err => {
@@ -195,17 +195,17 @@ tap.test('Agent', t => {
 
     t.test('fails with invalid URL', t => {
       t.plan(4)
-      t.throw(() => request(), InvalidArgumentError, 'throws on missing url argument')
-      t.throw(() => request(''), TypeError, 'throws on invalid url')
-      t.throw(() => request({}), InvalidArgumentError, 'throws on missing url.origin argument')
-      t.throw(() => request({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+      t.throws(() => request(), InvalidArgumentError, 'throws on missing url argument')
+      t.throws(() => request(''), TypeError, 'throws on invalid url')
+      t.throws(() => request({}), InvalidArgumentError, 'throws on missing url.origin argument')
+      t.throws(() => request({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
     })
 
     t.test('fails with unsupported opts.path', t => {
       t.plan(3)
-      t.throw(() => request('https://example.com', { path: 'asd' }), InvalidArgumentError, 'throws on opts.path argument')
-      t.throw(() => request('https://example.com', { path: '' }), InvalidArgumentError, 'throws on opts.path argument')
-      t.throw(() => request('https://example.com', { path: 0 }), InvalidArgumentError, 'throws on opts.path argument')
+      t.throws(() => request('https://example.com', { path: 'asd' }), InvalidArgumentError, 'throws on opts.path argument')
+      t.throws(() => request('https://example.com', { path: '' }), InvalidArgumentError, 'throws on opts.path argument')
+      t.throws(() => request('https://example.com', { path: 0 }), InvalidArgumentError, 'throws on opts.path argument')
     })
 
     t.test('fails with invalid client', t => {
@@ -213,7 +213,7 @@ tap.test('Agent', t => {
       const agent = {
         get: () => ({})
       }
-      t.throw(() => request('https://example.com', { agent }), InvalidReturnValueError)
+      t.throws(() => request('https://example.com', { agent }), InvalidReturnValueError)
     })
   })
 
@@ -225,14 +225,14 @@ tap.test('Agent', t => {
       const wanted = 'payload'
 
       const server = http.createServer((req, res) => {
-        t.strictEqual('/', req.url)
-        t.strictEqual('GET', req.method)
-        t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+        t.equal('/', req.url)
+        t.equal('GET', req.method)
+        t.equal(`localhost:${server.address().port}`, req.headers.host)
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
 
-      t.tearDown(server.close.bind(server))
+      t.teardown(server.close.bind(server))
 
       server.listen(0, () => {
         stream(
@@ -241,14 +241,14 @@ tap.test('Agent', t => {
             opaque: new PassThrough()
           },
           ({ statusCode, headers, opaque: pt }) => {
-            t.strictEqual(statusCode, 200)
-            t.strictEqual(headers['content-type'], 'text/plain')
+            t.equal(statusCode, 200)
+            t.equal(headers['content-type'], 'text/plain')
             const bufs = []
             pt.on('data', (buf) => {
               bufs.push(buf)
             })
             pt.on('end', () => {
-              t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+              t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
             })
             pt.on('error', () => {
               t.fail()
@@ -264,14 +264,14 @@ tap.test('Agent', t => {
       const wanted = 'payload'
 
       const server = http.createServer((req, res) => {
-        t.strictEqual('/', req.url)
-        t.strictEqual('GET', req.method)
-        t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+        t.equal('/', req.url)
+        t.equal('GET', req.method)
+        t.equal(`localhost:${server.address().port}`, req.headers.host)
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
 
-      t.tearDown(server.close.bind(server))
+      t.teardown(server.close.bind(server))
 
       const agent = new Agent()
 
@@ -283,14 +283,14 @@ tap.test('Agent', t => {
             opaque: new PassThrough()
           },
           ({ statusCode, headers, opaque: pt }) => {
-            t.strictEqual(statusCode, 200)
-            t.strictEqual(headers['content-type'], 'text/plain')
+            t.equal(statusCode, 200)
+            t.equal(headers['content-type'], 'text/plain')
             const bufs = []
             pt.on('data', (buf) => {
               bufs.push(buf)
             })
             pt.on('end', () => {
-              t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+              t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
             })
             pt.on('error', () => {
               t.fail()
@@ -303,10 +303,10 @@ tap.test('Agent', t => {
 
     t.test('fails with invalid URL', t => {
       t.plan(4)
-      t.throw(() => stream(), InvalidArgumentError, 'throws on missing url argument')
-      t.throw(() => stream(''), TypeError, 'throws on invalid url')
-      t.throw(() => stream({}), InvalidArgumentError, 'throws on missing url.origin argument')
-      t.throw(() => stream({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+      t.throws(() => stream(), InvalidArgumentError, 'throws on missing url argument')
+      t.throws(() => stream(''), TypeError, 'throws on invalid url')
+      t.throws(() => stream({}), InvalidArgumentError, 'throws on missing url.origin argument')
+      t.throws(() => stream({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
     })
 
     t.test('fails with invalid client', t => {
@@ -314,7 +314,7 @@ tap.test('Agent', t => {
       const agent = {
         get: () => ({})
       }
-      t.throw(() => stream('https://example.com', { agent }), InvalidReturnValueError)
+      t.throws(() => stream('https://example.com', { agent }), InvalidReturnValueError)
     })
   })
 
@@ -326,14 +326,14 @@ tap.test('Agent', t => {
       const wanted = 'payload'
 
       const server = http.createServer((req, res) => {
-        t.strictEqual('/', req.url)
-        t.strictEqual('GET', req.method)
-        t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+        t.equal('/', req.url)
+        t.equal('GET', req.method)
+        t.equal(`localhost:${server.address().port}`, req.headers.host)
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
 
-      t.tearDown(server.close.bind(server))
+      t.teardown(server.close.bind(server))
 
       server.listen(0, () => {
         const bufs = []
@@ -342,8 +342,8 @@ tap.test('Agent', t => {
           `http://localhost:${server.address().port}`,
           {},
           ({ statusCode, headers, body }) => {
-            t.strictEqual(statusCode, 200)
-            t.strictEqual(headers['content-type'], 'text/plain')
+            t.equal(statusCode, 200)
+            t.equal(headers['content-type'], 'text/plain')
             return body
           }
         )
@@ -352,7 +352,7 @@ tap.test('Agent', t => {
             bufs.push(buf)
           })
           .on('end', () => {
-            t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+            t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
           })
           .on('error', () => {
             t.fail()
@@ -365,14 +365,14 @@ tap.test('Agent', t => {
       const wanted = 'payload'
 
       const server = http.createServer((req, res) => {
-        t.strictEqual('/', req.url)
-        t.strictEqual('GET', req.method)
-        t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+        t.equal('/', req.url)
+        t.equal('GET', req.method)
+        t.equal(`localhost:${server.address().port}`, req.headers.host)
         res.setHeader('Content-Type', 'text/plain')
         res.end(wanted)
       })
 
-      t.tearDown(server.close.bind(server))
+      t.teardown(server.close.bind(server))
 
       const agent = new Agent()
 
@@ -383,8 +383,8 @@ tap.test('Agent', t => {
           `http://localhost:${server.address().port}`,
           { agent },
           ({ statusCode, headers, body }) => {
-            t.strictEqual(statusCode, 200)
-            t.strictEqual(headers['content-type'], 'text/plain')
+            t.equal(statusCode, 200)
+            t.equal(headers['content-type'], 'text/plain')
             return body
           }
         )
@@ -393,7 +393,7 @@ tap.test('Agent', t => {
             bufs.push(buf)
           })
           .on('end', () => {
-            t.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+            t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
           })
           .on('error', () => {
             t.fail()
@@ -403,10 +403,10 @@ tap.test('Agent', t => {
 
     t.test('fails with invalid URL', t => {
       t.plan(4)
-      t.throw(() => pipeline(), InvalidArgumentError, 'throws on missing url argument')
-      t.throw(() => pipeline(''), TypeError, 'throws on invalid url')
-      t.throw(() => pipeline({}), InvalidArgumentError, 'throws on missing url.origin argument')
-      t.throw(() => pipeline({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+      t.throws(() => pipeline(), InvalidArgumentError, 'throws on missing url argument')
+      t.throws(() => pipeline(''), TypeError, 'throws on invalid url')
+      t.throws(() => pipeline({}), InvalidArgumentError, 'throws on missing url.origin argument')
+      t.throws(() => pipeline({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
     })
 
     t.test('fails with invalid client', t => {
@@ -414,7 +414,7 @@ tap.test('Agent', t => {
       const agent = {
         get: () => ({})
       }
-      t.throw(() => pipeline('https://example.com', { agent }), InvalidReturnValueError)
+      t.throws(() => pipeline('https://example.com', { agent }), InvalidReturnValueError)
     })
   })
 })

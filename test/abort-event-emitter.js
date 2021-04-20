@@ -33,7 +33,7 @@ test('Abort before sending request (no body)', (t) => {
         bufs.push(buf)
       })
       response.body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
 

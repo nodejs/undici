@@ -15,11 +15,11 @@ test('request abort before headers', (t) => {
     res.end('hello')
     signal.emit('abort')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client[kConnect](() => {
       client.request({
@@ -28,9 +28,9 @@ test('request abort before headers', (t) => {
         signal
       }, (err) => {
         t.ok(err instanceof errors.RequestAbortedError)
-        t.strictEqual(signal.listenerCount('abort'), 0)
+        t.equal(signal.listenerCount('abort'), 0)
       })
-      t.strictEqual(signal.listenerCount('abort'), 1)
+      t.equal(signal.listenerCount('abort'), 1)
 
       client.request({
         path: '/',
@@ -38,9 +38,9 @@ test('request abort before headers', (t) => {
         signal
       }, (err) => {
         t.ok(err instanceof errors.RequestAbortedError)
-        t.strictEqual(signal.listenerCount('abort'), 1)
+        t.equal(signal.listenerCount('abort'), 1)
       })
-      t.strictEqual(signal.listenerCount('abort'), 2)
+      t.equal(signal.listenerCount('abort'), 2)
     })
   })
 })
@@ -50,11 +50,11 @@ test('request body destroyed on invalid callback', (t) => {
 
   const server = createServer((req, res) => {
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const body = new Readable({
       read () {}
@@ -66,7 +66,7 @@ test('request body destroyed on invalid callback', (t) => {
         body
       }, null)
     } catch (err) {
-      t.strictEqual(body.destroyed, true)
+      t.equal(body.destroyed, true)
     }
   })
 })
@@ -79,23 +79,23 @@ test('trailers', (t) => {
     res.addTrailers({ 'Content-MD5': 'test' })
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const { body, trailers } = await client.request({
       path: '/',
       method: 'GET'
     })
 
-    t.strictDeepEqual(trailers, {})
+    t.strictSame(trailers, {})
 
     body
       .on('data', () => t.fail())
       .on('end', () => {
-        t.strictDeepEqual(trailers, { 'content-md5': 'test' })
+        t.strictSame(trailers, { 'content-md5': 'test' })
       })
   })
 })

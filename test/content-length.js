@@ -257,7 +257,7 @@ test('response invalid content length with close', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.on('disconnect', (err) => {
-      t.strictEqual(err.code, 'UND_ERR_SOCKET')
+      t.equal(err.code, 'UND_ERR_SOCKET')
     })
 
     client.request({
@@ -270,7 +270,7 @@ test('response invalid content length with close', (t) => {
           t.fail()
         })
         .on('error', (err) => {
-          t.strictEqual(err.code, 'UND_ERR_SOCKET')
+          t.equal(err.code, 'UND_ERR_SOCKET')
         })
         .resume()
     })

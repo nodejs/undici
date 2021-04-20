@@ -18,35 +18,35 @@ test('GET errors and reconnect with pipelining 1', (t) => {
     res.socket.destroy()
 
     server.once('request', (req, res) => {
-      t.strictEqual('/', req.url)
-      t.strictEqual('GET', req.method)
+      t.equal('/', req.url)
+      t.equal('GET', req.method)
       res.setHeader('content-type', 'text/plain')
       res.end('hello')
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', idempotent: false, opaque: 'asd' }, (err, data) => {
       t.ok(err instanceof Error) // we are expecting an error
-      t.strictEqual(data.opaque, 'asd')
+      t.equal(data.opaque, 'asd')
     })
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
@@ -69,39 +69,39 @@ test('GET errors and reconnect with pipelining 3', (t) => {
         res.socket.destroy()
       }
     } else {
-      t.strictEqual('/', req.url)
-      t.strictEqual('GET', req.method)
+      t.equal('/', req.url)
+      t.equal('GET', req.method)
       res.setHeader('content-type', 'text/plain')
       res.end('hello')
     }
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     // all of these will error
     for (let i = 0; i < 3; i++) {
       client.request({ path: '/', method: 'GET', idempotent: false, opaque: 'asd' }, (err, data) => {
         t.ok(err instanceof Error) // we are expecting an error
-        t.strictEqual(data.opaque, 'asd')
+        t.equal(data.opaque, 'asd')
       })
     }
 
     // this will be queued up
     client.request({ path: '/', method: 'GET', idempotent: false }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
@@ -112,9 +112,9 @@ test('POST with a stream that errors and pipelining 1 should reconnect', (t) => 
 
   const server = createServer()
   server.once('request', (req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('POST', req.method)
-    t.strictEqual('42', req.headers['content-length'])
+    t.equal('/', req.url)
+    t.equal('POST', req.method)
+    t.equal('42', req.headers['content-length'])
 
     const bufs = []
     req.on('data', (buf) => {
@@ -124,21 +124,21 @@ test('POST with a stream that errors and pipelining 1 should reconnect', (t) => 
     req.on('aborted', () => {
       // we will abruptly close the connection here
       // but this will still end
-      t.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
+      t.equal('a string', Buffer.concat(bufs).toString('utf8'))
     })
 
     server.once('request', (req, res) => {
-      t.strictEqual('/', req.url)
-      t.strictEqual('GET', req.method)
+      t.equal('/', req.url)
+      t.equal('GET', req.method)
       res.setHeader('content-type', 'text/plain')
       res.end('hello')
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -155,21 +155,21 @@ test('POST with a stream that errors and pipelining 1 should reconnect', (t) => 
         }
       })
     }, (err, data) => {
-      t.strictEqual(err.message, 'kaboom')
-      t.strictEqual(data.opaque, 'asd')
+      t.equal(err.message, 'kaboom')
+      t.equal(data.opaque, 'asd')
     })
 
     // this will be queued up
     client.request({ path: '/', method: 'GET', idempotent: false }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
@@ -180,9 +180,9 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
 
   const server = createServer()
   server.once('request', (req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('POST', req.method)
-    t.strictEqual(req.headers['content-length'], undefined)
+    t.equal('/', req.url)
+    t.equal('POST', req.method)
+    t.equal(req.headers['content-length'], undefined)
 
     const bufs = []
     req.on('data', (buf) => {
@@ -192,21 +192,21 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
     req.on('aborted', () => {
       // we will abruptly close the connection here
       // but this will still end
-      t.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
+      t.equal('a string', Buffer.concat(bufs).toString('utf8'))
     })
 
     server.once('request', (req, res) => {
-      t.strictEqual('/', req.url)
-      t.strictEqual('GET', req.method)
+      t.equal('/', req.url)
+      t.equal('GET', req.method)
       res.setHeader('content-type', 'text/plain')
       res.end('hello')
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -219,21 +219,21 @@ test('POST with chunked encoding that errors and pipelining 1 should reconnect',
         }
       })
     }, (err, data) => {
-      t.strictEqual(err.message, 'kaboom')
-      t.strictEqual(data.opaque, 'asd')
+      t.equal(err.message, 'kaboom')
+      t.equal(data.opaque, 'asd')
     })
 
     // this will be queued up
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
@@ -245,7 +245,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid port')
+    t.equal(err.message, 'invalid port')
   }
 
   try {
@@ -253,7 +253,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid url')
+    t.equal(err.message, 'invalid url')
   }
 
   try {
@@ -261,7 +261,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid url')
+    t.equal(err.message, 'invalid url')
   }
 
   try {
@@ -269,7 +269,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid url')
+    t.equal(err.message, 'invalid url')
   }
 
   try {
@@ -279,7 +279,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid socketPath')
+    t.equal(err.message, 'invalid socketPath')
   }
 
   try {
@@ -289,7 +289,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid keepAliveTimeout')
+    t.equal(err.message, 'invalid keepAliveTimeout')
   }
 
   try {
@@ -299,7 +299,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid keepAliveMaxTimeout')
+    t.equal(err.message, 'invalid keepAliveMaxTimeout')
   }
 
   try {
@@ -309,7 +309,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid keepAliveMaxTimeout')
+    t.equal(err.message, 'invalid keepAliveMaxTimeout')
   }
 
   try {
@@ -319,7 +319,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid keepAliveTimeoutThreshold')
+    t.equal(err.message, 'invalid keepAliveTimeoutThreshold')
   }
 
   try {
@@ -329,7 +329,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid protocol')
+    t.equal(err.message, 'invalid protocol')
   }
 
   try {
@@ -339,7 +339,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid hostname')
+    t.equal(err.message, 'invalid hostname')
   }
 
   try {
@@ -349,7 +349,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid maxHeaderSize')
+    t.equal(err.message, 'invalid maxHeaderSize')
   }
 
   try {
@@ -357,7 +357,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid url')
+    t.equal(err.message, 'invalid url')
   }
 
   try {
@@ -366,7 +366,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid callback')
+    t.equal(err.message, 'invalid callback')
   }
 
   try {
@@ -375,7 +375,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid callback')
+    t.equal(err.message, 'invalid callback')
   }
 
   try {
@@ -383,7 +383,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported maxKeepAliveTimeout, use keepAliveMaxTimeout instead')
+    t.equal(err.message, 'unsupported maxKeepAliveTimeout, use keepAliveMaxTimeout instead')
   }
 
   try {
@@ -391,7 +391,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported keepAlive, use pipelining=0 instead')
+    t.equal(err.message, 'unsupported keepAlive, use pipelining=0 instead')
   }
 
   try {
@@ -399,7 +399,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported idleTimeout, use keepAliveTimeout instead')
+    t.equal(err.message, 'unsupported idleTimeout, use keepAliveTimeout instead')
   }
 
   try {
@@ -407,7 +407,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported socketTimeout, use headersTimeout & bodyTimeout instead')
+    t.equal(err.message, 'unsupported socketTimeout, use headersTimeout & bodyTimeout instead')
   }
 
   t.end()
@@ -422,11 +422,11 @@ test('POST which fails should error response', (t) => {
       res.destroy()
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     function checkError (err) {
       // Different platforms error with different codes...
@@ -488,16 +488,16 @@ test('client destroy cleanup', (t) => {
       })
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const body = new Readable({ read () {} })
     body.push('asd')
     body.on('error', (err) => {
-      t.strictEqual(err, _err)
+      t.equal(err, _err)
     })
 
     client.request({
@@ -505,7 +505,7 @@ test('client destroy cleanup', (t) => {
       method: 'POST',
       body
     }, (err, data) => {
-      t.strictEqual(err, _err)
+      t.equal(err, _err)
     })
   })
 })
@@ -520,11 +520,11 @@ test('GET errors body', (t) => {
       res.destroy()
     }, 19)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
@@ -542,11 +542,11 @@ test('validate request body', (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.request({
       path: '/',
@@ -608,11 +608,11 @@ test('parser error', (t) => {
   server.once('connection', (socket) => {
     socket.write('asd\n\r213123')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err) => {
       t.ok(err)
@@ -629,11 +629,11 @@ test('socket fail while writing request body', (t) => {
   const server = createServer()
   server.once('request', (req, res) => {
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const body = new Readable({ read () {} })
     body.push('asd')
@@ -664,13 +664,13 @@ test('socket fail while ending request body', (t) => {
   server.once('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const _err = new Error('kaboom')
     client.on('connect', () => {
@@ -685,7 +685,7 @@ test('socket fail while ending request body', (t) => {
       method: 'POST',
       body
     }, (err) => {
-      t.strictEqual(err, _err)
+      t.equal(err, _err)
     })
     client.close((err) => {
       t.error(err)
@@ -703,13 +703,13 @@ test('queued request should not fail on socket destroy', (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -740,13 +740,13 @@ test('queued request should fail on client destroy', (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     let requestErrored = false
     client.request({
@@ -760,7 +760,7 @@ test('queued request should fail on client destroy', (t) => {
         })
       client.destroy((err) => {
         t.error(err)
-        t.strictEqual(requestErrored, true)
+        t.equal(requestErrored, true)
       })
     })
     client.request({
@@ -770,7 +770,7 @@ test('queued request should fail on client destroy', (t) => {
     }, (err, data) => {
       requestErrored = true
       t.ok(err)
-      t.strictEqual(data.opaque, 'asd')
+      t.equal(data.opaque, 'asd')
     })
   })
 })
@@ -782,13 +782,13 @@ test('retry idempotent inflight', (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.request({
       path: '/',
@@ -869,11 +869,11 @@ test('CONNECT throws in next tick', (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -888,7 +888,7 @@ test('CONNECT throws in next tick', (t) => {
             method: 'CONNECT'
           }, (err) => {
             t.ok(err)
-            t.strictDeepEqual(ticked, true)
+            t.strictSame(ticked, true)
           })
           ticked = true
         })
@@ -905,18 +905,18 @@ test('invalid signal', (t) => {
 
   let ticked = false
   client.request({ path: '/', method: 'GET', signal: {}, opaque: 'asd' }, (err, { opaque }) => {
-    t.strictEqual(ticked, true)
-    t.strictEqual(opaque, 'asd')
+    t.equal(ticked, true)
+    t.equal(opaque, 'asd')
     t.ok(err instanceof errors.InvalidArgumentError)
   })
   client.pipeline({ path: '/', method: 'GET', signal: {} }, () => {})
     .on('error', (err) => {
-      t.strictEqual(ticked, true)
+      t.equal(ticked, true)
       t.ok(err instanceof errors.InvalidArgumentError)
     })
   client.stream({ path: '/', method: 'GET', signal: {}, opaque: 'asd' }, () => {}, (err, { opaque }) => {
-    t.strictEqual(ticked, true)
-    t.strictEqual(opaque, 'asd')
+    t.equal(ticked, true)
+    t.equal(opaque, 'asd')
     t.ok(err instanceof errors.InvalidArgumentError)
   })
   ticked = true
@@ -929,11 +929,11 @@ test('invalid body chunk does not crash', (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -945,7 +945,7 @@ test('invalid body chunk does not crash', (t) => {
       }),
       method: 'GET'
     }, (err) => {
-      t.strictEqual(err.code, 'ERR_INVALID_ARG_TYPE')
+      t.equal(err.code, 'ERR_INVALID_ARG_TYPE')
     })
   })
 })
@@ -953,7 +953,7 @@ test('invalid body chunk does not crash', (t) => {
 test('socket errors', t => {
   t.plan(2)
   const client = new Client('http://localhost:5554')
-  t.tearDown(client.destroy.bind(client))
+  t.teardown(client.destroy.bind(client))
 
   client.request({ path: '/', method: 'GET' }, (err, data) => {
     t.ok(err)

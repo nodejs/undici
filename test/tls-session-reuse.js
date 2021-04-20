@@ -101,28 +101,28 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
 
   t.test('Verify cached sessions', t => {
     t.plan(7)
-    t.strictEqual(serverRequests, 6)
-    t.strictEqual(
+    t.equal(serverRequests, 6)
+    t.equal(
       clientSessions.first.toString('hex'),
       clientSessions['first-reuse'].toString('hex')
     )
-    t.notStrictEqual(
+    t.not(
       clientSessions.first.toString('hex'),
       clientSessions['cipher-change'].toString('hex')
     )
-    t.notStrictEqual(
+    t.not(
       clientSessions.first.toString('hex'),
       clientSessions['before-drop'].toString('hex')
     )
-    t.notStrictEqual(
+    t.not(
       clientSessions['cipher-change'].toString('hex'),
       clientSessions['before-drop'].toString('hex')
     )
-    t.notStrictEqual(
+    t.not(
       clientSessions['before-drop'].toString('hex'),
       clientSessions['after-drop'].toString('hex')
     )
-    t.strictEqual(
+    t.equal(
       clientSessions['after-drop'].toString('hex'),
       clientSessions['after-drop-reuse'].toString('hex')
     )
