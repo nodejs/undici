@@ -31,7 +31,6 @@ The benchmark is a simple `hello world` [example](benchmarks/index.js) using
 | undici - pipeline       |     100 | 446.97 op/sec |  ± 3.04 % | + 570.55 %              | 
 | undici - stream         |     100 | 465.31 op/sec |  ± 5.56 % | + 598.07 %              |
 | undici - request        |     100 | 486.62 op/sec |  ± 2.56 % | + 630.04 %              |
-| undici - pool - request |     100 | 491.90 op/sec |  ± 2.50 % | + 637.95 %              |
 | undici - dispatch       |     100 | 553.45 op/sec |  ± 2.67 % | + 730.29 %              |
 
 ### Connections 32
@@ -42,7 +41,6 @@ The benchmark is a simple `hello world` [example](benchmarks/index.js) using
 | http - keepalive        |      99 |  33.74 op/sec |  ± 0.88 % | + 5.56 %                |
 | undici - pipeline       |     100 |  54.90 op/sec |  ± 1.06 % | + 71.78 %               |
 | undici - request        |     100 |  82.67 op/sec |  ± 1.69 % | + 158.65 %              |
-| undici - pool - request |     100 |  82.93 op/sec |  ± 1.66 % | + 159.48 %              |
 | undici - stream         |     100 |  94.95 op/sec |  ± 1.49 % | + 197.06 %              |
 | undici - dispatch       |     100 | 110.69 op/sec |  ± 1.57 % | + 246.33 %              |
 
