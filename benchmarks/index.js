@@ -123,14 +123,14 @@ class SimpleRequest {
   }
 }
 
-function makeParallelsRequests (cb) {
+function makeParallelRequests (cb) {
   return Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise(cb)))
 }
 
 cronometro(
   {
     'http - no agent' () {
-      return makeParallelsRequests(resolve => {
+      return makeParallelRequests(resolve => {
         http.get(httpNoAgent, res => {
           res
             .pipe(
@@ -145,7 +145,7 @@ cronometro(
       })
     },
     'http - keepalive' () {
-      return makeParallelsRequests(resolve => {
+      return makeParallelRequests(resolve => {
         http.get(httpOptions, res => {
           res
             .pipe(
@@ -160,7 +160,7 @@ cronometro(
       })
     },
     'http - keepalive - multiple sockets' () {
-      return makeParallelsRequests(resolve => {
+      return makeParallelRequests(resolve => {
         http.get(httpOptionsMultiSocket, res => {
           res
             .pipe(
@@ -175,7 +175,7 @@ cronometro(
       })
     },
     'undici - pipeline' () {
-      return makeParallelsRequests(resolve => {
+      return makeParallelRequests(resolve => {
         client
           .pipeline(undiciOptions, data => {
             return data.body
@@ -192,7 +192,7 @@ cronometro(
       })
     },
     'undici - request' () {
-      return makeParallelsRequests(resolve => {
+      return makeParallelRequests(resolve => {
         client.request(undiciOptions).then(({ body }) => {
           body
             .pipe(
@@ -207,7 +207,7 @@ cronometro(
       })
     },
     'undici - pool - request - multiple sockets' () {
-      return makeParallelsRequests(resolve => {
+      return makeParallelRequests(resolve => {
         pool.request(undiciOptions).then(({ body }) => {
           body
             .pipe(
@@ -222,7 +222,7 @@ cronometro(
       })
     },
     'undici - stream' () {
-      return makeParallelsRequests(resolve => {
+      return makeParallelRequests(resolve => {
         return client
           .stream(undiciOptions, () => {
             return new Writable({
@@ -235,12 +235,12 @@ cronometro(
       })
     },
     'undici - dispatch' () {
-      return makeParallelsRequests(resolve => {
+      return makeParallelRequests(resolve => {
         client.dispatch(undiciOptions, new SimpleRequest(resolve))
       })
     },
     'undici - noop' () {
-      return makeParallelsRequests(resolve => {
+      return makeParallelRequests(resolve => {
         client.dispatch(undiciOptions, new NoopRequest(resolve))
       })
     }
