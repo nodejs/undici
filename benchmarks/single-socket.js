@@ -6,7 +6,7 @@ const http = require('http')
 const os = require('os')
 const path = require('path')
 
-const { Client, Pool } = require('..')
+const { Client } = require('..')
 
 // # Start the Node.js server
 // node benchmarks/server.js
@@ -16,7 +16,6 @@ const { Client, Pool } = require('..')
 
 // Parse and normalize parameters
 const samples = parseInt(process.env.SAMPLES, 10) || 100
-const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const parallelRequests = parseInt(process.env.PARALLEL, 10) || 10
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
 const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
@@ -31,7 +30,7 @@ if (process.env.PORT) {
   dest.socketPath = path.join(os.tmpdir(), 'undici.sock')
 }
 
-const httpNoAgent = {
+const httpBaseOptions = {
   protocol: 'http:',
   hostname: 'localhost',
   method: 'GET',
@@ -39,19 +38,19 @@ const httpNoAgent = {
   ...dest
 }
 
-const httpOptions = {
-  ...httpNoAgent,
+const httpNoKeepAliveOptions = {
+  ...httpBaseOptions,
   agent: new http.Agent({
-    keepAlive: true,
+    keepAlive: false,
     maxSockets: 1
   })
 }
 
-const httpOptionsMultiSocket = {
-  ...httpNoAgent,
+const httpKeepAliveOptions = {
+  ...httpBaseOptions,
   agent: new http.Agent({
     keepAlive: true,
-    maxSockets: connections
+    maxSockets: 1
   })
 }
 
@@ -62,14 +61,8 @@ const undiciOptions = {
   bodyTimeout
 }
 
-const client = new Client(httpOptions.url, {
+const client = new Client(httpBaseOptions.url, {
   pipelining,
-  ...dest
-})
-
-const pool = new Pool(httpOptions.url, {
-  pipelining,
-  connections,
   ...dest
 })
 
@@ -129,9 +122,9 @@ function makeParallelRequests (cb) {
 
 cronometro(
   {
-    'http - no agent' () {
+    'http - no keepalive' () {
       return makeParallelRequests(resolve => {
-        http.get(httpNoAgent, res => {
+        http.get(httpNoKeepAliveOptions, res => {
           res
             .pipe(
               new Writable({
@@ -146,22 +139,7 @@ cronometro(
     },
     'http - keepalive' () {
       return makeParallelRequests(resolve => {
-        http.get(httpOptions, res => {
-          res
-            .pipe(
-              new Writable({
-                write (chunk, encoding, callback) {
-                  callback()
-                }
-              })
-            )
-            .on('finish', resolve)
-        })
-      })
-    },
-    'http - keepalive - multiple sockets' () {
-      return makeParallelRequests(resolve => {
-        http.get(httpOptionsMultiSocket, res => {
+        http.get(httpKeepAliveOptions, res => {
           res
             .pipe(
               new Writable({
@@ -206,21 +184,6 @@ cronometro(
         })
       })
     },
-    'undici - pool - request - multiple sockets' () {
-      return makeParallelRequests(resolve => {
-        pool.request(undiciOptions).then(({ body }) => {
-          body
-            .pipe(
-              new Writable({
-                write (chunk, encoding, callback) {
-                  callback()
-                }
-              })
-            )
-            .on('finish', resolve)
-        })
-      })
-    },
     'undici - stream' () {
       return makeParallelRequests(resolve => {
         return client
@@ -252,7 +215,7 @@ cronometro(
       compare: true
     }
   },
-  (err) => {
+  err => {
     if (err) {
       throw err
     }
