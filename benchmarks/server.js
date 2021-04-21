@@ -23,9 +23,10 @@ if (cluster.isPrimary) {
     cluster.fork()
   }
 } else {
-  createServer((req, res) => {
+  const server = createServer((req, res) => {
     setTimeout(function () {
       res.end('hello world')
     }, timeout)
   }).listen(port)
+  server.keepAliveTimeout = 600e3
 }
