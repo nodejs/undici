@@ -24,7 +24,7 @@ number of unix sockets (connections) with a pipelining depth of 10.
 
 ### Connections 1
 
-| Slower tests        | Samples |        Result  | Tolerance | Difference with slowest |
+| Test                | Samples |        Result  | Tolerance | Difference with slowest |
 |---------------------|---------|----------------|-----------|-------------------------|
 | http - no keepalive |      99 |   812 reqs/sec |  ± 0.22 % |                         |
 | http - keepalive    |      99 |   819 reqs/sec |  ± 0.20 % | + 0.82 %                |
@@ -35,7 +35,7 @@ number of unix sockets (connections) with a pipelining depth of 10.
 
 ### Connections 50
 
-| Slower tests        | Samples |        Result  | Tolerance | Difference with slowest |
+| Test                | Samples |        Result  | Tolerance | Difference with slowest |
 |---------------------|---------|----------------|-----------|-------------------------|
 | http - no keepalive |      99 | 12968 reqs/sec |  ± 1.86 % |                         |
 | http - keepalive    |      99 | 14745 reqs/sec |  ± 1.59 % | + 13.70 %               |
