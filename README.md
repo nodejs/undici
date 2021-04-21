@@ -17,19 +17,32 @@ npm i undici
 
 ## Benchmarks
 
-Machine: AMD EPYC 7502P
-
-Node 15
-```
-http - keepalive x 12,028 ops/sec ±2.60% (265 runs sampled)
-undici - pipeline x 31,321 ops/sec ±0.77% (276 runs sampled)
-undici - request x 36,612 ops/sec ±0.71% (277 runs sampled)
-undici - stream x 41,291 ops/sec ±0.90% (268 runs sampled)
-undici - dispatch x 47,319 ops/sec ±1.17% (263 runs sampled)
-```
+AMD EPYC 7502P 32 Core, Node 15
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
-single unix socket with pipelining.
+number of unix sockets (connections) with a pipelining depth of 10.
+
+### Connections 1
+
+| Slower tests        | Samples |        Result  | Tolerance | Difference with slowest |
+|---------------------|---------|----------------|-----------|-------------------------|
+| http - no keepalive |      99 |   812 reqs/sec |  ± 0.22 % |                         |
+| http - keepalive    |      99 |   819 reqs/sec |  ± 0.20 % | + 0.82 %                |
+| undici - pipeline   |      99 |  6632 reqs/sec |  ± 0.63 % | + 716.73 %              |
+| undici - request    |      99 |  6645 reqs/sec |  ± 1.34 % | + 718.34 %              |
+| undici - stream     |      99 |  7366 reqs/sec |  ± 0.59 % | + 807.11 %              |
+| undici - dispatch   |      99 |  7404 reqs/sec |  ± 0.37 % | + 811.76 %              |
+
+### Connections 50
+
+| Slower tests        | Samples |        Result  | Tolerance | Difference with slowest |
+|---------------------|---------|----------------|-----------|-------------------------|
+| http - no keepalive |      99 | 12968 reqs/sec |  ± 1.86 % |                         |
+| http - keepalive    |      99 | 14745 reqs/sec |  ± 1.59 % | + 13.70 %               |
+| undici - pipeline   |      99 | 20051 reqs/sec |  ± 2.34 % | + 54.62 %               |
+| undici - stream     |     100 | 26456 reqs/sec |  ± 3.50 % | + 104.00 %              |
+| undici - request    |      99 | 29342 reqs/sec |  ± 1.26 % | + 126.26 %              |
+| undici - dispatch   |      99 | 35323 reqs/sec |  ± 0.77 % | + 172.38 %              |
 
 ## Quick Start
 
