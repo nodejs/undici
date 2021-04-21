@@ -22,7 +22,8 @@
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
-    "index.(js|d.ts)",
+    "*.d.ts",
+    "index.js",
     "lib",
     "types",
     "docs"
