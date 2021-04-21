@@ -5,10 +5,11 @@ const { Writable } = require('stream')
 const http = require('http')
 const os = require('os')
 const path = require('path')
+const { table } = require('table')
 
 const { Pool, Client } = require('..')
 
-const iterations = parseInt(process.env.SAMPLES, 10) || 100
+const iterations = (parseInt(process.env.SAMPLES, 10) || 100) + 1
 const errorThreshold = parseInt(process.env.ERROR_TRESHOLD, 10) || 3
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
@@ -93,6 +94,69 @@ class SimpleRequest {
 
 function makeParallelRequests (cb) {
   return Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise(cb)))
+}
+
+function printResults (results) {
+  // Sort results by least performant first, then compare relative performances and also printing padding
+  let last
+
+  const rows = Object.entries(results)
+    // If any failed, put on the top of the list, otherwise order by mean, ascendin
+    .sort((a, b) => (!a[1].success ? -1 : b[1].mean - a[1].mean))
+    .map(([name, result]) => {
+      if (!result.success) {
+        return [name, result.size, 'Errored', 'N/A', 'N/A']
+      }
+
+      // Calculate throughtput and relative performance
+      const { size, mean, standardError } = result
+      const relative = last !== 0 ? (last / mean - 1) * 100 : 0
+
+      // Save the slowest for relative comparison
+      if (typeof last === 'undefined') {
+        last = mean
+      }
+
+      return [
+        name,
+        size,
+        `${((connections * 1e9) / mean).toFixed(2)} req/sec`,
+        `± ${((standardError / mean) * 100).toFixed(2)} %`,
+        relative > 0 ? `+ ${relative.toFixed(2)} %` : '-'
+      ]
+    })
+
+  // Add the header row
+  rows.unshift(['Tests', 'Samples', 'Result', 'Tolerance', 'Difference with slowest'])
+
+  return table(rows, {
+    columns: {
+      0: {
+        alignment: 'left'
+      },
+      1: {
+        alignment: 'right'
+      },
+      2: {
+        alignment: 'right'
+      },
+      3: {
+        alignment: 'right'
+      },
+      4: {
+        alignment: 'right'
+      }
+    },
+    drawHorizontalLine: (index, size) => index > 0 && index < size,
+    border: {
+      bodyLeft: '│',
+      bodyRight: '│',
+      bodyJoin: '│',
+      joinLeft: '|',
+      joinRight: '|',
+      joinJoin: '|'
+    }
+  })
 }
 
 cronometro(
@@ -181,16 +245,14 @@ cronometro(
   {
     iterations,
     errorThreshold,
-    print: {
-      colors: false,
-      compare: true
-    }
+    print: false
   },
-  err => {
+  (err, results) => {
     if (err) {
       throw err
     }
 
+    console.log(printResults(results))
     dispatcher.destroy()
   }
 )
