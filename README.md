@@ -24,25 +24,27 @@ number of unix sockets (connections) with a pipelining depth of 10.
 
 ### Connections 1
 
-| Slower tests            | Samples | Result        | Tolerance | Difference with slowest |
-|-------------------------|---------|---------------|-----------|-------------------------|
-| http - no keepalive     |      99 |  66.66 op/sec |  ± 0.99 % |                         |
-| http - keepalive        |      99 |  69.63 op/sec |  ± 0.94 % | + 4.46 %                | 
-| undici - pipeline       |     100 | 446.97 op/sec |  ± 3.04 % | + 570.55 %              | 
-| undici - stream         |     100 | 465.31 op/sec |  ± 5.56 % | + 598.07 %              |
-| undici - request        |     100 | 486.62 op/sec |  ± 2.56 % | + 630.04 %              |
-| undici - dispatch       |     100 | 553.45 op/sec |  ± 2.67 % | + 730.29 %              |
+--------------------------------------------------------------------------------------
+| Slower tests        | Samples |       Result | Tolerance | Difference with slowest |
+╟---------------------┼---------┼--------------┼-----------┼-------------------------╢
+| http - no keepalive |      99 |  8.12 op/sec |  ± 0.22 % |                         |
+| http - keepalive    |      99 |  8.19 op/sec |  ± 0.20 % | + 0.82 %                |
+| undici - pipeline   |      99 | 66.32 op/sec |  ± 0.63 % | + 716.73 %              |
+| undici - request    |      99 | 66.45 op/sec |  ± 1.34 % | + 718.34 %              |
+| undici - stream     |      99 | 73.66 op/sec |  ± 0.59 % | + 807.11 %              |
+| undici - dispatch   |      99 | 74.04 op/sec |  ± 0.37 % | + 811.76 %              |
 
 ### Connections 50
 
-| Slower tests            | Samples | Result        | Tolerance | Difference with slowest |
-|-------------------------|---------|---------------|-----------|-------------------------|
-| http - no keepalive     |      99 |  31.96 op/sec |  ± 0.96 % |                         |
-| http - keepalive        |      99 |  33.74 op/sec |  ± 0.88 % | + 5.56 %                |
-| undici - pipeline       |     100 |  54.90 op/sec |  ± 1.06 % | + 71.78 %               |
-| undici - request        |     100 |  82.67 op/sec |  ± 1.69 % | + 158.65 %              |
-| undici - stream         |     100 |  94.95 op/sec |  ± 1.49 % | + 197.06 %              |
-| undici - dispatch       |     100 | 110.69 op/sec |  ± 1.57 % | + 246.33 %              |
+---------------------------------------------------------------------------------------
+| Slower tests        | Samples |        Result | Tolerance | Difference with slowest |
+╟---------------------┼---------┼---------------┼-----------┼-------------------------╢
+| http - no keepalive |      99 | 129.68 op/sec |  ± 1.86 % |                         |
+| http - keepalive    |      99 | 147.45 op/sec |  ± 1.59 % | + 13.70 %               |
+| undici - pipeline   |      99 | 200.51 op/sec |  ± 2.34 % | + 54.62 %               |
+| undici - stream     |     100 | 264.56 op/sec |  ± 3.50 % | + 104.00 %              |
+| undici - request    |      99 | 293.42 op/sec |  ± 1.26 % | + 126.26 %              |
+| undici - dispatch   |      99 | 353.23 op/sec |  ± 0.77 % | + 172.38 %              |
 
 ## Quick Start
 
