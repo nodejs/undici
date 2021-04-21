@@ -13,7 +13,7 @@ test('socket close listener does not leak', (t) => {
   server.on('request', (req, res) => {
     res.end('hello')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   const makeBody = () => {
     return new Readable({
@@ -36,7 +36,7 @@ test('socket close listener does not leak', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.on('disconnect', () => {
       t.fail()

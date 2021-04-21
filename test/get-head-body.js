@@ -84,12 +84,12 @@ test('GET and HEAD with body should reset connection', (t) => {
 
 //   client.request({ method: 'GET', path: '/news/rss.xml', body: 'asd' }, (err, data) => {
 //     t.error(err)
-//     t.strictEqual(data.statusCode, 200)
+//     t.equal(data.statusCode, 200)
 //     data.body.resume()
 //   })
 //   client.request({ method: 'GET', path: '/news/rss.xml', body: 'asd' }, (err, data) => {
 //     t.error(err)
-//     t.strictEqual(data.statusCode, 200)
+//     t.equal(data.statusCode, 200)
 //     data.body.resume()
 //   })
 // })
@@ -117,7 +117,7 @@ test('HEAD should reset connection', (t) => {
       t.error(err)
       data.body.resume()
     })
-    t.strictEqual(client.busy, true)
+    t.equal(client.busy, true)
 
     client.request({
       path: '/',
@@ -134,10 +134,10 @@ test('HEAD should reset connection', (t) => {
             t.error(err)
             data.body.resume()
           })
-          t.strictEqual(client.busy, true)
+          t.equal(client.busy, true)
         })
       })
     })
-    t.strictEqual(client.busy, true)
+    t.equal(client.busy, true)
   })
 })

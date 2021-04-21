@@ -10,17 +10,17 @@ test('imported Client works with basic GET', (t) => {
   t.plan(10)
 
   const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
-    t.strictEqual(undefined, req.headers.foo)
-    t.strictEqual('bar', req.headers.bar)
-    t.strictEqual(undefined, req.headers['content-length'])
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
+    t.equal(undefined, req.headers.foo)
+    t.equal('bar', req.headers.bar)
+    t.equal(undefined, req.headers['content-length'])
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
 
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   const reqHeaders = {
     foo: undefined,
@@ -29,7 +29,7 @@ test('imported Client works with basic GET', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.request({
       path: '/',
@@ -38,14 +38,14 @@ test('imported Client works with basic GET', (t) => {
     }, (err, data) => {
       t.error(err)
       const { statusCode, headers, body } = data
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })

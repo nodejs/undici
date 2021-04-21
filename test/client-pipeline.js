@@ -16,26 +16,26 @@ test('pipeline get', (t) => {
   t.plan(17)
 
   const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
-    t.strictEqual(undefined, req.headers['content-length'])
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
+    t.equal(undefined, req.headers['content-length'])
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     {
       const bufs = []
       const signal = new EE()
       client.pipeline({ signal, path: '/', method: 'GET' }, ({ statusCode, headers, body }) => {
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'text/plain')
-        t.strictEqual(signal.listenerCount('abort'), 1)
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
+        t.equal(signal.listenerCount('abort'), 1)
         return body
       })
         .end()
@@ -43,19 +43,19 @@ test('pipeline get', (t) => {
           bufs.push(buf)
         })
         .on('end', () => {
-          t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
         .on('close', () => {
-          t.strictEqual(signal.listenerCount('abort'), 0)
+          t.equal(signal.listenerCount('abort'), 0)
         })
-      t.strictEqual(signal.listenerCount('abort'), 1)
+      t.equal(signal.listenerCount('abort'), 1)
     }
 
     {
       const bufs = []
       client.pipeline({ path: '/', method: 'GET' }, ({ statusCode, headers, body }) => {
-        t.strictEqual(statusCode, 200)
-        t.strictEqual(headers['content-type'], 'text/plain')
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
         return body
       })
         .end()
@@ -63,7 +63,7 @@ test('pipeline get', (t) => {
           bufs.push(buf)
         })
         .on('end', () => {
-          t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
     }
   })
@@ -75,11 +75,11 @@ test('pipeline echo', (t) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     let res = ''
     const buf1 = Buffer.alloc(1e3).toString()
@@ -104,7 +104,7 @@ test('pipeline echo', (t) => {
           callback()
         },
         final (callback) {
-          t.strictEqual(res, buf1 + buf2)
+          t.equal(res, buf1 + buf2)
           callback()
         }
       }),
@@ -124,11 +124,11 @@ test('pipeline ignore request body', (t) => {
     res.end()
     done()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     let res = ''
     const buf1 = Buffer.alloc(1e3).toString()
@@ -153,7 +153,7 @@ test('pipeline ignore request body', (t) => {
           callback()
         },
         final (callback) {
-          t.strictEqual(res, 'asd')
+          t.equal(res, 'asd')
           callback()
         }
       }),
@@ -179,26 +179,26 @@ test('pipeline invalid handler return after destroy should not error', (t) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const dup = client.pipeline({
       path: '/',
       method: 'GET'
     }, ({ body }) => {
       body.on('error', (err) => {
-        t.strictEqual(err.message, 'asd')
+        t.equal(err.message, 'asd')
       })
       dup.destroy(new Error('asd'))
       return {}
     })
       .on('error', (err) => {
-        t.strictEqual(err.message, 'asd')
+        t.equal(err.message, 'asd')
       })
       .on('close', () => {
         t.pass()
@@ -213,11 +213,11 @@ test('pipeline error body', (t) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const buf = Buffer.alloc(1e6).toString()
     pipeline(
@@ -253,11 +253,11 @@ test('pipeline destroy body', (t) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const buf = Buffer.alloc(1e6).toString()
     pipeline(
@@ -293,11 +293,11 @@ test('pipeline backpressure', (t) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const buf = Buffer.alloc(1e6).toString()
     const duplex = client.pipeline({
@@ -326,11 +326,11 @@ test('pipeline invalid handler return', (t) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -365,11 +365,11 @@ test('pipeline throw handler', (t) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -380,7 +380,7 @@ test('pipeline throw handler', (t) => {
       throw new Error('asd')
     })
       .on('error', (err) => {
-        t.strictEqual(err.message, 'asd')
+        t.equal(err.message, 'asd')
       })
       .end()
   })
@@ -392,11 +392,11 @@ test('pipeline destroy and throw handler', (t) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const dup = client.pipeline({
       path: '/',
@@ -425,11 +425,11 @@ test('pipeline abort res', (t) => {
     res.write('asd')
     _res = res
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -461,11 +461,11 @@ test('pipeline abort server res', (t) => {
   const server = createServer((req, res) => {
     res.destroy()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -486,11 +486,11 @@ test('pipeline abort duplex', (t) => {
   const server = createServer((req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -521,11 +521,11 @@ test('pipeline abort piped res', (t) => {
   const server = createServer((req, res) => {
     res.write('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -542,7 +542,7 @@ test('pipeline abort piped res', (t) => {
         if (process.versions.node.split('.')[0] < 13) {
           t.ok(err)
         } else {
-          t.strictEqual(err.code, 'UND_ERR_ABORTED')
+          t.equal(err.code, 'UND_ERR_ABORTED')
         }
       })
       .end()
@@ -555,11 +555,11 @@ test('pipeline abort piped res 2', (t) => {
   const server = createServer((req, res) => {
     res.write('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -588,11 +588,11 @@ test('pipeline abort piped res 3', (t) => {
   const server = createServer((req, res) => {
     res.write('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -600,7 +600,7 @@ test('pipeline abort piped res 3', (t) => {
     }, ({ body }) => {
       const pt = new PassThrough()
       body.on('error', (err) => {
-        t.strictEqual(err.message, 'asd')
+        t.equal(err.message, 'asd')
       })
       setImmediate(() => {
         pt.destroy(new Error('asd'))
@@ -609,7 +609,7 @@ test('pipeline abort piped res 3', (t) => {
       return pt
     })
       .on('error', (err) => {
-        t.strictEqual(err.message, 'asd')
+        t.equal(err.message, 'asd')
       })
       .end()
   })
@@ -623,11 +623,11 @@ test('pipeline abort server res after headers', (t) => {
     res.write('asd')
     _res = res
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -651,11 +651,11 @@ test('pipeline w/ write abort server res after headers', (t) => {
     req.pipe(res)
     _res = res
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -680,11 +680,11 @@ test('destroy in push', (t) => {
     res.write('asd')
     _res = res
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.pipeline({ path: '/', method: 'GET' }, ({ body }) => {
       body.once('data', () => {
@@ -707,7 +707,7 @@ test('destroy in push', (t) => {
         buf = chunk.toString()
         _res.end()
       }).on('end', () => {
-        t.strictEqual('asd', buf)
+        t.equal('asd', buf)
       })
       return body
     }).resume().end()
@@ -732,11 +732,11 @@ test('pipeline factory throw not unhandled', (t) => {
   const server = createServer((req, res) => {
     res.write('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -757,11 +757,11 @@ test('pipeline destroy before dispatch', (t) => {
   const server = createServer((req, res) => {
     res.end('hello')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client
       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
@@ -784,11 +784,11 @@ test('pipeline legacy stream', (t) => {
       res.end(Buffer.alloc(16e3))
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client
       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
@@ -810,11 +810,11 @@ test('pipeline objectMode', (t) => {
   const server = createServer((req, res) => {
     res.end(JSON.stringify({ asd: 1 }))
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client
       .pipeline({ path: '/', method: 'GET', objectMode: true }, ({ body }) => {
@@ -826,7 +826,7 @@ test('pipeline objectMode', (t) => {
         }), () => {})
       })
       .on('data', data => {
-        t.strictDeepEqual(data, { asd: 1 })
+        t.strictSame(data, { asd: 1 })
       })
       .end()
   })
@@ -838,11 +838,11 @@ test('pipeline invalid opts', (t) => {
   const server = createServer((req, res) => {
     res.end(JSON.stringify({ asd: 1 }))
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.close((err) => {
       t.error(err)
@@ -863,11 +863,11 @@ test('pipeline CONNECT throw', (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -889,11 +889,11 @@ test('pipeline body without destroy', (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.pipeline({
       path: '/',
@@ -918,11 +918,11 @@ test('pipeline ignore 1xx', (t) => {
     res.writeProcessing()
     res.end('hello')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     let buf = ''
     client.pipeline({
@@ -933,7 +933,7 @@ test('pipeline ignore 1xx', (t) => {
         buf += chunk
       })
       .on('end', () => {
-        t.strictEqual(buf, 'hello')
+        t.equal(buf, 'hello')
       })
       .end()
   })
@@ -948,11 +948,11 @@ test('pipeline backpressure', (t) => {
     res.writeProcessing()
     res.end(expected)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     let buf = ''
     client.pipeline({
@@ -972,7 +972,7 @@ test('pipeline backpressure', (t) => {
         buf += chunk
       })
       .on('end', () => {
-        t.strictEqual(buf, expected)
+        t.equal(buf, expected)
       })
   })
 })
@@ -987,11 +987,11 @@ test('pipeline abort after headers', (t) => {
       res.write('asd')
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const signal = new EE()
     client.pipeline({

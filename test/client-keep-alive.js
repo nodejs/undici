@@ -319,7 +319,7 @@ test('Disable keep alive', (t) => {
 
   const ports = []
   const server = http.createServer((req, res) => {
-    t.false(ports.includes(req.socket.remotePort))
+    t.notOk(ports.includes(req.socket.remotePort))
     ports.push(req.socket.remotePort)
     t.match(req.headers, { connection: 'close' })
     res.writeHead(200, { connection: 'close' })

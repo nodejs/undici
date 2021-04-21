@@ -9,12 +9,12 @@ test('tls get 1', (t) => {
   t.plan(4)
 
   const client = new Client('https://www.github.com')
-  t.tearDown(client.close.bind(client))
+  t.teardown(client.close.bind(client))
 
   client.request({ method: 'GET', path: '/' }, (err, data) => {
     t.error(err)
-    t.strictEqual(data.statusCode, 301)
-    t.strictEqual(client[kSocket].authorized, true)
+    t.equal(data.statusCode, 301)
+    t.equal(client[kSocket].authorized, true)
 
     data.body
       .resume()
@@ -32,12 +32,12 @@ test('tls get 2', (t) => {
       servername: 'www.github.com'
     }
   })
-  t.tearDown(client.close.bind(client))
+  t.teardown(client.close.bind(client))
 
   client.request({ method: 'GET', path: '/' }, (err, data) => {
     t.error(err)
-    t.strictEqual(data.statusCode, 301)
-    t.strictEqual(client[kSocket].authorized, true)
+    t.equal(data.statusCode, 301)
+    t.equal(client[kSocket].authorized, true)
 
     data.body
       .resume()
@@ -51,7 +51,7 @@ test('tls get 3', (t) => {
   t.plan(9)
 
   const client = new Client('https://140.82.112.4')
-  t.tearDown(client.destroy.bind(client))
+  t.teardown(client.destroy.bind(client))
 
   let didDisconnect = false
   client.request({
@@ -62,8 +62,8 @@ test('tls get 3', (t) => {
     }
   }, (err, data) => {
     t.error(err)
-    t.strictEqual(data.statusCode, 301)
-    t.strictEqual(client[kSocket].authorized, true)
+    t.equal(data.statusCode, 301)
+    t.equal(client[kSocket].authorized, true)
 
     data.body
       .resume()
@@ -88,8 +88,8 @@ test('tls get 3', (t) => {
       host: 'www.asd.com'
     }
   }, (err, data) => {
-    t.strictEqual(didDisconnect, true)
-    t.strictEqual(client[kSocket].authorized, false)
+    t.equal(didDisconnect, true)
+    t.equal(client[kSocket].authorized, false)
     t.ok(err)
   })
 })
@@ -103,7 +103,7 @@ test('tls get 4', (t) => {
     },
     pipelining: 2
   })
-  t.tearDown(client.close.bind(client))
+  t.teardown(client.close.bind(client))
 
   client.request({
     method: 'GET',
@@ -113,9 +113,9 @@ test('tls get 4', (t) => {
     }
   }, (err, data) => {
     t.error(err)
-    t.strictEqual(client.running, 1)
-    t.strictEqual(data.statusCode, 301)
-    t.strictEqual(client[kSocket].authorized, true)
+    t.equal(client.running, 1)
+    t.equal(data.statusCode, 301)
+    t.equal(client[kSocket].authorized, true)
 
     client.request({
       method: 'GET',
@@ -125,8 +125,8 @@ test('tls get 4', (t) => {
       }
     }, (err, data) => {
       t.error(err)
-      t.strictEqual(data.statusCode, 301)
-      t.strictEqual(client[kSocket].authorized, true)
+      t.equal(data.statusCode, 301)
+      t.equal(client[kSocket].authorized, true)
 
       data.body
         .resume()

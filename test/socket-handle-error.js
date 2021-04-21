@@ -12,11 +12,11 @@ test('stop error', (t) => {
     while (res.write(Buffer.alloc(4096))) {
     }
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     makeRequest()
 
@@ -28,7 +28,7 @@ test('stop error', (t) => {
       client.request({ path: '/', method: 'GET' }, (err, data) => {
         t.error(err)
         data.body.on('error', (err) => {
-          t.strictEqual(err.code, -100)
+          t.equal(err.code, -100)
         })
       })
       return client.size <= client.pipelining
@@ -43,11 +43,11 @@ test('resume error', (t) => {
     while (res.write(Buffer.alloc(4096))) {
     }
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     makeRequest()
 
@@ -59,7 +59,7 @@ test('resume error', (t) => {
         client[kSocket]._handle.readStart = () => -100
 
         data.body.on('error', (err) => {
-          t.strictEqual(err.code, -100)
+          t.equal(err.code, -100)
         })
 
         setTimeout(() => {

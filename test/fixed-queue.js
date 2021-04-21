@@ -8,12 +8,12 @@ test('fixed queue 1', (t) => {
   t.plan(5)
 
   const queue = new FixedQueue()
-  t.strictEqual(queue.head, queue.tail)
+  t.equal(queue.head, queue.tail)
   t.ok(queue.isEmpty())
   queue.push('a')
   t.ok(!queue.isEmpty())
-  t.strictEqual(queue.shift(), 'a')
-  t.strictEqual(queue.shift(), null)
+  t.equal(queue.shift(), 'a')
+  t.equal(queue.shift(), null)
 })
 
 test('fixed queue 2', (t) => {
@@ -27,12 +27,12 @@ test('fixed queue 2', (t) => {
   queue.push('a')
   t.ok(!queue.head.isFull())
 
-  t.notStrictEqual(queue.head, queue.tail)
+  t.not(queue.head, queue.tail)
   for (let i = 0; i < 2047; i++) {
-    t.strictEqual(queue.shift(), 'a')
+    t.equal(queue.shift(), 'a')
   }
-  t.strictEqual(queue.head, queue.tail)
+  t.equal(queue.head, queue.tail)
   t.ok(!queue.isEmpty())
-  t.strictEqual(queue.shift(), 'a')
+  t.equal(queue.shift(), 'a')
   t.ok(queue.isEmpty())
 })

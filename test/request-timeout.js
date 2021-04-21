@@ -397,7 +397,7 @@ test('Disable request timeout', (t) => {
         bufs.push(buf)
       })
       response.body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
 
@@ -432,7 +432,7 @@ test('Disable request timeout for a single request', (t) => {
         bufs.push(buf)
       })
       response.body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
 

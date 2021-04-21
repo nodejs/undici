@@ -17,11 +17,11 @@ test('https://github.com/mcollina/undici/issues/268', (t) => {
       }, 500)
     }, 500)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       method: 'GET',

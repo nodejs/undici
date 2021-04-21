@@ -9,7 +9,7 @@ test('handle headers as array', (t) => {
   const headers = ['a', '1', 'b', '2', 'c', '3']
 
   const server = createServer((req, res) => {
-    t.similar(req.headers, { a: '1', b: '2', c: '3' })
+    t.match(req.headers, { a: '1', b: '2', c: '3' })
     res.end()
   })
   t.teardown(server.close.bind(server))
@@ -41,7 +41,7 @@ test('fail if headers array is odd', (t) => {
       headers: headers
     }, (err) => {
       t.ok(err instanceof errors.InvalidArgumentError)
-      t.strictEqual(err.message, 'headers array must be even')
+      t.equal(err.message, 'headers array must be even')
     })
   })
 })
