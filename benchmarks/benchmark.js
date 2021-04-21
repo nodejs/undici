@@ -181,12 +181,10 @@ cronometro(
   {
     iterations,
     errorThreshold,
-    print: {
-      colors: false,
-      compare: true
-    }
+    print: false
   },
-  err => {
+  (err, val) => {
+    console.error(val)
     if (err) {
       throw err
     }
