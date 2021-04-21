@@ -82,8 +82,6 @@ Arguments:
 
 Returns a promise with the result of the `Dispatcher.request` method.
 
-`url` may contain pathname. `options` may not contain path.
-
 Calls `options.dispatcher.request(options)`.
 
 See [Dispatcher.request](./docs/api/Dispatcher.md#dispatcherrequestoptions-callback) for more details.
@@ -96,6 +94,7 @@ Arguments:
 * **options** [`StreamOptions`](./docs/api/Dispatcher.md#parameter-streamoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
+  * **maxRedirections** `Integer` - Default: `0`
 * **factory** `Dispatcher.stream.factory`
 
 Returns a promise with the result of the `Dispatcher.stream` method.
@@ -112,6 +111,7 @@ Arguments:
 * **options** [`PipelineOptions`](docs/api/Dispatcher.md#parameter-pipelineoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
+  * **maxRedirections** `Integer` - Default: `0`
 * **handler** `Dispatcher.pipeline.handler`
 
 Returns: `stream.Duplex`
@@ -129,6 +129,7 @@ Arguments:
 * **url** `string | URL | object`
 * **options** [`ConnectOptions`](docs/api/Dispatcher.md#parameter-connectoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+  * **maxRedirections** `Integer` - Default: `0`
 * **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
 
 Returns a promise with the result of the `Dispatcher.connect` method.
@@ -146,6 +147,7 @@ Arguments:
 * **url** `string | URL | object`
 * **options** [`UpgradeOptions`](docs/api/Dispatcher.md#parameter-upgradeoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+  * **maxRedirections** `Integer` - Default: `0`
 * **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
 
 Returns a promise with the result of the `Dispatcher.upgrade` method.
@@ -158,11 +160,11 @@ See [Dispatcher.upgrade](docs/api/Dispatcher.md#dispatcherupgradeoptions-callbac
 
 * dispatcher `Dispatcher`
 
-Sets the global dispatcher used by global API methods.
+Sets the global dispatcher used by Common API Methods.
 
 ### `undici.getGlobalDispatcher()`
 
-Gets the global dispatcher used by global API methods.
+Gets the global dispatcher used by Common API Methods.
 
 Returns: `Dispatcher`
 
