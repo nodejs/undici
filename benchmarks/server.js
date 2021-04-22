@@ -8,17 +8,17 @@ const cluster = require('cluster')
 
 const socketPath = path.join(os.tmpdir(), 'undici.sock')
 
-try {
-  unlinkSync(socketPath)
-} catch (_) {
-  // Do not nothing if the socket does not exist
-}
-
 const port = process.env.PORT || socketPath
 const timeout = parseInt(process.env.TIMEOUT, 10) || 1
 const workers = parseInt(process.env.WORKERS) || os.cpus().length
 
 if (cluster.isPrimary) {
+  try {
+    unlinkSync(socketPath)
+  } catch (_) {
+    // Do not nothing if the socket does not exist
+  }
+
   for (let i = 0; i < workers; i++) {
     cluster.fork()
   }
