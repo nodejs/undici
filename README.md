@@ -47,23 +47,27 @@ number of unix sockets (connections) with a pipelining depth of 10.
 ## Quick Start
 
 ```js
-import { request } from 'undici'
+const { request } = require('undici')
 
-const {
-  statusCode,
-  headers,
-  trailers,
-  body
-} = await request('http://localhost:3000/foo')
+async function makeRequest() {
+  const {
+    statusCode,
+    headers,
+    trailers,
+    body
+  } = await request('http://localhost:3000/foo')
 
-console.log('response received', statusCode)
-console.log('headers', headers)
+  console.log('response received', statusCode)
+  console.log('headers', headers)
 
-for await (const data of body) {
-  console.log('data', data)
+  for await (const data of body) {
+    console.log('data', data)
+  }
+
+  console.log('trailers', trailers)
 }
 
-console.log('trailers', trailers)
+makeRequest()
 ```
 
 ## Common API Methods
