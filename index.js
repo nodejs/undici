@@ -15,14 +15,14 @@ function undici (url, opts) {
   return new Pool(url, opts)
 }
 
-undici.Pool = Pool
-undici.Client = Client
-undici.errors = errors
-
-undici.Agent = Agent
-undici.request = request
-undici.stream = stream
-undici.pipeline = pipeline
-undici.setGlobalAgent = setGlobalAgent
-
 module.exports = undici
+
+module.exports.Pool = Pool
+module.exports.Client = Client
+module.exports.errors = errors
+
+module.exports.Agent = Agent
+module.exports.request = request
+module.exports.stream = stream
+module.exports.pipeline = pipeline
+module.exports.setGlobalAgent = setGlobalAgent
