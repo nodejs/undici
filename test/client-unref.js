@@ -11,7 +11,6 @@ test('end process on idle', (t) => {
     res.end()
   })
   server.keepAliveTimeout = 99999
-  server.unref()
 
   server.listen(0, async () => {
     request(`http://localhost:${server.address().port}`, (err, { body }) => {
@@ -19,6 +18,7 @@ test('end process on idle', (t) => {
       body
         .resume()
         .on('end', () => {
+          server.unref()
           setTimeout(() => {
             t.fail()
           }, 1e3).unref()
