@@ -5,7 +5,7 @@ const { Client } = require('..')
 const http = require('http')
 
 test('end process on idle', (t) => {
-  t.plan(3)
+  t.plan(2)
 
   const server = http.createServer((req, res) => {
     res.end()
@@ -23,7 +23,6 @@ test('end process on idle', (t) => {
           setTimeout(() => {
             t.fail()
           }, 2e3).unref()
-          t.pass()
         })
     })
   })
