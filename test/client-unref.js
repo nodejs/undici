@@ -1,5 +1,4 @@
 'use strict'
-'use strict'
 
 const { test } = require('tap')
 const { request } = require('..')
@@ -12,8 +11,7 @@ test('end process on idle', (t) => {
     res.end()
   })
   server.keepAliveTimeout = 99999
-
-  t.teardown(server.close.bind(server))
+  server.unref()
 
   server.listen(0, async () => {
     request(`http://localhost:${server.address().port}`, (err, { body }) => {
@@ -21,10 +19,9 @@ test('end process on idle', (t) => {
       body
         .resume()
         .on('end', () => {
-          console.error('end')
           setTimeout(() => {
             t.fail()
-          }, 10e3).unref()
+          }, 1e3).unref()
           t.pass()
         })
     })
