@@ -25,7 +25,7 @@ if (!WASI_ROOT) {
 // Build wasm binary
 execSync(`${WASI_ROOT}/bin/clang \
  --sysroot=${WASI_ROOT}/share/wasi-sysroot \
- -target wasm32-unknown-wasi \
+ -target wasm32-wasi \
  -Ofast \
  -fno-exceptions \
  -fvisibility=hidden \
@@ -42,3 +42,25 @@ execSync(`${WASI_ROOT}/bin/clang \
  ${join(WASM_SRC, 'src')}/*.c \
  -I${join(WASM_SRC, 'include')} \
  -o ${join(WASM_OUT, 'llhttp.wasm')}`, { stdio: 'inherit' })
+
+// Build SIMD wasm binary
+execSync(`${WASI_ROOT}/bin/clang \
+ --sysroot=${WASI_ROOT}/share/wasi-sysroot \
+ -target wasm32-wasi \
+ -msimd128 \
+ -Ofast \
+ -fno-exceptions \
+ -fvisibility=hidden \
+ -mexec-model=reactor \
+ -Wl,-error-limit=0 \
+ -Wl,-O3 \
+ -Wl,--lto-O3 \
+ -Wl,--strip-all \
+ -Wl,--allow-undefined \
+ -Wl,--export-dynamic \
+ -Wl,--export-table \
+ -Wl,--export=malloc \
+ -Wl,--export=free \
+ ${join(WASM_SRC, 'src')}/*.c \
+ -I${join(WASM_SRC, 'include')} \
+ -o ${join(WASM_OUT, 'llhttp_simd.wasm')}`, { stdio: 'inherit' })

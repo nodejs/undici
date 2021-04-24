@@ -34,6 +34,7 @@
     "lint": "standard | snazzy",
     "lint:fix": "standard --fix | snazzy",
     "test": "tap test/*.js --no-coverage && jest test/jest/test",
+    "test:simd": "tap test/*.js --no-coverage --experimental-wasm-simd ",
     "test:tdd": "tap test/*.js -w --no-coverage-report",
     "test:typescript": "tsd",
     "coverage": "standard | snazzy && tap test/*.js",
@@ -41,7 +42,7 @@
     "bench": "concurrently -k -s first npm:bench:server npm:bench:run",
     "bench:server": "node benchmarks/server.js",
     "prebench:run": "node benchmarks/wait.js",
-    "bench:run": "CONNECTIONS=1 node benchmarks/benchmark.js && CONNECTIONS=50 node benchmarks/benchmark.js",
+    "bench:run": "CONNECTIONS=1 node --experimental-wasm-simd benchmarks/benchmark.js && CONNECTIONS=50 node --experimental-wasm-simd benchmarks/benchmark.js",
     "serve:website": "docsify serve .",
     "prepare": "husky install"
   },

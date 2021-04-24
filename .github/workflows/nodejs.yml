@@ -32,6 +32,10 @@ jobs:
       run: |
         npm test
 
+    - name: Unit test SIMD (no coverage)
+      run: |
+        npm test:simd
+
     - name: Unit test (coverage)
       run: |
         npm run coverage:ci
