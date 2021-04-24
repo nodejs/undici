@@ -10,7 +10,7 @@ test('end process on idle', (t) => {
   const server = http.createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  t.teardown(server.unref.bind(server))
 
   server.keepAliveTimeout = 99999
 
