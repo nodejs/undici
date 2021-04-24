@@ -27,7 +27,7 @@ t.test('should not follow redirection by default if not using RedirectAgent', as
 })
 
 t.test('should follow redirection after a HTTP 300', async t => {
-  t.plan(3)
+  t.plan(4)
 
   const body = []
   const server = await startRedirectingServer(t)
@@ -35,20 +35,16 @@ t.test('should follow redirection after a HTTP 300', async t => {
   await stream(
     `http://${server}/300?key=value`,
     { opaque: body, maxRedirections: 10 },
-    ({ statusCode, headers, opaque }) => {
+    ({ statusCode, headers, opaque, context: { history } }) => {
       t.equal(statusCode, 200)
       t.notOk(headers.location)
-      /*
-        TODO: Test for the redirect history once added to the callback data.
-
-        [
-          `http://${server1}/`,
-          `http://${server2}/`,
-          `http://${server3}/`,
-          `http://${server2}/end`,
-          `http://${server3}/end`
-        ]
-      */
+      t.same(history, [
+        `http://${server}/300?key=value`,
+        `http://${server}/300/1?key=value`,
+        `http://${server}/300/2?key=value`,
+        `http://${server}/300/3?key=value`,
+        `http://${server}/300/4?key=value`
+      ])
 
       return createWritable(opaque)
     }
@@ -103,16 +99,12 @@ t.test('should follow redirection after a HTTP 303 changing method to GET', asyn
   const body = []
   const server = await startRedirectingServer(t)
 
-  await stream(
-    `http://${server}/303`,
-    { opaque: body, maxRedirections: 10 },
-    ({ statusCode, headers, opaque }) => {
-      t.equal(statusCode, 200)
-      t.notOk(headers.location)
+  await stream(`http://${server}/303`, { opaque: body, maxRedirections: 10 }, ({ statusCode, headers, opaque }) => {
+    t.equal(statusCode, 200)
+    t.notOk(headers.location)
 
-      return createWritable(opaque)
-    }
-  )
+    return createWritable(opaque)
+  })
 
   t.equal(body.join(''), `GET :: connection@keep-alive host@${server}`)
 })
@@ -231,28 +223,28 @@ t.test('should follow redirection after a HTTP 308', async t => {
 })
 
 t.test('should ignore HTTP 3xx response bodies', async t => {
-  t.plan(3)
+  t.plan(4)
 
   const body = []
   const server = await startRedirectingWithBodyServer(t)
 
-  await stream(`http://${server}/`, { opaque: body, maxRedirections: 10 }, ({ statusCode, headers, opaque }) => {
-    t.equal(statusCode, 200)
-    t.notOk(headers.location)
-    /*
-      TODO: Test for the redirect history once added to the callback data.
+  await stream(
+    `http://${server}/`,
+    { opaque: body, maxRedirections: 10 },
+    ({ statusCode, headers, opaque, context: { history } }) => {
+      t.equal(statusCode, 200)
+      t.notOk(headers.location)
+      t.same(history, [`http://${server}/`])
 
-      [`http://${server}/`]
-    */
-
-    return createWritable(opaque)
-  })
+      return createWritable(opaque)
+    }
+  )
 
   t.equal(body.join(''), 'FINAL')
 })
 
 t.test('should follow a redirect chain up to the allowed number of times', async t => {
-  t.plan(3)
+  t.plan(4)
 
   const body = []
   const server = await startRedirectingServer(t)
@@ -260,14 +252,10 @@ t.test('should follow a redirect chain up to the allowed number of times', async
   await stream(
     `http://${server}/300`,
     { opaque: body, maxRedirections: 2 },
-    ({ statusCode, headers, opaque }) => {
+    ({ statusCode, headers, opaque, context: { history } }) => {
       t.equal(statusCode, 300)
       t.equal(headers.location, `http://${server}/300/3`)
-      /*
-        TODO: Test for the redirect history once added to the callback data.
-
-        [`http://${server}/300`, `http://${server}/300/1`]
-      */
+      t.same(history, [`http://${server}/300`, `http://${server}/300/1`])
 
       return createWritable(opaque)
     }
@@ -277,28 +265,24 @@ t.test('should follow a redirect chain up to the allowed number of times', async
 })
 
 t.test('should follow redirections when going cross origin', async t => {
-  t.plan(3)
+  t.plan(4)
 
-  const [server1] = await startRedirectingChainServers(t)
+  const [server1, server2, server3] = await startRedirectingChainServers(t)
   const body = []
 
   await stream(
     `http://${server1}`,
     { method: 'POST', opaque: body, maxRedirections: 10 },
-    ({ statusCode, headers, opaque }) => {
+    ({ statusCode, headers, opaque, context: { history } }) => {
       t.equal(statusCode, 200)
       t.notOk(headers.location)
-      /*
-        TODO: Test for the redirect history once added to the callback data.
-
-        [
-          `http://${server1}/`,
-          `http://${server2}/`,
-          `http://${server3}/`,
-          `http://${server2}/end`,
-          `http://${server3}/end`
-        ]
-      */
+      t.same(history, [
+        `http://${server1}/`,
+        `http://${server2}/`,
+        `http://${server3}/`,
+        `http://${server2}/end`,
+        `http://${server3}/end`
+      ])
 
       return createWritable(opaque)
     }
@@ -364,13 +348,9 @@ t.test('should handle errors', async t => {
   const body = []
 
   try {
-    await stream(
-      'http://localhost:0',
-      { opaque: body, maxRedirections: 10 },
-      ({ statusCode, headers, opaque }) => {
-        return createWritable(opaque)
-      }
-    )
+    await stream('http://localhost:0', { opaque: body, maxRedirections: 10 }, ({ statusCode, headers, opaque }) => {
+      return createWritable(opaque)
+    })
 
     throw new Error('Did not throw')
   } catch (error) {
