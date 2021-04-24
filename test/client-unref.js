@@ -10,6 +10,8 @@ test('end process on idle', (t) => {
   const server = http.createServer((req, res) => {
     res.end()
   })
+  t.teardown(server.close.bind(server))
+
   server.keepAliveTimeout = 99999
 
   server.listen(0, async () => {
@@ -19,9 +21,9 @@ test('end process on idle', (t) => {
       body
         .resume()
         .on('end', () => {
-          server.unref()
+          t.pass()
           setTimeout(() => {
-            t.fail()
+            throw new Error('asd')
           }, 2e3).unref()
         })
     })
