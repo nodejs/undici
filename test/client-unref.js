@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { request } = require('..')
+const { Client } = require('..')
 const http = require('http')
 
 test('end process on idle', (t) => {
@@ -13,7 +13,8 @@ test('end process on idle', (t) => {
   server.keepAliveTimeout = 99999
 
   server.listen(0, async () => {
-    request(`http://localhost:${server.address().port}`, (err, { body }) => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    client.request({ path: '/', method: 'GET' }, (err, { body }) => {
       t.error(err)
       body
         .resume()
@@ -21,7 +22,7 @@ test('end process on idle', (t) => {
           server.unref()
           setTimeout(() => {
             t.fail()
-          }, 1e3).unref()
+          }, 2e3).unref()
           t.pass()
         })
     })
