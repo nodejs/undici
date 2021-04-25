@@ -20,6 +20,8 @@ jobs:
         run: npm i
       - name: Run Benchmark
         run: npm run bench
+      - name: Run simd Benchmark
+        run: npm run bench:simd
 
   benchmark_branch:
     name: benchmark branch
@@ -35,3 +37,5 @@ jobs:
         run: npm i
       - name: Run Benchmark
         run: npm run bench
+      - name: Run simd Benchmark
+        run: npm run bench:simd
