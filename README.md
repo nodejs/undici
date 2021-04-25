@@ -17,32 +17,41 @@ npm i undici
 
 ## Benchmarks
 
-AMD EPYC 7502P 32 Core, Node 15
-
 The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
-number of unix sockets (connections) with a pipelining depth of 10.
+number of unix sockets (connections) with a pipelining depth of 10. Node 16
+with `--experimental-wasm-simd`.
 
 ### Connections 1
 
-| Test                | Samples |        Result  | Tolerance | Difference with slowest |
-|---------------------|---------|----------------|-----------|-------------------------|
-| http - no keepalive |      99 |   812 reqs/sec |  ± 0.22 % |                         |
-| http - keepalive    |      99 |   819 reqs/sec |  ± 0.20 % | + 0.82 %                |
-| undici - pipeline   |      99 |  6632 reqs/sec |  ± 0.63 % | + 716.73 %              |
-| undici - request    |      99 |  6645 reqs/sec |  ± 1.34 % | + 718.34 %              |
-| undici - stream     |      99 |  7366 reqs/sec |  ± 0.59 % | + 807.11 %              |
-| undici - dispatch   |      99 |  7404 reqs/sec |  ± 0.37 % | + 811.76 %              |
+│ Tests               │ Samples │        Result │ Tolerance │ Difference with slowest │
+|---------------------|---------|---------------|-----------|-------------------------|
+│ http - keepalive    │      10 │  6.82 req/sec │  ± 0.48 % │                       - │
+|---------------------|---------|---------------|-----------|-------------------------|
+│ http - no keepalive │      15 │  6.84 req/sec │  ± 0.87 % │                + 0.21 % │
+|---------------------|---------|---------------|-----------|-------------------------|
+│ undici - pipeline   │      10 │ 61.57 req/sec │  ± 0.89 % │              + 802.73 % │
+|---------------------|---------|---------------|-----------|-------------------------|
+│ undici - stream     │     101 │ 64.96 req/sec │  ± 1.36 % │              + 852.37 % │
+|---------------------|---------|---------------|-----------|-------------------------|
+│ undici - request    │      45 │ 66.63 req/sec │  ± 0.99 % │              + 876.89 % │
+|---------------------|---------|---------------|-----------|-------------------------|
+│ undici - dispatch   │      40 │ 69.26 req/sec │  ± 0.98 % │              + 915.45 % │
 
 ### Connections 50
 
-| Test                | Samples |        Result  | Tolerance | Difference with slowest |
-|---------------------|---------|----------------|-----------|-------------------------|
-| http - no keepalive |      99 | 12968 reqs/sec |  ± 1.86 % |                         |
-| http - keepalive    |      99 | 14745 reqs/sec |  ± 1.59 % | + 13.70 %               |
-| undici - pipeline   |      99 | 20051 reqs/sec |  ± 2.34 % | + 54.62 %               |
-| undici - stream     |     100 | 26456 reqs/sec |  ± 3.50 % | + 104.00 %              |
-| undici - request    |      99 | 29342 reqs/sec |  ± 1.26 % | + 126.26 %              |
-| undici - dispatch   |      99 | 35323 reqs/sec |  ± 0.77 % | + 172.38 %              |
+│ Tests               │ Samples │           Result │ Tolerance │ Difference with slowest │
+|---------------------|---------|------------------|-----------|-------------------------|
+│ http - no keepalive │     101 │  4570.86 req/sec │  ± 2.07 % │                       - │
+|---------------------|---------|------------------|-----------|-------------------------|
+│ http - keepalive    │     101 │  4789.45 req/sec │  ± 3.81 % │                + 4.78 % │
+|---------------------|---------|------------------|-----------|-------------------------|
+│ undici - pipeline   │     101 │  9152.98 req/sec │  ± 2.59 % │              + 100.25 % │
+|---------------------|---------|------------------|-----------|-------------------------|
+│ undici - request    │     101 │ 13609.72 req/sec │  ± 1.39 % │              + 197.75 % │
+|---------------------|---------|------------------|-----------|-------------------------|
+│ undici - stream     │     101 │ 14894.38 req/sec │  ± 1.38 % │              + 225.86 % │
+|---------------------|---------|------------------|-----------|-------------------------|
+│ undici - dispatch   │     101 │ 14976.73 req/sec │  ± 1.56 % │              + 227.66 % │
 
 ## Quick Start
 
