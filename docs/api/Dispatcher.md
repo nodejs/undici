@@ -744,7 +744,7 @@ Parameters:
 * **targets** `Array<Dispatcher>`
 * **error** `Error`
 
-### Event: `'errconnect'`
+### Event: `'connectionError'`
 
 Parameters:
 

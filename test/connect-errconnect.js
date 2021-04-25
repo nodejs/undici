@@ -4,13 +4,13 @@ const { test } = require('tap')
 const { Client } = require('..')
 const net = require('net')
 
-test('connect-errconnect', t => {
+test('connect-connectionError', t => {
   t.plan(2)
 
   const client = new Client('http://localhost:9000')
   t.teardown(client.close.bind(client))
 
-  client.once('errconnect', () => {
+  client.once('connectionError', () => {
     t.pass()
   })
 
