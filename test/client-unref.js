@@ -3,7 +3,7 @@
 const tap = require('tap')
 const { createServer } = require('http')
 const { once } = require('events')
-const { Client } = require('../..')
+const { Client } = require('..')
 const { Worker, isMainThread, parentPort } = require('worker_threads')
 
 // On the main thread, spawn a worker that immediately launches an http server.
