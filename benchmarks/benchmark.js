@@ -151,6 +151,7 @@ function printResults (results) {
       bodyLeft: '│',
       bodyRight: '│',
       bodyJoin: '│',
+      joinBody: '-',
       joinLeft: '|',
       joinRight: '|',
       joinJoin: '|'
