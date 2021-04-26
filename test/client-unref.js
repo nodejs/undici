@@ -19,7 +19,6 @@ if (isMainThread) {
       const url = `http://localhost:${server.address().port}`
       const worker = new Worker(__filename, { workerData: { url } })
       worker.on('exit', code => {
-        console.error(code)
         t.equal(code, 0)
       })
     })
