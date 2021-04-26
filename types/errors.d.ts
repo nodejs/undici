@@ -46,8 +46,8 @@ declare namespace Errors {
   }
 
   /** Body does not match content-length header. */
-  export class ContentLengthMismatchError extends UndiciError {
-    name: 'ContentLengthMismatchError';
+  export class RequestContentLengthMismatchError extends UndiciError {
+    name: 'RequestContentLengthMismatchError';
     code: 'UND_ERR_CONTENT_LENGTH_MISMATCH';
   }
 
