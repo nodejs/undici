@@ -19,6 +19,7 @@ npm i undici
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
 number of unix sockets (connections) with a pipelining depth of 10 running on Node 16.
+The benchmarks have the [simd](https://github.com/WebAssembly/simd) feature enabled.
 
 ### Connections 1
 
@@ -41,10 +42,6 @@ number of unix sockets (connections) with a pipelining depth of 10 running on No
 | undici - request    |      20 |  9766.66 req/sec |  ± 2.79 % |              + 175.39 % |
 | undici - stream     |      15 | 10109.74 req/sec |  ± 2.94 % |              + 185.06 % |
 | undici - dispatch   |      25 | 10949.73 req/sec |  ± 2.54 % |              + 208.75 % |
-
-#### Note
-
-The benchmarks have the [simd](https://github.com/WebAssembly/simd) feature enabled.
 
 ## Quick Start
 
