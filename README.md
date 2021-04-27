@@ -17,32 +17,36 @@ npm i undici
 
 ## Benchmarks
 
-AMD EPYC 7502P 32 Core, Node 15
+AMD EPYC 7502P 32 Core, Node 16
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
 number of unix sockets (connections) with a pipelining depth of 10.
 
 ### Connections 1
 
-| Test                | Samples |        Result  | Tolerance | Difference with slowest |
-|---------------------|---------|----------------|-----------|-------------------------|
-| http - no keepalive |      99 |   812 reqs/sec |  ± 0.22 % |                         |
-| http - keepalive    |      99 |   819 reqs/sec |  ± 0.20 % | + 0.82 %                |
-| undici - pipeline   |      99 |  6632 reqs/sec |  ± 0.63 % | + 716.73 %              |
-| undici - request    |      99 |  6645 reqs/sec |  ± 1.34 % | + 718.34 %              |
-| undici - stream     |      99 |  7366 reqs/sec |  ± 0.59 % | + 807.11 %              |
-| undici - dispatch   |      99 |  7404 reqs/sec |  ± 0.37 % | + 811.76 %              |
+| Tests               | Samples |        Result | Tolerance | Difference with slowest |
+|---------------------|---------|---------------|-----------|-------------------------|
+| http - no keepalive |      15 |  4.63 req/sec |  ± 2.77 % |                       - |
+| http - keepalive    |      10 |  4.81 req/sec |  ± 2.16 % |                + 3.94 % |
+| undici - stream     |      25 | 62.22 req/sec |  ± 2.67 % |             + 1244.58 % |
+| undici - dispatch   |      15 | 64.33 req/sec |  ± 2.47 % |             + 1290.24 % |
+| undici - request    |      15 | 66.08 req/sec |  ± 2.48 % |             + 1327.88 % |
+| undici - pipeline   |      10 | 66.13 req/sec |  ± 1.39 % |             + 1329.08 % |
 
 ### Connections 50
 
-| Test                | Samples |        Result  | Tolerance | Difference with slowest |
-|---------------------|---------|----------------|-----------|-------------------------|
-| http - no keepalive |      99 | 12968 reqs/sec |  ± 1.86 % |                         |
-| http - keepalive    |      99 | 14745 reqs/sec |  ± 1.59 % | + 13.70 %               |
-| undici - pipeline   |      99 | 20051 reqs/sec |  ± 2.34 % | + 54.62 %               |
-| undici - stream     |     100 | 26456 reqs/sec |  ± 3.50 % | + 104.00 %              |
-| undici - request    |      99 | 29342 reqs/sec |  ± 1.26 % | + 126.26 %              |
-| undici - dispatch   |      99 | 35323 reqs/sec |  ± 0.77 % | + 172.38 %              |
+| Tests               | Samples |           Result | Tolerance | Difference with slowest |
+|---------------------|---------|------------------|-----------|-------------------------|
+| http - no keepalive |      50 |  3546.49 req/sec |  ± 2.90 % |                       - |
+| http - keepalive    |      15 |  5692.67 req/sec |  ± 2.48 % |               + 60.52 % |
+| undici - pipeline   |      25 |  8478.71 req/sec |  ± 2.62 % |              + 139.07 % |
+| undici - request    |      20 |  9766.66 req/sec |  ± 2.79 % |              + 175.39 % |
+| undici - stream     |      15 | 10109.74 req/sec |  ± 2.94 % |              + 185.06 % |
+| undici - dispatch   |      25 | 10949.73 req/sec |  ± 2.54 % |              + 208.75 % |
+
+#### Note
+
+The benchmarks have the [simd](https://github.com/WebAssembly/simd) feature enabled.
 
 ## Quick Start
 
