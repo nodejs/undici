@@ -17,10 +17,15 @@ test('connect-timeout', t => {
     return new net.Socket(options)
   }
 
+  const timeout = setTimeout(() => {
+    t.fail()
+  }, 2e3)
+
   client.request({
     path: '/',
     method: 'GET'
   }, (err) => {
     t.ok(err instanceof errors.ConnectTimeoutError)
+    clearTimeout(timeout)
   })
 })
