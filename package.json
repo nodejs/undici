@@ -39,9 +39,10 @@
     "coverage": "standard | snazzy && tap test/*.js",
     "coverage:ci": "npm run coverage -- --coverage-report=lcovonly",
     "bench": "concurrently -k -s first npm:bench:server npm:bench:run",
+    "bench:simd": "concurrently -k -s first npm:bench:server npm:bench:run:simd",
     "bench:server": "node benchmarks/server.js",
     "prebench:run": "node benchmarks/wait.js",
-    "bench:run": "CONNECTIONS=1 node benchmarks/benchmark.js && CONNECTIONS=50 node benchmarks/benchmark.js",
+    "bench:run": "CONNECTIONS=1 node --experimental-wasm-simd benchmarks/benchmark.js && CONNECTIONS=50 node --experimental-wasm-simd benchmarks/benchmark.js",
     "serve:website": "docsify serve .",
     "prepare": "husky install"
   },
