@@ -747,6 +747,17 @@ Parameters:
 * **targets** `Array<Dispatcher>`
 * **error** `Error`
 
+### Event: `'connectionError'`
+
+Parameters:
+
+* **origin** `URL`
+* **targets** `Array<Dispatcher>`
+* **error** `Error`
+
+Emitted when dispatcher fails to connect to
+origin.
+
 ### Event: `'drain'`
 
 Parameters:
