@@ -33,7 +33,7 @@
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
     "lint:fix": "standard --fix | snazzy",
-    "test": "tap test/*.js --no-coverage",
+    "test": "tap test/*.js --no-coverage  && jest test/jest/test",
     "test:tdd": "tap test/*.js -w --no-coverage-report",
     "test:typescript": "tsd",
     "coverage": "standard | snazzy && tap test/*.js",
