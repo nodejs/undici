@@ -17,10 +17,8 @@ npm i undici
 
 ## Benchmarks
 
-Node 16
-
 The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
-number of unix sockets (connections) with a pipelining depth of 10.
+number of unix sockets (connections) with a pipelining depth of 10 running on Node 16.
 
 ### Connections 1
 
