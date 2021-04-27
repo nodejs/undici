@@ -1,12 +1,12 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client, errors } = require('..')
+const { Client, Pool, errors } = require('..')
 const { createServer } = require('http')
 const net = require('net')
 const { Readable } = require('stream')
 
-const { kSocket } = require('../lib/core/symbols')
+const { kSocket, kConnect } = require('../lib/core/symbols')
 
 test('GET errors and reconnect with pipelining 1', (t) => {
   t.plan(9)
@@ -440,6 +440,38 @@ test('invalid options throws', (t) => {
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
     t.equal(err.message, 'invalid connectTimeout')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { [kConnect]: 'asd' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'connect must be a function')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { [kConnect]: -1 }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'connect must be a function')
+  }
+
+  try {
+    new Pool(new URL('http://localhost:200'), { [kConnect]: 'asd' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'connect must be a function')
+  }
+
+  try {
+    new Pool(new URL('http://localhost:200'), { [kConnect]: -1 }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'connect must be a function')
   }
 
   t.end()

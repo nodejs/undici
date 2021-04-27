@@ -6,7 +6,7 @@ const https = require('https')
 const crypto = require('crypto')
 const { test } = require('tap')
 const { Client, Pool } = require('..')
-const { kSocket, kTLSOpts, kTLSSession } = require('../lib/core/symbols')
+const { kSocket } = require('../lib/core/symbols')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
@@ -33,14 +33,15 @@ test('A client should reuse its TLS session', {
     })
 
     server.listen(0, function () {
+      const tls = {
+        ca,
+        rejectUnauthorized: false,
+        maxCachedSessions: 1,
+        servername: 'agent1'
+      }
       const client = new Client(`https://localhost:${server.address().port}`, {
         pipelining: 0,
-        tls: {
-          ca,
-          rejectUnauthorized: false,
-          maxCachedSessions: 1,
-          servername: 'agent1'
-        }
+        tls
       })
 
       t.teardown(() => {
@@ -82,9 +83,9 @@ test('A client should reuse its TLS session', {
         const options = queue.shift()
         if (options.ciphers) {
           // Choose different cipher to use different cache entry
-          client[kTLSOpts].ciphers = options.ciphers
+          tls.ciphers = options.ciphers
         } else {
-          delete client[kTLSOpts].ciphers
+          delete tls.ciphers
         }
         client.request(options, (err, data) => {
           t.error(err)
@@ -142,12 +143,14 @@ test('A pool should be able to reuse TLS sessions between clients', {
   const ASSERT_PERFORMANCE_GAIN = false
 
   t.test('Prepare request', t => {
-    t.plan(2 + REQ_COUNT + (ASSERT_PERFORMANCE_GAIN ? 1 : 0))
+    t.plan(2 + 1 + (ASSERT_PERFORMANCE_GAIN ? 1 : 0))
     const server = https.createServer(options, (req, res) => {
       serverRequests++
       res.end()
     })
-    server.on('error', err => console.error(err))
+
+    let numSessions = 0
+    const sessions = []
 
     server.listen(0, async () => {
       const poolWithSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
@@ -173,6 +176,15 @@ test('A pool should be able to reuse TLS sessions between clients', {
         }
       })
 
+      poolWithSessionReuse.on('connect', (url, targets) => {
+        const y = targets[1][kSocket].getSession()
+        if (sessions.some(x => x.equals(y))) {
+          return
+        }
+        sessions.push(y)
+        numSessions++
+      })
+
       t.teardown(() => {
         poolWithSessionReuse.close()
         poolWithoutSessionReuse.close()
@@ -181,19 +193,12 @@ test('A pool should be able to reuse TLS sessions between clients', {
 
       function request (pool, expectTLSSessionCache) {
         return new Promise((resolve, reject) => {
-          const s = startDelay()
           pool.request({
             method: 'GET',
             path: '/'
           }, (err, data) => {
-            const responseTime = endDelay(s)
             if (err) return reject(err)
-            if (expectTLSSessionCache) {
-              t.ok(pool[kTLSSession], 'Expected the session to be cached')
-            }
-            data.body.resume().on('end', () => {
-              resolve(responseTime)
-            })
+            data.body.resume().on('end', resolve)
           })
         })
       }
@@ -201,23 +206,17 @@ test('A pool should be able to reuse TLS sessions between clients', {
       async function runRequests (pool, numIterations, expectTLSSessionCache) {
         const requests = []
         // For the session reuse, we first need one client to connect to receive a valid tls session to reuse
-        const responseTime = await request(pool, false)
+        await request(pool, false)
         while (numIterations--) {
           requests.push(request(pool, expectTLSSessionCache))
         }
-        return await Promise.all(requests).then(responseTimes => responseTimes.concat([responseTime]))
+        return await Promise.all(requests)
       }
 
-      const responseTimesWithoutSessionReuse = await runRequests(poolWithoutSessionReuse, REQ_COUNT, false)
-      const responseTimesWithSessionReuse = await runRequests(poolWithSessionReuse, REQ_COUNT, true)
+      await runRequests(poolWithoutSessionReuse, REQ_COUNT, false)
+      await runRequests(poolWithSessionReuse, REQ_COUNT, true)
 
-      const averageResponseTimeWithSessionReuse = responseTimesWithSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithSessionReuse.length
-      const averageResponseTimeWithoutSessionReuse = responseTimesWithoutSessionReuse.reduce((sum, val) => sum + val, 0) / responseTimesWithoutSessionReuse.length
-
-      if (ASSERT_PERFORMANCE_GAIN) {
-        t.ok(averageResponseTimeWithSessionReuse < averageResponseTimeWithoutSessionReuse, `Average request response time should be lower with session reuse enabled (${averageResponseTimeWithSessionReuse}ms) than without (${averageResponseTimeWithoutSessionReuse}ms)`)
-      }
-
+      t.equal(numSessions, 2)
       t.equal(serverRequests, 2 + REQ_COUNT * 2)
       t.pass()
     })
@@ -225,12 +224,3 @@ test('A pool should be able to reuse TLS sessions between clients', {
 
   t.end()
 })
-
-const startDelay = () => {
-  return process.hrtime()
-}
-
-const endDelay = (hrtimeStart) => {
-  const hrduration = process.hrtime(hrtimeStart)
-  return hrduration[0] * 1e3 + hrduration[1] / 1e6
-}
