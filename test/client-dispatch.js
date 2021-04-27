@@ -1,8 +1,8 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client, Pool, errors } = require('..')
 const http = require('http')
+const { Client, Pool, errors } = require('..')
 
 test('dispatch invalid opts', (t) => {
   t.plan(8)
@@ -73,7 +73,7 @@ test('dispatch invalid opts', (t) => {
   })
 })
 
-test('basic dispatch get', (t) => {
+test('basic dispatch get', { only: false }, (t) => {
   t.plan(11)
 
   const server = http.createServer((req, res) => {
@@ -118,6 +118,69 @@ test('basic dispatch get', (t) => {
         t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       },
       onError () {
+        t.fail()
+      }
+    })
+  })
+})
+
+test('basic dispatch (redirection) get', { only: true }, async (t) => {
+  t.plan(11)
+
+  const maxRedirections = 2
+  const messages = ['hello', ' world', '!']
+  let currentRedirects = 0
+  const server = http.createServer((req, res) => {
+    let message = 'x2'
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
+    t.equal(undefined, req.headers.foo)
+    t.equal('bar', req.headers.bar)
+    t.equal('null', req.headers.baz)
+    t.equal(undefined, req.headers['content-length'])
+
+    if (currentRedirects < maxRedirections) {
+      res.statusCode = 301
+      res.setHeader('Connection', 'close')
+      res.setHeader('Location', `http://localhost:${server.address().port}/`)
+      message = messages[currentRedirects]
+      currentRedirects++
+    }
+
+    res.end(message)
+  })
+
+  const reqHeaders = {
+    foo: undefined,
+    bar: 'bar',
+    baz: null
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { maxRedirections })
+    t.teardown(client.close.bind(client))
+    t.teardown(server.close.bind(server))
+
+    const bufs = []
+    client.dispatch({
+      path: '/',
+      method: 'GET',
+      headers: reqHeaders
+    }, {
+      onConnect () {
+      },
+      onHeaders () {},
+      onData (buf) {
+        console.log(buf.toString('utf-8'))
+        bufs.push(buf)
+      },
+      onComplete (trailers) {
+        t.equal(trailers, null)
+        t.equal('hello world!', Buffer.concat(bufs).toString('utf8'))
+      },
+      onError (err) {
+        console.log('error;', err)
         t.fail()
       }
     })
