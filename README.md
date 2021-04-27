@@ -17,7 +17,7 @@ npm i undici
 
 ## Benchmarks
 
-AMD EPYC 7502P 32 Core, Node 16
+Node 16
 
 The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
 number of unix sockets (connections) with a pipelining depth of 10.
