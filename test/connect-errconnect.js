@@ -27,6 +27,6 @@ test('connect-connectionError', t => {
     path: '/',
     method: 'GET'
   }, (err) => {
-    t.strictEqual(err, _err)
+    t.equal(err, _err)
   })
 })
