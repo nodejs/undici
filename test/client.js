@@ -1128,3 +1128,26 @@ test('parser pause with no body timeout', (t) => {
     })
   })
 })
+
+test('TypedArray and DataView body', (t) => {
+  t.plan(3)
+  const server = createServer((req, res) => {
+    t.equal(req.headers['content-length'], '8')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.close.bind(client))
+
+    const body = Uint8Array.from(Buffer.alloc(8))
+    client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
+      t.error(err)
+      t.equal(statusCode, 200)
+      body.resume()
+    })
+  })
+})
