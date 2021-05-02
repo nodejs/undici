@@ -1024,7 +1024,7 @@ test('connected', (t) => {
       t.equal(client, self)
     })
 
-    t.equal(client[kConnected], 0)
+    t.equal(client[kConnected], false)
     client[kConnect](() => {
       client.request({
         path: '/',
@@ -1032,7 +1032,7 @@ test('connected', (t) => {
       }, (err) => {
         t.error(err)
       })
-      t.equal(client[kConnected], 1)
+      t.equal(client[kConnected], true)
     })
   })
 })
@@ -1049,9 +1049,9 @@ test('emit disconnect after destroy', t => {
     const url = new URL(`http://localhost:${server.address().port}`)
     const client = new Client(url)
 
-    t.equal(client[kConnected], 0)
+    t.equal(client[kConnected], false)
     client[kConnect](() => {
-      t.equal(client[kConnected], 1)
+      t.equal(client[kConnected], true)
       let disconnected = false
       client.on('disconnect', () => {
         disconnected = true
