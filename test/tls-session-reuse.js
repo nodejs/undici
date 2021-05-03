@@ -36,12 +36,12 @@ test('A client should reuse its TLS session', {
       const tls = {
         ca,
         rejectUnauthorized: false,
-        maxCachedSessions: 1,
         servername: 'agent1'
       }
       const client = new Client(`https://localhost:${server.address().port}`, {
         pipelining: 0,
-        tls
+        tls,
+        maxCachedSessions: 1
       })
 
       t.teardown(() => {
@@ -154,12 +154,12 @@ test('A client should disable session caching', {
       const tls = {
         ca,
         rejectUnauthorized: false,
-        maxCachedSessions: 0,
         servername: 'agent1'
       }
       const client = new Client(`https://localhost:${server.address().port}`, {
         pipelining: 0,
-        tls
+        tls,
+        maxCachedSessions: 0
       })
 
       t.teardown(() => {
@@ -234,23 +234,21 @@ test('A pool should be able to reuse TLS sessions between clients', {
       const poolWithSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
         pipelining: 0,
         connections: 100,
+        maxCachedSessions: 1,
         tls: {
           ca,
           rejectUnauthorized: false,
-          maxCachedSessions: 1,
-          servername: 'agent1',
-          reuseSessions: true
+          servername: 'agent1'
         }
       })
       const poolWithoutSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
         pipelining: 0,
         connections: 100,
+        maxCachedSessions: 0,
         tls: {
           ca,
           rejectUnauthorized: false,
-          maxCachedSessions: 1,
-          servername: 'agent1',
-          reuseSessions: false
+          servername: 'agent1'
         }
       })
 
