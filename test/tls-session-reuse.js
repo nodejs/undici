@@ -134,6 +134,84 @@ test('A client should reuse its TLS session', {
   t.end()
 })
 
+test('A client should disable session caching', {
+  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
+}, t => {
+  const clientSessions = {}
+  let serverRequests = 0
+
+  t.test('Prepare request', t => {
+    t.plan(3)
+    const server = https.createServer(options, (req, res) => {
+      if (req.url === '/drop-key') {
+        server.setTicketKeys(crypto.randomBytes(48))
+      }
+      serverRequests++
+      res.end()
+    })
+
+    server.listen(0, function () {
+      const tls = {
+        ca,
+        rejectUnauthorized: false,
+        maxCachedSessions: 0,
+        servername: 'agent1'
+      }
+      const client = new Client(`https://localhost:${server.address().port}`, {
+        pipelining: 0,
+        tls
+      })
+
+      t.teardown(() => {
+        client.close()
+        server.close()
+      })
+
+      const queue = [{
+        name: 'first',
+        method: 'GET',
+        path: '/'
+      }, {
+        name: 'second',
+        method: 'GET',
+        path: '/'
+      }]
+
+      function request () {
+        const options = queue.shift()
+        if (options.ciphers) {
+          // Choose different cipher to use different cache entry
+          tls.ciphers = options.ciphers
+        } else {
+          delete tls.ciphers
+        }
+        client.request(options, (err, data) => {
+          t.error(err)
+          clientSessions[options.name] = client[kSocket].getSession()
+          data.body.resume().on('end', () => {
+            if (queue.length !== 0) {
+              return request()
+            }
+            t.pass()
+          })
+        })
+      }
+      request()
+    })
+  })
+
+  t.test('Verify cached sessions', t => {
+    t.plan(2)
+    t.equal(serverRequests, 2)
+    t.not(
+      clientSessions.first.toString('hex'),
+      clientSessions.second.toString('hex')
+    )
+  })
+
+  t.end()
+})
+
 test('A pool should be able to reuse TLS sessions between clients', {
   skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
 }, t => {
