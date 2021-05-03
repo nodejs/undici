@@ -6,6 +6,8 @@ const { createServer } = require('http')
 const EE = require('events')
 const { kConnect } = require('../lib/core/symbols')
 const { Readable } = require('stream')
+const net = require('net')
+const { promisify } = require('util')
 
 test('request abort before headers', (t) => {
   t.plan(6)
@@ -96,4 +98,42 @@ test('trailers', (t) => {
         t.strictSame(trailers, { 'content-md5': 'test' })
       })
   })
+})
+
+test('destroy socket abruptly', async (t) => {
+  t.plan(2)
+
+  const server = net.createServer((socket) => {
+    const lines = [
+      'HTTP/1.1 200 OK',
+      'Date: Sat, 09 Oct 2010 14:28:02 GMT',
+      'Connection: close',
+      '',
+      'the body'
+    ]
+    socket.end(lines.join('\r\n'))
+    socket.destroy()
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.teardown(client.close.bind(client))
+
+  const { statusCode, body } = await client.request({
+    path: '/',
+    method: 'GET'
+  })
+
+  t.equal(statusCode, 200)
+
+  body.setEncoding('utf8')
+
+  let actual = ''
+
+  for await (const chunk of body) {
+    actual += chunk
+  }
+
+  t.equal(actual, 'the body')
 })
