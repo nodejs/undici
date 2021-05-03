@@ -115,7 +115,7 @@ test('destroy socket abruptly', async (t) => {
 
     // Unfortunately calling destroy synchronously might get us flaky results,
     // therefore we delay it to the next event loop run.
-    socket.destroy()
+    setImmediate(socket.destroy.bind(socket))
   })
   t.teardown(server.close.bind(server))
 
@@ -156,7 +156,7 @@ test('destroy socket abruptly with keep-alive', async (t) => {
 
     // Unfortunately calling destroy synchronously might get us flaky results,
     // therefore we delay it to the next event loop run.
-    socket.destroy()
+    setImmediate(socket.destroy.bind(socket))
   })
   t.teardown(server.close.bind(server))
 
