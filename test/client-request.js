@@ -140,3 +140,44 @@ test('destroy socket abruptly', async (t) => {
 
   t.equal(actual, 'the body')
 })
+
+test('destroy socket abruptly with keep-alive', async (t) => {
+  t.plan(2)
+
+  const server = net.createServer((socket) => {
+    const lines = [
+      'HTTP/1.1 200 OK',
+      'Date: Sat, 09 Oct 2010 14:28:02 GMT',
+      'Connection: keep-alive',
+      '',
+      'the body'
+    ]
+    socket.end(lines.join('\r\n'))
+
+    // Unfortunately calling destroy synchronously might get us flaky results,
+    // therefore we delay it to the next event loop run.
+    socket.destroy()
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.teardown(client.close.bind(client))
+
+  const { statusCode, body } = await client.request({
+    path: '/',
+    method: 'GET'
+  })
+
+  t.equal(statusCode, 200)
+
+  body.setEncoding('utf8')
+
+  let actual = ''
+
+  for await (const chunk of body) {
+    actual += chunk
+  }
+
+  t.equal(actual, 'the body')
+})
