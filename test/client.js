@@ -1004,6 +1004,8 @@ test('connected', (t) => {
   t.plan(7)
 
   const server = createServer((req, res) => {
+    // needed so that disconnect is emitted
+    res.setHeader('connection', 'close')
     req.pipe(res)
   })
   t.teardown(server.close.bind(server))
