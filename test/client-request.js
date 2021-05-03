@@ -149,6 +149,7 @@ test('destroy socket abruptly with keep-alive', async (t) => {
       'HTTP/1.1 200 OK',
       'Date: Sat, 09 Oct 2010 14:28:02 GMT',
       'Connection: keep-alive',
+      'Content-Length: 42',
       '',
       'the body'
     ]
@@ -173,11 +174,14 @@ test('destroy socket abruptly with keep-alive', async (t) => {
 
   body.setEncoding('utf8')
 
-  let actual = ''
-
-  for await (const chunk of body) {
-    actual += chunk
+  try {
+    /* eslint-disable */
+    for await (const _ of body) {
+      // empty on purpose
+    }
+    /* eslint-enable */
+    t.fail('no error')
+  } catch (err) {
+    t.pass('error happened')
   }
-
-  t.equal(actual, 'the body')
 })
