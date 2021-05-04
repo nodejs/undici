@@ -37,5 +37,7 @@ declare namespace Client {
     headersTimeout?: number | null;
     /** If `true`, an error is thrown when the request content-length header doesn't match the length of the request body. Default: `true`. */
     strictContentLength?: boolean
+    /** maximum number of TLS cached sessions. Use 0 to disable TLS session caching. Default: 100. */
+    maxCachedSessions?: number | null;
   }
 }

@@ -474,6 +474,22 @@ test('invalid options throws', (t) => {
     t.equal(err.message, 'connect must be a function')
   }
 
+  try {
+    new Client(new URL('http://localhost:200'), { maxCachedSessions: -10 }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'maxCachedSessions must be a positive integer or zero')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { maxCachedSessions: 'foo' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'maxCachedSessions must be a positive integer or zero')
+  }
+
   t.end()
 })
 
