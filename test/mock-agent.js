@@ -11,6 +11,7 @@ const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
 const { kAgent } = require('../lib/mock/mock-symbols')
 const Dispatcher = require('../lib/dispatcher')
+const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 
 test('MockAgent - constructor', t => {
   t.plan(5)
@@ -1825,6 +1826,38 @@ test('MockAgent - enableNetConnect with an unknown input should throw', async (t
   t.throws(() => mockAgent.enableNetConnect({}), new InvalidArgumentError('Unsupported matcher. Must be one of String|Function|RegExp.'))
 })
 
+test('MockAgent - enableNetConnect should throw if dispatch not found in registered dispatches and not allowed by net connect', async (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.equal(req.url, '/foo')
+    t.equal(req.method, 'GET')
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/wrong',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  mockAgent.enableNetConnect('example.com:9999')
+
+  await t.rejects(request(`${baseUrl}/foo`, {
+    method: 'GET'
+  }), new MockNotMatchedError(`Request to ${baseUrl} does not match any registered mock dispatches and net.connect is not enabled for this origin. Please register a mock dispatch for this origin or add this origin to your MockAgent.enableNetConnect call.`))
+})
+
 test('MockAgent - disableNetConnect should throw if dispatch not found by net connect', async (t) => {
   t.plan(1)
 
@@ -1854,5 +1887,5 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
 
   await t.rejects(request(`${baseUrl}/foo`, {
     method: 'GET'
-  }), new Error(`Unable to find mock dispatch and real dispatches are disabled for http://localhost:${server.address().port}`))
+  }), new MockNotMatchedError(`Request to ${baseUrl} does not match any registered mock dispatches and net.connect is disabled. Please register a mock dispatch for this origin.`))
 })
