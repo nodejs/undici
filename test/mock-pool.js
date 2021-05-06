@@ -33,7 +33,7 @@ test('MockPool - constructor', t => {
 })
 
 test('MockPool - dispatch', t => {
-  t.plan(1)
+  t.plan(2)
 
   t.test('should handle a single interceptor', (t) => {
     t.plan(1)
@@ -68,6 +68,41 @@ test('MockPool - dispatch', t => {
       onData: () => {},
       onComplete: () => {}
     }))
+  })
+
+  t.test('should directly throw error from mockDispatch function if error is not a MockNotMatchedError', (t) => {
+    t.plan(1)
+
+    const baseUrl = 'http://localhost:9999'
+
+    const mockAgent = new MockAgent()
+    t.teardown(mockAgent.close.bind(mockAgent))
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    this[kUrl] = new URL('http://localhost:9999')
+    mockPool[kDispatches] = [
+      {
+        path: '/foo',
+        method: 'GET',
+        data: {
+          statusCode: 200,
+          data: 'hello',
+          headers: {},
+          trailers: {},
+          error: null
+        }
+      }
+    ]
+
+    t.throws(() => mockPool.dispatch({
+      path: '/foo',
+      method: 'GET'
+    }, {
+      onHeaders: (_statusCode, _headers, resume) => { throw new Error('kaboom') },
+      onData: () => {},
+      onComplete: () => {}
+    }), new Error('kaboom'))
   })
 })
 
