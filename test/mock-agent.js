@@ -1826,14 +1826,13 @@ test('MockAgent - enableNetConnect with an unknown input should throw', async (t
   t.throws(() => mockAgent.enableNetConnect({}), new InvalidArgumentError('Unsupported matcher. Must be one of String|Function|RegExp.'))
 })
 
-test('MockAgent - enableNetConnect should throw if dispatch not found in registered dispatches and not allowed by net connect', async (t) => {
+test('MockAgent - enableNetConnect should throw if dispatch not matched for path and the origin is not allowed by net connect', async (t) => {
   t.plan(1)
 
   const server = createServer((req, res) => {
-    t.equal(req.url, '/foo')
-    t.equal(req.method, 'GET')
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
+    t.fail('should not be called')
+    t.end()
+    res.end('should not be called')
   })
   t.teardown(server.close.bind(server))
 
@@ -1847,15 +1846,79 @@ test('MockAgent - enableNetConnect should throw if dispatch not found in registe
 
   const mockPool = mockAgent.get(baseUrl)
   mockPool.intercept({
-    path: '/wrong',
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  mockAgent.enableNetConnect('example.com:9999')
+
+  await t.rejects(request(`${baseUrl}/wrong`, {
+    method: 'GET'
+  }), new MockNotMatchedError(`Mock dispatch not matched for path '/wrong': subsequent request to origin ${baseUrl} is not allowed (net.connect is not enabled for this origin)`))
+})
+
+test('MockAgent - enableNetConnect should throw if dispatch not matched for method and the origin is not allowed by net connect', async (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.fail('should not be called')
+    t.end()
+    res.end('should not be called')
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/foo',
     method: 'GET'
   }).reply(200, 'foo')
 
   mockAgent.enableNetConnect('example.com:9999')
 
   await t.rejects(request(`${baseUrl}/foo`, {
-    method: 'GET'
-  }), new MockNotMatchedError(`Request to ${baseUrl} does not match any registered mock dispatches and net.connect is not enabled for this origin. Please register a mock dispatch for this origin or add this origin to your MockAgent.enableNetConnect call.`))
+    method: 'WRONG'
+  }), new MockNotMatchedError(`Mock dispatch not matched for method 'WRONG': subsequent request to origin ${baseUrl} is not allowed (net.connect is not enabled for this origin)`))
+})
+
+test('MockAgent - enableNetConnect should throw if dispatch not matched for body and the origin is not allowed by net connect', async (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.fail('should not be called')
+    t.end()
+    res.end('should not be called')
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/foo',
+    method: 'GET',
+    body: 'hello'
+  }).reply(200, 'foo')
+
+  mockAgent.enableNetConnect('example.com:9999')
+
+  await t.rejects(request(`${baseUrl}/foo`, {
+    method: 'GET',
+    body: 'wrong'
+  }), new MockNotMatchedError(`Mock dispatch not matched for body 'wrong': subsequent request to origin ${baseUrl} is not allowed (net.connect is not enabled for this origin)`))
 })
 
 test('MockAgent - disableNetConnect should throw if dispatch not found by net connect', async (t) => {
@@ -1887,5 +1950,5 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
 
   await t.rejects(request(`${baseUrl}/foo`, {
     method: 'GET'
-  }), new MockNotMatchedError(`Request to ${baseUrl} does not match any registered mock dispatches and net.connect is disabled. Please register a mock dispatch for this origin.`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for path '/foo': subsequent request to origin ${baseUrl} is not allowed (net.connect disabled)`))
 })

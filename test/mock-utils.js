@@ -1,6 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
+const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 const { deleteMockDispatch, getMockDispatch } = require('../lib/mock/mock-utils')
 
 test('deleteMockDispatch - should do nothing if not able to find mock dispatch', (t) => {
@@ -66,7 +67,7 @@ test('getMockDispatch', (t) => {
     })
   })
 
-  t.test('it should return undefined is dispatch not found', (t) => {
+  t.test('it should throw if dispatch not found', (t) => {
     t.plan(1)
     const dispatches = [
       {
@@ -76,10 +77,9 @@ test('getMockDispatch', (t) => {
       }
     ]
 
-    const result = getMockDispatch(dispatches, {
+    t.throws(() => getMockDispatch(dispatches, {
       path: 'wrong',
       method: 'wrong'
-    })
-    t.equal(result, undefined)
+    }), new MockNotMatchedError('Mock dispatch not matched for path \'wrong\''))
   })
 })
