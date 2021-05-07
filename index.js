@@ -11,6 +11,7 @@ const api = require('./lib/api')
 const MockClient = require('./lib/mock/mock-client')
 const MockAgent = require('./lib/mock/mock-agent')
 const MockPool = require('./lib/mock/mock-pool')
+const mockErrors = require('./lib/mock/mock-errors')
 
 Object.assign(Dispatcher.prototype, api)
 
@@ -90,3 +91,4 @@ module.exports.upgrade = makeDispatcher(api.upgrade)
 module.exports.MockClient = MockClient
 module.exports.MockPool = MockPool
 module.exports.MockAgent = MockAgent
+module.exports.mockErrors = mockErrors

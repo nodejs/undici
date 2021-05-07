@@ -1,6 +1,4 @@
 import Agent from './agent'
-import MockPool from './mock-pool'
-import MockClient from './mock-client'
 import Dispatcher from './dispatcher'
 
 export = MockAgent
