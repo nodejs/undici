@@ -57,6 +57,7 @@ Returns: `MockInterceptor` corresponding to the input options.
 * **path** `string | RegExp | (path: string) => boolean` - a matcher for the HTTP request path.
 * **method** `string | RegExp | (method: string) => boolean` - a matcher for the HTTP request method.
 * **body** `string | RegExp | (body: string) => boolean` - (optional) - a matcher for the HTTP request body.
+* **headers** `Record<string, string | RegExp | (body: string) => boolean`> - (optional) - a matcher for the HTTP request headers. To be intercepted, a request must match all defined headers. Extra headers not defined here may (or may not) be included in the request and do not affect the interception in any way.
 
 ### Return: `MockInterceptor`
 
@@ -139,7 +140,7 @@ const result1 = await request('http://localhost:3000/foo')
 const result2 = await request('http://localhost:3000/hello')
 ```
 
-#### Example - Mocked request with query body, headers and trailers
+#### Example - Mocked request with query body, request headers and response headers and trailers
 
 ```js
 'use strict'
@@ -152,7 +153,11 @@ const mockPool = mockAgent.get('http://localhost:3000')
 mockPool.intercept({
   path: '/foo?hello=there&see=ya',
   method: 'POST',
-  body: 'form1=data1&form2=data2'
+  body: 'form1=data1&form2=data2',
+  headers: {
+    'User-Agent': 'undici',
+    Host: 'example.com'
+  }
 }).reply(200, { foo: 'bar' }, {
   headers: { 'content-type': 'application/json' },
   trailers: { 'Content-MD5': 'test' }
@@ -165,7 +170,12 @@ const {
   body
 } = await request('http://localhost:3000/foo?hello=there&see=ya', {
     method: 'POST',
-    body: 'form1=data1&form2=data2'
+    body: 'form1=data1&form2=data2',
+    headers: {
+      foo: 'bar',
+      'User-Agent': 'undici',
+      Host: 'example.com'
+    }
   })
 
 console.log('response received', statusCode) // 200
@@ -191,13 +201,22 @@ const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
   path: '/foo',
-  method: new RegExp('^GET$'),
+  method: /^GET$/,
   body: (value) => value === 'form=data',
+  headers: {
+    'User-Agent': 'undici',
+    Host: /^example.com$/
+  }
 }).reply(200, 'foo')
 
 const result = await request('http://localhost:3000/foo', {
   method: 'GET',
-  body: 'form=data'
+  body: 'form=data',
+  headers: {
+    foo: 'bar',
+    'User-Agent': 'undici',
+    Host: 'example.com'
+  }
 })
 // Will match and return mocked data
 ```
