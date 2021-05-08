@@ -7,8 +7,8 @@ import { MockInterceptor } from '../../types/mock-interceptor'
 
   // intercept
   expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: '' }))
-  expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: '', body: '' }))
-  expectAssignable<MockInterceptor>(mockClient.intercept({ path: new RegExp(''), method: new RegExp(''), body: new RegExp('') }))
+  expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: '', body: '', headers: { 'User-Agent': '' } }))
+  expectAssignable<MockInterceptor>(mockClient.intercept({ path: new RegExp(''), method: new RegExp(''), body: new RegExp(''), headers: { 'User-Agent': new RegExp('') } }))
   expectAssignable<MockInterceptor>(mockClient.intercept({
     path: (path) => {
       expectAssignable<string>(path)
@@ -21,6 +21,12 @@ import { MockInterceptor } from '../../types/mock-interceptor'
     body: (body) => {
       expectAssignable<string>(body)
       return true
+    },
+    headers: {
+      'User-Agent': (header) => {
+        expectAssignable<string>(header)
+        return true
+      }
     }
   }))
 
