@@ -17,7 +17,7 @@ npm i undici
 
 ## Benchmarks
 
-The benchmark is a simple `hello world` [example](benchmarks/index.js) using a
+The benchmark is a simple `hello world` [example](benchmarks/benchmark.js) using a
 number of unix sockets (connections) with a pipelining depth of 10 running on Node 16.
 The benchmarks have the [simd](https://github.com/WebAssembly/simd) feature enabled.
 
