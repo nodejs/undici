@@ -114,7 +114,7 @@ test('connect error', (t) => {
 })
 
 test('connect invalid opts', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const client = new Client('http://localhost:5432')
 
@@ -124,6 +124,14 @@ test('connect invalid opts', (t) => {
 
   try {
     client.connect(null, null)
+  } catch (err) {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  }
+
+  try {
+    client.connect({
+      path: '/'
+    }, null)
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
   }
