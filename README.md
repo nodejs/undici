@@ -182,7 +182,7 @@ Refs: https://tools.ietf.org/html/rfc7231#section-5.1.1
 
 ### Pipelining
 
-Uncidi will only use pipelining if configured with a `pipelining` factor
+Undici will only use pipelining if configured with a `pipelining` factor
 greater than `1`.
 
 Undici always assumes that connections are persistent and will immediately
