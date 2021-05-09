@@ -190,6 +190,37 @@ test('get with host header', (t) => {
   })
 })
 
+test('get with host header (IPv6)', (t) => {
+  t.plan(7)
+
+  const server = createServer((req, res) => {
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal('[::1]', req.headers.host)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello from ' + req.headers.host)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, '::', () => {
+    const client = new Client(`http://[::1]:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET', headers: { host: '[::1]' } }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.equal('hello from [::1]', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
 test('head with host header', (t) => {
   t.plan(7)
 
