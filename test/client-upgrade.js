@@ -146,26 +146,29 @@ test('upgrade error', (t) => {
 })
 
 test('upgrade invalid opts', (t) => {
-  t.plan(3)
+  t.plan(6)
 
   const client = new Client('http://localhost:5432')
 
   client.upgrade(null, err => {
     t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid opts')
   })
 
   try {
     client.upgrade(null, null)
+    t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid opts')
   }
 
   try {
-    client.upgrade({
-      path: '/'
-    }, null)
+    client.upgrade({ path: '/' }, null)
+    t.fail()
   } catch (err) {
     t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid callback')
   }
 })
 
