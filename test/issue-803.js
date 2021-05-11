@@ -11,7 +11,7 @@ test('https://github.com/nodejs/undici/issues/803', (t) => {
   const SIZE = 5900373096
 
   const server = createServer(async (req, res) => {
-    res.setHeader('content-length', 5900373096)
+    res.setHeader('content-length', SIZE)
     let pos = 0
     while (pos < SIZE) {
       const len = Math.min(SIZE - pos, 65536 * 8)
