@@ -5,7 +5,7 @@ const { Client } = require('..')
 const { createServer } = require('http')
 const EE = require('events')
 
-test('basic get', (t) => {
+test('https://github.com/nodejs/undici/issues/803', (t) => {
   t.plan(2)
 
   const SIZE = 5900373096
