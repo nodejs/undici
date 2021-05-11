@@ -267,3 +267,57 @@ test('response invalid content length with close', (t) => {
     })
   })
 })
+
+test('response content length greater than 2^31', {only:true}, (t) => {
+  t.plan(3)
+
+  // const limit = 4294967296 //2^32
+  const limit = 1073741824 //2^30
+
+  const server = createServer((req, res) => {
+    const payload = Buffer.alloc(limit).fill(1)
+    res.write(payload)
+    res.end()
+  
+//     let sent = 0
+//     const payload = new Readable({
+//       read(size) {
+//         const final = size + sent > limit
+//         const s = final ? limit - sent : size
+//         sent += s
+//         const chunk = Buffer.alloc(s).fill(1)
+//         this.push(chunk)
+//         if (final) {
+//           this.push(null)
+//         }
+//       }
+//     })
+//     payload.pipe(res)
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 0
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.on('disconnect', (origin, client, err) => {
+      t.equal(err.code, 'UND_ERR_INFO')
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body
+        .on('end', () => {
+          t.pass()
+        })
+        .on('error', (err) => {
+          t.error(err)
+        })
+        .resume()
+    })
+  })
+})
