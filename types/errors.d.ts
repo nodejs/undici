@@ -48,7 +48,7 @@ declare namespace Errors {
   /** Body does not match content-length header. */
   export class RequestContentLengthMismatchError extends UndiciError {
     name: 'RequestContentLengthMismatchError';
-    code: 'UND_ERR_CONTENT_LENGTH_MISMATCH';
+    code: 'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH';
   }
 
   /** Trying to use a destroyed client. */
