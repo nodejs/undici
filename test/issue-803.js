@@ -14,7 +14,7 @@ test('https://github.com/nodejs/undici/issues/803', (t) => {
     res.setHeader('content-length', SIZE)
     let pos = 0
     while (pos < SIZE) {
-      const len = Math.min(SIZE - pos, 65536 * 8)
+      const len = Math.min(SIZE - pos, 65536)
       if (!res.write(Buffer.allocUnsafe(len))) {
         await EE.once(res, 'drain')
       }
