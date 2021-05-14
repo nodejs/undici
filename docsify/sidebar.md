@@ -14,3 +14,4 @@
   * [API Lifecycle](/docs/api/api-lifecycle.md "Undici API - Lifecycle")
 * Best Practices
   * [Proxy](docs/best-practices/proxy.md "Connecting through a proxy")
+  * [Writing Tests](docs/best-practices/writing-tests.md "Using Undici inside tests")
