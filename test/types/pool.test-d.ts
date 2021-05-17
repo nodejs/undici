@@ -18,8 +18,8 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   expectAssignable<boolean>(pool.destroyed)
 
   // request
-  expectAssignable<PromiseLike<Dispatcher.ResponseData>>(pool.request({ origin: '', path: '', method: '' }))
-  expectAssignable<PromiseLike<Dispatcher.ResponseData>>(pool.request({ origin: new URL('http://localhost'), path: '', method: '' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(pool.request({ origin: '', path: '', method: '' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(pool.request({ origin: new URL('http://localhost'), path: '', method: '' }))
   expectAssignable<void>(pool.request({ origin: '', path: '', method: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
@@ -30,11 +30,11 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   }))
 
   // stream
-  expectAssignable<PromiseLike<Dispatcher.StreamData>>(pool.stream({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(pool.stream({ origin: '', path: '', method: '' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
-  expectAssignable<PromiseLike<Dispatcher.StreamData>>(pool.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(pool.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
@@ -72,14 +72,14 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   }))
 
   // upgrade
-  expectAssignable<PromiseLike<Dispatcher.UpgradeData>>(pool.upgrade({ path: '' }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(pool.upgrade({ path: '' }))
   expectAssignable<void>(pool.upgrade({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.UpgradeData>(data)
   }))
 
   // connect
-  expectAssignable<PromiseLike<Dispatcher.ConnectData>>(pool.connect({ path: '' }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(pool.connect({ path: '' }))
   expectAssignable<void>(pool.connect({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ConnectData>(data)
@@ -90,13 +90,13 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   expectAssignable<void>(pool.dispatch({ origin: new URL('http://localhost'), path: '', method: '' }, {}))
 
   // close
-  expectAssignable<PromiseLike<void>>(pool.close())
+  expectAssignable<Promise<void>>(pool.close())
   expectAssignable<void>(pool.close(() => {}))
 
   // destroy
-  expectAssignable<PromiseLike<void>>(pool.destroy())
-  expectAssignable<PromiseLike<void>>(pool.destroy(new Error()))
-  expectAssignable<PromiseLike<void>>(pool.destroy(null))
+  expectAssignable<Promise<void>>(pool.destroy())
+  expectAssignable<Promise<void>>(pool.destroy(new Error()))
+  expectAssignable<Promise<void>>(pool.destroy(null))
   expectAssignable<void>(pool.destroy(() => {}))
   expectAssignable<void>(pool.destroy(new Error(), () => {}))
   expectAssignable<void>(pool.destroy(null, () => {}))

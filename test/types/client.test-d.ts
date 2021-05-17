@@ -16,8 +16,8 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   expectAssignable<boolean>(client.destroyed)
 
   // request
-  expectAssignable<PromiseLike<Dispatcher.ResponseData>>(client.request({ origin: '', path: '', method: '' }))
-  expectAssignable<PromiseLike<Dispatcher.ResponseData>>(client.request({ origin: new URL('http://localhost:3000'), path: '', method: '' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(client.request({ origin: '', path: '', method: '' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(client.request({ origin: new URL('http://localhost:3000'), path: '', method: '' }))
   expectAssignable<void>(client.request({ origin: '', path: '', method: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
@@ -28,11 +28,11 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   }))
 
   // stream
-  expectAssignable<PromiseLike<Dispatcher.StreamData>>(client.stream({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(client.stream({ origin: '', path: '', method: '' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
-  expectAssignable<PromiseLike<Dispatcher.StreamData>>(client.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(client.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
@@ -70,14 +70,14 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   }))
 
   // upgrade
-  expectAssignable<PromiseLike<Dispatcher.UpgradeData>>(client.upgrade({ path: '' }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(client.upgrade({ path: '' }))
   expectAssignable<void>(client.upgrade({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.UpgradeData>(data)
   }))
 
   // connect
-  expectAssignable<PromiseLike<Dispatcher.ConnectData>>(client.connect({ path: '' }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(client.connect({ path: '' }))
   expectAssignable<void>(client.connect({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ConnectData>(data)
@@ -88,13 +88,13 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   expectAssignable<void>(client.dispatch({ origin: new URL('http://localhost'), path: '', method: '' }, {}))
 
   // close
-  expectAssignable<PromiseLike<void>>(client.close())
+  expectAssignable<Promise<void>>(client.close())
   expectAssignable<void>(client.close(() => {}))
 
   // destroy
-  expectAssignable<PromiseLike<void>>(client.destroy())
-  expectAssignable<PromiseLike<void>>(client.destroy(new Error()))
-  expectAssignable<PromiseLike<void>>(client.destroy(null))
+  expectAssignable<Promise<void>>(client.destroy())
+  expectAssignable<Promise<void>>(client.destroy(new Error()))
+  expectAssignable<Promise<void>>(client.destroy(null))
   expectAssignable<void>(client.destroy(() => {}))
   expectAssignable<void>(client.destroy(new Error(), () => {}))
   expectAssignable<void>(client.destroy(null, () => {}))

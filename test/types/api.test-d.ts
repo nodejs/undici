@@ -3,11 +3,11 @@ import { expectAssignable } from 'tsd'
 import { Dispatcher, request, stream, pipeline, connect, upgrade } from '../..'
 
 // request
-expectAssignable<PromiseLike<Dispatcher.ResponseData>>(request(''))
-expectAssignable<PromiseLike<Dispatcher.ResponseData>>(request('', { method: '' }))
+expectAssignable<Promise<Dispatcher.ResponseData>>(request(''))
+expectAssignable<Promise<Dispatcher.ResponseData>>(request('', { method: '' }))
 
 // stream
-expectAssignable<PromiseLike<Dispatcher.StreamData>>(stream('', { method: '' }, data => {
+expectAssignable<Promise<Dispatcher.StreamData>>(stream('', { method: '' }, data => {
   expectAssignable<Dispatcher.StreamFactoryData>(data)
   return new Writable()
 }))
@@ -19,9 +19,9 @@ expectAssignable<Duplex>(pipeline('', { method: '' }, data => {
 }))
 
 // connect
-expectAssignable<PromiseLike<Dispatcher.ConnectData>>(connect(''))
-expectAssignable<PromiseLike<Dispatcher.ConnectData>>(connect('', {}))
+expectAssignable<Promise<Dispatcher.ConnectData>>(connect(''))
+expectAssignable<Promise<Dispatcher.ConnectData>>(connect('', {}))
 
 // upgrade
-expectAssignable<PromiseLike<Dispatcher.UpgradeData>>(upgrade(''))
-expectAssignable<PromiseLike<Dispatcher.UpgradeData>>(upgrade('', {}))
+expectAssignable<Promise<Dispatcher.UpgradeData>>(upgrade(''))
+expectAssignable<Promise<Dispatcher.UpgradeData>>(upgrade('', {}))

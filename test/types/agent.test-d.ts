@@ -16,8 +16,8 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   expectAssignable<boolean>(agent.destroyed)
 
   // request
-  expectAssignable<PromiseLike<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: '' }))
-  expectAssignable<PromiseLike<Dispatcher.ResponseData>>(agent.request({ origin: new URL('http://localhost'), path: '', method: '' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: '' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: new URL('http://localhost'), path: '', method: '' }))
   expectAssignable<void>(agent.request({ origin: '', path: '', method: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
@@ -28,11 +28,11 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   }))
 
   // stream
-  expectAssignable<PromiseLike<Dispatcher.StreamData>>(agent.stream({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: '', path: '', method: '' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
-  expectAssignable<PromiseLike<Dispatcher.StreamData>>(agent.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
@@ -70,14 +70,14 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   }))
 
   // upgrade
-  expectAssignable<PromiseLike<Dispatcher.UpgradeData>>(agent.upgrade({ path: '' }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(agent.upgrade({ path: '' }))
   expectAssignable<void>(agent.upgrade({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.UpgradeData>(data)
   }))
 
   // connect
-  expectAssignable<PromiseLike<Dispatcher.ConnectData>>(agent.connect({ path: '' }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(agent.connect({ path: '' }))
   expectAssignable<void>(agent.connect({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ConnectData>(data)
@@ -88,13 +88,13 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   expectAssignable<void>(agent.dispatch({ origin: '', path: '', method: '', maxRedirections: 1 }, {}))
 
   // close
-  expectAssignable<PromiseLike<void>>(agent.close())
+  expectAssignable<Promise<void>>(agent.close())
   expectAssignable<void>(agent.close(() => {}))
 
   // destroy
-  expectAssignable<PromiseLike<void>>(agent.destroy())
-  expectAssignable<PromiseLike<void>>(agent.destroy(new Error()))
-  expectAssignable<PromiseLike<void>>(agent.destroy(null))
+  expectAssignable<Promise<void>>(agent.destroy())
+  expectAssignable<Promise<void>>(agent.destroy(new Error()))
+  expectAssignable<Promise<void>>(agent.destroy(null))
   expectAssignable<void>(agent.destroy(() => {}))
   expectAssignable<void>(agent.destroy(new Error(), () => {}))
   expectAssignable<void>(agent.destroy(null, () => {}))

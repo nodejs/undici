@@ -13,25 +13,25 @@ declare class Dispatcher extends EventEmitter {
   /** Dispatches a request. This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this. */
   dispatch(options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandlers): void;
   /** Starts two-way communications with the requested resource. */
-  connect(options: Dispatcher.ConnectOptions): PromiseLike<Dispatcher.ConnectData>;
+  connect(options: Dispatcher.ConnectOptions): Promise<Dispatcher.ConnectData>;
   connect(options: Dispatcher.ConnectOptions, callback: (err: Error | null, data: Dispatcher.ConnectData) => void): void;
   /** Performs an HTTP request. */
-  request(options: Dispatcher.RequestOptions): PromiseLike<Dispatcher.ResponseData>;
+  request(options: Dispatcher.RequestOptions): Promise<Dispatcher.ResponseData>;
   request(options: Dispatcher.RequestOptions, callback: (err: Error | null, data: Dispatcher.ResponseData) => void): void;
   /** For easy use with `stream.pipeline`. */
   pipeline(options: Dispatcher.PipelineOptions, handler: Dispatcher.PipelineHandler): Duplex;
   /** A faster version of `Dispatcher.request`. */
-  stream(options: Dispatcher.RequestOptions, factory: Dispatcher.StreamFactory): PromiseLike<Dispatcher.StreamData>;
+  stream(options: Dispatcher.RequestOptions, factory: Dispatcher.StreamFactory): Promise<Dispatcher.StreamData>;
   stream(options: Dispatcher.RequestOptions, factory: Dispatcher.StreamFactory, callback: (err: Error | null, data: Dispatcher.StreamData) => void): void;
   /** Upgrade to a different protocol. */
-  upgrade(options: Dispatcher.UpgradeOptions): PromiseLike<Dispatcher.UpgradeData>;
+  upgrade(options: Dispatcher.UpgradeOptions): Promise<Dispatcher.UpgradeData>;
   upgrade(options: Dispatcher.UpgradeOptions, callback: (err: Error | null, data: Dispatcher.UpgradeData) => void): void;
   /** Closes the client and gracefully waits for enqueued requests to complete before invoking the callback (or returnning a promise if no callback is provided). */
-  close(): PromiseLike<void>;
+  close(): Promise<void>;
   close(callback: () => void): void;
   /** Destroy the client abruptly with the given err. All the pending and running requests will be asynchronously aborted and error. Waits until socket is closed before invoking the callback (or returnning a promise if no callback is provided). Since this operation is asynchronously dispatched there might still be some progress on dispatched requests. */
-  destroy(): PromiseLike<void>;
-  destroy(err: Error | null): PromiseLike<void>;
+  destroy(): Promise<void>;
+  destroy(err: Error | null): Promise<void>;
   destroy(callback: () => void): void;
   destroy(err: Error | null, callback: () => void): void;
 }
