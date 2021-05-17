@@ -13,15 +13,15 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<void>(dispatcher.dispatch({ origin: new URL('http://localhost'), path: '', method: '' }, {}))
 
   // connect
-  expectAssignable<PromiseLike<Dispatcher.ConnectData>>(dispatcher.connect({ path: '' }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ path: '' }))
   expectAssignable<void>(dispatcher.connect({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ConnectData>(data)
   }))
 
   // request
-  expectAssignable<PromiseLike<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: '' }))
-  expectAssignable<PromiseLike<Dispatcher.ResponseData>>(dispatcher.request({ origin: new URL('http://localhost'), path: '', method: '' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: '' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: new URL('http://localhost'), path: '', method: '' }))
   expectAssignable<void>(dispatcher.request({ origin: '', path: '', method: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
@@ -42,11 +42,11 @@ expectAssignable<Dispatcher>(new Dispatcher())
   }))
 
   // stream
-  expectAssignable<PromiseLike<Dispatcher.StreamData>>(dispatcher.stream({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(dispatcher.stream({ origin: '', path: '', method: '' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
-  expectAssignable<PromiseLike<Dispatcher.StreamData>>(dispatcher.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(dispatcher.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
@@ -74,20 +74,20 @@ expectAssignable<Dispatcher>(new Dispatcher())
   ))
 
   // upgrade
-  expectAssignable<PromiseLike<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '' }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '' }))
   expectAssignable<void>(dispatcher.upgrade({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.UpgradeData>(data)
   }))
 
   // close
-  expectAssignable<PromiseLike<void>>(dispatcher.close())
+  expectAssignable<Promise<void>>(dispatcher.close())
   expectAssignable<void>(dispatcher.close(() => {}))
 
   // destroy
-  expectAssignable<PromiseLike<void>>(dispatcher.destroy())
-  expectAssignable<PromiseLike<void>>(dispatcher.destroy(new Error()))
-  expectAssignable<PromiseLike<void>>(dispatcher.destroy(null))
+  expectAssignable<Promise<void>>(dispatcher.destroy())
+  expectAssignable<Promise<void>>(dispatcher.destroy(new Error()))
+  expectAssignable<Promise<void>>(dispatcher.destroy(null))
   expectAssignable<void>(dispatcher.destroy(() => {}))
   expectAssignable<void>(dispatcher.destroy(new Error(), () => {}))
   expectAssignable<void>(dispatcher.destroy(null, () => {}))

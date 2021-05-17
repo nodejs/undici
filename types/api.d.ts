@@ -14,14 +14,14 @@ export {
 declare function request(
   url: string | URL | UrlObject,
   options?: { dispatcher?: Dispatcher } & Omit<Dispatcher.RequestOptions, 'origin' | 'path'>,
-): PromiseLike<Dispatcher.ResponseData>;
+): Promise<Dispatcher.ResponseData>;
 
 /** A faster version of `request`. */
 declare function stream(
   url: string | URL | UrlObject,
   options: { dispatcher?: Dispatcher } & Omit<Dispatcher.RequestOptions, 'origin' | 'path'>,
   factory: Dispatcher.StreamFactory
-): PromiseLike<Dispatcher.StreamData>;
+): Promise<Dispatcher.StreamData>;
 
 /** For easy use with `stream.pipeline`. */
 declare function pipeline(
@@ -34,10 +34,10 @@ declare function pipeline(
 declare function connect(
   url: string | URL | UrlObject,
   options?: { dispatcher?: Dispatcher } & Omit<Dispatcher.ConnectOptions, 'origin' | 'path'>
-): PromiseLike<Dispatcher.ConnectData>;
+): Promise<Dispatcher.ConnectData>;
 
 /** Upgrade to a different protocol. */
 declare function upgrade(
   url: string | URL | UrlObject,
   options?: { dispatcher?: Dispatcher } & Omit<Dispatcher.UpgradeOptions, 'origin' | 'path'>
-): PromiseLike<Dispatcher.UpgradeData>;
+): Promise<Dispatcher.UpgradeData>;
