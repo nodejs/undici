@@ -28,7 +28,7 @@ test('MockClient - constructor', t => {
     t.plan(1)
 
     const mockClient = new MockClient('http://localhost:9999', { agent: new MockAgent({ connections: 1 }) })
-    t.ok(mockClient instanceof Dispatcher)
+    t.type(mockClient, Dispatcher)
   })
 })
 
@@ -121,7 +121,7 @@ test('MockClient - intercept should return a MockInterceptor', (t) => {
     method: 'GET'
   })
 
-  t.ok(interceptor instanceof MockInterceptor)
+  t.type(interceptor, MockInterceptor)
 })
 
 test('MockClient - intercept validation', (t) => {
@@ -203,7 +203,7 @@ test('MockClient - should be able to set as globalDispatcher', async (t) => {
   t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockClient = mockAgent.get(baseUrl)
-  t.ok(mockClient instanceof MockClient)
+  t.type(mockClient, MockClient)
   setGlobalDispatcher(mockClient)
 
   mockClient.intercept({
@@ -239,7 +239,7 @@ test('MockClient - should be able to use as a local dispatcher', async (t) => {
   t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockClient = mockAgent.get(baseUrl)
-  t.ok(mockClient instanceof MockClient)
+  t.type(mockClient, MockClient)
 
   mockClient.intercept({
     path: '/foo',
@@ -274,7 +274,7 @@ test('MockClient - basic intercept with MockClient.request', async (t) => {
   const mockAgent = new MockAgent({ connections: 1 })
   t.teardown(mockAgent.close.bind(mockAgent))
   const mockClient = mockAgent.get(baseUrl)
-  t.ok(mockClient instanceof MockClient)
+  t.type(mockClient, MockClient)
 
   mockClient.intercept({
     path: '/foo?hello=there&see=ya',

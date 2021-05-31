@@ -26,7 +26,7 @@ test('response trailers missing', (t) => {
     }, (err, data) => {
       t.error(err)
       data.body.on('error', (err) => {
-        t.ok(err instanceof errors.TrailerMismatchError)
+        t.type(err, errors.TrailerMismatchError)
       })
     })
   })
@@ -56,7 +56,7 @@ test('response trailers missing w trailers', (t) => {
     }, (err, data) => {
       t.error(err)
       data.body.on('error', (err) => {
-        t.ok(err instanceof errors.TrailerMismatchError)
+        t.type(err, errors.TrailerMismatchError)
       })
     })
   })

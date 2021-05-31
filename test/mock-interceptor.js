@@ -14,7 +14,7 @@ test('MockInterceptor - reply', t => {
       method: ''
     }, [])
     const result = mockInterceptor.reply(200, 'hello')
-    t.ok(result instanceof MockScope)
+    t.type(result, MockScope)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -40,7 +40,7 @@ test('MockInterceptor - replyWithError', t => {
       method: ''
     }, [])
     const result = mockInterceptor.replyWithError(new Error('kaboom'))
-    t.ok(result instanceof MockScope)
+    t.type(result, MockScope)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -64,7 +64,7 @@ test('MockInterceptor - defaultReplyHeaders', t => {
       method: ''
     }, [])
     const result = mockInterceptor.defaultReplyHeaders({})
-    t.ok(result instanceof MockInterceptor)
+    t.type(result, MockInterceptor)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -88,7 +88,7 @@ test('MockInterceptor - defaultReplyTrailers', t => {
       method: ''
     }, [])
     const result = mockInterceptor.defaultReplyTrailers({})
-    t.ok(result instanceof MockInterceptor)
+    t.type(result, MockInterceptor)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -112,6 +112,6 @@ test('MockInterceptor - replyContentLength', t => {
       method: ''
     }, [])
     const result = mockInterceptor.defaultReplyTrailers({})
-    t.ok(result instanceof MockInterceptor)
+    t.type(result, MockInterceptor)
   })
 })

@@ -119,7 +119,7 @@ test('connect invalid opts', (t) => {
   const client = new Client('http://localhost:5432')
 
   client.connect(null, err => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid opts')
   })
 
@@ -127,7 +127,7 @@ test('connect invalid opts', (t) => {
     client.connect(null, null)
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid opts')
   }
 
@@ -135,7 +135,7 @@ test('connect invalid opts', (t) => {
     client.connect({ path: '/' }, null)
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid callback')
   }
 })
@@ -233,7 +233,7 @@ test('connect aborted', (t) => {
     }, (err, { opaque }) => {
       t.equal(opaque, 'asd')
       t.equal(signal.listenerCount('abort'), 0)
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.type(err, errors.RequestAbortedError)
     })
     t.equal(client[kBusy], true)
     t.equal(signal.listenerCount('abort'), 1)
@@ -307,7 +307,7 @@ test('connect invalid signal', (t) => {
       opaque: 'asd'
     }, (err, { opaque }) => {
       t.equal(opaque, 'asd')
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     })
   })
 })
@@ -336,7 +336,7 @@ test('connect aborted after connect', (t) => {
       opaque: 'asd'
     }, (err, { opaque }) => {
       t.equal(opaque, 'asd')
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.type(err, errors.RequestAbortedError)
     })
     t.equal(client[kBusy], true)
   })

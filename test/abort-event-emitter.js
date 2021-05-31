@@ -39,7 +39,7 @@ test('Abort before sending request (no body)', (t) => {
 
     const body = new Readable({ read () { } })
     body.on('error', (err) => {
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.type(err, errors.RequestAbortedError)
     })
     client.request({
       path: '/',
@@ -47,7 +47,7 @@ test('Abort before sending request (no body)', (t) => {
       signal: ee,
       body
     }, (err, response) => {
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.type(err, errors.RequestAbortedError)
     })
 
     ee.emit('abort')
@@ -70,7 +70,7 @@ test('Abort while waiting response (no body)', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.type(err, errors.RequestAbortedError)
     })
   })
 })
@@ -92,7 +92,7 @@ test('Abort while waiting response (write headers started) (no body)', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.type(err, errors.RequestAbortedError)
     })
   })
 })
@@ -117,7 +117,7 @@ test('Abort while waiting response (write headers and write body started) (no bo
         ee.emit('abort')
       })
       response.body.on('error', err => {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       })
     })
   })
@@ -140,7 +140,7 @@ function waitingWithBody (body, type) {
       t.teardown(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       })
     })
   })
@@ -168,7 +168,7 @@ function writeHeadersStartedWithBody (body, type) {
       t.teardown(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       })
     })
   })
@@ -199,7 +199,7 @@ function writeBodyStartedWithBody (body, type) {
           ee.emit('abort')
         })
         response.body.on('error', err => {
-          t.ok(err instanceof errors.RequestAbortedError)
+          t.type(err, errors.RequestAbortedError)
         })
       })
     })

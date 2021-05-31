@@ -39,7 +39,7 @@ test('refresh timeout on pause', (t) => {
 
       },
       onError (err) {
-        t.ok(err instanceof errors.BodyTimeoutError)
+        t.type(err, errors.BodyTimeoutError)
       }
     })
   })
@@ -89,7 +89,7 @@ test('start headers timeout after request body', (t) => {
       },
       onError (err) {
         t.equal(body.readableEnded, true)
-        t.ok(err instanceof errors.HeadersTimeoutError)
+        t.type(err, errors.HeadersTimeoutError)
       }
     })
   })

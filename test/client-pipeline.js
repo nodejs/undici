@@ -340,7 +340,7 @@ test('pipeline invalid handler return', (t) => {
       body.on('error', () => {})
     })
       .on('error', (err) => {
-        t.ok(err instanceof errors.InvalidReturnValueError)
+        t.type(err, errors.InvalidReturnValueError)
       })
       .end()
 
@@ -353,7 +353,7 @@ test('pipeline invalid handler return', (t) => {
       return {}
     })
       .on('error', (err) => {
-        t.ok(err instanceof errors.InvalidReturnValueError)
+        t.type(err, errors.InvalidReturnValueError)
       })
       .end()
   })
@@ -409,7 +409,7 @@ test('pipeline destroy and throw handler', (t) => {
     })
       .end()
       .on('error', (err) => {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       })
       .on('close', () => {
         t.pass()
@@ -449,7 +449,7 @@ test('pipeline abort res', (t) => {
       return body
     })
       .on('error', (err) => {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       })
       .end()
   })
@@ -474,7 +474,7 @@ test('pipeline abort server res', (t) => {
       t.fail()
     })
       .on('error', (err) => {
-        t.ok(err instanceof errors.SocketError)
+        t.type(err, errors.SocketError)
       })
       .end()
   })
@@ -505,7 +505,7 @@ test('pipeline abort duplex', (t) => {
       }, () => {
         t.fail()
       }).destroy().on('error', (err) => {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       })
     })
   })
@@ -563,7 +563,7 @@ test('pipeline abort piped res 2', (t) => {
     }, ({ body }) => {
       const pt = new PassThrough()
       body.on('error', (err) => {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       })
       setImmediate(() => {
         pt.destroy()
@@ -572,7 +572,7 @@ test('pipeline abort piped res 2', (t) => {
       return pt
     })
       .on('error', (err) => {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       })
       .end()
   })
@@ -633,7 +633,7 @@ test('pipeline abort server res after headers', (t) => {
       return data.body
     })
       .on('error', (err) => {
-        t.ok(err instanceof errors.SocketError)
+        t.type(err, errors.SocketError)
       })
       .end()
   })
@@ -661,7 +661,7 @@ test('pipeline w/ write abort server res after headers', (t) => {
       return data.body
     })
       .on('error', (err) => {
-        t.ok(err instanceof errors.SocketError)
+        t.type(err, errors.SocketError)
       })
       .resume()
       .write('asd')
@@ -718,7 +718,7 @@ test('pipeline args validation', (t) => {
   const ret = client.pipeline(null, () => {})
   ret.on('error', (err) => {
     t.ok(/opts/.test(err.message))
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 })
 
@@ -871,7 +871,7 @@ test('pipeline CONNECT throw', (t) => {
     }, () => {
       t.fail()
     }).on('error', (err) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     })
     client.on('disconnect', () => {
       t.fail()
@@ -1002,7 +1002,7 @@ test('pipeline abort after headers', (t) => {
     })
       .end()
       .on('error', (err) => {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       })
   })
 })

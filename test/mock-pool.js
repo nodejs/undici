@@ -28,7 +28,7 @@ test('MockPool - constructor', t => {
     t.plan(1)
 
     const mockPool = new MockPool('http://localhost:9999', { agent: new MockAgent() })
-    t.ok(mockPool instanceof Dispatcher)
+    t.type(mockPool, Dispatcher)
   })
 })
 
@@ -204,7 +204,7 @@ test('MockPool - should be able to set as globalDispatcher', async (t) => {
   t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
-  t.ok(mockPool instanceof MockPool)
+  t.type(mockPool, MockPool)
   setGlobalDispatcher(mockPool)
 
   mockPool.intercept({
@@ -240,7 +240,7 @@ test('MockPool - should be able to use as a local dispatcher', async (t) => {
   t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
-  t.ok(mockPool instanceof MockPool)
+  t.type(mockPool, MockPool)
 
   mockPool.intercept({
     path: '/foo',
@@ -275,7 +275,7 @@ test('MockPool - basic intercept with MockPool.request', async (t) => {
   const mockAgent = new MockAgent()
   t.teardown(mockAgent.close.bind(mockAgent))
   const mockPool = mockAgent.get(baseUrl)
-  t.ok(mockPool instanceof MockPool)
+  t.type(mockPool, MockPool)
 
   mockPool.intercept({
     path: '/foo?hello=there&see=ya',

@@ -25,7 +25,7 @@ test('connect-timeout', t => {
     path: '/',
     method: 'GET'
   }, (err) => {
-    t.ok(err instanceof errors.ConnectTimeoutError)
+    t.type(err, errors.ConnectTimeoutError)
     clearTimeout(timeout)
   })
 })

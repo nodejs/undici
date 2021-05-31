@@ -38,7 +38,7 @@ test('connect/disconnect event(s)', (t) => {
     })
     pool.on('disconnect', (origin, [pool, client], error) => {
       t.ok(client instanceof Client)
-      t.ok(error instanceof errors.InformationalError)
+      t.type(error, errors.InformationalError)
       t.equal(error.code, 'UND_ERR_INFO')
       t.equal(error.message, 'socket idle timeout')
     })
@@ -93,7 +93,7 @@ test('basic get', (t) => {
       client.destroy((err) => {
         t.error(err)
         client.close((err) => {
-          t.ok(err instanceof errors.ClientDestroyedError)
+          t.type(err, errors.ClientDestroyedError)
         })
       })
     })
@@ -136,7 +136,7 @@ test('URL as arg', (t) => {
       client.destroy((err) => {
         t.error(err)
         client.close((err) => {
-          t.ok(err instanceof errors.ClientDestroyedError)
+          t.type(err, errors.ClientDestroyedError)
         })
       })
     })
@@ -163,7 +163,7 @@ test('basic get error async/await', (t) => {
     await client.destroy()
 
     await client.close().catch((err) => {
-      t.ok(err instanceof errors.ClientDestroyedError)
+      t.type(err, errors.ClientDestroyedError)
     })
   })
 })
@@ -393,21 +393,21 @@ test('invalid options throws', (t) => {
   try {
     new Pool(null, { connections: -1 }) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid connections')
   }
 
   try {
     new Pool(null, { connections: true }) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid connections')
   }
 
   try {
     new Pool(null, { factory: '' }) // eslint-disable-line
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'factory must be a function.')
   }
 })
@@ -550,7 +550,7 @@ test('pool pipeline args validation', (t) => {
   const ret = client.pipeline(null, () => {})
   ret.on('error', (err) => {
     t.ok(/opts/.test(err.message))
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 })
 
@@ -979,7 +979,7 @@ test('pool close waits for all requests', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.ok(err instanceof errors.ClientClosedError)
+      t.type(err, errors.ClientClosedError)
     })
   })
 })
@@ -1004,7 +1004,7 @@ test('pool destroyed', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.ok(err instanceof errors.ClientDestroyedError)
+      t.type(err, errors.ClientDestroyedError)
     })
   })
 })
@@ -1049,7 +1049,7 @@ test('pool destroy fails queued requests', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.ok(err instanceof errors.ClientDestroyedError)
+      t.type(err, errors.ClientDestroyedError)
     })
   })
 })

@@ -33,7 +33,7 @@ test('GET errors and reconnect with pipelining 1', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', idempotent: false, opaque: 'asd' }, (err, data) => {
-      t.ok(err instanceof Error) // we are expecting an error
+      t.type(err, Error) // we are expecting an error
       t.equal(data.opaque, 'asd')
     })
 
@@ -86,7 +86,7 @@ test('GET errors and reconnect with pipelining 3', (t) => {
     // all of these will error
     for (let i = 0; i < 3; i++) {
       client.request({ path: '/', method: 'GET', idempotent: false, opaque: 'asd' }, (err, data) => {
-        t.ok(err instanceof Error) // we are expecting an error
+        t.type(err, Error) // we are expecting an error
         t.equal(data.opaque, 'asd')
       })
     }
@@ -244,7 +244,7 @@ test('invalid options throws', (t) => {
     new Client({ port: 'foobar' }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid port')
   }
 
@@ -252,7 +252,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://asd:200/somepath')) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid url')
   }
 
@@ -260,7 +260,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://asd:200?q=asd')) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid url')
   }
 
@@ -268,7 +268,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://asd:200#asd')) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid url')
   }
 
@@ -278,7 +278,7 @@ test('invalid options throws', (t) => {
     })
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid socketPath')
   }
 
@@ -288,7 +288,7 @@ test('invalid options throws', (t) => {
     }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid keepAliveTimeout')
   }
 
@@ -298,7 +298,7 @@ test('invalid options throws', (t) => {
     }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid keepAliveMaxTimeout')
   }
 
@@ -308,7 +308,7 @@ test('invalid options throws', (t) => {
     }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid keepAliveMaxTimeout')
   }
 
@@ -318,7 +318,7 @@ test('invalid options throws', (t) => {
     }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid keepAliveTimeoutThreshold')
   }
 
@@ -328,7 +328,7 @@ test('invalid options throws', (t) => {
     })
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid protocol')
   }
 
@@ -338,7 +338,7 @@ test('invalid options throws', (t) => {
     })
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid hostname')
   }
 
@@ -348,7 +348,7 @@ test('invalid options throws', (t) => {
     })
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid maxHeaderSize')
   }
 
@@ -356,7 +356,7 @@ test('invalid options throws', (t) => {
     new Client(1) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid url')
   }
 
@@ -365,7 +365,7 @@ test('invalid options throws', (t) => {
     client.destroy(null, null)
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid callback')
   }
 
@@ -374,7 +374,7 @@ test('invalid options throws', (t) => {
     client.close(null, null)
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid callback')
   }
 
@@ -382,7 +382,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { maxKeepAliveTimeout: 1e3 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'unsupported maxKeepAliveTimeout, use keepAliveMaxTimeout instead')
   }
 
@@ -390,7 +390,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { keepAlive: false }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'unsupported keepAlive, use pipelining=0 instead')
   }
 
@@ -398,7 +398,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { idleTimeout: 30e3 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'unsupported idleTimeout, use keepAliveTimeout instead')
   }
 
@@ -406,7 +406,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { socketTimeout: 30e3 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'unsupported socketTimeout, use headersTimeout & bodyTimeout instead')
   }
 
@@ -414,7 +414,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { requestTimeout: 30e3 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'unsupported requestTimeout, use headersTimeout & bodyTimeout instead')
   }
 
@@ -422,7 +422,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { connectTimeout: -1 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid connectTimeout')
   }
 
@@ -430,7 +430,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { connectTimeout: Infinity }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid connectTimeout')
   }
 
@@ -438,7 +438,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { connectTimeout: 'asd' }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid connectTimeout')
   }
 
@@ -446,7 +446,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { [kConnect]: 'asd' }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'connect must be a function')
   }
 
@@ -454,7 +454,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { [kConnect]: -1 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'connect must be a function')
   }
 
@@ -462,7 +462,7 @@ test('invalid options throws', (t) => {
     new Pool(new URL('http://localhost:200'), { [kConnect]: 'asd' }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'connect must be a function')
   }
 
@@ -470,7 +470,7 @@ test('invalid options throws', (t) => {
     new Pool(new URL('http://localhost:200'), { [kConnect]: -1 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'connect must be a function')
   }
 
@@ -478,7 +478,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { maxCachedSessions: -10 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'maxCachedSessions must be a positive integer or zero')
   }
 
@@ -486,7 +486,7 @@ test('invalid options throws', (t) => {
     new Client(new URL('http://localhost:200'), { maxCachedSessions: 'foo' }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'maxCachedSessions must be a positive integer or zero')
   }
 
@@ -633,7 +633,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: /asdasd/
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     })
 
     client.request({
@@ -641,7 +641,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: 0
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     })
 
     client.request({
@@ -649,7 +649,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: false
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     })
 
     client.request({
@@ -657,7 +657,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: ''
     }, (err, data) => {
-      t.error(err instanceof errors.InvalidArgumentError)
+      t.error(err)
       data.body.resume()
     })
 
@@ -666,7 +666,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: new Uint8Array()
     }, (err, data) => {
-      t.error(err instanceof errors.InvalidArgumentError)
+      t.error(err)
       data.body.resume()
     })
 
@@ -675,7 +675,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: Buffer.alloc(10)
     }, (err, data) => {
-      t.error(err instanceof errors.InvalidArgumentError)
+      t.error(err)
       data.body.resume()
     })
   })
@@ -770,7 +770,7 @@ test('socket fail while ending request body', (t) => {
     client.close((err) => {
       t.error(err)
       client.close((err) => {
-        t.ok(err instanceof errors.ClientDestroyedError)
+        t.type(err, errors.ClientDestroyedError)
       })
     })
   })
@@ -903,10 +903,10 @@ test('invalid opts', (t) => {
 
   const client = new Client('http://localhost:5000')
   client.request(null, (err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
   client.pipeline(null).on('error', (err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 })
 
@@ -987,17 +987,17 @@ test('invalid signal', (t) => {
   client.request({ path: '/', method: 'GET', signal: {}, opaque: 'asd' }, (err, { opaque }) => {
     t.equal(ticked, true)
     t.equal(opaque, 'asd')
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
   client.pipeline({ path: '/', method: 'GET', signal: {} }, () => {})
     .on('error', (err) => {
       t.equal(ticked, true)
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     })
   client.stream({ path: '/', method: 'GET', signal: {}, opaque: 'asd' }, () => {}, (err, { opaque }) => {
     t.equal(ticked, true)
     t.equal(opaque, 'asd')
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
   ticked = true
 })

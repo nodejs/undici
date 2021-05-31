@@ -22,12 +22,12 @@ server.listen(0, () => {
     t.teardown(client.close.bind(client))
 
     client.request({ path: null, method: 'GET' }, (err, res) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
       t.equal(err.message, 'path must be a string')
     })
 
     client.request({ path: 'aaa', method: 'GET' }, (err, res) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
       t.equal(err.message, 'path must be an absolute URL or start with a slash')
     })
   })
@@ -39,7 +39,7 @@ server.listen(0, () => {
     t.teardown(client.close.bind(client))
 
     client.request({ path: '/', method: null }, (err, res) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
       t.equal(err.message, 'method must be a string')
     })
   })
@@ -51,12 +51,12 @@ server.listen(0, () => {
     t.teardown(client.close.bind(client))
 
     client.request({ path: '/', method: 'POST', body: 42 }, (err, res) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
       t.equal(err.message, 'body must be a string, a Buffer or a Readable stream')
     })
 
     client.request({ path: '/', method: 'POST', body: { hello: 'world' } }, (err, res) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
       t.equal(err.message, 'body must be a string, a Buffer or a Readable stream')
     })
   })

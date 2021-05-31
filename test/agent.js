@@ -66,7 +66,7 @@ test('agent should call callback after closing internal pools', t => {
             t.fail('second request should not resolve')
           })
           .catch(err => {
-            t.ok(err instanceof errors.ClientClosedError)
+            t.type(err, errors.ClientClosedError)
           })
       })
     })
@@ -79,7 +79,7 @@ test('agent close throws when callback is not a function', t => {
   try {
     dispatcher.close({})
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   }
 })
 
@@ -115,7 +115,7 @@ test('agent should close internal pools', t => {
           t.fail('second request should not resolve')
         })
         .catch(err => {
-          t.ok(err instanceof errors.ClientClosedError)
+          t.type(err, errors.ClientClosedError)
         })
     })
   })
@@ -143,7 +143,7 @@ test('agent should destroy internal pools and call callback', t => {
         t.fail()
       })
       .catch(err => {
-        t.ok(err instanceof errors.ClientDestroyedError)
+        t.type(err, errors.ClientDestroyedError)
       })
 
     dispatcher.once('connect', () => {
@@ -153,7 +153,7 @@ test('agent should destroy internal pools and call callback', t => {
             t.fail()
           })
           .catch(err => {
-            t.ok(err instanceof errors.ClientDestroyedError)
+            t.type(err, errors.ClientDestroyedError)
           })
       })
     })
@@ -166,7 +166,7 @@ test('agent destroy throws when callback is not a function', t => {
   try {
     dispatcher.destroy(new Error('mock error'), {})
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   }
 })
 
@@ -203,7 +203,7 @@ test('agent should destroy internal pools', t => {
         t.fail()
       })
       .catch(err => {
-        t.ok(err instanceof errors.ClientDestroyedError)
+        t.type(err, errors.ClientDestroyedError)
       })
 
     dispatcher.once('connect', () => {
@@ -213,7 +213,7 @@ test('agent should destroy internal pools', t => {
           t.fail()
         })
         .catch(err => {
-          t.ok(err instanceof errors.ClientDestroyedError)
+          t.type(err, errors.ClientDestroyedError)
         })
     })
   })
@@ -243,7 +243,7 @@ test('multiple connections', t => {
     })
     dispatcher.on('disconnect', (origin, [dispatcher], error) => {
       t.ok(dispatcher)
-      t.ok(error instanceof errors.InformationalError)
+      t.type(error, errors.InformationalError)
       t.equal(error.code, 'UND_ERR_INFO')
       t.equal(error.message, 'reset')
     })

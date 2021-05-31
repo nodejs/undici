@@ -25,7 +25,7 @@ test('aborted response errors', (t) => {
       body.destroy()
       body
         .on('error', err => {
-          t.ok(err instanceof errors.RequestAbortedError)
+          t.type(err, errors.RequestAbortedError)
         })
         .on('close', () => {
           t.pass()
@@ -57,7 +57,7 @@ test('aborted req', (t) => {
         }
       })
     }, (err) => {
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.type(err, errors.RequestAbortedError)
     })
   })
 })
@@ -91,7 +91,7 @@ test('abort', (t) => {
         t.fail()
       },
       onError (err) {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       }
     })
 
@@ -136,7 +136,7 @@ test('abort pipelined', (t) => {
         t.fail()
       },
       onError (err) {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       }
     })
 
@@ -157,7 +157,7 @@ test('abort pipelined', (t) => {
         t.fail()
       },
       onError (err) {
-        t.ok(err instanceof errors.RequestAbortedError)
+        t.type(err, errors.RequestAbortedError)
       }
     })
 

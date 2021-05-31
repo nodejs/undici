@@ -16,7 +16,7 @@ test('dispatch invalid opts', (t) => {
       upgrade: 1
     }, null)
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'handler')
   }
 
@@ -27,7 +27,7 @@ test('dispatch invalid opts', (t) => {
       upgrade: 1
     }, 'asd')
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'handler')
   }
 
@@ -37,7 +37,7 @@ test('dispatch invalid opts', (t) => {
     upgrade: 1
   }, {
     onError (err) {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     }
   })
 
@@ -47,7 +47,7 @@ test('dispatch invalid opts', (t) => {
     headersTimeout: 'asd'
   }, {
     onError (err) {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     }
   })
 
@@ -57,7 +57,7 @@ test('dispatch invalid opts', (t) => {
     bodyTimeout: 'asd'
   }, {
     onError (err) {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     }
   })
 
@@ -68,7 +68,7 @@ test('dispatch invalid opts', (t) => {
     bodyTimeout: 'asd'
   }, {
     onError (err) {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     }
   })
 })

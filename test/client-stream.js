@@ -263,17 +263,17 @@ test('stream args validation', (t) => {
     path: '/',
     method: 'GET'
   }, null, (err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 
   client.stream(null, null, (err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 
   try {
     client.stream(null, null, 'asd')
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   }
 })
 
@@ -285,11 +285,11 @@ test('stream args validation promise', (t) => {
     path: '/',
     method: 'GET'
   }, null).catch((err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 
   client.stream(null, null).catch((err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 })
 
@@ -337,7 +337,7 @@ test('stream server side destroy', (t) => {
     }, () => {
       t.fail()
     }, (err) => {
-      t.ok(err instanceof errors.SocketError)
+      t.type(err, errors.SocketError)
     })
   })
 })
@@ -360,7 +360,7 @@ test('stream invalid return', (t) => {
     }, () => {
       return {}
     }, (err) => {
-      t.ok(err instanceof errors.InvalidReturnValueError)
+      t.type(err, errors.InvalidReturnValueError)
     })
   })
 })
@@ -413,7 +413,7 @@ test('stream factory abort', (t) => {
       return new PassThrough()
     }, (err) => {
       t.equal(signal.listenerCount('abort'), 0)
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.type(err, errors.RequestAbortedError)
     })
     t.equal(signal.listenerCount('abort'), 1)
   })
@@ -475,7 +475,7 @@ test('stream CONNECT throw', (t) => {
       method: 'CONNECT'
     }, () => {
     }, (err) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     })
   })
 })
@@ -528,7 +528,7 @@ test('stream abort before dispatch', (t) => {
     }, () => {
       return pt
     }, (err) => {
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.type(err, errors.RequestAbortedError)
     })
     signal.emit('abort')
   })
