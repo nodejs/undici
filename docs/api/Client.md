@@ -232,3 +232,7 @@ server.listen(() => {
   })
 })
 ```
+
+### Event: `'error'`
+
+Invoked for users errors such as throwing in the `onError` handler.
