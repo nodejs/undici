@@ -70,3 +70,7 @@ yarn.lock
 
 *0x
 *clinic*
+
+# Fuzzing
+corpus/
+crash-*
