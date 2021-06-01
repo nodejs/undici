@@ -1,6 +1,6 @@
 'use strict'
 
 module.exports = {
-  splitData: require('./split-data'),
-  appendData: require('./append-data')
+  splitData: require('./server-fuzz-split-data'),
+  appendData: require('./server-fuzz-append-data')
 }

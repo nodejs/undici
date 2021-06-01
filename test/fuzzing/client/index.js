@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = {
-  clientFuzzBody: require('./fuzz-body'),
-  clientFuzzHeaders: require('./fuzz-headers'),
-  clientFuzzOptions: require('./fuzz-options')
+  clientFuzzBody: require('./client-fuzz-body'),
+  clientFuzzHeaders: require('./client-fuzz-headers'),
+  clientFuzzOptions: require('./client-fuzz-options')
 }
