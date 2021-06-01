@@ -1,3 +1,5 @@
+'use strict'
+
 function splitData (socket, data) {
   const lines = [
     'HTTP/1.1 200 OK',
