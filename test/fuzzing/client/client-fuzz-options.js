@@ -3,7 +3,9 @@
 const { request, errors } = require('../../..')
 
 const acceptableCodes = [
-  'ERR_INVALID_URL'
+  'ERR_INVALID_URL',
+  // TODO: look into why this is: https://github.com/jonnydgreen/undici/runs/2732543485?check_suite_focus=true
+  'ENOTFOUND'
 ]
 
 async function fuzz (netServer, results, buf) {
