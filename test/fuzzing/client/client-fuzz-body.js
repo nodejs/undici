@@ -8,12 +8,11 @@ const acceptableCodes = [
 ]
 
 // TODO: could make this a class with some inbuilt functionality that we can inherit
-async function fuzz ({ url, ...dest }, results, buf) {
+async function fuzz (netServer, results, buf) {
   const body = buf
-  const options = { ...dest, body }
   results.body = body
   try {
-    const data = await request(url, options)
+    const data = await request(`http://localhost:${netServer.address().port}`, { body })
     data.body.destroy().on('error', () => {})
   } catch (err) {
     results.err = err

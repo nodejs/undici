@@ -6,9 +6,9 @@ const acceptableCodes = [
   'ERR_INVALID_URL'
 ]
 
-async function fuzz ({ url, ...dest }, results, buf) {
+async function fuzz (netServer, results, buf) {
   const optionKeys = ['body', 'path', 'method', 'opaque', 'upgrade', buf]
-  const options = dest
+  const options = {}
   for (const optionKey of optionKeys) {
     if (Math.random() < 0.5) {
       options[optionKey] = buf.toString()
@@ -16,7 +16,7 @@ async function fuzz ({ url, ...dest }, results, buf) {
   }
   results.options = options
   try {
-    const data = await request(url, options)
+    const data = await request(`http://localhost:${netServer.address().port}`, options)
     data.body.destroy().on('error', () => {})
   } catch (err) {
     results.err = err

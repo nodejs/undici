@@ -6,12 +6,11 @@ const acceptableCodes = [
   'ERR_INVALID_ARG_TYPE'
 ]
 
-async function fuzz ({ url, ...dest }, results, buf) {
+async function fuzz (netServer, results, buf) {
   const headers = { buf: buf.toString() }
-  const options = { ...dest, headers }
   results.body = headers
   try {
-    const data = await request(url, options)
+    const data = await request(`http://localhost:${netServer.address().port}`, { headers })
     data.body.destroy().on('error', () => {})
   } catch (err) {
     results.err = err
