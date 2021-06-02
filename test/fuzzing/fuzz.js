@@ -48,7 +48,7 @@ async function fuzz (buf) {
         clearTimeout(timer)
         const output = { clientFuzzFnName, buf: { raw: buf, string: buf.toString() }, raw: JSON.stringify({ clientFuzzFnName, buf: { raw: buf, string: buf.toString() }, err, ...results }), err, ...results }
 
-        console.log(`=== Failed fuzz ${clientFuzzFnName} with input '${buf} ==='`)
+        console.log(`=== Failed fuzz ${clientFuzzFnName} with input '${buf}' ===`)
         console.log('=== Fuzz results start ===')
         console.log(output)
         console.log('=== Fuzz results end ===')

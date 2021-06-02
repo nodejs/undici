@@ -25,9 +25,10 @@ jobs:
           npm run fuzz
 
       - uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
         with:
           name: undici-fuzz-results-${GITHUB_SHA}
-          if-no-files-found: ignore
           path: |
             corpus/
             crash-*
+            fuzz-results-*.json

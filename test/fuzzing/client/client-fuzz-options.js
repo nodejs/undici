@@ -3,12 +3,12 @@
 const { request } = require('../../..')
 
 const acceptableCodes = [
-  'UND_ERR_INVALID_ARG',
-  'ERR_INVALID_URL',
-  'HPE_INVALID_HEADER_TOKEN',
-  'ENOTFOUND',
-  // TODO: work out if this is legit and how we might be able to avoid it
-  'UND_ERR_CONNECT_TIMEOUT'
+  // TODO: undo
+  // 'UND_ERR_INVALID_ARG',
+  // 'ERR_INVALID_URL',
+  // 'HPE_INVALID_HEADER_TOKEN',
+  // // TODO: work out if this is legit and how we might be able to avoid it
+  // 'UND_ERR_CONNECT_TIMEOUT'
 ]
 
 async function fuzz (netServer, results, buf) {
