@@ -1,0 +1,33 @@
+name: Fuzzing
+
+on: [push, pull_request]
+
+jobs:
+  fuzzing:
+    name: Fuzz
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: Install
+        run: |
+          npm install
+
+      - name: Run fuzzing
+        timeout-minutes: 10
+        run: |
+          npm run fuzz
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: undici-fuzz-results-${GITHUB_SHA}
+          if-no-files-found: ignore
+          path: |
+            corpus/
+            crash-*

@@ -74,3 +74,4 @@ yarn.lock
 # Fuzzing
 corpus/
 crash-*
+fuzz-results-*.json
