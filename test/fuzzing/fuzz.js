@@ -3,9 +3,13 @@
 const net = require('net')
 const fs = require('fs/promises')
 const path = require('path')
-
+const os = require('os')
 const serverFuzzFnMap = require('./server')
 const clientFuzzFnMap = require('./client')
+
+const socketPath = path.join(os.tmpdir(), 'undici.sock')
+const port = process.env.PORT || socketPath
+const timeout = parseInt(process.env.TIMEOUT, 10) || 300_000 // 5 minutes by default
 
 const netServer = net.createServer((socket) => {
   socket.on('data', (data) => {
@@ -16,14 +20,12 @@ const netServer = net.createServer((socket) => {
     serverFuzzFn(socket, data)
   })
 })
-
-const waitForNetServer = netServer.listen(0)
+const waitForNetServer = netServer.listen(port)
 
 // Set script to exit gracefully after a set period of time.
-// Currently: 5 minutes
 const timer = setTimeout(() => {
   process.kill(process.pid, 'SIGINT')
-}, 300_000) // 5 minutes
+}, timeout)
 
 async function writeResults (resultsPath, data) {
   try {

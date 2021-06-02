@@ -1,12 +1,10 @@
 'use strict'
 
-const { request } = require('../../..')
+const { request, errors } = require('../../..')
 
 const acceptableCodes = [
-  'ERR_INVALID_ARG_TYPE',
-  'HPE_INVALID_CONSTANT',
-  // TODO: work out if this is legit and how we might be able to avoid it
-  'UND_ERR_CONNECT_TIMEOUT'
+
+  'ERR_INVALID_ARG_TYPE'
 ]
 
 // TODO: could make this a class with some inbuilt functionality that we can inherit
@@ -18,7 +16,10 @@ async function fuzz (netServer, results, buf) {
     data.body.destroy().on('error', () => {})
   } catch (err) {
     results.err = err
-    if (!acceptableCodes.includes(err.code)) {
+    // Handle any undici errors
+    if (Object.values(errors).some(undiciError => err instanceof undiciError)) {
+      // Okay error
+    } else if (!acceptableCodes.includes(err.code)) {
       console.log(`=== Headers: ${JSON.stringify(body)} ===`)
       throw err
     }
