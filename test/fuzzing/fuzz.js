@@ -10,6 +10,13 @@ const clientFuzzFnMap = require('./client')
 const socketPath = path.join(os.tmpdir(), 'undici.sock')
 const port = process.env.PORT || socketPath
 const timeout = parseInt(process.env.TIMEOUT, 10) || 300_000 // 5 minutes by default
+const dest = {}
+if (process.env.PORT) {
+  dest.url = `http://localhost:${port}`
+} else {
+  dest.url = 'http://localhost'
+  dest.socketPath = path.join(os.tmpdir(), 'undici.sock')
+}
 
 const netServer = net.createServer((socket) => {
   socket.on('data', (data) => {
@@ -45,7 +52,7 @@ async function fuzz (buf) {
     Object.entries(clientFuzzFnMap).map(async ([clientFuzzFnName, clientFuzzFn]) => {
       const results = {}
       try {
-        await clientFuzzFn(netServer, results, buf)
+        await clientFuzzFn(dest, results, buf)
       } catch (err) {
         clearTimeout(timer)
         const output = { clientFuzzFnName, buf: { raw: buf, string: buf.toString() }, raw: JSON.stringify({ clientFuzzFnName, buf: { raw: buf, string: buf.toString() }, err, ...results }), err, ...results }
