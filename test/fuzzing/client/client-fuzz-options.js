@@ -3,11 +3,11 @@
 const { request, errors } = require('../../..')
 
 const acceptableCodes = [
-  [() => true, 'ERR_INVALID_URL'],
-  // These are included because '\\\\ABC' is interpreted as a Windows UNC path.
-  [(buf) => buf.toString().startsWith('\\\\'), 'ENOTFOUND'],
-  [(buf) => buf.toString().startsWith('\\\\'), 'EAI_AGAIN'],
-  [(buf) => buf.toString().startsWith('\\\\'), 'ECONNREFUSED']
+  'ERR_INVALID_URL',
+  // These are included because '\\ABC' is interpreted as a Windows UNC path and can cause these errors.
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ECONNREFUSED'
   // ----
 ]
 
@@ -28,7 +28,7 @@ async function fuzz (netServer, results, buf) {
     // Handle any undici errors
     if (Object.values(errors).some(undiciError => err instanceof undiciError)) {
       // Okay error
-    } else if (!acceptableCodes.some(([matchingBuf, code]) => code === err.code && matchingBuf(buf))) {
+    } else if (!acceptableCodes.includes(err.code)) {
       console.log(`=== Options: ${JSON.stringify(options)} ===`)
       throw err
     }
