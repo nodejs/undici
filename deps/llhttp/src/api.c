@@ -41,6 +41,7 @@ void llhttp_init(llhttp_t* parser, llhttp_type_t type,
 
 #if defined(__wasm__)
 
+extern int wasm_on_message_begin(llhttp_t* p);
 extern int wasm_on_header_field(llhttp_t* p, const char* at, size_t length);
 extern int wasm_on_header_value(llhttp_t* p, const char* at, size_t length);
 extern int wasm_on_headers_complete(llhttp_t * p, int status_code, uint8_t upgrade, int should_keep_alive);
@@ -53,7 +54,7 @@ int on_headers_complete(llhttp_t * p)
 }
 
 const llhttp_settings_t wasm_settings = {
-  NULL,
+  wasm_on_message_begin,
   NULL,
   NULL,
   wasm_on_header_field,
