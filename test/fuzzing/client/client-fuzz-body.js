@@ -3,7 +3,6 @@
 const { request, errors } = require('../../..')
 
 const acceptableCodes = [
-
   'ERR_INVALID_ARG_TYPE'
 ]
 

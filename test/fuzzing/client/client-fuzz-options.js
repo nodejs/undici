@@ -4,8 +4,12 @@ const { request, errors } = require('../../..')
 
 const acceptableCodes = [
   'ERR_INVALID_URL',
-  // TODO: look into why this is: https://github.com/jonnydgreen/undici/runs/2732543485?check_suite_focus=true
-  'ENOTFOUND'
+  // These are currently included because '\\\\ABC' is interpreted as a Windows UNC path.
+  // TODO: Confirmation of whether this is a legitimate issue or not will be resolved in: https://github.com/nodejs/node/issues/38963
+  // Upon resolution, these entries will either be kept for this specific error case or removed when the issue is fixed.
+  'ENOTFOUND',
+  'EAI_AGAIN'
+  // ----
 ]
 
 async function fuzz (netServer, results, buf) {
