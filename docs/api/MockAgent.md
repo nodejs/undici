@@ -33,7 +33,7 @@ const mockAgent = new MockAgent()
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { Agent, MockAgent } = require('undici')
 
 const agent = new Agent()
 
@@ -69,7 +69,7 @@ Returns: `MockClient | MockPool`.
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -97,7 +97,7 @@ for await (const data of body) {
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, request } = require('undici')
 
 const mockAgent = new MockAgent()
 
@@ -123,7 +123,7 @@ for await (const data of body) {
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, request } = require('undici')
 
 const mockAgent = new MockAgent()
 
@@ -149,7 +149,7 @@ for await (const data of body) {
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, request } = require('undici')
 
 const mockAgent = new MockAgent({ connections: 1 })
 
@@ -175,7 +175,7 @@ for await (const data of body) {
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -202,7 +202,7 @@ const result2 = await request('http://localhost:3000/hello')
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -220,7 +220,7 @@ mockPool.intercept({
 const {
   statusCode,
   headers,
-  tailers,
+  trailers,
   body
 } = await request('http://localhost:3000/foo?hello=there&see=ya', {
     method: 'POST',
@@ -241,7 +241,7 @@ console.log('trailers', trailers) // {"Content-MD5":"test"}
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -268,15 +268,15 @@ for await (const data of body) {
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
-const mockPool = mockAgent.get((origin) => 'http://localhost:3000' === origin))
+const mockPool = mockAgent.get((origin) => origin === 'http://localhost:3000')
 mockPool.intercept({
   path: '/foo',
-  method: 'GET',
+  method: 'GET'
 }).reply(200, 'foo')
 
 const {
@@ -301,7 +301,7 @@ Returns: `Promise<void>`
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -328,7 +328,7 @@ const mockAgent = new MockAgent()
 const mockPool = mockAgent.get('http://localhost:3000')
 mockPool.intercept({
   path: '/foo',
-  method: 'GET',
+  method: 'GET'
 }).reply(200, 'foo')
 
 const {
@@ -351,7 +351,7 @@ Returns: `void`
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -369,7 +369,7 @@ Returns: `void`
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -397,7 +397,7 @@ Returns: `void`
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -412,7 +412,7 @@ await request('http://example.com')
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -434,7 +434,7 @@ await request('http://example-3.com')
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -449,7 +449,7 @@ await request('http://example.com')
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -470,7 +470,7 @@ Returns: `void`
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, request } = require('undici')
 
 const mockAgent = new MockAgent()
 
