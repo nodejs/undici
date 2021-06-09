@@ -1,6 +1,7 @@
 import { IncomingHttpHeaders } from 'http'
 
 export {
+  Interceptable,
   MockInterceptor,
   MockScope
 }
@@ -58,4 +59,9 @@ declare namespace MockInterceptor {
     headers?: IncomingHttpHeaders;
     trailers?: Record<string, string>;
   }
+}
+
+interface Interceptable {
+  /** Intercepts any matching requests that use the same origin as this mock client. */
+  intercept(options: MockInterceptor.Options): MockInterceptor;
 }

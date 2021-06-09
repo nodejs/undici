@@ -1,5 +1,6 @@
 import { expectAssignable } from 'tsd'
 import { MockAgent, MockPool, MockClient, Agent, setGlobalDispatcher } from '../..'
+import { MockInterceptor } from '../../types/mock-interceptor'
 
 expectAssignable<MockAgent>(new MockAgent())
 expectAssignable<MockAgent>(new MockAgent({}))
@@ -39,6 +40,9 @@ expectAssignable<MockAgent>(new MockAgent({}))
 
   // dispatch
   expectAssignable<void>(mockAgent.dispatch({ origin: '', path: '', method: '' }, {}))
+
+  // intercept
+  expectAssignable<MockInterceptor>((mockAgent.get('foo')).intercept({ path: '', method: '' }))
 }
 
 {

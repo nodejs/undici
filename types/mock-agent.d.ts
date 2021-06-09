@@ -1,5 +1,6 @@
 import Agent from './agent'
 import Dispatcher from './dispatcher'
+import { Interceptable } from './mock-interceptor'
 
 export = MockAgent
 
@@ -7,9 +8,9 @@ export = MockAgent
 declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.Options> extends Dispatcher {
   constructor(options?: MockAgent.Options)
   /** Creates and retrieves mock Dispatcher instances which can then be used to intercept HTTP requests. If the number of connections on the mock agent is set to 1, a MockClient instance is returned. Otherwise a MockPool instance is returned. */
-  get<TDispatcher extends Dispatcher>(origin: string): TDispatcher;
-  get<TDispatcher extends Dispatcher>(origin: RegExp): TDispatcher;
-  get<TDispatcher extends Dispatcher>(origin: ((origin: string) => boolean)): TDispatcher;
+  get<TInterceptable extends Interceptable>(origin: string): TInterceptable;
+  get<TInterceptable extends Interceptable>(origin: RegExp): TInterceptable;
+  get<TInterceptable extends Interceptable>(origin: ((origin: string) => boolean)): TInterceptable;
   /** Dispatches a mocked request. */
   dispatch(options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandlers): void;
   /** Closes the mock agent and waits for registered mock pools and clients to also close before resolving. */
