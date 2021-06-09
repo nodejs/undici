@@ -396,6 +396,8 @@ they fail due to indirect failure from the request
 at the head of the pipeline. This does not apply to
 idempotent requests with a stream request body.
 
+All response bodies must always be fully consumed or destroyed.
+
 Arguments:
 
 * **options** `RequestOptions`
