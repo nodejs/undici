@@ -39,5 +39,7 @@ declare namespace Client {
     strictContentLength?: boolean
     /** maximum number of TLS cached sessions. Use 0 to disable TLS session caching. Default: 100. */
     maxCachedSessions?: number | null;
+    /** A connector function which allows the implementation of custom connection handling for e.g. tunneling or other transport protocols such as quic.*/
+    connect?: function | null;
   }
 }

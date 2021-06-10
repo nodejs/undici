@@ -28,6 +28,8 @@ Returns: `Client`
 * **tls** `TlsOptions | null` (optional) - Default: `null` - An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
 * **strictContentLength** `Boolean` (optional) - Default: `true` - Whether to treat request content length mismatches as errors. If true, an error is thrown when the request content-length header doesn't match the length of the request body.
 * **maxCachedSessions** `number | null` (optional) - Default: `100` - Maximum number of TLS cached sessions. Use 0 to disable TLS session caching. Default: 100.
+* **connect** `function | null` (optional) - Default: `null` - A connector function which allows the implementation of custom connection handling for e.g. tunneling or other transport protocols such as quic.
+    
 
 ### Example - Basic Client instantiation
 
