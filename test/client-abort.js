@@ -5,6 +5,8 @@ const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { Readable } = require('stream')
 
+class OnAbortError extends Error {}
+
 test('aborted response errors', (t) => {
   t.plan(3)
 
@@ -159,6 +161,49 @@ test('abort pipelined', (t) => {
       onError (err) {
         t.type(err, errors.RequestAbortedError)
       }
+    })
+
+    client.on('disconnect', () => {
+      t.pass()
+    })
+  })
+})
+
+test('propagate unallowed throws in request.onError', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.dispatch({
+      method: 'GET',
+      path: '/'
+    }, {
+      onConnect (abort) {
+        setImmediate(abort)
+      },
+      onHeaders () {
+        t.pass()
+      },
+      onData () {
+        t.pass()
+      },
+      onComplete () {
+        t.pass()
+      },
+      onError () {
+        throw new OnAbortError('error')
+      }
+    })
+
+    client.on('error', (err) => {
+      t.type(err, OnAbortError)
     })
 
     client.on('disconnect', () => {

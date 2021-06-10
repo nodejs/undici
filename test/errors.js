@@ -26,7 +26,8 @@ const scenarios = [
   createScenario(errors.ClientDestroyedError, 'The client is destroyed', 'ClientDestroyedError', 'UND_ERR_DESTROYED'),
   createScenario(errors.ClientClosedError, 'The client is closed', 'ClientClosedError', 'UND_ERR_CLOSED'),
   createScenario(errors.SocketError, 'Socket error', 'SocketError', 'UND_ERR_SOCKET'),
-  createScenario(errors.NotSupportedError, 'Not supported error', 'NotSupportedError', 'UND_ERR_NOT_SUPPORTED')
+  createScenario(errors.NotSupportedError, 'Not supported error', 'NotSupportedError', 'UND_ERR_NOT_SUPPORTED'),
+  createScenario(errors.ResponseContentLengthMismatchError, 'Response body length does not match content-length header', 'ResponseContentLengthMismatchError', 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
 ]
 
 scenarios.forEach(scenario => {
@@ -64,4 +65,17 @@ scenarios.forEach(scenario => {
 
     t.end()
   })
+})
+
+test('Default HTTPParseError Codes', t => {
+  test('code and data should be undefined when not set', t => {
+    t.plan(2)
+
+    const error = new errors.HTTPParserError('HTTPParserError')
+
+    t.equal(error.code, undefined)
+    t.equal(error.data, undefined)
+  })
+
+  t.end()
 })
