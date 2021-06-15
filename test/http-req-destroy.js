@@ -9,7 +9,10 @@ test('do not kill req socket', (t) => {
   t.plan(3)
 
   const server1 = createServer((req, res) => {
-    undici.request(`http://localhost:${server2.address().port}`, {
+    const client = new undici.Client(`http://localhost:${server2.address().port}`)
+    t.teardown(client.close.bind(client))
+    client.request({
+      path: '/',
       method: 'POST',
       body: req
     }, (err, response) => {
@@ -34,9 +37,13 @@ test('do not kill req socket', (t) => {
   t.teardown(server2.close.bind(server2))
 
   server1.listen(0, () => {
+    const client = new undici.Client(`http://localhost:${server1.address().port}`)
+    t.teardown(client.close.bind(client))
+
     const r = new Readable({ read () {} })
     r.push('hello')
-    undici.request(`http://localhost:${server1.address().port}`, {
+    client.request({
+      path: '/',
       method: 'POST',
       body: r
     }, (err, response) => {
