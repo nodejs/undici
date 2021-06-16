@@ -3,7 +3,7 @@
 
 #define LLHTTP_VERSION_MAJOR 6
 #define LLHTTP_VERSION_MINOR 0
-#define LLHTTP_VERSION_PATCH 1
+#define LLHTTP_VERSION_PATCH 3
 
 #ifndef LLHTTP_STRICT_MODE
 # define LLHTTP_STRICT_MODE 0
@@ -381,6 +381,24 @@ llhttp_t* llhttp_alloc(llhttp_type_t type);
 
 LLHTTP_EXPORT
 void llhttp_free(llhttp_t* parser);
+
+LLHTTP_EXPORT
+uint8_t llhttp_get_type(llhttp_t* parser);
+
+LLHTTP_EXPORT
+uint8_t llhttp_get_http_major(llhttp_t* parser);
+
+LLHTTP_EXPORT
+uint8_t llhttp_get_http_minor(llhttp_t* parser);
+
+LLHTTP_EXPORT
+uint8_t llhttp_get_method(llhttp_t* parser);
+
+LLHTTP_EXPORT
+int llhttp_get_status_code(llhttp_t* parser);
+
+LLHTTP_EXPORT
+uint8_t llhttp_get_upgrade(llhttp_t* parser);
 
 #endif  // defined(__wasm__)
 
