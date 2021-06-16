@@ -26,10 +26,10 @@ declare class Dispatcher extends EventEmitter {
   /** Upgrade to a different protocol. */
   upgrade(options: Dispatcher.UpgradeOptions): Promise<Dispatcher.UpgradeData>;
   upgrade(options: Dispatcher.UpgradeOptions, callback: (err: Error | null, data: Dispatcher.UpgradeData) => void): void;
-  /** Closes the client and gracefully waits for enqueued requests to complete before invoking the callback (or returnning a promise if no callback is provided). */
+  /** Closes the client and gracefully waits for enqueued requests to complete before invoking the callback (or returning a promise if no callback is provided). */
   close(): Promise<void>;
   close(callback: () => void): void;
-  /** Destroy the client abruptly with the given err. All the pending and running requests will be asynchronously aborted and error. Waits until socket is closed before invoking the callback (or returnning a promise if no callback is provided). Since this operation is asynchronously dispatched there might still be some progress on dispatched requests. */
+  /** Destroy the client abruptly with the given err. All the pending and running requests will be asynchronously aborted and error. Waits until socket is closed before invoking the callback (or returning a promise if no callback is provided). Since this operation is asynchronously dispatched there might still be some progress on dispatched requests. */
   destroy(): Promise<void>;
   destroy(err: Error | null): Promise<void>;
   destroy(callback: () => void): void;
@@ -44,8 +44,8 @@ declare namespace Dispatcher {
     /** Default: `null` */
     body?: string | Buffer | Uint8Array | Readable | null;
     /** Default: `null` */
-    headers?: IncomingHttpHeaders | null;
-    /** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceeding requests in the pipeline has completed. Default: `true` if `method` is `HEAD` or `GET`. */
+    headers?: IncomingHttpHeaders | string[] | null;
+    /** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceding requests in the pipeline have completed. Default: `true` if `method` is `HEAD` or `GET`. */
     idempotent?: boolean;
     /** Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`. Default: `method === 'CONNECT' || null`. */
     upgrade?: boolean | string | null
@@ -53,7 +53,7 @@ declare namespace Dispatcher {
   export interface ConnectOptions {
     path: string;
     /** Default: `null` */
-    headers?: IncomingHttpHeaders | null;
+    headers?: IncomingHttpHeaders | string[] | null;
     /** Default: `null` */
     signal?: AbortSignal | EventEmitter | null;
     /** This argument parameter is passed through to `ConnectData` */
@@ -74,7 +74,7 @@ declare namespace Dispatcher {
     /** Default: `'GET'` */
     method?: string;
     /** Default: `null` */
-    headers?: IncomingHttpHeaders | null;
+    headers?: IncomingHttpHeaders | string[] | null;
     /** A string of comma separated protocols, in descending preference order. Default: `'Websocket'` */
     protocol?: string;
     /** Default: `null` */

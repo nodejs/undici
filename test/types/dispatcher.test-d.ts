@@ -10,6 +10,9 @@ expectAssignable<Dispatcher>(new Dispatcher())
 
   // dispatch
   expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: '' }, {}))
+  expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: '', headers: [] }, {}))
+  expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: '', headers: {} }, {}))
+  expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: '', headers: null }, {}))
   expectAssignable<void>(dispatcher.dispatch({ origin: new URL('http://localhost'), path: '', method: '' }, {}))
 
   // connect
