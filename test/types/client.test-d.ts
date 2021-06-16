@@ -71,6 +71,9 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
 
   // upgrade
   expectAssignable<Promise<Dispatcher.UpgradeData>>(client.upgrade({ path: '' }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(client.upgrade({ path: '', headers: [] }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(client.upgrade({ path: '', headers: {} }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(client.upgrade({ path: '', headers: null }))
   expectAssignable<void>(client.upgrade({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.UpgradeData>(data)
@@ -78,6 +81,9 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
 
   // connect
   expectAssignable<Promise<Dispatcher.ConnectData>>(client.connect({ path: '' }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(client.connect({ path: '', headers: [] }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(client.connect({ path: '', headers: {} }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(client.connect({ path: '', headers: null }))
   expectAssignable<void>(client.connect({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ConnectData>(data)
@@ -85,6 +91,9 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
 
   // dispatch
   expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '' }, {}))
+  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '', headers: [] }, {}))
+  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '', headers: {} }, {}))
+  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '', headers: null }, {}))
   expectAssignable<void>(client.dispatch({ origin: new URL('http://localhost'), path: '', method: '' }, {}))
 
   // close
