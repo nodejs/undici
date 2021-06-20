@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const http = require('http')
 const { Client, Pool, errors } = require('..')
+const stream = require('stream')
 
 test('dispatch invalid opts', (t) => {
   t.plan(8)
@@ -628,5 +629,136 @@ test('dispatch pool onError missing', (t) => {
       t.equal(err.code, 'UND_ERR_INVALID_ARG')
       t.equal(err.message, 'invalid onError method')
     }
+  })
+})
+
+test('dispatch onBodyChunkSent not a function', (t) => {
+  t.plan(2)
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onBodyChunkSent: '42',
+      onConnect () {},
+      onHeaders () {},
+      onData () {},
+      onError (err) {
+        t.equal(err.code, 'UND_ERR_INVALID_ARG')
+        t.equal(err.message, 'invalid onBodyChunkSent method')
+      }
+    })
+  })
+})
+
+test('dispatch onBodyChunkSent buffer', (t) => {
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+    const body = 'hello 🚀'
+    client.dispatch({
+      path: '/',
+      method: 'POST',
+      body
+    }, {
+      onBodyChunkSent (chunk) {
+        t.equal(chunk.toString(), body)
+      },
+      onError (err) {
+        throw err
+      },
+      onConnect () {},
+      onHeaders () {},
+      onData () {},
+      onComplete () {
+        t.end()
+      }
+    })
+  })
+})
+
+test('dispatch onBodyChunkSent stream', (t) => {
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.teardown(server.close.bind(server))
+  const chunks = ['he', 'llo', 'world', '🚀']
+  const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
+  const body = stream.Readable.from(chunks)
+  server.listen(0, () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+    let sentBytes = 0
+    let currentChunk = 0
+    client.dispatch({
+      path: '/',
+      method: 'POST',
+      body
+    }, {
+      onBodyChunkSent (chunk) {
+        t.equal(chunks[currentChunk++], chunk)
+        sentBytes += Buffer.byteLength(chunk)
+      },
+      onError (err) {
+        throw err
+      },
+      onConnect () {},
+      onHeaders () {},
+      onData () {},
+      onComplete () {
+        t.equal(currentChunk, chunks.length)
+        t.equal(sentBytes, toSendBytes)
+        t.end()
+      }
+    })
+  })
+})
+
+test('dispatch onBodyChunkSent async-iterable', (t) => {
+  const server = http.createServer((req, res) => {
+    res.end('ad')
+  })
+  t.teardown(server.close.bind(server))
+  const chunks = ['he', 'llo', 'world', '🚀']
+  const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
+  server.listen(0, () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+    let sentBytes = 0
+    let currentChunk = 0
+    client.dispatch({
+      path: '/',
+      method: 'POST',
+      body: chunks
+    }, {
+      onBodyChunkSent (chunk) {
+        t.equal(chunks[currentChunk++], chunk)
+        sentBytes += Buffer.byteLength(chunk)
+      },
+      onError (err) {
+        throw err
+      },
+      onConnect () {},
+      onHeaders () {},
+      onData () {},
+      onComplete () {
+        t.equal(currentChunk, chunks.length)
+        t.equal(sentBytes, toSendBytes)
+        t.end()
+      }
+    })
   })
 })
