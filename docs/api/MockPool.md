@@ -88,9 +88,9 @@ A `MockScope` is associated with a single `MockInterceptor`. With this, we can c
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 // MockPool
@@ -117,23 +117,22 @@ for await (const data of body) {
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
   path: '/foo',
-  method: 'GET',
+  method: 'GET'
 }).reply(200, 'foo')
 
 mockPool.intercept({
   path: '/hello',
-  method: 'GET',
+  method: 'GET'
 }).reply(200, 'hello')
-
 
 const result1 = await request('http://localhost:3000/foo')
 
@@ -144,9 +143,9 @@ const result2 = await request('http://localhost:3000/hello')
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
@@ -166,7 +165,7 @@ mockPool.intercept({
 const {
   statusCode,
   headers,
-  tailers,
+  trailers,
   body
 } = await request('http://localhost:3000/foo?hello=there&see=ya', {
     method: 'POST',
@@ -192,9 +191,9 @@ console.log('trailers', trailers) // {"Content-MD5":"test"}
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
@@ -225,20 +224,20 @@ const result = await request('http://localhost:3000/foo', {
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
-    path: '/foo',
-    method: 'GET'
-  }).replyWithError(new Error('kaboom'))
+  path: '/foo',
+  method: 'GET'
+}).replyWithError(new Error('kaboom'))
 
 await request('http://localhost:3000/foo', {
-  method: 'GET',
+  method: 'GET'
 })
 // Will throw new Error('kaboom')
 ```
@@ -247,16 +246,16 @@ await request('http://localhost:3000/foo', {
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
   path: '/foo',
-  method: 'GET',
+  method: 'GET'
 }).defaultReplyHeaders({ foo: 'bar' })
   .reply(200, 'foo')
 
@@ -268,16 +267,16 @@ const { headers } = await request('http://localhost:3000/foo')
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
   path: '/foo',
-  method: 'GET',
+  method: 'GET'
 }).defaultReplyTrailers({ foo: 'bar' })
   .reply(200, 'foo')
 
@@ -289,17 +288,17 @@ const { trailers } = await request('http://localhost:3000/foo')
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
-    path: '/foo',
-    method: 'GET'
-  }).replyContentLength().reply(200, 'foo')
+  path: '/foo',
+  method: 'GET'
+}).replyContentLength().reply(200, 'foo')
 
 const { headers } = await request('http://localhost:3000/foo')
 // headers: {"content-length":"3"}
@@ -309,37 +308,37 @@ const { headers } = await request('http://localhost:3000/foo')
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
-    path: '/foo',
-    method: 'GET'
-  }).replyContentLength().reply(200, 'foo')
+  path: '/foo',
+  method: 'GET'
+}).replyContentLength().reply(200, { foo: 'bar' })
 
 const { headers } = await request('http://localhost:3000/foo')
-// headers: {"content-length":"3"}
+// headers: {"content-length":"13"}
 ```
 
 #### Example - Mocked request with persist enabled
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
-    path: '/foo',
-    method: 'GET'
-  }).reply(200, 'foo').persist()
+  path: '/foo',
+  method: 'GET'
+}).reply(200, 'foo').persist()
 
 const result1 = await request('http://localhost:3000/foo')
 // Will match and return mocked data
@@ -354,17 +353,17 @@ const result2 = await request('http://localhost:3000/foo')
 
 ```js
 'use strict'
-const { MockAgent } = require('undici')
+const { MockAgent, setGlobalDispatcher, request } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
-    path: '/foo',
-    method: 'GET'
-  }).reply(200, 'foo').times(2)
+  path: '/foo',
+  method: 'GET'
+}).reply(200, 'foo').times(2)
 
 const result1 = await request('http://localhost:3000/foo')
 // Will match and return mocked data
@@ -388,7 +387,7 @@ Returns: `Promise<void>`
 'use strict'
 const { MockAgent } = require('undici')
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent()
 const mockPool = mockAgent.get('http://localhost:3000')
 
 await mockPool.close()
@@ -410,8 +409,8 @@ const { MockAgent } = require('undici')
 
 const mockAgent = new MockAgent()
 
-const mockClient = mockAgent.get('http://localhost:3000')
-mockClient.intercept({
+const mockPool = mockAgent.get('http://localhost:3000')
+mockPool.intercept({
   path: '/foo',
   method: 'GET',
 }).reply(200, 'foo')
@@ -419,7 +418,7 @@ mockClient.intercept({
 const {
   statusCode,
   body
-} = await mockClient.request({
+} = await mockPool.request({
   origin: 'http://localhost:3000',
   path: '/foo',
   method: 'GET'
