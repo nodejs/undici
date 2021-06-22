@@ -6,7 +6,7 @@ const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
 const { Readable } = require('stream')
 const { kSocket } = require('../lib/core/symbols')
-const { wrapWithAsyncIterable } = require('./utils/stream')
+const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 const EE = require('events')
 const { kUrl, kSize, kConnect, kBusy, kConnected, kRunning } = require('../lib/core/symbols')
 

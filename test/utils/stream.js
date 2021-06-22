@@ -23,10 +23,4 @@ function createWritable (target) {
   })
 }
 
-async function * wrapWithAsyncIterable (stream) {
-  for await (const chunk of stream) {
-    yield chunk
-  }
-}
-
-module.exports = { createReadable, createWritable, wrapWithAsyncIterable }
+module.exports = { createReadable, createWritable }

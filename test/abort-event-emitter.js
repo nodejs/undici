@@ -6,7 +6,7 @@ const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { createReadStream } = require('fs')
 const { Readable } = require('stream')
-const { wrapWithAsyncIterable } = require('./utils/stream')
+const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 
 test('Abort before sending request (no body)', (t) => {
   t.plan(4)

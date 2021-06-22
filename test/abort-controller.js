@@ -5,7 +5,7 @@ const { AbortController: NPMAbortController } = require('abort-controller')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { createReadStream } = require('fs')
-const { wrapWithAsyncIterable } = require('./utils/stream')
+const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 
 const controllers = [{
   AbortControllerImpl: NPMAbortController,

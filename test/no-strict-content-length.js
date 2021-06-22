@@ -5,7 +5,7 @@ const { Client } = require('..')
 const { createServer } = require('http')
 const { Readable } = require('stream')
 const sinon = require('sinon')
-const { wrapWithAsyncIterable } = require('./utils/stream')
+const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 
 tap.test('strictContentLength: false', (t) => {
   t.plan(7)

@@ -7,6 +7,11 @@ const net = require('net')
 const { Readable } = require('stream')
 
 const { kSocket, kConnect } = require('../lib/core/symbols')
+const { wrapWithAsyncIterable } = require('./utils/async-iterators')
+
+class IteratorError extends Error {}
+const ASYNC_ITERATOR = 'async-iterator'
+const STREAM = 'stream'
 
 test('GET errors and reconnect with pipelining 1', (t) => {
   t.plan(9)
@@ -107,137 +112,155 @@ test('GET errors and reconnect with pipelining 3', (t) => {
   })
 })
 
-test('POST with a stream that errors and pipelining 1 should reconnect', (t) => {
-  t.plan(12)
+function getBody (stream, type) {
+  if (type === ASYNC_ITERATOR) {
+    return wrapWithAsyncIterable(stream)
+  }
 
-  const server = createServer()
-  server.once('request', (req, res) => {
-    t.equal('/', req.url)
-    t.equal('POST', req.method)
-    t.equal('42', req.headers['content-length'])
+  return stream
+}
 
-    const bufs = []
-    req.on('data', (buf) => {
-      bufs.push(buf)
-    })
+function errorAndPipelining (type) {
+  test(`POST with a ${type} that errors and pipelining 1 should reconnect`, (t) => {
+    t.plan(12)
 
-    req.on('aborted', () => {
-      // we will abruptly close the connection here
-      // but this will still end
-      t.equal('a string', Buffer.concat(bufs).toString('utf8'))
-    })
-
+    const server = createServer()
     server.once('request', (req, res) => {
       t.equal('/', req.url)
-      t.equal('GET', req.method)
-      res.setHeader('content-type', 'text/plain')
-      res.end('hello')
-    })
-  })
-  t.teardown(server.close.bind(server))
+      t.equal('POST', req.method)
+      t.equal('42', req.headers['content-length'])
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
-
-    client.request({
-      path: '/',
-      method: 'POST',
-      headers: {
-        // higher than the length of the string
-        'content-length': 42
-      },
-      opaque: 'asd',
-      body: new Readable({
-        read () {
-          this.push('a string')
-          this.destroy(new Error('kaboom'))
-        }
-      })
-    }, (err, data) => {
-      t.equal(err.message, 'kaboom')
-      t.equal(data.opaque, 'asd')
-    })
-
-    // this will be queued up
-    client.request({ path: '/', method: 'GET', idempotent: false }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
-      body.on('data', (buf) => {
+      req.on('data', (buf) => {
         bufs.push(buf)
       })
-      body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+
+      req.on('aborted', () => {
+        // we will abruptly close the connection here
+        // but this will still end
+        t.equal('a string', Buffer.concat(bufs).toString('utf8'))
+      })
+
+      server.once('request', (req, res) => {
+        t.equal('/', req.url)
+        t.equal('GET', req.method)
+        res.setHeader('content-type', 'text/plain')
+        res.end('hello')
+      })
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`)
+      t.teardown(client.destroy.bind(client))
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        headers: {
+          // higher than the length of the string
+          'content-length': 42
+        },
+        opaque: 'asd',
+        body: getBody(new Readable({
+          read () {
+            this.push('a string')
+            this.destroy(new Error('kaboom'))
+          }
+        }), type)
+      }, (err, data) => {
+        t.equal(err.message, 'kaboom')
+        t.equal(data.opaque, 'asd')
+      })
+
+      // this will be queued up
+      client.request({ path: '/', method: 'GET', idempotent: false }, (err, { statusCode, headers, body }) => {
+        t.error(err)
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
+        const bufs = []
+        body.on('data', (buf) => {
+          bufs.push(buf)
+        })
+        body.on('end', () => {
+          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        })
       })
     })
   })
-})
+}
 
-test('POST with chunked encoding that errors and pipelining 1 should reconnect', (t) => {
-  t.plan(12)
+errorAndPipelining(STREAM)
+errorAndPipelining(ASYNC_ITERATOR)
 
-  const server = createServer()
-  server.once('request', (req, res) => {
-    t.equal('/', req.url)
-    t.equal('POST', req.method)
-    t.equal(req.headers['content-length'], undefined)
+function errorAndChunkedEncodingPipelining (type) {
+  test(`POST with chunked encoding, ${type} body that errors and pipelining 1 should reconnect`, (t) => {
+    t.plan(12)
 
-    const bufs = []
-    req.on('data', (buf) => {
-      bufs.push(buf)
-    })
-
-    req.on('aborted', () => {
-      // we will abruptly close the connection here
-      // but this will still end
-      t.equal('a string', Buffer.concat(bufs).toString('utf8'))
-    })
-
+    const server = createServer()
     server.once('request', (req, res) => {
       t.equal('/', req.url)
-      t.equal('GET', req.method)
-      res.setHeader('content-type', 'text/plain')
-      res.end('hello')
-    })
-  })
-  t.teardown(server.close.bind(server))
+      t.equal('POST', req.method)
+      t.equal(req.headers['content-length'], undefined)
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
-
-    client.request({
-      path: '/',
-      method: 'POST',
-      opaque: 'asd',
-      body: new Readable({
-        read () {
-          this.push('a string')
-          this.destroy(new Error('kaboom'))
-        }
-      })
-    }, (err, data) => {
-      t.equal(err.message, 'kaboom')
-      t.equal(data.opaque, 'asd')
-    })
-
-    // this will be queued up
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
-      body.on('data', (buf) => {
+      req.on('data', (buf) => {
         bufs.push(buf)
       })
-      body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+
+      req.on('aborted', () => {
+        // we will abruptly close the connection here
+        // but this will still end
+        t.equal('a string', Buffer.concat(bufs).toString('utf8'))
+      })
+
+      server.once('request', (req, res) => {
+        t.equal('/', req.url)
+        t.equal('GET', req.method)
+        res.setHeader('content-type', 'text/plain')
+        res.end('hello')
+      })
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`)
+      t.teardown(client.destroy.bind(client))
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        opaque: 'asd',
+        body: getBody(new Readable({
+          read () {
+            this.push('a string')
+            this.destroy(new Error('kaboom'))
+          }
+        }), type)
+      }, (err, data) => {
+        t.equal(err.message, 'kaboom')
+        t.equal(data.opaque, 'asd')
+      })
+
+      // this will be queued up
+      client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+        t.error(err)
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
+        const bufs = []
+        body.on('data', (buf) => {
+          bufs.push(buf)
+        })
+        body.on('end', () => {
+          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        })
       })
     })
   })
-})
+}
+
+errorAndChunkedEncodingPipelining(STREAM)
+errorAndChunkedEncodingPipelining(ASYNC_ITERATOR)
 
 test('invalid options throws', (t) => {
   try {
@@ -494,7 +517,7 @@ test('invalid options throws', (t) => {
 })
 
 test('POST which fails should error response', (t) => {
-  t.plan(4)
+  t.plan(6)
 
   const server = createServer()
   server.on('request', (req, res) => {
@@ -552,6 +575,34 @@ test('POST which fails should error response', (t) => {
         checkError(err)
       })
     }
+
+    {
+      const body = wrapWithAsyncIterable(['asd'], true)
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        body
+      }, (err) => {
+        checkError(err)
+      })
+    }
+
+    {
+      const body = wrapWithAsyncIterable(['asd'], true)
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        headers: {
+          'content-length': 100
+        },
+        body
+      }, (err) => {
+        console.log(err)
+        checkError(err)
+      })
+    }
   })
 })
 
@@ -579,6 +630,62 @@ test('client destroy cleanup', (t) => {
     body.on('error', (err) => {
       t.equal(err, _err)
     })
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body
+    }, (err, data) => {
+      t.equal(err, _err)
+    })
+  })
+})
+
+test('throwing async-iterator causes error', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end(Buffer.alloc(4 + 1, 'a'))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      method: 'POST',
+      path: '/',
+      body: (async function * () {
+        yield 'hello'
+        throw new IteratorError('bad iterator')
+      })()
+    }, (err) => {
+      t.type(err, IteratorError)
+    })
+  })
+})
+
+test('client async-iterator destroy cleanup', (t) => {
+  t.plan(2)
+
+  const _err = new Error('kaboom')
+  let client
+  const server = createServer()
+  server.once('request', (req, res) => {
+    req.once('data', () => {
+      client.destroy(_err, (err) => {
+        t.error(err)
+      })
+    })
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const body = wrapWithAsyncIterable(['asd'], true)
 
     client.request({
       path: '/',
@@ -703,78 +810,89 @@ test('parser error', (t) => {
   })
 })
 
-test('socket fail while writing request body', (t) => {
-  t.plan(2)
+function socketFailWrite (type) {
+  test(`socket fail while writing ${type} request body`, (t) => {
+    t.plan(2)
 
-  const server = createServer()
-  server.once('request', (req, res) => {
-  })
-  t.teardown(server.close.bind(server))
+    const server = createServer()
+    server.once('request', (req, res) => {
+    })
+    t.teardown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`)
+      t.teardown(client.destroy.bind(client))
 
-    const body = new Readable({ read () {} })
-    body.push('asd')
-
-    client.on('connect', () => {
-      process.nextTick(() => {
-        client[kSocket].destroy('kaboom')
+      const preBody = new Readable({ read () {} })
+      preBody.push('asd')
+      const body = getBody(preBody, type)
+      client.on('connect', () => {
+        process.nextTick(() => {
+          client[kSocket].destroy('kaboom')
+        })
       })
-    })
 
-    client.request({
-      path: '/',
-      method: 'POST',
-      body
-    }, (err) => {
-      t.ok(err)
-    })
-    client.close((err) => {
-      t.error(err)
-    })
-  })
-})
-
-test('socket fail while ending request body', (t) => {
-  t.plan(3)
-
-  const server = createServer()
-  server.once('request', (req, res) => {
-    res.end()
-  })
-  t.teardown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 2
-    })
-    t.teardown(client.destroy.bind(client))
-
-    const _err = new Error('kaboom')
-    client.on('connect', () => {
-      process.nextTick(() => {
-        client[kSocket].destroy(_err)
+      client.request({
+        path: '/',
+        method: 'POST',
+        body
+      }, (err) => {
+        t.ok(err)
       })
-    })
-    const body = new Readable({ read () {} })
-    body.push(null)
-    client.request({
-      path: '/',
-      method: 'POST',
-      body
-    }, (err) => {
-      t.equal(err, _err)
-    })
-    client.close((err) => {
-      t.error(err)
       client.close((err) => {
-        t.type(err, errors.ClientDestroyedError)
+        t.error(err)
       })
     })
   })
-})
+}
+socketFailWrite(STREAM)
+socketFailWrite(ASYNC_ITERATOR)
+
+function socketFailEndWrite (type) {
+  test(`socket fail while ending ${type} request body`, (t) => {
+    t.plan(3)
+
+    const server = createServer()
+    server.once('request', (req, res) => {
+      res.end()
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`, {
+        pipelining: 2
+      })
+      t.teardown(client.destroy.bind(client))
+
+      const _err = new Error('kaboom')
+      client.on('connect', () => {
+        process.nextTick(() => {
+          client[kSocket].destroy(_err)
+        })
+      })
+      const preBody = new Readable({ read () {} })
+      preBody.push(null)
+      const body = getBody(preBody, type)
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        body
+      }, (err) => {
+        t.equal(err, _err)
+      })
+      client.close((err) => {
+        t.error(err)
+        client.close((err) => {
+          t.type(err, errors.ClientDestroyedError)
+        })
+      })
+    })
+  })
+}
+
+socketFailEndWrite(STREAM)
+socketFailEndWrite(ASYNC_ITERATOR)
 
 test('queued request should not fail on socket destroy', (t) => {
   t.plan(4)
