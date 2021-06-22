@@ -5,9 +5,10 @@ const { Client } = require('..')
 const { createServer } = require('http')
 const { Readable } = require('stream')
 const sinon = require('sinon')
+const { wrapWithAsyncIterable } = require('./utils/stream')
 
 tap.test('strictContentLength: false', (t) => {
-  t.plan(4)
+  t.plan(7)
 
   const emitWarningStub = sinon.stub(process, 'emitWarning')
 
@@ -238,6 +239,111 @@ tap.test('strictContentLength: false', (t) => {
             })
           }
         })
+      }, (err) => {
+        assertEmitWarningCalledAndReset()
+        t.error(err)
+      })
+    })
+  })
+
+  t.test('request async iterating content-length less than body size', (t) => {
+    t.plan(1)
+
+    const server = createServer((req, res) => {
+      res.end()
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`, {
+        strictContentLength: false
+      })
+      t.teardown(client.close.bind(client))
+
+      client.request({
+        path: '/',
+        method: 'PUT',
+        headers: {
+          'content-length': 2
+        },
+        body: wrapWithAsyncIterable(new Readable({
+          read () {
+            setImmediate(() => {
+              this.push('abcd')
+              this.push(null)
+            })
+          }
+        }))
+      }, (err) => {
+        assertEmitWarningCalledAndReset()
+        t.error(err)
+      })
+    })
+  })
+
+  t.test('request async iterator content-length greater than body size', (t) => {
+    t.plan(1)
+
+    const server = createServer((req, res) => {
+      res.end()
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`, {
+        strictContentLength: false
+      })
+      t.teardown(client.close.bind(client))
+
+      client.request({
+        path: '/',
+        method: 'PUT',
+        headers: {
+          'content-length': 10
+        },
+        body: wrapWithAsyncIterable(new Readable({
+          read () {
+            setImmediate(() => {
+              this.push('abcd')
+              this.push(null)
+            })
+          }
+        }))
+      }, (err) => {
+        assertEmitWarningCalledAndReset()
+        t.error(err)
+      })
+    })
+  })
+
+  t.test('request async iterator data when content-length=0', (t) => {
+    t.plan(1)
+
+    const server = createServer((req, res) => {
+      res.end()
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`, {
+        strictContentLength: false
+      })
+      t.teardown(client.close.bind(client))
+
+      client.request({
+        path: '/',
+        method: 'PUT',
+        headers: {
+          'content-length': 0
+        },
+        body: wrapWithAsyncIterable(new Readable({
+          read () {
+            setImmediate(() => {
+              this.push('asdasdasdkajsdnasdkjasnd')
+              this.push(null)
+            })
+          }
+        }))
       }, (err) => {
         assertEmitWarningCalledAndReset()
         t.error(err)
