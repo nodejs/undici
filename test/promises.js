@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client, Pool } = require('..')
 const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
+const { wrapWithAsyncIterable } = require('./utils/stream')
 
 test('basic get, async await support', (t) => {
   t.plan(5)
@@ -130,6 +131,41 @@ test('basic POST with stream, async await support', (t) => {
           'content-length': Buffer.byteLength(expected)
         },
         body: createReadStream(__filename)
+      })
+      t.equal(statusCode, 200)
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    } catch (err) {
+      t.fail(err)
+    }
+  })
+})
+
+test('basic POST with async-iterator, async await support', (t) => {
+  t.plan(5)
+
+  const expected = readFileSync(__filename, 'utf8')
+
+  const server = createServer(postServer(t, expected))
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+
+    try {
+      const { statusCode, body } = await client.request({
+        path: '/',
+        method: 'POST',
+        headers: {
+          'content-length': Buffer.byteLength(expected)
+        },
+        body: wrapWithAsyncIterable(createReadStream(__filename))
       })
       t.equal(statusCode, 200)
       const bufs = []
