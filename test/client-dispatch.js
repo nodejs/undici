@@ -73,7 +73,7 @@ test('dispatch invalid opts', (t) => {
   })
 })
 
-test('basic dispatch get', { only: false }, (t) => {
+test('basic dispatch get', (t) => {
   t.plan(11)
 
   const server = http.createServer((req, res) => {
@@ -124,8 +124,8 @@ test('basic dispatch get', { only: false }, (t) => {
   })
 })
 
-test('basic dispatch (redirection) get', { only: true }, async (t) => {
-  t.plan(11)
+test('basic dispatch (redirection) get', { only: true }, (t) => {
+  t.plan(23)
 
   const maxRedirections = 2
   const messages = ['hello', ' world', '!']
@@ -150,6 +150,7 @@ test('basic dispatch (redirection) get', { only: true }, async (t) => {
 
     res.end(message)
   })
+  t.teardown(server.close.bind(server))
 
   const reqHeaders = {
     foo: undefined,
@@ -159,10 +160,10 @@ test('basic dispatch (redirection) get', { only: true }, async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, { maxRedirections })
-    t.teardown(client.close.bind(client))
-    t.teardown(server.close.bind(server))
-
     const bufs = []
+
+    t.teardown(client.close.bind(client))
+
     client.dispatch({
       path: '/',
       method: 'GET',
@@ -172,16 +173,15 @@ test('basic dispatch (redirection) get', { only: true }, async (t) => {
       },
       onHeaders () {},
       onData (buf) {
-        console.log(buf.toString('utf-8'))
         bufs.push(buf)
       },
       onComplete (trailers) {
-        t.equal(trailers, null)
+        t.strict(trailers, [])
         t.equal('hello world!', Buffer.concat(bufs).toString('utf8'))
+        t.teardown(client.close.bind(client))
       },
       onError (err) {
-        console.log('error;', err)
-        t.fail()
+        t.err(err)
       }
     })
   })
