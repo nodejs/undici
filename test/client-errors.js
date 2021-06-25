@@ -7,11 +7,9 @@ const net = require('net')
 const { Readable } = require('stream')
 
 const { kSocket, kConnect } = require('../lib/core/symbols')
-const { wrapWithAsyncIterable } = require('./utils/async-iterators')
+const { wrapWithAsyncIterable, maybeWrapStream, consts } = require('./utils/async-iterators')
 
 class IteratorError extends Error {}
-const ASYNC_ITERATOR = 'async-iterator'
-const STREAM = 'stream'
 
 test('GET errors and reconnect with pipelining 1', (t) => {
   t.plan(9)
@@ -112,14 +110,6 @@ test('GET errors and reconnect with pipelining 3', (t) => {
   })
 })
 
-function getBody (stream, type) {
-  if (type === ASYNC_ITERATOR) {
-    return wrapWithAsyncIterable(stream)
-  }
-
-  return stream
-}
-
 function errorAndPipelining (type) {
   test(`POST with a ${type} that errors and pipelining 1 should reconnect`, (t) => {
     t.plan(12)
@@ -162,7 +152,7 @@ function errorAndPipelining (type) {
           'content-length': 42
         },
         opaque: 'asd',
-        body: getBody(new Readable({
+        body: maybeWrapStream(new Readable({
           read () {
             this.push('a string')
             this.destroy(new Error('kaboom'))
@@ -190,8 +180,8 @@ function errorAndPipelining (type) {
   })
 }
 
-errorAndPipelining(STREAM)
-errorAndPipelining(ASYNC_ITERATOR)
+errorAndPipelining(consts.STREAM)
+errorAndPipelining(consts.ASYNC_ITERATOR)
 
 function errorAndChunkedEncodingPipelining (type) {
   test(`POST with chunked encoding, ${type} body that errors and pipelining 1 should reconnect`, (t) => {
@@ -231,7 +221,7 @@ function errorAndChunkedEncodingPipelining (type) {
         path: '/',
         method: 'POST',
         opaque: 'asd',
-        body: getBody(new Readable({
+        body: maybeWrapStream(new Readable({
           read () {
             this.push('a string')
             this.destroy(new Error('kaboom'))
@@ -259,8 +249,8 @@ function errorAndChunkedEncodingPipelining (type) {
   })
 }
 
-errorAndChunkedEncodingPipelining(STREAM)
-errorAndChunkedEncodingPipelining(ASYNC_ITERATOR)
+errorAndChunkedEncodingPipelining(consts.STREAM)
+errorAndChunkedEncodingPipelining(consts.ASYNC_ITERATOR)
 
 test('invalid options throws', (t) => {
   try {
@@ -825,7 +815,7 @@ function socketFailWrite (type) {
 
       const preBody = new Readable({ read () {} })
       preBody.push('asd')
-      const body = getBody(preBody, type)
+      const body = maybeWrapStream(preBody, type)
       client.on('connect', () => {
         process.nextTick(() => {
           client[kSocket].destroy('kaboom')
@@ -845,8 +835,8 @@ function socketFailWrite (type) {
     })
   })
 }
-socketFailWrite(STREAM)
-socketFailWrite(ASYNC_ITERATOR)
+socketFailWrite(consts.STREAM)
+socketFailWrite(consts.ASYNC_ITERATOR)
 
 function socketFailEndWrite (type) {
   test(`socket fail while ending ${type} request body`, (t) => {
@@ -872,7 +862,7 @@ function socketFailEndWrite (type) {
       })
       const preBody = new Readable({ read () {} })
       preBody.push(null)
-      const body = getBody(preBody, type)
+      const body = maybeWrapStream(preBody, type)
 
       client.request({
         path: '/',
@@ -891,8 +881,8 @@ function socketFailEndWrite (type) {
   })
 }
 
-socketFailEndWrite(STREAM)
-socketFailEndWrite(ASYNC_ITERATOR)
+socketFailEndWrite(consts.STREAM)
+socketFailEndWrite(consts.ASYNC_ITERATOR)
 
 test('queued request should not fail on socket destroy', (t) => {
   t.plan(4)
