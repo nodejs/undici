@@ -589,7 +589,6 @@ test('POST which fails should error response', (t) => {
         },
         body
       }, (err) => {
-        console.log(err)
         checkError(err)
       })
     }
