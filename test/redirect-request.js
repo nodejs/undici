@@ -2,9 +2,6 @@
 
 const t = require('tap')
 const { request } = require('..')
-const RedirectHandler = require('../lib/handler/redirect')
-const { InvalidArgumentError } = require('../lib/core/errors')
-const { nop } = require('../lib/core/util')
 const {
   startRedirectingServer,
   startRedirectingWithBodyServer,
@@ -374,18 +371,4 @@ t.test('should handle errors (promise)', async t => {
   } catch (error) {
     t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
   }
-})
-
-t.test('should complain for invalid headers', async t => {
-  t.plan(1)
-
-  const handler = new RedirectHandler('AGENT', { headers: 'ASD', origin: 'http://localhost' }, { context: {} })
-
-  t.throws(
-    () => {
-      handler.onHeaders(301, ['location', 'http://localhost'], nop)
-    },
-    InvalidArgumentError,
-    'throws on invalid headers'
-  )
 })

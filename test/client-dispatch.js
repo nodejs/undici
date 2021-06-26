@@ -125,21 +125,13 @@ test('basic dispatch get', (t) => {
 })
 
 test('basic dispatch (redirection) get', { only: true }, (t) => {
-  t.plan(23)
+  t.plan(16)
 
   const maxRedirections = 2
   const messages = ['hello', ' world', '!']
   let currentRedirects = 0
   const server = http.createServer((req, res) => {
     let message = 'x2'
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
-    t.equal(`localhost:${server.address().port}`, req.headers.host)
-    t.equal(undefined, req.headers.foo)
-    t.equal('bar', req.headers.bar)
-    t.equal('null', req.headers.baz)
-    t.equal(undefined, req.headers['content-length'])
-
     if (currentRedirects < maxRedirections) {
       res.statusCode = 301
       res.setHeader('Connection', 'close')
@@ -160,9 +152,9 @@ test('basic dispatch (redirection) get', { only: true }, (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, { maxRedirections })
-    const bufs = []
-
     t.teardown(client.close.bind(client))
+
+    const bufs = []
 
     client.dispatch({
       path: '/',
@@ -178,10 +170,9 @@ test('basic dispatch (redirection) get', { only: true }, (t) => {
       onComplete (trailers) {
         t.strict(trailers, [])
         t.equal('hello world!', Buffer.concat(bufs).toString('utf8'))
-        t.teardown(client.close.bind(client))
       },
       onError (err) {
-        t.err(err)
+        t.error(err)
       }
     })
   })
