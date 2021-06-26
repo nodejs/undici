@@ -476,7 +476,7 @@ test('basic POST with iterator', (t) => {
       res.end(expected)
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   const iterable = {
     [Symbol.iterator]: function * () {
@@ -489,7 +489,7 @@ test('basic POST with iterator', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.request({
       path: '/',
@@ -514,7 +514,7 @@ test('basic POST with iterator with invalid data', (t) => {
   t.plan(1)
 
   const server = createServer(() => {})
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   const iterable = {
     [Symbol.iterator]: function * () {
@@ -524,7 +524,7 @@ test('basic POST with iterator with invalid data', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.request({
       path: '/',
@@ -1341,6 +1341,155 @@ test('TypedArray and DataView body', (t) => {
       t.error(err)
       t.equal(statusCode, 200)
       body.resume()
+    })
+  })
+})
+
+test('async iterator empty chunk continues', (t) => {
+  t.plan(5)
+  const serverChunks = ['hello', 'world']
+  const server = createServer((req, res) => {
+    let str = ''
+    let i = 0
+    req.on('data', (chunk) => {
+      const content = chunk.toString()
+      t.equal(serverChunks[i++], content)
+      str += content
+    }).on('end', () => {
+      t.equal(str, serverChunks.join(''))
+      res.end()
+    })
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.close.bind(client))
+
+    const body = (async function * () {
+      yield serverChunks[0]
+      yield ''
+      yield serverChunks[1]
+    })()
+    client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
+      t.error(err)
+      t.equal(statusCode, 200)
+      body.resume()
+    })
+  })
+})
+
+test('async iterator error from server destroys early', (t) => {
+  t.plan(3)
+  const server = createServer((req, res) => {
+    req.on('data', (chunk) => {
+      res.destroy()
+    })
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.close.bind(client))
+    let gotDestroyed
+    const body = (async function * () {
+      try {
+        const promise = new Promise(resolve => {
+          gotDestroyed = resolve
+        })
+        yield 'hello'
+        await promise
+        yield 'inner-value'
+        t.fail('should not get here, iterator should be destroyed')
+      } finally {
+        t.ok(true)
+      }
+    })()
+    client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
+      t.ok(err)
+      t.equal(statusCode, undefined)
+      gotDestroyed()
+    })
+  })
+})
+
+test('regular iterator error from server closes early', (t) => {
+  t.plan(3)
+  const server = createServer((req, res) => {
+    req.on('data', () => {
+      process.nextTick(() => {
+        res.destroy()
+      })
+    })
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.close.bind(client))
+    let gotDestroyed = false
+    const body = (function * () {
+      try {
+        yield 'start'
+        while (!gotDestroyed) {
+          yield 'zzz'
+          // for eslint
+          gotDestroyed = gotDestroyed || false
+        }
+        yield 'zzz'
+        t.fail('should not get here, iterator should be destroyed')
+        yield 'zzz'
+      } finally {
+        t.ok(true)
+      }
+    })()
+    client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
+      t.ok(err)
+      t.equal(statusCode, undefined)
+      gotDestroyed = true
+    })
+  })
+})
+
+test('async iterator early return closes early', (t) => {
+  t.plan(3)
+  const server = createServer((req, res) => {
+    req.on('data', () => {
+      res.writeHead(200)
+      res.end()
+    })
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.close.bind(client))
+    let gotDestroyed
+    const body = (async function * () {
+      try {
+        const promise = new Promise(resolve => {
+          gotDestroyed = resolve
+        })
+        yield 'hello'
+        await promise
+        yield 'inner-value'
+        t.fail('should not get here, iterator should be destroyed')
+      } finally {
+        t.ok(true)
+      }
+    })()
+    client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
+      t.error(err)
+      t.equal(statusCode, 200)
+      gotDestroyed()
     })
   })
 })
