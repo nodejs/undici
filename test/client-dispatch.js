@@ -124,60 +124,6 @@ test('basic dispatch get', (t) => {
   })
 })
 
-test('basic dispatch (redirection) get', { only: true }, (t) => {
-  t.plan(16)
-
-  const maxRedirections = 2
-  const messages = ['hello', ' world', '!']
-  let currentRedirects = 0
-  const server = http.createServer((req, res) => {
-    let message = 'x2'
-    if (currentRedirects < maxRedirections) {
-      res.statusCode = 301
-      res.setHeader('Connection', 'close')
-      res.setHeader('Location', `http://localhost:${server.address().port}/`)
-      message = messages[currentRedirects]
-      currentRedirects++
-    }
-
-    res.end(message)
-  })
-  t.teardown(server.close.bind(server))
-
-  const reqHeaders = {
-    foo: undefined,
-    bar: 'bar',
-    baz: null
-  }
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { maxRedirections })
-    t.teardown(client.close.bind(client))
-
-    const bufs = []
-
-    client.dispatch({
-      path: '/',
-      method: 'GET',
-      headers: reqHeaders
-    }, {
-      onConnect () {
-      },
-      onHeaders () {},
-      onData (buf) {
-        bufs.push(buf)
-      },
-      onComplete (trailers) {
-        t.strict(trailers, [])
-        t.equal('hello world!', Buffer.concat(bufs).toString('utf8'))
-      },
-      onError (err) {
-        t.error(err)
-      }
-    })
-  })
-})
-
 test('trailers dispatch get', (t) => {
   t.plan(12)
 

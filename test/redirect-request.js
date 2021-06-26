@@ -1,7 +1,7 @@
 'use strict'
 
 const t = require('tap')
-const { request } = require('..')
+const { request, Client, Pool } = require('..')
 const {
   startRedirectingServer,
   startRedirectingWithBodyServer,
@@ -371,4 +371,64 @@ t.test('should handle errors (promise)', async t => {
   } catch (error) {
     t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
   }
+})
+
+t.test('should follow redirection after a HTTP 300 (Pool)', async t => {
+  t.plan(4)
+
+  let body = ''
+  const server = await startRedirectingServer(t)
+
+  const client = new Pool(`http://${server}`)
+  t.teardown(client.close.bind(client))
+
+  const { statusCode, headers, body: bodyStream, context: { history } } = await request(`http://${server}/300?key=value`, {
+    maxRedirections: 10,
+    dispatcher: client
+  })
+
+  for await (const b of bodyStream) {
+    body += b
+  }
+
+  t.equal(statusCode, 200)
+  t.notOk(headers.location)
+  t.same(history.map(x => x.toString()), [
+    `http://${server}/300?key=value`,
+    `http://${server}/300/1?key=value`,
+    `http://${server}/300/2?key=value`,
+    `http://${server}/300/3?key=value`,
+    `http://${server}/300/4?key=value`
+  ])
+  t.equal(body, `GET key=value :: connection@keep-alive host@${server}`)
+})
+
+t.test('should follow redirection after a HTTP 300 (Client)', async t => {
+  t.plan(4)
+
+  let body = ''
+  const server = await startRedirectingServer(t)
+
+  const client = new Client(`http://${server}`)
+  t.teardown(client.close.bind(client))
+
+  const { statusCode, headers, body: bodyStream, context: { history } } = await request(`http://${server}/300?key=value`, {
+    maxRedirections: 10,
+    dispatcher: client
+  })
+
+  for await (const b of bodyStream) {
+    body += b
+  }
+
+  t.equal(statusCode, 200)
+  t.notOk(headers.location)
+  t.same(history.map(x => x.toString()), [
+    `http://${server}/300?key=value`,
+    `http://${server}/300/1?key=value`,
+    `http://${server}/300/2?key=value`,
+    `http://${server}/300/3?key=value`,
+    `http://${server}/300/4?key=value`
+  ])
+  t.equal(body, `GET key=value :: connection@keep-alive host@${server}`)
 })
