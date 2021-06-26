@@ -73,3 +73,69 @@ test('https://github.com/mcollina/undici/issues/810 no pipelining', (t) => {
     })
   })
 })
+
+test('https://github.com/mcollina/undici/issues/810 pipelining', (t) => {
+  t.plan(3)
+
+  const server = net.createServer(socket => {
+    socket.write('HTTP/1.1 200 OK\r\n')
+    socket.write('Content-Length: 1\r\n\r\n')
+    socket.write('11111\r\n')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { pipelining: true })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume().on('end', () => {
+        t.fail()
+      }).on('error', err => {
+        t.equal(err.code, 'HPE_CB_MESSAGE_BEGIN')
+        t.type(err, errors.HTTPParserError)
+      })
+    })
+  })
+})
+
+test('https://github.com/mcollina/undici/issues/810 pipelining 2', (t) => {
+  t.plan(5)
+
+  const server = net.createServer(socket => {
+    socket.write('HTTP/1.1 200 OK\r\n')
+    socket.write('Content-Length: 1\r\n\r\n')
+    socket.write('11111\r\n')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, { pipelining: true })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume().on('end', () => {
+        t.fail()
+      }).on('error', err => {
+        t.equal(err.code, 'HPE_INVALID_CONSTANT')
+        t.type(err, errors.HTTPParserError)
+      })
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.equal(err.code, 'HPE_INVALID_CONSTANT')
+      t.type(err, errors.HTTPParserError)
+    })
+  })
+})
