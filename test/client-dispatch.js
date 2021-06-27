@@ -1,8 +1,8 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client, Pool, errors } = require('..')
 const http = require('http')
+const { Client, Pool, errors } = require('..')
 
 test('dispatch invalid opts', (t) => {
   t.plan(8)
