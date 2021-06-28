@@ -1493,3 +1493,63 @@ test('async iterator early return closes early', (t) => {
     })
   })
 })
+
+test('async iterator yield unsupported TypedArray', (t) => {
+  t.plan(3)
+  const server = createServer((req, res) => {
+    req.on('end', () => {
+      res.writeHead(200)
+      res.end()
+    })
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.close.bind(client))
+    const body = (async function * () {
+      try {
+        yield new Int32Array([1])
+        t.fail('should not get here, iterator should be destroyed')
+      } finally {
+        t.ok(true)
+      }
+    })()
+    client.request({ path: '/', method: 'POST', body }, (err) => {
+      t.ok(err)
+      t.equal(err.code, 'ERR_INVALID_ARG_TYPE')
+    })
+  })
+})
+
+test('async iterator yield object error', (t) => {
+  t.plan(3)
+  const server = createServer((req, res) => {
+    req.on('end', () => {
+      res.writeHead(200)
+      res.end()
+    })
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.close.bind(client))
+    const body = (async function * () {
+      try {
+        yield {}
+        t.fail('should not get here, iterator should be destroyed')
+      } finally {
+        t.ok(true)
+      }
+    })()
+    client.request({ path: '/', method: 'POST', body }, (err) => {
+      t.ok(err)
+      t.equal(err.code, 'ERR_INVALID_ARG_TYPE')
+    })
+  })
+})
