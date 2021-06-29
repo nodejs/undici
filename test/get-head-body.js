@@ -6,9 +6,10 @@ const { createServer } = require('http')
 const { Readable } = require('stream')
 const { kConnect } = require('../lib/core/symbols')
 const { kBusy } = require('../lib/core/symbols')
+const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 
 test('GET and HEAD with body should reset connection', (t) => {
-  t.plan(4 + 2)
+  t.plan(8 + 2)
 
   const server = createServer((req, res) => {
     res.end('asd')
@@ -66,6 +67,42 @@ test('GET and HEAD with body should reset connection', (t) => {
           this.push(null)
         }
       }),
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
+
+    client.request({
+      path: '/',
+      body: [],
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
+
+    client.request({
+      path: '/',
+      body: wrapWithAsyncIterable(new Readable({
+        read () {
+          this.push(null)
+        }
+      })),
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body.resume()
+    })
+
+    client.request({
+      path: '/',
+      body: wrapWithAsyncIterable(new Readable({
+        read () {
+          this.push('asd')
+          this.push(null)
+        }
+      })),
       method: 'GET'
     }, (err, data) => {
       t.error(err)

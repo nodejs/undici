@@ -5,6 +5,7 @@ const { AbortController: NPMAbortController } = require('abort-controller')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { createReadStream } = require('fs')
+const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 
 const controllers = [{
   AbortControllerImpl: NPMAbortController,
@@ -171,6 +172,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
   waitingWithBody('hello', 'string')
   waitingWithBody(createReadStream(__filename), 'stream')
   waitingWithBody(new Uint8Array([42]), 'Uint8Array')
+  waitingWithBody(wrapWithAsyncIterable(createReadStream(__filename)), 'async-iterator')
 
   function writeHeadersStartedWithBody (body, type) {  // eslint-disable-line
     test(`Abort ${controllerName} while waiting response (write headers started) (with body ${type})`, (t) => {
@@ -199,6 +201,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
   writeHeadersStartedWithBody('hello', 'string')
   writeHeadersStartedWithBody(createReadStream(__filename), 'stream')
   writeHeadersStartedWithBody(new Uint8Array([42]), 'Uint8Array')
+  writeHeadersStartedWithBody(wrapWithAsyncIterable(createReadStream(__filename)), 'async-iterator')
 
   function writeBodyStartedWithBody (body, type) { // eslint-disable-line
     test(`Abort ${controllerName} while waiting response (write headers and write body started) (with body ${type})`, (t) => {
@@ -231,4 +234,5 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
   writeBodyStartedWithBody('hello', 'string')
   writeBodyStartedWithBody(createReadStream(__filename), 'stream')
   writeBodyStartedWithBody(new Uint8Array([42]), 'Uint8Array')
+  writeBodyStartedWithBody(wrapWithAsyncIterable(createReadStream(__filename), 'async-iterator'))
 }

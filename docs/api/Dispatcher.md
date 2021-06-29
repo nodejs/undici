@@ -194,7 +194,7 @@ Returns: `void`
 
 * **path** `string`
 * **method** `string`
-* **body** `string | Buffer | Uint8Array | stream.Readable | null` (optional) - Default: `null`
+* **body** `string | Buffer | Uint8Array | stream.Readable | Iterable | AsyncIterable | null` (optional) - Default: `null`
 * **headers** `UndiciHeaders` (optional) - Default: `null`
 * **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceding requests in the pipeline has completed.
 * **upgrade** `string | null` (optional) - Default: `null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.

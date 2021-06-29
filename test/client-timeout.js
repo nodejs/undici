@@ -95,6 +95,57 @@ test('start headers timeout after request body', (t) => {
   })
 })
 
+test('start headers timeout after async iterator request body', (t) => {
+  t.plan(1)
+
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
+
+  const server = createServer((req, res) => {
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0,
+      headersTimeout: 100
+    })
+    t.teardown(client.destroy.bind(client))
+    let res
+    const body = (async function * () {
+      await new Promise((resolve) => { res = resolve })
+      process.nextTick(() => {
+        clock.tick(200)
+      })
+    })()
+    client.dispatch({
+      path: '/',
+      body,
+      method: 'GET'
+    }, {
+      onConnect () {
+        process.nextTick(() => {
+          clock.tick(200)
+        })
+        queueMicrotask(() => {
+          res()
+        })
+      },
+      onHeaders (statusCode, headers, resume) {
+      },
+      onData () {
+
+      },
+      onComplete () {
+
+      },
+      onError (err) {
+        t.type(err, errors.HeadersTimeoutError)
+      }
+    })
+  })
+})
+
 test('parser resume with no body timeout', (t) => {
   t.plan(1)
 
