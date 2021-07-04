@@ -58,12 +58,16 @@ declare namespace Dispatcher {
     signal?: AbortSignal | EventEmitter | null;
     /** This argument parameter is passed through to `ConnectData` */
     opaque?: unknown;
+    /** Default: 0 */
+    maxRedirections?: number;
   }
   export interface RequestOptions extends DispatchOptions {
     /** Default: `null` */
     opaque?: unknown;
     /** Default: `null` */
     signal?: AbortSignal | EventEmitter | null;
+    /** Default: 0 */
+    maxRedirections?: number;
   }
   export interface PipelineOptions extends RequestOptions {
     /** `true` if the `handler` will return an object stream. Default: `false` */
@@ -79,6 +83,8 @@ declare namespace Dispatcher {
     protocol?: string;
     /** Default: `null` */
     signal?: AbortSignal | EventEmitter | null;
+    /** Default: 0 */
+    maxRedirections?: number;
   }
   export interface ConnectData {
     statusCode: number;

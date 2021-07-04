@@ -16,14 +16,14 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<void>(dispatcher.dispatch({ origin: new URL('http://localhost'), path: '', method: '' }, {}))
 
   // connect
-  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ path: '' }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ path: '', maxRedirections: 0 }))
   expectAssignable<void>(dispatcher.connect({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ConnectData>(data)
   }))
 
   // request
-  expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: '' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: '', maxRedirections: 0 }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: new URL('http://localhost'), path: '', method: '' }))
   expectAssignable<void>(dispatcher.request({ origin: '', path: '', method: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
@@ -35,7 +35,7 @@ expectAssignable<Dispatcher>(new Dispatcher())
   }))
 
   // pipeline
-  expectAssignable<Duplex>(dispatcher.pipeline({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Duplex>(dispatcher.pipeline({ origin: '', path: '', method: '', maxRedirections: 0 }, data => {
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))
@@ -45,7 +45,7 @@ expectAssignable<Dispatcher>(new Dispatcher())
   }))
 
   // stream
-  expectAssignable<Promise<Dispatcher.StreamData>>(dispatcher.stream({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(dispatcher.stream({ origin: '', path: '', method: '', maxRedirections: 0 }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
@@ -77,7 +77,7 @@ expectAssignable<Dispatcher>(new Dispatcher())
   ))
 
   // upgrade
-  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '' }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', maxRedirections: 0 }))
   expectAssignable<void>(dispatcher.upgrade({ path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.UpgradeData>(data)
