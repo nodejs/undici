@@ -26,34 +26,31 @@ dispatcher.close(() => {}) // -> void
 #### Example - Request resolves before Client closes
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   response.end('undici')
-})
+}).listen()
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+await once(server, 'listening')
 
-  const request = client.request({
-    path: '/',
-    method: 'GET'
+const client = new Client(`http://localhost:${server.address().port}`)
+
+try {
+  const { body } = await client.request({
+      path: '/',
+      method: 'GET'
   })
+  body.setEncoding('utf8')
+  body.on('data', console.log)
+} catch (error) {}
 
-  client.close()
-    .then(() => {
-      // This waits for the previous request to complete
-      console.log('Client closed')
-      server.close()
-    })
+await client.close()
 
-  request.then(({ body }) => {
-    body.setEncoding('utf8')
-    body.on('data', console.log) // This logs before 'Client closed'
-  })
-})
+console.log('Client closed')
+server.close()
 ```
 
 ### `Dispatcher.connect(options[, callback])`
@@ -84,13 +81,13 @@ Returns: `void | Promise<ConnectData>` - Only returns a `Promise` if no `callbac
 #### Example - Connect request with echo
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   throw Error('should never get here')
-})
+}).listen()
 
 server.on('connect', (req, socket, head) => {
   socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
@@ -105,24 +102,25 @@ server.on('connect', (req, socket, head) => {
   })
 })
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+await once(server, 'listening')
 
-  client
-    .connect({ path: '/' })
-    .then(({ socket }) => {
-      const wanted = 'Body'
-      let data = ''
-      socket.on('data', d => { data += d })
-      socket.on('end', () => {
-        console.log(`Data received: ${data.toString()} | Data wanted: ${wanted}`)
-        client.close()
-        server.close()
-      })
-      socket.write(wanted)
-      socket.end()
-    })
-})
+const client = new Client(`http://localhost:${server.address().port}`)
+
+try {
+  const { socket } = await client.connect({
+    path: '/'
+  })
+  const wanted = 'Body'
+  let data = ''
+  socket.on('data', d => { data += d })
+  socket.on('end', () => {
+    console.log(`Data received: ${data.toString()} | Data wanted: ${wanted}`)
+    client.close()
+    server.close()
+  })
+  socket.write(wanted)
+  socket.end()
+} catch (error) { }
 ```
 
 ### `Dispatcher.destroy([error, callback]): Promise`
@@ -148,34 +146,32 @@ dispatcher.destroy(new Error(), () => {}) // -> void
 #### Example - Request is aborted when Client is destroyed
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
-  response.end('undici')
-})
+  response.end()
+}).listen()
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+await once(server, 'listening')
 
+const client = new Client(`http://localhost:${server.address().port}`)
+
+try {
   const request = client.request({
     path: '/',
     method: 'GET'
   })
-
   client.destroy()
     .then(() => {
-      // Still waits for requests to complete
       console.log('Client destroyed')
       server.close()
     })
-
-  // The request promise will reject with an Undici Client Destroyed error
-  request.catch(error => {
-    console.error(error)
-  })
-})
+  await request
+} catch (error) {
+  console.error(error)
+}
 ```
 
 ### `Dispatcher.dispatch(options, handler)`
@@ -211,59 +207,62 @@ Returns: `void`
 #### Example 1 - Dispatch GET request
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   response.end('Hello, World!')
-})
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+}).listen()
 
-  const data = []
+await once(server, 'listening')
 
-  client.dispatch({
-    path: '/',
-    method: 'GET',
-    headers: {
-      'x-foo': 'bar'
-    }
-  }, {
-    onConnect: () => {
-      console.log('Connected!')
-    },
-    onError: (error) => {
-      console.error(error)
-    },
-    onHeaders: (statusCode, headers) => {
-      console.log(`onHeaders | statusCode: ${statusCode} | headers: ${headers}`)
-    },
-    onData: (chunk) => {
-      console.log('onData : chunk received')
-      data.push(chunk)
-    },
-    onComplete: (trailers) => {
-      console.log(`onComplete | trailers: ${trailers}`)
-      const res = Buffer.concat(data).toString('utf8')
-      console.log(`Data: ${res}`)
-      client.close()
-      server.close()
-    }
-  })
+const client = new Client(`http://localhost:${server.address().port}`)
+
+const data = []
+
+client.dispatch({
+  path: '/',
+  method: 'GET',
+  headers: {
+    'x-foo': 'bar'
+  }
+}, {
+  onConnect: () => {
+    console.log('Connected!')
+  },
+  onError: (error) => {
+    console.error(error)
+  },
+  onHeaders: (statusCode, headers) => {
+    console.log(`onHeaders | statusCode: ${statusCode} | headers: ${headers}`)
+  },
+  onData: (chunk) => {
+    console.log('onData: chunk received')
+    data.push(chunk)
+  },
+  onComplete: (trailers) => {
+    console.log(`onComplete | trailers: ${trailers}`)
+    const res = Buffer.concat(data).toString('utf8')
+    console.log(`Data: ${res}`)
+    client.close()
+    server.close()
+  }
 })
 ```
 
 #### Example 2 - Dispatch Upgrade Request
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   response.end()
-})
+}).listen()
+
+await once(server, 'listening')
 
 server.on('upgrade', (request, socket, head) => {
   console.log('Node.js Server - upgrade event')
@@ -274,33 +273,31 @@ server.on('upgrade', (request, socket, head) => {
   socket.end()
 })
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+const client = new Client(`http://localhost:${server.address().port}`)
 
-  client.dispatch({
-    path: '/',
-    method: 'GET',
-    upgrade: 'websocket'
-  }, {
-    onConnect: () => {
-      console.log('Undici Client - onConnect')
-    },
-    onError: (error) => {
-      console.log('onError') // shouldn't print
-    },
-    onUpgrade: (statusCode, headers, socket) => {
-      console.log('Undici Client - onUpgrade')
-      console.log(`onUpgrade Headers: ${headers}`)
-      socket.on('data', buffer => {
-        console.log(buffer.toString('utf8'))
-      })
-      socket.on('end', () => {
-        client.close()
-        server.close()
-      })
-      socket.end()
-    }
-  })
+client.dispatch({
+  path: '/',
+  method: 'GET',
+  upgrade: 'websocket'
+}, {
+  onConnect: () => {
+    console.log('Undici Client - onConnect')
+  },
+  onError: (error) => {
+    console.log('onError') // shouldn't print
+  },
+  onUpgrade: (statusCode, headers, socket) => {
+    console.log('Undici Client - onUpgrade')
+    console.log(`onUpgrade Headers: ${headers}`)
+    socket.on('data', buffer => {
+      console.log(buffer.toString('utf8'))
+    })
+    socket.on('end', () => {
+      client.close()
+      server.close()
+    })
+    socket.end()
+  }
 })
 ```
 
@@ -332,56 +329,55 @@ Extends: [`RequestOptions`](#parameter-requestoptions)
 #### Example 1 - Pipeline Echo
 
 ```js
-'use strict'
-const { Readable, Writable, PassThrough, pipeline } = require('stream')
-const { createServer } = require('http')
-const { Client } = require('undici')
-
+import { Readable, Writable, PassThrough, pipeline } from 'stream'
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   request.pipe(response)
-})
+}).listen()
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+await once(server, 'listening')
 
-  let res = ''
+const client = new Client(`http://localhost:${server.address().port}`)
 
-  pipeline(
-    new Readable({
-      read () {
-        this.push(Buffer.from('undici'))
-        this.push(null)
-      }
-    }),
-    client.pipeline({
-      path: '/',
-      method: 'GET'
-    }, ({ statusCode, headers, body }) => {
-      console.log(`response received ${statusCode}`)
-      console.log('headers', headers)
-      return pipeline(body, new PassThrough(), () => {})
-    }),
-    new Writable({
-      write (chunk, _, callback) {
-        res += chunk.toString()
-        callback()
-      },
-      final (callback) {
-        console.log(`Response pipelined to writable: ${res}`)
-        callback()
-      }
-    }),
-    error => {
-      if (error) {
-        console.error(error)
-      }
+let res = ''
 
-      client.close()
-      server.close()
+pipeline(
+  new Readable({
+    read () {
+      this.push(Buffer.from('undici'))
+      this.push(null)
     }
-  )
-})
+  }),
+  client.pipeline({
+    path: '/',
+    method: 'GET'
+  }, ({ statusCode, headers, body }) => {
+    console.log(`response received ${statusCode}`)
+    console.log('headers', headers)
+    return pipeline(body, new PassThrough(), () => {})
+  }),
+  new Writable({
+    write (chunk, _, callback) {
+      res += chunk.toString()
+      callback()
+    },
+    final (callback) {
+      console.log(`Response pipelined to writable: ${res}`)
+      callback()
+    }
+  }),
+  error => {
+    if (error) {
+      console.error(error)
+    }
+
+    client.close()
+    server.close()
+  }
+)
 ```
 
 ### `Dispatcher.request(options[, callback])`
@@ -427,35 +423,36 @@ The `RequestOptions.method` property should not be value `'CONNECT'`.
 #### Example 1 - Basic GET Request
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   response.end('Hello, World!')
-})
+}).listen()
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+await once(server, 'listening')
 
-  client.request({
+const client = new Client(`http://localhost:${server.address().port}`)
+
+try {
+  const { body, headers, statusCode, trailers } = await client.request({
     path: '/',
     method: 'GET'
-  }).then(({ body, headers, statusCode, trailers }) => {
-    console.log(`response received ${statusCode}`)
-    console.log('headers', headers)
-    body.setEncoding('utf8')
-    body.on('data', console.log)
-    body.on('end', () => {
-      console.log('trailers', trailers)
-    })
-
-    client.close()
-    server.close()
-  }).catch(error => {
-    console.error(error)
   })
-})
+  console.log(`response received ${statusCode}`)
+  console.log('headers', headers)
+  body.setEncoding('utf8')
+  body.on('data', console.log)
+  body.on('end', () => {
+    console.log('trailers', trailers)
+  })
+
+  client.close()
+  server.close()
+} catch (error) {
+  console.error(error)
+}
 ```
 
 #### Example 2 - Aborting a request
@@ -463,88 +460,91 @@ server.listen(() => {
 > Node.js v15+ is required to run this example
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   response.end('Hello, World!')
-})
+}).listen()
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
-  const abortController = new AbortController()
+await once(server, 'listening')
 
+const client = new Client(`http://localhost:${server.address().port}`)
+const abortController = new AbortController()
+
+try {
   client.request({
     path: '/',
     method: 'GET',
     signal: abortController.signal
-  }).catch(error => {
-    console.error(error) // should print an RequestAbortedError
-    client.close()
-    server.close()
   })
+} catch (error) {
+  console.error(error) // should print an RequestAbortedError
+  client.close()
+  server.close()
+}
 
-  abortController.abort()
-
-})
+abortController.abort()
 ```
 
 Alternatively, any `EventEmitter` that emits an `'abort'` event may be used as an abort controller:
 
 ```js
-'use strict'
-const EventEmitter = require('events')
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import EventEmitter, { once } from 'events'
 
 const server = createServer((request, response) => {
   response.end('Hello, World!')
-})
+}).listen()
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
-  const ee = new EventEmitter()
+await once(server, 'listening')
 
+const client = new Client(`http://localhost:${server.address().port}`)
+const ee = new EventEmitter()
+
+try {
   client.request({
     path: '/',
     method: 'GET',
     signal: ee
-  }).catch(error => {
-    console.error(error) // should print an RequestAbortedError
-    client.close()
-    server.close()
   })
+} catch (error) {
+  console.error(error) // should print an RequestAbortedError
+  client.close()
+  server.close()
+}
 
-  ee.emit('abort')
-})
+ee.emit('abort')
 ```
 
 Destroying the request or response body will have the same effect.
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   response.end('Hello, World!')
-})
+}).listen()
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+await once(server, 'listening')
 
-  client.request({
+const client = new Client(`http://localhost:${server.address().port}`)
+
+try {
+  const { body } = await client.request({
     path: '/',
-    method: 'GET',
-  }).then(({ body }) => {
-    body.destroy()
-  }).catch(error => {
-    console.error(error) // should print an RequestAbortedError
-    client.close()
-    server.close()
+    method: 'GET'
   })
-})
+  body.destroy()
+} catch (error) {
+  console.error(error) // should print an RequestAbortedError
+  client.close()
+  server.close()
+}
 ```
 
 ### `Dispatcher.stream(options, factory[, callback])`
@@ -576,21 +576,23 @@ Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback
 #### Example 1 - Basic GET stream request
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
-const { Writable } = require('stream')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
+import { Writable } from 'stream'
 
 const server = createServer((request, response) => {
   response.end('Hello, World!')
-})
+}).listen()
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+await once(server, 'listening')
 
-  const bufs = []
+const client = new Client(`http://localhost:${server.address().port}`)
 
-  client.stream({
+const bufs = []
+
+try {
+  await client.stream({
     path: '/',
     method: 'GET',
     opaque: { bufs }
@@ -603,15 +605,15 @@ server.listen(() => {
         callback()
       }
     })
-  }).then(({ opaque: { bufs } }) => {
-    console.log(Buffer.concat(bufs).toString('utf-8'))
-
-    client.close()
-    server.close()
-  }).catch(error => {
-    console.error(error)
   })
-})
+
+  console.log(Buffer.concat(bufs).toString('utf-8'))
+
+  client.close()
+  server.close()
+} catch (error) {
+  console.error(error)
+}
 ```
 
 #### Example 2 - Stream to Fastify Response
@@ -619,56 +621,56 @@ server.listen(() => {
 In this example, a (fake) request is made to the fastify server using `fastify.inject()`. This request then executes the fastify route handler which makes a subsequent request to the raw Node.js http server using `undici.dispatcher.stream()`. The fastify response is passed to the `opaque` option so that undici can tap into the underlying writable stream using `response.raw`. This methodology demonstrates how one could use undici and fastify together to create fast-as-possible requests from one backend server to another.
 
 ```js
-'use strict'
-
-const { createServer } = require('http')
-const undici = require('undici')
-const fastify = require('fastify')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
+import fastify from 'fastify'
 
 const nodeServer = createServer((request, response) => {
   response.end('Hello, World! From Node.js HTTP Server')
+}).listen()
+
+await once(nodeServer, 'listening')
+
+console.log('Node Server listening')
+
+const nodeServerUndiciClient = new Client(`http://localhost:${nodeServer.address().port}`)
+
+const fastifyServer = fastify()
+
+fastifyServer.route({
+  url: '/',
+  method: 'GET',
+  handler: (request, response) => {
+    nodeServerUndiciClient.stream({
+      path: '/',
+      method: 'GET',
+      opaque: response
+    }, ({ opaque }) => opaque.raw)
+  }
 })
 
-nodeServer.listen(() => {
-  console.log('Node Server listening')
+await fastifyServer.listen()
 
-  const nodeServerUndiciClient = new undici.Client(`http://localhost:${nodeServer.address().port}`)
+console.log('Fastify Server listening')
 
-  const fastifyServer = fastify()
+const fastifyServerUndiciClient = new Client(`http://localhost:${fastifyServer.server.address().port}`)
 
-  fastifyServer.route({
-    url: '/',
-    method: 'GET',
-    handler: (request, response) => {
-      nodeServerUndiciClient.stream({
-        path: '/',
-        method: 'GET',
-        opaque: response
-      }, ({ opaque }) => opaque.raw)
-    }
+try {
+  const { statusCode, body } = await fastifyServerUndiciClient.request({
+    path: '/',
+    method: 'GET'
   })
+  
+  console.log(`response received ${statusCode}`)
+  body.setEncoding('utf8')
+  body.on('data', console.log)
 
-  fastifyServer
-    .listen()
-    .then(() => {
-      console.log('Fastify Server listening')
-      const fastifyServerUndiciClient = new undici.Client(`http://localhost:${fastifyServer.server.address().port}`)
-
-      fastifyServerUndiciClient.request({
-        path: '/',
-        method: 'GET'
-      }).then(({ statusCode, body }) => {
-        console.log(`response received ${statusCode}`)
-        body.setEncoding('utf8')
-        body.on('data', console.log)
-
-        nodeServerUndiciClient.close()
-        fastifyServerUndiciClient.close()
-        fastifyServer.close()
-        nodeServer.close()
-      })
-    })
-})
+  nodeServerUndiciClient.close()
+  fastifyServerUndiciClient.close()
+  fastifyServer.close()
+  nodeServer.close()
+} catch (error) { }
 ```
 
 ### `Dispatcher.upgrade(options[, callback])`
@@ -700,36 +702,36 @@ Returns: `void | Promise<UpgradeData>` - Only returns a `Promise` if no `callbac
 #### Example 1 - Basic Upgrade Request
 
 ```js
-'use strict'
-const { Client } = require('undici')
-const { createServer } = require('http')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   response.statusCode = 101
   response.setHeader('connection', 'upgrade')
   response.setHeader('upgrade', request.headers.upgrade)
   response.end()
-})
+}).listen()
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+await once(server, 'listening')
 
-  client
-    .upgrade({ path: '/' })
-    .then(({ headers, socket }) => {
-      socket.on('end', () => {
-        console.log(`upgrade: ${headers.upgrade}`)
-        client.close()
-        server.close()
-      })
-      socket.end()
-    })
-    .catch(error => {
-      console.error(error)
-      client.close()
-      server.close()
-    })
-})
+const client = new Client(`http://localhost:${server.address().port}`)
+
+try {
+  const { headers, socket } = await client.upgrade({
+    path: '/',
+  })
+  socket.on('end', () => {
+    console.log(`upgrade: ${headers.upgrade}`) // upgrade: Websocket
+    client.close()
+    server.close()
+  })
+  socket.end()
+} catch (error) {
+  console.error(error)
+  client.close()
+  server.close()
+}
 ```
 
 ## Instance Events

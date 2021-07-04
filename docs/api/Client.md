@@ -35,7 +35,7 @@ This will instantiate the undici Client, but it will not connect to the origin u
 
 ```js
 'use strict'
-const { Client } = require('undici')
+import { Client } from 'undici'
 
 const client = new Client('http://localhost:3000')
 ```
@@ -120,35 +120,36 @@ Emitted when a socket has been created and connected. The client will connect on
 #### Example - Client connect event
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   response.end('Hello, World!')
+}).listen()
+
+await once(server, 'listening') 
+
+const client = new Client(`http://localhost:${server.address().port}`)
+
+client.on('connect', (origin) => {
+  console.log(`Connected to ${origin}`) // should print before the request body statement
 })
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
-
-  client.on('connect', (origin) => {
-    console.log(`Connected to ${origin}`) // should print before the request body statement
-  })
-
-  client.request({
+try {
+  const { body } = await client.request({
     path: '/',
-    method: 'GET',
-  }).then(({ body }) => {
-    body.setEncoding('utf8')
-    body.on('data', console.log)
-    client.close()
-    server.close()
-  }).catch(error => {
-    console.error(error)
-    client.close()
-    server.close()
+    method: 'GET'
   })
-})
+  body.setEncoding('utf-8')
+  body.on('data', console.log)
+  client.close()
+  server.close()
+} catch (error) {
+  console.error(error)
+  client.close()
+  server.close()
+}
 ```
 
 ### Event: `'disconnect'`
@@ -166,30 +167,32 @@ Emitted when socket has disconnected. The error argument of the event is the err
 #### Example - Client disconnect event
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   response.destroy()
+}).listen()
+
+await once(server, 'listening')
+
+const client = new Client(`http://localhost:${server.address().port}`)
+
+client.on('disconnect', (origin) => {
+  console.log(`Disconnected from ${origin}`)
 })
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
-
-  client.on('disconnect', (origin) => {
-    console.log(`Disconnected from ${origin}`) // should print before the SocketError
-  })
-
-  client.request({
+try {
+  await client.request({
     path: '/',
-    method: 'GET',
-  }).catch(error => {
-    console.error(error.message)
-    client.close()
-    server.close()
+    method: 'GET'
   })
-})
+} catch (error) {
+  console.error(error.message)
+  client.close()
+  server.close()
+}
 ```
 
 ### Event: `'drain'`
@@ -201,36 +204,36 @@ See [Dispatcher Event: `'drain'`](docs/api/Dispatcher.md#event-drain).
 #### Example - Client drain event
 
 ```js
-'use strict'
-const { createServer } = require('http')
-const { Client } = require('undici')
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
 
 const server = createServer((request, response) => {
   response.end('Hello, World!')
-})
+}).listen()
 
-server.listen(() => {
-  const client = new Client(`http://localhost:${server.address().port}`)
+await once(server, 'listening')
 
-  client.on('drain', () => {
-    console.log('drain event')
-    console.log(`Is Client busy: ${client.busy}`)
-    client.close()
-    server.close()
-  })
+const client = new Client(`http://localhost:${server.address().port}`)
 
-  const requests = [
-    client.request({ path: '/', method: 'GET' }),
-    client.request({ path: '/', method: 'GET' }),
-    client.request({ path: '/', method: 'GET' })
-  ]
-
+client.on('drain', () => {
+  console.log('drain event')
   console.log(`Is Client busy: ${client.busy}`)
-
-  Promise.all(requests).then(() => {
-    console.log('requests completed')
-  })
+  client.close()
+  server.close()
 })
+
+const requests = [
+  client.request({ path: '/', method: 'GET' }),
+  client.request({ path: '/', method: 'GET' }),
+  client.request({ path: '/', method: 'GET' })
+]
+
+console.log(`Is Client busy: ${client.busy}`)
+
+await Promise.all(requests)
+
+console.log('requests completed')
 ```
 
 ### Event: `'error'`

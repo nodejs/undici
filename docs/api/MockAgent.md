@@ -23,8 +23,7 @@ Extends: [`AgentOptions`](docs/api/Agent.md#parameter-agentoptions)
 This will instantiate the MockAgent. It will not do anything until registered as the agent to use with requests and mock interceptions are added.
 
 ```js
-'use strict'
-const { MockAgent } = require('undici')
+import { MockAgent } from 'undici'
 
 const mockAgent = new MockAgent()
 ```
@@ -32,8 +31,7 @@ const mockAgent = new MockAgent()
 ### Example - Basic MockAgent instantiation with custom agent
 
 ```js
-'use strict'
-const { Agent, MockAgent } = require('undici')
+import { Agent, MockAgent } from 'undici'
 
 const agent = new Agent()
 
@@ -68,8 +66,7 @@ Returns: `MockClient | MockPool`.
 #### Example - Basic Mocked Request
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher, request } = require('undici')
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -78,33 +75,30 @@ const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
   path: '/foo',
-  method: 'GET',
+  method: 'GET'
 }).reply(200, 'foo')
 
-const {
-  statusCode,
-  body
-} = await request('http://localhost:3000/foo')
+const { statusCode, body } = await request('http://localhost:3000/foo')
 
-console.log('response received', statusCode) // 200
+console.log('response received', statusCode) // response received 200
 
 for await (const data of body) {
-  console.log('data', data) // 'foo'
+  console.log('data', data.toString('utf8')) // data foo
 }
 ```
 
 #### Example - Basic Mocked Request with local mock agent dispatcher
 
 ```js
-'use strict'
-const { MockAgent, request } = require('undici')
+import { MockAgent, request } from 'undici'
 
 const mockAgent = new MockAgent()
 
 const mockPool = mockAgent.get('http://localhost:3000')
+
 mockPool.intercept({
   path: '/foo',
-  method: 'GET',
+  method: 'GET'
 }).reply(200, 'foo')
 
 const {
@@ -112,25 +106,25 @@ const {
   body
 } = await request('http://localhost:3000/foo', { dispatcher: mockAgent })
 
-console.log('response received', statusCode) // 200
+console.log('response received', statusCode) // response received 200
 
 for await (const data of body) {
-  console.log('data', data) // 'foo'
+  console.log('data', data.toString('utf8')) // data foo
 }
 ```
 
 #### Example - Basic Mocked Request with local mock pool dispatcher
 
 ```js
-'use strict'
-const { MockAgent, request } = require('undici')
+import { MockAgent, request } from 'undici'
 
 const mockAgent = new MockAgent()
 
 const mockPool = mockAgent.get('http://localhost:3000')
+
 mockPool.intercept({
   path: '/foo',
-  method: 'GET',
+  method: 'GET'
 }).reply(200, 'foo')
 
 const {
@@ -138,25 +132,25 @@ const {
   body
 } = await request('http://localhost:3000/foo', { dispatcher: mockPool })
 
-console.log('response received', statusCode) // 200
+console.log('response received', statusCode) // response received 200
 
 for await (const data of body) {
-  console.log('data', data) // 'foo'
+  console.log('data', data.toString('utf8')) // data foo
 }
 ```
 
 #### Example - Basic Mocked Request with local mock client dispatcher
 
 ```js
-'use strict'
-const { MockAgent, request } = require('undici')
+import { MockAgent, request } from 'undici'
 
 const mockAgent = new MockAgent({ connections: 1 })
 
 const mockClient = mockAgent.get('http://localhost:3000')
+
 mockClient.intercept({
   path: '/foo',
-  method: 'GET',
+  method: 'GET'
 }).reply(200, 'foo')
 
 const {
@@ -164,18 +158,17 @@ const {
   body
 } = await request('http://localhost:3000/foo', { dispatcher: mockClient })
 
-console.log('response received', statusCode) // 200
+console.log('response received', statusCode) // response received 200
 
 for await (const data of body) {
-  console.log('data', data) // 'foo'
+  console.log('data', data.toString('utf8')) // data foo
 }
 ```
 
 #### Example - Basic Mocked requests with multiple intercepts
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher, request } = require('undici')
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -184,30 +177,41 @@ const mockPool = mockAgent.get('http://localhost:3000')
 
 mockPool.intercept({
   path: '/foo',
-  method: 'GET',
+  method: 'GET'
 }).reply(200, 'foo')
 
 mockPool.intercept({
   path: '/hello',
-  method: 'GET',
+  method: 'GET'
 }).reply(200, 'hello')
-
 
 const result1 = await request('http://localhost:3000/foo')
 
+console.log('response received', result1.statusCode) // response received 200
+
+for await (const data of result1.body) {
+  console.log('data', data.toString('utf8')) // data foo
+}
+
 const result2 = await request('http://localhost:3000/hello')
+
+console.log('response received', result2.statusCode) // response received 200
+
+for await (const data of result2.body) {
+  console.log('data', data.toString('utf8')) // data hello
+}
 ```
 
 #### Example - Mocked request with query body, headers and trailers
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher, request } = require('undici')
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get('http://localhost:3000')
+
 mockPool.intercept({
   path: '/foo?hello=there&see=ya',
   method: 'POST',
@@ -223,30 +227,30 @@ const {
   trailers,
   body
 } = await request('http://localhost:3000/foo?hello=there&see=ya', {
-    method: 'POST',
-    body: 'form1=data1&form2=data2'
-  })
+  method: 'POST',
+  body: 'form1=data1&form2=data2'
+})
 
-console.log('response received', statusCode) // 200
-console.log('headers', headers) // {"content-type":"application/json"}
+console.log('response received', statusCode) // response received 200
+console.log('headers', headers) // { 'content-type': 'application/json' }
 
 for await (const data of body) {
-  console.log('data', data) // '{"foo":"bar"}'
+  console.log('data', data.toString('utf8')) // '{"foo":"bar"}'
 }
 
-console.log('trailers', trailers) // {"Content-MD5":"test"}
+console.log('trailers', trailers) // { 'content-md5': 'test' }
 ```
 
 #### Example - Mocked request with origin regex
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher, request } = require('undici')
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get(new RegExp('http://localhost:3000'))
+
 mockPool.intercept({
   path: '/foo',
   method: 'GET',
@@ -257,23 +261,23 @@ const {
   body
 } = await request('http://localhost:3000/foo')
 
-console.log('response received', statusCode) // 200
+console.log('response received', statusCode) // response received 200
 
 for await (const data of body) {
-  console.log('data', data) // 'foo'
+  console.log('data', data.toString('utf8')) // data foo
 }
 ```
 
 #### Example - Mocked request with origin function
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher, request } = require('undici')
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
 const mockPool = mockAgent.get((origin) => origin === 'http://localhost:3000')
+
 mockPool.intercept({
   path: '/foo',
   method: 'GET'
@@ -284,10 +288,10 @@ const {
   body
 } = await request('http://localhost:3000/foo')
 
-console.log('response received', statusCode) // 200
+console.log('response received', statusCode) // response received 200
 
 for await (const data of body) {
-  console.log('data', data) // 'foo'
+  console.log('data', data.toString('utf8')) // data foo
 }
 ```
 
@@ -300,8 +304,7 @@ Returns: `Promise<void>`
 #### Example - clean up after tests are complete
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher } = require('undici')
+import { MockAgent, setGlobalDispatcher } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -320,12 +323,12 @@ See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientre
 #### Example - MockAgent request
 
 ```js
-'use strict'
-const { MockAgent } = require('undici')
+import { MockAgent } from 'undici'
 
 const mockAgent = new MockAgent()
 
 const mockPool = mockAgent.get('http://localhost:3000')
+
 mockPool.intercept({
   path: '/foo',
   method: 'GET'
@@ -339,6 +342,12 @@ const {
   path: '/foo',
   method: 'GET'
 })
+
+console.log('response received', statusCode) // response received 200
+
+for await (const data of body) {
+  console.log('data', data.toString('utf8')) // data foo
+}
 ```
 
 ### `MockAgent.deactivate()`
@@ -350,8 +359,7 @@ Returns: `void`
 #### Example - Deactivate Mocking
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher } = require('undici')
+import { MockAgent, setGlobalDispatcher } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -368,8 +376,7 @@ Returns: `void`
 #### Example - Activate Mocking
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher } = require('undici')
+import { MockAgent, setGlobalDispatcher } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -396,8 +403,7 @@ Returns: `void`
 #### Example - Allow all non-matching urls to be dispatched in a real HTTP request
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher, request } = require('undici')
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -411,8 +417,7 @@ await request('http://example.com')
 #### Example - Allow requests matching a host string to make real requests
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher, request } = require('undici')
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -433,8 +438,7 @@ await request('http://example-3.com')
 #### Example - Allow requests matching a host regex to make real requests
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher, request } = require('undici')
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -448,8 +452,7 @@ await request('http://example.com')
 #### Example - Allow requests matching a host function to make real requests
 
 ```js
-'use strict'
-const { MockAgent, setGlobalDispatcher, request } = require('undici')
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -469,8 +472,7 @@ Returns: `void`
 #### Example - Disable all non-matching requests by throwing an error for each
 
 ```js
-'use strict'
-const { MockAgent, request } = require('undici')
+import { MockAgent, request } from 'undici'
 
 const mockAgent = new MockAgent()
 
