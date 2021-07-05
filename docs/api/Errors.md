@@ -4,7 +4,7 @@ Undici exposes a variety of error objects that you can use to enhance your error
 You can find all the error objects inside the `errors` key.
 
 ```js
-const { errors } = require('undici')
+import { errors } from 'undici'
 ```
 
 | Error                                | Error Codes                           | Description                                        |
