@@ -1,5 +1,4 @@
 import { URL } from 'url'
-import { TlsOptions } from 'tls'
 import Dispatcher from './dispatcher'
 
 export = Client
@@ -17,8 +16,6 @@ declare class Client extends Dispatcher {
 
 declare namespace Client {
   export interface Options {
-    /** an IPC endpoint, either Unix domain socket or Windows named pipe. Default: `null`. */
-    socketPath?: string | null;
     /** the timeout after which a socket without active requests will time out. Monitors time between activity on a connected socket. This value may be overridden by *keep-alive* hints from the server. Default: `4e3` milliseconds (4s). */
     keepAliveTimeout?: number | null;
     /** the maximum allowed `idleTimeout` when overridden by *keep-alive* hints from the server. Default: `600e3` milliseconds (10min). */
@@ -27,8 +24,8 @@ declare namespace Client {
     keepAliveTimeoutThreshold?: number | null;
     /** The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`. */
     pipelining?: number | null;
-    /** An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback). Default: `null`. */
-    tls?: TlsOptions | null;
+    /** **/
+    connect?: object | Function | null;
     /** The maximum length of request headers in bytes. Default: `16384` (16KiB). */
     maxHeaderSize?: number | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
@@ -37,7 +34,5 @@ declare namespace Client {
     headersTimeout?: number | null;
     /** If `true`, an error is thrown when the request content-length header doesn't match the length of the request body. Default: `true`. */
     strictContentLength?: boolean
-    /** maximum number of TLS cached sessions. Use 0 to disable TLS session caching. Default: 100. */
-    maxCachedSessions?: number | null;
   }
 }
