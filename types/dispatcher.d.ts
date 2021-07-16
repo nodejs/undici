@@ -1,5 +1,4 @@
 import { URL } from 'url'
-import { TlsOptions } from 'tls'
 import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
 import { IncomingHttpHeaders } from 'http'

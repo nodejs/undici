@@ -6,7 +6,7 @@ const { createServer } = require('http')
 const net = require('net')
 const { Readable } = require('stream')
 
-const { kSocket, kConnect } = require('../lib/core/symbols')
+const { kSocket } = require('../lib/core/symbols')
 const { wrapWithAsyncIterable, maybeWrapStream, consts } = require('./utils/async-iterators')
 
 class IteratorError extends Error {}
@@ -456,35 +456,35 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    new Client(new URL('http://localhost:200'), { [kConnect]: 'asd' }) // eslint-disable-line
+    new Client(new URL('http://localhost:200'), { connect: 'asd' }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'connect must be a function')
+    t.equal(err.message, 'connect must be a function or an object')
   }
 
   try {
-    new Client(new URL('http://localhost:200'), { [kConnect]: -1 }) // eslint-disable-line
+    new Client(new URL('http://localhost:200'), { connect: -1 }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'connect must be a function')
+    t.equal(err.message, 'connect must be a function or an object')
   }
 
   try {
-    new Pool(new URL('http://localhost:200'), { [kConnect]: 'asd' }) // eslint-disable-line
+    new Pool(new URL('http://localhost:200'), { connect: 'asd' }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'connect must be a function')
+    t.equal(err.message, 'connect must be a function or an object')
   }
 
   try {
-    new Pool(new URL('http://localhost:200'), { [kConnect]: -1 }) // eslint-disable-line
+    new Pool(new URL('http://localhost:200'), { connect: -1 }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'connect must be a function')
+    t.equal(err.message, 'connect must be a function or an object')
   }
 
   try {
