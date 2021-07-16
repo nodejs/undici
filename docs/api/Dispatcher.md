@@ -182,7 +182,7 @@ This API is expected to evolve through semver-major versions and is less stable 
 Arguments:
 
 * **options** `DispatchOptions`
-* **handlers** `DispatchHandlers`
+* **handler** `DispatchHandler`
 
 Returns: `void`
 
@@ -194,8 +194,10 @@ Returns: `void`
 * **headers** `UndiciHeaders` (optional) - Default: `null`
 * **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceding requests in the pipeline has completed.
 * **upgrade** `string | null` (optional) - Default: `null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.
+* **bodyTimeout** `number | null` (optional) - The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 30 seconds.
+* **headersTimeout** `number | null` (optional) - The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 30 seconds.
 
-#### Parameter: `DispatchHandlers`
+#### Parameter: `DispatchHandler`
 
 * **onConnect** `(abort: () => void, context: object) => void` - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
 * **onError** `(error: Error) => void` - Invoked when an error has occurred. May not throw.
