@@ -632,7 +632,7 @@ test('dispatch pool onError missing', (t) => {
   })
 })
 
-test('dispatch onBodyChunkSent not a function', (t) => {
+test('dispatch onBodySent not a function', (t) => {
   t.plan(2)
   const server = http.createServer((req, res) => {
     res.end('ad')
@@ -647,19 +647,19 @@ test('dispatch onBodyChunkSent not a function', (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onBodyChunkSent: '42',
+      onBodySent: '42',
       onConnect () {},
       onHeaders () {},
       onData () {},
       onError (err) {
         t.equal(err.code, 'UND_ERR_INVALID_ARG')
-        t.equal(err.message, 'invalid onBodyChunkSent method')
+        t.equal(err.message, 'invalid onBodySent method')
       }
     })
   })
 })
 
-test('dispatch onBodyChunkSent buffer', (t) => {
+test('dispatch onBodySent buffer', (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
@@ -674,7 +674,7 @@ test('dispatch onBodyChunkSent buffer', (t) => {
       method: 'POST',
       body
     }, {
-      onBodyChunkSent (chunk) {
+      onBodySent (chunk) {
         t.equal(chunk.toString(), body)
       },
       onError (err) {
@@ -690,7 +690,7 @@ test('dispatch onBodyChunkSent buffer', (t) => {
   })
 })
 
-test('dispatch onBodyChunkSent stream', (t) => {
+test('dispatch onBodySent stream', (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
@@ -708,7 +708,7 @@ test('dispatch onBodyChunkSent stream', (t) => {
       method: 'POST',
       body
     }, {
-      onBodyChunkSent (chunk) {
+      onBodySent (chunk) {
         t.equal(chunks[currentChunk++], chunk)
         sentBytes += Buffer.byteLength(chunk)
       },
@@ -727,7 +727,7 @@ test('dispatch onBodyChunkSent stream', (t) => {
   })
 })
 
-test('dispatch onBodyChunkSent async-iterable', (t) => {
+test('dispatch onBodySent async-iterable', (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
@@ -744,7 +744,7 @@ test('dispatch onBodyChunkSent async-iterable', (t) => {
       method: 'POST',
       body: chunks
     }, {
-      onBodyChunkSent (chunk) {
+      onBodySent (chunk) {
         t.equal(chunks[currentChunk++], chunk)
         sentBytes += Buffer.byteLength(chunk)
       },

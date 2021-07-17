@@ -136,7 +136,7 @@ declare namespace Dispatcher {
     /** Invoked when response payload and trailers have been received and the request has completed. */
     onComplete?(trailers: string[] | null): void;
     /** Invoked when a body chunk is sent to the server. May be invoked multiple times for chunked requests */
-    onBodyChunkSent?(chunkSize: number, totalBytesSent: number): void;
+    onBodySent?(chunkSize: number, totalBytesSent: number): void;
   }
   export type PipelineHandler = (data: PipelineHandlerData) => Readable;
 }
