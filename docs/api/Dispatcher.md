@@ -188,6 +188,7 @@ Returns: `void`
 
 #### Parameter: `DispatchOptions`
 
+* **origin** `string | URL`
 * **path** `string`
 * **method** `string`
 * **body** `string | Buffer | Uint8Array | stream.Readable | Iterable | AsyncIterable | null` (optional) - Default: `null`
