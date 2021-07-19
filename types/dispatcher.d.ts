@@ -47,7 +47,11 @@ declare namespace Dispatcher {
     /** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceding requests in the pipeline have completed. Default: `true` if `method` is `HEAD` or `GET`. */
     idempotent?: boolean;
     /** Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`. Default: `method === 'CONNECT' || null`. */
-    upgrade?: boolean | string | null
+    upgrade?: boolean | string | null;
+    /** The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 30 seconds. */
+    headersTimeout?: number | null;
+    /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use 0 to disable it entirely. Defaults to 30 seconds. */
+    bodyTimeout?: number | null;
   }
   export interface ConnectOptions {
     path: string;
