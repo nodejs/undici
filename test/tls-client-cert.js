@@ -39,7 +39,7 @@ test('Client using valid client certificate', t => {
       servername: 'agent1'
     }
     const client = new Client(`https://localhost:${server.address().port}`, {
-      tls
+      connect: tls
     })
 
     t.teardown(() => {
