@@ -536,10 +536,10 @@ test('dispatch validations', t => {
   const dispatcher = new Agent()
 
   const noopHandler = {
-    onConnect() {},
-    onHeaders() {},
-    onData() {},
-    onComplete() {
+    onConnect () {},
+    onHeaders () {},
+    onData () {},
+    onComplete () {
       server.close()
     },
     onError (err) {
