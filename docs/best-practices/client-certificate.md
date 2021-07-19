@@ -47,7 +47,7 @@ server.listen(0, function () {
     servername: 'agent1'
   }
   const client = new Client(`https://localhost:${server.address().port}`, {
-    tls
+    connect: tls
   })
 
   client.request({
