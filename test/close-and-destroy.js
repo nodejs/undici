@@ -164,12 +164,14 @@ test('close should still reconnect', (t) => {
       t.equal(err, null)
       t.equal(client.closed, true)
     })
-    client[kSocket].destroy()
+    client.once('connect', () => {
+      client[kSocket].destroy()
+    })
 
     function makeRequest () {
       client.request({ path: '/', method: 'GET' }, (err, data) => {
-        data.body.resume()
         t.error(err)
+        data.body.resume()
       })
       return client[kSize] <= client.pipelining
     }

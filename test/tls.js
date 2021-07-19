@@ -49,7 +49,7 @@ test('tls get 2', (t) => {
 })
 
 test('tls get 3', (t) => {
-  t.plan(9)
+  t.plan(8)
 
   const client = new Client('https://140.82.112.4')
   t.teardown(client.destroy.bind(client))
@@ -90,7 +90,6 @@ test('tls get 3', (t) => {
     }
   }, (err, data) => {
     t.equal(didDisconnect, true)
-    t.equal(client[kSocket].authorized, false)
     t.ok(err)
   })
 })
@@ -145,7 +144,7 @@ test('tls get 4', (t) => {
 })
 
 test('tls get 5', (t) => {
-  t.plan(8)
+  t.plan(7)
 
   const client = new Client('https://140.82.112.4')
   t.teardown(client.destroy.bind(client))
@@ -182,7 +181,6 @@ test('tls get 5', (t) => {
     }
   }, (err, data) => {
     t.equal(didDisconnect, true)
-    t.equal(client[kSocket].authorized, false)
     t.ok(err)
   })
 })
