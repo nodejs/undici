@@ -556,7 +556,7 @@ test('dispatch validations', t => {
   t.throws(() => dispatcher.dispatch('ASD'), InvalidArgumentError, 'throws on missing handler')
   t.throws(() => dispatcher.dispatch('ASD', noopHandler), InvalidArgumentError, 'throws on invalid opts argument type')
   t.throws(() => dispatcher.dispatch({}, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
-  t.throws(() => dispatcher.dispatch({ origin: '' }, noopHandler), TypeError, 'throws on invalid opts.origin argument')
+  t.throws(() => dispatcher.dispatch({ origin: '' }, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
   t.throws(() => dispatcher.dispatch({}, {}), InvalidArgumentError, 'throws on invalid handler.onError')
 
   server.listen(0, () => {
