@@ -536,17 +536,36 @@ test('dispatch validations', t => {
   const dispatcher = new Agent()
 
   const noopHandler = {
+    onConnect () {},
+    onHeaders () {},
+    onData () {},
+    onComplete () {
+      server.close()
+    },
     onError (err) {
       throw err
     }
   }
 
-  t.plan(5)
+  const server = http.createServer((req, res) => {
+    res.setHeader('Content-Type', 'text/plain')
+    res.end('asd')
+  })
+
+  t.plan(6)
   t.throws(() => dispatcher.dispatch('ASD'), InvalidArgumentError, 'throws on missing handler')
   t.throws(() => dispatcher.dispatch('ASD', noopHandler), InvalidArgumentError, 'throws on invalid opts argument type')
   t.throws(() => dispatcher.dispatch({}, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
   t.throws(() => dispatcher.dispatch({ origin: '' }, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
   t.throws(() => dispatcher.dispatch({}, {}), InvalidArgumentError, 'throws on invalid handler.onError')
+
+  server.listen(0, () => {
+    t.doesNotThrow(() => dispatcher.dispatch({
+      origin: new URL(`http://localhost:${server.address().port}`),
+      path: '/',
+      method: 'GET'
+    }, noopHandler))
+  })
 })
 
 test('drain', t => {
