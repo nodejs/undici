@@ -36,10 +36,11 @@ test('https://github.com/nodejs/undici/issues/803', (t) => {
       t.error(err)
 
       let pos = 0
-      data.body.on('data', (buf) => {
+      const stream = data.body.readableNodeStream()
+      stream.on('data', (buf) => {
         pos += buf.length
       })
-      data.body.on('end', () => {
+      stream.on('end', () => {
         t.equal(pos, SIZE)
       })
     })

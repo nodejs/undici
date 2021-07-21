@@ -280,10 +280,11 @@ test('with globalAgent', t => {
         t.equal(statusCode, 200)
         t.equal(headers['content-type'], 'text/plain')
         const bufs = []
-        body.on('data', (buf) => {
+        const stream = body.readableNodeStream()
+        stream.on('data', (buf) => {
           bufs.push(buf)
         })
-        body.on('end', () => {
+        stream.on('end', () => {
           t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
         })
       })
@@ -315,10 +316,12 @@ test('with local agent', t => {
         t.equal(statusCode, 200)
         t.equal(headers['content-type'], 'text/plain')
         const bufs = []
-        body.on('data', (buf) => {
+
+        const stream = body.readableNodeStream()
+        stream.on('data', (buf) => {
           bufs.push(buf)
         })
-        body.on('end', () => {
+        stream.on('end', () => {
           t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
         })
       })

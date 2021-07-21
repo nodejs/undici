@@ -30,7 +30,8 @@ test('https://github.com/mcollina/undici/issues/810', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume().on('end', () => {
+      const stream = data.body.readableNodeStream()
+      stream.resume().on('end', () => {
         t.fail()
       }).on('error', err => (
         t.type(err, errors.HTTPParserError)
@@ -64,7 +65,8 @@ test('https://github.com/mcollina/undici/issues/810 no pipelining', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume().on('end', () => {
+      const stream = data.body.readableNodeStream()
+      stream.resume().on('end', () => {
         t.fail()
       }).on('error', err => {
         t.equal(err.code, 'HPE_CB_MESSAGE_BEGIN')

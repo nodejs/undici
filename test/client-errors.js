@@ -45,10 +45,11 @@ test('GET errors and reconnect with pipelining 1', (t) => {
       t.equal(statusCode, 200)
       t.equal(headers['content-type'], 'text/plain')
       const bufs = []
-      body.on('data', (buf) => {
+      const stream = body.readableNodeStream()
+      stream.on('data', (buf) => {
         bufs.push(buf)
       })
-      body.on('end', () => {
+      stream.on('end', () => {
         t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
@@ -100,10 +101,11 @@ test('GET errors and reconnect with pipelining 3', (t) => {
       t.equal(statusCode, 200)
       t.equal(headers['content-type'], 'text/plain')
       const bufs = []
-      body.on('data', (buf) => {
+      const stream = body.readableNodeStream()
+      stream.on('data', (buf) => {
         bufs.push(buf)
       })
-      body.on('end', () => {
+      stream.on('end', () => {
         t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
@@ -169,10 +171,11 @@ function errorAndPipelining (type) {
         t.equal(statusCode, 200)
         t.equal(headers['content-type'], 'text/plain')
         const bufs = []
-        body.on('data', (buf) => {
+        const stream = body.readableNodeStream()
+        stream.on('data', (buf) => {
           bufs.push(buf)
         })
-        body.on('end', () => {
+        stream.on('end', () => {
           t.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
@@ -238,10 +241,11 @@ function errorAndChunkedEncodingPipelining (type) {
         t.equal(statusCode, 200)
         t.equal(headers['content-type'], 'text/plain')
         const bufs = []
-        body.on('data', (buf) => {
+        const stream = body.readableNodeStream()
+        stream.on('data', (buf) => {
           bufs.push(buf)
         })
-        body.on('end', () => {
+        stream.on('end', () => {
           t.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
@@ -704,8 +708,9 @@ test('GET errors body', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      body.resume()
-      body.on('error', err => (
+      const stream = body.readableNodeStream()
+      stream.resume()
+      stream.on('error', err => (
         t.ok(err)
       ))
     })

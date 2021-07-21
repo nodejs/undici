@@ -29,10 +29,11 @@ test('https get with tls opts', (t) => {
       t.equal(statusCode, 200)
       t.equal(headers['content-type'], 'text/plain')
       const bufs = []
-      body.on('data', (buf) => {
+      const stream = body.readableNodeStream()
+      stream.on('data', (buf) => {
         bufs.push(buf)
       })
-      body.on('end', () => {
+      stream.on('end', () => {
         t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })

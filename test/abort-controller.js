@@ -61,10 +61,11 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       client.request({ path: '/', method: 'GET' }, (err, response) => {
         t.error(err)
         const bufs = []
-        response.body.on('data', (buf) => {
+        const stream = response.body.readableNodeStream()
+        stream.on('data', (buf) => {
           bufs.push(buf)
         })
-        response.body.on('end', () => {
+        stream.on('end', () => {
           t.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
@@ -136,10 +137,11 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
         t.error(err)
-        response.body.on('data', () => {
+        const stream = response.body.readableNodeStream()
+        stream.on('data', () => {
           abortController.abort()
         })
-        response.body.on('error', err => {
+        stream.on('error', err => {
           t.type(err, errors.RequestAbortedError)
         })
       })

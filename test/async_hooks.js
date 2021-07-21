@@ -57,7 +57,8 @@ test('async hooks', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      body.resume()
+      const stream = body.readableNodeStream()
+      stream.resume()
       t.strictSame(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world2' })
@@ -65,13 +66,13 @@ test('async hooks', (t) => {
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
         t.error(err)
         t.strictSame(getCurrentTransaction(), { hello: 'world2' })
-
-        body.once('data', () => {
+        const stream = body.readableNodeStream()
+        stream.once('data', () => {
           t.pass()
-          body.resume()
+          stream.resume()
         })
 
-        body.on('end', () => {
+        stream.on('end', () => {
           t.pass()
         })
       })
@@ -79,7 +80,8 @@ test('async hooks', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      body.resume()
+      const stream = body.readableNodeStream()
+      stream.resume()
       t.strictSame(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world' })
@@ -88,12 +90,13 @@ test('async hooks', (t) => {
         t.error(err)
         t.strictSame(getCurrentTransaction(), { hello: 'world' })
 
-        body.once('data', () => {
+        const stream = body.readableNodeStream()
+        stream.once('data', () => {
           t.pass()
-          body.resume()
+          stream.resume()
         })
 
-        body.on('end', () => {
+        stream.on('end', () => {
           t.pass()
         })
       })
@@ -101,7 +104,8 @@ test('async hooks', (t) => {
 
     client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      body.resume()
+      const stream = body.readableNodeStream()
+      stream.resume()
       t.strictSame(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world' })
@@ -110,12 +114,13 @@ test('async hooks', (t) => {
         t.error(err)
         t.strictSame(getCurrentTransaction(), { hello: 'world' })
 
-        body.once('data', () => {
+        const stream = body.readableNodeStream()
+        stream.once('data', () => {
           t.pass()
-          body.resume()
+          stream.resume()
         })
 
-        body.on('end', () => {
+        stream.on('end', () => {
           t.pass()
         })
       })
@@ -159,8 +164,9 @@ test('async hooks client is destroyed', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, { body }) => {
       t.error(err)
-      body.resume()
-      body.on('error', (err) => {
+      const stream = body.readableNodeStream()
+      stream.resume()
+      stream.on('error', (err) => {
         t.ok(err)
       })
       t.strictSame(getCurrentTransaction(), null)
