@@ -23,14 +23,22 @@ if (isMainThread) {
       })
     })
   })
+
+  tap.test('client automatically closes itself if the server is not there', t => {
+    t.plan(1)
+
+    const url = 'http://localhost:4242' // hopefully empty port
+    const worker = new Worker(__filename, { workerData: { url } })
+    worker.on('exit', code => {
+      t.equal(code, 0)
+    })
+  })
 } else {
   const { Client } = require('..')
 
   const client = new Client(workerData.url)
-  client.request({ path: '/', method: 'GET' }, (err, res) => {
-    if (err) {
-      throw err
-    }
+  client.request({ path: '/', method: 'GET' }, () => {
+    // We do not care about Errors
 
     setTimeout(() => {
       throw new Error()
