@@ -778,7 +778,7 @@ test('ignore request header mutations', (t) => {
       headers
     }, (err, { body }) => {
       t.error(err)
-      body.resume()
+      body.stream.resume()
     })
     headers.test = 'asd'
   })
@@ -802,7 +802,7 @@ test('url-like url', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
   })
 })
@@ -828,7 +828,7 @@ test('an absolute url as path', (t) => {
 
     client.request({ path, method: 'GET' }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
   })
 })
@@ -885,14 +885,14 @@ test('only one streaming req at a time', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
 
       client.request({
         path: '/',
         method: 'GET'
       }, (err, data) => {
         t.error(err)
-        data.body.resume()
+        data.body.stream.resume()
       })
 
       client.request({
@@ -941,14 +941,14 @@ test('only one async iterating req at a time', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
 
       client.request({
         path: '/',
         method: 'GET'
       }, (err, data) => {
         t.error(err)
-        data.body.resume()
+        data.body.stream.resume()
       })
       const body = wrapWithAsyncIterable(new Readable({
         read () {
@@ -1317,7 +1317,7 @@ test('parser pause with no body timeout', (t) => {
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
       t.error(err)
       t.equal(statusCode, 200)
-      body.resume()
+      body.stream.resume()
     })
   })
 })
@@ -1340,7 +1340,7 @@ test('TypedArray and DataView body', (t) => {
     client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
       t.error(err)
       t.equal(statusCode, 200)
-      body.resume()
+      body.stream.resume()
     })
   })
 })
@@ -1376,7 +1376,7 @@ test('async iterator empty chunk continues', (t) => {
     client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
       t.error(err)
       t.equal(statusCode, 200)
-      body.resume()
+      body.stream.resume()
     })
   })
 })

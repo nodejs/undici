@@ -48,7 +48,7 @@ test('gc should collect the client if, and only if, there are no active sockets'
       method: 'GET'
     }, (err, { body }) => {
       t.error(err)
-      body.resume()
+      body.stream.resume()
     })
   })
 })
@@ -92,7 +92,7 @@ test('gc should collect the pool if, and only if, there are no active sockets', 
       method: 'GET'
     }, (err, { body }) => {
       t.error(err)
-      body.resume()
+      body.stream.resume()
     })
   })
 })

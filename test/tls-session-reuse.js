@@ -70,7 +70,7 @@ test('A client should disable session caching', {
         client.request(options, (err, data) => {
           t.error(err)
           clientSessions[options.name] = client[kSocket].getSession()
-          data.body.resume().on('end', () => {
+          data.body.stream.resume().on('end', () => {
             if (queue.length !== 0) {
               return request()
             }
@@ -156,7 +156,7 @@ test('A pool should be able to reuse TLS sessions between clients', {
             path: '/'
           }, (err, data) => {
             if (err) return reject(err)
-            data.body.resume().on('end', resolve)
+            data.body.stream.resume().on('end', resolve)
           })
         })
       }

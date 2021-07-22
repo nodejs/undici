@@ -30,7 +30,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
 
     const emptyBody = new Readable({
@@ -43,7 +43,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
 
     client.request({
@@ -56,7 +56,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
 
     client.request({
@@ -70,7 +70,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
 
     client.request({
@@ -79,7 +79,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
 
     client.request({
@@ -92,7 +92,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
 
     client.request({
@@ -106,7 +106,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
   })
 })
@@ -153,7 +153,7 @@ test('HEAD should reset connection', (t) => {
       method: 'HEAD'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
     t.equal(client[kBusy], true)
 
@@ -162,7 +162,7 @@ test('HEAD should reset connection', (t) => {
       method: 'HEAD'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
       client.once('disconnect', () => {
         client[kConnect](() => {
           client.request({
@@ -170,10 +170,11 @@ test('HEAD should reset connection', (t) => {
             method: 'HEAD'
           }, (err, data) => {
             t.error(err)
-            data.body.resume()
-            data.body.on('end', () => {
-              t.pass()
-            })
+            data.body.stream
+              .resume()
+              .on('end', () => {
+                t.pass()
+              })
           })
           t.equal(client[kBusy], true)
         })

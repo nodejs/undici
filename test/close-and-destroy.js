@@ -171,7 +171,7 @@ test('close should still reconnect', (t) => {
     function makeRequest () {
       client.request({ path: '/', method: 'GET' }, (err, data) => {
         t.error(err)
-        data.body.resume()
+        data.body.stream.resume()
       })
       return client[kSize] <= client.pipelining
     }
@@ -203,7 +203,7 @@ test('close should call callback once finished', (t) => {
     function makeRequest () {
       client.request({ path: '/', method: 'GET' }, (err, data) => {
         t.error(err)
-        data.body.resume()
+        data.body.stream.resume()
       })
       return client[kSize] <= client.pipelining
     }

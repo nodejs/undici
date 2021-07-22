@@ -24,7 +24,7 @@ test('aborted response errors', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      const stream = body.readableNodeStream()
+      const stream = body.stream
       stream.destroy()
       body
         .on('error', err => {

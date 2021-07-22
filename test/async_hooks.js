@@ -57,7 +57,7 @@ test('async hooks', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      const stream = body.readableNodeStream()
+      const stream = body.stream
       stream.resume()
       t.strictSame(getCurrentTransaction(), null)
 
@@ -66,7 +66,7 @@ test('async hooks', (t) => {
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
         t.error(err)
         t.strictSame(getCurrentTransaction(), { hello: 'world2' })
-        const stream = body.readableNodeStream()
+        const stream = body.stream
         stream.once('data', () => {
           t.pass()
           stream.resume()
@@ -80,7 +80,7 @@ test('async hooks', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      const stream = body.readableNodeStream()
+      const stream = body.stream
       stream.resume()
       t.strictSame(getCurrentTransaction(), null)
 
@@ -90,7 +90,7 @@ test('async hooks', (t) => {
         t.error(err)
         t.strictSame(getCurrentTransaction(), { hello: 'world' })
 
-        const stream = body.readableNodeStream()
+        const stream = body.stream
         stream.once('data', () => {
           t.pass()
           stream.resume()
@@ -104,7 +104,7 @@ test('async hooks', (t) => {
 
     client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      const stream = body.readableNodeStream()
+      const stream = body.stream
       stream.resume()
       t.strictSame(getCurrentTransaction(), null)
 
@@ -114,7 +114,7 @@ test('async hooks', (t) => {
         t.error(err)
         t.strictSame(getCurrentTransaction(), { hello: 'world' })
 
-        const stream = body.readableNodeStream()
+        const stream = body.stream
         stream.once('data', () => {
           t.pass()
           stream.resume()
@@ -164,7 +164,7 @@ test('async hooks client is destroyed', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, { body }) => {
       t.error(err)
-      const stream = body.readableNodeStream()
+      const stream = body.stream
       stream.resume()
       stream.on('error', (err) => {
         t.ok(err)

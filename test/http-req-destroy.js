@@ -19,8 +19,9 @@ function doNotKillReqSocket (bodyType) {
         body: req
       }, (err, response) => {
         t.error(err)
+        const stream = response.body.stream
         setTimeout(() => {
-          response.body.on('data', buf => {
+          stream.on('data', buf => {
             res.write(buf)
             setTimeout(() => {
               res.end()
@@ -51,11 +52,12 @@ function doNotKillReqSocket (bodyType) {
       }, (err, response) => {
         t.error(err)
         const bufs = []
-        response.body.on('data', (buf) => {
+        const stream = response.body.stream
+        stream.on('data', (buf) => {
           bufs.push(buf)
           r.push(null)
         })
-        response.body.on('end', () => {
+        stream.on('end', () => {
           t.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })

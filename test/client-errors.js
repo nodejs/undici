@@ -45,7 +45,7 @@ test('GET errors and reconnect with pipelining 1', (t) => {
       t.equal(statusCode, 200)
       t.equal(headers['content-type'], 'text/plain')
       const bufs = []
-      const stream = body.readableNodeStream()
+      const stream = body.stream
       stream.on('data', (buf) => {
         bufs.push(buf)
       })
@@ -101,7 +101,7 @@ test('GET errors and reconnect with pipelining 3', (t) => {
       t.equal(statusCode, 200)
       t.equal(headers['content-type'], 'text/plain')
       const bufs = []
-      const stream = body.readableNodeStream()
+      const stream = body.stream
       stream.on('data', (buf) => {
         bufs.push(buf)
       })
@@ -171,7 +171,7 @@ function errorAndPipelining (type) {
         t.equal(statusCode, 200)
         t.equal(headers['content-type'], 'text/plain')
         const bufs = []
-        const stream = body.readableNodeStream()
+        const stream = body.stream
         stream.on('data', (buf) => {
           bufs.push(buf)
         })
@@ -241,7 +241,7 @@ function errorAndChunkedEncodingPipelining (type) {
         t.equal(statusCode, 200)
         t.equal(headers['content-type'], 'text/plain')
         const bufs = []
-        const stream = body.readableNodeStream()
+        const stream = body.stream
         stream.on('data', (buf) => {
           bufs.push(buf)
         })
@@ -708,7 +708,7 @@ test('GET errors body', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      const stream = body.readableNodeStream()
+      const stream = body.stream
       stream.resume()
       stream.on('error', err => (
         t.ok(err)
@@ -759,7 +759,7 @@ test('validate request body', (t) => {
       body: ''
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
 
     client.request({
@@ -768,7 +768,7 @@ test('validate request body', (t) => {
       body: new Uint8Array()
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
 
     client.request({
@@ -777,7 +777,7 @@ test('validate request body', (t) => {
       body: Buffer.alloc(10)
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
   })
 })
@@ -908,7 +908,7 @@ test('queued request should not fail on socket destroy', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume().on('error', () => {
+      data.body.stream.resume().on('error', () => {
         t.pass()
       })
       client[kSocket].destroy()
@@ -917,7 +917,7 @@ test('queued request should not fail on socket destroy', (t) => {
         method: 'GET'
       }, (err, data) => {
         t.error(err)
-        data.body.resume().on('end', () => {
+        data.body.stream.resume().on('end', () => {
           t.pass()
         })
       })
@@ -946,7 +946,7 @@ test('queued request should fail on client destroy', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
         .on('error', () => {
           t.pass()
         })
@@ -998,14 +998,14 @@ test('retry idempotent inflight', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
     client.request({
       path: '/',
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
     })
   })
 })

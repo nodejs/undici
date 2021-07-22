@@ -497,7 +497,7 @@ test('pipeline abort duplex', (t) => {
       method: 'PUT'
     }, (err, data) => {
       t.error(err)
-      data.body.resume()
+      data.body.stream.resume()
 
       client.pipeline({
         path: '/',

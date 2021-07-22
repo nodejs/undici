@@ -61,7 +61,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       client.request({ path: '/', method: 'GET' }, (err, response) => {
         t.error(err)
         const bufs = []
-        const stream = response.body.readableNodeStream()
+        const stream = response.body.stream
         stream.on('data', (buf) => {
           bufs.push(buf)
         })
@@ -137,7 +137,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
         t.error(err)
-        const stream = response.body.readableNodeStream()
+        const stream = response.body.stream
         stream.on('data', () => {
           abortController.abort()
         })

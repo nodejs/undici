@@ -29,7 +29,7 @@ test('https get with tls opts', (t) => {
       t.equal(statusCode, 200)
       t.equal(headers['content-type'], 'text/plain')
       const bufs = []
-      const stream = body.readableNodeStream()
+      const stream = body.stream
       stream.on('data', (buf) => {
         bufs.push(buf)
       })

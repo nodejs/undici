@@ -30,7 +30,7 @@ test('https://github.com/mcollina/undici/issues/810', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      const stream = data.body.readableNodeStream()
+      const stream = data.body.stream
       stream.resume().on('end', () => {
         t.fail()
       }).on('error', err => (
@@ -65,7 +65,7 @@ test('https://github.com/mcollina/undici/issues/810 no pipelining', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      const stream = data.body.readableNodeStream()
+      const stream = data.body.stream
       stream.resume().on('end', () => {
         t.fail()
       }).on('error', err => {
@@ -95,7 +95,7 @@ test('https://github.com/mcollina/undici/issues/810 pipelining', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume().on('end', () => {
+      data.body.stream.resume().on('end', () => {
         t.fail()
       }).on('error', err => {
         t.equal(err.code, 'HPE_CB_MESSAGE_BEGIN')
@@ -124,7 +124,7 @@ test('https://github.com/mcollina/undici/issues/810 pipelining 2', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.error(err)
-      data.body.resume().on('end', () => {
+      data.body.stream.resume().on('end', () => {
         t.fail()
       }).on('error', err => {
         t.equal(err.code, 'HPE_INVALID_CONSTANT')

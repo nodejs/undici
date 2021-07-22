@@ -29,6 +29,7 @@ test('multiple reconnect', (t) => {
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.error(err)
       data.body
+        .stream
         .resume()
         .on('end', () => {
           t.pass()

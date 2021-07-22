@@ -149,16 +149,17 @@ test('pipeline 1 is 1 active request', (t) => {
         method: 'GET'
       }, (err, data) => {
         t.error(err)
-        finished(data.body, (err) => {
+        const stream = data.body.stream
+        finished(stream, (err) => {
           t.ok(err)
           client.close((err) => {
             t.error(err)
           })
         })
-        data.body.destroy()
+        stream.destroy()
         res2.end()
       }))
-      data.body.resume()
+      data.body.stream.resume()
       res2.end()
     })
     t.ok(client[kSize] <= client.pipelining)
@@ -194,7 +195,7 @@ test('pipelined chunked POST stream', (t) => {
       path: '/',
       method: 'GET'
     }, (err, { body }) => {
-      body.resume()
+      body.stream.resume()
       t.error(err)
     })
 
@@ -207,7 +208,7 @@ test('pipelined chunked POST stream', (t) => {
         }
       })
     }, (err, { body }) => {
-      body.resume()
+      body.stream.resume()
       t.error(err)
     })
 
@@ -215,7 +216,7 @@ test('pipelined chunked POST stream', (t) => {
       path: '/',
       method: 'GET'
     }, (err, { body }) => {
-      body.resume()
+      body.stream.resume()
       t.error(err)
     })
 
@@ -228,7 +229,7 @@ test('pipelined chunked POST stream', (t) => {
         }
       })
     }, (err, { body }) => {
-      body.resume()
+      body.stream.resume()
       t.error(err)
     })
   })
@@ -261,7 +262,7 @@ test('pipelined chunked POST iterator', (t) => {
       path: '/',
       method: 'GET'
     }, (err, { body }) => {
-      body.resume()
+      body.stream.resume()
       t.error(err)
     })
 
@@ -274,7 +275,7 @@ test('pipelined chunked POST iterator', (t) => {
         }
       })()
     }, (err, { body }) => {
-      body.resume()
+      body.stream.resume()
       t.error(err)
     })
 
@@ -282,7 +283,7 @@ test('pipelined chunked POST iterator', (t) => {
       path: '/',
       method: 'GET'
     }, (err, { body }) => {
-      body.resume()
+      body.stream.resume()
       t.error(err)
     })
 
@@ -295,7 +296,7 @@ test('pipelined chunked POST iterator', (t) => {
         }
       })()
     }, (err, { body }) => {
-      body.resume()
+      body.stream.resume()
       t.error(err)
     })
   })
@@ -398,7 +399,7 @@ test('pipelining non-idempotent', (t) => {
     }, (err, data) => {
       t.error(err)
       t.equal(ended, true)
-      data.body.resume()
+      data.body.stream.resume()
     })
   })
 })
@@ -455,7 +456,7 @@ function pipeliningNonIdempotentWithBody (bodyType) {
       }, (err, data) => {
         t.error(err)
         t.equal(ended, true)
-        data.body.resume()
+        data.body.stream.resume()
       })
     })
   })

@@ -93,6 +93,7 @@ test('trailers', (t) => {
     })
 
     body
+      .stream
       .on('data', () => t.fail())
       .on('end', () => {
         t.strictSame(trailers, { 'content-md5': 'test' })

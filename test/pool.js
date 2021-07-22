@@ -49,7 +49,7 @@ test('connect/disconnect event(s)', (t) => {
         method: 'GET'
       }, (err, { headers, body }) => {
         t.error(err)
-        body.resume()
+        body.stream.resume()
       })
     }
   })
@@ -185,7 +185,7 @@ test('basic get with async/await', async (t) => {
   t.equal(statusCode, 200)
   t.equal(headers['content-type'], 'text/plain')
 
-  body.resume()
+  body.stream.resume()
   await promisify(eos)(body)
 
   await client.close()

@@ -43,7 +43,7 @@ test('socket back-pressure', (t) => {
           setTimeout(() => {
             t.ok(data.body._readableState.length < bytesWritten - data.body._readableState.highWaterMark)
             src.push(null)
-            data.body.resume()
+            data.body.stream.resume()
           }, 1e3)
         })
         .on('end', () => {
