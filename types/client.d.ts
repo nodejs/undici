@@ -1,4 +1,5 @@
 import { URL } from 'url'
+import { TlsOptions } from 'tls'
 import Dispatcher from './dispatcher'
 
 export = Client
@@ -33,6 +34,8 @@ declare namespace Client {
     /** The amount of time the parser will wait to receive the complete HTTP headers (Node 14 and above only). Default: `30e3` milliseconds (30s). */
     headersTimeout?: number | null;
     /** If `true`, an error is thrown when the request content-length header doesn't match the length of the request body. Default: `true`. */
-    strictContentLength?: boolean
+    strictContentLength?: boolean;
+    /** An options object which in the case of `https` will be passed to [`tls.connect`](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback). Default: `null`. */
+    tls?: TlsOptions | null;
   }
 }
