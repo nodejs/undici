@@ -1,4 +1,5 @@
 import { URL } from 'url'
+import { TlsOptions } from 'tls'
 import Dispatcher from './dispatcher'
 
 export = Client
@@ -25,7 +26,7 @@ declare namespace Client {
     /** The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`. */
     pipelining?: number | null;
     /** **/
-    connect?: object | Function | null;
+    connect?: ConnectOptions | Function | null;
     /** The maximum length of request headers in bytes. Default: `16384` (16KiB). */
     maxHeaderSize?: number | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
@@ -33,6 +34,15 @@ declare namespace Client {
     /** The amount of time the parser will wait to receive the complete HTTP headers (Node 14 and above only). Default: `30e3` milliseconds (30s). */
     headersTimeout?: number | null;
     /** If `true`, an error is thrown when the request content-length header doesn't match the length of the request body. Default: `true`. */
-    strictContentLength?: boolean
+    strictContentLength?: boolean;
+    /** @deprecated use the connect option instead */
+    tls?: TlsOptions | null;
+  }
+
+  export interface ConnectOptions extends TlsOptions {
+    maxCachedSessions?: number | null;
+    socketPath?: string | null;
+    timeout?: number | null;
+    servername?: string | null;
   }
 }

@@ -5,6 +5,9 @@ import { URL } from 'url'
 
 expectAssignable<Client>(new Client(''))
 expectAssignable<Client>(new Client('', {}))
+expectAssignable<Client>(new Client('', {
+  connect: { rejectUnauthorized: false }
+}))
 expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
 
 {
