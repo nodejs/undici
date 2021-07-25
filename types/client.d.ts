@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import { TlsOptions } from 'tls'
-import Dispatcher, { DispatchOptions, RequestOptions } from './dispatcher'
+import Dispatcher from './dispatcher'
 
 export = Client
 
@@ -13,11 +13,6 @@ declare class Client extends Dispatcher {
   closed: boolean;
   /** `true` after `client.destroyed()` has been called or `client.close()` has been called and the client shutdown has completed. */
   destroyed: boolean;
-  /** Dispatches a request. This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this. */
-  dispatch(options: Client.ClientDispatchOptions, handler: Dispatcher.DispatchHandlers): void;
-  /** Performs an HTTP request. */
-  request(options: Client.ClientRequestOptions): Promise<Dispatcher.ResponseData>;
-  request(options: Client.ClientRequestOptions, callback: (err: Error | null, data: Dispatcher.ResponseData) => void): void;
 }
 
 declare namespace Client {
@@ -49,13 +44,5 @@ declare namespace Client {
     socketPath?: string | null;
     timeout?: number | null;
     servername?: string | null;
-  }
-
-  export interface ClientDispatchOptions extends Partial<DispatchOptions> {
-    origin?: string | URL;
-  }
-
-  export interface ClientRequestOptions extends Partial<RequestOptions> {
-    origin?: string | URL;
   }
 }
