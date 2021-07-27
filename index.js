@@ -8,6 +8,7 @@ const Agent = require('./lib/agent')
 const util = require('./lib/core/util')
 const { InvalidArgumentError } = require('./lib/core/errors')
 const api = require('./lib/api')
+const Connector = require('./lib/core/connect')
 const MockClient = require('./lib/mock/mock-client')
 const MockAgent = require('./lib/mock/mock-agent')
 const MockPool = require('./lib/mock/mock-pool')
@@ -20,6 +21,7 @@ module.exports.Client = Client
 module.exports.Pool = Pool
 module.exports.Agent = Agent
 
+module.exports.Connector = Connector
 module.exports.errors = errors
 
 let globalDispatcher = new Agent()

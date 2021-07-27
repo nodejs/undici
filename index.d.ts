@@ -2,6 +2,7 @@ import Dispatcher from './types/dispatcher'
 import { setGlobalDispatcher, getGlobalDispatcher } from './types/global-dispatcher'
 import Pool from './types/pool'
 import Client from './types/client'
+import Connector from './types/connector'
 import errors from './types/errors'
 import Agent from './types/agent'
 import MockClient from './types/mock-client'
@@ -10,7 +11,7 @@ import MockAgent from './types/mock-agent'
 import mockErrors from './types/mock-errors'
 import { request, pipeline, stream, connect, upgrade } from './types/api'
 
-export { Dispatcher, Pool, Client, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, MockClient, MockPool, MockAgent, mockErrors }
+export { Dispatcher, Pool, Client, Connector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, MockClient, MockPool, MockAgent, mockErrors }
 export default Undici
 
 declare function Undici(url: string, opts: Pool.Options): Pool
@@ -19,6 +20,7 @@ declare namespace Undici {
   var Dispatcher: typeof import('./types/dispatcher')
   var Pool: typeof import('./types/pool');
   var Client: typeof import('./types/client');
+  var Connector: typeof import('./types/connector');
   var errors: typeof import('./types/errors');
   var Agent: typeof import('./types/agent');
   var setGlobalDispatcher: typeof import('./types/global-dispatcher').setGlobalDispatcher;
