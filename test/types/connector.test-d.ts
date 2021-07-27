@@ -1,12 +1,11 @@
 import { expectAssignable } from 'tsd'
-import { Client, Connector } from '../..'
+import { Client, buildConnector } from '../..'
 import { TLSSocket } from 'tls'
 
-const connector = new Connector({ rejectUnauthorized: false })
-expectAssignable<Connector>(connector)
+const connector = buildConnector({ rejectUnauthorized: false })
 expectAssignable<Client>(new Client('', {
-  connect (opts: Connector.ConnectOptions, cb: Connector.connectCallback) {
-    connector.connect(opts, (err, socket) => {
+  connect (opts: buildConnector.Options, cb: buildConnector.Callback) {
+    connector(opts, (err, socket) => {
       if (err) {
         return cb(err, null)
       }
