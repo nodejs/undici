@@ -26,6 +26,7 @@ Returns: `Client`
 * **pipelining** `number | null` (optional) - Default: `1` - The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Carefully consider your workload and environment before enabling concurrent requests as pipelining may reduce performance if used incorrectly. Pipelining is sensitive to network stack settings as well as head of line blocking caused by e.g. long running requests. Set to `0` to disable keep-alive connections.
 * **connect** `ConnectOptions | Function | null` (optional) - Default: `null`.
 * **strictContentLength** `Boolean` (optional) - Default: `true` - Whether to treat request content length mismatches as errors. If true, an error is thrown when the request content-length header doesn't match the length of the request body.
+* **onSocket** `Function | null` (optional) - Default: `null`. - A function that you can pass to run additonal validations before to use the Socket or TlsSocket for the current http call. It's emitted after the internal `connect` or `secureConnect` socket event. If you call the callback with an error, the requets won't be performed, and it will resolve immediately with such error.
 
 #### Parameter: `ConnectOptions`
 
@@ -46,6 +47,24 @@ This will instantiate the undici Client, but it will not connect to the origin u
 import { Client } from 'undici'
 
 const client = new Client('http://localhost:3000')
+```
+
+### Example - onSocket function usage
+
+
+```js
+'use strict'
+import { Client } from 'undici'
+
+const client = new Client('https://example.com', {
+  onSocket (socket, callback) {
+    if (!socket.authorized) {
+      callback(new Error('not authorized!'))
+    } else {
+      callback()
+    }
+  }
+})
 ```
 
 ## Instance Methods
