@@ -2,23 +2,18 @@ import { URL } from 'url'
 import { TLSSocket, TlsOptions } from 'tls'
 import { Socket } from 'net'
 
-export = Connector
+export = buildConnector
+declare function buildConnector (options?: buildConnector.BuildOptions): typeof buildConnector.connector
 
-declare class Connector {
-  constructor (options: Connector.Options);
-  /** Creates a new socket and returns it */
-  connect (options: Connector.ConnectOptions, callback: Connector.connectCallback): Socket | TLSSocket;
-}
-
-declare namespace Connector {
-  export interface Options extends TlsOptions {
+declare namespace buildConnector {
+  export interface BuildOptions extends TlsOptions {
     maxCachedSessions?: number | null;
     socketPath?: string | null;
     timeout?: number | null;
     servername?: string | null;
   }
 
-  export interface ConnectOptions {
+  export interface Options {
     hostname: string
     host?: string
     protocol: string
@@ -26,5 +21,7 @@ declare namespace Connector {
     servername?: string
   }
 
-  export type connectCallback = (err: Error | null, socket: Socket | TLSSocket | null) => void
+  export type Callback = (err: Error | null, socket: Socket | TLSSocket | null) => void
+
+  export function connector (options: buildConnector.Options, callback: buildConnector.Callback): Socket | TLSSocket;
 }

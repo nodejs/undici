@@ -1,7 +1,7 @@
 import { URL } from 'url'
 import { TlsOptions } from 'tls'
 import Dispatcher, { DispatchOptions, RequestOptions } from './dispatcher'
-import Connector from './connector'
+import buildConnector from './connector'
 
 export = Client
 
@@ -32,7 +32,7 @@ declare namespace Client {
     /** The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`. */
     pipelining?: number | null;
     /** **/
-    connect?: Connector.Options | Function | null;
+    connect?: buildConnector.BuildOptions | Function | null;
     /** The maximum length of request headers in bytes. Default: `16384` (16KiB). */
     maxHeaderSize?: number | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
