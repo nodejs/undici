@@ -1,5 +1,6 @@
 import { URL } from 'url'
-import { TlsOptions } from 'tls'
+import { TlsOptions, TLSSocket } from 'tls'
+import { Socket } from 'net'
 import Dispatcher, { DispatchOptions, RequestOptions } from './dispatcher'
 
 export = Client
@@ -42,6 +43,7 @@ declare namespace Client {
     strictContentLength?: boolean;
     /** @deprecated use the connect option instead */
     tls?: TlsOptions | null;
+    onSocket?: onSocketHook;
   }
 
   export interface ConnectOptions extends TlsOptions {
@@ -58,4 +60,6 @@ declare namespace Client {
   export interface ClientRequestOptions extends Partial<RequestOptions> {
     origin?: string | URL;
   }
+
+  export type onSocketHook = (socket: Socket | TLSSocket, cb: (err?: Error) => void) => void
 }
