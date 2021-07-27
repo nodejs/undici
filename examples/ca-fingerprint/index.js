@@ -23,13 +23,13 @@ server.listen(0, function () {
     connect (opts, cb) {
       connector.connect(opts, (err, socket) => {
         if (err) {
-          return cb(err)
-        }
-        if (getIssuerCertificate(socket).fingerprint256 !== caFingerprint) {
+          cb(err)
+        } else if (getIssuerCertificate(socket).fingerprint256 !== caFingerprint) {
           socket.destroy()
-          return cb(new Error('Fingerprint does not match'))
+          cb(new Error('Fingerprint does not match'))
+        } else {
+          cb(null, socket)
         }
-        return cb(null, socket)
       })
     }
   })
