@@ -26,5 +26,5 @@ declare namespace Connector {
     servername?: string
   }
 
-  export type connectCallback = (socket: Socket | TLSSocket, cb: (err?: Error) => void) => void
+  export type connectCallback = (err: Error | null, socket: Socket | TLSSocket | null) => void
 }
