@@ -2,7 +2,7 @@
 
 const crypto = require('crypto')
 const https = require('https')
-const { Client, Connector } = require('../..')
+const { Client, buildConnector } = require('../..')
 const pem = require('https-pem')
 
 const caFingerprint = getFingerprint(pem.cert.toString()
@@ -18,10 +18,10 @@ const server = https.createServer(pem, (req, res) => {
 })
 
 server.listen(0, function () {
-  const connector = new Connector({ rejectUnauthorized: false })
+  const connector = buildConnector({ rejectUnauthorized: false })
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect (opts, cb) {
-      connector.connect(opts, (err, socket) => {
+      connector(opts, (err, socket) => {
         if (err) {
           cb(err)
         } else if (getIssuerCertificate(socket).fingerprint256 !== caFingerprint) {
