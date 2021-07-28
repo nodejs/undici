@@ -48,6 +48,31 @@ import { Client } from 'undici'
 const client = new Client('http://localhost:3000')
 ```
 
+### Example - Custom connector
+
+This will allow you to perform some additional check on the socket that will be used for the next request.
+
+```js
+'use strict'
+import { Client, buildConnector } from 'undici'
+
+const connector = buildConnector({ rejectUnauthorized: false })
+const client = new Client('https://localhost:3000', {
+  connect (opts, cb) {
+    connector(opts, (err, socket) => {
+      if (err) {
+        cb(err)
+      } else if (/* assertion */) {
+        socket.destroy()
+        cb(new Error('kaboom'))
+      } else {
+        cb(null, socket)
+      }
+    })
+  }
+})
+```
+
 ## Instance Methods
 
 ### `Client.close([callback])`
