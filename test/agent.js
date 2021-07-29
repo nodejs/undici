@@ -307,7 +307,11 @@ test('with local agent', t => {
 
   t.teardown(server.close.bind(server))
 
-  const dispatcher = new Agent()
+  const dispatcher = new Agent({
+    connect: {
+      servername: 'agent1'
+    }
+  })
 
   server.listen(0, () => {
     request(`http://localhost:${server.address().port}`, { dispatcher })
@@ -708,4 +712,10 @@ test('unreachable request rejects and can be caught', t => {
   request('https://thisis.not/avalid/url').catch(() => {
     t.pass()
   })
+})
+
+test('connect is not valid', t => {
+  t.plan(1)
+
+  t.throws(() => new Agent({ connect: false }), InvalidArgumentError, 'connect must be a function or an object')
 })

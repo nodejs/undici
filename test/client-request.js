@@ -8,6 +8,8 @@ const { kConnect } = require('../lib/core/symbols')
 const { Readable } = require('stream')
 const net = require('net')
 const { promisify } = require('util')
+const { NotSupportedError } = require('../lib/core/errors')
+
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
 test('request abort before headers', (t) => {
@@ -462,4 +464,31 @@ test('request onInfo callback headers parsing', async (t) => {
   t.equal(infos[0].statusCode, 103)
   t.same(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
   t.pass()
+})
+
+test('request formData', { skip: nodeMajor < 16 }, (t) => {
+  t.plan(1)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+
+    try {
+      await body.formData()
+      t.fail('should throw NotSupportedError')
+    } catch (error) {
+      t.ok(error instanceof NotSupportedError)
+    }
+  })
 })

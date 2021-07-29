@@ -31,7 +31,7 @@ async function startRedirectingServer (t) {
 
     if (isNaN(code) || code < 0) {
       code = 302
-    } else if(code < 300) {
+    } else if (code < 300) {
       res.statusCode = code
       redirections = 5
     }

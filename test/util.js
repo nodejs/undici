@@ -6,6 +6,7 @@ const { Stream } = require('stream')
 const { EventEmitter } = require('events')
 
 const util = require('../lib/core/util')
+const { InvalidArgumentError } = require('../lib/core/errors')
 
 test('isStream', (t) => {
   t.plan(3)
@@ -28,4 +29,55 @@ test('getServerName', (t) => {
   t.equal(util.getServerName('example.com:80'), 'example.com')
   t.equal(util.getServerName('[2606:4700:4700::1111]'), '')
   t.equal(util.getServerName('[2606:4700:4700::1111]:443'), '')
+})
+
+test('validateHandler', (t) => {
+  t.plan(9)
+
+  t.throws(() => util.validateHandler(null), InvalidArgumentError, 'handler must be an object')
+  t.throws(() => util.validateHandler({
+    onConnect: null
+  }), InvalidArgumentError, 'invalid onConnect method')
+  t.throws(() => util.validateHandler({
+    onConnect: () => {},
+    onError: null
+  }), InvalidArgumentError, 'invalid onError method')
+  t.throws(() => util.validateHandler({
+    onConnect: () => {},
+    onError: () => {},
+    onBodySent: null
+  }), InvalidArgumentError, 'invalid onBodySent method')
+  t.throws(() => util.validateHandler({
+    onConnect: () => {},
+    onError: () => {},
+    onBodySent: () => {},
+    onHeaders: null
+  }), InvalidArgumentError, 'invalid onHeaders method')
+  t.throws(() => util.validateHandler({
+    onConnect: () => {},
+    onError: () => {},
+    onBodySent: () => {},
+    onHeaders: () => {},
+    onData: null
+  }), InvalidArgumentError, 'invalid onData method')
+  t.throws(() => util.validateHandler({
+    onConnect: () => {},
+    onError: () => {},
+    onBodySent: () => {},
+    onHeaders: () => {},
+    onData: () => {},
+    onComplete: null
+  }), InvalidArgumentError, 'invalid onComplete method')
+  t.throws(() => util.validateHandler({
+    onConnect: () => {},
+    onError: () => {},
+    onBodySent: () => {},
+    onUpgrade: 'null'
+  }, 'CONNECT'), InvalidArgumentError, 'invalid onUpgrade method')
+  t.throws(() => util.validateHandler({
+    onConnect: () => {},
+    onError: () => {},
+    onBodySent: () => {},
+    onUpgrade: 'null'
+  }, 'CONNECT', () => {}), InvalidArgumentError, 'invalid onUpgrade method')
 })
