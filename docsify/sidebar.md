@@ -6,6 +6,7 @@
   * [Client](/docs/api/Client.md "Undici API - Client")
   * [Pool](/docs/api/Pool.md "Undici API - Pool")
   * [Agent](/docs/api/Agent.md "Undici API - Agent")
+  * [Connector](/docs/api/Connector.md "Custom connector")
   * [Errors](/docs/api/Errors.md "Undici API - Errors")
   * [MockClient](/docs/api/MockClient.md "Undici API - MockClient")
   * [MockPool](/docs/api/MockPool.md "Undici API - MockPool")
