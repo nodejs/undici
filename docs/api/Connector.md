@@ -67,7 +67,7 @@ const client = new Client('https://localhost:3000', {
         cb(err)
       } else if (getIssuerCertificate(socket).fingerprint256 !== caFingerprint) {
         socket.destroy()
-        cb(new Error('Fingerprint does not match'))
+        cb(new Error('Fingerprint does not match or malformed certificate'))
       } else {
         cb(null, socket)
       }
@@ -94,15 +94,19 @@ client.request({
 function getIssuerCertificate (socket) {
   let certificate = socket.getPeerCertificate(true)
   while (certificate && Object.keys(certificate).length > 0) {
-    if (certificate.issuerCertificate !== undefined) {
-      // For self-signed certificates, `issuerCertificate` may be a circular reference.
-      if (certificate.fingerprint256 === certificate.issuerCertificate.fingerprint256) {
-        break
-      }
-      certificate = certificate.issuerCertificate
-    } else {
+    // invalid certificate
+    if (certificate.issuerCertificate == null) {
+      return null
+    }
+
+    // We have reached the root certificate.
+    // In case of self-signed certificates, `issuerCertificate` may be a circular reference.
+    if (certificate.fingerprint256 === certificate.issuerCertificate.fingerprint256) {
       break
     }
+
+    // continue the loop
+    certificate = certificate.issuerCertificate
   }
   return certificate
 }
