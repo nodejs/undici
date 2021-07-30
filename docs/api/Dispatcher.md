@@ -418,7 +418,7 @@ The `RequestOptions.method` property should not be value `'CONNECT'`.
 
 * **statusCode** `number`
 * **headers** `http.IncomingHttpHeaders`
-* **body** `stream.Readable`
+* **body** `stream.Readable` which also implements [the body mixin from the Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
 * **trailers** `Record<string, string>` - This object starts out
   as empty and will be mutated to contain trailers after `body` has emitted `'end'`.
 * **opaque** `unknown`
