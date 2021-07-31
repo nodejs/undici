@@ -65,6 +65,24 @@ for await (const data of body) {
 console.log('trailers', trailers)
 ```
 
+Using [the body mixin from the Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
+
+```js
+import { request } from 'undici'
+
+const {
+  statusCode,
+  headers,
+  trailers,
+  body
+} = await request('http://localhost:3000/foo')
+
+console.log('response received', statusCode)
+console.log('headers', headers)
+console.log('data', await body.json())
+console.log('trailers', trailers)
+```
+
 ## Common API Methods
 
 This section documents our most commonly used API methods. Additional APIs are documented in their own files within the [docs](./docs/) folder and are accessible via the navigation list on the left side of the docs site.

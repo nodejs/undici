@@ -185,3 +185,66 @@ test('destroy socket abruptly with keep-alive', async (t) => {
     t.pass('error happened')
   }
 })
+
+test('request json', (t) => {
+  t.plan(1)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    t.strictSame(obj, await body.json())
+  })
+})
+
+test('request text', (t) => {
+  t.plan(1)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    t.strictSame(JSON.stringify(obj), await body.text())
+  })
+})
+
+test('request arrayBuffer', (t) => {
+  t.plan(1)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    t.strictSame(Buffer.from(JSON.stringify(obj)), Buffer.from(await body.arrayBuffer()))
+  })
+})
