@@ -9,6 +9,7 @@ expectAssignable<Dispatcher>(new Dispatcher())
   const dispatcher = new Dispatcher()
 
   // dispatch
+  expectAssignable<void>(dispatcher.dispatch({ path: '', method: '' }, {}))
   expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: '' }, {}))
   expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: '', headers: [] }, {}))
   expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: '', headers: {} }, {}))

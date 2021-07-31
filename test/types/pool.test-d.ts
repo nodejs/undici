@@ -18,7 +18,6 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   expectAssignable<boolean>(pool.destroyed)
 
   // request
-  expectAssignable<Promise<Dispatcher.ResponseData>>(pool.request({ path: '', method: '' }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(pool.request({ origin: '', path: '', method: '' }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(pool.request({ origin: new URL('http://localhost'), path: '', method: '' }))
   expectAssignable<void>(pool.request({ origin: '', path: '', method: '' }, (err, data) => {
@@ -87,7 +86,6 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   }))
 
   // dispatch
-  expectAssignable<void>(pool.dispatch({ path: '', method: '' }, {}))
   expectAssignable<void>(pool.dispatch({ origin: '', path: '', method: '' }, {}))
   expectAssignable<void>(pool.dispatch({ origin: new URL('http://localhost'), path: '', method: '' }, {}))
 

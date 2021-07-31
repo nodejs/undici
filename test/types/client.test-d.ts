@@ -21,7 +21,6 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   // request
   expectAssignable<Promise<Dispatcher.ResponseData>>(client.request({ origin: '', path: '', method: '' }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(client.request({ origin: new URL('http://localhost:3000'), path: '', method: '' }))
-  expectAssignable<Promise<Dispatcher.ResponseData>>(client.request({ path: '/', method: 'GET' }))
   expectAssignable<void>(client.request({ origin: '', path: '', method: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
@@ -94,7 +93,6 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   }))
 
   // dispatch
-  expectAssignable<void>(client.dispatch({ path: '', method: '' }, {}))
   expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '' }, {}))
   expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '', headers: [] }, {}))
   expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '', headers: {} }, {}))

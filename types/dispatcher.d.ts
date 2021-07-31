@@ -37,7 +37,7 @@ declare class Dispatcher extends EventEmitter {
 
 declare namespace Dispatcher {
   export interface DispatchOptions {
-    origin: string | URL;
+    origin?: string | URL;
     path: string;
     method: string;
     /** Default: `null` */
