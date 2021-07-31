@@ -19,7 +19,7 @@ const scenarios = [
   createScenario(errors.HeadersOverflowError, 'Headers Overflow Error', 'HeadersOverflowError', 'UND_ERR_HEADERS_OVERFLOW'),
   createScenario(errors.InvalidArgumentError, 'Invalid Argument Error', 'InvalidArgumentError', 'UND_ERR_INVALID_ARG'),
   createScenario(errors.InvalidReturnValueError, 'Invalid Return Value Error', 'InvalidReturnValueError', 'UND_ERR_INVALID_RETURN_VALUE'),
-  createScenario(errors.RequestAbortedError, 'Request aborted', 'RequestAbortedError', 'UND_ERR_ABORTED'),
+  createScenario(errors.RequestAbortedError, 'Request aborted', 'AbortError', 'UND_ERR_ABORTED'),
   createScenario(errors.InformationalError, 'Request information', 'InformationalError', 'UND_ERR_INFO'),
   createScenario(errors.RequestContentLengthMismatchError, 'Request body length does not match content-length header', 'RequestContentLengthMismatchError', 'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH'),
   createScenario(errors.TrailerMismatchError, 'Trailers does not match trailer header', 'TrailerMismatchError', 'UND_ERR_TRAILER_MISMATCH'),
