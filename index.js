@@ -3,6 +3,7 @@
 const Client = require('./lib/client')
 const Dispatcher = require('./lib/dispatcher')
 const errors = require('./lib/core/errors')
+const Readable = require('./api/readable')
 const Pool = require('./lib/pool')
 const Agent = require('./lib/agent')
 const util = require('./lib/core/util')
@@ -20,6 +21,7 @@ module.exports.Dispatcher = Dispatcher
 module.exports.Client = Client
 module.exports.Pool = Pool
 module.exports.Agent = Agent
+module.exports.Readable = Readable
 
 module.exports.buildConnector = buildConnector
 module.exports.errors = errors
