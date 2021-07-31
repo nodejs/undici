@@ -424,6 +424,14 @@ The `RequestOptions.method` property should not be value `'CONNECT'`.
 * **opaque** `unknown`
 * **context** `object`
 
+`body` contains the following additional [body mixin](https://fetch.spec.whatwg.org/#body-mixin) methods and properties:
+
+- `text()`
+- `json()`
+- `arrayBuffer()`
+- `body`
+- `bodyUsed`
+
 #### Example 1 - Basic GET Request
 
 ```js
