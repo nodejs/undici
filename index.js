@@ -84,6 +84,7 @@ function makeDispatcher (fn) {
 module.exports.setGlobalDispatcher = setGlobalDispatcher
 module.exports.getGlobalDispatcher = getGlobalDispatcher
 
+module.exports.fetch = makeDispatcher(api.fetch)
 module.exports.request = makeDispatcher(api.request)
 module.exports.stream = makeDispatcher(api.stream)
 module.exports.pipeline = makeDispatcher(api.pipeline)

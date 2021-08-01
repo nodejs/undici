@@ -155,6 +155,50 @@ Calls `options.dispatch.connect(options)`.
 
 See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnect) for more details.
 
+https://fetch.spec.whatwg.org/
+
+### `undici.fetch([url, options]): Promise`
+
+Performs a HTTP request.
+
+Implements [fetch](https://fetch.spec.whatwg.org/).
+
+This API is **experimental** and is not yet fully compliant the Fetch Standard.
+
+Arguments:
+
+* **url** `string | URL | object`
+* **options** `RequestInit`
+
+Returns: `Promise<Response>`
+
+#### Parameter: `RequestInit`
+
+**method** `string`
+**headers** `HeadersInit`
+**body** `BodyInit?`
+**referrer** *not supported*
+**referrerPolicy** *not supported*
+**mode** *not supported*
+**credentials** *not supported*
+**cache** *not supported*
+**redirect** `RequestRedirect` *only `"follow"` supported*
+**integrity** *not supported*
+**keepalive** `boolean`
+**signal** `AbortSignal?`
+
+#### Parameter: `Response`
+
+* **type** `ResponseType`
+* **url** `string`
+* **redirected** `boolean`
+* **status** `number`
+* **ok** `boolean`
+* **statusText** *not supported*
+* **headers** `Headers`
+
+See [Dispatcher.fetch](docs/api/Dispatcher.md#dispatcherfetchoptions-callback) for more details.
+
 ### `undici.upgrade([url, options]): Promise`
 
 Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) for more details.
