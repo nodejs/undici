@@ -1,7 +1,8 @@
 import { Duplex, Readable, Writable } from 'stream'
-import { expectAssignable } from 'tsd'
+import { expectAssignable, expectType } from 'tsd'
 import { Dispatcher } from '../..'
 import { URL } from 'url'
+import { Blob } from 'buffer'
 
 expectAssignable<Dispatcher>(new Dispatcher())
 
@@ -95,4 +96,17 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<void>(dispatcher.destroy(() => {}))
   expectAssignable<void>(dispatcher.destroy(new Error(), () => {}))
   expectAssignable<void>(dispatcher.destroy(null, () => {}))
+}
+
+declare const { body }: Dispatcher.ResponseData;
+
+{
+  // body mixin tests
+  expectType<never | undefined>(body.body);
+  expectType<boolean>(body.bodyUsed);
+  expectType<Promise<ArrayBuffer>>(body.arrayBuffer());
+  expectType<Promise<Blob>>(body.blob())
+  expectType<Promise<never>>(body.formData())
+  expectType<Promise<string>>(body.text())
+  expectType<Promise<any>>(body.json())
 }

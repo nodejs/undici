@@ -2,6 +2,7 @@ import { URL } from 'url'
 import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
 import { IncomingHttpHeaders } from 'http'
+import { Blob } from 'buffer'
 
 type AbortSignal = unknown;
 
@@ -98,7 +99,7 @@ declare namespace Dispatcher {
   export interface ResponseData {
     statusCode: number;
     headers: IncomingHttpHeaders;
-    body: Readable;
+    body: Readable & BodyMixin;
     trailers: Record<string, string>;
     opaque: unknown;
     context: object;
@@ -143,4 +144,17 @@ declare namespace Dispatcher {
     onBodySent?(chunkSize: number, totalBytesSent: number): void;
   }
   export type PipelineHandler = (data: PipelineHandlerData) => Readable;
+
+  /** 
+   * @link https://fetch.spec.whatwg.org/#body-mixin
+   */
+  interface BodyMixin {
+    readonly body?: never // throws on node v16.6.0
+    readonly bodyUsed: boolean
+    arrayBuffer(): Promise<ArrayBuffer>
+    blob(): Promise<Blob>
+    formData(): Promise<never>
+    json(): Promise<any>
+    text(): Promise<string>
+  }
 }
