@@ -102,9 +102,9 @@ declare const { body }: Dispatcher.ResponseData;
 
 {
   // body mixin tests
-  expectType<never | undefined>(body.body);
-  expectType<boolean>(body.bodyUsed);
-  expectType<Promise<ArrayBuffer>>(body.arrayBuffer());
+  expectType<never | undefined>(body.body)
+  expectType<boolean>(body.bodyUsed)
+  expectType<Promise<ArrayBuffer>>(body.arrayBuffer())
   expectType<Promise<Blob>>(body.blob())
   expectType<Promise<never>>(body.formData())
   expectType<Promise<string>>(body.text())
