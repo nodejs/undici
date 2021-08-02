@@ -159,7 +159,7 @@ https://fetch.spec.whatwg.org/
 
 ### `undici.fetch([url, options]): Promise`
 
-Implements [fetch](https://fetch.spec.whatwg.org/).
+Implements the [fetch](https://fetch.spec.whatwg.org/).
 
 This is [experimental](https://nodejs.org/api/documentation.html#documentation_stability_index) and is not yet fully compliant the Fetch Standard. We plan to ship breaking changes to this feature until it is out of experimental.
 
@@ -172,18 +172,18 @@ Returns: `Promise<Response>`
 
 #### Parameter: `RequestInit`
 
-**method** `string`
-**headers** `HeadersInit`
-**body** `BodyInit?`
-**referrer** *not supported*
-**referrerPolicy** *not supported*
-**mode** *not supported*
-**credentials** *not supported*
-**cache** *not supported*
-**redirect** `RequestRedirect` *only `"follow"` supported*
-**integrity** *not supported*
-**keepalive** `boolean`
-**signal** `AbortSignal?`
+* **method** `string`
+* **headers** `HeadersInit`
+* **body** `BodyInit?`
+* **referrer** *not supported*
+* **referrerPolicy** *not supported*
+* **mode** *not supported*
+* **credentials** *not supported*
+* **cache** *not supported*
+* **redirect** `RequestRedirect` *only `"follow"` supported*
+* **integrity** *not supported*
+* **keepalive** `boolean`
+* **signal** `AbortSignal?`
 
 #### Parameter: `Response`
 
