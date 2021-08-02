@@ -9,7 +9,9 @@ const {
   startRedirectingWithoutLocationServer,
   startRedirectingWithAuthorization
 } = require('./utils/redirecting-servers')
-const { createReadable } = require('./utils/stream')
+const { createReadable, createReadableStream } = require('./utils/stream')
+
+const nodeMajor = Number(process.versions.node.split('.')[0])
 
 for (const factory of [
   (server, opts) => new undici.Agent(opts),
@@ -349,6 +351,27 @@ for (const factory of [
     } catch (err) {
       t.equal(err.message, 'maxRedirections must be a positive number')
     }
+  })
+
+  t.test('should not follow redirects when using ReadableStream request bodies', { skip: nodeMajor < 16 }, async t => {
+    t.plan(3)
+
+    let body = ''
+    const server = await startRedirectingServer(t)
+
+    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/301`, {
+      method: 'POST',
+      body: createReadableStream('REQUEST'),
+      maxRedirections: 10
+    })
+
+    for await (const b of bodyStream) {
+      body += b
+    }
+
+    t.equal(statusCode, 301)
+    t.equal(headers.location, `http://${server}/301/2`)
+    t.equal(body.length, 0)
   })
 
   t.test('should not follow redirects when using Readable request bodies', async t => {
