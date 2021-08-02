@@ -163,7 +163,7 @@ Performs a HTTP request.
 
 Implements [fetch](https://fetch.spec.whatwg.org/).
 
-This API is **experimental** and is not yet fully compliant the Fetch Standard.
+This is [experimental](https://nodejs.org/api/documentation.html#documentation_stability_index) and is not yet fully compliant the Fetch Standard. We plan to ship breaking changes to this feature until it is out of experimental.
 
 Arguments:
 
