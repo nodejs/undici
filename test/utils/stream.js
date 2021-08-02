@@ -2,8 +2,6 @@
 
 const { Readable, Writable } = require('stream')
 
-let ReadableStream
-
 function createReadable (data) {
   return new Readable({
     read () {
@@ -25,24 +23,4 @@ function createWritable (target) {
   })
 }
 
-class Source {
-  constructor (data) {
-    this.data = data
-  }
-
-  async start (controller) {
-    this.controller = controller
-  }
-
-  async pull (controller) {
-    controller.enqueue(this.data)
-    controller.close()
-  }
-}
-
-function createReadableStream (data) {
-  ReadableStream = require('stream/web').ReadableStream
-  return new ReadableStream(new Source(data))
-}
-
-module.exports = { createReadableStream, createReadable, createWritable }
+module.exports = { createReadable, createWritable }
