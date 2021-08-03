@@ -6,7 +6,7 @@ const { createServer } = require('http')
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
 test('fetch', {
-  skip: nodeMajor < 14
+  skip: nodeMajor < 16
 }, t => {
   t.test('request json', (t) => {
     t.plan(1)

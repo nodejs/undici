@@ -30,8 +30,14 @@ test('socket close listener does not leak', (t) => {
     data.body.on('end', () => t.pass()).resume()
   }
 
-  process.on('warning', () => {
-    t.fail()
+  function onWarning (warning) {
+    if (!/ExperimentalWarning/.test(warning)) {
+      t.fail()
+    }
+  }
+  process.on('warning', onWarning)
+  t.teardown(() => {
+    process.removeListener('warning', onWarning)
   })
 
   server.listen(0, () => {
