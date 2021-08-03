@@ -190,7 +190,7 @@ https://fetch.spec.whatwg.org/#request-class
 
 #### Parameter: `Response`
 
-// https://fetch.spec.whatwg.org/#response-class
+https://fetch.spec.whatwg.org/#response-class
 
 * **type** `ResponseType`
 * **url** `string`
