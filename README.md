@@ -184,7 +184,7 @@ https://fetch.spec.whatwg.org/#request-class
 * **cache** *not supported*
 * **redirect** `RequestRedirect` *only `"follow"` supported*
 * **integrity** *not supported*
-* **keepalive** `boolean`
+* **keepalive** *not supported*
 * **signal** `AbortSignal?`
 * **window** `null`
 
