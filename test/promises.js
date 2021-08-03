@@ -200,9 +200,14 @@ test('20 times GET with pipelining 10, async await support', (t) => {
   t.teardown(server.close.bind(server))
 
   // needed to check for a warning on the maxListeners on the socket
-  process.on('warning', t.fail)
+  function onWarning (warning) {
+    if (!/ExperimentalWarning/.test(warning)) {
+      t.fail()
+    }
+  }
+  process.on('warning', onWarning)
   t.teardown(() => {
-    process.removeListener('warning', t.fail)
+    process.removeListener('warning', onWarning)
   })
 
   server.listen(0, () => {
