@@ -172,6 +172,8 @@ Returns: `Promise<Response>`
 
 #### Parameter: `RequestInit`
 
+https://fetch.spec.whatwg.org/#request-class
+
 * **method** `string`
 * **headers** `HeadersInit`
 * **body** `BodyInit?`
@@ -184,8 +186,11 @@ Returns: `Promise<Response>`
 * **integrity** *not supported*
 * **keepalive** `boolean`
 * **signal** `AbortSignal?`
+* **window** `null`
 
 #### Parameter: `Response`
+
+// https://fetch.spec.whatwg.org/#response-class
 
 * **type** `ResponseType`
 * **url** `string`
