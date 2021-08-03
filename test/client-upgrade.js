@@ -173,7 +173,7 @@ test('upgrade invalid opts', (t) => {
 })
 
 test('basic upgrade2', (t) => {
-  t.plan(4)
+  t.plan(3)
 
   const server = http.createServer()
   server.on('upgrade', (req, c, head) => {
@@ -199,8 +199,6 @@ test('basic upgrade2', (t) => {
       t.error(err)
 
       const { headers, socket } = data
-
-      t.equal(socket._readableState.flowing, null)
 
       let recvData = ''
       data.socket.on('data', (d) => {
