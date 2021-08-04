@@ -228,6 +228,31 @@ test('request text', (t) => {
   })
 })
 
+test('request blob', (t) => {
+  t.plan(2)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+
+    const blob = await body.blob()
+    t.strictSame(obj, JSON.parse(await blob.text()))
+    t.equal(blob.type, 'application/json')
+  })
+})
+
 test('request arrayBuffer', (t) => {
   t.plan(1)
 
