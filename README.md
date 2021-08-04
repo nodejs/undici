@@ -199,7 +199,7 @@ https://fetch.spec.whatwg.org/#response-class
 * **redirected** `boolean`
 * **status** `number`
 * **ok** `boolean`
-* **statusText** *not supported*
+* **statusText** `string`
 * **headers** `Headers`
 
 See [Dispatcher.fetch](docs/api/Dispatcher.md#dispatcherfetchoptions-callback) for more details.
