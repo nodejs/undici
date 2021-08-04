@@ -9,6 +9,8 @@ const { Readable } = require('stream')
 const net = require('net')
 const { promisify } = require('util')
 
+const nodeMajor = Number(process.versions.node.split('.')[0])
+
 test('request abort before headers', (t) => {
   t.plan(6)
 
@@ -225,6 +227,31 @@ test('request text', (t) => {
       method: 'GET'
     })
     t.strictSame(JSON.stringify(obj), await body.text())
+  })
+})
+
+test('request blob', { skip: nodeMajor < 16 }, (t) => {
+  t.plan(2)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+
+    const blob = await body.blob()
+    t.strictSame(obj, JSON.parse(await blob.text()))
+    t.equal(blob.type, 'application/json')
   })
 })
 
