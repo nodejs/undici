@@ -9,6 +9,8 @@ const { Readable } = require('stream')
 const net = require('net')
 const { promisify } = require('util')
 
+const nodeMajor = Number(process.versions.node.split('.')[0])
+
 test('request abort before headers', (t) => {
   t.plan(6)
 
@@ -228,7 +230,7 @@ test('request text', (t) => {
   })
 })
 
-test('request blob', (t) => {
+test('request blob', { skip: nodeMajor < 16 }, (t) => {
   t.plan(2)
 
   const obj = { asd: true }
