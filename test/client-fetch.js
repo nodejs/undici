@@ -53,5 +53,21 @@ test('fetch', {
     })
   })
 
+  t.test('should set type of blob object to the value of the `Content-Type` header from response', (t) => {
+    t.plan(1)
+
+    const obj = { asd: true }
+    const server = createServer((req, res) => {
+      res.setHeader('Content-Type', 'application/json')
+      res.end(JSON.stringify(obj))
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const response = await fetch(`http://localhost:${server.address().port}`)
+      t.equal('application/json', (await response.blob()).type)
+    })
+  })
+
   t.end()
 })
