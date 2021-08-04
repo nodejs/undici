@@ -30,7 +30,40 @@ test('request post blob', { skip: !Blob }, (t) => {
         type: 'application/json'
       })
     }, (err, data) => {
-      console.error(err)
+      t.error(err)
+      data.body.resume().on('end', () => {
+        t.pass()
+      })
+    })
+  })
+})
+
+test('request post arrayBuffer', { skip: !Blob }, (t) => {
+  t.plan(3)
+
+  const server = createServer(async (req, res) => {
+    let str = ''
+    for await (const chunk of req) {
+      str += chunk
+    }
+    t.equal(str, 'asd')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const buf = Buffer.from('asd')
+    const dst = new ArrayBuffer(buf.byteLength)
+    buf.copy(new Uint8Array(dst))
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      body: dst
+    }, (err, data) => {
       t.error(err)
       data.body.resume().on('end', () => {
         t.pass()
