@@ -20,7 +20,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
 
@@ -28,17 +28,26 @@ jobs:
       run: |
         npm install
 
-    - name: Unit test (no coverage)
+    - name: Test Tap
       run: |
-        npm test
+        npm run test:tap
 
-    - name: Unit test (coverage)
+    - name: Test Jest
       run: |
-        npm run coverage:ci
+        npm run test:jest
 
-    - name: Test types
+    # How to run only for Node 16+?
+    # - name: Test node-fetch
+    #   run: |
+    #     npm run test:node-fetch
+
+    - name: Test Types
       run: |
         npm run test:typescript
 
-    - name: Coverage report
+    - name: Coverage
+      run: |
+        npm run coverage:ci
+
+    - name: Coverage Report
       uses: codecov/codecov-action@v1

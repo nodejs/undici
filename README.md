@@ -157,7 +157,7 @@ See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnect) for more deta
 
 https://fetch.spec.whatwg.org/
 
-### `undici.fetch([url, options]): Promise`
+### `undici.fetch(input[, init]): Promise`
 
 Implements [fetch](https://fetch.spec.whatwg.org/).
 
@@ -167,8 +167,8 @@ This is [experimental](https://nodejs.org/api/documentation.html#documentation_s
 
 Arguments:
 
-* **url** `string | URL | object`
-* **options** `RequestInit`
+* **input** `string | Request`
+* **init** `RequestInit`
 
 Returns: `Promise<Response>`
 
