@@ -18,28 +18,28 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   expectAssignable<boolean>(pool.destroyed)
 
   // request
-  expectAssignable<Promise<Dispatcher.ResponseData>>(pool.request({ origin: '', path: '', method: '' }))
-  expectAssignable<Promise<Dispatcher.ResponseData>>(pool.request({ origin: new URL('http://localhost'), path: '', method: '' }))
-  expectAssignable<void>(pool.request({ origin: '', path: '', method: '' }, (err, data) => {
+  expectAssignable<Promise<Dispatcher.ResponseData>>(pool.request({ origin: '', path: '', method: 'GET' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(pool.request({ origin: new URL('http://localhost'), path: '', method: 'GET' }))
+  expectAssignable<void>(pool.request({ origin: '', path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
   }))
-  expectAssignable<void>(pool.request({ origin: new URL('http://localhost'), path: '', method: '' }, (err, data) => {
+  expectAssignable<void>(pool.request({ origin: new URL('http://localhost'), path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
   }))
 
   // stream
-  expectAssignable<Promise<Dispatcher.StreamData>>(pool.stream({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(pool.stream({ origin: '', path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
-  expectAssignable<Promise<Dispatcher.StreamData>>(pool.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(pool.stream({ origin: new URL('http://localhost'), path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
   expectAssignable<void>(pool.stream(
-    { origin: '', path: '', method: '' },
+    { origin: '', path: '', method: 'GET' },
     data => {
       expectAssignable<Dispatcher.StreamFactoryData>(data)
       return new Writable()
@@ -50,7 +50,7 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
     }
   ))
   expectAssignable<void>(pool.stream(
-    { origin: new URL('http://localhost'), path: '', method: '' },
+    { origin: new URL('http://localhost'), path: '', method: 'GET' },
     data => {
       expectAssignable<Dispatcher.StreamFactoryData>(data)
       return new Writable()
@@ -62,11 +62,11 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   ))
 
   // pipeline
-  expectAssignable<Duplex>(pool.pipeline({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Duplex>(pool.pipeline({ origin: '', path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))
-  expectAssignable<Duplex>(pool.pipeline({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
+  expectAssignable<Duplex>(pool.pipeline({ origin: new URL('http://localhost'), path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))
@@ -86,8 +86,8 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   }))
 
   // dispatch
-  expectAssignable<void>(pool.dispatch({ origin: '', path: '', method: '' }, {}))
-  expectAssignable<void>(pool.dispatch({ origin: new URL('http://localhost'), path: '', method: '' }, {}))
+  expectAssignable<void>(pool.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<void>(pool.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
 
   // close
   expectAssignable<Promise<void>>(pool.close())

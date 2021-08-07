@@ -16,28 +16,28 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   expectAssignable<boolean>(agent.destroyed)
 
   // request
-  expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: '' }))
-  expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: new URL('http://localhost'), path: '', method: '' }))
-  expectAssignable<void>(agent.request({ origin: '', path: '', method: '' }, (err, data) => {
+  expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: 'GET' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: new URL('http://localhost'), path: '', method: 'GET' }))
+  expectAssignable<void>(agent.request({ origin: '', path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
   }))
-  expectAssignable<void>(agent.request({ origin: new URL('http://localhost'), path: '', method: '' }, (err, data) => {
+  expectAssignable<void>(agent.request({ origin: new URL('http://localhost'), path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
   }))
 
   // stream
-  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: '', path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
-  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: new URL('http://localhost'), path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
   expectAssignable<void>(agent.stream(
-    { origin: '', path: '', method: '' },
+    { origin: '', path: '', method: 'GET' },
     data => {
       expectAssignable<Dispatcher.StreamFactoryData>(data)
       return new Writable()
@@ -48,7 +48,7 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
     }
   ))
   expectAssignable<void>(agent.stream(
-    { origin: new URL('http://localhost'), path: '', method: '' },
+    { origin: new URL('http://localhost'), path: '', method: 'GET' },
     data => {
       expectAssignable<Dispatcher.StreamFactoryData>(data)
       return new Writable()
@@ -60,11 +60,11 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   ))
 
   // pipeline
-  expectAssignable<Duplex>(agent.pipeline({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Duplex>(agent.pipeline({ origin: '', path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))
-  expectAssignable<Duplex>(agent.pipeline({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
+  expectAssignable<Duplex>(agent.pipeline({ origin: new URL('http://localhost'), path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))
@@ -84,8 +84,8 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   }))
 
   // dispatch
-  expectAssignable<void>(agent.dispatch({ origin: '', path: '', method: '' }, {}))
-  expectAssignable<void>(agent.dispatch({ origin: '', path: '', method: '', maxRedirections: 1 }, {}))
+  expectAssignable<void>(agent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<void>(agent.dispatch({ origin: '', path: '', method: 'GET', maxRedirections: 1 }, {}))
 
   // close
   expectAssignable<Promise<void>>(agent.close())

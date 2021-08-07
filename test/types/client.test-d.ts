@@ -19,28 +19,28 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   expectAssignable<boolean>(client.destroyed)
 
   // request
-  expectAssignable<Promise<Dispatcher.ResponseData>>(client.request({ origin: '', path: '', method: '' }))
-  expectAssignable<Promise<Dispatcher.ResponseData>>(client.request({ origin: new URL('http://localhost:3000'), path: '', method: '' }))
-  expectAssignable<void>(client.request({ origin: '', path: '', method: '' }, (err, data) => {
+  expectAssignable<Promise<Dispatcher.ResponseData>>(client.request({ origin: '', path: '', method: 'GET' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(client.request({ origin: new URL('http://localhost:3000'), path: '', method: 'GET' }))
+  expectAssignable<void>(client.request({ origin: '', path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
   }))
-  expectAssignable<void>(client.request({ origin: new URL('http://localhost:3000'), path: '', method: '' }, (err, data) => {
+  expectAssignable<void>(client.request({ origin: new URL('http://localhost:3000'), path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
   }))
 
   // stream
-  expectAssignable<Promise<Dispatcher.StreamData>>(client.stream({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(client.stream({ origin: '', path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
-  expectAssignable<Promise<Dispatcher.StreamData>>(client.stream({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(client.stream({ origin: new URL('http://localhost'), path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
   expectAssignable<void>(client.stream(
-    { origin: '', path: '', method: '' },
+    { origin: '', path: '', method: 'GET' },
     data => {
       expectAssignable<Dispatcher.StreamFactoryData>(data)
       return new Writable()
@@ -51,7 +51,7 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
     }
   ))
   expectAssignable<void>(client.stream(
-    { origin: new URL('http://localhost'), path: '', method: '' },
+    { origin: new URL('http://localhost'), path: '', method: 'GET' },
     data => {
       expectAssignable<Dispatcher.StreamFactoryData>(data)
       return new Writable()
@@ -63,11 +63,11 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   ))
 
   // pipeline
-  expectAssignable<Duplex>(client.pipeline({ origin: '', path: '', method: '' }, data => {
+  expectAssignable<Duplex>(client.pipeline({ origin: '', path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))
-  expectAssignable<Duplex>(client.pipeline({ origin: new URL('http://localhost'), path: '', method: '' }, data => {
+  expectAssignable<Duplex>(client.pipeline({ origin: new URL('http://localhost'), path: '', method: 'GET' }, data => {
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))
@@ -93,11 +93,11 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   }))
 
   // dispatch
-  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '' }, {}))
-  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '', headers: [] }, {}))
-  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '', headers: {} }, {}))
-  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: '', headers: null }, {}))
-  expectAssignable<void>(client.dispatch({ origin: new URL('http://localhost'), path: '', method: '' }, {}))
+  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: 'GET', headers: [] }, {}))
+  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: 'GET', headers: {} }, {}))
+  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: 'GET', headers: null }, {}))
+  expectAssignable<void>(client.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
 
   // close
   expectAssignable<Promise<void>>(client.close())

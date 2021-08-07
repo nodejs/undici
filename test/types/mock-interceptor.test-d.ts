@@ -4,7 +4,7 @@ import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
 
 {
   const mockPool: MockPool = new MockAgent().get('')
-  const mockInterceptor = mockPool.intercept({ path: '', method: '' })
+  const mockInterceptor = mockPool.intercept({ path: '', method: 'GET' })
 
   // reply
   expectAssignable<MockScope>(mockInterceptor.reply(200, ''))
@@ -33,7 +33,7 @@ import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
 
 {
   const mockPool: MockPool = new MockAgent().get('')
-  const mockScope = mockPool.intercept({ path: '', method: '' }).reply(200, '')
+  const mockScope = mockPool.intercept({ path: '', method: 'GET' }).reply(200, '')
 
   // delay
   expectAssignable<MockScope>(mockScope.delay(1))

@@ -4,16 +4,16 @@ import { Dispatcher, request, stream, pipeline, connect, upgrade } from '../..'
 
 // request
 expectAssignable<Promise<Dispatcher.ResponseData>>(request(''))
-expectAssignable<Promise<Dispatcher.ResponseData>>(request('', { method: '' }))
+expectAssignable<Promise<Dispatcher.ResponseData>>(request('', { method: 'GET' }))
 
 // stream
-expectAssignable<Promise<Dispatcher.StreamData>>(stream('', { method: '' }, data => {
+expectAssignable<Promise<Dispatcher.StreamData>>(stream('', { method: 'GET' }, data => {
   expectAssignable<Dispatcher.StreamFactoryData>(data)
   return new Writable()
 }))
 
 // pipeline
-expectAssignable<Duplex>(pipeline('', { method: '' }, data => {
+expectAssignable<Duplex>(pipeline('', { method: 'GET' }, data => {
   expectAssignable<Dispatcher.PipelineHandlerData>(data)
   return new Readable()
 }))

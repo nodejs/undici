@@ -6,8 +6,8 @@ import { MockInterceptor } from '../../types/mock-interceptor'
   const mockClient: MockClient = new MockAgent({ connections: 1 }).get('')
 
   // intercept
-  expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: '' }))
-  expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: '', body: '', headers: { 'User-Agent': '' } }))
+  expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: 'GET' }))
+  expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: 'GET', body: '', headers: { 'User-Agent': '' } }))
   expectAssignable<MockInterceptor>(mockClient.intercept({ path: new RegExp(''), method: new RegExp(''), body: new RegExp(''), headers: { 'User-Agent': new RegExp('') } }))
   expectAssignable<MockInterceptor>(mockClient.intercept({
     path: (path) => {
@@ -31,7 +31,7 @@ import { MockInterceptor } from '../../types/mock-interceptor'
   }))
 
   // dispatch
-  expectAssignable<void>(mockClient.dispatch({ origin: '', path: '', method: '' }, {}))
+  expectAssignable<void>(mockClient.dispatch({ origin: '', path: '', method: 'GET' }, {}))
 
   // close
   expectAssignable<Promise<void>>(mockClient.close())

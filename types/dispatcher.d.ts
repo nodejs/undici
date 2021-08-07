@@ -40,7 +40,7 @@ declare namespace Dispatcher {
   export interface DispatchOptions {
     origin?: string | URL;
     path: string;
-    method: string;
+    method: HttpMethod;
     /** Default: `null` */
     body?: string | Buffer | Uint8Array | Readable | null;
     /** Default: `null` */
@@ -144,6 +144,7 @@ declare namespace Dispatcher {
     onBodySent?(chunkSize: number, totalBytesSent: number): void;
   }
   export type PipelineHandler = (data: PipelineHandlerData) => Readable;
+  export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
 
   /** 
    * @link https://fetch.spec.whatwg.org/#body-mixin
