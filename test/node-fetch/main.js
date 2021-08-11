@@ -766,141 +766,133 @@ describe('node-fetch', () => {
     })
   })
 
-  const testAbortController = (name, buildAbortController, moreTests = null) => {
-    describe(`AbortController (${name})`, () => {
-      let controller
+  describe('AbortController', () => {
+    let controller
 
-      beforeEach(() => {
-        controller = buildAbortController()
-      })
-
-      it('should support request cancellation with signal', () => {
-        const fetches = [
-          fetch(
-            `${base}timeout`,
-            {
-              method: 'POST',
-              signal: controller.signal,
-              headers: {
-                'Content-Type': 'application/json',
-                body: JSON.stringify({ hello: 'world' })
-              }
-            }
-          )
-        ]
-        setTimeout(() => {
-          controller.abort()
-        }, 100)
-
-        return Promise.all(fetches.map(fetched => expect(fetched)
-          .to.eventually.be.rejected
-          .and.be.an.instanceOf(Error)
-          .and.have.property('name', 'AbortError')
-        ))
-      })
-
-      it('should support multiple request cancellation with signal', () => {
-        const fetches = [
-          fetch(`${base}timeout`, { signal: controller.signal }),
-          fetch(
-            `${base}timeout`,
-            {
-              method: 'POST',
-              signal: controller.signal,
-              headers: {
-                'Content-Type': 'application/json',
-                body: JSON.stringify({ hello: 'world' })
-              }
-            }
-          )
-        ]
-        setTimeout(() => {
-          controller.abort()
-        }, 100)
-
-        return Promise.all(fetches.map(fetched => expect(fetched)
-          .to.eventually.be.rejected
-          .and.be.an.instanceOf(Error)
-          .and.have.property('name', 'AbortError')
-        ))
-      })
-
-      it('should reject immediately if signal has already been aborted', () => {
-        const url = `${base}timeout`
-        const options = {
-          signal: controller.signal
-        }
-        controller.abort()
-        const fetched = fetch(url, options)
-        return expect(fetched).to.eventually.be.rejected
-          .and.be.an.instanceOf(Error)
-          .and.have.property('name', 'AbortError')
-      })
-
-      it('should allow redirects to be aborted', () => {
-        const request = new Request(`${base}redirect/slow`, {
-          signal: controller.signal
-        })
-        setTimeout(() => {
-          controller.abort()
-        }, 20)
-        return expect(fetch(request)).to.be.eventually.rejected
-          .and.be.an.instanceOf(Error)
-          .and.have.property('name', 'AbortError')
-      })
-
-      it('should allow redirected response body to be aborted', () => {
-        const request = new Request(`${base}redirect/slow-stream`, {
-          signal: controller.signal
-        })
-        return expect(fetch(request).then(res => {
-          expect(res.headers.get('content-type')).to.equal('text/plain')
-          const result = res.text()
-          controller.abort()
-          return result
-        })).to.be.eventually.rejected
-          .and.be.an.instanceOf(Error)
-          .and.have.property('name', 'AbortError')
-      })
-
-      it('should reject response body with AbortError when aborted before stream has been read completely', () => {
-        return expect(fetch(
-          `${base}slow`,
-          { signal: controller.signal }
-        ))
-          .to.eventually.be.fulfilled
-          .then(res => {
-            const promise = res.text()
-            controller.abort()
-            return expect(promise)
-              .to.eventually.be.rejected
-              .and.be.an.instanceof(Error)
-              .and.have.property('name', 'AbortError')
-          })
-      })
-
-      it('should reject response body methods immediately with AbortError when aborted before stream is disturbed', () => {
-        return expect(fetch(
-          `${base}slow`,
-          { signal: controller.signal }
-        ))
-          .to.eventually.be.fulfilled
-          .then(res => {
-            controller.abort()
-            return expect(res.text())
-              .to.eventually.be.rejected
-              .and.be.an.instanceof(Error)
-              .and.have.property('name', 'AbortError')
-          })
-      })
-
-      if (moreTests) {
-        moreTests()
-      }
+    beforeEach(() => {
+      controller = new AbortController()
     })
-  }
 
-  testAbortController('native', () => new AbortController())
+    it('should support request cancellation with signal', () => {
+      const fetches = [
+        fetch(
+          `${base}timeout`,
+          {
+            method: 'POST',
+            signal: controller.signal,
+            headers: {
+              'Content-Type': 'application/json',
+              body: JSON.stringify({ hello: 'world' })
+            }
+          }
+        )
+      ]
+      setTimeout(() => {
+        controller.abort()
+      }, 100)
+
+      return Promise.all(fetches.map(fetched => expect(fetched)
+        .to.eventually.be.rejected
+        .and.be.an.instanceOf(Error)
+        .and.have.property('name', 'AbortError')
+      ))
+    })
+
+    it('should support multiple request cancellation with signal', () => {
+      const fetches = [
+        fetch(`${base}timeout`, { signal: controller.signal }),
+        fetch(
+          `${base}timeout`,
+          {
+            method: 'POST',
+            signal: controller.signal,
+            headers: {
+              'Content-Type': 'application/json',
+              body: JSON.stringify({ hello: 'world' })
+            }
+          }
+        )
+      ]
+      setTimeout(() => {
+        controller.abort()
+      }, 100)
+
+      return Promise.all(fetches.map(fetched => expect(fetched)
+        .to.eventually.be.rejected
+        .and.be.an.instanceOf(Error)
+        .and.have.property('name', 'AbortError')
+      ))
+    })
+
+    it('should reject immediately if signal has already been aborted', () => {
+      const url = `${base}timeout`
+      const options = {
+        signal: controller.signal
+      }
+      controller.abort()
+      const fetched = fetch(url, options)
+      return expect(fetched).to.eventually.be.rejected
+        .and.be.an.instanceOf(Error)
+        .and.have.property('name', 'AbortError')
+    })
+
+    it('should allow redirects to be aborted', () => {
+      const request = new Request(`${base}redirect/slow`, {
+        signal: controller.signal
+      })
+      setTimeout(() => {
+        controller.abort()
+      }, 20)
+      return expect(fetch(request)).to.be.eventually.rejected
+        .and.be.an.instanceOf(Error)
+        .and.have.property('name', 'AbortError')
+    })
+
+    it('should allow redirected response body to be aborted', () => {
+      const request = new Request(`${base}redirect/slow-stream`, {
+        signal: controller.signal
+      })
+      return expect(fetch(request).then(res => {
+        expect(res.headers.get('content-type')).to.equal('text/plain')
+        const result = res.text()
+        controller.abort()
+        return result
+      })).to.be.eventually.rejected
+        .and.be.an.instanceOf(Error)
+        .and.have.property('name', 'AbortError')
+    })
+
+    it('should reject response body with AbortError when aborted before stream has been read completely', () => {
+      return expect(fetch(
+        `${base}slow`,
+        { signal: controller.signal }
+      ))
+        .to.eventually.be.fulfilled
+        .then(res => {
+          const promise = res.text()
+          controller.abort()
+          return expect(promise)
+            .to.eventually.be.rejected
+            .and.be.an.instanceof(Error)
+            .and.have.property('name', 'AbortError')
+        })
+    })
+
+    it('should reject response body methods immediately with AbortError when aborted before stream is disturbed', () => {
+      return expect(fetch(
+        `${base}slow`,
+        { signal: controller.signal }
+      ))
+        .to.eventually.be.fulfilled
+        .then(res => {
+          controller.abort()
+          return expect(res.text())
+            .to.eventually.be.rejected
+            .and.be.an.instanceof(Error)
+            .and.have.property('name', 'AbortError')
+        })
+    })
+  })
 
   it('should throw a TypeError if a signal is not of type AbortSignal or EventTarget', () => {
     return Promise.all([
