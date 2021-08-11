@@ -1338,7 +1338,7 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should allow cloning a json response and log it as text response', () => {
+  it('should allow cloning a json response and log it as text response', () => {
     const url = `${base}json`
     return fetch(url).then(res => {
       const r1 = res.clone()
@@ -1349,7 +1349,7 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should allow cloning a json response, and then log it as text response', () => {
+  it('should allow cloning a json response, and then log it as text response', () => {
     const url = `${base}json`
     return fetch(url).then(res => {
       const r1 = res.clone()
@@ -1362,7 +1362,7 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should allow cloning a json response, first log as text response, then return json object', () => {
+  it('should allow cloning a json response, first log as text response, then return json object', () => {
     const url = `${base}json`
     return fetch(url).then(res => {
       const r1 = res.clone()
