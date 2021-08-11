@@ -946,15 +946,10 @@ describe('node-fetch', () => {
     ])
   })
 
-  it('should gracefully handle a nullish signal', () => {
-    return Promise.all([
-      fetch(`${base}hello`, { signal: null }).then(res => {
-        return expect(res.ok).to.be.true
-      }),
-      fetch(`${base}hello`, { signal: undefined }).then(res => {
-        return expect(res.ok).to.be.true
-      })
-    ])
+  it('should gracefully handle a null signal', () => {
+    return fetch(`${base}hello`, { signal: null }).then(res => {
+      return expect(res.ok).to.be.true
+    })
   })
 
   it('should allow setting User-Agent', () => {
