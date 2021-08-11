@@ -233,7 +233,7 @@ describe('Headers', () => {
     expect(h3Raw.b).to.include('1')
   })
 
-  xit('should accept headers as an iterable of tuples', () => {
+  it('should accept headers as an iterable of tuples', () => {
     let headers
 
     headers = new Headers([
@@ -264,7 +264,7 @@ describe('Headers', () => {
     expect(() => new Headers([['b', '2', 'huh?']])).to.throw(TypeError)
     expect(() => new Headers(['b2'])).to.throw(TypeError)
     expect(() => new Headers('b2')).to.throw(TypeError)
-    // expect(() => new Headers({ [Symbol.iterator]: 42 })).to.throw(TypeError)
+    expect(() => new Headers({ [Symbol.iterator]: 42 })).to.throw(TypeError)
   })
 
   xit('should use a custom inspect function', () => {

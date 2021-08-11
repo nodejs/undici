@@ -534,7 +534,7 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should handle response with no status text', () => {
+  it('should handle response with no status text', () => {
     const url = `${base}no-status-text`
     return fetch(url).then(res => {
       expect(res.statusText).to.equal('')
@@ -892,36 +892,6 @@ describe('node-fetch', () => {
               .and.be.an.instanceof(Error)
               .and.have.property('name', 'AbortError')
           })
-      })
-
-      xit('should cancel request body of type Stream with AbortError when aborted', () => {
-        const body = toWeb(new stream.Readable({ objectMode: true }))
-        body._read = () => {}
-        const promise = fetch(
-          `${base}slow`,
-          { signal: controller.signal, body, method: 'POST' }
-        )
-
-        const result = Promise.all([
-          new Promise((resolve, reject) => {
-            body.on('error', error => {
-              try {
-                expect(error).to.be.an.instanceof(Error)
-                  .and.have.property('name', 'AbortError')
-                resolve()
-              } catch (error_) {
-                reject(error_)
-              }
-            })
-          }),
-          expect(promise).to.eventually.be.rejected
-            .and.be.an.instanceof(Error)
-            .and.have.property('name', 'AbortError')
-        ])
-
-        controller.abort()
-
-        return result
       })
 
       if (moreTests) {
@@ -1376,7 +1346,7 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should allow cloning a json response and log it as text response', () => {
+  xit('should allow cloning a json response and log it as text response', () => {
     const url = `${base}json`
     return fetch(url).then(res => {
       const r1 = res.clone()
@@ -1387,7 +1357,7 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should allow cloning a json response, and then log it as text response', () => {
+  xit('should allow cloning a json response, and then log it as text response', () => {
     const url = `${base}json`
     return fetch(url).then(res => {
       const r1 = res.clone()
@@ -1400,7 +1370,7 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should allow cloning a json response, first log as text response, then return json object', () => {
+  xit('should allow cloning a json response, first log as text response, then return json object', () => {
     const url = `${base}json`
     return fetch(url).then(res => {
       const r1 = res.clone()
