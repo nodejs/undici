@@ -6,7 +6,7 @@ const { Response } = require('../../lib/api/api-fetch/response.js')
 const TestServer = require('./utils/server.js')
 const toWeb = require('./utils/toWeb.js')
 const { Blob } = require('buffer')
-const { kUrlList } = require('../../lib/api/api-fetch/symbols.js')
+const { kState } = require('../../lib/api/api-fetch/symbols.js')
 
 const { expect } = chai
 
@@ -114,15 +114,15 @@ describe('Response', () => {
   }
 
   xit('should support clone() method', () => {
-    const body = stream.Readable.from('a=1')
+    const body = toWeb(stream.Readable.from('a=1'))
     const res = new Response(body, {
       headers: {
         a: '1'
       },
-      [kUrlList]: base,
       status: 346,
       statusText: 'production'
     })
+    res[kState].urlList = [base]
     const cl = res.clone()
     expect(cl.headers.get('a')).to.equal('1')
     expect(cl.type).to.equal('default')
