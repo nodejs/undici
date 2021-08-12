@@ -159,6 +159,7 @@ https://fetch.spec.whatwg.org/
 
 ### `undici.fetch(input[, init]): Promise`
 
+https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch
 https://fetch.spec.whatwg.org/#fetch-method
 
 Only supported on Node 16+.
