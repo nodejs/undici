@@ -36,10 +36,9 @@ jobs:
       run: |
         npm run test:jest
 
-    # How to run only for Node 16+?
-    # - name: Test node-fetch
-    #   run: |
-    #     npm run test:node-fetch
+    - name: Test node-fetch
+      run: |
+        npm run test:node-fetch
 
     - name: Test Types
       run: |

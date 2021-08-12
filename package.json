@@ -34,7 +34,7 @@
     "lint": "standard | snazzy",
     "lint:fix": "standard --fix | snazzy",
     "test": "tap test/*.js --no-coverage && mocha test/node-fetch && jest test/jest/test",
-    "test:node-fetch": "mocha test/node-fetch",
+    "test:node-fetch": "node scripts/test-node-fetch.js 16 && mocha test/node-fetch || echo Skipping",
     "test:jest": "jest test/jest/test",
     "test:tap": "tap test/*.js --no-coverage ",
     "test:tdd": "tap test/*.js -w --no-coverage-report",
