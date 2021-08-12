@@ -155,9 +155,9 @@ Calls `options.dispatch.connect(options)`.
 
 See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnect) for more details.
 
-https://fetch.spec.whatwg.org/
-
 ### `undici.fetch(input[, init]): Promise`
+
+Implements [fetch](https://fetch.spec.whatwg.org/).
 
 https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch
 https://fetch.spec.whatwg.org/#fetch-method
