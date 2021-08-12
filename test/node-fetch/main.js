@@ -82,12 +82,12 @@ describe('node-fetch', () => {
 
   it('should reject with error if url is protocol relative', () => {
     const url = '//example.com/'
-    return expect(fetch(url)).to.eventually.be.rejectedWith(TypeError, /Invalid URL/)
+    return expect(fetch(url)).to.eventually.be.rejectedWith(TypeError)
   })
 
   it('should reject with error if url is relative path', () => {
     const url = '/some/path'
-    return expect(fetch(url)).to.eventually.be.rejectedWith(TypeError, /Invalid URL/)
+    return expect(fetch(url)).to.eventually.be.rejectedWith(TypeError)
   })
 
   it('should reject with error if protocol is unsupported', () => {
