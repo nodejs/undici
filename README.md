@@ -159,50 +159,13 @@ https://fetch.spec.whatwg.org/
 
 ### `undici.fetch(input[, init]): Promise`
 
-Implements [fetch](https://fetch.spec.whatwg.org/).
+https://fetch.spec.whatwg.org/#fetch-method
 
 Only supported on Node 16+.
 
 This is [experimental](https://nodejs.org/api/documentation.html#documentation_stability_index) and is not yet fully compliant the Fetch Standard. We plan to ship breaking changes to this feature until it is out of experimental.
 
-Arguments:
-
-* **input** `string | Request`
-* **init** `RequestInit`
-
 Returns: `Promise<Response>`
-
-#### Parameter: `RequestInit`
-
-https://fetch.spec.whatwg.org/#request-class
-
-* **method** `string`
-* **headers** `HeadersInit`
-* **body** `BodyInit?`
-* **referrer** *not supported*
-* **referrerPolicy** *not supported*
-* **mode** *not supported*
-* **credentials** *not supported*
-* **cache** *not supported*
-* **redirect** `RequestRedirect`
-* **integrity** *not supported*
-* **keepalive** *not supported*
-* **signal** `AbortSignal?`
-* **window** `null`
-
-#### Parameter: `Response`
-
-https://fetch.spec.whatwg.org/#response-class
-
-* **type** `ResponseType`
-* **url** `string`
-* **redirected** `boolean`
-* **status** `number`
-* **ok** `boolean`
-* **statusText** `string`
-* **headers** `Headers`
-
-See [Dispatcher.fetch](docs/api/Dispatcher.md#dispatcherfetchoptions-callback) for more details.
 
 ### `undici.upgrade([url, options]): Promise`
 
