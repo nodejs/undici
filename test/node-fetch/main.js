@@ -26,7 +26,6 @@ const RequestOrig = require('../../lib/api/api-fetch/request.js').Request
 const ResponseOrig = require('../../lib/api/api-fetch/response.js').Response
 const TestServer = require('./utils/server.js')
 const chaiTimeout = require('./utils/chai-timeout.js')
-const toWeb = require('./utils/toWeb.js')
 const { ReadableStream } = require('stream/web')
 
 function isNodeLowerThan (version) {
@@ -346,7 +345,7 @@ describe('node-fetch', () => {
     const url = `${base}redirect/307`
     const options = {
       method: 'PATCH',
-      body: toWeb(stream.Readable.from('tada'))
+      body: stream.Readable.from('tada')
     }
     return expect(fetch(url, options)).to.eventually.be.rejected
       .and.be.an.instanceOf(TypeError)
@@ -1128,7 +1127,7 @@ describe('node-fetch', () => {
     const url = `${base}inspect`
     const options = {
       method: 'POST',
-      body: toWeb(stream.Readable.from('a=1'))
+      body: stream.Readable.from('a=1')
     }
     return fetch(url, options).then(res => {
       return res.json()

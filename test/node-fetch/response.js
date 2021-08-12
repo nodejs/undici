@@ -4,7 +4,6 @@ const chai = require('chai')
 const stream = require('stream')
 const { Response } = require('../../lib/api/api-fetch/response.js')
 const TestServer = require('./utils/server.js')
-const toWeb = require('./utils/toWeb.js')
 const { Blob } = require('buffer')
 const { kState } = require('../../lib/api/api-fetch/symbols.js')
 
@@ -68,7 +67,7 @@ describe('Response', () => {
   })
 
   it('should support empty options', () => {
-    const res = new Response(toWeb(stream.Readable.from('a=1')))
+    const res = new Response(stream.Readable.from('a=1'))
     return res.text().then(result => {
       expect(result).to.equal('a=1')
     })
@@ -114,7 +113,7 @@ describe('Response', () => {
   }
 
   xit('should support clone() method', () => {
-    const body = toWeb(stream.Readable.from('a=1'))
+    const body = stream.Readable.from('a=1')
     const res = new Response(body, {
       headers: {
         a: '1'
@@ -139,7 +138,7 @@ describe('Response', () => {
   })
 
   it('should support stream as body', () => {
-    const body = toWeb(stream.Readable.from('a=1'))
+    const body = stream.Readable.from('a=1')
     const res = new Response(body)
     return res.text().then(result => {
       expect(result).to.equal('a=1')
