@@ -3,7 +3,7 @@
 const { format } = require('util')
 const chai = require('chai')
 const chaiIterator = require('chai-iterator')
-const { Headers } = require('../../lib/api/api-fetch/headers.js')
+const { Headers } = require('../../lib/fetch/headers.js')
 
 chai.use(chaiIterator)
 

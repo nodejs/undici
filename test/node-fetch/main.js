@@ -21,9 +21,9 @@ const {
   setGlobalDispatcher,
   Agent
 } = require('../../index.js')
-const HeadersOrig = require('../../lib/api/api-fetch/headers.js').Headers
-const RequestOrig = require('../../lib/api/api-fetch/request.js').Request
-const ResponseOrig = require('../../lib/api/api-fetch/response.js').Response
+const HeadersOrig = require('../../lib/fetch/headers.js').Headers
+const RequestOrig = require('../../lib/fetch/request.js').Request
+const ResponseOrig = require('../../lib/fetch/response.js').Response
 const TestServer = require('./utils/server.js')
 const chaiTimeout = require('./utils/chai-timeout.js')
 const { ReadableStream } = require('stream/web')

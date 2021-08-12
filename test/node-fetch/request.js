@@ -5,7 +5,7 @@ const AbortController = require('abort-controller')
 const chai = require('chai')
 const { Blob } = require('buffer')
 
-const Request = require('../../lib/api/api-fetch/request.js').Request
+const Request = require('../../lib/fetch/request.js').Request
 const TestServer = require('./utils/server.js')
 
 const { expect } = chai

@@ -2,10 +2,10 @@
 
 const chai = require('chai')
 const stream = require('stream')
-const { Response } = require('../../lib/api/api-fetch/response.js')
+const { Response } = require('../../lib/fetch/response.js')
 const TestServer = require('./utils/server.js')
 const { Blob } = require('buffer')
-const { kState } = require('../../lib/api/api-fetch/symbols.js')
+const { kState } = require('../../lib/fetch/symbols.js')
 
 const { expect } = chai
 
