@@ -33,7 +33,10 @@
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
     "lint:fix": "standard --fix | snazzy",
-    "test": "tap test/*.js --no-coverage && jest test/jest/test",
+    "test": "tap test/*.js --no-coverage && mocha test/node-fetch && jest test/jest/test",
+    "test:node-fetch": "node scripts/test-node-fetch.js 16 && mocha test/node-fetch || echo Skipping",
+    "test:jest": "jest test/jest/test",
+    "test:tap": "tap test/*.js --no-coverage ",
     "test:tdd": "tap test/*.js -w --no-coverage-report",
     "test:typescript": "tsd",
     "coverage": "standard | snazzy && tap test/*.js",
@@ -50,13 +53,21 @@
     "@sinonjs/fake-timers": "^7.0.5",
     "@types/node": "^15.0.2",
     "abort-controller": "^3.0.0",
+    "busboy": "^0.3.1",
+    "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
+    "chai-iterator": "^3.0.2",
+    "chai-string": "^1.5.0",
     "concurrently": "^6.1.0",
     "cronometro": "^0.8.0",
+    "delay": "^5.0.0",
     "docsify-cli": "^4.4.2",
     "https-pem": "^2.0.0",
     "husky": "^6.0.0",
     "jest": "^27.0.5",
     "jsfuzz": "^1.0.15",
+    "mocha": "^9.0.3",
+    "p-timeout": "^3.2.0",
     "pre-commit": "^1.2.2",
     "proxy": "^1.0.2",
     "proxyquire": "^2.1.3",
@@ -72,6 +83,9 @@
     "node": ">=12.18"
   },
   "standard": {
+    "env": [
+      "mocha"
+    ],
     "ignore": [
       "lib/llhttp/constants.js",
       "lib/llhttp/utils.js"
