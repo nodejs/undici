@@ -275,7 +275,7 @@ test('request arrayBuffer', (t) => {
   })
 })
 
-test('request body', { skip: nodeMajor < 16 },(t) => {
+test('request body', { skip: nodeMajor < 16 }, (t) => {
   t.plan(1)
 
   const obj = { asd: true }
