@@ -275,3 +275,29 @@ test('request arrayBuffer', (t) => {
     t.strictSame(Buffer.from(JSON.stringify(obj)), Buffer.from(await body.arrayBuffer()))
   })
 })
+
+test('request body', (t) => {
+  t.plan(1)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+
+    let x = ''
+    for await (const chunk of body.body) {
+      x += chunk
+    }
+    t.strictSame(JSON.stringify(obj), x)
+  })
+})
