@@ -604,7 +604,7 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should decompress gzip response', () => {
+  it('should decompress gzip response', () => {
     const url = `${base}gzip`
     return fetch(url).then(res => {
       expect(res.headers.get('content-type')).to.equal('text/plain')
@@ -637,7 +637,7 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should decompress deflate response', () => {
+  it('should decompress deflate response', () => {
     const url = `${base}deflate`
     return fetch(url).then(res => {
       expect(res.headers.get('content-type')).to.equal('text/plain')
@@ -659,7 +659,7 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should decompress brotli response', function () {
+  it('should decompress brotli response', function () {
     if (typeof zlib.createBrotliDecompress !== 'function') {
       this.skip()
     }
@@ -674,7 +674,7 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should handle no content response with brotli encoding', function () {
+  it('should handle no content response with brotli encoding', function () {
     if (typeof zlib.createBrotliDecompress !== 'function') {
       this.skip()
     }
@@ -692,7 +692,7 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should skip decompression if unsupported', () => {
+  it('should skip decompression if unsupported', () => {
     const url = `${base}sdch`
     return fetch(url).then(res => {
       expect(res.headers.get('content-type')).to.equal('text/plain')
@@ -703,13 +703,12 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should reject if response compression is invalid', () => {
+  it('should reject if response compression is invalid', () => {
     const url = `${base}invalid-content-encoding`
     return fetch(url).then(res => {
       expect(res.headers.get('content-type')).to.equal('text/plain')
       return expect(res.text()).to.eventually.be.rejected
         .and.be.an.instanceOf(TypeError)
-        .and.have.property('code', 'Z_DATA_ERROR')
     })
   })
 
