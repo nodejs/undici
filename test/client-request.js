@@ -8,6 +8,7 @@ const { kConnect } = require('../lib/core/symbols')
 const { Readable } = require('stream')
 const net = require('net')
 const { promisify } = require('util')
+const nodeMajor = Number(process.versions.node.split('.')[0])
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
@@ -276,7 +277,7 @@ test('request arrayBuffer', (t) => {
   })
 })
 
-test('request body', (t) => {
+test('request body', { skip: nodeMajor < 16 },(t) => {
   t.plan(1)
 
   const obj = { asd: true }
