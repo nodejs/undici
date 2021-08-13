@@ -10,8 +10,6 @@ const net = require('net')
 const { promisify } = require('util')
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
-const nodeMajor = Number(process.versions.node.split('.')[0])
-
 test('request abort before headers', (t) => {
   t.plan(6)
 
