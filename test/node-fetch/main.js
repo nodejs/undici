@@ -708,7 +708,6 @@ describe('node-fetch', () => {
     return fetch(url).then(res => {
       expect(res.headers.get('content-type')).to.equal('text/plain')
       return expect(res.text()).to.eventually.be.rejected
-        .and.be.an.instanceOf(TypeError)
     })
   })
 
