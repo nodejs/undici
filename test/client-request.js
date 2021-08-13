@@ -296,7 +296,7 @@ test('request body', (t) => {
 
     let x = ''
     for await (const chunk of body.body) {
-      x += chunk
+      x += Buffer.from(chunk)
     }
     t.strictSame(JSON.stringify(obj), x)
   })
