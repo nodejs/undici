@@ -8,7 +8,6 @@ const { kConnect } = require('../lib/core/symbols')
 const { Readable } = require('stream')
 const net = require('net')
 const { promisify } = require('util')
-
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
 test('request abort before headers', (t) => {
@@ -273,5 +272,31 @@ test('request arrayBuffer', (t) => {
       method: 'GET'
     })
     t.strictSame(Buffer.from(JSON.stringify(obj)), Buffer.from(await body.arrayBuffer()))
+  })
+})
+
+test('request body', { skip: nodeMajor < 16 }, (t) => {
+  t.plan(1)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+
+    let x = ''
+    for await (const chunk of body.body) {
+      x += Buffer.from(chunk)
+    }
+    t.strictSame(JSON.stringify(obj), x)
   })
 })

@@ -15,6 +15,7 @@ const MockPool = require('./lib/mock/mock-pool')
 const mockErrors = require('./lib/mock/mock-errors')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
+const nodeMinor = Number(process.versions.node.split('.')[1])
 
 Object.assign(Dispatcher.prototype, api)
 
@@ -86,7 +87,7 @@ function makeDispatcher (fn) {
 module.exports.setGlobalDispatcher = setGlobalDispatcher
 module.exports.getGlobalDispatcher = getGlobalDispatcher
 
-if (nodeMajor >= 16) {
+if (nodeMajor > 16 || (nodeMajor === 16 && nodeMinor >= 5)) {
   const fetchImpl = require('./lib/fetch')
   module.exports.fetch = async function fetch (resource, init) {
     const dispatcher = getGlobalDispatcher()
