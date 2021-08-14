@@ -692,6 +692,28 @@ describe('node-fetch', () => {
     })
   })
 
+  it('should skip decompression if unsupported codings', () => {
+    const url = `${base}multiunsupported`
+    return fetch(url).then(res => {
+      expect(res.headers.get('content-type')).to.equal('text/plain')
+      return res.text().then(result => {
+        expect(result).to.be.a('string')
+        expect(result).to.equal('multiunsupported')
+      })
+    })
+  })
+
+  it('should decompress multiple coding', () => {
+    const url = `${base}multisupported`
+    return fetch(url).then(res => {
+      expect(res.headers.get('content-type')).to.equal('text/plain')
+      return res.text().then(result => {
+        expect(result).to.be.a('string')
+        expect(result).to.equal('hello world')
+      })
+    })
+  })
+
   it('should reject if response compression is invalid', () => {
     const url = `${base}invalid-content-encoding`
     return fetch(url).then(res => {

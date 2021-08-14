@@ -162,6 +162,36 @@ module.exports = class TestServer {
       }
     }
 
+    if (p === '/multiunsupported') {
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'text/plain')
+      if (typeof zlib.createBrotliDecompress === 'function') {
+        res.setHeader('Content-Encoding', 'br,asd,br')
+        res.end('multiunsupported')
+      }
+    }
+
+    if (p === '/multisupported') {
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'text/plain')
+      if (typeof zlib.createBrotliDecompress === 'function') {
+        res.setHeader('Content-Encoding', 'br,br')
+        zlib.brotliCompress('hello world', (err, buffer) => {
+          if (err) {
+            throw err
+          }
+
+          zlib.brotliCompress(buffer, (err, buffer) => {
+            if (err) {
+              throw err
+            }
+
+            res.end(buffer)
+          })
+        })
+      }
+    }
+
     if (p === '/deflate-raw') {
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/plain')
