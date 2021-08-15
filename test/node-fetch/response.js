@@ -112,7 +112,7 @@ describe('Response', () => {
     })
   }
 
-  xit('should support clone() method', () => {
+  it('should support clone() method', () => {
     const body = stream.Readable.from('a=1')
     const res = new Response(body, {
       headers: {
