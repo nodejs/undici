@@ -15,6 +15,7 @@ const { Blob } = require('buffer')
 
 const {
   fetch,
+  FormData,
   Headers,
   Request,
   Response,
@@ -1131,6 +1132,26 @@ describe('node-fetch', () => {
       expect(res.headers['content-type']).to.be.undefined
       expect(res.headers['content-length']).to.be.undefined
     })
+  })
+
+  it('should allow POST request with form-data as body', () => {
+    const form = new FormData()
+    form.append('a', '1')
+    form.append('b', '2')
+
+    const url = `${base}multipart`
+    const options = {
+      method: 'POST',
+      body: form
+    }
+    return fetch(url, options)
+      .then((res) => {
+        return res.formData()
+      })
+      .then((formData) => {
+        expect(formData.get('a')).to.equal('1')
+        expect(formData.get('b')).to.equal('2')
+      })
   })
 
   it('should allow POST request with object body', () => {

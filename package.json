@@ -53,7 +53,6 @@
     "@sinonjs/fake-timers": "^7.0.5",
     "@types/node": "^15.0.2",
     "abort-controller": "^3.0.0",
-    "busboy": "^0.3.1",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "chai-iterator": "^3.0.2",
@@ -99,5 +98,8 @@
     "compilerOptions": {
       "esModuleInterop": true
     }
+  },
+  "dependencies": {
+    "dicer": "^0.3.0"
   }
 }
