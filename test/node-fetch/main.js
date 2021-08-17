@@ -15,9 +15,9 @@ const { Blob } = require('buffer')
 
 const {
   fetch,
-  FormData,
   Headers,
   Request,
+  FormData,
   Response,
   setGlobalDispatcher,
   Agent
@@ -1134,26 +1134,6 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should allow POST request with form-data as body', () => {
-    const form = new FormData()
-    form.append('a', '1')
-    form.append('b', '2')
-
-    const url = `${base}multipart`
-    const options = {
-      method: 'POST',
-      body: form
-    }
-    return fetch(url, options)
-      .then((res) => {
-        return res.formData()
-      })
-      .then((formData) => {
-        expect(formData.get('a')).to.equal('1')
-        expect(formData.get('b')).to.equal('2')
-      })
-  })
-
   it('should allow POST request with object body', () => {
     const url = `${base}inspect`
     // Note that fetch simply calls tostring on an object
@@ -1168,6 +1148,24 @@ describe('node-fetch', () => {
       expect(res.body).to.equal('[object Object]')
       expect(res.headers['content-type']).to.equal('text/plain;charset=UTF-8')
       expect(res.headers['content-length']).to.equal('15')
+    })
+  })
+
+  it('should allow POST request with form-data as body', () => {
+    const form = new FormData()
+    form.append('a', '1')
+
+    const url = `${base}multipart`
+    const options = {
+      method: 'POST',
+      body: form
+    }
+    return fetch(url, options).then(res => {
+      return res.json()
+    }).then(res => {
+      expect(res.method).to.equal('POST')
+      expect(res.headers['content-type']).to.startWith('multipart/form-data; boundary=')
+      expect(res.body).to.equal('a=1')
     })
   })
 
