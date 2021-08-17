@@ -91,7 +91,7 @@ This section documents our most commonly used API methods. Additional APIs are d
 
 Arguments:
 
-* **url** `string | URL | object`
+* **url** `string | URL | UrlObject`
 * **options** [`RequestOptions`](./docs/api/Dispatcher.md#parameter-requestoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
@@ -107,7 +107,7 @@ See [Dispatcher.request](./docs/api/Dispatcher.md#dispatcherrequestoptions-callb
 
 Arguments:
 
-* **url** `string | URL | object`
+* **url** `string | URL | UrlObject`
 * **options** [`StreamOptions`](./docs/api/Dispatcher.md#parameter-streamoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
@@ -124,7 +124,7 @@ See [Dispatcher.stream](docs/api/Dispatcher.md#dispatcherstream) for more detail
 
 Arguments:
 
-* **url** `string | URL | object`
+* **url** `string | URL | UrlObject`
 * **options** [`PipelineOptions`](docs/api/Dispatcher.md#parameter-pipelineoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
@@ -143,7 +143,7 @@ Starts two-way communications with the requested resource using [HTTP CONNECT](h
 
 Arguments:
 
-* **url** `string | URL | object`
+* **url** `string | URL | UrlObject`
 * **options** [`ConnectOptions`](docs/api/Dispatcher.md#parameter-connectoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
   * **maxRedirections** `Integer` - Default: `0`
@@ -172,7 +172,7 @@ Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](h
 
 Arguments:
 
-* **url** `string | URL | object`
+* **url** `string | URL | UrlObject`
 * **options** [`UpgradeOptions`](docs/api/Dispatcher.md#parameter-upgradeoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
   * **maxRedirections** `Integer` - Default: `0`
@@ -195,6 +195,16 @@ Sets the global dispatcher used by Common API Methods.
 Gets the global dispatcher used by Common API Methods.
 
 Returns: `Dispatcher`
+
+### `UrlObject`
+
+* **port** `string | number` (optional)
+* **path** `string` (optional)
+* **pathname** `string` (optional)
+* **hostname** `string` (optional)
+* **origin** `string` (optional)
+* **protocol** `string` (optional)
+* **search** `string` (optional)
 
 ## Specification Compliance
 
