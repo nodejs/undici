@@ -98,8 +98,5 @@
     "compilerOptions": {
       "esModuleInterop": true
     }
-  },
-  "dependencies": {
-    "dicer": "^0.3.0"
   }
 }
