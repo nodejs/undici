@@ -300,3 +300,73 @@ test('request body', { skip: nodeMajor < 16 }, (t) => {
     t.strictSame(JSON.stringify(obj), x)
   })
 })
+
+test('request post body no missing data', { skip: nodeMajor < 16 }, (t) => {
+  t.plan(2)
+
+  const server = createServer(async (req, res) => {
+    let ret = ''
+    for await (const chunk of req) {
+      ret += chunk
+    }
+    t.equal(ret, 'asd')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET',
+      body: new Readable({
+        read () {
+          this.push('asd')
+          this.push(null)
+        }
+      }),
+      maxRedirections: 2
+    })
+    await body.text()
+    t.pass()
+  })
+})
+
+test('request post body no extra data handler', { skip: nodeMajor < 16 }, (t) => {
+  t.plan(3)
+
+  const server = createServer(async (req, res) => {
+    let ret = ''
+    for await (const chunk of req) {
+      ret += chunk
+    }
+    t.equal(ret, 'asd')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const reqBody = new Readable({
+      read () {
+        this.push('asd')
+        this.push(null)
+      }
+    })
+    process.nextTick(() => {
+      t.equal(reqBody.listenerCount('data'), 0)
+    })
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET',
+      body: reqBody,
+      maxRedirections: 0
+    })
+    await body.text()
+    t.pass()
+  })
+})
