@@ -17,6 +17,7 @@ const {
   fetch,
   Headers,
   Request,
+  FormData,
   Response,
   setGlobalDispatcher,
   Agent
@@ -1147,6 +1148,24 @@ describe('node-fetch', () => {
       expect(res.body).to.equal('[object Object]')
       expect(res.headers['content-type']).to.equal('text/plain;charset=UTF-8')
       expect(res.headers['content-length']).to.equal('15')
+    })
+  })
+
+  it('should allow POST request with form-data as body', () => {
+    const form = new FormData()
+    form.append('a', '1')
+
+    const url = `${base}multipart`
+    const options = {
+      method: 'POST',
+      body: form
+    }
+    return fetch(url, options).then(res => {
+      return res.json()
+    }).then(res => {
+      expect(res.method).to.equal('POST')
+      expect(res.headers['content-type']).to.startWith('multipart/form-data; boundary=')
+      expect(res.body).to.equal('a=1')
     })
   })
 

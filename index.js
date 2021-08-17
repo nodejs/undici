@@ -96,6 +96,8 @@ if (nodeMajor > 16 || (nodeMajor === 16 && nodeMinor >= 5)) {
   module.exports.Headers = require('./lib/fetch/headers').Headers
   module.exports.Response = require('./lib/fetch/response').Response
   module.exports.Request = require('./lib/fetch/request').Request
+  module.exports.FormData = require('./lib/fetch/formdata').FormData
+  module.exports.File = require('./lib/fetch/file').File
 }
 
 module.exports.request = makeDispatcher(api.request)
