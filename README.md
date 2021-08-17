@@ -198,13 +198,13 @@ Returns: `Dispatcher`
 
 ### `UrlObject`
 
-* **port** `string | number | null` (optional)
-* **path** `string | null` (optional)
-* **pathname** `string | null` (optional)
-* **hostname** `string | null` (optional)
-* **origin** `string | null` (optional)
-* **protocol** `string | null` (optional)
-* **search** `string | null` (optional)
+* **port** `string | number` (optional)
+* **path** `string` (optional)
+* **pathname** `string` (optional)
+* **hostname** `string` (optional)
+* **origin** `string` (optional)
+* **protocol** `string` (optional)
+* **search** `string` (optional)
 
 ## Specification Compliance
 
