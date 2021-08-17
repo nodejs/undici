@@ -193,7 +193,7 @@ describe('Request', () => {
     })
   })
 
-  xit('should support clone() method', () => {
+  it('should support clone() method', () => {
     const url = base
     const body = stream.Readable.from('a=1')
     const agent = new http.Agent()
