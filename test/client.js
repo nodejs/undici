@@ -413,6 +413,42 @@ test('basic POST with stream', (t) => {
   })
 })
 
+test('basic POST with paused stream', (t) => {
+  t.plan(7)
+
+  const expected = readFileSync(__filename, 'utf8')
+
+  const server = createServer(postServer(t, expected))
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+
+    const stream = createReadStream(__filename)
+    stream.pause()
+    client.request({
+      path: '/',
+      method: 'POST',
+      headers: {
+        'content-length': Buffer.byteLength(expected)
+      },
+      headersTimeout: 0,
+      body: stream
+    }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.equal(statusCode, 200)
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
 test('basic POST with custom stream', (t) => {
   t.plan(4)
 
