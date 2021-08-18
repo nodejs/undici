@@ -43,3 +43,6 @@ jobs:
     - name: Test Types
       run: |
         npm run test:typescript
+
+    - name: Coverage Report
+      uses: codecov/codecov-action@v1
