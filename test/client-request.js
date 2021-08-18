@@ -101,7 +101,7 @@ test('trailers', (t) => {
   })
 })
 
-test('destroy socket abruptly', async (t) => {
+test('destroy socket abruptly', { skip: true }, async (t) => {
   t.plan(2)
 
   const server = net.createServer((socket) => {
@@ -142,7 +142,7 @@ test('destroy socket abruptly', async (t) => {
   t.equal(actual, 'the body')
 })
 
-test('destroy socket abruptly with keep-alive', async (t) => {
+test('destroy socket abruptly with keep-alive', { skip: true }, async (t) => {
   t.plan(2)
 
   const server = net.createServer((socket) => {
