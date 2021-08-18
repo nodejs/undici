@@ -560,6 +560,7 @@ tap.test('request guard', (t) => {
 
   for (const name of forbiddenHeaderNames) {
     headers.set(name, '1')
+    headers.append(name, '1')
     t.equals(headers.has(name), false)
   }
 
@@ -579,6 +580,7 @@ tap.test('response guard', (t) => {
 
   for (const name of forbiddenResponseHeaderNames) {
     headers.set(name, '1')
+    headers.append(name, '1')
     t.equals(headers.has(name), false)
   }
 
