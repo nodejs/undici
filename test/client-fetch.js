@@ -1,32 +1,28 @@
+/* globals AbortController */
+
 'use strict'
 
 const { test } = require('tap')
-const { createServer } = require('https')
+const { createServer } = require('http')
 const nodeMajor = Number(process.versions.node.split('.')[0])
-const pem = require('https-pem')
+const { ReadableStream } = require('stream/web')
 
 test('fetch', {
   skip: nodeMajor < 16
 }, t => {
-  const { fetch, setGlobalDispatcher, Agent } = require('..')
-
-  setGlobalDispatcher(new Agent({
-    connect: {
-      rejectUnauthorized: false
-    }
-  }))
+  const { fetch } = require('..')
 
   t.test('request json', (t) => {
     t.plan(1)
 
     const obj = { asd: true }
-    const server = createServer(pem, (req, res) => {
+    const server = createServer((req, res) => {
       res.end(JSON.stringify(obj))
     })
     t.teardown(server.close.bind(server))
 
     server.listen(0, async () => {
-      const body = await fetch(`https://localhost:${server.address().port}`)
+      const body = await fetch(`http://localhost:${server.address().port}`)
       t.strictSame(obj, await body.json())
     })
   })
@@ -35,13 +31,13 @@ test('fetch', {
     t.plan(1)
 
     const obj = { asd: true }
-    const server = createServer(pem, (req, res) => {
+    const server = createServer((req, res) => {
       res.end(JSON.stringify(obj))
     })
     t.teardown(server.close.bind(server))
 
     server.listen(0, async () => {
-      const body = await fetch(`https://localhost:${server.address().port}`)
+      const body = await fetch(`http://localhost:${server.address().port}`)
       t.strictSame(JSON.stringify(obj), await body.text())
     })
   })
@@ -50,13 +46,13 @@ test('fetch', {
     t.plan(1)
 
     const obj = { asd: true }
-    const server = createServer(pem, (req, res) => {
+    const server = createServer((req, res) => {
       res.end(JSON.stringify(obj))
     })
     t.teardown(server.close.bind(server))
 
     server.listen(0, async () => {
-      const body = await fetch(`https://localhost:${server.address().port}`)
+      const body = await fetch(`http://localhost:${server.address().port}`)
       t.strictSame(Buffer.from(JSON.stringify(obj)), Buffer.from(await body.arrayBuffer()))
     })
   })
@@ -65,15 +61,191 @@ test('fetch', {
     t.plan(1)
 
     const obj = { asd: true }
-    const server = createServer(pem, (req, res) => {
+    const server = createServer((req, res) => {
       res.setHeader('Content-Type', 'application/json')
       res.end(JSON.stringify(obj))
     })
     t.teardown(server.close.bind(server))
 
     server.listen(0, async () => {
-      const response = await fetch(`https://localhost:${server.address().port}`)
+      const response = await fetch(`http://localhost:${server.address().port}`)
       t.equal('application/json', (await response.blob()).type)
+    })
+  })
+
+  t.test('pre aborted with readable request body', (t) => {
+    t.plan(2)
+
+    const server = createServer((req, res) => {
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const ac = new AbortController()
+      ac.abort()
+      await fetch(`http://localhost:${server.address().port}`, {
+        signal: ac.signal,
+        method: 'POST',
+        body: new ReadableStream({
+          async cancel (reason) {
+            t.equal(reason.name, 'AbortError')
+          }
+        })
+      }).catch(err => {
+        t.equal(err.name, 'AbortError')
+      })
+    })
+  })
+
+  t.test('pre aborted with closed readable request body', (t) => {
+    t.plan(2)
+
+    const server = createServer((req, res) => {
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const ac = new AbortController()
+      ac.abort()
+      const body = new ReadableStream({
+        async start (c) {
+          t.pass()
+          c.close()
+        },
+        async cancel (reason) {
+          t.fail()
+        }
+      })
+      queueMicrotask(() => {
+        fetch(`http://localhost:${server.address().port}`, {
+          signal: ac.signal,
+          method: 'POST',
+          body
+        }).catch(err => {
+          t.equal(err.name, 'AbortError')
+        })
+      })
+    })
+  })
+
+  t.test('unsupported formData 1', (t) => {
+    t.plan(1)
+
+    const server = createServer((req, res) => {
+      res.setHeader('content-type', 'asdasdsad')
+      res.end()
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      fetch(`http://localhost:${server.address().port}`)
+        .then(res => res.formData())
+        .catch(err => {
+          t.equal(err.name, 'TypeError')
+        })
+    })
+  })
+
+  t.test('unsupported formData 2', (t) => {
+    t.plan(1)
+
+    const server = createServer((req, res) => {
+      res.setHeader('content-type', 'multipart/form-data')
+      res.end()
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      fetch(`http://localhost:${server.address().port}`)
+        .then(res => res.formData())
+        .catch(err => {
+          t.equal(err.name, 'NotSupportedError')
+        })
+    })
+  })
+
+  t.test('urlencoded formData', (t) => {
+    t.plan(2)
+
+    const server = createServer((req, res) => {
+      res.setHeader('content-type', 'application/x-www-form-urlencoded')
+      res.end('field1=value1&field2=value2')
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      fetch(`http://localhost:${server.address().port}`)
+        .then(res => res.formData())
+        .then(formData => {
+          t.equal(formData.get('field1'), 'value1')
+          t.equal(formData.get('field2'), 'value2')
+        })
+    })
+  })
+
+  t.test('locked blob body', (t) => {
+    t.plan(1)
+
+    const server = createServer((req, res) => {
+      res.end()
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const res = await fetch(`http://localhost:${server.address().port}`)
+      const reader = res.body.getReader()
+      res.blob().catch(err => {
+        t.equal(err.message, 'locked')
+        reader.cancel()
+      })
+    })
+  })
+
+  t.test('disturbed blob body', (t) => {
+    t.plan(2)
+
+    const server = createServer((req, res) => {
+      res.end()
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const res = await fetch(`http://localhost:${server.address().port}`)
+      res.blob().then(() => {
+        t.pass(2)
+      })
+      res.blob().catch(err => {
+        t.equal(err.message, 'disturbed')
+      })
+    })
+  })
+
+  t.test('redirect with body', (t) => {
+    t.plan(3)
+
+    let count = 0
+    const server = createServer(async (req, res) => {
+      let body = ''
+      for await (const chunk of req) {
+        body += chunk
+      }
+      t.equal(body, 'asd')
+      if (count++ === 0) {
+        res.setHeader('location', 'asd')
+        res.statusCode = 302
+        res.end()
+      } else {
+        res.end(String(count))
+      }
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const res = await fetch(`http://localhost:${server.address().port}`, {
+        method: 'PUT',
+        body: 'asd'
+      })
+      t.equal(await res.text(), '2')
     })
   })
 
