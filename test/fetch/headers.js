@@ -3,8 +3,6 @@
 const tap = require('tap')
 const {
   Headers,
-  normalizeAndValidateHeaderName,
-  normalizeAndValidateHeaderValue,
   binarySearch
 } = require('../../lib/fetch/headers')
 const { kHeadersList } = require('../../lib/core/symbols')
@@ -396,20 +394,6 @@ tap.test('Headers as Iterable', t => {
 
     t.same(headers[kHeadersList], expected)
   })
-})
-
-tap.test('Headers normalize and validate', t => {
-  t.plan(2)
-  const name = 'UNDICI'
-  const value = '    fetch	' // eslint-disable-line no-tabs
-  t.equal(
-    normalizeAndValidateHeaderName(name),
-    'undici'
-  )
-  t.strictSame(
-    normalizeAndValidateHeaderValue(name, value),
-    'fetch'
-  )
 })
 
 tap.test('binary search', t => {
