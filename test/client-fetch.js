@@ -6,11 +6,12 @@ const { test } = require('tap')
 const { createServer } = require('http')
 const nodeMajor = Number(process.versions.node.split('.')[0])
 const { ReadableStream } = require('stream/web')
+const { Blob } = require('buffer')
 
 test('fetch', {
   skip: nodeMajor < 16
 }, t => {
-  const { fetch } = require('..')
+  const { fetch, Response, Request, FormData, File } = require('..')
 
   t.test('request json', (t) => {
     t.plan(1)
@@ -246,6 +247,80 @@ test('fetch', {
         body: 'asd'
       })
       t.equal(await res.text(), '2')
+    })
+  })
+
+  t.test('fail to extract locked body', (t) => {
+    t.plan(1)
+
+    const stream = new ReadableStream({})
+    const reader = stream.getReader()
+    try {
+      // eslint-disable-next-line
+      new Response(stream)
+    } catch (err) {
+      t.equal(err.name, 'TypeError')
+    }
+    reader.cancel()
+  })
+
+  t.test('fail to extract locked body', (t) => {
+    t.plan(1)
+
+    const stream = new ReadableStream({})
+    const reader = stream.getReader()
+    try {
+      // eslint-disable-next-line
+      new Request('http://asd', {
+        method: 'PUT',
+        body: stream,
+        keepalive: true
+      })
+    } catch (err) {
+      t.equal(err.message, 'keepalive')
+    }
+    reader.cancel()
+  })
+
+  t.test('post FormData with Blob', (t) => {
+    t.plan(1)
+
+    const body = new FormData()
+    body.append('field1', new Blob(['asd1']))
+
+    const server = createServer((req, res) => {
+      req.pipe(res)
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const res = await fetch(`http://localhost:${server.address().port}`, {
+        method: 'PUT',
+        body
+      })
+      t.ok(/asd1/.test(await res.text()))
+    })
+  })
+
+  t.test('post FormData with File', (t) => {
+    t.plan(2)
+
+    const body = new FormData()
+    body.append('field1', new File(['asd1'], 'filename123'))
+
+    const server = createServer((req, res) => {
+      req.pipe(res)
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const res = await fetch(`http://localhost:${server.address().port}`, {
+        method: 'PUT',
+        body
+      })
+      const result = await res.text()
+      t.ok(/asd1/.test(result))
+      t.ok(/filename123/.test(result))
     })
   })
 
