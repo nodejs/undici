@@ -28,23 +28,7 @@ jobs:
       run: |
         npm install
 
-    - name: Test Tap
-      run: |
-        npm run test:tap
-
-    - name: Test Jest
-      run: |
-        npm run test:jest
-
-    - name: Test node-fetch
-      run: |
-        npm run test:node-fetch
-
-    - name: Test Types
-      run: |
-        npm run test:typescript
-
-    - name: Coverage
+    - name: Test
       run: |
         npm run coverage:ci
 
