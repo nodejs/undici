@@ -370,3 +370,27 @@ test('request post body no extra data handler', { skip: nodeMajor < 16 }, (t) =>
     t.pass()
   })
 })
+
+test('request with onInfo callback', (t) => {
+  t.plan(2)
+  const infos = []
+  const server = createServer((req, res) => {
+    res.writeContinue()
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify({ foo: 'bar' }))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    await client.request({
+      path: '/',
+      method: 'GET',
+      onInfo: (x) => { infos.push(x) }
+    })
+    t.equal(infos.length(), 1)
+    t.pass()
+  })
+})
