@@ -92,9 +92,6 @@
       "lib/llhttp/utils.js"
     ]
   },
-  "tap": {
-    "check-coverage": false
-  },
   "tsd": {
     "directory": "test/types",
     "compilerOptions": {
