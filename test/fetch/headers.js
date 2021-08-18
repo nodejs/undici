@@ -500,19 +500,26 @@ tap.test('arg validation', (t) => {
   }, TypeError)
 
   t.throws(() => {
-    Reflect.apply(Headers.keys, null)
+    Reflect.apply(Headers.prototype.keys, null)
   }, TypeError)
 
   t.throws(() => {
-    Reflect.apply(Headers.values, null)
+    Reflect.apply(Headers.prototype.values, null)
   }, TypeError)
 
   t.throws(() => {
-    Reflect.apply(Headers.entries, null)
+    Reflect.apply(Headers.prototype.entries, null)
   }, TypeError)
 
   t.throws(() => {
-    Reflect.apply(Headers[Symbol.iterator], null)
+    console.error("ASD")
+    try {
+
+      Reflect.apply(Headers.prototype.entries, null, [])
+      console.error("ASD2")
+    }catch(err) {
+      console.error(err)
+    }
   }, TypeError)
 
   t.end()
