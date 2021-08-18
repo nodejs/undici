@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 const [major, minor, patch] = process.versions.node.split('.').map(v => Number(v))
 const required = process.argv.pop().split('.').map(v => Number(v))
 
