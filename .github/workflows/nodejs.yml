@@ -44,5 +44,9 @@ jobs:
       run: |
         npm run test:typescript
 
+    - name: Coverage
+      run: |
+        npm run coverage:ci
+
     - name: Coverage Report
       uses: codecov/codecov-action@v1
