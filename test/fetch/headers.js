@@ -511,17 +511,6 @@ tap.test('arg validation', (t) => {
     Reflect.apply(Headers.prototype.entries, null)
   }, TypeError)
 
-  t.throws(() => {
-    console.error("ASD")
-    try {
-
-      Reflect.apply(Headers.prototype.entries, null, [])
-      console.error("ASD2")
-    }catch(err) {
-      console.error(err)
-    }
-  }, TypeError)
-
   t.end()
 })
 
