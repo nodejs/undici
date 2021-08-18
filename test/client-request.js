@@ -375,7 +375,7 @@ test('request with onInfo callback', (t) => {
   t.plan(2)
   const infos = []
   const server = createServer((req, res) => {
-    res.writeContinue()
+    res.writeProcessing()
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify({ foo: 'bar' }))
   })
@@ -390,7 +390,39 @@ test('request with onInfo callback', (t) => {
       method: 'GET',
       onInfo: (x) => { infos.push(x) }
     })
-    t.equal(infos.length(), 1)
+    t.equal(infos.length, 1)
+    t.pass()
+  })
+})
+
+test('request with onInfo callback but socket is destroyed before end of response', (t) => {
+  t.plan(4)
+  const infos = []
+  let response
+  const server = createServer((req, res) => {
+    response = res
+    res.writeProcessing()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+    try {
+      await client.request({
+        path: '/',
+        method: 'GET',
+        onInfo: (x) => {
+          infos.push(x)
+          response.destroy()
+        }
+      })
+      t.error()
+    } catch (e) {
+      t.ok(e)
+      t.equal(e.message, 'other side closed')
+    }
+    t.equal(infos.length, 1)
     t.pass()
   })
 })
