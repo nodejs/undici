@@ -1,11 +1,13 @@
 'use strict'
 
+const util = require('util')
 const tap = require('tap')
 const {
   Headers,
   binarySearch
 } = require('../../lib/fetch/headers')
 const { kHeadersList } = require('../../lib/core/symbols')
+const { kGuard } = require('../../lib/fetch/symbols')
 
 tap.test('Headers initialization', t => {
   t.plan(6)
@@ -430,4 +432,158 @@ tap.test('binary search', t => {
   tests.forEach(({ input: [list, target], expected, message }) => {
     t.equal(expected, binarySearch(list, target), message)
   })
+})
+
+tap.test('arg validation', (t) => {
+  const headers = new Headers()
+
+  // constructor
+  t.throws(() => {
+    // eslint-disable-next-line
+    new Headers(0)
+  }, TypeError)
+
+  // append
+  t.throws(() => {
+    Headers.prototype.append.call(null)
+  }, TypeError)
+  t.throws(() => {
+    headers.append()
+  }, TypeError)
+
+  // delete
+  t.throws(() => {
+    Headers.prototype.delete.call(null)
+  }, TypeError)
+  t.throws(() => {
+    headers.delete()
+  }, TypeError)
+
+  // get
+  t.throws(() => {
+    Headers.prototype.get.call(null)
+  }, TypeError)
+  t.throws(() => {
+    headers.get()
+  }, TypeError)
+
+  // has
+  t.throws(() => {
+    Headers.prototype.has.call(null)
+  }, TypeError)
+  t.throws(() => {
+    headers.has()
+  }, TypeError)
+
+  // set
+  t.throws(() => {
+    Headers.prototype.set.call(null)
+  }, TypeError)
+  t.throws(() => {
+    headers.set()
+  }, TypeError)
+
+  // forEach
+  t.throws(() => {
+    Headers.prototype.forEach.call(null)
+  }, TypeError)
+  t.throws(() => {
+    headers.forEach()
+  }, TypeError)
+  t.throws(() => {
+    headers.forEach(1)
+  }, TypeError)
+
+  // inspect
+  t.throws(() => {
+    Headers.prototype[Symbol.for('nodejs.util.inspect.custom')].call(null)
+  }, TypeError)
+
+  t.end()
+})
+
+tap.test('node inspect', (t) => {
+  const headers = new Headers()
+  headers.set('k1', 'v1')
+  headers.set('k2', 'v2')
+  t.equal(util.inspect(headers), "HeadersList(4) [ 'k1', 'v1', 'k2', 'v2' ]")
+  t.end()
+})
+
+tap.test('immutable guard', (t) => {
+  const headers = new Headers()
+  headers.set('key', 'val')
+  headers[kGuard] = 'immutable'
+
+  t.throws(() => {
+    headers.set('asd', 'asd')
+  })
+  t.throws(() => {
+    headers.append('asd', 'asd')
+  })
+  t.throws(() => {
+    headers.delete('asd')
+  })
+  t.equals(headers.get('key'), 'val')
+  t.equals(headers.has('key'), true)
+
+  t.end()
+})
+
+tap.test('request guard', (t) => {
+  const headers = new Headers()
+  headers[kGuard] = 'request'
+  headers.set('set-cookie', 'val')
+
+  const forbiddenHeaderNames = [
+    'accept-charset',
+    'accept-encoding',
+    'access-control-request-headers',
+    'access-control-request-method',
+    'connection',
+    'content-length',
+    'cookie',
+    'cookie2',
+    'date',
+    'dnt',
+    'expect',
+    'host',
+    'keep-alive',
+    'origin',
+    'referer',
+    'te',
+    'trailer',
+    'transfer-encoding',
+    'upgrade',
+    'via'
+  ]
+
+  for (const name of forbiddenHeaderNames) {
+    headers.set(name, '1')
+    t.equals(headers.has(name), false)
+  }
+
+  t.equals(headers.get('set-cookie'), 'val')
+  t.equals(headers.has('set-cookie'), true)
+
+  t.end()
+})
+
+tap.test('response guard', (t) => {
+  const headers = new Headers()
+  headers[kGuard] = 'response'
+  headers.set('key', 'val')
+  headers.set('keep-alive', 'val')
+
+  const forbiddenResponseHeaderNames = ['set-cookie', 'set-cookie2']
+
+  for (const name of forbiddenResponseHeaderNames) {
+    headers.set(name, '1')
+    t.equals(headers.has(name), false)
+  }
+
+  t.equals(headers.get('keep-alive'), 'val')
+  t.equals(headers.has('keep-alive'), true)
+
+  t.end()
 })
