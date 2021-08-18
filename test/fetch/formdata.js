@@ -64,6 +64,11 @@ test('arg validation', (t) => {
     form.delete()
   }, TypeError)
 
+  // iterator
+  t.throws(() => {
+    Reflect.apply(FormData.prototype[Symbol.iterator], null)
+  }, TypeError)
+
   t.end()
 })
 

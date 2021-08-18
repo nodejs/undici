@@ -499,6 +499,22 @@ tap.test('arg validation', (t) => {
     Headers.prototype[Symbol.for('nodejs.util.inspect.custom')].call(null)
   }, TypeError)
 
+  t.throws(() => {
+    Reflect.apply(Headers.keys, null)
+  }, TypeError)
+
+  t.throws(() => {
+    Reflect.apply(Headers.values, null)
+  }, TypeError)
+
+  t.throws(() => {
+    Reflect.apply(Headers.entries, null)
+  }, TypeError)
+
+  t.throws(() => {
+    Reflect.apply(Headers[Symbol.iterator], null)
+  }, TypeError)
+
   t.end()
 })
 
