@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, only } = require('tap')
+const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
 const EE = require('events')
@@ -429,7 +429,7 @@ only('request with onInfo callback but socket is destroyed before end of respons
   })
 })
 
-only('request onInfo callback headers parsing', async (t) => {
+test('request onInfo callback headers parsing', async (t) => {
   t.plan(4)
   const infos = []
 
