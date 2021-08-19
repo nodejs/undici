@@ -36,7 +36,7 @@ test('arg validation', (t) => {
     })
   }, TypeError)
 
-  for (const nullStatus of [101, 204, 205, 304]) {
+  for (const nullStatus of [204, 205, 304]) {
     t.throws(() => {
       // eslint-disable-next-line
       new Response(new ArrayBuffer(16), {
