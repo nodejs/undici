@@ -396,7 +396,7 @@ test('request with onInfo callback', (t) => {
   })
 })
 
-only('request with onInfo callback but socket is destroyed before end of response', (t) => {
+test('request with onInfo callback but socket is destroyed before end of response', (t) => {
   t.plan(5)
   const infos = []
   let response

@@ -428,7 +428,7 @@ test('with a local agent', t => {
   })
 })
 
-test('fails with invalid URL', t => {
+test('stream: fails with invalid URL', t => {
   t.plan(4)
   t.throws(() => stream(), InvalidArgumentError, 'throws on missing url argument')
   t.throws(() => stream(''), InvalidArgumentError, 'throws on invalid url')
@@ -516,12 +516,42 @@ test('with a local agent', t => {
   })
 })
 
-test('fails with invalid URL', t => {
+test('pipeline: fails with invalid URL', t => {
   t.plan(4)
   t.throws(() => pipeline(), InvalidArgumentError, 'throws on missing url argument')
   t.throws(() => pipeline(''), InvalidArgumentError, 'throws on invalid url')
   t.throws(() => pipeline({}), InvalidArgumentError, 'throws on missing url.origin argument')
   t.throws(() => pipeline({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+})
+
+test('pipeline: fails with invalid onInfo', (t) => {
+  t.plan(2)
+  pipeline({ origin: 'http://localhost', path: '/', onInfo: 'foo' }, () => {}).on('error', (err) => {
+    t.type(err, InvalidArgumentError)
+    t.equal(err.message, 'invalid onInfo callback')
+  })
+})
+
+test('request: fails with invalid onInfo', async (t) => {
+  try {
+    await request({ origin: 'http://localhost', path: '/', onInfo: 'foo' })
+    t.fail('should throw')
+  } catch (e) {
+    t.ok(e)
+    t.equal(e.message, 'invalid onInfo callback')
+  }
+  t.end()
+})
+
+test('stream: fails with invalid onInfo', async (t) => {
+  try {
+    await stream({ origin: 'http://localhost', path: '/', onInfo: 'foo' }, () => new PassThrough())
+    t.fail('should throw')
+  } catch (e) {
+    t.ok(e)
+    t.equal(e.message, 'invalid onInfo callback')
+  }
+  t.end()
 })
 
 test('constructor validations', t => {

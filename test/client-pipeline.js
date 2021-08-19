@@ -934,6 +934,39 @@ test('pipeline ignore 1xx', (t) => {
       .end()
   })
 })
+test('pipeline ignore 1xx and use onInfo', (t) => {
+  t.plan(3)
+
+  const infos = []
+  const server = createServer((req, res) => {
+    res.writeProcessing()
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+
+    let buf = ''
+    client.pipeline({
+      path: '/',
+      method: 'GET',
+      onInfo: (x) => {
+        infos.push(x)
+      }
+    }, ({ body }) => body)
+      .on('data', (chunk) => {
+        buf += chunk
+      })
+      .on('end', () => {
+        t.equal(buf, 'hello')
+        t.equal(infos.length, 1)
+        t.equal(infos[0].statusCode, 102)
+      })
+      .end()
+  })
+})
 
 test('pipeline backpressure', (t) => {
   t.plan(1)
