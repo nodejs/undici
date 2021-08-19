@@ -1,6 +1,6 @@
 'use strict'
 
-const { test } = require('tap')
+const { test, only } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
 const EE = require('events')
@@ -372,7 +372,7 @@ test('request post body no extra data handler', { skip: nodeMajor < 16 }, (t) =>
 })
 
 test('request with onInfo callback', (t) => {
-  t.plan(2)
+  t.plan(3)
   const infos = []
   const server = createServer((req, res) => {
     res.writeProcessing()
@@ -391,12 +391,13 @@ test('request with onInfo callback', (t) => {
       onInfo: (x) => { infos.push(x) }
     })
     t.equal(infos.length, 1)
+    t.equal(infos[0].statusCode, 102)
     t.pass()
   })
 })
 
-test('request with onInfo callback but socket is destroyed before end of response', (t) => {
-  t.plan(4)
+only('request with onInfo callback but socket is destroyed before end of response', (t) => {
+  t.plan(5)
   const infos = []
   let response
   const server = createServer((req, res) => {
@@ -423,6 +424,46 @@ test('request with onInfo callback but socket is destroyed before end of respons
       t.equal(e.message, 'other side closed')
     }
     t.equal(infos.length, 1)
+    t.equal(infos[0].statusCode, 102)
     t.pass()
   })
+})
+
+only('request onInfo callback headers parsing', async (t) => {
+  t.plan(4)
+  const infos = []
+
+  const server = net.createServer((socket) => {
+    const lines = [
+      'HTTP/1.1 103 Early Hints',
+      'Link: </style.css>; rel=preload; as=style',
+      '',
+      'HTTP/1.1 200 OK',
+      'Date: Sat, 09 Oct 2010 14:28:02 GMT',
+      'Connection: close',
+      '',
+      'the body'
+    ]
+    socket.end(lines.join('\r\n'))
+
+    // Unfortunately calling destroy synchronously might get us flaky results,
+    // therefore we delay it to the next event loop run.
+    setImmediate(socket.destroy.bind(socket))
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.teardown(client.close.bind(client))
+
+  await client.request({
+    path: '/',
+    method: 'GET',
+    onInfo: (x) => { infos.push(x) }
+  })
+  t.equal(infos.length, 1)
+  t.equal(infos[0].statusCode, 103)
+  t.same(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
+  t.pass()
 })
