@@ -72,6 +72,8 @@ declare namespace Dispatcher {
     signal?: AbortSignal | EventEmitter | null;
     /** Default: 0 */
     maxRedirections?: number;
+    /** Default: `null` */
+    onInfo?: (info: {statusCode: number, headers: Record<string, string | string[]>}) => void;
   }
   export interface PipelineOptions extends RequestOptions {
     /** `true` if the `handler` will return an object stream. Default: `false` */

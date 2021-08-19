@@ -17,6 +17,7 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
 
   // request
   expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: 'GET' }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: 'GET', onInfo: ((info) => {}) }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: new URL('http://localhost'), path: '', method: 'GET' }))
   expectAssignable<void>(agent.request({ origin: '', path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
