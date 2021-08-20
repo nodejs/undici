@@ -19,3 +19,12 @@ test('isStream', (t) => {
   const ee = new EventEmitter()
   t.notOk(util.isStream(ee))
 })
+
+test('getServerName', (t) => {
+  t.plan(4)
+
+  t.equal(util.getServerName('1.1.1.1'), '1.1.1.1')
+  t.equal(util.getServerName('1.1.1.1:443'), '1.1.1.1')
+  t.equal(util.getServerName('example.com'), 'example.com')
+  t.equal(util.getServerName('example.com:80'), 'example.com')
+})
