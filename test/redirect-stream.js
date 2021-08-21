@@ -11,6 +11,29 @@ const {
 } = require('./utils/redirecting-servers')
 const { createReadable, createWritable } = require('./utils/stream')
 
+t.test('should always have a history with the final URL even if no redirections were followed', async t => {
+  t.plan(4)
+
+  const body = []
+  const server = await startRedirectingServer(t)
+
+  await stream(
+    `http://${server}/200?key=value`,
+    { opaque: body, maxRedirections: 10 },
+    ({ statusCode, headers, opaque, context: { history } }) => {
+      t.equal(statusCode, 200)
+      t.notOk(headers.location)
+      t.same(history.map(x => x.toString()), [
+        `http://${server}/200?key=value`,
+      ])
+
+      return createWritable(opaque)
+    }
+  )
+
+  t.equal(body.join(''), `GET /5 key=value :: connection@keep-alive host@${server}`)
+})
+
 t.test('should not follow redirection by default if not using RedirectAgent', async t => {
   t.plan(3)
 
@@ -44,14 +67,15 @@ t.test('should follow redirection after a HTTP 300', async t => {
         `http://${server}/300/1?key=value`,
         `http://${server}/300/2?key=value`,
         `http://${server}/300/3?key=value`,
-        `http://${server}/300/4?key=value`
+        `http://${server}/300/4?key=value`,
+        `http://${server}/300/5?key=value`
       ])
 
       return createWritable(opaque)
     }
   )
 
-  t.equal(body.join(''), `GET key=value :: connection@keep-alive host@${server}`)
+  t.equal(body.join(''), `GET /5 key=value :: connection@keep-alive host@${server}`)
 })
 
 t.test('should follow redirection after a HTTP 301', async t => {
@@ -71,7 +95,7 @@ t.test('should follow redirection after a HTTP 301', async t => {
     }
   )
 
-  t.equal(body.join(''), `POST :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
+  t.equal(body.join(''), `POST /5 :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
 })
 
 t.test('should follow redirection after a HTTP 302', async t => {
@@ -91,7 +115,7 @@ t.test('should follow redirection after a HTTP 302', async t => {
     }
   )
 
-  t.equal(body.join(''), `PUT :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
+  t.equal(body.join(''), `PUT /5 :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
 })
 
 t.test('should follow redirection after a HTTP 303 changing method to GET', async t => {
@@ -107,7 +131,7 @@ t.test('should follow redirection after a HTTP 303 changing method to GET', asyn
     return createWritable(opaque)
   })
 
-  t.equal(body.join(''), `GET :: connection@keep-alive host@${server}`)
+  t.equal(body.join(''), `GET /5 :: connection@keep-alive host@${server}`)
 })
 
 t.test('should remove Host and request body related headers when following HTTP 303 (array)', async t => {
@@ -147,7 +171,7 @@ t.test('should remove Host and request body related headers when following HTTP 
     }
   )
 
-  t.equal(body.join(''), `GET :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+  t.equal(body.join(''), `GET /5 :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
 })
 
 t.test('should remove Host and request body related headers when following HTTP 303 (object)', async t => {
@@ -180,7 +204,7 @@ t.test('should remove Host and request body related headers when following HTTP 
     }
   )
 
-  t.equal(body.join(''), `GET :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+  t.equal(body.join(''), `GET /5 :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
 })
 
 t.test('should follow redirection after a HTTP 307', async t => {
@@ -200,7 +224,7 @@ t.test('should follow redirection after a HTTP 307', async t => {
     }
   )
 
-  t.equal(body.join(''), `DELETE :: connection@keep-alive host@${server}`)
+  t.equal(body.join(''), `DELETE /5 :: connection@keep-alive host@${server}`)
 })
 
 t.test('should follow redirection after a HTTP 308', async t => {
@@ -220,7 +244,7 @@ t.test('should follow redirection after a HTTP 308', async t => {
     }
   )
 
-  t.equal(body.join(''), `OPTIONS :: connection@keep-alive host@${server}`)
+  t.equal(body.join(''), `OPTIONS /5 :: connection@keep-alive host@${server}`)
 })
 
 t.test('should ignore HTTP 3xx response bodies', async t => {
@@ -235,7 +259,7 @@ t.test('should ignore HTTP 3xx response bodies', async t => {
     ({ statusCode, headers, opaque, context: { history } }) => {
       t.equal(statusCode, 200)
       t.notOk(headers.location)
-      t.same(history.map(x => x.toString()), [`http://${server}/`])
+      t.same(history.map(x => x.toString()), [`http://${server}/`, `http://${server}/end`])
 
       return createWritable(opaque)
     }
@@ -256,7 +280,7 @@ t.test('should follow a redirect chain up to the allowed number of times', async
     ({ statusCode, headers, opaque, context: { history } }) => {
       t.equal(statusCode, 300)
       t.equal(headers.location, `http://${server}/300/3`)
-      t.same(history.map(x => x.toString()), [`http://${server}/300`, `http://${server}/300/1`])
+      t.same(history.map(x => x.toString()), [`http://${server}/300`, `http://${server}/300/1`, `http://${server}/300/2`])
 
       return createWritable(opaque)
     }
@@ -282,7 +306,8 @@ t.test('should follow redirections when going cross origin', async t => {
         `http://${server2}/`,
         `http://${server3}/`,
         `http://${server2}/end`,
-        `http://${server3}/end`
+        `http://${server3}/end`,
+        `http://${server1}/end`
       ])
 
       return createWritable(opaque)

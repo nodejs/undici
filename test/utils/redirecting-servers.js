@@ -31,6 +31,9 @@ async function startRedirectingServer (t) {
 
     if (isNaN(code) || code < 0) {
       code = 302
+    } else if(code < 300) {
+      res.statusCode = code
+      redirections = 5
     }
 
     if (isNaN(redirections) || redirections < 0) {
@@ -49,7 +52,7 @@ async function startRedirectingServer (t) {
     if (redirections === 5) {
       res.setHeader('Connection', 'close')
       res.write(
-        `${req.method}${query ? ` ${query}` : ''} :: ${Object.entries(req.headers)
+        `${req.method} /${redirections}${query ? ` ${query}` : ''} :: ${Object.entries(req.headers)
           .map(([k, v]) => `${k}@${v}`)
           .join(' ')}`
       )
