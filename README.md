@@ -184,7 +184,6 @@ can lead to excessive connection usage, reduced performance (due to less connect
 and even stalls or deadlocks when running out of connections. Therefore, it is highly 
 recommended to always either consume or cancel the response body.
 
-
 ```js
 // Do
 const headers = await fetch(url)
