@@ -171,7 +171,7 @@ This is [experimental](https://nodejs.org/api/documentation.html#documentation_s
 This section documents parts of the [fetch specification](https://fetch.spec.whatwg.org) which Undici does
 not support or does not fully implement.
 
-##### Garbage collection
+##### Garbage Collection
 
 * https://fetch.spec.whatwg.org/#garbage-collection
 
