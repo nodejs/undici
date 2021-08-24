@@ -166,6 +166,24 @@ Only supported on Node 16+.
 
 This is [experimental](https://nodejs.org/api/documentation.html#documentation_stability_index) and is not yet fully compliant with the Fetch Standard. We plan to ship breaking changes to this feature until it is out of experimental.
 
+#### Specification Compliance
+
+This section documents parts of the [fetch specification](https://fetch.spec.whatwg.org) which Undici does
+not support or does not fully implement.
+
+##### Garbage collection
+
+* https://fetch.spec.whatwg.org/#garbage-collection
+
+The fetch specication allows users to skip consuming the response body by relying on
+garbage collection to release connection resources. undici does the same. However,
+garbage collection is node is less aggressive and deterministic (due to the lack
+of deterministic idle periods that browser have through the rendering refresh rate)
+which means that leaving the release of connection resources to the garbage collector
+can lead to excessive connection usage, reduce performance due to less connection re-use,
+and even stalls when running out of connections. Therefore, it is highly recommended to
+always either consume or cancel the response body.
+
 ### `undici.upgrade([url, options]): Promise`
 
 Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) for more details.
