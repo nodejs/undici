@@ -193,11 +193,9 @@ const headers = await fetch(url)
     return res.headers
   })
 
-// Don't
+// Do not
 const headers = await fetch(url)
-  .then(async res => {
-    return res.headers
-  })
+  .then(res => res.headers)
 ```
 
 ### `undici.upgrade([url, options]): Promise`
