@@ -153,7 +153,7 @@ test('pre aborted signal', t => {
   const ac = new AbortController()
   ac.abort()
   const req = new Request('http://asd', { signal: ac.signal })
-  t.equals(req.signal.aborted, true)
+  t.equal(req.signal.aborted, true)
   t.end()
 })
 
@@ -162,7 +162,7 @@ test('post aborted signal', t => {
 
   const ac = new AbortController()
   const req = new Request('http://asd', { signal: ac.signal })
-  t.equals(req.signal.aborted, false)
+  t.equal(req.signal.aborted, false)
   ac.signal.addEventListener('abort', () => {
     t.pass()
   })
@@ -173,7 +173,7 @@ test('pre aborted signal cloned', t => {
   const ac = new AbortController()
   ac.abort()
   const req = new Request('http://asd', { signal: ac.signal }).clone()
-  t.equals(req.signal.aborted, true)
+  t.equal(req.signal.aborted, true)
   t.end()
 })
 
@@ -182,7 +182,7 @@ test('post aborted signal cloned', t => {
 
   const ac = new AbortController()
   const req = new Request('http://asd', { signal: ac.signal }).clone()
-  t.equals(req.signal.aborted, false)
+  t.equal(req.signal.aborted, false)
   ac.signal.addEventListener('abort', () => {
     t.pass()
   })
