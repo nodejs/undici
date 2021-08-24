@@ -177,12 +177,28 @@ not support or does not fully implement.
 
 The fetch specication allows users to skip consuming the response body by relying on
 garbage collection to release connection resources. undici does the same. However,
-garbage collection is node is less aggressive and deterministic (due to the lack
-of deterministic idle periods that browser have through the rendering refresh rate)
+garbage collection in node is less aggressive and deterministic (due to the lack
+of clear idle periods that browser have through the rendering refresh rate)
 which means that leaving the release of connection resources to the garbage collector
-can lead to excessive connection usage, reduce performance due to less connection re-use,
-and even stalls when running out of connections. Therefore, it is highly recommended to
-always either consume or cancel the response body.
+can lead to excessive connection usage, reduced performance (due to less connection re-use),
+and even stalls or deadlocks when running out of connections. Therefore, it is highly 
+recommended to always either consume or cancel the response body.
+
+
+```js
+// Do
+const headers = await fetch(url)
+  .then(async res => {
+    await res.arrayBuffer()
+    return res.headers
+  })
+
+// Don't
+const headers = await fetch(url)
+  .then(async res => {
+    return res.headers
+  })
+```
 
 ### `undici.upgrade([url, options]): Promise`
 
