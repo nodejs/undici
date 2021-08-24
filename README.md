@@ -189,7 +189,9 @@ recommended to always either consume or cancel the response body.
 // Do
 const headers = await fetch(url)
   .then(async res => {
-    await res.arrayBuffer()
+    for await (const chunk of res) {
+      // force consumption of body
+    }
     return res.headers
   })
 
