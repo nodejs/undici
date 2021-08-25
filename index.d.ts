@@ -11,6 +11,10 @@ import MockAgent from './types/mock-agent'
 import mockErrors from './types/mock-errors'
 import { request, pipeline, stream, connect, upgrade } from './types/api'
 
+export * from './types/fetch'
+export * from './types/file'
+export * from './types/formdata'
+
 export { Dispatcher, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, MockClient, MockPool, MockAgent, mockErrors }
 export default Undici
 
