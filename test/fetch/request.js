@@ -149,6 +149,12 @@ test('arg validation', (t) => {
   t.end()
 })
 
+test('undefined signal', t => {
+  const req = new Request('http://asd', { signal: undefined })
+  t.equal(req.signal.aborted, false)
+  t.end()
+})
+
 test('pre aborted signal', t => {
   const ac = new AbortController()
   ac.abort()
