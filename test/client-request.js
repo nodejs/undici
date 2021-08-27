@@ -445,10 +445,6 @@ test('request onInfo callback headers parsing', async (t) => {
       'the body'
     ]
     socket.end(lines.join('\r\n'))
-
-    // Unfortunately calling destroy synchronously might get us flaky results,
-    // therefore we delay it to the next event loop run.
-    setImmediate(socket.destroy.bind(socket))
   })
   t.teardown(server.close.bind(server))
 
