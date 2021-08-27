@@ -21,10 +21,11 @@ test('isStream', (t) => {
 })
 
 test('getServerName', (t) => {
-  t.plan(4)
-
-  t.equal(util.getServerName('1.1.1.1'), '1.1.1.1')
-  t.equal(util.getServerName('1.1.1.1:443'), '1.1.1.1')
+  t.plan(6)
+  t.equal(util.getServerName('1.1.1.1'), '')
+  t.equal(util.getServerName('1.1.1.1:443'), '')
   t.equal(util.getServerName('example.com'), 'example.com')
   t.equal(util.getServerName('example.com:80'), 'example.com')
+  t.equal(util.getServerName('[2606:4700:4700::1111]'), '')
+  t.equal(util.getServerName('[2606:4700:4700::1111]:443'), '')
 })
