@@ -22,7 +22,7 @@ for (const factory of [
     const dispatcher = factory(server, opts)
     return undici.request(args[0], { ...args[1], dispatcher }, args[2])
   }
-  
+
   t.test('should always have a history with the final URL even if no redirections were followed', async t => {
     t.plan(4)
 
@@ -40,7 +40,7 @@ for (const factory of [
     t.equal(statusCode, 200)
     t.notOk(headers.location)
     t.same(history.map(x => x.toString()),  [`http://${server}/200?key=value`])
-    t.equal(body, `GET /5 key=value :: connection@keep-alive host@${server}`)
+    t.equal(body, `GET /5 key=value :: host@${server} connection@keep-alive`)
   })
 
   t.test('should not follow redirection by default if not using RedirectAgent', async t => {
@@ -83,7 +83,7 @@ for (const factory of [
       `http://${server}/300/4?key=value`,
       `http://${server}/300/5?key=value`
     ])
-    t.equal(body, `GET /5 key=value :: connection@keep-alive host@${server}`)
+    t.equal(body, `GET /5 key=value :: host@${server} connection@keep-alive`)
   })
 
   t.test('should follow redirection after a HTTP 300 default', async t => {
@@ -108,7 +108,7 @@ for (const factory of [
       `http://${server}/300/4?key=value`,
       `http://${server}/300/5?key=value`
     ])
-    t.equal(body, `GET /5 key=value :: connection@keep-alive host@${server}`)
+    t.equal(body, `GET /5 key=value :: host@${server} connection@keep-alive`)
   })
 
   t.test('should follow redirection after a HTTP 301', async t => {
@@ -129,7 +129,7 @@ for (const factory of [
 
     t.equal(statusCode, 200)
     t.notOk(headers.location)
-    t.equal(body, `POST /5 :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
+    t.equal(body, `POST /5 :: host@${server} connection@keep-alive content-length@7 :: REQUEST`)
   })
 
   t.test('should follow redirection after a HTTP 302', async t => {
@@ -150,7 +150,7 @@ for (const factory of [
 
     t.equal(statusCode, 200)
     t.notOk(headers.location)
-    t.equal(body, `PUT /5 :: connection@keep-alive host@${server} content-length@7 :: REQUEST`)
+    t.equal(body, `PUT /5 :: host@${server} connection@keep-alive content-length@7 :: REQUEST`)
   })
 
   t.test('should follow redirection after a HTTP 303 changing method to GET', async t => {
@@ -171,7 +171,7 @@ for (const factory of [
 
     t.equal(statusCode, 200)
     t.notOk(headers.location)
-    t.equal(body, `GET /5 :: connection@keep-alive host@${server}`)
+    t.equal(body, `GET /5 :: host@${server} connection@keep-alive`)
   })
 
   t.test('should remove Host and request body related headers when following HTTP 303 (array)', async t => {
@@ -207,7 +207,7 @@ for (const factory of [
 
     t.equal(statusCode, 200)
     t.notOk(headers.location)
-    t.equal(body, `GET /5 :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+    t.equal(body, `GET /5 :: host@${server} connection@keep-alive x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
   })
 
   t.test('should remove Host and request body related headers when following HTTP 303 (object)', async t => {
@@ -236,7 +236,7 @@ for (const factory of [
 
     t.equal(statusCode, 200)
     t.notOk(headers.location)
-    t.equal(body, `GET /5 :: connection@keep-alive host@${server} x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+    t.equal(body, `GET /5 :: host@${server} connection@keep-alive x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
   })
 
   t.test('should follow redirection after a HTTP 307', async t => {
@@ -256,7 +256,7 @@ for (const factory of [
 
     t.equal(statusCode, 200)
     t.notOk(headers.location)
-    t.equal(body, `DELETE /5 :: connection@keep-alive host@${server}`)
+    t.equal(body, `DELETE /5 :: host@${server} connection@keep-alive`)
   })
 
   t.test('should follow redirection after a HTTP 308', async t => {
@@ -276,7 +276,7 @@ for (const factory of [
 
     t.equal(statusCode, 200)
     t.notOk(headers.location)
-    t.equal(body, `OPTIONS /5 :: connection@keep-alive host@${server}`)
+    t.equal(body, `OPTIONS /5 :: host@${server} connection@keep-alive`)
   })
 
   t.test('should ignore HTTP 3xx response bodies', async t => {
