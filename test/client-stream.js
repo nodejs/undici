@@ -587,6 +587,41 @@ test('stream ignore 1xx', (t) => {
   })
 })
 
+test('stream ignore 1xx and use onInfo', (t) => {
+  t.plan(4)
+
+  const infos = []
+  const server = createServer((req, res) => {
+    res.writeProcessing()
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+
+    let buf = ''
+    client.stream({
+      path: '/',
+      method: 'GET',
+      onInfo: (x) => {
+        infos.push(x)
+      }
+    }, () => new Writable({
+      write (chunk, encoding, callback) {
+        buf += chunk
+        callback()
+      }
+    }), (err, data) => {
+      t.error(err)
+      t.equal(buf, 'hello')
+      t.equal(infos.length, 1)
+      t.equal(infos[0].statusCode, 102)
+    })
+  })
+})
+
 test('stream backpressure', (t) => {
   t.plan(2)
 

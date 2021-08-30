@@ -329,6 +329,7 @@ Extends: [`RequestOptions`](#parameter-requestoptions)
 * **opaque** `unknown`
 * **body** `stream.Readable`
 * **context** `object`
+* **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received. 
 
 #### Example 1 - Pipeline Echo
 
@@ -411,6 +412,7 @@ Extends: [`DispatchOptions`](#parameter-dispatchoptions)
 
 * **opaque** `unknown` (optional) - Default: `null` - Used for passing through context to `ResponseData`
 * **signal** `AbortSignal | events.EventEmitter | null` (optional) - Default: `null`
+* **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received. 
 
 The `RequestOptions.method` property should not be value `'CONNECT'`.
 
@@ -578,6 +580,7 @@ Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback
 * **statusCode** `number`
 * **headers** `http.IncomingHttpHeaders`
 * **opaque** `unknown`
+* **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received. 
 
 #### Parameter: `StreamData`
 

@@ -370,3 +370,96 @@ test('request post body no extra data handler', { skip: nodeMajor < 16 }, (t) =>
     t.pass()
   })
 })
+
+test('request with onInfo callback', (t) => {
+  t.plan(3)
+  const infos = []
+  const server = createServer((req, res) => {
+    res.writeProcessing()
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify({ foo: 'bar' }))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    await client.request({
+      path: '/',
+      method: 'GET',
+      onInfo: (x) => { infos.push(x) }
+    })
+    t.equal(infos.length, 1)
+    t.equal(infos[0].statusCode, 102)
+    t.pass()
+  })
+})
+
+test('request with onInfo callback but socket is destroyed before end of response', (t) => {
+  t.plan(5)
+  const infos = []
+  let response
+  const server = createServer((req, res) => {
+    response = res
+    res.writeProcessing()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+    try {
+      await client.request({
+        path: '/',
+        method: 'GET',
+        onInfo: (x) => {
+          infos.push(x)
+          response.destroy()
+        }
+      })
+      t.error()
+    } catch (e) {
+      t.ok(e)
+      t.equal(e.message, 'other side closed')
+    }
+    t.equal(infos.length, 1)
+    t.equal(infos[0].statusCode, 102)
+    t.pass()
+  })
+})
+
+test('request onInfo callback headers parsing', async (t) => {
+  t.plan(4)
+  const infos = []
+
+  const server = net.createServer((socket) => {
+    const lines = [
+      'HTTP/1.1 103 Early Hints',
+      'Link: </style.css>; rel=preload; as=style',
+      '',
+      'HTTP/1.1 200 OK',
+      'Date: Sat, 09 Oct 2010 14:28:02 GMT',
+      'Connection: close',
+      '',
+      'the body'
+    ]
+    socket.end(lines.join('\r\n'))
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.teardown(client.close.bind(client))
+
+  await client.request({
+    path: '/',
+    method: 'GET',
+    onInfo: (x) => { infos.push(x) }
+  })
+  t.equal(infos.length, 1)
+  t.equal(infos[0].statusCode, 103)
+  t.same(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
+  t.pass()
+})
