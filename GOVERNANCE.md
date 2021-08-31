@@ -50,7 +50,8 @@ request or issue. The WG should serve as the final arbiter where
 required.
 
 For the current list of Collaborators, see the project
-[README.md](./README.md#collaborators).
+[README.md](./README.md#collaborators). The list shall be in an
+alphabetical order.
 
 ### WG Membership
 
