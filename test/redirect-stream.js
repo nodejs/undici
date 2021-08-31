@@ -24,7 +24,7 @@ t.test('should always have a history with the final URL even if no redirections 
       t.equal(statusCode, 200)
       t.notOk(headers.location)
       t.same(history.map(x => x.toString()), [
-        `http://${server}/200?key=value`,
+        `http://${server}/200?key=value`
       ])
 
       return createWritable(opaque)

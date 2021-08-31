@@ -6,7 +6,7 @@ const { Client, Pool, errors } = require('..')
 const stream = require('stream')
 
 test('dispatch invalid opts', (t) => {
-  t.plan(8)
+  t.plan(14)
 
   const client = new Client('http://localhost:5000')
 
@@ -39,6 +39,7 @@ test('dispatch invalid opts', (t) => {
   }, {
     onError (err) {
       t.type(err, errors.InvalidArgumentError)
+      t.equal(err.message, 'upgrade must be a string')
     }
   })
 
@@ -49,6 +50,7 @@ test('dispatch invalid opts', (t) => {
   }, {
     onError (err) {
       t.type(err, errors.InvalidArgumentError)
+      t.equal(err.message, 'invalid headersTimeout')
     }
   })
 
@@ -59,6 +61,7 @@ test('dispatch invalid opts', (t) => {
   }, {
     onError (err) {
       t.type(err, errors.InvalidArgumentError)
+      t.equal(err.message, 'invalid bodyTimeout')
     }
   })
 
@@ -70,6 +73,14 @@ test('dispatch invalid opts', (t) => {
   }, {
     onError (err) {
       t.type(err, errors.InvalidArgumentError)
+      t.equal(err.message, 'invalid bodyTimeout')
+    }
+  })
+
+  client.dispatch(null, {
+    onError (err) {
+      t.type(err, errors.InvalidArgumentError)
+      t.equal(err.message, 'opts must be an object.')
     }
   })
 })
@@ -759,6 +770,37 @@ test('dispatch onBodySent async-iterable', (t) => {
         t.equal(sentBytes, toSendBytes)
         t.end()
       }
+    })
+  })
+})
+
+test('dispatch onBodySent throws error', (t) => {
+  const server = http.createServer((req, res) => {
+    res.end('ended')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+    const body = 'hello'
+    client.dispatch({
+      path: '/',
+      method: 'POST',
+      body
+    }, {
+      onBodySent (chunk) {
+        throw new Error('fail')
+      },
+      onError (err) {
+        t.type(err, Error)
+        t.equal(err.message, 'fail')
+        t.end()
+      },
+      onConnect () {},
+      onHeaders () {},
+      onData () {},
+      onComplete () {}
     })
   })
 })

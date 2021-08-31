@@ -39,7 +39,7 @@ for (const factory of [
 
     t.equal(statusCode, 200)
     t.notOk(headers.location)
-    t.same(history.map(x => x.toString()),  [`http://${server}/200?key=value`])
+    t.same(history.map(x => x.toString()), [`http://${server}/200?key=value`])
     t.equal(body, `GET /5 key=value :: host@${server} connection@keep-alive`)
   })
 
