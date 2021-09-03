@@ -21,7 +21,7 @@ test('arg validation', (t) => {
     form.append()
   }, TypeError)
   t.throws(() => {
-    form.append('asd', 'asd', 'asd')
+    form.append('k', 'not usv', '')
   }, TypeError)
 
   // delete
@@ -37,7 +37,7 @@ test('arg validation', (t) => {
     FormData.prototype.get.call(null)
   }, TypeError)
   t.throws(() => {
-    form.delete()
+    form.get()
   }, TypeError)
 
   // getAll
@@ -45,7 +45,7 @@ test('arg validation', (t) => {
     FormData.prototype.getAll.call(null)
   }, TypeError)
   t.throws(() => {
-    form.delete()
+    form.getAll()
   }, TypeError)
 
   // has
@@ -53,7 +53,7 @@ test('arg validation', (t) => {
     FormData.prototype.has.call(null)
   }, TypeError)
   t.throws(() => {
-    form.delete()
+    form.has()
   }, TypeError)
 
   // set
@@ -61,7 +61,10 @@ test('arg validation', (t) => {
     FormData.prototype.set.call(null)
   }, TypeError)
   t.throws(() => {
-    form.delete()
+    form.set('k')
+  }, TypeError)
+  t.throws(() => {
+    form.set('k', 'not usv', '')
   }, TypeError)
 
   // iterator
@@ -108,6 +111,10 @@ test('append string', (t) => {
   t.same([...form], [['k1', 'v1'], ['k2', 'v2']])
   t.equal(form.has('k1'), true)
   t.equal(form.get('k1'), 'v1')
+  form.append('k1', 'v1+')
+  t.same(form.getAll('k1'), ['v1', 'v1+'])
+  form.set('k2', 'v1++')
+  t.equal(form.get('k2'), 'v1++')
   form.delete('asd')
   t.equal(form.get('asd'), null)
   t.end()
