@@ -14,8 +14,9 @@ const MockAgent = require('./lib/mock/mock-agent')
 const MockPool = require('./lib/mock/mock-pool')
 const mockErrors = require('./lib/mock/mock-errors')
 
-const nodeMajor = Number(process.versions.node.split('.')[0])
-const nodeMinor = Number(process.versions.node.split('.')[1])
+const nodeVersion = process.versions.node.split('.')
+const nodeMajor = Number(nodeVersion[0])
+const nodeMinor = Number(nodeVersion[1])
 
 Object.assign(Dispatcher.prototype, api)
 
@@ -79,7 +80,7 @@ function makeDispatcher (fn) {
       ...opts,
       origin: url.origin,
       path: url.search ? `${url.pathname}${url.search}` : url.pathname,
-      method: opts.method ? opts.method : opts.body ? 'PUT' : 'GET'
+      method: opts.method || (opts.body ? 'PUT' : 'GET')
     }, handler)
   }
 }
