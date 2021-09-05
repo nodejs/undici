@@ -8,6 +8,26 @@ const { ReadableStream } = require('stream/web')
 const { Blob } = require('buffer')
 const { fetch, Response, Request, FormData, File } = require('../..')
 
+test('args validation', (t) => {
+  t.plan(2)
+
+  t.throws(() => {
+    File.prototype.filename.call(null)
+  }, TypeError)
+  t.throws(() => {
+    File.prototype.lastModified.call(null)
+  }, TypeError)
+})
+
+test('return value of File.lastModified', (t) => {
+  t.plan(2)
+
+  const f = new File(['asd1'], 'filename123')
+  const lastModified = f.lastModified
+  t.ok(typeof lastModified === typeof Date.now())
+  t.ok(lastModified >= 0 && lastModified <= Date.now())
+})
+
 test('request json', (t) => {
   t.plan(1)
 
