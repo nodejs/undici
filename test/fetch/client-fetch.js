@@ -19,11 +19,13 @@ test('args validation', (t) => {
   }, TypeError)
 })
 
-test('call last modified', (t) => {
-  t.plan(1)
+test('return value of File.lastModified', (t) => {
+  t.plan(2)
 
   const f = new File(['asd1'], 'filename123')
-  t.ok(f.lastModified)
+  const lastModified = f.lastModified
+  t.ok(typeof lastModified === typeof Date.now())
+  t.ok(lastModified >= 0 && lastModified <= Date.now())
 })
 
 test('request json', (t) => {
