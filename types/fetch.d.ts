@@ -35,7 +35,7 @@ export interface BodyMixin {
   readonly body: ControlledAsyncIterable | null
   readonly bodyUsed: boolean
 
-  readonly arrayBuffer: () => Promise<Buffer>
+  readonly arrayBuffer: () => Promise<ArrayBuffer>
   readonly blob: () => Promise<Blob>
   readonly formData: () => Promise<FormData>
   readonly json: () => Promise<unknown>
@@ -126,7 +126,7 @@ export declare class Request implements BodyMixin {
   readonly body: ControlledAsyncIterable | null
   readonly bodyUsed: boolean
 
-  readonly arrayBuffer: () => Promise<Buffer>
+  readonly arrayBuffer: () => Promise<ArrayBuffer>
   readonly blob: () => Promise<Blob>
   readonly formData: () => Promise<FormData>
   readonly json: () => Promise<unknown>
@@ -165,7 +165,7 @@ export declare class Response implements BodyMixin {
   readonly body: ControlledAsyncIterable | null
   readonly bodyUsed: boolean
 
-  readonly arrayBuffer: () => Promise<Buffer>
+  readonly arrayBuffer: () => Promise<ArrayBuffer>
   readonly blob: () => Promise<Blob>
   readonly formData: () => Promise<FormData>
   readonly json: () => Promise<unknown>
