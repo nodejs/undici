@@ -14,7 +14,7 @@ try {
 const { Client } = require('../..')
 const { createServer, request } = require('http')
 
-t.plan(15)
+t.plan(16)
 
 const server = createServer((req, res) => {
   req.resume()

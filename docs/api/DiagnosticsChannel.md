@@ -67,3 +67,15 @@ diagnosticsChannel.channel('undici:request:trailers').subscribe(({ request, trai
   console.log(trailers.map((x) => x.toString()))
 })
 ```
+
+## `undici:request:error`
+
+This message is published if the request is going to error, but it has not errored yet.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:request:error').subscribe(({ request, error }) => {
+  // request is the same object undici:request:create
+})
+```
