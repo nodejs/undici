@@ -4,9 +4,16 @@ const util = require('util')
 const tap = require('tap')
 const {
   Headers,
-  binarySearch
+  binarySearch,
+  normalizeAndValidateHeaderName,
+  normalizeAndValidateHeaderValue,
+  fill,
 } = require('../../lib/fetch/headers')
 const { kHeadersList } = require('../../lib/core/symbols')
+const {
+  InvalidHTTPTokenError,
+  HTTPInvalidHeaderValueError,
+} = require('../../lib/core/errors')
 const { kGuard } = require('../../lib/fetch/symbols')
 const {
   forbiddenHeaderNames,
@@ -439,12 +446,37 @@ tap.test('binary search', t => {
 })
 
 tap.test('arg validation', (t) => {
+  // normalizeAndValidateHeaderName
+  t.throws(() => {
+    normalizeAndValidateHeaderName()
+  }, InvalidHTTPTokenError)
+
+  // normalizeAndValidateHeaderValue
+  t.throws(() => {
+    normalizeAndValidateHeaderValue()
+  }, HTTPInvalidHeaderValueError)
+
+  // fill
+  t.throws(() => {
+    fill({}, 0)
+  }, TypeError)
+
   const headers = new Headers()
 
   // constructor
   t.throws(() => {
     // eslint-disable-next-line
     new Headers(0)
+  }, TypeError)
+
+  // get [Symbol.toStringTag]
+  t.throws(() => {
+    Object.prototype.toString.call(Headers.prototype)
+  }, TypeError)
+
+  // toString
+  t.throws(() => {
+    Headers.prototype.toString.call(null)
   }, TypeError)
 
   // append
@@ -506,6 +538,17 @@ tap.test('arg validation', (t) => {
   t.end()
 })
 
+tap.test('various init paths of Headers', (t) => {
+  const h1 = new Headers()
+  const h2 = new Headers({})
+  const h3 = new Headers(undefined)
+  t.equal([...h1.entries()].length, 0)
+  t.equal([...h2.entries()].length, 0)
+  t.equal([...h3.entries()].length, 0)
+
+  t.end()
+})
+
 tap.test('node inspect', (t) => {
   const headers = new Headers()
   headers.set('k1', 'v1')
@@ -534,15 +577,26 @@ tap.test('immutable guard', (t) => {
   t.end()
 })
 
-tap.test('request guard', (t) => {
+tap.test('request-no-cors guard', (t) => {
   const headers = new Headers()
+  headers[kGuard] = 'request-no-cors'
+  t.doesNotThrow(() => { headers.set('key', 'val') })
+  t.doesNotThrow(() => { headers.append('key', 'val') })
+  t.doesNotThrow(() => { headers.delete('key') })
+  t.end()
+})
+
+tap.test('request guard', (t) => {
+  const headers = new Headers(forbiddenHeaderNames.map(k => [k, 'v']))
   headers[kGuard] = 'request'
   headers.set('set-cookie', 'val')
 
   for (const name of forbiddenHeaderNames) {
     headers.set(name, '1')
     headers.append(name, '1')
-    t.equals(headers.has(name), false)
+    t.equals(headers.get(name), 'v')
+    headers.delete(name)
+    t.equals(headers.has(name), true)
   }
 
   t.equals(headers.get('set-cookie'), 'val')
@@ -552,7 +606,7 @@ tap.test('request guard', (t) => {
 })
 
 tap.test('response guard', (t) => {
-  const headers = new Headers()
+  const headers = new Headers(forbiddenResponseHeaderNames.map(k => [k, 'v']))
   headers[kGuard] = 'response'
   headers.set('key', 'val')
   headers.set('keep-alive', 'val')
@@ -560,7 +614,9 @@ tap.test('response guard', (t) => {
   for (const name of forbiddenResponseHeaderNames) {
     headers.set(name, '1')
     headers.append(name, '1')
-    t.equals(headers.has(name), false)
+    t.equals(headers.get(name), 'v')
+    headers.delete(name)
+    t.equals(headers.has(name), true)
   }
 
   t.equals(headers.get('keep-alive'), 'val')
