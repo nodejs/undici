@@ -8,6 +8,10 @@ const {
 } = require('../../lib/fetch/headers')
 const { kHeadersList } = require('../../lib/core/symbols')
 const { kGuard } = require('../../lib/fetch/symbols')
+const {
+  forbiddenHeaderNames,
+  forbiddenResponseHeaderNames
+} = require('../../lib/fetch/constants')
 
 tap.test('Headers initialization', t => {
   t.plan(6)
@@ -535,29 +539,6 @@ tap.test('request guard', (t) => {
   headers[kGuard] = 'request'
   headers.set('set-cookie', 'val')
 
-  const forbiddenHeaderNames = [
-    'accept-charset',
-    'accept-encoding',
-    'access-control-request-headers',
-    'access-control-request-method',
-    'connection',
-    'content-length',
-    'cookie',
-    'cookie2',
-    'date',
-    'dnt',
-    'expect',
-    'host',
-    'keep-alive',
-    'origin',
-    'referer',
-    'te',
-    'trailer',
-    'transfer-encoding',
-    'upgrade',
-    'via'
-  ]
-
   for (const name of forbiddenHeaderNames) {
     headers.set(name, '1')
     headers.append(name, '1')
@@ -575,8 +556,6 @@ tap.test('response guard', (t) => {
   headers[kGuard] = 'response'
   headers.set('key', 'val')
   headers.set('keep-alive', 'val')
-
-  const forbiddenResponseHeaderNames = ['set-cookie', 'set-cookie2']
 
   for (const name of forbiddenResponseHeaderNames) {
     headers.set(name, '1')
