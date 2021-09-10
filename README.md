@@ -168,15 +168,15 @@ This is [experimental](https://nodejs.org/api/documentation.html#documentation_s
 
 #### Specification Compliance
 
-This section documents parts of the [fetch specification](https://fetch.spec.whatwg.org) which Undici does
+This section documents parts of the [Fetch Standard](https://fetch.spec.whatwg.org) which Undici does
 not support or does not fully implement.
 
 ##### Garbage Collection
 
 * https://fetch.spec.whatwg.org/#garbage-collection
 
-The fetch specification allows users to skip consuming the response body by relying on
-garbage collection to release connection resources. Undici does the same. However,
+The [Fetch Standard](https://fetch.spec.whatwg.org) allows users to skip consuming the response body by relying on
+[garbage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management#garbage_collection) to release connection resources. Undici does the same. However,
 garbage collection in Node is less aggressive and deterministic (due to the lack
 of clear idle periods that browser have through the rendering refresh rate)
 which means that leaving the release of connection resources to the garbage collector
