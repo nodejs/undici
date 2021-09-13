@@ -32,7 +32,7 @@ test('uses max value from keep-alive header', (t) => {
     })
   })
 })
-/*
+
 test('20 times GET with pipelining 10', (t) => {
   const num = 20
   t.plan(3 * num + 1)
@@ -725,4 +725,3 @@ function pipeliningIdempotentBusy (bodyType) {
 
 pipeliningIdempotentBusy(consts.STREAM)
 pipeliningIdempotentBusy(consts.ASYNC_ITERATOR)
-*/
