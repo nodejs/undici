@@ -9,6 +9,28 @@ const EE = require('events')
 const { kBusy, kRunning, kSize } = require('../lib/core/symbols')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
 
+test('uses max value from keep-alive header', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.setHeader('keep-alive', 'max=10')
+    res.end()
+  })
+
+  t.teardown(server.close.bind(server))
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 100
+    })
+
+    const { body } = await client.request({ path: '/', method: 'GET' })
+    body.resume()
+    body.on('end', () => {
+      t.equal(client.pipelining, 10)
+    })
+  })
+})
+
 test('20 times GET with pipelining 10', (t) => {
   const num = 20
   t.plan(3 * num + 1)
