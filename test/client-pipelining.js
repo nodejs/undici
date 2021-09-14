@@ -701,3 +701,52 @@ function pipeliningIdempotentBusy (bodyType) {
 
 pipeliningIdempotentBusy(consts.STREAM)
 pipeliningIdempotentBusy(consts.ASYNC_ITERATOR)
+
+test('pipelining blocked', (t) => {
+  t.plan(6)
+
+  const server = createServer()
+
+  let blocking = true
+  let count = 0
+
+  server.on('request', (req, res) => {
+    t.ok(!count || !blocking)
+    count++
+    setImmediate(() => {
+      res.end('asd')
+    })
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      pipelining: 10
+    })
+    t.teardown(client.close.bind(client))
+    client.request({
+      path: '/',
+      method: 'GET',
+      blocking: true
+    }, (err, data) => {
+      t.error(err)
+      blocking = false
+      data.body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
+    })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.error(err)
+      data.body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
+    })
+  })
+})
