@@ -194,6 +194,7 @@ Returns: `void`
 * **body** `string | Buffer | Uint8Array | stream.Readable | Iterable | AsyncIterable | null` (optional) - Default: `null`
 * **headers** `UndiciHeaders` (optional) - Default: `null`
 * **idempotent** `boolean` (optional) - Default: `true` if `method` is `'HEAD'` or `'GET'` - Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceding requests in the pipeline has completed.
+* **blocking** `boolean` (optional) - Default: `false` - Whether the response is expected to take a long time and would end up blocking the pipeline. When this is set to `true` further pipelining will be avoided on the same connection until headers have been received.
 * **upgrade** `string | null` (optional) - Default: `null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.
 * **bodyTimeout** `number | null` (optional) - The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 30 seconds.
 * **headersTimeout** `number | null` (optional) - The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 30 seconds.
@@ -676,7 +677,7 @@ try {
     path: '/',
     method: 'GET'
   })
-  
+
   console.log(`response received ${statusCode}`)
   body.setEncoding('utf8')
   body.on('data', console.log)
@@ -695,7 +696,7 @@ Upgrade to a different protocol. Visit [MDN - HTTP - Protocol upgrade mechanism]
 Arguments:
 
 * **options** `UpgradeOptions`
-  
+
 * **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
 
 Returns: `void | Promise<UpgradeData>` - Only returns a `Promise` if no `callback` argument was passed
@@ -791,7 +792,7 @@ Emitted when dispatcher is no longer busy.
 
 Header arguments such as `options.headers` in [`Client.dispatch`](./Client.md#client-dispatchoptions-handlers) can be specified in two forms; either as an object specified by the `http.IncomingHttpHeaders` type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
 
-Keys are lowercase and values are not modified. 
+Keys are lowercase and values are not modified.
 
 Response headers will derive a `host` from the `url` of the [Client](#class-client) instance if no `host` header was previously specified.
 
