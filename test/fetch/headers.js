@@ -571,8 +571,8 @@ tap.test('immutable guard', (t) => {
   t.throws(() => {
     headers.delete('asd')
   })
-  t.equals(headers.get('key'), 'val')
-  t.equals(headers.has('key'), true)
+  t.equal(headers.get('key'), 'val')
+  t.equal(headers.has('key'), true)
 
   t.end()
 })
@@ -594,13 +594,13 @@ tap.test('request guard', (t) => {
   for (const name of forbiddenHeaderNames) {
     headers.set(name, '1')
     headers.append(name, '1')
-    t.equals(headers.get(name), 'v')
+    t.equal(headers.get(name), 'v')
     headers.delete(name)
-    t.equals(headers.has(name), true)
+    t.equal(headers.has(name), true)
   }
 
-  t.equals(headers.get('set-cookie'), 'val')
-  t.equals(headers.has('set-cookie'), true)
+  t.equal(headers.get('set-cookie'), 'val')
+  t.equal(headers.has('set-cookie'), true)
 
   t.end()
 })
@@ -614,13 +614,13 @@ tap.test('response guard', (t) => {
   for (const name of forbiddenResponseHeaderNames) {
     headers.set(name, '1')
     headers.append(name, '1')
-    t.equals(headers.get(name), 'v')
+    t.equal(headers.get(name), 'v')
     headers.delete(name)
-    t.equals(headers.has(name), true)
+    t.equal(headers.has(name), true)
   }
 
-  t.equals(headers.get('keep-alive'), 'val')
-  t.equals(headers.has('keep-alive'), true)
+  t.equal(headers.get('keep-alive'), 'val')
+  t.equal(headers.has('keep-alive'), true)
 
   t.end()
 })
