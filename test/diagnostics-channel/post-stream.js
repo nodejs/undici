@@ -13,7 +13,7 @@ try {
 }
 
 const { Client } = require('../..')
-const { createServer, request } = require('http')
+const { createServer } = require('http')
 
 t.plan(16)
 
@@ -33,7 +33,7 @@ const reqHeaders = {
   foo: undefined,
   bar: 'bar'
 }
-let body = Readable.from(['hello', ' ', 'world'])
+const body = Readable.from(['hello', ' ', 'world'])
 
 let _req
 diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {

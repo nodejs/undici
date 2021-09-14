@@ -7,12 +7,12 @@ const {
   binarySearch,
   normalizeAndValidateHeaderName,
   normalizeAndValidateHeaderValue,
-  fill,
+  fill
 } = require('../../lib/fetch/headers')
 const { kHeadersList } = require('../../lib/core/symbols')
 const {
   InvalidHTTPTokenError,
-  HTTPInvalidHeaderValueError,
+  HTTPInvalidHeaderValueError
 } = require('../../lib/core/errors')
 const { kGuard } = require('../../lib/fetch/symbols')
 const {

@@ -12,7 +12,7 @@ try {
 }
 
 const { Client } = require('../..')
-const { createServer, request } = require('http')
+const { createServer } = require('http')
 
 t.plan(14)
 
