@@ -166,6 +166,34 @@ Only supported on Node 16+.
 
 This is [experimental](https://nodejs.org/api/documentation.html#documentation_stability_index) and is not yet fully compliant with the Fetch Standard. We plan to ship breaking changes to this feature until it is out of experimental.
 
+Basic usage example:
+
+```
+    import {fetch} from 'undici';
+    
+    // Promises
+    fetch('https://example.com')
+    .then(res => res.json())
+    .then(json => console.log(json))
+    
+    // Async/Await
+    const res = await fetch('https://example.com')
+    const json = await res.json()
+```
+
+#### `response.body`
+
+Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v16.x/docs/api/webstreams.html) which follow the API of the WHATWG web standard found in browsers, and an older Node-specific [streams API](https://nodejs.org/api/stream.html). `response.body` returns a web stream. If you require a Node stream, it is possible to convert between the two using `.fromWeb()`. 
+
+```
+    import {fetch} from 'undici';
+    
+    async function fetchStream() {
+    const response = await fetch('https://example.com')
+    const stream = response.body;
+    }
+```
+
 #### Specification Compliance
 
 This section documents parts of the [Fetch Standard](https://fetch.spec.whatwg.org) which Undici does
