@@ -68,10 +68,6 @@ test('https://github.com/mcollina/undici/issues/810 no pipelining', (t) => {
         // t.fail() FIX: Should fail.
         t.pass()
       })
-      // .on('error', err => {
-      //   t.equal(err.code, 'HPE_CB_MESSAGE_BEGIN')
-      //   t.type(err, errors.HTTPParserError)
-      // })
     })
   })
 })
@@ -99,10 +95,6 @@ test('https://github.com/mcollina/undici/issues/810 pipelining', (t) => {
         // t.fail() FIX: Should fail.
         t.pass()
       })
-      // .on('error', err => {
-      //   t.equal(err.code, 'HPE_CB_MESSAGE_BEGIN')
-      //   t.type(err, errors.HTTPParserError)
-      // })
     })
   })
 })
@@ -130,10 +122,6 @@ test('https://github.com/mcollina/undici/issues/810 pipelining 2', (t) => {
         // t.fail() FIX: Should fail.
         t.pass()
       })
-      // .on('error', err => {
-      //   t.equal(err.code, 'HPE_INVALID_CONSTANT')
-      //   t.type(err, errors.HTTPParserError)
-      // })
     })
 
     client.request({
