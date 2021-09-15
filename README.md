@@ -186,8 +186,8 @@ Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v1
     import {fetch} from 'undici';
     
     async function fetchStream() {
-    const response = await fetch('https://example.com')
-    const stream = response.body;
+        const response = await fetch('https://example.com')
+        const stream = response.body;
     }
 ```
 
