@@ -172,9 +172,9 @@ Basic usage example:
     import {fetch} from 'undici';
     
     async function fetchJson() {
-    const res = await fetch('https://example.com')
-    const json = await res.json()
-    console.log(json);
+        const res = await fetch('https://example.com')
+        const json = await res.json()
+        console.log(json);
     }
 ```
 
