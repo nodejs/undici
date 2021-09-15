@@ -171,19 +171,16 @@ Basic usage example:
 ```
     import {fetch} from 'undici';
     
-    // Promises
-    fetch('https://example.com')
-    .then(res => res.json())
-    .then(json => console.log(json))
-    
-    // Async/Await
+    async function fetchJson() {
     const res = await fetch('https://example.com')
     const json = await res.json()
+    console.log(json);
+    }
 ```
 
 #### `response.body`
 
-Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v16.x/docs/api/webstreams.html) which follow the API of the WHATWG web standard found in browsers, and an older Node-specific [streams API](https://nodejs.org/api/stream.html). `response.body` returns a web stream. If you require a Node stream, it is possible to convert between the two using `.fromWeb()`. 
+Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v16.x/docs/api/webstreams.html) which follow the API of the WHATWG web standard found in browsers, and an older Node-specific [streams API](https://nodejs.org/api/stream.html). `response.body` returns a readable web stream. If you require a Node stream, it is possible to convert between the two using `.fromWeb()`. 
 
 ```
     import {fetch} from 'undici';
