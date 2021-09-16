@@ -84,7 +84,7 @@ diagnosticsChannel.channel('undici:request:error').subscribe(({ request, error }
 
 This message is published right before first byte of the request is written to the socket.
 
-*Note*: It exact headers that will be sent to the server in raw foramt. 
+*Note*: It will publish the exact headers that will be sent to the server in raw foramt. 
 
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
@@ -120,7 +120,7 @@ diagnosticsChannel.channel('undici:client:write').subscribe((connectParams) => {
 })
 ```
 
-## `undici:client:error`
+## `undici:client:connect:error`
 
 This message is published if it did not succeed to create new connection
 
