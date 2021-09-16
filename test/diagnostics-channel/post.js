@@ -14,7 +14,7 @@ try {
 const { Client } = require('../..')
 const { createServer } = require('http')
 
-t.plan(16)
+t.plan(30)
 
 const server = createServer((req, res) => {
   req.resume()
@@ -43,6 +43,44 @@ diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
   request.addHeader('hello', 'world')
   t.equal(request.headers, 'bar: bar\r\nhello: world\r\n')
   t.same(request.body, Buffer.from('hello world'))
+})
+
+diagnosticsChannel.channel('undici:client:connect').subscribe((connectParams) => {
+  t.equal(Object.keys(connectParams).length, 5)
+
+  const { host, hostname, protocol, port, servername } = connectParams
+
+  t.equal(host, `localhost:${server.address().port}`)
+  t.equal(hostname, 'localhost')
+  t.equal(port, String(server.address().port))
+  t.equal(protocol, 'http:')
+  t.equal(servername, null)
+})
+
+diagnosticsChannel.channel('undici:client:connected').subscribe((connectParams) => {
+  t.equal(Object.keys(connectParams).length, 5)
+
+  const { host, hostname, protocol, port, servername } = connectParams
+
+  t.equal(host, `localhost:${server.address().port}`)
+  t.equal(hostname, 'localhost')
+  t.equal(port, String(server.address().port))
+  t.equal(protocol, 'http:')
+  t.equal(servername, null)
+})
+
+diagnosticsChannel.channel('undici:client:write').subscribe(({ request, headers }) => {
+  t.equal(_req, request)
+
+  const expectedHeaders = [
+    'POST / HTTP/1.1',
+    `host: localhost:${server.address().port}`,
+    'connection: keep-alive',
+    'bar: bar',
+    'hello: world'
+  ]
+
+  t.equal(headers, expectedHeaders.join('\r\n') + '\r\n')
 })
 
 diagnosticsChannel.channel('undici:request:headers').subscribe(({ request, response }) => {
