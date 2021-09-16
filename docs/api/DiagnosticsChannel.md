@@ -79,3 +79,55 @@ diagnosticsChannel.channel('undici:request:error').subscribe(({ request, error }
   // request is the same object undici:request:create
 })
 ```
+
+## `undici:client:write`
+
+This message is published right before first byte of the request is written to the socket.
+
+*Note*: It exact headers that will be sent to the server in raw foramt. 
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:client:write').subscribe(({ request, headers }) => {
+  // request is the same object undici:request:create
+  console.log(`Full headers list ${headers.split('\r\n')}`);
+})
+```
+
+## `undici:client:connect`
+
+This message is published before creating a new connection for **any** request. 
+You can not assume that this event is related to any specific request.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:client:write').subscribe((connectParams) => {
+  // const { host, hostname, protocol, port, servername } = connectParams
+})
+```
+
+## `undici:client:connected`
+
+This message is published after connection established.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:client:write').subscribe((connectParams) => {
+  // const { host, hostname, protocol, port, servername } = connectParams
+})
+```
+
+## `undici:client:error`
+
+This message is published if it did not succeed to create new connection
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:client:write').subscribe(({ error, ...connectParams }) => {
+  // const { host, hostname, protocol, port, servername } = connectParams
+  console.log(`Connect failed with ${error.message}`)
+})
