@@ -80,7 +80,7 @@ diagnosticsChannel.channel('undici:request:error').subscribe(({ request, error }
 })
 ```
 
-## `undici:client:write`
+## `undici:client:sendHeaders`
 
 This message is published right before first byte of the request is written to the socket.
 
@@ -89,13 +89,13 @@ This message is published right before first byte of the request is written to t
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:write').subscribe(({ request, headers, socket }) => {
+diagnosticsChannel.channel('undici:client:sendHeaders').subscribe(({ request, headers, socket }) => {
   // request is the same object undici:request:create
   console.log(`Full headers list ${headers.split('\r\n')}`);
 })
 ```
 
-## `undici:client:connect`
+## `undici:client:BeforeConnect`
 
 This message is published before creating a new connection for **any** request. 
 You can not assume that this event is related to any specific request.
@@ -103,7 +103,7 @@ You can not assume that this event is related to any specific request.
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:connect').subscribe((connectParams) => {
+diagnosticsChannel.channel('undici:client:beforeConnect').subscribe((connectParams) => {
   // const { host, hostname, protocol, port, servername } = connectParams
 })
 ```
@@ -120,14 +120,14 @@ diagnosticsChannel.channel('undici:client:connected').subscribe((socket, ...conn
 })
 ```
 
-## `undici:client:connect:error`
+## `undici:client:connectError`
 
 This message is published if it did not succeed to create new connection
 
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:connect:error').subscribe(({ error, socket, ...connectParams }) => {
+diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, socket, ...connectParams }) => {
   // const { host, hostname, protocol, port, servername } = connectParams
   console.log(`Connect failed with ${error.message}`)
 })

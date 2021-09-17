@@ -17,7 +17,7 @@ t.plan(14)
 
 const connectError = new Error('custom error')
 
-diagnosticsChannel.channel('undici:client:connect').subscribe((connectParams) => {
+diagnosticsChannel.channel('undici:client:beforeConnect').subscribe((connectParams) => {
   t.equal(Object.keys(connectParams).length, 5)
 
   const { host, hostname, protocol, port, servername } = connectParams
@@ -29,7 +29,7 @@ diagnosticsChannel.channel('undici:client:connect').subscribe((connectParams) =>
   t.equal(servername, null)
 })
 
-diagnosticsChannel.channel('undici:client:connect:error').subscribe(({ error, ...connectParams }) => {
+diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, ...connectParams }) => {
   t.equal(Object.keys(connectParams).length, 5)
 
   const { host, hostname, protocol, port, servername } = connectParams

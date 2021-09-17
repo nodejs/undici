@@ -43,7 +43,7 @@ diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
   t.equal(request.headers, 'bar: bar\r\nhello: world\r\n')
 })
 
-diagnosticsChannel.channel('undici:client:connect').subscribe((connectParams) => {
+diagnosticsChannel.channel('undici:client:beforeConnect').subscribe((connectParams) => {
   t.equal(Object.keys(connectParams).length, 5)
 
   const { host, hostname, protocol, port, servername } = connectParams
@@ -70,7 +70,7 @@ diagnosticsChannel.channel('undici:client:connected').subscribe((connectParams) 
   t.equal(servername, null)
 })
 
-diagnosticsChannel.channel('undici:client:write').subscribe(({ request, headers, socket }) => {
+diagnosticsChannel.channel('undici:client:sendHeaders').subscribe(({ request, headers, socket }) => {
   t.equal(_req, request)
   t.equal(_socket, socket)
 
