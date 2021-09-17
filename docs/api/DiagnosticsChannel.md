@@ -95,7 +95,7 @@ diagnosticsChannel.channel('undici:client:sendHeaders').subscribe(({ request, he
 })
 ```
 
-## `undici:client:BeforeConnect`
+## `undici:client:beforeConnect`
 
 This message is published before creating a new connection for **any** request. 
 You can not assume that this event is related to any specific request.
