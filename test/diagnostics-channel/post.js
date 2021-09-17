@@ -14,7 +14,7 @@ try {
 const { Client } = require('../..')
 const { createServer } = require('http')
 
-t.plan(30)
+t.plan(31)
 
 const server = createServer((req, res) => {
   req.resume()
@@ -57,10 +57,13 @@ diagnosticsChannel.channel('undici:client:connect').subscribe((connectParams) =>
   t.equal(servername, null)
 })
 
+let _socket
 diagnosticsChannel.channel('undici:client:connected').subscribe((connectParams) => {
-  t.equal(Object.keys(connectParams).length, 5)
+  t.equal(Object.keys(connectParams).length, 6)
 
-  const { host, hostname, protocol, port, servername } = connectParams
+  const { host, hostname, protocol, port, servername, socket } = connectParams
+
+  _socket = socket
 
   t.equal(host, `localhost:${server.address().port}`)
   t.equal(hostname, 'localhost')
@@ -69,8 +72,9 @@ diagnosticsChannel.channel('undici:client:connected').subscribe((connectParams) 
   t.equal(servername, null)
 })
 
-diagnosticsChannel.channel('undici:client:write').subscribe(({ request, headers }) => {
+diagnosticsChannel.channel('undici:client:write').subscribe(({ request, headers, socket }) => {
   t.equal(_req, request)
+  t.equal(_socket, socket)
 
   const expectedHeaders = [
     'POST / HTTP/1.1',

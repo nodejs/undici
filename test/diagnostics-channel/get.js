@@ -14,7 +14,7 @@ try {
 const { Client } = require('../..')
 const { createServer } = require('http')
 
-t.plan(28)
+t.plan(29)
 
 const server = createServer((req, res) => {
   res.setHeader('Content-Type', 'text/plain')
@@ -43,20 +43,6 @@ diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
   t.equal(request.headers, 'bar: bar\r\nhello: world\r\n')
 })
 
-diagnosticsChannel.channel('undici:client:write').subscribe(({ request, headers }) => {
-  t.equal(_req, request)
-
-  const expectedHeaders = [
-    'GET / HTTP/1.1',
-    `host: localhost:${server.address().port}`,
-    'connection: keep-alive',
-    'bar: bar',
-    'hello: world'
-  ]
-
-  t.equal(headers, expectedHeaders.join('\r\n') + '\r\n')
-})
-
 diagnosticsChannel.channel('undici:client:connect').subscribe((connectParams) => {
   t.equal(Object.keys(connectParams).length, 5)
 
@@ -69,16 +55,34 @@ diagnosticsChannel.channel('undici:client:connect').subscribe((connectParams) =>
   t.equal(servername, null)
 })
 
+let _socket
 diagnosticsChannel.channel('undici:client:connected').subscribe((connectParams) => {
-  t.equal(Object.keys(connectParams).length, 5)
+  t.equal(Object.keys(connectParams).length, 6)
 
-  const { host, hostname, protocol, port, servername } = connectParams
+  const { host, hostname, protocol, port, servername, socket } = connectParams
+
+  _socket = socket
 
   t.equal(host, `localhost:${server.address().port}`)
   t.equal(hostname, 'localhost')
   t.equal(port, String(server.address().port))
   t.equal(protocol, 'http:')
   t.equal(servername, null)
+})
+
+diagnosticsChannel.channel('undici:client:write').subscribe(({ request, headers, socket }) => {
+  t.equal(_req, request)
+  t.equal(_socket, socket)
+
+  const expectedHeaders = [
+    'GET / HTTP/1.1',
+    `host: localhost:${server.address().port}`,
+    'connection: keep-alive',
+    'bar: bar',
+    'hello: world'
+  ]
+
+  t.equal(headers, expectedHeaders.join('\r\n') + '\r\n')
 })
 
 diagnosticsChannel.channel('undici:request:headers').subscribe(({ request, response }) => {

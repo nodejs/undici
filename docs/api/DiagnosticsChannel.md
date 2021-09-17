@@ -89,7 +89,7 @@ This message is published right before first byte of the request is written to t
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:write').subscribe(({ request, headers }) => {
+diagnosticsChannel.channel('undici:client:write').subscribe(({ request, headers, socket }) => {
   // request is the same object undici:request:create
   console.log(`Full headers list ${headers.split('\r\n')}`);
 })
@@ -103,7 +103,7 @@ You can not assume that this event is related to any specific request.
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:write').subscribe((connectParams) => {
+diagnosticsChannel.channel('undici:client:connect').subscribe((connectParams) => {
   // const { host, hostname, protocol, port, servername } = connectParams
 })
 ```
@@ -115,7 +115,7 @@ This message is published after connection established.
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:write').subscribe((connectParams) => {
+diagnosticsChannel.channel('undici:client:connected').subscribe((socket, ...connectParams) => {
   // const { host, hostname, protocol, port, servername } = connectParams
 })
 ```
@@ -127,7 +127,7 @@ This message is published if it did not succeed to create new connection
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:write').subscribe(({ error, ...connectParams }) => {
+diagnosticsChannel.channel('undici:client:connect:error').subscribe(({ error, socket, ...connectParams }) => {
   // const { host, hostname, protocol, port, servername } = connectParams
   console.log(`Connect failed with ${error.message}`)
 })
