@@ -13,13 +13,15 @@ try {
 
 const { Client } = require('../..')
 
-t.plan(15)
+t.plan(16)
 
 const connectError = new Error('custom error')
 
-let _client
-diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectParams, client }) => {
-  _client = client
+let _connector
+diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectParams, connector }) => {
+  _connector = connector
+
+  t.equal(typeof _connector, 'function')
   t.equal(Object.keys(connectParams).length, 5)
 
   const { host, hostname, protocol, port, servername } = connectParams
@@ -31,9 +33,9 @@ diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectPa
   t.equal(servername, null)
 })
 
-diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, connectParams, client }) => {
+diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, connectParams, connector }) => {
   t.equal(Object.keys(connectParams).length, 5)
-  t.equal(_client, client)
+  t.equal(_connector, connector)
 
   const { host, hostname, protocol, port, servername } = connectParams
 

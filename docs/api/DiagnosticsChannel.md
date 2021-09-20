@@ -89,9 +89,8 @@ This message is published right before first byte of the request is written to t
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:sendHeaders').subscribe(({ request, headers, socket, client }) => {
+diagnosticsChannel.channel('undici:client:sendHeaders').subscribe(({ request, headers, socket }) => {
   // request is the same object undici:request:create
-  // client is the dispatcher object for the request
   console.log(`Full headers list ${headers.split('\r\n')}`);
 })
 ```
@@ -104,9 +103,9 @@ You can not assume that this event is related to any specific request.
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectParams, client }) => {
+diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectParams, connector }) => {
   // const { host, hostname, protocol, port, servername } = connectParams
-  // client is the dispatcher object that connects and will be used to dispatch requests
+  // connector is a function that creates the socket
 })
 ```
 
@@ -117,9 +116,9 @@ This message is published after connection established.
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:connected').subscribe(({ socket, connectParams, client }) => {
+diagnosticsChannel.channel('undici:client:connected').subscribe(({ socket, connectParams, connector }) => {
   // const { host, hostname, protocol, port, servername } = connectParams
-  // client is the dispatcher object that connects and will be used to dispatch requests
+ // connector is a function that creates the socket
 })
 ```
 
@@ -130,8 +129,8 @@ This message is published if it did not succeed to create new connection
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, socket, connectParams, client }) => {
+diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, socket, connectParams, connector }) => {
   // const { host, hostname, protocol, port, servername } = connectParams
-  // client is the dispatcher object that connects and will be used to dispatch requests
+  // connector is a function that creates the socket
   console.log(`Connect failed with ${error.message}`)
 })
