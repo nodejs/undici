@@ -23,9 +23,10 @@ if (cluster.isPrimary) {
     cluster.fork()
   }
 } else {
+  const buf = Buffer.alloc(64 * 1024, '_')
   const server = createServer((req, res) => {
     setTimeout(function () {
-      res.end('hello world')
+      res.end(buf)
     }, timeout)
   }).listen(port)
   server.keepAliveTimeout = 600e3
