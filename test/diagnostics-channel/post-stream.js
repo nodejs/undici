@@ -15,7 +15,7 @@ try {
 const { Client } = require('../..')
 const { createServer } = require('http')
 
-t.plan(31)
+t.plan(33)
 
 const server = createServer((req, res) => {
   req.resume()
@@ -47,7 +47,10 @@ diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
   t.same(request.body, body)
 })
 
-diagnosticsChannel.channel('undici:client:beforeConnect').subscribe((connectParams) => {
+let _client
+diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectParams, client }) => {
+  _client = client
+
   t.equal(Object.keys(connectParams).length, 5)
 
   const { host, hostname, protocol, port, servername } = connectParams
@@ -60,12 +63,13 @@ diagnosticsChannel.channel('undici:client:beforeConnect').subscribe((connectPara
 })
 
 let _socket
-diagnosticsChannel.channel('undici:client:connected').subscribe((connectParams) => {
-  t.equal(Object.keys(connectParams).length, 6)
-
-  const { host, hostname, protocol, port, servername, socket } = connectParams
-
+diagnosticsChannel.channel('undici:client:connected').subscribe(({ connectParams, socket, client }) => {
   _socket = socket
+
+  t.equal(Object.keys(connectParams).length, 5)
+  t.equal(_client, client)
+
+  const { host, hostname, protocol, port, servername } = connectParams
 
   t.equal(host, `localhost:${server.address().port}`)
   t.equal(hostname, 'localhost')
@@ -74,9 +78,10 @@ diagnosticsChannel.channel('undici:client:connected').subscribe((connectParams) 
   t.equal(servername, null)
 })
 
-diagnosticsChannel.channel('undici:client:sendHeaders').subscribe(({ request, headers, socket }) => {
+diagnosticsChannel.channel('undici:client:sendHeaders').subscribe(({ request, headers, socket, client }) => {
   t.equal(_req, request)
   t.equal(_socket, socket)
+  t.equal(_client, client)
 
   const expectedHeaders = [
     'POST / HTTP/1.1',
