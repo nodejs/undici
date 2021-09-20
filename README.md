@@ -180,22 +180,17 @@ Basic usage example:
 
 #### `response.body`
 
-Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v16.x/docs/api/webstreams.html) which follow the API of the WHATWG web standard found in browsers, and an older Node-specific [streams API](https://nodejs.org/api/stream.html). `response.body` returns a readable web stream.
+Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v16.x/docs/api/webstreams.html) which follow the API of the WHATWG web standard found in browsers, and an older Node-specific [streams API](https://nodejs.org/api/stream.html). `response.body` returns a readable web stream. If you would prefer to work with a Node stream you can convert a web stream using `.fromWeb()`. 
 
 ```
     import {fetch} from 'undici';
-    
+    import {Readable} from 'node:stream';
+
     async function fetchStream() {
         const response = await fetch('https://example.com')
-        const stream = response.body;
+        const readableWebStream = response.body;
+        const readableNodeStream = Readable.fromWeb(readableWebStream);
     }
-```
-
-If you require a Node stream, it is possible to convert between the two using `.fromWeb()`. 
-
-```
-import {Readable} from 'node:stream';
-const readableNodeStream = Readable.fromWeb(response.body);
 ```
 
 #### Specification Compliance
