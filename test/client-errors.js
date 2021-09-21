@@ -3,7 +3,10 @@
 const { test } = require('tap')
 const { Client, Pool, errors } = require('..')
 const { createServer } = require('http')
+const https = require('https')
+const pem = require('https-pem')
 const net = require('net')
+const tls = require('tls')
 const { Readable } = require('stream')
 
 const { kSocket } = require('../lib/core/symbols')
@@ -1172,6 +1175,52 @@ test('headers overflow', t => {
       t.ok(err)
       t.equal(err.code, 'UND_ERR_HEADERS_OVERFLOW')
       t.end()
+    })
+  })
+})
+
+test('SocketError should expose socket details (net)', (t) => {
+  t.plan(2)
+
+  const server = createServer()
+
+  server.once('request', (req, res) => {
+    res.destroy()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.ok(err instanceof errors.SocketError)
+      t.ok(err.socket instanceof net.Socket)
+    })
+  })
+})
+
+test('SocketError should expose socket details (tls)', (t) => {
+  t.plan(2)
+
+  const server = https.createServer(pem)
+
+  server.once('request', (req, res) => {
+    res.destroy()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      tls: {
+        rejectUnauthorized: false
+      }
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.ok(err instanceof errors.SocketError)
+      t.ok(err.socket instanceof tls.TLSSocket)
     })
   })
 })
