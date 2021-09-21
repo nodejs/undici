@@ -98,7 +98,7 @@ export declare class FormData {
   /**
    * Executes given callback function for each field of the FormData instance
    */
-  forEach(fn: (value: FormDataEntryValue, key: string, fd: FormData) => void, ctx?: unknown): void
+  forEach(callback: (value: FormDataEntryValue, key: string, formData: FormData) => void, ctx?: unknown): void
 
   readonly [Symbol.toStringTag]: string
 }
