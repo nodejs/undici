@@ -79,3 +79,58 @@ diagnosticsChannel.channel('undici:request:error').subscribe(({ request, error }
   // request is the same object undici:request:create
 })
 ```
+
+## `undici:client:sendHeaders`
+
+This message is published right before first byte of the request is written to the socket.
+
+*Note*: It will publish the exact headers that will be sent to the server in raw foramt. 
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:client:sendHeaders').subscribe(({ request, headers, socket }) => {
+  // request is the same object undici:request:create
+  console.log(`Full headers list ${headers.split('\r\n')}`);
+})
+```
+
+## `undici:client:beforeConnect`
+
+This message is published before creating a new connection for **any** request. 
+You can not assume that this event is related to any specific request.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectParams, connector }) => {
+  // const { host, hostname, protocol, port, servername } = connectParams
+  // connector is a function that creates the socket
+})
+```
+
+## `undici:client:connected`
+
+This message is published after connection established.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:client:connected').subscribe(({ socket, connectParams, connector }) => {
+  // const { host, hostname, protocol, port, servername } = connectParams
+ // connector is a function that creates the socket
+})
+```
+
+## `undici:client:connectError`
+
+This message is published if it did not succeed to create new connection
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, socket, connectParams, connector }) => {
+  // const { host, hostname, protocol, port, servername } = connectParams
+  // connector is a function that creates the socket
+  console.log(`Connect failed with ${error.message}`)
+})
