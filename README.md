@@ -168,7 +168,7 @@ This is [experimental](https://nodejs.org/api/documentation.html#documentation_s
 
 Basic usage example:
 
-```
+```js
     import {fetch} from 'undici';
     
     async function fetchJson() {
@@ -182,7 +182,7 @@ Basic usage example:
 
 Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v16.x/docs/api/webstreams.html) which follow the API of the WHATWG web standard found in browsers, and an older Node-specific [streams API](https://nodejs.org/api/stream.html). `response.body` returns a readable web stream. If you would prefer to work with a Node stream you can convert a web stream using `.fromWeb()`. 
 
-```
+```js
     import {fetch} from 'undici';
     import {Readable} from 'node:stream';
 
