@@ -1,3 +1,6 @@
+import { Socket } from 'net'
+import { TLSSocket } from 'tls'
+
 export = Errors
 
 declare namespace Errors {
@@ -67,6 +70,7 @@ declare namespace Errors {
   export class SocketError extends UndiciError {
     name: 'SocketError';
     code: 'UND_ERR_SOCKET';
+    socket: Socket | TLSSocket | null
   }
 
   /** Encountered unsupported functionality. */
