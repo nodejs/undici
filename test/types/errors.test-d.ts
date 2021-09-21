@@ -54,7 +54,7 @@ expectAssignable<errors.UndiciError>(new errors.SocketError())
 expectAssignable<errors.SocketError>(new errors.SocketError())
 expectAssignable<'SocketError'>(new errors.SocketError().name)
 expectAssignable<'UND_ERR_SOCKET'>(new errors.SocketError().code)
-expectAssignable<Socket | TLSSocket>(new errors.SocketError().socket)
+expectAssignable<Socket | TLSSocket | null>(new errors.SocketError().socket)
 
 expectAssignable<errors.UndiciError>(new errors.NotSupportedError())
 expectAssignable<errors.NotSupportedError>(new errors.NotSupportedError())

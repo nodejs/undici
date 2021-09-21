@@ -24,3 +24,4 @@ import { errors } from 'undici'
 ### `SocketError`
 
 The `SocketError` has a `.socket` property which holds the instance of the `Socket` or `TLSSocket` that caused the error.
+Be aware that in some cases the `.socket` property can be `null`.
