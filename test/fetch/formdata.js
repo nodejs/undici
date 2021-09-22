@@ -82,8 +82,8 @@ test('append file', (t) => {
 
   t.equal(form.has('asd'), true)
   t.equal(form.has('asd2'), true)
-  t.equal(form.get('asd').filename, 'asd2')
-  t.equal(form.get('asd2').filename, 'asd2')
+  t.equal(form.get('asd').name, 'asd2')
+  t.equal(form.get('asd2').name, 'asd2')
   form.delete('asd')
   t.equal(form.get('asd'), null)
   t.equal(form.has('asd2'), true)

@@ -12,7 +12,7 @@ test('args validation', (t) => {
   t.plan(2)
 
   t.throws(() => {
-    File.prototype.filename.call(null)
+    File.prototype.name.call(null)
   }, TypeError)
   t.throws(() => {
     File.prototype.lastModified.call(null)
