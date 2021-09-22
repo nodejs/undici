@@ -6,7 +6,6 @@ const { createServer } = require('http')
 const https = require('https')
 const pem = require('https-pem')
 const net = require('net')
-const tls = require('tls')
 const { Readable } = require('stream')
 
 const { kSocket } = require('../lib/core/symbols')
@@ -1180,7 +1179,7 @@ test('headers overflow', t => {
 })
 
 test('SocketError should expose socket details (net)', (t) => {
-  t.plan(2)
+  t.plan(8)
 
   const server = createServer()
 
@@ -1195,13 +1194,19 @@ test('SocketError should expose socket details (net)', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.ok(err instanceof errors.SocketError)
-      t.ok(err.socket instanceof net.Socket)
+      t.equal(err.socket.remoteFamily, 'IPv4')
+      t.equal(err.socket.localAddress, '127.0.0.1')
+      t.equal(err.socket.remoteAddress, '127.0.0.1')
+      t.type(err.socket.localPort, 'number')
+      t.type(err.socket.remotePort, 'number')
+      t.type(err.socket.bytesWritten, 'number')
+      t.type(err.socket.bytesRead, 'number')
     })
   })
 })
 
 test('SocketError should expose socket details (tls)', (t) => {
-  t.plan(2)
+  t.plan(8)
 
   const server = https.createServer(pem)
 
@@ -1220,7 +1225,13 @@ test('SocketError should expose socket details (tls)', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.ok(err instanceof errors.SocketError)
-      t.ok(err.socket instanceof tls.TLSSocket)
+      t.equal(err.socket.remoteFamily, 'IPv4')
+      t.equal(err.socket.localAddress, '127.0.0.1')
+      t.equal(err.socket.remoteAddress, '127.0.0.1')
+      t.type(err.socket.localPort, 'number')
+      t.type(err.socket.remotePort, 'number')
+      t.type(err.socket.bytesWritten, 'number')
+      t.type(err.socket.bytesRead, 'number')
     })
   })
 })

@@ -1,7 +1,6 @@
 import { expectAssignable } from 'tsd'
 import { errors } from '../..'
-import { Socket } from 'net'
-import { TLSSocket } from 'tls'
+import { SocketInfo } from '../../types/client'
 
 expectAssignable<errors.UndiciError>(new errors.UndiciError())
 
@@ -54,7 +53,7 @@ expectAssignable<errors.UndiciError>(new errors.SocketError())
 expectAssignable<errors.SocketError>(new errors.SocketError())
 expectAssignable<'SocketError'>(new errors.SocketError().name)
 expectAssignable<'UND_ERR_SOCKET'>(new errors.SocketError().code)
-expectAssignable<Socket | TLSSocket | null>(new errors.SocketError().socket)
+expectAssignable<SocketInfo | null>(new errors.SocketError().socket)
 
 expectAssignable<errors.UndiciError>(new errors.NotSupportedError())
 expectAssignable<errors.NotSupportedError>(new errors.NotSupportedError())
