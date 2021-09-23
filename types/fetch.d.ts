@@ -38,7 +38,7 @@ export interface BodyMixin {
   readonly arrayBuffer: () => Promise<ArrayBuffer>
   readonly blob: () => Promise<Blob>
   readonly formData: () => Promise<FormData>
-  readonly json: () => Promise<unknown>
+  readonly json: <T>() => Promise<T>
   readonly text: () => Promise<string>
 }
 
@@ -129,7 +129,7 @@ export declare class Request implements BodyMixin {
   readonly arrayBuffer: () => Promise<ArrayBuffer>
   readonly blob: () => Promise<Blob>
   readonly formData: () => Promise<FormData>
-  readonly json: () => Promise<unknown>
+  readonly json: <T>() => Promise<T>
   readonly text: () => Promise<string>
 
   readonly clone: () => Request
@@ -168,7 +168,7 @@ export declare class Response implements BodyMixin {
   readonly arrayBuffer: () => Promise<ArrayBuffer>
   readonly blob: () => Promise<Blob>
   readonly formData: () => Promise<FormData>
-  readonly json: () => Promise<unknown>
+  readonly json: <T>() => Promise<T>
   readonly text: () => Promise<string>
 
   readonly clone: () => Response
