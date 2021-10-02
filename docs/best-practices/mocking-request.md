@@ -37,6 +37,7 @@ setGlobalDispatcher(mockAgent);
 // Provide the base url to the request
 const mockPool = mockAgent.get('http://localhost:3000');
 
+// intercept the request
 mockPool.intercept({
   path: '/bank-transfer',
   method: 'POST',
