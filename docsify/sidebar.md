@@ -17,3 +17,4 @@
   * [Proxy](docs/best-practices/proxy.md "Connecting through a proxy")
   * [Client Certificate](docs/best-practices/client-certificate.md "Connect using a client certificate")
   * [Writing Tests](docs/best-practices/writing-tests.md "Using Undici inside tests")
+  * [Mocking Request](docs/best-practices/mocking-request.md "Using Undici inside tests")
