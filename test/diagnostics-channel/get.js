@@ -14,7 +14,7 @@ try {
 const { Client } = require('../..')
 const { createServer } = require('http')
 
-t.plan(31)
+t.plan(32)
 
 const server = createServer((req, res) => {
   res.setHeader('Content-Type', 'text/plain')
@@ -35,6 +35,7 @@ const reqHeaders = {
 let _req
 diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
   _req = request
+  t.equal(request.origin, `http://localhost:${server.address().port}`)
   t.equal(request.completed, false)
   t.equal(request.method, 'GET')
   t.equal(request.path, '/')
