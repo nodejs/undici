@@ -15,6 +15,7 @@ This message is published when a new outgoing request is created.
 import diagnosticsChannel from 'diagnostics_channel'
 
 diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
+  console.log('origin', request.origin)
   console.log('completed', request.completed)
   console.log('method', request.method)
   console.log('path', request.path)
