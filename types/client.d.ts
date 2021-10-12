@@ -1,7 +1,8 @@
 import { URL } from 'url'
 import { TlsOptions } from 'tls'
-import Dispatcher, { DispatchOptions, RequestOptions } from './dispatcher'
-import buildConnector from './connector'
+import Dispatcher = require('./dispatcher')
+import { DispatchOptions, RequestOptions } from './dispatcher'
+import buildConnector = require('./connector')
 
 export = Client
 

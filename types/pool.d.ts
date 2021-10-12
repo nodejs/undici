@@ -1,5 +1,5 @@
-import Client from './client'
-import Dispatcher from './dispatcher'
+import Client = require('./client')
+import Dispatcher = require('./dispatcher')
 import { URL } from 'url'
 
 export = Pool

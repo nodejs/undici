@@ -1,7 +1,7 @@
-import Pool from './pool'
-import MockAgent from './mock-agent'
+import Pool = require('./pool')
+import MockAgent = require('./mock-agent')
 import { Interceptable, MockInterceptor } from './mock-interceptor'
-import Dispatcher from './dispatcher'
+import Dispatcher = require('./dispatcher')
 
 export = MockPool
 

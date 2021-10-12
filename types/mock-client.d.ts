@@ -1,6 +1,6 @@
-import Client from './client'
-import Dispatcher from './dispatcher'
-import MockAgent from './mock-agent'
+import Client = require('./client')
+import Dispatcher = require('./dispatcher')
+import MockAgent = require('./mock-agent')
 import { MockInterceptor, Interceptable } from './mock-interceptor'
 
 export = MockClient
