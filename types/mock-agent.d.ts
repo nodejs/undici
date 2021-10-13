@@ -1,5 +1,5 @@
-import Agent from './agent'
-import Dispatcher from './dispatcher'
+import Agent = require('./agent')
+import Dispatcher = require('./dispatcher')
 import { Interceptable } from './mock-interceptor'
 
 export = MockAgent

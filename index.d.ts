@@ -1,14 +1,14 @@
-import Dispatcher from './types/dispatcher'
+import Dispatcher = require('./types/dispatcher')
 import { setGlobalDispatcher, getGlobalDispatcher } from './types/global-dispatcher'
-import Pool from './types/pool'
-import Client from './types/client'
-import buildConnector from './types/connector'
-import errors from './types/errors'
-import Agent from './types/agent'
-import MockClient from './types/mock-client'
-import MockPool from './types/mock-pool'
-import MockAgent from './types/mock-agent'
-import mockErrors from './types/mock-errors'
+import Pool = require('./types/pool')
+import Client = require('./types/client')
+import buildConnector = require('./types/connector')
+import errors = require('./types/errors')
+import Agent = require('./types/agent')
+import MockClient = require('./types/mock-client')
+import MockPool = require('./types/mock-pool')
+import MockAgent = require('./types/mock-agent')
+import mockErrors = require('./types/mock-errors')
 import { request, pipeline, stream, connect, upgrade } from './types/api'
 
 export * from './types/fetch'

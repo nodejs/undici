@@ -1,6 +1,6 @@
 import { URL } from 'url'
-import Dispatcher from './dispatcher'
-import Pool from './pool'
+import Dispatcher = require('./dispatcher')
+import Pool = require('./pool')
 
 export = Agent
 

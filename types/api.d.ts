@@ -1,6 +1,6 @@
 import { URL, UrlObject } from 'url'
 import { Duplex } from 'stream'
-import Dispatcher from './dispatcher'
+import Dispatcher = require('./dispatcher')
 
 export {
   request,
