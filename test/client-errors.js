@@ -1194,9 +1194,15 @@ test('SocketError should expose socket details (net)', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.ok(err instanceof errors.SocketError)
-      t.equal(err.socket.remoteFamily, 'IPv4')
-      t.equal(err.socket.localAddress, '127.0.0.1')
-      t.equal(err.socket.remoteAddress, '127.0.0.1')
+      if (err.socket.remoteFamily === 'IPv4') {
+        t.equal(err.socket.remoteFamily, 'IPv4')
+        t.equal(err.socket.localAddress, '127.0.0.1')
+        t.equal(err.socket.remoteAddress, '127.0.0.1')
+      } else {
+        t.equal(err.socket.remoteFamily, 'IPv6')
+        t.equal(err.socket.localAddress, '::1')
+        t.equal(err.socket.remoteAddress, '::1')
+      }
       t.type(err.socket.localPort, 'number')
       t.type(err.socket.remotePort, 'number')
       t.type(err.socket.bytesWritten, 'number')
@@ -1225,9 +1231,15 @@ test('SocketError should expose socket details (tls)', (t) => {
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       t.ok(err instanceof errors.SocketError)
-      t.equal(err.socket.remoteFamily, 'IPv4')
-      t.equal(err.socket.localAddress, '127.0.0.1')
-      t.equal(err.socket.remoteAddress, '127.0.0.1')
+      if (err.socket.remoteFamily === 'IPv4') {
+        t.equal(err.socket.remoteFamily, 'IPv4')
+        t.equal(err.socket.localAddress, '127.0.0.1')
+        t.equal(err.socket.remoteAddress, '127.0.0.1')
+      } else {
+        t.equal(err.socket.remoteFamily, 'IPv6')
+        t.equal(err.socket.localAddress, '::1')
+        t.equal(err.socket.remoteAddress, '::1')
+      }
       t.type(err.socket.localPort, 'number')
       t.type(err.socket.remotePort, 'number')
       t.type(err.socket.bytesWritten, 'number')
