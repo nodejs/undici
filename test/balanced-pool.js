@@ -20,7 +20,9 @@ test('upstream add/remove/get', async (t) => {
 
   t.throws(() => client.dispatch())
 
-  await client.close()
+  const p = client.close()
+  t.ok(p instanceof Promise)
+  await p
 })
 
 test('basic get', async (t) => {
