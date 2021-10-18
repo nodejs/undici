@@ -5,6 +5,7 @@
   * [Dispatcher](/docs/api/Dispatcher.md "Undici API - Dispatcher")
   * [Client](/docs/api/Client.md "Undici API - Client")
   * [Pool](/docs/api/Pool.md "Undici API - Pool")
+  * [BalancedPool](/docs/api/BalancedPool.md "Undici API - BalancedPool")
   * [Agent](/docs/api/Agent.md "Undici API - Agent")
   * [Connector](/docs/api/Connector.md "Custom connector")
   * [Errors](/docs/api/Errors.md "Undici API - Errors")

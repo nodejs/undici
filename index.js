@@ -4,6 +4,7 @@ const Client = require('./lib/client')
 const Dispatcher = require('./lib/dispatcher')
 const errors = require('./lib/core/errors')
 const Pool = require('./lib/pool')
+const BalancedPool = require('./lib/balanced-pool')
 const Agent = require('./lib/agent')
 const util = require('./lib/core/util')
 const { InvalidArgumentError } = errors
@@ -23,6 +24,7 @@ Object.assign(Dispatcher.prototype, api)
 module.exports.Dispatcher = Dispatcher
 module.exports.Client = Client
 module.exports.Pool = Pool
+module.exports.BalancedPool = BalancedPool
 module.exports.Agent = Agent
 
 module.exports.buildConnector = buildConnector
