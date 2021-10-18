@@ -1,7 +1,7 @@
 import Dispatcher = require('./types/dispatcher')
 import { setGlobalDispatcher, getGlobalDispatcher } from './types/global-dispatcher'
 import Pool = require('./types/pool')
-import BalancedPool = require('./types/balanced_pool')
+import BalancedPool = require('./types/balanced-pool')
 import Client = require('./types/client')
 import buildConnector = require('./types/connector')
 import errors = require('./types/errors')
@@ -24,7 +24,7 @@ declare function Undici(url: string, opts: Pool.Options): Pool
 declare namespace Undici {
   var Dispatcher: typeof import('./types/dispatcher')
   var Pool: typeof import('./types/pool');
-  var BalancedPool: typeof import('./types/balanced_pool');
+  var BalancedPool: typeof import('./types/balanced-pool');
   var Client: typeof import('./types/client');
   var buildConnector: typeof import('./types/connector');
   var errors: typeof import('./types/errors');
