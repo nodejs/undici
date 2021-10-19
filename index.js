@@ -91,8 +91,11 @@ module.exports.setGlobalDispatcher = setGlobalDispatcher
 module.exports.getGlobalDispatcher = getGlobalDispatcher
 
 if (nodeMajor > 16 || (nodeMajor === 16 && nodeMinor >= 5)) {
-  const fetchImpl = require('./lib/fetch')
+  let fetchImpl = null
   module.exports.fetch = async function fetch (resource, init) {
+    if (!fetchImpl) {
+      fetchImpl = require('./lib/fetch')
+    }
     const dispatcher = getGlobalDispatcher()
     return fetchImpl.call(dispatcher, resource, init)
   }
