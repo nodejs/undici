@@ -8,7 +8,7 @@ async function main() {
     headers,
     trailers,
     body
-    // send the request via the https://my.proxy.agent/ HTTP proxy
+    // send the request via the http://localhost:8000/ HTTP proxy
   } = await request('http://localhost:3000/undici')
 
   console.log('response received', statusCode)
