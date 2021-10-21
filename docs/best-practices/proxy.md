@@ -9,6 +9,8 @@ the `path` should be `path: 'http://upstream.server:port/hello?foo=bar'`.
 
 If you proxy requires basic authentication, you can send it via the `proxy-authorization` header.
 
+> In latest versions of `undici` you can use [`ProxyAgent`](docs/api/ProxyAgent.md) to avoid some settings.
+
 ### Connect without authentication
 
 ```js
