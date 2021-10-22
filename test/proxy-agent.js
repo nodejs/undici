@@ -20,7 +20,7 @@ test('should accept string and object as options', (t) => {
 })
 
 test('use proxy-agent to connect through proxy', async (t) => {
-  t.plan(5)
+  t.plan(6)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -34,6 +34,7 @@ test('use proxy-agent to connect through proxy', async (t) => {
 
   server.on('request', (req, res) => {
     t.equal(req.url, '/')
+    t.equal(req.headers.host, serverUrl, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -55,7 +56,7 @@ test('use proxy-agent to connect through proxy', async (t) => {
 })
 
 test('use proxy-agent to connect through proxy using path with params', async (t) => {
-  t.plan(5)
+  t.plan(6)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -68,6 +69,7 @@ test('use proxy-agent to connect through proxy using path with params', async (t
   })
   server.on('request', (req, res) => {
     t.equal(req.url, '/hello?foo=bar')
+    t.equal(req.headers.host, serverUrl, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -89,7 +91,7 @@ test('use proxy-agent to connect through proxy using path with params', async (t
 })
 
 test('use proxy-agent with auth', async (t) => {
-  t.plan(6)
+  t.plan(7)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -107,6 +109,7 @@ test('use proxy-agent with auth', async (t) => {
 
   server.on('request', (req, res) => {
     t.equal(req.url, '/hello?foo=bar')
+    t.equal(req.headers.host, serverUrl, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -136,7 +139,7 @@ test('use proxy-agent with auth', async (t) => {
 })
 
 test('use proxy-agent with setGlobalDispatcher', async (t) => {
-  t.plan(5)
+  t.plan(6)
   const defaultDispatcher = getGlobalDispatcher()
 
   const server = await buildServer()
@@ -154,6 +157,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
   })
   server.on('request', (req, res) => {
     t.equal(req.url, '/hello?foo=bar')
+    t.equal(req.headers.host, serverUrl, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
