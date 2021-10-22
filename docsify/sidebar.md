@@ -7,6 +7,7 @@
   * [Pool](/docs/api/Pool.md "Undici API - Pool")
   * [BalancedPool](/docs/api/BalancedPool.md "Undici API - BalancedPool")
   * [Agent](/docs/api/Agent.md "Undici API - Agent")
+  * [ProxyAgent](/docs/api/ProxyAgent.md "Undici API - ProxyAgent")
   * [Connector](/docs/api/Connector.md "Custom connector")
   * [Errors](/docs/api/Errors.md "Undici API - Errors")
   * [MockClient](/docs/api/MockClient.md "Undici API - MockClient")
