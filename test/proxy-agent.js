@@ -2,6 +2,7 @@
 
 const { test } = require('tap')
 const { request, setGlobalDispatcher, getGlobalDispatcher } = require('..')
+const url = require('url')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const ProxyAgent = require('../lib/proxy-agent')
 const { createServer } = require('http')
@@ -26,7 +27,8 @@ test('use proxy-agent to connect through proxy', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent(proxyUrl);
+  const proxyAgent = new ProxyAgent(proxyUrl)
+  const parsedOrigin = url.parse(serverUrl)
 
   proxy.on('request', () => {
     t.pass('should call proxy')
@@ -34,7 +36,7 @@ test('use proxy-agent to connect through proxy', async (t) => {
 
   server.on('request', (req, res) => {
     t.equal(req.url, '/')
-    t.equal(req.headers.host, serverUrl, 'should not use proxyUrl as host')
+    t.equal(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -63,13 +65,14 @@ test('use proxy-agent to connect through proxy using path with params', async (t
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent(proxyUrl);
+  const parsedOrigin = url.parse(serverUrl)
 
   proxy.on('request', () => {
     t.pass('should call proxy')
   })
   server.on('request', (req, res) => {
     t.equal(req.url, '/hello?foo=bar')
-    t.equal(req.headers.host, serverUrl, 'should not use proxyUrl as host')
+    t.equal(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -98,6 +101,7 @@ test('use proxy-agent with auth', async (t) => {
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent(proxyUrl);
+  const parsedOrigin = url.parse(serverUrl)
 
   proxy.authenticate = function (req, fn) {
     t.pass('authentication should be called')
@@ -109,7 +113,7 @@ test('use proxy-agent with auth', async (t) => {
 
   server.on('request', (req, res) => {
     t.equal(req.url, '/hello?foo=bar')
-    t.equal(req.headers.host, serverUrl, 'should not use proxyUrl as host')
+    t.equal(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -148,6 +152,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent(proxyUrl);
+  const parsedOrigin = url.parse(serverUrl)
   setGlobalDispatcher(proxyAgent)
 
   t.teardown(() => setGlobalDispatcher(defaultDispatcher))
@@ -157,7 +162,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
   })
   server.on('request', (req, res) => {
     t.equal(req.url, '/hello?foo=bar')
-    t.equal(req.headers.host, serverUrl, 'should not use proxyUrl as host')
+    t.equal(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })

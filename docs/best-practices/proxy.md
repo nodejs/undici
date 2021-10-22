@@ -1,6 +1,9 @@
 # Connecting through a proxy
 
-Connecting through a proxy is possible by properly configuring the `Client` or `Pool` constructor and request.
+Connecting through a proxy is possible by:
+
+- Using [AgentProxy](docs/api/ProxyAgent.md).
+- Configuring `Client` or `Pool` constructor.
 
 The proxy url should be passed to the `Client` or `Pool` constructor, while the upstream server url
 should be added to every request call in the `path`.
@@ -8,8 +11,6 @@ For instance, if you need to send a request to the `/hello` route of your upstre
 the `path` should be `path: 'http://upstream.server:port/hello?foo=bar'`.
 
 If you proxy requires basic authentication, you can send it via the `proxy-authorization` header.
-
-> In latest versions of `undici` you can use [`ProxyAgent`](docs/api/ProxyAgent.md) to avoid some settings.
 
 ### Connect without authentication
 
