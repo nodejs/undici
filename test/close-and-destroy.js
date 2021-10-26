@@ -278,6 +278,42 @@ test('close socket and reconnect after maxRequestsPerClient reached', (t) => {
   })
 })
 
+test('close socket and reconnect after maxRequestsPerClient reached (async)', (t) => {
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    res.end(req.url)
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    let connections = 0
+    server.on('connection', () => {
+      connections++
+    })
+    const client = new Client(
+      `http://localhost:${server.address().port}`,
+      { maxRequestsPerClient: 2 }
+    )
+    t.teardown(client.destroy.bind(client))
+
+    await t.resolves(
+      Promise.all([
+        makeRequest(),
+        makeRequest(),
+        makeRequest(),
+        makeRequest()
+      ])
+    )
+    t.equal(connections, 2)
+
+    function makeRequest () {
+      return client.request({ path: '/', method: 'GET' })
+    }
+  })
+})
+
 test('should not close socket when no maxRequestsPerClient is provided', (t) => {
   t.plan(5)
 
