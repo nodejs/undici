@@ -409,14 +409,14 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should treat broken redirect as ordinary response (manual)', () => {
+  it('should treat broken redirect as ordinary response (manual)', () => {
     const url = `${base}redirect/no-location`
     const options = {
       redirect: 'manual'
     }
     return fetch(url, options).then(res => {
       expect(res.url).to.equal(url)
-      expect(res.status).to.equal(301)
+      expect(res.status).to.equal(0)
       expect(res.headers.get('location')).to.be.null
     })
   })
