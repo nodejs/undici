@@ -39,6 +39,8 @@ declare namespace Client {
     strictContentLength?: boolean;
     /** @deprecated use the connect option instead */
     tls?: TlsOptions | null;
+    /** */
+    maxRequestsPerClient?: number;
   }
 
   export interface SocketInfo {
