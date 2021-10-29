@@ -93,8 +93,8 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   }))
 
   // dispatch
-  expectAssignable<void>(agent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
-  expectAssignable<void>(agent.dispatch({ origin: '', path: '', method: 'GET', maxRedirections: 1 }, {}))
+  expectAssignable<boolean>(agent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(agent.dispatch({ origin: '', path: '', method: 'GET', maxRedirections: 1 }, {}))
 
   // close
   expectAssignable<Promise<void>>(agent.close())

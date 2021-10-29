@@ -86,8 +86,8 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   }))
 
   // dispatch
-  expectAssignable<void>(pool.dispatch({ origin: '', path: '', method: 'GET' }, {}))
-  expectAssignable<void>(pool.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(pool.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(pool.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
 
   // close
   expectAssignable<Promise<void>>(pool.close())

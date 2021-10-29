@@ -21,5 +21,5 @@ expectAssignable<ProxyAgent>(
   expectAssignable<Promise<void>>(proxyAgent.close())
 
   // dispatch
-  expectAssignable<void>(proxyAgent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(proxyAgent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
 }

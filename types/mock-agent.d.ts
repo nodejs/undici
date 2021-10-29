@@ -12,7 +12,7 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   get<TInterceptable extends Interceptable>(origin: RegExp): TInterceptable;
   get<TInterceptable extends Interceptable>(origin: ((origin: string) => boolean)): TInterceptable;
   /** Dispatches a mocked request. */
-  dispatch(options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandlers): void;
+  dispatch(options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandlers): boolean;
   /** Closes the mock agent and waits for registered mock pools and clients to also close before resolving. */
   close(): Promise<void>;
   /** Disables mocking in MockAgent. */

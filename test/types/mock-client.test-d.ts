@@ -31,7 +31,7 @@ import { MockInterceptor } from '../../types/mock-interceptor'
   }))
 
   // dispatch
-  expectAssignable<void>(mockClient.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(mockClient.dispatch({ origin: '', path: '', method: 'GET' }, {}))
 
   // close
   expectAssignable<Promise<void>>(mockClient.close())
