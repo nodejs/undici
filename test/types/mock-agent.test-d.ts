@@ -39,7 +39,7 @@ expectAssignable<MockAgent>(new MockAgent({}))
   expectAssignable<void>(mockAgent.disableNetConnect())
 
   // dispatch
-  expectAssignable<void>(mockAgent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(mockAgent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
 
   // intercept
   expectAssignable<MockInterceptor>((mockAgent.get('foo')).intercept({ path: '', method: 'GET' }))

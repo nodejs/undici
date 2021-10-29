@@ -96,11 +96,11 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   }))
 
   // dispatch
-  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: 'GET' }, {}))
-  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: 'GET', headers: [] }, {}))
-  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: 'GET', headers: {} }, {}))
-  expectAssignable<void>(client.dispatch({ origin: '', path: '', method: 'GET', headers: null }, {}))
-  expectAssignable<void>(client.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(client.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(client.dispatch({ origin: '', path: '', method: 'GET', headers: [] }, {}))
+  expectAssignable<boolean>(client.dispatch({ origin: '', path: '', method: 'GET', headers: {} }, {}))
+  expectAssignable<boolean>(client.dispatch({ origin: '', path: '', method: 'GET', headers: null }, {}))
+  expectAssignable<boolean>(client.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
 
   // close
   expectAssignable<Promise<void>>(client.close())

@@ -10,12 +10,12 @@ expectAssignable<Dispatcher>(new Dispatcher())
   const dispatcher = new Dispatcher()
 
   // dispatch
-  expectAssignable<void>(dispatcher.dispatch({ path: '', method: 'GET' }, {}))
-  expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: 'GET' }, {}))
-  expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: [] }, {}))
-  expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: {} }, {}))
-  expectAssignable<void>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: null }, {}))
-  expectAssignable<void>(dispatcher.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: [] }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: {} }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: null }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
 
   // connect
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ path: '', maxRedirections: 0 }))
