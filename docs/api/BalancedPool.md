@@ -25,10 +25,6 @@ See: [`PoolOptions`](docs/api/Pool.md#parameter-pooloptions)
 
 Returns an array of upstreams that were previously added.
 
-### `BalancedPool.busy`
-
-Implements [Client.busy](docs/api/Client.md#clientbusy)
-
 ### `BalancedPool.closed`
 
 Implements [Client.closed](docs/api/Client.md#clientclosed)

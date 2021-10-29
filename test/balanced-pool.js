@@ -26,7 +26,7 @@ test('upstream add/remove/get', async (t) => {
 })
 
 test('basic get', async (t) => {
-  t.plan(17)
+  t.plan(16)
 
   let server1Called = 0
   const server1 = createServer((req, res) => {
@@ -71,7 +71,6 @@ test('basic get', async (t) => {
     t.equal('hello', await body.text())
   }
 
-  t.equal(client.busy, false)
   t.equal(server1Called, 1)
   t.equal(server2Called, 1)
 
