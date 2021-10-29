@@ -11,7 +11,7 @@ export = Dispatcher;
 /** Dispatcher is the core API used to dispatch requests. */
 declare class Dispatcher extends EventEmitter {
   /** Dispatches a request. This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this. */
-  dispatch(options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandlers): void;
+  dispatch(options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandlers): boolean;
   /** Starts two-way communications with the requested resource. */
   connect(options: Dispatcher.ConnectOptions): Promise<Dispatcher.ConnectData>;
   connect(options: Dispatcher.ConnectOptions, callback: (err: Error | null, data: Dispatcher.ConnectData) => void): void;
@@ -148,7 +148,7 @@ declare namespace Dispatcher {
   export type PipelineHandler = (data: PipelineHandlerData) => Readable;
   export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
 
-  /** 
+  /**
    * @link https://fetch.spec.whatwg.org/#body-mixin
    */
   interface BodyMixin {

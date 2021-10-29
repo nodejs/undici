@@ -177,14 +177,15 @@ try {
 ### `Dispatcher.dispatch(options, handler)`
 
 This is the low level API which all the preceding APIs are implemented on top of.
-This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this.
+This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs.
+It is primarily intended for library developers who implement higher level APIs on top of this.
 
 Arguments:
 
 * **options** `DispatchOptions`
 * **handler** `DispatchHandler`
 
-Returns: `void`
+Returns: `Boolean` - `false` if dispatcher is busy and further dispatch calls won't make any progress until the `'drain'` event has been emitted.
 
 #### Parameter: `DispatchOptions`
 
@@ -330,7 +331,7 @@ Extends: [`RequestOptions`](#parameter-requestoptions)
 * **opaque** `unknown`
 * **body** `stream.Readable`
 * **context** `object`
-* **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received. 
+* **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received.
 
 #### Example 1 - Pipeline Echo
 
@@ -413,7 +414,7 @@ Extends: [`DispatchOptions`](#parameter-dispatchoptions)
 
 * **opaque** `unknown` (optional) - Default: `null` - Used for passing through context to `ResponseData`
 * **signal** `AbortSignal | events.EventEmitter | null` (optional) - Default: `null`
-* **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received. 
+* **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received.
 
 The `RequestOptions.method` property should not be value `'CONNECT'`.
 
@@ -581,7 +582,7 @@ Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback
 * **statusCode** `number`
 * **headers** `http.IncomingHttpHeaders`
 * **opaque** `unknown`
-* **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received. 
+* **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received.
 
 #### Parameter: `StreamData`
 
