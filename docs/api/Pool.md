@@ -22,10 +22,6 @@ Extends: [`ClientOptions`](docs/api/Client.md#parameter-clientoptions)
 
 ## Instance Properties
 
-### `Pool.busy`
-
-Implements [Client.busy](docs/api/Client.md#clientbusy)
-
 ### `Pool.closed`
 
 Implements [Client.closed](docs/api/Client.md#clientclosed)

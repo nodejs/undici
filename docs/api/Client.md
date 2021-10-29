@@ -113,12 +113,6 @@ See [`Dispatcher.upgrade(options[, callback])`](docs/api/Dispatcher.md#clientupg
 
 ## Instance Properties
 
-### `Client.busy`
-
-* `boolean`
-
-`true` if pipeline is saturated or blocked. Indicates whether dispatching further requests is meaningful.
-
 ### `Client.closed`
 
 * `boolean`
@@ -161,7 +155,7 @@ const server = createServer((request, response) => {
   response.end('Hello, World!')
 }).listen()
 
-await once(server, 'listening') 
+await once(server, 'listening')
 
 const client = new Client(`http://localhost:${server.address().port}`)
 
@@ -251,7 +245,6 @@ const client = new Client(`http://localhost:${server.address().port}`)
 
 client.on('drain', () => {
   console.log('drain event')
-  console.log(`Is Client busy: ${client.busy}`)
   client.close()
   server.close()
 })
@@ -261,8 +254,6 @@ const requests = [
   client.request({ path: '/', method: 'GET' }),
   client.request({ path: '/', method: 'GET' })
 ]
-
-console.log(`Is Client busy: ${client.busy}`)
 
 await Promise.all(requests)
 
