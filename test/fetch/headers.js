@@ -280,7 +280,25 @@ tap.test('Headers set', t => {
 })
 
 tap.test('Headers as Iterable', t => {
-  t.plan(6)
+  t.plan(7)
+
+  t.test('should freeze values while iterating', t => {
+    t.plan(1)
+    const init = [
+      ['foo', '123'],
+      ['bar', '456']
+    ]
+    const expected = [
+      ['x-bar', '456'],
+      ['x-foo', '123']
+    ]
+    const headers = new Headers(init)
+    for (const [key, val] of headers) {
+      headers.delete(key)
+      headers.set(`x-${key}`, val)
+    }
+    t.strictSame([...headers], expected)
+  })
 
   t.test('returns combined and sorted entries using .forEach()', t => {
     t.plan(12)
