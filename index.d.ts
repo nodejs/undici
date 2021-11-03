@@ -41,4 +41,5 @@ declare namespace Undici {
   var MockPool: typeof import('./types/mock-pool');
   var MockAgent: typeof import('./types/mock-agent');
   var mockErrors: typeof import('./types/mock-errors');
+  var fetch: typeof import('./types/fetch').fetch;
 }
