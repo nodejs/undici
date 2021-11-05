@@ -8,6 +8,7 @@ import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
 
   // reply
   expectAssignable<MockScope>(mockInterceptor.reply(200, ''))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, Buffer))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}, {}))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { headers: { foo: 'bar' }}))

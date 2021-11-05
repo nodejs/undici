@@ -2,7 +2,11 @@
 
 const { test } = require('tap')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
-const { deleteMockDispatch, getMockDispatch } = require('../lib/mock/mock-utils')
+const {
+  deleteMockDispatch,
+  getMockDispatch,
+  getResponseData
+} = require('../lib/mock/mock-utils')
 
 test('deleteMockDispatch - should do nothing if not able to find mock dispatch', (t) => {
   t.plan(1)
@@ -81,5 +85,27 @@ test('getMockDispatch', (t) => {
       path: 'wrong',
       method: 'wrong'
     }), new MockNotMatchedError('Mock dispatch not matched for path \'wrong\''))
+  })
+})
+
+test('getResponseData', (t) => {
+  t.plan(3)
+
+  t.test('it should stringify objects', (t) => {
+    t.plan(1)
+    const responseData = getResponseData({ str: 'string', num: 42 })
+    t.equal(responseData, '{"str":"string","num":42}')
+  })
+
+  t.test('it should return strings untouched', (t) => {
+    t.plan(1)
+    const responseData = getResponseData('test')
+    t.equal(responseData, 'test')
+  })
+
+  t.test('it should return buffers untouched', (t) => {
+    t.plan(1)
+    const responseData = getResponseData(Buffer.from('test'))
+    t.ok(Buffer.isBuffer(responseData))
   })
 })
