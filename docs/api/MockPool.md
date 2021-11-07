@@ -62,11 +62,13 @@ Returns: `MockInterceptor` corresponding to the input options.
 
 We can define the behaviour of an intercepted request with the following options.
 
-* **reply** `(statusCode: number, replyData: string | object, responseOptions?: MockResponseOptions) => MockScope` - define a reply for a matching request. Default for `responseOptions` is `{}`.
+* **reply** `(statusCode: number, replyData: string | Buffer | object, responseOptions?: MockResponseOptions) => MockScope` - define a reply for a matching request. Default for `responseOptions` is `{}`.
 * **replyWithError** `(error: Error) => MockScope` - define an error for a matching request to throw.
 * **defaultReplyHeaders** `(headers: Record<string, string>) => MockInterceptor` - define default headers to be included in subsequent replies. These are in addition to headers on a specific reply.
 * **defaultReplyTrailers** `(trailers: Record<string, string>) => MockInterceptor` - define default trailers to be included in subsequent replies. These are in addition to trailers on a specific reply.
 * **replyContentLength** `() => MockInterceptor` - define automatically calculated `content-length` headers to be included in subsequent replies.
+
+The reply data of an intercepted request may either be a string, buffer, or JavaScript object. Objects are converted to JSON while strings and buffers are sent as-is.
 
 By default, `reply` and `replyWithError` define the behaviour for the first matching request only. Subsequent requests will not be affected (this can be changed using the returned `MockScope`).
 
