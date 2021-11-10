@@ -791,11 +791,11 @@ Emitted when dispatcher is no longer busy.
 
 * `http.IncomingHttpHeaders | string[] | null`
 
-Header arguments such as `options.headers` in [`Client.dispatch`](./Client.md#client-dispatchoptions-handlers) can be specified in two forms; either as an object specified by the `http.IncomingHttpHeaders` type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
+Header arguments such as `options.headers` in [`Client.dispatch`](docs/api/Client.md#clientdispatchoptions-handlers) can be specified in two forms; either as an object specified by the `http.IncomingHttpHeaders` type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
 
 Keys are lowercase and values are not modified.
 
-Response headers will derive a `host` from the `url` of the [Client](#class-client) instance if no `host` header was previously specified.
+Response headers will derive a `host` from the `url` of the [Client](docs/api/Client.md#class-client) instance if no `host` header was previously specified.
 
 ### Example 1 - Object
 

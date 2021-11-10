@@ -44,11 +44,11 @@ Implements: [`MockPool.close()`](docs/api/MockPool.md#mockpoolclose)
 
 ### `MockClient.dispatch(options, handlers)`
 
-Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
+Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#dispatcherdispatchoptions-handler).
 
 ### `MockClient.request(options[, callback])`
 
-See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
+See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#dispatcherrequestoptions-callback).
 
 #### Example - MockClient request
 

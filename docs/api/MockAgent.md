@@ -318,7 +318,7 @@ Implements [`Agent.dispatch(options, handlers)`](docs/api/Agent.md#parameter-age
 
 ### `MockAgent.request(options[, callback])`
 
-See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
+See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#dispatcherrequestoptions-callback).
 
 #### Example - MockAgent request
 

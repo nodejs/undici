@@ -29,25 +29,25 @@ An Undici [Client](docs/api/Client.md) can be best described as a state machine.
 
 ### idle
 
-The **idle** state is the initial state of a `Client` instance. While an `origin` is required for instantiating a `Client` instance, the underlying socket connection will not be established until a request is queued using [`Client.dispatch()`](docs/api/Client.md#clientdispatchoptions-handlers). By calling `Client.dispatch()` directly or using one of the multiple implementations ([`Client.connect()`](docs/api/Client.md#clientconnectoptions--callback), [`Client.pipeline()`](docs/api/Client.md#clientpipelineoptions-handler), [`Client.request()`](docs/api/Client.md#clientrequestoptions--callback), [`Client.stream()`](docs/api/Client.md#clientstreamoptions-factory--callback), and [`Client.upgrade()`](docs/api/Client.md#clientupgradeoptions-callback)), the `Client` instance will transition from **idle** to [**pending**](#pending) and then most likely directly to [**processing**](#processing).
+The **idle** state is the initial state of a `Client` instance. While an `origin` is required for instantiating a `Client` instance, the underlying socket connection will not be established until a request is queued using [`Client.dispatch()`](docs/api/Client.md#clientdispatchoptions-handlers). By calling `Client.dispatch()` directly or using one of the multiple implementations ([`Client.connect()`](docs/api/Client.md#clientconnectoptions-callback), [`Client.pipeline()`](docs/api/Client.md#clientpipelineoptions-handler), [`Client.request()`](docs/api/Client.md#clientrequestoptions-callback), [`Client.stream()`](docs/api/Client.md#clientstreamoptions-factory-callback), and [`Client.upgrade()`](docs/api/Client.md#clientupgradeoptions-callback)), the `Client` instance will transition from **idle** to [**pending**](#pending) and then most likely directly to [**processing**](#processing).
 
-Calling [`Client.close()`](docs/api/Client.md#clientclose-callback-) or [`Client.destroy()`](docs/api/Client.md#clientdestroyerror) transitions directly to the [**destroyed**](#destroyed) state since the `Client` instance will have no queued requests in this state.
+Calling [`Client.close()`](docs/api/Client.md#clientclosecallback) or [`Client.destroy()`](docs/api/Client.md#clientdestroyerror-callback) transitions directly to the [**destroyed**](#destroyed) state since the `Client` instance will have no queued requests in this state.
 
 ### pending
 
 The **pending** state signifies a non-processing `Client`. Upon entering this state, the `Client` establishes a socket connection and emits the [`'connect'`](docs/api/Client.md#event-connect) event signalling a connection was successfully established with the `origin` provided during `Client` instantiation. The internal queue is initially empty, and requests can start queueing.
 
-Calling [`Client.close()`](docs/api/Client.md#clientclose-callback-) with queued requests, transitions the `Client` to the [**processing**](#processing) state. Without queued requests, it transitions to the [**destroyed**](#destroyed) state.
+Calling [`Client.close()`](docs/api/Client.md#clientclosecallback) with queued requests, transitions the `Client` to the [**processing**](#processing) state. Without queued requests, it transitions to the [**destroyed**](#destroyed) state.
 
-Calling [`Client.destroy()`](docs/api/Client.md#clientdestroyerror) transitions directly to the [**destroyed**](#destroyed) state regardless of existing requests.
+Calling [`Client.destroy()`](docs/api/Client.md#clientdestroyerror-callback) transitions directly to the [**destroyed**](#destroyed) state regardless of existing requests.
 
 ### processing
 
-The **processing** state is a state machine within itself. It initializes to the [**processing.running**](#running) state. The [`Client.dispatch()`](docs/api/Client.md#clientdispatchoptions-handlers), [`Client.close()`](docs/api/Client.md#clientclose-callback-), and [`Client.destroy()`](docs/api/Client.md#clientdestroyerror) can be called at any time while the `Client` is in this state. `Client.dispatch()` will add more requests to the queue while existing requests continue to be processed. `Client.close()` will transition to the [**processing.closing**](#closing) state. And `Client.destroy()` will transition to [**destroyed**](#destroyed).
+The **processing** state is a state machine within itself. It initializes to the [**processing.running**](#running) state. The [`Client.dispatch()`](docs/api/Client.md#clientdispatchoptions-handlers), [`Client.close()`](docs/api/Client.md#clientclosecallback), and [`Client.destroy()`](docs/api/Client.md#clientdestroyerror-callback) can be called at any time while the `Client` is in this state. `Client.dispatch()` will add more requests to the queue while existing requests continue to be processed. `Client.close()` will transition to the [**processing.closing**](#closing) state. And `Client.destroy()` will transition to [**destroyed**](#destroyed).
 
 #### running
 
-In the **processing.running** sub-state, queued requests are being processed in a FIFO order. If a request body requires draining, the *needDrain* event transitions to the [**processing.busy**](#busy) sub-state. The *close* event transitions the Client to the [**process.closing**](#closing) sub-state. If all queued requests are processed and neither [`Client.close()`](docs/api/Client.md#clientclose-callback-) nor [`Client.destroy()`](docs/api/Client.md#clientdestroyerror) are called, then the [**processing**](#processing) machine will trigger a *keepalive* event transitioning the `Client` back to the [**pending**](#pending) state. During this time, the `Client` is waiting for the socket connection to timeout, and once it does, it triggers the *timeout* event and transitions to the [**idle**](#idle) state.
+In the **processing.running** sub-state, queued requests are being processed in a FIFO order. If a request body requires draining, the *needDrain* event transitions to the [**processing.busy**](#busy) sub-state. The *close* event transitions the Client to the [**process.closing**](#closing) sub-state. If all queued requests are processed and neither [`Client.close()`](docs/api/Client.md#clientclosecallback) nor [`Client.destroy()`](docs/api/Client.md#clientdestroyerror-callback) are called, then the [**processing**](#processing) machine will trigger a *keepalive* event transitioning the `Client` back to the [**pending**](#pending) state. During this time, the `Client` is waiting for the socket connection to timeout, and once it does, it triggers the *timeout* event and transitions to the [**idle**](#idle) state.
 
 #### busy
 
@@ -55,7 +55,7 @@ This sub-state is only entered when a request body is an instance of [Stream](ht
 
 #### closing
 
-This sub-state is only entered when a `Client` instance has queued requests and the [`Client.close()`](docs/api/Client.md#clientclose-callback-) method is called. In this state, the `Client` instance continues to process requests as usual, with the one exception that no additional requests can be queued. Once all of the queued requests are processed, the `Client` will trigger the *done* event gracefully entering the [**destroyed**](#destroyed) state without an error.
+This sub-state is only entered when a `Client` instance has queued requests and the [`Client.close()`](docs/api/Client.md#clientclosecallback) method is called. In this state, the `Client` instance continues to process requests as usual, with the one exception that no additional requests can be queued. Once all of the queued requests are processed, the `Client` will trigger the *done* event gracefully entering the [**destroyed**](#destroyed) state without an error.
 
 ### destroyed
 

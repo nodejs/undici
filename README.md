@@ -93,7 +93,7 @@ Arguments:
 
 * **url** `string | URL | UrlObject`
 * **options** [`RequestOptions`](./docs/api/Dispatcher.md#parameter-requestoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
   * **maxRedirections** `Integer` - Default: `0`
 
@@ -109,7 +109,7 @@ Arguments:
 
 * **url** `string | URL | UrlObject`
 * **options** [`StreamOptions`](./docs/api/Dispatcher.md#parameter-streamoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
   * **maxRedirections** `Integer` - Default: `0`
 * **factory** `Dispatcher.stream.factory`
@@ -118,7 +118,7 @@ Returns a promise with the result of the `Dispatcher.stream` method.
 
 Calls `options.dispatcher.stream(options, factory)`.
 
-See [Dispatcher.stream](docs/api/Dispatcher.md#dispatcherstream) for more details.
+See [Dispatcher.stream](docs/api/Dispatcher.md#dispatcherstreamoptions-factory-callback) for more details.
 
 ### `undici.pipeline([url, options, ]handler): Duplex`
 
@@ -126,7 +126,7 @@ Arguments:
 
 * **url** `string | URL | UrlObject`
 * **options** [`PipelineOptions`](docs/api/Dispatcher.md#parameter-pipelineoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
   * **maxRedirections** `Integer` - Default: `0`
 * **handler** `Dispatcher.pipeline.handler`
@@ -135,7 +135,7 @@ Returns: `stream.Duplex`
 
 Calls `options.dispatch.pipeline(options, handler)`.
 
-See [Dispatcher.pipeline](docs/api/Dispatcher.md#dispatcherpipeline) for more details.
+See [Dispatcher.pipeline](docs/api/Dispatcher.md#dispatcherpipelineoptions-handler) for more details.
 
 ### `undici.connect([url, options]): Promise`
 
@@ -145,7 +145,7 @@ Arguments:
 
 * **url** `string | URL | UrlObject`
 * **options** [`ConnectOptions`](docs/api/Dispatcher.md#parameter-connectoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **maxRedirections** `Integer` - Default: `0`
 * **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
 
@@ -153,7 +153,7 @@ Returns a promise with the result of the `Dispatcher.connect` method.
 
 Calls `options.dispatch.connect(options)`.
 
-See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnect) for more details.
+See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnectoptions-callback) for more details.
 
 ### `undici.fetch(input[, init]): Promise`
 
@@ -170,7 +170,7 @@ Basic usage example:
 
 ```js
     import {fetch} from 'undici';
-    
+
     async function fetchJson() {
         const res = await fetch('https://example.com')
         const json = await res.json()
@@ -180,7 +180,7 @@ Basic usage example:
 
 #### `response.body`
 
-Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v16.x/docs/api/webstreams.html) which follow the API of the WHATWG web standard found in browsers, and an older Node-specific [streams API](https://nodejs.org/api/stream.html). `response.body` returns a readable web stream. If you would prefer to work with a Node stream you can convert a web stream using `.fromWeb()`. 
+Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v16.x/docs/api/webstreams.html) which follow the API of the WHATWG web standard found in browsers, and an older Node-specific [streams API](https://nodejs.org/api/stream.html). `response.body` returns a readable web stream. If you would prefer to work with a Node stream you can convert a web stream using `.fromWeb()`.
 
 ```js
     import {fetch} from 'undici';
@@ -208,7 +208,7 @@ garbage collection in Node is less aggressive and deterministic (due to the lack
 of clear idle periods that browser have through the rendering refresh rate)
 which means that leaving the release of connection resources to the garbage collector
 can lead to excessive connection usage, reduced performance (due to less connection re-use),
-and even stalls or deadlocks when running out of connections. Therefore, it is highly 
+and even stalls or deadlocks when running out of connections. Therefore, it is highly
 recommended to always either consume or cancel the response body.
 
 ```js
@@ -234,7 +234,7 @@ Arguments:
 
 * **url** `string | URL | UrlObject`
 * **options** [`UpgradeOptions`](docs/api/Dispatcher.md#parameter-upgradeoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcherdispatcher)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **maxRedirections** `Integer` - Default: `0`
 * **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
 
