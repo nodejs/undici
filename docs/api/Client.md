@@ -77,37 +77,37 @@ const client = new Client('https://localhost:3000', {
 
 ### `Client.close([callback])`
 
-Implements [`Dispatcher.close([callback])`](docs/api/Dispatcher.md#dispatcherclosecallback-promise).
+Implements [`Dispatcher.close([callback])`](Dispatcher.md#dispatcherclosecallback-promise).
 
 ### `Client.destroy([error, callback])`
 
-Implements [`Dispatcher.destroy([error, callback])`](docs/api/Dispatcher.md#dispatcherdestroyerror-callback-promise).
+Implements [`Dispatcher.destroy([error, callback])`](Dispatcher.md#dispatcherdestroyerror-callback-promise).
 
 Waits until socket is closed before invoking the callback (or returning a promise if no callback is provided).
 
 ### `Client.connect(options[, callback])`
 
-See [`Dispatcher.connect(options[, callback])`](docs/api/Dispatcher.md#dispatcherconnectoptions-callback).
+See [`Dispatcher.connect(options[, callback])`](Dispatcher.md#dispatcherconnectoptions-callback).
 
 ### `Client.dispatch(options, handlers)`
 
-Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#dispatcherdispatchoptions-handler).
+Implements [`Dispatcher.dispatch(options, handlers)`](Dispatcher.md#dispatcherdispatchoptions-handler).
 
 ### `Client.pipeline(options, handler)`
 
-See [`Dispatcher.pipeline(options, handler)`](docs/api/Dispatcher.md#dispatcherpipelineoptions-handler).
+See [`Dispatcher.pipeline(options, handler)`](Dispatcher.md#dispatcherpipelineoptions-handler).
 
 ### `Client.request(options[, callback])`
 
-See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#dispatcherrequestoptions-callback).
+See [`Dispatcher.request(options [, callback])`](Dispatcher.md#dispatcherrequestoptions-callback).
 
 ### `Client.stream(options, factory[, callback])`
 
-See [`Dispatcher.stream(options, factory[, callback])`](docs/api/Dispatcher.md#dispatcherstreamoptions-factory-callback).
+See [`Dispatcher.stream(options, factory[, callback])`](Dispatcher.md#dispatcherstreamoptions-factory-callback).
 
 ### `Client.upgrade(options[, callback])`
 
-See [`Dispatcher.upgrade(options[, callback])`](docs/api/Dispatcher.md#dispatcherupgradeoptions-callback).
+See [`Dispatcher.upgrade(options[, callback])`](Dispatcher.md#dispatcherupgradeoptions-callback).
 
 ## Instance Properties
 
@@ -133,7 +133,7 @@ Property to get and set the pipelining factor.
 
 ### Event: `'connect'`
 
-See [Dispatcher Event: `'connect'`](docs/api/Dispatcher.md#event-connect).
+See [Dispatcher Event: `'connect'`](Dispatcher.md#event-connect).
 
 Parameters:
 
@@ -179,7 +179,7 @@ try {
 
 ### Event: `'disconnect'`
 
-See [Dispatcher Event: `'disconnect'`](docs/api/Dispatcher.md#event-disconnect).
+See [Dispatcher Event: `'disconnect'`](Dispatcher.md#event-disconnect).
 
 Parameters:
 
@@ -224,7 +224,7 @@ try {
 
 Emitted when pipeline is no longer busy.
 
-See [Dispatcher Event: `'drain'`](docs/api/Dispatcher.md#event-drain).
+See [Dispatcher Event: `'drain'`](Dispatcher.md#event-drain).
 
 #### Example - Client drain event
 
