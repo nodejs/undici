@@ -14,7 +14,7 @@ Returns: `MockAgent`
 
 ### Parameter: `MockAgentOptions`
 
-Extends: [`AgentOptions`](docs/api/Agent.md#parameter-agentoptions)
+Extends: [`AgentOptions`](Agent.md#parameter-agentoptions)
 
 * **agent** `Agent` (optional) - Default: `new Agent([options])` - a custom agent encapsulated by the MockAgent.
 
@@ -314,11 +314,11 @@ await mockAgent.close()
 
 ### `MockAgent.dispatch(options, handlers)`
 
-Implements [`Agent.dispatch(options, handlers)`](docs/api/Agent.md#parameter-agentdispatchoptions).
+Implements [`Agent.dispatch(options, handlers)`](Agent.md#parameter-agentdispatchoptions).
 
 ### `MockAgent.request(options[, callback])`
 
-See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
+See [`Dispatcher.request(options [, callback])`](Dispatcher.md#dispatcherrequestoptions-callback).
 
 #### Example - MockAgent request
 

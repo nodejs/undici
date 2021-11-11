@@ -14,7 +14,7 @@ Returns: `ProxyAgent`
 
 ### Parameter: `ProxyAgentOptions`
 
-Extends: [`AgentOptions`](docs/api/Agent.md#parameter-agentoptions)
+Extends: [`AgentOptions`](Agent.md#parameter-agentoptions)
 
 * **uri** `string` (required) - It can be passed either by a string or a object containing `uri` as string.
 
@@ -93,8 +93,8 @@ await proxyAgent.close()
 
 ### `ProxyAgent.dispatch(options, handlers)`
 
-Implements [`Agent.dispatch(options, handlers)`](docs/api/Agent.md#parameter-agentdispatchoptions).
+Implements [`Agent.dispatch(options, handlers)`](Agent.md#parameter-agentdispatchoptions).
 
 ### `ProxyAgent.request(options[, callback])`
 
-See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
+See [`Dispatcher.request(options [, callback])`](Dispatcher.md#dispatcherrequestoptions-callback).

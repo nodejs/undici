@@ -299,7 +299,7 @@ mockPool.intercept({
 }).defaultReplyTrailers({ foo: 'bar' })
   .reply(200, 'foo')
 
-const { trailers } = await request('http://localhost:3000/foo') 
+const { trailers } = await request('http://localhost:3000/foo')
 
 console.log('trailers', trailers) // trailers { foo: 'bar' }
 ```
@@ -412,11 +412,11 @@ await mockPool.close()
 
 ### `MockPool.dispatch(options, handlers)`
 
-Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
+Implements [`Dispatcher.dispatch(options, handlers)`](Dispatcher.md#dispatcherdispatchoptions-handler).
 
 ### `MockPool.request(options[, callback])`
 
-See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
+See [`Dispatcher.request(options [, callback])`](Dispatcher.md#dispatcherrequestoptions-callback).
 
 #### Example - MockPool request
 

@@ -2,7 +2,7 @@
 
 Extends: `undici.Dispatcher`
 
-A pool of [Client](docs/api/Client.md) instances connected to the same upstream target.
+A pool of [Client](Client.md) instances connected to the same upstream target.
 
 Requests are not guaranteed to be dispatched in order of invocation.
 
@@ -15,7 +15,7 @@ Arguments:
 
 ### Parameter: `PoolOptions`
 
-Extends: [`ClientOptions`](docs/api/Client.md#parameter-clientoptions)
+Extends: [`ClientOptions`](Client.md#parameter-clientoptions)
 
 * **factory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Client(origin, opts)`
 * **connections** `number | null` (optional) - Default: `null` - The number of `Client` instances to create. When set to `null`, the `Pool` instance will create an unlimited amount of `Client` instances.
@@ -24,56 +24,56 @@ Extends: [`ClientOptions`](docs/api/Client.md#parameter-clientoptions)
 
 ### `Pool.closed`
 
-Implements [Client.closed](docs/api/Client.md#clientclosed)
+Implements [Client.closed](Client.md#clientclosed)
 
 ### `Pool.destroyed`
 
-Implements [Client.destroyed](docs/api/Client.md#clientdestroyed)
+Implements [Client.destroyed](Client.md#clientdestroyed)
 
 ## Instance Methods
 
 ### `Pool.close([callback])`
 
-Implements [`Dispatcher.close([callback])`](docs/api/Dispatcher.md#clientclose-callback-).
+Implements [`Dispatcher.close([callback])`](Dispatcher.md#dispatcherclosecallback-promise).
 
 ### `Pool.destroy([error, callback])`
 
-Implements [`Dispatcher.destroy([error, callback])`](docs/api/Dispatcher.md#dispatcher-callback-).
+Implements [`Dispatcher.destroy([error, callback])`](Dispatcher.md#dispatcherdestroyerror-callback-promise).
 
 ### `Pool.connect(options[, callback])`
 
-See [`Dispatcher.connect(options[, callback])`](docs/api/Dispatcher.md#clientconnectoptions--callback).
+See [`Dispatcher.connect(options[, callback])`](Dispatcher.md#dispatcherconnectoptions-callback).
 
-### `Pool.dispatch(options, handlers)`
+### `Pool.dispatch(options, handler)`
 
-Implements [`Dispatcher.dispatch(options, handlers)`](docs/api/Dispatcher.md#clientdispatchoptions-handlers).
+Implements [`Dispatcher.dispatch(options, handler)`](Dispatcher.md#dispatcherdispatchoptions-handler).
 
 ### `Pool.pipeline(options, handler)`
 
-See [`Dispatcher.pipeline(options, handler)`](docs/api/Dispatcher.md#clientpipelineoptions-handler).
+See [`Dispatcher.pipeline(options, handler)`](Dispatcher.md#dispatcherpipelineoptions-handler).
 
 ### `Pool.request(options[, callback])`
 
-See [`Dispatcher.request(options [, callback])`](docs/api/Dispatcher.md#clientrequestoptions--callback).
+See [`Dispatcher.request(options [, callback])`](Dispatcher.md#dispatcherrequestoptions-callback).
 
 ### `Pool.stream(options, factory[, callback])`
 
-See [`Dispatcher.stream(options, factory[, callback])`](docs/api/Dispatcher.md#clientstreamoptions-factory--callback).
+See [`Dispatcher.stream(options, factory[, callback])`](Dispatcher.md#dispatcherstreamoptions-factory-callback).
 
 ### `Pool.upgrade(options[, callback])`
 
-See [`Dispatcher.upgrade(options[, callback])`](docs/api/Dispatcher.md#clientupgradeoptions-callback).
+See [`Dispatcher.upgrade(options[, callback])`](Dispatcher.md#dispatcherupgradeoptions-callback).
 
 ## Instance Events
 
 ### Event: `'connect'`
 
-See [Dispatcher Event: `'connect'`](docs/api/Dispatcher.md#event-connect).
+See [Dispatcher Event: `'connect'`](Dispatcher.md#event-connect).
 
 ### Event: `'disconnect'`
 
-See [Dispatcher Event: `'disconnect'`](docs/api/Dispatcher.md#event-connect).
+See [Dispatcher Event: `'disconnect'`](Dispatcher.md#event-disconnect).
 
 ### Event: `'drain'`
 
-See [Dispatcher Event: `'drain'`](docs/api/Dispatcher.md#event-connect).
+See [Dispatcher Event: `'drain'`](Dispatcher.md#event-drain).
