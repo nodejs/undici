@@ -47,7 +47,7 @@ Implements [`Dispatcher.dispatch(options, handler)`](Dispatcher.md#dispatcherdis
 
 #### Parameter: `AgentDispatchOptions`
 
-Extends: [`DispatchOptions``](Dispatcher.md#parameter-dispatchoptions)
+Extends: [`DispatchOptions`](Dispatcher.md#parameter-dispatchoptions)
 
 * **origin** `string | URL`
 * **maxRedirections** `Integer`.
