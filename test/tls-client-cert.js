@@ -6,6 +6,7 @@ const https = require('https')
 const { test } = require('tap')
 const { Client } = require('..')
 const { kSocket } = require('../lib/core/symbols')
+const nodeMajor = Number(process.versions.node.split('.')[0])
 
 const serverOptions = {
   ca: [
@@ -17,7 +18,7 @@ const serverOptions = {
   rejectUnauthorized: false
 }
 
-test('Client using valid client certificate', t => {
+test('Client using valid client certificate', { skip: nodeMajor > 16 }, t => {
   t.plan(5)
 
   const server = https.createServer(serverOptions, (req, res) => {
