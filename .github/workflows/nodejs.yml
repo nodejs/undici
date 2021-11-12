@@ -9,28 +9,11 @@ on: [push, pull_request]
 jobs:
   build:
     name: Test
-    runs-on: ${{ matrix.os }}
 
-    strategy:
-      matrix:
-        node-version: [12.x, 14.x, 16.x]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
-
-    - name: Install
-      run: |
-        npm install
-
-    - name: Test
-      run: |
-        npm run coverage:ci
-
-    - name: Coverage Report
-      uses: codecov/codecov-action@v2
+    uses: pkgjs/action/.github/workflows/node-test.yaml@main
+    with:
+      runs-on: ubuntu-latest, windows-latest, macOS-latest
+      test-command: npm run coverage:ci
+      post-test-steps: |
+        - name: Coverage Report
+          uses: codecov/codecov-action@v2

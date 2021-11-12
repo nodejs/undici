@@ -15,7 +15,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
-          node-version: 16
+          node-version: lts/*
       - name: Install Modules
         run: npm i
       - name: Run Benchmark
@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
-          node-version: 16
+          node-version: lts/*
       - name: Install Modules
         run: npm i
       - name: Run Benchmark
