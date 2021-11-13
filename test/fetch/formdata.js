@@ -119,3 +119,81 @@ test('append string', (t) => {
   t.equal(form.get('asd'), null)
   t.end()
 })
+
+test('formData.entries', (t) => {
+  t.plan(2)
+  const form = new FormData()
+
+  t.test('with 0 entries', (t) => {
+    t.plan(1)
+
+    const entries = [...form.entries()]
+    t.same(entries, [])
+  })
+
+  t.test('with 1+ entries', (t) => {
+    t.plan(2)
+
+    form.set('k1', 'v1')
+    form.set('k2', 'v2')
+
+    const entries = [...form.entries()]
+    const entries2 = [...form.entries()]
+    t.same(entries, [['k1', 'v1'], ['k2', 'v2']])
+    t.same(entries, entries2)
+  })
+})
+
+test('formData.keys', (t) => {
+  t.plan(2)
+  const form = new FormData()
+
+  t.test('with 0 keys', (t) => {
+    t.plan(1)
+
+    const keys = [...form.entries()]
+    t.same(keys, [])
+  })
+
+  t.test('with 1+ keys', (t) => {
+    t.plan(2)
+
+    form.set('k1', 'v1')
+    form.set('k2', 'v2')
+
+    const keys = [...form.keys()]
+    const keys2 = [...form.keys()]
+    t.same(keys, ['k1', 'k2'])
+    t.same(keys, keys2)
+  })
+})
+
+test('formData.values', (t) => {
+  t.plan(2)
+  const form = new FormData()
+
+  t.test('with 0 values', (t) => {
+    t.plan(1)
+
+    const values = [...form.values()]
+    t.same(values, [])
+  })
+
+  t.test('with 1+ values', (t) => {
+    t.plan(2)
+
+    form.set('k1', 'v1')
+    form.set('k2', 'v2')
+
+    const values = [...form.values()]
+    const values2 = [...form.values()]
+    t.same(values, ['v1', 'v2'])
+    t.same(values, values2)
+  })
+})
+
+test('formData toStringTag', (t) => {
+  const form = new FormData()
+  t.equal(form[Symbol.toStringTag], 'FormData')
+  t.end()
+})
