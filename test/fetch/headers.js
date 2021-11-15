@@ -10,10 +10,6 @@ const {
   fill
 } = require('../../lib/fetch/headers')
 const { kHeadersList } = require('../../lib/core/symbols')
-const {
-  InvalidHTTPTokenError,
-  HTTPInvalidHeaderValueError
-} = require('../../lib/core/errors')
 const { kGuard } = require('../../lib/fetch/symbols')
 const {
   forbiddenHeaderNames,
@@ -489,12 +485,12 @@ tap.test('arg validation', (t) => {
   // normalizeAndValidateHeaderName
   t.throws(() => {
     normalizeAndValidateHeaderName()
-  }, InvalidHTTPTokenError)
+  }, TypeError)
 
   // normalizeAndValidateHeaderValue
   t.throws(() => {
     normalizeAndValidateHeaderValue()
-  }, HTTPInvalidHeaderValueError)
+  }, TypeError)
 
   // fill
   t.throws(() => {
