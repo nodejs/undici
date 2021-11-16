@@ -2,6 +2,7 @@
 
 const { test } = require('tap')
 const { FormData, File } = require('../../')
+const { Blob: ThirdPartyBlob } = require('formdata-node')
 const { Blob } = require('buffer')
 
 test('arg validation', (t) => {
@@ -95,6 +96,18 @@ test('append file', (t) => {
 test('append blob', async (t) => {
   const form = new FormData()
   form.set('asd', new Blob(['asd1']))
+
+  t.equal(form.has('asd'), true)
+  t.equal(await form.get('asd').text(), 'asd1')
+  form.delete('asd')
+  t.equal(form.get('asd'), null)
+
+  t.end()
+})
+
+test('append third-party blob', async (t) => {
+  const form = new FormData()
+  form.set('asd', new ThirdPartyBlob(['asd1']))
 
   t.equal(form.has('asd'), true)
   t.equal(await form.get('asd').text(), 'asd1')
