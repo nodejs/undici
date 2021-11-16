@@ -217,13 +217,11 @@ describe('Response', () => {
 
   it('should support undefined status', () => {
     const res = new Response(null, { status: undefined })
-    expect(res.status).to.equal(200);
-  });
-
+    expect(res.status).to.equal(200)
+  })
 
   it('should support undefined statusText', () => {
     const res = new Response(null, { statusText: undefined })
-    expect(res.statusText).to.equal("")
-  });
-
+    expect(res.statusText).to.equal('')
+  })
 })

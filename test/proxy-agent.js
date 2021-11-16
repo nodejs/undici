@@ -64,7 +64,7 @@ test('use proxy-agent to connect through proxy using path with params', async (t
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent(proxyUrl);
+  const proxyAgent = new ProxyAgent(proxyUrl)
   const parsedOrigin = url.parse(serverUrl)
 
   proxy.on('request', () => {
@@ -100,7 +100,7 @@ test('use proxy-agent with auth', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent(proxyUrl);
+  const proxyAgent = new ProxyAgent(proxyUrl)
   const parsedOrigin = url.parse(serverUrl)
 
   proxy.authenticate = function (req, fn) {
@@ -151,7 +151,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent(proxyUrl);
+  const proxyAgent = new ProxyAgent(proxyUrl)
   const parsedOrigin = url.parse(serverUrl)
   setGlobalDispatcher(proxyAgent)
 

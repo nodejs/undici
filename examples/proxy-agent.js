@@ -4,7 +4,7 @@ const { request, setGlobalDispatcher, ProxyAgent } = require('../')
 
 setGlobalDispatcher(new ProxyAgent('http://localhost:8000/'))
 
-async function main() {
+async function main () {
   const {
     statusCode,
     headers,
