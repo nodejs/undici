@@ -19,6 +19,17 @@
       "author": true
     }
   ],
+  "keywords": [
+    "fetch",
+    "http",
+    "https",
+    "promise",
+    "request",
+    "curl",
+    "wget",
+    "xhr",
+    "whatwg"
+  ],
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
