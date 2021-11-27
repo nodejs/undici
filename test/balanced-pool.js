@@ -102,10 +102,10 @@ test('connect/disconnect event(s)', (t) => {
     })
     t.teardown(pool.close.bind(pool))
 
-    pool.on('connect', (origin, [pool, client]) => {
+    pool.on('connect', (origin, [pool, pool2, client]) => {
       t.equal(client instanceof Client, true)
     })
-    pool.on('disconnect', (origin, [pool, client], error) => {
+    pool.on('disconnect', (origin, [pool, pool2, client], error) => {
       t.ok(client instanceof Client)
       t.type(error, errors.InformationalError)
       t.equal(error.code, 'UND_ERR_INFO')
