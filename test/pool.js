@@ -380,7 +380,7 @@ test('busy', (t) => {
         })
       })
       t.equal(client[kPending], n)
-      t.equal(client[kBusy], n >= 2)
+      t.equal(client[kBusy], n > 2)
       t.equal(client[kSize], n)
       t.equal(client[kRunning], 0)
     }
