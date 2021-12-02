@@ -12,6 +12,36 @@ const { NotSupportedError } = require('../lib/core/errors')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
+test('request dump', (t) => {
+  t.plan(3)
+
+  const signal = new EE()
+  const server = createServer((req, res) => {
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    let dumped = false
+    client.on('disconnect', () => {
+      t.equal(dumped, true)
+    })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.dump().then(() => {
+        dumped = true
+        t.pass()
+      })
+    })
+  })
+})
+
 test('request abort before headers', (t) => {
   t.plan(6)
 
