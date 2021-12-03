@@ -240,6 +240,27 @@ test('request json', (t) => {
   })
 })
 
+test('request long multibyte json', (t) => {
+  t.plan(1)
+
+  const obj = { asd: 'あ'.repeat(100000) }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    t.strictSame(obj, await body.json())
+  })
+})
+
 test('request text', (t) => {
   t.plan(1)
 
@@ -260,6 +281,28 @@ test('request text', (t) => {
     t.strictSame(JSON.stringify(obj), await body.text())
   })
 })
+
+test('request long multibyte text', (t) => {
+  t.plan(1)
+
+  const obj = { asd: 'あ'.repeat(100000) }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    t.strictSame(JSON.stringify(obj), await body.text())
+  })
+})
+
 
 test('request blob', { skip: nodeMajor < 16 }, (t) => {
   t.plan(2)
