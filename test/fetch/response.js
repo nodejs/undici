@@ -83,3 +83,14 @@ test('arg validation', (t) => {
 
   t.end()
 })
+
+test('response clone', (t) => {
+  // https://github.com/nodejs/undici/issues/1122
+  const response1 = new Response(null, { status: 201 })
+  const response2 = new Response(undefined, { status: 201 })
+
+  t.equal(response1.body, response1.clone().body)
+  t.equal(response2.body, response2.clone().body)
+  t.equal(response2.body, null)
+  t.end()
+})
