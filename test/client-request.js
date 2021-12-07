@@ -565,3 +565,31 @@ test('request formData', { skip: nodeMajor < 16 }, (t) => {
     }
   })
 })
+
+test('request text2', (t) => {
+  t.plan(2)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    let p = body.text()
+    let ret = ''
+    body.on('data', chunk => {
+      ret += chunk
+    }).on('end', () => {
+      t.equal(JSON.stringify(obj), ret)
+    })
+    t.strictSame(JSON.stringify(obj), await p)
+  })
+})
