@@ -41,6 +41,8 @@ declare namespace Client {
     tls?: TlsOptions | null;
     /** */
     maxRequestsPerClient?: number;
+    /** An IPC endpoint, either Unix domain socket or Windows named pipe. */
+    socketPath?: string | null;
   }
 
   export interface SocketInfo {
