@@ -261,6 +261,33 @@ test('request long multibyte json', (t) => {
   })
 })
 
+test('request multibyte json with setEncoding', (t) => {
+  t.plan(1)
+
+  const asd = Buffer.from('あいうえお')
+  const data = JSON.stringify({ asd })
+  const server = createServer((req, res) => {
+    res.write(data.slice(0, 1))
+    setTimeout(() => {
+      res.write(data.slice(1))
+      res.end()
+    }, 100)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    body.setEncoding('utf8')
+    t.strictSame(JSON.parse(data), await body.json())
+  })
+})
+
 test('request text', (t) => {
   t.plan(1)
 
@@ -303,6 +330,31 @@ test('request long multibyte text', (t) => {
   })
 })
 
+test('request multibyte text with setEncoding', (t) => {
+  t.plan(1)
+
+  const data = Buffer.from('あいうえお')
+  const server = createServer((req, res) => {
+    res.write(data.slice(0, 1))
+    setTimeout(() => {
+      res.write(data.slice(1))
+      res.end()
+    }, 100)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    body.setEncoding('utf8')
+    t.strictSame(data.toString('utf8'), await body.text())
+  })
+})
 
 test('request blob', { skip: nodeMajor < 16 }, (t) => {
   t.plan(2)
