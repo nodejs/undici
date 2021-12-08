@@ -15,7 +15,6 @@ const nodeMajor = Number(process.versions.node.split('.')[0])
 test('request dump', (t) => {
   t.plan(3)
 
-  const signal = new EE()
   const server = createServer((req, res) => {
     res.end('hello')
   })
@@ -303,7 +302,6 @@ test('request long multibyte text', (t) => {
   })
 })
 
-
 test('request blob', { skip: nodeMajor < 16 }, (t) => {
   t.plan(2)
 
@@ -583,7 +581,7 @@ test('request text2', (t) => {
       path: '/',
       method: 'GET'
     })
-    let p = body.text()
+    const p = body.text()
     let ret = ''
     body.on('data', chunk => {
       ret += chunk
