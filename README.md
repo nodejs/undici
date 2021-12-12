@@ -205,6 +205,12 @@ not support or does not fully implement.
 The [Fetch Standard](https://fetch.spec.whatwg.org) allows users to skip consuming the response body by relying on
 [garbage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management#garbage_collection) to release connection resources. Undici does not do the same. Therefore, it is important to always either consume or cancel the response body.
 
+Garbage collection in Node is less aggressive and deterministic
+(due to the lack of clear idle periods that browser have through the rendering refresh rate)
+which means that leaving the release of connection resources to the garbage collector can lead
+to excessive connection usage, reduced performance (due to less connection re-use), and even
+stalls or deadlocks when running out of connections.
+
 ```js
 // Do
 const headers = await fetch(url)
