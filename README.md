@@ -289,7 +289,7 @@ pipeline requests, without checking whether the connection is persistent.
 Hence, automatic fallback to HTTP/1.0 or HTTP/1.1 without pipelining is
 not supported.
 
-Undici will immediately pipeline when retrying requests afters a failed
+Undici will immediately pipeline when retrying requests after a failed
 connection. However, Undici will not retry the first remaining requests in
 the prior pipeline and instead error the corresponding callback/promise/stream.
 
