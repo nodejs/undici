@@ -6,27 +6,15 @@ const chai = require('chai')
 const {
   fetch,
   MockAgent,
-  setGlobalDispatcher,
-  getGlobalDispatcher
+  setGlobalDispatcher
 } = require('../../index.js')
 
 const { expect } = chai
 
 describe('node-fetch with MockAgent', () => {
-  let _prevGlobalDispatcher
-  let mockAgent
-
-  before(() => {
-    _prevGlobalDispatcher = getGlobalDispatcher()
-    mockAgent = new MockAgent()
-    setGlobalDispatcher(mockAgent)
-  })
-
-  after(() => {
-    setGlobalDispatcher(_prevGlobalDispatcher)
-  })
-
   it('should work', async () => {
+    const mockAgent = new MockAgent()
+    setGlobalDispatcher(mockAgent)
     const mockPool = mockAgent.get('http://localhost:3000')
 
     mockPool
