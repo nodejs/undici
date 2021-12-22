@@ -321,11 +321,11 @@ test('backpressure algorithm', (t) => {
 
   writeMore = true
 
-  d4.client.emit('drain', new URL('http://notahost'))
+  d4.client.emit('drain', new URL('http://notahost'), [])
 
   pool.dispatch({}, noopHandler) // d5 = c1
 
-  d3.client.emit('drain', new URL('http://notahost'))
+  d3.client.emit('drain', new URL('http://notahost'), [])
 
   pool.dispatch({}, noopHandler) // d6 = c0
 
@@ -337,7 +337,7 @@ test('backpressure algorithm', (t) => {
   t.equal(d5.id, d4.id)
   t.equal(d3.id, d6.id)
 
-  t.equal(total, 2)
+  t.equal(total, 3)
 
   t.end()
 })
@@ -380,7 +380,7 @@ test('busy', (t) => {
         })
       })
       t.equal(client[kPending], n)
-      t.equal(client[kBusy], n > 2)
+      t.equal(client[kBusy], n > 1)
       t.equal(client[kSize], n)
       t.equal(client[kRunning], 0)
     }
