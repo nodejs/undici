@@ -1,6 +1,6 @@
 # Mocking Request
 
-Undici have its own mocking [utility](docs/api/MockAgent.md). It allow us to intercept undici HTTP request and return mocked value instead. It can be useful for testing purposes.
+Undici have its own mocking [utility](../api/MockAgent.md). It allow us to intercept undici HTTP request and return mocked value instead. It can be useful for testing purposes.
 
 Example:
 
@@ -70,7 +70,7 @@ const badRequest = await bankTransfer('1234567890', '100')
 assert.deepEqual(badRequest, { message: 'bank account not found' })
 ```
 
-Explore other MockAgent functionality [here](docs/api/MockAgent.md)
+Explore other MockAgent functionality [here](../api/MockAgent.md)
 
 ## Debug Mock Value
 
