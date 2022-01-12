@@ -56,3 +56,57 @@ test('requestBadPort', (t) => {
     urlList: [new URL('https://asd:7')]
   }))
 })
+
+// https://html.spec.whatwg.org/multipage/origin.html#same-origin
+// look at examples
+test('sameOrigin', (t) => {
+  t.test('first test', (t) => {
+    const A = {
+      protocol: 'https:',
+      hostname: 'example.org',
+      port: ''
+    }
+
+    const B = {
+      protocol: 'https:',
+      hostname: 'example.org',
+      port: ''
+    }
+
+    t.ok(util.sameOrigin(A, B))
+    t.end()
+  })
+
+  t.test('second test', (t) => {
+    const A = {
+      protocol: 'https:',
+      hostname: 'example.org',
+      port: '314'
+    }
+
+    const B = {
+      protocol: 'https:',
+      hostname: 'example.org',
+      port: '420'
+    }
+
+    t.notOk(util.sameOrigin(A, B))
+    t.end()
+  })
+
+  t.test('obviously shouldn\'t be equal', (t) => {
+    t.notOk(util.sameOrigin(
+      { protocol: 'http:', hostname: 'example.org' },
+      { protocol: 'https:', hostname: 'example.org' }
+    ))
+
+    t.notOk(util.sameOrigin(
+      { protocol: 'https:', hostname: 'example.org' },
+      { protocol: 'https:', hostname: 'example.com' }
+    ))
+
+    t.end()
+  })
+
+  t.end()
+})
