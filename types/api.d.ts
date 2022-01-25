@@ -13,7 +13,7 @@ export {
 /** Performs an HTTP request. */
 declare function request(
   url: string | URL | UrlObject,
-  options?: { dispatcher?: Dispatcher } & Omit<Dispatcher.RequestOptions, 'origin' | 'path'>,
+  options?: { dispatcher?: Dispatcher } & Omit<Dispatcher.RequestOptions, 'origin' | 'path' | 'method'> & Partial<Pick<Dispatcher.RequestOptions, 'method'>>,
 ): Promise<Dispatcher.ResponseData>;
 
 /** A faster version of `request`. */
