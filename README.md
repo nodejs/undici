@@ -215,7 +215,7 @@ stalls or deadlocks when running out of connections.
 // Do
 const headers = await fetch(url)
   .then(async res => {
-    for await (const chunk of res) {
+    for await (const chunk of res.body) {
       // force consumption of body
     }
     return res.headers
