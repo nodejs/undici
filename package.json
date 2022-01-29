@@ -40,7 +40,7 @@
     "docs"
   ],
   "scripts": {
-    "build:node": "esbuild index.js --bundle --platform=node --outfile=out.js",
+    "build:node": "esbuild index.js --bundle --platform=node --outfile=undici.js",
     "prebuild:wasm": "docker build -t llhttp_wasm_builder -f build/Dockerfile .",
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
