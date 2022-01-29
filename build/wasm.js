@@ -1,6 +1,7 @@
 'use strict'
 
 const { execSync } = require('child_process')
+const { writeFileSync, readFileSync } = require('fs');
 const { join, resolve } = require('path')
 const { WASI_ROOT } = process.env
 
@@ -43,6 +44,12 @@ execSync(`${WASI_ROOT}/bin/clang \
  -I${join(WASM_SRC, 'include')} \
  -o ${join(WASM_OUT, 'llhttp.wasm')}`, { stdio: 'inherit' })
 
+const base64Wasm = readFileSync(join(WASM_OUT, 'llhttp.wasm')).toString('base64')
+writeFileSync(
+  join(WASM_OUT, 'llhttp.wasm.js'),
+  `module.exports = "${base64Wasm}";\n`
+)
+
 // Build wasm simd binary
 execSync(`${WASI_ROOT}/bin/clang \
  --sysroot=${WASI_ROOT}/share/wasi-sysroot \
@@ -64,3 +71,9 @@ execSync(`${WASI_ROOT}/bin/clang \
  ${join(WASM_SRC, 'src')}/*.c \
  -I${join(WASM_SRC, 'include')} \
  -o ${join(WASM_OUT, 'llhttp_simd.wasm')}`, { stdio: 'inherit' })
+
+const base64WasmSimd = readFileSync(join(WASM_OUT, 'llhttp_simd.wasm')).toString('base64')
+writeFileSync(
+  join(WASM_OUT, 'llhttp_simd.wasm.js'),
+  `module.exports = "${base64WasmSimd}";\n`
+)
