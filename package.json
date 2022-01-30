@@ -40,6 +40,7 @@
     "docs"
   ],
   "scripts": {
+    "build:node": "esbuild index.js --bundle --platform=node --outfile=undici.js",
     "prebuild:wasm": "docker build -t llhttp_wasm_builder -f build/Dockerfile .",
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
@@ -74,6 +75,7 @@
     "cronometro": "^0.8.0",
     "delay": "^5.0.0",
     "docsify-cli": "^4.4.3",
+    "esbuild": "^0.14.14",
     "formdata-node": "^4.3.1",
     "https-pem": "^2.0.0",
     "husky": "^7.0.2",
