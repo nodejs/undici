@@ -75,3 +75,6 @@ yarn.lock
 corpus/
 crash-*
 fuzz-results-*.json
+
+# Bundle output
+undici-fetch.js
