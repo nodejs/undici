@@ -10,7 +10,7 @@ jobs:
   build:
     name: Test
 
-    uses: pkgjs/action/.github/workflows/node-test.yaml@main
+    uses: pkgjs/action/.github/workflows/node-test.yaml@v0.1
     with:
       runs-on: ubuntu-latest, windows-latest, macOS-latest
       test-command: npm run coverage:ci
