@@ -2,6 +2,8 @@
 
 * [Guides](#guides)
   * [Update `llhttp`](#update-llhttp)
+  * [Test](#test)
+  * [Coverage](#coverage)
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
   * [Moderation Policy](#moderation-policy)
 
@@ -72,6 +74,20 @@ cp src/native/api.h build/llhttp.h <your-path-to-undici>/deps/llhttp/include/
 cd <your-path-to-undici>
 
 npm run build:wasm
+```
+
+<a id="test"></a>
+### Test
+
+```bash
+npm run test
+```
+
+<a id="coverage"></a>
+### Coverage
+
+```bash
+npm run coverage
 ```
 
 <a id="developers-certificate-of-origin"></a>
