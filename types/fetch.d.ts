@@ -42,7 +42,7 @@ export interface BodyMixin {
   readonly text: () => Promise<string>
 }
 
-export type HeadersInit = Iterable<[string, string]> | Record<string, string>
+export type HeadersInit = string[][] | Record<string, string> | Headers
 
 export declare class Headers implements Iterable<[string, string]> {
   constructor (init?: HeadersInit)
@@ -96,11 +96,28 @@ export interface RequestInit {
   readonly method?: string
   readonly keepalive?: boolean
   readonly headers?: HeadersInit
-  readonly body?: BodyInit
+  readonly body?: BodyInit;
   readonly redirect?: RequestRedirect
   readonly integrity?: string
   readonly signal?: AbortSignal
+  readonly cache?: RequestCache
+  readonly credentials?: RequestCredentials
+  readonly mode?: RequestMode;
+  readonly referrer?: string;
+  readonly referrerPolicy?: ReferrerPolicy;
+  readonly window?: null; 
 }
+
+export type ReferrerPolicy = 
+  | ''
+  | 'no-referrer'
+  | 'no-referrer-when-downgrade'
+  | 'origin'
+  | 'origin-when-cross-origin'
+  | 'same-origin'
+  | 'strict-origin'
+  | 'strict-origin-when-cross-origin'
+  | 'unsafe-url';
 
 export type RequestMode = 'cors' | 'navigate' | 'no-cors' | 'same-origin'
 
