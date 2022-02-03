@@ -206,7 +206,7 @@ const data = {
 };
 
 (async () => {
-  await fetch("https://example.com", { body: data });
+  await fetch("https://example.com", { body: data, method: 'POST' });
 })();
 ```
 
