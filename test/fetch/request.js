@@ -149,6 +149,18 @@ test('arg validation', (t) => {
   t.end()
 })
 
+test('undefined integrity', t => {
+  const req = new Request('http://asd', { integrity: undefined })
+  t.equal(req.integrity, '')
+  t.end()
+})
+
+test('null integrity', t => {
+  const req = new Request('http://asd', { integrity: null })
+  t.equal(req.integrity, '')
+  t.end()
+})
+
 test('undefined signal', t => {
   const req = new Request('http://asd', { signal: undefined })
   t.equal(req.signal.aborted, false)
