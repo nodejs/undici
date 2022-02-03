@@ -96,16 +96,15 @@ export interface RequestInit {
   readonly method?: string
   readonly keepalive?: boolean
   readonly headers?: HeadersInit
-  readonly body?: BodyInit;
+  readonly body?: BodyInit
   readonly redirect?: RequestRedirect
   readonly integrity?: string
   readonly signal?: AbortSignal
-  readonly cache?: RequestCache
   readonly credentials?: RequestCredentials
-  readonly mode?: RequestMode;
-  readonly referrer?: string;
-  readonly referrerPolicy?: ReferrerPolicy;
-  readonly window?: null; 
+  readonly mode?: RequestMode
+  readonly referrer?: string
+  readonly referrerPolicy?: ReferrerPolicy
+  readonly window?: null
 }
 
 export type ReferrerPolicy = 
