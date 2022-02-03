@@ -189,6 +189,7 @@ A body can be of the following types:
 - ArrayBufferView
 - AsyncIterables
 - Blob
+- Iterables
 - String
 - URLSearchParams
 - FormData
