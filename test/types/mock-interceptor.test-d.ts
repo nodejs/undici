@@ -10,10 +10,15 @@ import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
   expectAssignable<MockScope>(mockInterceptor.reply(200, ''))
   expectAssignable<MockScope>(mockInterceptor.reply(200, Buffer))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({})))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}, {}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), {}))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { headers: { foo: 'bar' }}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), { headers: { foo: 'bar' }}))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { trailers: { foo: 'bar' }}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), { trailers: { foo: 'bar' }}))
   expectAssignable<MockScope<{ foo: string }>>(mockInterceptor.reply<{ foo: string }>(200, { foo: 'bar' }))
+  expectAssignable<MockScope<{ foo: string }>>(mockInterceptor.reply<{ foo: string }>(200, () => ({ foo: 'bar' })))
 
   // replyWithError
   class CustomError extends Error {
