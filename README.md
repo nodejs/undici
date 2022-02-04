@@ -180,6 +180,37 @@ Basic usage example:
     }
 ```
 
+
+#### `request.body`
+
+A body can be of the following types:
+
+- ArrayBuffer
+- ArrayBufferView
+- AsyncIterables
+- Blob
+- Iterables
+- String
+- URLSearchParams
+- FormData
+
+In this implementation of fetch, ```request.body ``` now accepts ```Async Iterables```. It is not present in the [Fetch Standard.](https://fetch.spec.whatwg.org)
+
+```js
+import { fetch } from "undici";
+
+const data = {
+  async *[Symbol.asyncIterator]() {
+    yield "hello";
+    yield "world";
+  },
+};
+
+(async () => {
+  await fetch("https://example.com", { body: data, method: 'POST' });
+})();
+```
+
 #### `response.body`
 
 Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v16.x/docs/api/webstreams.html) which follow the API of the WHATWG web standard found in browsers, and an older Node-specific [streams API](https://nodejs.org/api/stream.html). `response.body` returns a readable web stream. If you would prefer to work with a Node stream you can convert a web stream using `.fromWeb()`.
