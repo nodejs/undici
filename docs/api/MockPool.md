@@ -163,7 +163,7 @@ mockPool.intercept({
 
 mockPool.intercept({
   path: '/hello',
-  method: 'GET'
+  method: 'GET',
 }).reply(200, 'hello')
 
 const result1 = await request('http://localhost:3000/foo')
@@ -196,6 +196,7 @@ const mockPool = mockAgent.get('http://localhost:3000')
 mockPool.intercept({
   path: '/foo?hello=there&see=ya',
   method: 'POST',
+  body: 'form1=data1&form2=data2',
   headers: {
     'User-Agent': 'undici',
     Host: 'example.com'
