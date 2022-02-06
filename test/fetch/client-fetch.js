@@ -6,10 +6,10 @@ const { test } = require('tap')
 const { createServer } = require('http')
 const { ReadableStream } = require('stream/web')
 const { Blob } = require('buffer')
-const { fetch, Response, Request, FormData, File } = require('../..')
+const { fetch, Response, Request, FormData, File, FileLike } = require('../..')
 
 test('args validation', (t) => {
-  t.plan(3)
+  t.plan(12)
 
   t.throws(() => {
     File.prototype.name.call(null)
@@ -19,6 +19,34 @@ test('args validation', (t) => {
   }, TypeError)
   t.throws(() => {
     File.prototype[Symbol.toStringTag].call(null)
+  }, TypeError)
+
+  t.throws(() => {
+    FileLike.prototype.stream.call(null)
+  }, TypeError)
+  t.throws(() => {
+    FileLike.prototype.arrayBuffer.call(null)
+  }, TypeError)
+  t.throws(() => {
+    FileLike.prototype.slice.call(null)
+  }, TypeError)
+  t.throws(() => {
+    FileLike.prototype.text.call(null)
+  }, TypeError)
+  t.throws(() => {
+    FileLike.prototype.size.call(null)
+  }, TypeError)
+  t.throws(() => {
+    FileLike.prototype.type.call(null)
+  }, TypeError)
+  t.throws(() => {
+    FileLike.prototype.name.call(null)
+  }, TypeError)
+  t.throws(() => {
+    FileLike.prototype.lastModified.call(null)
+  }, TypeError)
+  t.throws(() => {
+    FileLike.prototype[Symbol.toStringTag].call(null)
   }, TypeError)
 })
 
