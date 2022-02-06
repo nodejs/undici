@@ -9,13 +9,16 @@ const { Blob } = require('buffer')
 const { fetch, Response, Request, FormData, File } = require('../..')
 
 test('args validation', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   t.throws(() => {
     File.prototype.name.call(null)
   }, TypeError)
   t.throws(() => {
     File.prototype.lastModified.call(null)
+  }, TypeError)
+  t.throws(() => {
+    File.prototype[Symbol.toStringTag].call(null)
   }, TypeError)
 })
 
