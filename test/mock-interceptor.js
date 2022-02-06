@@ -30,6 +30,31 @@ test('MockInterceptor - reply', t => {
   })
 })
 
+test('MockInterceptor - reply callback', t => {
+  t.plan(2)
+
+  t.test('should return MockScope', t => {
+    t.plan(1)
+    const mockInterceptor = new MockInterceptor({
+      path: '',
+      method: ''
+    }, [])
+    const result = mockInterceptor.reply(200, () => 'hello')
+    t.type(result, MockScope)
+  })
+
+  t.test('should error if passed options invalid', t => {
+    t.plan(2)
+
+    const mockInterceptor = new MockInterceptor({
+      path: '',
+      method: ''
+    }, [])
+    t.throws(() => mockInterceptor.reply(), new InvalidArgumentError('statusCode must be defined'))
+    t.throws(() => mockInterceptor.reply(200, () => {}, 'hello'), new InvalidArgumentError('responseOptions must be an object'))
+  })
+}) 
+
 test('MockInterceptor - replyWithError', t => {
   t.plan(2)
 

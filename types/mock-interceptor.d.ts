@@ -21,7 +21,11 @@ declare class MockScope<TData extends object = object> {
 declare class MockInterceptor {
   constructor(options: MockInterceptor.Options, mockDispatches: MockInterceptor.MockDispatch[]);
   /** Mock an undici request with the defined reply. */
-  reply<TData extends object = object>(statusCode: number, data: TData | Buffer| string , responseOptions?: MockInterceptor.MockResponseOptions): MockScope<TData>;
+  reply<TData extends object = object>(
+    statusCode: number,
+    data: TData | Buffer | string | MockInterceptor.MockResponseDataHandler<TData>,
+    responseOptions?: MockInterceptor.MockResponseOptions
+  ): MockScope<TData>;
   /** Mock an undici request by throwing the defined reply error. */
   replyWithError<TError extends Error = Error>(error: TError): MockScope;
   /** Set default reply headers on the interceptor for subsequent mocked replies. */
@@ -59,6 +63,19 @@ declare namespace MockInterceptor {
     headers?: IncomingHttpHeaders;
     trailers?: Record<string, string>;
   }
+
+  export interface MockResponseCallbackOptions {
+    path: string;
+    origin: string;
+    method: string;
+    body?: string;
+    headers: Headers;
+    maxRedirections: number;
+  }
+
+  export type MockResponseDataHandler<TData extends object = object> = (
+    opts: MockResponseCallbackOptions
+  ) => TData | Buffer | string;
 }
 
 interface Interceptable {
