@@ -113,7 +113,7 @@ for await (const data of body) {
 }
 ```
 
-#### Example - Mocked request using reply callbacks
+#### Example - Mocked request using reply data callbacks
 
 ```js
 import { MockAgent, setGlobalDispatcher, request } from 'undici'
@@ -131,6 +131,39 @@ mockPool.intercept({
     Host: 'example.com'
   }
 }).reply(200, ({ headers }) => ({ message: headers.get('message') }))
+
+const { statusCode, body, headers } = await request('http://localhost:3000', {
+  headers: {
+    message: 'hello world!'
+  }
+})
+
+console.log('response received', statusCode) // response received 200
+console.log('headers', headers) // { 'content-type': 'application/json' }
+
+for await (const data of body) {
+  console.log('data', data.toString('utf8')) // { "message":"hello world!" }
+}
+```
+
+#### Example - Mocked request using reply options callback
+
+```js
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+
+const mockPool = mockAgent.get('http://localhost:3000')
+
+mockPool.intercept({
+  path: '/echo',
+  method: 'GET',
+  headers: {
+    'User-Agent': 'undici',
+    Host: 'example.com'
+  }
+}).reply(({ headers }) => ({ statusCode: 200, data: { message: headers.get('message') }})))
 
 const { statusCode, body, headers } = await request('http://localhost:3000', {
   headers: {
