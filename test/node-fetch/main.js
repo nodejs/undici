@@ -416,7 +416,7 @@ describe('node-fetch', () => {
     }
     return fetch(url, options).then(res => {
       expect(res.url).to.equal(url)
-      expect(res.status).to.equal(0)
+      expect(res.status).to.equal(301)
       expect(res.headers.get('location')).to.be.null
     })
   })
@@ -1475,12 +1475,11 @@ describe('node-fetch', () => {
     ).not.to.timeout
   })
 
-  it('should allow get all responses of a header', () => {
+  it('should not allow getting any cookies from the response header', () => {
     const url = `${base}cookie`
     return fetch(url).then(res => {
-      const expected = 'a=1, b=1'
-      expect(res.headers.get('set-cookie')).to.equal(expected)
-      expect(res.headers.get('Set-Cookie')).to.equal(expected)
+      expect(res.headers.get('set-cookie')).to.equal(null)
+      expect(res.headers.get('Set-Cookie')).to.equal(null)
     })
   })
 
@@ -1626,5 +1625,20 @@ describe('node-fetch', () => {
     const url = `${base}möbius`
     const res = await fetch(url)
     expect(res.url).to.equal(`${base}m%C3%B6bius`)
+  })
+
+  it('should allow manual redirect handling', function () {
+    this.timeout(5000)
+    const url = 'https://httpbin.org/status/302'
+    const options = {
+      redirect: 'manual'
+    }
+    return fetch(url, options).then(res => {
+      expect(res.status).to.equal(302)
+      expect(res.url).to.equal(url)
+      expect(res.type).to.equal('basic')
+      expect(res.headers.get('Location')).to.equal('/redirect/1')
+      expect(res.ok).to.be.false
+    })
   })
 })

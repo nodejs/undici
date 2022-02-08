@@ -47,10 +47,13 @@ test('responseLocationURL', (t) => {
 })
 
 test('requestBadPort', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   t.equal('allowed', util.requestBadPort({
     urlList: [new URL('https://asd')]
+  }))
+  t.equal('blocked', util.requestBadPort({
+    urlList: [new URL('http://asd:7')]
   }))
   t.equal('blocked', util.requestBadPort({
     urlList: [new URL('https://asd:7')]
