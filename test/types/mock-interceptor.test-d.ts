@@ -23,6 +23,10 @@ import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
   expectAssignable<MockScope>(mockInterceptor.reply(() => ({ statusCode: 200, data: { foo: 'bar' }, responseOptions: {
     headers: { foo: 'bar' }
   }})))
+  expectAssignable<MockScope>(mockInterceptor.reply((options) => { 
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions>(options);
+    return { statusCode: 200, data: { foo: 'bar'}
+  }}))
   expectAssignable<MockScope>(mockInterceptor.reply(() => ({ statusCode: 200, data: { foo: 'bar' }, responseOptions: {
     trailers: { foo: 'bar' }
   }})))
