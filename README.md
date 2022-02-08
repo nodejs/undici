@@ -332,6 +332,15 @@ aborted.
 * Refs: https://tools.ietf.org/html/rfc2616#section-8.1.2.2
 * Refs: https://tools.ietf.org/html/rfc7230#section-6.3.2
 
+### Manual Redirect
+
+Since it is not possible to manually follow an HTTP redirect on server-side,
+Undici returns the actual response instead of an `opaqueredirect` filtered one
+when invoked with a `manual` redirect. This aligns `fetch()` with the other
+implementations in Deno and Cloudflare Workers.
+
+Refs: https://fetch.spec.whatwg.org/#atomic-http-redirect-handling
+
 ## Collaborators
 
 * [__Daniele Belardi__](https://github.com/dnlup), <https://www.npmjs.com/~dnlup>
