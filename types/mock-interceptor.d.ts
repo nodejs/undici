@@ -1,4 +1,5 @@
 import { IncomingHttpHeaders } from 'http'
+import Dispatcher from './dispatcher';
 
 export {
   Interceptable,
@@ -83,7 +84,7 @@ declare namespace MockInterceptor {
   ) => { statusCode: number, data: TData | Buffer | string, responseOptions?: MockResponseOptions }
 }
 
-interface Interceptable {
+interface Interceptable extends Dispatcher {
   /** Intercepts any matching requests that use the same origin as this mock client. */
   intercept(options: MockInterceptor.Options): MockInterceptor;
 }

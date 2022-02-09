@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import { MockAgent, MockPool, MockClient, Agent, setGlobalDispatcher } from '../..'
+import { MockAgent, MockPool, MockClient, Agent, setGlobalDispatcher, Dispatcher } from '../..'
 import { MockInterceptor } from '../../types/mock-interceptor'
 
 expectAssignable<MockAgent>(new MockAgent())
@@ -16,6 +16,7 @@ expectAssignable<MockAgent>(new MockAgent({}))
     expectAssignable<string>(origin)
     return true
   }))
+  expectAssignable<Dispatcher>(mockAgent.get(''))
 
   // close
   expectAssignable<Promise<void>>(mockAgent.close())
