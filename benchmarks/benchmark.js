@@ -7,7 +7,7 @@ const os = require('os')
 const path = require('path')
 const { table } = require('table')
 
-const { Pool, Client } = require('..')
+const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
 const iterations = (parseInt(process.env.SAMPLES, 10) || 100) + 1
 const errorThreshold = parseInt(process.env.ERROR_TRESHOLD, 10) || 3
@@ -63,6 +63,8 @@ const dispatcher = new Class(httpBaseOptions.url, {
   connections,
   ...dest
 })
+
+setGlobalDispatcher(new Agent({ pipelining, connections }))
 
 class SimpleRequest {
   constructor (resolve) {
@@ -239,6 +241,13 @@ cronometro(
     'undici - dispatch' () {
       return makeParallelRequests(resolve => {
         dispatcher.dispatch(undiciOptions, new SimpleRequest(resolve))
+      })
+    },
+    'undici - fetch' () {
+      return makeParallelRequests(resolve => {
+        fetch(dest.url).then(res => {
+          res.text().then(resolve)
+        })
       })
     }
   },
