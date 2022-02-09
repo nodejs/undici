@@ -9,5 +9,8 @@ const badPatch = major === required[0] && minor === required[1] && patch < requi
 
 if (badMajor || badMinor || badPatch) {
   console.log(`Required Node.js >=${required.join('.')}, got ${process.versions.node}`)
-  process.exit(1)
+  console.log('Skipping')
+  return
 }
+
+process.exit(1)
