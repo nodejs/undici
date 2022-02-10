@@ -98,6 +98,22 @@ test('response clone', (t) => {
 test('Response.json', async (t) => {
   t.ok(typeof Response.json === 'function')
 
+  t.test('invalid arguments', (t) => {
+    t.throws(() => {
+      Response.json()
+    }, TypeError)
+
+    t.throws(() => {
+      Response.json({}, null)
+    }, TypeError)
+
+    t.throws(() => {
+      Response.json({}, 'Hello!') // non-object
+    }, TypeError)
+
+    t.end()
+  })
+
   t.test('with init["status"]', (t) => {
     t.throws(() => {
       Response.json({ a: 'b' }, {
