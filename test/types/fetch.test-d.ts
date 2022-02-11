@@ -17,6 +17,7 @@ import {
   Response,
   ResponseInit,
   ResponseType,
+  ReferrerPolicy
 } from '../..'
 
 const requestInit: RequestInit = {}
