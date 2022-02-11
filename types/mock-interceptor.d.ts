@@ -1,5 +1,6 @@
 import { IncomingHttpHeaders } from 'http'
 import Dispatcher from './dispatcher';
+import { Headers } from './fetch'
 
 export {
   Interceptable,
