@@ -436,7 +436,7 @@ The `RequestOptions.method` property should not be value `'CONNECT'`.
 - `body`
 - `bodyUsed`
 
-`body` contains the following additional extentions:
+`body` contains the following additional extensions:
 
 - `dump({ limit: Integer })`, dump the response by reading up to `limit` bytes without killing the socket (optional) - Default: 262144.
 
