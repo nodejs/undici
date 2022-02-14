@@ -197,9 +197,72 @@ test('Response.json', async (t) => {
     const resp1 = Response.json({ a: 'b' })
 
     t.same(await resp1.json(), { a: 'b' })
-    
+
     t.end()
   })
+
+  t.end()
+})
+
+// https://github.com/web-platform-tests/wpt/pull/32825
+test('Response.json WPTs', async (t) => {
+  t.test('WPT tests', async (t) => {
+    const APPLICATION_JSON = 'application/json;charset=utf-8'
+    const FOO_BAR = 'foo/bar'
+
+    const INIT_TESTS = [
+      [undefined, 200, '', APPLICATION_JSON, {}],
+      [{ status: 400 }, 400, '', APPLICATION_JSON, {}],
+      [{ statusText: 'foo' }, 200, 'foo', APPLICATION_JSON, {}],
+      [{ headers: {} }, 200, '', APPLICATION_JSON, {}],
+      [{ headers: { 'content-type': FOO_BAR } }, 200, '', FOO_BAR, {}],
+      // TODO: ensure that the status text was missing here and not supposed to be APPLICATION_JSON
+      [{ headers: { 'x-foo': 'bar' } }, 200, '', APPLICATION_JSON, { 'x-foo': 'bar' }]
+    ]
+
+    for (const [init, status, statusText, contentType, headers] of INIT_TESTS) {
+      const response = Response.json('hello world', init)
+      t.equal(response.type, 'default', "Response's type is default")
+      t.equal(response.status, status, "Response's status is " + status)
+      t.equal(response.statusText, statusText, "Response's statusText is " + JSON.stringify(statusText))
+      t.equal(response.headers.get('content-type'), contentType, "Response's content-type is " + contentType)
+      for (const key in headers) {
+        t.equal(response.headers.get(key), headers[key], "Response's header " + key + ' is ' + JSON.stringify(headers[key]))
+      }
+
+      const data = await response.json()
+      t.equal(data, 'hello world', "Response's body is 'hello world'")
+    }
+
+    t.end()
+  })
+
+  t.test('throws with null body statuses', (t) => {
+    const nullBodyStatus = [204, 205, 304]
+    nullBodyStatus.forEach((status) => {
+      t.throws(
+        () => Response.json('hello world', { status }),
+        TypeError,
+        `Throws TypeError when calling static json() with a status of ${status}`
+      )
+    })
+
+    t.end()
+  })
+
+  t.test('Check static json() encodes JSON objects correctly', async (t) => {
+    const response = Response.json({ foo: 'bar' })
+    const data = await response.json()
+    t.equal(typeof data, 'object', "Response's json body is an object")
+    t.equal(data.foo, 'bar', "Response's json body is { foo: 'bar' }")
+
+    t.end()
+  })
+
+  // unserializable
+  t.throws(() => {
+    Response.json(Symbol('foo'))
+  }, TypeError)
 
   t.end()
 })
