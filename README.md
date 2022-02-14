@@ -194,7 +194,7 @@ A body can be of the following types:
 - URLSearchParams
 - FormData
 
-In this implementation of fetch, ```request.body ``` now accepts ```Async Iterables```. It is not present in the [Fetch Standard.](https://fetch.spec.whatwg.org)
+In this implementation of fetch, ```request.body``` now accepts ```Async Iterables```. It is not present in the [Fetch Standard.](https://fetch.spec.whatwg.org)
 
 ```js
 import { fetch } from "undici";

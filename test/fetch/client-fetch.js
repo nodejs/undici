@@ -8,55 +8,18 @@ const { ReadableStream } = require('stream/web')
 const { Blob } = require('buffer')
 const { fetch, Response, Request, FormData, File, FileLike } = require('../..')
 
-test('args validation', (t) => {
-  t.plan(12)
-
-  t.throws(() => {
-    File.prototype.name.call(null)
-  }, TypeError)
-  t.throws(() => {
-    File.prototype.lastModified.call(null)
-  }, TypeError)
-  t.throws(() => {
-    File.prototype[Symbol.toStringTag].call(null)
-  }, TypeError)
-
-  t.throws(() => {
-    FileLike.prototype.stream.call(null)
-  }, TypeError)
-  t.throws(() => {
-    FileLike.prototype.arrayBuffer.call(null)
-  }, TypeError)
-  t.throws(() => {
-    FileLike.prototype.slice.call(null)
-  }, TypeError)
-  t.throws(() => {
-    FileLike.prototype.text.call(null)
-  }, TypeError)
-  t.throws(() => {
-    FileLike.prototype.size.call(null)
-  }, TypeError)
-  t.throws(() => {
-    FileLike.prototype.type.call(null)
-  }, TypeError)
-  t.throws(() => {
-    FileLike.prototype.name.call(null)
-  }, TypeError)
-  t.throws(() => {
-    FileLike.prototype.lastModified.call(null)
-  }, TypeError)
-  t.throws(() => {
-    FileLike.prototype[Symbol.toStringTag].call(null)
-  }, TypeError)
-})
-
-test('return value of File.lastModified', (t) => {
+test('function signature', (t) => {
   t.plan(2)
 
-  const f = new File(['asd1'], 'filename123')
-  const lastModified = f.lastModified
-  t.ok(typeof lastModified === typeof Date.now())
-  t.ok(lastModified >= 0 && lastModified <= Date.now())
+  t.equal(fetch.name, 'fetch')
+  t.equal(fetch.length, 1)
+})
+
+test('args validation', async (t) => {
+  t.plan(2)
+
+  await t.rejects(fetch(), TypeError)
+  await t.rejects(fetch('ftp://unsupported'), TypeError)
 })
 
 test('request json', (t) => {

@@ -17,6 +17,7 @@ import {
   Response,
   ResponseInit,
   ResponseType,
+  ReferrerPolicy
 } from '../..'
 
 const requestInit: RequestInit = {}
@@ -33,6 +34,11 @@ expectType<BodyInit | undefined>(requestInit.body)
 expectType<RequestRedirect | undefined>(requestInit.redirect)
 expectType<string | undefined>(requestInit.integrity)
 expectType<AbortSignal | undefined>(requestInit.signal)
+expectType<RequestCredentials | undefined>(requestInit.credentials)
+expectType<RequestMode | undefined>(requestInit.mode)
+expectType<string | undefined>(requestInit.referrer);
+expectType<ReferrerPolicy | undefined>(requestInit.referrerPolicy)
+expectType<null | undefined>(requestInit.window)
 
 expectType<number | undefined>(responseInit.status)
 expectType<string | undefined>(responseInit.statusText)
