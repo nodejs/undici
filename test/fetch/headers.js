@@ -207,7 +207,7 @@ tap.test('Headers get', t => {
 tap.test('Headers has', t => {
   t.plan(2)
 
-  t.test('returns boolean existance for a header name', t => {
+  t.test('returns boolean existence for a header name', t => {
     t.plan(2)
     const headers = new Headers()
 
