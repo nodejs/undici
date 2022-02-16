@@ -163,3 +163,14 @@ test('busy', (t) => {
     }
   })
 })
+
+test('invalid options throws', (t) => {
+  t.plan(2)
+
+  try {
+    new BalancedPool(null, { factory: '' }) // eslint-disable-line
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'factory must be a function.')
+  }
+})
