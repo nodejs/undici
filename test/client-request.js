@@ -503,7 +503,7 @@ test('request with onInfo callback but socket is destroyed before end of respons
 })
 
 test('request onInfo callback headers parsing', async (t) => {
-  t.plan(4)
+  t.plan(5)
   const infos = []
 
   const server = net.createServer((socket) => {
@@ -534,6 +534,7 @@ test('request onInfo callback headers parsing', async (t) => {
   t.equal(infos.length, 1)
   t.equal(infos[0].statusCode, 103)
   t.same(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
+  t.same(infos[0].rawHeaders, ['Link', '</style.css>; rel=preload; as=style'])
   t.pass()
 })
 
