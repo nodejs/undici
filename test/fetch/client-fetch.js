@@ -7,6 +7,7 @@ const { createServer } = require('http')
 const { ReadableStream } = require('stream/web')
 const { Blob } = require('buffer')
 const { fetch, Response, Request, FormData, File, FileLike } = require('../..')
+const { join } = require('path')
 
 test('function signature', (t) => {
   t.plan(2)
@@ -331,4 +332,24 @@ test('post FormData with File', (t) => {
     t.ok(/asd1/.test(result))
     t.ok(/filename123/.test(result))
   })
+})
+
+test('fetch file', async (t) => {
+  t.plan(1)
+  const fileToRead = join(__dirname, '..', 'fixtures', 'file.text')
+  const body = await fetch(`file://${fileToRead}`)
+  const text = await body.text()
+  t.equal(text, 'hello world')
+})
+
+test('fetch file does not exist', async (t) => {
+  t.plan(2)
+  const fileToRead = join(__dirname, '..', 'fixtures', 'does-not-exist.text')
+  try {
+    await fetch(`file://${fileToRead}`)
+    t.fail('fetch should have thrown')
+  } catch (err) {
+    t.ok(err.cause)
+    t.equal(err.cause.code, 'ENOENT')
+  }
 })
