@@ -43,7 +43,7 @@ test('arg validation', (t) => {
   t.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
-      window: null
+      window: 1
     })
   }, TypeError)
   t.throws(() => {
