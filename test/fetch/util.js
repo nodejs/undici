@@ -113,3 +113,35 @@ test('sameOrigin', (t) => {
 
   t.end()
 })
+
+t.test('make policy container', (t) => {
+  t.same(util.makePolicyContainer(), {
+    CSPList: [],
+    embedderPolicy: {
+      value: 'unsafe-none',
+      reportingEndpoint: '',
+      reportOnlyValue: 'unsafe-none',
+      reportOnlyReportingEndpoint: ''
+    },
+    referrerPolicy: 'strict-origin-when-cross-origin'
+  })
+
+  t.end()
+})
+
+t.test('clone policy container', (t) => {
+  const testPolicy = {
+    CSPList: ['foo', 'bar'],
+    embedderPolicy: {
+      value: 'unsafe-none',
+      reportingEndpoint: 'endpoint',
+      reportOnlyValue: 'unsafe-none',
+      reportOnlyReportingEndpoint: 'report-endpoint'
+    },
+    referrerPolicy: 'refer-policy'
+  }
+
+  t.same(util.clonePolicyContainer(testPolicy), testPolicy)
+
+  t.end()
+})
