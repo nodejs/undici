@@ -64,6 +64,8 @@ declare namespace Dispatcher {
     opaque?: unknown;
     /** Default: 0 */
     maxRedirections?: number;
+    /** Default: `null` */
+    responseHeader?: 'raw' | null;
   }
   export interface RequestOptions extends DispatchOptions {
     /** Default: `null` */
@@ -74,6 +76,8 @@ declare namespace Dispatcher {
     maxRedirections?: number;
     /** Default: `null` */
     onInfo?: (info: {statusCode: number, headers: Record<string, string | string[]>}) => void;
+    /** Default: `null` */
+    responseHeader?: 'raw' | null;
   }
   export interface PipelineOptions extends RequestOptions {
     /** `true` if the `handler` will return an object stream. Default: `false` */
@@ -91,6 +95,8 @@ declare namespace Dispatcher {
     signal?: AbortSignal | EventEmitter | null;
     /** Default: 0 */
     maxRedirections?: number;
+    /** Default: `null` */
+    responseHeader?: 'raw' | null;
   }
   export interface ConnectData {
     statusCode: number;
