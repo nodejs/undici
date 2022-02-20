@@ -64,6 +64,8 @@ declare namespace Dispatcher {
     opaque?: unknown;
     /** Default: 0 */
     maxRedirections?: number;
+    /** Default: `null` */
+    responseHeader?: 'raw' | null;
   }
   export interface RequestOptions extends DispatchOptions {
     /** Default: `null` */
@@ -73,7 +75,9 @@ declare namespace Dispatcher {
     /** Default: 0 */
     maxRedirections?: number;
     /** Default: `null` */
-    onInfo?: (info: {statusCode: number, headers: Record<string, string | string[]>, rawHeaders: string[];}) => void;
+    onInfo?: (info: {statusCode: number, headers: Record<string, string | string[]>}) => void;
+    /** Default: `null` */
+    responseHeader?: 'raw' | null;
   }
   export interface PipelineOptions extends RequestOptions {
     /** `true` if the `handler` will return an object stream. Default: `false` */
@@ -91,17 +95,17 @@ declare namespace Dispatcher {
     signal?: AbortSignal | EventEmitter | null;
     /** Default: 0 */
     maxRedirections?: number;
+    /** Default: `null` */
+    responseHeader?: 'raw' | null;
   }
   export interface ConnectData {
     statusCode: number;
-    rawHeaders: string[];
     headers: IncomingHttpHeaders;
     socket: Duplex;
     opaque: unknown;
   }
   export interface ResponseData {
     statusCode: number;
-    rawHeaders: string[];
     headers: IncomingHttpHeaders;
     body: Readable & BodyMixin;
     trailers: Record<string, string>;
@@ -110,7 +114,6 @@ declare namespace Dispatcher {
   }
   export interface PipelineHandlerData {
     statusCode: number;
-    rawHeaders: string[];
     headers: IncomingHttpHeaders;
     opaque: unknown;
     body: Readable;
@@ -121,14 +124,12 @@ declare namespace Dispatcher {
     trailers: Record<string, string>;
   }
   export interface UpgradeData {
-    rawHeaders: string[];
     headers: IncomingHttpHeaders;
     socket: Duplex;
     opaque: unknown;
   }
   export interface StreamFactoryData {
     statusCode: number;
-    rawHeaders: string[];
     headers: IncomingHttpHeaders;
     opaque: unknown;
     context: object;
