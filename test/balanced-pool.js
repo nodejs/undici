@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { BalancedPool, Client, errors } = require('..')
+const { BalancedPool, Client, errors, Pool } = require('..')
 const { createServer } = require('http')
 const { promisify } = require('util')
 
@@ -162,4 +162,64 @@ test('busy', (t) => {
       })
     }
   })
+})
+
+test('invalid options throws', (t) => {
+  t.plan(2)
+
+  try {
+    new BalancedPool(null, { factory: '' }) // eslint-disable-line
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'factory must be a function.')
+  }
+})
+
+test('factory option with basic get request', async(t) => {
+  t.plan(12)
+
+  let factoryCalled = 0
+  const opts = {
+    factory: (origin, opts) => {
+      factoryCalled ++
+      return new Pool(origin, opts)
+    }
+  }
+
+  const client = new BalancedPool([], opts) // eslint-disable-line
+
+  let serverCalled = 0
+  const server = createServer((req, res) => {
+    serverCalled++
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen).call(server, 0)
+
+  client.addUpstream(`http://localhost:${server.address().port}`)
+
+  t.same(client.upstreams, [`http://localhost:${server.address().port}`])
+
+  t.teardown(client.destroy.bind(client))
+
+  {
+    const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
+    t.equal(statusCode, 200)
+    t.equal(headers['content-type'], 'text/plain')
+    t.equal('hello', await body.text())
+  }
+
+  t.equal(serverCalled, 1)
+  t.equal(factoryCalled, 1)
+
+  t.equal(client.destroyed, false)
+  t.equal(client.closed, false)
+  await client.close()
+  t.equal(client.destroyed, true)
+  t.equal(client.closed, true)
+
 })
