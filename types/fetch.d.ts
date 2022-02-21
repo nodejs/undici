@@ -42,7 +42,7 @@ export interface BodyMixin {
   readonly text: () => Promise<string>
 }
 
-export type HeadersInit = string[][] | Record<string, string> | Headers
+export type HeadersInit = string[][] | Record<string, string | string[]> | Headers
 
 export declare class Headers implements Iterable<[string, string]> {
   constructor (init?: HeadersInit)

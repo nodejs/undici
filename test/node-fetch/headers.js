@@ -279,4 +279,24 @@ describe('Headers', () => {
     // eslint-disable-next-line quotes
     expect(format(headers)).to.equal("{ a: [ '1', '3' ], b: '2', host: 'thehost' }")
   })
+
+  it('shoud accept headers as objects with array values', () => {
+    const headers = new Headers({
+      a: ['1', '2'],
+      b: ['3', '4'],
+      c: '5'
+    })
+    expect(headers).to.have.property('forEach')
+
+    const result = []
+    for (const [key, value] of headers.entries()) {
+      result.push([key, value])
+    }
+
+    expect(result).to.deep.equal([
+      ['a', '1,2'],
+      ['b', '3,4'],
+      ['c', '5']
+    ])
+  })
 })
