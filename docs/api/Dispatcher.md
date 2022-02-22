@@ -307,6 +307,59 @@ client.dispatch({
 })
 ```
 
+#### Example 3 - Dispatch POST request
+
+```js
+import { createServer } from 'http'
+import { Client } from 'undici'
+import { once } from 'events'
+
+const server = createServer((request, response) => {
+  request.on('data', (data) => {
+    console.log(`Request Data: ${data.toString('utf8')}`)
+    const body = JSON.parse(data)
+    body.message = 'World'
+    response.end(JSON.stringify(body))
+  })
+}).listen()
+
+await once(server, 'listening')
+
+const client = new Client(`http://localhost:${server.address().port}`)
+
+const data = []
+
+client.dispatch({
+  path: '/',
+  method: 'POST',
+  headers: {
+    'content-type': 'application/json'
+  },
+  body: JSON.stringify({ message: 'Hello' })
+}, {
+  onConnect: () => {
+    console.log('Connected!')
+  },
+  onError: (error) => {
+    console.error(error)
+  },
+  onHeaders: (statusCode, headers) => {
+    console.log(`onHeaders | statusCode: ${statusCode} | headers: ${headers}`)
+  },
+  onData: (chunk) => {
+    console.log('onData: chunk received')
+    data.push(chunk)
+  },
+  onComplete: (trailers) => {
+    console.log(`onComplete | trailers: ${trailers}`)
+    const res = Buffer.concat(data).toString('utf8')
+    console.log(`Response Data: ${res}`)
+    client.close()
+    server.close()
+  }
+})
+```
+
 ### `Dispatcher.pipeline(options, handler)`
 
 For easy use with [stream.pipeline](https://nodejs.org/api/stream.html#stream_stream_pipeline_source_transforms_destination_callback). The `handler` argument should return a `Readable` from which the result will be read. Usually it should just return the `body` argument unless some kind of transformation needs to be performed based on e.g. `headers` or `statusCode`. The `handler` should validate the response and save any required state. If there is an error, it should be thrown. The function returns a `Duplex` which writes to the request and reads from the response.
