@@ -311,6 +311,28 @@ test('post FormData with Blob', (t) => {
   })
 })
 
+test('post FormData with File', (t) => {
+  t.plan(2)
+
+  const body = new FormData()
+  body.append('field1', new File(['asd1'], 'filename123'))
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const res = await fetch(`http://localhost:${server.address().port}`, {
+      method: 'PUT',
+      body
+    })
+    const result = await res.text()
+    t.ok(/asd1/.test(result))
+    t.ok(/filename123/.test(result))
+  })
+})
+
 test('properly include URL hash', (t) => {
   t.plan(1)
 
