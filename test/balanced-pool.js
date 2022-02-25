@@ -18,6 +18,13 @@ test('upstream add/remove/get', async (t) => {
   client.removeUpstream('http://localhost:2424')
   t.same(client.upstreams, [])
 
+  client.addUpstream('http://localhost:80')
+  client.addUpstream('http://localhost:80')
+  client.addUpstream(new URL('http://localhost:80'))
+  t.same(client.upstreams, ['http://localhost'])
+  client.removeUpstream('http://localhost:80')
+  t.same(client.upstreams, [])
+
   t.throws(() => client.dispatch())
 
   const p = client.close()
