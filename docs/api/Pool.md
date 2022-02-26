@@ -30,6 +30,10 @@ Implements [Client.closed](Client.md#clientclosed)
 
 Implements [Client.destroyed](Client.md#clientdestroyed)
 
+### `Pool.stats`
+
+Returns [`PoolStats`](PoolStats.md) instance for this pool.
+
 ## Instance Methods
 
 ### `Pool.close([callback])`

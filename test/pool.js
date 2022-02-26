@@ -343,7 +343,7 @@ test('backpressure algorithm', (t) => {
 })
 
 test('busy', (t) => {
-  t.plan(8 * 10 + 2 + 1)
+  t.plan(8 * 16 + 2 + 1)
 
   const server = createServer((req, res) => {
     t.equal('/', req.url)
@@ -353,9 +353,11 @@ test('busy', (t) => {
   })
   t.teardown(server.close.bind(server))
 
+  const connections = 2;
+
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
-      connections: 2,
+      connections,
       pipelining: 2
     })
     client.on('drain', () => {
@@ -383,6 +385,13 @@ test('busy', (t) => {
       t.equal(client[kBusy], n > 1)
       t.equal(client[kSize], n)
       t.equal(client[kRunning], 0)
+
+      t.equal(client.stats.connected, 0)
+      t.equal(client.stats.free, 0)
+      t.equal(client.stats.queued, Math.max(n - connections, 0))
+      t.equal(client.stats.pending, n)
+      t.equal(client.stats.size, n)
+      t.equal(client.stats.running, 0)
     }
   })
 })
