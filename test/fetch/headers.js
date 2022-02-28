@@ -17,7 +17,7 @@ const {
 } = require('../../lib/fetch/constants')
 
 tap.test('Headers initialization', t => {
-  t.plan(6)
+  t.plan(7)
 
   t.test('allows undefined', t => {
     t.plan(1)
@@ -96,6 +96,20 @@ tap.test('Headers initialization', t => {
     t.throws(() => new Headers([
       ['key', 'value', 'value2']
     ]), 'throws when too many arguments are passed')
+  })
+
+  t.test('accepts headers as objects with array values', t => {
+    t.plan(1)
+    const headers = new Headers({
+      a: ['1', '2'],
+      b: ['3', '4'],
+      c: '5'
+    })
+    t.same(headers.entries(), [
+      ['a', '1,2'],
+      ['b', '3,4'],
+      ['c', '5']
+    ])
   })
 })
 

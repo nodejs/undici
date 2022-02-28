@@ -42,7 +42,7 @@ export interface BodyMixin {
   readonly text: () => Promise<string>
 }
 
-export type HeadersInit = string[][] | Record<string, string> | Headers
+export type HeadersInit = string[][] | Record<string, string | ReadonlyArray<string>> | Headers
 
 export declare class Headers implements Iterable<[string, string]> {
   constructor (init?: HeadersInit)
@@ -107,7 +107,7 @@ export interface RequestInit {
   readonly window?: null
 }
 
-export type ReferrerPolicy = 
+export type ReferrerPolicy =
   | ''
   | 'no-referrer'
   | 'no-referrer-when-downgrade'
