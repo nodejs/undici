@@ -281,6 +281,34 @@ test('request text', (t) => {
   })
 })
 
+test('empty host header', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end(req.headers.host)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const serverAddress = `localhost:${server.address().port}`;
+    const client = new Client(`http://${serverAddress}`)
+    t.teardown(client.destroy.bind(client))
+
+    const getWithHost = async (host, wanted) => {
+      const { body } = await client.request({
+        path: '/',
+        method: 'GET',
+        headers: { host }
+      })
+      t.strictSame(await body.text(), wanted)
+    }
+
+    await getWithHost('test', 'test')
+    await getWithHost(undefined, serverAddress)
+    await getWithHost('', '')
+  })
+})
+
 test('request long multibyte text', (t) => {
   t.plan(1)
 
