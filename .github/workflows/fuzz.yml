@@ -24,7 +24,7 @@ jobs:
         run: |
           npm run fuzz
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: ${{ failure() }}
         with:
           name: undici-fuzz-results-${{ github.sha }}
