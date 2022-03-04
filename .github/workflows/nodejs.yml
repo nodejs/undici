@@ -12,7 +12,7 @@ jobs:
 
     uses: pkgjs/action/.github/workflows/node-test.yaml@v0.1
     with:
-      runs-on: ubuntu-latest, windows-latest
+      runs-on: ubuntu-latest, windows-latest, macos-latest
       test-command: npm run coverage:ci
       post-test-steps: |
         - name: Coverage Report
