@@ -178,3 +178,40 @@ test('isURLPotentiallyTrustworthy', (t) => {
     t.notOk(util.isURLPotentiallyTrustworthy(instance))
   }
 })
+
+test('determineRequestsReferrer', (t) => {
+  t.plan(4)
+  t.test('Should handle empty referrerPolicy', (tt) => {
+    tt.plan(2)
+    tt.equal(util.determineRequestsReferrer({}), 'no-referrer')
+    tt.equal(util.determineRequestsReferrer({ referrerPolicy: '' }), 'no-referrer')
+  })
+
+  t.test('Should handle "no-referrer" referrerPolicy', (tt) => {
+    tt.plan(1)
+    tt.equal(util.determineRequestsReferrer({ referrerPolicy: 'no-referrer' }), 'no-referrer')
+  })
+
+  t.test('Should return "no-referrer" if request referrer is absent', (tt) => {
+    tt.plan(1)
+    tt.equal(util.determineRequestsReferrer({
+      referrerPolicy: 'origin'
+    }), 'no-referrer')
+  })
+
+  t.test('Should return "no-referrer" if scheme is local scheme', (tt) => {
+    tt.plan(4)
+    const referrerSources = [
+      new URL('data:something'),
+      new URL('about:blank'),
+      new URL('javascript:something'),
+      new URL('file://path/to/file')]
+
+    for (const source of referrerSources) {
+      tt.equal(util.determineRequestsReferrer({
+        referrerPolicy: 'origin',
+        referrer: source
+      }), 'no-referrer')
+    }
+  })
+})
