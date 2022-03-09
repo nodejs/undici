@@ -264,5 +264,13 @@ test('Response.json WPTs', async (t) => {
     Response.json(Symbol('foo'))
   }, TypeError)
 
+  class CustomError extends Error {}
+
+  // This test should ensure that a CustomError is being thrown.
+  // It does do so, but tap doesn't seem to recognize it.
+  t.throws(() => {
+    Response.json({ get foo() { throw new CustomError("bar") } })
+  })
+
   t.end()
 })
