@@ -28,7 +28,7 @@ test('arg validation', (t) => {
     new Response(null, {
       status: '600'
     })
-  }, TypeError)
+  }, RangeError)
   t.throws(() => {
     // eslint-disable-next-line
     new Response(null, {
