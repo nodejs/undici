@@ -2320,17 +2320,17 @@ test('MockAgent - headers function interceptor', async (t) => {
     path: '/foo',
     method: 'GET',
     headers (headers) {
-      t.equal(headers instanceof Headers, true)
-      return !headers.has('authorization')
+      t.equal(typeof headers, 'object')
+      return !Object.keys(headers).includes('authorization')
     }
   }).reply(200, 'foo').times(2)
 
   await t.rejects(request(`${baseUrl}/foo`, {
     method: 'GET',
     headers: {
-      authorization: 'Bearer foo'
+      Authorization: 'Bearer foo'
     }
-  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"authorization":"Bearer foo"}': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"Authorization":"Bearer foo"}': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
 
   {
     const { statusCode } = await request(`${baseUrl}/foo`, {
