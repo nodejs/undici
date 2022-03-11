@@ -3,7 +3,21 @@
 const { test } = require('tap')
 const { MockInterceptor, MockScope } = require('../lib/mock/mock-interceptor')
 const MockAgent = require('../lib/mock/mock-agent');
+const { kDispatchKey } = require('../lib/mock/mock-symbols');
 const { InvalidArgumentError } = require('../lib/core/errors')
+
+
+test('MockInterceptor - path', t => {
+  t.plan(1)
+  t.test('should remove hash fragment from paths', t => {
+    t.plan(1)
+    const mockInterceptor = new MockInterceptor({
+      path: '#foobar',
+      method: ''
+    }, [])
+    t.equal(mockInterceptor[kDispatchKey].path, '')
+  })
+})
 
 test('MockInterceptor - reply', t => {
   t.plan(2)
