@@ -15,6 +15,7 @@ const MockAgent = require('./lib/mock/mock-agent')
 const MockPool = require('./lib/mock/mock-pool')
 const mockErrors = require('./lib/mock/mock-errors')
 const ProxyAgent = require('./lib/proxy-agent')
+const MockMissingHeader = require('./lib/mock/mock-symbols').kExpectMissing
 
 const nodeVersion = process.versions.node.split('.')
 const nodeMajor = Number(nodeVersion[0])
@@ -118,3 +119,4 @@ module.exports.MockClient = MockClient
 module.exports.MockPool = MockPool
 module.exports.MockAgent = MockAgent
 module.exports.mockErrors = mockErrors
+module.exports.MockMissingHeader = MockMissingHeader
