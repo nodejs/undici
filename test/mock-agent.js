@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
-const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
+const { request, setGlobalDispatcher, MockAgent, Agent, Headers } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
 const { InvalidArgumentError, ClientClosedError } = require('../lib/core/errors')
@@ -2292,4 +2292,60 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
   await t.rejects(request(`${baseUrl}/foo`, {
     method: 'GET'
   }), new MockNotMatchedError(`Mock dispatch not matched for path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+})
+
+test('MockAgent - headers function interceptor', async (t) => {
+  t.plan(7)
+
+  const server = createServer((req, res) => {
+    t.fail('should not be called')
+    t.end()
+    res.end('should not be called')
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+  const mockPool = mockAgent.get(baseUrl)
+
+  // Disable net connect so we can make sure it matches properly
+  mockAgent.disableNetConnect()
+
+  mockPool.intercept({
+    path: '/foo',
+    method: 'GET',
+    headers (headers) {
+      t.equal(headers instanceof Headers, true)
+      return !headers.has('authorization')
+    }
+  }).reply(200, 'foo').times(2)
+
+  await t.rejects(request(`${baseUrl}/foo`, {
+    method: 'GET',
+    headers: {
+      authorization: 'Bearer foo'
+    }
+  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"authorization":"Bearer foo"}': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+
+  {
+    const { statusCode } = await request(`${baseUrl}/foo`, {
+      method: 'GET',
+      headers: {
+        foo: 'bar'
+      }
+    })
+    t.equal(statusCode, 200)
+  }
+
+  {
+    const { statusCode } = await request(`${baseUrl}/foo`, {
+      method: 'GET'
+    })
+    t.equal(statusCode, 200)
+  }
 })
