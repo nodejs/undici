@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
-const { request, setGlobalDispatcher, MockAgent, Agent, Headers } = require('..')
+const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
 const { InvalidArgumentError, ClientClosedError } = require('../lib/core/errors')
