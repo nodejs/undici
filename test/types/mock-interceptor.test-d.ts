@@ -61,3 +61,10 @@ import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
   // times
   expectAssignable<MockScope>(mockScope.times(2))
 }
+
+{
+  const mockPool: MockPool = new MockAgent().get('')
+  mockPool.intercept({ path: '', method: 'GET', headers: () => true })
+  mockPool.intercept({ path: '', method: 'GET', headers: () => false })
+  mockPool.intercept({ path: '', method: 'GET', headers: (headers) => Object.keys(headers).includes('authorization') })
+}
