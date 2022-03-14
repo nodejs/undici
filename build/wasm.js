@@ -1,7 +1,7 @@
 'use strict'
 
 const { execSync } = require('child_process')
-const { writeFileSync, readFileSync } = require('fs');
+const { writeFileSync, readFileSync } = require('fs')
 const { join, resolve } = require('path')
 const { WASI_ROOT } = process.env
 

@@ -290,7 +290,7 @@ test('empty host header', (t) => {
   t.teardown(server.close.bind(server))
 
   server.listen(0, async () => {
-    const serverAddress = `localhost:${server.address().port}`;
+    const serverAddress = `localhost:${server.address().port}`
     const client = new Client(`http://${serverAddress}`)
     t.teardown(client.destroy.bind(client))
 
@@ -564,7 +564,6 @@ test('request onInfo callback headers parsing', async (t) => {
   t.same(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
   t.pass()
 })
-
 
 test('request raw responseHeaders', async (t) => {
   t.plan(4)

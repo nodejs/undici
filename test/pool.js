@@ -353,7 +353,7 @@ test('busy', (t) => {
   })
   t.teardown(server.close.bind(server))
 
-  const connections = 2;
+  const connections = 2
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {

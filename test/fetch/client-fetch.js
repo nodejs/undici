@@ -6,7 +6,7 @@ const { test } = require('tap')
 const { createServer } = require('http')
 const { ReadableStream } = require('stream/web')
 const { Blob } = require('buffer')
-const { fetch, Response, Request, FormData, File, FileLike } = require('../..')
+const { fetch, Response, Request, FormData, File } = require('../..')
 
 test('function signature', (t) => {
   t.plan(2)

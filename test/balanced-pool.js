@@ -182,13 +182,13 @@ test('invalid options throws', (t) => {
   }
 })
 
-test('factory option with basic get request', async(t) => {
+test('factory option with basic get request', async (t) => {
   t.plan(12)
 
   let factoryCalled = 0
   const opts = {
     factory: (origin, opts) => {
-      factoryCalled ++
+      factoryCalled++
       return new Pool(origin, opts)
     }
   }
@@ -228,5 +228,4 @@ test('factory option with basic get request', async(t) => {
   await client.close()
   t.equal(client.destroyed, true)
   t.equal(client.closed, true)
-
 })
