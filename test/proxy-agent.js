@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { request, setGlobalDispatcher, getGlobalDispatcher } = require('..')
-const url = require('url')
+const { URL } = require('url')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const ProxyAgent = require('../lib/proxy-agent')
 const { createServer } = require('http')
@@ -28,7 +28,7 @@ test('use proxy-agent to connect through proxy', async (t) => {
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent(proxyUrl)
-  const parsedOrigin = url.parse(serverUrl)
+  const parsedOrigin = new URL(serverUrl)
 
   proxy.on('request', () => {
     t.pass('should call proxy')
@@ -65,7 +65,7 @@ test('use proxy-agent to connect through proxy using path with params', async (t
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent(proxyUrl)
-  const parsedOrigin = url.parse(serverUrl)
+  const parsedOrigin = new URL(serverUrl)
 
   proxy.on('request', () => {
     t.pass('should call proxy')
@@ -101,7 +101,7 @@ test('use proxy-agent with auth', async (t) => {
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent(proxyUrl)
-  const parsedOrigin = url.parse(serverUrl)
+  const parsedOrigin = new URL(serverUrl)
 
   proxy.authenticate = function (req, fn) {
     t.pass('authentication should be called')
@@ -152,7 +152,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent(proxyUrl)
-  const parsedOrigin = url.parse(serverUrl)
+  const parsedOrigin = new URL(serverUrl)
   setGlobalDispatcher(proxyAgent)
 
   t.teardown(() => setGlobalDispatcher(defaultDispatcher))

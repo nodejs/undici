@@ -21,7 +21,7 @@ describe('node-fetch with MockAgent', () => {
     mockPool
       .intercept({
         path: '/test',
-        method: 'GET',
+        method: 'GET'
       })
       .reply(200, { success: true })
       .persist()
@@ -69,7 +69,7 @@ describe('node-fetch with MockAgent', () => {
         path: '/test',
         method: 'GET',
         headers: {
-          'User-Agent': /^undici$/,
+          'User-Agent': /^undici$/
         }
       })
       .reply(200, { success: true })
