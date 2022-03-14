@@ -147,14 +147,13 @@ test('MockPool - intercept validation', (t) => {
     t.throws(() => mockPool.intercept({}), new InvalidArgumentError('opts.path must be defined'))
   })
 
-  t.test('it should error if no method specified in the intercept', t => {
+  t.test('it should default to GET if no method specified in the intercept', t => {
     t.plan(1)
     const mockAgent = new MockAgent()
     t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockPool = mockAgent.get('http://localhost:9999')
-
-    t.throws(() => mockPool.intercept({ path: '/foo' }), new InvalidArgumentError('opts.method must be defined'))
+    t.doesNotThrow(() => mockPool.intercept({ path: '/foo' }))
   })
 })
 
