@@ -554,11 +554,12 @@ test('request onInfo callback headers parsing', async (t) => {
   const client = new Client(`http://localhost:${server.address().port}`)
   t.teardown(client.close.bind(client))
 
-  await client.request({
+  const { body } = await client.request({
     path: '/',
     method: 'GET',
     onInfo: (x) => { infos.push(x) }
   })
+  await body.dump()
   t.equal(infos.length, 1)
   t.equal(infos[0].statusCode, 103)
   t.same(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
@@ -589,12 +590,13 @@ test('request raw responseHeaders', async (t) => {
   const client = new Client(`http://localhost:${server.address().port}`)
   t.teardown(client.close.bind(client))
 
-  const { headers } = await client.request({
+  const { body, headers } = await client.request({
     path: '/',
     method: 'GET',
     responseHeaders: 'raw',
     onInfo: (x) => { infos.push(x) }
   })
+  await body.dump()
   t.equal(infos.length, 1)
   t.same(infos[0].headers, ['Link', '</style.css>; rel=preload; as=style'])
   t.same(headers, ['Date', 'Sat, 09 Oct 2010 14:28:02 GMT', 'Connection', 'close'])
