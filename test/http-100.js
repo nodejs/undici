@@ -84,6 +84,30 @@ test('error 100 body', (t) => {
   })
 })
 
+test('error 101 upgrade', (t) => {
+  t.plan(2)
+
+  const server = net.createServer((socket) => {
+    socket.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: example/1\r\nConnection: Upgrade\r\n')
+    socket.write('\r\n')
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.equal(err.message, 'bad upgrade')
+    })
+    client.on('disconnect', () => {
+      t.pass()
+    })
+  })
+})
+
 test('1xx response without timeouts', { only: true }, t => {
   t.plan(2)
 
