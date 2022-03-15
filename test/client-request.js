@@ -281,6 +281,34 @@ test('request text', (t) => {
   })
 })
 
+test('empty host header', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end(req.headers.host)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const serverAddress = `localhost:${server.address().port}`
+    const client = new Client(`http://${serverAddress}`)
+    t.teardown(client.destroy.bind(client))
+
+    const getWithHost = async (host, wanted) => {
+      const { body } = await client.request({
+        path: '/',
+        method: 'GET',
+        headers: { host }
+      })
+      t.strictSame(await body.text(), wanted)
+    }
+
+    await getWithHost('test', 'test')
+    await getWithHost(undefined, serverAddress)
+    await getWithHost('', '')
+  })
+})
+
 test('request long multibyte text', (t) => {
   t.plan(1)
 
@@ -534,6 +562,42 @@ test('request onInfo callback headers parsing', async (t) => {
   t.equal(infos.length, 1)
   t.equal(infos[0].statusCode, 103)
   t.same(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
+  t.pass()
+})
+
+test('request raw responseHeaders', async (t) => {
+  t.plan(4)
+  const infos = []
+
+  const server = net.createServer((socket) => {
+    const lines = [
+      'HTTP/1.1 103 Early Hints',
+      'Link: </style.css>; rel=preload; as=style',
+      '',
+      'HTTP/1.1 200 OK',
+      'Date: Sat, 09 Oct 2010 14:28:02 GMT',
+      'Connection: close',
+      '',
+      'the body'
+    ]
+    socket.end(lines.join('\r\n'))
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.teardown(client.close.bind(client))
+
+  const { headers } = await client.request({
+    path: '/',
+    method: 'GET',
+    responseHeaders: 'raw',
+    onInfo: (x) => { infos.push(x) }
+  })
+  t.equal(infos.length, 1)
+  t.same(infos[0].headers, ['Link', '</style.css>; rel=preload; as=style'])
+  t.same(headers, ['Date', 'Sat, 09 Oct 2010 14:28:02 GMT', 'Connection', 'close'])
   t.pass()
 })
 

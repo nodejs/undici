@@ -3,6 +3,7 @@ import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
 import { IncomingHttpHeaders } from 'http'
 import { Blob } from 'buffer'
+import BodyReadable from './readable'
 
 type AbortSignal = unknown;
 
@@ -64,6 +65,8 @@ declare namespace Dispatcher {
     opaque?: unknown;
     /** Default: 0 */
     maxRedirections?: number;
+    /** Default: `null` */
+    responseHeader?: 'raw' | null;
   }
   export interface RequestOptions extends DispatchOptions {
     /** Default: `null` */
@@ -73,7 +76,9 @@ declare namespace Dispatcher {
     /** Default: 0 */
     maxRedirections?: number;
     /** Default: `null` */
-    onInfo?: (info: {statusCode: number, headers: Record<string, string | string[]>}) => void;
+    onInfo?: (info: { statusCode: number, headers: Record<string, string | string[]> }) => void;
+    /** Default: `null` */
+    responseHeader?: 'raw' | null;
   }
   export interface PipelineOptions extends RequestOptions {
     /** `true` if the `handler` will return an object stream. Default: `false` */
@@ -91,6 +96,8 @@ declare namespace Dispatcher {
     signal?: AbortSignal | EventEmitter | null;
     /** Default: 0 */
     maxRedirections?: number;
+    /** Default: `null` */
+    responseHeader?: 'raw' | null;
   }
   export interface ConnectData {
     statusCode: number;
@@ -101,7 +108,7 @@ declare namespace Dispatcher {
   export interface ResponseData {
     statusCode: number;
     headers: IncomingHttpHeaders;
-    body: Readable & BodyMixin;
+    body: BodyReadable & BodyMixin;
     trailers: Record<string, string>;
     opaque: unknown;
     context: object;
@@ -110,7 +117,7 @@ declare namespace Dispatcher {
     statusCode: number;
     headers: IncomingHttpHeaders;
     opaque: unknown;
-    body: Readable;
+    body: BodyReadable;
     context: object;
   }
   export interface StreamData {

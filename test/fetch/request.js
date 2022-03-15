@@ -6,6 +6,7 @@ const { test } = require('tap')
 const {
   Request
 } = require('../../')
+const { kState } = require('../../lib/fetch/symbols.js')
 
 test('arg validation', (t) => {
   // constructor
@@ -42,7 +43,7 @@ test('arg validation', (t) => {
   t.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
-      window: null
+      window: 1
     })
   }, TypeError)
   t.throws(() => {
@@ -146,6 +147,71 @@ test('arg validation', (t) => {
     Request.prototype.clone.call(null)
   }, TypeError)
 
+  t.end()
+})
+
+test('undefined window', t => {
+  t.doesNotThrow(() => new Request('http://asd', { window: undefined }))
+  t.end()
+})
+
+test('undefined body', t => {
+  const req = new Request('http://asd', { body: undefined })
+  t.equal(req[kState].body, null)
+  t.end()
+})
+
+test('undefined method', t => {
+  const req = new Request('http://asd', { method: undefined })
+  t.equal(req.method, 'GET')
+  t.end()
+})
+
+test('undefined headers', t => {
+  const req = new Request('http://asd', { headers: undefined })
+  t.equal([...req.headers.entries()].length, 0)
+  t.end()
+})
+
+test('undefined referrer', t => {
+  const req = new Request('http://asd', { referrer: undefined })
+  t.equal(req.referrer, 'about:client')
+  t.end()
+})
+
+test('undefined referrerPolicy', t => {
+  const req = new Request('http://asd', { referrerPolicy: undefined })
+  t.equal(req.referrerPolicy, '')
+  t.end()
+})
+
+test('undefined mode', t => {
+  const req = new Request('http://asd', { mode: undefined })
+  t.equal(req.mode, 'cors')
+  t.end()
+})
+
+test('undefined credentials', t => {
+  const req = new Request('http://asd', { credentials: undefined })
+  t.equal(req.credentials, 'same-origin')
+  t.end()
+})
+
+test('undefined cache', t => {
+  const req = new Request('http://asd', { cache: undefined })
+  t.equal(req.cache, 'default')
+  t.end()
+})
+
+test('undefined redirect', t => {
+  const req = new Request('http://asd', { redirect: undefined })
+  t.equal(req.redirect, 'follow')
+  t.end()
+})
+
+test('undefined keepalive', t => {
+  const req = new Request('http://asd', { keepalive: undefined })
+  t.equal(req.keepalive, false)
   t.end()
 })
 

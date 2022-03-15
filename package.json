@@ -1,6 +1,6 @@
 {
   "name": "undici",
-  "version": "4.14.1",
+  "version": "4.15.1",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
   "homepage": "https://undici.nodejs.org",
   "bugs": {
@@ -40,7 +40,7 @@
     "docs"
   ],
   "scripts": {
-    "build:node": "esbuild index.js --bundle --platform=node --outfile=undici.js",
+    "build:node": "npx esbuild@0.14.25 index.js --bundle --platform=node --outfile=undici.js",
     "prebuild:wasm": "docker build -t llhttp_wasm_builder -f build/Dockerfile .",
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
@@ -48,7 +48,7 @@
     "test": "npm run test:tap && npm run test:node-fetch && npm run test:fetch && npm run test:jest && tsd",
     "test:node-fetch": "node scripts/verifyVersion.js 16 || mocha test/node-fetch",
     "test:fetch": "node scripts/verifyVersion.js 16 || tap test/fetch/*.js",
-    "test:jest": "jest test/jest/test",
+    "test:jest": "jest",
     "test:tap": "tap test/*.js test/diagnostics-channel/*.js",
     "test:tdd": "tap test/*.js test/diagnostics-channel/*.js -w",
     "test:typescript": "tsd",
@@ -75,7 +75,6 @@
     "cronometro": "^0.8.0",
     "delay": "^5.0.0",
     "docsify-cli": "^4.4.3",
-    "esbuild": "^0.14.14",
     "formdata-node": "^4.3.1",
     "https-pem": "^2.0.0",
     "husky": "^7.0.2",
@@ -114,5 +113,10 @@
         "esnext"
       ]
     }
+  },
+  "jest": {
+    "testMatch": [
+      "<rootDir>/test/jest/**"
+    ]
   }
 }
