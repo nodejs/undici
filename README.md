@@ -106,8 +106,9 @@ This section documents our most commonly used API methods. Additional APIs are d
 Arguments:
 
 * **url** `string | URL | UrlObject`
-* **options** [`RequestOptions`](./docs/api/Dispatcher.md#parameter-requestoptions)
+* **options** [`RequestOptions`](./docs/api/Dispatcher.md#parameter-requestoptions)(`origin` is omitted)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
+  * **path** `String` (optional)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
   * **maxRedirections** `Integer` - Default: `0`
 
