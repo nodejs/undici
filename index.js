@@ -60,23 +60,14 @@ function makeDispatcher (fn) {
     }
 
     if (opts && opts.path != null) {
-      if (typeof opts.path !== 'string') {
-        throw new InvalidArgumentError('invalid opts.path')
-      }
-
-      let path = opts.path
-      if (!opts.path.startsWith('/')) {
-        path = `/${path}`
-      }
-
-      url = new URL(util.parseOrigin(url).origin + path)
-    } else {
-      if (!opts) {
-        opts = typeof url === 'object' ? url : {}
-      }
-
-      url = util.parseURL(url)
+      throw new InvalidArgumentError('unsupported option `path`')
     }
+
+    if (!opts) {
+      opts = typeof url === 'object' ? url : {}
+    }
+
+    url = util.parseURL(url)
 
     const { agent, dispatcher = getGlobalDispatcher() } = opts
 

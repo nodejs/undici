@@ -344,7 +344,7 @@ test('fails with invalid args', t => {
   t.throws(() => request(''), errors.InvalidArgumentError, 'throws on invalid url')
   t.throws(() => request({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
   t.throws(() => request({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
-  t.throws(() => request('https://example.com', { path: 0 }), errors.InvalidArgumentError, 'throws on opts.path argument')
+  t.throws(() => request('https://example.com', { path: '/hello' }), errors.InvalidArgumentError, 'throws on opts.path argument')
   t.throws(() => request('https://example.com', { agent: new Agent() }), errors.InvalidArgumentError, 'throws on opts.path argument')
   t.throws(() => request('https://example.com', 'asd'), errors.InvalidArgumentError, 'throws on non object opts argument')
   t.end()
@@ -648,7 +648,7 @@ test('drain', t => {
 })
 
 test('global api', t => {
-  t.plan(6 * 2)
+  t.plan(4 * 2)
 
   const server = http.createServer((req, res) => {
     if (req.url === '/bar') {
@@ -665,10 +665,8 @@ test('global api', t => {
 
   server.listen(0, async () => {
     const origin = `http://localhost:${server.address().port}`
-    await request(origin, { path: '/foo' })
     await request(`${origin}/foo`)
-    await request({ origin, path: '/foo' })
-    await stream({ origin, path: '/foo' }, () => new PassThrough())
+    await request(`${origin}/foo`, {}, () => new PassThrough())
     await request({ protocol: 'http:', hostname: 'localhost', port: server.address().port, path: '/foo' })
     await request(`${origin}/bar`, { body: 'asd' })
   })
@@ -677,9 +675,9 @@ test('global api', t => {
 test('global api throws', t => {
   const origin = 'http://asd'
   t.throws(() => request(`${origin}/foo`, { path: '/foo' }), errors.InvalidArgumentError)
-  t.throws(() => request({ origin, path: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
-  t.throws(() => request({ origin, pathname: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
-  t.throws(() => request({ origin: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
+  t.throws(() => request({ origin, path: 0 }, { path: 0 }), errors.InvalidArgumentError)
+  t.throws(() => request({ origin, pathname: 0 }, { path: 0 }), errors.InvalidArgumentError)
+  t.throws(() => request({ origin: 0 }, { path: 0 }), errors.InvalidArgumentError)
   t.throws(() => request(0), errors.InvalidArgumentError)
   t.throws(() => request(1), errors.InvalidArgumentError)
   t.end()
