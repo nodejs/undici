@@ -246,7 +246,7 @@ cronometro(
     'undici - fetch' () {
       return makeParallelRequests(resolve => {
         fetch(dest.url).then(res => {
-          res.text().then(resolve)
+          res.body.pipeTo(new WritableStream({ write () {}, close () { resolve() } }))
         })
       })
     }
