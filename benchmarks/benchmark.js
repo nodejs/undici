@@ -6,6 +6,7 @@ const http = require('http')
 const os = require('os')
 const path = require('path')
 const { table } = require('table')
+const { WritableStream } = require('stream/web')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
