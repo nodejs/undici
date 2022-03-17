@@ -2,7 +2,7 @@
 
 const { request } = require('../')
 
-async function main() {
+async function main () {
   const {
     statusCode,
     headers,
