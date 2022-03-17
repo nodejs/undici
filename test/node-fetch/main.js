@@ -780,9 +780,8 @@ describe('node-fetch', () => {
           }
         )
       ]
-      setTimeout(() => {
-        controller.abort()
-      }, 100)
+
+      controller.abort()
 
       return Promise.all(fetches.map(fetched => expect(fetched)
         .to.eventually.be.rejected
@@ -806,9 +805,8 @@ describe('node-fetch', () => {
           }
         )
       ]
-      setTimeout(() => {
-        controller.abort()
-      }, 100)
+
+      controller.abort()
 
       return Promise.all(fetches.map(fetched => expect(fetched)
         .to.eventually.be.rejected
