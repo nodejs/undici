@@ -10,7 +10,7 @@ const { WritableStream } = require('stream/web')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
-const iterations = (parseInt(process.env.SAMPLES, 10) || 100) + 1
+const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
 const errorThreshold = parseInt(process.env.ERROR_TRESHOLD, 10) || 3
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
@@ -129,6 +129,8 @@ function printResults (results) {
       ]
     })
 
+  console.log(results)
+
   // Add the header row
   rows.unshift(['Tests', 'Samples', 'Result', 'Tolerance', 'Difference with slowest'])
 
@@ -162,9 +164,9 @@ function printResults (results) {
   })
 }
 
-cronometro(
-  {
+const experiments = {
     'http - no keepalive' () {
+      console.log('aaa')
       return makeParallelRequests(resolve => {
         http.get(httpNoKeepAliveOptions, res => {
           res
@@ -243,15 +245,22 @@ cronometro(
       return makeParallelRequests(resolve => {
         dispatcher.dispatch(undiciOptions, new SimpleRequest(resolve))
       })
-    },
-    'undici - fetch' () {
-      return makeParallelRequests(resolve => {
-        fetch(dest.url).then(res => {
-          res.body.pipeTo(new WritableStream({ write () {}, close () { resolve() } }))
-        })
-      })
     }
-  },
+}
+
+if (process.env.PORT) {
+  // fetch does not support the socket
+  experiments['undici - fetch'] = () => {
+    return makeParallelRequests(resolve => {
+      fetch(dest.url).then(res => {
+        res.body.pipeTo(new WritableStream({ write () {}, close () { resolve() } }))
+      }).catch(console.log)
+    })
+  }
+}
+
+cronometro(
+  experiments, 
   {
     iterations,
     errorThreshold,
