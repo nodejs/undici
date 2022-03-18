@@ -993,72 +993,72 @@ test('pool close waits for all requests', (t) => {
   })
 })
 
-// test('pool destroyed', (t) => {
-//   t.plan(1)
+test('pool destroyed', (t) => {
+  t.plan(1)
 
-//   const server = createServer((req, res) => {
-//     res.end('asd')
-//   })
-//   t.teardown(server.close.bind(server))
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, () => {
-//     const client = new Pool(`http://localhost:${server.address().port}`, {
-//       connections: 1,
-//       pipelining: 1
-//     })
-//     t.teardown(client.destroy.bind(client))
+  server.listen(0, () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1,
+      pipelining: 1
+    })
+    t.teardown(client.destroy.bind(client))
 
-//     client.destroy()
-//     client.request({
-//       path: '/',
-//       method: 'GET'
-//     }, (err) => {
-//       t.type(err, errors.ClientDestroyedError)
-//     })
-//   })
-// })
+    client.destroy()
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.type(err, errors.ClientDestroyedError)
+    })
+  })
+})
 
-// test('pool destroy fails queued requests', (t) => {
-//   t.plan(6)
+test('pool destroy fails queued requests', (t) => {
+  t.plan(6)
 
-//   const server = createServer((req, res) => {
-//     res.end('asd')
-//   })
-//   t.teardown(server.close.bind(server))
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const client = new Pool(`http://localhost:${server.address().port}`, {
-//       connections: 1,
-//       pipelining: 1
-//     })
-//     t.teardown(client.destroy.bind(client))
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1,
+      pipelining: 1
+    })
+    t.teardown(client.destroy.bind(client))
 
-//     const _err = new Error()
-//     client.request({
-//       path: '/',
-//       method: 'GET'
-//     }, (err) => {
-//       t.equal(err, _err)
-//     })
+    const _err = new Error()
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.equal(err, _err)
+    })
 
-//     client.request({
-//       path: '/',
-//       method: 'GET'
-//     }, (err) => {
-//       t.equal(err, _err)
-//     })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.equal(err, _err)
+    })
 
-//     t.equal(client.destroyed, false)
-//     client.destroy(_err, () => {
-//       t.pass()
-//     })
-//     t.equal(client.destroyed, true)
+    t.equal(client.destroyed, false)
+    client.destroy(_err, () => {
+      t.pass()
+    })
+    t.equal(client.destroyed, true)
 
-//     client.request({
-//       path: '/',
-//       method: 'GET'
-//     }, (err) => {
-//       t.type(err, errors.ClientDestroyedError)
-//     })
-//   })
-// })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      t.type(err, errors.ClientDestroyedError)
+    })
+  })
+})
