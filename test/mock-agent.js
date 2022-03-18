@@ -2350,7 +2350,6 @@ test('MockAgent - headers function interceptor', async (t) => {
   }
 })
 
-
 test('MockAgent - clients are not garbage collected', async (t) => {
   const samples = 250
   t.plan(2)
@@ -2371,23 +2370,22 @@ test('MockAgent - clients are not garbage collected', async (t) => {
   dispatcher.disableNetConnect()
 
   // Purposely create the pool inside a function so that the reference is lost
-  function intercept() {
+  function intercept () {
     // Create the pool and add a lot of intercepts
     const pool = dispatcher.get(baseUrl)
 
-    for(let i = 0; i < samples; i++) {
+    for (let i = 0; i < samples; i++) {
       pool.intercept({
         path: `/foo/${i}`,
-        method: 'GET',
+        method: 'GET'
       }).reply(200, Buffer.alloc(1024 * 1024))
-      .persist()
     }
   }
 
   intercept()
 
   const results = new Set()
-  for(let i = 0; i < samples; i++) {
+  for (let i = 0; i < samples; i++) {
     // Let's make some time pass to allow garbage collection to happen
     await require('timers/promises').setTimeout(10)
 
