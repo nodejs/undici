@@ -2369,6 +2369,13 @@ test('MockAgent - clients are not garbage collected', async (t) => {
   const dispatcher = new MockAgent()
   dispatcher.disableNetConnect()
 
+  // When Node 16 is the minimum supported, this can be replaced by simply requiring setTimeout from timers/promises
+  function sleep (delay) {
+    return new Promise(resolve => {
+      setTimeout(resolve, delay)
+    })
+  }
+
   // Purposely create the pool inside a function so that the reference is lost
   function intercept () {
     // Create the pool and add a lot of intercepts
@@ -2387,7 +2394,7 @@ test('MockAgent - clients are not garbage collected', async (t) => {
   const results = new Set()
   for (let i = 0; i < samples; i++) {
     // Let's make some time pass to allow garbage collection to happen
-    await require('timers/promises').setTimeout(10)
+    await sleep(10)
 
     const { statusCode } = await request(`${baseUrl}/foo/${i}`, { method: 'GET', dispatcher })
     results.add(statusCode)
