@@ -2,6 +2,7 @@
 
 * [Guides](#guides)
   * [Update `llhttp`](#update-llhttp)
+  * [Lint](#lint)
   * [Test](#test)
   * [Coverage](#coverage)
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
@@ -74,6 +75,14 @@ cp src/native/api.h build/llhttp.h <your-path-to-undici>/deps/llhttp/include/
 cd <your-path-to-undici>
 
 npm run build:wasm
+```
+
+<a id="lint"></a>
+
+### Lint
+
+```bash
+npm run lint
 ```
 
 <a id="test"></a>
