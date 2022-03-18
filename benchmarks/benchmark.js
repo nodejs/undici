@@ -166,7 +166,6 @@ function printResults (results) {
 
 const experiments = {
   'http - no keepalive' () {
-    console.log('aaa')
     return makeParallelRequests(resolve => {
       http.get(httpNoKeepAliveOptions, res => {
         res
