@@ -2349,3 +2349,57 @@ test('MockAgent - headers function interceptor', async (t) => {
     t.equal(statusCode, 200)
   }
 })
+
+test('MockAgent - clients are not garbage collected', async (t) => {
+  const samples = 250
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    t.fail('should not be called')
+    t.end()
+    res.end('should not be called')
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  // Create the dispatcher and isable net connect so we can make sure it matches properly
+  const dispatcher = new MockAgent()
+  dispatcher.disableNetConnect()
+
+  // When Node 16 is the minimum supported, this can be replaced by simply requiring setTimeout from timers/promises
+  function sleep (delay) {
+    return new Promise(resolve => {
+      setTimeout(resolve, delay)
+    })
+  }
+
+  // Purposely create the pool inside a function so that the reference is lost
+  function intercept () {
+    // Create the pool and add a lot of intercepts
+    const pool = dispatcher.get(baseUrl)
+
+    for (let i = 0; i < samples; i++) {
+      pool.intercept({
+        path: `/foo/${i}`,
+        method: 'GET'
+      }).reply(200, Buffer.alloc(1024 * 1024))
+    }
+  }
+
+  intercept()
+
+  const results = new Set()
+  for (let i = 0; i < samples; i++) {
+    // Let's make some time pass to allow garbage collection to happen
+    await sleep(10)
+
+    const { statusCode } = await request(`${baseUrl}/foo/${i}`, { method: 'GET', dispatcher })
+    results.add(statusCode)
+  }
+
+  t.equal(results.size, 1)
+  t.ok(results.has(200))
+})
