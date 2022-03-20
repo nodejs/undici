@@ -839,35 +839,35 @@ describe('node-fetch', () => {
         .and.have.property('name', 'AbortError')
     })
 
-    // it('should allow redirected response body to be aborted', () => {
-    //   const request = new Request(`${base}redirect/slow-stream`, {
-    //     signal: controller.signal
-    //   })
-    //   return expect(fetch(request).then(res => {
-    //     expect(res.headers.get('content-type')).to.equal('text/plain')
-    //     const result = res.text()
-    //     controller.abort()
-    //     return result
-    //   })).to.be.eventually.rejected
-    //     .and.be.an.instanceOf(Error)
-    //     .and.have.property('name', 'AbortError')
-    // })
+    it('should allow redirected response body to be aborted', () => {
+      const request = new Request(`${base}redirect/slow-stream`, {
+        signal: controller.signal
+      })
+      return expect(fetch(request).then(res => {
+        expect(res.headers.get('content-type')).to.equal('text/plain')
+        const result = res.text()
+        controller.abort()
+        return result
+      })).to.be.eventually.rejected
+        .and.be.an.instanceOf(Error)
+        .and.have.property('name', 'AbortError')
+    })
 
-    // it('should reject response body with AbortError when aborted before stream has been read completely', () => {
-    //   return expect(fetch(
-    //     `${base}slow`,
-    //     { signal: controller.signal }
-    //   ))
-    //     .to.eventually.be.fulfilled
-    //     .then(res => {
-    //       const promise = res.text()
-    //       controller.abort()
-    //       return expect(promise)
-    //         .to.eventually.be.rejected
-    //         .and.be.an.instanceof(Error)
-    //         .and.have.property('name', 'AbortError')
-    //     })
-    // })
+    it('should reject response body with AbortError when aborted before stream has been read completely', () => {
+      return expect(fetch(
+        `${base}slow`,
+        { signal: controller.signal }
+      ))
+        .to.eventually.be.fulfilled
+        .then(res => {
+          const promise = res.text()
+          controller.abort()
+          return expect(promise)
+            .to.eventually.be.rejected
+            .and.be.an.instanceof(Error)
+            .and.have.property('name', 'AbortError')
+        })
+    })
 
     it('should reject response body methods immediately with AbortError when aborted before stream is disturbed', () => {
       return expect(fetch(
