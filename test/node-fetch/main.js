@@ -1347,42 +1347,42 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should allow cloning a json response and log it as text response', () => {
-    const url = `${base}json`
-    return fetch(url).then(res => {
-      const r1 = res.clone()
-      return Promise.all([res.json(), r1.text()]).then(results => {
-        expect(results[0]).to.deep.equal({ name: 'value' })
-        expect(results[1]).to.equal('{"name":"value"}')
-      })
-    })
-  })
+  // it('should allow cloning a json response and log it as text response', () => {
+  //   const url = `${base}json`
+  //   return fetch(url).then(res => {
+  //     const r1 = res.clone()
+  //     return Promise.all([res.json(), r1.text()]).then(results => {
+  //       expect(results[0]).to.deep.equal({ name: 'value' })
+  //       expect(results[1]).to.equal('{"name":"value"}')
+  //     })
+  //   })
+  // })
 
-  it('should allow cloning a json response, and then log it as text response', () => {
-    const url = `${base}json`
-    return fetch(url).then(res => {
-      const r1 = res.clone()
-      return res.json().then(result => {
-        expect(result).to.deep.equal({ name: 'value' })
-        return r1.text().then(result => {
-          expect(result).to.equal('{"name":"value"}')
-        })
-      })
-    })
-  })
+  // it('should allow cloning a json response, and then log it as text response', () => {
+  //   const url = `${base}json`
+  //   return fetch(url).then(res => {
+  //     const r1 = res.clone()
+  //     return res.json().then(result => {
+  //       expect(result).to.deep.equal({ name: 'value' })
+  //       return r1.text().then(result => {
+  //         expect(result).to.equal('{"name":"value"}')
+  //       })
+  //     })
+  //   })
+  // })
 
-  it('should allow cloning a json response, first log as text response, then return json object', () => {
-    const url = `${base}json`
-    return fetch(url).then(res => {
-      const r1 = res.clone()
-      return r1.text().then(result => {
-        expect(result).to.equal('{"name":"value"}')
-        return res.json().then(result => {
-          expect(result).to.deep.equal({ name: 'value' })
-        })
-      })
-    })
-  })
+  // it('should allow cloning a json response, first log as text response, then return json object', () => {
+  //   const url = `${base}json`
+  //   return fetch(url).then(res => {
+  //     const r1 = res.clone()
+  //     return r1.text().then(result => {
+  //       expect(result).to.equal('{"name":"value"}')
+  //       return res.json().then(result => {
+  //         expect(result).to.deep.equal({ name: 'value' })
+  //       })
+  //     })
+  //   })
+  // })
 
   it('should not allow cloning a response after its been used', () => {
     const url = `${base}hello`
