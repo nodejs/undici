@@ -1350,7 +1350,6 @@ describe('node-fetch', () => {
   it('should allow cloning a json response and log it as text response', () => {
     const url = `${base}json`
     return fetch(url).then(res => {
-      console.log('BODY', res.body)
       const r1 = res.clone()
       return Promise.all([res.json(), r1.text()]).then(results => {
         expect(results[0]).to.deep.equal({ name: 'value' })
