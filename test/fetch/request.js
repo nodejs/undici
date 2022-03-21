@@ -37,18 +37,6 @@ test('arg validation', (t) => {
   t.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
-      window: {}
-    })
-  }, TypeError)
-  t.throws(() => {
-    // eslint-disable-next-line
-    new Request('http://asd', {
-      window: 1
-    })
-  }, TypeError)
-  t.throws(() => {
-    // eslint-disable-next-line
-    new Request('http://asd', {
       mode: 'navigate'
     })
   })
@@ -150,8 +138,20 @@ test('arg validation', (t) => {
   t.end()
 })
 
-test('undefined window', t => {
-  t.doesNotThrow(() => new Request('http://asd', { window: undefined }))
+test('any window', t => {
+  for (const window of [
+    1,
+    true,
+    'string',
+    null,
+    undefined,
+    Symbol('undici'),
+    {},
+    []
+  ]) {
+    t.throws(() => new Request('http://asd', { window }), TypeError)
+  }
+
   t.end()
 })
 
