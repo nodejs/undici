@@ -7,7 +7,7 @@ const util = require('../../lib/fetch/util')
 const { HeadersList } = require('../../lib/fetch/headers')
 
 test('responseURL', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   t.ok(util.responseURL({
     urlList: [
@@ -18,6 +18,14 @@ test('responseURL', (t) => {
   t.notOk(util.responseURL({
     urlList: []
   }))
+
+  const responseURL = util.responseURL({
+    urlList: [
+      new URL('http://asd')
+    ]
+  })
+
+  t.ok(responseURL instanceof URL) // returns a URL
 })
 
 test('responseLocationURL', (t) => {
