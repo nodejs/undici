@@ -150,7 +150,7 @@ test('any window', t => {
     {},
     []
   ]) {
-    t.throws(() => new Request('http://asd', { window }), TypeError)
+    t.doesNotThrow(() => new Request('http://asd', { window }))
   }
 
   t.end()
