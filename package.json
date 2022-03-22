@@ -66,6 +66,7 @@
     "@sinonjs/fake-timers": "^7.0.5",
     "@types/node": "^16.9.1",
     "abort-controller": "^3.0.0",
+    "babel-eslint": "^10.1.0",
     "busboy": "^0.3.1",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
@@ -103,7 +104,8 @@
     "ignore": [
       "lib/llhttp/constants.js",
       "lib/llhttp/utils.js"
-    ]
+    ],
+    "parser": "babel-eslint"
   },
   "tsd": {
     "directory": "test/types",
