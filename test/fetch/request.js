@@ -34,11 +34,24 @@ test('arg validation', (t) => {
     // eslint-disable-next-line
     new Request('http://asd', undefined)
   }, TypeError)
+  t.throws(() => {
+    // eslint-disable-next-line
+    new Request('http://asd', {
+      mode: 'navigate'
+    })
+  })
 
   t.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
       referrerPolicy: 'agjhagna'
+    })
+  }, TypeError)
+
+  t.throws(() => {
+    // eslint-disable-next-line
+    new Request('http://asd', {
+      mode: 'agjhagna'
     })
   }, TypeError)
 
@@ -83,6 +96,10 @@ test('arg validation', (t) => {
   }, TypeError)
 
   t.throws(() => {
+    Request.prototype.mode.call(null)
+  }, TypeError)
+
+  t.throws(() => {
     Request.prototype.credentials.call(null)
   }, TypeError)
 
@@ -117,24 +134,6 @@ test('arg validation', (t) => {
   t.throws(() => {
     Request.prototype.clone.call(null)
   }, TypeError)
-
-  // init['mode'] is ignored
-  for (const mode of [
-    'navigate',
-    'web-socket',
-    'cors',
-    'no-cors',
-    'same-origin',
-    null,
-    undefined,
-    1,
-    true,
-    'non-sense',
-    {},
-    Request
-  ]) {
-    t.doesNotThrow(() => new Request('http://asd', { mode }))
-  }
 
   t.end()
 })
@@ -183,6 +182,12 @@ test('undefined referrer', t => {
 test('undefined referrerPolicy', t => {
   const req = new Request('http://asd', { referrerPolicy: undefined })
   t.equal(req.referrerPolicy, '')
+  t.end()
+})
+
+test('undefined mode', t => {
+  const req = new Request('http://asd', { mode: undefined })
+  t.equal(req.mode, 'cors')
   t.end()
 })
 

@@ -101,6 +101,7 @@ export interface RequestInit {
   readonly integrity?: string
   readonly signal?: AbortSignal
   readonly credentials?: RequestCredentials
+  readonly mode?: RequestMode
   readonly referrer?: string
   readonly referrerPolicy?: ReferrerPolicy
   readonly window?: null
@@ -117,6 +118,8 @@ export type ReferrerPolicy =
   | 'strict-origin-when-cross-origin'
   | 'unsafe-url';
 
+export type RequestMode = 'cors' | 'navigate' | 'no-cors' | 'same-origin'
+
 export type RequestRedirect = 'error' | 'follow' | 'manual'
 
 export declare class Request implements BodyMixin {
@@ -128,6 +131,7 @@ export declare class Request implements BodyMixin {
   readonly headers: Headers
   readonly integrity: string
   readonly method: string
+  readonly mode: RequestMode
   readonly redirect: RequestRedirect
   readonly referrerPolicy: string
   readonly url: string

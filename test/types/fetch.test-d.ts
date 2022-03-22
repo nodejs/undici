@@ -12,6 +12,7 @@ import {
   RequestCredentials,
   RequestDestination,
   RequestInit,
+  RequestMode,
   RequestRedirect,
   Response,
   ResponseInit,
@@ -34,10 +35,10 @@ expectType<RequestRedirect | undefined>(requestInit.redirect)
 expectType<string | undefined>(requestInit.integrity)
 expectType<AbortSignal | undefined>(requestInit.signal)
 expectType<RequestCredentials | undefined>(requestInit.credentials)
+expectType<RequestMode | undefined>(requestInit.mode)
 expectType<string | undefined>(requestInit.referrer);
 expectType<ReferrerPolicy | undefined>(requestInit.referrerPolicy)
 expectType<null | undefined>(requestInit.window)
-expectError(requestInit.mode)
 
 expectType<number | undefined>(responseInit.status)
 expectType<string | undefined>(responseInit.statusText)
@@ -119,6 +120,7 @@ expectType<RequestDestination>(request.destination)
 expectType<Headers>(request.headers)
 expectType<string>(request.integrity)
 expectType<string>(request.method)
+expectType<RequestMode>(request.mode)
 expectType<RequestRedirect>(request.redirect)
 expectType<string>(request.referrerPolicy)
 expectType<string>(request.url)
@@ -131,7 +133,6 @@ expectType<Promise<FormData>>(request.formData())
 expectType<Promise<unknown>>(request.json())
 expectType<Promise<string>>(request.text())
 expectType<Request>(request.clone())
-expectError(request.mode)
 
 expectType<Headers>(response.headers)
 expectType<boolean>(response.ok)
