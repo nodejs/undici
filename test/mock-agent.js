@@ -6,7 +6,7 @@ const { promisify } = require('util')
 const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
-const { InvalidArgumentError, ClientClosedError } = require('../lib/core/errors')
+const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/errors')
 const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
 const { kAgent } = require('../lib/mock/mock-symbols')
@@ -44,7 +44,6 @@ test('MockAgent - constructor', t => {
     const agent = new Agent()
     t.teardown(agent.close.bind(agent))
     const mockAgent = new MockAgent({ agent })
-    t.teardown(mockAgent.close.bind(mockAgent))
 
     t.equal(mockAgent[kAgent], agent)
   })
@@ -238,7 +237,6 @@ test('MockAgent - .close should clean up registered pools', async (t) => {
   const baseUrl = 'http://localhost:9999'
 
   const mockAgent = new MockAgent()
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   // Register a pool
   const mockPool = mockAgent.get(baseUrl)
@@ -257,7 +255,6 @@ test('MockAgent - .close should clean up registered clients', async (t) => {
   const baseUrl = 'http://localhost:9999'
 
   const mockAgent = new MockAgent({ connections: 1 })
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   // Register a pool
   const mockClient = mockAgent.get(baseUrl)
@@ -289,7 +286,6 @@ test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
   t.teardown(agent.close.bind(agent))
 
   const mockAgent = new MockAgent({ agent })
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
   mockPool.intercept({
@@ -454,7 +450,6 @@ test('MockAgent - should support specifying custom agents to mock', async (t) =>
 
   const mockAgent = new MockAgent({ agent })
   setGlobalDispatcher(mockAgent)
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
   mockPool.intercept({
@@ -987,7 +982,6 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
 
   const mockAgent = new MockAgent({ connections: 1 })
   setGlobalDispatcher(mockAgent)
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockClient = mockAgent.get(baseUrl)
   mockClient.intercept({
@@ -1001,7 +995,7 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
   try {
     await request(`${baseUrl}/foo`, { method: 'GET' })
   } catch (err) {
-    t.type(err, ClientClosedError)
+    t.type(err, ClientDestroyedError)
   }
 })
 
@@ -1022,7 +1016,6 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
   mockPool.intercept({
@@ -1036,7 +1029,7 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
   try {
     await request(`${baseUrl}/foo`, { method: 'GET' })
   } catch (err) {
-    t.type(err, ClientClosedError)
+    t.type(err, ClientDestroyedError)
   }
 })
 
