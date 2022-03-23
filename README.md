@@ -67,7 +67,7 @@ console.log('trailers', trailers)
 
 ## Body Mixins
 
-The `body` mixins are the most common way to format the request/response body from a [`ReadableStream`](https://streams.spec.whatwg.org/#readablestream). Mixins include:
+The `body` mixins are the most common way to format the request/response body. Mixins include:
 
 - [`.formData()`](https://fetch.spec.whatwg.org/#dom-body-formdata)
 - [`.json()`](https://fetch.spec.whatwg.org/#dom-body-json)
