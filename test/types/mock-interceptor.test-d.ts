@@ -5,6 +5,7 @@ import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
 {
   const mockPool: MockPool = new MockAgent().get('')
   const mockInterceptor = mockPool.intercept({ path: '', method: 'GET' })
+  const mockInterceptorDefaultMethod = mockPool.intercept({ path: '' })
 
   // reply
   expectAssignable<MockScope>(mockInterceptor.reply(200, ''))
