@@ -299,8 +299,8 @@ tap.test('Headers as Iterable', t => {
       ['bar', '456']
     ]
     const expected = [
-      ['x-bar', '456'],
-      ['x-foo', '123']
+      ['x-foo', '123'],
+      ['x-bar', '456']
     ]
     const headers = new Headers(init)
     for (const [key, val] of headers) {
@@ -325,10 +325,11 @@ tap.test('Headers as Iterable', t => {
       headers.set(key + key, 1)
     }
 
-    t.strictSame(order, ['x', 'y', 'z'])
+    t.strictSame(order, ['z', 'y', 'x'])
+    // TODO: check if is required to keep the order
     t.strictSame(
       [...headers.keys()],
-      ['x', 'xx', 'y', 'yy', 'z', 'zz']
+      ['z', 'y', 'x', 'zz', 'yy', 'xx']
     )
   })
 
