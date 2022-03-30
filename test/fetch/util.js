@@ -158,3 +158,19 @@ test('CORBCheck', (t) => {
 
   t.end()
 })
+
+test('CORScheck', (t) => {
+  const nonCorsResponse = { headersList: { get () { return null } } }
+  t.equal(util.corsCheck({}, nonCorsResponse), 'failure')
+
+  const corsResponse = { headersList: { get () { return '*' } } }
+  t.equal(util.corsCheck({ credentials: '' }, corsResponse), 'success')
+
+  const mockResponse = { headersList: { get () { return '' } } }
+  t.equal(util.corsCheck({ credentials: '' }, mockResponse), 'success')
+
+  const allowedOriginTrue = { headersList: { get () { return 'true' } } }
+  t.equal(util.corsCheck({}, allowedOriginTrue), 'success')
+
+  t.end()
+})
