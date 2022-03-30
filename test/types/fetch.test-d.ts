@@ -1,5 +1,6 @@
 import { URL } from 'url'
 import { Blob } from 'buffer'
+import { ReadableStream } from 'stream/web'
 import { expectType, expectError } from 'tsd'
 import {
   BodyInit,
@@ -141,6 +142,7 @@ expectType<string>(response.statusText)
 expectType<ResponseType>(response.type)
 expectType<string>(response.url)
 expectType<boolean>(response.redirected)
+expectType<ReadableStream | null>(response.body)
 expectType<boolean>(response.bodyUsed)
 expectType<Promise<ArrayBuffer>>(response.arrayBuffer())
 expectType<Promise<Blob>>(response.blob())
