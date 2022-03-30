@@ -114,7 +114,6 @@ test('sameOrigin', (t) => {
   t.end()
 })
 
-//
 test('CORBCheck', (t) => {
   const allowedRequests = [{
     initiator: 'download',
