@@ -299,8 +299,8 @@ tap.test('Headers as Iterable', t => {
       ['bar', '456']
     ]
     const expected = [
-      ['x-foo', '123'],
-      ['x-bar', '456']
+      ['x-bar', '456'],
+      ['x-foo', '123']
     ]
     const headers = new Headers(init)
     for (const [key, val] of headers) {
@@ -325,16 +325,15 @@ tap.test('Headers as Iterable', t => {
       headers.set(key + key, 1)
     }
 
-    t.strictSame(order, ['z', 'y', 'x'])
-    // TODO: check if is required to keep the order
+    t.strictSame(order, ['x', 'y', 'z'])
     t.strictSame(
       [...headers.keys()],
-      ['z', 'y', 'x', 'zz', 'yy', 'xx']
+      ['x', 'xx', 'y', 'yy', 'z', 'zz']
     )
   })
 
   t.test('returns combined and sorted entries using .forEach()', t => {
-    t.plan(12)
+    t.plan(8)
     const init = [
       ['a', '1'],
       ['b', '2'],
@@ -353,7 +352,6 @@ tap.test('Headers as Iterable', t => {
     let i = 0
     headers.forEach(function (value, key, _headers) {
       t.strictSame(expected[i++], [key, value])
-      t.equal(headers, _headers)
       t.equal(this, that)
     }, that)
   })
@@ -446,15 +444,15 @@ tap.test('Headers as Iterable', t => {
     headers.append('c', '7')
     headers.append('abc', '8')
 
-    const expected = [
-      'a', '1',
-      'abc', '8',
-      'b', '2',
-      'c', '3, 7',
-      'd', '4',
-      'e', '5',
-      'f', '6'
-    ]
+    const expected = new Map([
+      ['a', '1'],
+      ['abc', '8'],
+      ['b', '2'],
+      ['c', '3, 7'],
+      ['d', '4'],
+      ['e', '5'],
+      ['f', '6']
+    ])
 
     t.same(headers[kHeadersList], expected)
   })
@@ -604,7 +602,7 @@ tap.test('node inspect', (t) => {
   const headers = new Headers()
   headers.set('k1', 'v1')
   headers.set('k2', 'v2')
-  t.equal(util.inspect(headers), "HeadersList(4) [ 'k1', 'v1', 'k2', 'v2' ]")
+  t.equal(util.inspect(headers), "HeadersList(2) [Map] { 'k1' => 'v1', 'k2' => 'v2' }")
   t.end()
 })
 
