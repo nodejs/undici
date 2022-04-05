@@ -2399,8 +2399,6 @@ test('MockAgent - clients are not garbage collected', async (t) => {
 
 // https://github.com/nodejs/undici/issues/1321
 test('MockAgent - using fetch yields correct statusText', async (t) => {
-  t.plan(2)
-
   const mockAgent = new MockAgent()
   mockAgent.disableNetConnect()
   setGlobalDispatcher(mockAgent)
@@ -2417,4 +2415,16 @@ test('MockAgent - using fetch yields correct statusText', async (t) => {
 
   t.equal(status, 200)
   t.equal(statusText, 'OK')
+
+  mockPool.intercept({
+    path: '/badStatusText',
+    method: 'GET'
+  }).reply(420, 'Everyday')
+
+  await t.rejects(
+    fetch('http://localhost:3000/badStatusText'),
+    TypeError
+  )
+
+  t.end()
 })
