@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
-const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
+const { fetch, request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
 const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/errors')
@@ -2395,4 +2395,26 @@ test('MockAgent - clients are not garbage collected', async (t) => {
 
   t.equal(results.size, 1)
   t.ok(results.has(200))
+})
+
+// https://github.com/nodejs/undici/issues/1321
+test('MockAgent - using fetch yields correct statusText', async (t) => {
+  t.plan(2)
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get('http://localhost:3000')
+
+  mockPool.intercept({
+    path: '/statusText',
+    method: 'GET'
+  }).reply(200, 'Body')
+
+  const { status, statusText } = await fetch('http://localhost:3000/statusText')
+
+  t.equal(status, 200)
+  t.equal(statusText, 'OK')
 })
