@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
-const { fetch, request, setGlobalDispatcher, MockAgent, Agent } = require('..')
+const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
 const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/errors')
@@ -12,6 +12,8 @@ const MockPool = require('../lib/mock/mock-pool')
 const { kAgent } = require('../lib/mock/mock-symbols')
 const Dispatcher = require('../lib/dispatcher')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
+
+const nodeMajor = Number(process.versions.node.split('.')[0])
 
 test('MockAgent - constructor', t => {
   t.plan(5)
@@ -2398,7 +2400,9 @@ test('MockAgent - clients are not garbage collected', async (t) => {
 })
 
 // https://github.com/nodejs/undici/issues/1321
-test('MockAgent - using fetch yields correct statusText', async (t) => {
+test('MockAgent - using fetch yields correct statusText', { skip: nodeMajor < 16 }, async (t) => {
+  const { fetch } = require('..')
+
   const mockAgent = new MockAgent()
   mockAgent.disableNetConnect()
   setGlobalDispatcher(mockAgent)
