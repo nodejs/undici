@@ -125,7 +125,7 @@ test('MockClient - intercept should return a MockInterceptor', (t) => {
 })
 
 test('MockClient - intercept validation', (t) => {
-  t.plan(3)
+  t.plan(4)
 
   t.test('it should error if no options specified in the intercept', t => {
     t.plan(1)
@@ -155,6 +155,22 @@ test('MockClient - intercept validation', (t) => {
     const mockClient = mockAgent.get('http://localhost:9999')
 
     t.throws(() => mockClient.intercept({ path: '/foo' }), new InvalidArgumentError('opts.method must be defined'))
+  })
+
+  t.test('it should uppercase the method - https://github.com/nodejs/undici/issues/1320', t => {
+    t.plan(1)
+
+    const mockAgent = new MockAgent()
+    const mockClient = mockAgent.get('http://localhost:3000')
+
+    t.teardown(mockAgent.close.bind(mockAgent))
+
+    mockClient.intercept({
+      path: '/test',
+      method: 'patch'
+    }).reply(200, 'Hello!')
+
+    t.equal(mockClient[kDispatches][0].method, 'PATCH')
   })
 })
 
