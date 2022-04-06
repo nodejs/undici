@@ -13,6 +13,8 @@ const { kAgent } = require('../lib/mock/mock-symbols')
 const Dispatcher = require('../lib/dispatcher')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 
+const nodeMajor = Number(process.versions.node.split('.')[0])
+
 test('MockAgent - constructor', t => {
   t.plan(5)
 
@@ -2395,4 +2397,38 @@ test('MockAgent - clients are not garbage collected', async (t) => {
 
   t.equal(results.size, 1)
   t.ok(results.has(200))
+})
+
+// https://github.com/nodejs/undici/issues/1321
+test('MockAgent - using fetch yields correct statusText', { skip: nodeMajor < 16 }, async (t) => {
+  const { fetch } = require('..')
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get('http://localhost:3000')
+
+  mockPool.intercept({
+    path: '/statusText',
+    method: 'GET'
+  }).reply(200, 'Body')
+
+  const { status, statusText } = await fetch('http://localhost:3000/statusText')
+
+  t.equal(status, 200)
+  t.equal(statusText, 'OK')
+
+  mockPool.intercept({
+    path: '/badStatusText',
+    method: 'GET'
+  }).reply(420, 'Everyday')
+
+  await t.rejects(
+    fetch('http://localhost:3000/badStatusText'),
+    TypeError
+  )
+
+  t.end()
 })
