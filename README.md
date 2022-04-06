@@ -91,7 +91,7 @@ console.log('data', await body.json())
 console.log('trailers', trailers)
 ```
 
-_Note: Once a mixin has been called, the `ReadableStream` the body represents cannot be reused, thus calling additional mixins on `.body`, e.g. `.body.json(); .body.text()` will result in an error `TypeError: unusable` being thrown and returned through the `Promise` rejection._
+_Note: Once a mixin has been called then the body cannot be reused, thus calling additional mixins on `.body`, e.g. `.body.json(); .body.text()` will result in an error `TypeError: unusable` being thrown and returned through the `Promise` rejection._
 
 Should you need to access the `body` in plain-text after using a mixin, the best practice is to use the `.text()` mixin first, and manually parse the text to the desired format.
 
