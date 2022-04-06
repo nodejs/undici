@@ -65,7 +65,15 @@ for await (const data of body) {
 console.log('trailers', trailers)
 ```
 
-Using [the body mixin from the Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
+## Body Mixins
+
+The `body` mixins are the most common way to format the request/response body. Mixins include:
+
+- [`.formData()`](https://fetch.spec.whatwg.org/#dom-body-formdata)
+- [`.json()`](https://fetch.spec.whatwg.org/#dom-body-json)
+- [`.text()`](https://fetch.spec.whatwg.org/#dom-body-text)
+
+Example usage:
 
 ```js
 import { request } from 'undici'
@@ -82,6 +90,12 @@ console.log('headers', headers)
 console.log('data', await body.json())
 console.log('trailers', trailers)
 ```
+
+_Note: Once a mixin has been called then the body cannot be reused, thus calling additional mixins on `.body`, e.g. `.body.json(); .body.text()` will result in an error `TypeError: unusable` being thrown and returned through the `Promise` rejection._
+
+Should you need to access the `body` in plain-text after using a mixin, the best practice is to use the `.text()` mixin first, and manually parse the text to the desired format.
+
+For more information about their behavior, please reference the body mixin from the [Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
 
 ## Common API Methods
 
