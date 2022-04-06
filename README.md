@@ -95,8 +95,6 @@ _Note: Once a mixin has been called, the `ReadableStream` the body represents ca
 
 Should you need to access the `body` in plain-text after using a mixin, the best practice is to use the `.text()` mixin first, and manually parse the text to the desired format.
 
-If the scenario arises where you absolutely must have a copy of the result stream, [`.clone`](https://fetch.spec.whatwg.org/#dom-request-clone) can be used _before_ using a `body` mixin, or [`body.pipeThrough`](https://streams.spec.whatwg.org/#readablestream-pipe-through) with a user-defined stream [§](https://web.dev/fetch-upload-streaming), such as [`TransformStream`]https://nodejs.org/api/stream.html#duplex-and-transform-streams.
-
 For more information about their behavior, please reference the body mixin from the [Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
 
 ## Common API Methods
