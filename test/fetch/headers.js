@@ -568,8 +568,7 @@ tap.test('node inspect', (t) => {
   headers.set('k2', 'v2')
   t.equal(util.inspect(headers), `HeadersList {
   [Symbol(headers map)]: Map(2) { 'k1' => 'v1', 'k2' => 'v2' },
-  [Symbol(kSorted)]: false,
-  [Symbol(headers map sorted)]: Map(0) {}
+  [Symbol(headers map sorted)]: undefined
 }`)
   t.end()
 })
