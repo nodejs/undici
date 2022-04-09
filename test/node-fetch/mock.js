@@ -68,8 +68,8 @@ describe('node-fetch with MockAgent', () => {
       .intercept({
         path: '/test',
         method: 'GET',
-        headers: {
-          'User-Agent': /^undici$/
+        headers: (h) => {
+          return h['user-agent'] === 'undici'
         }
       })
       .reply(200, { success: true })
@@ -79,7 +79,6 @@ describe('node-fetch with MockAgent', () => {
       method: 'GET',
       headers: new Headers({ 'User-Agent': 'undici' })
     })
-
     expect(res.status).to.equal(200)
     expect(await res.json()).to.deep.equal({ success: true })
   })
