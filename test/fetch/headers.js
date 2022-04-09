@@ -1,6 +1,5 @@
 'use strict'
 
-const util = require('util')
 const tap = require('tap')
 const {
   Headers,
@@ -8,7 +7,6 @@ const {
   normalizeAndValidateHeaderValue,
   fill
 } = require('../../lib/fetch/headers')
-const { kHeadersList } = require('../../lib/core/symbols')
 const { kGuard } = require('../../lib/fetch/symbols')
 const {
   forbiddenHeaderNames,
@@ -454,7 +452,7 @@ tap.test('Headers as Iterable', t => {
       ['f', '6']
     ])]
 
-    t.same([...headers[kHeadersList]], expected)
+    t.same([...headers], expected)
   })
 })
 
@@ -559,17 +557,6 @@ tap.test('various init paths of Headers', (t) => {
   t.equal([...h2.entries()].length, 0)
   t.equal([...h3.entries()].length, 0)
 
-  t.end()
-})
-
-tap.test('node inspect', (t) => {
-  const headers = new Headers()
-  headers.set('k1', 'v1')
-  headers.set('k2', 'v2')
-  t.equal(util.inspect(headers), `HeadersList {
-  [Symbol(headers map)]: Map(2) { 'k1' => 'v1', 'k2' => 'v2' },
-  [Symbol(headers map sorted)]: undefined
-}`)
   t.end()
 })
 
