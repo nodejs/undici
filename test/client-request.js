@@ -9,6 +9,7 @@ const { Readable } = require('stream')
 const net = require('net')
 const { promisify } = require('util')
 const { NotSupportedError } = require('../lib/core/errors')
+const { parseFormDataString } = require('./utils/formdata')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
@@ -659,8 +660,6 @@ test('request text2', (t) => {
 })
 
 test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
-  t.plan(4)
-
   const { FormData } = require('../')
   const { Blob } = require('buffer')
 
@@ -679,11 +678,17 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
       chunks.push(chunk)
     }
 
-    // send the FormData back to the client
-    return res.end(JSON.stringify({
-      bodyReceived: Buffer.concat(chunks).toString(),
-      boundary: '--' + contentType.split('boundary=').pop()
-    }))
+    const { fileMap, fields } = await parseFormDataString(
+      Buffer.concat(chunks),
+      contentType
+    )
+
+    t.same(fields[0], { key: 'key', value: 'value' })
+    t.ok(fileMap.has('file'))
+    t.equal(fileMap.get('file').data.toString(), 'Hello, world!')
+    t.equal(fileMap.get('file').info, 'hello_world.txt')
+
+    return res.end()
   })
   t.teardown(server.close.bind(server))
 
@@ -691,16 +696,13 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    const { body } = await client.request({
+    await client.request({
       path: '/',
       method: 'POST',
       body: fd
     })
 
-    const { bodyReceived, boundary } = await body.json()
-    t.ok(boundary.startsWith('------formdata-undici-'))
-    t.ok(bodyReceived.startsWith(boundary))
-    t.ok(bodyReceived.endsWith(boundary + '--'))
+    t.end()
   })
 })
 
