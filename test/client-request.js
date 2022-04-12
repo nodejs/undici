@@ -657,3 +657,49 @@ test('request text2', (t) => {
     t.strictSame(JSON.stringify(obj), await p)
   })
 })
+
+test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
+  t.plan(4)
+
+  const { FormData } = require('../')
+  const { Blob } = require('buffer')
+
+  const fd = new FormData()
+  fd.set('key', 'value')
+  fd.set('file', new Blob(['Hello, world!']), 'hello_world.txt')
+
+  const server = createServer(async (req, res) => {
+    const contentType = req.headers['content-type']
+    // ensure we received a multipart/form-data header
+    t.ok(/^multipart\/form-data; boundary=-+formdata-undici-0.\d+$/.test(contentType))
+
+    const chunks = []
+
+    for await (const chunk of req) {
+      chunks.push(chunk)
+    }
+
+    // send the FormData back to the client
+    return res.end(JSON.stringify({
+      bodyReceived: Buffer.concat(chunks).toString(),
+      boundary: '--' + contentType.split('boundary=').pop()
+    }))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'POST',
+      body: fd
+    })
+
+    const { bodyReceived, boundary } = await body.json()
+    t.ok(boundary.startsWith('------formdata-undici-'))
+    t.ok(bodyReceived.startsWith(boundary))
+    t.ok(bodyReceived.endsWith(boundary + '--'))
+  })
+})
