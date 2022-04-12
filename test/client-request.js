@@ -703,3 +703,21 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
     t.ok(bodyReceived.endsWith(boundary + '--'))
   })
 })
+
+test('request with FormData body on node < 16', { skip: nodeMajor >= 16 }, async (t) => {
+  t.plan(1)
+
+  // a FormData polyfill, for example
+  class FormData {}
+
+  const fd = new FormData()
+
+  const client = new Client('http://localhost:3000')
+  t.teardown(client.destroy.bind(client))
+
+  await t.rejects(client.request({
+    path: '/',
+    method: 'POST',
+    body: fd
+  }), errors.InvalidArgumentError)
+})
