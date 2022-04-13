@@ -12,6 +12,8 @@ const {
   forbiddenHeaderNames,
   forbiddenResponseHeaderNames
 } = require('../../lib/fetch/constants')
+const { createServer } = require('http')
+const { fetch } = require('../../index')
 
 tap.test('Headers initialization', t => {
   t.plan(7)
@@ -626,4 +628,38 @@ tap.test('response guard', (t) => {
   t.equal(headers.has('keep-alive'), true)
 
   t.end()
+})
+
+tap.test('set-cookie[2] in Headers constructor', (t) => {
+  const headers = new Headers(forbiddenResponseHeaderNames.map(k => [k, 'v']))
+
+  for (const header of forbiddenResponseHeaderNames) {
+    t.ok(headers.has(header))
+    t.equal(headers.get(header), 'v')
+  }
+
+  t.end()
+})
+
+// https://github.com/nodejs/undici/issues/1328
+tap.test('set-cookie[2] received from server - issue #1328', (t) => {
+  const server = createServer((req, res) => {
+    res.setHeader('set-cookie', 'my-cookie; wow')
+    res.end('Goodbye!')
+  }).unref()
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const { headers } = await fetch(`http://localhost:${server.address().port}`)
+
+    t.notOk(headers.has('set-cookie'))
+    t.notOk(headers.has('Set-cookie'))
+    t.notOk(headers.has('sEt-CoOkIe'))
+
+    t.equal(headers.get('set-cookie'), null)
+    t.equal(headers.get('Set-cookie'), null)
+    t.equal(headers.get('sEt-CoOkIe'), null)
+
+    t.end()
+  })
 })
