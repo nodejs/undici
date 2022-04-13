@@ -9,6 +9,7 @@ const { Readable } = require('stream')
 const net = require('net')
 const { promisify } = require('util')
 const { NotSupportedError } = require('../lib/core/errors')
+const { parseFormDataString } = require('./utils/formdata')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
@@ -656,4 +657,69 @@ test('request text2', (t) => {
     })
     t.strictSame(JSON.stringify(obj), await p)
   })
+})
+
+test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
+  const { FormData } = require('../')
+  const { Blob } = require('buffer')
+
+  const fd = new FormData()
+  fd.set('key', 'value')
+  fd.set('file', new Blob(['Hello, world!']), 'hello_world.txt')
+
+  const server = createServer(async (req, res) => {
+    const contentType = req.headers['content-type']
+    // ensure we received a multipart/form-data header
+    t.ok(/^multipart\/form-data; boundary=-+formdata-undici-0.\d+$/.test(contentType))
+
+    const chunks = []
+
+    for await (const chunk of req) {
+      chunks.push(chunk)
+    }
+
+    const { fileMap, fields } = await parseFormDataString(
+      Buffer.concat(chunks),
+      contentType
+    )
+
+    t.same(fields[0], { key: 'key', value: 'value' })
+    t.ok(fileMap.has('file'))
+    t.equal(fileMap.get('file').data.toString(), 'Hello, world!')
+    t.equal(fileMap.get('file').info, 'hello_world.txt')
+
+    return res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    await client.request({
+      path: '/',
+      method: 'POST',
+      body: fd
+    })
+
+    t.end()
+  })
+})
+
+test('request with FormData body on node < 16', { skip: nodeMajor >= 16 }, async (t) => {
+  t.plan(1)
+
+  // a FormData polyfill, for example
+  class FormData {}
+
+  const fd = new FormData()
+
+  const client = new Client('http://localhost:3000')
+  t.teardown(client.destroy.bind(client))
+
+  await t.rejects(client.request({
+    path: '/',
+    method: 'POST',
+    body: fd
+  }), errors.InvalidArgumentError)
 })
