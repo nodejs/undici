@@ -1,6 +1,10 @@
 import { expectAssignable } from 'tsd'
-import { MockAgent, MockPool } from '../..'
+import { MockAgent, MockPool, BodyInit, Dispatcher } from '../..'
 import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
+
+declare const mockResponseCallbackOptions: MockInterceptor.MockResponseCallbackOptions;
+
+expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCallbackOptions.body)
 
 {
   const mockPool: MockPool = new MockAgent().get('')
