@@ -11,7 +11,7 @@ afterAll(async () => {
   await mockAgent.close()
 })
 
-runIf(nodeMajor >= 16)('Jest works with MockScope.delay - issue #1327', async () => {
+runIf(nodeMajor >= 14)('Jest works with MockScope.delay - issue #1327', async () => {
   mockAgent.disableNetConnect()
   setGlobalDispatcher(mockAgent)
 
