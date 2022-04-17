@@ -1,7 +1,7 @@
 import { URL } from 'url'
 import { TlsOptions } from 'tls'
 import Dispatcher = require('./dispatcher')
-import { DispatchOptions, RequestOptions } from './dispatcher'
+import {DispatchInterceptor, DispatchOptions, RequestOptions} from './dispatcher'
 import buildConnector = require('./connector')
 
 export = Client
@@ -41,6 +41,8 @@ declare namespace Client {
     tls?: TlsOptions | null;
     /** */
     maxRequestsPerClient?: number;
+
+    interceptors?: {Client: DispatchInterceptor[] | undefined}
   }
 
   export interface SocketInfo {

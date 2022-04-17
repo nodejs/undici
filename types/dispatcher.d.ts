@@ -3,8 +3,9 @@ import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
 import { IncomingHttpHeaders } from 'http'
 import { Blob } from 'buffer'
-import BodyReadable from './readable'
+import type BodyReadable from './readable'
 import { FormData } from './formdata'
+import { UndiciError } from './errors'
 
 type AbortSignal = unknown;
 
@@ -36,6 +37,59 @@ declare class Dispatcher extends EventEmitter {
   destroy(err: Error | null): Promise<void>;
   destroy(callback: () => void): void;
   destroy(err: Error | null, callback: () => void): void;
+
+  on(eventName: 'connect', callback: (origin: URL, targets: Array<Dispatcher>) => void): this;
+  on(eventName: 'disconnect', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  on(eventName: 'connectionError', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  on(eventName: 'drain', callback: (origin: URL) => void): this;
+
+
+  once(eventName: 'connect', callback: (origin: URL, targets: Array<Dispatcher>) => void): this;
+  once(eventName: 'disconnect', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  once(eventName: 'connectionError', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  once(eventName: 'drain', callback: (origin: URL) => void): this;
+
+
+  off(eventName: 'connect', callback: (origin: URL, targets: Array<Dispatcher>) => void): this;
+  off(eventName: 'disconnect', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  off(eventName: 'connectionError', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  off(eventName: 'drain', callback: (origin: URL) => void): this;
+
+
+  addListener(eventName: 'connect', callback: (origin: URL, targets: Array<Dispatcher>) => void): this;
+  addListener(eventName: 'disconnect', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  addListener(eventName: 'connectionError', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  addListener(eventName: 'drain', callback: (origin: URL) => void): this;
+
+  removeListener(eventName: 'connect', callback: (origin: URL, targets: Array<Dispatcher>) => void): this;
+  removeListener(eventName: 'disconnect', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  removeListener(eventName: 'connectionError', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  removeListener(eventName: 'drain', callback: (origin: URL) => void): this;
+
+  prependListener(eventName: 'connect', callback: (origin: URL, targets: Array<Dispatcher>) => void): this;
+  prependListener(eventName: 'disconnect', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  prependListener(eventName: 'connectionError', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  prependListener(eventName: 'drain', callback: (origin: URL) => void): this;
+
+  prependOnceListener(eventName: 'connect', callback: (origin: URL, targets: Array<Dispatcher>) => void): this;
+  prependOnceListener(eventName: 'disconnect', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  prependOnceListener(eventName: 'connectionError', callback: (origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void): this;
+  prependOnceListener(eventName: 'drain', callback: (origin: URL) => void): this;
+
+  listeners(eventName: 'connect'): ((origin: URL, targets: Array<Dispatcher>) => void)[]
+  listeners(eventName: 'disconnect'): ((origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void)[];
+  listeners(eventName: 'connectionError'): ((origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void)[];
+  listeners(eventName: 'drain'): ((origin: URL) => void)[];
+
+  rawListeners(eventName: 'connect'): ((origin: URL, targets: Array<Dispatcher>) => void)[]
+  rawListeners(eventName: 'disconnect'): ((origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void)[];
+  rawListeners(eventName: 'connectionError'): ((origin: URL, targets: Array<Dispatcher>, error: UndiciError) => void)[];
+  rawListeners(eventName: 'drain'): ((origin: URL) => void)[];
+
+  emit(eventName: 'connect', origin: URL, targets: Array<Dispatcher>): boolean;
+  emit(eventName: 'disconnect', origin: URL, targets: Array<Dispatcher>, error: UndiciError): boolean;
+  emit(eventName: 'connectionError', origin: URL, targets: Array<Dispatcher>, error: UndiciError): boolean;
+  emit(eventName: 'drain', origin: URL): boolean;
 }
 
 declare namespace Dispatcher {
@@ -167,5 +221,9 @@ declare namespace Dispatcher {
     formData(): Promise<never>;
     json(): Promise<any>;
     text(): Promise<string>;
+  }
+
+  export interface DispatchInterceptor {
+    (dispatch: Dispatcher['dispatch']): Dispatcher['dispatch']
   }
 }
