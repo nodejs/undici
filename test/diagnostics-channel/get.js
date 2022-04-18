@@ -114,8 +114,9 @@ diagnosticsChannel.channel('undici:request:headers').subscribe(({ request, respo
 
 let endEmitted = false
 diagnosticsChannel.channel('undici:request:trailers').subscribe(({ request, trailers }) => {
+  delete request.bodyReceived
   t.equal(request.completed, true)
-  t.equal(_req, request)
+  t.same(_req, request)
   // This event is emitted after the last chunk has been added to the body stream,
   // not when it was consumed by the application
   t.equal(endEmitted, false)

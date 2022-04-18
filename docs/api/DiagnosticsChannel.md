@@ -66,8 +66,12 @@ diagnosticsChannel.channel('undici:request:trailers').subscribe(({ request, trai
   console.log('completed', request.completed)
   // trailers are buffers.
   console.log(trailers.map((x) => x.toString()))
+  // bodyReceived is an array of buffers containing the body received from the server
+  console.log(request.bodyReceived)
 })
 ```
+
+*Note*: the `bodyReceived` property is only available in this channel.
 
 ## `undici:request:error`
 
