@@ -224,4 +224,9 @@ describe('Response', () => {
     const res = new Response(null, { statusText: undefined })
     expect(res.statusText).to.equal('')
   })
+
+  it('should not set bodyUsed to undefined', () => {
+    const res = new Response()
+    expect(res.bodyUsed).to.be.false
+  })
 })
