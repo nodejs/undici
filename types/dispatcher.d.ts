@@ -199,7 +199,7 @@ declare namespace Dispatcher {
     /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
     onUpgrade?(statusCode: number, headers: string[] | null, socket: Duplex): void;
     /** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
-    onHeaders?(statusCode: number, headers: string[] | null, resume: () => void): boolean;
+    onHeaders?(statusCode: number, headers: Buffer[] | null, resume: () => void): boolean;
     /** Invoked when response payload data is received. */
     onData?(chunk: Buffer): boolean;
     /** Invoked when response payload and trailers have been received and the request has completed. */
