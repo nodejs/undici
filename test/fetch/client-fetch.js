@@ -332,3 +332,13 @@ test('post FormData with File', (t) => {
     t.ok(/filename123/.test(result))
   })
 })
+
+test('invalid url', async (t) => {
+  t.plan(1)
+
+  try {
+    await fetch('http://invalid')
+  } catch (e) {
+    t.match(e.cause.message, 'invalid')
+  }
+})
