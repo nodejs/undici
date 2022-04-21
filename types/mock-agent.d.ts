@@ -1,6 +1,7 @@
 import Agent = require('./agent')
 import Dispatcher = require('./dispatcher')
-import { Interceptable } from './mock-interceptor'
+import {Interceptable, MockInterceptor, MockScope} from './mock-interceptor'
+import MockDispatch = MockInterceptor.MockDispatch;
 
 export = MockAgent
 
@@ -26,6 +27,12 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   enableNetConnect(host: ((host: string) => boolean)): void;
   /** Causes all requests to throw when requests are not matched in a MockAgent intercept. */
   disableNetConnect(): void;
+  pendingInterceptors(): MockDispatch[];
+  assertNoUnusedInterceptors(options?: {formatter?: UnusedInterceptorFormatter}): void;
+}
+
+interface UnusedInterceptorFormatter {
+  formatTable: typeof console.table
 }
 
 declare namespace MockAgent {

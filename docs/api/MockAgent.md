@@ -445,3 +445,71 @@ mockAgent.disableNetConnect()
 await request('http://example.com')
 // Will throw
 ```
+
+
+### `MockAgent.pendingInterceptors()`
+
+This method returns any pending (i.e., non-persistent and not fully consumed) interceptors registered on a mock agent.
+
+Returns: `MockDispatch[]`
+
+#### Example - List all pending inteceptors
+
+```js
+const agent = new MockAgent()
+agent.disableNetConnect()
+
+agent
+  .get('https://example.com')
+  .intercept({ method: 'GET', path: '/' })
+  .reply(200, '')
+
+const pendingInterceptors = dispatcher.pendingInterceptors()
+// Returns [
+//   {
+//     times: null,
+//     persist: false,
+//     consumed: false,
+//     path: '/',
+//     method: 'GET',
+//     body: undefined,
+//     headers: undefined,
+//     data: {
+//       error: null,
+//       statusCode: 200,
+//       data: '',
+//       headers: {},
+//       trailers: {}
+//     }
+//   }
+// ]
+```
+
+### `MockAgent.assertNoUnusedInterceptors([options])`
+
+This method throws if the mock agent has any pending (i.e., non-persistent and not fully consumed) interceptors.
+
+#### Example - Check that there are no pending interceptors
+
+```js
+const agent = new MockAgent()
+agent.disableNetConnect()
+
+agent
+  .get('https://example.com')
+  .intercept({ method: 'GET', path: '/' })
+  .reply(200, '')
+
+dispatcher.assertNoPendingInterceptors()
+// Throws an Error with the following message:
+//
+// 1 interceptor was not consumed!
+// (0 interceptors were consumed, and 0 were not counted because they are persistent.)
+//
+// This interceptor was not consumed:
+// ┌─────────┬────────┬──────┬─────────────┬────────────┬─────────────────┐
+// │ (index) │ Method │ Path │ Status code │ Persistent │ Remaining calls │
+// ├─────────┼────────┼──────┼─────────────┼────────────┼─────────────────┤
+// │    0    │ 'GET'  │ '/'  │     200     │    '❌'    │        1        │
+// └─────────┴────────┴──────┴─────────────┴────────────┴─────────────────┘
+```
