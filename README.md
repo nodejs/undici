@@ -93,7 +93,7 @@ console.log('trailers', trailers)
 
 _Note: Once a mixin has been called then the body cannot be reused, thus calling additional mixins on `.body`, e.g. `.body.json(); .body.text()` will result in an error `TypeError: unusable` being thrown and returned through the `Promise` rejection._
 
-Should you need to access the `body` in plain-text after using a mixin, the best practice is to use the `.text()` mixin first then manually parse the text to the desired format.
+Should you need to access the `body` in plain-text after using a mixin, the best practice is to use the `.text()` mixin first and then manually parse the text to the desired format.
 
 For more information about their behavior, please reference the body mixin from the [Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
 
