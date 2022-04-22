@@ -65,7 +65,15 @@ for await (const data of body) {
 console.log('trailers', trailers)
 ```
 
-Using [the body mixin from the Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
+## Body Mixins
+
+The `body` mixins are the most common way to format the request/response body. Mixins include:
+
+- [`.formData()`](https://fetch.spec.whatwg.org/#dom-body-formdata)
+- [`.json()`](https://fetch.spec.whatwg.org/#dom-body-json)
+- [`.text()`](https://fetch.spec.whatwg.org/#dom-body-text)
+
+Example usage:
 
 ```js
 import { request } from 'undici'
@@ -82,6 +90,12 @@ console.log('headers', headers)
 console.log('data', await body.json())
 console.log('trailers', trailers)
 ```
+
+_Note: Once a mixin has been called then the body cannot be reused, thus calling additional mixins on `.body`, e.g. `.body.json(); .body.text()` will result in an error `TypeError: unusable` being thrown and returned through the `Promise` rejection._
+
+Should you need to access the `body` in plain-text after using a mixin, the best practice is to use the `.text()` mixin first, and manually parse the text to the desired format.
+
+For more information about their behavior, please reference the body mixin from the [Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
 
 ## Common API Methods
 
@@ -164,7 +178,9 @@ Implements [fetch](https://fetch.spec.whatwg.org/#fetch-method).
 
 Only supported on Node 16.5+.
 
-This is [experimental](https://nodejs.org/api/documentation.html#documentation_stability_index) and is not yet fully compliant with the Fetch Standard. We plan to ship breaking changes to this feature until it is out of experimental.
+This is [experimental](https://nodejs.org/api/documentation.html#documentation_stability_index) and is not yet fully compliant with the Fetch Standard.
+We plan to ship breaking changes to this feature until it is out of experimental.
+Help us improve the test coverage by following instructions at [nodejs/undici/#951](https://github.com/nodejs/undici/issues/951).
 
 Basic usage example:
 
@@ -176,6 +192,37 @@ Basic usage example:
         const json = await res.json()
         console.log(json);
     }
+```
+
+
+#### `request.body`
+
+A body can be of the following types:
+
+- ArrayBuffer
+- ArrayBufferView
+- AsyncIterables
+- Blob
+- Iterables
+- String
+- URLSearchParams
+- FormData
+
+In this implementation of fetch, ```request.body``` now accepts ```Async Iterables```. It is not present in the [Fetch Standard.](https://fetch.spec.whatwg.org)
+
+```js
+import { fetch } from "undici";
+
+const data = {
+  async *[Symbol.asyncIterator]() {
+    yield "hello";
+    yield "world";
+  },
+};
+
+(async () => {
+  await fetch("https://example.com", { body: data, method: 'POST' });
+})();
 ```
 
 #### `response.body`
@@ -298,6 +345,15 @@ aborted.
 
 * Refs: https://tools.ietf.org/html/rfc2616#section-8.1.2.2
 * Refs: https://tools.ietf.org/html/rfc7230#section-6.3.2
+
+### Manual Redirect
+
+Since it is not possible to manually follow an HTTP redirect on server-side,
+Undici returns the actual response instead of an `opaqueredirect` filtered one
+when invoked with a `manual` redirect. This aligns `fetch()` with the other
+implementations in Deno and Cloudflare Workers.
+
+Refs: https://fetch.spec.whatwg.org/#atomic-http-redirect-handling
 
 ## Collaborators
 

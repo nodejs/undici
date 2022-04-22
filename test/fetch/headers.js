@@ -1,23 +1,22 @@
 'use strict'
 
-const util = require('util')
 const tap = require('tap')
 const {
   Headers,
-  binarySearch,
   normalizeAndValidateHeaderName,
   normalizeAndValidateHeaderValue,
   fill
 } = require('../../lib/fetch/headers')
-const { kHeadersList } = require('../../lib/core/symbols')
 const { kGuard } = require('../../lib/fetch/symbols')
 const {
   forbiddenHeaderNames,
   forbiddenResponseHeaderNames
 } = require('../../lib/fetch/constants')
+const { createServer } = require('http')
+const { fetch } = require('../../index')
 
 tap.test('Headers initialization', t => {
-  t.plan(6)
+  t.plan(7)
 
   t.test('allows undefined', t => {
     t.plan(1)
@@ -96,6 +95,21 @@ tap.test('Headers initialization', t => {
     t.throws(() => new Headers([
       ['key', 'value', 'value2']
     ]), 'throws when too many arguments are passed')
+  })
+
+  t.test('accepts headers as objects with array values', t => {
+    t.plan(1)
+    const headers = new Headers({
+      c: '5',
+      b: ['3', '4'],
+      a: ['1', '2']
+    })
+
+    t.same([...headers.entries()], [
+      ['a', '1,2'],
+      ['b', '3,4'],
+      ['c', '5']
+    ])
   })
 })
 
@@ -207,7 +221,7 @@ tap.test('Headers get', t => {
 tap.test('Headers has', t => {
   t.plan(2)
 
-  t.test('returns boolean existance for a header name', t => {
+  t.test('returns boolean existence for a header name', t => {
     t.plan(2)
     const headers = new Headers()
 
@@ -308,7 +322,7 @@ tap.test('Headers as Iterable', t => {
     const order = []
     for (const [key] of headers) {
       order.push(key)
-      headers.set(key + key, 1)
+      headers.append(key + key, 1)
     }
 
     t.strictSame(order, ['x', 'y', 'z'])
@@ -319,7 +333,7 @@ tap.test('Headers as Iterable', t => {
   })
 
   t.test('returns combined and sorted entries using .forEach()', t => {
-    t.plan(12)
+    t.plan(8)
     const init = [
       ['a', '1'],
       ['b', '2'],
@@ -338,7 +352,6 @@ tap.test('Headers as Iterable', t => {
     let i = 0
     headers.forEach(function (value, key, _headers) {
       t.strictSame(expected[i++], [key, value])
-      t.equal(headers, _headers)
       t.equal(this, that)
     }, that)
   })
@@ -431,53 +444,17 @@ tap.test('Headers as Iterable', t => {
     headers.append('c', '7')
     headers.append('abc', '8')
 
-    const expected = [
-      'a', '1',
-      'abc', '8',
-      'b', '2',
-      'c', '3, 7',
-      'd', '4',
-      'e', '5',
-      'f', '6'
-    ]
+    const expected = [...new Map([
+      ['a', '1'],
+      ['abc', '8'],
+      ['b', '2'],
+      ['c', '3, 7'],
+      ['d', '4'],
+      ['e', '5'],
+      ['f', '6']
+    ])]
 
-    t.same(headers[kHeadersList], expected)
-  })
-})
-
-tap.test('binary search', t => {
-  //           0   1   2   3   4   5   6   7
-  const l1 = ['b', 1, 'c', 2, 'd', 3, 'f', 4]
-  //           0   1   2   3   4   5   6   7   8   9
-  const l2 = ['b', 1, 'c', 2, 'd', 3, 'e', 4, 'g', 5]
-  //           0   1   2   3    4    5   6   7
-  const l3 = ['a', 1, 'b', 2, 'bcd', 3, 'c', 4]
-  //           0   1   2   3   4   5    6    7   8   9
-  const l4 = ['a', 1, 'b', 2, 'c', 3, 'cde', 4, 'f', 5]
-
-  const tests = [
-    { input: [l1, 'c'], expected: 2, message: 'find item in n=even array' },
-    { input: [l1, 'f'], expected: 6, message: 'find item at end of n=even array' },
-    { input: [l1, 'b'], expected: 0, message: 'find item at beg of n=even array' },
-    { input: [l1, 'e'], expected: 6, message: 'find new item position in n=even array' },
-    { input: [l1, 'g'], expected: 8, message: 'find new item position at end of n=even array' },
-    { input: [l1, 'a'], expected: 0, message: 'find new item position at beg of n=even array' },
-    { input: [l2, 'c'], expected: 2, message: 'find item in n=odd array' },
-    { input: [l2, 'g'], expected: 8, message: 'find item at end of n=odd array' },
-    { input: [l2, 'b'], expected: 0, message: 'find item at beg of n=odd array' },
-    { input: [l2, 'f'], expected: 8, message: 'find new item position in n=odd array' },
-    { input: [l2, 'h'], expected: 10, message: 'find new item position at end of n=odd array' },
-    { input: [l2, 'a'], expected: 0, message: 'find new item position at beg of n=odd array' },
-    { input: [l3, 'b'], expected: 2, message: 'find item with similarity in n=odd array' },
-    { input: [l3, 'bcd'], expected: 4, message: 'find item with similarity in n=odd array' },
-    { input: [l4, 'c'], expected: 4, message: 'find item with similarity in n=odd array' },
-    { input: [l4, 'cde'], expected: 6, message: 'find item with similarity in n=odd array' }
-  ]
-
-  t.plan(tests.length)
-
-  tests.forEach(({ input: [list, target], expected, message }) => {
-    t.equal(expected, binarySearch(list, target), message)
+    t.same([...headers], expected)
   })
 })
 
@@ -585,14 +562,6 @@ tap.test('various init paths of Headers', (t) => {
   t.end()
 })
 
-tap.test('node inspect', (t) => {
-  const headers = new Headers()
-  headers.set('k1', 'v1')
-  headers.set('k2', 'v2')
-  t.equal(util.inspect(headers), "HeadersList(4) [ 'k1', 'v1', 'k2', 'v2' ]")
-  t.end()
-})
-
 tap.test('immutable guard', (t) => {
   const headers = new Headers()
   headers.set('key', 'val')
@@ -659,4 +628,38 @@ tap.test('response guard', (t) => {
   t.equal(headers.has('keep-alive'), true)
 
   t.end()
+})
+
+tap.test('set-cookie[2] in Headers constructor', (t) => {
+  const headers = new Headers(forbiddenResponseHeaderNames.map(k => [k, 'v']))
+
+  for (const header of forbiddenResponseHeaderNames) {
+    t.ok(headers.has(header))
+    t.equal(headers.get(header), 'v')
+  }
+
+  t.end()
+})
+
+// https://github.com/nodejs/undici/issues/1328
+tap.test('set-cookie[2] received from server - issue #1328', (t) => {
+  const server = createServer((req, res) => {
+    res.setHeader('set-cookie', 'my-cookie; wow')
+    res.end('Goodbye!')
+  }).unref()
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const { headers } = await fetch(`http://localhost:${server.address().port}`)
+
+    t.notOk(headers.has('set-cookie'))
+    t.notOk(headers.has('Set-cookie'))
+    t.notOk(headers.has('sEt-CoOkIe'))
+
+    t.equal(headers.get('set-cookie'), null)
+    t.equal(headers.get('Set-cookie'), null)
+    t.equal(headers.get('sEt-CoOkIe'), null)
+
+    t.end()
+  })
 })

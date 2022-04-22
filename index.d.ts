@@ -10,12 +10,13 @@ import MockClient = require('./types/mock-client')
 import MockPool = require('./types/mock-pool')
 import MockAgent = require('./types/mock-agent')
 import mockErrors = require('./types/mock-errors')
-import ProxyAgent from './types/proxy-agent'
+import ProxyAgent = require('./types/proxy-agent')
 import { request, pipeline, stream, connect, upgrade } from './types/api'
 
 export * from './types/fetch'
 export * from './types/file'
 export * from './types/formdata'
+export { Interceptable } from './types/mock-interceptor'
 
 export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, MockClient, MockPool, MockAgent, mockErrors, ProxyAgent }
 export default Undici

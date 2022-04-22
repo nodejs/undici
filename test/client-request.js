@@ -9,6 +9,7 @@ const { Readable } = require('stream')
 const net = require('net')
 const { promisify } = require('util')
 const { NotSupportedError } = require('../lib/core/errors')
+const { parseFormDataString } = require('./utils/formdata')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
@@ -281,6 +282,34 @@ test('request text', (t) => {
   })
 })
 
+test('empty host header', (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.end(req.headers.host)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const serverAddress = `localhost:${server.address().port}`
+    const client = new Client(`http://${serverAddress}`)
+    t.teardown(client.destroy.bind(client))
+
+    const getWithHost = async (host, wanted) => {
+      const { body } = await client.request({
+        path: '/',
+        method: 'GET',
+        headers: { host }
+      })
+      t.strictSame(await body.text(), wanted)
+    }
+
+    await getWithHost('test', 'test')
+    await getWithHost(undefined, serverAddress)
+    await getWithHost('', '')
+  })
+})
+
 test('request long multibyte text', (t) => {
   t.plan(1)
 
@@ -526,14 +555,52 @@ test('request onInfo callback headers parsing', async (t) => {
   const client = new Client(`http://localhost:${server.address().port}`)
   t.teardown(client.close.bind(client))
 
-  await client.request({
+  const { body } = await client.request({
     path: '/',
     method: 'GET',
     onInfo: (x) => { infos.push(x) }
   })
+  await body.dump()
   t.equal(infos.length, 1)
   t.equal(infos[0].statusCode, 103)
   t.same(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
+  t.pass()
+})
+
+test('request raw responseHeaders', async (t) => {
+  t.plan(4)
+  const infos = []
+
+  const server = net.createServer((socket) => {
+    const lines = [
+      'HTTP/1.1 103 Early Hints',
+      'Link: </style.css>; rel=preload; as=style',
+      '',
+      'HTTP/1.1 200 OK',
+      'Date: Sat, 09 Oct 2010 14:28:02 GMT',
+      'Connection: close',
+      '',
+      'the body'
+    ]
+    socket.end(lines.join('\r\n'))
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.teardown(client.close.bind(client))
+
+  const { body, headers } = await client.request({
+    path: '/',
+    method: 'GET',
+    responseHeaders: 'raw',
+    onInfo: (x) => { infos.push(x) }
+  })
+  await body.dump()
+  t.equal(infos.length, 1)
+  t.same(infos[0].headers, ['Link', '</style.css>; rel=preload; as=style'])
+  t.same(headers, ['Date', 'Sat, 09 Oct 2010 14:28:02 GMT', 'Connection', 'close'])
   t.pass()
 })
 
@@ -590,4 +657,69 @@ test('request text2', (t) => {
     })
     t.strictSame(JSON.stringify(obj), await p)
   })
+})
+
+test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
+  const { FormData } = require('../')
+  const { Blob } = require('buffer')
+
+  const fd = new FormData()
+  fd.set('key', 'value')
+  fd.set('file', new Blob(['Hello, world!']), 'hello_world.txt')
+
+  const server = createServer(async (req, res) => {
+    const contentType = req.headers['content-type']
+    // ensure we received a multipart/form-data header
+    t.ok(/^multipart\/form-data; boundary=-+formdata-undici-0.\d+$/.test(contentType))
+
+    const chunks = []
+
+    for await (const chunk of req) {
+      chunks.push(chunk)
+    }
+
+    const { fileMap, fields } = await parseFormDataString(
+      Buffer.concat(chunks),
+      contentType
+    )
+
+    t.same(fields[0], { key: 'key', value: 'value' })
+    t.ok(fileMap.has('file'))
+    t.equal(fileMap.get('file').data.toString(), 'Hello, world!')
+    t.equal(fileMap.get('file').info, 'hello_world.txt')
+
+    return res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    await client.request({
+      path: '/',
+      method: 'POST',
+      body: fd
+    })
+
+    t.end()
+  })
+})
+
+test('request with FormData body on node < 16', { skip: nodeMajor >= 16 }, async (t) => {
+  t.plan(1)
+
+  // a FormData polyfill, for example
+  class FormData {}
+
+  const fd = new FormData()
+
+  const client = new Client('http://localhost:3000')
+  t.teardown(client.destroy.bind(client))
+
+  await t.rejects(client.request({
+    path: '/',
+    method: 'POST',
+    body: fd
+  }), errors.InvalidArgumentError)
 })

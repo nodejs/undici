@@ -1,28 +1,54 @@
 'use strict'
 
-const { test } = require('tap')
-const { BalancedPool, Client, errors } = require('..')
 const { createServer } = require('http')
 const { promisify } = require('util')
+const { test } = require('tap')
+const {
+  BalancedPool,
+  Client,
+  errors,
+  Pool
+} = require('..')
 
-test('upstream add/remove/get', async (t) => {
-  const client = new BalancedPool()
-  t.same(client.upstreams, [])
-  client.addUpstream('http://localhost:4242')
-  t.same(client.upstreams, ['http://localhost:4242'])
-  client.addUpstream('http://localhost:2424')
-  client.addUpstream('http://localhost:2424')
-  t.same(client.upstreams, ['http://localhost:4242', 'http://localhost:2424'])
-  client.removeUpstream('http://localhost:4242')
-  t.same(client.upstreams, ['http://localhost:2424'])
-  client.removeUpstream('http://localhost:2424')
-  t.same(client.upstreams, [])
+test('throws when factory is not a function', (t) => {
+  t.plan(2)
 
-  t.throws(() => client.dispatch())
+  try {
+    new BalancedPool(null, { factory: '' }) // eslint-disable-line
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'factory must be a function.')
+  }
+})
 
-  const p = client.close()
-  t.ok(p instanceof Promise)
-  await p
+test('add/remove upstreams', (t) => {
+  t.plan(7)
+
+  const upstream01 = 'http://localhost:1'
+  const upstream02 = 'http://localhost:2'
+
+  const pool = new BalancedPool()
+  t.same(pool.upstreams, [])
+
+  // try to remove non-existent upstream
+  pool.removeUpstream(upstream01)
+  t.same(pool.upstreams, [])
+
+  pool.addUpstream(upstream01)
+  t.same(pool.upstreams, [upstream01])
+
+  // try to add the same upstream
+  pool.addUpstream(upstream01)
+  t.same(pool.upstreams, [upstream01])
+
+  pool.addUpstream(upstream02)
+  t.same(pool.upstreams, [upstream01, upstream02])
+
+  pool.removeUpstream(upstream02)
+  t.same(pool.upstreams, [upstream01])
+
+  pool.removeUpstream(upstream01)
+  t.same(pool.upstreams, [])
 })
 
 test('basic get', async (t) => {
@@ -162,4 +188,65 @@ test('busy', (t) => {
       })
     }
   })
+})
+
+test('factory option with basic get request', async (t) => {
+  t.plan(12)
+
+  let factoryCalled = 0
+  const opts = {
+    factory: (origin, opts) => {
+      factoryCalled++
+      return new Pool(origin, opts)
+    }
+  }
+
+  const client = new BalancedPool([], opts) // eslint-disable-line
+
+  let serverCalled = 0
+  const server = createServer((req, res) => {
+    serverCalled++
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen).call(server, 0)
+
+  client.addUpstream(`http://localhost:${server.address().port}`)
+
+  t.same(client.upstreams, [`http://localhost:${server.address().port}`])
+
+  t.teardown(client.destroy.bind(client))
+
+  {
+    const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
+    t.equal(statusCode, 200)
+    t.equal(headers['content-type'], 'text/plain')
+    t.equal('hello', await body.text())
+  }
+
+  t.equal(serverCalled, 1)
+  t.equal(factoryCalled, 1)
+
+  t.equal(client.destroyed, false)
+  t.equal(client.closed, false)
+  await client.close()
+  t.equal(client.destroyed, true)
+  t.equal(client.closed, true)
+})
+
+test('throws when upstream is missing', async (t) => {
+  t.plan(2)
+
+  const pool = new BalancedPool()
+
+  try {
+    await pool.request({ path: '/', method: 'GET' })
+  } catch (e) {
+    t.type(e, errors.BalancedPoolMissingUpstreamError)
+    t.equal(e.message, 'No upstream has been added to the BalancedPool')
+  }
 })

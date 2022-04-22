@@ -6,12 +6,14 @@ const { promisify } = require('util')
 const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
-const { InvalidArgumentError, ClientClosedError } = require('../lib/core/errors')
+const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/errors')
 const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
 const { kAgent } = require('../lib/mock/mock-symbols')
 const Dispatcher = require('../lib/dispatcher')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
+
+const nodeMajor = Number(process.versions.node.split('.')[0])
 
 test('MockAgent - constructor', t => {
   t.plan(5)
@@ -44,7 +46,6 @@ test('MockAgent - constructor', t => {
     const agent = new Agent()
     t.teardown(agent.close.bind(agent))
     const mockAgent = new MockAgent({ agent })
-    t.teardown(mockAgent.close.bind(mockAgent))
 
     t.equal(mockAgent[kAgent], agent)
   })
@@ -238,7 +239,6 @@ test('MockAgent - .close should clean up registered pools', async (t) => {
   const baseUrl = 'http://localhost:9999'
 
   const mockAgent = new MockAgent()
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   // Register a pool
   const mockPool = mockAgent.get(baseUrl)
@@ -257,7 +257,6 @@ test('MockAgent - .close should clean up registered clients', async (t) => {
   const baseUrl = 'http://localhost:9999'
 
   const mockAgent = new MockAgent({ connections: 1 })
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   // Register a pool
   const mockClient = mockAgent.get(baseUrl)
@@ -289,7 +288,6 @@ test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
   t.teardown(agent.close.bind(agent))
 
   const mockAgent = new MockAgent({ agent })
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
   mockPool.intercept({
@@ -454,7 +452,6 @@ test('MockAgent - should support specifying custom agents to mock', async (t) =>
 
   const mockAgent = new MockAgent({ agent })
   setGlobalDispatcher(mockAgent)
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
   mockPool.intercept({
@@ -987,7 +984,6 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
 
   const mockAgent = new MockAgent({ connections: 1 })
   setGlobalDispatcher(mockAgent)
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockClient = mockAgent.get(baseUrl)
   mockClient.intercept({
@@ -1001,7 +997,7 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
   try {
     await request(`${baseUrl}/foo`, { method: 'GET' })
   } catch (err) {
-    t.type(err, ClientClosedError)
+    t.type(err, ClientDestroyedError)
   }
 })
 
@@ -1022,7 +1018,6 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
-  t.teardown(mockAgent.close.bind(mockAgent))
 
   const mockPool = mockAgent.get(baseUrl)
   mockPool.intercept({
@@ -1036,7 +1031,7 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
   try {
     await request(`${baseUrl}/foo`, { method: 'GET' })
   } catch (err) {
-    t.type(err, ClientClosedError)
+    t.type(err, ClientDestroyedError)
   }
 })
 
@@ -2292,4 +2287,148 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
   await t.rejects(request(`${baseUrl}/foo`, {
     method: 'GET'
   }), new MockNotMatchedError(`Mock dispatch not matched for path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+})
+
+test('MockAgent - headers function interceptor', async (t) => {
+  t.plan(7)
+
+  const server = createServer((req, res) => {
+    t.fail('should not be called')
+    t.end()
+    res.end('should not be called')
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+  const mockPool = mockAgent.get(baseUrl)
+
+  // Disable net connect so we can make sure it matches properly
+  mockAgent.disableNetConnect()
+
+  mockPool.intercept({
+    path: '/foo',
+    method: 'GET',
+    headers (headers) {
+      t.equal(typeof headers, 'object')
+      return !Object.keys(headers).includes('authorization')
+    }
+  }).reply(200, 'foo').times(2)
+
+  await t.rejects(request(`${baseUrl}/foo`, {
+    method: 'GET',
+    headers: {
+      Authorization: 'Bearer foo'
+    }
+  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"Authorization":"Bearer foo"}': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+
+  {
+    const { statusCode } = await request(`${baseUrl}/foo`, {
+      method: 'GET',
+      headers: {
+        foo: 'bar'
+      }
+    })
+    t.equal(statusCode, 200)
+  }
+
+  {
+    const { statusCode } = await request(`${baseUrl}/foo`, {
+      method: 'GET'
+    })
+    t.equal(statusCode, 200)
+  }
+})
+
+test('MockAgent - clients are not garbage collected', async (t) => {
+  const samples = 250
+  t.plan(2)
+
+  const server = createServer((req, res) => {
+    t.fail('should not be called')
+    t.end()
+    res.end('should not be called')
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  // Create the dispatcher and isable net connect so we can make sure it matches properly
+  const dispatcher = new MockAgent()
+  dispatcher.disableNetConnect()
+
+  // When Node 16 is the minimum supported, this can be replaced by simply requiring setTimeout from timers/promises
+  function sleep (delay) {
+    return new Promise(resolve => {
+      setTimeout(resolve, delay)
+    })
+  }
+
+  // Purposely create the pool inside a function so that the reference is lost
+  function intercept () {
+    // Create the pool and add a lot of intercepts
+    const pool = dispatcher.get(baseUrl)
+
+    for (let i = 0; i < samples; i++) {
+      pool.intercept({
+        path: `/foo/${i}`,
+        method: 'GET'
+      }).reply(200, Buffer.alloc(1024 * 1024))
+    }
+  }
+
+  intercept()
+
+  const results = new Set()
+  for (let i = 0; i < samples; i++) {
+    // Let's make some time pass to allow garbage collection to happen
+    await sleep(10)
+
+    const { statusCode } = await request(`${baseUrl}/foo/${i}`, { method: 'GET', dispatcher })
+    results.add(statusCode)
+  }
+
+  t.equal(results.size, 1)
+  t.ok(results.has(200))
+})
+
+// https://github.com/nodejs/undici/issues/1321
+test('MockAgent - using fetch yields correct statusText', { skip: nodeMajor < 16 }, async (t) => {
+  const { fetch } = require('..')
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get('http://localhost:3000')
+
+  mockPool.intercept({
+    path: '/statusText',
+    method: 'GET'
+  }).reply(200, 'Body')
+
+  const { status, statusText } = await fetch('http://localhost:3000/statusText')
+
+  t.equal(status, 200)
+  t.equal(statusText, 'OK')
+
+  mockPool.intercept({
+    path: '/badStatusText',
+    method: 'GET'
+  }).reply(420, 'Everyday')
+
+  await t.rejects(
+    fetch('http://localhost:3000/badStatusText'),
+    TypeError
+  )
+
+  t.end()
 })

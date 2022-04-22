@@ -47,10 +47,13 @@ test('responseLocationURL', (t) => {
 })
 
 test('requestBadPort', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   t.equal('allowed', util.requestBadPort({
     urlList: [new URL('https://asd')]
+  }))
+  t.equal('blocked', util.requestBadPort({
+    urlList: [new URL('http://asd:7')]
   }))
   t.equal('blocked', util.requestBadPort({
     urlList: [new URL('https://asd:7')]
@@ -106,6 +109,51 @@ test('sameOrigin', (t) => {
     ))
 
     t.end()
+  })
+
+  t.end()
+})
+
+test('CORBCheck', (t) => {
+  const allowedRequests = [{
+    initiator: 'download',
+    currentURL: { scheme: '' }
+  }, {
+    initiator: '',
+    currentURL: { scheme: 'https' }
+  }
+  ]
+
+  const response = { headersList: { get () { return '' } } }
+
+  allowedRequests.forEach((request) => {
+    t.ok(util.CORBCheck(request, response))
+  })
+
+  t.ok(util.CORBCheck({
+    initiator: '',
+    currentURL: { scheme: '' }
+  }, response))
+
+  const protectedResponses = [{
+    status: 206,
+    headersList: { get () { return 'text/html' } }
+  }, {
+    status: 206,
+    headersList: { get () { return 'application/javascript' } }
+  }, {
+    status: 206,
+    headersList: { get () { return 'application/xml' } }
+  }, {
+    status: 218,
+    headersList: { get (type) { return type === 'content-type' ? 'text/html' : 'x-content-type-options' } }
+  }]
+
+  protectedResponses.forEach(response => {
+    t.equal(util.CORBCheck({
+      initiator: '',
+      currentURL: { scheme: 'https' }
+    }, response), 'blocked')
   })
 
   t.end()

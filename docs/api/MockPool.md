@@ -62,7 +62,7 @@ Returns: `MockInterceptor` corresponding to the input options.
 
 We can define the behaviour of an intercepted request with the following options.
 
-* **reply** `(statusCode: number, replyData: string | Buffer | object, responseOptions?: MockResponseOptions) => MockScope` - define a reply for a matching request. Default for `responseOptions` is `{}`.
+* **reply** `(statusCode: number, replyData: string | Buffer | object | MockInterceptor.MockResponseDataHandler, responseOptions?: MockResponseOptions) => MockScope` - define a reply for a matching request. You can define this as a callback to read incoming request data. Default for `responseOptions` is `{}`.
 * **replyWithError** `(error: Error) => MockScope` - define an error for a matching request to throw.
 * **defaultReplyHeaders** `(headers: Record<string, string>) => MockInterceptor` - define default headers to be included in subsequent replies. These are in addition to headers on a specific reply.
 * **defaultReplyTrailers** `(trailers: Record<string, string>) => MockInterceptor` - define default trailers to be included in subsequent replies. These are in addition to trailers on a specific reply.
@@ -95,11 +95,7 @@ setGlobalDispatcher(mockAgent)
 
 // MockPool
 const mockPool = mockAgent.get('http://localhost:3000')
-
-mockPool.intercept({
-  path: '/foo',
-  method: 'GET',
-}).reply(200, 'foo')
+mockPool.intercept({ path: '/foo' }).reply(200, 'foo')
 
 const {
   statusCode,
@@ -110,6 +106,72 @@ console.log('response received', statusCode) // response received 200
 
 for await (const data of body) {
   console.log('data', data.toString('utf8')) // data foo
+}
+```
+
+#### Example - Mocked request using reply data callbacks
+
+```js
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+
+const mockPool = mockAgent.get('http://localhost:3000')
+
+mockPool.intercept({
+  path: '/echo',
+  method: 'GET',
+  headers: {
+    'User-Agent': 'undici',
+    Host: 'example.com'
+  }
+}).reply(200, ({ headers }) => ({ message: headers.get('message') }))
+
+const { statusCode, body, headers } = await request('http://localhost:3000', {
+  headers: {
+    message: 'hello world!'
+  }
+})
+
+console.log('response received', statusCode) // response received 200
+console.log('headers', headers) // { 'content-type': 'application/json' }
+
+for await (const data of body) {
+  console.log('data', data.toString('utf8')) // { "message":"hello world!" }
+}
+```
+
+#### Example - Mocked request using reply options callback
+
+```js
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+
+const mockPool = mockAgent.get('http://localhost:3000')
+
+mockPool.intercept({
+  path: '/echo',
+  method: 'GET',
+  headers: {
+    'User-Agent': 'undici',
+    Host: 'example.com'
+  }
+}).reply(({ headers }) => ({ statusCode: 200, data: { message: headers.get('message') }})))
+
+const { statusCode, body, headers } = await request('http://localhost:3000', {
+  headers: {
+    message: 'hello world!'
+  }
+})
+
+console.log('response received', statusCode) // response received 200
+console.log('headers', headers) // { 'content-type': 'application/json' }
+
+for await (const data of body) {
+  console.log('data', data.toString('utf8')) // { "message":"hello world!" }
 }
 ```
 
@@ -130,7 +192,7 @@ mockPool.intercept({
 
 mockPool.intercept({
   path: '/hello',
-  method: 'GET'
+  method: 'GET',
 }).reply(200, 'hello')
 
 const result1 = await request('http://localhost:3000/foo')

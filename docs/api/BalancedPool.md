@@ -11,14 +11,15 @@ Requests are not guaranteed to be dispatched in order of invocation.
 Arguments:
 
 * **upstreams** `URL | string | string[]` - It should only include the **protocol, hostname, and port**.
-* **options** `PoolOptions` (optional)
+* **options** `BalancedPoolOptions` (optional)
 
-### Parameter: `PoolOptions`
+### Parameter: `BalancedPoolOptions`
+
+Extends: [`PoolOptions`](Pool.md#parameter-pooloptions)
+
+* **factory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Pool(origin, opts)`
 
 The `PoolOptions` are passed to each of the `Pool` instances being created.
-
-See: [`PoolOptions`](Pool.md#parameter-pooloptions)
-
 ## Instance Properties
 
 ### `BalancedPool.upstreams`
@@ -32,6 +33,10 @@ Implements [Client.closed](Client.md#clientclosed)
 ### `BalancedPool.destroyed`
 
 Implements [Client.destroyed](Client.md#clientdestroyed)
+
+### `Pool.stats`
+
+Returns [`PoolStats`](PoolStats.md) instance for this pool.
 
 ## Instance Methods
 

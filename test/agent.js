@@ -2,18 +2,23 @@
 
 const { test } = require('tap')
 const http = require('http')
-const { Agent, request, stream, pipeline, setGlobalDispatcher } = require('../')
 const { PassThrough } = require('stream')
-const { InvalidArgumentError } = require('../lib/core/errors')
-const { errors } = require('../index')
 const { kRunning } = require('../lib/core/symbols')
+const {
+  Agent,
+  errors,
+  request,
+  stream,
+  pipeline,
+  setGlobalDispatcher
+} = require('../')
 
 test('setGlobalDispatcher', t => {
   t.plan(2)
 
   t.test('fails if agent does not implement `get` method', t => {
     t.plan(1)
-    t.throws(() => setGlobalDispatcher({ dispatch: 'not a function' }), InvalidArgumentError)
+    t.throws(() => setGlobalDispatcher({ dispatch: 'not a function' }), errors.InvalidArgumentError)
   })
 
   t.test('sets global agent', t => {
@@ -66,7 +71,7 @@ test('agent should call callback after closing internal pools', t => {
             t.fail('second request should not resolve')
           })
           .catch(err => {
-            t.type(err, errors.ClientClosedError)
+            t.type(err, errors.ClientDestroyedError)
           })
       })
     })
@@ -115,7 +120,7 @@ test('agent should close internal pools', t => {
           t.fail('second request should not resolve')
         })
         .catch(err => {
-          t.type(err, errors.ClientClosedError)
+          t.type(err, errors.ClientDestroyedError)
         })
     })
   })
@@ -333,13 +338,13 @@ test('with local agent', t => {
 })
 
 test('fails with invalid args', t => {
-  t.throws(() => request(), InvalidArgumentError, 'throws on missing url argument')
-  t.throws(() => request(''), InvalidArgumentError, 'throws on invalid url')
-  t.throws(() => request({}), InvalidArgumentError, 'throws on missing url.origin argument')
-  t.throws(() => request({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
-  t.throws(() => request('https://example.com', { path: 0 }), InvalidArgumentError, 'throws on opts.path argument')
-  t.throws(() => request('https://example.com', { agent: new Agent() }), InvalidArgumentError, 'throws on opts.path argument')
-  t.throws(() => request('https://example.com', 'asd'), InvalidArgumentError, 'throws on non object opts argument')
+  t.throws(() => request(), errors.InvalidArgumentError, 'throws on missing url argument')
+  t.throws(() => request(''), errors.InvalidArgumentError, 'throws on invalid url')
+  t.throws(() => request({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
+  t.throws(() => request({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
+  t.throws(() => request('https://example.com', { path: 0 }), errors.InvalidArgumentError, 'throws on opts.path argument')
+  t.throws(() => request('https://example.com', { agent: new Agent() }), errors.InvalidArgumentError, 'throws on opts.path argument')
+  t.throws(() => request('https://example.com', 'asd'), errors.InvalidArgumentError, 'throws on non object opts argument')
   t.end()
 })
 
@@ -434,10 +439,10 @@ test('with a local agent', t => {
 
 test('stream: fails with invalid URL', t => {
   t.plan(4)
-  t.throws(() => stream(), InvalidArgumentError, 'throws on missing url argument')
-  t.throws(() => stream(''), InvalidArgumentError, 'throws on invalid url')
-  t.throws(() => stream({}), InvalidArgumentError, 'throws on missing url.origin argument')
-  t.throws(() => stream({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+  t.throws(() => stream(), errors.InvalidArgumentError, 'throws on missing url argument')
+  t.throws(() => stream(''), errors.InvalidArgumentError, 'throws on invalid url')
+  t.throws(() => stream({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
+  t.throws(() => stream({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
 })
 
 test('with globalAgent', t => {
@@ -522,16 +527,16 @@ test('with a local agent', t => {
 
 test('pipeline: fails with invalid URL', t => {
   t.plan(4)
-  t.throws(() => pipeline(), InvalidArgumentError, 'throws on missing url argument')
-  t.throws(() => pipeline(''), InvalidArgumentError, 'throws on invalid url')
-  t.throws(() => pipeline({}), InvalidArgumentError, 'throws on missing url.origin argument')
-  t.throws(() => pipeline({ origin: '' }), InvalidArgumentError, 'throws on invalid url.origin argument')
+  t.throws(() => pipeline(), errors.InvalidArgumentError, 'throws on missing url argument')
+  t.throws(() => pipeline(''), errors.InvalidArgumentError, 'throws on invalid url')
+  t.throws(() => pipeline({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
+  t.throws(() => pipeline({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
 })
 
 test('pipeline: fails with invalid onInfo', (t) => {
   t.plan(2)
   pipeline({ origin: 'http://localhost', path: '/', onInfo: 'foo' }, () => {}).on('error', (err) => {
-    t.type(err, InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
     t.equal(err.message, 'invalid onInfo callback')
   })
 })
@@ -560,10 +565,10 @@ test('stream: fails with invalid onInfo', async (t) => {
 
 test('constructor validations', t => {
   t.plan(4)
-  t.throws(() => new Agent({ factory: 'ASD' }), InvalidArgumentError, 'throws on invalid opts argument')
-  t.throws(() => new Agent({ maxRedirections: 'ASD' }), InvalidArgumentError, 'throws on invalid opts argument')
-  t.throws(() => new Agent({ maxRedirections: -1 }), InvalidArgumentError, 'throws on invalid opts argument')
-  t.throws(() => new Agent({ maxRedirections: null }), InvalidArgumentError, 'throws on invalid opts argument')
+  t.throws(() => new Agent({ factory: 'ASD' }), errors.InvalidArgumentError, 'throws on invalid opts argument')
+  t.throws(() => new Agent({ maxRedirections: 'ASD' }), errors.InvalidArgumentError, 'throws on invalid opts argument')
+  t.throws(() => new Agent({ maxRedirections: -1 }), errors.InvalidArgumentError, 'throws on invalid opts argument')
+  t.throws(() => new Agent({ maxRedirections: null }), errors.InvalidArgumentError, 'throws on invalid opts argument')
 })
 
 test('dispatch validations', t => {
@@ -587,11 +592,11 @@ test('dispatch validations', t => {
   })
 
   t.plan(6)
-  t.throws(() => dispatcher.dispatch('ASD'), InvalidArgumentError, 'throws on missing handler')
-  t.throws(() => dispatcher.dispatch('ASD', noopHandler), InvalidArgumentError, 'throws on invalid opts argument type')
-  t.throws(() => dispatcher.dispatch({}, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
-  t.throws(() => dispatcher.dispatch({ origin: '' }, noopHandler), InvalidArgumentError, 'throws on invalid opts.origin argument')
-  t.throws(() => dispatcher.dispatch({}, {}), InvalidArgumentError, 'throws on invalid handler.onError')
+  t.throws(() => dispatcher.dispatch('ASD'), errors.InvalidArgumentError, 'throws on missing handler')
+  t.throws(() => dispatcher.dispatch('ASD', noopHandler), errors.InvalidArgumentError, 'throws on invalid opts argument type')
+  t.throws(() => dispatcher.dispatch({}, noopHandler), errors.InvalidArgumentError, 'throws on invalid opts.origin argument')
+  t.throws(() => dispatcher.dispatch({ origin: '' }, noopHandler), errors.InvalidArgumentError, 'throws on invalid opts.origin argument')
+  t.throws(() => dispatcher.dispatch({}, {}), errors.InvalidArgumentError, 'throws on invalid handler.onError')
 
   server.listen(0, () => {
     t.doesNotThrow(() => dispatcher.dispatch({
@@ -697,12 +702,12 @@ test('global api', t => {
 
 test('global api throws', t => {
   const origin = 'http://asd'
-  t.throws(() => request(`${origin}/foo`, { path: '/foo' }), InvalidArgumentError)
-  t.throws(() => request({ origin, path: 0 }, { path: '/foo' }), InvalidArgumentError)
-  t.throws(() => request({ origin, pathname: 0 }, { path: '/foo' }), InvalidArgumentError)
-  t.throws(() => request({ origin: 0 }, { path: '/foo' }), InvalidArgumentError)
-  t.throws(() => request(0), InvalidArgumentError)
-  t.throws(() => request(1), InvalidArgumentError)
+  t.throws(() => request(`${origin}/foo`, { path: '/foo' }), errors.InvalidArgumentError)
+  t.throws(() => request({ origin, path: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
+  t.throws(() => request({ origin, pathname: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
+  t.throws(() => request({ origin: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
+  t.throws(() => request(0), errors.InvalidArgumentError)
+  t.throws(() => request(1), errors.InvalidArgumentError)
   t.end()
 })
 
@@ -717,5 +722,5 @@ test('unreachable request rejects and can be caught', t => {
 test('connect is not valid', t => {
   t.plan(1)
 
-  t.throws(() => new Agent({ connect: false }), InvalidArgumentError, 'connect must be a function or an object')
+  t.throws(() => new Agent({ connect: false }), errors.InvalidArgumentError, 'connect must be a function or an object')
 })

@@ -1,19 +1,40 @@
 import { expectAssignable } from 'tsd'
-import { MockAgent, MockPool } from '../..'
+import { MockAgent, MockPool, BodyInit, Dispatcher } from '../..'
 import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
+
+declare const mockResponseCallbackOptions: MockInterceptor.MockResponseCallbackOptions;
+
+expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCallbackOptions.body)
 
 {
   const mockPool: MockPool = new MockAgent().get('')
   const mockInterceptor = mockPool.intercept({ path: '', method: 'GET' })
+  const mockInterceptorDefaultMethod = mockPool.intercept({ path: '' })
 
   // reply
   expectAssignable<MockScope>(mockInterceptor.reply(200, ''))
   expectAssignable<MockScope>(mockInterceptor.reply(200, Buffer))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({})))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}, {}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), {}))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { headers: { foo: 'bar' }}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), { headers: { foo: 'bar' }}))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { trailers: { foo: 'bar' }}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), { trailers: { foo: 'bar' }}))
   expectAssignable<MockScope<{ foo: string }>>(mockInterceptor.reply<{ foo: string }>(200, { foo: 'bar' }))
+  expectAssignable<MockScope<{ foo: string }>>(mockInterceptor.reply<{ foo: string }>(200, () => ({ foo: 'bar' })))
+  expectAssignable<MockScope>(mockInterceptor.reply(() => ({ statusCode: 200, data: { foo: 'bar' }})))
+  expectAssignable<MockScope>(mockInterceptor.reply(() => ({ statusCode: 200, data: { foo: 'bar' }, responseOptions: {
+    headers: { foo: 'bar' }
+  }})))
+  expectAssignable<MockScope>(mockInterceptor.reply((options) => {
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions>(options);
+    return { statusCode: 200, data: { foo: 'bar'}
+  }}))
+  expectAssignable<MockScope>(mockInterceptor.reply(() => ({ statusCode: 200, data: { foo: 'bar' }, responseOptions: {
+    trailers: { foo: 'bar' }
+  }})))
 
   // replyWithError
   class CustomError extends Error {
@@ -24,7 +45,7 @@ import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
 
   // defaultReplyHeaders
   expectAssignable<MockInterceptor>(mockInterceptor.defaultReplyHeaders({ foo: 'bar' }))
-  
+
   // defaultReplyTrailers
   expectAssignable<MockInterceptor>(mockInterceptor.defaultReplyTrailers({ foo: 'bar' }))
 
@@ -44,4 +65,11 @@ import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
 
   // times
   expectAssignable<MockScope>(mockScope.times(2))
+}
+
+{
+  const mockPool: MockPool = new MockAgent().get('')
+  mockPool.intercept({ path: '', method: 'GET', headers: () => true })
+  mockPool.intercept({ path: '', method: 'GET', headers: () => false })
+  mockPool.intercept({ path: '', method: 'GET', headers: (headers) => Object.keys(headers).includes('authorization') })
 }

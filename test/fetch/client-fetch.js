@@ -8,24 +8,18 @@ const { ReadableStream } = require('stream/web')
 const { Blob } = require('buffer')
 const { fetch, Response, Request, FormData, File } = require('../..')
 
-test('args validation', (t) => {
+test('function signature', (t) => {
   t.plan(2)
 
-  t.throws(() => {
-    File.prototype.name.call(null)
-  }, TypeError)
-  t.throws(() => {
-    File.prototype.lastModified.call(null)
-  }, TypeError)
+  t.equal(fetch.name, 'fetch')
+  t.equal(fetch.length, 1)
 })
 
-test('return value of File.lastModified', (t) => {
+test('args validation', async (t) => {
   t.plan(2)
 
-  const f = new File(['asd1'], 'filename123')
-  const lastModified = f.lastModified
-  t.ok(typeof lastModified === typeof Date.now())
-  t.ok(lastModified >= 0 && lastModified <= Date.now())
+  await t.rejects(fetch(), TypeError)
+  await t.rejects(fetch('ftp://unsupported'), TypeError)
 })
 
 test('request json', (t) => {
@@ -337,4 +331,14 @@ test('post FormData with File', (t) => {
     t.ok(/asd1/.test(result))
     t.ok(/filename123/.test(result))
   })
+})
+
+test('invalid url', async (t) => {
+  t.plan(1)
+
+  try {
+    await fetch('http://invalid')
+  } catch (e) {
+    t.match(e.cause.message, 'invalid')
+  }
 })

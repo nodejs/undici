@@ -1,6 +1,6 @@
 {
   "name": "undici",
-  "version": "4.13.0",
+  "version": "5.0.0",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
   "homepage": "https://undici.nodejs.org",
   "bugs": {
@@ -40,24 +40,24 @@
     "docs"
   ],
   "scripts": {
-    "build:node": "esbuild index-fetch.js --bundle --platform=node --outfile=undici-fetch.js",
+    "build:node": "npx esbuild@0.14.25 index-fetch.js --bundle --platform=node --outfile=undici-fetch.js",
     "prebuild:wasm": "docker build -t llhttp_wasm_builder -f build/Dockerfile .",
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
     "lint:fix": "standard --fix | snazzy",
     "test": "npm run test:tap && npm run test:node-fetch && npm run test:fetch && npm run test:jest && tsd",
-    "test:node-fetch": "node scripts/verifyVersion.js 16 && mocha test/node-fetch || echo Skipping",
-    "test:fetch": "node scripts/verifyVersion.js 16 && tap test/fetch/*.js || echo Skipping",
-    "test:jest": "jest test/jest/test",
+    "test:node-fetch": "node scripts/verifyVersion.js 16 || mocha test/node-fetch",
+    "test:fetch": "node scripts/verifyVersion.js 16 || tap test/fetch/*.js",
+    "test:jest": "jest",
     "test:tap": "tap test/*.js test/diagnostics-channel/*.js",
     "test:tdd": "tap test/*.js test/diagnostics-channel/*.js -w",
     "test:typescript": "tsd",
-    "coverage": "nyc npm run test",
+    "coverage": "nyc --reporter=text --reporter=html npm run test",
     "coverage:ci": "nyc --reporter=lcov npm run test",
-    "bench": "concurrently -k -s first npm:bench:server npm:bench:run",
+    "bench": "PORT=3042 concurrently -k -s first npm:bench:server npm:bench:run",
     "bench:server": "node benchmarks/server.js",
     "prebench:run": "node benchmarks/wait.js",
-    "bench:run": "CONNECTIONS=1 node --experimental-wasm-simd benchmarks/benchmark.js && CONNECTIONS=50 node --experimental-wasm-simd benchmarks/benchmark.js",
+    "bench:run": "CONNECTIONS=1 node --experimental-wasm-simd benchmarks/benchmark.js; CONNECTIONS=50 node --experimental-wasm-simd benchmarks/benchmark.js",
     "serve:website": "docsify serve .",
     "prepare": "husky install",
     "fuzz": "jsfuzz test/fuzzing/fuzz.js corpus"
@@ -75,7 +75,6 @@
     "cronometro": "^0.8.0",
     "delay": "^5.0.0",
     "docsify-cli": "^4.4.3",
-    "esbuild": "^0.14.14",
     "formdata-node": "^4.3.1",
     "https-pem": "^2.0.0",
     "husky": "^7.0.2",
@@ -109,7 +108,15 @@
   "tsd": {
     "directory": "test/types",
     "compilerOptions": {
-      "esModuleInterop": true
+      "esModuleInterop": true,
+      "lib": [
+        "esnext"
+      ]
     }
+  },
+  "jest": {
+    "testMatch": [
+      "<rootDir>/test/jest/**"
+    ]
   }
 }

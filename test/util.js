@@ -81,3 +81,16 @@ test('validateHandler', (t) => {
     onUpgrade: 'null'
   }, 'CONNECT', () => {}), InvalidArgumentError, 'invalid onUpgrade method')
 })
+
+test('parseHeaders', (t) => {
+  t.plan(4)
+  t.same(util.parseHeaders(['key', 'value']), { key: 'value' })
+  t.same(util.parseHeaders([Buffer.from('key'), Buffer.from('value')]), { key: 'value' })
+  t.same(util.parseHeaders(['Key', 'Value']), { key: 'Value' })
+  t.same(util.parseHeaders(['Key', 'value', 'key', 'Value']), { key: ['value', 'Value'] })
+})
+
+test('parseRawHeaders', (t) => {
+  t.plan(1)
+  t.same(util.parseRawHeaders(['key', 'value', Buffer.from('key'), Buffer.from('value')]), ['key', 'value', 'key', 'value'])
+})

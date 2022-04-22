@@ -12,7 +12,7 @@ test('should work in jest', async () => {
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
-  await new Promise((resolve, reject) => {
+  await expect(new Promise((resolve, reject) => {
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       client.request({
@@ -28,9 +28,9 @@ test('should work in jest', async () => {
         if (err) {
           reject(err)
         } else {
-          resolve(result)
+          resolve(result.body.text())
         }
       })
     })
-  })
+  })).resolves.toBe('hello')
 })

@@ -4,6 +4,7 @@
 
 import { Blob } from 'buffer'
 import { URL, URLSearchParams } from 'url'
+import { ReadableStream } from 'stream/web'
 import { FormData } from './formdata'
 
 export type RequestInfo = string | URL | Request
@@ -12,13 +13,6 @@ export declare function fetch (
   input: RequestInfo,
   init?: RequestInit
 ): Promise<Response>
-
-declare class ControlledAsyncIterable implements AsyncIterable<Uint8Array> {
-  constructor (input: AsyncIterable<Uint8Array> | Iterable<Uint8Array>)
-  data: AsyncIterable<Uint8Array>
-  disturbed: boolean
-  readonly [Symbol.asyncIterator]: () => AsyncIterator<Uint8Array>
-}
 
 export type BodyInit =
   | ArrayBuffer
@@ -32,7 +26,7 @@ export type BodyInit =
   | string
 
 export interface BodyMixin {
-  readonly body: ControlledAsyncIterable | null
+  readonly body: ReadableStream | null
   readonly bodyUsed: boolean
 
   readonly arrayBuffer: () => Promise<ArrayBuffer>
@@ -42,7 +36,7 @@ export interface BodyMixin {
   readonly text: () => Promise<string>
 }
 
-export type HeadersInit = Iterable<[string, string]> | Record<string, string>
+export type HeadersInit = string[][] | Record<string, string | ReadonlyArray<string>> | Headers
 
 export declare class Headers implements Iterable<[string, string]> {
   constructor (init?: HeadersInit)
@@ -100,7 +94,23 @@ export interface RequestInit {
   readonly redirect?: RequestRedirect
   readonly integrity?: string
   readonly signal?: AbortSignal
+  readonly credentials?: RequestCredentials
+  readonly mode?: RequestMode
+  readonly referrer?: string
+  readonly referrerPolicy?: ReferrerPolicy
+  readonly window?: null
 }
+
+export type ReferrerPolicy =
+  | ''
+  | 'no-referrer'
+  | 'no-referrer-when-downgrade'
+  | 'origin'
+  | 'origin-when-cross-origin'
+  | 'same-origin'
+  | 'strict-origin'
+  | 'strict-origin-when-cross-origin'
+  | 'unsafe-url';
 
 export type RequestMode = 'cors' | 'navigate' | 'no-cors' | 'same-origin'
 
@@ -123,7 +133,7 @@ export declare class Request implements BodyMixin {
   readonly keepalive: boolean
   readonly signal: AbortSignal
 
-  readonly body: ControlledAsyncIterable | null
+  readonly body: ReadableStream | null
   readonly bodyUsed: boolean
 
   readonly arrayBuffer: () => Promise<ArrayBuffer>
@@ -162,7 +172,7 @@ export declare class Response implements BodyMixin {
   readonly url: string
   readonly redirected: boolean
 
-  readonly body: ControlledAsyncIterable | null
+  readonly body: ReadableStream | null
   readonly bodyUsed: boolean
 
   readonly arrayBuffer: () => Promise<ArrayBuffer>

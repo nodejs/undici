@@ -6,10 +6,11 @@ const http = require('http')
 const os = require('os')
 const path = require('path')
 const { table } = require('table')
+const { WritableStream } = require('stream/web')
 
-const { Pool, Client } = require('..')
+const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
-const iterations = (parseInt(process.env.SAMPLES, 10) || 100) + 1
+const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
 const errorThreshold = parseInt(process.env.ERROR_TRESHOLD, 10) || 3
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
@@ -63,6 +64,8 @@ const dispatcher = new Class(httpBaseOptions.url, {
   connections,
   ...dest
 })
+
+setGlobalDispatcher(new Agent({ pipelining, connections }))
 
 class SimpleRequest {
   constructor (resolve) {
@@ -126,6 +129,8 @@ function printResults (results) {
       ]
     })
 
+  console.log(results)
+
   // Add the header row
   rows.unshift(['Tests', 'Samples', 'Result', 'Tolerance', 'Difference with slowest'])
 
@@ -159,45 +164,11 @@ function printResults (results) {
   })
 }
 
-cronometro(
-  {
-    'http - no keepalive' () {
-      return makeParallelRequests(resolve => {
-        http.get(httpNoKeepAliveOptions, res => {
-          res
-            .pipe(
-              new Writable({
-                write (chunk, encoding, callback) {
-                  callback()
-                }
-              })
-            )
-            .on('finish', resolve)
-        })
-      })
-    },
-    'http - keepalive' () {
-      return makeParallelRequests(resolve => {
-        http.get(httpKeepAliveOptions, res => {
-          res
-            .pipe(
-              new Writable({
-                write (chunk, encoding, callback) {
-                  callback()
-                }
-              })
-            )
-            .on('finish', resolve)
-        })
-      })
-    },
-    'undici - pipeline' () {
-      return makeParallelRequests(resolve => {
-        dispatcher
-          .pipeline(undiciOptions, data => {
-            return data.body
-          })
-          .end()
+const experiments = {
+  'http - no keepalive' () {
+    return makeParallelRequests(resolve => {
+      http.get(httpNoKeepAliveOptions, res => {
+        res
           .pipe(
             new Writable({
               write (chunk, encoding, callback) {
@@ -207,41 +178,88 @@ cronometro(
           )
           .on('finish', resolve)
       })
-    },
-    'undici - request' () {
-      return makeParallelRequests(resolve => {
-        dispatcher.request(undiciOptions).then(({ body }) => {
-          body
-            .pipe(
-              new Writable({
-                write (chunk, encoding, callback) {
-                  callback()
-                }
-              })
-            )
-            .on('finish', resolve)
-        })
-      })
-    },
-    'undici - stream' () {
-      return makeParallelRequests(resolve => {
-        return dispatcher
-          .stream(undiciOptions, () => {
-            return new Writable({
+    })
+  },
+  'http - keepalive' () {
+    return makeParallelRequests(resolve => {
+      http.get(httpKeepAliveOptions, res => {
+        res
+          .pipe(
+            new Writable({
               write (chunk, encoding, callback) {
                 callback()
               }
             })
-          })
-          .then(resolve)
+          )
+          .on('finish', resolve)
       })
-    },
-    'undici - dispatch' () {
-      return makeParallelRequests(resolve => {
-        dispatcher.dispatch(undiciOptions, new SimpleRequest(resolve))
-      })
-    }
+    })
   },
+  'undici - pipeline' () {
+    return makeParallelRequests(resolve => {
+      dispatcher
+        .pipeline(undiciOptions, data => {
+          return data.body
+        })
+        .end()
+        .pipe(
+          new Writable({
+            write (chunk, encoding, callback) {
+              callback()
+            }
+          })
+        )
+        .on('finish', resolve)
+    })
+  },
+  'undici - request' () {
+    return makeParallelRequests(resolve => {
+      dispatcher.request(undiciOptions).then(({ body }) => {
+        body
+          .pipe(
+            new Writable({
+              write (chunk, encoding, callback) {
+                callback()
+              }
+            })
+          )
+          .on('finish', resolve)
+      })
+    })
+  },
+  'undici - stream' () {
+    return makeParallelRequests(resolve => {
+      return dispatcher
+        .stream(undiciOptions, () => {
+          return new Writable({
+            write (chunk, encoding, callback) {
+              callback()
+            }
+          })
+        })
+        .then(resolve)
+    })
+  },
+  'undici - dispatch' () {
+    return makeParallelRequests(resolve => {
+      dispatcher.dispatch(undiciOptions, new SimpleRequest(resolve))
+    })
+  }
+}
+
+if (process.env.PORT) {
+  // fetch does not support the socket
+  experiments['undici - fetch'] = () => {
+    return makeParallelRequests(resolve => {
+      fetch(dest.url).then(res => {
+        res.body.pipeTo(new WritableStream({ write () {}, close () { resolve() } }))
+      }).catch(console.log)
+    })
+  }
+}
+
+cronometro(
+  experiments,
   {
     iterations,
     errorThreshold,

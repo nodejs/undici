@@ -1,16 +1,78 @@
 'use strict'
 
+const { EventEmitter } = require('events')
+const { createServer } = require('http')
+const net = require('net')
+const {
+  finished,
+  PassThrough,
+  Readable
+} = require('stream')
+const { promisify } = require('util')
 const proxyquire = require('proxyquire')
 const { test } = require('tap')
-const { Client, Pool, errors } = require('..')
-const { createServer } = require('http')
-const { EventEmitter } = require('events')
-const { promisify } = require('util')
-const { PassThrough, Readable } = require('stream')
-const { kBusy, kPending, kRunning, kSize, kUrl } = require('../lib/core/symbols')
-const eos = require('stream').finished
-const net = require('net')
-const EE = require('events')
+const {
+  kBusy,
+  kPending,
+  kRunning,
+  kSize,
+  kUrl
+} = require('../lib/core/symbols')
+const {
+  Client,
+  Pool,
+  errors
+} = require('..')
+
+test('throws when connection is inifinite', (t) => {
+  t.plan(2)
+
+  try {
+    new Pool(null, { connections: 0 / 0 }) // eslint-disable-line
+  } catch (e) {
+    t.type(e, errors.InvalidArgumentError)
+    t.equal(e.message, 'invalid connections')
+  }
+})
+
+test('throws when connections is negative', (t) => {
+  t.plan(2)
+
+  try {
+    new Pool(null, { connections: -1 }) // eslint-disable-line no-new
+  } catch (e) {
+    t.type(e, errors.InvalidArgumentError)
+    t.equal(e.message, 'invalid connections')
+  }
+})
+
+test('throws when connection is not number', (t) => {
+  t.plan(2)
+
+  try {
+    new Pool(null, { connections: true }) // eslint-disable-line no-new
+  } catch (e) {
+    t.type(e, errors.InvalidArgumentError)
+    t.equal(e.message, 'invalid connections')
+  }
+})
+
+test('throws when factory is not a function', (t) => {
+  t.plan(2)
+
+  try {
+    new Pool(null, { factory: '' }) // eslint-disable-line no-new
+  } catch (e) {
+    t.type(e, errors.InvalidArgumentError)
+    t.equal(e.message, 'factory must be a function.')
+  }
+})
+
+test('does not throw when connect is a function', (t) => {
+  t.plan(1)
+
+  t.doesNotThrow(() => new Pool('http://localhost', { connect: () => {} }))
+})
 
 test('connect/disconnect event(s)', (t) => {
   const clients = 2
@@ -186,7 +248,7 @@ test('basic get with async/await', async (t) => {
   t.equal(headers['content-type'], 'text/plain')
 
   body.resume()
-  await promisify(eos)(body)
+  await promisify(finished)(body)
 
   await client.close()
   await client.destroy()
@@ -343,7 +405,7 @@ test('backpressure algorithm', (t) => {
 })
 
 test('busy', (t) => {
-  t.plan(8 * 10 + 2 + 1)
+  t.plan(8 * 16 + 2 + 1)
 
   const server = createServer((req, res) => {
     t.equal('/', req.url)
@@ -353,9 +415,11 @@ test('busy', (t) => {
   })
   t.teardown(server.close.bind(server))
 
+  const connections = 2
+
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
-      connections: 2,
+      connections,
       pipelining: 2
     })
     client.on('drain', () => {
@@ -383,33 +447,15 @@ test('busy', (t) => {
       t.equal(client[kBusy], n > 1)
       t.equal(client[kSize], n)
       t.equal(client[kRunning], 0)
+
+      t.equal(client.stats.connected, 0)
+      t.equal(client.stats.free, 0)
+      t.equal(client.stats.queued, Math.max(n - connections, 0))
+      t.equal(client.stats.pending, n)
+      t.equal(client.stats.size, n)
+      t.equal(client.stats.running, 0)
     }
   })
-})
-
-test('invalid options throws', (t) => {
-  t.plan(6)
-
-  try {
-    new Pool(null, { connections: -1 }) // eslint-disable-line
-  } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'invalid connections')
-  }
-
-  try {
-    new Pool(null, { connections: true }) // eslint-disable-line
-  } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'invalid connections')
-  }
-
-  try {
-    new Pool(null, { factory: '' }) // eslint-disable-line
-  } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'factory must be a function.')
-  }
 })
 
 test('invalid pool dispatch options', (t) => {
@@ -732,7 +778,7 @@ test('pool request abort in queue', (t) => {
       }
     })
 
-    const signal = new EE()
+    const signal = new EventEmitter()
     client.request({
       path: '/',
       method: 'GET',
@@ -777,7 +823,7 @@ test('pool stream abort in queue', (t) => {
       }
     })
 
-    const signal = new EE()
+    const signal = new EventEmitter()
     client.stream({
       path: '/',
       method: 'GET',
@@ -822,7 +868,7 @@ test('pool pipeline abort in queue', (t) => {
       }
     })
 
-    const signal = new EE()
+    const signal = new EventEmitter()
     client.pipeline({
       path: '/',
       method: 'GET',
