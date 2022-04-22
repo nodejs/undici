@@ -7,6 +7,7 @@ const { InvalidArgumentError } = require('../lib/core/errors')
 const ProxyAgent = require('../lib/proxy-agent')
 const { createServer } = require('http')
 const proxy = require('proxy')
+const { once } = require('events')
 
 const nodeMajor = Number(process.versions.node.split('.', 1)[0])
 
@@ -189,6 +190,8 @@ test('ProxyAgent correctly sends headers when using fetch - #1355', { skip: node
   const { getGlobalDispatcher, setGlobalDispatcher, fetch } = require('../index')
 
   const expectedHeaders = {
+    host: '127.0.0.1:9000',
+    connection: 'keep-alive',
     'test-header': 'value',
     accept: '*/*',
     'accept-language': '*',
@@ -197,22 +200,22 @@ test('ProxyAgent correctly sends headers when using fetch - #1355', { skip: node
     'accept-encoding': 'gzip, deflate'
   }
 
-  const proxy = await buildProxy((req, res) => {
+  const oldDispatcher = getGlobalDispatcher()
+  const server = createServer((req, res) => {
     t.same(req.headers, expectedHeaders)
     res.end('goodbye')
-  })
+  }).listen(0)
+  t.teardown(server.close.bind(server))
 
-  const oldDispatcher = getGlobalDispatcher()
-  const proxyUrl = `http://localhost:${proxy.address().port}`
-  setGlobalDispatcher(new ProxyAgent(proxyUrl))
+  await once(server, 'listening')
 
-  await fetch(proxyUrl, {
+  setGlobalDispatcher(new ProxyAgent(`http://localhost:${server.address().port}`))
+
+  await fetch('http://127.0.0.1:9000', {
     headers: { 'Test-header': 'value' }
   })
 
-  proxy.close()
   setGlobalDispatcher(oldDispatcher)
-
   t.end()
 })
 
