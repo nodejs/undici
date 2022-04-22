@@ -243,7 +243,7 @@ Nodejs has two kinds of streams: [web streams](https://nodejs.org/dist/latest-v1
 #### Specification Compliance
 
 This section documents parts of the [Fetch Standard](https://fetch.spec.whatwg.org) that Undici does
-not support or fully implement.
+not support or does not fully implement.
 
 ##### Garbage Collection
 
@@ -316,7 +316,7 @@ Returns: `Dispatcher`
 ## Specification Compliance
 
 This section documents parts of the HTTP/1.1 specification that Undici does
-not support or fully implement.
+not support or does not fully implement.
 
 ### Expect
 
@@ -348,7 +348,7 @@ aborted.
 
 ### Manual Redirect
 
-Since it is not possible to manually follow an HTTP redirect server-side,
+Since it is not possible to manually follow an HTTP redirect on the server-side,
 Undici returns the actual response instead of an `opaqueredirect` filtered one
 when invoked with a `manual` redirect. This aligns `fetch()` with the other
 implementations in Deno and Cloudflare Workers.
