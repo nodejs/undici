@@ -464,7 +464,7 @@ agent
   .intercept({ method: 'GET', path: '/' })
   .reply(200, '')
 
-const pendingInterceptors = dispatcher.pendingInterceptors()
+const pendingInterceptors = agent.pendingInterceptors()
 // Returns [
 //   {
 //     times: null,
@@ -500,7 +500,7 @@ agent
   .intercept({ method: 'GET', path: '/' })
   .reply(200, '')
 
-dispatcher.assertNoPendingInterceptors()
+agent.assertNoPendingInterceptors()
 // Throws an Error with the following message:
 //
 // 1 interceptor was not consumed!

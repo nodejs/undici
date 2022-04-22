@@ -28,11 +28,11 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   /** Causes all requests to throw when requests are not matched in a MockAgent intercept. */
   disableNetConnect(): void;
   pendingInterceptors(): MockDispatch[];
-  assertNoUnusedInterceptors(options?: {formatter?: UnusedInterceptorFormatter}): void;
+  assertNoUnusedInterceptors(options?: {tableFormatter?: UnusedInterceptorFormatter}): void;
 }
 
 interface UnusedInterceptorFormatter {
-  formatTable: typeof console.table
+  formatTable(...args: Parameters<typeof console.table>): string;
 }
 
 declare namespace MockAgent {

@@ -63,5 +63,12 @@ expectAssignable<MockAgent>(new MockAgent({}))
 {
   const agent = new MockAgent({agent: new Agent()})
   expectType<() => MockDispatch[]>(agent.pendingInterceptors)
-  expectType<(options?: { formatter?: { formatTable: typeof console.table } }) => void>(agent.assertNoUnusedInterceptors)
+  expectType<(options?: {
+    tableFormatter?: {
+      formatTable(
+        tabularData: any,
+        properties?: readonly string[]
+      ): string;
+    }
+  }) => void>(agent.assertNoUnusedInterceptors)
 }

@@ -84,8 +84,12 @@ test('works when no interceptors are registered', t => {
   t.same(dispatcher.pendingInterceptors(), [])
 })
 
-test('defaults to rendering output with terminal color', t => {
+test('defaults to rendering output with terminal color when process.env.CI is unset', t => {
   t.plan(2)
+
+  // This ensures that the test works in an environment where the CI env var is set.
+  const oldCiEnvVar = process.env.CI
+  delete process.env.CI
 
   const err = t.throws(
     () => mockAgentWithOneInterceptor().assertNoUnusedInterceptors())
@@ -100,6 +104,14 @@ This interceptor was not consumed:
 │    0    │ [32m'GET'[39m  │ [32m'/'[39m  │     [33m200[39m     │    [32m'❌'[39m    │        [33m1[39m        │
 └─────────┴────────┴──────┴─────────────┴────────────┴─────────────────┘
 `.trim())
+
+  // Re-set the CI env var if it were set.
+  // Assigning `undefined` does not work,
+  // because reading the env var afterwards yields the string 'undefined',
+  // so we need to re-set it conditionally.
+  if (oldCiEnvVar != null) {
+    process.env.CI = oldCiEnvVar
+  }
 })
 
 test('returns unused interceptors', t => {
