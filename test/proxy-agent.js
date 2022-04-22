@@ -7,6 +7,9 @@ const { InvalidArgumentError } = require('../lib/core/errors')
 const ProxyAgent = require('../lib/proxy-agent')
 const { createServer } = require('http')
 const proxy = require('proxy')
+const { once } = require('events')
+
+const nodeMajor = Number(process.versions.node.split('.', 1)[0])
 
 test('should throw error when no uri is provided', (t) => {
   t.plan(2)
@@ -183,6 +186,39 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
   proxyAgent.close()
 })
 
+test('ProxyAgent correctly sends headers when using fetch - #1355', { skip: nodeMajor < 16 }, async (t) => {
+  const { getGlobalDispatcher, setGlobalDispatcher, fetch } = require('../index')
+
+  const expectedHeaders = {
+    host: '127.0.0.1:9000',
+    connection: 'keep-alive',
+    'test-header': 'value',
+    accept: '*/*',
+    'accept-language': '*',
+    'sec-fetch-mode': 'cors',
+    'user-agent': 'undici',
+    'accept-encoding': 'gzip, deflate'
+  }
+
+  const oldDispatcher = getGlobalDispatcher()
+  const server = createServer((req, res) => {
+    t.same(req.headers, expectedHeaders)
+    res.end('goodbye')
+  }).listen(0)
+  t.teardown(server.close.bind(server))
+
+  await once(server, 'listening')
+
+  setGlobalDispatcher(new ProxyAgent(`http://localhost:${server.address().port}`))
+
+  await fetch('http://127.0.0.1:9000', {
+    headers: { 'Test-header': 'value' }
+  })
+
+  setGlobalDispatcher(oldDispatcher)
+  t.end()
+})
+
 function buildServer () {
   return new Promise((resolve) => {
     const server = createServer()
@@ -190,9 +226,11 @@ function buildServer () {
   })
 }
 
-function buildProxy () {
+function buildProxy (listener) {
   return new Promise((resolve) => {
-    const server = proxy(createServer())
+    const server = listener
+      ? proxy(createServer(listener))
+      : proxy(createServer())
     server.listen(0, () => resolve(server))
   })
 }
