@@ -135,3 +135,21 @@ diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, soc
   // connector is a function that creates the socket
   console.log(`Connect failed with ${error.message}`)
 })
+```
+
+## `undici:body:consumed`
+
+This message is published once a body is consumed using a [body mixin](https://github.com/nodejs/undici#body-mixins).
+
+```js
+diagnosticsChannel.channel('undici:body:consumed').subscribe(({ body, request }) => {
+  // request is the same object undici:request:create
+
+  // body is the body consumed (this corresponds with how the body was consumed. For example, if the body was consumed using .blob(), this property will be a blob)
+  if (typeof body === 'string') {
+    // the body was consumed with `.text()`
+  }
+})
+```
+
+Note: Consuming the body in other ways (ie. async iterators or [stream consumers](https://nodejs.org/api/webstreams.html#utility-consumers)) will not cause a message to be published in this channel.
