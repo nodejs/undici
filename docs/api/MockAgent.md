@@ -446,7 +446,6 @@ await request('http://example.com')
 // Will throw
 ```
 
-
 ### `MockAgent.pendingInterceptors()`
 
 This method returns any pending (i.e., non-persistent and not fully consumed) interceptors registered on a mock agent.
