@@ -108,7 +108,7 @@ test('error 101 upgrade', (t) => {
   })
 })
 
-test('1xx response without timeouts', { only: true }, t => {
+test('1xx response without timeouts', t => {
   t.plan(2)
 
   const server = createServer((req, res) => {
