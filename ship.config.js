@@ -1,3 +1,3 @@
 module.exports = {
-  buildCommand: () => "npm run build:node",
-};
+  buildCommand: () => 'npm run build:node'
+}
