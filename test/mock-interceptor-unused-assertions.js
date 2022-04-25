@@ -143,12 +143,13 @@ These interceptors were not consumed:
 })
 
 test('works when no interceptors are registered', t => {
-  t.plan(1)
+  t.plan(2)
 
   const dispatcher = new MockAgent()
   dispatcher.disableNetConnect()
 
   t.same(dispatcher.pendingInterceptors(), [])
+  t.doesNotThrow(() => dispatcher.assertNoUnusedInterceptors())
 })
 
 test('defaults to rendering output with terminal color when process.env.CI is unset', t => {
