@@ -448,9 +448,13 @@ await request('http://example.com')
 
 ### `MockAgent.pendingInterceptors()`
 
-This method returns any pending (i.e., non-persistent and not fully consumed) interceptors registered on a mock agent.
+This method returns any pending interceptors registered on a mock agent. A pending interceptor meets one of the following criteria:
 
-Returns: `MockDispatch[]`
+- Is registered with neither `.times(<number>)` nor `.persist()`, and has not been invoked;
+- Is persistent (i.e., registered with `.persist()`) and has not been invoked;
+- Is registered with `.times(<number>)` and has not been invoked `<number>` of times.
+
+Returns: `PendingInterceptor[]` (where `PendingInterceptor` is a `MockDispatch` with an additional `origin: string`)
 
 #### Example - List all pending inteceptors
 
@@ -466,9 +470,11 @@ agent
 const pendingInterceptors = agent.pendingInterceptors()
 // Returns [
 //   {
-//     times: null,
+//     timesInvoked: 0,
+//     times: 1,
 //     persist: false,
 //     consumed: false,
+//     pending: true,
 //     path: '/',
 //     method: 'GET',
 //     body: undefined,
@@ -479,14 +485,19 @@ const pendingInterceptors = agent.pendingInterceptors()
 //       data: '',
 //       headers: {},
 //       trailers: {}
-//     }
+//     },
+//     origin: 'https://example.com'
 //   }
 // ]
 ```
 
-### `MockAgent.assertNoUnusedInterceptors([options])`
+### `MockAgent.assertNoPendingInterceptors([options])`
 
-This method throws if the mock agent has any pending (i.e., non-persistent and not fully consumed) interceptors.
+This method throws if the mock agent has any pending interceptors. A pending interceptor meets one of the following criteria:
+
+- Is registered with neither `.times(<number>)` nor `.persist()`, and has not been invoked;
+- Is persistent (i.e., registered with `.persist()`) and has not been invoked;
+- Is registered with `.times(<number>)` and has not been invoked `<number>` of times.
 
 #### Example - Check that there are no pending interceptors
 
@@ -500,15 +511,13 @@ agent
   .reply(200, '')
 
 agent.assertNoPendingInterceptors()
-// Throws an Error with the following message:
+// Throws an UndiciError with the following message:
 //
-// 1 interceptor was not consumed!
-// (0 interceptors were consumed, and 0 were not counted because they are persistent.)
+// 1 interceptor is pending:
 //
-// This interceptor was not consumed:
-// ┌─────────┬────────┬──────┬─────────────┬────────────┬─────────────────┐
-// │ (index) │ Method │ Path │ Status code │ Persistent │ Remaining calls │
-// ├─────────┼────────┼──────┼─────────────┼────────────┼─────────────────┤
-// │    0    │ 'GET'  │ '/'  │     200     │    '❌'    │        1        │
-// └─────────┴────────┴──────┴─────────────┴────────────┴─────────────────┘
+// ┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
+// │ (index) │ Method │        Origin         │ Path │ Status code │ Persistent │ Invocations │ Remaining │
+// ├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
+// │    0    │ 'GET'  │ 'https://example.com' │ '/'  │     200     │    '❌'    │      0      │     1     │
+// └─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
 ```

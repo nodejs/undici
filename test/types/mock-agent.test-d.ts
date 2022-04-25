@@ -61,14 +61,15 @@ expectAssignable<MockAgent>(new MockAgent({}))
 }
 
 {
+  interface PendingInterceptor extends MockDispatch {
+    origin: string;
+  }
+
   const agent = new MockAgent({agent: new Agent()})
-  expectType<() => MockDispatch[]>(agent.pendingInterceptors)
+  expectType<() => PendingInterceptor[]>(agent.pendingInterceptors)
   expectType<(options?: {
-    tableFormatter?: {
-      formatTable(
-        tabularData: any,
-        properties?: readonly string[]
-      ): string;
+    pendingInterceptorsFormatter?: {
+      format(pendingInterceptors: readonly PendingInterceptor[]): string;
     }
-  }) => void>(agent.assertNoUnusedInterceptors)
+  }) => void>(agent.assertNoPendingInterceptors)
 }

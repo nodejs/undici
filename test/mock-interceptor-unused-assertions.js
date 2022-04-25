@@ -2,10 +2,10 @@
 
 const { test, beforeEach, afterEach } = require('tap')
 const { MockAgent, setGlobalDispatcher } = require('..')
-const TableFormatter = require('../lib/mock/table-formatter')
+const PendingInterceptorsFormatter = require('../lib/mock/pending-interceptors-formatter')
 
 // Avoid colors in the output for inline snapshots.
-const tableFormatter = new TableFormatter({ disableColors: true })
+const pendingInterceptorsFormatter = new PendingInterceptorsFormatter({ disableColors: true })
 
 let originalGlobalDispatcher
 
@@ -35,25 +35,23 @@ function mockAgentWithOneInterceptor () {
   return agent
 }
 
-test('1 unconsumed interceptor', t => {
+test('1 pending interceptor', t => {
   t.plan(2)
 
-  const err = t.throws(() => mockAgentWithOneInterceptor().assertNoUnusedInterceptors({ tableFormatter }))
+  const err = t.throws(() => mockAgentWithOneInterceptor().assertNoPendingInterceptors({ pendingInterceptorsFormatter }))
 
   t.same(err.message, `
-1 interceptor was not consumed!
-(0 interceptors were consumed, and 0 were not counted because they are persistent.)
+1 interceptor is pending:
 
-This interceptor was not consumed:
-┌─────────┬────────┬──────┬─────────────┬────────────┬─────────────────┐
-│ (index) │ Method │ Path │ Status code │ Persistent │ Remaining calls │
-├─────────┼────────┼──────┼─────────────┼────────────┼─────────────────┤
-│    0    │ 'GET'  │ '/'  │     200     │    '❌'    │        1        │
-└─────────┴────────┴──────┴─────────────┴────────────┴─────────────────┘
+┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
+│ (index) │ Method │        Origin         │ Path │ Status code │ Persistent │ Invocations │ Remaining │
+├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
+│    0    │ 'GET'  │ 'https://example.com' │ '/'  │     200     │    '❌'    │      0      │     1     │
+└─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
 `.trim())
 })
 
-test('2 unconsumed interceptors', t => {
+test('2 pending interceptors', t => {
   t.plan(2)
 
   const withTwoInterceptors = mockAgentWithOneInterceptor()
@@ -61,23 +59,21 @@ test('2 unconsumed interceptors', t => {
     .get(origin)
     .intercept({ method: 'get', path: '/some/path' })
     .reply(204, 'OK')
-  const err = t.throws(() => withTwoInterceptors.assertNoUnusedInterceptors({ tableFormatter }))
+  const err = t.throws(() => withTwoInterceptors.assertNoPendingInterceptors({ pendingInterceptorsFormatter }))
 
   t.same(err.message, `
-2 interceptors were not consumed!
-(0 interceptors were consumed, and 0 were not counted because they are persistent.)
+2 interceptors are pending:
 
-These interceptors were not consumed:
-┌─────────┬────────┬──────────────┬─────────────┬────────────┬─────────────────┐
-│ (index) │ Method │     Path     │ Status code │ Persistent │ Remaining calls │
-├─────────┼────────┼──────────────┼─────────────┼────────────┼─────────────────┤
-│    0    │ 'GET'  │     '/'      │     200     │    '❌'    │        1        │
-│    1    │ 'GET'  │ '/some/path' │     204     │    '❌'    │        1        │
-└─────────┴────────┴──────────────┴─────────────┴────────────┴─────────────────┘
+┌─────────┬────────┬──────────────────────────┬──────────────┬─────────────┬────────────┬─────────────┬───────────┐
+│ (index) │ Method │          Origin          │     Path     │ Status code │ Persistent │ Invocations │ Remaining │
+├─────────┼────────┼──────────────────────────┼──────────────┼─────────────┼────────────┼─────────────┼───────────┤
+│    0    │ 'GET'  │  'https://example.com'   │     '/'      │     200     │    '❌'    │      0      │     1     │
+│    1    │ 'GET'  │ 'https://localhost:9999' │ '/some/path' │     204     │    '❌'    │      0      │     1     │
+└─────────┴────────┴──────────────────────────┴──────────────┴─────────────┴────────────┴─────────────┴───────────┘
 `.trim())
 })
 
-test('Variations of persist(), times(), and consumed status', async t => {
+test('Variations of persist(), times(), and pending status', async t => {
   t.plan(7)
 
   // Agent with unused interceptor
@@ -100,11 +96,11 @@ test('Variations of persist(), times(), and consumed status', async t => {
 
   // Consumed without persist()
   agent.get(origin)
-    .intercept({ method: 'post', path: '/transient/consumed' })
+    .intercept({ method: 'post', path: '/transient/pending' })
     .reply(201, 'Created')
-  t.same((await agent.request({ origin, method: 'POST', path: '/transient/consumed' })).statusCode, 201)
+  t.same((await agent.request({ origin, method: 'POST', path: '/transient/pending' })).statusCode, 201)
 
-  // Partially consumed with times()
+  // Partially pending with times()
   agent.get(origin)
     .intercept({ method: 'get', path: '/times/partial' })
     .reply(200, 'OK')
@@ -117,28 +113,27 @@ test('Variations of persist(), times(), and consumed status', async t => {
     .reply(200, 'OK')
     .times(2)
 
-  // Fully consumed with times()
+  // Fully pending with times()
   agent.get(origin)
-    .intercept({ method: 'get', path: '/times/consumed' })
+    .intercept({ method: 'get', path: '/times/pending' })
     .reply(200, 'OK')
     .times(2)
-  t.same((await agent.request({ origin, method: 'GET', path: '/times/consumed' })).statusCode, 200)
-  t.same((await agent.request({ origin, method: 'GET', path: '/times/consumed' })).statusCode, 200)
+  t.same((await agent.request({ origin, method: 'GET', path: '/times/pending' })).statusCode, 200)
+  t.same((await agent.request({ origin, method: 'GET', path: '/times/pending' })).statusCode, 200)
 
-  const err = t.throws(() => agent.assertNoUnusedInterceptors({ tableFormatter }))
+  const err = t.throws(() => agent.assertNoPendingInterceptors({ pendingInterceptorsFormatter }))
 
   t.same(err.message, `
-3 interceptors were not consumed!
-(0 interceptors were consumed, and 2 were not counted because they are persistent.)
+4 interceptors are pending:
 
-These interceptors were not consumed:
-┌─────────┬────────┬──────────────────┬─────────────┬────────────┬─────────────────┐
-│ (index) │ Method │       Path       │ Status code │ Persistent │ Remaining calls │
-├─────────┼────────┼──────────────────┼─────────────┼────────────┼─────────────────┤
-│    0    │ 'GET'  │       '/'        │     200     │    '❌'    │        1        │
-│    1    │ 'GET'  │ '/times/partial' │     200     │    '❌'    │        4        │
-│    2    │ 'GET'  │ '/times/unused'  │     200     │    '❌'    │        2        │
-└─────────┴────────┴──────────────────┴─────────────┴────────────┴─────────────────┘
+┌─────────┬────────┬──────────────────────────┬──────────────────────┬─────────────┬────────────┬─────────────┬───────────┐
+│ (index) │ Method │          Origin          │         Path         │ Status code │ Persistent │ Invocations │ Remaining │
+├─────────┼────────┼──────────────────────────┼──────────────────────┼─────────────┼────────────┼─────────────┼───────────┤
+│    0    │ 'GET'  │  'https://example.com'   │         '/'          │     200     │    '❌'    │      0      │     1     │
+│    1    │ 'GET'  │ 'https://localhost:9999' │ '/persistent/unused' │     200     │    '✅'    │      0      │ Infinity  │
+│    2    │ 'GET'  │ 'https://localhost:9999' │   '/times/partial'   │     200     │    '❌'    │      1      │     4     │
+│    3    │ 'GET'  │ 'https://localhost:9999' │   '/times/unused'    │     200     │    '❌'    │      0      │     2     │
+└─────────┴────────┴──────────────────────────┴──────────────────────┴─────────────┴────────────┴─────────────┴───────────┘
 `.trim())
 })
 
@@ -149,11 +144,11 @@ test('works when no interceptors are registered', t => {
   agent.disableNetConnect()
 
   t.same(agent.pendingInterceptors(), [])
-  t.doesNotThrow(() => agent.assertNoUnusedInterceptors())
+  t.doesNotThrow(() => agent.assertNoPendingInterceptors())
 })
 
-test('works when all interceptors are consumed', async t => {
-  t.plan(3)
+test('works when all interceptors are pending', async t => {
+  t.plan(4)
 
   const agent = new MockAgent()
   agent.disableNetConnect()
@@ -161,8 +156,11 @@ test('works when all interceptors are consumed', async t => {
   agent.get(origin).intercept({ method: 'get', path: '/' }).reply(200, 'OK')
   t.same((await agent.request({ origin, method: 'GET', path: '/' })).statusCode, 200)
 
+  agent.get(origin).intercept({ method: 'get', path: '/persistent' }).reply(200, 'OK')
+  t.same((await agent.request({ origin, method: 'GET', path: '/persistent' })).statusCode, 200)
+
   t.same(agent.pendingInterceptors(), [])
-  t.doesNotThrow(() => agent.assertNoUnusedInterceptors())
+  t.doesNotThrow(() => agent.assertNoPendingInterceptors())
 })
 
 test('defaults to rendering output with terminal color when process.env.CI is unset', t => {
@@ -173,17 +171,15 @@ test('defaults to rendering output with terminal color when process.env.CI is un
   delete process.env.CI
 
   const err = t.throws(
-    () => mockAgentWithOneInterceptor().assertNoUnusedInterceptors())
+    () => mockAgentWithOneInterceptor().assertNoPendingInterceptors())
   t.same(err.message, `
-1 interceptor was not consumed!
-(0 interceptors were consumed, and 0 were not counted because they are persistent.)
+1 interceptor is pending:
 
-This interceptor was not consumed:
-┌─────────┬────────┬──────┬─────────────┬────────────┬─────────────────┐
-│ (index) │ Method │ Path │ Status code │ Persistent │ Remaining calls │
-├─────────┼────────┼──────┼─────────────┼────────────┼─────────────────┤
-│    0    │ [32m'GET'[39m  │ [32m'/'[39m  │     [33m200[39m     │    [32m'❌'[39m    │        [33m1[39m        │
-└─────────┴────────┴──────┴─────────────┴────────────┴─────────────────┘
+┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
+│ (index) │ Method │        Origin         │ Path │ Status code │ Persistent │ Invocations │ Remaining │
+├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
+│    0    │ \u001b[32m'GET'\u001b[39m  │ \u001b[32m'https://example.com'\u001b[39m │ \u001b[32m'/'\u001b[39m  │     \u001b[33m200\u001b[39m     │    \u001b[32m'❌'\u001b[39m    │      \u001b[33m0\u001b[39m      │     \u001b[33m1\u001b[39m     │
+└─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
 `.trim())
 
   // Re-set the CI env var if it were set.
@@ -200,9 +196,11 @@ test('returns unused interceptors', t => {
 
   t.same(mockAgentWithOneInterceptor().pendingInterceptors(), [
     {
-      times: null,
+      timesInvoked: 0,
+      times: 1,
       persist: false,
       consumed: false,
+      pending: true,
       path: '/',
       method: 'GET',
       body: undefined,
@@ -213,7 +211,8 @@ test('returns unused interceptors', t => {
         data: '',
         headers: {},
         trailers: {}
-      }
+      },
+      origin: 'https://example.com'
     }
   ])
 })
