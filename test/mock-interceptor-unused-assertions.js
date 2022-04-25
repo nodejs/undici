@@ -145,11 +145,24 @@ These interceptors were not consumed:
 test('works when no interceptors are registered', t => {
   t.plan(2)
 
-  const dispatcher = new MockAgent()
-  dispatcher.disableNetConnect()
+  const agent = new MockAgent()
+  agent.disableNetConnect()
 
-  t.same(dispatcher.pendingInterceptors(), [])
-  t.doesNotThrow(() => dispatcher.assertNoUnusedInterceptors())
+  t.same(agent.pendingInterceptors(), [])
+  t.doesNotThrow(() => agent.assertNoUnusedInterceptors())
+})
+
+test('works when all interceptors are consumed', async t => {
+  t.plan(3)
+
+  const agent = new MockAgent()
+  agent.disableNetConnect()
+
+  agent.get(origin).intercept({ method: 'get', path: '/' }).reply(200, 'OK')
+  t.same((await agent.request({ origin, method: 'GET', path: '/' })).statusCode, 200)
+
+  t.same(agent.pendingInterceptors(), [])
+  t.doesNotThrow(() => agent.assertNoUnusedInterceptors())
 })
 
 test('defaults to rendering output with terminal color when process.env.CI is unset', t => {
