@@ -9,6 +9,8 @@ const tableFormatter = new TableFormatter({ disableColors: true })
 
 let originalGlobalDispatcher
 
+const origin = 'https://localhost:9999'
+
 beforeEach(() => {
   // Disallow all network activity by default by using a mock agent as the global dispatcher
   const globalDispatcher = new MockAgent()
@@ -56,7 +58,7 @@ test('2 unconsumed interceptors', t => {
 
   const withTwoInterceptors = mockAgentWithOneInterceptor()
   withTwoInterceptors
-    .get('https://localhost:9999')
+    .get(origin)
     .intercept({ method: 'get', path: '/some/path' })
     .reply(204, 'OK')
   const err = t.throws(() => withTwoInterceptors.assertNoUnusedInterceptors({ tableFormatter }))
@@ -72,6 +74,71 @@ These interceptors were not consumed:
 │    0    │ 'GET'  │     '/'      │     200     │    '❌'    │        1        │
 │    1    │ 'GET'  │ '/some/path' │     204     │    '❌'    │        1        │
 └─────────┴────────┴──────────────┴─────────────┴────────────┴─────────────────┘
+`.trim())
+})
+
+test('Variations of persist(), times(), and consumed status', async t => {
+  t.plan(7)
+
+  // Agent with unused interceptor
+  const agent = mockAgentWithOneInterceptor()
+
+  // Unused with persist()
+  agent
+    .get(origin)
+    .intercept({ method: 'get', path: '/persistent/unused' })
+    .reply(200, 'OK')
+    .persist()
+
+  // Used with persist()
+  agent
+    .get(origin)
+    .intercept({ method: 'GET', path: '/persistent/used' })
+    .reply(200, 'OK')
+    .persist()
+  t.same((await agent.request({ origin, method: 'GET', path: '/persistent/used' })).statusCode, 200)
+
+  // Consumed without persist()
+  agent.get(origin)
+    .intercept({ method: 'post', path: '/transient/consumed' })
+    .reply(201, 'Created')
+  t.same((await agent.request({ origin, method: 'POST', path: '/transient/consumed' })).statusCode, 201)
+
+  // Partially consumed with times()
+  agent.get(origin)
+    .intercept({ method: 'get', path: '/times/partial' })
+    .reply(200, 'OK')
+    .times(5)
+  t.same((await agent.request({ origin, method: 'GET', path: '/times/partial' })).statusCode, 200)
+
+  // Unused with times()
+  agent.get(origin)
+    .intercept({ method: 'get', path: '/times/unused' })
+    .reply(200, 'OK')
+    .times(2)
+
+  // Fully consumed with times()
+  agent.get(origin)
+    .intercept({ method: 'get', path: '/times/consumed' })
+    .reply(200, 'OK')
+    .times(2)
+  t.same((await agent.request({ origin, method: 'GET', path: '/times/consumed' })).statusCode, 200)
+  t.same((await agent.request({ origin, method: 'GET', path: '/times/consumed' })).statusCode, 200)
+
+  const err = t.throws(() => agent.assertNoUnusedInterceptors({ tableFormatter }))
+
+  t.same(err.message, `
+3 interceptors were not consumed!
+(0 interceptors were consumed, and 2 were not counted because they are persistent.)
+
+These interceptors were not consumed:
+┌─────────┬────────┬──────────────────┬─────────────┬────────────┬─────────────────┐
+│ (index) │ Method │       Path       │ Status code │ Persistent │ Remaining calls │
+├─────────┼────────┼──────────────────┼─────────────┼────────────┼─────────────────┤
+│    0    │ 'GET'  │       '/'        │     200     │    '❌'    │        1        │
+│    1    │ 'GET'  │ '/times/partial' │     200     │    '❌'    │        4        │
+│    2    │ 'GET'  │ '/times/unused'  │     200     │    '❌'    │        2        │
+└─────────┴────────┴──────────────────┴─────────────┴────────────┴─────────────────┘
 `.trim())
 })
 
