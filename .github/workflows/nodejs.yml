@@ -17,3 +17,13 @@ jobs:
       post-test-steps: |
         - name: Coverage Report
           uses: codecov/codecov-action@v2
+  automerge:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - uses: fastify/github-action-merge-dependabot@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
