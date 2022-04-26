@@ -81,7 +81,7 @@
     "jest": "^28.0.1",
     "jsfuzz": "^1.0.15",
     "mocha": "^9.1.1",
-    "p-timeout": "^3.2.0",
+    "p-timeout": "^5.0.2",
     "pre-commit": "^1.2.2",
     "proxy": "^1.0.2",
     "proxyquire": "^2.1.3",
