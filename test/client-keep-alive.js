@@ -195,7 +195,7 @@ test('keep-alive threshold', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 120e,
+      keepAliveTimeout: 120e3,
       keepAliveTimeoutThreshold: 29e3
     })
     t.teardown(client.destroy.bind(client))
@@ -232,7 +232,7 @@ test('keep-alive max keepalive', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 120e,
+      keepAliveTimeout: 120e3,
       keepAliveMaxTimeout: 1e3
     })
     t.teardown(client.destroy.bind(client))
