@@ -63,7 +63,7 @@
     "fuzz": "jsfuzz test/fuzzing/fuzz.js corpus"
   },
   "devDependencies": {
-    "@sinonjs/fake-timers": "^7.0.5",
+    "@sinonjs/fake-timers": "^9.1.2",
     "@types/node": "^16.9.1",
     "abort-controller": "^3.0.0",
     "busboy": "^0.3.1",
