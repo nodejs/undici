@@ -71,7 +71,7 @@
     "chai-as-promised": "^7.1.1",
     "chai-iterator": "^3.0.2",
     "chai-string": "^1.5.0",
-    "concurrently": "^6.2.1",
+    "concurrently": "^7.1.0",
     "cronometro": "^0.8.0",
     "delay": "^5.0.0",
     "docsify-cli": "^4.4.3",
