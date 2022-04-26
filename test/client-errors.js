@@ -410,7 +410,7 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    new Client(new URL('http://localhost:200'), { idleTimeout: 30e3 }) // eslint-disable-line
+    new Client(new URL('http://localhost:200'), { idleTimeout: 120e }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
@@ -418,7 +418,7 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    new Client(new URL('http://localhost:200'), { socketTimeout: 30e3 }) // eslint-disable-line
+    new Client(new URL('http://localhost:200'), { socketTimeout: 120e }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
@@ -426,7 +426,7 @@ test('invalid options throws', (t) => {
   }
 
   try {
-    new Client(new URL('http://localhost:200'), { requestTimeout: 30e3 }) // eslint-disable-line
+    new Client(new URL('http://localhost:200'), { requestTimeout: 120e }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)

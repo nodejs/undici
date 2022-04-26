@@ -542,7 +542,7 @@ test('stream custom timeout', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      headersTimeout: 30e3
+      headersTimeout: 120e
     })
     t.teardown(client.destroy.bind(client))
 
@@ -623,7 +623,7 @@ test('pipeline timeout', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      headersTimeout: 30e3
+      headersTimeout: 120e
     })
     t.teardown(client.destroy.bind(client))
 
