@@ -51,9 +51,9 @@ declare namespace Dispatcher {
     idempotent?: boolean;
     /** Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`. Default: `method === 'CONNECT' || null`. */
     upgrade?: boolean | string | null;
-    /** The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 30 seconds. */
+    /** The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 120 seconds. */
     headersTimeout?: number | null;
-    /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use 0 to disable it entirely. Defaults to 30 seconds. */
+    /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use 0 to disable it entirely. Defaults to 120 seconds. */
     bodyTimeout?: number | null;
   }
   export interface ConnectOptions {

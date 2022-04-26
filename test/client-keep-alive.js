@@ -187,7 +187,7 @@ test('keep-alive threshold', (t) => {
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
     socket.write('Content-Length: 0\r\n')
-    socket.write('Keep-Alive: timeout=30s\r\n')
+    socket.write('Keep-Alive: timeout=120s\r\n')
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
@@ -195,7 +195,7 @@ test('keep-alive threshold', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 30e3,
+      keepAliveTimeout: 120e3,
       keepAliveTimeoutThreshold: 29e3
     })
     t.teardown(client.destroy.bind(client))
@@ -224,7 +224,7 @@ test('keep-alive max keepalive', (t) => {
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
     socket.write('Content-Length: 0\r\n')
-    socket.write('Keep-Alive: timeout=30s\r\n')
+    socket.write('Keep-Alive: timeout=120s\r\n')
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
@@ -232,7 +232,7 @@ test('keep-alive max keepalive', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 30e3,
+      keepAliveTimeout: 120e3,
       keepAliveMaxTimeout: 1e3
     })
     t.teardown(client.destroy.bind(client))
