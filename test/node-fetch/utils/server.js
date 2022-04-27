@@ -13,7 +13,7 @@ module.exports = class TestServer {
       console.log(err.stack)
     })
     this.server.on('connection', socket => {
-      socket.setTimeout(310_000)
+      socket.setTimeout(1500)
     })
   }
 
