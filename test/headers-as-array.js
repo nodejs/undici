@@ -20,7 +20,7 @@ test('handle headers as array', (t) => {
     client.request({
       path: '/',
       method: 'GET',
-      headers: headers
+      headers
     }, () => {})
   })
 })
@@ -38,7 +38,7 @@ test('fail if headers array is odd', (t) => {
     client.request({
       path: '/',
       method: 'GET',
-      headers: headers
+      headers
     }, (err) => {
       t.type(err, errors.InvalidArgumentError)
       t.equal(err.message, 'headers array must be even')
@@ -59,7 +59,7 @@ test('fail if headers is not an object or an array', (t) => {
     client.request({
       path: '/',
       method: 'GET',
-      headers: headers
+      headers
     }, (err) => {
       t.ok(err instanceof errors.InvalidArgumentError)
       t.equal(err.message, 'headers must be an object or an array')
