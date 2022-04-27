@@ -13,7 +13,7 @@ module.exports = class TestServer {
       console.log(err.stack)
     })
     this.server.on('connection', socket => {
-      socket.setTimeout(1500)
+      socket.setTimeout(310_000)
     })
   }
 
@@ -225,6 +225,22 @@ module.exports = class TestServer {
         res.setHeader('Content-Type', 'text/plain')
         res.end('text')
       }, 1000)
+    }
+
+    if (p === '/timeout60s') {
+      setTimeout(() => {
+        res.statusCode = 200
+        res.setHeader('Content-Type', 'text/plain')
+        res.end('text')
+      }, 60_000)
+    }
+
+    if (p === '/timeout300s') {
+      setTimeout(() => {
+        res.statusCode = 200
+        res.setHeader('Content-Type', 'text/plain')
+        res.end('text')
+      }, 300_000)
     }
 
     if (p === '/slow') {
