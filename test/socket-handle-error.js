@@ -10,6 +10,7 @@ test('stop error', (t) => {
 
   const server = createServer((req, res) => {
     while (res.write(Buffer.alloc(4096))) {
+      // Do nothing...
     }
   })
   t.tearDown(server.close.bind(server))
@@ -41,6 +42,7 @@ test('resume error', (t) => {
 
   const server = createServer((req, res) => {
     while (res.write(Buffer.alloc(4096))) {
+      // Do nothing...
     }
   })
   t.tearDown(server.close.bind(server))

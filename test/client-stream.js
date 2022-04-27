@@ -684,7 +684,7 @@ test('stream needDrain', (t) => {
     }
 
     while (dst.write(Buffer.alloc(4096))) {
-
+      // Do nothing...
     }
 
     const orgWrite = dst.write
@@ -737,7 +737,7 @@ test('stream legacy needDrain', (t) => {
     }
 
     while (dst.write(Buffer.alloc(4096))) {
-
+      // Do nothing...
     }
 
     const orgWrite = dst.write

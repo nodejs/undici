@@ -501,7 +501,7 @@ test('10 times GET', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    for (var i = 0; i < num; i++) {
+    for (let i = 0; i < num; i++) {
       makeRequest(i)
     }
 
@@ -534,7 +534,7 @@ test('10 times HEAD', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.tearDown(client.close.bind(client))
 
-    for (var i = 0; i < num; i++) {
+    for (let i = 0; i < num; i++) {
       makeRequest(i)
     }
 

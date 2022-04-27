@@ -175,7 +175,7 @@ test('20 times GET with pipelining 10, async await support', (t) => {
     })
     t.tearDown(client.close.bind(client))
 
-    for (var i = 0; i < num; i++) {
+    for (let i = 0; i < num; i++) {
       makeRequest(i)
     }
 
