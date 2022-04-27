@@ -1642,7 +1642,7 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should not time out waiting for a response 60 seconds', function () {
+  xit('should not time out waiting for a response 60 seconds', function () {
     this.skip()
     this.timeout(65_000)
     return fetch(`${base}timeout60s`).then(res => {
@@ -1654,7 +1654,7 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should time out waiting for more than 300 seconds', function () {
+  xit('should time out waiting for more than 300 seconds', function () {
     this.skip()
     this.timeout(305_000)
     return expect(fetch(`${base}timeout300s`)).to.eventually.be.rejectedWith(TypeError)
