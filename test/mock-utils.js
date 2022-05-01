@@ -125,7 +125,7 @@ test('getStatusText', (t) => {
     t.ok(getStatusText(statusCode))
   }
 
-  t.throws(() => getStatusText(420), ReferenceError)
+  t.equal(getStatusText(420), 'unknown')
 
   t.end()
 })

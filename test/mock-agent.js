@@ -2421,14 +2421,13 @@ test('MockAgent - using fetch yields correct statusText', { skip: nodeMajor < 16
   t.equal(statusText, 'OK')
 
   mockPool.intercept({
-    path: '/badStatusText',
+    path: '/unknownStatusText',
     method: 'GET'
   }).reply(420, 'Everyday')
 
-  await t.rejects(
-    fetch('http://localhost:3000/badStatusText'),
-    TypeError
-  )
+  const unknownStatusCodeRes = await fetch('http://localhost:3000/unknownStatusText')
+  t.equal(unknownStatusCodeRes.status, 420)
+  t.equal(unknownStatusCodeRes.statusText, 'unknown')
 
   t.end()
 })
