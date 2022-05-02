@@ -73,7 +73,7 @@
     "chai-iterator": "^3.0.2",
     "chai-string": "^1.5.0",
     "concurrently": "^7.1.0",
-    "cronometro": "^0.8.0",
+    "cronometro": "^1.0.5",
     "delay": "^5.0.0",
     "docsify-cli": "^4.4.3",
     "formdata-node": "^4.3.1",
