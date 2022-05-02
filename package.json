@@ -35,6 +35,7 @@
   "files": [
     "*.d.ts",
     "index.js",
+    "index-fetch.js",
     "lib",
     "types",
     "docs"
