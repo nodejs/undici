@@ -15,6 +15,7 @@
   * [MockAgent](/docs/api/MockAgent.md "Undici API - MockAgent")
   * [MockErrors](/docs/api/MockErrors.md "Undici API - MockErrors")
   * [API Lifecycle](/docs/api/api-lifecycle.md "Undici API - Lifecycle")
+  * [Diagnosthic Channel Support](/docs/api/DiagnosticChannel.md "Diagnostic Channel Support")
 * Best Practices
   * [Proxy](/docs/best-practices/proxy.md "Connecting through a proxy")
   * [Client Certificate](/docs/best-practices/client-certificate.md "Connect using a client certificate")
