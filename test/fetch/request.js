@@ -4,7 +4,8 @@
 
 const { test } = require('tap')
 const {
-  Request
+  Request,
+  Headers
 } = require('../../')
 const { kState } = require('../../lib/fetch/symbols.js')
 
@@ -271,4 +272,36 @@ test('post aborted signal cloned', t => {
     t.pass()
   })
   ac.abort()
+})
+
+test('Passing headers in init', (t) => {
+  // https://github.com/nodejs/undici/issues/1400
+  t.test('Headers instance', (t) => {
+    const req = new Request('http://localhost', {
+      headers: new Headers({ key: 'value' })
+    })
+
+    t.equal(req.headers.get('key'), 'value')
+    t.end()
+  })
+
+  t.test('key:value object', (t) => {
+    const req = new Request('http://localhost', {
+      headers: { key: 'value' }
+    })
+
+    t.equal(req.headers.get('key'), 'value')
+    t.end()
+  })
+
+  t.test('[key, value][]', (t) => {
+    const req = new Request('http://localhost', {
+      headers: [['key', 'value']]
+    })
+
+    t.equal(req.headers.get('key'), 'value')
+    t.end()
+  })
+
+  t.end()
 })
