@@ -95,7 +95,7 @@
     "wait-on": "^6.0.0"
   },
   "engines": {
-    "node": ">=12.18"
+    "node": ">=15.14"
   },
   "standard": {
     "env": [
