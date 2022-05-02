@@ -11,6 +11,8 @@ const { MockInterceptor } = require('../lib/mock/mock-interceptor')
 const { getResponse } = require('../lib/mock/mock-utils')
 const Dispatcher = require('../lib/dispatcher')
 
+const nodeMajor = Number(process.versions.node.split('.', 1)[0])
+
 test('MockPool - constructor', t => {
   t.plan(3)
 
@@ -299,4 +301,49 @@ test('MockPool - basic intercept with MockPool.request', async (t) => {
   t.same(jsonResponse, {
     foo: 'bar'
   })
+})
+
+test('MockPool - allows matching headers in fetch', { skip: nodeMajor < 16 }, async (t) => {
+  const { fetch, getGlobalDispatcher, setGlobalDispatcher } = require('../index')
+
+  const oldDispatcher = getGlobalDispatcher()
+
+  const baseUrl = 'http://localhost:9999'
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+
+  t.teardown(async () => {
+    await mockAgent.close()
+    setGlobalDispatcher(oldDispatcher)
+  })
+
+  const pool = mockAgent.get(baseUrl)
+  pool.intercept({
+    path: '/foo',
+    method: 'GET',
+    headers: {
+      accept: 'application/json'
+    }
+  }).reply(200, { ok: 1 }).times(3)
+
+  await t.resolves(
+    fetch(`${baseUrl}/foo`, {
+      headers: {
+        accept: 'application/json'
+      }
+    })
+  )
+
+  // no 'accept: application/json' header sent, not matched
+  await t.rejects(fetch(`${baseUrl}/foo`))
+
+  // not 'accept: application/json', not matched
+  await t.rejects(fetch(`${baseUrl}/foo`), {
+    headers: {
+      accept: 'text/plain'
+    }
+  }, TypeError)
+
+  t.end()
 })
