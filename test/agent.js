@@ -702,7 +702,6 @@ test('connect is not valid', t => {
 test('the dispatcher is truly global', t => {
   const agent = getGlobalDispatcher()
   const undiciFresh = importFresh('../index.js')
-  t.not(getGlobalDispatcher, undiciFresh.getGlobalDispatcher)
   t.equal(agent, undiciFresh.getGlobalDispatcher())
   t.end()
 })
