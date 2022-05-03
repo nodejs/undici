@@ -1,12 +1,10 @@
 'use strict'
 
-const Agent = require('./lib/agent')
-
-const globalDispatcher = new Agent()
-
+const { getGlobalDispatcher } = require('./lib/global')
 const fetchImpl = require('./lib/fetch')
+
 module.exports.fetch = async function fetch (resource) {
-  return fetchImpl.apply(globalDispatcher, arguments)
+  return fetchImpl.apply(getGlobalDispatcher(), arguments)
 }
 module.exports.FormData = require('./lib/fetch/formdata').FormData
 module.exports.Headers = require('./lib/fetch/headers').Headers

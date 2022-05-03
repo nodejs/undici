@@ -15,12 +15,11 @@ const MockAgent = require('./lib/mock/mock-agent')
 const MockPool = require('./lib/mock/mock-pool')
 const mockErrors = require('./lib/mock/mock-errors')
 const ProxyAgent = require('./lib/proxy-agent')
+const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 
 const nodeVersion = process.versions.node.split('.')
 const nodeMajor = Number(nodeVersion[0])
 const nodeMinor = Number(nodeVersion[1])
-
-const globalDispatcher = Symbol.for('undici.globalDispatcher')
 
 Object.assign(Dispatcher.prototype, api)
 
@@ -33,26 +32,6 @@ module.exports.ProxyAgent = ProxyAgent
 
 module.exports.buildConnector = buildConnector
 module.exports.errors = errors
-
-if (getGlobalDispatcher() === undefined) {
-  setGlobalDispatcher(new Agent())
-}
-
-function setGlobalDispatcher (agent) {
-  if (!agent || typeof agent.dispatch !== 'function') {
-    throw new InvalidArgumentError('Argument agent must implement Agent')
-  }
-  Object.defineProperty(globalThis, globalDispatcher, {
-    value: agent,
-    writable: true,
-    enumerable: false,
-    configurable: false
-  })
-}
-
-function getGlobalDispatcher () {
-  return globalThis[globalDispatcher]
-}
 
 function makeDispatcher (fn) {
   return (url, opts, handler) => {
