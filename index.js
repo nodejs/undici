@@ -20,6 +20,8 @@ const nodeVersion = process.versions.node.split('.')
 const nodeMajor = Number(nodeVersion[0])
 const nodeMinor = Number(nodeVersion[1])
 
+const globalDispatcher = Symbol.for('undici.globalDispatcher')
+
 Object.assign(Dispatcher.prototype, api)
 
 module.exports.Dispatcher = Dispatcher
@@ -32,17 +34,24 @@ module.exports.ProxyAgent = ProxyAgent
 module.exports.buildConnector = buildConnector
 module.exports.errors = errors
 
-let globalDispatcher = new Agent()
+if (getGlobalDispatcher() === undefined) {
+  setGlobalDispatcher(new Agent())
+}
 
 function setGlobalDispatcher (agent) {
   if (!agent || typeof agent.dispatch !== 'function') {
     throw new InvalidArgumentError('Argument agent must implement Agent')
   }
-  globalDispatcher = agent
+  Object.defineProperty(globalThis, globalDispatcher, {
+    value: agent,
+    writable: true,
+    enumerable: false,
+    configurable: false
+  })
 }
 
 function getGlobalDispatcher () {
-  return globalDispatcher
+  return globalThis[globalDispatcher]
 }
 
 function makeDispatcher (fn) {
