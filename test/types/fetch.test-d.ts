@@ -3,6 +3,7 @@ import { Blob } from 'buffer'
 import { ReadableStream } from 'stream/web'
 import { expectType, expectError } from 'tsd'
 import {
+  Agent,
   BodyInit,
   fetch,
   FormData,
@@ -23,6 +24,9 @@ import {
 
 const requestInit: RequestInit = {}
 const responseInit: ResponseInit = { status: 200, statusText: 'OK' }
+const requestInit2: RequestInit = {
+  dispatcher: new Agent()
+}
 
 declare const request: Request
 declare const headers: Headers

@@ -7,6 +7,8 @@ import { URL, URLSearchParams } from 'url'
 import { ReadableStream } from 'stream/web'
 import { FormData } from './formdata'
 
+import Dispatcher = require('./dispatcher')
+
 export type RequestInfo = string | URL | Request
 
 export declare function fetch (
@@ -99,6 +101,7 @@ export interface RequestInit {
   readonly referrer?: string
   readonly referrerPolicy?: ReferrerPolicy
   readonly window?: null
+  readonly dispatcher?: Dispatcher
 }
 
 export type ReferrerPolicy =
