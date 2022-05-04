@@ -1,4 +1,4 @@
-name: 'Lint PR'
+name: 'Lint PR Title'
 
 on:
   pull_request_target:
@@ -6,6 +6,10 @@ on:
       - opened
       - edited
       - synchronize
+
+permissions:
+  pull-requests: read
+  statuses: write
 
 jobs:
   main:
