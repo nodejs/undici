@@ -86,7 +86,7 @@ if (nodeMajor > 16 || (nodeMajor === 16 && nodeMinor >= 5)) {
     if (!fetchImpl) {
       fetchImpl = require('./lib/fetch')
     }
-    const dispatcher = getGlobalDispatcher()
+    const dispatcher = arguments[1]?.dispatcher || getGlobalDispatcher()
     return fetchImpl.apply(dispatcher, arguments)
   }
   module.exports.Headers = require('./lib/fetch/headers').Headers
