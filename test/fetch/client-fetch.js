@@ -7,6 +7,13 @@ const { createServer } = require('http')
 const { ReadableStream } = require('stream/web')
 const { Blob } = require('buffer')
 const { fetch, Response, Request, FormData, File } = require('../..')
+const { Client, setGlobalDispatcher, Agent } = require('../..')
+const nodeFetch = require('../../index-fetch')
+
+setGlobalDispatcher(new Agent({
+  keepAliveTimeout: 1,
+  keepAliveMaxTimeout: 1
+}))
 
 test('function signature', (t) => {
   t.plan(2)
@@ -341,4 +348,58 @@ test('invalid url', async (t) => {
   } catch (e) {
     t.match(e.cause.message, 'invalid')
   }
+})
+
+test('custom agent', (t) => {
+  t.plan(2)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const dispatcher = new Client('http://localhost:' + server.address().port, {
+      keepAliveTimeout: 1,
+      keepAliveMaxTimeout: 1
+    })
+    const oldDispatch = dispatcher.dispatch
+    dispatcher.dispatch = function (options, handler) {
+      t.pass('custom dispatcher')
+      return oldDispatch.call(this, options, handler)
+    }
+    t.teardown(server.close.bind(server))
+    const body = await fetch(`http://localhost:${server.address().port}`, {
+      dispatcher
+    })
+    t.strictSame(obj, await body.json())
+  })
+})
+
+test('custom agent node fetch', (t) => {
+  t.plan(2)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const dispatcher = new Client('http://localhost:' + server.address().port, {
+      keepAliveTimeout: 1,
+      keepAliveMaxTimeout: 1
+    })
+    const oldDispatch = dispatcher.dispatch
+    dispatcher.dispatch = function (options, handler) {
+      t.pass('custom dispatcher')
+      return oldDispatch.call(this, options, handler)
+    }
+    t.teardown(server.close.bind(server))
+    const body = await nodeFetch.fetch(`http://localhost:${server.address().port}`, {
+      dispatcher
+    })
+    t.strictSame(obj, await body.json())
+  })
 })
