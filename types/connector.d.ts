@@ -1,11 +1,11 @@
 import {TLSSocket, ConnectionOptions} from 'tls'
-import {NetConnectOpts, Socket} from 'net'
+import {IpcNetConnectOpts, Socket, TcpNetConnectOpts} from 'net'
 
 export = buildConnector
 declare function buildConnector (options?: buildConnector.BuildOptions): typeof buildConnector.connector
 
 declare namespace buildConnector {
-  export interface BuildOptions extends ConnectionOptions, NetConnectOpts {
+  export type BuildOptions = (ConnectionOptions | TcpNetConnectOpts | IpcNetConnectOpts ) & {
     maxCachedSessions?: number | null;
     socketPath?: string | null;
     timeout?: number | null;
