@@ -3,11 +3,14 @@ import { Blob } from 'buffer'
 import { ReadableStream } from 'stream/web'
 import { expectType, expectError } from 'tsd'
 import {
+  Agent,
   BodyInit,
   fetch,
   FormData,
   Headers,
   HeadersInit,
+  HeadersIterableIterator,
+  HeadersIterator,
   Request,
   RequestCache,
   RequestCredentials,
@@ -23,6 +26,9 @@ import {
 
 const requestInit: RequestInit = {}
 const responseInit: ResponseInit = { status: 200, statusText: 'OK' }
+const requestInit2: RequestInit = {
+  dispatcher: new Agent()
+}
 
 declare const request: Request
 declare const headers: Headers
@@ -111,9 +117,9 @@ expectType<void>(headers.delete('key'))
 expectType<string | null>(headers.get('key'))
 expectType<boolean>(headers.has('key'))
 expectType<void>(headers.set('key', 'value'))
-expectType<IterableIterator<string>>(headers.keys())
-expectType<IterableIterator<string>>(headers.values())
-expectType<IterableIterator<[string, string]>>(headers.entries())
+expectType<HeadersIterableIterator<string>>(headers.keys())
+expectType<HeadersIterableIterator<string>>(headers.values())
+expectType<HeadersIterableIterator<[string, string]>>(headers.entries())
 
 expectType<RequestCache>(request.cache)
 expectType<RequestCredentials>(request.credentials)

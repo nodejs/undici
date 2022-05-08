@@ -1,12 +1,12 @@
 'use strict'
 
-const cronometro = require('cronometro')
-const { Writable } = require('stream')
 const http = require('http')
 const os = require('os')
 const path = require('path')
 const { table } = require('table')
+const { Writable } = require('stream')
 const { WritableStream } = require('stream/web')
+const { isMainThread } = require('worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
@@ -258,19 +258,29 @@ if (process.env.PORT) {
   }
 }
 
-cronometro(
-  experiments,
-  {
-    iterations,
-    errorThreshold,
-    print: false
-  },
-  (err, results) => {
-    if (err) {
-      throw err
-    }
+async function main () {
+  const { cronometro } = await import('cronometro')
 
-    console.log(printResults(results))
-    dispatcher.destroy()
-  }
-)
+  cronometro(
+    experiments,
+    {
+      iterations,
+      errorThreshold,
+      print: false
+    },
+    (err, results) => {
+      if (err) {
+        throw err
+      }
+
+      console.log(printResults(results))
+      dispatcher.destroy()
+    }
+  )
+}
+
+if (isMainThread) {
+  main()
+} else {
+  module.exports = main
+}

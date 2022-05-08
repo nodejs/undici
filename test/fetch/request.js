@@ -8,6 +8,7 @@ const {
   Headers
 } = require('../../')
 const { kState } = require('../../lib/fetch/symbols.js')
+const { URLSearchParams } = require('url')
 
 test('arg validation', (t) => {
   // constructor
@@ -260,6 +261,27 @@ test('pre aborted signal cloned', t => {
   const req = new Request('http://asd', { signal: ac.signal }).clone()
   t.equal(req.signal.aborted, true)
   t.end()
+})
+
+test('URLSearchParams body with Headers object - issue #1407', async (t) => {
+  const body = new URLSearchParams({
+    abc: 123
+  })
+
+  const request = new Request(
+    'http://localhost',
+    {
+      method: 'POST',
+      body,
+      headers: {
+        Authorization: 'test'
+      }
+    }
+  )
+
+  t.equal(request.headers.get('content-type'), 'application/x-www-form-urlencoded;charset=UTF-8')
+  t.equal(request.headers.get('authorization'), 'test')
+  t.equal(await request.text(), 'abc=123')
 })
 
 test('post aborted signal cloned', t => {
