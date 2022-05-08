@@ -9,6 +9,8 @@ import {
   FormData,
   Headers,
   HeadersInit,
+  HeadersIterableIterator,
+  HeadersIterator,
   Request,
   RequestCache,
   RequestCredentials,
@@ -115,9 +117,9 @@ expectType<void>(headers.delete('key'))
 expectType<string | null>(headers.get('key'))
 expectType<boolean>(headers.has('key'))
 expectType<void>(headers.set('key', 'value'))
-expectType<IterableIterator<string>>(headers.keys())
-expectType<IterableIterator<string>>(headers.values())
-expectType<IterableIterator<[string, string]>>(headers.entries())
+expectType<HeadersIterableIterator<string>>(headers.keys())
+expectType<HeadersIterableIterator<string>>(headers.values())
+expectType<HeadersIterableIterator<[string, string]>>(headers.entries())
 
 expectType<RequestCache>(request.cache)
 expectType<RequestCredentials>(request.credentials)
