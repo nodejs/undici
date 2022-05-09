@@ -586,6 +586,34 @@ tap.test('arg validation', (t) => {
   t.end()
 })
 
+tap.test('function signature verification', (t) => {
+  t.test('function length', (t) => {
+    t.equal(Headers.prototype.append.length, 2)
+    t.equal(Headers.prototype.constructor.length, 0)
+    t.equal(Headers.prototype.delete.length, 1)
+    t.equal(Headers.prototype.entries.length, 0)
+    t.equal(Headers.prototype.forEach.length, 1)
+    t.equal(Headers.prototype.get.length, 1)
+    t.equal(Headers.prototype.has.length, 1)
+    t.equal(Headers.prototype.keys.length, 0)
+    t.equal(Headers.prototype.set.length, 2)
+    t.equal(Headers.prototype.values.length, 0)
+    t.equal(Headers.prototype[Symbol.iterator].length, 0)
+    t.equal(Headers.prototype.toString.length, 0)
+
+    t.end()
+  })
+
+  t.test('function equality', (t) => {
+    t.equal(Headers.prototype.entries, Headers.prototype[Symbol.iterator])
+    // TODO(@KhafraDev): ensure Headers.prototype.toString === Object.prototype.toString
+
+    t.end()
+  })
+
+  t.end()
+})
+
 tap.test('various init paths of Headers', (t) => {
   const h1 = new Headers()
   const h2 = new Headers({})
