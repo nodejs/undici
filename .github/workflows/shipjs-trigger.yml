@@ -1,0 +1,29 @@
+name: Ship js trigger
+on:
+  pull_request:
+    types:
+      - closed
+jobs:
+  build:
+    name: Release
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'releases/v')
+    steps:
+      - name: Checkout code 🛎
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Setup node environment 📦
+        uses: actions/setup-node@v3
+        with:
+          registry-url: https://registry.npmjs.org
+          check-latest: true
+
+      - name: Trigger a release 🥳
+        run: npx shipjs trigger
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_INCOMING_HOOK: ${{ secrets.SLACK_INCOMING_HOOK }}
