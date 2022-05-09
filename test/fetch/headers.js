@@ -289,6 +289,41 @@ tap.test('Headers set', t => {
   })
 })
 
+tap.test('Headers forEach', t => {
+  const headers = new Headers([['a', 'b'], ['c', 'd']])
+
+  t.test('standard', t => {
+    t.equal(typeof headers.forEach, 'function')
+
+    headers.forEach((value, key, headerInstance) => {
+      t.ok(value === 'b' || value === 'd')
+      t.ok(key === 'a' || key === 'c')
+      t.equal(headers, headerInstance)
+    })
+
+    t.end()
+  })
+
+  t.test('when no thisArg is set, it is globalThis', (t) => {
+    headers.forEach(function () {
+      t.equal(this, globalThis)
+    })
+
+    t.end()
+  })
+
+  t.test('with thisArg', t => {
+    const thisArg = { a: Math.random() }
+    headers.forEach(function () {
+      t.equal(this, thisArg)
+    }, thisArg)
+
+    t.end()
+  })
+
+  t.end()
+})
+
 tap.test('Headers as Iterable', t => {
   t.plan(8)
 
