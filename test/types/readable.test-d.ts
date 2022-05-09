@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import BodyReadable from '../../types/readable'
+import BodyReadable = require('../../types/readable')
 import { Blob } from 'buffer'
 
 expectAssignable<BodyReadable>(new BodyReadable())
