@@ -520,12 +520,12 @@ tap.test('arg validation', (t) => {
   // get [Symbol.toStringTag]
   t.doesNotThrow(() => {
     Object.prototype.toString.call(Headers.prototype)
-  }, TypeError)
+  })
 
   // toString
   t.doesNotThrow(() => {
     Headers.prototype.toString.call(null)
-  }, TypeError)
+  })
 
   // append
   t.throws(() => {
