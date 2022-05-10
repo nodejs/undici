@@ -518,12 +518,12 @@ tap.test('arg validation', (t) => {
   }, TypeError)
 
   // get [Symbol.toStringTag]
-  t.throws(() => {
+  t.doesNotThrow(() => {
     Object.prototype.toString.call(Headers.prototype)
   }, TypeError)
 
   // toString
-  t.throws(() => {
+  t.doesNotThrow(() => {
     Headers.prototype.toString.call(null)
   }, TypeError)
 
@@ -606,7 +606,15 @@ tap.test('function signature verification', (t) => {
 
   t.test('function equality', (t) => {
     t.equal(Headers.prototype.entries, Headers.prototype[Symbol.iterator])
-    // TODO(@KhafraDev): ensure Headers.prototype.toString === Object.prototype.toString
+    t.equal(Headers.prototype.toString, Object.prototype.toString)
+
+    t.end()
+  })
+
+  tap.test('toString and Symbol.toStringTag', (t) => {
+    t.equal(Object.prototype.toString.call(Headers.prototype), '[object Headers]')
+    t.equal(Headers.prototype[Symbol.toStringTag], 'Headers')
+    t.equal(Headers.prototype.toString.call(null), '[object Null]')
 
     t.end()
   })
