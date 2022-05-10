@@ -611,7 +611,7 @@ tap.test('function signature verification', (t) => {
     t.end()
   })
 
-  tap.test('toString and Symbol.toStringTag', (t) => {
+  t.test('toString and Symbol.toStringTag', (t) => {
     t.equal(Object.prototype.toString.call(Headers.prototype), '[object Headers]')
     t.equal(Headers.prototype[Symbol.toStringTag], 'Headers')
     t.equal(Headers.prototype.toString.call(null), '[object Null]')
