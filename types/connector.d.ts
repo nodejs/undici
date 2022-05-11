@@ -5,7 +5,7 @@ export = buildConnector
 declare function buildConnector (options?: buildConnector.BuildOptions): typeof buildConnector.connector
 
 declare namespace buildConnector {
-  export type BuildOptions = (ConnectionOptions | TcpNetConnectOpts | IpcNetConnectOpts ) & {
+  export type BuildOptions = (ConnectionOptions | TcpNetConnectOpts | IpcNetConnectOpts) & {
     maxCachedSessions?: number | null;
     socketPath?: string | null;
     timeout?: number | null;

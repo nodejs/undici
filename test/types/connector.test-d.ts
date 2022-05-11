@@ -1,6 +1,7 @@
-import { expectAssignable } from 'tsd'
+import {expectAssignable} from 'tsd'
 import { Client, buildConnector } from '../..'
-import { TLSSocket } from 'tls'
+import {ConnectionOptions, TLSSocket} from 'tls'
+import {NetConnectOpts} from "net";
 
 const connector = buildConnector({ rejectUnauthorized: false })
 expectAssignable<Client>(new Client('', {
@@ -19,3 +20,11 @@ expectAssignable<Client>(new Client('', {
     })
   }
 }))
+
+expectAssignable<buildConnector.BuildOptions>({
+  checkServerIdentity: () => undefined,
+  port: 80,
+});
+// This needs to be partial as required arguments (port) have a default in lib/core/connect.js
+expectAssignable<ConnectionOptions>({} as buildConnector.BuildOptions);
+expectAssignable<Partial<NetConnectOpts>>({} as buildConnector.BuildOptions);
