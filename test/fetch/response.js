@@ -45,8 +45,8 @@ test('arg validation', (t) => {
     }, TypeError)
   }
 
-  t.throws(() => {
-    Response.prototype[Symbol.toStringTag].call(null)
+  t.doesNotThrow(() => {
+    Response.prototype[Symbol.toStringTag].charAt(0)
   }, TypeError)
 
   t.throws(() => {
@@ -92,5 +92,13 @@ test('response clone', (t) => {
   t.equal(response1.body, response1.clone().body)
   t.equal(response2.body, response2.clone().body)
   t.equal(response2.body, null)
+  t.end()
+})
+
+test('Symbol.toStringTag', (t) => {
+  const resp = new Response()
+
+  t.equal(resp[Symbol.toStringTag], 'Response')
+  t.equal(Response.prototype[Symbol.toStringTag], 'Response')
   t.end()
 })

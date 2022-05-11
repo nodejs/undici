@@ -73,6 +73,11 @@ test('arg validation', (t) => {
     Reflect.apply(FormData.prototype[Symbol.iterator], null)
   }, TypeError)
 
+  // toStringTag
+  t.doesNotThrow(() => {
+    FormData.prototype[Symbol.toStringTag].charAt(0)
+  })
+
   t.end()
 })
 
@@ -208,5 +213,6 @@ test('formData.values', (t) => {
 test('formData toStringTag', (t) => {
   const form = new FormData()
   t.equal(form[Symbol.toStringTag], 'FormData')
+  t.equal(FormData.prototype[Symbol.toStringTag], 'FormData')
   t.end()
 })
