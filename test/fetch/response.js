@@ -50,31 +50,31 @@ test('arg validation', (t) => {
   }, TypeError)
 
   t.throws(() => {
-    Response.prototype.type.call(null)
+    Response.prototype.type.toString()
   }, TypeError)
 
   t.throws(() => {
-    Response.prototype.url.call(null)
+    Response.prototype.url.toString()
   }, TypeError)
 
   t.throws(() => {
-    Response.prototype.redirected.call(null)
+    Response.prototype.redirected.toString()
   }, TypeError)
 
   t.throws(() => {
-    Response.prototype.status.call(null)
+    Response.prototype.status.toString()
   }, TypeError)
 
   t.throws(() => {
-    Response.prototype.ok.call(null)
+    Response.prototype.ok.toString()
   }, TypeError)
 
   t.throws(() => {
-    Response.prototype.statusText.call(null)
+    Response.prototype.statusText.toString()
   }, TypeError)
 
   t.throws(() => {
-    Response.prototype.headers.call(null)
+    Response.prototype.headers.toString()
   }, TypeError)
 
   t.throws(() => {
