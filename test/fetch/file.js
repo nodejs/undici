@@ -7,10 +7,10 @@ test('args validation', (t) => {
   t.plan(14)
 
   t.throws(() => {
-    File.prototype.name.call(null)
+    File.prototype.name.toString()
   }, TypeError)
   t.throws(() => {
-    File.prototype.lastModified.call(null)
+    File.prototype.lastModified.toString()
   }, TypeError)
   t.doesNotThrow(() => {
     File.prototype[Symbol.toStringTag].charAt(0)
@@ -29,16 +29,16 @@ test('args validation', (t) => {
     FileLike.prototype.text.call(null)
   }, TypeError)
   t.throws(() => {
-    FileLike.prototype.size.call(null)
+    FileLike.prototype.size.toString()
   }, TypeError)
   t.throws(() => {
-    FileLike.prototype.type.call(null)
+    FileLike.prototype.type.toString()
   }, TypeError)
   t.throws(() => {
-    FileLike.prototype.name.call(null)
+    FileLike.prototype.name.toString()
   }, TypeError)
   t.throws(() => {
-    FileLike.prototype.lastModified.call(null)
+    FileLike.prototype.lastModified.toString()
   }, TypeError)
   t.doesNotThrow(() => {
     FileLike.prototype[Symbol.toStringTag].charAt(0)
