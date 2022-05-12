@@ -149,6 +149,10 @@ test('arg validation', (t) => {
     Request.prototype.clone.call(null)
   }, TypeError)
 
+  t.doesNotThrow(() => {
+    Request.prototype[Symbol.toStringTag].charAt(0)
+  })
+
   t.end()
 })
 
@@ -325,5 +329,13 @@ test('Passing headers in init', (t) => {
     t.end()
   })
 
+  t.end()
+})
+
+test('Symbol.toStringTag', (t) => {
+  const req = new Request('http://localhost')
+
+  t.equal(req[Symbol.toStringTag], 'Request')
+  t.equal(Request.prototype[Symbol.toStringTag], 'Request')
   t.end()
 })
