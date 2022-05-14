@@ -59,6 +59,16 @@ test('Parsing attributes', (t) => {
     t.ok(diff <= 2_000_000) // 2000 seconds -> ms
     t.ok(diff > 1_999_000)
 
+    t.same(
+      parseUnparsedAttributes('; Max-Age=Abcd'),
+      {}
+    )
+
+    t.same(
+      parseUnparsedAttributes('; Max-Age=0Abcd'),
+      {}
+    )
+
     t.end()
   })
 

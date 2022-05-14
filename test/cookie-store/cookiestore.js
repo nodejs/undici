@@ -88,6 +88,26 @@ test('CookieStore.prototype methods', async (t) => {
     t.end()
   })
 
+  t.test('multiple attributes', async (t) => {
+    const cookie = 'key=value; Domain=foo.com; PaTh=/account/login; Secure; sAMeSIte=LaX'
+    cookieStore = CookieStoreFrom(cookie)
+
+    t.same(
+      await cookieStore.get('key'),
+      {
+        name: 'key',
+        value: 'value',
+        domain: 'foo.com',
+        path: '/account/login',
+        expires: null,
+        secure: true,
+        sameSite: 'lax'
+      }
+    )
+
+    t.end()
+  })
+
   t.test('CookieStore.set options', async (t) => {
     cookieStore = CookieStoreFrom()
 
