@@ -9,6 +9,7 @@ test('CookieStoreFrom', async (t) => {
   t.doesNotThrow(() => CookieStoreFrom(setCookie))
   t.doesNotThrow(() => CookieStoreFrom([setCookie]))
   t.doesNotThrow(() => CookieStoreFrom())
+  t.throws(() => CookieStoreFrom([true]))
 
   const cookieStore = CookieStoreFrom(setCookie)
 
@@ -60,6 +61,47 @@ test('CookieStore.prototype methods', async (t) => {
       secure: true,
       sameSite: 'strict'
     })
+
+    cookieStore = CookieStoreFrom()
+    await cookieStore.set({ name: 'key', value: 'value' })
+
+    t.same(
+      await cookieStore.get('key'),
+      {
+        name: 'key',
+        value: 'value',
+        domain: null,
+        path: '/',
+        expires: null,
+        secure: true,
+        sameSite: 'strict'
+      }
+    )
+
+    await cookieStore.set({ name: 'key', value: 'value2' }) // duplicate key
+
+    t.same(
+      (await cookieStore.get('key')).value,
+      'value2'
+    )
+
+    t.end()
+  })
+
+  t.test('CookieStore.set options', async (t) => {
+    cookieStore = CookieStoreFrom()
+
+    await t.resolves(cookieStore.set({ name: 'a', value: 'b', domain: 'foo.com' }))
+
+    await t.resolves(cookieStore.set({ name: 'a', value: 'b', expires: (Date.now() / 1000) + 86_400 }))
+
+    await t.resolves(cookieStore.set({ name: 'a', value: 'b', path: '/hi' }))
+
+    await cookieStore.set({ name: 'a', value: 'b', sameSite: 'lax' })
+    t.equal((await cookieStore.get('a')).sameSite, 'lax')
+
+    await cookieStore.set({ name: 'a', value: 'b', sameSite: 'none' })
+    t.equal((await cookieStore.get('a')).sameSite, 'none')
 
     t.end()
   })
@@ -144,6 +186,93 @@ test('CookieStore.prototype methods', async (t) => {
 
     t.end()
   })
+
+  t.end()
+})
+
+test('Missing and invalid arguments', async (t) => {
+  const cookieStore = CookieStoreFrom('a=b')
+
+  await t.rejects(cookieStore.get(null))
+  await t.rejects(cookieStore.get({}))
+
+  try {
+    await cookieStore.set()
+    t.fail()
+  } catch {
+    t.pass()
+  }
+
+  try {
+    await cookieStore.delete()
+    t.fail()
+  } catch {
+    t.pass()
+  }
+
+  for (const [key, value] of [
+    ['\u0000Key', 'value'],
+    ['Key', '\u0000Value'],
+    [{ name: '\u0000Key', value: 'Value' }],
+    [{ name: 'Key', value: '\u0000Value' }]
+  ]) {
+    try {
+      await cookieStore.set(key, value)
+      t.fail()
+    } catch {
+      t.pass()
+    }
+  }
+
+  try {
+    await cookieStore.set('', 'a=b')
+    t.fail()
+  } catch {
+    t.pass()
+  }
+
+  try {
+    await cookieStore.set('', '')
+    t.fail()
+  } catch {
+    t.pass()
+  }
+
+  try {
+    await cookieStore.set(''.padEnd(2048, 'k'), ''.padEnd(2049, 'v'))
+    t.fail()
+  } catch {
+    t.pass()
+  }
+
+  try {
+    await cookieStore.set({ name: 'a', value: 'b', domain: '.foo.com' })
+    t.fail()
+  } catch {
+    t.pass()
+  }
+
+  try {
+    const domain = ''.padEnd(1025, 'f') + '.com'
+    await cookieStore.set({ name: 'a', value: 'b', domain })
+    t.fail()
+  } catch {
+    t.pass()
+  }
+
+  try {
+    await cookieStore.set({ name: 'a', value: 'b', path: 'hi' })
+    t.fail()
+  } catch {
+    t.pass()
+  }
+
+  try {
+    await cookieStore.set({ name: 'a', value: 'b', path: 'p'.repeat(1025) })
+    t.fail()
+  } catch {
+    t.pass()
+  }
 
   t.end()
 })
