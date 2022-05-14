@@ -131,7 +131,18 @@ test('CookieStore.prototype methods', async (t) => {
   })
 
   t.test('CookieStore.delete', async (t) => {
+    cookieStore = CookieStoreFrom()
 
+    await cookieStore.set('a', 'b')
+    await cookieStore.set('c', 'd')
+
+    await cookieStore.delete('a')
+    t.equal(await cookieStore.get('a'), undefined)
+
+    await cookieStore.delete('c')
+    t.equal(await cookieStore.get('c'), undefined)
+
+    t.end()
   })
 
   t.end()
