@@ -1,7 +1,8 @@
 'use strict'
 
 const { test } = require('tap')
-const { CookieStore } = require('../../lib/cookie-store/cookie-store')
+const { inspect } = require('util')
+const { CookieStore, CookieStoreFrom } = require('../../lib/cookie-store/cookie-store')
 
 test('CookieStore signatures are correct', (t) => {
   t.equal(CookieStore.prototype.get.length, 0)
@@ -34,5 +35,12 @@ test('brand checks', (t) => {
   t.throws(() => p.delete.call(null), TypeError)
   t.doesNotThrow(() => p[Symbol.toStringTag])
 
+  t.end()
+})
+
+test('util.inspect', (t) => {
+  const cookieStore = CookieStoreFrom()
+
+  t.equal(inspect(cookieStore), 'CookieStore []')
   t.end()
 })
