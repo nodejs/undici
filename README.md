@@ -318,6 +318,44 @@ Gets the global dispatcher used by Common API Methods.
 
 Returns: `Dispatcher`
 
+### `undici.CookieStore`
+
+Implements [CookieStore](https://wicg.github.io/cookie-store/)
+
+* https://wicg.github.io/cookie-store/
+* https://developer.mozilla.org/en-US/docs/Web/API/CookieStore
+
+This is [experimental](https://nodejs.org/api/documentation.html#documentation_stability_index) and is not yet fully compliant with the CookieStore Standard.
+We plan to ship breaking changes to this feature until it is out of experimental.
+
+Basic usage example:
+
+*Note*: You cannot directly construct a new CookieStore due to the spec.
+
+```js
+import { CookieStore, CookieStoreFrom } from 'undici'
+import assert from 'node:assert'
+
+const setCookies = [
+  'sessionId=abcd; Path=/account/login; Domain=example.com',
+  'key=value; Path=/admin; Expires=Sun, 15 May 2022 16:09:49 GMT'
+]
+
+const cookieStore = CookieStoreFrom(setCookies)
+
+assert(cookieStore instanceof CookieStore)
+
+const cookie = await cookieStore.get('sessionId')
+const cookies = await cookieStore.getAll()
+```
+
+```js
+import { CookieStoreFrom } from 'undici'
+
+const cookieStore = CookieStoreFrom() // create an empty CookieStore
+console.log(cookieStore) // CookieStore []
+```
+
 ### `UrlObject`
 
 * **port** `string | number` (optional)
