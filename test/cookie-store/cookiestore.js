@@ -78,7 +78,7 @@ test('CookieStore.prototype methods', async (t) => {
       }
     )
 
-    await cookieStore.set({ name: 'key', value: 'value2' }) // duplicate key
+    await cookieStore.set({ name: 'key', value: 'value2', path: '/longpathsosortscorrectly' }) // duplicate key
 
     t.same(
       (await cookieStore.get('key')).value,
@@ -117,10 +117,10 @@ test('CookieStore.prototype methods', async (t) => {
 
     await t.resolves(cookieStore.set({ name: 'a', value: 'b', path: '/hi' }))
 
-    await cookieStore.set({ name: 'a', value: 'b', sameSite: 'lax' })
+    await cookieStore.set({ name: 'a', value: 'b', sameSite: 'lax', path: '/longer' })
     t.equal((await cookieStore.get('a')).sameSite, 'lax')
 
-    await cookieStore.set({ name: 'a', value: 'b', sameSite: 'none' })
+    await cookieStore.set({ name: 'a', value: 'b', sameSite: 'none', path: '/longest' })
     t.equal((await cookieStore.get('a')).sameSite, 'none')
 
     t.end()
@@ -168,8 +168,16 @@ test('CookieStore.prototype methods', async (t) => {
     await cookieStore.set('a', 'c')
     await cookieStore.set('d', 'e')
 
-    // duplicated names are replaced
     const expected = [
+      {
+        name: 'a',
+        value: 'b',
+        domain: null,
+        path: '/',
+        expires: null,
+        secure: true,
+        sameSite: 'strict'
+      },
       {
         name: 'a',
         value: 'c',
