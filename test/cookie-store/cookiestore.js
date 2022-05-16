@@ -304,3 +304,19 @@ test('Missing and invalid arguments', async (t) => {
 
   t.end()
 })
+
+test('Invalid domain', async (t) => {
+  const cookieStore = CookieStoreFrom(undefined, 'https://example.com')
+  const options = { name: 'name', value: 'value', domain: 'example.org' }
+
+  try {
+    await cookieStore.set(options)
+    t.fail()
+  } catch {
+    t.pass()
+  }
+
+  await t.resolves(cookieStore.set({ ...options, domain: 'example.com' }))
+
+  t.end()
+})

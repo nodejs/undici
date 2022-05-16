@@ -356,6 +356,19 @@ const cookieStore = CookieStoreFrom() // create an empty CookieStore
 console.log(cookieStore) // CookieStore []
 ```
 
+```js
+import { CookieStoreFrom } from 'undici'
+
+// create an empty cookie store where cookie domains must be 'example.com'
+const cookieStore = CookieStoreFrom(undefined, 'https://example.com')
+
+await cookieStore.set({ name: 'cookie', value: 'my-value', domain: 'example.org' }) // rejects
+await cookieStore.set({ name: 'cookie', value: 'my-value', domain: 'example.com' }) // resolves
+await cookieStore.set({ name: 'cookie', value: 'my-value' }) // resolves
+
+// By excluding a second argument, all cookies will be considered valid.
+```
+
 ### `UrlObject`
 
 * **port** `string | number` (optional)
