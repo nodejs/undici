@@ -124,6 +124,8 @@ Options:
   Default: `null`.
 * `headers: Object|Array|Null`, an object with header-value pairs or an array with header-value pairs bi-indexed (`['header1', 'value1', 'header2', 'value2']`).
   Default: `null`.
+* `params: Object|Null`, an object with query string param value pairs.
+  Default: `null`.
 * `signal: AbortSignal|EventEmitter|Null`
   Default: `null`.
 * `idempotent: Boolean`, whether the requests can be safely retried or not.

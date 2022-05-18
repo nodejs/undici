@@ -89,6 +89,8 @@ declare namespace Client {
     body?: string | Buffer | Uint8Array | Readable | null;
     /** Default: `null` */
     headers?: IncomingHttpHeaders | null;
+    /** Default: 'null' */
+    params?: Record<string, any> | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving a complete headers. Use 0 to disable it entirely. Default: `30e3` milliseconds (30s). */
     headersTimeout?: number;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving a body data. Use 0 to disable it entirely. Default: `30e3` milliseconds (30s). */

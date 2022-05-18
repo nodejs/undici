@@ -1,12 +1,13 @@
 'use strict'
 
+const EE = require('events')
+const querystring = require('querystring')
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { readFileSync, createReadStream } = require('fs')
 const { Readable } = require('stream')
 const { kSocket } = require('../lib/core/symbols')
-const EE = require('events')
 const { kConnect } = require('../lib/core/symbols')
 
 test('basic get', (t) => {
@@ -76,6 +77,48 @@ test('basic get', (t) => {
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
+  })
+})
+
+test('basic get with query params', (t) => {
+  t.plan(5)
+
+  const server = createServer(serverRequestParams(t, {
+    foo: '1',
+    bar: 'bar',
+    multi: [
+      '1',
+      '2'
+    ]
+  }))
+  t.tearDown(server.close.bind(server))
+
+  const params = {
+    foo: 1,
+    bar: 'bar',
+    multi: [1, 2]
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.tearDown(client.close.bind(client))
+
+    t.strictEqual(client.url.origin, `http://localhost:${server.address().port}`)
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      params
+    }, (err, data) => {
+      t.error(err)
+      const { statusCode } = data
+      t.strictEqual(statusCode, 200)
+    })
+    t.strictEqual(signal.listenerCount('abort'), 1)
   })
 })
 
@@ -178,6 +221,16 @@ test('head with host header', (t) => {
     })
   })
 })
+
+function serverRequestParams (t, expected) {
+  return function (req, res) {
+    const queryParams = querystring.parse(req.url.replace('/?', '')) // We remove opening /? because parser assumes it to be a part of param name
+    t.strictSame(JSON.parse(JSON.stringify(queryParams)), expected)
+
+    req.setEncoding('utf8')
+    res.end('hello')
+  }
+}
 
 function postServer (t, expected) {
   return function (req, res) {
