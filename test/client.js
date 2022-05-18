@@ -179,7 +179,6 @@ test('basic get with query params partially in path', (t) => {
   })
   t.teardown(server.close.bind(server))
 
-
   const params = {
     foo: 1
   }
