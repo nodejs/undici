@@ -84,13 +84,14 @@ test('basic get with query params', (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
-    const [, paramString] = req.url.split('?')
-    const searchParams = new URLSearchParams(paramString)
-    const searchParamsObject = Object.fromEntries(searchParams.entries())
+    const searchParamsObject = buildParams(req.url)
     t.strictSame(searchParamsObject, {
+      date: '1995-12-16T22:00:00.000Z',
+      obj: '%7B%22id%22:1%7D',
+      bool: 'true',
       foo: '1',
       bar: 'bar',
-      multi: '1,2'
+      multi: ['1','2']
     })
 
     res.statusCode = 200
@@ -99,6 +100,9 @@ test('basic get with query params', (t) => {
   t.teardown(server.close.bind(server))
 
   const params = {
+    date: new Date(1995, 11, 17),
+    obj: { id: 1 },
+    bool: true,
     foo: 1,
     bar: 'bar',
     multi: [1, 2]
@@ -108,7 +112,7 @@ test('basic get with query params', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       keepAliveTimeout: 300e3
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const signal = new EE()
     client.request({
@@ -119,9 +123,56 @@ test('basic get with query params', (t) => {
     }, (err, data) => {
       t.error(err)
       const { statusCode } = data
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
     })
-    t.strictEqual(signal.listenerCount('abort'), 1)
+    t.equal(signal.listenerCount('abort'), 1)
+  })
+})
+
+test('basic get with query params ignores hashmark', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    const searchParamsObject = buildParams(req.url)
+    t.strictSame(searchParamsObject, {
+      date: '1995-12-16T22:00:00.000Z',
+      obj: '%7B%22id%22:1%7D',
+      foo: '1',
+      bar: 'bar',
+      multi: ['1','2']
+    })
+
+    res.statusCode = 200
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  const params = {
+    date: new Date(1995, 11, 17),
+    obj: { id: 1 },
+    foo: 1,
+    bar: 'bar',
+    multi: [1, 2]
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/#',
+      method: 'GET',
+      params
+    }, (err, data) => {
+      t.error(err)
+      const { statusCode } = data
+      t.equal(statusCode, 200)
+    })
+    t.equal(signal.listenerCount('abort'), 1)
   })
 })
 
@@ -129,9 +180,7 @@ test('basic get with empty query params', (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
-    const [, paramString] = req.url.split('?')
-    const searchParams = new URLSearchParams(paramString)
-    const searchParamsObject = Object.fromEntries(searchParams.entries())
+    const searchParamsObject = buildParams(req.url)
     t.strictSame(searchParamsObject, {})
 
     res.statusCode = 200
@@ -145,7 +194,7 @@ test('basic get with empty query params', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       keepAliveTimeout: 300e3
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const signal = new EE()
     client.request({
@@ -156,9 +205,9 @@ test('basic get with empty query params', (t) => {
     }, (err, data) => {
       t.error(err)
       const { statusCode } = data
-      t.strictEqual(statusCode, 200)
+      t.equal(statusCode, 200)
     })
-    t.strictEqual(signal.listenerCount('abort'), 1)
+    t.equal(signal.listenerCount('abort'), 1)
   })
 })
 
@@ -166,9 +215,7 @@ test('basic get with query params partially in path', (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
-    const [, paramString] = req.url.split('?')
-    const searchParams = new URLSearchParams(paramString)
-    const searchParamsObject = Object.fromEntries(searchParams.entries())
+    const searchParamsObject = buildParams(req.url)
     t.strictSame(searchParamsObject, {
       foo: '1',
       bar: '2'
@@ -187,7 +234,7 @@ test('basic get with query params partially in path', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       keepAliveTimeout: 300e3
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     const signal = new EE()
     client.request({
@@ -1713,3 +1760,26 @@ test('async iterator yield object error', (t) => {
     })
   })
 })
+
+function buildParams(path) {
+  const cleanPath = path.replace('/?', '').replace('/', '').split('&')
+  const builtParams = cleanPath.reduce((acc, entry) => {
+    const [key, value] = entry.split('=')
+    if (key.length === 0) {
+      return acc
+    }
+
+    if (acc[key]) {
+      if (Array.isArray(acc[key])) {
+        acc[key].push(value)
+      } else {
+        acc[key] = [acc[key], value]
+    }
+    } else {
+      acc[key] = value
+    }
+    return acc
+  }, {})
+
+  return builtParams
+}
