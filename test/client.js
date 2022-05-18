@@ -80,6 +80,7 @@ test('basic get', (t) => {
   })
 })
 
+/*
 test('basic get with query params', (t) => {
   t.plan(4)
 
@@ -180,6 +181,8 @@ test('basic get with query params partially in path', (t) => {
   })
 })
 
+
+ */
 test('basic head', (t) => {
   t.plan(14)
 
