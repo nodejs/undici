@@ -82,7 +82,7 @@ test('basic get', (t) => {
 })
 
 test('basic get with query params', (t) => {
-  t.plan(5)
+  t.plan(4)
 
   const server = createServer(serverRequestParams(t, {
     foo: '1',
@@ -105,8 +105,6 @@ test('basic get with query params', (t) => {
       keepAliveTimeout: 300e3
     })
     t.tearDown(client.close.bind(client))
-
-    t.strictEqual(client.url.origin, `http://localhost:${server.address().port}`)
 
     const signal = new EE()
     client.request({
