@@ -117,6 +117,35 @@ test('basic get with query params', (t) => {
   })
 })
 
+test('basic get with empty query params', (t) => {
+  t.plan(4)
+
+  const server = createServer(serverRequestParams(t, {}))
+  t.tearDown(server.close.bind(server))
+
+  const params = {}
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.tearDown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      params
+    }, (err, data) => {
+      t.error(err)
+      const { statusCode } = data
+      t.strictEqual(statusCode, 200)
+    })
+    t.strictEqual(signal.listenerCount('abort'), 1)
+  })
+})
+
 test('basic get with query params partially in path', (t) => {
   t.plan(4)
 
