@@ -86,3 +86,16 @@ test('Check static json() propagates JSON serializer errors', (t) => {
 
   t.end()
 })
+
+// note: these tests are not part of any WPTs
+test('unserializable values', (t) => {
+  t.throws(() => {
+    Response.json(Symbol('symbol'))
+  }, TypeError)
+
+  t.throws(() => {
+    Response.json(undefined)
+  }, TypeError)
+
+  t.end()
+})
