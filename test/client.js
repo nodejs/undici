@@ -91,7 +91,7 @@ test('basic get with query params', (t) => {
       bool: 'true',
       foo: '1',
       bar: 'bar',
-      multi: ['1','2']
+      multi: ['1', '2']
     })
 
     res.statusCode = 200
@@ -139,7 +139,7 @@ test('basic get with query params ignores hashmark', (t) => {
       obj: '%7B%22id%22:1%7D',
       foo: '1',
       bar: 'bar',
-      multi: ['1','2']
+      multi: ['1', '2']
     })
 
     res.statusCode = 200
@@ -1761,7 +1761,7 @@ test('async iterator yield object error', (t) => {
   })
 })
 
-function buildParams(path) {
+function buildParams (path) {
   const cleanPath = path.replace('/?', '').replace('/', '').split('&')
   const builtParams = cleanPath.reduce((acc, entry) => {
     const [key, value] = entry.split('=')
@@ -1774,7 +1774,7 @@ function buildParams(path) {
         acc[key].push(value)
       } else {
         acc[key] = [acc[key], value]
-    }
+      }
     } else {
       acc[key] = value
     }
