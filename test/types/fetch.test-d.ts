@@ -29,6 +29,9 @@ const responseInit: ResponseInit = { status: 200, statusText: 'OK' }
 const requestInit2: RequestInit = {
   dispatcher: new Agent()
 }
+const requestInit3: RequestInit = {}
+// Test assignment. See https://github.com/whatwg/fetch/issues/1445
+requestInit3.credentials = 'include'
 
 declare const request: Request
 declare const headers: Headers
