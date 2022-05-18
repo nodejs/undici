@@ -1,5 +1,6 @@
 import { expectAssignable } from 'tsd'
 import { errors } from '../..'
+import { SocketInfo } from '../../types/client'
 
 expectAssignable<errors.UndiciError>(new errors.UndiciError())
 
@@ -33,10 +34,10 @@ expectAssignable<errors.InformationalError>(new errors.InformationalError())
 expectAssignable<'InformationalError'>(new errors.InformationalError().name)
 expectAssignable<'UND_ERR_INFO'>(new errors.InformationalError().code)
 
-expectAssignable<errors.UndiciError>(new errors.ContentLengthMismatchError())
-expectAssignable<errors.ContentLengthMismatchError>(new errors.ContentLengthMismatchError())
-expectAssignable<'ContentLengthMismatchError'>(new errors.ContentLengthMismatchError().name)
-expectAssignable<'UND_ERR_CONTENT_LENGTH_MISMATCH'>(new errors.ContentLengthMismatchError().code)
+expectAssignable<errors.UndiciError>(new errors.RequestContentLengthMismatchError())
+expectAssignable<errors.RequestContentLengthMismatchError>(new errors.RequestContentLengthMismatchError())
+expectAssignable<'RequestContentLengthMismatchError'>(new errors.RequestContentLengthMismatchError().name)
+expectAssignable<'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH'>(new errors.RequestContentLengthMismatchError().code)
 
 expectAssignable<errors.UndiciError>(new errors.ClientDestroyedError())
 expectAssignable<errors.ClientDestroyedError>(new errors.ClientDestroyedError())
@@ -52,6 +53,7 @@ expectAssignable<errors.UndiciError>(new errors.SocketError())
 expectAssignable<errors.SocketError>(new errors.SocketError())
 expectAssignable<'SocketError'>(new errors.SocketError().name)
 expectAssignable<'UND_ERR_SOCKET'>(new errors.SocketError().code)
+expectAssignable<SocketInfo | null>(new errors.SocketError().socket)
 
 expectAssignable<errors.UndiciError>(new errors.NotSupportedError())
 expectAssignable<errors.NotSupportedError>(new errors.NotSupportedError())

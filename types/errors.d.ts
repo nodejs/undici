@@ -1,4 +1,5 @@
 export = Errors
+import { SocketInfo } from './client'
 
 declare namespace Errors {
   export class UndiciError extends Error { }
@@ -46,9 +47,9 @@ declare namespace Errors {
   }
 
   /** Body does not match content-length header. */
-  export class ContentLengthMismatchError extends UndiciError {
-    name: 'ContentLengthMismatchError';
-    code: 'UND_ERR_CONTENT_LENGTH_MISMATCH';
+  export class RequestContentLengthMismatchError extends UndiciError {
+    name: 'RequestContentLengthMismatchError';
+    code: 'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH';
   }
 
   /** Trying to use a destroyed client. */
@@ -67,6 +68,7 @@ declare namespace Errors {
   export class SocketError extends UndiciError {
     name: 'SocketError';
     code: 'UND_ERR_SOCKET';
+    socket: SocketInfo | null
   }
 
   /** Encountered unsupported functionality. */

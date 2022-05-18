@@ -15,7 +15,7 @@ test('invalid headers', (t) => {
       'content-length': 'asd'
     }
   }, (err, data) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 
   client.request({
@@ -23,7 +23,7 @@ test('invalid headers', (t) => {
     method: 'GET',
     headers: 1
   }, (err, data) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 
   client.request({
@@ -33,7 +33,7 @@ test('invalid headers', (t) => {
       'transfer-encoding': 'chunked'
     }
   }, (err, data) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 
   client.request({
@@ -43,7 +43,7 @@ test('invalid headers', (t) => {
       upgrade: 'asd'
     }
   }, (err, data) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 
   client.request({
@@ -53,7 +53,7 @@ test('invalid headers', (t) => {
       connection: 'close'
     }
   }, (err, data) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 
   client.request({
@@ -63,7 +63,7 @@ test('invalid headers', (t) => {
       'keep-alive': 'timeout=5'
     }
   }, (err, data) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 
   client.request({
@@ -73,7 +73,7 @@ test('invalid headers', (t) => {
       foo: {}
     }
   }, (err, data) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 
   client.request({
@@ -83,7 +83,7 @@ test('invalid headers', (t) => {
       expect: '100-continue'
     }
   }, (err, data) => {
-    t.ok(err instanceof errors.NotSupportedError)
+    t.type(err, errors.NotSupportedError)
   })
 
   client.request({
@@ -93,7 +93,7 @@ test('invalid headers', (t) => {
       Expect: '100-continue'
     }
   }, (err, data) => {
-    t.ok(err instanceof errors.NotSupportedError)
+    t.type(err, errors.NotSupportedError)
   })
 
   client.request({
@@ -103,6 +103,6 @@ test('invalid headers', (t) => {
       expect: 'asd'
     }
   }, (err, data) => {
-    t.ok(err instanceof errors.NotSupportedError)
+    t.type(err, errors.NotSupportedError)
   })
 })

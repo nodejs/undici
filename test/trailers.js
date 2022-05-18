@@ -3,36 +3,32 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const errors = require('../lib/core/errors')
 
-test('response trailers missing', (t) => {
-  t.plan(2)
+test('response trailers missing is OK', (t) => {
+  t.plan(1)
 
   const server = createServer((req, res) => {
     res.writeHead(200, {
       Trailer: 'content-length'
     })
-    res.end()
+    res.end('response')
   })
   t.teardown(server.close.bind(server))
-  server.listen(0, () => {
+  server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    client.request({
+    const { body } = await client.request({
       path: '/',
       method: 'GET',
       body: 'asd'
-    }, (err, data) => {
-      t.error(err)
-      data.body.on('error', (err) => {
-        t.ok(err instanceof errors.TrailerMismatchError)
-      })
     })
+
+    t.equal(await body.text(), 'response')
   })
 })
 
-test('response trailers missing w trailers', (t) => {
+test('response trailers missing w trailers is OK', (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {
@@ -42,22 +38,20 @@ test('response trailers missing w trailers', (t) => {
     res.addTrailers({
       asd: 'foo'
     })
-    res.end()
+    res.end('response')
   })
   t.teardown(server.close.bind(server))
-  server.listen(0, () => {
+  server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    client.request({
+    const { body, trailers } = await client.request({
       path: '/',
       method: 'GET',
       body: 'asd'
-    }, (err, data) => {
-      t.error(err)
-      data.body.on('error', (err) => {
-        t.ok(err instanceof errors.TrailerMismatchError)
-      })
     })
+
+    t.equal(await body.text(), 'response')
+    t.same(trailers, { asd: 'foo' })
   })
 })

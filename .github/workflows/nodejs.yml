@@ -9,36 +9,21 @@ on: [push, pull_request]
 jobs:
   build:
     name: Test
-    runs-on: ${{ matrix.os }}
 
-    strategy:
-      matrix:
-        node-version: [10.16.0, 10.x, 12.3.0, 12.18.0, 12.x, 14.0.0, 14.x, 15.x]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-
+    uses: pkgjs/action/.github/workflows/node-test.yaml@v0.1
+    with:
+      runs-on: ubuntu-latest, windows-latest
+      test-command: npm run coverage:ci
+      post-test-steps: |
+        - name: Coverage Report
+          uses: codecov/codecov-action@v2
+  automerge:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-
-    - name: Install
-      run: |
-        npm install
-
-    - name: Unit test (no coverage)
-      run: |
-        npm test
-
-    - name: Unit test (coverage)
-      run: |
-        npm run coverage:ci
-
-    - name: Test types
-      run: |
-        npm run test:typescript
-
-    - name: Coverage report
-      uses: codecov/codecov-action@v1
+      - uses: fastify/github-action-merge-dependabot@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

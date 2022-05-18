@@ -1,12 +1,17 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client, errors } = require('..')
+const { Client, Pool, errors } = require('..')
 const { createServer } = require('http')
+const https = require('https')
+const pem = require('https-pem')
 const net = require('net')
 const { Readable } = require('stream')
 
 const { kSocket } = require('../lib/core/symbols')
+const { wrapWithAsyncIterable, maybeWrapStream, consts } = require('./utils/async-iterators')
+
+class IteratorError extends Error {}
 
 test('GET errors and reconnect with pipelining 1', (t) => {
   t.plan(9)
@@ -18,35 +23,35 @@ test('GET errors and reconnect with pipelining 1', (t) => {
     res.socket.destroy()
 
     server.once('request', (req, res) => {
-      t.strictEqual('/', req.url)
-      t.strictEqual('GET', req.method)
+      t.equal('/', req.url)
+      t.equal('GET', req.method)
       res.setHeader('content-type', 'text/plain')
       res.end('hello')
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', idempotent: false, opaque: 'asd' }, (err, data) => {
-      t.ok(err instanceof Error) // we are expecting an error
-      t.strictEqual(data.opaque, 'asd')
+      t.type(err, Error) // we are expecting an error
+      t.equal(data.opaque, 'asd')
     })
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
@@ -69,207 +74,217 @@ test('GET errors and reconnect with pipelining 3', (t) => {
         res.socket.destroy()
       }
     } else {
-      t.strictEqual('/', req.url)
-      t.strictEqual('GET', req.method)
+      t.equal('/', req.url)
+      t.equal('GET', req.method)
       res.setHeader('content-type', 'text/plain')
       res.end('hello')
     }
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     // all of these will error
     for (let i = 0; i < 3; i++) {
       client.request({ path: '/', method: 'GET', idempotent: false, opaque: 'asd' }, (err, data) => {
-        t.ok(err instanceof Error) // we are expecting an error
-        t.strictEqual(data.opaque, 'asd')
+        t.type(err, Error) // we are expecting an error
+        t.equal(data.opaque, 'asd')
       })
     }
 
     // this will be queued up
     client.request({ path: '/', method: 'GET', idempotent: false }, (err, { statusCode, headers, body }) => {
       t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
 })
 
-test('POST with a stream that errors and pipelining 1 should reconnect', (t) => {
-  t.plan(12)
+function errorAndPipelining (type) {
+  test(`POST with a ${type} that errors and pipelining 1 should reconnect`, (t) => {
+    t.plan(12)
 
-  const server = createServer()
-  server.once('request', (req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('POST', req.method)
-    t.strictEqual('42', req.headers['content-length'])
-
-    const bufs = []
-    req.on('data', (buf) => {
-      bufs.push(buf)
-    })
-
-    req.on('aborted', () => {
-      // we will abruptly close the connection here
-      // but this will still end
-      t.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
-    })
-
+    const server = createServer()
     server.once('request', (req, res) => {
-      t.strictEqual('/', req.url)
-      t.strictEqual('GET', req.method)
-      res.setHeader('content-type', 'text/plain')
-      res.end('hello')
-    })
-  })
-  t.tearDown(server.close.bind(server))
+      t.equal('/', req.url)
+      t.equal('POST', req.method)
+      t.equal('42', req.headers['content-length'])
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
-
-    client.request({
-      path: '/',
-      method: 'POST',
-      headers: {
-        // higher than the length of the string
-        'content-length': 42
-      },
-      opaque: 'asd',
-      body: new Readable({
-        read () {
-          this.push('a string')
-          this.destroy(new Error('kaboom'))
-        }
-      })
-    }, (err, data) => {
-      t.strictEqual(err.message, 'kaboom')
-      t.strictEqual(data.opaque, 'asd')
-    })
-
-    // this will be queued up
-    client.request({ path: '/', method: 'GET', idempotent: false }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
-      body.on('data', (buf) => {
+      req.on('data', (buf) => {
         bufs.push(buf)
       })
-      body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+
+      req.on('aborted', () => {
+        // we will abruptly close the connection here
+        // but this will still end
+        t.equal('a string', Buffer.concat(bufs).toString('utf8'))
+      })
+
+      server.once('request', (req, res) => {
+        t.equal('/', req.url)
+        t.equal('GET', req.method)
+        res.setHeader('content-type', 'text/plain')
+        res.end('hello')
+      })
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`)
+      t.teardown(client.destroy.bind(client))
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        headers: {
+          // higher than the length of the string
+          'content-length': 42
+        },
+        opaque: 'asd',
+        body: maybeWrapStream(new Readable({
+          read () {
+            this.push('a string')
+            this.destroy(new Error('kaboom'))
+          }
+        }), type)
+      }, (err, data) => {
+        t.equal(err.message, 'kaboom')
+        t.equal(data.opaque, 'asd')
+      })
+
+      // this will be queued up
+      client.request({ path: '/', method: 'GET', idempotent: false }, (err, { statusCode, headers, body }) => {
+        t.error(err)
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
+        const bufs = []
+        body.on('data', (buf) => {
+          bufs.push(buf)
+        })
+        body.on('end', () => {
+          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        })
       })
     })
   })
-})
+}
 
-test('POST with chunked encoding that errors and pipelining 1 should reconnect', (t) => {
-  t.plan(12)
+errorAndPipelining(consts.STREAM)
+errorAndPipelining(consts.ASYNC_ITERATOR)
 
-  const server = createServer()
-  server.once('request', (req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('POST', req.method)
-    t.strictEqual(req.headers['content-length'], undefined)
+function errorAndChunkedEncodingPipelining (type) {
+  test(`POST with chunked encoding, ${type} body that errors and pipelining 1 should reconnect`, (t) => {
+    t.plan(12)
 
-    const bufs = []
-    req.on('data', (buf) => {
-      bufs.push(buf)
-    })
-
-    req.on('aborted', () => {
-      // we will abruptly close the connection here
-      // but this will still end
-      t.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
-    })
-
+    const server = createServer()
     server.once('request', (req, res) => {
-      t.strictEqual('/', req.url)
-      t.strictEqual('GET', req.method)
-      res.setHeader('content-type', 'text/plain')
-      res.end('hello')
-    })
-  })
-  t.tearDown(server.close.bind(server))
+      t.equal('/', req.url)
+      t.equal('POST', req.method)
+      t.equal(req.headers['content-length'], undefined)
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
-
-    client.request({
-      path: '/',
-      method: 'POST',
-      opaque: 'asd',
-      body: new Readable({
-        read () {
-          this.push('a string')
-          this.destroy(new Error('kaboom'))
-        }
-      })
-    }, (err, data) => {
-      t.strictEqual(err.message, 'kaboom')
-      t.strictEqual(data.opaque, 'asd')
-    })
-
-    // this will be queued up
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
-      body.on('data', (buf) => {
+      req.on('data', (buf) => {
         bufs.push(buf)
       })
-      body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+
+      req.on('aborted', () => {
+        // we will abruptly close the connection here
+        // but this will still end
+        t.equal('a string', Buffer.concat(bufs).toString('utf8'))
+      })
+
+      server.once('request', (req, res) => {
+        t.equal('/', req.url)
+        t.equal('GET', req.method)
+        res.setHeader('content-type', 'text/plain')
+        res.end('hello')
+      })
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`)
+      t.teardown(client.destroy.bind(client))
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        opaque: 'asd',
+        body: maybeWrapStream(new Readable({
+          read () {
+            this.push('a string')
+            this.destroy(new Error('kaboom'))
+          }
+        }), type)
+      }, (err, data) => {
+        t.equal(err.message, 'kaboom')
+        t.equal(data.opaque, 'asd')
+      })
+
+      // this will be queued up
+      client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+        t.error(err)
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain')
+        const bufs = []
+        body.on('data', (buf) => {
+          bufs.push(buf)
+        })
+        body.on('end', () => {
+          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        })
       })
     })
   })
-})
+}
+
+errorAndChunkedEncodingPipelining(consts.STREAM)
+errorAndChunkedEncodingPipelining(consts.ASYNC_ITERATOR)
 
 test('invalid options throws', (t) => {
   try {
     new Client({ port: 'foobar' }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid port')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid port')
   }
 
   try {
     new Client(new URL('http://asd:200/somepath')) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid url')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid url')
   }
 
   try {
     new Client(new URL('http://asd:200?q=asd')) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid url')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid url')
   }
 
   try {
     new Client(new URL('http://asd:200#asd')) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid url')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid url')
   }
 
   try {
@@ -278,8 +293,8 @@ test('invalid options throws', (t) => {
     })
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid socketPath')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid socketPath')
   }
 
   try {
@@ -288,8 +303,8 @@ test('invalid options throws', (t) => {
     }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid keepAliveTimeout')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid keepAliveTimeout')
   }
 
   try {
@@ -298,8 +313,8 @@ test('invalid options throws', (t) => {
     }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid keepAliveMaxTimeout')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid keepAliveMaxTimeout')
   }
 
   try {
@@ -308,8 +323,8 @@ test('invalid options throws', (t) => {
     }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid keepAliveMaxTimeout')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid keepAliveMaxTimeout')
   }
 
   try {
@@ -318,8 +333,8 @@ test('invalid options throws', (t) => {
     }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid keepAliveTimeoutThreshold')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid keepAliveTimeoutThreshold')
   }
 
   try {
@@ -328,8 +343,8 @@ test('invalid options throws', (t) => {
     })
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid protocol')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid protocol')
   }
 
   try {
@@ -338,8 +353,8 @@ test('invalid options throws', (t) => {
     })
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid hostname')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid hostname')
   }
 
   try {
@@ -348,16 +363,16 @@ test('invalid options throws', (t) => {
     })
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid maxHeaderSize')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid maxHeaderSize')
   }
 
   try {
     new Client(1) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid url')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid url')
   }
 
   try {
@@ -365,8 +380,8 @@ test('invalid options throws', (t) => {
     client.destroy(null, null)
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid callback')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid callback')
   }
 
   try {
@@ -374,55 +389,135 @@ test('invalid options throws', (t) => {
     client.close(null, null)
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'invalid callback')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid callback')
   }
 
   try {
     new Client(new URL('http://localhost:200'), { maxKeepAliveTimeout: 1e3 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported maxKeepAliveTimeout, use keepAliveMaxTimeout instead')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'unsupported maxKeepAliveTimeout, use keepAliveMaxTimeout instead')
   }
 
   try {
     new Client(new URL('http://localhost:200'), { keepAlive: false }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported keepAlive, use pipelining=0 instead')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'unsupported keepAlive, use pipelining=0 instead')
   }
 
   try {
     new Client(new URL('http://localhost:200'), { idleTimeout: 30e3 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported idleTimeout, use keepAliveTimeout instead')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'unsupported idleTimeout, use keepAliveTimeout instead')
   }
 
   try {
     new Client(new URL('http://localhost:200'), { socketTimeout: 30e3 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported socketTimeout, use headersTimeout & bodyTimeout instead')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'unsupported socketTimeout, use headersTimeout & bodyTimeout instead')
   }
 
   try {
     new Client(new URL('http://localhost:200'), { requestTimeout: 30e3 }) // eslint-disable-line
     t.fail()
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
-    t.strictEqual(err.message, 'unsupported requestTimeout, use headersTimeout & bodyTimeout instead')
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'unsupported requestTimeout, use headersTimeout & bodyTimeout instead')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectTimeout: -1 }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid connectTimeout')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectTimeout: Infinity }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid connectTimeout')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectTimeout: 'asd' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid connectTimeout')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connect: 'asd' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'connect must be a function or an object')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connect: -1 }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'connect must be a function or an object')
+  }
+
+  try {
+    new Pool(new URL('http://localhost:200'), { connect: 'asd' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'connect must be a function or an object')
+  }
+
+  try {
+    new Pool(new URL('http://localhost:200'), { connect: -1 }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'connect must be a function or an object')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { maxCachedSessions: -10 }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'maxCachedSessions must be a positive integer or zero')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { maxCachedSessions: 'foo' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'maxCachedSessions must be a positive integer or zero')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { maxRequestsPerClient: 'foo' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'maxRequestsPerClient must be a positive number')
   }
 
   t.end()
 })
 
 test('POST which fails should error response', (t) => {
-  t.plan(4)
+  t.plan(6)
 
   const server = createServer()
   server.on('request', (req, res) => {
@@ -430,11 +525,11 @@ test('POST which fails should error response', (t) => {
       res.destroy()
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     function checkError (err) {
       // Different platforms error with different codes...
@@ -480,6 +575,33 @@ test('POST which fails should error response', (t) => {
         checkError(err)
       })
     }
+
+    {
+      const body = wrapWithAsyncIterable(['asd'], true)
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        body
+      }, (err) => {
+        checkError(err)
+      })
+    }
+
+    {
+      const body = wrapWithAsyncIterable(['asd'], true)
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        headers: {
+          'content-length': 100
+        },
+        body
+      }, (err) => {
+        checkError(err)
+      })
+    }
   })
 })
 
@@ -496,16 +618,16 @@ test('client destroy cleanup', (t) => {
       })
     })
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     const body = new Readable({ read () {} })
     body.push('asd')
     body.on('error', (err) => {
-      t.strictEqual(err, _err)
+      t.equal(err, _err)
     })
 
     client.request({
@@ -513,7 +635,63 @@ test('client destroy cleanup', (t) => {
       method: 'POST',
       body
     }, (err, data) => {
-      t.strictEqual(err, _err)
+      t.equal(err, _err)
+    })
+  })
+})
+
+test('throwing async-iterator causes error', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.end(Buffer.alloc(4 + 1, 'a'))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      method: 'POST',
+      path: '/',
+      body: (async function * () {
+        yield 'hello'
+        throw new IteratorError('bad iterator')
+      })()
+    }, (err) => {
+      t.type(err, IteratorError)
+    })
+  })
+})
+
+test('client async-iterator destroy cleanup', (t) => {
+  t.plan(2)
+
+  const _err = new Error('kaboom')
+  let client
+  const server = createServer()
+  server.once('request', (req, res) => {
+    req.once('data', () => {
+      client.destroy(_err, (err) => {
+        t.error(err)
+      })
+    })
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const body = wrapWithAsyncIterable(['asd'], true)
+
+    client.request({
+      path: '/',
+      method: 'POST',
+      body
+    }, (err, data) => {
+      t.equal(err, _err)
     })
   })
 })
@@ -528,11 +706,11 @@ test('GET errors body', (t) => {
       res.destroy()
     }, 19)
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.error(err)
@@ -550,18 +728,18 @@ test('validate request body', (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.request({
       path: '/',
       method: 'POST',
       body: /asdasd/
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     })
 
     client.request({
@@ -569,7 +747,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: 0
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     })
 
     client.request({
@@ -577,7 +755,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: false
     }, (err, data) => {
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.type(err, errors.InvalidArgumentError)
     })
 
     client.request({
@@ -585,7 +763,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: ''
     }, (err, data) => {
-      t.error(err instanceof errors.InvalidArgumentError)
+      t.error(err)
       data.body.resume()
     })
 
@@ -594,7 +772,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: new Uint8Array()
     }, (err, data) => {
-      t.error(err instanceof errors.InvalidArgumentError)
+      t.error(err)
       data.body.resume()
     })
 
@@ -603,7 +781,7 @@ test('validate request body', (t) => {
       method: 'POST',
       body: Buffer.alloc(10)
     }, (err, data) => {
-      t.error(err instanceof errors.InvalidArgumentError)
+      t.error(err)
       data.body.resume()
     })
   })
@@ -616,11 +794,11 @@ test('parser error', (t) => {
   server.once('connection', (socket) => {
     socket.write('asd\n\r213123')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err) => {
       t.ok(err)
@@ -631,78 +809,89 @@ test('parser error', (t) => {
   })
 })
 
-test('socket fail while writing request body', (t) => {
-  t.plan(2)
+function socketFailWrite (type) {
+  test(`socket fail while writing ${type} request body`, (t) => {
+    t.plan(2)
 
-  const server = createServer()
-  server.once('request', (req, res) => {
-  })
-  t.tearDown(server.close.bind(server))
+    const server = createServer()
+    server.once('request', (req, res) => {
+    })
+    t.teardown(server.close.bind(server))
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`)
+      t.teardown(client.destroy.bind(client))
 
-    const body = new Readable({ read () {} })
-    body.push('asd')
-
-    client.on('connect', () => {
-      process.nextTick(() => {
-        client[kSocket].destroy('kaboom')
+      const preBody = new Readable({ read () {} })
+      preBody.push('asd')
+      const body = maybeWrapStream(preBody, type)
+      client.on('connect', () => {
+        process.nextTick(() => {
+          client[kSocket].destroy('kaboom')
+        })
       })
-    })
 
-    client.request({
-      path: '/',
-      method: 'POST',
-      body
-    }, (err) => {
-      t.ok(err)
-    })
-    client.close((err) => {
-      t.error(err)
-    })
-  })
-})
-
-test('socket fail while ending request body', (t) => {
-  t.plan(3)
-
-  const server = createServer()
-  server.once('request', (req, res) => {
-    res.end()
-  })
-  t.tearDown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 2
-    })
-    t.tearDown(client.destroy.bind(client))
-
-    const _err = new Error('kaboom')
-    client.on('connect', () => {
-      process.nextTick(() => {
-        client[kSocket].destroy(_err)
+      client.request({
+        path: '/',
+        method: 'POST',
+        body
+      }, (err) => {
+        t.ok(err)
       })
-    })
-    const body = new Readable({ read () {} })
-    body.push(null)
-    client.request({
-      path: '/',
-      method: 'POST',
-      body
-    }, (err) => {
-      t.strictEqual(err, _err)
-    })
-    client.close((err) => {
-      t.error(err)
       client.close((err) => {
-        t.ok(err instanceof errors.ClientDestroyedError)
+        t.error(err)
       })
     })
   })
-})
+}
+socketFailWrite(consts.STREAM)
+socketFailWrite(consts.ASYNC_ITERATOR)
+
+function socketFailEndWrite (type) {
+  test(`socket fail while ending ${type} request body`, (t) => {
+    t.plan(3)
+
+    const server = createServer()
+    server.once('request', (req, res) => {
+      res.end()
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`, {
+        pipelining: 2
+      })
+      t.teardown(client.destroy.bind(client))
+
+      const _err = new Error('kaboom')
+      client.on('connect', () => {
+        process.nextTick(() => {
+          client[kSocket].destroy(_err)
+        })
+      })
+      const preBody = new Readable({ read () {} })
+      preBody.push(null)
+      const body = maybeWrapStream(preBody, type)
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        body
+      }, (err) => {
+        t.equal(err, _err)
+      })
+      client.close((err) => {
+        t.error(err)
+        client.close((err) => {
+          t.type(err, errors.ClientDestroyedError)
+        })
+      })
+    })
+  })
+}
+
+socketFailEndWrite(consts.STREAM)
+socketFailEndWrite(consts.ASYNC_ITERATOR)
 
 test('queued request should not fail on socket destroy', (t) => {
   t.plan(4)
@@ -711,13 +900,13 @@ test('queued request should not fail on socket destroy', (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -748,13 +937,13 @@ test('queued request should fail on client destroy', (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     let requestErrored = false
     client.request({
@@ -768,7 +957,7 @@ test('queued request should fail on client destroy', (t) => {
         })
       client.destroy((err) => {
         t.error(err)
-        t.strictEqual(requestErrored, true)
+        t.equal(requestErrored, true)
       })
     })
     client.request({
@@ -778,7 +967,7 @@ test('queued request should fail on client destroy', (t) => {
     }, (err, data) => {
       requestErrored = true
       t.ok(err)
-      t.strictEqual(data.opaque, 'asd')
+      t.equal(data.opaque, 'asd')
     })
   })
 })
@@ -790,13 +979,13 @@ test('retry idempotent inflight', (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.tearDown(client.close.bind(client))
+    t.teardown(client.close.bind(client))
 
     client.request({
       path: '/',
@@ -831,10 +1020,10 @@ test('invalid opts', (t) => {
 
   const client = new Client('http://localhost:5000')
   client.request(null, (err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
   client.pipeline(null).on('error', (err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.type(err, errors.InvalidArgumentError)
   })
 })
 
@@ -877,11 +1066,11 @@ test('CONNECT throws in next tick', (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -896,7 +1085,7 @@ test('CONNECT throws in next tick', (t) => {
             method: 'CONNECT'
           }, (err) => {
             t.ok(err)
-            t.strictDeepEqual(ticked, true)
+            t.strictSame(ticked, true)
           })
           ticked = true
         })
@@ -913,19 +1102,19 @@ test('invalid signal', (t) => {
 
   let ticked = false
   client.request({ path: '/', method: 'GET', signal: {}, opaque: 'asd' }, (err, { opaque }) => {
-    t.strictEqual(ticked, true)
-    t.strictEqual(opaque, 'asd')
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(ticked, true)
+    t.equal(opaque, 'asd')
+    t.type(err, errors.InvalidArgumentError)
   })
   client.pipeline({ path: '/', method: 'GET', signal: {} }, () => {})
     .on('error', (err) => {
-      t.strictEqual(ticked, true)
-      t.ok(err instanceof errors.InvalidArgumentError)
+      t.equal(ticked, true)
+      t.type(err, errors.InvalidArgumentError)
     })
   client.stream({ path: '/', method: 'GET', signal: {}, opaque: 'asd' }, () => {}, (err, { opaque }) => {
-    t.strictEqual(ticked, true)
-    t.strictEqual(opaque, 'asd')
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.equal(ticked, true)
+    t.equal(opaque, 'asd')
+    t.type(err, errors.InvalidArgumentError)
   })
   ticked = true
 })
@@ -937,11 +1126,11 @@ test('invalid body chunk does not crash', (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
+    t.teardown(client.destroy.bind(client))
 
     client.request({
       path: '/',
@@ -953,7 +1142,7 @@ test('invalid body chunk does not crash', (t) => {
       }),
       method: 'GET'
     }, (err) => {
-      t.strictEqual(err.code, 'ERR_INVALID_ARG_TYPE')
+      t.equal(err.code, 'ERR_INVALID_ARG_TYPE')
     })
   })
 })
@@ -961,12 +1150,108 @@ test('invalid body chunk does not crash', (t) => {
 test('socket errors', t => {
   t.plan(2)
   const client = new Client('http://localhost:5554')
-  t.tearDown(client.destroy.bind(client))
+  t.teardown(client.destroy.bind(client))
 
   client.request({ path: '/', method: 'GET' }, (err, data) => {
     t.ok(err)
     // TODO: Why UND_ERR_SOCKET?
     t.ok(err.code === 'ECONNREFUSED' || err.code === 'UND_ERR_SOCKET', err.code)
     t.end()
+  })
+})
+
+test('headers overflow', t => {
+  t.plan(2)
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.writeHead(200, {
+      'x-test-1': '1',
+      'x-test-2': '2'
+    })
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      maxHeaderSize: 10
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.ok(err)
+      t.equal(err.code, 'UND_ERR_HEADERS_OVERFLOW')
+      t.end()
+    })
+  })
+})
+
+test('SocketError should expose socket details (net)', (t) => {
+  t.plan(8)
+
+  const server = createServer()
+
+  server.once('request', (req, res) => {
+    res.destroy()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.ok(err instanceof errors.SocketError)
+      if (err.socket.remoteFamily === 'IPv4') {
+        t.equal(err.socket.remoteFamily, 'IPv4')
+        t.equal(err.socket.localAddress, '127.0.0.1')
+        t.equal(err.socket.remoteAddress, '127.0.0.1')
+      } else {
+        t.equal(err.socket.remoteFamily, 'IPv6')
+        t.equal(err.socket.localAddress, '::1')
+        t.equal(err.socket.remoteAddress, '::1')
+      }
+      t.type(err.socket.localPort, 'number')
+      t.type(err.socket.remotePort, 'number')
+      t.type(err.socket.bytesWritten, 'number')
+      t.type(err.socket.bytesRead, 'number')
+    })
+  })
+})
+
+test('SocketError should expose socket details (tls)', (t) => {
+  t.plan(8)
+
+  const server = https.createServer(pem)
+
+  server.once('request', (req, res) => {
+    res.destroy()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      tls: {
+        rejectUnauthorized: false
+      }
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.ok(err instanceof errors.SocketError)
+      if (err.socket.remoteFamily === 'IPv4') {
+        t.equal(err.socket.remoteFamily, 'IPv4')
+        t.equal(err.socket.localAddress, '127.0.0.1')
+        t.equal(err.socket.remoteAddress, '127.0.0.1')
+      } else {
+        t.equal(err.socket.remoteFamily, 'IPv6')
+        t.equal(err.socket.localAddress, '::1')
+        t.equal(err.socket.remoteAddress, '::1')
+      }
+      t.type(err.socket.localPort, 'number')
+      t.type(err.socket.remotePort, 'number')
+      t.type(err.socket.bytesWritten, 'number')
+      t.type(err.socket.bytesRead, 'number')
+    })
   })
 })

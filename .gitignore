@@ -66,6 +66,15 @@ yarn.lock
 
 # IDE files
 .idea
+.vscode
 
 *0x
 *clinic*
+
+# Fuzzing
+corpus/
+crash-*
+fuzz-results-*.json
+
+# Bundle output
+undici-fetch.js

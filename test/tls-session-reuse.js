@@ -5,8 +5,8 @@ const { join } = require('path')
 const https = require('https')
 const crypto = require('crypto')
 const { test } = require('tap')
-const { Client } = require('..')
-const { kSocket, kTLSOpts } = require('../lib/core/symbols')
+const { Client, Pool } = require('..')
+const { kSocket } = require('../lib/core/symbols')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
@@ -16,12 +16,14 @@ const options = {
 }
 const ca = readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
 
-test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
+test('A client should disable session caching', {
+  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
+}, t => {
   const clientSessions = {}
   let serverRequests = 0
 
   t.test('Prepare request', t => {
-    t.plan(7)
+    t.plan(3)
     const server = https.createServer(options, (req, res) => {
       if (req.url === '/drop-key') {
         server.setTicketKeys(crypto.randomBytes(48))
@@ -31,14 +33,15 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
     })
 
     server.listen(0, function () {
+      const tls = {
+        ca,
+        rejectUnauthorized: false,
+        servername: 'agent1'
+      }
       const client = new Client(`https://localhost:${server.address().port}`, {
         pipelining: 0,
-        tls: {
-          ca,
-          rejectUnauthorized: false,
-          maxCachedSessions: 1,
-          servername: 'agent1'
-        }
+        tls,
+        maxCachedSessions: 0
       })
 
       t.teardown(() => {
@@ -51,27 +54,7 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
         method: 'GET',
         path: '/'
       }, {
-        name: 'first-reuse',
-        method: 'GET',
-        path: '/'
-      }, {
-        name: 'cipher-change',
-        method: 'GET',
-        path: '/',
-        // Choose different cipher to use different cache entry
-        ciphers: 'AES256-SHA'
-      }, {
-        // Change the ticket key to ensure session is updated in cache
-        name: 'before-drop',
-        method: 'GET',
-        path: '/drop-key'
-      }, {
-        // Ticket will be updated starting from this
-        name: 'after-drop',
-        method: 'GET',
-        path: '/'
-      }, {
-        name: 'after-drop-reuse',
+        name: 'second',
         method: 'GET',
         path: '/'
       }]
@@ -80,9 +63,9 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
         const options = queue.shift()
         if (options.ciphers) {
           // Choose different cipher to use different cache entry
-          client[kTLSOpts].ciphers = options.ciphers
+          tls.ciphers = options.ciphers
         } else {
-          delete client[kTLSOpts].ciphers
+          delete tls.ciphers
         }
         client.request(options, (err, data) => {
           t.error(err)
@@ -100,32 +83,101 @@ test('TLS should reuse sessions', { skip: nodeMajor < 11 }, t => {
   })
 
   t.test('Verify cached sessions', t => {
-    t.plan(7)
-    t.strictEqual(serverRequests, 6)
-    t.strictEqual(
+    t.plan(2)
+    t.equal(serverRequests, 2)
+    t.not(
       clientSessions.first.toString('hex'),
-      clientSessions['first-reuse'].toString('hex')
+      clientSessions.second.toString('hex')
     )
-    t.notStrictEqual(
-      clientSessions.first.toString('hex'),
-      clientSessions['cipher-change'].toString('hex')
-    )
-    t.notStrictEqual(
-      clientSessions.first.toString('hex'),
-      clientSessions['before-drop'].toString('hex')
-    )
-    t.notStrictEqual(
-      clientSessions['cipher-change'].toString('hex'),
-      clientSessions['before-drop'].toString('hex')
-    )
-    t.notStrictEqual(
-      clientSessions['before-drop'].toString('hex'),
-      clientSessions['after-drop'].toString('hex')
-    )
-    t.strictEqual(
-      clientSessions['after-drop'].toString('hex'),
-      clientSessions['after-drop-reuse'].toString('hex')
-    )
+  })
+
+  t.end()
+})
+
+test('A pool should be able to reuse TLS sessions between clients', {
+  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
+}, t => {
+  let serverRequests = 0
+
+  const REQ_COUNT = 10
+  const ASSERT_PERFORMANCE_GAIN = false
+
+  t.test('Prepare request', t => {
+    t.plan(2 + 1 + (ASSERT_PERFORMANCE_GAIN ? 1 : 0))
+    const server = https.createServer(options, (req, res) => {
+      serverRequests++
+      res.end()
+    })
+
+    let numSessions = 0
+    const sessions = []
+
+    server.listen(0, async () => {
+      const poolWithSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
+        pipelining: 0,
+        connections: 100,
+        maxCachedSessions: 1,
+        tls: {
+          ca,
+          rejectUnauthorized: false,
+          servername: 'agent1'
+        }
+      })
+      const poolWithoutSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
+        pipelining: 0,
+        connections: 100,
+        maxCachedSessions: 0,
+        tls: {
+          ca,
+          rejectUnauthorized: false,
+          servername: 'agent1'
+        }
+      })
+
+      poolWithSessionReuse.on('connect', (url, targets) => {
+        const y = targets[1][kSocket].getSession()
+        if (sessions.some(x => x.equals(y))) {
+          return
+        }
+        sessions.push(y)
+        numSessions++
+      })
+
+      t.teardown(() => {
+        poolWithSessionReuse.close()
+        poolWithoutSessionReuse.close()
+        server.close()
+      })
+
+      function request (pool, expectTLSSessionCache) {
+        return new Promise((resolve, reject) => {
+          pool.request({
+            method: 'GET',
+            path: '/'
+          }, (err, data) => {
+            if (err) return reject(err)
+            data.body.resume().on('end', resolve)
+          })
+        })
+      }
+
+      async function runRequests (pool, numIterations, expectTLSSessionCache) {
+        const requests = []
+        // For the session reuse, we first need one client to connect to receive a valid tls session to reuse
+        await request(pool, false)
+        while (numIterations--) {
+          requests.push(request(pool, expectTLSSessionCache))
+        }
+        return await Promise.all(requests)
+      }
+
+      await runRequests(poolWithoutSessionReuse, REQ_COUNT, false)
+      await runRequests(poolWithSessionReuse, REQ_COUNT, true)
+
+      t.equal(numSessions, 2)
+      t.equal(serverRequests, 2 + REQ_COUNT * 2)
+      t.pass()
+    })
   })
 
   t.end()

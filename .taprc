@@ -1,7 +1,8 @@
-esm: false
 ts: false
 jsx: false
 flow: false
-coverage: true
+coverage: false
 expose-gc: true
 timeout: 60
+check-coverage: false
+node-arg: --experimental-wasm-simd

@@ -1,37 +1,29 @@
-import { UrlObject } from 'url'
-import Pool from './pool'
-import Client from './client'
-import { Duplex } from 'stream'
 import { URL } from 'url'
+import Dispatcher = require('./dispatcher')
+import Pool = require('./pool')
 
-export {
-  Agent,
-  setGlobalAgent,
-  request,
-  stream,
-  pipeline,
+export = Agent
+
+declare class Agent extends Dispatcher{
+  constructor(opts?: Agent.Options)
+  /** `true` after `dispatcher.close()` has been called. */
+  closed: boolean;
+  /** `true` after `dispatcher.destroyed()` has been called or `dispatcher.close()` has been called and the dispatcher shutdown has completed. */
+  destroyed: boolean;
+  /** Dispatches a request. */
+  dispatch(options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandlers): boolean;
 }
 
-declare class Agent {
-  constructor(opts?: Pool.Options)
-  get(origin: string): Pool;
+declare namespace Agent {
+  export interface Options extends Pool.Options {
+    /** Default: `(origin, opts) => new Pool(origin, opts)`. */
+    factory?(origin: URL, opts: Object): Dispatcher;
+    /** Integer. Default: `0` */
+    maxRedirections?: number;
+  }
+
+  export interface DispatchOptions extends Dispatcher.DispatchOptions {
+    /** Integer. */
+    maxRedirections?: number;
+  }
 }
-
-declare function setGlobalAgent<AgentImplementation extends Agent>(agent: AgentImplementation): void;
-
-declare function request(
-  url: string | URL | UrlObject,
-  opts?: { agent?: Agent } & Omit<Client.RequestOptions, 'path'>,
-): PromiseLike<Client.ResponseData>;
-
-declare function stream(
-  url: string | URL | UrlObject,
-  opts: { agent?: Agent } & Omit<Client.RequestOptions, 'path'>,
-  factory: Client.StreamFactory
-): PromiseLike<Client.StreamData>;
-
-declare function pipeline(
-  url: string | URL | UrlObject,
-  opts: { agent?: Agent } & Omit<Client.PipelineOptions, 'path'>,
-  handler: Client.PipelineHandler
-): Duplex;

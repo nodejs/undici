@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
+const { Readable } = require('stream')
 const EE = require('events')
 
 test('stream body without destroy', (t) => {
@@ -17,7 +18,8 @@ test('stream body without destroy', (t) => {
     t.teardown(client.destroy.bind(client))
 
     const signal = new EE()
-    const body = new EE()
+    const body = new Readable({ read () {} })
+    body.destroy = undefined
     body.on('error', (err) => {
       t.ok(err)
     })
@@ -33,7 +35,7 @@ test('stream body without destroy', (t) => {
   })
 })
 
-test('IncomingMessage', { only: true }, (t) => {
+test('IncomingMessage', (t) => {
   t.plan(2)
 
   const server = createServer((req, res) => {

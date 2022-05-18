@@ -13,7 +13,7 @@ test('socket close listener does not leak', (t) => {
   server.on('request', (req, res) => {
     res.end('hello')
   })
-  t.tearDown(server.close.bind(server))
+  t.teardown(server.close.bind(server))
 
   const makeBody = () => {
     return new Readable({
@@ -30,17 +30,19 @@ test('socket close listener does not leak', (t) => {
     data.body.on('end', () => t.pass()).resume()
   }
 
-  process.on('warning', () => {
-    t.fail()
+  function onWarning (warning) {
+    if (!/ExperimentalWarning/.test(warning)) {
+      t.fail()
+    }
+  }
+  process.on('warning', onWarning)
+  t.teardown(() => {
+    process.removeListener('warning', onWarning)
   })
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.tearDown(client.destroy.bind(client))
-
-    client.on('disconnect', () => {
-      t.fail()
-    })
+    t.teardown(client.destroy.bind(client))
 
     for (let n = 0; n < 16; ++n) {
       client.request({ path: '/', method: 'GET', body: makeBody() }, onRequest)
