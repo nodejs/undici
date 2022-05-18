@@ -83,10 +83,11 @@ test('basic get', (t) => {
 test('basic get with query params', (t) => {
   t.plan(4)
 
+  const date = new Date(1995, 11, 17)
   const server = createServer((req, res) => {
     const searchParamsObject = buildParams(req.url)
     t.strictSame(searchParamsObject, {
-      date: '1995-12-16T22:00:00.000Z',
+      date: date.toISOString(),
       obj: '%7B%22id%22:1%7D',
       bool: 'true',
       foo: '1',
@@ -100,7 +101,7 @@ test('basic get with query params', (t) => {
   t.teardown(server.close.bind(server))
 
   const params = {
-    date: new Date(1995, 11, 17),
+    date,
     obj: { id: 1 },
     bool: true,
     foo: 1,
@@ -135,7 +136,6 @@ test('basic get with query params ignores hashmark', (t) => {
   const server = createServer((req, res) => {
     const searchParamsObject = buildParams(req.url)
     t.strictSame(searchParamsObject, {
-      date: '1995-12-16T22:00:00.000Z',
       obj: '%7B%22id%22:1%7D',
       foo: '1',
       bar: 'bar',
@@ -148,7 +148,6 @@ test('basic get with query params ignores hashmark', (t) => {
   t.teardown(server.close.bind(server))
 
   const params = {
-    date: new Date(1995, 11, 17),
     obj: { id: 1 },
     foo: 1,
     bar: 'bar',
