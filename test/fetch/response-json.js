@@ -97,5 +97,17 @@ test('unserializable values', (t) => {
     Response.json(undefined)
   }, TypeError)
 
+  t.throws(() => {
+    Response.json()
+  }, TypeError)
+
+  t.end()
+})
+
+test('invalid init', (t) => {
+  t.throws(() => {
+    Response.json(null, 3)
+  }, TypeError)
+
   t.end()
 })
