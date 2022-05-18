@@ -127,7 +127,7 @@ test('basic get with query params partially in path', (t) => {
   t.tearDown(server.close.bind(server))
 
   const params = {
-    foo: 1,
+    foo: 1
   }
 
   server.listen(0, () => {
@@ -324,8 +324,8 @@ test('head with host header', (t) => {
 
 function serverRequestParams (t, expected) {
   return function (req, res) {
-    const [ , paramString ] = req.url.split( '?' );
-    const searchParams = new URLSearchParams( paramString );
+    const [, paramString] = req.url.split('?')
+    const searchParams = new URLSearchParams(paramString)
     const searchParamsObject = Object.fromEntries(searchParams.entries())
     t.strictSame(searchParamsObject, expected)
 
