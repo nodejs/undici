@@ -3,7 +3,6 @@
 const EE = require('events')
 const { readFileSync, createReadStream } = require('fs')
 const { createServer } = require('http')
-const querystring = require('querystring')
 const { Readable } = require('stream')
 const { test } = require('tap')
 const { Client, errors } = require('..')
@@ -87,10 +86,7 @@ test('basic get with query params', (t) => {
   const server = createServer(serverRequestParams(t, {
     foo: '1',
     bar: 'bar',
-    multi: [
-      '1',
-      '2'
-    ]
+    multi: '1,2'
   }))
   t.tearDown(server.close.bind(server))
 
@@ -110,6 +106,40 @@ test('basic get with query params', (t) => {
     client.request({
       signal,
       path: '/',
+      method: 'GET',
+      params
+    }, (err, data) => {
+      t.error(err)
+      const { statusCode } = data
+      t.strictEqual(statusCode, 200)
+    })
+    t.strictEqual(signal.listenerCount('abort'), 1)
+  })
+})
+
+test('basic get with query params partially in path', (t) => {
+  t.plan(4)
+
+  const server = createServer(serverRequestParams(t, {
+    foo: '1',
+    bar: '2'
+  }))
+  t.tearDown(server.close.bind(server))
+
+  const params = {
+    foo: 1,
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.tearDown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/?bar=2',
       method: 'GET',
       params
     }, (err, data) => {
@@ -294,8 +324,10 @@ test('head with host header', (t) => {
 
 function serverRequestParams (t, expected) {
   return function (req, res) {
-    const queryParams = querystring.parse(req.url.replace('/?', '')) // We remove opening /? because parser assumes it to be a part of param name
-    t.strictSame(JSON.parse(JSON.stringify(queryParams)), expected)
+    const [ , paramString ] = req.url.split( '?' );
+    const searchParams = new URLSearchParams( paramString );
+    const searchParamsObject = Object.fromEntries(searchParams.entries())
+    t.strictSame(searchParamsObject, expected)
 
     req.setEncoding('utf8')
     res.end('hello')
