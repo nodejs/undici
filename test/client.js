@@ -80,7 +80,6 @@ test('basic get', (t) => {
   })
 })
 
-
 test('basic get with query params', (t) => {
   t.plan(4)
 
@@ -362,6 +361,7 @@ test('head with host header', (t) => {
   })
 })
 
+/*
 function serverRequestParams (t, expected) {
   return function (req, res) {
     const [, paramString] = req.url.split('?')
@@ -373,6 +373,7 @@ function serverRequestParams (t, expected) {
     res.end('hello')
   }
 }
+ */
 
 function postServer (t, expected) {
   return function (req, res) {
