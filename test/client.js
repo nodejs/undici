@@ -100,7 +100,7 @@ test('basic get returns 400 when configured to throw on errors (callback)', (t) 
       signal,
       path: '/',
       method: 'GET',
-      throwOnError: true,
+      throwOnError: true
     }, (err) => {
       t.equal(err.message, 'Response status code 400: Bad Request')
     })
@@ -112,7 +112,7 @@ test('basic get returns 400 when configured to throw on errors (promise)', (t) =
   t.plan(1)
 
   const server = createServer((req, res) => {
-    res.writeHead( 400, 'Invalid params', {'content-type' : 'text/plain'});
+    res.writeHead(400, 'Invalid params', { 'content-type': 'text/plain' })
     res.end('Invalid params')
   })
   t.teardown(server.close.bind(server))
