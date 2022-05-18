@@ -125,12 +125,19 @@ test('basic get with query params', (t) => {
   })
 })
 
-/*
 test('basic get with empty query params', (t) => {
   t.plan(4)
 
-  const server = createServer(serverRequestParams(t, {}))
-  t.tearDown(server.close.bind(server))
+  const server = createServer((req, res) => {
+    const [, paramString] = req.url.split('?')
+    const searchParams = new URLSearchParams(paramString)
+    const searchParamsObject = Object.fromEntries(searchParams.entries())
+    t.strictSame(searchParamsObject, {})
+
+    res.statusCode = 200
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
 
   const params = {}
 
@@ -158,11 +165,20 @@ test('basic get with empty query params', (t) => {
 test('basic get with query params partially in path', (t) => {
   t.plan(4)
 
-  const server = createServer(serverRequestParams(t, {
-    foo: '1',
-    bar: '2'
-  }))
-  t.tearDown(server.close.bind(server))
+  const server = createServer((req, res) => {
+    const [, paramString] = req.url.split('?')
+    const searchParams = new URLSearchParams(paramString)
+    const searchParamsObject = Object.fromEntries(searchParams.entries())
+    t.strictSame(searchParamsObject, {
+      foo: '1',
+      bar: '2'
+    })
+
+    res.statusCode = 200
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
 
   const params = {
     foo: 1
@@ -188,7 +204,6 @@ test('basic get with query params partially in path', (t) => {
     t.strictEqual(signal.listenerCount('abort'), 1)
   })
 })
- */
 
 test('basic head', (t) => {
   t.plan(14)
@@ -360,20 +375,6 @@ test('head with host header', (t) => {
     })
   })
 })
-
-/*
-function serverRequestParams (t, expected) {
-  return function (req, res) {
-    const [, paramString] = req.url.split('?')
-    const searchParams = new URLSearchParams(paramString)
-    const searchParamsObject = Object.fromEntries(searchParams.entries())
-    t.strictSame(searchParamsObject, expected)
-
-    res.statusCode = 200
-    res.end('hello')
-  }
-}
- */
 
 function postServer (t, expected) {
   return function (req, res) {
