@@ -403,21 +403,3 @@ test('custom agent node fetch', (t) => {
     t.strictSame(obj, await body.json())
   })
 })
-
-test('get set-cookie with credentials: include (#1262)', (t) => {
-  t.plan(1)
-
-  const server = createServer((req, res) => {
-    res.setHeader('set-cookie', 'hello=world')
-    res.end('Hello World!')
-  })
-  t.teardown(server.close.bind(server))
-
-  server.listen(0, async () => {
-    const { headers } = await fetch(`http://localhost:${server.address().port}`, {
-      credentials: 'include'
-    })
-
-    t.equal(headers.get('set-cookie'), 'hello=world')
-  })
-})
