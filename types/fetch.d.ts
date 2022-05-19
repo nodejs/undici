@@ -199,5 +199,6 @@ export declare class Response implements BodyMixin {
   readonly clone: () => Response
 
   static error (): Response
+  static json(data: any, init?: ResponseInit): Response
   static redirect (url: string | URL, status: ResponseRedirectStatus): Response
 }
