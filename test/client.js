@@ -83,11 +83,9 @@ test('basic get', (t) => {
 test('basic get with query params', (t) => {
   t.plan(4)
 
-  const date = new Date(1995, 11, 17)
   const server = createServer((req, res) => {
     const searchParamsObject = buildParams(req.url)
     t.strictSame(searchParamsObject, {
-      date: date.toISOString(),
       bool: 'true',
       foo: '1',
       bar: 'bar',
@@ -101,7 +99,6 @@ test('basic get with query params', (t) => {
   t.teardown(server.close.bind(server))
 
   const query = {
-    date,
     bool: true,
     foo: 1,
     bar: 'bar',
@@ -162,19 +159,42 @@ test('basic get with query params with object throws an error', (t) => {
   })
 })
 
-test('basic get with query params ignores hashmark', (t) => {
-  t.plan(4)
+test('basic get with query params with date throws an error', (t) => {
+  t.plan(1)
+
+  const date = new Date()
+  const server = createServer((req, res) => {
+    t.fail()
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = {
+    dateObj: date
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.equal(err.message, 'Passing date as a query param is not supported, please serialize to string up-front')
+    })
+  })
+})
+
+test('basic get with query params fails if url includes hashmark', (t) => {
+  t.plan(1)
 
   const server = createServer((req, res) => {
-    const searchParamsObject = buildParams(req.url)
-    t.strictSame(searchParamsObject, {
-      foo: '1',
-      bar: 'bar',
-      multi: ['1', '2']
-    })
-
-    res.statusCode = 200
-    res.end('hello')
+    t.fail()
   })
   t.teardown(server.close.bind(server))
 
@@ -197,11 +217,8 @@ test('basic get with query params ignores hashmark', (t) => {
       method: 'GET',
       query
     }, (err, data) => {
-      t.error(err)
-      const { statusCode } = data
-      t.equal(statusCode, 200)
+      t.equal(err.message, 'Query params cannot be passed when url already contains "?" or "#".')
     })
-    t.equal(signal.listenerCount('abort'), 1)
   })
 })
 
@@ -265,7 +282,7 @@ test('basic get with query params partially in path', (t) => {
       method: 'GET',
       query
     }, (err, data) => {
-      t.equal(err.message, 'Query params cannot be passed when url contains "?" already.')
+      t.equal(err.message, 'Query params cannot be passed when url already contains "?" or "#".')
     })
   })
 })
