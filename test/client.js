@@ -88,7 +88,6 @@ test('basic get with query params', (t) => {
     const searchParamsObject = buildParams(req.url)
     t.strictSame(searchParamsObject, {
       date: date.toISOString(),
-      obj: '%7B%22id%22:1%7D',
       bool: 'true',
       foo: '1',
       bar: 'bar',
@@ -100,9 +99,8 @@ test('basic get with query params', (t) => {
   })
   t.teardown(server.close.bind(server))
 
-  const params = {
+  const query = {
     date,
-    obj: { id: 1 },
     bool: true,
     foo: 1,
     bar: 'bar',
@@ -120,7 +118,7 @@ test('basic get with query params', (t) => {
       signal,
       path: '/',
       method: 'GET',
-      params
+      query
     }, (err, data) => {
       t.error(err)
       const { statusCode } = data
@@ -130,13 +128,42 @@ test('basic get with query params', (t) => {
   })
 })
 
+test('basic get with query params with object throws an error', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.fail()
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = {
+    obj: { id : 1 },
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.equal(err.message, 'Passing object as a query param is not supported, please serialize to string up-front')
+    })
+  })
+})
+
 test('basic get with query params ignores hashmark', (t) => {
   t.plan(4)
 
   const server = createServer((req, res) => {
     const searchParamsObject = buildParams(req.url)
     t.strictSame(searchParamsObject, {
-      obj: '%7B%22id%22:1%7D',
       foo: '1',
       bar: 'bar',
       multi: ['1', '2']
@@ -147,8 +174,7 @@ test('basic get with query params ignores hashmark', (t) => {
   })
   t.teardown(server.close.bind(server))
 
-  const params = {
-    obj: { id: 1 },
+  const query = {
     foo: 1,
     bar: 'bar',
     multi: [1, 2]
@@ -165,7 +191,7 @@ test('basic get with query params ignores hashmark', (t) => {
       signal,
       path: '/#',
       method: 'GET',
-      params
+      query
     }, (err, data) => {
       t.error(err)
       const { statusCode } = data
@@ -187,7 +213,7 @@ test('basic get with empty query params', (t) => {
   })
   t.teardown(server.close.bind(server))
 
-  const params = {}
+  const query = {}
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
@@ -200,7 +226,7 @@ test('basic get with empty query params', (t) => {
       signal,
       path: '/',
       method: 'GET',
-      params
+      query
     }, (err, data) => {
       t.error(err)
       const { statusCode } = data
@@ -225,7 +251,7 @@ test('basic get with query params partially in path', (t) => {
   })
   t.teardown(server.close.bind(server))
 
-  const params = {
+  const query = {
     foo: 1
   }
 
@@ -240,7 +266,7 @@ test('basic get with query params partially in path', (t) => {
       signal,
       path: '/?bar=2',
       method: 'GET',
-      params
+      query
     }, (err, data) => {
       t.error(err)
       const { statusCode } = data
