@@ -89,7 +89,7 @@ test('basic get with query params', (t) => {
       bool: 'true',
       foo: '1',
       bar: 'bar',
-      ':%24%2C%2B%5B%5D%40%5E*()-': ':%24%2C%2B%5B%5D%40%5E*()-',
+      '%60~%3A%24%2C%2B%5B%5D%40%5E*()-': '%60~%3A%24%2C%2B%5B%5D%40%5E*()-',
       multi: ['1', '2']
     })
 
@@ -104,7 +104,7 @@ test('basic get with query params', (t) => {
     bar: 'bar',
     nullVal: null,
     undefinedVal: undefined,
-    ':$,+[]@^*()-': ':$,+[]@^*()-',
+    '`~:$,+[]@^*()-': '`~:$,+[]@^*()-',
     multi: [1, 2]
   }
 
@@ -159,6 +159,34 @@ test('basic get with query params with object throws an error', (t) => {
   })
 })
 
+test('basic get with non-object query params throws an error', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.fail()
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = '{ obj: { id: 1 } }'
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.equal(err.message, 'Query params must be an object')
+    })
+  })
+})
+
 test('basic get with query params with date throws an error', (t) => {
   t.plan(1)
 
@@ -185,7 +213,7 @@ test('basic get with query params with date throws an error', (t) => {
       method: 'GET',
       query
     }, (err, data) => {
-      t.equal(err.message, 'Passing date as a query param is not supported, please serialize to string up-front')
+      t.equal(err.message, 'Passing object as a query param is not supported, please serialize to string up-front')
     })
   })
 })
