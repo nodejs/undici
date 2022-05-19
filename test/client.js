@@ -137,7 +137,7 @@ test('basic get with query params with object throws an error', (t) => {
   t.teardown(server.close.bind(server))
 
   const query = {
-    obj: { id : 1 },
+    obj: { id: 1 }
   }
 
   server.listen(0, () => {
