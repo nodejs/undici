@@ -2,7 +2,6 @@
 
 const { test } = require('tap')
 const { request, setGlobalDispatcher, getGlobalDispatcher } = require('..')
-const { URL } = require('url')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const ProxyAgent = require('../lib/proxy-agent')
 const { createServer } = require('http')
