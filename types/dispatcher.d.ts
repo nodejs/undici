@@ -47,6 +47,8 @@ declare namespace Dispatcher {
     body?: string | Buffer | Uint8Array | Readable | null | FormData;
     /** Default: `null` */
     headers?: IncomingHttpHeaders | string[] | null;
+    /** Query string params to be embedded in the request URL. Default: `null` */
+    query?: Record<string, any>;
     /** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceding requests in the pipeline have completed. Default: `true` if `method` is `HEAD` or `GET`. */
     idempotent?: boolean;
     /** Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`. Default: `method === 'CONNECT' || null`. */
