@@ -2,7 +2,6 @@
 
 const { test } = require('tap')
 const { fetch } = require('../..')
-const { URL } = require('url')
 const { Blob } = require('buffer')
 
 test('fetching blob: uris', async (t) => {

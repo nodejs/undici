@@ -8,7 +8,6 @@ const {
   Headers
 } = require('../../')
 const { kState } = require('../../lib/fetch/symbols.js')
-const { URLSearchParams } = require('url')
 
 test('arg validation', (t) => {
   // constructor
