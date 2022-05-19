@@ -91,6 +91,7 @@ test('basic get with query params', (t) => {
       bool: 'true',
       foo: '1',
       bar: 'bar',
+      ':$,%2B[]%40%5E*()-': ':$,%2B[]%40%5E*()-',
       multi: ['1', '2']
     })
 
@@ -106,6 +107,7 @@ test('basic get with query params', (t) => {
     bar: 'bar',
     nullVal: null,
     undefinedVal: undefined,
+    ':$,+[]@^*()-': ':$,+[]@^*()-',
     multi: [1, 2]
   }
 
