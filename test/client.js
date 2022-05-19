@@ -104,6 +104,8 @@ test('basic get with query params', (t) => {
     bool: true,
     foo: 1,
     bar: 'bar',
+    nullVal: null,
+    undefinedVal: undefined,
     multi: [1, 2]
   }
 
@@ -237,17 +239,10 @@ test('basic get with empty query params', (t) => {
 })
 
 test('basic get with query params partially in path', (t) => {
-  t.plan(4)
+  t.plan(1)
 
   const server = createServer((req, res) => {
-    const searchParamsObject = buildParams(req.url)
-    t.strictSame(searchParamsObject, {
-      foo: '1',
-      bar: '2'
-    })
-
-    res.statusCode = 200
-    res.end('hello')
+    t.fail()
   })
   t.teardown(server.close.bind(server))
 
@@ -268,11 +263,8 @@ test('basic get with query params partially in path', (t) => {
       method: 'GET',
       query
     }, (err, data) => {
-      t.error(err)
-      const { statusCode } = data
-      t.strictEqual(statusCode, 200)
+      t.equal(err.message, 'Query params cannot be passed when url contains "?" already.')
     })
-    t.strictEqual(signal.listenerCount('abort'), 1)
   })
 })
 
