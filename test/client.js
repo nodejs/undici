@@ -315,6 +315,72 @@ test('basic get with query params partially in path', (t) => {
   })
 })
 
+test('basic get returns 400 when configured to throw on errors (callback)', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    res.statusCode = 400
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      throwOnError: true
+    }, (err) => {
+      t.equal(err.message, 'Response status code 400: Bad Request')
+      t.equal(err.status, 400)
+      t.equal(err.statusCode, 400)
+      t.equal(err.headers.connection, 'keep-alive')
+      t.equal(err.headers['content-length'], '5')
+    })
+    t.equal(signal.listenerCount('abort'), 1)
+  })
+})
+
+test('basic get returns 400 when configured to throw on errors (promise)', (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    res.writeHead(400, 'Invalid params', { 'content-type': 'text/plain' })
+    res.end('Invalid params')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    try {
+      await client.request({
+        signal,
+        path: '/',
+        method: 'GET',
+        throwOnError: true
+      })
+      t.fail('Should throw an error')
+    } catch (err) {
+      t.equal(err.message, 'Response status code 400: Invalid params')
+      t.equal(err.status, 400)
+      t.equal(err.statusCode, 400)
+      t.equal(err.headers.connection, 'keep-alive')
+      t.equal(err.headers['content-type'], 'text/plain')
+    }
+  })
+})
+
 test('basic head', (t) => {
   t.plan(14)
 
