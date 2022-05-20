@@ -216,3 +216,9 @@ test('formData toStringTag', (t) => {
   t.equal(FormData.prototype[Symbol.toStringTag], 'FormData')
   t.end()
 })
+
+test('formData.constructor.name', (t) => {
+  const form = new FormData()
+  t.equal(form.constructor.name, 'FormData')
+  t.end()
+})
