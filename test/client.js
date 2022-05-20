@@ -316,7 +316,7 @@ test('basic get with query params partially in path', (t) => {
 })
 
 test('basic get returns 400 when configured to throw on errors (callback)', (t) => {
-  t.plan(6)
+  t.plan(5)
 
   const server = createServer((req, res) => {
     res.statusCode = 400
@@ -343,7 +343,6 @@ test('basic get returns 400 when configured to throw on errors (callback)', (t) 
       t.equal(err.headers.connection, 'keep-alive')
       t.equal(err.headers['content-length'], '5')
     })
-    t.equal(signal.listenerCount('abort'), 1)
   })
 })
 
