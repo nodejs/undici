@@ -103,7 +103,7 @@ const badRequest = await bankTransfer('1234567890', '100')
 
 ## Reply with data based on request
 
-If the mocked response needs to be dinamically derived from the reuqest parametes, you can provide a function instead of an object to `reply`
+If the mocked response needs to be dynamically derived from the request parameters, you can provide a function instead of an object to `reply`
 
 ```js
 mockPool.intercept({
