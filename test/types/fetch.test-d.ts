@@ -29,6 +29,9 @@ const responseInit: ResponseInit = { status: 200, statusText: 'OK' }
 const requestInit2: RequestInit = {
   dispatcher: new Agent()
 }
+const requestInit3: RequestInit = {}
+// Test assignment. See https://github.com/whatwg/fetch/issues/1445
+requestInit3.credentials = 'include'
 
 declare const request: Request
 declare const headers: Headers
@@ -105,12 +108,19 @@ expectType<Response>(new Response(new BigInt64Array(), responseInit))
 expectType<Response>(new Response(new BigUint64Array(), responseInit))
 expectType<Response>(new Response(new ArrayBuffer(0), responseInit))
 expectType<Response>(Response.error())
+expectType<Response>(Response.json({ a: 'b' }))
+expectType<Response>(Response.json({}, { status: 200 }))
+expectType<Response>(Response.json({}, { statusText: 'OK' }))
+expectType<Response>(Response.json({}, { headers: {} }))
+expectType<Response>(Response.json(null))
 expectType<Response>(Response.redirect('https://example.com', 301))
 expectType<Response>(Response.redirect('https://example.com', 302))
 expectType<Response>(Response.redirect('https://example.com', 303))
 expectType<Response>(Response.redirect('https://example.com', 307))
 expectType<Response>(Response.redirect('https://example.com', 308))
 expectError(Response.redirect('https://example.com', NaN))
+expectError(Response.json())
+expectError(Response.json(null, 3))
 
 expectType<void>(headers.append('key', 'value'))
 expectType<void>(headers.delete('key'))

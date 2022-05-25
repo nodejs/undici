@@ -1,10 +1,10 @@
 'use strict'
 
+const { readFileSync, createReadStream } = require('fs')
+const { createServer } = require('http')
+const { Readable } = require('stream')
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const { createServer } = require('http')
-const { readFileSync, createReadStream } = require('fs')
-const { Readable } = require('stream')
 const { kSocket } = require('../lib/core/symbols')
 const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 const EE = require('events')
@@ -77,6 +77,307 @@ test('basic get', (t) => {
         t.equal('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
+  })
+})
+
+test('basic get with query params', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    const searchParamsObject = buildParams(req.url)
+    t.strictSame(searchParamsObject, {
+      bool: 'true',
+      foo: '1',
+      bar: 'bar',
+      '%60~%3A%24%2C%2B%5B%5D%40%5E*()-': '%60~%3A%24%2C%2B%5B%5D%40%5E*()-',
+      multi: ['1', '2']
+    })
+
+    res.statusCode = 200
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = {
+    bool: true,
+    foo: 1,
+    bar: 'bar',
+    nullVal: null,
+    undefinedVal: undefined,
+    '`~:$,+[]@^*()-': '`~:$,+[]@^*()-',
+    multi: [1, 2]
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.error(err)
+      const { statusCode } = data
+      t.equal(statusCode, 200)
+    })
+    t.equal(signal.listenerCount('abort'), 1)
+  })
+})
+
+test('basic get with query params with object throws an error', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.fail()
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = {
+    obj: { id: 1 }
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.equal(err.message, 'Passing object as a query param is not supported, please serialize to string up-front')
+    })
+  })
+})
+
+test('basic get with non-object query params throws an error', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.fail()
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = '{ obj: { id: 1 } }'
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.equal(err.message, 'Query params must be an object')
+    })
+  })
+})
+
+test('basic get with query params with date throws an error', (t) => {
+  t.plan(1)
+
+  const date = new Date()
+  const server = createServer((req, res) => {
+    t.fail()
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = {
+    dateObj: date
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.equal(err.message, 'Passing object as a query param is not supported, please serialize to string up-front')
+    })
+  })
+})
+
+test('basic get with query params fails if url includes hashmark', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.fail()
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = {
+    foo: 1,
+    bar: 'bar',
+    multi: [1, 2]
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/#',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.equal(err.message, 'Query params cannot be passed when url already contains "?" or "#".')
+    })
+  })
+})
+
+test('basic get with empty query params', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    const searchParamsObject = buildParams(req.url)
+    t.strictSame(searchParamsObject, {})
+
+    res.statusCode = 200
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = {}
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.error(err)
+      const { statusCode } = data
+      t.equal(statusCode, 200)
+    })
+    t.equal(signal.listenerCount('abort'), 1)
+  })
+})
+
+test('basic get with query params partially in path', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.fail()
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = {
+    foo: 1
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/?bar=2',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.equal(err.message, 'Query params cannot be passed when url already contains "?" or "#".')
+    })
+  })
+})
+
+test('basic get returns 400 when configured to throw on errors (callback)', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    res.statusCode = 400
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      throwOnError: true
+    }, (err) => {
+      t.equal(err.message, 'Response status code 400: Bad Request')
+      t.equal(err.status, 400)
+      t.equal(err.statusCode, 400)
+      t.equal(err.headers.connection, 'keep-alive')
+      t.equal(err.headers['content-length'], '5')
+    })
+    t.equal(signal.listenerCount('abort'), 1)
+  })
+})
+
+test('basic get returns 400 when configured to throw on errors (promise)', (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    res.writeHead(400, 'Invalid params', { 'content-type': 'text/plain' })
+    res.end('Invalid params')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    try {
+      await client.request({
+        signal,
+        path: '/',
+        method: 'GET',
+        throwOnError: true
+      })
+      t.fail('Should throw an error')
+    } catch (err) {
+      t.equal(err.message, 'Response status code 400: Invalid params')
+      t.equal(err.status, 400)
+      t.equal(err.statusCode, 400)
+      t.equal(err.headers.connection, 'keep-alive')
+      t.equal(err.headers['content-type'], 'text/plain')
+    }
   })
 })
 
@@ -1589,3 +1890,26 @@ test('async iterator yield object error', (t) => {
     })
   })
 })
+
+function buildParams (path) {
+  const cleanPath = path.replace('/?', '').replace('/', '').split('&')
+  const builtParams = cleanPath.reduce((acc, entry) => {
+    const [key, value] = entry.split('=')
+    if (key.length === 0) {
+      return acc
+    }
+
+    if (acc[key]) {
+      if (Array.isArray(acc[key])) {
+        acc[key].push(value)
+      } else {
+        acc[key] = [acc[key], value]
+      }
+    } else {
+      acc[key] = value
+    }
+    return acc
+  }, {})
+
+  return builtParams
+}
