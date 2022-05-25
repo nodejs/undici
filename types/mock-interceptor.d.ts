@@ -50,6 +50,8 @@ declare namespace MockInterceptor {
     body?: string | RegExp | ((body: string) => boolean);
     /** Headers to intercept on. */
     headers?: Record<string, string | RegExp | ((body: string) => boolean)> | ((headers: Record<string, string>) => boolean);
+    /** Query params to intercept on */
+    query?: Record<string, any>;
   }
   export interface MockDispatch<TData extends object = object, TError extends Error = Error> extends Options {
     times: number | null;
