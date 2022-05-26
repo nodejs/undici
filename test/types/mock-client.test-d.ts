@@ -8,6 +8,7 @@ import { MockInterceptor } from '../../types/mock-interceptor'
   // intercept
   expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: 'GET' }))
   expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: 'GET', body: '', headers: { 'User-Agent': '' } }))
+  expectAssignable<MockInterceptor>(mockClient.intercept({ path: '', method: 'GET', query: { id: 1 } }))
   expectAssignable<MockInterceptor>(mockClient.intercept({ path: new RegExp(''), method: new RegExp(''), body: new RegExp(''), headers: { 'User-Agent': new RegExp('') } }))
   expectAssignable<MockInterceptor>(mockClient.intercept({
     path: (path) => {
