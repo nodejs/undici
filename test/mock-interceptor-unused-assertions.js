@@ -204,6 +204,7 @@ test('returns unused interceptors', t => {
       path: '/',
       method: 'GET',
       body: undefined,
+      query: undefined,
       headers: undefined,
       data: {
         error: null,
