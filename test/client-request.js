@@ -686,7 +686,7 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
     t.same(fields[0], { key: 'key', value: 'value' })
     t.ok(fileMap.has('file'))
     t.equal(fileMap.get('file').data.toString(), 'Hello, world!')
-    t.equal(fileMap.get('file').info, {
+    t.same(fileMap.get('file').info, {
       filename: 'hello_world.txt',
       encoding: '7bit',
       mimeType: 'application/octet-stream'
