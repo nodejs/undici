@@ -295,7 +295,7 @@ const headers = await fetch(url)
 * https://fetch.spec.whatwg.org/#forbidden-response-header-name
 * https://github.com/wintercg/fetch/issues/6
 
-The [Fetch Standard](https://fetch.spec.whatwg.org) requires implementations to exclude certain headers from requests and responses. Undici does not filter out these headers.
+The [Fetch Standard](https://fetch.spec.whatwg.org) requires implementations to exclude certain headers from requests and responses. In browser environments, some headers are forbidden so the user agent remains in full control over them. In Undici, these constraints are removed to give more control to the user.
 
 ### `undici.upgrade([url, options]): Promise`
 
