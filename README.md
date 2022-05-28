@@ -293,6 +293,7 @@ const headers = await fetch(url)
 * https://fetch.spec.whatwg.org/#cors-safelisted-response-header-name
 * https://fetch.spec.whatwg.org/#forbidden-header-name
 * https://fetch.spec.whatwg.org/#forbidden-response-header-name
+* https://github.com/wintercg/fetch/issues/6
 
 The [Fetch Standard](https://fetch.spec.whatwg.org) requires implementations to exclude certain headers from requests and responses. Undici does not filter out these headers.
 
