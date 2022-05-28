@@ -1,7 +1,7 @@
 const http = require('http')
 const zlib = require('zlib')
 const { once } = require('events')
-const Busboy = require('busboy')
+const newBusboy = require('busboy')
 
 module.exports = class TestServer {
   constructor () {
@@ -451,7 +451,7 @@ module.exports = class TestServer {
     if (p === '/multipart') {
       res.statusCode = 200
       res.setHeader('Content-Type', 'application/json')
-      const busboy = new Busboy({ headers: request.headers })
+      const busboy = newBusboy({ headers: request.headers })
       let body = ''
       busboy.on('file', async (fieldName, file, fileName) => {
         body += `${fieldName}=${fileName}`
