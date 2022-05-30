@@ -8,12 +8,6 @@ const {
   fill
 } = require('../../lib/fetch/headers')
 const { kGuard } = require('../../lib/fetch/symbols')
-const {
-  forbiddenHeaderNames,
-  forbiddenResponseHeaderNames
-} = require('../../lib/fetch/constants')
-const { createServer } = require('http')
-const { fetch } = require('../../index')
 
 tap.test('Headers initialization', t => {
   t.plan(7)
@@ -660,77 +654,4 @@ tap.test('request-no-cors guard', (t) => {
   t.doesNotThrow(() => { headers.append('key', 'val') })
   t.doesNotThrow(() => { headers.delete('key') })
   t.end()
-})
-
-tap.test('request guard', (t) => {
-  const headers = new Headers(forbiddenHeaderNames.map(k => [k, 'v']))
-  headers[kGuard] = 'request'
-  headers.set('set-cookie', 'val')
-
-  for (const name of forbiddenHeaderNames) {
-    headers.set(name, '1')
-    headers.append(name, '1')
-    t.equal(headers.get(name), 'v')
-    headers.delete(name)
-    t.equal(headers.has(name), true)
-  }
-
-  t.equal(headers.get('set-cookie'), 'val')
-  t.equal(headers.has('set-cookie'), true)
-
-  t.end()
-})
-
-tap.test('response guard', (t) => {
-  const headers = new Headers(forbiddenResponseHeaderNames.map(k => [k, 'v']))
-  headers[kGuard] = 'response'
-  headers.set('key', 'val')
-  headers.set('keep-alive', 'val')
-
-  for (const name of forbiddenResponseHeaderNames) {
-    headers.set(name, '1')
-    headers.append(name, '1')
-    t.equal(headers.get(name), 'v')
-    headers.delete(name)
-    t.equal(headers.has(name), true)
-  }
-
-  t.equal(headers.get('keep-alive'), 'val')
-  t.equal(headers.has('keep-alive'), true)
-
-  t.end()
-})
-
-tap.test('set-cookie[2] in Headers constructor', (t) => {
-  const headers = new Headers(forbiddenResponseHeaderNames.map(k => [k, 'v']))
-
-  for (const header of forbiddenResponseHeaderNames) {
-    t.ok(headers.has(header))
-    t.equal(headers.get(header), 'v')
-  }
-
-  t.end()
-})
-
-// https://github.com/nodejs/undici/issues/1328
-tap.test('set-cookie[2] received from server - issue #1328', (t) => {
-  const server = createServer((req, res) => {
-    res.setHeader('set-cookie', 'my-cookie; wow')
-    res.end('Goodbye!')
-  }).unref()
-  t.teardown(server.close.bind(server))
-
-  server.listen(0, async () => {
-    const { headers } = await fetch(`http://localhost:${server.address().port}`)
-
-    t.notOk(headers.has('set-cookie'))
-    t.notOk(headers.has('Set-cookie'))
-    t.notOk(headers.has('sEt-CoOkIe'))
-
-    t.equal(headers.get('set-cookie'), null)
-    t.equal(headers.get('Set-cookie'), null)
-    t.equal(headers.get('sEt-CoOkIe'), null)
-
-    t.end()
-  })
 })
