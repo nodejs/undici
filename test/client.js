@@ -10,6 +10,14 @@ const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 const EE = require('events')
 const { kUrl, kSize, kConnect, kBusy, kConnected, kRunning } = require('../lib/core/symbols')
 
+const hasIPv6 = (() => {
+  const iFaces = require('os').networkInterfaces()
+  const re = process.platform === 'win32' ? /Loopback Pseudo-Interface/ : /lo/
+  return Object.keys(iFaces).some(
+    (name) => re.test(name) && iFaces[name].some(({ family }) => family === 6)
+  )
+})()
+
 test('basic get', (t) => {
   t.plan(24)
 
@@ -421,7 +429,7 @@ test('basic head', (t) => {
   })
 })
 
-test('basic head (IPv6)', (t) => {
+test('basic head (IPv6)', { skip: !hasIPv6 }, (t) => {
   t.plan(14)
 
   const server = createServer((req, res) => {
@@ -492,7 +500,7 @@ test('get with host header', (t) => {
   })
 })
 
-test('get with host header (IPv6)', (t) => {
+test('get with host header (IPv6)', { skip: !hasIPv6 }, (t) => {
   t.plan(7)
 
   const server = createServer((req, res) => {
