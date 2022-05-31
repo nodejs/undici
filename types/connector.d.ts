@@ -9,6 +9,7 @@ declare namespace buildConnector {
     maxCachedSessions?: number | null;
     socketPath?: string | null;
     timeout?: number | null;
+    port?: number;
   }
 
   export interface Options {
