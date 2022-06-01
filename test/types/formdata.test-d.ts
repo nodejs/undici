@@ -1,7 +1,7 @@
 import { Blob } from 'buffer'
 import { Readable } from 'stream'
 import { expectAssignable, expectType } from 'tsd'
-import { File, FormData } from '../..'
+import { File, FormData, SpecIterableIterator } from '../..'
 import { DispatchOptions } from '../../types/dispatcher'
 
 declare const dispatcherOptions: DispatchOptions
@@ -20,8 +20,8 @@ expectType<Array<File | string>>(formData.getAll('key'))
 expectType<Array<File | string>>(formData.getAll('key'))
 expectType<boolean>(formData.has('key'))
 expectType<void>(formData.delete('key'))
-expectAssignable<IterableIterator<string>>(formData.keys())
-expectAssignable<IterableIterator<File | string>>(formData.values())
-expectAssignable<IterableIterator<[string, File | string]>>(formData.entries())
-expectAssignable<IterableIterator<[string, File | string]>>(formData[Symbol.iterator]())
+expectAssignable<SpecIterableIterator<string>>(formData.keys())
+expectAssignable<SpecIterableIterator<File | string>>(formData.values())
+expectAssignable<SpecIterableIterator<[string, File | string]>>(formData.entries())
+expectAssignable<SpecIterableIterator<[string, File | string]>>(formData[Symbol.iterator]())
 expectAssignable<string | Buffer | Uint8Array | FormData | Readable | undefined | null>(dispatcherOptions.body)
