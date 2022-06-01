@@ -213,6 +213,65 @@ test('formData.values', (t) => {
   })
 })
 
+test('formData forEach', (t) => {
+  t.test('invalid arguments', (t) => {
+    t.throws(() => {
+      FormData.prototype.forEach.call({})
+    }, TypeError('Illegal invocation'))
+
+    t.throws(() => {
+      const fd = new FormData()
+
+      fd.forEach({})
+    }, TypeError)
+
+    t.end()
+  })
+
+  t.test('with a callback', (t) => {
+    const fd = new FormData()
+
+    fd.set('a', 'b')
+    fd.set('c', 'd')
+
+    let i = 0
+    fd.forEach((value, key, self) => {
+      if (i++ === 0) {
+        t.equal(value, 'b')
+        t.equal(key, 'a')
+      } else {
+        t.equal(value, 'd')
+        t.equal(key, 'c')
+      }
+
+      t.equal(fd, self)
+    })
+
+    t.end()
+  })
+
+  t.test('with a thisArg', (t) => {
+    const fd = new FormData()
+    fd.set('b', 'a')
+
+    fd.forEach(function (value, key, self) {
+      t.equal(this, globalThis)
+      t.equal(fd, self)
+      t.equal(key, 'b')
+      t.equal(value, 'a')
+    })
+
+    const thisArg = Symbol('thisArg')
+    fd.forEach(function () {
+      t.equal(this, thisArg)
+    }, thisArg)
+
+    t.end()
+  })
+
+  t.end()
+})
+
 test('formData toStringTag', (t) => {
   const form = new FormData()
   t.equal(form[Symbol.toStringTag], 'FormData')
