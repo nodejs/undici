@@ -1,6 +1,7 @@
-import { expectAssignable } from 'tsd'
+import {expectAssignable} from 'tsd'
 import { Client, buildConnector } from '../..'
-import { TLSSocket } from 'tls'
+import {ConnectionOptions, TLSSocket} from 'tls'
+import {IpcNetConnectOpts, NetConnectOpts, TcpNetConnectOpts} from "net";
 
 const connector = buildConnector({ rejectUnauthorized: false })
 expectAssignable<Client>(new Client('', {
@@ -19,3 +20,8 @@ expectAssignable<Client>(new Client('', {
     })
   }
 }))
+
+expectAssignable<buildConnector.BuildOptions>({
+  checkServerIdentity: () => undefined, // Test if ConnectionOptions is assignable
+  localPort: 1234, // Test if TcpNetConnectOpts is assignable
+});
