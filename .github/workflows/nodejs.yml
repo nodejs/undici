@@ -18,6 +18,9 @@ jobs:
         - name: Coverage Report
           uses: codecov/codecov-action@v2
   automerge:
+    if: >
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.user.login == 'dependabot[bot]'
     needs: build
     runs-on: ubuntu-latest
     permissions:
