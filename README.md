@@ -185,13 +185,13 @@ Help us improve the test coverage by following instructions at [nodejs/undici/#9
 Basic usage example:
 
 ```js
-    import {fetch} from 'undici';
+import { fetch } from 'undici';
 
-    async function fetchJson() {
-        const res = await fetch('https://example.com')
-        const json = await res.json()
-        console.log(json);
-    }
+async function fetchJson() {
+    const res = await fetch('https://example.com')
+    const json = await res.json()
+    console.log(json);
+}
 ```
 
 You can pass an optional dispatcher to `fetch` as:
