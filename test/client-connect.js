@@ -53,41 +53,6 @@ test('basic connect', (t) => {
   })
 })
 
-test('connect >=300 should error', (t) => {
-  t.plan(2)
-
-  const server = http.createServer((c) => {
-    t.fail()
-  })
-  server.on('connect', (req, socket, firstBodyChunk) => {
-    socket.write('HTTP/1.1 300 Connection established\r\n\r\n')
-
-    let data = firstBodyChunk.toString()
-    socket.on('data', (buf) => {
-      data += buf.toString()
-    })
-
-    socket.on('end', () => {
-      socket.end(data)
-    })
-  })
-  t.teardown(server.close.bind(server))
-
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
-
-    try {
-      await client.connect({
-        path: '/'
-      })
-    } catch (err) {
-      t.equal(err.code, 'UND_ERR_SOCKET')
-      t.equal(err.message, 'bad connect')
-    }
-  })
-})
-
 test('connect error', (t) => {
   t.plan(1)
 
