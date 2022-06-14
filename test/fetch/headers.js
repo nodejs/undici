@@ -1,12 +1,7 @@
 'use strict'
 
 const tap = require('tap')
-const {
-  Headers,
-  normalizeAndValidateHeaderName,
-  normalizeAndValidateHeaderValue,
-  fill
-} = require('../../lib/fetch/headers')
+const { Headers, fill } = require('../../lib/fetch/headers')
 const { kGuard } = require('../../lib/fetch/symbols')
 
 tap.test('Headers initialization', t => {
@@ -69,7 +64,7 @@ tap.test('Headers initialization', t => {
   })
 
   t.test('allows a myriad of header values to be passed', t => {
-    t.plan(5)
+    t.plan(4)
 
     // Headers constructor uses Headers.append
 
@@ -80,9 +75,6 @@ tap.test('Headers initialization', t => {
     t.doesNotThrow(() => new Headers([
       ['key', null]
     ]), 'allows null values')
-    t.doesNotThrow(() => new Headers([
-      ['key', Symbol('undici-fetch')]
-    ]), 'allows Symbol values')
     t.throws(() => new Headers([
       ['key']
     ]), 'throws when 2 arguments are not passed')
@@ -263,14 +255,13 @@ tap.test('Headers set', t => {
   })
 
   t.test('allows setting a myriad of values', t => {
-    t.plan(5)
+    t.plan(4)
     const headers = new Headers()
 
     t.doesNotThrow(() => headers.set('a', ['b', 'c']), 'sets array values properly')
     t.doesNotThrow(() => headers.set('b', null), 'allows setting null values')
     t.throws(() => headers.set('c'), 'throws when 2 arguments are not passed')
     t.doesNotThrow(() => headers.set('c', 'd', 'e'), 'ignores extra arguments')
-    t.doesNotThrow(() => headers.set('f', Symbol('g'), 'allows Symbol value'))
   })
 
   t.test('throws on invalid entry', t => {
@@ -488,16 +479,6 @@ tap.test('Headers as Iterable', t => {
 })
 
 tap.test('arg validation', (t) => {
-  // normalizeAndValidateHeaderName
-  t.throws(() => {
-    normalizeAndValidateHeaderName()
-  }, TypeError)
-
-  // normalizeAndValidateHeaderValue
-  t.throws(() => {
-    normalizeAndValidateHeaderValue()
-  }, TypeError)
-
   // fill
   t.throws(() => {
     fill({}, 0)
