@@ -636,3 +636,35 @@ tap.test('request-no-cors guard', (t) => {
   t.doesNotThrow(() => { headers.delete('key') })
   t.end()
 })
+
+tap.test('invalid headers', (t) => {
+  for (const byte of ['\r', '\n', '\t', ' ', String.fromCharCode(128), '']) {
+    t.throws(() => {
+      new Headers().set(byte, 'test')
+    }, TypeError, 'invalid header name')
+  }
+
+  for (const byte of [
+    '\0',
+    '\r',
+    '\n'
+  ]) {
+    t.throws(() => {
+      new Headers().set('a', `a${byte}b`)
+    }, TypeError, 'not allowed at all in header value')
+  }
+
+  t.doesNotThrow(() => {
+    new Headers().set('a', '\r')
+  })
+
+  t.doesNotThrow(() => {
+    new Headers().set('a', '\n')
+  })
+
+  t.throws(() => {
+    new Headers().set('a', Symbol('symbol'))
+  }, TypeError, 'symbols should throw')
+
+  t.end()
+})
