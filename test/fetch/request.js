@@ -162,17 +162,25 @@ test('arg validation', async (t) => {
     Request.prototype[Symbol.toStringTag].charAt(0)
   })
 
-  await t.rejects(async () => {
-    await new Request('http://localhost').text.call({
-      blob () {
-        return {
-          text () {
-            return Promise.resolve('emulating .blob()')
+  for (const method of [
+    'text',
+    'json',
+    'arrayBuffer',
+    'blob',
+    'formData'
+  ]) {
+    await t.rejects(async () => {
+      await new Request('http://localhost')[method].call({
+        blob () {
+          return {
+            text () {
+              return Promise.resolve('emulating this')
+            }
           }
         }
-      }
-    })
-  }, TypeError)
+      })
+    }, TypeError)
+  }
 
   t.end()
 })
