@@ -9,7 +9,7 @@ const {
 } = require('../../')
 const { kState } = require('../../lib/fetch/symbols.js')
 
-test('arg validation', (t) => {
+test('arg validation', async (t) => {
   // constructor
   t.throws(() => {
     // eslint-disable-next-line
@@ -145,12 +145,34 @@ test('arg validation', (t) => {
   }, TypeError)
 
   t.throws(() => {
+    // eslint-disable-next-line no-unused-expressions
+    Request.prototype.body
+  }, TypeError)
+
+  t.throws(() => {
+    // eslint-disable-next-line no-unused-expressions
+    Request.prototype.bodyUsed
+  }, TypeError)
+
+  t.throws(() => {
     Request.prototype.clone.call(null)
   }, TypeError)
 
   t.doesNotThrow(() => {
     Request.prototype[Symbol.toStringTag].charAt(0)
   })
+
+  await t.rejects(async () => {
+    await new Request('http://localhost').text.call({
+      blob () {
+        return {
+          text () {
+            return Promise.resolve('emulating .blob()')
+          }
+        }
+      }
+    })
+  }, TypeError)
 
   t.end()
 })
