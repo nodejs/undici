@@ -68,6 +68,13 @@ test('ConvertToInt(V)', (t) => {
         enforceRange: true
       })
     }, TypeError)
+
+    t.equal(
+      ConvertToInt(65.5, 64, signedness, {
+        enforceRange: true
+      }),
+      65
+    )
   }
 
   for (const signedness of ['signed', 'unsigned']) {
@@ -92,6 +99,8 @@ test('ConvertToInt(V)', (t) => {
       0
     )
   }
+
+  t.equal(ConvertToInt(111, 2, 'signed'), -1)
 
   t.end()
 })
