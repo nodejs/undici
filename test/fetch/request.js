@@ -258,7 +258,7 @@ test('undefined integrity', t => {
 
 test('null integrity', t => {
   const req = new Request('http://asd', { integrity: null })
-  t.equal(req.integrity, '')
+  t.equal(req.integrity, 'null')
   t.end()
 })
 
@@ -366,5 +366,43 @@ test('Symbol.toStringTag', (t) => {
 
   t.equal(req[Symbol.toStringTag], 'Request')
   t.equal(Request.prototype[Symbol.toStringTag], 'Request')
+  t.end()
+})
+
+test('invalid RequestInit values', (t) => {
+  /* eslint-disable no-new */
+  t.throws(() => {
+    new Request('http://l', { mode: 'CoRs' })
+  }, TypeError, 'not exact case = error')
+
+  t.throws(() => {
+    new Request('http://l', { mode: 'random' })
+  }, TypeError)
+
+  t.throws(() => {
+    new Request('http://l', { credentials: 'OMIt' })
+  }, TypeError, 'not exact case = error')
+
+  t.throws(() => {
+    new Request('http://l', { credentials: 'random' })
+  }, TypeError)
+
+  t.throws(() => {
+    new Request('http://l', { cache: 'DeFaULt' })
+  }, TypeError, 'not exact case = error')
+
+  t.throws(() => {
+    new Request('http://l', { cache: 'random' })
+  }, TypeError)
+
+  t.throws(() => {
+    new Request('http://l', { redirect: 'FOllOW' })
+  }, TypeError, 'not exact case = error')
+
+  t.throws(() => {
+    new Request('http://l', { redirect: 'random' })
+  }, TypeError)
+  /* eslint-enable no-new */
+
   t.end()
 })

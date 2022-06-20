@@ -1,7 +1,6 @@
 const stream = require('stream')
 const http = require('http')
 
-const AbortController = require('abort-controller')
 const chai = require('chai')
 const { Blob } = require('buffer')
 
