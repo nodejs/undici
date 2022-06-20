@@ -1,7 +1,6 @@
 /* eslint no-unused-expressions: "off" */
 
 const chai = require('chai')
-const stream = require('stream')
 const { Response } = require('../../lib/fetch/response.js')
 const TestServer = require('./utils/server.js')
 const { Blob } = require('buffer')
@@ -66,12 +65,12 @@ describe('Response', () => {
     // }
   })
 
-  it('should support empty options', () => {
-    const res = new Response(stream.Readable.from('a=1'))
-    return res.text().then(result => {
-      expect(result).to.equal('a=1')
-    })
-  })
+  // it('should support empty options', () => {
+  //   const res = new Response(stream.Readable.from('a=1'))
+  //   return res.text().then(result => {
+  //     expect(result).to.equal('a=1')
+  //   })
+  // })
 
   it('should support parsing headers', () => {
     const res = new Response(null, {
@@ -113,7 +112,7 @@ describe('Response', () => {
   }
 
   it('should support clone() method', () => {
-    const body = stream.Readable.from('a=1')
+    const body = 'a=1'
     const res = new Response(body, {
       headers: {
         a: '1'
@@ -137,13 +136,13 @@ describe('Response', () => {
     })
   })
 
-  it('should support stream as body', () => {
-    const body = stream.Readable.from('a=1')
-    const res = new Response(body)
-    return res.text().then(result => {
-      expect(result).to.equal('a=1')
-    })
-  })
+  // it('should support stream as body', () => {
+  //   const body = stream.Readable.from('a=1')
+  //   const res = new Response(body)
+  //   return res.text().then(result => {
+  //     expect(result).to.equal('a=1')
+  //   })
+  // })
 
   it('should support string as body', () => {
     const res = new Response('a=1')
