@@ -124,3 +124,17 @@ test('Symbol.toStringTag', (t) => {
   t.equal(Response.prototype[Symbol.toStringTag], 'Response')
   t.end()
 })
+
+test('async iterable body', async (t) => {
+  const asyncIterable = {
+    async * [Symbol.asyncIterator] () {
+      yield 'a'
+      yield 'b'
+      yield 'c'
+    }
+  }
+
+  const response = new Response(asyncIterable)
+  t.equal(await response.text(), 'abc')
+  t.end()
+})
