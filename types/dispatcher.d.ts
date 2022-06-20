@@ -53,6 +53,8 @@ declare namespace Dispatcher {
     idempotent?: boolean;
     /** Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`. Default: `method === 'CONNECT' || null`. */
     upgrade?: boolean | string | null;
+    /** Whether the connection should be reset after request has completed. This can be necessary when the server misbehaves and doesn't properly terminate messages during socket re-use. */
+    reset?: boolean | null;
     /** The amount of time the parser will wait to receive the complete HTTP headers. Defaults to 30 seconds. */
     headersTimeout?: number | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use 0 to disable it entirely. Defaults to 30 seconds. */
