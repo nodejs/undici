@@ -284,3 +284,15 @@ test('formData.constructor.name', (t) => {
   t.equal(form.constructor.name, 'FormData')
   t.end()
 })
+
+test('arguments', (t) => {
+  t.equal(FormData.constructor.length, 1)
+  t.equal(FormData.prototype.append.length, 2)
+  t.equal(FormData.prototype.delete.length, 1)
+  t.equal(FormData.prototype.get.length, 1)
+  t.equal(FormData.prototype.getAll.length, 1)
+  t.equal(FormData.prototype.has.length, 1)
+  t.equal(FormData.prototype.set.length, 2)
+
+  t.end()
+})
