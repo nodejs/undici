@@ -5,7 +5,7 @@ const { Headers, fill } = require('../../lib/fetch/headers')
 const { kGuard } = require('../../lib/fetch/symbols')
 
 tap.test('Headers initialization', t => {
-  t.plan(7)
+  t.plan(8)
 
   t.test('allows undefined', t => {
     t.plan(1)
@@ -54,13 +54,23 @@ tap.test('Headers initialization', t => {
     /* eslint-enable no-new-wrappers */
   })
 
-  t.test('fails if function or primitive is passed', t => {
-    t.plan(4)
-    const expectedTypeError = TypeError("Failed to construct 'Headers': The provided value is not of type '(record<ByteString, ByteString> or sequence<sequence<ByteString>>")
-    t.throws(() => new Headers(Function), expectedTypeError)
-    t.throws(() => new Headers(function () {}), expectedTypeError)
+  t.test('fails if primitive is passed', t => {
+    t.plan(2)
+    const expectedTypeError = TypeError
     t.throws(() => new Headers(1), expectedTypeError)
     t.throws(() => new Headers('1'), expectedTypeError)
+  })
+
+  t.test('allows some weird stuff (because of webidl)', t => {
+    t.doesNotThrow(() => {
+      new Headers(function () {}) // eslint-disable-line no-new
+    })
+
+    t.doesNotThrow(() => {
+      new Headers(Function) // eslint-disable-line no-new
+    })
+
+    t.end()
   })
 
   t.test('allows a myriad of header values to be passed', t => {
