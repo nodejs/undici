@@ -18,9 +18,15 @@ tap.test('Headers initialization', t => {
 
     t.test('fails on invalid array-based init', t => {
       t.plan(3)
-      t.throws(() => new Headers([['undici', 'fetch'], ['fetch']]), TypeError())
-      t.throws(() => new Headers(['undici', 'fetch', 'fetch']), TypeError())
-      t.throws(() => new Headers([0, 1, 2]), TypeError())
+      t.throws(
+        () => new Headers([['undici', 'fetch'], ['fetch']]),
+        TypeError('Headers constructor: expected name/value pair to be length 2, found 1.')
+      )
+      t.throws(() => new Headers(['undici', 'fetch', 'fetch']), TypeError)
+      t.throws(
+        () => new Headers([0, 1, 2]),
+        TypeError('Sequence: Value of type Number is not an Object.')
+      )
     })
 
     t.test('allows even length init', t => {
@@ -32,7 +38,10 @@ tap.test('Headers initialization', t => {
     t.test('fails for event flattened init', t => {
       t.plan(1)
       const init = ['undici', 'fetch', 'fetch', 'undici']
-      t.throws(() => new Headers(init), TypeError())
+      t.throws(
+        () => new Headers(init),
+        TypeError('Sequence: Value of type String is not an Object.')
+      )
     })
   })
 
