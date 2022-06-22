@@ -5,8 +5,7 @@
 const { test } = require('tap')
 const {
   Request,
-  Headers,
-  fetch
+  Headers
 } = require('../../')
 const { kState } = require('../../lib/fetch/symbols.js')
 
@@ -266,13 +265,6 @@ test('null integrity', t => {
 test('undefined signal', t => {
   const req = new Request('http://asd', { signal: undefined })
   t.equal(req.signal.aborted, false)
-  t.end()
-})
-
-test('error on redirect', async t => {
-  const errorCause = await fetch('http://nodejs.org/', { redirect: 'error' }).catch(e => e.cause)
-
-  t.equal(errorCause.message, 'unexpected redirect')
   t.end()
 })
 
