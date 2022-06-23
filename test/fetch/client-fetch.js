@@ -403,3 +403,19 @@ test('custom agent node fetch', (t) => {
     t.strictSame(obj, await body.json())
   })
 })
+
+test('error on redirect', async (t) => {
+  const server = createServer((req, res) => {
+    res.statusCode = 302
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const errorCause = await fetch(`http://localhost:${server.address().port}`, {
+      redirect: 'error'
+    }).catch((e) => e.cause)
+
+    t.equal(errorCause.message, 'unexpected redirect')
+  })
+})
