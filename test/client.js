@@ -398,8 +398,6 @@ test('basic get returns error body when configured to throw on errors', (t) => {
     res.writeHead(400, 'Invalid params', {
       'Content-Type': 'application/json'
     })
-    console.log('erfrefre')
-    console.log(bodyAsString)
     res.end(bodyAsString)
   })
   t.teardown(server.close.bind(server))
