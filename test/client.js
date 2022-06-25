@@ -393,7 +393,7 @@ test('basic get returns error body when configured to throw on errors', (t) => {
   t.plan(6)
 
   const server = createServer((req, res) => {
-    const body = { msg: 'Error', details: { code: 94 }}
+    const body = { msg: 'Error', details: { code: 94 } }
     const bodyAsString = JSON.stringify(body)
     res.writeHead(400, 'Invalid params', {
       'Content-Type': 'application/json'
@@ -427,7 +427,7 @@ test('basic get returns error body when configured to throw on errors', (t) => {
       t.equal(err.statusCode, 400)
       t.equal(err.headers.connection, 'keep-alive')
       t.equal(err.headers['content-type'], 'application/json')
-      t.same(body, { msg: 'Error', details: { code: 94 }})
+      t.same(body, { msg: 'Error', details: { code: 94 } })
     }
   })
 })
