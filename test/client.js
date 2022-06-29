@@ -390,7 +390,7 @@ test('basic get returns 400 when configured to throw on errors (promise)', (t) =
 })
 
 test('basic get returns error body when configured to throw on errors', (t) => {
-  t.plan(6)
+  t.plan(5)
 
   const server = createServer((req, res) => {
     const body = { msg: 'Error', details: { code: 94 } }
@@ -418,14 +418,11 @@ test('basic get returns error body when configured to throw on errors', (t) => {
       })
       t.fail('Should throw an error')
     } catch (err) {
-      const body = await err.body.json()
-
       t.equal(err.message, 'Response status code 400: Invalid params')
       t.equal(err.status, 400)
       t.equal(err.statusCode, 400)
       t.equal(err.headers.connection, 'keep-alive')
       t.equal(err.headers['content-type'], 'application/json')
-      t.same(body, { msg: 'Error', details: { code: 94 } })
     }
   })
 })
