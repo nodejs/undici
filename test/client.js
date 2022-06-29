@@ -356,6 +356,38 @@ test('basic get returns 400 when configured to throw on errors (callback)', (t) 
   })
 })
 
+test('basic get returns 400 when configured to throw on errors and correctly handles malformed json (callback)', (t) => {
+  t.plan(6)
+
+  const server = createServer((req, res) => {
+    res.writeHead(400, 'Invalid params', { 'content-type': 'application/json' })
+    res.end('Invalid params')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      throwOnError: true
+    }, (err) => {
+      t.equal(err.message, 'Response status code 400: Invalid params')
+      t.equal(err.status, 400)
+      t.equal(err.statusCode, 400)
+      t.equal(err.headers.connection, 'keep-alive')
+      t.same(err.body, null)
+    })
+    t.equal(signal.listenerCount('abort'), 1)
+  })
+})
+
 test('basic get returns 400 when configured to throw on errors (promise)', (t) => {
   t.plan(6)
 
