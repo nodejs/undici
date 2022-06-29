@@ -18,7 +18,6 @@ declare namespace Errors {
     code: 'UND_ERR_BODY_TIMEOUT';
   }
 
-  /** A body exceeds the `bodyTimeout` option. */
   export class ResponseStatusCodeError extends UndiciError {
     name: 'ResponseStatusCodeError';
     code: 'UND_ERR_RESPONSE_STATUS_CODE';
