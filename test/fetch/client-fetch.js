@@ -9,6 +9,7 @@ const { Blob } = require('buffer')
 const { fetch, Response, Request, FormData, File } = require('../..')
 const { Client, setGlobalDispatcher, Agent } = require('../..')
 const nodeFetch = require('../../index-fetch')
+const { once } = require('events')
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 1,
@@ -418,4 +419,24 @@ test('error on redirect', async (t) => {
 
     t.equal(errorCause.message, 'unexpected redirect')
   })
+})
+
+// https://github.com/nodejs/undici/issues/1527
+test('fetching with Request object - issue #1527', async (t) => {
+  const server = createServer((req, res) => {
+    t.pass()
+    res.end()
+  }).listen(0)
+
+  t.teardown(server.close.bind(server))
+  await once(server, 'listening')
+
+  const body = JSON.stringify({ foo: 'bar' })
+  const request = new Request(`http://localhost:${server.address().port}`, {
+    method: 'POST',
+    body
+  })
+
+  await t.resolves(fetch(request))
+  t.end()
 })
