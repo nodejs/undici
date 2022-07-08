@@ -17,6 +17,9 @@ jobs:
       post-test-steps: |
         - name: Coverage Report
           uses: codecov/codecov-action@v2
+      include: |
+        - runs-on: ubuntu-latest
+          node-version: 16.5
   automerge:
     if: >
         github.event_name == 'pull_request' &&
