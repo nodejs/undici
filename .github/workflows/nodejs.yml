@@ -19,7 +19,7 @@ jobs:
           uses: codecov/codecov-action@v2
       include: |
         - runs-on: ubuntu-latest
-          node-version: 16.7
+          node-version: 16.8
   automerge:
     if: >
         github.event_name == 'pull_request' &&
