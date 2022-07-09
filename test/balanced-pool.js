@@ -336,7 +336,7 @@ const cases = [
 
   {
     iterations: 100,
-    startingWeightPerServer: 100,
+    maxWeightPerServer: 100,
     errorPenalty: 7,
     config: [{ server: 'A' }, { server: 'B' }, { server: 'C' }],
     expected: ['A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'],
@@ -349,7 +349,7 @@ const cases = [
 
   {
     iterations: 100,
-    startingWeightPerServer: 100,
+    maxWeightPerServer: 100,
     errorPenalty: 15,
     config: [{ server: 'A', downOnRequests: [0] }, { server: 'B' }, { server: 'C' }],
     expected: ['A/connectionRefused', 'B', 'C', 'B', 'C', 'B', 'C', 'A', 'B', 'C', 'A'],
@@ -362,7 +362,7 @@ const cases = [
 
   {
     iterations: 100,
-    startingWeightPerServer: 100,
+    maxWeightPerServer: 100,
     errorPenalty: 15,
     config: [{ server: 'A' }, { server: 'B', downOnRequests: [0] }, { server: 'C' }],
     expected: ['A', 'B/connectionRefused', 'C', 'A', 'C', 'A', 'C', 'A', 'B', 'C'],
@@ -375,7 +375,7 @@ const cases = [
 
   {
     iterations: 100,
-    startingWeightPerServer: 100,
+    maxWeightPerServer: 100,
     errorPenalty: 15,
     config: [{ server: 'A' }, { server: 'B', downOnRequests: [0] }, { server: 'C', downOnRequests: [0] }],
     expected: ['A', 'B/connectionRefused', 'C/connectionRefused', 'A', 'A', 'A', 'B', 'C'],
@@ -388,7 +388,7 @@ const cases = [
 
   {
     iterations: 100,
-    startingWeightPerServer: 100,
+    maxWeightPerServer: 100,
     errorPenalty: 15,
     config: [{ server: 'A', downOnRequests: [0] }, { server: 'B', downOnRequests: [0] }, { server: 'C', downOnRequests: [0] }],
     expected: ['A/connectionRefused', 'B/connectionRefused', 'C/connectionRefused', 'A', 'B', 'C', 'A', 'B', 'C'],
@@ -401,7 +401,7 @@ const cases = [
 
   {
     iterations: 100,
-    startingWeightPerServer: 100,
+    maxWeightPerServer: 100,
     errorPenalty: 15,
     config: [{ server: 'A', downOnRequests: [0, 1, 2] }, { server: 'B', downOnRequests: [0, 1, 2] }, { server: 'C', downOnRequests: [0, 1, 2] }],
     expected: ['A/connectionRefused', 'B/connectionRefused', 'C/connectionRefused', 'A/connectionRefused', 'B/connectionRefused', 'C/connectionRefused', 'A/connectionRefused', 'B/connectionRefused', 'C/connectionRefused', 'A', 'B', 'C', 'A', 'B', 'C'],
@@ -414,7 +414,7 @@ const cases = [
 
   {
     iterations: 100,
-    startingWeightPerServer: 100,
+    maxWeightPerServer: 100,
     errorPenalty: 15,
     config: [{ server: 'A', downOnRequests: [0] }, { server: 'B', downOnRequests: [0, 1] }, { server: 'C', downOnRequests: [0] }],
     expected: ['A/connectionRefused', 'B/connectionRefused', 'C/connectionRefused', 'A', 'B/connectionRefused', 'C', 'A', 'B', 'C', 'A', 'B', 'C', 'A', 'C', 'A', 'C', 'A', 'C', 'A', 'B'],
@@ -427,7 +427,7 @@ const cases = [
 
   {
     iterations: 100,
-    startingWeightPerServer: 100,
+    maxWeightPerServer: 100,
     errorPenalty: 15,
     config: [{ server: 'A' }, { server: 'B' }, { server: 'C', downOnRequests: [1] }],
     expected: ['A', 'B', 'C', 'A', 'B', 'C/connectionRefused', 'A', 'B', 'A', 'B', 'A', 'B', 'C', 'A', 'B', 'C'],
@@ -440,7 +440,7 @@ const cases = [
 
   {
     iterations: 100,
-    startingWeightPerServer: 100,
+    maxWeightPerServer: 100,
     errorPenalty: 15,
     config: [{ server: 'A', socketHangupOnRequests: [1] }, { server: 'B' }, { server: 'C' }],
     expected: ['A', 'B', 'C', 'A/socketError', 'B', 'C', 'B', 'C', 'B', 'C', 'A'],
@@ -453,7 +453,7 @@ const cases = [
 
   {
     iterations: 100,
-    startingWeightPerServer: 100,
+    maxWeightPerServer: 100,
     errorPenalty: 7,
     config: [{ server: 'A' }, { server: 'B' }, { server: 'C' }, { server: 'D' }, { server: 'E' }],
     expected: ['A', 'B', 'C', 'D', 'E', 'A', 'B', 'C', 'D', 'E'],
@@ -464,7 +464,7 @@ const cases = [
 
 ]
 
-for (const [index, { config, expected, expectedRatios, iterations = 9, expectedConnectionRefusedErrors = 0, expectedSocketErrors = 0, startingWeightPerServer, errorPenalty = 10 }] of cases.entries()) {
+for (const [index, { config, expected, expectedRatios, iterations = 9, expectedConnectionRefusedErrors = 0, expectedSocketErrors = 0, maxWeightPerServer, errorPenalty = 10 }] of cases.entries()) {
   test(`weighted round robin - case ${index}`, async (t) => {
     // cerate an array to store succesfull reqeusts
     const requestLog = []
@@ -485,7 +485,7 @@ for (const [index, { config, expected, expectedRatios, iterations = 9, expectedC
     const urls = servers.map(server => `http://localhost:${server.port}`)
 
     // add upstreams
-    const client = new BalancedPool(urls[0], { startingWeightPerServer, errorPenalty })
+    const client = new BalancedPool(urls[0], { maxWeightPerServer, errorPenalty })
     urls.slice(1).map(url => client.addUpstream(url))
 
     let connectionRefusedErrors = 0
