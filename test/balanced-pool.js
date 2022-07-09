@@ -447,6 +447,19 @@ const cases = [
     expectedConnectionRefusedErrors: 0,
     expectedSocketErrors: 1,
     expectedRatios: [0.32, 0.34, 0.34]
+  },
+
+  // 9
+
+  {
+    iterations: 100,
+    startingWeightPerServer: 100,
+    errorPenalty: 7,
+    config: [{ server: 'A' }, { server: 'B' }, { server: 'C' }, { server: 'D' }, { server: 'E' }],
+    expected: ['A', 'B', 'C', 'D', 'E', 'A', 'B', 'C', 'D', 'E'],
+    expectedConnectionRefusedErrors: 0,
+    expectedSocketErrors: 0,
+    expectedRatios: [0.2, 0.2, 0.2, 0.2, 0.2]
   }
 
 ]
