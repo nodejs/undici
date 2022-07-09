@@ -460,6 +460,18 @@ const cases = [
     expectedConnectionRefusedErrors: 0,
     expectedSocketErrors: 0,
     expectedRatios: [0.2, 0.2, 0.2, 0.2, 0.2]
+  },
+
+  // 10
+  {
+    iterations: 100,
+    maxWeightPerServer: 100,
+    errorPenalty: 15,
+    config: [{ server: 'A', downOnRequests: [0, 1, 2, 3] }, { server: 'B' }, { server: 'C' }],
+    expected: ['A/connectionRefused', 'B', 'C', 'B', 'C', 'B', 'C', 'A/connectionRefused', 'B', 'C', 'B', 'C', 'A/connectionRefused', 'B', 'C', 'B', 'C', 'A/connectionRefused', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'],
+    expectedConnectionRefusedErrors: 4,
+    expectedSocketErrors: 0,
+    expectedRatios: [0.18, 0.41, 0.41]
   }
 
 ]
