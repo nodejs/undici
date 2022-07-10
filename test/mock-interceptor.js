@@ -32,14 +32,13 @@ test('MockInterceptor - reply', t => {
   })
 
   t.test('should error if passed options invalid', t => {
-    t.plan(3)
+    t.plan(2)
 
     const mockInterceptor = new MockInterceptor({
       path: '',
       method: ''
     }, [])
     t.throws(() => mockInterceptor.reply(), new InvalidArgumentError('statusCode must be defined'))
-    t.throws(() => mockInterceptor.reply(200), new InvalidArgumentError('data must be defined'))
     t.throws(() => mockInterceptor.reply(200, '', 'hello'), new InvalidArgumentError('responseOptions must be an object'))
   })
 })
@@ -113,7 +112,7 @@ test('MockInterceptor - reply options callback', t => {
   })
 
   t.test('should error if passed options invalid', async (t) => {
-    t.plan(4)
+    t.plan(3)
 
     const baseUrl = 'http://localhost:9999'
     const mockAgent = new MockAgent()
@@ -125,13 +124,6 @@ test('MockInterceptor - reply options callback', t => {
       path: '/test',
       method: 'GET'
     }).reply(() => {})
-
-    mockPool.intercept({
-      path: '/test2',
-      method: 'GET'
-    }).reply(() => ({
-      statusCode: 200
-    }))
 
     mockPool.intercept({
       path: '/test3',
@@ -158,15 +150,6 @@ test('MockInterceptor - reply options callback', t => {
       onData: () => {},
       onComplete: () => {}
     }), new InvalidArgumentError('reply options callback must return an object'))
-
-    t.throws(() => mockPool.dispatch({
-      path: '/test2',
-      method: 'GET'
-    }, {
-      onHeaders: () => {},
-      onData: () => {},
-      onComplete: () => {}
-    }), new InvalidArgumentError('data must be defined'))
 
     t.throws(() => mockPool.dispatch({
       path: '/test3',
