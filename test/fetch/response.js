@@ -138,3 +138,29 @@ test('async iterable body', async (t) => {
   t.equal(await response.text(), 'abc')
   t.end()
 })
+
+// https://github.com/nodejs/node/pull/43752#issuecomment-1179678544
+test('Modifying headers using Headers.prototype.set', (t) => {
+  const response = new Response('body', {
+    headers: {
+      'content-type': 'test/test',
+      'Content-Encoding': 'hello/world'
+    }
+  })
+
+  const response2 = response.clone()
+
+  response.headers.set('content-type', 'application/wasm')
+  response.headers.set('Content-Encoding', 'world/hello')
+
+  t.equal(response.headers.get('content-type'), 'application/wasm')
+  t.equal(response.headers.get('Content-Encoding'), 'world/hello')
+
+  response2.headers.delete('content-type')
+  response2.headers.delete('Content-Encoding')
+
+  t.equal(response2.headers.get('content-type'), null)
+  t.equal(response2.headers.get('Content-Encoding'), null)
+
+  t.end()
+})
