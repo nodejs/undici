@@ -178,11 +178,33 @@ async function startRedirectingWithAuthorization (t, authorization) {
   return [server1, server2]
 }
 
+async function startRedirectingWithRelativePath (t) {
+  const server = await startServer(t, (req, res) => {
+    res.setHeader('Connection', 'close')
+
+    if (req.url === '/') {
+      res.statusCode = 301
+      res.setHeader('Location', '/absolute/a')
+      res.end('')
+    } else if (req.url === '/absolute/a') {
+      res.statusCode = 301
+      res.setHeader('Location', 'b')
+      res.end('')
+    } else {
+      res.statusCode = 200
+      res.end(req.url)
+    }
+  })
+
+  return server
+}
+
 module.exports = {
   startServer,
   startRedirectingServer,
   startRedirectingWithBodyServer,
   startRedirectingWithoutLocationServer,
   startRedirectingChainServers,
-  startRedirectingWithAuthorization
+  startRedirectingWithAuthorization,
+  startRedirectingWithRelativePath
 }
