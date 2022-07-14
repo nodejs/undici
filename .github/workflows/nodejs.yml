@@ -20,7 +20,7 @@ jobs:
       include: |
         - runs-on: ubuntu-latest
           node-version: 16.8
-      exclude:
+      exclude: |
         - runs-on: windows-latest
           node-version: 16
   automerge:
