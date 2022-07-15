@@ -4,6 +4,7 @@ const { test } = require('tap')
 const {
   Response
 } = require('../../')
+const { ReadableStream } = require('stream/web')
 
 test('arg validation', async (t) => {
   // constructor
@@ -161,6 +162,69 @@ test('Modifying headers using Headers.prototype.set', (t) => {
 
   t.equal(response2.headers.get('content-type'), null)
   t.equal(response2.headers.get('Content-Encoding'), null)
+
+  t.end()
+})
+
+// https://github.com/nodejs/node/issues/43838
+test('constructing a Response with a ReadableStream body', async (t) => {
+  const text = '{"foo":"bar"}'
+  const uint8 = new TextEncoder().encode(text)
+
+  t.test('Readable stream with Uint8Array chunks', async (t) => {
+    const readable = new ReadableStream({
+      start (controller) {
+        controller.enqueue(uint8)
+        controller.close()
+      }
+    })
+
+    const response1 = new Response(readable)
+    const response2 = response1.clone()
+    const response3 = response1.clone()
+
+    t.equal(await response1.text(), text)
+    t.same(await response2.arrayBuffer(), uint8.buffer)
+    t.same(await response3.json(), JSON.parse(text))
+
+    t.end()
+  })
+
+  t.test('Readable stream with non-Uint8Array chunks', async (t) => {
+    const readable = new ReadableStream({
+      start (controller) {
+        controller.enqueue(text) // string
+        controller.close()
+      }
+    })
+
+    const response = new Response(readable)
+
+    await t.rejects(response.text(), TypeError)
+
+    t.end()
+  })
+
+  t.test('Readable with ArrayBuffer chunk still throws', async (t) => {
+    const readable = new ReadableStream({
+      start (controller) {
+        controller.enqueue(uint8.buffer)
+        controller.close()
+      }
+    })
+
+    const response1 = new Response(readable)
+    const response2 = response1.clone()
+    const response3 = response1.clone()
+    const response4 = response1.clone()
+
+    await t.rejects(response1.arrayBuffer(), TypeError)
+    await t.rejects(response2.text(), TypeError)
+    await t.rejects(response3.json(), TypeError)
+    await t.rejects(response4.blob(), TypeError)
+
+    t.end()
+  })
 
   t.end()
 })
