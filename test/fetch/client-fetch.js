@@ -10,6 +10,7 @@ const { fetch, Response, Request, FormData, File } = require('../..')
 const { Client, setGlobalDispatcher, Agent } = require('../..')
 const nodeFetch = require('../../index-fetch')
 const { once } = require('events')
+const { gzipSync } = require('zlib')
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 1,
@@ -439,4 +440,31 @@ test('fetching with Request object - issue #1527', async (t) => {
 
   await t.resolves(fetch(request))
   t.end()
+})
+
+test('do not decode redirect body', (t) => {
+  t.plan(3)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    if (req.url === '/resource') {
+      t.pass('we redirect')
+      res.statusCode = 301
+      res.setHeader('location', '/resource/')
+      // Some dumb http servers set the content-encoding gzip
+      // even if there is no response
+      res.setHeader('content-encoding', 'gzip')
+      res.end()
+      return
+    }
+    t.pass('actual response')
+    res.setHeader('content-encoding', 'gzip')
+    res.end(gzipSync(JSON.stringify(obj)))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const body = await fetch(`http://localhost:${server.address().port}/resource`)
+    t.strictSame(JSON.stringify(obj), await body.text())
+  })
 })
