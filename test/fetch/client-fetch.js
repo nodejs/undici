@@ -468,3 +468,35 @@ test('do not decode redirect body', (t) => {
     t.strictSame(JSON.stringify(obj), await body.text())
   })
 })
+
+test('Receiving non-Latin1 headers', async (t) => {
+  const ContentDisposition = [
+    'inline; filename=rock&roll.png',
+    'inline; filename="rock\'n\'roll.png"',
+    'inline; filename="image â\x80\x94 copy (1).png"; filename*=UTF-8\'\'image%20%E2%80%94%20copy%20(1).png',
+    'inline; filename="_å\x9C\x96ç\x89\x87_ð\x9F\x96¼_image_.png"; filename*=UTF-8\'\'_%E5%9C%96%E7%89%87_%F0%9F%96%BC_image_.png',
+    'inline; filename="100 % loading&perf.png"; filename*=UTF-8\'\'100%20%25%20loading%26perf.png'
+  ]
+
+  const server = createServer((req, res) => {
+    for (let i = 0; i < ContentDisposition.length; i++) {
+      res.setHeader(`Content-Disposition-${i + 1}`, ContentDisposition[i])
+    }
+
+    res.end()
+  }).listen(0)
+
+  t.teardown(server.close.bind(server))
+  await once(server, 'listening')
+
+  const url = `http://localhost:${server.address().port}`
+  const response = await fetch(url, { method: 'HEAD' })
+  const cdHeaders = [...response.headers]
+    .filter(([k]) => k.startsWith('content-disposition'))
+    .map(([, v]) => v)
+  const lengths = cdHeaders.map(h => h.length)
+
+  t.same(cdHeaders, ContentDisposition)
+  t.same(lengths, [30, 34, 94, 104, 90])
+  t.end()
+})
