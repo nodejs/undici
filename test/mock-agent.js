@@ -2431,3 +2431,35 @@ test('MockAgent - using fetch yields correct statusText', { skip: nodeMajor < 16
 
   t.end()
 })
+
+// https://github.com/nodejs/undici/issues/1556
+test('MockAgent - using fetch yields a headers object in the reply callback', { skip: nodeMajor < 16 }, async (t) => {
+  const { fetch } = require('..')
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get('http://localhost:3000')
+
+  mockPool.intercept({
+    path: '/headers',
+    method: 'GET'
+  }).reply(200, (opts) => {
+    t.same(opts.headers, {
+      accept: '*/*',
+      'accept-language': '*',
+      'sec-fetch-mode': 'cors',
+      'user-agent': 'undici',
+      'accept-encoding': 'gzip, deflate'
+    })
+
+    return {}
+  })
+
+  await fetch('http://localhost:3000/headers', {
+    dispatcher: mockAgent
+  })
+
+  t.end()
+})
