@@ -1994,3 +1994,119 @@ function buildParams (path) {
 
   return builtParams
 }
+
+test('\\r\\n in Headers', (t) => {
+  t.plan(1)
+
+  const reqHeaders = {
+    bar: '\r\nbar'
+  }
+
+  const client = new Client('http://localhost:4242', {
+    keepAliveTimeout: 300e3
+  })
+  t.teardown(client.close.bind(client))
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: reqHeaders
+  }, (err) => {
+    t.equal(err.message, 'invalid bar header')
+  })
+})
+
+test('\\r in Headers', (t) => {
+  t.plan(1)
+
+  const reqHeaders = {
+    bar: '\rbar'
+  }
+
+  const client = new Client('http://localhost:4242', {
+    keepAliveTimeout: 300e3
+  })
+  t.teardown(client.close.bind(client))
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: reqHeaders
+  }, (err) => {
+    t.equal(err.message, 'invalid bar header')
+  })
+})
+
+test('\\n in Headers', (t) => {
+  t.plan(1)
+
+  const reqHeaders = {
+    bar: '\nbar'
+  }
+
+  const client = new Client('http://localhost:4242', {
+    keepAliveTimeout: 300e3
+  })
+  t.teardown(client.close.bind(client))
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: reqHeaders
+  }, (err) => {
+    t.equal(err.message, 'invalid bar header')
+  })
+})
+
+test('\\n in Headers', (t) => {
+  t.plan(1)
+
+  const reqHeaders = {
+    '\nbar': 'foo'
+  }
+
+  const client = new Client('http://localhost:4242', {
+    keepAliveTimeout: 300e3
+  })
+  t.teardown(client.close.bind(client))
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: reqHeaders
+  }, (err) => {
+    t.equal(err.message, 'invalid header key')
+  })
+})
+
+test('\\n in Path', (t) => {
+  t.plan(1)
+
+  const client = new Client('http://localhost:4242', {
+    keepAliveTimeout: 300e3
+  })
+  t.teardown(client.close.bind(client))
+
+  client.request({
+    path: '/\n',
+    method: 'GET'
+  }, (err) => {
+    t.equal(err.message, 'invalid request path')
+  })
+})
+
+test('\\n in Method', (t) => {
+  t.plan(1)
+
+  const client = new Client('http://localhost:4242', {
+    keepAliveTimeout: 300e3
+  })
+  t.teardown(client.close.bind(client))
+
+  client.request({
+    path: '/',
+    method: 'GET\n'
+  }, (err) => {
+    t.equal(err.message, 'invalid request method')
+  })
+})

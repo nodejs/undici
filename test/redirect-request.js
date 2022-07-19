@@ -7,7 +7,8 @@ const {
   startRedirectingWithBodyServer,
   startRedirectingChainServers,
   startRedirectingWithoutLocationServer,
-  startRedirectingWithAuthorization
+  startRedirectingWithAuthorization,
+  startRedirectingWithCookie
 } = require('./utils/redirecting-servers')
 const { createReadable, createReadableStream } = require('./utils/stream')
 
@@ -479,6 +480,25 @@ t.test('removes authorization header on third party origin', async t => {
     maxRedirections: 10,
     headers: {
       authorization: 'secret'
+    }
+  })
+
+  let body = ''
+  for await (const b of bodyStream) {
+    body += b
+  }
+
+  t.equal(body, '')
+})
+
+t.test('removes cookie header on third party origin', async t => {
+  t.plan(1)
+
+  const [server1] = await startRedirectingWithCookie(t, 'a=b')
+  const { body: bodyStream } = await undici.request(`http://${server1}`, {
+    maxRedirections: 10,
+    headers: {
+      cookie: 'a=b'
     }
   })
 
