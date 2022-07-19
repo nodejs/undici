@@ -202,6 +202,42 @@ test('urlencoded formData', (t) => {
   })
 })
 
+test('text with BOM', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'application/x-www-form-urlencoded')
+    res.end('\uFEFFtest=\uFEFF')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    fetch(`http://localhost:${server.address().port}`)
+      .then(res => res.text())
+      .then(text => {
+        t.equal(text, 'test=\uFEFF')
+      })
+  })
+})
+
+test('formData with BOM', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'application/x-www-form-urlencoded')
+    res.end('\uFEFFtest=\uFEFF')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    fetch(`http://localhost:${server.address().port}`)
+      .then(res => res.formData())
+      .then(formData => {
+        t.equal(formData.get('\uFEFFtest'), '\uFEFF')
+      })
+  })
+})
+
 test('locked blob body', (t) => {
   t.plan(1)
 
