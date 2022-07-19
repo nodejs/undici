@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
-const { MockAgent, MockPool, setGlobalDispatcher, request } = require('..')
+const { MockAgent, MockPool, getGlobalDispatcher, setGlobalDispatcher, request } = require('..')
 const { kUrl } = require('../lib/core/symbols')
 const { kDispatches } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
@@ -303,8 +303,29 @@ test('MockPool - basic intercept with MockPool.request', async (t) => {
   })
 })
 
+// https://github.com/nodejs/undici/issues/1546
+test('MockPool - correct errors when consuming invalid JSON body', async (t) => {
+  const oldDispatcher = getGlobalDispatcher()
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+
+  t.teardown(() => setGlobalDispatcher(oldDispatcher))
+
+  const mockPool = mockAgent.get('https://google.com')
+  mockPool.intercept({
+    path: 'https://google.com'
+  }).reply(200, 'it\'s just a text')
+
+  const { body } = await request('https://google.com')
+  await t.rejects(body.json(), SyntaxError)
+
+  t.end()
+})
+
 test('MockPool - allows matching headers in fetch', { skip: nodeMajor < 16 }, async (t) => {
-  const { fetch, getGlobalDispatcher, setGlobalDispatcher } = require('../index')
+  const { fetch } = require('../index')
 
   const oldDispatcher = getGlobalDispatcher()
 

@@ -178,6 +178,29 @@ async function startRedirectingWithAuthorization (t, authorization) {
   return [server1, server2]
 }
 
+async function startRedirectingWithCookie (t, cookie) {
+  const server1 = await startServer(t, (req, res) => {
+    if (req.headers.cookie !== cookie) {
+      res.statusCode = 403
+      res.setHeader('Connection', 'close')
+      res.end('')
+      return
+    }
+
+    res.statusCode = 301
+    res.setHeader('Connection', 'close')
+
+    res.setHeader('Location', `http://${server2}`)
+    res.end('')
+  })
+
+  const server2 = await startServer(t, (req, res) => {
+    res.end(req.headers.cookie || '')
+  })
+
+  return [server1, server2]
+}
+
 async function startRedirectingWithRelativePath (t) {
   const server = await startServer(t, (req, res) => {
     res.setHeader('Connection', 'close')
@@ -206,5 +229,6 @@ module.exports = {
   startRedirectingWithoutLocationServer,
   startRedirectingChainServers,
   startRedirectingWithAuthorization,
+  startRedirectingWithCookie,
   startRedirectingWithRelativePath
 }
