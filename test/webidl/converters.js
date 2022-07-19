@@ -183,3 +183,11 @@ test('BufferSource', (t) => {
 
   t.end()
 })
+
+test('ByteString', (t) => {
+  t.doesNotThrow(() => {
+    webidl.converters.ByteString('')
+  })
+
+  t.end()
+})
