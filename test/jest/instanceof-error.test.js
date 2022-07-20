@@ -13,6 +13,7 @@ const nodeMajor = Number(process.versions.node.split('.', 1)[0])
 
 runIf(nodeMajor >= 16)('isErrorLike sanity check', () => {
   const { isErrorLike } = require('../../lib/fetch/util')
+  const { DOMException } = require('../../lib/fetch/constants')
   const error = new DOMException('')
 
   // https://github.com/facebook/jest/issues/2549
