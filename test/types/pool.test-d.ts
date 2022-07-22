@@ -1,5 +1,5 @@
 import { Duplex, Readable, Writable } from 'stream'
-import { expectAssignable, expectNotAssignable, expectType } from 'tsd'
+import { expectAssignable, expectType } from 'tsd'
 import { Dispatcher, Pool, Client } from '../..'
 import { URL } from 'url'
 
@@ -16,7 +16,7 @@ expectAssignable<Pool>(new Pool('', { connections: 1 }))
   // properties
   expectAssignable<boolean>(pool.closed)
   expectAssignable<boolean>(pool.destroyed)
-  expectNotAssignable<Pool.PoolStats>(pool.stats)
+  expectAssignable<Pool.PoolStats>(pool.stats)
 
   // request
   expectAssignable<Promise<Dispatcher.ResponseData>>(pool.request({ origin: '', path: '', method: 'GET' }))
