@@ -270,9 +270,10 @@ test('undefined signal', t => {
 
 test('pre aborted signal', t => {
   const ac = new AbortController()
-  ac.abort()
+  ac.abort('gwak')
   const req = new Request('http://asd', { signal: ac.signal })
   t.equal(req.signal.aborted, true)
+  t.equal(req.signal.reason, 'gwak')
   t.end()
 })
 
@@ -283,16 +284,17 @@ test('post aborted signal', t => {
   const req = new Request('http://asd', { signal: ac.signal })
   t.equal(req.signal.aborted, false)
   ac.signal.addEventListener('abort', () => {
-    t.pass()
+    t.equals(req.signal.reason, 'gwak')
   })
-  ac.abort()
+  ac.abort('gwak')
 })
 
 test('pre aborted signal cloned', t => {
   const ac = new AbortController()
-  ac.abort()
+  ac.abort('gwak')
   const req = new Request('http://asd', { signal: ac.signal }).clone()
   t.equal(req.signal.aborted, true)
+  t.equal(req.signal.reason, 'gwak')
   t.end()
 })
 
