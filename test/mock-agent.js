@@ -2469,6 +2469,7 @@ test('MockAgent - headers in mock dispatcher intercept should be case-insensitiv
   const { fetch } = require('..')
 
   const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
   setGlobalDispatcher(mockAgent)
   t.teardown(mockAgent.close.bind(mockAgent))
 
