@@ -2463,3 +2463,34 @@ test('MockAgent - using fetch yields a headers object in the reply callback', { 
 
   t.end()
 })
+
+// https://github.com/nodejs/undici/issues/1579
+test('MockAgent - headers in mock dispatcher intercept should be case-insensitive', { skip: nodeMajor < 16 }, async (t) => {
+  const { fetch } = require('..')
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get('https://example.com')
+
+  mockPool
+    .intercept({
+      path: '/',
+      headers: {
+        authorization: 'Bearer 12345',
+        'USER-agent': 'undici'
+      }
+    })
+    .reply(200)
+
+  await fetch('https://example.com', {
+    headers: {
+      Authorization: 'Bearer 12345',
+      'user-AGENT': 'undici'
+    }
+  })
+
+  t.end()
+})
