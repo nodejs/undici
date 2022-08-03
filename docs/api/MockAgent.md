@@ -8,7 +8,7 @@ A mocked Agent class that implements the Agent API. It allows one to intercept H
 
 Arguments:
 
-* **options** `MockAgentOptions` (optional) - It extends the `Agent` options.
+- **options** `MockAgentOptions` (optional) - It extends the `Agent` options.
 
 Returns: `MockAgent`
 
@@ -16,26 +16,26 @@ Returns: `MockAgent`
 
 Extends: [`AgentOptions`](Agent.md#parameter-agentoptions)
 
-* **agent** `Agent` (optional) - Default: `new Agent([options])` - a custom agent encapsulated by the MockAgent.
+- **agent** `Agent` (optional) - Default: `new Agent([options])` - a custom agent encapsulated by the MockAgent.
 
 ### Example - Basic MockAgent instantiation
 
 This will instantiate the MockAgent. It will not do anything until registered as the agent to use with requests and mock interceptions are added.
 
 ```js
-import { MockAgent } from 'undici'
+import { MockAgent } from "undici";
 
-const mockAgent = new MockAgent()
+const mockAgent = new MockAgent();
 ```
 
 ### Example - Basic MockAgent instantiation with custom agent
 
 ```js
-import { Agent, MockAgent } from 'undici'
+import { Agent, MockAgent } from "undici";
 
-const agent = new Agent()
+const agent = new Agent();
 
-const mockAgent = new MockAgent({ agent })
+const mockAgent = new MockAgent({ agent });
 ```
 
 ## Instance Methods
@@ -48,218 +48,232 @@ For subsequent `MockAgent.get` calls on the same origin, the same mock instance 
 
 Arguments:
 
-* **origin** `string | RegExp | (value) => boolean` - a matcher for the pool origin to be retrieved from the MockAgent.
+- **origin** `string | RegExp | (value) => boolean` - a matcher for the pool origin to be retrieved from the MockAgent.
 
 | Matcher type | Condition to pass          |
-|:------------:| -------------------------- |
-| `string`     | Exact match against string |
-| `RegExp`     | Regex must pass            |
-| `Function`   | Function must return true  |
+| :----------: | -------------------------- |
+|   `string`   | Exact match against string |
+|   `RegExp`   | Regex must pass            |
+|  `Function`  | Function must return true  |
 
 Returns: `MockClient | MockPool`.
 
-| `MockAgentOptions`   | Mock instance returned |
-| -------------------- | ---------------------- |
-| `connections === 1`  | `MockClient`           |
-| `connections` > `1`  | `MockPool`             |
+| `MockAgentOptions`  | Mock instance returned |
+| ------------------- | ---------------------- |
+| `connections === 1` | `MockClient`           |
+| `connections` > `1` | `MockPool`             |
 
 #### Example - Basic Mocked Request
 
 ```js
-import { MockAgent, setGlobalDispatcher, request } from 'undici'
+import { MockAgent, setGlobalDispatcher, request } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-const mockPool = mockAgent.get('http://localhost:3000')
-mockPool.intercept({ path: '/foo' }).reply(200, 'foo')
+const mockPool = mockAgent.get("http://localhost:3000");
+mockPool.intercept({ path: "/foo" }).reply(200, "foo");
 
-const { statusCode, body } = await request('http://localhost:3000/foo')
+const { statusCode, body } = await request("http://localhost:3000/foo");
 
-console.log('response received', statusCode) // response received 200
+console.log("response received", statusCode); // response received 200
 
 for await (const data of body) {
-  console.log('data', data.toString('utf8')) // data foo
+  console.log("data", data.toString("utf8")); // data foo
 }
+```
+
+#### Example - Mock different requests within the same file
+
+```js
+import { MockAgent, setGlobalDispatcher } = require('undici');
+const agent = new MockAgent();
+agent.disableNetConnect();
+setGlobalDispatcher(agent);
+describe('Test', () => {
+  it('200', async () => {
+    const mockAgent = agent.get('http://test.com');
+    // your test
+  });
+  it('200', async () => {
+    const mockAgent = agent.get('http://testing.com');
+    // your test
+  });
+});
 ```
 
 #### Example - Basic Mocked Request with local mock agent dispatcher
 
 ```js
-import { MockAgent, request } from 'undici'
+import { MockAgent, request } from "undici";
 
-const mockAgent = new MockAgent()
+const mockAgent = new MockAgent();
 
-const mockPool = mockAgent.get('http://localhost:3000')
-mockPool.intercept({ path: '/foo' }).reply(200, 'foo')
+const mockPool = mockAgent.get("http://localhost:3000");
+mockPool.intercept({ path: "/foo" }).reply(200, "foo");
 
-const {
-  statusCode,
-  body
-} = await request('http://localhost:3000/foo', { dispatcher: mockAgent })
+const { statusCode, body } = await request("http://localhost:3000/foo", {
+  dispatcher: mockAgent,
+});
 
-console.log('response received', statusCode) // response received 200
+console.log("response received", statusCode); // response received 200
 
 for await (const data of body) {
-  console.log('data', data.toString('utf8')) // data foo
+  console.log("data", data.toString("utf8")); // data foo
 }
 ```
 
 #### Example - Basic Mocked Request with local mock pool dispatcher
 
 ```js
-import { MockAgent, request } from 'undici'
+import { MockAgent, request } from "undici";
 
-const mockAgent = new MockAgent()
+const mockAgent = new MockAgent();
 
-const mockPool = mockAgent.get('http://localhost:3000')
-mockPool.intercept({ path: '/foo' }).reply(200, 'foo')
+const mockPool = mockAgent.get("http://localhost:3000");
+mockPool.intercept({ path: "/foo" }).reply(200, "foo");
 
-const {
-  statusCode,
-  body
-} = await request('http://localhost:3000/foo', { dispatcher: mockPool })
+const { statusCode, body } = await request("http://localhost:3000/foo", {
+  dispatcher: mockPool,
+});
 
-console.log('response received', statusCode) // response received 200
+console.log("response received", statusCode); // response received 200
 
 for await (const data of body) {
-  console.log('data', data.toString('utf8')) // data foo
+  console.log("data", data.toString("utf8")); // data foo
 }
 ```
 
 #### Example - Basic Mocked Request with local mock client dispatcher
 
 ```js
-import { MockAgent, request } from 'undici'
+import { MockAgent, request } from "undici";
 
-const mockAgent = new MockAgent({ connections: 1 })
+const mockAgent = new MockAgent({ connections: 1 });
 
-const mockClient = mockAgent.get('http://localhost:3000')
-mockClient.intercept({ path: '/foo' }).reply(200, 'foo')
+const mockClient = mockAgent.get("http://localhost:3000");
+mockClient.intercept({ path: "/foo" }).reply(200, "foo");
 
-const {
-  statusCode,
-  body
-} = await request('http://localhost:3000/foo', { dispatcher: mockClient })
+const { statusCode, body } = await request("http://localhost:3000/foo", {
+  dispatcher: mockClient,
+});
 
-console.log('response received', statusCode) // response received 200
+console.log("response received", statusCode); // response received 200
 
 for await (const data of body) {
-  console.log('data', data.toString('utf8')) // data foo
+  console.log("data", data.toString("utf8")); // data foo
 }
 ```
 
 #### Example - Basic Mocked requests with multiple intercepts
 
 ```js
-import { MockAgent, setGlobalDispatcher, request } from 'undici'
+import { MockAgent, setGlobalDispatcher, request } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-const mockPool = mockAgent.get('http://localhost:3000')
-mockPool.intercept({ path: '/foo' }).reply(200, 'foo')
-mockPool.intercept({ path: '/hello'}).reply(200, 'hello')
+const mockPool = mockAgent.get("http://localhost:3000");
+mockPool.intercept({ path: "/foo" }).reply(200, "foo");
+mockPool.intercept({ path: "/hello" }).reply(200, "hello");
 
-const result1 = await request('http://localhost:3000/foo')
+const result1 = await request("http://localhost:3000/foo");
 
-console.log('response received', result1.statusCode) // response received 200
+console.log("response received", result1.statusCode); // response received 200
 
 for await (const data of result1.body) {
-  console.log('data', data.toString('utf8')) // data foo
+  console.log("data", data.toString("utf8")); // data foo
 }
 
-const result2 = await request('http://localhost:3000/hello')
+const result2 = await request("http://localhost:3000/hello");
 
-console.log('response received', result2.statusCode) // response received 200
+console.log("response received", result2.statusCode); // response received 200
 
 for await (const data of result2.body) {
-  console.log('data', data.toString('utf8')) // data hello
+  console.log("data", data.toString("utf8")); // data hello
 }
 ```
 
 #### Example - Mocked request with query body, headers and trailers
 
 ```js
-import { MockAgent, setGlobalDispatcher, request } from 'undici'
+import { MockAgent, setGlobalDispatcher, request } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-const mockPool = mockAgent.get('http://localhost:3000')
+const mockPool = mockAgent.get("http://localhost:3000");
 
-mockPool.intercept({
-  path: '/foo?hello=there&see=ya',
-  method: 'POST',
-  body: 'form1=data1&form2=data2'
-}).reply(200, { foo: 'bar' }, {
-  headers: { 'content-type': 'application/json' },
-  trailers: { 'Content-MD5': 'test' }
-})
+mockPool
+  .intercept({
+    path: "/foo?hello=there&see=ya",
+    method: "POST",
+    body: "form1=data1&form2=data2",
+  })
+  .reply(
+    200,
+    { foo: "bar" },
+    {
+      headers: { "content-type": "application/json" },
+      trailers: { "Content-MD5": "test" },
+    }
+  );
 
-const {
-  statusCode,
-  headers,
-  trailers,
-  body
-} = await request('http://localhost:3000/foo?hello=there&see=ya', {
-  method: 'POST',
-  body: 'form1=data1&form2=data2'
-})
+const { statusCode, headers, trailers, body } = await request(
+  "http://localhost:3000/foo?hello=there&see=ya",
+  {
+    method: "POST",
+    body: "form1=data1&form2=data2",
+  }
+);
 
-console.log('response received', statusCode) // response received 200
-console.log('headers', headers) // { 'content-type': 'application/json' }
+console.log("response received", statusCode); // response received 200
+console.log("headers", headers); // { 'content-type': 'application/json' }
 
 for await (const data of body) {
-  console.log('data', data.toString('utf8')) // '{"foo":"bar"}'
+  console.log("data", data.toString("utf8")); // '{"foo":"bar"}'
 }
 
-console.log('trailers', trailers) // { 'content-md5': 'test' }
+console.log("trailers", trailers); // { 'content-md5': 'test' }
 ```
 
 #### Example - Mocked request with origin regex
 
 ```js
-import { MockAgent, setGlobalDispatcher, request } from 'undici'
+import { MockAgent, setGlobalDispatcher, request } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-const mockPool = mockAgent.get(new RegExp('http://localhost:3000'))
-mockPool.intercept({ path: '/foo' }).reply(200, 'foo')
+const mockPool = mockAgent.get(new RegExp("http://localhost:3000"));
+mockPool.intercept({ path: "/foo" }).reply(200, "foo");
 
-const {
-  statusCode,
-  body
-} = await request('http://localhost:3000/foo')
+const { statusCode, body } = await request("http://localhost:3000/foo");
 
-console.log('response received', statusCode) // response received 200
+console.log("response received", statusCode); // response received 200
 
 for await (const data of body) {
-  console.log('data', data.toString('utf8')) // data foo
+  console.log("data", data.toString("utf8")); // data foo
 }
 ```
 
 #### Example - Mocked request with origin function
 
 ```js
-import { MockAgent, setGlobalDispatcher, request } from 'undici'
+import { MockAgent, setGlobalDispatcher, request } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-const mockPool = mockAgent.get((origin) => origin === 'http://localhost:3000')
-mockPool.intercept({ path: '/foo' }).reply(200, 'foo')
+const mockPool = mockAgent.get((origin) => origin === "http://localhost:3000");
+mockPool.intercept({ path: "/foo" }).reply(200, "foo");
 
-const {
-  statusCode,
-  body
-} = await request('http://localhost:3000/foo')
+const { statusCode, body } = await request("http://localhost:3000/foo");
 
-console.log('response received', statusCode) // response received 200
+console.log("response received", statusCode); // response received 200
 
 for await (const data of body) {
-  console.log('data', data.toString('utf8')) // data foo
+  console.log("data", data.toString("utf8")); // data foo
 }
 ```
 
@@ -272,12 +286,12 @@ Returns: `Promise<void>`
 #### Example - clean up after tests are complete
 
 ```js
-import { MockAgent, setGlobalDispatcher } from 'undici'
+import { MockAgent, setGlobalDispatcher } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-await mockAgent.close()
+await mockAgent.close();
 ```
 
 ### `MockAgent.dispatch(options, handlers)`
@@ -291,26 +305,23 @@ See [`Dispatcher.request(options [, callback])`](Dispatcher.md#dispatcherrequest
 #### Example - MockAgent request
 
 ```js
-import { MockAgent } from 'undici'
+import { MockAgent } from "undici";
 
-const mockAgent = new MockAgent()
+const mockAgent = new MockAgent();
 
-const mockPool = mockAgent.get('http://localhost:3000')
-mockPool.intercept({ path: '/foo' }).reply(200, 'foo')
+const mockPool = mockAgent.get("http://localhost:3000");
+mockPool.intercept({ path: "/foo" }).reply(200, "foo");
 
-const {
-  statusCode,
-  body
-} = await mockAgent.request({
-  origin: 'http://localhost:3000',
-  path: '/foo',
-  method: 'GET'
-})
+const { statusCode, body } = await mockAgent.request({
+  origin: "http://localhost:3000",
+  path: "/foo",
+  method: "GET",
+});
 
-console.log('response received', statusCode) // response received 200
+console.log("response received", statusCode); // response received 200
 
 for await (const data of body) {
-  console.log('data', data.toString('utf8')) // data foo
+  console.log("data", data.toString("utf8")); // data foo
 }
 ```
 
@@ -323,12 +334,12 @@ Returns: `void`
 #### Example - Deactivate Mocking
 
 ```js
-import { MockAgent, setGlobalDispatcher } from 'undici'
+import { MockAgent, setGlobalDispatcher } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-mockAgent.deactivate()
+mockAgent.deactivate();
 ```
 
 ### `MockAgent.activate()`
@@ -340,16 +351,16 @@ Returns: `void`
 #### Example - Activate Mocking
 
 ```js
-import { MockAgent, setGlobalDispatcher } from 'undici'
+import { MockAgent, setGlobalDispatcher } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-mockAgent.deactivate()
+mockAgent.deactivate();
 // No mocking will occur
 
 // Later
-mockAgent.activate()
+mockAgent.activate();
 ```
 
 ### `MockAgent.enableNetConnect([host])`
@@ -360,70 +371,70 @@ When using a string, it should only include the **hostname and optionally, the p
 
 Arguments:
 
-* **host** `string | RegExp | (value) => boolean` - (optional)
+- **host** `string | RegExp | (value) => boolean` - (optional)
 
 Returns: `void`
 
 #### Example - Allow all non-matching urls to be dispatched in a real HTTP request
 
 ```js
-import { MockAgent, setGlobalDispatcher, request } from 'undici'
+import { MockAgent, setGlobalDispatcher, request } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-mockAgent.enableNetConnect()
+mockAgent.enableNetConnect();
 
-await request('http://example.com')
+await request("http://example.com");
 // A real request is made
 ```
 
 #### Example - Allow requests matching a host string to make real requests
 
 ```js
-import { MockAgent, setGlobalDispatcher, request } from 'undici'
+import { MockAgent, setGlobalDispatcher, request } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-mockAgent.enableNetConnect('example-1.com')
-mockAgent.enableNetConnect('example-2.com:8080')
+mockAgent.enableNetConnect("example-1.com");
+mockAgent.enableNetConnect("example-2.com:8080");
 
-await request('http://example-1.com')
+await request("http://example-1.com");
 // A real request is made
 
-await request('http://example-2.com:8080')
+await request("http://example-2.com:8080");
 // A real request is made
 
-await request('http://example-3.com')
+await request("http://example-3.com");
 // Will throw
 ```
 
 #### Example - Allow requests matching a host regex to make real requests
 
 ```js
-import { MockAgent, setGlobalDispatcher, request } from 'undici'
+import { MockAgent, setGlobalDispatcher, request } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-mockAgent.enableNetConnect(new RegExp('example.com'))
+mockAgent.enableNetConnect(new RegExp("example.com"));
 
-await request('http://example.com')
+await request("http://example.com");
 // A real request is made
 ```
 
 #### Example - Allow requests matching a host function to make real requests
 
 ```js
-import { MockAgent, setGlobalDispatcher, request } from 'undici'
+import { MockAgent, setGlobalDispatcher, request } from "undici";
 
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
+const mockAgent = new MockAgent();
+setGlobalDispatcher(mockAgent);
 
-mockAgent.enableNetConnect((value) => value === 'example.com')
+mockAgent.enableNetConnect((value) => value === "example.com");
 
-await request('http://example.com')
+await request("http://example.com");
 // A real request is made
 ```
 
@@ -436,13 +447,13 @@ Returns: `void`
 #### Example - Disable all non-matching requests by throwing an error for each
 
 ```js
-import { MockAgent, request } from 'undici'
+import { MockAgent, request } from "undici";
 
-const mockAgent = new MockAgent()
+const mockAgent = new MockAgent();
 
-mockAgent.disableNetConnect()
+mockAgent.disableNetConnect();
 
-await request('http://example.com')
+await request("http://example.com");
 // Will throw
 ```
 
@@ -459,15 +470,15 @@ Returns: `PendingInterceptor[]` (where `PendingInterceptor` is a `MockDispatch` 
 #### Example - List all pending inteceptors
 
 ```js
-const agent = new MockAgent()
-agent.disableNetConnect()
+const agent = new MockAgent();
+agent.disableNetConnect();
 
 agent
-  .get('https://example.com')
-  .intercept({ method: 'GET', path: '/' })
-  .reply(200)
+  .get("https://example.com")
+  .intercept({ method: "GET", path: "/" })
+  .reply(200);
 
-const pendingInterceptors = agent.pendingInterceptors()
+const pendingInterceptors = agent.pendingInterceptors();
 // Returns [
 //   {
 //     timesInvoked: 0,
@@ -502,15 +513,15 @@ This method throws if the mock agent has any pending interceptors. A pending int
 #### Example - Check that there are no pending interceptors
 
 ```js
-const agent = new MockAgent()
-agent.disableNetConnect()
+const agent = new MockAgent();
+agent.disableNetConnect();
 
 agent
-  .get('https://example.com')
-  .intercept({ method: 'GET', path: '/' })
-  .reply(200)
+  .get("https://example.com")
+  .intercept({ method: "GET", path: "/" })
+  .reply(200);
 
-agent.assertNoPendingInterceptors()
+agent.assertNoPendingInterceptors();
 // Throws an UndiciError with the following message:
 //
 // 1 interceptor is pending:
