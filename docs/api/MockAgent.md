@@ -179,7 +179,7 @@ for await (const data of result2.body) {
 ```
 #### Example - Mock different requests within the same file
 ```js
-import { MockAgent, setGlobalDispatcher } = require('undici');
+const { MockAgent, setGlobalDispatcher } = require('undici');
 const agent = new MockAgent();
 agent.disableNetConnect();
 setGlobalDispatcher(agent);
