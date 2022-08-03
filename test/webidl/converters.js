@@ -189,5 +189,14 @@ test('ByteString', (t) => {
     webidl.converters.ByteString('')
   })
 
+  // https://github.com/nodejs/undici/issues/1590
+  t.throws(() => {
+    const char = String.fromCharCode(256)
+    webidl.converters.ByteString(`invalid${char}char`)
+  }, {
+    message: 'Cannot convert argument to a ByteString because the character at' +
+             'index 7 has a value of 256 which is greater than 255.'
+  })
+
   t.end()
 })
