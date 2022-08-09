@@ -21,7 +21,7 @@ test('should validate content-type CRLF Injection', (t) => {
         method: 'GET',
         headers: {
           'content-type': 'application/json\r\n\r\nGET /foo2 HTTP/1.1'
-        },
+        }
       })
       t.fail('request should fail')
     } catch (e) {
