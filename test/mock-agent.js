@@ -2494,3 +2494,30 @@ test('MockAgent - headers in mock dispatcher intercept should be case-insensitiv
 
   t.end()
 })
+
+test('MockAgent - headers should be array of strings', async (t) => {
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+
+  const mockPool = mockAgent.get('http://localhost:3000')
+
+  mockPool.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo', {
+    headers: {
+      'set-cookie': [
+        'foo=bar',
+        'bar=baz',
+        'baz=qux'
+      ]
+    }
+  })
+
+  const { headers } = await request('http://localhost:3000/foo', {
+    method: 'GET'
+  })
+
+  t.equal(headers['set-cookie'].length, 3)
+})
