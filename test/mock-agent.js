@@ -2495,7 +2495,7 @@ test('MockAgent - headers in mock dispatcher intercept should be case-insensitiv
   t.end()
 })
 
-test('MockAgent - headers should be array of strings', { skip: nodeMajor < 16 }, async (t) => {
+test('MockAgent - headers should be array of strings', async (t) => {
   const mockAgent = new MockAgent()
   mockAgent.disableNetConnect()
   setGlobalDispatcher(mockAgent)
