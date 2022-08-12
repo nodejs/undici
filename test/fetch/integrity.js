@@ -2,10 +2,14 @@
 
 const { test } = require('tap')
 const { createServer } = require('http')
-const { fetch } = require('../..')
 const { createHash } = require('crypto')
 const { gzipSync } = require('zlib')
+const { fetch, setGlobalDispatcher, Agent } = require('../..')
 
+setGlobalDispatcher(new Agent({
+  keepAliveTimeout: 1,
+  keepAliveMaxTimeout: 1
+}))
 
 test('request with correct integrity checksum', (t) => {
   const body = 'Hello world!'
