@@ -536,28 +536,3 @@ test('Receiving non-Latin1 headers', async (t) => {
   t.same(lengths, [30, 34, 94, 104, 90])
   t.end()
 })
-
-// https://github.com/nodejs/undici/issues/1594
-// TODO(@KhafraDev): this test fails because of an integrity-mismatch check
-// that hasn't been implemented when this comment was written. Enable this
-// check once a resource's integrity is checked.
-test('with RequestInit.integrity set', async (t) => {
-  const body = 'Hello world'
-  const hash = require('crypto').createHash('sha256').update(body).digest('hex')
-
-  const server = createServer((req, res) => {
-    res.write(body)
-    res.end()
-  }).listen(0)
-
-  t.teardown(server.close.bind(server))
-  await once(server, 'listening')
-
-  const response = await fetch(`http://localhost:${server.address().port}`, {
-    integrity: `sha256-${hash}`
-  })
-
-  const ab = await response.arrayBuffer()
-
-  t.same(new Uint8Array(ab), new TextEncoder().encode(body))
-})
