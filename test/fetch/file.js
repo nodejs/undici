@@ -120,6 +120,16 @@ test('File.prototype.text', async (t) => {
     t.equal(await file.text(), 'hello world')
     t.end()
   })
+
+  t.test('With TypedArray range', async (t) => {
+    const uint8_1 = new Uint8Array(Buffer.from('hello world'))
+    const uint8_2 = new Uint8Array(uint8_1.buffer, 1, 4)
+
+    const file = new File([uint8_2], 'hello_world.txt')
+
+    t.equal(await file.text(), 'ello')
+    t.end()
+  })
   /* eslint-enable camelcase */
 
   t.test('With ArrayBuffer', async (t) => {
@@ -135,6 +145,15 @@ test('File.prototype.text', async (t) => {
   t.test('With string', async (t) => {
     const string = 'hello world'
     const file = new File([string], 'hello_world.txt')
+
+    t.equal(await file.text(), 'hello world')
+    t.end()
+  })
+
+  t.test('With Buffer', async (t) => {
+    const buffer = Buffer.from('hello world')
+
+    const file = new File([buffer], 'hello_world.txt')
 
     t.equal(await file.text(), 'hello world')
     t.end()
