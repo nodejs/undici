@@ -18,37 +18,27 @@ const {
 test('request timeout', (t) => {
   t.plan(1)
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
-    }, 100)
-    clock.tick(100)
+    }, 1000)
   })
   t.teardown(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 50 })
+    const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 500 })
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
       t.type(err, errors.HeadersTimeoutError)
     })
-
-    clock.tick(50)
   })
 })
 
 test('request timeout with readable body', (t) => {
   t.plan(1)
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
-
   const server = createServer((req, res) => {
-    clock.tick(100)
   })
   t.teardown(server.close.bind(server))
 
@@ -57,7 +47,7 @@ test('request timeout with readable body', (t) => {
   t.teardown(() => unlinkSync(tempfile))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 50 })
+    const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 1e3 })
     t.teardown(client.destroy.bind(client))
 
     const body = createReadStream(tempfile)
