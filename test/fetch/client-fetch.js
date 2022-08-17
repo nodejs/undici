@@ -165,21 +165,38 @@ test('unsupported formData 1', (t) => {
   })
 })
 
-test('unsupported formData 2', (t) => {
-  t.plan(1)
+test('multipart formdata', async (t) => {
+  t.plan(2)
+
+  // Construct example form data, with text and file fields
+  const formData = new FormData()
+  formData.append('field1', 'value1')
+  const blob = new Blob(['example\ntext file'], { type: 'text/plain' })
+  formData.append('field2', blob, 'file.txt')
+
+  const tempRes = new Response(formData)
+  const boundary = tempRes.headers.get('content-type').split('boundary=')[1]
+  const formRaw = await tempRes.text()
 
   const server = createServer((req, res) => {
-    res.setHeader('content-type', 'multipart/form-data')
+    res.setHeader('content-type', 'multipart/form-data; boundary=' + boundary)
+    res.write(formRaw)
     res.end()
   })
   t.teardown(server.close.bind(server))
 
-  server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`)
-      .then(res => res.formData())
-      .catch(err => {
-        t.equal(err.name, 'NotSupportedError')
-      })
+  await new Promise((resolve) => {
+    server.listen(0, () => {
+      fetch(`http://localhost:${server.address().port}`)
+        .then(res => res.formData())
+        .then(formData => {
+          t.equal(formData.get('field1'), 'value1')
+          return formData.get('field2').text()
+        }).then(text => {
+          t.equal(text, 'example\ntext file')
+          resolve()
+        })
+    })
   })
 })
 
