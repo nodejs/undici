@@ -425,6 +425,7 @@ test('invalid RequestInit values', (t) => {
 
 test('RequestInit.signal option', async (t) => {
   t.throws(() => {
+    // eslint-disable-next-line no-new
     new Request('http://asd', {
       signal: true
     })
