@@ -316,6 +316,54 @@ test('MockClient - should intercept query params with hardcoded path', async (t)
   t.same(response, 'hello')
 })
 
+test('MockClient - should intercept query params regardless of key ordering', async (t) => {
+  t.plan(3)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('should not be called')
+    t.fail('should not be called')
+    t.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent({ connections: 1 })
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockClient = mockAgent.get(baseUrl)
+  t.type(mockClient, MockClient)
+  setGlobalDispatcher(mockClient)
+
+  const query = {
+    pageNum: 1,
+    limit: 100,
+    ordering: [false, true]
+  }
+
+  mockClient.intercept({
+    path: '/foo',
+    query: {
+      ordering: query.ordering,
+      pageNum: query.pageNum,
+      limit: query.limit
+    },
+    method: 'GET'
+  }).reply(200, 'hello')
+
+  const { statusCode, body } = await request(`${baseUrl}/foo`, {
+    method: 'GET',
+    query
+  })
+  t.equal(statusCode, 200)
+
+  const response = await getResponse(body)
+  t.same(response, 'hello')
+})
+
 test('MockClient - should be able to use as a local dispatcher', async (t) => {
   t.plan(3)
 
