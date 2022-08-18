@@ -7,6 +7,8 @@ const { once } = require('events')
 const { ReadableStream } = require('stream/web')
 const { DOMException } = require('../../lib/fetch/constants')
 
+const { AbortController: NPMAbortController } = require('abort-controller')
+
 /* global AbortController */
 
 test('parallel fetch with the same AbortController works as expected', async (t) => {
@@ -105,4 +107,32 @@ test('Readable stream synchronously cancels with AbortError if aborted before re
   t.equal(cancelReason, fetchErr, 'Fetch rejects with same error instance')
 
   t.end()
+})
+
+test('Allow the usage of custom implementation of AbortController', async (t) => {
+  const body = {
+    fixes: 1605
+  }
+
+  const server = createServer((req, res) => {
+    res.statusCode = 200
+    res.end(JSON.stringify(body))
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const controller = new NPMAbortController()
+  const signal = controller.signal
+  controller.abort()
+
+  try {
+    await fetch(`http://localhost:${server.address().port}`, {
+      signal
+    })
+  } catch (e) {
+    t.equal(e.code, DOMException.ABORT_ERR)
+  }
 })
