@@ -5,7 +5,8 @@
 const { test } = require('tap')
 const {
   Request,
-  Headers
+  Headers,
+  fetch
 } = require('../../')
 const { kState } = require('../../lib/fetch/symbols.js')
 const hasSignalReason = !!~process.version.localeCompare('v16.14.0', undefined, { numeric: true })
@@ -420,4 +421,17 @@ test('invalid RequestInit values', (t) => {
   /* eslint-enable no-new */
 
   t.end()
+})
+
+test('RequestInit.signal option', async (t) => {
+  t.throws(() => {
+    // eslint-disable-next-line no-new
+    new Request('http://asd', {
+      signal: true
+    })
+  }, TypeError)
+
+  await t.rejects(fetch('http://asd', {
+    signal: false
+  }), TypeError)
 })
