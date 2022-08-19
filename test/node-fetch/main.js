@@ -1032,6 +1032,22 @@ describe('node-fetch', () => {
     })
   })
 
+  it('should allow POST request with ArrayBufferView (BigUint64Array) body', () => {
+    const encoder = new TextEncoder()
+    const url = `${base}inspect`
+    const options = {
+      method: 'POST',
+      body: new BigUint64Array(encoder.encode('0123456789abcdef').buffer)
+    }
+    return fetch(url, options).then(res => res.json()).then(res => {
+      expect(res.method).to.equal('POST')
+      expect(res.body).to.equal('0123456789abcdef')
+      expect(res.headers['transfer-encoding']).to.be.undefined
+      expect(res.headers['content-type']).to.be.undefined
+      expect(res.headers['content-length']).to.equal('16')
+    })
+  })
+
   it('should allow POST request with ArrayBufferView (DataView) body', () => {
     const encoder = new TextEncoder()
     const url = `${base}inspect`
