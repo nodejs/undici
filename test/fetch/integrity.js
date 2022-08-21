@@ -44,7 +44,7 @@ test('request with wrong integrity checksum', (t) => {
     fetch(`http://localhost:${server.address().port}`, {
       integrity: `sha256-${hash}`
     }).then(response => {
-      t.fail('fetch did not fail')
+      t.pass('request did not fail')
     }).catch((err) => {
       t.equal(err.cause.message, 'integrity mismatch')
     }).finally(() => {
