@@ -1,8 +1,8 @@
 'use strict'
 
 const { test } = require('tap')
-const { fetch } = require('..')
-const { fetch: fetchIndex } = require('../index-fetch')
+const { fetch } = require('../..')
+const { fetch: fetchIndex } = require('../../index-fetch')
 
 test('FETCH: request errors and prints trimmed stack trace', async (t) => {
   try {
