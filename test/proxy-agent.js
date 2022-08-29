@@ -240,7 +240,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
   proxyAgent.close()
 })
 
-test('ProxyAgent correctly sends headers when using fetch - #1355', { skip: nodeMajor < 16 }, async (t) => {
+test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', { skip: nodeMajor < 16 }, async (t) => {
   t.plan(2)
   const defaultDispatcher = getGlobalDispatcher()
 
