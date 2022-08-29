@@ -241,7 +241,8 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
 })
 
 test('ProxyAgent correctly sends headers when using fetch - #1355', { skip: nodeMajor < 16 }, async (t) => {
-  const { getGlobalDispatcher, setGlobalDispatcher, fetch } = require('../index')
+  t.plan(1)
+  const defaultDispatcher = getGlobalDispatcher()
 
   const server = await buildServer()
   const proxy = await buildProxy()
@@ -250,7 +251,9 @@ test('ProxyAgent correctly sends headers when using fetch - #1355', { skip: node
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   const proxyAgent = new ProxyAgent(proxyUrl)
-  const oldDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(proxyAgent)
+
+  t.teardown(() => setGlobalDispatcher(defaultDispatcher))
 
   const expectedHeaders = {
     host: `localhost:${server.address().port}`,
@@ -268,11 +271,9 @@ test('ProxyAgent correctly sends headers when using fetch - #1355', { skip: node
     res.end('goodbye')
   })
 
-  setGlobalDispatcher(proxyAgent)
   await fetch(serverUrl, {
     headers: { 'Test-header': 'value' }
   })
-  setGlobalDispatcher(oldDispatcher)
 
   server.close()
   proxy.close()
