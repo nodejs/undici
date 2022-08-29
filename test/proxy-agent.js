@@ -241,7 +241,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
 })
 
 test('ProxyAgent correctly sends headers when using fetch - #1355', { skip: nodeMajor < 16 }, async (t) => {
-  t.plan(1)
+  t.plan(2)
   const defaultDispatcher = getGlobalDispatcher()
 
   const server = await buildServer()
@@ -265,6 +265,15 @@ test('ProxyAgent correctly sends headers when using fetch - #1355', { skip: node
     'user-agent': 'undici',
     'accept-encoding': 'gzip, deflate'
   }
+
+  const expectedProxyHeaders = {
+    host: `localhost:${proxy.address().port}`,
+    connection: 'keep-alive'
+  }
+
+  proxy.on('connect', (req, res) => {
+    t.same(req.headers, expectedProxyHeaders)
+  })
 
   server.on('request', (req, res) => {
     t.same(req.headers, expectedHeaders)
