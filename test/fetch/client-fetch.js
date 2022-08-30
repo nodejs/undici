@@ -304,6 +304,34 @@ test('redirect with body', (t) => {
   })
 })
 
+test('redirect with stream', (t) => {
+  t.plan(3)
+
+  const location = '/asd'
+  const body = 'hello!'
+  const server = createServer(async (req, res) => {
+    res.writeHead(302, { location })
+    let count = 0
+    const l = setInterval(() => {
+      res.write(body[count++])
+      if (count === body.length) {
+        res.end()
+        clearInterval(l)
+      }
+    }, 50)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const res = await fetch(`http://localhost:${server.address().port}`, {
+      redirect: 'manual'
+    })
+    t.equal(res.status, 302)
+    t.equal(res.headers.get('location'), location)
+    t.equal(await res.text(), body)
+  })
+})
+
 test('fail to extract locked body', (t) => {
   t.plan(1)
 
