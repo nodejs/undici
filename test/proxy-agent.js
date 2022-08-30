@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { request, setGlobalDispatcher, getGlobalDispatcher } = require('..')
+const { request, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('..')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { readFileSync } = require('fs')
 const { join } = require('path')
