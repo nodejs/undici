@@ -533,6 +533,25 @@ test('do not decode redirect body', (t) => {
   })
 })
 
+test('decode non-redirect body with location header', (t) => {
+  t.plan(2)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    t.pass('response')
+    res.statusCode = 201
+    res.setHeader('location', '/resource/')
+    res.setHeader('content-encoding', 'gzip')
+    res.end(gzipSync(JSON.stringify(obj)))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const body = await fetch(`http://localhost:${server.address().port}/resource`)
+    t.strictSame(JSON.stringify(obj), await body.text())
+  })
+})
+
 test('Receiving non-Latin1 headers', async (t) => {
   const ContentDisposition = [
     'inline; filename=rock&roll.png',
