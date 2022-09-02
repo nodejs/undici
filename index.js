@@ -104,6 +104,11 @@ if (nodeMajor > 16 || (nodeMajor === 16 && nodeMinor >= 8)) {
   module.exports.Request = require('./lib/fetch/request').Request
   module.exports.FormData = require('./lib/fetch/formdata').FormData
   module.exports.File = require('./lib/fetch/file').File
+
+  const { setGlobalOrigin, getGlobalOrigin } = require('./lib/fetch/global')
+
+  module.exports.setGlobalOrigin = setGlobalOrigin
+  module.exports.getGlobalOrigin = getGlobalOrigin
 }
 
 module.exports.request = makeDispatcher(api.request)
