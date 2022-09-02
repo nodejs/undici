@@ -329,6 +329,28 @@ Gets the global dispatcher used by Common API Methods.
 
 Returns: `Dispatcher`
 
+### `undici.setGlobalOrigin(origin)`
+
+* origin `string | URL | undefined`
+
+Sets the global origin used in `fetch`.
+
+If `undefined` is passed, the global origin will be reset. This will cause `Response.redirect`, `new Request()`, and `fetch` to throw an error when a relative path is passed.
+
+```js
+setGlobalOrigin('http://localhost:3000')
+
+const response = await fetch('/api/ping')
+
+console.log(response.url) // http://localhost:3000/api/ping
+```
+
+### `undici.getGlobalOrigin()`
+
+Gets the global origin used in `fetch`.
+
+Returns: `URL`
+
 ### `UrlObject`
 
 * **port** `string | number` (optional)
