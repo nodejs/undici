@@ -3,13 +3,15 @@
 const { test } = require('tap')
 const { createServer } = require('http')
 const { promisify } = require('util')
-const { MockAgent, MockPool, setGlobalDispatcher, request } = require('..')
+const { MockAgent, MockPool, getGlobalDispatcher, setGlobalDispatcher, request } = require('..')
 const { kUrl } = require('../lib/core/symbols')
 const { kDispatches } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { MockInterceptor } = require('../lib/mock/mock-interceptor')
 const { getResponse } = require('../lib/mock/mock-utils')
 const Dispatcher = require('../lib/dispatcher')
+
+const nodeMajor = Number(process.versions.node.split('.', 1)[0])
 
 test('MockPool - constructor', t => {
   t.plan(3)
@@ -299,4 +301,70 @@ test('MockPool - basic intercept with MockPool.request', async (t) => {
   t.same(jsonResponse, {
     foo: 'bar'
   })
+})
+
+// https://github.com/nodejs/undici/issues/1546
+test('MockPool - correct errors when consuming invalid JSON body', async (t) => {
+  const oldDispatcher = getGlobalDispatcher()
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+
+  t.teardown(() => setGlobalDispatcher(oldDispatcher))
+
+  const mockPool = mockAgent.get('https://google.com')
+  mockPool.intercept({
+    path: 'https://google.com'
+  }).reply(200, 'it\'s just a text')
+
+  const { body } = await request('https://google.com')
+  await t.rejects(body.json(), SyntaxError)
+
+  t.end()
+})
+
+test('MockPool - allows matching headers in fetch', { skip: nodeMajor < 16 }, async (t) => {
+  const { fetch } = require('../index')
+
+  const oldDispatcher = getGlobalDispatcher()
+
+  const baseUrl = 'http://localhost:9999'
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+
+  t.teardown(async () => {
+    await mockAgent.close()
+    setGlobalDispatcher(oldDispatcher)
+  })
+
+  const pool = mockAgent.get(baseUrl)
+  pool.intercept({
+    path: '/foo',
+    method: 'GET',
+    headers: {
+      accept: 'application/json'
+    }
+  }).reply(200, { ok: 1 }).times(3)
+
+  await t.resolves(
+    fetch(`${baseUrl}/foo`, {
+      headers: {
+        accept: 'application/json'
+      }
+    })
+  )
+
+  // no 'accept: application/json' header sent, not matched
+  await t.rejects(fetch(`${baseUrl}/foo`))
+
+  // not 'accept: application/json', not matched
+  await t.rejects(fetch(`${baseUrl}/foo`), {
+    headers: {
+      accept: 'text/plain'
+    }
+  }, TypeError)
+
+  t.end()
 })

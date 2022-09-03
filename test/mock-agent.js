@@ -2421,14 +2421,103 @@ test('MockAgent - using fetch yields correct statusText', { skip: nodeMajor < 16
   t.equal(statusText, 'OK')
 
   mockPool.intercept({
-    path: '/badStatusText',
+    path: '/unknownStatusText',
     method: 'GET'
   }).reply(420, 'Everyday')
 
-  await t.rejects(
-    fetch('http://localhost:3000/badStatusText'),
-    TypeError
-  )
+  const unknownStatusCodeRes = await fetch('http://localhost:3000/unknownStatusText')
+  t.equal(unknownStatusCodeRes.status, 420)
+  t.equal(unknownStatusCodeRes.statusText, 'unknown')
 
   t.end()
+})
+
+// https://github.com/nodejs/undici/issues/1556
+test('MockAgent - using fetch yields a headers object in the reply callback', { skip: nodeMajor < 16 }, async (t) => {
+  const { fetch } = require('..')
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get('http://localhost:3000')
+
+  mockPool.intercept({
+    path: '/headers',
+    method: 'GET'
+  }).reply(200, (opts) => {
+    t.same(opts.headers, {
+      accept: '*/*',
+      'accept-language': '*',
+      'sec-fetch-mode': 'cors',
+      'user-agent': 'undici',
+      'accept-encoding': 'gzip, deflate'
+    })
+
+    return {}
+  })
+
+  await fetch('http://localhost:3000/headers', {
+    dispatcher: mockAgent
+  })
+
+  t.end()
+})
+
+// https://github.com/nodejs/undici/issues/1579
+test('MockAgent - headers in mock dispatcher intercept should be case-insensitive', { skip: nodeMajor < 16 }, async (t) => {
+  const { fetch } = require('..')
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get('https://example.com')
+
+  mockPool
+    .intercept({
+      path: '/',
+      headers: {
+        authorization: 'Bearer 12345',
+        'USER-agent': 'undici'
+      }
+    })
+    .reply(200)
+
+  await fetch('https://example.com', {
+    headers: {
+      Authorization: 'Bearer 12345',
+      'user-AGENT': 'undici'
+    }
+  })
+
+  t.end()
+})
+
+test('MockAgent - headers should be array of strings', async (t) => {
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+
+  const mockPool = mockAgent.get('http://localhost:3000')
+
+  mockPool.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo', {
+    headers: {
+      'set-cookie': [
+        'foo=bar',
+        'bar=baz',
+        'baz=qux'
+      ]
+    }
+  })
+
+  const { headers } = await request('http://localhost:3000/foo', {
+    method: 'GET'
+  })
+
+  t.equal(headers['set-cookie'].length, 3)
 })

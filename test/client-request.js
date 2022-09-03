@@ -686,7 +686,11 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
     t.same(fields[0], { key: 'key', value: 'value' })
     t.ok(fileMap.has('file'))
     t.equal(fileMap.get('file').data.toString(), 'Hello, world!')
-    t.equal(fileMap.get('file').info, 'hello_world.txt')
+    t.same(fileMap.get('file').info, {
+      filename: 'hello_world.txt',
+      encoding: '7bit',
+      mimeType: 'application/octet-stream'
+    })
 
     return res.end()
   })
@@ -722,4 +726,213 @@ test('request with FormData body on node < 16', { skip: nodeMajor >= 16 }, async
     method: 'POST',
     body: fd
   }), errors.InvalidArgumentError)
+})
+
+test('request post body Buffer from string', (t) => {
+  t.plan(2)
+  const requestBody = Buffer.from('abcdefghijklmnopqrstuvwxyz')
+
+  const server = createServer(async (req, res) => {
+    let ret = ''
+    for await (const chunk of req) {
+      ret += chunk
+    }
+    t.equal(ret, 'abcdefghijklmnopqrstuvwxyz')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'POST',
+      body: requestBody,
+      maxRedirections: 2
+    })
+    await body.text()
+    t.pass()
+  })
+})
+
+test('request post body Buffer from buffer', (t) => {
+  t.plan(2)
+  const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
+  const requestBody = Buffer.from(fullBuffer.buffer, 8, 16)
+
+  const server = createServer(async (req, res) => {
+    let ret = ''
+    for await (const chunk of req) {
+      ret += chunk
+    }
+    t.equal(ret, 'ijklmnopqrstuvwx')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'POST',
+      body: requestBody,
+      maxRedirections: 2
+    })
+    await body.text()
+    t.pass()
+  })
+})
+
+test('request post body Uint8Array', (t) => {
+  t.plan(2)
+  const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
+  const requestBody = new Uint8Array(fullBuffer.buffer, 8, 16)
+
+  const server = createServer(async (req, res) => {
+    let ret = ''
+    for await (const chunk of req) {
+      ret += chunk
+    }
+    t.equal(ret, 'ijklmnopqrstuvwx')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'POST',
+      body: requestBody,
+      maxRedirections: 2
+    })
+    await body.text()
+    t.pass()
+  })
+})
+
+test('request post body Uint32Array', (t) => {
+  t.plan(2)
+  const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
+  const requestBody = new Uint32Array(fullBuffer.buffer, 8, 4)
+
+  const server = createServer(async (req, res) => {
+    let ret = ''
+    for await (const chunk of req) {
+      ret += chunk
+    }
+    t.equal(ret, 'ijklmnopqrstuvwx')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'POST',
+      body: requestBody,
+      maxRedirections: 2
+    })
+    await body.text()
+    t.pass()
+  })
+})
+
+test('request post body Float64Array', (t) => {
+  t.plan(2)
+  const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
+  const requestBody = new Float64Array(fullBuffer.buffer, 8, 2)
+
+  const server = createServer(async (req, res) => {
+    let ret = ''
+    for await (const chunk of req) {
+      ret += chunk
+    }
+    t.equal(ret, 'ijklmnopqrstuvwx')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'POST',
+      body: requestBody,
+      maxRedirections: 2
+    })
+    await body.text()
+    t.pass()
+  })
+})
+
+test('request post body BigUint64Array', (t) => {
+  t.plan(2)
+  const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
+  const requestBody = new BigUint64Array(fullBuffer.buffer, 8, 2)
+
+  const server = createServer(async (req, res) => {
+    let ret = ''
+    for await (const chunk of req) {
+      ret += chunk
+    }
+    t.equal(ret, 'ijklmnopqrstuvwx')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'POST',
+      body: requestBody,
+      maxRedirections: 2
+    })
+    await body.text()
+    t.pass()
+  })
+})
+
+test('request post body DataView', (t) => {
+  t.plan(2)
+  const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
+  const requestBody = new DataView(fullBuffer.buffer, 8, 16)
+
+  const server = createServer(async (req, res) => {
+    let ret = ''
+    for await (const chunk of req) {
+      ret += chunk
+    }
+    t.equal(ret, 'ijklmnopqrstuvwx')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'POST',
+      body: requestBody,
+      maxRedirections: 2
+    })
+    await body.text()
+    t.pass()
+  })
 })

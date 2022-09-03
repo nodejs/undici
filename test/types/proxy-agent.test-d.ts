@@ -8,8 +8,21 @@ expectAssignable<ProxyAgent>(
   new ProxyAgent({
     connections: 1,
     uri: '',
+    auth: '',
     maxRedirections: 1,
-    factory: (_origin: URL, opts: Object) => new Agent(opts)
+    factory: (_origin: URL, opts: Object) => new Agent(opts),
+    requestTls: {
+      ca: [''],
+      key: '',
+      cert: '',
+      servername: ''
+    },
+    proxyTls: {
+      ca: [''],
+      key: '',
+      cert: '',
+      servername: ''
+    }
   })
 )
 

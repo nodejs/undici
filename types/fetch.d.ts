@@ -7,6 +7,8 @@ import { URL, URLSearchParams } from 'url'
 import { ReadableStream } from 'stream/web'
 import { FormData } from './formdata'
 
+import Dispatcher = require('./dispatcher')
+
 export type RequestInfo = string | URL | Request
 
 export declare function fetch (
@@ -36,9 +38,21 @@ export interface BodyMixin {
   readonly text: () => Promise<string>
 }
 
+export interface SpecIterator<T, TReturn = any, TNext = undefined> {
+  next(...args: [] | [TNext]): IteratorResult<T, TReturn>;
+}
+
+export interface SpecIterableIterator<T> extends SpecIterator<T> {
+  [Symbol.iterator](): SpecIterableIterator<T>;
+}
+
+export interface SpecIterable<T> {
+  [Symbol.iterator](): SpecIterator<T>;
+}
+
 export type HeadersInit = string[][] | Record<string, string | ReadonlyArray<string>> | Headers
 
-export declare class Headers implements Iterable<[string, string]> {
+export declare class Headers implements SpecIterable<[string, string]> {
   constructor (init?: HeadersInit)
   readonly append: (name: string, value: string) => void
   readonly delete: (name: string) => void
@@ -50,10 +64,10 @@ export declare class Headers implements Iterable<[string, string]> {
     thisArg?: unknown
   ) => void
 
-  readonly keys: () => IterableIterator<string>
-  readonly values: () => IterableIterator<string>
-  readonly entries: () => IterableIterator<[string, string]>
-  readonly [Symbol.iterator]: () => Iterator<[string, string]>
+  readonly keys: () => SpecIterableIterator<string>
+  readonly values: () => SpecIterableIterator<string>
+  readonly entries: () => SpecIterableIterator<[string, string]>
+  readonly [Symbol.iterator]: () => SpecIterator<[string, string]>
 }
 
 export type RequestCache =
@@ -87,18 +101,19 @@ type RequestDestination =
   | 'xslt'
 
 export interface RequestInit {
-  readonly method?: string
-  readonly keepalive?: boolean
-  readonly headers?: HeadersInit
-  readonly body?: BodyInit
-  readonly redirect?: RequestRedirect
-  readonly integrity?: string
-  readonly signal?: AbortSignal
-  readonly credentials?: RequestCredentials
-  readonly mode?: RequestMode
-  readonly referrer?: string
-  readonly referrerPolicy?: ReferrerPolicy
-  readonly window?: null
+  method?: string
+  keepalive?: boolean
+  headers?: HeadersInit
+  body?: BodyInit
+  redirect?: RequestRedirect
+  integrity?: string
+  signal?: AbortSignal
+  credentials?: RequestCredentials
+  mode?: RequestMode
+  referrer?: string
+  referrerPolicy?: ReferrerPolicy
+  window?: null
+  dispatcher?: Dispatcher
 }
 
 export type ReferrerPolicy =
@@ -184,5 +199,6 @@ export declare class Response implements BodyMixin {
   readonly clone: () => Response
 
   static error (): Response
+  static json(data: any, init?: ResponseInit): Response
   static redirect (url: string | URL, status: ResponseRedirectStatus): Response
 }

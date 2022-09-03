@@ -1,5 +1,5 @@
 import { IncomingHttpHeaders } from 'http'
-import Dispatcher from './dispatcher';
+import Dispatcher = require('./dispatcher');
 import { BodyInit, Headers } from './fetch'
 
 export {
@@ -26,7 +26,7 @@ declare class MockInterceptor {
   reply<TData extends object = object>(replyOptionsCallback: MockInterceptor.MockReplyOptionsCallback<TData>): MockScope<TData>;
   reply<TData extends object = object>(
     statusCode: number,
-    data: TData | Buffer | string | MockInterceptor.MockResponseDataHandler<TData>,
+    data?: TData | Buffer | string | MockInterceptor.MockResponseDataHandler<TData>,
     responseOptions?: MockInterceptor.MockResponseOptions
   ): MockScope<TData>;
   /** Mock an undici request by throwing the defined reply error. */
@@ -50,6 +50,8 @@ declare namespace MockInterceptor {
     body?: string | RegExp | ((body: string) => boolean);
     /** Headers to intercept on. */
     headers?: Record<string, string | RegExp | ((body: string) => boolean)> | ((headers: Record<string, string>) => boolean);
+    /** Query params to intercept on */
+    query?: Record<string, any>;
   }
   export interface MockDispatch<TData extends object = object, TError extends Error = Error> extends Options {
     times: number | null;
@@ -72,7 +74,7 @@ declare namespace MockInterceptor {
     origin: string;
     method: string;
     body?: BodyInit | Dispatcher.DispatchOptions['body'];
-    headers: Headers;
+    headers: Headers | Record<string, string>;
     maxRedirections: number;
   }
 
@@ -82,7 +84,7 @@ declare namespace MockInterceptor {
 
   export type MockReplyOptionsCallback<TData extends object = object> = (
     opts: MockResponseCallbackOptions
-  ) => { statusCode: number, data: TData | Buffer | string, responseOptions?: MockResponseOptions }
+  ) => { statusCode: number, data?: TData | Buffer | string, responseOptions?: MockResponseOptions }
 }
 
 interface Interceptable extends Dispatcher {

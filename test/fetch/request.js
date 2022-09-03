@@ -4,11 +4,14 @@
 
 const { test } = require('tap')
 const {
-  Request
+  Request,
+  Headers,
+  fetch
 } = require('../../')
 const { kState } = require('../../lib/fetch/symbols.js')
+const hasSignalReason = !!~process.version.localeCompare('v16.14.0', undefined, { numeric: true })
 
-test('arg validation', (t) => {
+test('arg validation', async (t) => {
   // constructor
   t.throws(() => {
     // eslint-disable-next-line
@@ -96,56 +99,90 @@ test('arg validation', (t) => {
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.destination.call(null)
+    Request.prototype.destination.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.referrer.call(null)
+    Request.prototype.referrer.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.referrerPolicy.call(null)
+    Request.prototype.referrerPolicy.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.mode.call(null)
+    Request.prototype.mode.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.credentials.call(null)
+    Request.prototype.credentials.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.cache.call(null)
+    Request.prototype.cache.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.redirect.call(null)
+    Request.prototype.redirect.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.integrity.call(null)
+    Request.prototype.integrity.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.keepalive.call(null)
+    Request.prototype.keepalive.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.isReloadNavigation.call(null)
+    Request.prototype.isReloadNavigation.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.isHistoryNavigation.call(null)
+    Request.prototype.isHistoryNavigation.toString()
   }, TypeError)
 
   t.throws(() => {
-    Request.prototype.signal.call(null)
+    Request.prototype.signal.toString()
+  }, TypeError)
+
+  t.throws(() => {
+    // eslint-disable-next-line no-unused-expressions
+    Request.prototype.body
+  }, TypeError)
+
+  t.throws(() => {
+    // eslint-disable-next-line no-unused-expressions
+    Request.prototype.bodyUsed
   }, TypeError)
 
   t.throws(() => {
     Request.prototype.clone.call(null)
   }, TypeError)
+
+  t.doesNotThrow(() => {
+    Request.prototype[Symbol.toStringTag].charAt(0)
+  })
+
+  for (const method of [
+    'text',
+    'json',
+    'arrayBuffer',
+    'blob',
+    'formData'
+  ]) {
+    await t.rejects(async () => {
+      await new Request('http://localhost')[method].call({
+        blob () {
+          return {
+            text () {
+              return Promise.resolve('emulating this')
+            }
+          }
+        }
+      })
+    }, TypeError)
+  }
 
   t.end()
 })
@@ -223,7 +260,7 @@ test('undefined integrity', t => {
 
 test('null integrity', t => {
   const req = new Request('http://asd', { integrity: null })
-  t.equal(req.integrity, '')
+  t.equal(req.integrity, 'null')
   t.end()
 })
 
@@ -235,9 +272,12 @@ test('undefined signal', t => {
 
 test('pre aborted signal', t => {
   const ac = new AbortController()
-  ac.abort()
+  ac.abort('gwak')
   const req = new Request('http://asd', { signal: ac.signal })
   t.equal(req.signal.aborted, true)
+  if (hasSignalReason) {
+    t.equal(req.signal.reason, 'gwak')
+  }
   t.end()
 })
 
@@ -248,17 +288,45 @@ test('post aborted signal', t => {
   const req = new Request('http://asd', { signal: ac.signal })
   t.equal(req.signal.aborted, false)
   ac.signal.addEventListener('abort', () => {
-    t.pass()
+    if (hasSignalReason) {
+      t.equal(req.signal.reason, 'gwak')
+    } else {
+      t.pass()
+    }
   })
-  ac.abort()
+  ac.abort('gwak')
 })
 
 test('pre aborted signal cloned', t => {
   const ac = new AbortController()
-  ac.abort()
+  ac.abort('gwak')
   const req = new Request('http://asd', { signal: ac.signal }).clone()
   t.equal(req.signal.aborted, true)
+  if (hasSignalReason) {
+    t.equal(req.signal.reason, 'gwak')
+  }
   t.end()
+})
+
+test('URLSearchParams body with Headers object - issue #1407', async (t) => {
+  const body = new URLSearchParams({
+    abc: 123
+  })
+
+  const request = new Request(
+    'http://localhost',
+    {
+      method: 'POST',
+      body,
+      headers: {
+        Authorization: 'test'
+      }
+    }
+  )
+
+  t.equal(request.headers.get('content-type'), 'application/x-www-form-urlencoded;charset=UTF-8')
+  t.equal(request.headers.get('authorization'), 'test')
+  t.equal(await request.text(), 'abc=123')
 })
 
 test('post aborted signal cloned', t => {
@@ -268,7 +336,102 @@ test('post aborted signal cloned', t => {
   const req = new Request('http://asd', { signal: ac.signal }).clone()
   t.equal(req.signal.aborted, false)
   ac.signal.addEventListener('abort', () => {
-    t.pass()
+    if (hasSignalReason) {
+      t.equal(req.signal.reason, 'gwak')
+    } else {
+      t.pass()
+    }
   })
-  ac.abort()
+  ac.abort('gwak')
+})
+
+test('Passing headers in init', (t) => {
+  // https://github.com/nodejs/undici/issues/1400
+  t.test('Headers instance', (t) => {
+    const req = new Request('http://localhost', {
+      headers: new Headers({ key: 'value' })
+    })
+
+    t.equal(req.headers.get('key'), 'value')
+    t.end()
+  })
+
+  t.test('key:value object', (t) => {
+    const req = new Request('http://localhost', {
+      headers: { key: 'value' }
+    })
+
+    t.equal(req.headers.get('key'), 'value')
+    t.end()
+  })
+
+  t.test('[key, value][]', (t) => {
+    const req = new Request('http://localhost', {
+      headers: [['key', 'value']]
+    })
+
+    t.equal(req.headers.get('key'), 'value')
+    t.end()
+  })
+
+  t.end()
+})
+
+test('Symbol.toStringTag', (t) => {
+  const req = new Request('http://localhost')
+
+  t.equal(req[Symbol.toStringTag], 'Request')
+  t.equal(Request.prototype[Symbol.toStringTag], 'Request')
+  t.end()
+})
+
+test('invalid RequestInit values', (t) => {
+  /* eslint-disable no-new */
+  t.throws(() => {
+    new Request('http://l', { mode: 'CoRs' })
+  }, TypeError, 'not exact case = error')
+
+  t.throws(() => {
+    new Request('http://l', { mode: 'random' })
+  }, TypeError)
+
+  t.throws(() => {
+    new Request('http://l', { credentials: 'OMIt' })
+  }, TypeError, 'not exact case = error')
+
+  t.throws(() => {
+    new Request('http://l', { credentials: 'random' })
+  }, TypeError)
+
+  t.throws(() => {
+    new Request('http://l', { cache: 'DeFaULt' })
+  }, TypeError, 'not exact case = error')
+
+  t.throws(() => {
+    new Request('http://l', { cache: 'random' })
+  }, TypeError)
+
+  t.throws(() => {
+    new Request('http://l', { redirect: 'FOllOW' })
+  }, TypeError, 'not exact case = error')
+
+  t.throws(() => {
+    new Request('http://l', { redirect: 'random' })
+  }, TypeError)
+  /* eslint-enable no-new */
+
+  t.end()
+})
+
+test('RequestInit.signal option', async (t) => {
+  t.throws(() => {
+    // eslint-disable-next-line no-new
+    new Request('http://asd', {
+      signal: true
+    })
+  }, TypeError)
+
+  await t.rejects(fetch('http://asd', {
+    signal: false
+  }), TypeError)
 })

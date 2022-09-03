@@ -6,7 +6,8 @@ const {
   deleteMockDispatch,
   getMockDispatch,
   getResponseData,
-  getStatusText
+  getStatusText,
+  getHeaderByName
 } = require('../lib/mock/mock-utils')
 
 test('deleteMockDispatch - should do nothing if not able to find mock dispatch', (t) => {
@@ -125,7 +126,34 @@ test('getStatusText', (t) => {
     t.ok(getStatusText(statusCode))
   }
 
-  t.throws(() => getStatusText(420), ReferenceError)
+  t.equal(getStatusText(420), 'unknown')
+
+  t.end()
+})
+
+test('getHeaderByName', (t) => {
+  const headersRecord = {
+    key: 'value'
+  }
+
+  t.equal(getHeaderByName(headersRecord, 'key'), 'value')
+  t.equal(getHeaderByName(headersRecord, 'anotherKey'), undefined)
+
+  const headersArray = ['key', 'value']
+
+  t.equal(getHeaderByName(headersArray, 'key'), 'value')
+  t.equal(getHeaderByName(headersArray, 'anotherKey'), undefined)
+
+  if (Number(process.versions.node.split('.')[0]) >= 16) {
+    const { Headers } = require('../index')
+
+    const headers = new Headers([
+      ['key', 'value']
+    ])
+
+    t.equal(getHeaderByName(headers, 'key'), 'value')
+    t.equal(getHeaderByName(headers, 'anotherKey'), null)
+  }
 
   t.end()
 })

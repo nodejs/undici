@@ -104,7 +104,7 @@ test('https://url.spec.whatwg.org/#string-percent-decode', (t) => {
     const percentDecoded = stringPercentDecode(input)
     const expected = [...input].map(c => c.charCodeAt(0))
 
-    t.same(percentDecoded, Uint8Array.of(...expected))
+    t.same(percentDecoded, Uint8Array.from(expected))
     t.end()
   })
 
@@ -210,6 +210,22 @@ test('processing.any.js', async (t) => {
       t.fail(`failed on '${input}'`)
     }
   }
+
+  // https://github.com/nodejs/undici/issues/1574
+  test('too long base64 url', async (t) => {
+    const inputStr = 'a'.repeat(1 << 20)
+    const base64 = Buffer.from(inputStr).toString('base64')
+    const dataURIPrefix = 'data:application/octet-stream;base64,'
+    const dataURL = dataURIPrefix + base64
+    try {
+      const res = await fetch(dataURL)
+      const buf = await res.arrayBuffer()
+      const outputStr = Buffer.from(buf).toString('ascii')
+      t.same(outputStr, inputStr)
+    } catch (e) {
+      t.fail(`failed to fetch ${dataURL}`)
+    }
+  })
 
   t.end()
 })

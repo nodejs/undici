@@ -1032,6 +1032,22 @@ describe('node-fetch', () => {
     })
   })
 
+  it('should allow POST request with ArrayBufferView (BigUint64Array) body', () => {
+    const encoder = new TextEncoder()
+    const url = `${base}inspect`
+    const options = {
+      method: 'POST',
+      body: new BigUint64Array(encoder.encode('0123456789abcdef').buffer)
+    }
+    return fetch(url, options).then(res => res.json()).then(res => {
+      expect(res.method).to.equal('POST')
+      expect(res.body).to.equal('0123456789abcdef')
+      expect(res.headers['transfer-encoding']).to.be.undefined
+      expect(res.headers['content-type']).to.be.undefined
+      expect(res.headers['content-length']).to.equal('16')
+    })
+  })
+
   it('should allow POST request with ArrayBufferView (DataView) body', () => {
     const encoder = new TextEncoder()
     const url = `${base}inspect`
@@ -1641,4 +1657,20 @@ describe('node-fetch', () => {
       expect(res.ok).to.be.false
     })
   })
+
+  // it('should not time out waiting for a response 60 seconds', function () {
+  //   this.timeout(65_000)
+  //   return fetch(`${base}timeout60s`).then(res => {
+  //     expect(res.status).to.equal(200)
+  //     expect(res.ok).to.be.true
+  //     return res.text().then(result => {
+  //       expect(result).to.equal('text')
+  //     })
+  //   })
+  // })
+
+  // it('should time out waiting for more than 300 seconds', function () {
+  //   this.timeout(305_000)
+  //   return expect(fetch(`${base}timeout300s`)).to.eventually.be.rejectedWith(TypeError)
+  // })
 })

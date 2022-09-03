@@ -15,6 +15,7 @@ const MockAgent = require('./lib/mock/mock-agent')
 const MockPool = require('./lib/mock/mock-pool')
 const mockErrors = require('./lib/mock/mock-errors')
 const ProxyAgent = require('./lib/proxy-agent')
+const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 
 const nodeVersion = process.versions.node.split('.')
 const nodeMajor = Number(nodeVersion[0])
@@ -31,19 +32,6 @@ module.exports.ProxyAgent = ProxyAgent
 
 module.exports.buildConnector = buildConnector
 module.exports.errors = errors
-
-let globalDispatcher = new Agent()
-
-function setGlobalDispatcher (agent) {
-  if (!agent || typeof agent.dispatch !== 'function') {
-    throw new InvalidArgumentError('Argument agent must implement Agent')
-  }
-  globalDispatcher = agent
-}
-
-function getGlobalDispatcher () {
-  return globalDispatcher
-}
 
 function makeDispatcher (fn) {
   return (url, opts, handler) => {
@@ -65,7 +53,12 @@ function makeDispatcher (fn) {
         throw new InvalidArgumentError('invalid opts.path')
       }
 
-      url = new URL(opts.path, util.parseOrigin(url))
+      let path = opts.path
+      if (!opts.path.startsWith('/')) {
+        path = `/${path}`
+      }
+
+      url = new URL(util.parseOrigin(url).origin + path)
     } else {
       if (!opts) {
         opts = typeof url === 'object' ? url : {}
@@ -92,20 +85,30 @@ function makeDispatcher (fn) {
 module.exports.setGlobalDispatcher = setGlobalDispatcher
 module.exports.getGlobalDispatcher = getGlobalDispatcher
 
-if (nodeMajor > 16 || (nodeMajor === 16 && nodeMinor >= 5)) {
+if (nodeMajor > 16 || (nodeMajor === 16 && nodeMinor >= 8)) {
   let fetchImpl = null
   module.exports.fetch = async function fetch (resource) {
     if (!fetchImpl) {
-      fetchImpl = require('./lib/fetch')
+      fetchImpl = require('./lib/fetch').fetch
     }
-    const dispatcher = getGlobalDispatcher()
-    return fetchImpl.apply(dispatcher, arguments)
+    const dispatcher = (arguments[1] && arguments[1].dispatcher) || getGlobalDispatcher()
+    try {
+      return await fetchImpl.apply(dispatcher, arguments)
+    } catch (err) {
+      Error.captureStackTrace(err, this)
+      throw err
+    }
   }
   module.exports.Headers = require('./lib/fetch/headers').Headers
   module.exports.Response = require('./lib/fetch/response').Response
   module.exports.Request = require('./lib/fetch/request').Request
   module.exports.FormData = require('./lib/fetch/formdata').FormData
   module.exports.File = require('./lib/fetch/file').File
+
+  const { setGlobalOrigin, getGlobalOrigin } = require('./lib/fetch/global')
+
+  module.exports.setGlobalOrigin = setGlobalOrigin
+  module.exports.getGlobalOrigin = getGlobalOrigin
 }
 
 module.exports.request = makeDispatcher(api.request)

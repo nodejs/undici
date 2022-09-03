@@ -22,7 +22,6 @@ const scenarios = [
   createScenario(errors.RequestAbortedError, 'Request aborted', 'AbortError', 'UND_ERR_ABORTED'),
   createScenario(errors.InformationalError, 'Request information', 'InformationalError', 'UND_ERR_INFO'),
   createScenario(errors.RequestContentLengthMismatchError, 'Request body length does not match content-length header', 'RequestContentLengthMismatchError', 'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH'),
-  createScenario(errors.TrailerMismatchError, 'Trailers does not match trailer header', 'TrailerMismatchError', 'UND_ERR_TRAILER_MISMATCH'),
   createScenario(errors.ClientDestroyedError, 'The client is destroyed', 'ClientDestroyedError', 'UND_ERR_DESTROYED'),
   createScenario(errors.ClientClosedError, 'The client is closed', 'ClientClosedError', 'UND_ERR_CLOSED'),
   createScenario(errors.SocketError, 'Socket error', 'SocketError', 'UND_ERR_SOCKET'),

@@ -12,6 +12,7 @@ expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCall
   const mockInterceptorDefaultMethod = mockPool.intercept({ path: '' })
 
   // reply
+  expectAssignable<MockScope>(mockInterceptor.reply(200))
   expectAssignable<MockScope>(mockInterceptor.reply(200, ''))
   expectAssignable<MockScope>(mockInterceptor.reply(200, Buffer))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}))
@@ -35,6 +36,10 @@ expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCall
   expectAssignable<MockScope>(mockInterceptor.reply(() => ({ statusCode: 200, data: { foo: 'bar' }, responseOptions: {
     trailers: { foo: 'bar' }
   }})))
+  mockInterceptor.reply((options) => {
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions['headers']>(options.headers);
+    return { statusCode: 200, data: { foo: 'bar' } }
+  })
 
   // replyWithError
   class CustomError extends Error {
@@ -55,7 +60,7 @@ expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCall
 
 {
   const mockPool: MockPool = new MockAgent().get('')
-  const mockScope = mockPool.intercept({ path: '', method: 'GET' }).reply(200, '')
+  const mockScope = mockPool.intercept({ path: '', method: 'GET' }).reply(200)
 
   // delay
   expectAssignable<MockScope>(mockScope.delay(1))
