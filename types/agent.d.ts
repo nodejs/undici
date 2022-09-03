@@ -22,7 +22,7 @@ declare namespace Agent {
     /** Integer. Default: `0` */
     maxRedirections?: number;
 
-    interceptors?: { Agent?: DispatchInterceptor[] } & Pool.Options["interceptors"]
+    interceptors?: { Agent?: readonly DispatchInterceptor[] } & Pool.Options["interceptors"]
   }
 
   export interface DispatchOptions extends Dispatcher.DispatchOptions {

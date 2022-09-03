@@ -42,7 +42,7 @@ declare namespace Client {
     /** */
     maxRequestsPerClient?: number;
 
-    interceptors?: {Client: DispatchInterceptor[] | undefined}
+    interceptors?: {Client: readonly DispatchInterceptor[] | undefined}
   }
 
   export interface SocketInfo {

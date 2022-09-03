@@ -24,6 +24,6 @@ declare namespace Pool {
     /** The max number of clients to create. `null` if no limit. Default `null`. */
     connections?: number | null;
 
-    interceptors?: { Pool?: DispatchInterceptor[] } & Client.Options["interceptors"]
+    interceptors?: { Pool?: readonly DispatchInterceptor[] } & Client.Options["interceptors"]
   }
 }
