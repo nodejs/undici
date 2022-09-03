@@ -12,9 +12,9 @@ describe('interceptors', () => {
       res.setHeader('Content-Type', 'text/plain')
       res.end('hello')
     })
-    await new Promise((resolve) => {server.listen(0, resolve)})
+    await new Promise((resolve) => { server.listen(0, resolve) })
   })
-  afterEach(async() => {
+  afterEach(async () => {
     await server.close()
   })
 
@@ -29,7 +29,7 @@ describe('interceptors', () => {
       }
     }
 
-    //await new Promise(resolve => server.listen(0, () => resolve()))
+    // await new Promise(resolve => server.listen(0, () => resolve()))
     const opts = { interceptors: { Client: [buildInterceptor] } }
     const agent = new Agent(opts)
     const origin = new URL(`http://localhost:${server.address().port}`)
@@ -44,56 +44,56 @@ describe('interceptors', () => {
   })
 
   test('interceptors are applied in the correct order', async () => {
-      const setHeaderInterceptor = (dispatch) => {
-        return (opts, handler) => {
-          opts.headers.push('foo', 'bar')
-          return dispatch(opts, handler)
-        }
+    const setHeaderInterceptor = (dispatch) => {
+      return (opts, handler) => {
+        opts.headers.push('foo', 'bar')
+        return dispatch(opts, handler)
       }
+    }
 
-      const assertHeaderInterceptor = (dispatch) => {
-        return (opts, handler) => {
-          expect(opts.headers).toEqual(['foo', 'bar'])
-          return dispatch(opts, handler)
-        }
+    const assertHeaderInterceptor = (dispatch) => {
+      return (opts, handler) => {
+        expect(opts.headers).toEqual(['foo', 'bar'])
+        return dispatch(opts, handler)
       }
+    }
 
-      const opts = { interceptors: { Pool: [setHeaderInterceptor, assertHeaderInterceptor] } }
-      const agent = new Agent(opts)
-      const origin = new URL(`http://localhost:${server.address().port}`)
-      await request(origin, { dispatcher: agent, headers: [] })
+    const opts = { interceptors: { Pool: [setHeaderInterceptor, assertHeaderInterceptor] } }
+    const agent = new Agent(opts)
+    const origin = new URL(`http://localhost:${server.address().port}`)
+    await request(origin, { dispatcher: agent, headers: [] })
   })
 
   test('interceptors handlers are called in reverse order', async () => {
-      const clearResponseHeadersInterceptor = (dispatch) => {
-        return (opts, handler) => {
-          class ResultInterceptor extends DecoratorHandler {
-            onHeaders (statusCode, headers, resume) {
-              return super.onHeaders(statusCode, [], resume)
-            }
+    const clearResponseHeadersInterceptor = (dispatch) => {
+      return (opts, handler) => {
+        class ResultInterceptor extends DecoratorHandler {
+          onHeaders (statusCode, headers, resume) {
+            return super.onHeaders(statusCode, [], resume)
           }
-
-          return dispatch(opts, new ResultInterceptor(handler))
         }
-      }
 
-      const assertHeaderInterceptor = (dispatch) => {
-        return (opts, handler) => {
-          class ResultInterceptor extends DecoratorHandler {
-            onHeaders (statusCode, headers, resume) {
-              expect(headers).toEqual([])
-              return super.onHeaders(statusCode, headers, resume)
-            }
+        return dispatch(opts, new ResultInterceptor(handler))
+      }
+    }
+
+    const assertHeaderInterceptor = (dispatch) => {
+      return (opts, handler) => {
+        class ResultInterceptor extends DecoratorHandler {
+          onHeaders (statusCode, headers, resume) {
+            expect(headers).toEqual([])
+            return super.onHeaders(statusCode, headers, resume)
           }
-
-          return dispatch(opts, new ResultInterceptor(handler))
         }
-      }
 
-      const opts = { interceptors: { Agent: [assertHeaderInterceptor, clearResponseHeadersInterceptor] } }
-      const agent = new Agent(opts)
-      const origin = new URL(`http://localhost:${server.address().port}`)
-      await request(origin, { dispatcher: agent, headers: [] })
+        return dispatch(opts, new ResultInterceptor(handler))
+      }
+    }
+
+    const opts = { interceptors: { Agent: [assertHeaderInterceptor, clearResponseHeadersInterceptor] } }
+    const agent = new Agent(opts)
+    const origin = new URL(`http://localhost:${server.address().port}`)
+    await request(origin, { dispatcher: agent, headers: [] })
   })
 })
 
@@ -175,22 +175,22 @@ describe('interceptors with NtlmRequestHandler', () => {
         res.end()
       }
     })
-    await new Promise((resolve) => {server.listen(0, resolve)})
+    await new Promise((resolve) => { server.listen(0, resolve) })
   })
-  afterEach(async() => {
+  afterEach(async () => {
     await server.close()
   })
 
   test('Retry interceptor on Client will use the same socket', async () => {
-      const interceptor = dispatch => {
-        return (opts, handler) => {
-          return dispatch(opts, new FakeNtlmRequestHandler(dispatch, opts, handler))
-        }
+    const interceptor = dispatch => {
+      return (opts, handler) => {
+        return dispatch(opts, new FakeNtlmRequestHandler(dispatch, opts, handler))
       }
-      const opts = { interceptors: { Client: [interceptor] } }
-      const agent = new Agent(opts)
-      const origin = new URL(`http://localhost:${server.address().port}`)
-      const { statusCode } = await request(origin, { dispatcher: agent, headers: [] })
-      expect(statusCode).toEqual(200)
+    }
+    const opts = { interceptors: { Client: [interceptor] } }
+    const agent = new Agent(opts)
+    const origin = new URL(`http://localhost:${server.address().port}`)
+    const { statusCode } = await request(origin, { dispatcher: agent, headers: [] })
+    expect(statusCode).toEqual(200)
   })
 })
