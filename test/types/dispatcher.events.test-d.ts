@@ -4,9 +4,9 @@ import {URL} from "url";
 import {UndiciError} from "../../types/errors";
 
 interface EventHandler {
-  connect(origin: URL, targets: Array<Dispatcher>): void
-  disconnect(origin: URL, targets: Array<Dispatcher>, error: UndiciError): void
-  connectionError(origin: URL, targets: Array<Dispatcher>, error: UndiciError): void
+  connect(origin: URL, targets: readonly Dispatcher[]): void
+  disconnect(origin: URL, targets: readonly Dispatcher[], error: UndiciError): void
+  connectionError(origin: URL, targets: readonly Dispatcher[], error: UndiciError): void
   drain(origin: URL): void
 }
 
