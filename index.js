@@ -89,7 +89,7 @@ if (nodeMajor > 16 || (nodeMajor === 16 && nodeMinor >= 8)) {
   let fetchImpl = null
   module.exports.fetch = async function fetch (resource) {
     if (!fetchImpl) {
-      fetchImpl = require('./lib/fetch')
+      fetchImpl = require('./lib/fetch').fetch
     }
     const dispatcher = (arguments[1] && arguments[1].dispatcher) || getGlobalDispatcher()
     try {
