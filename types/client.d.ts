@@ -3,7 +3,6 @@ import { TlsOptions } from 'tls'
 import Dispatcher = require('./dispatcher')
 import {DispatchInterceptor} from './dispatcher'
 import buildConnector, {connector} from "./connector";
-import {Socket} from "net"
 
 export = Client
 
