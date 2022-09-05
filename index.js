@@ -16,6 +16,8 @@ const MockPool = require('./lib/mock/mock-pool')
 const mockErrors = require('./lib/mock/mock-errors')
 const ProxyAgent = require('./lib/proxy-agent')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
+const DecoratorHandler = require('./lib/handler/DecoratorHandler')
+const RedirectHandler = require('./lib/handler/RedirectHandler')
 
 const nodeVersion = process.versions.node.split('.')
 const nodeMajor = Number(nodeVersion[0])
@@ -29,6 +31,9 @@ module.exports.Pool = Pool
 module.exports.BalancedPool = BalancedPool
 module.exports.Agent = Agent
 module.exports.ProxyAgent = ProxyAgent
+
+module.exports.DecoratorHandler = DecoratorHandler
+module.exports.RedirectHandler = RedirectHandler
 
 module.exports.buildConnector = buildConnector
 module.exports.errors = errors

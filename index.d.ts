@@ -2,6 +2,8 @@ import Dispatcher = require('./types/dispatcher')
 import { setGlobalDispatcher, getGlobalDispatcher } from './types/global-dispatcher'
 import { setGlobalOrigin, getGlobalOrigin } from './types/global-origin'
 import Pool = require('./types/pool')
+import { RedirectHandler, DecoratorHandler } from './types/handlers'
+
 import BalancedPool = require('./types/balanced-pool')
 import Client = require('./types/client')
 import buildConnector = require('./types/connector')
@@ -20,7 +22,7 @@ export * from './types/formdata'
 export * from './types/diagnostics-channel'
 export { Interceptable } from './types/mock-interceptor'
 
-export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, MockClient, MockPool, MockAgent, mockErrors, ProxyAgent }
+export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, MockClient, MockPool, MockAgent, mockErrors, ProxyAgent, RedirectHandler, DecoratorHandler }
 export default Undici
 
 declare function Undici(url: string, opts: Pool.Options): Pool
@@ -28,6 +30,8 @@ declare function Undici(url: string, opts: Pool.Options): Pool
 declare namespace Undici {
   var Dispatcher: typeof import('./types/dispatcher')
   var Pool: typeof import('./types/pool');
+  var RedirectHandler: typeof import ('./types/handlers').RedirectHandler
+  var DecoratorHandler: typeof import ('./types/handlers').DecoratorHandler
   var BalancedPool: typeof import('./types/balanced-pool');
   var Client: typeof import('./types/client');
   var buildConnector: typeof import('./types/connector');

@@ -42,7 +42,7 @@ Here is a contrived example of an interceptor stripping the headers from a respo
 'use strict'
 
 const clearHeadersInterceptor = dispatch => {
-  const DecoratorHandler = require('undici/lib/handler/decorator')
+  const { DecoratorHandler } = require('undici')
   class ResultInterceptor extends DecoratorHandler {
     onHeaders (statusCode, headers, resume) {
       return super.onHeaders(statusCode, [], resume)
