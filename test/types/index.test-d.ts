@@ -1,5 +1,6 @@
 import { expectAssignable } from 'tsd'
 import Undici, {Pool, Client, errors, fetch, Interceptable, RedirectHandler, DecoratorHandler} from '../..'
+import Dispatcher from "../../types/dispatcher";
 
 expectAssignable<Pool>(Undici('', {}))
 expectAssignable<Pool>(new Undici.Pool('', {}))
@@ -9,5 +10,9 @@ expectAssignable<typeof errors>(Undici.errors)
 expectAssignable<typeof fetch>(Undici.fetch)
 
 const client = new Undici.Client('', {})
-expectAssignable<RedirectHandler>(new Undici.RedirectHandler(client, 10, {}, client))
-expectAssignable<DecoratorHandler>(new Undici.DecoratorHandler(client))
+const handler: Dispatcher.DispatchHandlers =  {}
+
+expectAssignable<RedirectHandler>(new Undici.RedirectHandler(client, 10, {
+  path: '/', method: 'GET'
+}, handler))
+expectAssignable<DecoratorHandler>(new Undici.DecoratorHandler(handler))
