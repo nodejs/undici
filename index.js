@@ -18,6 +18,7 @@ const ProxyAgent = require('./lib/proxy-agent')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 const DecoratorHandler = require('./lib/handler/DecoratorHandler')
 const RedirectHandler = require('./lib/handler/RedirectHandler')
+const createRedirectInterceptor = require('./lib/interceptor/redirectInterceptor')
 
 const nodeVersion = process.versions.node.split('.')
 const nodeMajor = Number(nodeVersion[0])
@@ -34,6 +35,7 @@ module.exports.ProxyAgent = ProxyAgent
 
 module.exports.DecoratorHandler = DecoratorHandler
 module.exports.RedirectHandler = RedirectHandler
+module.exports.createRedirectInterceptor = createRedirectInterceptor
 
 module.exports.buildConnector = buildConnector
 module.exports.errors = errors

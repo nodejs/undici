@@ -32,6 +32,7 @@ declare namespace Undici {
   var Pool: typeof import('./types/pool');
   var RedirectHandler: typeof import ('./types/handlers').RedirectHandler
   var DecoratorHandler: typeof import ('./types/handlers').DecoratorHandler
+  var createRedirectInterceptor: typeof import ('./types/interceptors').createRedirectInterceptor
   var BalancedPool: typeof import('./types/balanced-pool');
   var Client: typeof import('./types/client');
   var buildConnector: typeof import('./types/connector');
