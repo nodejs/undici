@@ -203,6 +203,37 @@ test('multipart formdata not base64', async (t) => {
   })
 })
 
+test('busboy emit error', async (t) => {
+  t.plan(1)
+
+  const formData = new FormData()
+  formData.append('field1', 'value1')
+
+  const tempRes = new Response(formData)
+  const formRaw = await tempRes.text()
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'multipart/form-data; boundary=wrongboundary')
+    res.write(formRaw)
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  await new Promise((resolve) => {
+    server.listen(0, async () => {
+      const response = await fetch(`http://localhost:${server.address().port}`)
+
+      try {
+        await response.formData()
+      } catch (err) {
+        t.equal(err.message, 'Unexpected end of form')
+      }
+
+      resolve()
+    })
+  })
+})
+
 test('multipart formdata base64', async (t) => {
   t.plan(1)
 
