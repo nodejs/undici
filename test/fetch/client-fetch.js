@@ -166,8 +166,6 @@ test('unsupported formData 1', (t) => {
 })
 
 test('multipart formdata not base64', async (t) => {
-  t.plan(2)
-
   // Construct example form data, with text and blob fields
   const formData = new FormData()
   formData.append('field1', 'value1')
@@ -185,27 +183,44 @@ test('multipart formdata not base64', async (t) => {
   })
   t.teardown(server.close.bind(server))
 
-  await new Promise((resolve) => {
-    server.listen(0, async () => {
-      const response = await fetch(`http://localhost:${server.address().port}`)
-      const form = await response.formData()
+  server.listen(0, () => {
+    fetch(`http://localhost:${server.address().port}`)
+      .then(res => res.formData())
+      .then(form => {
+        const field1 = form.get('field1')
+        t.equal(field1, 'value1')
+        const field2 = form.get('field2')
+        return field2.text()
+      })
+      .then(text => {
+        t.equal(text, 'example\ntext file')
+      })
+  })
+})
 
-      // Text field
-      const field1 = form.get('field1')
-      t.equal(field1, 'value1')
+test('multipart formdata base64', (t) => {
+  t.plan(1)
 
-      // Blob field
-      const field2 = form.get('field2')
-      const field2Text = await field2.text()
-      t.equal(field2Text, 'example\ntext file')
-      resolve()
-    })
+  // Example form data with base64 encoding
+  const formRaw = '------formdata-undici-0.5786922755719377\r\nContent-Disposition: form-data; name="key"; filename="test.txt"\r\nContent-Type: text/plain\r\nContent-Transfer-Encoding: base64\r\n\r\ndmFsdWU=\r\n------formdata-undici-0.5786922755719377--'
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'multipart/form-data; boundary=----formdata-undici-0.5786922755719377')
+    res.write(formRaw)
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    fetch(`http://localhost:${server.address().port}`)
+      .then(res => res.formData())
+      .then(form => form.get('key').text())
+      .then(text => {
+        t.equal(text, 'value')
+      })
   })
 })
 
 test('busboy emit error', async (t) => {
-  t.plan(1)
-
   const formData = new FormData()
   formData.append('field1', 'value1')
 
@@ -219,42 +234,10 @@ test('busboy emit error', async (t) => {
   })
   t.teardown(server.close.bind(server))
 
-  await new Promise((resolve) => {
-    server.listen(0, async () => {
-      const response = await fetch(`http://localhost:${server.address().port}`)
-
-      try {
-        await response.formData()
-      } catch (err) {
-        t.equal(err.message, 'Unexpected end of form')
-      }
-
-      resolve()
-    })
-  })
-})
-
-test('multipart formdata base64', async (t) => {
-  t.plan(1)
-
-  // Example form data with base64 encoding
-  const formRaw = '------formdata-undici-0.5786922755719377\r\nContent-Disposition: form-data; name="key"; filename="test.txt"\r\nContent-Type: text/plain\r\nContent-Transfer-Encoding: base64\r\n\r\ndmFsdWU=\r\n------formdata-undici-0.5786922755719377--'
-  const server = createServer((req, res) => {
-    res.setHeader('content-type', 'multipart/form-data; boundary=----formdata-undici-0.5786922755719377')
-    res.write(formRaw)
-    res.end()
-  })
-  t.teardown(server.close.bind(server))
-
-  await new Promise((resolve) => {
-    server.listen(0, async () => {
-      const response = await fetch(`http://localhost:${server.address().port}`)
-      const form = await response.formData()
-
-      const text = await form.get('key').text()
-      console.log(text)
-      t.equal(text, 'value')
-      resolve()
+  server.listen(0, async () => {
+    const res = await fetch(`http://localhost:${server.address().port}`)
+    res.formData().catch(err => {
+      t.equal(err.message, 'Unexpected end of form')
     })
   })
 })
