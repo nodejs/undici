@@ -9,6 +9,10 @@ const {
   fetch
 } = require('../../')
 const { kState } = require('../../lib/fetch/symbols.js')
+const {
+  Blob: ThirdPartyBlob,
+  FormData: ThirdPartyFormData
+} = require('formdata-node')
 const hasSignalReason = !!~process.version.localeCompare('v16.14.0', undefined, { numeric: true })
 
 test('arg validation', async (t) => {
@@ -434,4 +438,24 @@ test('RequestInit.signal option', async (t) => {
   await t.rejects(fetch('http://asd', {
     signal: false
   }), TypeError)
+})
+
+test('constructing Request with third party Blob body', async (t) => {
+  const blob = new ThirdPartyBlob(['text'])
+  const req = new Request('http://asd', {
+    method: 'POST',
+    body: blob
+  })
+  t.equal(await req.text(), 'text')
+})
+test('constructing Request with third party FormData body', async (t) => {
+  const form = new ThirdPartyFormData()
+  form.set('key', 'value')
+  const req = new Request('http://asd', {
+    method: 'POST',
+    body: form
+  })
+  const contentType = req.headers.get('content-type').split('=')
+  t.equal(contentType[0], 'multipart/form-data; boundary')
+  t.ok((await req.text()).startsWith(`--${contentType[1]}`))
 })
