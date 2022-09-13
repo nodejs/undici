@@ -225,16 +225,16 @@ A body can be of the following types:
 In this implementation of fetch, ```request.body``` now accepts ```Async Iterables```. It is not present in the [Fetch Standard.](https://fetch.spec.whatwg.org)
 
 ```js
-import { fetch } from "undici"
+import { fetch } from 'undici'
 
 const data = {
   async *[Symbol.asyncIterator]() {
-    yield "hello"
-    yield "world"
+    yield 'hello'
+    yield 'world'
   },
 }
 
-await fetch("https://example.com", { body: data, method: 'POST' })
+await fetch('https://example.com', { body: data, method: 'POST' })
 ```
 
 #### `response.body`
