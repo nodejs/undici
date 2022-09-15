@@ -15,6 +15,8 @@ const {
   PassThrough
 } = require('stream')
 
+const nodeMajor = Number(process.versions.node.split('.')[0])
+
 test('request timeout', (t) => {
   t.plan(1)
 
@@ -55,7 +57,7 @@ test('request timeout with readable body', (t) => {
       t.type(err, errors.HeadersTimeoutError)
     })
   })
-})
+}, { skip: nodeMajor < 14 })
 
 test('body timeout', (t) => {
   t.plan(2)
