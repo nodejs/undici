@@ -16,14 +16,13 @@ jobs:
       test-command: npm run coverage:ci
       post-test-steps: |
         - name: Coverage Report
-          uses: codecov/codecov-action@v2
+          uses: codecov/codecov-action@v3
       include: |
         - runs-on: ubuntu-latest
           node-version: 16.8
       exclude: |
         - runs-on: windows-latest
           node-version: 16
-        - node-version: 12
   automerge:
     if: >
         github.event_name == 'pull_request' &&
