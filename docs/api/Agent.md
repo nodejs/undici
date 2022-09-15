@@ -16,7 +16,7 @@ Returns: `Agent`
 
 ### Parameter: `AgentOptions`
 
-Extends: [`ClientOptions`](Pool.md#parameter-pooloptions)
+Extends: [`PoolOptions`](Pool.md#parameter-pooloptions)
 
 * **factory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Pool(origin, opts)`
 * **maxRedirections** `Integer` - Default: `0`. The number of HTTP redirection to follow unless otherwise specified in `DispatchOptions`.
