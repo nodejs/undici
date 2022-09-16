@@ -250,7 +250,7 @@ test('locked blob body', (t) => {
     const res = await fetch(`http://localhost:${server.address().port}`)
     const reader = res.body.getReader()
     res.blob().catch(err => {
-      t.equal(err.message, 'locked')
+      t.equal(err.message, 'The stream is locked.')
       reader.cancel()
     })
   })
@@ -270,7 +270,7 @@ test('disturbed blob body', (t) => {
       t.pass(2)
     })
     res.blob().catch(err => {
-      t.equal(err.message, 'disturbed')
+      t.equal(err.message, 'The body has already been consumed.')
     })
   })
 })
