@@ -11,6 +11,7 @@ const { Client, setGlobalDispatcher, Agent } = require('../..')
 const nodeFetch = require('../../index-fetch')
 const { once } = require('events')
 const { gzipSync } = require('zlib')
+const { promisify } = require('util')
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 1,
@@ -166,6 +167,7 @@ test('unsupported formData 1', (t) => {
 })
 
 test('multipart formdata not base64', async (t) => {
+  t.plan(2)
   // Construct example form data, with text and blob fields
   const formData = new FormData()
   formData.append('field1', 'value1')
@@ -183,19 +185,15 @@ test('multipart formdata not base64', async (t) => {
   })
   t.teardown(server.close.bind(server))
 
-  server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`)
-      .then(res => res.formData())
-      .then(form => {
-        const field1 = form.get('field1')
-        t.equal(field1, 'value1')
-        const field2 = form.get('field2')
-        return field2.text()
-      })
-      .then(text => {
-        t.equal(text, 'example\ntext file')
-      })
-  })
+  const listen = promisify(server.listen.bind(server))
+  await listen(0)
+
+  const res = await fetch(`http://localhost:${server.address().port}`)
+  const form = await res.formData()
+  t.equal(form.get('field1'), 'value1')
+
+  const text = await form.get('field2').text()
+  t.equal(text, 'example\ntext file')
 })
 
 test('multipart formdata base64', (t) => {
@@ -221,6 +219,7 @@ test('multipart formdata base64', (t) => {
 })
 
 test('busboy emit error', async (t) => {
+  t.plan(1)
   const formData = new FormData()
   formData.append('field1', 'value1')
 
@@ -234,12 +233,11 @@ test('busboy emit error', async (t) => {
   })
   t.teardown(server.close.bind(server))
 
-  server.listen(0, async () => {
-    const res = await fetch(`http://localhost:${server.address().port}`)
-    res.formData().catch(err => {
-      t.equal(err.message, 'Unexpected end of form')
-    })
-  })
+  const listen = promisify(server.listen.bind(server))
+  await listen(0)
+
+  const res = await fetch(`http://localhost:${server.address().port}`)
+  await t.rejects(res.formData(), 'Unexpected end of multipart data')
 })
 
 test('urlencoded formData', (t) => {
