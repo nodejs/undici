@@ -25,8 +25,6 @@ export { Interceptable } from './types/mock-interceptor'
 export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, MockClient, MockPool, MockAgent, mockErrors, ProxyAgent, RedirectHandler, DecoratorHandler }
 export default Undici
 
-declare function Undici(url: string, opts: Pool.Options): Pool
-
 declare namespace Undici {
   var Dispatcher: typeof import('./types/dispatcher')
   var Pool: typeof import('./types/pool');
