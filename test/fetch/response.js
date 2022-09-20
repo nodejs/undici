@@ -5,6 +5,10 @@ const {
   Response
 } = require('../../')
 const { ReadableStream } = require('stream/web')
+const {
+  Blob: ThirdPartyBlob,
+  FormData: ThirdPartyFormData
+} = require('formdata-node')
 
 test('arg validation', async (t) => {
   // constructor
@@ -229,4 +233,18 @@ test('constructing a Response with a ReadableStream body', async (t) => {
   })
 
   t.end()
+})
+
+test('constructing Response with third party Blob body', async (t) => {
+  const blob = new ThirdPartyBlob(['text'])
+  const res = new Response(blob)
+  t.equal(await res.text(), 'text')
+})
+test('constructing Response with third party FormData body', async (t) => {
+  const form = new ThirdPartyFormData()
+  form.set('key', 'value')
+  const res = new Response(form)
+  const contentType = res.headers.get('content-type').split('=')
+  t.equal(contentType[0], 'multipart/form-data; boundary')
+  t.ok((await res.text()).startsWith(`--${contentType[1]}`))
 })

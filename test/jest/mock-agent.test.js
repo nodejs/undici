@@ -1,6 +1,5 @@
 'use strict'
 
-const { afterEach } = require('tap')
 const { request, setGlobalDispatcher, MockAgent } = require('../..')
 const { getResponse } = require('../../lib/mock/mock-utils')
 

@@ -1,7 +1,7 @@
 'use strict'
 
 const { getGlobalDispatcher } = require('./lib/global')
-const fetchImpl = require('./lib/fetch')
+const fetchImpl = require('./lib/fetch').fetch
 
 module.exports.fetch = async function fetch (resource) {
   const dispatcher = (arguments[1] && arguments[1].dispatcher) || getGlobalDispatcher()

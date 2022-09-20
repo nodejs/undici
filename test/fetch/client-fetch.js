@@ -250,7 +250,7 @@ test('locked blob body', (t) => {
     const res = await fetch(`http://localhost:${server.address().port}`)
     const reader = res.body.getReader()
     res.blob().catch(err => {
-      t.equal(err.message, 'locked')
+      t.equal(err.message, 'The stream is locked.')
       reader.cancel()
     })
   })
@@ -270,7 +270,7 @@ test('disturbed blob body', (t) => {
       t.pass(2)
     })
     res.blob().catch(err => {
-      t.equal(err.message, 'disturbed')
+      t.equal(err.message, 'The body has already been consumed.')
     })
   })
 })
@@ -301,6 +301,34 @@ test('redirect with body', (t) => {
       body: 'asd'
     })
     t.equal(await res.text(), '2')
+  })
+})
+
+test('redirect with stream', (t) => {
+  t.plan(3)
+
+  const location = '/asd'
+  const body = 'hello!'
+  const server = createServer(async (req, res) => {
+    res.writeHead(302, { location })
+    let count = 0
+    const l = setInterval(() => {
+      res.write(body[count++])
+      if (count === body.length) {
+        res.end()
+        clearInterval(l)
+      }
+    }, 50)
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const res = await fetch(`http://localhost:${server.address().port}`, {
+      redirect: 'manual'
+    })
+    t.equal(res.status, 302)
+    t.equal(res.headers.get('location'), location)
+    t.equal(await res.text(), body)
   })
 })
 
@@ -494,6 +522,25 @@ test('do not decode redirect body', (t) => {
       return
     }
     t.pass('actual response')
+    res.setHeader('content-encoding', 'gzip')
+    res.end(gzipSync(JSON.stringify(obj)))
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const body = await fetch(`http://localhost:${server.address().port}/resource`)
+    t.strictSame(JSON.stringify(obj), await body.text())
+  })
+})
+
+test('decode non-redirect body with location header', (t) => {
+  t.plan(2)
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    t.pass('response')
+    res.statusCode = 201
+    res.setHeader('location', '/resource/')
     res.setHeader('content-encoding', 'gzip')
     res.end(gzipSync(JSON.stringify(obj)))
   })

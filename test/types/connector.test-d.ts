@@ -6,17 +6,17 @@ import {IpcNetConnectOpts, NetConnectOpts, TcpNetConnectOpts} from "net";
 const connector = buildConnector({ rejectUnauthorized: false })
 expectAssignable<Client>(new Client('', {
   connect (opts: buildConnector.Options, cb: buildConnector.Callback) {
-    connector(opts, (err, socket) => {
-      if (err) {
-        return cb(err, null)
+    connector(opts, (...args) => {
+      if (args[0]) {
+        return cb(args[0], null)
       }
-      if (socket instanceof TLSSocket) {
-        if (socket.getPeerCertificate().fingerprint256 !== 'FO:OB:AR') {
-          socket.destroy()
+      if (args[1] instanceof TLSSocket) {
+        if (args[1].getPeerCertificate().fingerprint256 !== 'FO:OB:AR') {
+          args[1].destroy()
           return cb(new Error('Fingerprint does not match'), null)
         }
       }
-      return cb(null, socket)
+      return cb(null, args[1])
     })
   }
 }))
