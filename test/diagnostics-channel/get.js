@@ -49,7 +49,7 @@ diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectPa
   _connector = connector
 
   t.equal(typeof _connector, 'function')
-  t.equal(Object.keys(connectParams).length, 5)
+  t.equal(Object.keys(connectParams).length, 6)
 
   const { host, hostname, protocol, port, servername } = connectParams
 
@@ -65,7 +65,7 @@ diagnosticsChannel.channel('undici:client:connected').subscribe(({ connectParams
   _socket = socket
 
   t.equal(_connector, connector)
-  t.equal(Object.keys(connectParams).length, 5)
+  t.equal(Object.keys(connectParams).length, 6)
 
   const { host, hostname, protocol, port, servername } = connectParams
 
