@@ -53,6 +53,7 @@
     "test:tap": "tap test/*.js test/diagnostics-channel/*.js",
     "test:tdd": "tap test/*.js test/diagnostics-channel/*.js -w",
     "test:typescript": "tsd",
+    "test:wpt": "node scripts/verifyVersion 18 || node test/wpt/runner/start.mjs",
     "coverage": "nyc --reporter=text --reporter=html npm run test",
     "coverage:ci": "nyc --reporter=lcov npm run test",
     "bench": "PORT=3042 concurrently -k -s first npm:bench:server npm:bench:run",
@@ -106,7 +107,9 @@
     ],
     "ignore": [
       "lib/llhttp/constants.js",
-      "lib/llhttp/utils.js"
+      "lib/llhttp/utils.js",
+      "test/wpt/runner/fetch",
+      "test/wpt/runner/resources"
     ]
   },
   "tsd": {
