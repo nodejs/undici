@@ -299,12 +299,22 @@ test('invalid options throws', (t) => {
 
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
-      keepAliveTimeout: 'asd'
+      localAddress: 123
     }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'invalid keepAliveTimeout')
+    t.equal(err.message, 'localAddress must be valid string IP address')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      localAddress: 'abcd123'
+    }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'localAddress must be valid string IP address')
   }
 
   try {
