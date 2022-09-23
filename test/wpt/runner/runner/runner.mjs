@@ -1,10 +1,10 @@
+import { EventEmitter } from 'node:events'
+import { readdirSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
-import { readdirSync, statSync } from 'node:fs'
-import { EventEmitter } from 'node:events'
 
-const testPath = fileURLToPath(join(import.meta.url, '../..'))
+const testPath = fileURLToPath(join(import.meta.url, '../../../tests'))
 
 export class WPTRunner extends EventEmitter {
   /** @type {string} */
@@ -73,6 +73,8 @@ export class WPTRunner extends EventEmitter {
         console.log({ message })
       } else if (message.type === 'completion') {
         this.emit('completion')
+      } else if (message.meta) {
+        console.log(message.meta) // todo(@khafradev): remove; just for debugging
       }
     })
   }
