@@ -114,51 +114,6 @@ test('sameOrigin', (t) => {
   t.end()
 })
 
-test('CORBCheck', (t) => {
-  const allowedRequests = [{
-    initiator: 'download',
-    currentURL: { scheme: '' }
-  }, {
-    initiator: '',
-    currentURL: { scheme: 'https' }
-  }
-  ]
-
-  const response = { headersList: { get () { return '' } } }
-
-  allowedRequests.forEach((request) => {
-    t.ok(util.CORBCheck(request, response))
-  })
-
-  t.ok(util.CORBCheck({
-    initiator: '',
-    currentURL: { scheme: '' }
-  }, response))
-
-  const protectedResponses = [{
-    status: 206,
-    headersList: { get () { return 'text/html' } }
-  }, {
-    status: 206,
-    headersList: { get () { return 'application/javascript' } }
-  }, {
-    status: 206,
-    headersList: { get () { return 'application/xml' } }
-  }, {
-    status: 218,
-    headersList: { get (type) { return type === 'content-type' ? 'text/html' : 'x-content-type-options' } }
-  }]
-
-  protectedResponses.forEach(response => {
-    t.equal(util.CORBCheck({
-      initiator: '',
-      currentURL: { scheme: 'https' }
-    }, response), 'blocked')
-  })
-
-  t.end()
-})
-
 test('isURLPotentiallyTrustworthy', (t) => {
   const valid = ['http://127.0.0.1', 'http://localhost.localhost',
     'http://[::1]', 'http://adb.localhost', 'https://something.com', 'wss://hello.com',
@@ -201,12 +156,11 @@ test('determineRequestsReferrer', (t) => {
   })
 
   t.test('Should return "no-referrer" if scheme is local scheme', (tt) => {
-    tt.plan(4)
+    tt.plan(3)
     const referrerSources = [
       new URL('data:something'),
       new URL('about:blank'),
-      new URL('javascript:something'),
-      new URL('file://path/to/file')]
+      new URL('blob:https://video_url')]
 
     for (const source of referrerSources) {
       tt.equal(util.determineRequestsReferrer({
