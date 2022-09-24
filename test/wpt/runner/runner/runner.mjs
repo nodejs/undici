@@ -73,8 +73,6 @@ export class WPTRunner extends EventEmitter {
         console.log({ message })
       } else if (message.type === 'completion') {
         this.emit('completion')
-      } else if (message.meta) {
-        console.log(message.meta) // todo(@khafradev): remove; just for debugging
       }
     })
   }
