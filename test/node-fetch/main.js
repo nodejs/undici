@@ -880,7 +880,7 @@ describe('node-fetch', () => {
           return expect(res.text())
             .to.eventually.be.rejected
             .and.be.an.instanceof(Error)
-            .and.have.property('name', 'TypeError')
+            .and.have.property('name', 'AbortError')
         })
     })
   })

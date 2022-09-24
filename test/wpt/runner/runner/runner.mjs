@@ -1,10 +1,12 @@
 import { EventEmitter } from 'node:events'
-import { readdirSync, statSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
 
-const testPath = fileURLToPath(join(import.meta.url, '../../../tests'))
+const basePath = fileURLToPath(join(import.meta.url, '../../..'))
+const testPath = join(basePath, 'tests')
+const statusPath = join(basePath, 'status')
 
 export class WPTRunner extends EventEmitter {
   /** @type {string} */
@@ -19,11 +21,22 @@ export class WPTRunner extends EventEmitter {
   /** @type {string} */
   #url
 
+  /** @type {import('../../status/fetch.status.json')} */
+  #status
+
+  #stats = {
+    completed: 0,
+    failed: 0,
+    success: 0,
+    expectedFailures: 0
+  }
+
   constructor (folder, url) {
     super()
 
     this.#folderPath = join(testPath, folder)
     this.#files.push(...WPTRunner.walk(this.#folderPath, () => true))
+    this.#status = JSON.parse(readFileSync(join(statusPath, `${folder}.status.json`)))
     this.#url = url
 
     if (this.#files.length === 0) {
@@ -68,13 +81,42 @@ export class WPTRunner extends EventEmitter {
     })
 
     worker.on('message', (message) => {
-      if (message.result?.status === 1) {
-        process.exitCode = 1
-        console.log({ message })
+      if (message.type === 'result') {
+        this.handleTestCompletion(message)
       } else if (message.type === 'completion') {
         this.emit('completion')
+        const { completed, failed, success, expectedFailures } = this.#stats
+        console.log(
+          `Completed: ${completed}, failed: ${failed}, success: ${success}, ` +
+          `expected failures: ${expectedFailures}, ` +
+          `unexpected failures: ${failed - expectedFailures}`
+        )
       }
     })
+  }
+
+  handleTestCompletion (message) {
+    if (message.type === 'result') {
+      this.#stats.completed += 1
+
+      if (message.result.status === 1) {
+        this.#stats.failed += 1
+        this.onFail(message)
+      } else {
+        this.#stats.success += 1
+      }
+    }
+  }
+
+  onFail ({ result }) {
+    const { name } = result
+
+    if (this.#status.fail.includes(name)) {
+      this.#stats.expectedFailures += 1
+    } else {
+      process.exitCode = 1
+      console.error(result)
+    }
   }
 
   addInitScript (code) {
