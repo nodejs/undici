@@ -30,6 +30,12 @@ const server = createServer(async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   switch (fullUrl.pathname) {
+    case '/resources/data.json': {
+      // https://github.com/web-platform-tests/wpt/blob/6ae3f702a332e8399fab778c831db6b7dca3f1c6/fetch/api/resources/data.json
+      return createReadStream(join(resources, 'data.json'))
+        .on('end', () => res.end())
+        .pipe(res)
+    }
     case '/resources/infinite-slow-response.py': {
       // https://github.com/web-platform-tests/wpt/blob/master/fetch/api/resources/infinite-slow-response.py
       const stateKey = fullUrl.searchParams.get('stateKey') ?? ''
@@ -73,8 +79,8 @@ const server = createServer(async (req, res) => {
     }
     case '/resources/empty.txt': {
       return createReadStream(join(resources, 'empty.txt'))
-        .pipe(res)
         .on('end', () => res.end())
+        .pipe(res)
     }
     default: {
       res.statusCode = 200
