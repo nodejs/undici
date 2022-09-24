@@ -14,7 +14,7 @@ try {
 const { Client } = require('../..')
 const { createServer } = require('http')
 
-t.plan(32)
+t.plan(33)
 
 const server = createServer((req, res) => {
   res.setHeader('Content-Type', 'text/plain')
@@ -110,6 +110,7 @@ diagnosticsChannel.channel('undici:request:headers').subscribe(({ request, respo
   ]
   t.same(response.headers, expectedHeaders)
   t.equal(response.statusText, 'OK')
+  t.equal(response.socket.remotePort, server.address().port)
 })
 
 let endEmitted = false

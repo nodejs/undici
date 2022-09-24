@@ -149,3 +149,22 @@ test('Absolute URL as pathname should be included in req.path', async (t) => {
   t.equal(noSlashPath2Arg.statusCode, 200)
   t.end()
 })
+
+test('Request result should return socket info', async (t) => {
+  const requestedServer = createServer((req, res) => {
+    t.equal(`localhost:${requestedServer.address().port}`, req.headers.host)
+    res.statusCode = 200
+    res.end('hello')
+  })
+
+  t.teardown(requestedServer.close.bind(requestedServer))
+
+  await Promise.all([
+    requestedServer.listen(0)
+  ])
+
+  const result = await request(`http://localhost:${requestedServer.address().port}`)
+  t.equal(result.statusCode, 200)
+  t.equal(result.socket.remotePort, requestedServer.address().port)
+  t.end()
+})

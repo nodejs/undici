@@ -6,6 +6,7 @@ import { Blob } from 'buffer'
 import type BodyReadable from './readable'
 import { FormData } from './formdata'
 import { UndiciError } from './errors'
+import { SocketInfo } from './client'
 
 type AbortSignal = unknown;
 
@@ -171,6 +172,7 @@ declare namespace Dispatcher {
     trailers: Record<string, string>;
     opaque: unknown;
     context: object;
+    socket: SocketInfo;
   }
   export interface PipelineHandlerData {
     statusCode: number;
