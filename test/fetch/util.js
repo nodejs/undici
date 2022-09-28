@@ -113,3 +113,99 @@ test('sameOrigin', (t) => {
 
   t.end()
 })
+
+test('isURLPotentiallyTrustworthy', (t) => {
+  const valid = ['http://127.0.0.1', 'http://localhost.localhost',
+    'http://[::1]', 'http://adb.localhost', 'https://something.com', 'wss://hello.com',
+    'file:///link/to/file.txt', 'data:text/plain;base64,randomstring', 'about:blank', 'about:srcdoc']
+  const invalid = ['http://121.3.4.5:55', 'null:8080', 'something:8080']
+
+  t.plan(valid.length + invalid.length + 1)
+  t.notOk(util.isURLPotentiallyTrustworthy('string'))
+
+  for (const url of valid) {
+    const instance = new URL(url)
+    t.ok(util.isURLPotentiallyTrustworthy(instance))
+  }
+
+  for (const url of invalid) {
+    const instance = new URL(url)
+    t.notOk(util.isURLPotentiallyTrustworthy(instance))
+  }
+})
+
+test('determineRequestsReferrer', (t) => {
+  t.plan(7)
+
+  t.test('Should handle empty referrerPolicy', (tt) => {
+    tt.plan(2)
+    tt.equal(util.determineRequestsReferrer({}), 'no-referrer')
+    tt.equal(util.determineRequestsReferrer({ referrerPolicy: '' }), 'no-referrer')
+  })
+
+  t.test('Should handle "no-referrer" referrerPolicy', (tt) => {
+    tt.plan(1)
+    tt.equal(util.determineRequestsReferrer({ referrerPolicy: 'no-referrer' }), 'no-referrer')
+  })
+
+  t.test('Should return "no-referrer" if request referrer is absent', (tt) => {
+    tt.plan(1)
+    tt.equal(util.determineRequestsReferrer({
+      referrerPolicy: 'origin'
+    }), 'no-referrer')
+  })
+
+  t.test('Should return "no-referrer" if scheme is local scheme', (tt) => {
+    tt.plan(3)
+    const referrerSources = [
+      new URL('data:something'),
+      new URL('about:blank'),
+      new URL('blob:https://video_url')]
+
+    for (const source of referrerSources) {
+      tt.equal(util.determineRequestsReferrer({
+        referrerPolicy: 'origin',
+        referrer: source
+      }), 'no-referrer')
+    }
+  })
+
+  t.test('Should return "no-referrer" if the request referrer is neither client nor instance of URL', (tt) => {
+    tt.plan(4)
+    const requests = [
+      { referrerPolicy: 'origin', referrer: 'string' },
+      { referrerPolicy: 'origin', referrer: null },
+      { referrerPolicy: 'origin', referrer: undefined },
+      { referrerPolicy: 'origin', referrer: '' }
+    ]
+
+    for (const request of requests) {
+      tt.equal(util.determineRequestsReferrer(request), 'no-referrer')
+    }
+  })
+
+  t.test('Should return referrer origin on referrerPolicy origin', (tt) => {
+    tt.plan(1)
+    const expectedRequest = {
+      referrerPolicy: 'origin',
+      referrer: new URL('http://example:12345@example.com')
+    }
+
+    tt.equal(util.determineRequestsReferrer(expectedRequest), expectedRequest.referrer.origin)
+  })
+
+  t.test('Should return referrer url on referrerPolicy unsafe-url', (tt) => {
+    tt.plan(1)
+    const expectedRequest = {
+      referrerPolicy: 'unsafe-url',
+      referrer: new URL('http://example:12345@example.com/hello/world')
+    }
+
+    const expectedReffererUrl = new URL(expectedRequest.referrer.href)
+
+    expectedReffererUrl.username = ''
+    expectedReffererUrl.password = ''
+
+    tt.equal(util.determineRequestsReferrer(expectedRequest), expectedReffererUrl.href)
+  })
+})
