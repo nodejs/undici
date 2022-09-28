@@ -1,5 +1,4 @@
-import { readFileSync } from 'node:fs'
-import { createContext, runInContext, runInThisContext } from 'node:vm'
+import { runInThisContext } from 'node:vm'
 import { parentPort, workerData } from 'node:worker_threads'
 import {
   setGlobalOrigin,
@@ -11,7 +10,7 @@ import {
   Headers
 } from '../../../../index.js'
 
-const { initScripts, paths, url } = workerData
+const { initScripts, meta, test, url } = workerData
 
 const globalPropertyDescriptors = {
   writable: true,
@@ -58,6 +57,8 @@ runInThisContext(`
       return false
     }
   }
+  globalThis.window = globalThis
+  globalThis.location = new URL('${url}')
 `)
 
 await import('../resources/testharness.cjs')
@@ -87,13 +88,16 @@ add_completion_callback((_, status) => {
 
 setGlobalOrigin(url)
 
+// Inject any script the user provided before
+// running the tests.
 for (const initScript of initScripts) {
   runInThisContext(initScript)
 }
 
-for (const path of paths) {
-  const code = readFileSync(path, 'utf-8')
-  const context = createContext(globalThis)
-
-  runInContext(code, context, { filename: path })
+// Inject any files from the META tags
+for (const script of meta.scripts) {
+  runInThisContext(script)
 }
+
+// Finally, run the test.
+runInThisContext(test)

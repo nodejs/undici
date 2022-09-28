@@ -1,10 +1,13 @@
-import { join, resolve } from 'node:path'
+import { EventEmitter, once } from 'node:events'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
-import { readdirSync, statSync } from 'node:fs'
-import { EventEmitter } from 'node:events'
+import { parseMeta } from './util.mjs'
 
-const testPath = fileURLToPath(join(import.meta.url, '../..'))
+const basePath = fileURLToPath(join(import.meta.url, '../../..'))
+const testPath = join(basePath, 'tests')
+const statusPath = join(basePath, 'status')
 
 export class WPTRunner extends EventEmitter {
   /** @type {string} */
@@ -19,11 +22,22 @@ export class WPTRunner extends EventEmitter {
   /** @type {string} */
   #url
 
+  /** @type {import('../../status/fetch.status.json')} */
+  #status
+
+  #stats = {
+    completed: 0,
+    failed: 0,
+    success: 0,
+    expectedFailures: 0
+  }
+
   constructor (folder, url) {
     super()
 
     this.#folderPath = join(testPath, folder)
     this.#files.push(...WPTRunner.walk(this.#folderPath, () => true))
+    this.#status = JSON.parse(readFileSync(join(statusPath, `${folder}.status.json`)))
     this.#url = url
 
     if (this.#files.length === 0) {
@@ -56,28 +70,96 @@ export class WPTRunner extends EventEmitter {
     return [...files]
   }
 
-  run () {
+  async run () {
     const workerPath = fileURLToPath(join(import.meta.url, '../worker.mjs'))
 
-    const worker = new Worker(workerPath, {
-      workerData: {
-        initScripts: this.#initScripts,
-        paths: this.#files,
-        url: this.#url
-      }
-    })
+    for (const test of this.#files) {
+      const code = readFileSync(test, 'utf-8')
+      const worker = new Worker(workerPath, {
+        workerData: {
+          // Code to load before the test harness and tests.
+          initScripts: this.#initScripts,
+          // The test file.
+          test: code,
+          // Parsed META tag information
+          meta: this.resolveMeta(code, test),
+          url: this.#url,
+          path: test
+        }
+      })
 
-    worker.on('message', (message) => {
-      if (message.result?.status === 1) {
-        process.exitCode = 1
-        console.log({ message })
-      } else if (message.type === 'completion') {
-        this.emit('completion')
+      worker.on('message', (message) => {
+        if (message.type === 'result') {
+          this.handleIndividualTestCompletion(message)
+        } else if (message.type === 'completion') {
+          this.handleTestCompletion(worker)
+        }
+      })
+
+      await once(worker, 'exit')
+    }
+
+    this.emit('completion')
+    const { completed, failed, success, expectedFailures } = this.#stats
+    console.log(
+      `Completed: ${completed}, failed: ${failed}, success: ${success}, ` +
+      `expected failures: ${expectedFailures}, ` +
+      `unexpected failures: ${failed - expectedFailures}`
+    )
+  }
+
+  /**
+   * Called after a test has succeeded or failed.
+   */
+  handleIndividualTestCompletion (message) {
+    if (message.type === 'result') {
+      this.#stats.completed += 1
+
+      if (message.result.status === 1) {
+        this.#stats.failed += 1
+
+        if (this.#status.fail.includes(message.result.name)) {
+          this.#stats.expectedFailures += 1
+        } else {
+          process.exitCode = 1
+          console.error(message.result)
+        }
+      } else {
+        this.#stats.success += 1
       }
-    })
+    }
+  }
+
+  /**
+   * Called after all the tests in a worker are completed.
+   * @param {Worker} worker
+   */
+  handleTestCompletion (worker) {
+    worker.terminate()
   }
 
   addInitScript (code) {
     this.#initScripts.push(code)
+  }
+
+  /**
+   * Parses META tags and resolves any script file paths.
+   * @param {string} code
+   * @param {string} path The absolute path of the test
+   */
+  resolveMeta (code, path) {
+    const meta = parseMeta(code)
+    const scripts = meta.scripts.map((script) => {
+      if (isAbsolute(script)) {
+        return readFileSync(join(testPath, script), 'utf-8')
+      }
+
+      return readFileSync(resolve(path, '..', script), 'utf-8')
+    })
+
+    return {
+      ...meta,
+      scripts
+    }
   }
 }
