@@ -12,6 +12,7 @@ const nodeFetch = require('../../index-fetch')
 const { once } = require('events')
 const { gzipSync } = require('zlib')
 const { promisify } = require('util')
+const { randomFillSync, createHash } = require('crypto')
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 1,
@@ -200,10 +201,15 @@ test('multipart formdata base64', (t) => {
   t.plan(1)
 
   // Example form data with base64 encoding
-  const formRaw = '------formdata-undici-0.5786922755719377\r\nContent-Disposition: form-data; name="key"; filename="test.txt"\r\nContent-Type: text/plain\r\nContent-Transfer-Encoding: base64\r\n\r\ndmFsdWU=\r\n------formdata-undici-0.5786922755719377--'
-  const server = createServer((req, res) => {
+  const data = randomFillSync(Buffer.alloc(256))
+  const formRaw = `------formdata-undici-0.5786922755719377\r\nContent-Disposition: form-data; name="file"; filename="test.txt"\r\nContent-Type: application/octet-stream\r\nContent-Transfer-Encoding: base64\r\n\r\n${data.toString('base64')}\r\n------formdata-undici-0.5786922755719377--`
+  const server = createServer(async (req, res) => {
     res.setHeader('content-type', 'multipart/form-data; boundary=----formdata-undici-0.5786922755719377')
-    res.write(formRaw)
+
+    for (let offset = 0; offset < formRaw.length;) {
+      res.write(formRaw.slice(offset, offset += 2))
+      await new Promise(resolve => setTimeout(resolve))
+    }
     res.end()
   })
   t.teardown(server.close.bind(server))
@@ -211,9 +217,10 @@ test('multipart formdata base64', (t) => {
   server.listen(0, () => {
     fetch(`http://localhost:${server.address().port}`)
       .then(res => res.formData())
-      .then(form => form.get('key').text())
-      .then(text => {
-        t.equal(text, 'value')
+      .then(form => form.get('file').arrayBuffer())
+      .then(buffer => createHash('sha256').update(Buffer.from(buffer)).digest('base64'))
+      .then(digest => {
+        t.equal(createHash('sha256').update(data).digest('base64'), digest)
       })
   })
 })
