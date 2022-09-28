@@ -11,6 +11,7 @@ const { Client, setGlobalDispatcher, Agent } = require('../..')
 const nodeFetch = require('../../index-fetch')
 const { once } = require('events')
 const { gzipSync } = require('zlib')
+const { promisify } = require('util')
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 1,
@@ -165,11 +166,44 @@ test('unsupported formData 1', (t) => {
   })
 })
 
-test('unsupported formData 2', (t) => {
-  t.plan(1)
+test('multipart formdata not base64', async (t) => {
+  t.plan(2)
+  // Construct example form data, with text and blob fields
+  const formData = new FormData()
+  formData.append('field1', 'value1')
+  const blob = new Blob(['example\ntext file'], { type: 'text/plain' })
+  formData.append('field2', blob, 'file.txt')
+
+  const tempRes = new Response(formData)
+  const boundary = tempRes.headers.get('content-type').split('boundary=')[1]
+  const formRaw = await tempRes.text()
 
   const server = createServer((req, res) => {
-    res.setHeader('content-type', 'multipart/form-data')
+    res.setHeader('content-type', 'multipart/form-data; boundary=' + boundary)
+    res.write(formRaw)
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  const listen = promisify(server.listen.bind(server))
+  await listen(0)
+
+  const res = await fetch(`http://localhost:${server.address().port}`)
+  const form = await res.formData()
+  t.equal(form.get('field1'), 'value1')
+
+  const text = await form.get('field2').text()
+  t.equal(text, 'example\ntext file')
+})
+
+test('multipart formdata base64', (t) => {
+  t.plan(1)
+
+  // Example form data with base64 encoding
+  const formRaw = '------formdata-undici-0.5786922755719377\r\nContent-Disposition: form-data; name="key"; filename="test.txt"\r\nContent-Type: text/plain\r\nContent-Transfer-Encoding: base64\r\n\r\ndmFsdWU=\r\n------formdata-undici-0.5786922755719377--'
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'multipart/form-data; boundary=----formdata-undici-0.5786922755719377')
+    res.write(formRaw)
     res.end()
   })
   t.teardown(server.close.bind(server))
@@ -177,10 +211,33 @@ test('unsupported formData 2', (t) => {
   server.listen(0, () => {
     fetch(`http://localhost:${server.address().port}`)
       .then(res => res.formData())
-      .catch(err => {
-        t.equal(err.name, 'NotSupportedError')
+      .then(form => form.get('key').text())
+      .then(text => {
+        t.equal(text, 'value')
       })
   })
+})
+
+test('busboy emit error', async (t) => {
+  t.plan(1)
+  const formData = new FormData()
+  formData.append('field1', 'value1')
+
+  const tempRes = new Response(formData)
+  const formRaw = await tempRes.text()
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'multipart/form-data; boundary=wrongboundary')
+    res.write(formRaw)
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  const listen = promisify(server.listen.bind(server))
+  await listen(0)
+
+  const res = await fetch(`http://localhost:${server.address().port}`)
+  await t.rejects(res.formData(), 'Unexpected end of multipart data')
 })
 
 test('urlencoded formData', (t) => {

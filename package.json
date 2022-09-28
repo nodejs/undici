@@ -69,7 +69,6 @@
     "@types/node": "^17.0.45",
     "abort-controller": "^3.0.0",
     "atomic-sleep": "^1.0.0",
-    "busboy": "^1.6.0",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "chai-iterator": "^3.0.2",
@@ -125,5 +124,8 @@
     "testMatch": [
       "<rootDir>/test/jest/**"
     ]
+  },
+  "dependencies": {
+    "busboy": "^1.6.0"
   }
 }
