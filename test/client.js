@@ -99,6 +99,8 @@ test('basic get with query params', (t) => {
       bar: 'bar',
       nullVal: '',
       undefinedVal: '',
+      functionVal: '',
+      objectVal: '',
       '%60~%3A%24%2C%2B%5B%5D%40%5E*()-': '%60~%3A%24%2C%2B%5B%5D%40%5E*()-',
       multi: ['1', '2']
     })
@@ -114,6 +116,8 @@ test('basic get with query params', (t) => {
     bar: 'bar',
     nullVal: null,
     undefinedVal: undefined,
+    functionVal: function () {},
+    objectVal: {},
     '`~:$,+[]@^*()-': '`~:$,+[]@^*()-',
     multi: [1, 2]
   }
