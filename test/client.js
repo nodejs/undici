@@ -206,6 +206,41 @@ test('basic get with empty query params', (t) => {
   })
 })
 
+test('basic get with array query params', (t) => {
+  t.plan(4)
+
+  const server = createServer((req, res) => {
+    const searchParamsObject = buildParams(req.url)
+    t.strictSame(searchParamsObject, { 0: 'first-key', 1: 'second-key', 2: 'third-key' })
+
+    res.statusCode = 200
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  const query = ['first-key', 'second-key', 'third-key']
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    t.teardown(client.close.bind(client))
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      query
+    }, (err, data) => {
+      t.error(err)
+      const { statusCode } = data
+      t.equal(statusCode, 200)
+    })
+    t.equal(signal.listenerCount('abort'), 1)
+  })
+})
+
 test('basic get with query params partially in path', (t) => {
   t.plan(1)
 
