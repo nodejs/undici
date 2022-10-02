@@ -98,7 +98,9 @@ test('basic get with query params', (t) => {
       foo: '1',
       bar: 'bar',
       '%60~%3A%24%2C%2B%5B%5D%40%5E*()-': '%60~%3A%24%2C%2B%5B%5D%40%5E*()-',
-      multi: ['1', '2']
+      multi: ['1', '2'],
+      nullVal: '',
+      undefinedVal: ''
     })
 
     res.statusCode = 200
@@ -134,95 +136,6 @@ test('basic get with query params', (t) => {
       t.equal(statusCode, 200)
     })
     t.equal(signal.listenerCount('abort'), 1)
-  })
-})
-
-test('basic get with query params with object throws an error', (t) => {
-  t.plan(1)
-
-  const server = createServer((req, res) => {
-    t.fail()
-  })
-  t.teardown(server.close.bind(server))
-
-  const query = {
-    obj: { id: 1 }
-  }
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 300e3
-    })
-    t.teardown(client.close.bind(client))
-
-    const signal = new EE()
-    client.request({
-      signal,
-      path: '/',
-      method: 'GET',
-      query
-    }, (err, data) => {
-      t.equal(err.message, 'Passing object as a query param is not supported, please serialize to string up-front')
-    })
-  })
-})
-
-test('basic get with non-object query params throws an error', (t) => {
-  t.plan(1)
-
-  const server = createServer((req, res) => {
-    t.fail()
-  })
-  t.teardown(server.close.bind(server))
-
-  const query = '{ obj: { id: 1 } }'
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 300e3
-    })
-    t.teardown(client.close.bind(client))
-
-    const signal = new EE()
-    client.request({
-      signal,
-      path: '/',
-      method: 'GET',
-      query
-    }, (err, data) => {
-      t.equal(err.message, 'Query params must be an object')
-    })
-  })
-})
-
-test('basic get with query params with date throws an error', (t) => {
-  t.plan(1)
-
-  const date = new Date()
-  const server = createServer((req, res) => {
-    t.fail()
-  })
-  t.teardown(server.close.bind(server))
-
-  const query = {
-    dateObj: date
-  }
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 300e3
-    })
-    t.teardown(client.close.bind(client))
-
-    const signal = new EE()
-    client.request({
-      signal,
-      path: '/',
-      method: 'GET',
-      query
-    }, (err, data) => {
-      t.equal(err.message, 'Passing object as a query param is not supported, please serialize to string up-front')
-    })
   })
 })
 

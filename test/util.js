@@ -95,3 +95,27 @@ test('parseRawHeaders', (t) => {
   t.plan(1)
   t.same(util.parseRawHeaders(['key', 'value', Buffer.from('key'), Buffer.from('value')]), ['key', 'value', 'key', 'value'])
 })
+
+test('buildURL', (t) => {
+  const tests = [
+    [{ id: BigInt(123456) }, 'id=123456'],
+    [{ date: new Date() }, 'date='],
+    [{ obj: { id: 1 } }, 'obj='],
+    [{ params: ['a', 'b', 'c'] }, 'params=a&params=b&params=c'],
+    [{ bool: true }, 'bool=true'],
+    [{ number: 123456 }, 'number=123456'],
+    [{ string: 'hello' }, 'string=hello'],
+    [{ null: null }, 'null='],
+    [{ void: undefined }, 'void='],
+    [{ fn: function () {} }, 'fn=']
+  ]
+
+  const base = 'https://www.google.com'
+
+  for (const [input, output] of tests) {
+    const expected = `${base}?${output}`
+    t.equal(util.buildURL(base, input), expected)
+  }
+
+  t.end()
+})
