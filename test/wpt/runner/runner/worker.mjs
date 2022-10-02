@@ -1,3 +1,4 @@
+import { join } from 'node:path'
 import { runInThisContext } from 'node:vm'
 import { parentPort, workerData } from 'node:worker_threads'
 import {
@@ -10,7 +11,10 @@ import {
   Headers
 } from '../../../../index.js'
 
-const { initScripts, meta, test, url } = workerData
+const { initScripts, meta, test, url, path } = workerData
+
+const basePath = join(process.cwd(), 'test/wpt/tests')
+const urlPath = path.slice(basePath.length)
 
 const globalPropertyDescriptors = {
   writable: true,
@@ -86,7 +90,7 @@ add_completion_callback((_, status) => {
   })
 })
 
-setGlobalOrigin(url)
+setGlobalOrigin(new URL(urlPath, url))
 
 // Inject any script the user provided before
 // running the tests.

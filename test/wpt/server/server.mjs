@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { createReadStream } from 'node:fs'
 import { setTimeout as sleep } from 'node:timers/promises'
 
-const resources = fileURLToPath(join(import.meta.url, '../../runner/resources'))
+const tests = fileURLToPath(join(import.meta.url, '../../tests'))
 
 // https://web-platform-tests.org/tools/wptserve/docs/stash.html
 class Stash extends Map {
@@ -30,13 +30,16 @@ const server = createServer(async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   switch (fullUrl.pathname) {
-    case '/resources/data.json': {
+    case '/fetch/data-urls/resources/base64.json':
+    case '/fetch/data-urls/resources/data-urls.json':
+    case '/fetch/api/resources/empty.txt':
+    case '/fetch/api/resources/data.json': {
       // https://github.com/web-platform-tests/wpt/blob/6ae3f702a332e8399fab778c831db6b7dca3f1c6/fetch/api/resources/data.json
-      return createReadStream(join(resources, 'data.json'))
+      return createReadStream(join(tests, fullUrl.pathname))
         .on('end', () => res.end())
         .pipe(res)
     }
-    case '/resources/infinite-slow-response.py': {
+    case '/fetch/api/resources/infinite-slow-response.py': {
       // https://github.com/web-platform-tests/wpt/blob/master/fetch/api/resources/infinite-slow-response.py
       const stateKey = fullUrl.searchParams.get('stateKey') ?? ''
       const abortKey = fullUrl.searchParams.get('abortKey') ?? ''
@@ -66,7 +69,7 @@ const server = createServer(async (req, res) => {
 
       return res.end()
     }
-    case '/resources/stash-take.py': {
+    case '/fetch/api/resources/stash-take.py': {
       // https://github.com/web-platform-tests/wpt/blob/6ae3f702a332e8399fab778c831db6b7dca3f1c6/fetch/api/resources/stash-take.py
 
       const key = fullUrl.searchParams.get('key')
@@ -76,11 +79,6 @@ const server = createServer(async (req, res) => {
 
       res.write(JSON.stringify(took))
       return res.end()
-    }
-    case '/resources/empty.txt': {
-      return createReadStream(join(resources, 'empty.txt'))
-        .on('end', () => res.end())
-        .pipe(res)
     }
     default: {
       res.statusCode = 200
