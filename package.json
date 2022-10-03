@@ -126,6 +126,7 @@
     ]
   },
   "dependencies": {
-    "busboy": "^1.6.0"
+    "busboy": "^1.6.0",
+    "fast-querystring": "^1.0.0"
   }
 }
