@@ -107,13 +107,14 @@ test('buildURL', { skip: process.version.startsWith('v12.') }, (t) => {
     [{ string: 'hello' }, 'string=hello'],
     [{ null: null }, 'null='],
     [{ void: undefined }, 'void='],
-    [{ fn: function () {} }, 'fn=']
+    [{ fn: function () {} }, 'fn='],
+    [{}, '']
   ]
 
   const base = 'https://www.google.com'
 
   for (const [input, output] of tests) {
-    const expected = `${base}?${output}`
+    const expected = `${base}${output ? `?${output}` : output}`
     t.equal(util.buildURL(base, input), expected)
   }
 
