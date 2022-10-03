@@ -32,6 +32,14 @@ const httpBaseOptions = {
   hostname: 'localhost',
   method: 'GET',
   path: '/',
+  query: {
+    frappucino: 'muffin',
+    goat: 'scone',
+    pond: 'moose',
+    foo: ['bar', 'baz', 'bal'],
+    bool: true,
+    numberKey: 256
+  },
   ...dest
 }
 
