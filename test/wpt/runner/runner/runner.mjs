@@ -36,7 +36,10 @@ export class WPTRunner extends EventEmitter {
     super()
 
     this.#folderPath = join(testPath, folder)
-    this.#files.push(...WPTRunner.walk(this.#folderPath, () => true))
+    this.#files.push(...WPTRunner.walk(
+      this.#folderPath,
+      (file) => file.endsWith('.js')
+    ))
     this.#status = JSON.parse(readFileSync(join(statusPath, `${folder}.status.json`)))
     this.#url = url
 
