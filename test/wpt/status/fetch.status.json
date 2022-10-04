@@ -15,5 +15,18 @@
 		"fail": [
 			"Input request used for creating new request became disturbed even if body is not used"
 		]
+	},
+	"response-error-from-stream.any.js": {
+		"fail": [
+			"ReadableStream start() Error propagates to Response.formData() Promise",
+			"ReadableStream pull() Error propagates to Response.formData() Promise"
+		]
+	},
+	"response-consume-empty.any.js": {
+		"fail": [
+			"Consume response's body as blob",
+			"Consume response's body as formData with correct multipart type (error case)",
+			"Consume empty FormData response body as text"
+		]
 	}
 }

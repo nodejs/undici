@@ -30,6 +30,7 @@ const server = createServer(async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   switch (fullUrl.pathname) {
+    case '/xhr/resources/utf16-bom.json':
     case '/fetch/data-urls/resources/base64.json':
     case '/fetch/data-urls/resources/data-urls.json':
     case '/fetch/api/resources/empty.txt':
@@ -38,6 +39,32 @@ const server = createServer(async (req, res) => {
       return createReadStream(join(tests, fullUrl.pathname))
         .on('end', () => res.end())
         .pipe(res)
+    }
+    case '/fetch/api/resources/trickle.py': {
+      // Note: python's time.sleep(...) takes seconds, while setTimeout
+      // takes ms.
+      const delay = parseFloat(fullUrl.searchParams.get('ms') ?? 500)
+      const count = parseInt(fullUrl.searchParams.get('count') ?? 50)
+
+      // eslint-disable-next-line no-unused-vars
+      for await (const chunk of req); // read request body
+
+      await sleep(delay)
+
+      if (!fullUrl.searchParams.has('notype')) {
+        res.setHeader('Content-type', 'text/plain')
+      }
+
+      res.statusCode = 200
+      await sleep(delay)
+
+      for (let i = 0; i < count; i++) {
+        res.write('TEST_TRICKLE\n')
+        await sleep(delay)
+      }
+
+      res.end()
+      break
     }
     case '/fetch/api/resources/infinite-slow-response.py': {
       // https://github.com/web-platform-tests/wpt/blob/master/fetch/api/resources/infinite-slow-response.py
