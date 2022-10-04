@@ -1,7 +1,19 @@
 {
-	"fail": [
-		"Stream errors once aborted. Underlying connection closed.",
-		"Underlying connection is closed when aborting after receiving response - no-cors",
-		"Already aborted signal rejects immediately"
-	]
+	"request-init-stream.any.js": {
+		"fail": [
+			"It is error to omit .duplex when the body is a ReadableStream."
+		]
+	},
+	"general.any.js": {
+		"fail": [
+			"Stream errors once aborted. Underlying connection closed.",
+			"Underlying connection is closed when aborting after receiving response - no-cors",
+			"Already aborted signal rejects immediately"
+		]
+	},
+	"request-disturbed.any.js": {
+		"fail": [
+			"Input request used for creating new request became disturbed even if body is not used"
+		]
+	}
 }

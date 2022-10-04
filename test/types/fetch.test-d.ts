@@ -1,7 +1,7 @@
 import { URL } from 'url'
 import { Blob } from 'buffer'
 import { ReadableStream } from 'stream/web'
-import { expectType, expectError } from 'tsd'
+import { expectType, expectError, expectAssignable, expectNotAssignable } from 'tsd'
 import {
   Agent,
   BodyInit,
@@ -10,7 +10,6 @@ import {
   Headers,
   HeadersInit,
   SpecIterableIterator,
-  SpecIterator,
   Request,
   RequestCache,
   RequestCredentials,
@@ -166,3 +165,7 @@ expectType<Promise<FormData>>(response.formData())
 expectType<Promise<unknown>>(response.json())
 expectType<Promise<string>>(response.text())
 expectType<Response>(response.clone())
+
+expectType<Request>(new Request('https://example.com', { body: 'Hello, world', duplex: 'half' }))
+expectAssignable<RequestInit>({ duplex: 'half' })
+expectNotAssignable<RequestInit>({ duplex: 'not valid' })
