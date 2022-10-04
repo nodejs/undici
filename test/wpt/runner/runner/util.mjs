@@ -38,8 +38,9 @@ export function parseMeta (fileContents) {
     }
 
     switch (groups.type) {
+      case 'title':
       case 'timeout': {
-        meta.timeout = groups.match
+        meta[groups.type] = groups.match
         break
       }
       case 'global': {

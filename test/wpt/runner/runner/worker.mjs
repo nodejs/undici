@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import { runInThisContext } from 'node:vm'
 import { parentPort, workerData } from 'node:worker_threads'
+import { readFileSync } from 'node:fs'
 import {
   setGlobalOrigin,
   Response,
@@ -65,7 +66,8 @@ runInThisContext(`
   globalThis.location = new URL('${url}')
 `)
 
-await import('../resources/testharness.cjs')
+const harness = readFileSync(join(basePath, '../runner/resources/testharness.cjs'), 'utf-8')
+runInThisContext(harness)
 
 // add_*_callback comes from testharness
 // stolen from node's wpt test runner
