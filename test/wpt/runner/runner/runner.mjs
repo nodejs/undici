@@ -1,6 +1,6 @@
 import { EventEmitter, once } from 'node:events'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { isAbsolute, join, resolve } from 'node:path'
+import { basename, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { parseMeta } from './util.mjs'
@@ -93,7 +93,7 @@ export class WPTRunner extends EventEmitter {
 
       worker.on('message', (message) => {
         if (message.type === 'result') {
-          this.handleIndividualTestCompletion(message)
+          this.handleIndividualTestCompletion(message, basename(test))
         } else if (message.type === 'completion') {
           this.handleTestCompletion(worker)
         }
@@ -114,14 +114,16 @@ export class WPTRunner extends EventEmitter {
   /**
    * Called after a test has succeeded or failed.
    */
-  handleIndividualTestCompletion (message) {
+  handleIndividualTestCompletion (message, fileName) {
+    const { fail } = this.#status[fileName] ?? {}
+
     if (message.type === 'result') {
       this.#stats.completed += 1
 
       if (message.result.status === 1) {
         this.#stats.failed += 1
 
-        if (this.#status.fail.includes(message.result.name)) {
+        if (fail && fail.includes(message.result.name)) {
           this.#stats.expectedFailures += 1
         } else {
           process.exitCode = 1
