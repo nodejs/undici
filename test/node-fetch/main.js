@@ -1135,7 +1135,8 @@ describe('node-fetch', () => {
     const url = `${base}inspect`
     const options = {
       method: 'POST',
-      body: stream.Readable.from('a=1')
+      body: stream.Readable.from('a=1'),
+      duplex: 'half'
     }
     return fetch(url, options).then(res => {
       return res.json()
