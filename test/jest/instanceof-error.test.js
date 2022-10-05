@@ -37,7 +37,7 @@ runIf(nodeMajor >= 16)('Real use-case', async () => {
     signal: ac.signal
   })
 
-  await expect(promise).rejects.toThrowError('The operation was aborted.')
+  await expect(promise).rejects.toThrowError('This operation was aborted')
 
   server.close()
   await once(server, 'close')
