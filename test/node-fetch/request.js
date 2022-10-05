@@ -207,7 +207,8 @@ describe('Request', () => {
       follow: 3,
       compress: false,
       agent,
-      signal
+      signal,
+      duplex: 'half'
     })
     const cl = request.clone()
     expect(cl.url).to.equal(url)

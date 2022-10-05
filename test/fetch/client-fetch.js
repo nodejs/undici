@@ -111,7 +111,8 @@ test('pre aborted with readable request body', (t) => {
         async cancel (reason) {
           t.equal(reason.name, 'AbortError')
         }
-      })
+      }),
+      duplex: 'half'
     }).catch(err => {
       t.equal(err.name, 'AbortError')
     })
@@ -141,7 +142,8 @@ test('pre aborted with closed readable request body', (t) => {
       fetch(`http://localhost:${server.address().port}`, {
         signal: ac.signal,
         method: 'POST',
-        body
+        body,
+        duplex: 'half'
       }).catch(err => {
         t.equal(err.name, 'AbortError')
       })

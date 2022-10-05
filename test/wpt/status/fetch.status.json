@@ -1,9 +1,4 @@
 {
-	"request-init-stream.any.js": {
-		"fail": [
-			"It is error to omit .duplex when the body is a ReadableStream."
-		]
-	},
 	"general.any.js": {
 		"fail": [
 			"Stream errors once aborted. Underlying connection closed.",
