@@ -194,7 +194,7 @@ test('ByteString', (t) => {
     const char = String.fromCharCode(256)
     webidl.converters.ByteString(`invalid${char}char`)
   }, {
-    message: 'Cannot convert argument to a ByteString because the character at' +
+    message: 'Cannot convert argument to a ByteString because the character at ' +
              'index 7 has a value of 256 which is greater than 255.'
   })
 
