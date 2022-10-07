@@ -30,6 +30,10 @@ const server = createServer(async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   switch (fullUrl.pathname) {
+    case '/interfaces/dom.idl':
+    case '/interfaces/html.idl':
+    case '/interfaces/fetch.idl':
+    case '/interfaces/referrer-policy.idl':
     case '/xhr/resources/utf16-bom.json':
     case '/fetch/data-urls/resources/base64.json':
     case '/fetch/data-urls/resources/data-urls.json':

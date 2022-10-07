@@ -1,0 +1,1 @@
+./test/wpt/tests/resources/webidl2/lib/webidl2.js

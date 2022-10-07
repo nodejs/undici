@@ -1,4 +1,5 @@
 import { exit } from 'node:process'
+import { readFileSync, readlinkSync } from 'node:fs'
 
 /**
  * Parse the `Meta:` tags sometimes included in tests.
@@ -62,4 +63,9 @@ export function parseMeta (fileContents) {
   }
 
   return meta
+}
+
+export function resolveSymLink (path) {
+  const symlink = readlinkSync(path)
+  return readFileSync(symlink, 'utf-8')
 }
