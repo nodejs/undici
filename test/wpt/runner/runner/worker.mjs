@@ -9,7 +9,8 @@ import {
   fetch,
   FormData,
   File,
-  Headers
+  Headers,
+  FileReader
 } from '../../../../index.js'
 
 const { initScripts, meta, test, url, path } = workerData
@@ -48,6 +49,10 @@ Object.defineProperties(globalThis, {
   Response: {
     ...globalPropertyDescriptors,
     value: Response
+  },
+  FileReader: {
+    ...globalPropertyDescriptors,
+    value: FileReader
   }
 })
 
