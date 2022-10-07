@@ -111,6 +111,19 @@ const server = createServer(async (req, res) => {
       res.write(JSON.stringify(took))
       return res.end()
     }
+    case '/fetch/api/resources/echo-content.py': {
+      res.setHeader('X-Request-Method', req.method)
+      res.setHeader('X-Request-Content-Length', req.headers['content-length'] ?? 'NO')
+      res.setHeader('X-Request-Content-Type', req.headers['content-type'] ?? 'NO')
+      res.setHeader('Content-Type', 'text/plain')
+
+      for await (const chunk of req) {
+        res.write(chunk)
+      }
+
+      res.end()
+      break
+    }
     default: {
       res.statusCode = 200
       res.end('body')

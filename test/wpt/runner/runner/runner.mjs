@@ -11,6 +11,9 @@ const statusPath = join(basePath, 'status')
 
 export class WPTRunner extends EventEmitter {
   /** @type {string} */
+  #folderName
+
+  /** @type {string} */
   #folderPath
 
   /** @type {string[]} */
@@ -35,6 +38,7 @@ export class WPTRunner extends EventEmitter {
   constructor (folder, url) {
     super()
 
+    this.#folderName = folder
     this.#folderPath = join(testPath, folder)
     this.#files.push(...WPTRunner.walk(
       this.#folderPath,
@@ -105,6 +109,7 @@ export class WPTRunner extends EventEmitter {
     this.emit('completion')
     const { completed, failed, success, expectedFailures } = this.#stats
     console.log(
+      `[${this.#folderName}]: ` +
       `Completed: ${completed}, failed: ${failed}, success: ${success}, ` +
       `expected failures: ${expectedFailures}, ` +
       `unexpected failures: ${failed - expectedFailures}`
