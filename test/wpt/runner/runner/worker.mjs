@@ -26,6 +26,7 @@ const globalPropertyDescriptors = {
 Object.defineProperties(globalThis, {
   fetch: {
     ...globalPropertyDescriptors,
+    enumerable: true,
     value: fetch
   },
   File: {
@@ -60,10 +61,14 @@ runInThisContext(`
     },
     isShadowRealm () {
       return false
+    },
+    isWindow () {
+      return false
     }
   }
   globalThis.window = globalThis
   globalThis.location = new URL('${url}')
+  globalThis.Window = Object.getPrototypeOf(globalThis).constructor
 `)
 
 const harness = readFileSync(join(basePath, '../runner/resources/testharness.cjs'), 'utf-8')

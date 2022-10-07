@@ -23,5 +23,10 @@
 			"Consume response's body as formData with correct multipart type (error case)",
 			"Consume empty FormData response body as text"
 		]
+	},
+	"idlharness.any.js": {
+		"fail": [
+			"Response interface: operation json(any, optional ResponseInit)"
+		]
 	}
 }

@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
-import { parseMeta } from './util.mjs'
+import { parseMeta, resolveSymLink } from './util.mjs'
 
 const basePath = fileURLToPath(join(import.meta.url, '../../..'))
 const testPath = join(basePath, 'tests')
@@ -155,7 +155,10 @@ export class WPTRunner extends EventEmitter {
   resolveMeta (code, path) {
     const meta = parseMeta(code)
     const scripts = meta.scripts.map((script) => {
-      if (isAbsolute(script)) {
+      if (script === '/resources/WebIDLParser.js') {
+        // See https://github.com/web-platform-tests/wpt/pull/731
+        return resolveSymLink(join(testPath, script))
+      } else if (isAbsolute(script)) {
         return readFileSync(join(testPath, script), 'utf-8')
       }
 
