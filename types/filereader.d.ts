@@ -22,16 +22,16 @@ export declare class FileReader extends EventTarget {
 
   readonly readyState: number
 
-  readonly result: string | ArrayBuffer
+  readonly result: string | ArrayBuffer | null
 
-  readonly error: DOMException
+  readonly error: DOMException | null
 
-  onloadstart? (this: FileReader, event: ProgressEvent): void
-  onprogress? (this: FileReader, event: ProgressEvent): void
-  onload? (this: FileReader, event: ProgressEvent): void
-  onabort? (this: FileReader, event: ProgressEvent): void
-  onerror? (this: FileReader, event: ProgressEvent): void
-  onloadend? (this: FileReader, event: ProgressEvent): void
+  onloadstart: null | ((this: FileReader, event: ProgressEvent) => void)
+  onprogress: null | ((this: FileReader, event: ProgressEvent) => void)
+  onload: null | ((this: FileReader, event: ProgressEvent) => void)
+  onabort: null |  ((this: FileReader, event: ProgressEvent) => void)
+  onerror: null | ((this: FileReader, event: ProgressEvent) => void)
+  onloadend: null | ((this: FileReader, event: ProgressEvent) => void)
 }
 
 export interface ProgressEventInit extends EventInit {
