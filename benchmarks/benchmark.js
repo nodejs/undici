@@ -112,14 +112,14 @@ function printResults (results) {
   let last
 
   const rows = Object.entries(results)
-    // If any failed, put on the top of the list, otherwise order by mean, ascendin
+    // If any failed, put on the top of the list, otherwise order by mean, ascending
     .sort((a, b) => (!a[1].success ? -1 : b[1].mean - a[1].mean))
     .map(([name, result]) => {
       if (!result.success) {
         return [name, result.size, 'Errored', 'N/A', 'N/A']
       }
 
-      // Calculate throughtput and relative performance
+      // Calculate throughput and relative performance
       const { size, mean, standardError } = result
       const relative = last !== 0 ? (last / mean - 1) * 100 : 0
 

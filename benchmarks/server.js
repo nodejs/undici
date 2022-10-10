@@ -16,7 +16,7 @@ if (cluster.isPrimary) {
   try {
     unlinkSync(socketPath)
   } catch (_) {
-    // Do not nothing if the socket does not exist
+    // Do nothing if the socket does not exist
   }
 
   for (let i = 0; i < workers; i++) {
