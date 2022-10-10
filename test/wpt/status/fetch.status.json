@@ -26,7 +26,8 @@
 	},
 	"idlharness.any.js": {
 		"fail": [
-			"Response interface: operation json(any, optional ResponseInit)"
+			"Response interface: operation json(any, optional ResponseInit)",
+			"Window interface: operation fetch(RequestInfo, optional RequestInit)"
 		]
 	}
 }

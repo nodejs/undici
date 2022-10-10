@@ -113,19 +113,22 @@ test('https://mimesniff.spec.whatwg.org/#parse-a-mime-type', (t) => {
   t.same(parseMIMEType('text/plain'), {
     type: 'text',
     subtype: 'plain',
-    parameters: new Map()
+    parameters: new Map(),
+    essence: 'text/plain'
   })
 
   t.same(parseMIMEType('text/html;charset="shift_jis"iso-2022-jp'), {
     type: 'text',
     subtype: 'html',
-    parameters: new Map([['charset', 'shift_jis']])
+    parameters: new Map([['charset', 'shift_jis']]),
+    essence: 'text/html'
   })
 
   t.same(parseMIMEType('application/javascript'), {
     type: 'application',
     subtype: 'javascript',
-    parameters: new Map()
+    parameters: new Map(),
+    essence: 'application/javascript'
   })
 
   t.end()
