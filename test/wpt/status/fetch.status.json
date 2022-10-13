@@ -35,5 +35,10 @@
 			"Check response clone use structureClone for teed ReadableStreams (ArrayBufferchunk)",
 			"Check response clone use structureClone for teed ReadableStreams (DataViewchunk)"
 		]
+	},
+	"request-upload.any.js": {
+		"fail": [
+			"Fetch with POST with text body on 421 response should be retried once on new connection."	
+		]
 	}
 }
