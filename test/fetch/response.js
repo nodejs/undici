@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, teardown } = require('tap')
+const { test } = require('tap')
 const {
   Response
 } = require('../../')
@@ -248,6 +248,3 @@ test('constructing Response with third party FormData body', async (t) => {
   t.equal(contentType[0], 'multipart/form-data; boundary')
   t.ok((await res.text()).startsWith(`--${contentType[1]}`))
 })
-
-// This is needed due to https://github.com/nodejs/node/issues/44985
-teardown(() => process.exit(0))
