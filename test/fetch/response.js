@@ -171,7 +171,7 @@ test('Modifying headers using Headers.prototype.set', (t) => {
 })
 
 // https://github.com/nodejs/node/issues/43838
-test('constructing a Response with a ReadableStream body', async (t) => {
+test('constructing a Response with a ReadableStream body', { skip: process.version.startsWith('v16.') }, async (t) => {
   const text = '{"foo":"bar"}'
   const uint8 = new TextEncoder().encode(text)
 
@@ -209,7 +209,7 @@ test('constructing a Response with a ReadableStream body', async (t) => {
     t.end()
   })
 
-  t.test('Readable with ArrayBuffer chunk still throws', async (t) => {
+  t.test('Readable with ArrayBuffer chunk still throws', { skip: process.version.startsWith('v16.') }, async (t) => {
     const readable = new ReadableStream({
       start (controller) {
         controller.enqueue(uint8.buffer)

@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
-import { parseMeta, resolveSymLink } from './util.mjs'
+import { parseMeta } from './util.mjs'
 
 const basePath = fileURLToPath(join(import.meta.url, '../../..'))
 const testPath = join(basePath, 'tests')
@@ -162,7 +162,7 @@ export class WPTRunner extends EventEmitter {
     const scripts = meta.scripts.map((script) => {
       if (script === '/resources/WebIDLParser.js') {
         // See https://github.com/web-platform-tests/wpt/pull/731
-        return resolveSymLink(join(testPath, script))
+        return readFileSync(join(testPath, '/resources/webidl2/lib/webidl2.js'), 'utf-8')
       } else if (isAbsolute(script)) {
         return readFileSync(join(testPath, script), 'utf-8')
       }
