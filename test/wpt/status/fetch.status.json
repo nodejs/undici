@@ -29,5 +29,11 @@
 			"Response interface: operation json(any, optional ResponseInit)",
 			"Window interface: operation fetch(RequestInfo, optional RequestInit)"
 		]
+	},
+	"response-clone.any.js": {
+		"fail": [
+			"Check response clone use structureClone for teed ReadableStreams (ArrayBufferchunk)",
+			"Check response clone use structureClone for teed ReadableStreams (DataViewchunk)"
+		]
 	}
 }
