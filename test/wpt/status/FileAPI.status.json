@@ -1,1 +1,7 @@
-{}
+{
+	"File-constructor.any.js": {
+		"fail": [
+			"Using type in File constructor: nonparsable"
+		]
+	}
+}
