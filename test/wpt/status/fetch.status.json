@@ -40,5 +40,13 @@
 		"fail": [
 			"Fetch with POST with text body on 421 response should be retried once on new connection."	
 		]
+	},
+	"stream-safe-creation.any.js": {
+		"fail": [
+			"throwing Object.prototype.type accessor should not affect stream creation by 'fetch'",
+			"Object.prototype.type accessor returning invalid value should not affect stream creation by 'fetch'",
+			"throwing Object.prototype.highWaterMark accessor should not affect stream creation by 'fetch'",
+			"Object.prototype.highWaterMark accessor returning invalid value should not affect stream creation by 'fetch'"
+		]
 	}
 }
