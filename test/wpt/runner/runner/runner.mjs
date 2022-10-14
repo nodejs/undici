@@ -120,7 +120,7 @@ export class WPTRunner extends EventEmitter {
    * Called after a test has succeeded or failed.
    */
   handleIndividualTestCompletion (message, fileName) {
-    const { fail } = this.#status[fileName] ?? {}
+    const { fail, allowUnexpectedFailures } = this.#status[fileName] ?? {}
 
     if (message.type === 'result') {
       this.#stats.completed += 1
@@ -128,7 +128,7 @@ export class WPTRunner extends EventEmitter {
       if (message.result.status === 1) {
         this.#stats.failed += 1
 
-        if (fail && fail.includes(message.result.name)) {
+        if (allowUnexpectedFailures || (fail && fail.includes(message.result.name))) {
           this.#stats.expectedFailures += 1
         } else {
           process.exitCode = 1

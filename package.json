@@ -53,7 +53,7 @@
     "test:tap": "tap test/*.js test/diagnostics-channel/*.js",
     "test:tdd": "tap test/*.js test/diagnostics-channel/*.js -w",
     "test:typescript": "tsd",
-    "test:wpt": "node scripts/verifyVersion 18 || (node test/wpt/start-fetch.mjs && node test/wpt/start-FileAPI.mjs)",
+    "test:wpt": "node scripts/verifyVersion 18 || (node test/wpt/start-fetch.mjs && node test/wpt/start-FileAPI.mjs && node test/wpt/start-mimesniff.mjs)",
     "coverage": "nyc --reporter=text --reporter=html npm run test",
     "coverage:ci": "nyc --reporter=lcov npm run test",
     "bench": "PORT=3042 concurrently -k -s first npm:bench:server npm:bench:run",

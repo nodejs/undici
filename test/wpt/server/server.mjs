@@ -30,6 +30,8 @@ const server = createServer(async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   switch (fullUrl.pathname) {
+    case '/mimesniff/mime-types/resources/generated-mime-types.json':
+    case '/mimesniff/mime-types/resources/mime-types.json':
     case '/interfaces/dom.idl':
     case '/interfaces/html.idl':
     case '/interfaces/fetch.idl':
