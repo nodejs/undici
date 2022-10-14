@@ -124,6 +124,84 @@ const server = createServer(async (req, res) => {
       res.end()
       break
     }
+    case '/fetch/api/resources/status.py': {
+      const code = parseInt(fullUrl.searchParams.get('code') ?? 200)
+      const text = fullUrl.searchParams.get('text') ?? 'OMG'
+      const content = fullUrl.searchParams.get('content') ?? ''
+      const type = fullUrl.searchParams.get('type') ?? ''
+      res.statusCode = code
+      res.statusMessage = text
+      res.setHeader('Content-Type', type)
+      res.setHeader('X-Request-Method', req.method)
+      res.end(content)
+      break
+    }
+    case '/fetch/api/resources/inspect-headers.py': {
+      const query = fullUrl.searchParams
+      const checkedHeaders = query.get('headers')
+        ?.split('|')
+        .map(h => h.toLowerCase()) ?? []
+
+      if (query.has('headers')) {
+        for (const header of checkedHeaders) {
+          if (Object.hasOwn(req.headers, header)) {
+            res.setHeader(`x-request-${header}`, req.headers[header] ?? '')
+          }
+        }
+      }
+
+      if (query.has('cors')) {
+        if (Object.hasOwn(req.headers, 'origin')) {
+          res.setHeader('Access-Control-Allow-Origin', req.headers.origin ?? '')
+        } else {
+          res.setHeader('Access-Control-Allow-Origin', '*')
+        }
+
+        res.setHeader('Access-Control-Allow-Credentials', 'true')
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, HEAD')
+        const exposedHeaders = checkedHeaders.map(h => `x-request-${h}`).join(', ')
+        res.setHeader('Access-Control-Expose-Headers', exposedHeaders)
+        if (query.has('allow_headers')) {
+          res.setHeader('Access-Control-Allow-Headers', query.get('allowed_headers'))
+        } else {
+          res.setHeader('Access-Control-Allow-Headers', Object.keys(req.headers).join(', '))
+        }
+      }
+
+      res.setHeader('content-type', 'text/plain')
+      res.end('')
+      break
+    }
+    case '/xhr/resources/parse-headers.py': {
+      if (fullUrl.searchParams.has('my-custom-header')) {
+        const val = fullUrl.searchParams.get('my-custom-header').toLowerCase()
+        // res.setHeader does validation which may prevent some tests from running.
+        res.socket.write(
+          `HTTP/1.1 200 OK\r\nmy-custom-header: ${val}\r\n\r\n`
+        )
+      }
+      res.end('')
+      break
+    }
+    case '/fetch/api/resources/bad-chunk-encoding.py': {
+      const query = fullUrl.searchParams
+
+      const delay = parseFloat(query.get('ms') ?? 1000)
+      const count = parseInt(query.get('count') ?? 50)
+      await sleep(delay)
+      res.socket.write(
+        'HTTP/1.1 200 OK\r\ntransfer-encoding: chunked\r\n\r\n'
+      )
+      await sleep(delay)
+
+      for (let i = 0; i < count; i++) {
+        res.socket.write('a\r\nTEST_CHUNK\r\n')
+        await sleep(delay)
+      }
+
+      res.end('garbage')
+      break
+    }
     default: {
       res.statusCode = 200
       res.end('body')
