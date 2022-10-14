@@ -1,0 +1,5 @@
+{
+	"parsing.any.js": {
+		"allowUnexpectedFailures": true
+	}
+}
