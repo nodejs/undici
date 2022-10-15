@@ -142,6 +142,50 @@ test('use proxy-agent with auth', async (t) => {
   proxyAgent.close()
 })
 
+test('use proxy-agent with token', async (t) => {
+  t.plan(7)
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({
+    token: `Bearer ${Buffer.from('user:pass').toString('base64')}`,
+    uri: proxyUrl
+  })
+  const parsedOrigin = new URL(serverUrl)
+
+  proxy.authenticate = function (req, fn) {
+    t.pass('authentication should be called')
+    fn(null, req.headers['proxy-authorization'] === `Bearer ${Buffer.from('user:pass').toString('base64')}`)
+  }
+  proxy.on('connect', () => {
+    t.pass('proxy should be called')
+  })
+
+  server.on('request', (req, res) => {
+    t.equal(req.url, '/hello?foo=bar')
+    t.equal(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    res.setHeader('content-type', 'application/json')
+    res.end(JSON.stringify({ hello: 'world' }))
+  })
+
+  const {
+    statusCode,
+    headers,
+    body
+  } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
+  const json = await body.json()
+
+  t.equal(statusCode, 200)
+  t.same(json, { hello: 'world' })
+  t.equal(headers.connection, 'keep-alive', 'should remain the connection open')
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 test('sending proxy-authorization in request headers should throw', async (t) => {
   t.plan(3)
   const server = await buildServer()

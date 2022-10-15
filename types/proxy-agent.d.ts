@@ -15,6 +15,7 @@ declare namespace ProxyAgent {
   export interface Options extends Agent.Options {
     uri: string;
     auth?: string;
+    token?: string;
     requestTls?: TlsOptions & { servername?: string };
     proxyTls?: TlsOptions & { servername?: string };
   }
