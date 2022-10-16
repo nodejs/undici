@@ -14,6 +14,9 @@ declare class ProxyAgent extends Dispatcher {
 declare namespace ProxyAgent {
   export interface Options extends Agent.Options {
     uri: string;
+    /**
+     * @deprecated use opts.token
+     */
     auth?: string;
     token?: string;
     requestTls?: TlsOptions & { servername?: string };
