@@ -18,6 +18,17 @@ test('should throw error when no uri is provided', (t) => {
   t.throws(() => new ProxyAgent({}), InvalidArgumentError)
 })
 
+test('using auth in combination with token should throw', (t) => {
+  t.plan(1)
+  t.throws(() => new ProxyAgent({
+    auth: 'foo',
+    token: 'Bearer bar',
+    uri: 'http://example.com'
+  }),
+  InvalidArgumentError
+  )
+})
+
 test('should accept string and object as options', (t) => {
   t.plan(2)
   t.doesNotThrow(() => new ProxyAgent('http://example.com'))
