@@ -31,6 +31,7 @@ const server = createServer(async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   switch (fullUrl.pathname) {
+    case '/fetch/api/resources/top.txt':
     case '/mimesniff/mime-types/resources/generated-mime-types.json':
     case '/mimesniff/mime-types/resources/mime-types.json':
     case '/interfaces/dom.idl':
@@ -221,6 +222,11 @@ const server = createServer(async (req, res) => {
     }
     case '/fetch/connection-pool/resources/network-partition-key.py': {
       return route(req, res, fullUrl)
+    }
+    case '/resources/top.txt': {
+      return createReadStream(join(tests, 'fetch/api/', fullUrl.pathname))
+        .on('end', () => res.end())
+        .pipe(res)
     }
     default: {
       res.statusCode = 200
