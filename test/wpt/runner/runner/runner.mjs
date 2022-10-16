@@ -81,7 +81,9 @@ export class WPTRunner extends EventEmitter {
     const workerPath = fileURLToPath(join(import.meta.url, '../worker.mjs'))
 
     for (const test of this.#files) {
-      const code = readFileSync(test, 'utf-8')
+      const code = test.includes('.sub.')
+        ? handlePipes(readFileSync(test, 'utf-8'), this.#url)
+        : readFileSync(test, 'utf-8')
       const meta = this.resolveMeta(code, test)
 
       const worker = new Worker(workerPath, {
