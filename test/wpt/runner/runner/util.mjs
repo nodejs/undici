@@ -63,3 +63,57 @@ export function parseMeta (fileContents) {
 
   return meta
 }
+
+/**
+ * @param {string} sub
+ */
+function parseSubBlock (sub) {
+  const subName = sub.includes('[') ? sub.slice(0, sub.indexOf('[')) : sub
+  const options = sub.matchAll(/\[(.*?)\]/gm)
+
+  return {
+    sub: subName,
+    options: [...options].map(match => match[1])
+  }
+}
+
+/**
+ * @see https://web-platform-tests.org/writing-tests/server-pipes.html?highlight=sub#built-in-pipes
+ * @param {string} code
+ * @param {string} url
+ */
+export function handlePipes (code, url) {
+  const server = new URL(url)
+
+  // "Substitutions are marked in a file using a block delimited by
+  //  {{ and }}. Inside the block the following variables are available:"
+  return code.replace(/{{(.*?)}}/gm, (_, match) => {
+    const { sub } = parseSubBlock(match)
+
+    switch (sub) {
+      // "The host name of the server excluding any subdomain part."
+      // eslint-disable-next-line no-fallthrough
+      case 'host':
+      // "The domain name of a particular subdomain e.g.
+      //  {{domains[www]}} for the www subdomain."
+      // eslint-disable-next-line no-fallthrough
+      case 'domains':
+      // "The domain name of a particular subdomain for a particular host.
+      //  The first key may be empty (designating the “default” host) or
+      //  the value alt; i.e., {{hosts[alt][]}} (designating the alternate
+      //  host)."
+      // eslint-disable-next-line no-fallthrough
+      case 'hosts': {
+        return 'localhost'
+      }
+      // "The port number of servers, by protocol e.g. {{ports[http][0]}}
+      //  for the first (and, depending on setup, possibly only) http server"
+      case 'ports': {
+        return server.port
+      }
+      default: {
+        throw new TypeError(`Unknown substitute "${sub}".`)
+      }
+    }
+  })
+}
