@@ -126,7 +126,7 @@ export function handlePipes (code, url) {
 export function normalizeName (name) {
   return name.replace(/(\v)/g, (_, match) => {
     switch (inspect(match)) {
-      case `'\\x0B'`: return '\\x0B'
+      case '\'\\x0B\'': return '\\x0B'
       default: return match
     }
   })
