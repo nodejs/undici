@@ -83,7 +83,7 @@ import { setGlobalDispatcher, request, ProxyAgent } from 'undici';
 
 const proxyAgent = new ProxyAgent({
   uri: 'my.proxy.server',
-  token 'Bearer xxxx'
+  token: 'Bearer xxxx'
 });
 setGlobalDispatcher(proxyAgent);
 
