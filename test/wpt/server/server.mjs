@@ -5,6 +5,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { createReadStream, readFileSync } from 'node:fs'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { route } from './routes/network-partition-key.mjs'
 
 const tests = fileURLToPath(join(import.meta.url, '../../tests'))
 
@@ -217,6 +218,9 @@ const server = createServer(async (req, res) => {
       res.socket.write(asis)
       res.end()
       break
+    }
+    case '/fetch/connection-pool/resources/network-partition-key.py': {
+      return route(req, res, fullUrl)
     }
     default: {
       res.statusCode = 200
