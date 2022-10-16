@@ -110,7 +110,7 @@ export function handlePipes (code, url) {
       // "The port number of servers, by protocol e.g. {{ports[http][0]}}
       //  for the first (and, depending on setup, possibly only) http server"
       case 'ports': {
-        return `${server.port}/`
+        return server.port
       }
       default: {
         throw new TypeError(`Unknown substitute "${sub}".`)
