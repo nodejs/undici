@@ -3,7 +3,7 @@ import { createServer } from 'node:http'
 import { join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { createReadStream } from 'node:fs'
+import { createReadStream, readFileSync } from 'node:fs'
 import { setTimeout as sleep } from 'node:timers/promises'
 
 const tests = fileURLToPath(join(import.meta.url, '../../tests'))
@@ -202,6 +202,20 @@ const server = createServer(async (req, res) => {
       }
 
       res.end('garbage')
+      break
+    }
+    case '/xhr/resources/headers-www-authenticate.asis':
+    case '/xhr/resources/headers-some-are-empty.asis':
+    case '/xhr/resources/headers-basic':
+    case '/xhr/resources/headers-double-empty.asis':
+    case '/xhr/resources/header-content-length-twice.asis':
+    case '/xhr/resources/header-content-length.asis': {
+      let asis = readFileSync(join(tests, fullUrl.pathname), 'utf-8')
+      asis = asis.replace(/\n/g, '\r\n')
+      asis = `${asis}\r\n`
+
+      res.socket.write(asis)
+      res.end()
       break
     }
     default: {

@@ -1,4 +1,5 @@
 import { exit } from 'node:process'
+import { inspect } from 'node:util'
 
 /**
  * Parse the `Meta:` tags sometimes included in tests.
@@ -114,6 +115,19 @@ export function handlePipes (code, url) {
       default: {
         throw new TypeError(`Unknown substitute "${sub}".`)
       }
+    }
+  })
+}
+
+/**
+ * Some test names may contain characters that JSON cannot handle.
+ * @param {string} name
+ */
+export function normalizeName (name) {
+  return name.replace(/(\v)/g, (_, match) => {
+    switch (inspect(match)) {
+      case `'\\x0B'`: return '\\x0B'
+      default: return match
     }
   })
 }

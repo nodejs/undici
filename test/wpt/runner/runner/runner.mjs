@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
-import { parseMeta, handlePipes } from './util.mjs'
+import { parseMeta, handlePipes, normalizeName } from './util.mjs'
 
 const basePath = fileURLToPath(join(import.meta.url, '../../..'))
 const testPath = join(basePath, 'tests')
@@ -130,7 +130,9 @@ export class WPTRunner extends EventEmitter {
       if (message.result.status === 1) {
         this.#stats.failed += 1
 
-        if (allowUnexpectedFailures || (fail && fail.includes(message.result.name))) {
+        const name = normalizeName(message.result.name)
+
+        if (allowUnexpectedFailures || fail?.includes(name)) {
           this.#stats.expectedFailures += 1
         } else {
           process.exitCode = 1
