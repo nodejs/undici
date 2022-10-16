@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
-import { parseMeta } from './util.mjs'
+import { parseMeta, handlePipes } from './util.mjs'
 
 const basePath = fileURLToPath(join(import.meta.url, '../../..'))
 const testPath = join(basePath, 'tests')
@@ -82,6 +82,8 @@ export class WPTRunner extends EventEmitter {
 
     for (const test of this.#files) {
       const code = readFileSync(test, 'utf-8')
+      const meta = this.resolveMeta(code, test)
+
       const worker = new Worker(workerPath, {
         workerData: {
           // Code to load before the test harness and tests.
@@ -89,7 +91,7 @@ export class WPTRunner extends EventEmitter {
           // The test file.
           test: code,
           // Parsed META tag information
-          meta: this.resolveMeta(code, test),
+          meta,
           url: this.#url,
           path: test
         }
@@ -159,19 +161,29 @@ export class WPTRunner extends EventEmitter {
    */
   resolveMeta (code, path) {
     const meta = parseMeta(code)
-    const scripts = meta.scripts.map((script) => {
-      if (script === '/resources/WebIDLParser.js') {
+    const scripts = meta.scripts.map((filePath) => {
+      let content = ''
+
+      if (filePath === '/resources/WebIDLParser.js') {
         // See https://github.com/web-platform-tests/wpt/pull/731
         return readFileSync(join(testPath, '/resources/webidl2/lib/webidl2.js'), 'utf-8')
-      } else if (isAbsolute(script)) {
-        return readFileSync(join(testPath, script), 'utf-8')
+      } else if (isAbsolute(filePath)) {
+        content = readFileSync(join(testPath, filePath), 'utf-8')
+      } else {
+        content = readFileSync(resolve(path, '..', filePath), 'utf-8')
       }
 
-      return readFileSync(resolve(path, '..', script), 'utf-8')
+      // If the file has any built-in pipes.
+      if (filePath.includes('.sub.')) {
+        content = handlePipes(content, this.#url)
+      }
+
+      return content
     })
 
     return {
       ...meta,
+      resourcePaths: meta.scripts,
       scripts
     }
   }

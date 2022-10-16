@@ -48,5 +48,11 @@
 			"throwing Object.prototype.highWaterMark accessor should not affect stream creation by 'fetch'",
 			"Object.prototype.highWaterMark accessor returning invalid value should not affect stream creation by 'fetch'"
 		]
+	},
+	"scheme-blob.sub.any.js": {
+		"fail": [
+			"Set content type to the empty string for slice with invalid content type",
+			"Set content type to the empty string for slice with no content type "
+		]
 	}
 }
