@@ -299,6 +299,16 @@ test('invalid options throws', (t) => {
 
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      keepAliveTimeout: 'asd'
+    }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'invalid keepAliveTimeout')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
       localAddress: 123
     }) // eslint-disable-line
     t.fail()
