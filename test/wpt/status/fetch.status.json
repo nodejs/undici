@@ -61,6 +61,10 @@
 			"response.headers.get('double-trouble') expects , ",
 			"response.headers.get('foo-test') expects 1, 2, 3",
 			"response.headers.get('heya') expects , \\x0B\f, 1, , , 2"
+		],
+		"flaky": [
+			"response.headers.get('content-length') expects 0",
+			"response.headers.get('www-authenticate') expects 1, 2, 3, 4"
 		]
 	},
 	"integrity.sub.any.js": {
