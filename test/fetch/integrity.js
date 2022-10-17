@@ -16,7 +16,7 @@ setGlobalDispatcher(new Agent({
 
 test('request with correct integrity checksum', (t) => {
   const body = 'Hello world!'
-  const hash = createHash('sha256').update(body).digest('hex')
+  const hash = createHash('sha256').update(body).digest('base64')
 
   const server = createServer((req, res) => {
     res.end(body)
@@ -58,7 +58,7 @@ test('request with wrong integrity checksum', (t) => {
 
 test('request with integrity checksum on encoded body', (t) => {
   const body = 'Hello world!'
-  const hash = createHash('sha256').update(body).digest('hex')
+  const hash = createHash('sha256').update(body).digest('base64')
 
   const server = createServer((req, res) => {
     res.setHeader('content-encoding', 'gzip')

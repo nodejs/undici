@@ -5,12 +5,7 @@ const { fetch } = require('../..')
 
 test('fetching about: uris', async (t) => {
   t.test('about:blank', async (t) => {
-    const res = await fetch('about:blank')
-
-    t.equal(res.url, 'about:blank')
-    t.equal(res.statusText, 'OK')
-    t.equal(res.headers.get('Content-Type'), 'text/html;charset=utf-8')
-    t.end()
+    await t.rejects(fetch('about:blank'))
   })
 
   t.test('All other about: urls should return an error', async (t) => {
