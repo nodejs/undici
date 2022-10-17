@@ -5,7 +5,8 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { createReadStream, readFileSync } from 'node:fs'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { route } from './routes/network-partition-key.mjs'
+import { route as networkPartitionRoute } from './routes/network-partition-key.mjs'
+import { route as redirectRoute } from './routes/redirect.mjs'
 
 const tests = fileURLToPath(join(import.meta.url, '../../tests'))
 
@@ -221,12 +222,15 @@ const server = createServer(async (req, res) => {
       break
     }
     case '/fetch/connection-pool/resources/network-partition-key.py': {
-      return route(req, res, fullUrl)
+      return networkPartitionRoute(req, res, fullUrl)
     }
     case '/resources/top.txt': {
       return createReadStream(join(tests, 'fetch/api/', fullUrl.pathname))
         .on('end', () => res.end())
         .pipe(res)
+    }
+    case '/fetch/api/resources/redirect.py': {
+      return redirectRoute(req, res, fullUrl)
     }
     default: {
       res.statusCode = 200
