@@ -232,6 +232,29 @@ const server = createServer(async (req, res) => {
     case '/fetch/api/resources/redirect.py': {
       return redirectRoute(req, res, fullUrl)
     }
+    case '/fetch/api/resources/method.py': {
+      if (fullUrl.searchParams.has('cors')) {
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        res.setHeader('Access-Control-Allow-Credentials', 'true')
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, FOO')
+        res.setHeader('Access-Control-Allow-Headers', 'x-test, x-foo')
+        res.setHeader('Access-Control-Expose-Headers', 'x-request-method')
+      }
+
+      res.setHeader('x-request-method', req.method)
+      res.setHeader('x-request-content-type', req.headers['content-type'] ?? 'NO')
+      res.setHeader('x-request-content-length', req.headers['content-length'] ?? 'NO')
+      res.setHeader('x-request-content-encoding', req.headers['content-encoding'] ?? 'NO')
+      res.setHeader('x-request-content-language', req.headers['content-language'] ?? 'NO')
+      res.setHeader('x-request-content-location', req.headers['content-location'] ?? 'NO')
+
+      for await (const chunk of req) {
+        res.write(chunk)
+      }
+
+      res.end()
+      return
+    }
     default: {
       res.statusCode = 200
       res.end('body')
