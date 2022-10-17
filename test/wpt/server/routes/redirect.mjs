@@ -6,9 +6,11 @@ const stash = new Map()
  * @see https://github.com/web-platform-tests/wpt/blob/master/fetch/connection-pool/resources/network-partition-key.py
  * @param {Parameters<import('http').RequestListener>[0]} req
  * @param {Parameters<import('http').RequestListener>[1]} res
- * @param {URL} url
+ * @param {URL} fullUrl
  */
-export async function route (req, res, { searchParams }) {
+export async function route (req, res, fullUrl) {
+  const { searchParams } = fullUrl
+
   let stashedData = { count: 0, preflight: 0 }
   let status = 302
   res.setHeader('Content-Type', 'text/plain')
@@ -60,7 +62,7 @@ export async function route (req, res, { searchParams }) {
     let url = decodeURIComponent(searchParams.get('location'))
 
     if (!searchParams.has('simple')) {
-      const scheme = new URL(url).protocol
+      const scheme = new URL(url, fullUrl).protocol
 
       if (scheme === 'http:' || scheme === 'https:') {
         url += url.includes('?') ? '&' : '?'
