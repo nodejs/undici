@@ -153,5 +153,14 @@
 			"Redirect 308 in \"manual\" mode with invalid location",
 			"Redirect 308 in \"manual\" mode with data location"
 		]
+	},
+	"header-values.any.js": {
+		"fail": [
+			"XMLHttpRequest with value x%00x needs to throw",
+			"XMLHttpRequest with value x%0Ax needs to throw",
+			"XMLHttpRequest with value x%0Dx needs to throw",
+			"XMLHttpRequest with all valid values",
+			"fetch() with all valid values"
+		]
 	}
 }
