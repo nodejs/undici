@@ -121,7 +121,7 @@ describe('Response', () => {
       status: 346,
       statusText: 'production'
     })
-    res[kState].urlList = [base]
+    res[kState].urlList = [new URL(base)]
     const cl = res.clone()
     expect(cl.headers.get('a')).to.equal('1')
     expect(cl.type).to.equal('default')

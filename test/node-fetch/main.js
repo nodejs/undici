@@ -1532,12 +1532,12 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should keep `?` sign in URL when no params are given', () => {
+  it('should NOT keep `?` sign in URL when no params are given', () => {
     const url = `${base}question?`
     const urlObject = new URL(url)
     const request = new Request(urlObject)
     return fetch(request).then(res => {
-      expect(res.url).to.equal(url)
+      expect(res.url).to.equal(url.slice(0, -1))
       expect(res.ok).to.be.true
       expect(res.status).to.equal(200)
     })
@@ -1554,12 +1554,12 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should preserve the hash (#) symbol', () => {
+  it('should NOT preserve the hash (#) symbol', () => {
     const url = `${base}question?#`
     const urlObject = new URL(url)
     const request = new Request(urlObject)
     return fetch(request).then(res => {
-      expect(res.url).to.equal(url)
+      expect(res.url).to.equal(url.slice(0, -2))
       expect(res.ok).to.be.true
       expect(res.status).to.equal(200)
     })
