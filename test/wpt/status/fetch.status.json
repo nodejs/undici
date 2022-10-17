@@ -123,5 +123,11 @@
 			"Consume blob response's body as blob",
 			"Consume blob response's body as blob (empty blob as input)"
 		]
+	},
+	"request-consume-empty.any.js": {
+		"fail": [
+			"Consume request's body as blob",
+			"Consume empty FormData request body as text"
+		]
 	}
 }
