@@ -129,5 +129,10 @@
 			"Consume request's body as blob",
 			"Consume empty FormData request body as text"
 		]
+	},
+	"redirect-method.any.js": {
+		"fail": [
+			"Redirect 303 with TESTING"
+		]
 	}
 }
