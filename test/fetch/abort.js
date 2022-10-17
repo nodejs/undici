@@ -88,3 +88,39 @@ test('Allow the usage of custom implementation of AbortController', async (t) =>
     t.equal(e.code, DOMException.ABORT_ERR)
   }
 })
+
+test('allows aborting with custom errors', { skip: process.version.startsWith('v16.') }, async (t) => {
+  const server = createServer((req, res) => {
+    setTimeout(() => res.end(), 5000)
+  }).listen(0)
+
+  t.teardown(server.close.bind(server))
+  await once(server, 'listening')
+
+  t.test('Using AbortSignal.timeout', async (t) => {
+    await t.rejects(
+      fetch(`http://localhost:${server.address().port}`, {
+        signal: AbortSignal.timeout(50)
+      }),
+      {
+        name: 'TimeoutError',
+        code: DOMException.TIMEOUT_ERR
+      }
+    )
+  })
+
+  t.test('Error defaults to an AbortError DOMException', async (t) => {
+    const ac = new AbortController()
+    ac.abort() // no reason
+
+    await t.rejects(
+      fetch(`http://localhost:${server.address().port}`, {
+        signal: ac.signal
+      }),
+      {
+        name: 'AbortError',
+        code: DOMException.ABORT_ERR
+      }
+    )
+  })
+})
