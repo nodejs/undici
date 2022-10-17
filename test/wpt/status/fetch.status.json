@@ -134,5 +134,24 @@
 		"fail": [
 			"Redirect 303 with TESTING"
 		]
+	},
+	"redirect-location.any.js": {
+		"fail": [
+			"Redirect 301 in \"manual\" mode without location",
+			"Redirect 301 in \"manual\" mode with invalid location",
+			"Redirect 301 in \"manual\" mode with data location",
+			"Redirect 302 in \"manual\" mode without location",
+			"Redirect 302 in \"manual\" mode with invalid location",
+			"Redirect 302 in \"manual\" mode with data location",
+			"Redirect 303 in \"manual\" mode without location",
+			"Redirect 303 in \"manual\" mode with invalid location",
+			"Redirect 303 in \"manual\" mode with data location",
+			"Redirect 307 in \"manual\" mode without location",
+			"Redirect 307 in \"manual\" mode with invalid location",
+			"Redirect 307 in \"manual\" mode with data location",
+			"Redirect 308 in \"manual\" mode without location",
+			"Redirect 308 in \"manual\" mode with invalid location",
+			"Redirect 308 in \"manual\" mode with data location"
+		]
 	}
 }
