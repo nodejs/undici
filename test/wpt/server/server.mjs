@@ -255,6 +255,18 @@ const server = createServer(async (req, res) => {
       res.end()
       return
     }
+    case '/fetch/api/resources/clean-stash.py': {
+      const token = fullUrl.searchParams.get('token')
+      const took = stash.take(token)
+
+      if (took) {
+        res.end('1')
+      } else {
+        res.end('0')
+      }
+
+      break
+    }
     default: {
       res.statusCode = 200
       res.end('body')
