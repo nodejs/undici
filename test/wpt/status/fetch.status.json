@@ -19,8 +19,6 @@
 	},
 	"response-consume-empty.any.js": {
 		"fail": [
-			"Consume response's body as blob",
-			"Consume response's body as formData with correct multipart type (error case)",
 			"Consume empty FormData response body as text"
 		]
 	},
@@ -114,19 +112,11 @@
 	},
 	"request-consume.any.js": {
 		"fail": [
-			"Consume String request's body as blob",
-			"Consume ArrayBuffer request's body as blob",
-			"Consume Uint8Array request's body as blob",
-			"Consume Int8Array request's body as blob",
-			"Consume Float32Array request's body as blob",
-			"Consume DataView request's body as blob",
-			"Consume blob response's body as blob",
-			"Consume blob response's body as blob (empty blob as input)"
+			"Consume blob response's body as blob"
 		]
 	},
 	"request-consume-empty.any.js": {
 		"fail": [
-			"Consume request's body as blob",
 			"Consume empty FormData request body as text"
 		]
 	},
