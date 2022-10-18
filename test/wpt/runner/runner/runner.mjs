@@ -1,4 +1,4 @@
-import { EventEmitter, once } from 'node:events'
+import { EventEmitter } from 'node:events'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -77,8 +77,10 @@ export class WPTRunner extends EventEmitter {
     return [...files]
   }
 
-  async run () {
+  run () {
     const workerPath = fileURLToPath(join(import.meta.url, '../worker.mjs'))
+    /** @type {Set<Worker>} */
+    const activeWorkers = new Set()
 
     for (const test of this.#files) {
       const code = test.includes('.sub.')
@@ -99,6 +101,8 @@ export class WPTRunner extends EventEmitter {
         }
       })
 
+      activeWorkers.add(worker)
+
       worker.on('message', (message) => {
         if (message.type === 'result') {
           this.handleIndividualTestCompletion(message, basename(test))
@@ -107,17 +111,14 @@ export class WPTRunner extends EventEmitter {
         }
       })
 
-      await once(worker, 'exit')
-    }
+      worker.once('exit', () => {
+        activeWorkers.delete(worker)
 
-    this.emit('completion')
-    const { completed, failed, success, expectedFailures } = this.#stats
-    console.log(
-      `[${this.#folderName}]: ` +
-      `Completed: ${completed}, failed: ${failed}, success: ${success}, ` +
-      `expected failures: ${expectedFailures}, ` +
-      `unexpected failures: ${failed - expectedFailures}`
-    )
+        if (activeWorkers.size === 0) {
+          this.handleRunnerCompletion()
+        }
+      })
+    }
   }
 
   /**
@@ -154,6 +155,20 @@ export class WPTRunner extends EventEmitter {
    */
   handleTestCompletion (worker) {
     worker.terminate()
+  }
+
+  /**
+   * Called after every test has completed.
+   */
+  handleRunnerCompletion () {
+    this.emit('completion')
+    const { completed, failed, success, expectedFailures } = this.#stats
+    console.log(
+      `[${this.#folderName}]: ` +
+      `Completed: ${completed}, failed: ${failed}, success: ${success}, ` +
+      `expected failures: ${expectedFailures}, ` +
+      `unexpected failures: ${failed - expectedFailures}`
+    )
   }
 
   addInitScript (code) {
