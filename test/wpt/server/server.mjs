@@ -270,6 +270,11 @@ const server = createServer(async (req, res) => {
 
       break
     }
+    case '/fetch/content-encoding/resources/bad-gzip-body.py': {
+      res.setHeader('Content-Encoding', 'gzip')
+      res.end('not actually gzip')
+      break
+    }
     default: {
       res.statusCode = 200
       res.end('body')
