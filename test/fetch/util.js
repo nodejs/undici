@@ -134,6 +134,45 @@ test('isURLPotentiallyTrustworthy', (t) => {
   }
 })
 
+test('setRequestReferrerPolicyOnRedirect', nested => {
+  nested.plan(2)
+
+  nested.test('should set referrer policy from response headers on redirect', t => {
+    const request = {
+      referrerPolicy: 'no-referrer, strict-origin-when-cross-origin'
+    }
+
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    actualResponse.headersList.append('Referrer-Policy', 'origin')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    t.equal(request.referrerPolicy, 'origin')
+    t.end()
+  })
+
+  nested.test('should set not change request referrer policy if no Referrer-Policy from initial redirect response', t => {
+    const request = {
+      referrerPolicy: 'no-referrer, strict-origin-when-cross-origin'
+    }
+
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    t.equal(request.referrerPolicy, 'no-referrer, strict-origin-when-cross-origin')
+    t.end()
+  })
+})
+
 test('determineRequestsReferrer', (t) => {
   t.plan(7)
 
