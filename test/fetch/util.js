@@ -135,7 +135,7 @@ test('isURLPotentiallyTrustworthy', (t) => {
 })
 
 test('setRequestReferrerPolicyOnRedirect', nested => {
-  nested.plan(2)
+  nested.plan(3)
 
   nested.test('should set referrer policy from response headers on redirect', t => {
     const request = {
@@ -146,13 +146,14 @@ test('setRequestReferrerPolicyOnRedirect', nested => {
       headersList: new HeadersList()
     }
 
+    t.plan(1)
+
     actualResponse.headersList.append('Connection', 'close')
     actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
     actualResponse.headersList.append('Referrer-Policy', 'origin')
     util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
 
     t.equal(request.referrerPolicy, 'origin')
-    t.end()
   })
 
   nested.test('should set not change request referrer policy if no Referrer-Policy from initial redirect response', t => {
@@ -164,12 +165,32 @@ test('setRequestReferrerPolicyOnRedirect', nested => {
       headersList: new HeadersList()
     }
 
+    t.plan(1)
+
     actualResponse.headersList.append('Connection', 'close')
     actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
     util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
 
     t.equal(request.referrerPolicy, 'no-referrer, strict-origin-when-cross-origin')
-    t.end()
+  })
+
+  nested.test('should set not change request referrer policy if the policy is a non-valid Referrer Policy', t => {
+    const initial = 'no-referrer, strict-origin-when-cross-origin'
+    const request = {
+      referrerPolicy: initial
+    }
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    t.plan(1)
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    actualResponse.headersList.append('Referrer-Policy', 'asdasd')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    t.equal(request.referrerPolicy, initial)
   })
 })
 
