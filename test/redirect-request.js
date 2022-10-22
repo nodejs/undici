@@ -8,7 +8,8 @@ const {
   startRedirectingChainServers,
   startRedirectingWithoutLocationServer,
   startRedirectingWithAuthorization,
-  startRedirectingWithCookie
+  startRedirectingWithCookie,
+  startRedirectingWithQueryParams
 } = require('./utils/redirecting-servers')
 const { createReadable, createReadableStream } = require('./utils/stream')
 
@@ -298,6 +299,21 @@ for (const factory of [
     t.notOk(headers.location)
     t.same(history.map(x => x.toString()), [`http://${server}/`, `http://${server}/end`])
     t.equal(body, 'FINAL')
+  })
+
+  t.test('should ignore query after redirection', async t => {
+    t.plan(3)
+
+    const server = await startRedirectingWithQueryParams(t)
+
+    const { statusCode, headers, context: { history } } = await request(server, undefined, `http://${server}/`, {
+      maxRedirections: 10,
+      query: { param1: 'first' }
+    })
+
+    t.equal(statusCode, 200)
+    t.notOk(headers.location)
+    t.same(history.map(x => x.toString()), [`http://${server}/`, `http://${server}/?param2=second`])
   })
 
   t.test('should follow a redirect chain up to the allowed number of times', async t => {
