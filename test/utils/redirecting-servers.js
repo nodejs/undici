@@ -222,6 +222,23 @@ async function startRedirectingWithRelativePath (t) {
   return server
 }
 
+async function startRedirectingWithQueryParams (t) {
+  const server = await startServer(t, (req, res) => {
+    if (req.url === '/?param1=first') {
+      res.statusCode = 301
+      res.setHeader('Connection', 'close')
+      res.setHeader('Location', `http://${server}/?param2=second`)
+      res.end('REDIRECT')
+      return
+    }
+
+    res.setHeader('Connection', 'close')
+    res.end('')
+  })
+
+  return server
+}
+
 module.exports = {
   startServer,
   startRedirectingServer,
@@ -230,5 +247,6 @@ module.exports = {
   startRedirectingChainServers,
   startRedirectingWithAuthorization,
   startRedirectingWithCookie,
-  startRedirectingWithRelativePath
+  startRedirectingWithRelativePath,
+  startRedirectingWithQueryParams
 }
