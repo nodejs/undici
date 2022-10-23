@@ -281,7 +281,7 @@ test('response invalid content length with close', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.on('disconnect', (origin, client, err) => {
-      t.equal(err.code, 'UND_ERR_SOCKET')
+      t.equal(err.code, 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
     })
 
     client.request({
@@ -294,7 +294,7 @@ test('response invalid content length with close', (t) => {
           t.fail()
         })
         .on('error', (err) => {
-          t.equal(err.code, 'UND_ERR_SOCKET')
+          t.equal(err.code, 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
         })
         .resume()
     })
