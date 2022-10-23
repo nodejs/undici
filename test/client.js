@@ -1885,6 +1885,43 @@ test('async iterator yield object error', (t) => {
   })
 })
 
+test('Successfully get a Response when neither a Transfer-Encoding or Content-Length header is present', (t) => {
+  t.plan(2)
+  const server = createServer((req, res) => {
+    req.on('data', (data) => {
+    })
+    req.on('end', () => {
+      res.removeHeader('transfer-encoding')
+      res.writeHead(200, {
+        // Header isn't actually necessary, but tells node to close after response
+        connection: 'close',
+        foo: 'bar'
+      })
+      res.end('a response body')
+    })
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, { body }) => {
+      t.error(err)
+      const bufs = []
+      body.on('error', () => {
+        t.fail('Closing the connection is valid')
+      })
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.equal('a response body', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
 function buildParams (path) {
   const cleanPath = path.replace('/?', '').replace('/', '').split('&')
   const builtParams = cleanPath.reduce((acc, entry) => {
