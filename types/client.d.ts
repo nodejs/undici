@@ -41,7 +41,7 @@ declare namespace Client {
     tls?: TlsOptions | null;
     /** */
     maxRequestsPerClient?: number;
-    /** Max response body size in bytes, 0 is disabled */
+    /** Max response body size in bytes, -1 is disabled */
     maxResponseSize?: number | null;
 
     interceptors?: {Client: readonly DispatchInterceptor[] | undefined}
