@@ -132,4 +132,4 @@ By making a contribution to this project, I certify that:
 The [Node.js Moderation Policy] applies to this project.
 
 [Node.js Moderation Policy]:
-https://github.com/nodejs/admin/blob/master/Moderation-Policy.md
+https://github.com/nodejs/admin/blob/main/Moderation-Policy.md
