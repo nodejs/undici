@@ -26,7 +26,8 @@ const scenarios = [
   createScenario(errors.ClientClosedError, 'The client is closed', 'ClientClosedError', 'UND_ERR_CLOSED'),
   createScenario(errors.SocketError, 'Socket error', 'SocketError', 'UND_ERR_SOCKET'),
   createScenario(errors.NotSupportedError, 'Not supported error', 'NotSupportedError', 'UND_ERR_NOT_SUPPORTED'),
-  createScenario(errors.ResponseContentLengthMismatchError, 'Response body length does not match content-length header', 'ResponseContentLengthMismatchError', 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
+  createScenario(errors.ResponseContentLengthMismatchError, 'Response body length does not match content-length header', 'ResponseContentLengthMismatchError', 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH'),
+  createScenario(errors.ResponseExceededMaxSizeError, 'Response content exceeded max size', 'ResponseExceededMaxSizeError', 'UND_ERR_RES_EXCEEDED_MAX_SIZE')
 ]
 
 scenarios.forEach(scenario => {
