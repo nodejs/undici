@@ -55,7 +55,7 @@
     "test:typescript": "tsd",
     "test:wpt": "node scripts/verifyVersion 18 || (node test/wpt/start-fetch.mjs && node test/wpt/start-FileAPI.mjs && node test/wpt/start-mimesniff.mjs && node test/wpt/start-xhr.mjs)",
     "coverage": "nyc --reporter=text --reporter=html npm run test",
-    "coverage:ci": "nyc --reporter=lcov npm run test && npx --yes c8 --reporter=lcov --include=lib/fetch npm run test:wpt",
+    "coverage:ci": "npx --yes c8 --reporter=lcov npm run test",
     "bench": "PORT=3042 concurrently -k -s first npm:bench:server npm:bench:run",
     "bench:server": "node benchmarks/server.js",
     "prebench:run": "node benchmarks/wait.js",
