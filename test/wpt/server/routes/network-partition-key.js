@@ -6,7 +6,7 @@ const stash = new Map()
  * @param {Parameters<import('http').RequestListener>[1]} res
  * @param {URL} url
  */
-export function route (req, res, { searchParams, port }) {
+module.exports.route = function route (req, res, { searchParams, port }) {
   res.setHeader('Cache-Control', 'no-store')
 
   const dispatch = searchParams.get('dispatch')

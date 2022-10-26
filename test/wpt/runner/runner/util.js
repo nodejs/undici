@@ -1,5 +1,5 @@
-import { exit } from 'node:process'
-import { inspect } from 'node:util'
+const { exit } = require('node:process')
+const { inspect } = require('node:util')
 
 /**
  * Parse the `Meta:` tags sometimes included in tests.
@@ -14,7 +14,7 @@ import { inspect } from 'node:util'
  * @see https://nodejs.org/api/readline.html#readline_example_read_file_stream_line_by_line
  * @param {string} fileContents
  */
-export function parseMeta (fileContents) {
+function parseMeta (fileContents) {
   const lines = fileContents.split(/\r?\n/g)
 
   const meta = {
@@ -83,7 +83,7 @@ function parseSubBlock (sub) {
  * @param {string} code
  * @param {string} url
  */
-export function handlePipes (code, url) {
+function handlePipes (code, url) {
   const server = new URL(url)
 
   // "Substitutions are marked in a file using a block delimited by
@@ -123,11 +123,17 @@ export function handlePipes (code, url) {
  * Some test names may contain characters that JSON cannot handle.
  * @param {string} name
  */
-export function normalizeName (name) {
+function normalizeName (name) {
   return name.replace(/(\v)/g, (_, match) => {
     switch (inspect(match)) {
       case '\'\\x0B\'': return '\\x0B'
       default: return match
     }
   })
+}
+
+module.exports = {
+  parseMeta,
+  handlePipes,
+  normalizeName
 }

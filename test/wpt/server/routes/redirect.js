@@ -1,4 +1,4 @@
-import { setTimeout } from 'timers/promises'
+const { setTimeout } = require('node:timers/promises')
 
 const stash = new Map()
 
@@ -8,7 +8,7 @@ const stash = new Map()
  * @param {Parameters<import('http').RequestListener>[1]} res
  * @param {URL} fullUrl
  */
-export async function route (req, res, fullUrl) {
+module.exports.route = async function route (req, res, fullUrl) {
   const { searchParams } = fullUrl
 
   let stashedData = { count: 0, preflight: 0 }

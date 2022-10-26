@@ -1,15 +1,14 @@
-import { EventEmitter } from 'node:events'
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { basename, isAbsolute, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { Worker } from 'node:worker_threads'
-import { parseMeta, handlePipes, normalizeName } from './util.mjs'
+const { EventEmitter } = require('node:events')
+const { readdirSync, readFileSync, statSync } = require('node:fs')
+const { basename, isAbsolute, join, resolve } = require('node:path')
+const { Worker } = require('node:worker_threads')
+const { parseMeta, handlePipes, normalizeName } = require('./util.js')
 
-const basePath = fileURLToPath(join(import.meta.url, '../../..'))
+const basePath = join(__dirname, '../..')
 const testPath = join(basePath, 'tests')
 const statusPath = join(basePath, 'status')
 
-export class WPTRunner extends EventEmitter {
+class WPTRunner extends EventEmitter {
   /** @type {string} */
   #folderName
 
@@ -78,7 +77,7 @@ export class WPTRunner extends EventEmitter {
   }
 
   run () {
-    const workerPath = fileURLToPath(join(import.meta.url, '../worker.mjs'))
+    const workerPath = join(__dirname, 'worker.mjs')
     /** @type {Set<Worker>} */
     const activeWorkers = new Set()
 
@@ -208,4 +207,8 @@ export class WPTRunner extends EventEmitter {
       scripts
     }
   }
+}
+
+module.exports = {
+  WPTRunner
 }

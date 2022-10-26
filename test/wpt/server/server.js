@@ -1,14 +1,18 @@
-import { once } from 'node:events'
-import { createServer } from 'node:http'
-import { join } from 'node:path'
-import process from 'node:process'
-import { fileURLToPath } from 'node:url'
-import { createReadStream, readFileSync } from 'node:fs'
-import { setTimeout as sleep } from 'node:timers/promises'
-import { route as networkPartitionRoute } from './routes/network-partition-key.mjs'
-import { route as redirectRoute } from './routes/redirect.mjs'
+const { createServer } = require('node:http')
+const { join } = require('node:path')
+const process = require('node:process')
+const { createReadStream, readFileSync } = require('node:fs')
+const { setTimeout: sleep } = require('node:timers/promises')
+const { route: networkPartitionRoute } = require('./routes/network-partition-key.js')
+const { route: redirectRoute } = require('./routes/redirect.js')
 
-const tests = fileURLToPath(join(import.meta.url, '../../tests'))
+const tests = join(__dirname, '../tests')
+
+const send = (message) => {
+  if (typeof process.send === 'function') {
+    process.send(message)
+  }
+}
 
 // https://web-platform-tests.org/tools/wptserve/docs/stash.html
 class Stash extends Map {
@@ -280,17 +284,9 @@ const server = createServer(async (req, res) => {
       res.end('body')
     }
   }
-}).listen(0)
-
-await once(server, 'listening')
-
-const send = (message) => {
-  if (typeof process.send === 'function') {
-    process.send(message)
-  }
-}
-
-send({ server: `http://localhost:${server.address().port}` })
+}).listen(0, () => {
+  send({ server: `http://localhost:${server.address().port}` })
+})
 
 process.on('message', (message) => {
   if (message === 'shutdown') {
