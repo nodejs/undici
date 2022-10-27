@@ -1,9 +1,9 @@
 {
 	"general.any.js": {
 		"fail": [
-			"Stream errors once aborted. Underlying connection closed.",
+			"Already aborted signal rejects immediately",
 			"Underlying connection is closed when aborting after receiving response - no-cors",
-			"Already aborted signal rejects immediately"
+			"Stream errors once aborted. Underlying connection closed."
 		]
 	},
 	"request-disturbed.any.js": {

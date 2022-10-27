@@ -1,3 +1,4 @@
+import { deepStrictEqual } from 'node:assert'
 import { EventEmitter } from 'node:events'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, isAbsolute, join, resolve } from 'node:path'
@@ -27,6 +28,9 @@ export class WPTRunner extends EventEmitter {
 
   /** @type {import('../../status/fetch.status.json')} */
   #status
+
+  /** Tests that have expectedly failed mapped by file name */
+  #statusOutput = {}
 
   #stats = {
     completed: 0,
@@ -138,6 +142,10 @@ export class WPTRunner extends EventEmitter {
         if (flaky?.includes(name)) {
           this.#stats.expectedFailures += 1
         } else if (allowUnexpectedFailures || fail?.includes(name)) {
+          if (!allowUnexpectedFailures) {
+            this.#statusOutput[fileName] ??= []
+            this.#statusOutput[fileName].push(name)
+          }
           this.#stats.expectedFailures += 1
         } else {
           process.exitCode = 1
@@ -161,6 +169,18 @@ export class WPTRunner extends EventEmitter {
    * Called after every test has completed.
    */
   handleRunnerCompletion () {
+    const expectedFailuresObject = Object.keys(this.#status).reduce((a, b) => {
+      if (Array.isArray(this.#status[b].fail)) {
+        a[b] = [...this.#status[b].fail]
+      }
+      return a
+    }, {})
+
+    deepStrictEqual(
+      this.#statusOutput,
+      expectedFailuresObject
+    )
+
     this.emit('completion')
     const { completed, failed, success, expectedFailures } = this.#stats
     console.log(

@@ -6,8 +6,6 @@
 	},
 	"idlharness.any.js": {
 		"fail": [
-			"URL interface: operation revokeObjectURL(DOMString)",
-			"URL interface: operation createObjectURL((Blob or MediaSource))",
 			"Blob interface: attribute size",
 			"Blob interface: attribute type",
 			"Blob interface: operation slice(optional long long, optional long long, optional DOMString)",
@@ -21,7 +19,9 @@
 			"FileList interface: existence and properties of interface prototype object's \"constructor\" property",
 			"FileList interface: existence and properties of interface prototype object's @@unscopables property",
 			"FileList interface: operation item(unsigned long)",
-			"FileList interface: attribute length"
+			"FileList interface: attribute length",
+			"URL interface: operation createObjectURL((Blob or MediaSource))",
+			"URL interface: operation revokeObjectURL(DOMString)"
 		]
 	},
 	"filereader_events.any.js": {
