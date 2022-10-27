@@ -94,10 +94,12 @@ test('max response size', (t) => {
     t.plan(2)
 
     t.throws(() => {
-      Client('http://localhost:3000', { maxResponseSize: 'hello' })
+      // eslint-disable-next-line no-new
+      new Client('http://localhost:3000', { maxResponseSize: 'hello' })
     }, 'maxResponseSize must be a number')
     t.throws(() => {
-      Client('http://localhost:3000', { maxResponseSize: -2 })
-    })
+      // eslint-disable-next-line no-new
+      new Client('http://localhost:3000', { maxResponseSize: -2 })
+    }, 'maxResponseSize must be greater than or equal to -1')
   })
 })
