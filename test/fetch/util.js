@@ -134,6 +134,142 @@ test('isURLPotentiallyTrustworthy', (t) => {
   }
 })
 
+test('setRequestReferrerPolicyOnRedirect', nested => {
+  nested.plan(7)
+
+  nested.test('should set referrer policy from response headers on redirect', t => {
+    const request = {
+      referrerPolicy: 'no-referrer, strict-origin-when-cross-origin'
+    }
+
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    t.plan(1)
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    actualResponse.headersList.append('Referrer-Policy', 'origin')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    t.equal(request.referrerPolicy, 'origin')
+  })
+
+  nested.test('should select the first valid policy from a response', t => {
+    const request = {
+      referrerPolicy: 'no-referrer, strict-origin-when-cross-origin'
+    }
+
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    t.plan(1)
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    actualResponse.headersList.append('Referrer-Policy', 'asdas, origin')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    t.equal(request.referrerPolicy, 'origin')
+  })
+
+  nested.test('should select the first valid policy from a response#2', t => {
+    const request = {
+      referrerPolicy: 'no-referrer, strict-origin-when-cross-origin'
+    }
+
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    t.plan(1)
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    actualResponse.headersList.append('Referrer-Policy', 'no-referrer, asdas, origin, 0943sd')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    t.equal(request.referrerPolicy, 'origin')
+  })
+
+  nested.test('should pick the last fallback over invalid policy tokens', t => {
+    const request = {
+      referrerPolicy: 'no-referrer, strict-origin-when-cross-origin'
+    }
+
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    t.plan(1)
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    actualResponse.headersList.append('Referrer-Policy', 'origin, asdas, asdaw34')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    t.equal(request.referrerPolicy, 'origin')
+  })
+
+  nested.test('should set not change request referrer policy if no Referrer-Policy from initial redirect response', t => {
+    const request = {
+      referrerPolicy: 'no-referrer, strict-origin-when-cross-origin'
+    }
+
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    t.plan(1)
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    t.equal(request.referrerPolicy, 'no-referrer, strict-origin-when-cross-origin')
+  })
+
+  nested.test('should set not change request referrer policy if the policy is a non-valid Referrer Policy', t => {
+    const initial = 'no-referrer, strict-origin-when-cross-origin'
+    const request = {
+      referrerPolicy: initial
+    }
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    t.plan(1)
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    actualResponse.headersList.append('Referrer-Policy', 'asdasd')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    t.equal(request.referrerPolicy, initial)
+  })
+
+  nested.test('should set not change request referrer policy if the policy is a non-valid Referrer Policy', t => {
+    const initial = 'no-referrer, strict-origin-when-cross-origin'
+    const request = {
+      referrerPolicy: initial
+    }
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    t.plan(1)
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    actualResponse.headersList.append('Referrer-Policy', 'asdasd, asdasa, 12daw,')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    t.equal(request.referrerPolicy, initial)
+  })
+})
+
 test('determineRequestsReferrer', (t) => {
   t.plan(7)
 
