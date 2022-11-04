@@ -3,9 +3,7 @@ import { URL } from "url";
 import { connector } from "./connector";
 import { HttpMethod } from "./dispatcher";
 
-export = DiagnosticsChannel;
-
-declare namespace DiagnosticsChannel {
+export declare namespace DiagnosticsChannel {
   interface Request {
     origin?: string | URL;
     completed: boolean;
