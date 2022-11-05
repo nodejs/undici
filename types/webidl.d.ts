@@ -7,7 +7,7 @@ type Converter<T> = (object: unknown) => T
 
 type SequenceConverter<T> = (object: unknown) => T[]
 
-type RecordConverter<K, V> = Record<K, v>
+type RecordConverter<K extends string, V> = (object: unknown) => Record<K, V>
 
 interface ConvertToIntOpts {
   clamp?: boolean
@@ -15,7 +15,7 @@ interface ConvertToIntOpts {
 }
 
 interface WebidlErrors {
-  exception (opts: { header: string, message: string }): never
+  exception (opts: { header: string, message: string }): TypeError
   /**
    * @description Throw an error when conversion from one type to another has failed
    */
@@ -23,7 +23,7 @@ interface WebidlErrors {
     prefix: string
     argument: string
     types: string[]
-  }): never
+  }): TypeError
   /**
    * @description Throw an error when an invalid argument is provided
    */
@@ -31,7 +31,7 @@ interface WebidlErrors {
     prefix: string
     value: string
     type: string
-  }): never
+  }): TypeError
 }
 
 interface WebidlUtil {
@@ -90,7 +90,7 @@ interface WebidlConverters {
   /**
    * @see https://webidl.spec.whatwg.org/#es-any
    */
-  any <Value>(V: Value): V
+  any <Value>(V: Value): Value
 
   /**
    * @see https://webidl.spec.whatwg.org/#es-long-long
@@ -145,7 +145,7 @@ interface WebidlConverters {
 
   ['record<ByteString, ByteString>']: RecordConverter<string, string>
 
-  [Key: string]: (...args: unknown[]) => unknown
+  [Key: string]: (...args: any[]) => unknown
 }
 
 export interface Webidl {
@@ -169,7 +169,7 @@ export interface Webidl {
    * @see https://webidl.spec.whatwg.org/#es-to-record
    * @description Convert a value, V, to a WebIDL record type.
    */
-  recordConverter <K, V>(
+  recordConverter <K extends string, V>(
     keyConverter: Converter<K>,
     valueConverter: Converter<V>
   ): RecordConverter<K, V>
@@ -202,5 +202,7 @@ export interface Webidl {
    * @see https://webidl.spec.whatwg.org/#idl-nullable-type
    * @description allows a type, V, to be null
    */
-  nullableConverter (converter: Converter): (V: unknown) => ReturnType<typeof converter> | null
+  nullableConverter <T>(
+    converter: Converter<T>
+  ): (V: unknown) => ReturnType<typeof converter> | null
 }
