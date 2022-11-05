@@ -205,4 +205,9 @@ export interface Webidl {
   nullableConverter <T>(
     converter: Converter<T>
   ): (V: unknown) => ReturnType<typeof converter> | null
+
+  argumentLengthCheck (args: { length: number }, min: number, context: {
+    header: string
+    message?: string
+  }): void
 }
