@@ -2498,7 +2498,7 @@ test('MockAgent - headers in mock dispatcher intercept should be case-insensitiv
 // https://github.com/nodejs/undici/issues/1757
 test('MockAgent - reply callback can be asynchronous', { skip: nodeMajor < 16 }, async (t) => {
   const { fetch } = require('..')
-  const ReadableStream = globalThis.ReadableStream ?? require('stream/web').ReadableStream
+  const ReadableStream = globalThis.ReadableStream || require('stream/web').ReadableStream
 
   class MiniflareDispatcher extends Dispatcher {
     constructor (inner, options) {
@@ -2530,7 +2530,7 @@ test('MockAgent - reply callback can be asynchronous', { skip: nodeMajor < 16 },
     path: () => true,
     method: () => true
   }).reply(200, async (opts) => {
-    if (opts.body?.[Symbol.asyncIterator]) {
+    if (opts.body && opts.body[Symbol.asyncIterator]) {
       const chunks = []
       for await (const chunk of opts.body) {
         chunks.push(chunk)
