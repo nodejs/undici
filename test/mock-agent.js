@@ -2495,6 +2495,82 @@ test('MockAgent - headers in mock dispatcher intercept should be case-insensitiv
   t.end()
 })
 
+// https://github.com/nodejs/undici/issues/1757
+test('MockAgent - reply callback can be asynchronous', { skip: nodeMajor < 16 }, async (t) => {
+  const { fetch } = require('..')
+  const ReadableStream = globalThis.ReadableStream || require('stream/web').ReadableStream
+
+  class MiniflareDispatcher extends Dispatcher {
+    constructor (inner, options) {
+      super(options)
+      this.inner = inner
+    }
+
+    dispatch (options, handler) {
+      return this.inner.dispatch(options, handler)
+    }
+
+    close (...args) {
+      return this.inner.close(...args)
+    }
+
+    destroy (...args) {
+      return this.inner.destroy(...args)
+    }
+  }
+
+  const mockAgent = new MockAgent()
+  const mockClient = mockAgent.get('http://localhost:3000')
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(new MiniflareDispatcher(mockAgent))
+
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  mockClient.intercept({
+    path: () => true,
+    method: () => true
+  }).reply(200, async (opts) => {
+    if (opts.body && opts.body[Symbol.asyncIterator]) {
+      const chunks = []
+      for await (const chunk of opts.body) {
+        chunks.push(chunk)
+      }
+
+      return Buffer.concat(chunks)
+    }
+
+    return opts.body
+  }).persist()
+
+  {
+    const response = await fetch('http://localhost:3000', {
+      method: 'POST',
+      body: JSON.stringify({ foo: 'bar' })
+    })
+
+    t.same(await response.json(), { foo: 'bar' })
+  }
+
+  {
+    const response = await fetch('http://localhost:3000', {
+      method: 'POST',
+      body: new ReadableStream({
+        start (controller) {
+          controller.enqueue(new TextEncoder().encode('{"foo":'))
+
+          setTimeout(() => {
+            controller.enqueue(new TextEncoder().encode('"bar"}'))
+            controller.close()
+          }, 100)
+        }
+      }),
+      duplex: 'half'
+    })
+
+    t.same(await response.json(), { foo: 'bar' })
+  }
+})
+
 test('MockAgent - headers should be array of strings', async (t) => {
   const mockAgent = new MockAgent()
   mockAgent.disableNetConnect()
