@@ -4,7 +4,7 @@ import { Blob } from 'buffer'
 import { DOMException, Event, EventInit, EventTarget } from './patch'
 
 export declare class FileReader {
-  __proto__: EventTarget['prototype'] & FileReader
+  __proto__: EventTarget & FileReader
 
   constructor ()
 
