@@ -4,7 +4,7 @@ import { Blob } from 'buffer'
 import { DOMException, Event, EventInit, EventTarget } from './patch'
 
 export declare class FileReader {
-  __proto__: EventTarget
+  __proto__: EventTarget['prototype'] & FileReader
 
   constructor ()
 
@@ -44,7 +44,7 @@ export interface ProgressEventInit extends EventInit {
 }
 
 export declare class ProgressEvent {
-  __proto__: Event
+  __proto__: Event & ProgressEvent
 
   constructor (type: string, eventInitDict?: ProgressEventInit)
 
