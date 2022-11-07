@@ -1,6 +1,7 @@
 /// <reference types="node" />
 
 import { Blob } from 'buffer'
+import { DOMException, Event, EventInit, EventTarget } from './patch'
 
 export declare class FileReader extends EventTarget {
   constructor ()

@@ -116,8 +116,7 @@
     "compilerOptions": {
       "esModuleInterop": true,
       "lib": [
-        "esnext",
-        "DOM"
+        "esnext"
       ]
     }
   },
