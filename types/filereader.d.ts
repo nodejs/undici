@@ -3,7 +3,9 @@
 import { Blob } from 'buffer'
 import { DOMException, Event, EventInit, EventTarget } from './patch'
 
-export declare class FileReader extends EventTarget {
+export declare class FileReader {
+  __proto__: EventTarget
+
   constructor ()
 
   readAsArrayBuffer (blob: Blob): void
@@ -41,7 +43,9 @@ export interface ProgressEventInit extends EventInit {
   total?: number
 }
 
-export declare class ProgressEvent extends Event {
+export declare class ProgressEvent {
+  __proto__: Event
+
   constructor (type: string, eventInitDict?: ProgressEventInit)
 
   readonly lengthComputable: boolean

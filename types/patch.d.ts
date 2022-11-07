@@ -6,23 +6,23 @@ export type DOMException = typeof globalThis extends { DOMException: infer T }
  ? T
  : any
 
-export type EventTarget = typeof globalThis extends { EventTarget: { prototype: infer T } }
+export type EventTarget = typeof globalThis extends { EventTarget: infer T }
   ? T
   : {
     addEventListener(
       type: string,
-      listener: EventListener | EventListenerObject,
-      options?: AddEventListenerOptions | boolean,
+      listener: any,
+      options?: any,
     ): void
     dispatchEvent(event: Event): boolean
     removeEventListener(
       type: string,
-      listener: EventListener | EventListenerObject,
-      options?: EventListenerOptions | boolean,
+      listener: any,
+      options?: any | boolean,
     ): void
   }
 
-export type Event = typeof globalThis extends { Event: { prototype: infer T } }
+export type Event = typeof globalThis extends { Event: infer T }
   ? T
   : {
     readonly bubbles: boolean
