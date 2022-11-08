@@ -230,7 +230,7 @@ const data = {
   },
 }
 
-await fetch('https://example.com', { body: data, method: 'POST', duplex: "half" })
+await fetch('https://example.com', { body: data, method: 'POST', duplex: 'half' })
 ```
 
 #### `request.duplex`
