@@ -786,3 +786,31 @@ test('stream legacy needDrain', (t) => {
     })
   })
 })
+
+test('steam throw if statusCode >= 400', (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    res.writeHead(400, { 'Content-Type': 'text/plain' })
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.close.bind(client))
+
+    try {
+      await client.stream({
+        path: '/',
+        method: 'GET',
+        throwOnError: true,
+        opaque: new PassThrough()
+      }, ({ opaque }) => opaque)
+
+      t.fail('No Error')
+    } catch (e) {
+      t.pass('Error')
+    }
+  })
+})
