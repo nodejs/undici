@@ -790,9 +790,11 @@ test('stream legacy needDrain', (t) => {
 test('steam throw if statusCode >= 400', (t) => {
   t.plan(1)
 
+  const expectedBodyContent = 'expected_body_content'
+
   const server = createServer((req, res) => {
     res.writeHead(400, { 'Content-Type': 'text/plain' })
-    res.end()
+    res.end(expectedBodyContent)
   })
   t.teardown(server.close.bind(server))
 
@@ -800,17 +802,26 @@ test('steam throw if statusCode >= 400', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.close.bind(client))
 
+    const passThrough = new PassThrough()
+    const chunks = []
+
+    passThrough.on('data', (chunk) => {
+      chunks.push(chunk)
+    })
+
     try {
       await client.stream({
         path: '/',
         method: 'GET',
         throwOnError: true,
-        opaque: new PassThrough()
+        opaque: passThrough
       }, ({ opaque }) => opaque)
 
       t.fail('No Error')
     } catch (e) {
-      t.pass('Error')
+      const actualBodyContent = Buffer.concat(chunks).toString()
+
+      t.equal(actualBodyContent, expectedBodyContent)
     }
   })
 })
