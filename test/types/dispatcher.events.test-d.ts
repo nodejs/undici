@@ -1,12 +1,12 @@
 import { Dispatcher } from '../..'
 import {expectAssignable} from "tsd";
 import {URL} from "url";
-import {UndiciError} from "../../types/errors";
+import Errors from "../../types/errors";
 
 interface EventHandler {
   connect(origin: URL, targets: readonly Dispatcher[]): void
-  disconnect(origin: URL, targets: readonly Dispatcher[], error: UndiciError): void
-  connectionError(origin: URL, targets: readonly Dispatcher[], error: UndiciError): void
+  disconnect(origin: URL, targets: readonly Dispatcher[], error: Errors.UndiciError): void
+  connectionError(origin: URL, targets: readonly Dispatcher[], error: Errors.UndiciError): void
   drain(origin: URL): void
 }
 
@@ -36,7 +36,7 @@ interface EventHandler {
 
   const origin = new URL('')
   const targets = new Array<Dispatcher>()
-  const error = new UndiciError()
+  const error = new Errors.UndiciError()
   expectAssignable<boolean>(dispatcher.emit('connect', origin, targets))
   expectAssignable<boolean>(dispatcher.emit('disconnect', origin, targets, error))
   expectAssignable<boolean>(dispatcher.emit('connectionError', origin, targets, error))
