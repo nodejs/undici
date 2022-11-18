@@ -54,10 +54,14 @@ const server = createServer(async (req, res) => {
       if (existsSync(customHeadersPath)) {
         const headers = readFileSync(customHeadersPath, 'utf-8')
           .trim()
-          .split('\n')
+          .split(/\r?\n/g)
           .map((h) => h.split(': '))
 
         for (const [key, value] of headers) {
+          if (!key || !value) {
+            console.warn(`Skipping ${key}:${value} header pair`)
+            continue
+          }
           res.setHeader(key, value)
         }
       }
