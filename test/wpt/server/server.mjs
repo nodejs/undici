@@ -3,7 +3,7 @@ import { createServer } from 'node:http'
 import { join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { createReadStream, readFileSync } from 'node:fs'
+import { createReadStream, readFileSync, existsSync } from 'node:fs'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { route as networkPartitionRoute } from './routes/network-partition-key.mjs'
 import { route as redirectRoute } from './routes/redirect.mjs'
@@ -32,6 +32,8 @@ const server = createServer(async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   switch (fullUrl.pathname) {
+    case '/fetch/content-encoding/resources/foo.octetstream.gz':
+    case '/fetch/content-encoding/resources/foo.text.gz':
     case '/fetch/api/resources/cors-top.txt':
     case '/fetch/api/resources/top.txt':
     case '/mimesniff/mime-types/resources/generated-mime-types.json':
@@ -47,6 +49,19 @@ const server = createServer(async (req, res) => {
     case '/fetch/data-urls/resources/data-urls.json':
     case '/fetch/api/resources/empty.txt':
     case '/fetch/api/resources/data.json': {
+      // If this specific resources requires custom headers
+      const customHeadersPath = join(tests, fullUrl.pathname + '.headers')
+      if (existsSync(customHeadersPath)) {
+        const headers = readFileSync(customHeadersPath, 'utf-8')
+          .trim()
+          .split('\n')
+          .map((h) => h.split(': '))
+
+        for (const [key, value] of headers) {
+          res.setHeader(key, value)
+        }
+      }
+
       // https://github.com/web-platform-tests/wpt/blob/6ae3f702a332e8399fab778c831db6b7dca3f1c6/fetch/api/resources/data.json
       return createReadStream(join(tests, fullUrl.pathname))
         .on('end', () => res.end())
