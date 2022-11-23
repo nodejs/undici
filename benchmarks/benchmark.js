@@ -4,7 +4,7 @@ const http = require('http')
 const os = require('os')
 const path = require('path')
 const { table } = require('table')
-const { Writable } = require('stream')
+const { Writable } = require('readable-stream')
 const { WritableStream } = require('stream/web')
 const { isMainThread } = require('worker_threads')
 

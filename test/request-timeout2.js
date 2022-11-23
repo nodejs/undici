@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const { Readable } = require('stream')
+const { Readable } = require('readable-stream')
 
 test('request timeout with slow readable body', (t) => {
   t.plan(1)

@@ -1,7 +1,7 @@
 'use strict'
 
 const t = require('tap')
-const { Readable } = require('stream')
+const { Readable } = require('readable-stream')
 
 let diagnosticsChannel
 

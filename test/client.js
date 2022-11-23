@@ -2,7 +2,7 @@
 
 const { readFileSync, createReadStream } = require('fs')
 const { createServer } = require('http')
-const { Readable } = require('stream')
+const { Readable } = require('readable-stream')
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { kSocket } = require('../lib/core/symbols')

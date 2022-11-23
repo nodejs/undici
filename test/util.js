@@ -2,7 +2,7 @@
 
 const t = require('tap')
 const { test } = t
-const { Stream } = require('stream')
+const { Stream } = require('readable-stream')
 const { EventEmitter } = require('events')
 
 const util = require('../lib/core/util')

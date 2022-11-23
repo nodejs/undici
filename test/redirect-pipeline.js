@@ -2,7 +2,7 @@
 
 const t = require('tap')
 const { pipeline: undiciPipeline } = require('..')
-const { pipeline: streamPipelineCb } = require('stream')
+const { pipeline: streamPipelineCb } = require('readable-stream')
 const { promisify } = require('util')
 const { createReadable, createWritable } = require('./utils/stream')
 const { startRedirectingServer } = require('./utils/redirecting-servers')

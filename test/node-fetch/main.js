@@ -3,7 +3,7 @@
 
 // Test tools
 const zlib = require('zlib')
-const stream = require('stream')
+const stream = require('readable-stream')
 const vm = require('vm')
 const chai = require('chai')
 const crypto = require('crypto')

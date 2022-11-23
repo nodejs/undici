@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const { finished, Readable } = require('stream')
+const { finished, Readable } = require('readable-stream')
 const { kConnect } = require('../lib/core/symbols')
 const EE = require('events')
 const { kBusy, kRunning, kSize } = require('../lib/core/symbols')

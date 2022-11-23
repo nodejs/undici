@@ -5,7 +5,7 @@ const { Client } = require('..')
 const { createServer } = require('http')
 const { createHook, executionAsyncId } = require('async_hooks')
 const { readFile } = require('fs')
-const { PassThrough } = require('stream')
+const { PassThrough } = require('readable-stream')
 
 const transactions = new Map()
 

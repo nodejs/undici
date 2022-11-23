@@ -2,7 +2,7 @@
 
 const { Client } = require('..')
 const { createServer } = require('http')
-const { Readable } = require('stream')
+const { Readable } = require('readable-stream')
 const { test } = require('tap')
 
 test('socket back-pressure', (t) => {

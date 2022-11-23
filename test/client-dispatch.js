@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const http = require('http')
 const { Client, Pool, errors } = require('..')
-const stream = require('stream')
+const stream = require('readable-stream')
 
 test('dispatch invalid opts', (t) => {
   t.plan(14)

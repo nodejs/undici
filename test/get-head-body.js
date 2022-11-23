@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const { Readable } = require('stream')
+const { Readable } = require('readable-stream')
 const { kConnect } = require('../lib/core/symbols')
 const { kBusy } = require('../lib/core/symbols')
 const { wrapWithAsyncIterable } = require('./utils/async-iterators')

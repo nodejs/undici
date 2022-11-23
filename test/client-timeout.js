@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
-const { Readable } = require('stream')
+const { Readable } = require('readable-stream')
 const FakeTimers = require('@sinonjs/fake-timers')
 
 test('refresh timeout on pause', (t) => {

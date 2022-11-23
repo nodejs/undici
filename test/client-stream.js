@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
-const { PassThrough, Writable, Readable } = require('stream')
+const { PassThrough, Writable, Readable } = require('readable-stream')
 const EE = require('events')
 
 test('stream get', (t) => {

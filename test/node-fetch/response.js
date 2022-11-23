@@ -1,7 +1,7 @@
 /* eslint no-unused-expressions: "off" */
 
 const chai = require('chai')
-const stream = require('stream')
+const stream = require('readable-stream')
 const { Response } = require('../../lib/fetch/response.js')
 const TestServer = require('./utils/server.js')
 const { Blob } = require('buffer')

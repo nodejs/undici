@@ -13,7 +13,7 @@ const {
   Readable,
   Writable,
   PassThrough
-} = require('stream')
+} = require('readable-stream')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 

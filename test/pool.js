@@ -7,7 +7,7 @@ const {
   finished,
   PassThrough,
   Readable
-} = require('stream')
+} = require('readable-stream')
 const { promisify } = require('util')
 const proxyquire = require('proxyquire')
 const { test } = require('tap')

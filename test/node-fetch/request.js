@@ -1,4 +1,4 @@
-const stream = require('stream')
+const stream = require('readable-stream')
 const http = require('http')
 
 const chai = require('chai')

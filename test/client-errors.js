@@ -6,7 +6,7 @@ const { createServer } = require('http')
 const https = require('https')
 const pem = require('https-pem')
 const net = require('net')
-const { Readable } = require('stream')
+const { Readable } = require('readable-stream')
 
 const { kSocket } = require('../lib/core/symbols')
 const { wrapWithAsyncIterable, maybeWrapStream, consts } = require('./utils/async-iterators')

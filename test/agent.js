@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const http = require('http')
-const { PassThrough } = require('stream')
+const { PassThrough } = require('readable-stream')
 const { kRunning } = require('../lib/core/symbols')
 const {
   Agent,

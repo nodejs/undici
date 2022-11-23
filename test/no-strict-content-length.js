@@ -3,7 +3,7 @@
 const tap = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const { Readable } = require('stream')
+const { Readable } = require('readable-stream')
 const sinon = require('sinon')
 const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 

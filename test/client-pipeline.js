@@ -10,7 +10,7 @@ const {
   Transform,
   Writable,
   PassThrough
-} = require('stream')
+} = require('readable-stream')
 
 test('pipeline get', (t) => {
   t.plan(17)

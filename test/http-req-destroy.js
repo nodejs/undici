@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const undici = require('..')
 const { createServer } = require('http')
-const { Readable } = require('stream')
+const { Readable } = require('readable-stream')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
 
 function doNotKillReqSocket (bodyType) {
