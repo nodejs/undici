@@ -294,6 +294,28 @@ const server = createServer(async (req, res) => {
       res.end('not actually gzip')
       break
     }
+    case '/fetch/api/resources/dump-authorization-header.py': {
+      res.setHeader('Content-Type', 'text/html')
+      res.setHeader('Cache-Control', 'no-cache')
+
+      if (req.headers.origin) {
+        res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
+        res.setHeader('Access-Control-Allow-Credentials', 'true')
+      } else {
+        res.setHeader('Access-Control-Allow-Origin', '*')
+      }
+
+      res.setHeader('Access-Control-Allow-Headers', 'Authorization')
+      res.statusCode = 200
+
+      if (req.headers.authorization) {
+        res.end(req.headers.authorization)
+        return
+      }
+
+      res.end('none')
+      break
+    }
     default: {
       res.statusCode = 200
       res.end('body')
