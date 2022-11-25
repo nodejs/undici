@@ -6,8 +6,10 @@ const { FormData, fetch } = require('../..')
 const { once } = require('events')
 const { createServer } = require('http')
 
+const isV16x = process.version.startsWith('v16.')
+
 // https://github.com/nodejs/undici/issues/1783
-test('Sending a FormData body sets Content-Length header', async (t) => {
+test('Sending a FormData body sets Content-Length header', { skip: isV16x }, async (t) => {
   const server = createServer((req, res) => {
     t.equal(req.headers['content-length'], '285')
     res.end()
