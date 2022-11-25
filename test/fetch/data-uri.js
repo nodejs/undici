@@ -177,3 +177,17 @@ test('too long base64 url', async (t) => {
     t.fail(`failed to fetch ${dataURL}`)
   }
 })
+
+test('https://domain.com/#', (t) => {
+  t.plan(1)
+  const domain = 'https://domain.com/#'
+  const serialized = URLSerializer(new URL(domain))
+  t.equal(serialized, domain)
+})
+
+test('https://domain.com/?', (t) => {
+  t.plan(1)
+  const domain = 'https://domain.com/?'
+  const serialized = URLSerializer(new URL(domain))
+  t.equal(serialized, domain)
+})

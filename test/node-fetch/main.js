@@ -1532,34 +1532,12 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should NOT keep `?` sign in URL when no params are given', () => {
-    const url = `${base}question?`
-    const urlObject = new URL(url)
-    const request = new Request(urlObject)
-    return fetch(request).then(res => {
-      expect(res.url).to.equal(url.slice(0, -1))
-      expect(res.ok).to.be.true
-      expect(res.status).to.equal(200)
-    })
-  })
-
   it('if params are given, do not modify anything', () => {
     const url = `${base}question?a=1`
     const urlObject = new URL(url)
     const request = new Request(urlObject)
     return fetch(request).then(res => {
       expect(res.url).to.equal(url)
-      expect(res.ok).to.be.true
-      expect(res.status).to.equal(200)
-    })
-  })
-
-  it('should NOT preserve the hash (#) symbol', () => {
-    const url = `${base}question?#`
-    const urlObject = new URL(url)
-    const request = new Request(urlObject)
-    return fetch(request).then(res => {
-      expect(res.url).to.equal(url.slice(0, -2))
       expect(res.ok).to.be.true
       expect(res.status).to.equal(200)
     })
