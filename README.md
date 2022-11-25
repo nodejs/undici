@@ -230,8 +230,14 @@ const data = {
   },
 }
 
-await fetch('https://example.com', { body: data, method: 'POST' })
+await fetch('https://example.com', { body: data, method: 'POST', duplex: 'half' })
 ```
+
+#### `request.duplex`
+
+- half
+
+In this implementation of fetch, `request.duplex` must be set if `request.body` is `ReadableStream` or `Async Iterables`. And fetch requests are currently always be full duplex. More detail refer to [Fetch Standard.](https://fetch.spec.whatwg.org/#dom-requestinit-duplex)
 
 #### `response.body`
 
