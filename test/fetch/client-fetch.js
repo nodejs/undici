@@ -227,6 +227,26 @@ test('multipart formdata base64', (t) => {
   })
 })
 
+test('multipart fromdata non-ascii filed names', async (t) => {
+  t.plan(1)
+
+  const request = new Request('http://localhost', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'multipart/form-data; boundary=----formdata-undici-0.6204674738279623'
+    },
+    body:
+      '------formdata-undici-0.6204674738279623\r\n' +
+      'Content-Disposition: form-data; name="fiŝo"\r\n' +
+      '\r\n' +
+      'value1\r\n' +
+      '------formdata-undici-0.6204674738279623--'
+  })
+
+  const form = await request.formData()
+  t.equal(form.get('fiŝo'), 'value1')
+})
+
 test('busboy emit error', async (t) => {
   t.plan(1)
   const formData = new FormData()
