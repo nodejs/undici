@@ -41,8 +41,7 @@
     "docs"
   ],
   "scripts": {
-    "build:node": "npx esbuild@0.15.15 index-fetch.js --bundle --external:readable-stream --platform=node --outfile=undici-fetch.js",
-    "postbuild:node": "sed -i 's/require(\"readable-stream\")/require(\"stream\")/g' undici-fetch.js",
+    "build:node": "npx esbuild@0.15.16 index-fetch.js --bundle --alias:readable-stream=stream --platform=node --outfile=undici-fetch.js",
     "prebuild:wasm": "docker build -t llhttp_wasm_builder -f build/Dockerfile .",
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
