@@ -316,6 +316,23 @@ const server = createServer(async (req, res) => {
       res.end('none')
       break
     }
+    case '/xhr/resources/echo-headers.py': {
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'text/plain')
+
+      // wpt runner sends this as 1 chunk
+      let body = ''
+
+      for (let i = 0; i < req.rawHeaders.length; i += 2) {
+        const key = req.rawHeaders[i]
+        const value = req.rawHeaders[i + 1]
+
+        body += `${key}: ${value}`
+      }
+
+      res.end(body)
+      break
+    }
     default: {
       res.statusCode = 200
       res.end('body')
