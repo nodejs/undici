@@ -339,3 +339,5 @@ process.on('message', (message) => {
     server.close((err) => err ? send(err) : send({ message: 'shutdown' }))
   }
 })
+
+export { server }
