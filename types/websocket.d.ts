@@ -1,6 +1,12 @@
 /// <reference types="node" />
 
-import { EventTarget, Event } from './patch'
+import {
+  EventTarget,
+  Event,
+  EventListenerOptions,
+  AddEventListenerOptions,
+  EventListenerOrEventListenerObject
+} from './patch'
 
 export type BinaryType = 'blob' | 'arraybuffer'
 
