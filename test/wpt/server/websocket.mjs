@@ -12,6 +12,4 @@ wss.on('connection', (ws) => {
   ws.on('message', (data) => {
     ws.send(data)
   })
-
-  ws.send('Connected!')
 })
