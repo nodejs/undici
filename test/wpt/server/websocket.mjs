@@ -9,7 +9,8 @@ const textData = [
   '𐐇',
   '\ufffd',
   '',
-  'null'
+  'null',
+  'c'.repeat(65000)
 ]
 
 // The file router server handles sending the url, closing,
