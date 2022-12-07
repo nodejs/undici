@@ -1,1 +1,6 @@
-{}
+{
+  "Create-on-worker-shutdown.any.js": {
+    "skip": true,
+    "//": "NodeJS workers are different from web workers & don't work with blob: urls"
+  }
+}
