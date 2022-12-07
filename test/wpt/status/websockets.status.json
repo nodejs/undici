@@ -9,12 +9,6 @@
   "Send-65K-data.any.js": {
     "skip": true
   },
-  "Send-binary-65K-arraybuffer.any.js": {
-    "skip": true
-  },
-  "Send-binary-blob.any.js": {
-    "skip": true
-  },
   "bufferedAmount-unchanged-by-sync-xhr.any.js": {
     "skip": true,
     "//": "Node.js doesn't have XMLHttpRequest nor does this test make sense regardless"
