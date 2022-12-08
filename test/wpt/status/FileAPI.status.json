@@ -5,13 +5,18 @@
 		]
 	},
 	"idlharness.any.js": {
-		"fail": [
+		"note": "These flaky tests only fail in < node v19; add in a way to mark them as such eventually",
+		"flaky": [
 			"Blob interface: attribute size",
 			"Blob interface: attribute type",
 			"Blob interface: operation slice(optional long long, optional long long, optional DOMString)",
 			"Blob interface: operation stream()",
 			"Blob interface: operation text()",
 			"Blob interface: operation arrayBuffer()",
+			"URL interface: operation createObjectURL((Blob or MediaSource))",
+			"URL interface: operation revokeObjectURL(DOMString)"
+		],
+		"fail": [
 			"FileList interface: existence and properties of interface object",
 			"FileList interface object length",
 			"FileList interface object name",
@@ -19,9 +24,7 @@
 			"FileList interface: existence and properties of interface prototype object's \"constructor\" property",
 			"FileList interface: existence and properties of interface prototype object's @@unscopables property",
 			"FileList interface: operation item(unsigned long)",
-			"FileList interface: attribute length",
-			"URL interface: operation createObjectURL((Blob or MediaSource))",
-			"URL interface: operation revokeObjectURL(DOMString)"
+			"FileList interface: attribute length"
 		]
 	},
 	"filereader_events.any.js": {
