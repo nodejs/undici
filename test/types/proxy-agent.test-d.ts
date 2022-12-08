@@ -16,13 +16,15 @@ expectAssignable<ProxyAgent>(
       ca: [''],
       key: '',
       cert: '',
-      servername: ''
+      servername: '',
+      timeout: 1
     },
     proxyTls: {
       ca: [''],
       key: '',
       cert: '',
-      servername: ''
+      servername: '',
+      timeout: 1
     }
   })
 )
