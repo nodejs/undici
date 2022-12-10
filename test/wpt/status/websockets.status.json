@@ -12,5 +12,9 @@
   },
   "referrer.any.js": {
     "skip": true
+  },
+  "Send-65K-data.any.js": {
+    "skip": true,
+    "//": "this test is only flaky on linux"
   }
 }
