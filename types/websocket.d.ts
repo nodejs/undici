@@ -119,12 +119,3 @@ export declare const MessageEvent: {
   prototype: MessageEvent
   new<T>(type: string, eventInitDict?: MessageEventInit<T>): MessageEvent<T>
 }
-
-interface WebSocketHooksList {
-  'utf-8': (buffer: Buffer) => boolean
-}
-
-export interface WebSocketHooks {
-  ['get']<T extends keyof WebSocketHooks>(name: T): WebSocketHooks[T]
-  ['set']<T extends keyof WebSocketHooks>(name: T, hook: WebSocketHooks[T]): void
-}

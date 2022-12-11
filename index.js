@@ -121,10 +121,8 @@ if (nodeMajor > 16 || (nodeMajor === 16 && nodeMinor >= 8)) {
 
 if (nodeMajor >= 18) {
   const { WebSocket } = require('./lib/websocket/websocket')
-  const { WebsocketHooks } = require('./lib/websocket/hooks')
 
   module.exports.WebSocket = WebSocket
-  module.exports.WebSocketHooks = WebsocketHooks
 }
 
 module.exports.request = makeDispatcher(api.request)
