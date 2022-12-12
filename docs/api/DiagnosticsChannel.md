@@ -135,3 +135,58 @@ diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, soc
   // connector is a function that creates the socket
   console.log(`Connect failed with ${error.message}`)
 })
+```
+
+## `undici:websocket:ping`
+
+This message is published after the client receives a ping from the server.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:ping').subscribe(({ frame }) => {
+  // The frame received from the server
+  console.log(frame)
+})
+```
+
+## `undici:websocket:pong`
+
+This message is published after the client receives a pong from the server.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:pong').subscribe(({ frame }) => {
+  // The frame received from the server
+  console.log(frame)
+})
+```
+
+## `undici:websocket:open`
+
+This message is published after the client has successfully connected to a server.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:open').subscribe(({ address, protocol, extensions }) => {
+  console.log(address) // address, family, and port
+  console.log(protocol) // negotiated subprotocols
+  console.log(extensions) // negotiated extensions
+})
+```
+
+## `undici:websocket:close`
+
+This message is published after the connection has closed.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:close').subscribe(({ websocket, code, reason }) => {
+  console.log(websocket) // the WebSocket object
+  console.log(code) // the closing status code
+  console.log(reason) // the closing reason
+})
+```
