@@ -1,4 +1,5 @@
 {
+  "allowUnexpectedFailures": true,
   "Create-on-worker-shutdown.any.js": {
     "skip": true,
     "//": "Node.js workers are different from web workers & don't work with blob: urls"
