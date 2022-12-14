@@ -27,5 +27,10 @@
     "flaky": [
       "Send 65K binary data on a WebSocket - ArrayBuffer - Connection should be closed"
     ]
+  },
+  "Send-0byte-data.any.js": {
+    "flaky": [
+      "Send 0 byte data on a WebSocket - Connection should be closed"
+    ]
   }
 }

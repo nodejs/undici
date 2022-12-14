@@ -25,7 +25,16 @@ const wss = new WebSocketServer({
 
 wss.on('connection', (ws) => {
   ws.on('message', (data) => {
-    const binary = !textData.includes(data.toString('utf-8'))
+    const str = data.toString('utf-8')
+
+    if (str === 'Goodbye') {
+      // Close-server-initiated-close.any.js sends a "Goodbye" message
+      // when it wants the server to close the connection.
+      ws.close(1000)
+      return
+    }
+
+    const binary = !textData.includes(str)
     ws.send(data, { binary })
   })
 
