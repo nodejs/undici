@@ -137,32 +137,6 @@ diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, soc
 })
 ```
 
-## `undici:websocket:ping`
-
-This message is published after the client receives a ping from the server.
-
-```js
-import diagnosticsChannel from 'diagnostics_channel'
-
-diagnosticsChannel.channel('undici:websocket:ping').subscribe(({ frame }) => {
-  // The frame received from the server
-  console.log(frame)
-})
-```
-
-## `undici:websocket:pong`
-
-This message is published after the client receives a pong from the server.
-
-```js
-import diagnosticsChannel from 'diagnostics_channel'
-
-diagnosticsChannel.channel('undici:websocket:pong').subscribe(({ frame }) => {
-  // The frame received from the server
-  console.log(frame)
-})
-```
-
 ## `undici:websocket:open`
 
 This message is published after the client has successfully connected to a server.
@@ -188,5 +162,17 @@ diagnosticsChannel.channel('undici:websocket:close').subscribe(({ websocket, cod
   console.log(websocket) // the WebSocket object
   console.log(code) // the closing status code
   console.log(reason) // the closing reason
+})
+```
+
+## `undici:websocket:socket_error`
+
+This message is published if the socket experiences an error.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:socket_error').subscribe((error) => {
+  console.log(error)
 })
 ```
