@@ -36,7 +36,8 @@ export class WPTRunner extends EventEmitter {
     completed: 0,
     failed: 0,
     success: 0,
-    expectedFailures: 0
+    expectedFailures: 0,
+    skipped: 0
   }
 
   constructor (folder, url) {
@@ -92,6 +93,11 @@ export class WPTRunner extends EventEmitter {
         : readFileSync(test, 'utf-8')
       const meta = this.resolveMeta(code, test)
 
+      if (this.#status[basename(test)]?.skip) {
+        this.#stats.skipped += 1
+        continue
+      }
+
       const worker = new Worker(workerPath, {
         workerData: {
           // Code to load before the test harness and tests.
@@ -129,7 +135,7 @@ export class WPTRunner extends EventEmitter {
    * Called after a test has succeeded or failed.
    */
   handleIndividualTestCompletion (message, fileName) {
-    const { fail, allowUnexpectedFailures, flaky } = this.#status[fileName] ?? {}
+    const { fail, allowUnexpectedFailures, flaky } = this.#status[fileName] ?? this.#status
 
     if (message.type === 'result') {
       this.#stats.completed += 1
@@ -182,12 +188,13 @@ export class WPTRunner extends EventEmitter {
     )
 
     this.emit('completion')
-    const { completed, failed, success, expectedFailures } = this.#stats
+    const { completed, failed, success, expectedFailures, skipped } = this.#stats
     console.log(
       `[${this.#folderName}]: ` +
       `Completed: ${completed}, failed: ${failed}, success: ${success}, ` +
       `expected failures: ${expectedFailures}, ` +
-      `unexpected failures: ${failed - expectedFailures}`
+      `unexpected failures: ${failed - expectedFailures}, ` +
+      `skipped: ${skipped}`
     )
   }
 

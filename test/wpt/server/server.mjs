@@ -43,6 +43,7 @@ const server = createServer(async (req, res) => {
     case '/interfaces/html.idl':
     case '/interfaces/fetch.idl':
     case '/interfaces/FileAPI.idl':
+    case '/interfaces/websockets.idl':
     case '/interfaces/referrer-policy.idl':
     case '/xhr/resources/utf16-bom.json':
     case '/fetch/data-urls/resources/base64.json':
@@ -355,3 +356,5 @@ process.on('message', (message) => {
     server.close((err) => err ? send(err) : send({ message: 'shutdown' }))
   }
 })
+
+export { server }

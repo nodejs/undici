@@ -135,3 +135,44 @@ diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, soc
   // connector is a function that creates the socket
   console.log(`Connect failed with ${error.message}`)
 })
+```
+
+## `undici:websocket:open`
+
+This message is published after the client has successfully connected to a server.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:open').subscribe(({ address, protocol, extensions }) => {
+  console.log(address) // address, family, and port
+  console.log(protocol) // negotiated subprotocols
+  console.log(extensions) // negotiated extensions
+})
+```
+
+## `undici:websocket:close`
+
+This message is published after the connection has closed.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:close').subscribe(({ websocket, code, reason }) => {
+  console.log(websocket) // the WebSocket object
+  console.log(code) // the closing status code
+  console.log(reason) // the closing reason
+})
+```
+
+## `undici:websocket:socket_error`
+
+This message is published if the socket experiences an error.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:socket_error').subscribe((error) => {
+  console.log(error)
+})
+```

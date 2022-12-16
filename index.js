@@ -119,6 +119,12 @@ if (nodeMajor > 16 || (nodeMajor === 16 && nodeMinor >= 8)) {
   module.exports.getGlobalOrigin = getGlobalOrigin
 }
 
+if (nodeMajor >= 18) {
+  const { WebSocket } = require('./lib/websocket/websocket')
+
+  module.exports.WebSocket = WebSocket
+}
+
 module.exports.request = makeDispatcher(api.request)
 module.exports.stream = makeDispatcher(api.stream)
 module.exports.pipeline = makeDispatcher(api.pipeline)
