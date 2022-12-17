@@ -10,6 +10,7 @@
   * [ProxyAgent](/docs/api/ProxyAgent.md "Undici API - ProxyAgent")
   * [Connector](/docs/api/Connector.md "Custom connector")
   * [Errors](/docs/api/Errors.md "Undici API - Errors")
+  * [Fetch](/docs/api/Fetch.md "Undici API - Fetch")
   * [MockClient](/docs/api/MockClient.md "Undici API - MockClient")
   * [MockPool](/docs/api/MockPool.md "Undici API - MockPool")
   * [MockAgent](/docs/api/MockAgent.md "Undici API - MockAgent")
