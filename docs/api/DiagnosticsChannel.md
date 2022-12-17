@@ -176,3 +176,29 @@ diagnosticsChannel.channel('undici:websocket:socket_error').subscribe((error) =>
   console.log(error)
 })
 ```
+
+## `undici:websocket:ping`
+
+This message is published after the client receives a ping frame, if the connection is not closing.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:ping').subscribe(({ payload }) => {
+  // a Buffer or undefined, containing the optional application data of the frame
+  console.log(payload)
+})
+```
+
+## `undici:websocket:pong`
+
+This message is published after the client receives a pong frame.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:pong').subscribe(({ payload }) => {
+  // a Buffer or undefined, containing the optional application data of the frame
+  console.log(payload)
+})
+```
