@@ -12,6 +12,8 @@ import {
   Headers,
   FileReader
 } from '../../../../index.js'
+import { WebSocket } from '../../../../lib/websocket/websocket.js'
+import { CloseEvent } from '../../../../lib/websocket/events.js'
 
 const { initScripts, meta, test, url, path } = workerData
 
@@ -53,6 +55,14 @@ Object.defineProperties(globalThis, {
   FileReader: {
     ...globalPropertyDescriptors,
     value: FileReader
+  },
+  WebSocket: {
+    ...globalPropertyDescriptors,
+    value: WebSocket
+  },
+  CloseEvent: {
+    ...globalPropertyDescriptors,
+    value: CloseEvent
   }
 })
 

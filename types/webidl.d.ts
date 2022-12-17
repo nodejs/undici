@@ -103,9 +103,14 @@ interface WebidlConverters {
   ['unsigned long long'] (V: unknown): number
 
   /**
+   * @see https://webidl.spec.whatwg.org/#es-unsigned-long
+   */
+  ['unsigned long'] (V: unknown): number
+
+  /**
    * @see https://webidl.spec.whatwg.org/#es-unsigned-short
    */
-  ['unsigned short'] (V: unknown): number
+  ['unsigned short'] (V: unknown, opts?: ConvertToIntOpts): number
 
   /**
    * @see https://webidl.spec.whatwg.org/#idl-ArrayBuffer
