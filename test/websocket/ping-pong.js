@@ -12,16 +12,16 @@ test('Receives ping and parses body', (t) => {
 
   server.on('connection', (ws) => {
     ws.ping('Hello, world')
-
-    ws._socket.destroy()
-    server._server.close()
   })
+
+  t.teardown(server.close.bind(server))
 
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
   ws.onerror = ws.onmessage = t.fail
 
   diagnosticsChannel.channel('undici:websocket:ping').subscribe(({ payload }) => {
     t.same(payload, Buffer.from('Hello, world'))
+    ws.close()
   })
 })
 
@@ -32,15 +32,15 @@ test('Receives pong and parses body', (t) => {
 
   server.on('connection', (ws) => {
     ws.pong('Pong')
-
-    ws._socket.destroy()
-    server._server.close()
   })
+
+  t.teardown(server.close.bind(server))
 
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
   ws.onerror = ws.onmessage = t.fail
 
   diagnosticsChannel.channel('undici:websocket:pong').subscribe(({ payload }) => {
     t.same(payload, Buffer.from('Pong'))
+    ws.close()
   })
 })
