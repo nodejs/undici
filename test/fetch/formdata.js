@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { FormData, File } = require('../../')
+const { FormData, File, Response } = require('../../')
 const { Blob: ThirdPartyBlob } = require('formdata-node')
 const { Blob } = require('buffer')
 
@@ -295,4 +295,23 @@ test('arguments', (t) => {
   t.equal(FormData.prototype.set.length, 2)
 
   t.end()
+})
+
+// https://github.com/nodejs/undici/pull/1814
+test('FormData returned from bodyMixin.formData is not a clone', async (t) => {
+  const fd = new FormData()
+  fd.set('foo', 'bar')
+
+  const res = new Response(fd)
+  fd.set('foo', 'foo')
+
+  const fd2 = await res.formData()
+
+  t.equal(fd2.get('foo'), 'bar')
+  t.equal(fd.get('foo'), 'foo')
+
+  fd2.set('foo', 'baz')
+
+  t.equal(fd2.get('foo'), 'baz')
+  t.equal(fd.get('foo'), 'foo')
 })
