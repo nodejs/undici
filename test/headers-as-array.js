@@ -25,6 +25,69 @@ test('handle headers as array', (t) => {
   })
 })
 
+test('handle multi-valued headers as array', (t) => {
+  t.plan(1)
+  const headers = ['a', '1', 'b', '2', 'c', '3', 'd', '4', 'd', '5']
+
+  const server = createServer((req, res) => {
+    t.match(req.headers, { a: '1', b: '2', c: '3', d: '4, 5' })
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers
+    }, () => {})
+  })
+})
+
+test('handle headers with array', (t) => {
+  t.plan(1)
+  const headers = { a: '1', b: '2', c: '3', d: ['4'] }
+
+  const server = createServer((req, res) => {
+    t.match(req.headers, { a: '1', b: '2', c: '3', d: '4' })
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers
+    }, () => {})
+  })
+})
+
+test('handle multi-valued headers', (t) => {
+  t.plan(1)
+  const headers = { a: '1', b: '2', c: '3', d: ['4', '5'] }
+
+  const server = createServer((req, res) => {
+    t.match(req.headers, { a: '1', b: '2', c: '3', d: '4, 5' })
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers
+    }, () => {})
+  })
+})
+
 test('fail if headers array is odd', (t) => {
   t.plan(2)
   const headers = ['a', '1', 'b', '2', 'c', '3', 'd']

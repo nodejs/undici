@@ -185,6 +185,30 @@ describe('node-fetch', () => {
     })
   })
 
+  it('should send request with custom headers array', () => {
+    const url = `${base}inspect`
+    const options = {
+      headers: { 'x-custom-header': ['abc'] }
+    }
+    return fetch(url, options).then(res => {
+      return res.json()
+    }).then(res => {
+      expect(res.headers['x-custom-header']).to.equal('abc')
+    })
+  })
+
+  it('should send request with multi-valued headers', () => {
+    const url = `${base}inspect`
+    const options = {
+      headers: { 'x-custom-header': ['abc', '123'] }
+    }
+    return fetch(url, options).then(res => {
+      return res.json()
+    }).then(res => {
+      expect(res.headers['x-custom-header']).to.equal('abc,123')
+    })
+  })
+
   it('should accept headers instance', () => {
     const url = `${base}inspect`
     const options = {
