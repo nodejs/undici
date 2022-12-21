@@ -4,7 +4,7 @@ const { test } = require('tap')
 const { Client, errors } = require('..')
 
 test('invalid headers', (t) => {
-  t.plan(10)
+  t.plan(9)
 
   const client = new Client('http://localhost:3000')
   t.teardown(client.destroy.bind(client))
@@ -41,16 +41,6 @@ test('invalid headers', (t) => {
     method: 'GET',
     headers: {
       upgrade: 'asd'
-    }
-  }, (err, data) => {
-    t.type(err, errors.InvalidArgumentError)
-  })
-
-  client.request({
-    path: '/',
-    method: 'GET',
-    headers: {
-      connection: 'close'
     }
   }, (err, data) => {
     t.type(err, errors.InvalidArgumentError)
