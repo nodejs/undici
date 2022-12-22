@@ -2,7 +2,6 @@
 
 const { test } = require('tap')
 const { createServer } = require('http')
-const { once } = require('events')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 
