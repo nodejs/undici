@@ -33,3 +33,103 @@ test('Sending > 2^16 bytes', (t) => {
     server.close()
   })
 })
+
+test('Sending data after close', (t) => {
+  t.plan(2)
+
+  const server = new WebSocketServer({ port: 0 })
+
+  server.on('connection', (ws) => {
+    t.pass()
+
+    ws.on('message', t.fail)
+  })
+
+  t.teardown(server.close.bind(server))
+  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+  ws.addEventListener('open', () => {
+    ws.close()
+    ws.send('Some message')
+
+    t.pass()
+  })
+
+  ws.addEventListener('error', t.fail)
+})
+
+test('Sending data to a server', (t) => {
+  t.plan(3)
+
+  t.test('Send with string', (t) => {
+    t.plan(2)
+
+    const server = new WebSocketServer({ port: 0 })
+
+    server.on('connection', (ws) => {
+      ws.on('message', (data, isBinary) => {
+        t.notOk(isBinary, 'Received text frame')
+        t.same(data, Buffer.from('message'))
+
+        ws.close(1000)
+      })
+    })
+
+    t.teardown(server.close.bind(server))
+
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+    ws.addEventListener('open', () => {
+      ws.send('message')
+    })
+  })
+
+  t.test('Send with ArrayBuffer', (t) => {
+    t.plan(2)
+
+    const message = new TextEncoder().encode('message')
+    const ab = new ArrayBuffer(7)
+    new Uint8Array(ab).set(message)
+
+    const server = new WebSocketServer({ port: 0 })
+
+    server.on('connection', (ws) => {
+      ws.on('message', (data, isBinary) => {
+        t.ok(isBinary)
+        t.same(new Uint8Array(data), message)
+
+        ws.close(1000)
+      })
+    })
+
+    t.teardown(server.close.bind(server))
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+    ws.addEventListener('open', () => {
+      ws.send(ab)
+    })
+  })
+
+  t.test('Send with Blob', (t) => {
+    t.plan(2)
+
+    const blob = new Blob(['hello'])
+    const server = new WebSocketServer({ port: 0 })
+
+    server.on('connection', (ws) => {
+      ws.on('message', (data, isBinary) => {
+        t.ok(isBinary)
+        t.same(data, Buffer.from('hello'))
+
+        ws.close(1000)
+      })
+    })
+
+    t.teardown(server.close.bind(server))
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+    ws.addEventListener('open', () => {
+      ws.send(blob)
+    })
+  })
+})
