@@ -58,6 +58,25 @@ test('Sending data after close', (t) => {
   ws.addEventListener('error', t.fail)
 })
 
+test('Sending data before connected', (t) => {
+  t.plan(2)
+
+  const server = new WebSocketServer({ port: 0 })
+
+  t.teardown(server.close.bind(server))
+  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+  t.throws(
+    () => ws.send('Not sent'),
+    {
+      name: 'InvalidStateError',
+      constructor: DOMException
+    }
+  )
+
+  t.equal(ws.readyState, WebSocket.CONNECTING)
+})
+
 test('Sending data to a server', (t) => {
   t.plan(3)
 

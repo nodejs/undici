@@ -44,5 +44,13 @@ test('Constructor', (t) => {
     }
   )
 
+  t.throws(
+    () => new WebSocket('wss://echo.websocket.events', ['<>@,;:\\"/[]?={}\t']),
+    {
+      name: 'SyntaxError',
+      constructor: DOMException
+    }
+  )
+
   t.end()
 })
