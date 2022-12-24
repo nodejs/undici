@@ -5,7 +5,7 @@ const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 
 test('Close', (t) => {
-  t.plan(5)
+  t.plan(6)
 
   t.test('Close with code', (t) => {
     t.plan(1)
@@ -108,5 +108,23 @@ test('Close', (t) => {
 
     const ws = new WebSocket(`ws://localhost:${server.address().port}`)
     ws.addEventListener('open', () => ws.close())
+  })
+
+  t.test('Close with a 3000 status code', (t) => {
+    t.plan(2)
+
+    const server = new WebSocketServer({ port: 0 })
+
+    server.on('connection', (ws) => {
+      ws.on('close', (code, reason) => {
+        t.equal(code, 3000)
+        t.same(reason, Buffer.alloc(0))
+      })
+    })
+
+    t.teardown(server.close.bind(server))
+
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    ws.addEventListener('open', () => ws.close(3000))
   })
 })
