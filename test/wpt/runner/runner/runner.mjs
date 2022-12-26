@@ -112,6 +112,12 @@ export class WPTRunner extends EventEmitter {
       })
 
       activeWorkers.add(worker)
+      const timeout = setTimeout(
+        () => {
+          console.warn('Test timed out:', test)
+        },
+        meta.timeout === 'long' ? 60_000 : 10_000
+      )
 
       worker.on('message', (message) => {
         if (message.type === 'result') {
@@ -123,6 +129,7 @@ export class WPTRunner extends EventEmitter {
 
       worker.once('exit', () => {
         activeWorkers.delete(worker)
+        clearTimeout(timeout)
 
         if (activeWorkers.size === 0) {
           this.handleRunnerCompletion()

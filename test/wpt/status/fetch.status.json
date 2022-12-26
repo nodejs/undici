@@ -1,6 +1,6 @@
 {
 	"general.any.js": {
-		"fail": [
+		"flaky": [
 			"Already aborted signal rejects immediately",
 			"Underlying connection is closed when aborting after receiving response - no-cors",
 			"Stream errors once aborted. Underlying connection closed."
