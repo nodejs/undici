@@ -115,18 +115,19 @@ const server = createServer(async (req, res) => {
       while (true) {
         if (!res.write('.')) {
           break
-        } else if (abortKey && stash.take(abortKey, fullUrl.pathname)) {
+        } else if (abortKey && stash.take(abortKey)) {
           break
         }
 
-        await sleep(10)
+        await sleep(100)
       }
 
       if (stateKey) {
         stash.put(stateKey, 'closed', fullUrl.pathname)
       }
 
-      return res.end()
+      res.end()
+      return
     }
     case '/fetch/api/resources/stash-take.py': {
       // https://github.com/web-platform-tests/wpt/blob/6ae3f702a332e8399fab778c831db6b7dca3f1c6/fetch/api/resources/stash-take.py
