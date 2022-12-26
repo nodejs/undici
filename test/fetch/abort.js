@@ -10,7 +10,7 @@ const { AbortController: NPMAbortController } = require('abort-controller')
 
 /* global AbortController */
 
-test('parallel fetch with the same AbortController works as expected', async (t) => {
+test('parallel fetch with the same AbortController works as expected', { skip: true }, async (t) => {
   const body = {
     fixes: 1389,
     bug: 'Ensure request is not aborted before enqueueing bytes into stream.'
@@ -100,7 +100,7 @@ test('allows aborting with custom errors', { skip: process.version.startsWith('v
   t.test('Using AbortSignal.timeout', async (t) => {
     await t.rejects(
       fetch(`http://localhost:${server.address().port}`, {
-        signal: AbortSignal.timeout(50)
+        signal: AbortSignal.timeout(1)
       }),
       {
         name: 'TimeoutError',

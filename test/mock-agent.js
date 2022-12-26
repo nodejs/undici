@@ -798,7 +798,7 @@ test('MockAgent - handle delays to simulate work', async (t) => {
   const response = await getResponse(body)
   t.equal(response, 'hello')
   const elapsedInMs = process.hrtime(start)[1] / 1e6
-  t.ok(elapsedInMs >= 50, `Elapsed time is not greater than 50ms: ${elapsedInMs}`)
+  t.ok(Math.ceil(elapsedInMs) >= 50, `Elapsed time is not greater than 50ms: ${elapsedInMs}`)
 })
 
 test('MockAgent - should persist requests', async (t) => {
