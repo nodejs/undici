@@ -182,3 +182,41 @@ test('HEAD should reset connection', (t) => {
     t.equal(client[kBusy], true)
   })
 })
+
+// test('HEAD should not reset connection', (t) => {
+//   t.plan(3)
+
+//   const server = createServer((req, res) => {
+//     res.end('asd')
+//   })
+
+//   t.teardown(server.close.bind(server))
+//   server.listen(0, () => {
+//     const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 2 })
+//     t.teardown(client.destroy.bind(client))
+
+//     let done = false
+//     client.once('disconnect', () => {
+//       t.ok(done)
+//     })
+
+//     client.request({
+//       path: '/',
+//       method: 'HEAD',
+//       reset: false
+//     }, (err, data) => {
+//       t.error(err)
+//       data.body.resume()
+//     })
+
+//     client.request({
+//       path: '/',
+//       method: 'HEAD',
+//       reset: false
+//     }, (err, data) => {
+//       t.error(err)
+//       data.body.resume()
+//       done = true
+//     })
+//   })
+// })
