@@ -323,7 +323,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', { ski
 
   const expectedProxyHeaders = {
     host: `localhost:${proxy.address().port}`,
-    connection: 'keep-alive'
+    connection: 'close'
   }
 
   proxy.on('connect', (req, res) => {
