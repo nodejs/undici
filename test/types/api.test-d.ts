@@ -5,7 +5,7 @@ import { Dispatcher, request, stream, pipeline, connect, upgrade } from '../..'
 // request
 expectAssignable<Promise<Dispatcher.ResponseData>>(request(''))
 expectAssignable<Promise<Dispatcher.ResponseData>>(request('', { }))
-expectAssignable<Promise<Dispatcher.ResponseData>>(request('', { method: 'GET' }))
+expectAssignable<Promise<Dispatcher.ResponseData>>(request('', { method: 'GET', reset: false }))
 
 // stream
 expectAssignable<Promise<Dispatcher.StreamData>>(stream('', { method: 'GET' }, data => {

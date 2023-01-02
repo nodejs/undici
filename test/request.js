@@ -149,3 +149,61 @@ test('Absolute URL as pathname should be included in req.path', async (t) => {
   t.equal(noSlashPath2Arg.statusCode, 200)
   t.end()
 })
+
+test('DispatchOptions#reset', scope => {
+  scope.plan(3)
+
+  scope.test('Should throw if invalid reset option', t => {
+    t.plan(1)
+
+    t.rejects(request({
+      method: 'GET',
+      origin: 'http://somehost.xyz',
+      reset: 0
+    }), 'invalid reset')
+  })
+
+  scope.test('Should include "connection:close" if reset true', async t => {
+    const server = createServer((req, res) => {
+      t.equal('GET', req.method)
+      t.equal(`localhost:${server.address().port}`, req.headers.host)
+      t.equal(req.headers.connection, 'close')
+      res.statusCode = 200
+      res.end('hello')
+    })
+
+    t.plan(3)
+
+    t.teardown(server.close.bind(server))
+
+    await server.listen(0)
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true
+    })
+  })
+
+  scope.test('Should include "connection:keep-alive" if reset false', async t => {
+    const server = createServer((req, res) => {
+      t.equal('GET', req.method)
+      t.equal(`localhost:${server.address().port}`, req.headers.host)
+      t.equal(req.headers.connection, 'keep-alive')
+      res.statusCode = 200
+      res.end('hello')
+    })
+
+    t.plan(3)
+
+    t.teardown(server.close.bind(server))
+
+    await server.listen(0)
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: false
+    })
+  })
+})
