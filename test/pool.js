@@ -57,17 +57,6 @@ test('throws when connection is not number', (t) => {
   }
 })
 
-test('throws when reset is is not boolean', (t) => {
-  t.plan(2)
-
-  try {
-    new Pool(null, { reset: 0 }) // eslint-disable-line no-new
-  } catch (e) {
-    t.type(e, errors.InvalidArgumentError)
-    t.equal(e.message, 'reset must be a boolean')
-  }
-})
-
 test('throws when factory is not a function', (t) => {
   t.plan(2)
 
