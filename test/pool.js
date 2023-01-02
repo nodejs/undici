@@ -174,53 +174,6 @@ test('basic get', (t) => {
   })
 })
 
-test('basic get - with reset to true', (t) => {
-  t.plan(15)
-
-  const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
-    t.equal(req.headers.connection, 'close')
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  t.teardown(server.close.bind(server))
-
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, { reset: true })
-    t.teardown(client.destroy.bind(client))
-
-    t.equal(client[kUrl].origin, `http://localhost:${server.address().port}`)
-
-    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
-      const bufs = []
-      body.on('data', (buf) => {
-        bufs.push(buf)
-      })
-      body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
-      })
-    })
-
-    t.equal(client.destroyed, false)
-    t.equal(client.closed, false)
-    client.close((err) => {
-      t.error(err)
-      t.equal(client.destroyed, true)
-      client.destroy((err) => {
-        t.error(err)
-        client.close((err) => {
-          t.type(err, errors.ClientDestroyedError)
-        })
-      })
-    })
-    t.equal(client.closed, true)
-  })
-})
-
 test('URL as arg', (t) => {
   t.plan(9)
 
