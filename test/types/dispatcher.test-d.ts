@@ -30,7 +30,7 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: 'GET', maxRedirections: 0, query: { pageNum: 1, id: 'abc' } }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: 'GET', maxRedirections: 0, throwOnError: true }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: new URL('http://localhost'), path: '', method: 'GET' }))
-  expectAssignable<void>(dispatcher.request({ origin: '', path: '', method: 'GET', reset: null }, (err, data) => {
+  expectAssignable<void>(dispatcher.request({ origin: '', path: '', method: 'GET', reset: true }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
   }))
