@@ -176,7 +176,12 @@ test('DispatchOptions#reset', scope => {
 
     t.teardown(server.close.bind(server))
 
-    await server.listen(0)
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
 
     await request({
       method: 'GET',
@@ -198,7 +203,12 @@ test('DispatchOptions#reset', scope => {
 
     t.teardown(server.close.bind(server))
 
-    await server.listen(0)
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
 
     await request({
       method: 'GET',
