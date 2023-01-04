@@ -151,7 +151,7 @@ test('Absolute URL as pathname should be included in req.path', async (t) => {
 })
 
 test('DispatchOptions#reset', scope => {
-  scope.plan(3)
+  scope.plan(4)
 
   scope.test('Should throw if invalid reset option', t => {
     t.plan(1)
@@ -214,6 +214,35 @@ test('DispatchOptions#reset', scope => {
       method: 'GET',
       origin: `http://localhost:${server.address().port}`,
       reset: false
+    })
+  })
+
+  scope.test('Should react to manual set of "connection:close" header', async t => {
+    const server = createServer((req, res) => {
+      t.equal('GET', req.method)
+      t.equal(`localhost:${server.address().port}`, req.headers.host)
+      t.equal(req.headers.connection, 'close')
+      res.statusCode = 200
+      res.end('hello')
+    })
+
+    t.plan(3)
+
+    t.teardown(server.close.bind(server))
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      headers: {
+        connection: 'close'
+      }
     })
   })
 })
