@@ -123,6 +123,13 @@ if (nodeMajor >= 18) {
   const { WebSocket } = require('./lib/websocket/websocket')
 
   module.exports.WebSocket = WebSocket
+
+  const { deleteCookie, getCookies, getSetCookies, setCookie } = require('./lib/cookies')
+
+  module.exports.deleteCookie = deleteCookie
+  module.exports.getCookies = getCookies
+  module.exports.getSetCookies = getSetCookies
+  module.exports.setCookie = setCookie
 }
 
 module.exports.request = makeDispatcher(api.request)
