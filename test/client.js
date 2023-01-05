@@ -88,6 +88,77 @@ test('basic get', (t) => {
   })
 })
 
+test('basic get with custom request.reset=true', (t) => {
+  t.plan(26)
+
+  const server = createServer((req, res) => {
+    t.equal('/', req.url)
+    t.equal('GET', req.method)
+    t.equal(`localhost:${server.address().port}`, req.headers.host)
+    t.equal(req.headers.connection, 'close')
+    t.equal(undefined, req.headers.foo)
+    t.equal('bar', req.headers.bar)
+    t.equal(undefined, req.headers['content-length'])
+    res.setHeader('Content-Type', 'text/plain')
+    res.end('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  const reqHeaders = {
+    foo: undefined,
+    bar: 'bar'
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {})
+    t.teardown(client.close.bind(client))
+
+    t.equal(client[kUrl].origin, `http://localhost:${server.address().port}`)
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      reset: true,
+      headers: reqHeaders
+    }, (err, data) => {
+      t.error(err)
+      const { statusCode, headers, body } = data
+      t.equal(statusCode, 200)
+      t.equal(signal.listenerCount('abort'), 1)
+      t.equal(headers['content-type'], 'text/plain')
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.equal(signal.listenerCount('abort'), 0)
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+    t.equal(signal.listenerCount('abort'), 1)
+
+    client.request({
+      path: '/',
+      reset: true,
+      method: 'GET',
+      headers: reqHeaders
+    }, (err, { statusCode, headers, body }) => {
+      t.error(err)
+      t.equal(statusCode, 200)
+      t.equal(headers['content-type'], 'text/plain')
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})
+
 test('basic get with query params', (t) => {
   t.plan(4)
 
