@@ -141,6 +141,10 @@ if (util.nodeMajor >= 18 && hasCrypto) {
   const { WebSocket } = require('./lib/websocket/websocket')
 
   module.exports.WebSocket = WebSocket
+
+  const { FormDataParser } = require('./lib/formdata/parser')
+
+  module.exports.FormDataParser = FormDataParser
 }
 
 module.exports.request = makeDispatcher(api.request)
