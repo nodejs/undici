@@ -15,7 +15,7 @@ export interface Cookie {
   unparsed?: string[]
 }
 
-export function deleteCookies (
+export function deleteCookie (
   headers: Headers,
   name: string,
   attributes?: { name?: string, domain?: string }
