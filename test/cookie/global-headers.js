@@ -9,6 +9,8 @@ const {
 } = require('../..')
 const { getHeadersList } = require('../../lib/cookies/util')
 
+/* global Headers */
+
 if (!globalThis.Headers) {
   skip('No global Headers to test')
   process.exit(0)
