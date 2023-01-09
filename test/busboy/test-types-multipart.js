@@ -931,7 +931,7 @@ const tests = [
   }
 ]
 
-for (const test of tests.slice(0, 20)) {
+for (const test of tests.slice(0, 21)) {
   active.set(test, 1)
 
   const { what, boundary, events, limits, preservePath, fileHwm } = test
@@ -1013,7 +1013,7 @@ for (const test of tests.slice(0, 20)) {
 }
 
 // Byte-by-byte versions
-for (let test of tests.slice(0, 20)) {
+for (let test of tests.slice(0, 21)) {
   test = { ...test }
   test.what += ' (byte-by-byte)'
   active.set(test, 1)
