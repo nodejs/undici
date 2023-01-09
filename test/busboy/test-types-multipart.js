@@ -781,6 +781,8 @@ const tests = [
     what: 'Files limit'
   },
   {
+    // Note: this test is very slow because we need to write > 64 KiB
+    // of data one byte at a time.
     source: [
       ['-----------------------------paZqsnEHRufoShdX6fh0lUhXBP4k',
         'Content-Disposition: form-data; ' +
@@ -931,7 +933,7 @@ const tests = [
   }
 ]
 
-for (const test of tests.slice(0, 22)) {
+for (const test of tests) {
   active.set(test, 1)
 
   const { what, boundary, events, limits, preservePath, fileHwm } = test
@@ -1013,7 +1015,7 @@ for (const test of tests.slice(0, 22)) {
 }
 
 // Byte-by-byte versions
-for (let test of tests.slice(0, 22)) {
+for (let test of tests) {
   test = { ...test }
   test.what += ' (byte-by-byte)'
   active.set(test, 1)
