@@ -618,17 +618,7 @@ const tests = [
         info: {
           filename: 'notes.txt',
           encoding: '7bit',
-          // TODO(@KhafraDev): This behavior is correct (the value should be text/plain),
-          // but the added complexity of removing leading/trailing whitespace would make
-          // this very challenging. Note that a header field value must not be empty,
-          // which will be used to allow such headers to be parsed.
-          //
-          // https://www.rfc-editor.org/rfc/rfc9110.html#section-5.5
-          // A field value does not include leading or trailing whitespace.  When
-          // a specific version of HTTP allows such whitespace to appear in a
-          // message, a field parsing implementation MUST exclude such whitespace
-          // prior to evaluating the field value.
-          mimeType: 'application/octet-stream' // 'text/plain'
+          mimeType: 'text/plain'
         },
         limited: false
       }
