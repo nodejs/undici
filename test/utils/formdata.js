@@ -1,4 +1,4 @@
-const busboy = require('busboy')
+const { FormDataParser } = require('../..')
 
 function parseFormDataString (
   body,
@@ -9,7 +9,7 @@ function parseFormDataString (
     fields: []
   }
 
-  const bb = busboy({
+  const bb = new FormDataParser({
     headers: {
       'content-type': contentType
     }

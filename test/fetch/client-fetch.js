@@ -247,7 +247,7 @@ test('multipart fromdata non-ascii filed names', async (t) => {
   t.equal(form.get('fiŝo'), 'value1')
 })
 
-test('busboy emit error', async (t) => {
+test('BodyMixin.formData rejects with mismatched boundary', async (t) => {
   t.plan(1)
   const formData = new FormData()
   formData.append('field1', 'value1')

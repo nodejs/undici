@@ -658,7 +658,7 @@ test('request text2', (t) => {
   })
 })
 
-test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
+test('request with FormData body', { skip: nodeMajor < 18 }, (t) => {
   const { FormData } = require('../')
   const { Blob } = require('buffer')
 
