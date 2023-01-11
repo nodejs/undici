@@ -781,8 +781,6 @@ const tests = [
     what: 'Files limit'
   },
   {
-    // Note: this test is very slow because we need to write > 64 KiB
-    // of data one byte at a time.
     source: [
       ['-----------------------------paZqsnEHRufoShdX6fh0lUhXBP4k',
         'Content-Disposition: form-data; ' +
