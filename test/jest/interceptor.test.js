@@ -5,6 +5,8 @@ const { Agent, request } = require('../../index')
 const DecoratorHandler = require('../../lib/handler/DecoratorHandler')
 /* global expect */
 
+const defaultOpts = { keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }
+
 describe('interceptors', () => {
   let server
   beforeEach(async () => {
@@ -15,7 +17,7 @@ describe('interceptors', () => {
     await new Promise((resolve) => { server.listen(0, resolve) })
   })
   afterEach(async () => {
-    await server.close()
+    await new Promise((resolve) => server.close(resolve))
   })
 
   test('interceptors are applied on client from an agent', async () => {
@@ -29,8 +31,7 @@ describe('interceptors', () => {
       }
     }
 
-    // await new Promise(resolve => server.listen(0, () => resolve()))
-    const opts = { interceptors: { Client: [buildInterceptor] } }
+    const opts = { interceptors: { Client: [buildInterceptor] }, ...defaultOpts }
     const agent = new Agent(opts)
     const origin = new URL(`http://localhost:${server.address().port}`)
     await Promise.all([
@@ -58,7 +59,7 @@ describe('interceptors', () => {
       }
     }
 
-    const opts = { interceptors: { Pool: [setHeaderInterceptor, assertHeaderInterceptor] } }
+    const opts = { interceptors: { Pool: [setHeaderInterceptor, assertHeaderInterceptor] }, ...defaultOpts }
     const agent = new Agent(opts)
     const origin = new URL(`http://localhost:${server.address().port}`)
     await request(origin, { dispatcher: agent, headers: [] })
@@ -90,7 +91,7 @@ describe('interceptors', () => {
       }
     }
 
-    const opts = { interceptors: { Agent: [assertHeaderInterceptor, clearResponseHeadersInterceptor] } }
+    const opts = { interceptors: { Agent: [assertHeaderInterceptor, clearResponseHeadersInterceptor] }, ...defaultOpts }
     const agent = new Agent(opts)
     const origin = new URL(`http://localhost:${server.address().port}`)
     await request(origin, { dispatcher: agent, headers: [] })
@@ -178,7 +179,7 @@ describe('interceptors with NtlmRequestHandler', () => {
     await new Promise((resolve) => { server.listen(0, resolve) })
   })
   afterEach(async () => {
-    await server.close()
+    await new Promise((resolve) => server.close(resolve))
   })
 
   test('Retry interceptor on Client will use the same socket', async () => {
@@ -187,7 +188,7 @@ describe('interceptors with NtlmRequestHandler', () => {
         return dispatch(opts, new FakeNtlmRequestHandler(dispatch, opts, handler))
       }
     }
-    const opts = { interceptors: { Client: [interceptor] } }
+    const opts = { interceptors: { Client: [interceptor] }, ...defaultOpts }
     const agent = new Agent(opts)
     const origin = new URL(`http://localhost:${server.address().port}`)
     const { statusCode } = await request(origin, { dispatcher: agent, headers: [] })
