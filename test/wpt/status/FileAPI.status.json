@@ -1,6 +1,6 @@
 {
 	"File-constructor.any.js": {
-		"fail": [
+		"flaky": [
 			"Using type in File constructor: nonparsable"
 		]
 	},
