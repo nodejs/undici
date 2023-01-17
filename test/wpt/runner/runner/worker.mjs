@@ -2,6 +2,7 @@ import { join } from 'node:path'
 import { runInThisContext } from 'node:vm'
 import { parentPort, workerData } from 'node:worker_threads'
 import { readFileSync } from 'node:fs'
+import buffer from 'node:buffer'
 import {
   setGlobalOrigin,
   Response,
@@ -34,7 +35,7 @@ Object.defineProperties(globalThis, {
   },
   File: {
     ...globalPropertyDescriptors,
-    value: File
+    value: buffer.File ?? File
   },
   FormData: {
     ...globalPropertyDescriptors,
