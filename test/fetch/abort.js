@@ -90,9 +90,7 @@ test('Allow the usage of custom implementation of AbortController', async (t) =>
 })
 
 test('allows aborting with custom errors', { skip: process.version.startsWith('v16.') }, async (t) => {
-  const server = createServer((req, res) => {
-    setTimeout(() => res.end(), 5000)
-  }).listen(0)
+  const server = createServer().listen(0)
 
   t.teardown(server.close.bind(server))
   await once(server, 'listening')
