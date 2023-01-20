@@ -1660,20 +1660,4 @@ describe('node-fetch', () => {
       expect(res.ok).to.be.false
     })
   })
-
-  // it('should not time out waiting for a response 60 seconds', function () {
-  //   this.timeout(65_000)
-  //   return fetch(`${base}timeout60s`).then(res => {
-  //     expect(res.status).to.equal(200)
-  //     expect(res.ok).to.be.true
-  //     return res.text().then(result => {
-  //       expect(result).to.equal('text')
-  //     })
-  //   })
-  // })
-
-  // it('should time out waiting for more than 300 seconds', function () {
-  //   this.timeout(305_000)
-  //   return expect(fetch(`${base}timeout300s`)).to.eventually.be.rejectedWith(TypeError)
-  // })
 })
