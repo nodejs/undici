@@ -227,22 +227,6 @@ module.exports = class TestServer {
       }, 1000)
     }
 
-    if (p === '/timeout60s') {
-      setTimeout(() => {
-        res.statusCode = 200
-        res.setHeader('Content-Type', 'text/plain')
-        res.end('text')
-      }, 60_000)
-    }
-
-    if (p === '/timeout300s') {
-      setTimeout(() => {
-        res.statusCode = 200
-        res.setHeader('Content-Type', 'text/plain')
-        res.end('text')
-      }, 300_000)
-    }
-
     if (p === '/slow') {
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/plain')
