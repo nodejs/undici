@@ -4,6 +4,8 @@ const { test } = require('tap')
 const { FormData, File, Response } = require('../../')
 const { Blob: ThirdPartyBlob } = require('formdata-node')
 const { Blob } = require('buffer')
+const { isFormDataLike } = require('../../lib/core/util')
+const ThirdPartyFormDataInvalid = require('form-data')
 
 test('arg validation', (t) => {
   const form = new FormData()
@@ -283,6 +285,84 @@ test('formData.constructor.name', (t) => {
   const form = new FormData()
   t.equal(form.constructor.name, 'FormData')
   t.end()
+})
+
+test('formData should be an instance of FormData', (t) => {
+  t.plan(3)
+
+  t.test('Invalid class FormData', (t) => {
+    class FormData {
+      constructor () {
+        this.data = []
+      }
+
+      append (key, value) {
+        this.data.push([key, value])
+      }
+
+      get (key) {
+        return this.data.find(([k]) => k === key)
+      }
+    }
+
+    const form = new FormData()
+    t.equal(isFormDataLike(form), false)
+    t.end()
+  })
+
+  t.test('Invalid function FormData', (t) => {
+    function FormData () {
+      const data = []
+      return {
+        append (key, value) {
+          data.push([key, value])
+        },
+        get (key) {
+          return data.find(([k]) => k === key)
+        }
+      }
+    }
+
+    const form = new FormData()
+    t.equal(isFormDataLike(form), false)
+    t.end()
+  })
+
+  test('Invalid third-party FormData', (t) => {
+    const form = new ThirdPartyFormDataInvalid()
+    t.equal(isFormDataLike(form), false)
+    t.end()
+  })
+
+  t.test('Valid FormData', (t) => {
+    const form = new FormData()
+    t.equal(isFormDataLike(form), true)
+    t.end()
+  })
+})
+
+test('FormData should be compatible with third-party libraries', (t) => {
+  t.plan(1)
+
+  class FormData {
+    constructor () {
+      this.data = []
+    }
+
+    append () {}
+    delete () {}
+    get () {}
+    getAll () {}
+    has () {}
+    set () {}
+    entries () {}
+    keys () {}
+    values () {}
+    forEach () {}
+  }
+
+  const form = new FormData()
+  t.equal(isFormDataLike(form), true)
 })
 
 test('arguments', (t) => {

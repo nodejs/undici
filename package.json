@@ -79,6 +79,7 @@
     "cronometro": "^1.0.5",
     "delay": "^5.0.0",
     "docsify-cli": "^4.4.3",
+    "form-data": "^4.0.0",
     "formdata-node": "^4.3.1",
     "https-pem": "^3.0.0",
     "husky": "^8.0.1",
