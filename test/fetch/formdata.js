@@ -5,6 +5,7 @@ const { FormData, File, Response } = require('../../')
 const { Blob: ThirdPartyBlob } = require('formdata-node')
 const { Blob } = require('buffer')
 const { isFormDataLike } = require('../../lib/core/util')
+const ThirdPartyFormDataInvalid = require('form-data')
 
 test('arg validation', (t) => {
   const form = new FormData()
@@ -323,6 +324,12 @@ test('formData should be an instance of FormData', (t) => {
     }
 
     const form = new FormData()
+    t.equal(isFormDataLike(form), false)
+    t.end()
+  })
+
+  test('Invalid third-party FormData', (t) => {
+    const form = new ThirdPartyFormDataInvalid()
     t.equal(isFormDataLike(form), false)
     t.end()
   })
