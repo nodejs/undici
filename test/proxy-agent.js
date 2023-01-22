@@ -197,6 +197,39 @@ test('use proxy-agent with token', async (t) => {
   proxyAgent.close()
 })
 
+test('use proxy-agent with custom headers', async (t) => {
+  t.plan(2)
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({
+    uri: proxyUrl,
+    headers: {
+      'User-Agent': 'Foobar/1.0.0'
+    }
+  })
+
+  proxy.on('connect', (req) => {
+    t.equal(req.headers['user-agent'], 'Foobar/1.0.0')
+  })
+
+  server.on('request', (req, res) => {
+    t.equal(req.headers['user-agent'], 'BarBaz/1.0.0')
+    res.end()
+  })
+
+  await request(serverUrl + '/hello?foo=bar', {
+    headers: { 'user-agent': 'BarBaz/1.0.0' },
+    dispatcher: proxyAgent
+  })
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 test('sending proxy-authorization in request headers should throw', async (t) => {
   t.plan(3)
   const server = await buildServer()
