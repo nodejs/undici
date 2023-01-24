@@ -5,7 +5,6 @@ const { fetch } = require('../..')
 const { createServer } = require('http')
 const { once } = require('events')
 const { DOMException } = require('../../lib/fetch/constants')
-const errors = require('../..').errors
 const semver = require('semver')
 
 const { AbortController: NPMAbortController } = require('abort-controller')
@@ -44,7 +43,7 @@ test('allows aborting with custom errors', { skip: semver.satisfies(process.vers
   t.teardown(server.close.bind(server))
   await once(server, 'listening')
 
-  t.test('Using AbortSignal.timeout without cause', { skip: semver.satisfies(process.version, '>= 19.0.0')}, async (t) => {
+  t.test('Using AbortSignal.timeout without cause', { skip: semver.satisfies(process.version, '>= 19.0.0') }, async (t) => {
     await t.rejects(
       fetch(`http://localhost:${server.address().port}`, {
         signal: AbortSignal.timeout(50)
@@ -56,7 +55,7 @@ test('allows aborting with custom errors', { skip: semver.satisfies(process.vers
     )
   })
 
-  t.test('Using AbortSignal.timeout with cause', { skip: semver.satisfies(process.version, '< 19.0.0')}, async (t) => {
+  t.test('Using AbortSignal.timeout with cause', { skip: semver.satisfies(process.version, '< 19.0.0') }, async (t) => {
     t.plan(3)
 
     try {
