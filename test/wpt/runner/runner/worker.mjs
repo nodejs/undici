@@ -64,6 +64,11 @@ Object.defineProperties(globalThis, {
   CloseEvent: {
     ...globalPropertyDescriptors,
     value: CloseEvent
+  },
+  Blob: {
+    ...globalPropertyDescriptors,
+    // See https://github.com/nodejs/node/pull/45659
+    value: buffer.Blob
   }
 })
 
