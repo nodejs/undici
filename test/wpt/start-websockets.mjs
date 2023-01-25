@@ -10,6 +10,8 @@ const child = fork(serverPath, [], {
   stdio: ['pipe', 'pipe', 'pipe', 'ipc']
 })
 
+child.on('exit', (code) => process.exit(code))
+
 for await (const [message] of on(child, 'message')) {
   if (message.server) {
     const runner = new WPTRunner('websockets', message.server)
@@ -18,11 +20,7 @@ for await (const [message] of on(child, 'message')) {
     runner.once('completion', () => {
       if (child.connected) {
         child.send('shutdown')
-      } else {
-        process.exit()
       }
     })
-  } else if (message.message === 'shutdown') {
-    process.exit()
   }
 }
