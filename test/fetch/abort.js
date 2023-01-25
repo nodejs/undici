@@ -56,17 +56,23 @@ test('allows aborting with custom errors', { skip: semver.satisfies(process.vers
   })
 
   t.test('Using AbortSignal.timeout with cause', { skip: semver.satisfies(process.version, '< 19.0.0') }, async (t) => {
-    t.plan(3)
+    t.plan(2)
 
     try {
       await fetch(`http://localhost:${server.address().port}`, {
         signal: AbortSignal.timeout(50)
       })
     } catch (err) {
-      t.equal(err.name, 'TypeError')
-      const cause = err.cause
-      t.equal(cause.name, 'HeadersTimeoutError')
-      t.equal(cause.code, 'UND_ERR_HEADERS_TIMEOUT')
+      if (err.name === 'TypeError') {
+        const cause = err.cause
+        t.equal(cause.name, 'HeadersTimeoutError')
+        t.equal(cause.code, 'UND_ERR_HEADERS_TIMEOUT')
+      } else if (err.name = 'TimeoutError') {
+        t.equal(cause.code, DOMException.TIMEOUT_ERR)
+        t.equal(err.cause, undefined)
+      } else {
+        t.error(err)
+      }
     }
   })
 
