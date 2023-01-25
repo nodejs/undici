@@ -67,8 +67,8 @@ test('allows aborting with custom errors', { skip: semver.satisfies(process.vers
         const cause = err.cause
         t.equal(cause.name, 'HeadersTimeoutError')
         t.equal(cause.code, 'UND_ERR_HEADERS_TIMEOUT')
-      } else if (err.name = 'TimeoutError') {
-        t.equal(cause.code, DOMException.TIMEOUT_ERR)
+      } else if (err.name === 'TimeoutError') {
+        t.equal(err.code, DOMException.TIMEOUT_ERR)
         t.equal(err.cause, undefined)
       } else {
         t.error(err)
