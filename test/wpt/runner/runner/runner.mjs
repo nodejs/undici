@@ -1,6 +1,7 @@
 import { deepStrictEqual } from 'node:assert'
-import { EventEmitter } from 'node:events'
+import { EventEmitter, once } from 'node:events'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { cpus } from 'node:os'
 import { basename, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
@@ -82,10 +83,11 @@ export class WPTRunner extends EventEmitter {
     return [...files]
   }
 
-  run () {
+  async run () {
     const workerPath = fileURLToPath(join(import.meta.url, '../worker.mjs'))
     /** @type {Set<Worker>} */
     const activeWorkers = new Set()
+    let finishedFiles = 0
 
     for (const test of this.#files) {
       const code = test.includes('.sub.')
@@ -95,6 +97,7 @@ export class WPTRunner extends EventEmitter {
 
       if (this.#status[basename(test)]?.skip) {
         this.#stats.skipped += 1
+        finishedFiles++
         continue
       }
 
@@ -131,10 +134,14 @@ export class WPTRunner extends EventEmitter {
         activeWorkers.delete(worker)
         clearTimeout(timeout)
 
-        if (activeWorkers.size === 0) {
+        if (++finishedFiles === this.#files.length) {
           this.handleRunnerCompletion()
         }
       })
+
+      if (activeWorkers.size === cpus().length) {
+        await once(worker, 'exit')
+      }
     }
   }
 

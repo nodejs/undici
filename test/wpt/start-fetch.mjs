@@ -16,7 +16,11 @@ for await (const [message] of on(child, 'message')) {
     runner.run()
 
     runner.once('completion', () => {
-      child.send('shutdown')
+      if (child.connected) {
+        child.send('shutdown')
+      } else {
+        process.exit()
+      }
     })
   } else if (message.message === 'shutdown') {
     process.exit()
