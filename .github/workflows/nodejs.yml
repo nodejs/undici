@@ -9,6 +9,7 @@ on: [push, pull_request]
 jobs:
   build:
     name: Test
+    timeout-minutes: 15
     uses: pkgjs/action/.github/workflows/node-test.yaml@v0.1
     with:
       runs-on: ubuntu-latest, windows-latest
@@ -22,7 +23,6 @@ jobs:
       exclude: |
         - runs-on: windows-latest
           node-version: 16
-        - node-version: 19
   automerge:
     if: >
       github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
