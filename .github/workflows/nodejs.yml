@@ -22,7 +22,6 @@ jobs:
       exclude: |
         - runs-on: windows-latest
           node-version: 16
-        - node-version: 19
   automerge:
     if: >
       github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
