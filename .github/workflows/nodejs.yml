@@ -9,7 +9,6 @@ on: [push, pull_request]
 jobs:
   build:
     name: Test
-    timeout-minutes: 15
     uses: pkgjs/action/.github/workflows/node-test.yaml@v0.1
     with:
       runs-on: ubuntu-latest, windows-latest
