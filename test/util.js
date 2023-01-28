@@ -83,12 +83,27 @@ test('validateHandler', (t) => {
 })
 
 test('parseHeaders', (t) => {
-  t.plan(5)
+  t.plan(7)
   t.same(util.parseHeaders(['key', 'value']), { key: 'value' })
   t.same(util.parseHeaders([Buffer.from('key'), Buffer.from('value')]), { key: 'value' })
   t.same(util.parseHeaders(['Key', 'Value']), { key: 'Value' })
   t.same(util.parseHeaders(['Key', 'value', 'key', 'Value']), { key: ['value', 'Value'] })
   t.same(util.parseHeaders(['key', ['value1', 'value2', 'value3']]), { key: ['value1', 'value2', 'value3'] })
+  t.same(util.parseHeaders(['set-cookie', '123456|123456|123456;Path=/']), { 'set-cookie': ['123456|123456|123456', 'Path=/'] })
+  t.same(util.parseHeaders([
+    'set-cookie',
+    '123456|123456|123456;Path=/',
+    'set-cookie',
+    '233333|114514;1919810;Hello=World'
+  ]), {
+    'set-cookie': [
+      '123456|123456|123456',
+      'Path=/',
+      '233333|114514',
+      '1919810',
+      'Hello=World'
+    ]
+  })
 })
 
 test('parseRawHeaders', (t) => {
