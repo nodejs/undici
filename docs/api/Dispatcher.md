@@ -74,7 +74,7 @@ Returns: `void | Promise<ConnectData>` - Only returns a `Promise` if no `callbac
 #### Parameter: `ConnectData`
 
 * **statusCode** `number`
-* **headers** `http.IncomingHttpHeaders`
+* **headers** `Record<string, string | string[]>`
 * **socket** `stream.Duplex`
 * **opaque** `unknown`
 
@@ -383,7 +383,7 @@ Extends: [`RequestOptions`](#parameter-requestoptions)
 #### Parameter: PipelineHandlerData
 
 * **statusCode** `number`
-* **headers** `IncomingHttpHeaders`
+* **headers** `Record<string, string | string[]>`
 * **opaque** `unknown`
 * **body** `stream.Readable`
 * **context** `object`
@@ -477,7 +477,7 @@ The `RequestOptions.method` property should not be value `'CONNECT'`.
 #### Parameter: `ResponseData`
 
 * **statusCode** `number`
-* **headers** `http.IncomingHttpHeaders` - Note that all header keys are lower-cased, e. g. `content-type`.
+* **headers** `Record<string, string | string[]>` - Note that all header keys are lower-cased, e. g. `content-type`.
 * **body** `stream.Readable` which also implements [the body mixin from the Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
 * **trailers** `Record<string, string>` - This object starts out
   as empty and will be mutated to contain trailers after `body` has emitted `'end'`.
@@ -644,7 +644,7 @@ Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback
 #### Parameter: `StreamFactoryData`
 
 * **statusCode** `number`
-* **headers** `http.IncomingHttpHeaders`
+* **headers** `Record<string, string | string[]>`
 * **opaque** `unknown`
 * **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received.
 
@@ -853,9 +853,9 @@ Emitted when dispatcher is no longer busy.
 
 ## Parameter: `UndiciHeaders`
 
-* `http.IncomingHttpHeaders | string[] | null`
+* `Record<string, string | string[]> | string[] | null`
 
-Header arguments such as `options.headers` in [`Client.dispatch`](Client.md#clientdispatchoptions-handlers) can be specified in two forms; either as an object specified by the `http.IncomingHttpHeaders` type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
+Header arguments such as `options.headers` in [`Client.dispatch`](Client.md#clientdispatchoptions-handlers) can be specified in two forms; either as an object specified by the `Record<string, string | string[]>` (`IncomingHttpHeaders`) type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
 
 Keys are lowercase and values are not modified.
 

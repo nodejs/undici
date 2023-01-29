@@ -1,4 +1,4 @@
-import {IncomingHttpHeaders} from "http";
+import { IncomingHttpHeaders } from "./header";
 import Client from './client'
 
 export default Errors
