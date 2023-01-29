@@ -19,6 +19,7 @@
   * [API Lifecycle](/docs/api/api-lifecycle.md "Undici API - Lifecycle")
   * [Diagnostics Channel Support](/docs/api/DiagnosticsChannel.md "Diagnostics Channel Support")
   * [WebSocket](/docs/api/WebSocket.md "Undici API - WebSocket")
+  * [MIME Type Parsing](/docs/api/ContentType.md "Undici API - MIME Type Parsing")
 * Best Practices
   * [Proxy](/docs/best-practices/proxy.md "Connecting through a proxy")
   * [Client Certificate](/docs/best-practices/client-certificate.md "Connect using a client certificate")
