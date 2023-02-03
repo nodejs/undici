@@ -48,3 +48,22 @@ test('Can send cookies to a server with fetch - issue #1463', async (t) => {
 
   t.end()
 })
+
+test('Cookie header is delimited with a semicolon rather than a comma - issue #1905', async (t) => {
+  t.plan(1)
+
+  const server = createServer((req, res) => {
+    t.equal(req.headers.cookie, 'FOO=lorem-ipsum-dolor-sit-amet; BAR=the-quick-brown-fox')
+    res.end()
+  }).listen(0)
+
+  t.teardown(server.close.bind(server))
+  await once(server, 'listening')
+
+  await fetch(`http://localhost:${server.address().port}`, {
+    headers: [
+      ['cookie', 'FOO=lorem-ipsum-dolor-sit-amet'],
+      ['cookie', 'BAR=the-quick-brown-fox']
+    ]
+  })
+})
