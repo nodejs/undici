@@ -10,8 +10,6 @@ declare namespace buildConnector {
     socketPath?: string | null;
     timeout?: number | null;
     port?: number;
-    /** TCP keepalive interval for the socket in milliseconds. Default: `60e3` milliseconds (60s) */
-    tcpKeepAliveInterval?: number | null;
   }
 
   export interface Options {
