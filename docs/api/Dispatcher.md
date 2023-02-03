@@ -202,6 +202,7 @@ Returns: `Boolean` - `false` if dispatcher is busy and further dispatch calls wo
 * **bodyTimeout** `number | null` (optional) - The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 30 seconds.
 * **headersTimeout** `number | null` (optional) - The amount of time the parser will wait to receive the complete HTTP headers while not sending the request. Defaults to 30 seconds.
 * **throwOnError** `boolean` (optional) - Default: `false` - Whether Undici should throw an error upon receiving a 4xx or 5xx response from the server.
+* **tcpKeepAliveInterval** `number | null` (optional) - Default: `60000` - TCP keepalive interval for the socket in milliseconds
 
 #### Parameter: `DispatchHandler`
 

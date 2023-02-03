@@ -43,6 +43,8 @@ declare namespace Client {
     maxRequestsPerClient?: number;
     /** Max response body size in bytes, -1 is disabled */
     maxResponseSize?: number | null;
+    /** TCP keepalive interval for the socket in milliseconds. Default: `60e3` milliseconds (60s) */
+    tcpKeepAliveInterval?: number | null;
 
     interceptors?: {Client: readonly DispatchInterceptor[] | undefined}
   }
