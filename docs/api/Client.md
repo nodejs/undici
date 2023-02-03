@@ -38,6 +38,7 @@ Furthermore, the following options can be passed:
 * **maxCachedSessions** `number | null` (optional) - Default: `100` - Maximum number of TLS cached sessions. Use 0 to disable TLS session caching. Default: 100.
 * **timeout** `number | null` (optional) -  Default `10e3`
 * **servername** `string | null` (optional)
+* **tcpKeepAliveInterval** `number | null` (optional) - Default: `60000` - TCP keepalive interval for the socket in milliseconds
 
 ### Example - Basic Client instantiation
 
