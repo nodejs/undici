@@ -1,8 +1,8 @@
 'use strict'
 
-const { test } = require('tap')
-const { Client } = require('..')
-const { createServer } = require('http')
+// const { test } = require('tap')
+// const { Client } = require('..')
+// const { createServer } = require('http')
 // const FakeTimers = require('@sinonjs/fake-timers')
 
 // test('multiple reconnect', (t) => {

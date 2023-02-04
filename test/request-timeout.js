@@ -3,17 +3,17 @@
 const { test } = require('tap')
 const { createReadStream, writeFileSync, unlinkSync } = require('fs')
 const { Client, errors } = require('..')
-const { kConnect } = require('../lib/core/symbols')
+// const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('http')
-const EventEmitter = require('events')
+// const EventEmitter = require('events')
 // const FakeTimers = require('@sinonjs/fake-timers')
-const { AbortController } = require('abort-controller')
-const {
-  pipeline,
-  Readable,
-  Writable,
-  PassThrough
-} = require('stream')
+// const { AbortController } = require('abort-controller')
+// const {
+//   pipeline,
+//   Readable,
+//   Writable,
+//   PassThrough
+// } = require('stream')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
 
