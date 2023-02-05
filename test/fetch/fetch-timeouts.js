@@ -3,6 +3,7 @@
 const { test } = require('tap')
 
 const { fetch, Agent } = require('../..')
+const timers = require('../../lib/timers')
 const { createServer } = require('http')
 const FakeTimers = require('@sinonjs/fake-timers')
 
@@ -15,6 +16,12 @@ test('Fetch very long request, timeout overridden so no error', (t) => {
 
   const clock = FakeTimers.install()
   t.teardown(clock.uninstall.bind(clock))
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  t.teardown(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {

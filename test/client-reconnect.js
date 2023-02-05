@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
 const FakeTimers = require('@sinonjs/fake-timers')
+const timers = require('../lib/timers')
 
 test('multiple reconnect', (t) => {
   t.plan(5)
@@ -11,6 +12,12 @@ test('multiple reconnect', (t) => {
   let n = 0
   const clock = FakeTimers.install()
   t.teardown(clock.uninstall.bind(clock))
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  t.teardown(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     n === 0 ? res.destroy() : res.end('ok')
