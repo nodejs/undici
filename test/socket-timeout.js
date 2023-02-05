@@ -2,8 +2,9 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
+const timers = require('../lib/timers')
 const { createServer } = require('http')
-// const FakeTimers = require('@sinonjs/fake-timers')
+const FakeTimers = require('@sinonjs/fake-timers')
 
 test('timeout with pipelining 1', (t) => {
   t.plan(9)
@@ -57,37 +58,43 @@ test('timeout with pipelining 1', (t) => {
   })
 })
 
-// test('Disable socket timeout', (t) => {
-//   t.plan(2)
+test('Disable socket timeout', (t) => {
+  t.plan(2)
 
-//   const server = createServer()
-//   const clock = FakeTimers.install()
-//   t.teardown(clock.uninstall.bind(clock))
+  const server = createServer()
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
 
-//   server.once('request', (req, res) => {
-//     setTimeout(() => {
-//       res.end('hello')
-//     }, 31e3)
-//     clock.tick(32e3)
-//   })
-//   t.teardown(server.close.bind(server))
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  t.teardown(() => {
+    Object.assign(timers, orgTimers)
+  })
 
-//   server.listen(0, () => {
-//     const client = new Client(`http://localhost:${server.address().port}`, {
-//       bodyTimeout: 0,
-//       headersTimeout: 0
-//     })
-//     t.teardown(client.close.bind(client))
+  server.once('request', (req, res) => {
+    setTimeout(() => {
+      res.end('hello')
+    }, 31e3)
+    clock.tick(32e3)
+  })
+  t.teardown(server.close.bind(server))
 
-//     client.request({ path: '/', method: 'GET' }, (err, result) => {
-//       t.error(err)
-//       const bufs = []
-//       result.body.on('data', (buf) => {
-//         bufs.push(buf)
-//       })
-//       result.body.on('end', () => {
-//         t.equal('hello', Buffer.concat(bufs).toString('utf8'))
-//       })
-//     })
-//   })
-// })
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0,
+      headersTimeout: 0
+    })
+    t.teardown(client.close.bind(client))
+
+    client.request({ path: '/', method: 'GET' }, (err, result) => {
+      t.error(err)
+      const bufs = []
+      result.body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      result.body.on('end', () => {
+        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+})

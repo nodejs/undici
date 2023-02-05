@@ -3,8 +3,9 @@
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { createServer } = require('http')
-// const { Readable } = require('stream')
-// const FakeTimers = require('@sinonjs/fake-timers')
+const { Readable } = require('stream')
+const FakeTimers = require('@sinonjs/fake-timers')
+const timers = require('../lib/timers')
 
 test('refresh timeout on pause', (t) => {
   t.plan(1)
@@ -16,7 +17,7 @@ test('refresh timeout on pause', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
-      bodyTimeout: 1500
+      bodyTimeout: 500
     })
     t.teardown(client.destroy.bind(client))
 
@@ -29,7 +30,7 @@ test('refresh timeout on pause', (t) => {
       onHeaders (statusCode, headers, resume) {
         setTimeout(() => {
           resume()
-        }, 3000)
+        }, 1000)
         return false
       },
       onData () {
@@ -45,140 +46,152 @@ test('refresh timeout on pause', (t) => {
   })
 })
 
-// test('start headers timeout after request body', (t) => {
-//   t.plan(2)
+test('start headers timeout after request body', (t) => {
+  t.plan(2)
 
-//   const clock = FakeTimers.install()
-//   t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
 
-//   const server = createServer((req, res) => {
-//   })
-//   t.teardown(server.close.bind(server))
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  t.teardown(() => {
+    Object.assign(timers, orgTimers)
+  })
 
-//   server.listen(0, () => {
-//     const client = new Client(`http://localhost:${server.address().port}`, {
-//       bodyTimeout: 0,
-//       headersTimeout: 10000
-//     })
-//     t.teardown(client.destroy.bind(client))
+  const server = createServer((req, res) => {
+  })
+  t.teardown(server.close.bind(server))
 
-//     const body = new Readable({ read () {} })
-//     client.dispatch({
-//       path: '/',
-//       body,
-//       method: 'GET'
-//     }, {
-//       onConnect () {
-//         process.nextTick(() => {
-//           clock.tick(20000)
-//         })
-//         queueMicrotask(() => {
-//           body.push(null)
-//           body.on('end', () => {
-//             clock.tick(20000)
-//           })
-//         })
-//       },
-//       onHeaders (statusCode, headers, resume) {
-//       },
-//       onData () {
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0,
+      headersTimeout: 100
+    })
+    t.teardown(client.destroy.bind(client))
 
-//       },
-//       onComplete () {
+    const body = new Readable({ read () {} })
+    client.dispatch({
+      path: '/',
+      body,
+      method: 'GET'
+    }, {
+      onConnect () {
+        process.nextTick(() => {
+          clock.tick(200)
+        })
+        queueMicrotask(() => {
+          body.push(null)
+          body.on('end', () => {
+            clock.tick(200)
+          })
+        })
+      },
+      onHeaders (statusCode, headers, resume) {
+      },
+      onData () {
 
-//       },
-//       onError (err) {
-//         t.equal(body.readableEnded, true)
-//         t.type(err, errors.HeadersTimeoutError)
-//       }
-//     })
-//   })
-// })
+      },
+      onComplete () {
 
-// test('start headers timeout after async iterator request body', (t) => {
-//   t.plan(1)
+      },
+      onError (err) {
+        t.equal(body.readableEnded, true)
+        t.type(err, errors.HeadersTimeoutError)
+      }
+    })
+  })
+})
 
-//   const clock = FakeTimers.install()
-//   t.teardown(clock.uninstall.bind(clock))
+test('start headers timeout after async iterator request body', (t) => {
+  t.plan(1)
 
-//   const server = createServer((req, res) => {
-//   })
-//   t.teardown(server.close.bind(server))
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
 
-//   server.listen(0, () => {
-//     const client = new Client(`http://localhost:${server.address().port}`, {
-//       bodyTimeout: 0,
-//       headersTimeout: 10000
-//     })
-//     t.teardown(client.destroy.bind(client))
-//     let res
-//     const body = (async function * () {
-//       await new Promise((resolve) => { res = resolve })
-//       process.nextTick(() => {
-//         clock.tick(20000)
-//       })
-//     })()
-//     client.dispatch({
-//       path: '/',
-//       body,
-//       method: 'GET'
-//     }, {
-//       onConnect () {
-//         process.nextTick(() => {
-//           clock.tick(20000)
-//         })
-//         queueMicrotask(() => {
-//           res()
-//         })
-//       },
-//       onHeaders (statusCode, headers, resume) {
-//       },
-//       onData () {
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  t.teardown(() => {
+    Object.assign(timers, orgTimers)
+  })
 
-//       },
-//       onComplete () {
+  const server = createServer((req, res) => {
+  })
+  t.teardown(server.close.bind(server))
 
-//       },
-//       onError (err) {
-//         t.type(err, errors.HeadersTimeoutError)
-//       }
-//     })
-//   })
-// })
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0,
+      headersTimeout: 100
+    })
+    t.teardown(client.destroy.bind(client))
+    let res
+    const body = (async function * () {
+      await new Promise((resolve) => { res = resolve })
+      process.nextTick(() => {
+        clock.tick(200)
+      })
+    })()
+    client.dispatch({
+      path: '/',
+      body,
+      method: 'GET'
+    }, {
+      onConnect () {
+        process.nextTick(() => {
+          clock.tick(200)
+        })
+        queueMicrotask(() => {
+          res()
+        })
+      },
+      onHeaders (statusCode, headers, resume) {
+      },
+      onData () {
 
-// test('parser resume with no body timeout', (t) => {
-//   t.plan(1)
+      },
+      onComplete () {
 
-//   const server = createServer((req, res) => {
-//     res.end('asd')
-//   })
-//   t.teardown(server.close.bind(server))
+      },
+      onError (err) {
+        t.type(err, errors.HeadersTimeoutError)
+      }
+    })
+  })
+})
 
-//   server.listen(0, () => {
-//     const client = new Client(`http://localhost:${server.address().port}`, {
-//       bodyTimeout: 0
-//     })
-//     t.teardown(client.destroy.bind(client))
+test('parser resume with no body timeout', (t) => {
+  t.plan(1)
 
-//     client.dispatch({
-//       path: '/',
-//       method: 'GET'
-//     }, {
-//       onConnect () {
-//       },
-//       onHeaders (statusCode, headers, resume) {
-//         setTimeout(resume, 2000)
-//         return false
-//       },
-//       onData () {
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  t.teardown(server.close.bind(server))
 
-//       },
-//       onComplete () {
-//         t.pass()
-//       },
-//       onError (err) {
-//         t.error(err)
-//       }
-//     })
-//   })
-// })
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      bodyTimeout: 0
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onConnect () {
+      },
+      onHeaders (statusCode, headers, resume) {
+        setTimeout(resume, 2000)
+        return false
+      },
+      onData () {
+
+      },
+      onComplete () {
+        t.pass()
+      },
+      onError (err) {
+        t.error(err)
+      }
+    })
+  })
+})

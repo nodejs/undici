@@ -2,10 +2,11 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
+const timers = require('../lib/timers')
 const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('net')
 const http = require('http')
-// const FakeTimers = require('@sinonjs/fake-timers')
+const FakeTimers = require('@sinonjs/fake-timers')
 
 test('keep-alive header', (t) => {
   t.plan(2)
@@ -41,41 +42,47 @@ test('keep-alive header', (t) => {
   })
 })
 
-// test('keep-alive header 0', (t) => {
-//   t.plan(2)
+test('keep-alive header 0', (t) => {
+  t.plan(2)
 
-//   const clock = FakeTimers.install()
-//   t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
 
-//   const server = createServer((socket) => {
-//     socket.write('HTTP/1.1 200 OK\r\n')
-//     socket.write('Content-Length: 0\r\n')
-//     socket.write('Keep-Alive: timeout=1s\r\n')
-//     socket.write('Connection: keep-alive\r\n')
-//     socket.write('\r\n\r\n')
-//   })
-//   t.teardown(server.close.bind(server))
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  t.teardown(() => {
+    Object.assign(timers, orgTimers)
+  })
 
-//   server.listen(0, () => {
-//     const client = new Client(`http://localhost:${server.address().port}`, {
-//       keepAliveTimeoutThreshold: 500
-//     })
-//     t.teardown(client.destroy.bind(client))
+  const server = createServer((socket) => {
+    socket.write('HTTP/1.1 200 OK\r\n')
+    socket.write('Content-Length: 0\r\n')
+    socket.write('Keep-Alive: timeout=1s\r\n')
+    socket.write('Connection: keep-alive\r\n')
+    socket.write('\r\n\r\n')
+  })
+  t.teardown(server.close.bind(server))
 
-//     client.request({
-//       path: '/',
-//       method: 'GET'
-//     }, (err, { body }) => {
-//       t.error(err)
-//       body.on('end', () => {
-//         client.on('disconnect', () => {
-//           t.pass()
-//         })
-//         clock.tick(600)
-//       }).resume()
-//     })
-//   })
-// })
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeoutThreshold: 500
+    })
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      body.on('end', () => {
+        client.on('disconnect', () => {
+          t.pass()
+        })
+        clock.tick(600)
+      }).resume()
+    })
+  })
+})
 
 test('keep-alive header 1', (t) => {
   t.plan(2)

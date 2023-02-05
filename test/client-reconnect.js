@@ -1,47 +1,54 @@
 'use strict'
 
-// const { test } = require('tap')
-// const { Client } = require('..')
-// const { createServer } = require('http')
-// const FakeTimers = require('@sinonjs/fake-timers')
+const { test } = require('tap')
+const { Client } = require('..')
+const { createServer } = require('http')
+const FakeTimers = require('@sinonjs/fake-timers')
+const timers = require('../lib/timers')
 
-// test('multiple reconnect', (t) => {
-//   t.plan(5)
+test('multiple reconnect', (t) => {
+  t.plan(5)
 
-//   let n = 0
-//   const clock = FakeTimers.install()
-//   t.teardown(clock.uninstall.bind(clock))
+  let n = 0
+  const clock = FakeTimers.install()
+  t.teardown(clock.uninstall.bind(clock))
 
-//   const server = createServer((req, res) => {
-//     n === 0 ? res.destroy() : res.end('ok')
-//   })
-//   t.teardown(server.close.bind(server))
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  t.teardown(() => {
+    Object.assign(timers, orgTimers)
+  })
 
-//   server.listen(0, () => {
-//     const client = new Client(`http://localhost:${server.address().port}`)
-//     t.teardown(client.destroy.bind(client))
+  const server = createServer((req, res) => {
+    n === 0 ? res.destroy() : res.end('ok')
+  })
+  t.teardown(server.close.bind(server))
 
-//     client.request({ path: '/', method: 'GET' }, (err, data) => {
-//       t.ok(err)
-//       t.equal(err.code, 'UND_ERR_SOCKET')
-//     })
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
 
-//     client.request({ path: '/', method: 'GET' }, (err, data) => {
-//       t.error(err)
-//       data.body
-//         .resume()
-//         .on('end', () => {
-//           t.pass()
-//         })
-//     })
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.ok(err)
+      t.equal(err.code, 'UND_ERR_SOCKET')
+    })
 
-//     client.on('disconnect', () => {
-//       if (++n === 1) {
-//         t.pass()
-//       }
-//       process.nextTick(() => {
-//         clock.tick(1000)
-//       })
-//     })
-//   })
-// })
+    client.request({ path: '/', method: 'GET' }, (err, data) => {
+      t.error(err)
+      data.body
+        .resume()
+        .on('end', () => {
+          t.pass()
+        })
+    })
+
+    client.on('disconnect', () => {
+      if (++n === 1) {
+        t.pass()
+      }
+      process.nextTick(() => {
+        clock.tick(1000)
+      })
+    })
+  })
+})
