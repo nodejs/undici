@@ -5,6 +5,7 @@ const { Client, errors } = require('..')
 const { createServer } = require('http')
 const { Readable } = require('stream')
 const FakeTimers = require('@sinonjs/fake-timers')
+const timers = require('../lib/timers')
 
 test('refresh timeout on pause', (t) => {
   t.plan(1)
@@ -50,6 +51,12 @@ test('start headers timeout after request body', (t) => {
 
   const clock = FakeTimers.install()
   t.teardown(clock.uninstall.bind(clock))
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  t.teardown(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
   })
@@ -100,6 +107,12 @@ test('start headers timeout after async iterator request body', (t) => {
 
   const clock = FakeTimers.install()
   t.teardown(clock.uninstall.bind(clock))
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  t.teardown(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
   })
@@ -167,7 +180,7 @@ test('parser resume with no body timeout', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers, resume) {
-        setTimeout(resume, 100)
+        setTimeout(resume, 2000)
         return false
       },
       onData () {
