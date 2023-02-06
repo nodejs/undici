@@ -94,7 +94,7 @@ test('basic dispatch get', (t) => {
     t.equal(`localhost:${server.address().port}`, req.headers.host)
     t.equal(undefined, req.headers.foo)
     t.equal('bar', req.headers.bar)
-    t.equal('null', req.headers.baz)
+    t.equal('', req.headers.baz)
     t.equal(undefined, req.headers['content-length'])
     res.end('hello')
   })
