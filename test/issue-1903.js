@@ -4,7 +4,7 @@ const { createServer } = require('node:http')
 const { test } = require('tap')
 const { request } = require('..')
 
-function createPromise() {
+function createPromise () {
   const result = {}
   result.promise = new Promise((resolve) => {
     result.resolve = resolve
