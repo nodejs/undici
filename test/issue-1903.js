@@ -26,9 +26,9 @@ test('should parse content-disposition consistencely', async (t) => {
   const server = createServer((req, res) => {
     res.writeHead(200, {
       'content-length': 2,
-      'content-disposition': 'attachment; filename="år.pdf"'
+      'content-disposition': "attachment; filename='år.pdf'"
     })
-    header.push('attachment; filename="år.pdf"')
+    header.push("attachment; filename='år.pdf'")
     res.end('OK', spinup1.resolve)
   })
   t.teardown(server.close.bind(server))
@@ -36,7 +36,7 @@ test('should parse content-disposition consistencely', async (t) => {
 
   const proxy1 = createServer(async (req, res) => {
     const { statusCode, headers, body } = await request(`http://localhost:${server.address().port}`, {
-      method: "GET"
+      method: 'GET'
     })
     header.push(headers['content-disposition'])
     delete headers['transfer-encoding']
@@ -48,7 +48,7 @@ test('should parse content-disposition consistencely', async (t) => {
 
   const proxy2 = createServer(async (req, res) => {
     const { statusCode, headers, body } = await request(`http://localhost:${proxy1.address().port}`, {
-      method: "GET"
+      method: 'GET'
     })
     header.push(headers['content-disposition'])
     delete headers['transfer-encoding']
@@ -62,7 +62,7 @@ test('should parse content-disposition consistencely', async (t) => {
   await Promise.all([spinup1.promise, spinup2.promise, spinup3.promise])
 
   const { statusCode, headers, body } = await request(`http://localhost:${proxy2.address().port}`, {
-    method: "GET"
+    method: 'GET'
   })
   header.push(headers['content-disposition'])
   t.equal(statusCode, 200)
@@ -75,4 +75,3 @@ test('should parse content-disposition consistencely', async (t) => {
   t.equal(header[1], header[2])
   t.equal(header[2], header[3])
 })
-
