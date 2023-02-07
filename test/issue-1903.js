@@ -1,6 +1,6 @@
 'use strict'
 
-const { createServer } = require('node:http')
+const { createServer } = require('http')
 const { test } = require('tap')
 const { request } = require('..')
 
