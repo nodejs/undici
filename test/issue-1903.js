@@ -28,7 +28,7 @@ test('should parse content-disposition consistencely', async (t) => {
       'content-length': 2,
       'content-disposition': 'attachment; filename="år.pdf"'
     })
-    header.push(header)
+    header.push('attachment; filename="år.pdf"')
     res.end('OK', spinup1.resolve)
   })
   t.teardown(server.close.bind(server))
