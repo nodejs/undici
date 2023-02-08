@@ -206,5 +206,10 @@
 			"fetch() with value %1E",
 			"fetch() with value %1F"
 		]
+	},
+	"header-setcookie.any.js": {
+		"fail": [
+			"Set-Cookie is a forbidden response header"
+		]
 	}
 }
