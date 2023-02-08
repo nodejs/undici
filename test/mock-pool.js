@@ -5,13 +5,12 @@ const { createServer } = require('http')
 const { promisify } = require('util')
 const { MockAgent, MockPool, getGlobalDispatcher, setGlobalDispatcher, request } = require('..')
 const { kUrl } = require('../lib/core/symbols')
+const { nodeMajor } = require('../lib/core/util')
 const { kDispatches } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { MockInterceptor } = require('../lib/mock/mock-interceptor')
 const { getResponse } = require('../lib/mock/mock-utils')
 const Dispatcher = require('../lib/dispatcher')
-
-const nodeMajor = Number(process.versions.node.split('.', 1)[0])
 
 test('MockPool - constructor', t => {
   t.plan(3)

@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { createReadStream, writeFileSync, unlinkSync } = require('fs')
 const { Client, errors } = require('..')
 const { kConnect } = require('../lib/core/symbols')
+const { nodeMajor } = require('../lib/core/util')
 const timers = require('../lib/timers')
 const { createServer } = require('http')
 const EventEmitter = require('events')
@@ -15,8 +16,6 @@ const {
   Writable,
   PassThrough
 } = require('stream')
-
-const nodeMajor = Number(process.versions.node.split('.')[0])
 
 test('request timeout', (t) => {
   t.plan(1)

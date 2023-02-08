@@ -5,7 +5,7 @@ const { fetch } = require('../..')
 const { createServer } = require('http')
 const { once } = require('events')
 const { DOMException } = require('../../lib/fetch/constants')
-const semver = require('semver')
+const { nodeMajor } = require('../../lib/core/util')
 
 const { AbortController: NPMAbortController } = require('abort-controller')
 
@@ -37,7 +37,7 @@ test('Allow the usage of custom implementation of AbortController', async (t) =>
   }
 })
 
-test('allows aborting with custom errors', { skip: semver.satisfies(process.version, '16.x') }, async (t) => {
+test('allows aborting with custom errors', { skip: nodeMajor === 16 }, async (t) => {
   const server = createServer().listen(0)
 
   t.teardown(server.close.bind(server))

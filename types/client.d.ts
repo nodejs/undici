@@ -43,7 +43,11 @@ declare namespace Client {
     maxRequestsPerClient?: number;
     /** Max response body size in bytes, -1 is disabled */
     maxResponseSize?: number | null;
-
+    /** Enables a family autodetection algorithm that loosely implements section 5 of RFC 8305. */
+    autoSelectFamily?: boolean;
+    /** The amount of time in milliseconds to wait for a connection attempt to finish before trying the next address when using the `autoSelectFamily` option. */
+    autoSelectFamilyAttemptTimeout?: number;
+    
     interceptors?: {Client: readonly DispatchInterceptor[] | undefined}
   }
 

@@ -3,14 +3,13 @@
 const { test } = require('tap')
 const { request, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('..')
 const { InvalidArgumentError } = require('../lib/core/errors')
+const { nodeMajor } = require('../lib/core/util')
 const { readFileSync } = require('fs')
 const { join } = require('path')
 const ProxyAgent = require('../lib/proxy-agent')
 const { createServer } = require('http')
 const https = require('https')
 const proxy = require('proxy')
-
-const nodeMajor = Number(process.versions.node.split('.', 1)[0])
 
 test('should throw error when no uri is provided', (t) => {
   t.plan(2)

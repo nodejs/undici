@@ -533,6 +533,14 @@ test('invalid options throws', (t) => {
     t.equal(err.message, 'maxRequestsPerClient must be a positive number')
   }
 
+  try {
+    new Client(new URL('http://localhost:200'), { autoSelectFamilyAttemptTimeout: 'foo' }) // eslint-disable-line
+    t.fail()
+  } catch (err) {
+    t.type(err, errors.InvalidArgumentError)
+    t.equal(err.message, 'autoSelectFamilyAttemptTimeout must be a positive number')
+  }
+
   t.end()
 })
 

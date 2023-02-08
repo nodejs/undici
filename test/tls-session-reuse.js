@@ -7,8 +7,7 @@ const crypto = require('crypto')
 const { test } = require('tap')
 const { Client, Pool } = require('..')
 const { kSocket } = require('../lib/core/symbols')
-
-const nodeMajor = Number(process.versions.node.split('.')[0])
+const { nodeMajor } = require('../lib/core/util')
 
 const options = {
   key: readFileSync(join(__dirname, 'fixtures', 'key.pem'), 'utf8'),

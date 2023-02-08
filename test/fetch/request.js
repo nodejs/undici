@@ -13,7 +13,9 @@ const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
-const hasSignalReason = !!~process.version.localeCompare('v16.14.0', undefined, { numeric: true })
+const { nodeMajor } = require('../../lib/core/util')
+
+const hasSignalReason = (nodeMajor > 16 || (nodeMajor === 16 && nodeMajor > 14))
 
 test('arg validation', async (t) => {
   // constructor

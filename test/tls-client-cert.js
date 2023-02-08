@@ -6,7 +6,7 @@ const https = require('https')
 const { test } = require('tap')
 const { Client } = require('..')
 const { kSocket } = require('../lib/core/symbols')
-const nodeMajor = Number(process.versions.node.split('.')[0])
+const { nodeMajor } = require('../lib/core/util')
 
 const serverOptions = {
   ca: [

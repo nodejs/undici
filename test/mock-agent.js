@@ -7,13 +7,12 @@ const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
 const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/errors')
+const { nodeMajor } = require('../lib/core/util')
 const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
 const { kAgent } = require('../lib/mock/mock-symbols')
 const Dispatcher = require('../lib/dispatcher')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
-
-const nodeMajor = Number(process.versions.node.split('.')[0])
 
 test('MockAgent - constructor', t => {
   t.plan(5)

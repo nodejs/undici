@@ -96,7 +96,7 @@ test('parseRawHeaders', (t) => {
   t.same(util.parseRawHeaders(['key', 'value', Buffer.from('key'), Buffer.from('value')]), ['key', 'value', 'key', 'value'])
 })
 
-test('buildURL', { skip: process.version.startsWith('v12.') }, (t) => {
+test('buildURL', { skip: util.nodeMajor >= 12 }, (t) => {
   const tests = [
     [{ id: BigInt(123456) }, 'id=123456'],
     [{ date: new Date() }, 'date='],
