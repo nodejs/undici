@@ -665,3 +665,21 @@ tap.test('invalid headers', (t) => {
 
   t.end()
 })
+
+tap.test('Headers.prototype.getSetCookie', (t) => {
+  t.test('Mutating the returned list does not affect the set-cookie list', (t) => {
+    const h = new Headers([
+      ['set-cookie', 'a=b'],
+      ['set-cookie', 'c=d']
+    ])
+
+    const old = h.getSetCookie()
+    h.getSetCookie().push('oh=no')
+    const now = h.getSetCookie()
+
+    t.same(old, now)
+    t.end()
+  })
+
+  t.end()
+})

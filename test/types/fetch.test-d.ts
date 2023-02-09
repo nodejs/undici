@@ -169,3 +169,5 @@ expectType<Response>(response.clone())
 expectType<Request>(new Request('https://example.com', { body: 'Hello, world', duplex: 'half' }))
 expectAssignable<RequestInit>({ duplex: 'half' })
 expectNotAssignable<RequestInit>({ duplex: 'not valid' })
+
+expectType<string[]>(headers.getSetCookie())
