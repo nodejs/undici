@@ -246,3 +246,26 @@ test('DispatchOptions#reset', scope => {
     })
   })
 })
+
+test('should throw timeout immediately', scope => {
+  scope.plan(1)
+
+  scope.test('throw headersTimeoutError', t => {
+    t.plan(1)
+
+    const server = createServer((req, res) => {
+      setTimeout(() => {
+        res.end('banana')
+      }, 50)
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, () => {
+      t.rejects(request(`http://localhost:${server.address().port}`, {
+        method: 'GET',
+        headersTimeout: 10,
+        bodyTimeout: 10
+      }), 'HeadersTimeoutError')
+    })
+  })
+})

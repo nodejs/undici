@@ -498,7 +498,7 @@ test('invalid url', async (t) => {
   try {
     await fetch('http://invalid')
   } catch (e) {
-    t.match(e.cause.message, 'invalid')
+    t.match(e.cause.message, 'Connect Timeout Error')
   }
 })
 
