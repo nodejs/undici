@@ -74,8 +74,8 @@ test('Disable socket timeout', (t) => {
   server.once('request', (req, res) => {
     setTimeout(() => {
       res.end('hello')
-    }, 31e3)
-    clock.tick(32e3)
+    }, 301e3)
+    clock.tick(302e3)
   })
   t.teardown(server.close.bind(server))
 
