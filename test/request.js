@@ -256,15 +256,15 @@ test('should throw timeout immediately', scope => {
     const server = createServer((req, res) => {
       setTimeout(() => {
         res.end('banana')
-      }, 50)
+      }, 800)
     })
     t.teardown(server.close.bind(server))
 
     server.listen(0, () => {
       t.rejects(request(`http://localhost:${server.address().port}`, {
         method: 'GET',
-        headersTimeout: 10,
-        bodyTimeout: 10
+        headersTimeout: 500,
+        bodyTimeout: 400
       }), 'HeadersTimeoutError')
     })
   })
