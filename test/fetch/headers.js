@@ -666,6 +666,18 @@ tap.test('invalid headers', (t) => {
   t.end()
 })
 
+tap.test('headers that might cause a ReDoS', (t) => {
+  t.doesNotThrow(() => {
+    // This test will time out if the ReDoS attack is successful.
+    const headers = new Headers()
+    const attack = 'a' + '\t'.repeat(500_000) + '\ta'
+    headers.append('fhqwhgads', attack)
+  })
+
+  t.end()
+})
+
+
 tap.test('Headers.prototype.getSetCookie', (t) => {
   t.test('Mutating the returned list does not affect the set-cookie list', (t) => {
     const h = new Headers([
