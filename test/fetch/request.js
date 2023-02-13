@@ -13,9 +13,8 @@ const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
-const { nodeMajor } = require('../../lib/core/util')
 
-const hasSignalReason = (nodeMajor > 16 || (nodeMajor === 16 && nodeMajor > 14))
+const hasSignalReason = 'reason' in AbortSignal.prototype
 
 test('arg validation', async (t) => {
   // constructor
