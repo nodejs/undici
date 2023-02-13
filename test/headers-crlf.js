@@ -3,7 +3,6 @@
 const { test } = require('tap')
 const { Client } = require('..')
 const { createServer } = require('http')
-const EE = require('events')
 
 test('CRLF Injection in Nodejs ‘undici’ via host', (t) => {
   t.plan(1)
@@ -17,7 +16,7 @@ test('CRLF Injection in Nodejs ‘undici’ via host', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.close.bind(client))
 
-    const unsanitizedContentTypeInput =  '12 \r\n\r\naaa:aaa'
+    const unsanitizedContentTypeInput = '12 \r\n\r\naaa:aaa'
 
     try {
       const { body } = await client.request({
@@ -25,7 +24,7 @@ test('CRLF Injection in Nodejs ‘undici’ via host', (t) => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'host': unsanitizedContentTypeInput
+          host: unsanitizedContentTypeInput
         },
         body: 'asd'
       })

@@ -677,7 +677,6 @@ tap.test('headers that might cause a ReDoS', (t) => {
   t.end()
 })
 
-
 tap.test('Headers.prototype.getSetCookie', (t) => {
   t.test('Mutating the returned list does not affect the set-cookie list', (t) => {
     const h = new Headers([
