@@ -1,3 +1,4 @@
+import { IncomingHttpHeaders } from 'http'
 import { Duplex, Readable, Writable } from 'stream'
 import { expectAssignable, expectType } from 'tsd'
 import { Dispatcher } from '../..'
@@ -9,11 +10,18 @@ expectAssignable<Dispatcher>(new Dispatcher())
 {
   const dispatcher = new Dispatcher()
 
+  const nodeCoreHeaders = {
+    authorization: undefined,
+    ['content-type']: 'application/json'
+  } satisfies IncomingHttpHeaders;
+
   // dispatch
   expectAssignable<boolean>(dispatcher.dispatch({ path: '', method: 'GET' }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: { authorization: undefined } }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: [] }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: {} }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: nodeCoreHeaders }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: null, reset: true }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
 
