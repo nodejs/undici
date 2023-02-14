@@ -115,12 +115,8 @@ export class WPTRunner extends EventEmitter {
       })
 
       activeWorkers.add(worker)
-      const timeout = setTimeout(
-        () => {
-          console.warn('Test timed out:', test)
-        },
-        meta.timeout === 'long' ? 60_000 : 10_000
-      )
+      // These values come directly from the web-platform-tests
+      const timeout = meta.timeout === 'long' ? 60_000 : 10_000
 
       worker.on('message', (message) => {
         if (message.type === 'result') {
@@ -132,15 +128,16 @@ export class WPTRunner extends EventEmitter {
 
       worker.once('exit', () => {
         activeWorkers.delete(worker)
-        clearTimeout(timeout)
 
         if (++finishedFiles === this.#files.length) {
           this.handleRunnerCompletion()
         }
       })
 
-      if (activeWorkers.size === cpus().length) {
-        await once(worker, 'exit')
+      if (activeWorkers.size >= cpus().length) {
+        await once(worker, 'exit', {
+          signal: AbortSignal.timeout(timeout)
+        })
       }
     }
   }
