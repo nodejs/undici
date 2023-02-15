@@ -1,5 +1,7 @@
+import assert from 'node:assert'
 import { exit } from 'node:process'
 import { inspect } from 'node:util'
+import tty from 'node:tty'
 
 /**
  * Parse the `Meta:` tags sometimes included in tests.
@@ -131,4 +133,16 @@ export function normalizeName (name) {
       default: return match
     }
   })
+}
+
+export function colors (str, color) {
+  assert(Object.hasOwn(inspect.colors, color), `Missing color ${color}`)
+
+  if (!tty.WriteStream.prototype.hasColors()) {
+    return str
+  }
+
+  const [start, end] = inspect.colors[color]
+
+  return `\u001b[${start}m${str}\u001b[${end}m`
 }
