@@ -9,9 +9,8 @@ const { Readable } = require('stream')
 const net = require('net')
 const { promisify } = require('util')
 const { NotSupportedError } = require('../lib/core/errors')
+const { nodeMajor } = require('../lib/core/util')
 const { parseFormDataString } = require('./utils/formdata')
-
-const nodeMajor = Number(process.versions.node.split('.')[0])
 
 test('request dump', (t) => {
   t.plan(3)

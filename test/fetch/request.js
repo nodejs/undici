@@ -13,7 +13,8 @@ const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
-const hasSignalReason = !!~process.version.localeCompare('v16.14.0', undefined, { numeric: true })
+
+const hasSignalReason = 'reason' in AbortSignal.prototype
 
 test('arg validation', async (t) => {
   // constructor

@@ -2,6 +2,7 @@
 
 const t = require('tap')
 const undici = require('..')
+const { nodeMajor } = require('../lib/core/util')
 const {
   startRedirectingServer,
   startRedirectingWithBodyServer,
@@ -12,8 +13,6 @@ const {
   startRedirectingWithQueryParams
 } = require('./utils/redirecting-servers')
 const { createReadable, createReadableStream } = require('./utils/stream')
-
-const nodeMajor = Number(process.versions.node.split('.')[0])
 
 for (const factory of [
   (server, opts) => new undici.Agent(opts),

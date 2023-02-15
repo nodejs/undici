@@ -2,6 +2,7 @@
 
 const { test } = require('tap')
 const { createServer } = require('http')
+const { nodeMajor, nodeMinor } = require('../../lib/core/util')
 const { fetch } = require('../..')
 
 const {
@@ -9,9 +10,7 @@ const {
   performance
 } = require('perf_hooks')
 
-const semver = require('semver')
-
-const skip = semver.lt(process.version, '18.2.0')
+const skip = nodeMajor < 18 || (nodeMajor === 18 && nodeMinor < 2)
 
 test('should create a PerformanceResourceTiming after each fetch request', { skip }, (t) => {
   t.plan(4)
