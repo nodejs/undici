@@ -74,7 +74,7 @@ Returns: `void | Promise<ConnectData>` - Only returns a `Promise` if no `callbac
 #### Parameter: `ConnectData`
 
 * **statusCode** `number`
-* **headers** `Record<string, string | string[]>`
+* **headers** `Record<string, string | string[] | undefined>`
 * **socket** `stream.Duplex`
 * **opaque** `unknown`
 
@@ -383,7 +383,7 @@ Extends: [`RequestOptions`](#parameter-requestoptions)
 #### Parameter: PipelineHandlerData
 
 * **statusCode** `number`
-* **headers** `Record<string, string | string[]>`
+* **headers** `Record<string, string | string[] | undefined>`
 * **opaque** `unknown`
 * **body** `stream.Readable`
 * **context** `object`
@@ -644,7 +644,7 @@ Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback
 #### Parameter: `StreamFactoryData`
 
 * **statusCode** `number`
-* **headers** `Record<string, string | string[]>`
+* **headers** `Record<string, string | string[] | undefined>`
 * **opaque** `unknown`
 * **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received.
 
@@ -853,9 +853,9 @@ Emitted when dispatcher is no longer busy.
 
 ## Parameter: `UndiciHeaders`
 
-* `Record<string, string | string[]> | string[] | null`
+* `Record<string, string | string[] | undefined> | string[] | null`
 
-Header arguments such as `options.headers` in [`Client.dispatch`](Client.md#clientdispatchoptions-handlers) can be specified in two forms; either as an object specified by the `Record<string, string | string[]>` (`IncomingHttpHeaders`) type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
+Header arguments such as `options.headers` in [`Client.dispatch`](Client.md#clientdispatchoptions-handlers) can be specified in two forms; either as an object specified by the `Record<string, string | string[] | undefined>` (`IncomingHttpHeaders`) type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
 
 Keys are lowercase and values are not modified.
 
