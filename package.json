@@ -81,7 +81,7 @@
     "dns-packet": "^5.4.0",
     "docsify-cli": "^4.4.3",
     "form-data": "^4.0.0",
-    "formdata-node": "^4.3.1",
+    "formdata-node": "^5.0.0",
     "https-pem": "^3.0.0",
     "husky": "^8.0.1",
     "import-fresh": "^3.3.0",
