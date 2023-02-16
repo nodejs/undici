@@ -3,6 +3,9 @@
 const tap = require('tap')
 const { Headers, fill } = require('../../lib/fetch/headers')
 const { kGuard } = require('../../lib/fetch/symbols')
+const { once } = require('events')
+const { fetch } = require('../..')
+const { createServer } = require('http')
 
 tap.test('Headers initialization', t => {
   t.plan(8)
@@ -690,6 +693,23 @@ tap.test('Headers.prototype.getSetCookie', (t) => {
 
     t.same(old, now)
     t.end()
+  })
+
+  // https://github.com/nodejs/undici/issues/1935
+  t.test('When Headers are cloned, so are the cookies', async (t) => {
+    const server = createServer((req, res) => {
+      res.setHeader('Set-Cookie', 'test=onetwo')
+      res.end('Hello World!')
+    }).listen(0)
+
+    await once(server, 'listening')
+    t.teardown(server.close.bind(server))
+
+    const res = await fetch(`http://localhost:${server.address().port}`)
+    const entries = Object.fromEntries(res.headers.entries())
+
+    t.same(res.headers.getSetCookie(), ['test=onetwo'])
+    t.ok('set-cookie' in entries)
   })
 
   t.end()
