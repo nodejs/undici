@@ -1,11 +1,10 @@
 import { deepStrictEqual } from 'node:assert'
 import { EventEmitter, once } from 'node:events'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { cpus } from 'node:os'
 import { basename, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
-import { parseMeta, handlePipes, normalizeName } from './util.mjs'
+import { parseMeta, handlePipes, normalizeName, colors } from './util.mjs'
 
 const basePath = fileURLToPath(join(import.meta.url, '../../..'))
 const testPath = join(basePath, 'tests')
@@ -80,14 +79,14 @@ export class WPTRunner extends EventEmitter {
       }
     }
 
-    return [...files]
+    return [...files].sort()
   }
 
   async run () {
     const workerPath = fileURLToPath(join(import.meta.url, '../worker.mjs'))
     /** @type {Set<Worker>} */
     const activeWorkers = new Set()
-    let finishedFiles = 0
+    let finishedFiles = 1
 
     for (const test of this.#files) {
       const code = test.includes('.sub.')
@@ -97,9 +96,16 @@ export class WPTRunner extends EventEmitter {
 
       if (this.#status[basename(test)]?.skip) {
         this.#stats.skipped += 1
+
+        console.log('='.repeat(96))
+        console.log(colors(`[${finishedFiles}/${this.#files.length}] SKIPPED - ${test}`, 'yellow'))
+        console.log('='.repeat(96))
+
         finishedFiles++
         continue
       }
+
+      const start = performance.now()
 
       const worker = new Worker(workerPath, {
         workerData: {
@@ -126,20 +132,26 @@ export class WPTRunner extends EventEmitter {
         }
       })
 
-      worker.once('exit', () => {
+      try {
         activeWorkers.delete(worker)
 
-        if (++finishedFiles === this.#files.length) {
-          this.handleRunnerCompletion()
-        }
-      })
-
-      if (activeWorkers.size >= cpus().length) {
         await once(worker, 'exit', {
           signal: AbortSignal.timeout(timeout)
         })
+
+        console.log('='.repeat(96))
+        console.log(colors(`[${finishedFiles}/${this.#files.length}] PASSED - ${test}`, 'green'))
+        console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
+        console.log('='.repeat(96))
+
+        finishedFiles++
+      } catch (e) {
+        console.log(`${test} timed out after ${timeout}ms`)
+        throw e
       }
     }
+
+    this.handleRunnerCompletion()
   }
 
   /**

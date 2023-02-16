@@ -6,7 +6,7 @@ import { on } from 'events'
 
 if (process.env.CI) {
   // TODO(@KhafraDev): figure out *why* these tests are flaky in the CI.
-  process.exit(0)
+  // process.exit(0)
 }
 
 const serverPath = fileURLToPath(join(import.meta.url, '../server/websocket.mjs'))
