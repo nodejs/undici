@@ -2,7 +2,7 @@
 /// <reference types="node" />
 
 import { File } from './file'
-import { SpecIterator, SpecIterableIterator } from './fetch'
+import { SpecIterableIterator } from './fetch'
 
 /**
  * A `string` or `File` that represents a single value from a set of `FormData` key-value pairs.
@@ -13,6 +13,7 @@ declare type FormDataEntryValue = string | File
  * Provides a way to easily construct a set of key/value pairs representing form fields and their values, which can then be easily sent using fetch().
  */
 export declare class FormData {
+  constructor()
   /**
    * Appends a new value onto an existing key inside a FormData object,
    * or adds the key if it does not already exist.
@@ -21,7 +22,7 @@ export declare class FormData {
    *
    * @param name The name of the field whose data is contained in `value`.
    * @param value The field's value. This can be [`Blob`](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
-    or [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File). If none of these are specified the value is converted to a string.
+   or [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File). If none of these are specified the value is converted to a string.
    * @param fileName The filename reported to the server, when a Blob or File is passed as the second parameter. The default filename for Blob objects is "blob". The default filename for File objects is the file's filename.
    */
   append(name: string, value: unknown, fileName?: string): void
@@ -32,7 +33,7 @@ export declare class FormData {
    *
    * @param name The name of the field whose data is contained in `value`.
    * @param value The field's value. This can be [`Blob`](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
-    or [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File). If none of these are specified the value is converted to a string.
+   or [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File). If none of these are specified the value is converted to a string.
    * @param fileName The filename reported to the server, when a Blob or File is passed as the second parameter. The default filename for Blob objects is "blob". The default filename for File objects is the file's filename.
    *
    */
