@@ -608,8 +608,8 @@ test('stream timeout', (t) => {
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
-    }, 31e3)
-    clock.tick(31e3)
+    }, 301e3)
+    clock.tick(301e3)
   })
   t.teardown(server.close.bind(server))
 
@@ -682,8 +682,8 @@ test('pipeline timeout', (t) => {
   const server = createServer((req, res) => {
     setTimeout(() => {
       req.pipe(res)
-    }, 31e3)
-    clock.tick(31e3)
+    }, 301e3)
+    clock.tick(301e3)
   })
   t.teardown(server.close.bind(server))
 
