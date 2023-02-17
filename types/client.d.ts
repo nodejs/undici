@@ -31,7 +31,7 @@ declare namespace Client {
     connect?: buildConnector.BuildOptions | buildConnector.connector | null;
     /** The maximum length of request headers in bytes. Default: `16384` (16KiB). */
     maxHeaderSize?: number | null;
-    /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Default: `30e3` milliseconds (30s). */
+    /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Default: `300e3` milliseconds (300s). */
     bodyTimeout?: number | null;
     /** The amount of time the parser will wait to receive the complete HTTP headers (Node 14 and above only). Default: `300e3` milliseconds (300s). */
     headersTimeout?: number | null;
