@@ -68,7 +68,7 @@ export declare class Headers implements SpecIterable<[string, string]> {
   readonly keys: () => SpecIterableIterator<string>
   readonly values: () => SpecIterableIterator<string>
   readonly entries: () => SpecIterableIterator<[string, string]>
-  readonly [Symbol.iterator]: () => SpecIterator<[string, string]>
+  readonly [Symbol.iterator]: () => SpecIterableIterator<[string, string]>
 }
 
 export type RequestCache =
@@ -146,7 +146,8 @@ export declare class Request implements BodyMixin {
   readonly method: string
   readonly mode: RequestMode
   readonly redirect: RequestRedirect
-  readonly referrerPolicy: string
+  readonly referrer: string
+  readonly referrerPolicy: ReferrerPolicy
   readonly url: string
 
   readonly keepalive: boolean
