@@ -87,18 +87,27 @@ export class WPTRunner extends EventEmitter {
     /** @type {Set<Worker>} */
     const activeWorkers = new Set()
     let finishedFiles = 1
+    let total = this.#files.length
 
-    for (const test of this.#files) {
+    const files = this.#files.map((test) => {
       const code = test.includes('.sub.')
         ? handlePipes(readFileSync(test, 'utf-8'), this.#url)
         : readFileSync(test, 'utf-8')
       const meta = this.resolveMeta(code, test)
 
+      if (meta.variant.length) {
+        total += meta.variant.length - 1
+      }
+
+      return [test, code, meta]
+    })
+
+    for (const [test, code, meta] of files) {
       if (this.#status[basename(test)]?.skip) {
         this.#stats.skipped += 1
 
         console.log('='.repeat(96))
-        console.log(colors(`[${finishedFiles}/${this.#files.length}] SKIPPED - ${test}`, 'yellow'))
+        console.log(colors(`[${finishedFiles}/${total}] SKIPPED - ${test}`, 'yellow'))
         console.log('='.repeat(96))
 
         finishedFiles++
@@ -107,47 +116,54 @@ export class WPTRunner extends EventEmitter {
 
       const start = performance.now()
 
-      const worker = new Worker(workerPath, {
-        workerData: {
-          // Code to load before the test harness and tests.
-          initScripts: this.#initScripts,
-          // The test file.
-          test: code,
-          // Parsed META tag information
-          meta,
-          url: this.#url,
-          path: test
+      for (const variant of meta.variant.length ? meta.variant : ['']) {
+        const url = new URL(this.#url)
+        if (variant) {
+          url.search = variant
         }
-      })
-
-      activeWorkers.add(worker)
-      // These values come directly from the web-platform-tests
-      const timeout = meta.timeout === 'long' ? 60_000 : 10_000
-
-      worker.on('message', (message) => {
-        if (message.type === 'result') {
-          this.handleIndividualTestCompletion(message, basename(test))
-        } else if (message.type === 'completion') {
-          this.handleTestCompletion(worker)
-        }
-      })
-
-      try {
-        activeWorkers.delete(worker)
-
-        await once(worker, 'exit', {
-          signal: AbortSignal.timeout(timeout)
+        const worker = new Worker(workerPath, {
+          workerData: {
+            // Code to load before the test harness and tests.
+            initScripts: this.#initScripts,
+            // The test file.
+            test: code,
+            // Parsed META tag information
+            meta,
+            url: url.href,
+            path: test
+          }
         })
 
-        console.log('='.repeat(96))
-        console.log(colors(`[${finishedFiles}/${this.#files.length}] PASSED - ${test}`, 'green'))
-        console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
-        console.log('='.repeat(96))
+        activeWorkers.add(worker)
+        // These values come directly from the web-platform-tests
+        const timeout = meta.timeout === 'long' ? 60_000 : 10_000
 
-        finishedFiles++
-      } catch (e) {
-        console.log(`${test} timed out after ${timeout}ms`)
-        throw e
+        worker.on('message', (message) => {
+          if (message.type === 'result') {
+            this.handleIndividualTestCompletion(message, basename(test))
+          } else if (message.type === 'completion') {
+            this.handleTestCompletion(worker)
+          }
+        })
+
+        try {
+          activeWorkers.delete(worker)
+
+          await once(worker, 'exit', {
+            signal: AbortSignal.timeout(timeout)
+          })
+
+          console.log('='.repeat(96))
+          console.log(colors(`[${finishedFiles}/${total}] PASSED - ${test}`, 'green'))
+          if (variant) console.log('Variant:', variant)
+          console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
+          console.log('='.repeat(96))
+
+          finishedFiles++
+        } catch (e) {
+          console.log(`${test} timed out after ${timeout}ms`)
+          throw e
+        }
       }
     }
 
