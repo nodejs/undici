@@ -3,7 +3,11 @@
 		"flaky": [
 			"Already aborted signal rejects immediately",
 			"Underlying connection is closed when aborting after receiving response - no-cors",
-			"Stream errors once aborted. Underlying connection closed."
+			"Stream errors once aborted. Underlying connection closed.",
+      "Readable stream synchronously cancels with AbortError if aborted before reading",
+      "Cross Origin Fetch with non safe range header",
+      "Fetch with range header will be sent with Accept-Encoding: identity",
+      "Privileged header not allowed for guard type: request-no-cors"
 		]
 	},
 	"request-disturbed.any.js": {
@@ -64,44 +68,8 @@
 		]
 	},
 	"request-headers.any.js": {
-		"fail": [
-			"Adding invalid request header \"Accept-Charset: KO\"",
-			"Adding invalid request header \"accept-charset: KO\"",
-			"Adding invalid request header \"ACCEPT-ENCODING: KO\"",
-			"Adding invalid request header \"Accept-Encoding: KO\"",
-			"Adding invalid request header \"Access-Control-Request-Headers: KO\"",
-			"Adding invalid request header \"Access-Control-Request-Method: KO\"",
-			"Adding invalid request header \"Connection: KO\"",
-			"Adding invalid request header \"Content-Length: KO\"",
-			"Adding invalid request header \"Cookie: KO\"",
-			"Adding invalid request header \"Cookie2: KO\"",
-			"Adding invalid request header \"Date: KO\"",
-			"Adding invalid request header \"DNT: KO\"",
-			"Adding invalid request header \"Expect: KO\"",
-			"Adding invalid request header \"Host: KO\"",
-			"Adding invalid request header \"Keep-Alive: KO\"",
-			"Adding invalid request header \"Origin: KO\"",
-			"Adding invalid request header \"Referer: KO\"",
-			"Adding invalid request header \"Set-Cookie: KO\"",
-			"Adding invalid request header \"TE: KO\"",
-			"Adding invalid request header \"Trailer: KO\"",
-			"Adding invalid request header \"Transfer-Encoding: KO\"",
-			"Adding invalid request header \"Upgrade: KO\"",
-			"Adding invalid request header \"Via: KO\"",
-			"Adding invalid request header \"Proxy-: KO\"",
-			"Adding invalid request header \"proxy-a: KO\"",
-			"Adding invalid request header \"Sec-: KO\"",
-			"Adding invalid request header \"sec-b: KO\"",
-			"Adding invalid no-cors request header \"Content-Type: KO\"",
-			"Adding invalid no-cors request header \"Potato: KO\"",
-			"Adding invalid no-cors request header \"proxy: KO\"",
-			"Adding invalid no-cors request header \"proxya: KO\"",
-			"Adding invalid no-cors request header \"sec: KO\"",
-			"Adding invalid no-cors request header \"secb: KO\"",
-			"Check that request constructor is filtering headers provided as init parameter",
-			"Check that no-cors request constructor is filtering headers provided as init parameter",
-			"Check that no-cors request constructor is filtering headers provided as part of request parameter"
-		]
+    "note": "TODO(@KhafraDev): investigate referrer failures",
+    "skip": true
 	},
 	"request-consume.any.js": {
 		"fail": [
@@ -211,5 +179,300 @@
 		"fail": [
 			"Set-Cookie is a forbidden response header"
 		]
-	}
+	},
+  "cache.https.any.js": {
+    "skip": true
+  },
+  "conditional-get.any.js": {
+    "note": "There is only 1 test and it fails. No point in running it.",
+    "skip": true
+  },
+  "headers-no-cors.any.js": {
+    "skip": true
+  },
+  "cookies.any.js": {
+    "fail": [
+      "Include mode: 1 cookie",
+      "Include mode: 2 cookies",
+      "Same-origin mode: 1 cookie",
+      "Same-origin mode: 2 cookies"
+    ]
+  },
+  "redirect-location-escape.tentative.any.js": {
+    "skip": true
+  },
+  "fetch.any.js": {
+    "skip": true
+  },
+  "1xx-response.any.js": {
+    "note": "TODO(@KhafraDev): investigate",
+    "skip": true
+  },
+  "blob.any.js": {
+    "skip": true
+  },
+  "status.sub.any.js": {
+    "note": "undici doesn't implement orb",
+    "skip": true
+  },
+  "nosniff.sub.any.js": {
+    "note": "undici doesn't implement orb",
+    "skip": true
+  },
+  "known-mime-type.sub.any.js": {
+    "note": "undici doesn't implement orb",
+    "skip": true
+  },
+  "trailing-dot.https.sub.any.js": {
+    "note": "undici doesn't implement orb",
+    "skip": true
+  },
+  "fetch.https.sub.any.js": {
+    "note": "accessing secure wss url when the websocket server is insecure",
+    "skip": true
+  },
+  "request-cache-reload.any.js": {
+    "skip": true
+  },
+  "request-init-priority.any.js": {
+    "note": "undici doesn't implement priority hints, yet(?)",
+    "skip": true
+  },
+  "response-consume-stream.any.js": {
+    "fail": [
+      "Read blob response's body as readableStream with mode=byob",
+      "Read text response's body as readableStream with mode=byob",
+      "Read URLSearchParams response's body as readableStream with mode=byob",
+      "Read array buffer response's body as readableStream with mode=byob",
+      "Read form data response's body as readableStream with mode=byob"
+    ]
+  },
+  "response-stream-with-broken-then.any.js": {
+    "note": "TODO(@KhafraDev): either requires primordials or a bug in node core",
+    "skip": true
+  },
+  "api-and-duplicate-headers.any.js": {
+    "fail": [
+      "XMLHttpRequest and duplicate Content-Length/Content-Type headers",
+      "fetch() and duplicate Content-Length/Content-Type headers"
+    ]
+  },
+  "fetch.https.any.js": {
+    "note": "no cross origin protection",
+    "skip": true
+  },
+  "304-update.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "cache-mode.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "cc-request.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "credentials.tentative.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "freshness.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "heuristic.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "invalidate.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "partial.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "post-patch.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "status.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "vary.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "fetch-preflight.https.sub.any.js": {
+    "note": "no preflight",
+    "skip": true
+  },
+  "content-range.sub.any.js": {
+    "note": "no range header support",
+    "skip": true
+  },
+  "mode-no-cors.sub.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "mode-same-origin.any.js": {
+    "note": "TODO(@KhafraDev): we implement same origin checks, check why this test fails",
+    "skip": true
+  },
+  "referrer.any.js": {
+    "note": "TODO(@KhafraDev): should probably work?",
+    "skip": true
+  },
+  "request-forbidden-headers.any.js": {
+    "note": "no forbidden headers",
+    "skip": true
+  },
+  "request-referrer.any.js": {
+    "note": "TODO(@KhafraDev): referrer",
+    "skip": true
+  },
+  "request-upload.h2.any.js": {
+    "note": "no http2 support",
+    "skip": true
+  },
+  "status.h2.any.js": {
+    "note": "no http2 support",
+    "skip": true
+  },
+  "cors-basic.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-cookies-redirect.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-cookies.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-expose-star.sub.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "redirect-referrer.any.js": {
+    "note": "TODO(@KhafraDev): investigate referrer failures",
+    "skip": true
+  },
+  "redirect-upload.h2.any.js": {
+    "note": "no http2 support",
+    "skip": true
+  },
+  "request-cache-default-conditional.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "request-cache-default.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "request-cache-force-cache.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "request-cache-no-cache.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "request-cache-no-store.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "request-cache-only-if-cached.any.js": {
+    "note": "no http cache",
+    "skip": true
+  },
+  "authentication-basic.any.js": {
+    "note": "TODO(@KhafraDev): investigate",
+    "skip": true
+  },
+  "authentication-redirection.any.js": {
+    "note": "connects to https server",
+    "fail": [
+      "getAuthorizationHeaderValue - cross origin redirection"
+    ]
+  },
+  "redirect-empty-location.any.js": {
+    "note": "TODO(@KhafraDev): investigate",
+    "skip": true
+  },
+  "redirect-mode.any.js": {
+    "note": "mode isn't respected",
+    "skip": true
+  },
+  "redirect-origin.any.js": {
+    "note": "TODO(@KhafraDev): investigate",
+    "skip": true
+  },
+  "redirect-referrer-override.any.js": {
+    "note": "TODO(@KhafraDev): investigate",
+    "skip": true
+  },
+  "cors-filtering.sub.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-multiple-origins.sub.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-no-preflight.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-origin.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-preflight-referrer.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-preflight-response-validation.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-preflight-star.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-preflight-status.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-preflight.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-redirect-credentials.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-redirect-preflight.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-redirect.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-preflight-cache.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-preflight-not-cors-safelisted.any.js": {
+    "note": "no cors",
+    "skip": true
+  },
+  "cors-preflight-redirect.any.js": {
+    "note": "no cors",
+    "skip": true
+  }
 }

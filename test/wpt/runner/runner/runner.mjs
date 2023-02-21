@@ -45,10 +45,12 @@ export class WPTRunner extends EventEmitter {
 
     this.#folderName = folder
     this.#folderPath = join(testPath, folder)
-    this.#files.push(...WPTRunner.walk(
-      this.#folderPath,
-      (file) => file.endsWith('.js')
-    ))
+    this.#files.push(
+      ...WPTRunner.walk(
+        this.#folderPath,
+        (file) => file.endsWith('.any.js')
+      )
+    )
     this.#status = JSON.parse(readFileSync(join(statusPath, `${folder}.status.json`)))
     this.#url = url
 
@@ -89,6 +91,9 @@ export class WPTRunner extends EventEmitter {
     let finishedFiles = 1
 
     for (const test of this.#files) {
+      console.log('='.repeat(96))
+      console.log(colors(`Started ${test}`, 'green'))
+
       const code = test.includes('.sub.')
         ? handlePipes(readFileSync(test, 'utf-8'), this.#url)
         : readFileSync(test, 'utf-8')
@@ -97,7 +102,6 @@ export class WPTRunner extends EventEmitter {
       if (this.#status[basename(test)]?.skip) {
         this.#stats.skipped += 1
 
-        console.log('='.repeat(96))
         console.log(colors(`[${finishedFiles}/${this.#files.length}] SKIPPED - ${test}`, 'yellow'))
         console.log('='.repeat(96))
 
@@ -133,21 +137,22 @@ export class WPTRunner extends EventEmitter {
       })
 
       try {
-        activeWorkers.delete(worker)
-
         await once(worker, 'exit', {
           signal: AbortSignal.timeout(timeout)
         })
 
-        console.log('='.repeat(96))
         console.log(colors(`[${finishedFiles}/${this.#files.length}] PASSED - ${test}`, 'green'))
         console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
         console.log('='.repeat(96))
 
         finishedFiles++
+        activeWorkers.delete(worker)
       } catch (e) {
         console.log(`${test} timed out after ${timeout}ms`)
-        throw e
+        queueMicrotask(() => {
+          throw e
+        })
+        return
       }
     }
 

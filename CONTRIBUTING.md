@@ -77,6 +77,45 @@ cd <your-path-to-undici>
 npm run build:wasm
 ```
 
+<a id="update-wpts"></a>
+### Update `WPTs`
+
+`undici` runs a subset of the [`web-platform-tests`](https://github.com/web-platform-tests/wpt).
+
+Here are the steps to update them.
+
+#### Sparse-clone the [wpt](https://github.com/web-platform-tests/wpt) repo
+
+```bash
+git clone --depth 1 --single-branch --branch epochs/daily --filter=blob:none --sparse https://github.com/web-platform-tests/wpt.git test/wpt/tests
+
+cd test/wpt/tests
+
+```
+
+#### Checkout the tests
+
+Only run the commands for the folder(s) you want to update.
+
+```bash
+git sparse-checkout add /fetch
+git sparse-checkout add /FileAPI
+git sparse-checkout add /xhr
+git sparse-checkout add /websockets
+git sparse-checkout add /resources
+git sparse-checkout add /common
+```
+
+#### Run the tests
+
+Run the tests to ensure that any new failures are marked as such.
+
+You can mark tests as failing in their corresponding [status](./test/wpt/status) file.
+
+```bash
+npm run test:wpt
+```
+
 <a id="lint"></a>
 
 ### Lint

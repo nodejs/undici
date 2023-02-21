@@ -32,5 +32,28 @@
 			"events are dispatched in the correct order for an empty blob",
 			"events are dispatched in the correct order for a non-empty blob"
 		]
-	}
+	},
+  "url-with-xhr.any.js": {
+    "note": "no xmlhttprequest",
+    "skip": true
+  },
+  "url-with-fetch.any.js": {
+    "note": "TODO(@KhafraDev): can be fixed",
+    "skip": true
+  },
+  "url-format.any.js": {
+    "note": "TODO(@KhafraDev): can be fixed",
+    "skip": true
+  },
+  "filereader_result.any.js": {
+    "skip": true
+  },
+  "Blob-stream.any.js": {
+    "fail": [
+      "Reading Blob.stream() with BYOB reader"
+    ]
+  },
+  "Blob-constructor.any.js": {
+    "skip": true
+  }
 }
