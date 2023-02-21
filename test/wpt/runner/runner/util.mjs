@@ -2,6 +2,7 @@ import assert from 'node:assert'
 import { exit } from 'node:process'
 import { inspect } from 'node:util'
 import tty from 'node:tty'
+import { sep } from 'node:path'
 
 /**
  * Parse the `Meta:` tags sometimes included in tests.
@@ -149,4 +150,23 @@ export function colors (str, color) {
   const [start, end] = inspect.colors[color]
 
   return `\u001b[${start}m${str}\u001b[${end}m`
+}
+
+/** @param {string} path */
+export function resolveStatusPath (path, status) {
+  const paths = path
+    .slice(process.cwd().length + sep.length)
+    .split(sep)
+    .slice(3) // [test, wpt, tests, fetch, b, c.js] -> [fetch, b, c.js]
+
+  // skip the first folder name
+  for (let i = 1; i < paths.length - 1; i++) {
+    status = status[paths[i]]
+
+    if (!status) {
+      break
+    }
+  }
+
+  return { topLevel: status ?? {}, file: status?.[paths.at(-1)] ?? {} }
 }
