@@ -107,7 +107,7 @@ export class WPTRunner extends EventEmitter {
     for (const [test, code, meta] of files) {
       console.log('='.repeat(96))
       console.log(colors(`Started ${test}`, 'green'))
-      
+
       if (this.#status[basename(test)]?.skip) {
         this.#stats.skipped += 1
 
@@ -155,7 +155,6 @@ export class WPTRunner extends EventEmitter {
             signal: AbortSignal.timeout(timeout)
           })
 
-          console.log('='.repeat(96))
           console.log(colors(`[${finishedFiles}/${total}] PASSED - ${test}`, 'green'))
           if (variant) console.log('Variant:', variant)
           console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
