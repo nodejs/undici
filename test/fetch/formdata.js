@@ -349,6 +349,10 @@ test('FormData should be compatible with third-party libraries', (t) => {
       this.data = []
     }
 
+    get [Symbol.toStringTag] () {
+      return 'FormData'
+    }
+
     append () {}
     delete () {}
     get () {}

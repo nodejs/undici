@@ -25,7 +25,9 @@ export function parseMeta (fileContents) {
     /** @type {string[]} */
     global: [],
     /** @type {string[]} */
-    scripts: []
+    scripts: [],
+    /** @type {string[]} */
+    variant: []
   }
 
   for (const line of lines) {
@@ -42,6 +44,8 @@ export function parseMeta (fileContents) {
 
     switch (groups.type) {
       case 'variant':
+        meta[groups.type].push(groups.match)
+        break
       case 'title':
       case 'timeout': {
         meta[groups.type] = groups.match
