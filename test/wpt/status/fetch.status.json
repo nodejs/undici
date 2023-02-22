@@ -371,7 +371,7 @@
         ]
       },
       "response-stream-with-broken-then.any.js": {
-        "note": "TODO(@KhafraDev): either requires primordials or a bug in node core",
+        "note": "this is a bug in webstreams, see https://github.com/nodejs/node/issues/46786",
         "skip": true
       }
     }
