@@ -46,8 +46,11 @@
         "skip": true
       },
       "referrer.any.js": {
-        "note": "TODO(@KhafraDev): investigate",
-        "skip": true
+        "fail": [
+          "origin-when-cross-origin policy on a cross-origin URL",
+          "origin-when-cross-origin policy on a cross-origin URL after same-origin redirection",
+          "origin-when-cross-origin policy on a same-origin URL after cross-origin redirection"
+        ]
       },
       "request-forbidden-headers.any.js": {
         "note": "undici doesn't filter headers",
