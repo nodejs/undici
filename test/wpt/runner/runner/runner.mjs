@@ -159,6 +159,8 @@ export class WPTRunner extends EventEmitter {
             this.handleTestCompletion(worker)
           } else if (message.type === 'error') {
             this.#uncaughtExceptions.push(message.error)
+            this.#stats.failed += 1
+            this.#stats.success -= 1
           }
         })
 
