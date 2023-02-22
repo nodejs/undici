@@ -289,12 +289,6 @@
           "Consume empty FormData request body as text"
         ]
       },
-      "request-consume.any.js": {
-        "note": "TODO(@KhafraDev): investigate",
-        "fail": [
-          "Consume blob response's body as blob"
-        ]
-      },
       "request-disturbed.any.js": {
         "note": "TODO(@KhafraDev): investigate",
         "fail": [
