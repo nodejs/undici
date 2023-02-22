@@ -180,14 +180,14 @@ test('too long base64 url', async (t) => {
 
 test('https://domain.com/#', (t) => {
   t.plan(1)
-  const domain = 'https://domain.com/#'
+  const domain = 'https://domain.com/#a'
   const serialized = URLSerializer(new URL(domain))
   t.equal(serialized, domain)
 })
 
 test('https://domain.com/?', (t) => {
   t.plan(1)
-  const domain = 'https://domain.com/?'
+  const domain = 'https://domain.com/?a=b'
   const serialized = URLSerializer(new URL(domain))
   t.equal(serialized, domain)
 })
