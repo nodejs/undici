@@ -17,6 +17,7 @@ var invalidRequestHeaders = [
   ["Accept-Encoding", "KO"],
   ["Access-Control-Request-Headers", "KO"],
   ["Access-Control-Request-Method", "KO"],
+  ["Access-Control-Request-Private-Network", "KO"],
   ["Connection", "KO"],
   ["Content-Length", "KO"],
   ["Cookie", "KO"],
@@ -58,6 +59,7 @@ var invalidRequestNoCorsHeaders = [
   ["proxya", "KO"],
   ["sec", "KO"],
   ["secb", "KO"],
+  ["Empty-Value", ""],
 ];
 
 validRequestHeaders.forEach(function(header) {

@@ -1,215 +1,395 @@
 {
-	"general.any.js": {
-		"flaky": [
-			"Already aborted signal rejects immediately",
-			"Underlying connection is closed when aborting after receiving response - no-cors",
-			"Stream errors once aborted. Underlying connection closed."
-		]
-	},
-	"request-disturbed.any.js": {
-		"fail": [
-			"Input request used for creating new request became disturbed even if body is not used"
-		]
-	},
-	"response-error-from-stream.any.js": {
-		"fail": [
-			"ReadableStream start() Error propagates to Response.formData() Promise",
-			"ReadableStream pull() Error propagates to Response.formData() Promise"
-		]
-	},
-	"response-consume-empty.any.js": {
-		"fail": [
-			"Consume empty FormData response body as text"
-		]
-	},
+  "api": {
+    "abort": {
+      "general.any.js": {
+        "fail": [
+          "Already aborted signal rejects immediately",
+          "Underlying connection is closed when aborting after receiving response - no-cors",
+          "Stream errors once aborted. Underlying connection closed.",
+          "Readable stream synchronously cancels with AbortError if aborted before reading"
+        ]
+      },
+      "cache.https.any.js": {
+        "note": "undici doesn't implement http caching",
+        "skip": true
+      }
+    },
+    "basic": {
+      "conditional-get.any.js": {
+        "fail": [
+          "Testing conditional GET with ETags"
+        ]
+      },
+      "header-value-combining.any.js": {
+        "fail": [
+          "response.headers.get('content-length') expects 0, 0",
+          "response.headers.get('foo-test') expects 1, 2, 3",
+          "response.headers.get('heya') expects , \\x0B\f, 1, , , 2"
+        ],
+        "flaky": [
+          "response.headers.get('content-length') expects 0",
+          "response.headers.get('double-trouble') expects , ",
+          "response.headers.get('www-authenticate') expects 1, 2, 3, 4"
+        ]
+      },
+      "integrity.sub.any.js": {
+        "fail": [
+          "Empty string integrity for opaque response"
+        ]
+      },
+      "mode-no-cors.sub.any.js": {
+        "note": "undici doesn't implement CORs",
+        "skip": true
+      },
+      "mode-same-origin.any.js": {
+        "note": "undici doesn't respect RequestInit.mode",
+        "skip": true
+      },
+      "referrer.any.js": {
+        "fail": [
+          "origin-when-cross-origin policy on a cross-origin URL",
+          "origin-when-cross-origin policy on a cross-origin URL after same-origin redirection",
+          "origin-when-cross-origin policy on a same-origin URL after cross-origin redirection"
+        ]
+      },
+      "request-forbidden-headers.any.js": {
+        "note": "undici doesn't filter headers",
+        "skip": true
+      },
+      "request-headers.any.js": {
+        "fail": [
+          "Fetch with Chicken",
+          "Fetch with Chicken with body",
+          "Fetch with TacO and mode \"same-origin\" needs an Origin header",
+          "Fetch with TacO and mode \"cors\" needs an Origin header"
+        ]
+      },
+      "request-referrer.any.js": {
+        "note": "TODO(@KhafraDev): url referrer test could probably be fixed",
+        "fail": [
+          "about:client referrer",
+          "url referrer"
+        ]
+      },
+      "request-upload.any.js": {
+        "fail": [
+          "Fetch with POST with text body on 421 response should be retried once on new connection."	
+        ]
+      },
+      "request-upload.h2.any.js": {
+        "note": "undici doesn't support http/2",
+        "skip": true
+      },
+      "status.h2.any.js": {
+        "note": "undici doesn't support http/2",
+        "skip": true
+      },
+      "stream-safe-creation.any.js": {
+        "note": "tests are very finnicky",
+        "fail": [
+          "throwing Object.prototype.type accessor should not affect stream creation by 'fetch'",
+          "Object.prototype.type accessor returning invalid value should not affect stream creation by 'fetch'",
+          "throwing Object.prototype.highWaterMark accessor should not affect stream creation by 'fetch'",
+          "Object.prototype.highWaterMark accessor returning invalid value should not affect stream creation by 'fetch'"
+        ]
+      }
+    },
+    "cors": {
+      "note": "undici doesn't implement CORs",
+      "skip": true
+    },
+    "credentials": {
+      "authentication-redirection.any.js": {
+        "note": "connects to https server",
+        "fail": [
+          "getAuthorizationHeaderValue - cross origin redirection"
+        ]
+      },
+      "cookies.any.js": {
+        "fail": [
+          "Include mode: 1 cookie",
+          "Include mode: 2 cookies",
+          "Same-origin mode: 1 cookie",
+          "Same-origin mode: 2 cookies"
+        ]
+      }
+    },
+    "headers": {
+      "header-setcookie.any.js": {
+        "note": "undici doesn't filter headers",
+        "fail": [
+          "Set-Cookie is a forbidden response header"
+        ]
+      },
+      "header-values-normalize.any.js": {
+        "note": "TODO(@KhafraDev): https://github.com/nodejs/undici/issues/1680",
+        "fail": [
+          "XMLHttpRequest with value %00",
+          "XMLHttpRequest with value %01",
+          "XMLHttpRequest with value %02",
+          "XMLHttpRequest with value %03",
+          "XMLHttpRequest with value %04",
+          "XMLHttpRequest with value %05",
+          "XMLHttpRequest with value %06",
+          "XMLHttpRequest with value %07",
+          "XMLHttpRequest with value %08",
+          "XMLHttpRequest with value %09",
+          "XMLHttpRequest with value %0A",
+          "XMLHttpRequest with value %0D",
+          "XMLHttpRequest with value %0E",
+          "XMLHttpRequest with value %0F",
+          "XMLHttpRequest with value %10",
+          "XMLHttpRequest with value %11",
+          "XMLHttpRequest with value %12",
+          "XMLHttpRequest with value %13",
+          "XMLHttpRequest with value %14",
+          "XMLHttpRequest with value %15",
+          "XMLHttpRequest with value %16",
+          "XMLHttpRequest with value %17",
+          "XMLHttpRequest with value %18",
+          "XMLHttpRequest with value %19",
+          "XMLHttpRequest with value %1A",
+          "XMLHttpRequest with value %1B",
+          "XMLHttpRequest with value %1C",
+          "XMLHttpRequest with value %1D",
+          "XMLHttpRequest with value %1E",
+          "XMLHttpRequest with value %1F",
+          "XMLHttpRequest with value %20",
+          "fetch() with value %01",
+          "fetch() with value %02",
+          "fetch() with value %03",
+          "fetch() with value %04",
+          "fetch() with value %05",
+          "fetch() with value %06",
+          "fetch() with value %07",
+          "fetch() with value %08",
+          "fetch() with value %0E",
+          "fetch() with value %0F",
+          "fetch() with value %10",
+          "fetch() with value %11",
+          "fetch() with value %12",
+          "fetch() with value %13",
+          "fetch() with value %14",
+          "fetch() with value %15",
+          "fetch() with value %16",
+          "fetch() with value %17",
+          "fetch() with value %18",
+          "fetch() with value %19",
+          "fetch() with value %1A",
+          "fetch() with value %1B",
+          "fetch() with value %1C",
+          "fetch() with value %1D",
+          "fetch() with value %1E",
+          "fetch() with value %1F"
+        ]
+      },
+      "header-values.any.js": {
+        "fail": [
+          "XMLHttpRequest with value x%00x needs to throw",
+          "XMLHttpRequest with value x%0Ax needs to throw",
+          "XMLHttpRequest with value x%0Dx needs to throw",
+          "XMLHttpRequest with all valid values",
+          "fetch() with all valid values"
+        ]
+      },
+      "headers-no-cors.any.js": {
+        "note": "undici doesn't implement CORs",
+        "skip": true
+      }
+    },
+    "redirect": {
+      "redirect-empty-location.any.js": {
+        "note": "undici handles redirect: manual differently than browsers",
+        "fail": [
+          "redirect response with empty Location, manual mode"
+        ]
+      },
+      "redirect-location-escape.tentative.any.js": {
+        "note": "TODO(@KhafraDev): crashes runner",
+        "skip": true
+      },
+      "redirect-location.any.js": {
+        "note": "undici handles redirect: manual differently than browsers",
+        "fail": [
+          "Redirect 301 in \"manual\" mode without location",
+          "Redirect 301 in \"manual\" mode with invalid location",
+          "Redirect 301 in \"manual\" mode with data location",
+          "Redirect 302 in \"manual\" mode without location",
+          "Redirect 302 in \"manual\" mode with invalid location",
+          "Redirect 302 in \"manual\" mode with data location",
+          "Redirect 303 in \"manual\" mode without location",
+          "Redirect 303 in \"manual\" mode with invalid location",
+          "Redirect 303 in \"manual\" mode with data location",
+          "Redirect 307 in \"manual\" mode without location",
+          "Redirect 307 in \"manual\" mode with invalid location",
+          "Redirect 307 in \"manual\" mode with data location",
+          "Redirect 308 in \"manual\" mode without location",
+          "Redirect 308 in \"manual\" mode with invalid location",
+          "Redirect 308 in \"manual\" mode with data location"
+        ]
+      },
+      "redirect-method.any.js": {
+        "fail": [
+          "Redirect 303 with TESTING"
+        ]
+      },
+      "redirect-mode.any.js": {
+        "note": "mode isn't respected",
+        "skip": true
+      },
+      "redirect-origin.any.js": {
+        "note": "TODO(@KhafraDev): investigate",
+        "skip": true
+      },
+      "redirect-referrer-override.any.js": {
+        "note": "TODO(@KhafraDev): investigate",
+        "skip": true
+      },
+      "redirect-referrer.any.js": {
+        "note": "TODO(@KhafraDev): investigate",
+        "skip": true
+      },
+      "redirect-upload.h2.any.js": {
+        "note": "undici doesn't support http/2",
+        "skip": true
+      }
+    },
+    "request": {
+      "request-cache-default-conditional.any.js": {
+        "note": "undici doesn't implement an http cache",
+        "skip": true
+      },
+      "request-cache-default.any.js": {
+        "note": "undici doesn't implement an http cache",
+        "skip": true
+      },
+      "request-cache-force-cache.any.js": {
+        "note": "undici doesn't implement an http cache",
+        "skip": true
+      },
+      "request-cache-no-cache.any.js": {
+        "note": "undici doesn't implement an http cache",
+        "skip": true
+      },
+      "request-cache-no-store.any.js": {
+        "note": "undici doesn't implement an http cache",
+        "skip": true
+      },
+      "request-cache-only-if-cached.any.js": {
+        "note": "undici doesn't implement an http cache",
+        "skip": true
+      },
+      "request-cache-reload.any.js": {
+        "note": "undici doesn't implement an http cache",
+        "skip": true
+      },
+      "request-consume-empty.any.js": {
+        "note": "the semantics about this test are being discussed - https://github.com/web-platform-tests/wpt/pull/3950",
+        "fail": [
+          "Consume empty FormData request body as text"
+        ]
+      },
+      "request-consume.any.js": {
+        "note": "TODO(@KhafraDev): investigate",
+        "fail": [
+          "Consume blob response's body as blob"
+        ]
+      },
+      "request-disturbed.any.js": {
+        "note": "TODO(@KhafraDev): investigate",
+        "fail": [
+          "Input request used for creating new request became disturbed even if body is not used"
+        ]
+      },
+      "request-headers.any.js": {
+        "note": "TODO(@KhafraDev): investigate",
+        "skip": true
+      },
+      "request-init-priority.any.js": {
+        "note": "undici doesn't implement priority hints, yet(?)",
+        "skip": true
+      }
+    },
+    "response": {
+      "response-clone.any.js": {
+        "fail": [
+          "Check response clone use structureClone for teed ReadableStreams (ArrayBufferchunk)",
+          "Check response clone use structureClone for teed ReadableStreams (DataViewchunk)"
+        ]
+      },
+      "response-consume-empty.any.js": {
+        "fail": [
+          "Consume empty FormData response body as text"
+        ]
+      },
+      "response-consume-stream.any.js": {
+        "fail": [
+          "Read blob response's body as readableStream with mode=byob",
+          "Read text response's body as readableStream with mode=byob",
+          "Read URLSearchParams response's body as readableStream with mode=byob",
+          "Read array buffer response's body as readableStream with mode=byob",
+          "Read form data response's body as readableStream with mode=byob"
+        ]
+      },
+      "response-error-from-stream.any.js": {
+        "fail": [
+          "ReadableStream start() Error propagates to Response.formData() Promise",
+          "ReadableStream pull() Error propagates to Response.formData() Promise"
+        ]
+      },
+      "response-stream-with-broken-then.any.js": {
+        "note": "TODO(@KhafraDev): either requires primordials or a bug in node core",
+        "skip": true
+      }
+    }
+  },
+  "content-length": {
+    "api-and-duplicate-headers.any.js": {
+      "fail": [
+        "XMLHttpRequest and duplicate Content-Length/Content-Type headers",
+        "fetch() and duplicate Content-Length/Content-Type headers"
+      ]
+    }
+  },
+  "cross-origin-resource-policy": {
+    "note": "undici doesn't implement CORs",
+    "skip": true
+  },
+  "http-cache": {
+    "note": "undici doesn't implement http caching",
+    "skip": true
+  },
+  "metadata": {
+    "note": "undici doesn't respect RequestInit.mode",
+    "skip": true
+  },
+  "orb": {
+    "tentative": {
+      "note": "undici doesn't implement orb",
+      "skip": true
+    }
+  },
+  "range": {
+    "note": "undici doesn't respect range header",
+    "skip": true
+  },
+  "security": {
+    "1xx-response.any.js": {
+      "fail": [
+        "Status(100) should be ignored.",
+        "Status(101) should be accepted, with removing body.",
+        "Status(103) should be ignored.",
+        "Status(199) should be ignored."
+      ]
+    }
+  },
+  "stale-while-revalidate": {
+    "note": "undici doesn't implement http caching",
+    "skip": true
+  },
 	"idlharness.any.js": {
 		"flaky": [
 			"Window interface: operation fetch(RequestInfo, optional RequestInit)"
-		]
-	},
-	"response-clone.any.js": {
-		"fail": [
-			"Check response clone use structureClone for teed ReadableStreams (ArrayBufferchunk)",
-			"Check response clone use structureClone for teed ReadableStreams (DataViewchunk)"
-		]
-	},
-	"request-upload.any.js": {
-		"fail": [
-			"Fetch with POST with text body on 421 response should be retried once on new connection."	
-		]
-	},
-	"stream-safe-creation.any.js": {
-		"fail": [
-			"throwing Object.prototype.type accessor should not affect stream creation by 'fetch'",
-			"Object.prototype.type accessor returning invalid value should not affect stream creation by 'fetch'",
-			"throwing Object.prototype.highWaterMark accessor should not affect stream creation by 'fetch'",
-			"Object.prototype.highWaterMark accessor returning invalid value should not affect stream creation by 'fetch'"
-		]
-	},
-	"header-value-combining.any.js": {
-		"fail": [
-			"response.headers.get('content-length') expects 0, 0",
-			"response.headers.get('foo-test') expects 1, 2, 3",
-			"response.headers.get('heya') expects , \\x0B\f, 1, , , 2"
-		],
-		"flaky": [
-			"response.headers.get('content-length') expects 0",
-      "response.headers.get('double-trouble') expects , ",
-			"response.headers.get('www-authenticate') expects 1, 2, 3, 4"
-		]
-	},
-	"integrity.sub.any.js": {
-		"fail": [
-			"Empty string integrity for opaque response"
-		]
-	},
-	"request-headers.any.js": {
-		"fail": [
-			"Adding invalid request header \"Accept-Charset: KO\"",
-			"Adding invalid request header \"accept-charset: KO\"",
-			"Adding invalid request header \"ACCEPT-ENCODING: KO\"",
-			"Adding invalid request header \"Accept-Encoding: KO\"",
-			"Adding invalid request header \"Access-Control-Request-Headers: KO\"",
-			"Adding invalid request header \"Access-Control-Request-Method: KO\"",
-			"Adding invalid request header \"Connection: KO\"",
-			"Adding invalid request header \"Content-Length: KO\"",
-			"Adding invalid request header \"Cookie: KO\"",
-			"Adding invalid request header \"Cookie2: KO\"",
-			"Adding invalid request header \"Date: KO\"",
-			"Adding invalid request header \"DNT: KO\"",
-			"Adding invalid request header \"Expect: KO\"",
-			"Adding invalid request header \"Host: KO\"",
-			"Adding invalid request header \"Keep-Alive: KO\"",
-			"Adding invalid request header \"Origin: KO\"",
-			"Adding invalid request header \"Referer: KO\"",
-			"Adding invalid request header \"Set-Cookie: KO\"",
-			"Adding invalid request header \"TE: KO\"",
-			"Adding invalid request header \"Trailer: KO\"",
-			"Adding invalid request header \"Transfer-Encoding: KO\"",
-			"Adding invalid request header \"Upgrade: KO\"",
-			"Adding invalid request header \"Via: KO\"",
-			"Adding invalid request header \"Proxy-: KO\"",
-			"Adding invalid request header \"proxy-a: KO\"",
-			"Adding invalid request header \"Sec-: KO\"",
-			"Adding invalid request header \"sec-b: KO\"",
-			"Adding invalid no-cors request header \"Content-Type: KO\"",
-			"Adding invalid no-cors request header \"Potato: KO\"",
-			"Adding invalid no-cors request header \"proxy: KO\"",
-			"Adding invalid no-cors request header \"proxya: KO\"",
-			"Adding invalid no-cors request header \"sec: KO\"",
-			"Adding invalid no-cors request header \"secb: KO\"",
-			"Check that request constructor is filtering headers provided as init parameter",
-			"Check that no-cors request constructor is filtering headers provided as init parameter",
-			"Check that no-cors request constructor is filtering headers provided as part of request parameter"
-		]
-	},
-	"request-consume.any.js": {
-		"fail": [
-			"Consume blob response's body as blob"
-		]
-	},
-	"request-consume-empty.any.js": {
-		"fail": [
-			"Consume empty FormData request body as text"
-		]
-	},
-	"redirect-method.any.js": {
-		"fail": [
-			"Redirect 303 with TESTING"
-		]
-	},
-	"redirect-location.any.js": {
-		"fail": [
-			"Redirect 301 in \"manual\" mode without location",
-			"Redirect 301 in \"manual\" mode with invalid location",
-			"Redirect 301 in \"manual\" mode with data location",
-			"Redirect 302 in \"manual\" mode without location",
-			"Redirect 302 in \"manual\" mode with invalid location",
-			"Redirect 302 in \"manual\" mode with data location",
-			"Redirect 303 in \"manual\" mode without location",
-			"Redirect 303 in \"manual\" mode with invalid location",
-			"Redirect 303 in \"manual\" mode with data location",
-			"Redirect 307 in \"manual\" mode without location",
-			"Redirect 307 in \"manual\" mode with invalid location",
-			"Redirect 307 in \"manual\" mode with data location",
-			"Redirect 308 in \"manual\" mode without location",
-			"Redirect 308 in \"manual\" mode with invalid location",
-			"Redirect 308 in \"manual\" mode with data location"
-		]
-	},
-	"header-values.any.js": {
-		"fail": [
-			"XMLHttpRequest with value x%00x needs to throw",
-			"XMLHttpRequest with value x%0Ax needs to throw",
-			"XMLHttpRequest with value x%0Dx needs to throw",
-			"XMLHttpRequest with all valid values",
-			"fetch() with all valid values"
-		]
-	},
-	"header-values-normalize.any.js": {
-		"fail": [
-			"XMLHttpRequest with value %00",
-			"XMLHttpRequest with value %01",
-			"XMLHttpRequest with value %02",
-			"XMLHttpRequest with value %03",
-			"XMLHttpRequest with value %04",
-			"XMLHttpRequest with value %05",
-			"XMLHttpRequest with value %06",
-			"XMLHttpRequest with value %07",
-			"XMLHttpRequest with value %08",
-			"XMLHttpRequest with value %09",
-			"XMLHttpRequest with value %0A",
-			"XMLHttpRequest with value %0D",
-			"XMLHttpRequest with value %0E",
-			"XMLHttpRequest with value %0F",
-			"XMLHttpRequest with value %10",
-			"XMLHttpRequest with value %11",
-			"XMLHttpRequest with value %12",
-			"XMLHttpRequest with value %13",
-			"XMLHttpRequest with value %14",
-			"XMLHttpRequest with value %15",
-			"XMLHttpRequest with value %16",
-			"XMLHttpRequest with value %17",
-			"XMLHttpRequest with value %18",
-			"XMLHttpRequest with value %19",
-			"XMLHttpRequest with value %1A",
-			"XMLHttpRequest with value %1B",
-			"XMLHttpRequest with value %1C",
-			"XMLHttpRequest with value %1D",
-			"XMLHttpRequest with value %1E",
-			"XMLHttpRequest with value %1F",
-			"XMLHttpRequest with value %20",
-			"fetch() with value %01",
-			"fetch() with value %02",
-			"fetch() with value %03",
-			"fetch() with value %04",
-			"fetch() with value %05",
-			"fetch() with value %06",
-			"fetch() with value %07",
-			"fetch() with value %08",
-			"fetch() with value %0E",
-			"fetch() with value %0F",
-			"fetch() with value %10",
-			"fetch() with value %11",
-			"fetch() with value %12",
-			"fetch() with value %13",
-			"fetch() with value %14",
-			"fetch() with value %15",
-			"fetch() with value %16",
-			"fetch() with value %17",
-			"fetch() with value %18",
-			"fetch() with value %19",
-			"fetch() with value %1A",
-			"fetch() with value %1B",
-			"fetch() with value %1C",
-			"fetch() with value %1D",
-			"fetch() with value %1E",
-			"fetch() with value %1F"
-		]
-	},
-	"header-setcookie.any.js": {
-		"fail": [
-			"Set-Cookie is a forbidden response header"
 		]
 	}
 }

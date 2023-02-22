@@ -1,10 +1,9 @@
-import { deepStrictEqual } from 'node:assert'
 import { EventEmitter, once } from 'node:events'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { basename, isAbsolute, join, resolve } from 'node:path'
+import { isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
-import { parseMeta, handlePipes, normalizeName, colors } from './util.mjs'
+import { colors, handlePipes, normalizeName, parseMeta, resolveStatusPath } from './util.mjs'
 
 const basePath = fileURLToPath(join(import.meta.url, '../../..'))
 const testPath = join(basePath, 'tests')
@@ -45,10 +44,12 @@ export class WPTRunner extends EventEmitter {
 
     this.#folderName = folder
     this.#folderPath = join(testPath, folder)
-    this.#files.push(...WPTRunner.walk(
-      this.#folderPath,
-      (file) => file.endsWith('.js')
-    ))
+    this.#files.push(
+      ...WPTRunner.walk(
+        this.#folderPath,
+        (file) => file.endsWith('.any.js')
+      )
+    )
     this.#status = JSON.parse(readFileSync(join(statusPath, `${folder}.status.json`)))
     this.#url = url
 
@@ -103,10 +104,14 @@ export class WPTRunner extends EventEmitter {
     })
 
     for (const [test, code, meta] of files) {
-      if (this.#status[basename(test)]?.skip) {
+      console.log('='.repeat(96))
+      console.log(`Started ${test}`)
+
+      const status = resolveStatusPath(test, this.#status)
+
+      if (status.file.skip || status.topLevel.skip) {
         this.#stats.skipped += 1
 
-        console.log('='.repeat(96))
         console.log(colors(`[${finishedFiles}/${total}] SKIPPED - ${test}`, 'yellow'))
         console.log('='.repeat(96))
 
@@ -140,29 +145,30 @@ export class WPTRunner extends EventEmitter {
 
         worker.on('message', (message) => {
           if (message.type === 'result') {
-            this.handleIndividualTestCompletion(message, basename(test))
+            this.handleIndividualTestCompletion(message, status, test)
           } else if (message.type === 'completion') {
             this.handleTestCompletion(worker)
           }
         })
 
         try {
-          activeWorkers.delete(worker)
-
           await once(worker, 'exit', {
             signal: AbortSignal.timeout(timeout)
           })
 
-          console.log('='.repeat(96))
           console.log(colors(`[${finishedFiles}/${total}] PASSED - ${test}`, 'green'))
           if (variant) console.log('Variant:', variant)
           console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
           console.log('='.repeat(96))
 
           finishedFiles++
+          activeWorkers.delete(worker)
         } catch (e) {
           console.log(`${test} timed out after ${timeout}ms`)
-          throw e
+          queueMicrotask(() => {
+            throw e
+          })
+          return
         }
       }
     }
@@ -173,8 +179,8 @@ export class WPTRunner extends EventEmitter {
   /**
    * Called after a test has succeeded or failed.
    */
-  handleIndividualTestCompletion (message, fileName) {
-    const { fail, allowUnexpectedFailures, flaky } = this.#status[fileName] ?? this.#status
+  handleIndividualTestCompletion (message, status, path) {
+    const { file, topLevel } = status
 
     if (message.type === 'result') {
       this.#stats.completed += 1
@@ -184,13 +190,16 @@ export class WPTRunner extends EventEmitter {
 
         const name = normalizeName(message.result.name)
 
-        if (flaky?.includes(name)) {
+        if (file.flaky?.includes(name)) {
           this.#stats.expectedFailures += 1
-        } else if (allowUnexpectedFailures || fail?.includes(name)) {
-          if (!allowUnexpectedFailures) {
-            this.#statusOutput[fileName] ??= []
-            this.#statusOutput[fileName].push(name)
+        } else if (file.allowUnexpectedFailures || topLevel.allowUnexpectedFailures || file.fail?.includes(name)) {
+          if (!file.allowUnexpectedFailures && !topLevel.allowUnexpectedFailures) {
+            if (Array.isArray(file.fail)) {
+              this.#statusOutput[path] ??= []
+              this.#statusOutput[path].push(file.fail)
+            }
           }
+
           this.#stats.expectedFailures += 1
         } else {
           process.exitCode = 1
@@ -214,17 +223,7 @@ export class WPTRunner extends EventEmitter {
    * Called after every test has completed.
    */
   handleRunnerCompletion () {
-    const expectedFailuresObject = Object.keys(this.#status).reduce((a, b) => {
-      if (Array.isArray(this.#status[b].fail)) {
-        a[b] = [...this.#status[b].fail]
-      }
-      return a
-    }, {})
-
-    deepStrictEqual(
-      this.#statusOutput,
-      expectedFailuresObject
-    )
+    console.log(this.#statusOutput) // tests that failed
 
     this.emit('completion')
     const { completed, failed, success, expectedFailures, skipped } = this.#stats

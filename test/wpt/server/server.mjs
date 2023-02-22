@@ -335,6 +335,28 @@ const server = createServer(async (req, res) => {
       res.end(body)
       break
     }
+    case '/fetch/api/resources/authentication.py': {
+      const auth = Buffer.from(req.headers.authorization.slice('Basic '.length), 'base64')
+      const [user, password] = auth.toString().split(':')
+
+      if (user === 'user' && password === 'password') {
+        res.end('Authentication done')
+        return
+      }
+
+      const realm = fullUrl.searchParams.get('realm') ?? 'test'
+
+      res.statusCode = 401
+      res.setHeader('WWW-Authenticate', `Basic realm="${realm}"`)
+      res.end('Please login with credentials \'user\' and \'password\'')
+      return
+    }
+    case '/fetch/api/resources/redirect-empty-location.py': {
+      res.setHeader('location', '')
+      res.statusCode = 302
+      res.end('')
+      return
+    }
     default: {
       res.statusCode = 200
       res.end('body')
