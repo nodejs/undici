@@ -54,8 +54,12 @@
         "skip": true
       },
       "request-headers.any.js": {
-        "note": "TODO(@KhafraDev): investigate",
-        "skip": true
+        "fail": [
+          "Fetch with Chicken",
+          "Fetch with Chicken with body",
+          "Fetch with TacO and mode \"same-origin\" needs an Origin header",
+          "Fetch with TacO and mode \"cors\" needs an Origin header"
+        ]
       },
       "request-referrer.any.js": {
         "note": "TODO(@KhafraDev): investigate",
