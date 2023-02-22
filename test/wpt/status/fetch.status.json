@@ -65,8 +65,11 @@
         ]
       },
       "request-referrer.any.js": {
-        "note": "TODO(@KhafraDev): investigate",
-        "skip": true
+        "note": "TODO(@KhafraDev): url referrer test could probably be fixed",
+        "fail": [
+          "about:client referrer",
+          "url referrer"
+        ]
       },
       "request-upload.any.js": {
         "fail": [
@@ -96,12 +99,6 @@
       "skip": true
     },
     "credentials": {
-      "authentication-basic.any.js": {
-        "note": "TODO(@KhafraDev): investigate",
-        "fail": [
-          "User-added bogus Authorization header with omit mode"
-        ]
-      },
       "authentication-redirection.any.js": {
         "note": "connects to https server",
         "fail": [
@@ -202,9 +199,8 @@
     },
     "redirect": {
       "redirect-empty-location.any.js": {
-        "note": "TODO(@KhafraDev): investigate",
+        "note": "undici handles redirect: manual differently than browsers",
         "fail": [
-          "redirect response with empty Location, follow mode",
           "redirect response with empty Location, manual mode"
         ]
       },
