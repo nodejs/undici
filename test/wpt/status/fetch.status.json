@@ -289,21 +289,54 @@
           "Consume empty FormData request body as text"
         ]
       },
-      "request-consume.any.js": {
-        "note": "TODO(@KhafraDev): investigate",
-        "fail": [
-          "Consume blob response's body as blob"
-        ]
-      },
       "request-disturbed.any.js": {
-        "note": "TODO(@KhafraDev): investigate",
+        "note": "this test fails in all other platforms - https://wpt.fyi/results/fetch/api/request/request-disturbed.any.html?label=master&label=experimental&product=chrome&product=firefox&product=safari&product=deno&aligned&view=subtest",
         "fail": [
           "Input request used for creating new request became disturbed even if body is not used"
         ]
       },
       "request-headers.any.js": {
-        "note": "TODO(@KhafraDev): investigate",
-        "skip": true
+        "note": "undici doesn't filter headers",
+        "fail": [
+          "Adding invalid request header \"Accept-Charset: KO\"",
+          "Adding invalid request header \"accept-charset: KO\"",
+          "Adding invalid request header \"ACCEPT-ENCODING: KO\"",
+          "Adding invalid request header \"Accept-Encoding: KO\"",
+          "Adding invalid request header \"Access-Control-Request-Headers: KO\"",
+          "Adding invalid request header \"Access-Control-Request-Method: KO\"",
+          "Adding invalid request header \"Access-Control-Request-Private-Network: KO\"",
+          "Adding invalid request header \"Connection: KO\"",
+          "Adding invalid request header \"Content-Length: KO\"",
+          "Adding invalid request header \"Cookie: KO\"",
+          "Adding invalid request header \"Cookie2: KO\"",
+          "Adding invalid request header \"Date: KO\"",
+          "Adding invalid request header \"DNT: KO\"",
+          "Adding invalid request header \"Expect: KO\"",
+          "Adding invalid request header \"Host: KO\"",
+          "Adding invalid request header \"Keep-Alive: KO\"",
+          "Adding invalid request header \"Origin: KO\"",
+          "Adding invalid request header \"Referer: KO\"",
+          "Adding invalid request header \"Set-Cookie: KO\"",
+          "Adding invalid request header \"TE: KO\"",
+          "Adding invalid request header \"Trailer: KO\"",
+          "Adding invalid request header \"Transfer-Encoding: KO\"",
+          "Adding invalid request header \"Upgrade: KO\"",
+          "Adding invalid request header \"Via: KO\"",
+          "Adding invalid request header \"Proxy-: KO\"",
+          "Adding invalid request header \"proxy-a: KO\"",
+          "Adding invalid request header \"Sec-: KO\"",
+          "Adding invalid request header \"sec-b: KO\"",
+          "Adding invalid no-cors request header \"Content-Type: KO\"",
+          "Adding invalid no-cors request header \"Potato: KO\"",
+          "Adding invalid no-cors request header \"proxy: KO\"",
+          "Adding invalid no-cors request header \"proxya: KO\"",
+          "Adding invalid no-cors request header \"sec: KO\"",
+          "Adding invalid no-cors request header \"secb: KO\"",
+          "Adding invalid no-cors request header \"Empty-Value: \"",
+          "Check that request constructor is filtering headers provided as init parameter",
+          "Check that no-cors request constructor is filtering headers provided as init parameter",
+          "Check that no-cors request constructor is filtering headers provided as part of request parameter"
+        ]
       },
       "request-init-priority.any.js": {
         "note": "undici doesn't implement priority hints, yet(?)",
@@ -338,7 +371,7 @@
         ]
       },
       "response-stream-with-broken-then.any.js": {
-        "note": "TODO(@KhafraDev): either requires primordials or a bug in node core",
+        "note": "this is a bug in webstreams, see https://github.com/nodejs/node/issues/46786",
         "skip": true
       }
     }
