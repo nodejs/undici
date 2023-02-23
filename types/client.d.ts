@@ -29,21 +29,21 @@ export declare namespace Client {
     /** The amount of time the parser will wait to receive the complete HTTP headers (Node 14 and above only). Default: `300e3` milliseconds (300s). */
     headersTimeout?: number;
     /** @deprecated unsupported socketTimeout, use headersTimeout & bodyTimeout instead */
-    socketTimeout?: number;
+    socketTimeout?: never;
     /** @deprecated unsupported requestTimeout, use headersTimeout & bodyTimeout instead */
-    requestTimeout?: number;
+    requestTimeout?: never;
     /** TODO */
     connectTimeout?: number;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Default: `300e3` milliseconds (300s). */
     bodyTimeout?: number;
     /** @deprecated unsupported idleTimeout, use keepAliveTimeout instead */
-    idleTimeout?: number;
+    idleTimeout?: never;
     /** @deprecated unsupported keepAlive, use pipelining=0 instead */
-    keepAlive?: string;
+    keepAlive?: never;
     /** the timeout after which a socket without active requests will time out. Monitors time between activity on a connected socket. This value may be overridden by *keep-alive* hints from the server. Default: `4e3` milliseconds (4s). */
     keepAliveTimeout?: number;
     /** @deprecated unsupported maxKeepAliveTimeout, use keepAliveMaxTimeout instead */
-    maxKeepAliveTimeout?: number;
+    maxKeepAliveTimeout?: never;
     /** the maximum allowed `idleTimeout` when overridden by *keep-alive* hints from the server. Default: `600e3` milliseconds (10min). */
     keepAliveMaxTimeout?: number;
     /** A number subtracted from server *keep-alive* hints when overriding `idleTimeout` to account for timing inaccuracies caused by e.g. transport latency. Default: `1e3` milliseconds (1s). */
@@ -53,7 +53,7 @@ export declare namespace Client {
     /** The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`. */
     pipelining?: number;
     /** @deprecated use the connect option instead */
-    tls?: TlsOptions;
+    tls?: never;
     /** If `true`, an error is thrown when the request content-length header doesn't match the length of the request body. Default: `true`. */
     strictContentLength?: boolean;
     /** TODO */
