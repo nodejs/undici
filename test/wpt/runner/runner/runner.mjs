@@ -31,6 +31,8 @@ export class WPTRunner extends EventEmitter {
   /** Tests that have expectedly failed mapped by file name */
   #statusOutput = {}
 
+  #uncaughtExceptions = []
+
   #stats = {
     completed: 0,
     failed: 0,
@@ -58,6 +60,13 @@ export class WPTRunner extends EventEmitter {
         this.emit('completion')
       })
     }
+
+    this.once('completion', () => {
+      for (const exception of this.#uncaughtExceptions) {
+        console.log(colors(`Uncaught exception: ${exception.stack}`, 'red'))
+        console.log('='.repeat(96))
+      }
+    })
   }
 
   static walk (dir, fn) {
@@ -148,6 +157,10 @@ export class WPTRunner extends EventEmitter {
             this.handleIndividualTestCompletion(message, status, test)
           } else if (message.type === 'completion') {
             this.handleTestCompletion(worker)
+          } else if (message.type === 'error') {
+            this.#uncaughtExceptions.push(message.error)
+            this.#stats.failed += 1
+            this.#stats.success -= 1
           }
         })
 
@@ -196,7 +209,7 @@ export class WPTRunner extends EventEmitter {
           if (!file.allowUnexpectedFailures && !topLevel.allowUnexpectedFailures) {
             if (Array.isArray(file.fail)) {
               this.#statusOutput[path] ??= []
-              this.#statusOutput[path].push(file.fail)
+              this.#statusOutput[path].push(name)
             }
           }
 

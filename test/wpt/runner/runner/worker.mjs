@@ -18,6 +18,17 @@ import { CloseEvent } from '../../../../lib/websocket/events.js'
 
 const { initScripts, meta, test, url, path } = workerData
 
+process.on('uncaughtException', (err) => {
+  parentPort.postMessage({
+    type: 'error',
+    error: {
+      message: err.message,
+      name: err.name,
+      stack: err.stack
+    }
+  })
+})
+
 const basePath = join(process.cwd(), 'test/wpt/tests')
 const urlPath = path.slice(basePath.length)
 
