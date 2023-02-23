@@ -1,6 +1,6 @@
 import { EventEmitter, once } from 'node:events'
-import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { isAbsolute, join, resolve } from 'node:path'
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { colors, handlePipes, normalizeName, parseMeta, resolveStatusPath } from './util.mjs'
@@ -8,6 +8,24 @@ import { colors, handlePipes, normalizeName, parseMeta, resolveStatusPath } from
 const basePath = fileURLToPath(join(import.meta.url, '../../..'))
 const testPath = join(basePath, 'tests')
 const statusPath = join(basePath, 'status')
+
+// https://github.com/web-platform-tests/wpt/blob/b24eedd/resources/testharness.js#L3705
+function sanitizeUnpairedSurrogates (str) {
+  return str.replace(
+    /([\ud800-\udbff]+)(?![\udc00-\udfff])|(^|[^\ud800-\udbff])([\udc00-\udfff]+)/g,
+    function (_, low, prefix, high) {
+      let output = prefix || '' // Prefix may be undefined
+      const string = low || high // Only one of these alternates can match
+      for (let i = 0; i < string.length; i++) {
+        output += codeUnitStr(string[i])
+      }
+      return output
+    })
+}
+
+function codeUnitStr (char) {
+  return 'U+' + char.charCodeAt(0).toString(16)
+}
 
 export class WPTRunner extends EventEmitter {
   /** @type {string} */
@@ -33,6 +51,12 @@ export class WPTRunner extends EventEmitter {
 
   #uncaughtExceptions = []
 
+  /** @type {boolean} */
+  #appendReport
+
+  /** @type {string} */
+  #reportPath
+
   #stats = {
     completed: 0,
     failed: 0,
@@ -41,7 +65,7 @@ export class WPTRunner extends EventEmitter {
     skipped: 0
   }
 
-  constructor (folder, url) {
+  constructor (folder, url, { appendReport = false, reportPath } = {}) {
     super()
 
     this.#folderName = folder
@@ -52,6 +76,19 @@ export class WPTRunner extends EventEmitter {
         (file) => file.endsWith('.any.js')
       )
     )
+
+    if (appendReport) {
+      if (!reportPath) {
+        throw new TypeError('reportPath must be provided when appendReport is true')
+      }
+      if (!existsSync(reportPath)) {
+        throw new TypeError('reportPath is invalid')
+      }
+    }
+
+    this.#appendReport = appendReport
+    this.#reportPath = reportPath
+
     this.#status = JSON.parse(readFileSync(join(statusPath, `${folder}.status.json`)))
     this.#url = url
 
@@ -148,13 +185,29 @@ export class WPTRunner extends EventEmitter {
           }
         })
 
+        let result, report
+        if (this.#appendReport) {
+          report = JSON.parse(readFileSync(this.#reportPath))
+
+          const fileUrl = new URL(`/${this.#folderName}${test.slice(this.#folderPath.length)}`, 'http://wpt')
+          fileUrl.pathname = fileUrl.pathname.replace(/\.js$/, '.html')
+          fileUrl.search = variant
+
+          result = {
+            test: fileUrl.href.slice(fileUrl.origin.length),
+            subtests: [],
+            status: 'OK'
+          }
+          report.results.push(result)
+        }
+
         activeWorkers.add(worker)
         // These values come directly from the web-platform-tests
         const timeout = meta.timeout === 'long' ? 60_000 : 10_000
 
         worker.on('message', (message) => {
           if (message.type === 'result') {
-            this.handleIndividualTestCompletion(message, status, test)
+            this.handleIndividualTestCompletion(message, status, test, meta, result)
           } else if (message.type === 'completion') {
             this.handleTestCompletion(worker)
           } else if (message.type === 'error') {
@@ -174,6 +227,10 @@ export class WPTRunner extends EventEmitter {
           console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
           console.log('='.repeat(96))
 
+          if (result?.subtests.length > 0) {
+            writeFileSync(this.#reportPath, JSON.stringify(report))
+          }
+
           finishedFiles++
           activeWorkers.delete(worker)
         } catch (e) {
@@ -192,14 +249,24 @@ export class WPTRunner extends EventEmitter {
   /**
    * Called after a test has succeeded or failed.
    */
-  handleIndividualTestCompletion (message, status, path) {
+  handleIndividualTestCompletion (message, status, path, meta, wptResult) {
     const { file, topLevel } = status
 
     if (message.type === 'result') {
       this.#stats.completed += 1
 
+      if (/^Untitled( \d+)?$/.test(message.result.name)) {
+        message.result.name = `${meta.title}${message.result.name.slice(8)}`
+      }
+
       if (message.result.status === 1) {
         this.#stats.failed += 1
+
+        wptResult?.subtests.push({
+          status: 'FAIL',
+          name: sanitizeUnpairedSurrogates(message.result.name),
+          message: sanitizeUnpairedSurrogates(message.result.message)
+        })
 
         const name = normalizeName(message.result.name)
 
@@ -219,6 +286,10 @@ export class WPTRunner extends EventEmitter {
           console.error(message.result)
         }
       } else {
+        wptResult?.subtests.push({
+          status: 'PASS',
+          name: sanitizeUnpairedSurrogates(message.result.name)
+        })
         this.#stats.success += 1
       }
     }
