@@ -1,20 +1,14 @@
-import { join } from 'node:path'
-import { runInThisContext } from 'node:vm'
-import { parentPort, workerData } from 'node:worker_threads'
-import { readFileSync } from 'node:fs'
 import buffer from 'node:buffer'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { setFlagsFromString } from 'node:v8'
+import { runInNewContext, runInThisContext } from 'node:vm'
+import { parentPort, workerData } from 'node:worker_threads'
 import {
-  setGlobalOrigin,
-  Response,
-  Request,
-  fetch,
-  FormData,
-  File,
-  Headers,
-  FileReader
+  fetch, File, FileReader, FormData, Headers, Request, Response, setGlobalOrigin
 } from '../../../../index.js'
-import { WebSocket } from '../../../../lib/websocket/websocket.js'
 import { CloseEvent } from '../../../../lib/websocket/events.js'
+import { WebSocket } from '../../../../lib/websocket/websocket.js'
 
 const { initScripts, meta, test, url, path } = workerData
 
@@ -141,6 +135,11 @@ for (const initScript of initScripts) {
 for (const script of meta.scripts) {
   runInThisContext(script)
 }
+
+// A few tests require gc, which can't be passed to a Worker.
+// see https://github.com/nodejs/node/issues/16595#issuecomment-340288680
+setFlagsFromString('--expose-gc')
+globalThis.gc = runInNewContext('gc')
 
 // Finally, run the test.
 runInThisContext(test)
