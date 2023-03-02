@@ -102,7 +102,8 @@
       "authentication-redirection.any.js": {
         "note": "connects to https server",
         "fail": [
-          "getAuthorizationHeaderValue - cross origin redirection"
+          "getAuthorizationHeaderValue - cross origin redirection",
+          "getAuthorizationHeaderValue - same origin redirection"
         ]
       },
       "cookies.any.js": {

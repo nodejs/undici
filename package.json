@@ -112,8 +112,7 @@
     "ignore": [
       "lib/llhttp/constants.js",
       "lib/llhttp/utils.js",
-      "test/wpt/tests",
-      "test/wpt/runner/resources"
+      "test/wpt/tests"
     ]
   },
   "tsd": {

@@ -1,4 +1,4 @@
-import { WPTRunner } from './runner/runner/runner.mjs'
+import { WPTRunner } from './runner/runner.mjs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { fork } from 'child_process'

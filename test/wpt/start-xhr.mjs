@@ -1,4 +1,4 @@
-import { WPTRunner } from './runner/runner/runner.mjs'
+import { WPTRunner } from './runner/runner.mjs'
 import { once } from 'events'
 
 const { WPT_REPORT } = process.env

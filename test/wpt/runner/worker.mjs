@@ -6,9 +6,9 @@ import { runInNewContext, runInThisContext } from 'node:vm'
 import { parentPort, workerData } from 'node:worker_threads'
 import {
   fetch, File, FileReader, FormData, Headers, Request, Response, setGlobalOrigin
-} from '../../../../index.js'
-import { CloseEvent } from '../../../../lib/websocket/events.js'
-import { WebSocket } from '../../../../lib/websocket/websocket.js'
+} from '../../../index.js'
+import { CloseEvent } from '../../../lib/websocket/events.js'
+import { WebSocket } from '../../../lib/websocket/websocket.js'
 
 const { initScripts, meta, test, url, path } = workerData
 
@@ -97,7 +97,7 @@ runInThisContext(`
   globalThis.Window = Object.getPrototypeOf(globalThis).constructor
 `)
 
-const harness = readFileSync(join(basePath, '../runner/resources/testharness.cjs'), 'utf-8')
+const harness = readFileSync(join(basePath, '/resources/testharness.js'), 'utf-8')
 runInThisContext(harness)
 
 // add_*_callback comes from testharness

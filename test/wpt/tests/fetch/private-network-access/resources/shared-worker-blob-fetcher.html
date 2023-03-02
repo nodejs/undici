@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>Worker Blob Fetcher</title>
+<title>SharedWorker Blob Fetcher</title>
 <script>
   window.addEventListener("message", function (evt) {
-    const { url } = evt.data;
+    let { url } = evt.data;
 
     const workerScriptContent = `
       async function doFetch(url) {
@@ -15,31 +15,36 @@
         };
       }
 
-      async function fetchAndPost(url) {
+      async function fetchAndPost(url, port) {
         try {
           const message = await doFetch(url);
-          self.postMessage(message);
+          port.postMessage(message);
         } catch(e) {
-          self.postMessage({ error: e.name });
+          port.postMessage({ error: e.name });
         }
       }
 
-      fetchAndPost("${url}");
+      const url = "${url}";
+
+      self.addEventListener("connect", async (evt) => {
+        await fetchAndPost(url, evt.ports[0]);
+      });
     `;
     const blob =
         new Blob([workerScriptContent], {type: 'application/javascript'});
     const workerScriptUrl = URL.createObjectURL(blob);
 
-    const worker = new Worker(workerScriptUrl);
+    const worker = new SharedWorker(workerScriptUrl);
 
     URL.revokeObjectURL(workerScriptUrl);
 
-    worker.addEventListener("message", (evt) => {
+    worker.onerror = (evt) => {
+      parent.postMessage({ error: evt.message || "unknown error" }, "*");
+    };
+
+    worker.port.addEventListener("message", (evt) => {
       parent.postMessage(evt.data, "*");
     });
-
-    worker.addEventListener("error", (evt) => {
-      parent.postMessage({ error: evt.message || "unknown error" }, "*");
-    });
+    worker.port.start();
   });
 </script>
