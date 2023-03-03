@@ -13,7 +13,7 @@ const {
 const skip = nodeMajor < 18 || (nodeMajor === 18 && nodeMinor < 2)
 
 test('should create a PerformanceResourceTiming after each fetch request', { skip }, (t) => {
-  t.plan(4)
+  t.plan(6)
   const obs = new PerformanceObserver(list => {
     const entries = list.getEntries()
     t.equal(entries.length, 1)
@@ -24,6 +24,9 @@ test('should create a PerformanceResourceTiming after each fetch request', { ski
       protocol: 'http'
     })
     t.strictSame(entry.entryType, 'resource')
+
+    t.ok(entry.duration >= 0)
+    t.ok(entry.startTime >= 0)
 
     obs.disconnect()
     performance.clearResourceTimings()
