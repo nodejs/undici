@@ -5,6 +5,7 @@
   * [Lint](#lint)
   * [Test](#test)
   * [Coverage](#coverage)
+  * [Update `WPTs`](#update-wpts)
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
   * [Moderation Policy](#moderation-policy)
 
