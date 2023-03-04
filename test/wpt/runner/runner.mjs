@@ -255,10 +255,6 @@ export class WPTRunner extends EventEmitter {
     if (message.type === 'result') {
       this.#stats.completed += 1
 
-      if (/^Untitled( \d+)?$/.test(message.result.name)) {
-        message.result.name = `${meta.title}${message.result.name.slice(8)}`
-      }
-
       if (message.result.status === 1) {
         this.#stats.failed += 1
 
