@@ -5,6 +5,7 @@
   * [Lint](#lint)
   * [Test](#test)
   * [Coverage](#coverage)
+  * [Update `WPTs`](#update-wpts)
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
   * [Moderation Policy](#moderation-policy)
 
@@ -84,6 +85,24 @@ npm run build:wasm
 
 Here are the steps to update them.
 
+<details>
+<summary>Skip the tutorial</summary>
+
+```bash
+git clone --depth 1 --single-branch --branch epochs/daily --filter=blob:none --sparse https://github.com/web-platform-tests/wpt.git test/wpt/tests
+cd test/wpt/tests
+git sparse-checkout add /fetch
+git sparse-checkout add /FileAPI
+git sparse-checkout add /xhr
+git sparse-checkout add /websockets
+git sparse-checkout add /resources
+git sparse-checkout add /common
+git sparse-checkout add /mimesniff
+git sparse-checkout add /interfaces
+git sparse-checkout add /resources
+```
+</details>
+
 #### Sparse-clone the [wpt](https://github.com/web-platform-tests/wpt) repo
 
 ```bash
@@ -104,6 +123,8 @@ git sparse-checkout add /xhr
 git sparse-checkout add /websockets
 git sparse-checkout add /resources
 git sparse-checkout add /common
+
+# etc
 ```
 
 #### Run the tests
