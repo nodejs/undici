@@ -83,7 +83,25 @@ npm run build:wasm
 
 `undici` runs a subset of the [`web-platform-tests`](https://github.com/web-platform-tests/wpt).
 
-Here are the steps to update them. You may also use the steps from [this gist](https://gist.github.com/KhafraDev/27f273c0afa2ea650e3cdf1672c82727) to update the tests.
+Here are the steps to update them.
+
+<details>
+<summary>Skip the tutorial</summary>
+
+```bash
+git clone --depth 1 --single-branch --branch epochs/daily --filter=blob:none --sparse https://github.com/web-platform-tests/wpt.git test/wpt/tests
+cd test/wpt/tests
+git sparse-checkout add /fetch
+git sparse-checkout add /FileAPI
+git sparse-checkout add /xhr
+git sparse-checkout add /websockets
+git sparse-checkout add /resources
+git sparse-checkout add /common
+git sparse-checkout add /mimesniff
+git sparse-checkout add /interfaces
+git sparse-checkout add /resources
+```
+</details>
 
 #### Sparse-clone the [wpt](https://github.com/web-platform-tests/wpt) repo
 
