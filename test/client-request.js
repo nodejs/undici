@@ -1,3 +1,5 @@
+/* globals AbortController */
+
 'use strict'
 
 const { test } = require('tap')
@@ -42,7 +44,7 @@ test('request dump', (t) => {
 })
 
 test('request dump with abort signal', (t) => {
-  t.plan(1)
+  t.plan(2)
   const server = createServer((req, res) => {
     res.write('hello')
   })
