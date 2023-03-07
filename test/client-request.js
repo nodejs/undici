@@ -60,9 +60,8 @@ test('request dump with abort signal', (t) => {
     }, (err, { body }) => {
       t.error(err)
       const ac = new AbortController()
-      const { signal } = ac
-      body.dump({ signal }).catch((err) => {
-        t.type(err, errors.RequestAbortedError)
+      body.dump({ signal: ac.signal }).catch((err) => {
+        t.equal(err.name, 'AbortError')
         server.close()
       })
       ac.abort()
