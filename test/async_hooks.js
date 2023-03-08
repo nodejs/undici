@@ -157,7 +157,7 @@ test('async hooks client is destroyed', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.teardown(client.destroy.bind(client))
 
-    client.request({ path: '/', method: 'GET' }, (err, { body }) => {
+    client.request({ path: '/', method: 'GET', throwOnError: true }, (err, { body }) => {
       t.error(err)
       body.resume()
       body.on('error', (err) => {
