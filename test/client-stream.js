@@ -809,7 +809,7 @@ test('stream legacy needDrain', (t) => {
         opaque: new PassThrough()
       }, ({ opaque: pt }) => {
         pt.on('data', () => {
-          t.not.pass()
+          t.fail()
         })
         return pt
       }, (e) => {
