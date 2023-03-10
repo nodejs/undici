@@ -1,3 +1,5 @@
+/* globals AbortController */
+
 'use strict'
 
 const { test } = require('tap')
@@ -37,6 +39,38 @@ test('request dump', (t) => {
         dumped = true
         t.pass()
       })
+    })
+  })
+})
+
+test('request dump with abort signal', (t) => {
+  t.plan(2)
+  const server = createServer((req, res) => {
+    res.write('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.error(err)
+      let ac
+      if (!global.AbortController) {
+        const { AbortController } = require('abort-controller')
+        ac = new AbortController()
+      } else {
+        ac = new AbortController()
+      }
+      body.dump({ signal: ac.signal }).catch((err) => {
+        t.equal(err.name, 'AbortError')
+        server.close()
+      })
+      ac.abort()
     })
   })
 })
