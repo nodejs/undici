@@ -819,4 +819,29 @@ test('stream legacy needDrain', (t) => {
       })
     })
   })
+
+  test('steam throwOnError=true, error on stream', (t) => {
+    t.plan(1)
+
+    const server = createServer((req, res) => {
+      res.end('asd')
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const client = new Client(`http://localhost:${server.address().port}`)
+      t.teardown(client.close.bind(client))
+
+      client.stream({
+        path: '/',
+        method: 'GET',
+        throwOnError: true,
+        opaque: new PassThrough()
+      }, () => {
+        throw new Error('asd')
+      }, (e) => {
+        t.equal(e.message, 'asd')
+      })
+    })
+  })
 })
