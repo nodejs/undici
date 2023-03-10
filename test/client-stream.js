@@ -785,4 +785,63 @@ test('stream legacy needDrain', (t) => {
       t.pass()
     })
   })
+
+  test('steam throwOnError', (t) => {
+    t.plan(2)
+
+    const errStatusCode = 500
+    const errMessage = 'Internal Server Error'
+
+    const server = createServer((req, res) => {
+      res.writeHead(errStatusCode, { 'Content-Type': 'text/plain' })
+      res.end(errMessage)
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const client = new Client(`http://localhost:${server.address().port}`)
+      t.teardown(client.close.bind(client))
+
+      client.stream({
+        path: '/',
+        method: 'GET',
+        throwOnError: true,
+        opaque: new PassThrough()
+      }, ({ opaque: pt }) => {
+        pt.on('data', () => {
+          t.fail()
+        })
+        return pt
+      }, (e) => {
+        t.equal(e.status, errStatusCode)
+        t.equal(e.body, errMessage)
+        t.end()
+      })
+    })
+  })
+
+  test('steam throwOnError=true, error on stream', (t) => {
+    t.plan(1)
+
+    const server = createServer((req, res) => {
+      res.end('asd')
+    })
+    t.teardown(server.close.bind(server))
+
+    server.listen(0, async () => {
+      const client = new Client(`http://localhost:${server.address().port}`)
+      t.teardown(client.close.bind(client))
+
+      client.stream({
+        path: '/',
+        method: 'GET',
+        throwOnError: true,
+        opaque: new PassThrough()
+      }, () => {
+        throw new Error('asd')
+      }, (e) => {
+        t.equal(e.message, 'asd')
+      })
+    })
+  })
 })
