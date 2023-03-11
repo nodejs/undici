@@ -608,6 +608,26 @@ test('Proxy via HTTP to HTTP endpoint', async (t) => {
   proxyAgent.close()
 })
 
+test('ProxyAgent should use provided instance of Agent', (t) => {
+  const agent = new https.Agent({ keepAlive: true })
+
+  const proxyAgent = new ProxyAgent({ agent })
+
+  t.equal(proxyAgent[kAgent], agent, 'ProxyAgent should use provided instance of Agent')
+  t.end()
+  proxyAgent.close()
+})
+
+test('ProxyAgent should create a new instance of Agent if not provided', (t) => {
+  const opts = {}
+ß
+  const proxyAgent = new ProxyAgent(opts)
+
+  t.type(proxyAgent[kAgent], https.Agent, 'ProxyAgent should create a new instance of Agent')
+  t.end()
+  proxyAgent.close()
+})
+
 function buildServer () {
   return new Promise((resolve) => {
     const server = createServer()
