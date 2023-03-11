@@ -25,6 +25,6 @@ declare namespace ProxyAgent {
     headers?: IncomingHttpHeaders;
     requestTls?: buildConnector.BuildOptions;
     proxyTls?: buildConnector.BuildOptions;
-    clientFactory?(origin: URL, opts: object): Client | Pool;
+    clientFactory?(origin: URL, opts: object): Dispatcher;
   }
 }
