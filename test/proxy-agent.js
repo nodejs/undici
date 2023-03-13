@@ -7,6 +7,7 @@ const { nodeMajor } = require('../lib/core/util')
 const { readFileSync } = require('fs')
 const { join } = require('path')
 const ProxyAgent = require('../lib/proxy-agent')
+const Pool = require('../lib/pool')
 const { createServer } = require('http')
 const https = require('https')
 const proxy = require('proxy')
@@ -67,6 +68,45 @@ test('use proxy-agent to connect through proxy', async (t) => {
   t.same(json, { hello: 'world' })
   t.equal(headers.connection, 'keep-alive', 'should remain the connection open')
 
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
+test('use proxy agent to connect through proxy using Pool', async (t) => {
+  t.plan(3)
+  const server = await buildServer()
+  const proxy = await buildProxy()
+  let resolveFirstConnect
+  let connectCount = 0
+
+  proxy.authenticate = async function (req, fn) {
+    if (++connectCount === 2) {
+      t.pass('second connect should arrive while first is still inflight')
+      resolveFirstConnect()
+      fn(null, true)
+    } else {
+      await new Promise((resolve) => {
+        resolveFirstConnect = resolve
+      })
+      fn(null, true)
+    }
+  }
+
+  server.on('request', (req, res) => {
+    res.end()
+  })
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+  const clientFactory = (url, options) => {
+    return new Pool(url, options)
+  }
+  const proxyAgent = new ProxyAgent({ auth: Buffer.from('user:pass').toString('base64'), uri: proxyUrl, clientFactory })
+  const firstRequest = request(`${serverUrl}`, { dispatcher: proxyAgent })
+  const secondRequest = await request(`${serverUrl}`, { dispatcher: proxyAgent })
+  t.equal((await firstRequest).statusCode, 200)
+  t.equal(secondRequest.statusCode, 200)
   server.close()
   proxy.close()
   proxyAgent.close()

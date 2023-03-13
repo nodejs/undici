@@ -19,6 +19,7 @@ Extends: [`AgentOptions`](Agent.md#parameter-agentoptions)
 * **uri** `string` (required) - It can be passed either by a string or a object containing `uri` as string.
 * **token** `string` (optional) - It can be passed by a string of token for authentication.
 * **auth** `string` (**deprecated**) - Use token.
+* **clientFactory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Pool(origin, opts)`
 
 Examples:
 

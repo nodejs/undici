@@ -1,6 +1,6 @@
 import { expectAssignable } from 'tsd'
 import { URL } from 'url'
-import { ProxyAgent, setGlobalDispatcher, getGlobalDispatcher, Agent } from '../..'
+import { ProxyAgent, setGlobalDispatcher, getGlobalDispatcher, Agent, Pool } from '../..'
 
 expectAssignable<ProxyAgent>(new ProxyAgent(''))
 expectAssignable<ProxyAgent>(new ProxyAgent({ uri: '' }))
@@ -25,7 +25,8 @@ expectAssignable<ProxyAgent>(
       cert: '',
       servername: '',
       timeout: 1
-    }
+    },
+    clientFactory: (origin: URL, opts: object) => new Pool(origin, opts)
   })
 )
 
