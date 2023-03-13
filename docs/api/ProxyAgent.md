@@ -83,7 +83,8 @@ import { setGlobalDispatcher, request, ProxyAgent } from 'undici';
 
 const proxyAgent = new ProxyAgent({
   uri: 'my.proxy.server',
-  token: 'Bearer xxxx'
+  // token: 'Bearer xxxx'
+  token: `Basic ${Buffer.from('username:password').toString('base64')}`
 });
 setGlobalDispatcher(proxyAgent);
 
