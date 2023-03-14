@@ -97,6 +97,10 @@ runInThisContext(`
   globalThis.Window = Object.getPrototypeOf(globalThis).constructor
 `)
 
+if (meta.title) {
+  runInThisContext(`globalThis.META_TITLE = "${meta.title}"`)
+}
+
 const harness = readFileSync(join(basePath, '/resources/testharness.js'), 'utf-8')
 runInThisContext(harness)
 
