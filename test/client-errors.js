@@ -260,7 +260,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'Invalid Port: port must be a valid integer or a string representation of an integer.')
+    t.equal(err.message, 'Invalid URL: port must be a valid integer or a string representation of an integer.')
   }
 
   try {
@@ -392,7 +392,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'Invalid URL argument: The URL argument must be a non-null object.')
+    t.equal(err.message, 'Invalid URL: The URL argument must be a non-null object.')
   }
 
   try {
