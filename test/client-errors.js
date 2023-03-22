@@ -260,7 +260,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'invalid port')
+    t.equal(err.message, 'Invalid URL: port must be a valid integer or a string representation of an integer.')
   }
 
   try {
@@ -364,7 +364,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'invalid protocol')
+    t.equal(err.message, 'Invalid URL protocol: the URL must start with `http:` or `https:`.')
   }
 
   try {
@@ -374,7 +374,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'invalid hostname')
+    t.equal(err.message, 'Invalid URL hostname: the hostname must be a string or null/undefined.')
   }
 
   try {
@@ -392,7 +392,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'invalid url')
+    t.equal(err.message, 'Invalid URL: The URL argument must be a non-null object.')
   }
 
   try {
