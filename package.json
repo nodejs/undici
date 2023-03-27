@@ -69,6 +69,7 @@
   "devDependencies": {
     "@sinonjs/fake-timers": "^10.0.2",
     "@types/node": "^18.0.3",
+    "node-abort-controller": "^3.1.1",
     "abort-controller": "^3.0.0",
     "atomic-sleep": "^1.0.0",
     "chai": "^4.3.4",
