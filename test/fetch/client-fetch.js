@@ -8,6 +8,7 @@ const { ReadableStream } = require('stream/web')
 const { Blob } = require('buffer')
 const { fetch, Response, Request, FormData, File } = require('../..')
 const { Client, setGlobalDispatcher, Agent } = require('../..')
+const { nodeMajor, nodeMinor } = require('../../lib/core/util')
 const nodeFetch = require('../../index-fetch')
 const { once } = require('events')
 const { gzipSync } = require('zlib')
@@ -199,7 +200,9 @@ test('multipart formdata not base64', async (t) => {
   t.equal(text, 'example\ntext file')
 })
 
-test('multipart formdata base64', (t) => {
+// TODO(@KhafraDev): re-enable this test once the issue is fixed
+// See https://github.com/nodejs/node/issues/47301
+test('multipart formdata base64', { skip: nodeMajor >= 19 && nodeMinor >= 8 }, (t) => {
   t.plan(1)
 
   // Example form data with base64 encoding
