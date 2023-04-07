@@ -51,7 +51,7 @@
     "test:node-fetch": "node scripts/verifyVersion.js 16 || mocha test/node-fetch",
     "test:fetch": "node scripts/verifyVersion.js 16 || (npm run build:node && tap test/fetch/*.js && tap test/webidl/*.js)",
     "test:jest": "node scripts/verifyVersion.js 14 || jest",
-    "test:tap": "tap test/*.js test/diagnostics-channel/*.js",
+    "test:tap": "tap --expose-gc test/*.js test/diagnostics-channel/*.js",
     "test:tdd": "tap test/*.js test/diagnostics-channel/*.js -w",
     "test:typescript": "tsd && tsc test/imports/undici-import.ts",
     "test:websocket": "node scripts/verifyVersion.js 18 || tap test/websocket/*.js",
