@@ -3,6 +3,7 @@
 const { createServer } = require('http')
 const { test } = require('tap')
 const { request } = require('..')
+const { nodeMajor } = require('../lib/core/util')
 
 function createPromise () {
   const result = {}
@@ -12,7 +13,7 @@ function createPromise () {
   return result
 }
 
-test('should parse content-disposition consistently', { skip: true }, async (t) => {
+test('should parse content-disposition consistently', { skip: nodeMajor >= 19 }, async (t) => {
   t.plan(5)
 
   // create promise to allow server spinup in parallel
