@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { fetch } = require('..')
+const { fetch } = require('../..')
 const { createServer } = require('http')
 
 test('do not leak', (t) => {
