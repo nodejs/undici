@@ -460,3 +460,19 @@ test('constructing Request with third party FormData body', async (t) => {
   t.equal(contentType[0], 'multipart/form-data; boundary')
   t.ok((await req.text()).startsWith(`--${contentType[1]}`))
 })
+
+// https://github.com/nodejs/undici/issues/2050
+test('set-cookie headers get cleared when passing a Request as first param', (t) => {
+  const req1 = new Request('http://localhost', {
+    headers: {
+      'set-cookie': 'a=1'
+    }
+  })
+
+  t.same([...req1.headers], [['set-cookie', 'a=1']])
+  const req2 = new Request(req1, { headers: {} })
+
+  t.same([...req2.headers], [])
+  t.same(req2.headers.getSetCookie(), [])
+  t.end()
+})
