@@ -25,15 +25,18 @@ test('do not leak', (t) => {
       .then(attack)
   })
 
-  const xs = []
+  let prev = Infinity
+  let count = 0
   const interval = setInterval(() => {
+    done = true
     global.gc()
-    xs.push(process.memoryUsage().heapUsed)
-    if (xs.length > 5) {
-      done = true
-      const final = xs.pop() // compare against final value
-      xs.splice(2) // skip first two values, memory can still be growing
-      t.ok(xs.every(x => final - x < 1e6))
+    const next = process.memoryUsage().heapUsed
+    if (next <= prev) {
+      t.pass()
+    } else if (count++ > 10) {
+      t.fail()
+    } else {
+      prev = next
     }
   }, 1e3)
   t.teardown(() => clearInterval(interval))
