@@ -53,7 +53,7 @@
     "test:jest": "node scripts/verifyVersion.js 14 || jest",
     "test:tap": "tap test/*.js test/diagnostics-channel/*.js",
     "test:tdd": "tap test/*.js test/diagnostics-channel/*.js -w",
-    "test:typescript": "node scripts/verifyVersion.js 14 || tsd",
+    "test:typescript": "node scripts/verifyVersion.js 14 || tsd && tsc --skipLibCheck test/imports/undici-import.ts",
     "test:websocket": "node scripts/verifyVersion.js 18 || tap test/websocket/*.js",
     "test:wpt": "node scripts/verifyVersion 18 || (node test/wpt/start-fetch.mjs && node test/wpt/start-FileAPI.mjs && node test/wpt/start-mimesniff.mjs && node test/wpt/start-xhr.mjs && node --no-warnings test/wpt/start-websockets.mjs)",
     "coverage": "nyc --reporter=text --reporter=html npm run test",
