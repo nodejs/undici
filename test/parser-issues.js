@@ -40,7 +40,7 @@ test('https://github.com/mcollina/undici/issues/268', (t) => {
 })
 
 test('parser fail', (t) => {
-  t.plan(3)
+  t.plan(2)
 
   const server = net.createServer(socket => {
     socket.write('HTT/1.1 200 OK\r\n')
