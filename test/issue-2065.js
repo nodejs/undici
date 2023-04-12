@@ -4,7 +4,7 @@ const { test, skip } = require('tap')
 const { nodeMajor, nodeMinor } = require('../lib/core/util')
 const { createServer } = require('http')
 const { once } = require('events')
-const { File, request } = require('..')
+const { File, FormData, request } = require('..')
 
 if (nodeMajor < 16 || (nodeMajor === 16 && nodeMinor < 8)) {
   skip('FormData is not available in node < v16.8.0')
