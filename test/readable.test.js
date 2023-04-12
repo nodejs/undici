@@ -8,7 +8,7 @@ test('avoid body reordering', async function (t) {
   }
   function abort () {
   }
-  const r = new Readable(resume, abort)
+  const r = new Readable({ resume, abort })
 
   r.push(Buffer.from('hello'))
 
