@@ -75,6 +75,29 @@ test('request dump with abort signal', (t) => {
   })
 })
 
+test('request hwm', (t) => {
+  t.plan(2)
+  const server = createServer((req, res) => {
+    res.write('hello')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      highWaterMark: 1000
+    }, (err, { body }) => {
+      t.error(err)
+      t.same(body.readableHighWaterMark, 1000)
+      body.dump()
+    })
+  })
+})
+
 test('request abort before headers', (t) => {
   t.plan(6)
 

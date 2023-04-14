@@ -46,7 +46,7 @@ execSync(`${WASI_ROOT}/bin/clang \
 
 const base64Wasm = readFileSync(join(WASM_OUT, 'llhttp.wasm')).toString('base64')
 writeFileSync(
-  join(WASM_OUT, 'llhttp.wasm.js'),
+  join(WASM_OUT, 'llhttp-wasm.js'),
   `module.exports = "${base64Wasm}";\n`
 )
 
@@ -74,6 +74,6 @@ execSync(`${WASI_ROOT}/bin/clang \
 
 const base64WasmSimd = readFileSync(join(WASM_OUT, 'llhttp_simd.wasm')).toString('base64')
 writeFileSync(
-  join(WASM_OUT, 'llhttp_simd.wasm.js'),
+  join(WASM_OUT, 'llhttp_simd-wasm.js'),
   `module.exports = "${base64WasmSimd}";\n`
 )

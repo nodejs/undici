@@ -111,6 +111,16 @@ test('sameOrigin', (t) => {
     t.end()
   })
 
+  t.test('file:// urls', (t) => {
+    // urls with opaque origins should return true
+
+    const a = new URL('file:///C:/undici')
+    const b = new URL('file:///var/undici')
+
+    t.ok(util.sameOrigin(a, b))
+    t.end()
+  })
+
   t.end()
 })
 
