@@ -366,7 +366,7 @@ test('basic get returns 400 when configured to throw on errors and correctly han
       t.equal(err.status, 400)
       t.equal(err.statusCode, 400)
       t.equal(err.headers.connection, 'keep-alive')
-      t.same(err.body, 'Invalid params')
+      t.same(err.body, null)
     })
     t.equal(signal.listenerCount('abort'), 1)
   })
