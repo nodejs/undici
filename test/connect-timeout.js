@@ -16,8 +16,8 @@ test('priotorise socket errors over timeouts', (t) => {
       t.equal(err.code, 'ENOTFOUND')
     })
 
-  // block for 1001ms which is enough for the dns lookup to complete and TO to fire
-  sleep(connectTimeout + 1)
+  // block for 2s which is enough for the dns lookup to complete and TO to fire
+  sleep(connectTimeout * 2)
 })
 
 // never connect

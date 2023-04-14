@@ -22,6 +22,7 @@ test('do not leak', (t) => {
     const controller = new AbortController()
     fetch(url, { signal: controller.signal })
       .then(res => res.arrayBuffer())
+      .catch(() => {})
       .then(attack)
   })
 
