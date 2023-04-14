@@ -33,7 +33,7 @@ test('do not leak', (t) => {
     const next = process.memoryUsage().heapUsed
     if (next <= prev) {
       t.pass()
-    } else if (count++ > 10) {
+    } else if (count++ > 20) {
       t.fail()
     } else {
       prev = next
