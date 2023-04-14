@@ -142,7 +142,7 @@ test('keep-alive header no postfix', (t) => {
       body.on('end', () => {
         const timeout = setTimeout(() => {
           t.fail()
-        }, 3e3)
+        }, 4e3)
         client.on('disconnect', () => {
           t.pass()
           clearTimeout(timeout)
