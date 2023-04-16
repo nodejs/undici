@@ -10,7 +10,8 @@ function startServer (t, handler) {
       resolve(`localhost:${server.address().port}`)
     })
 
-    t.teardown(server.close.bind(server))
+    const close = server.closeAllConnections || server.close
+    t.teardown(close.bind(server))
   })
 }
 
