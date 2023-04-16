@@ -99,8 +99,9 @@ export class WPTRunner extends EventEmitter {
     }
 
     this.once('completion', () => {
-      for (const exception of this.#uncaughtExceptions) {
-        console.log(colors(`Uncaught exception: ${exception.stack}`, 'red'))
+      for (const { error, test } of this.#uncaughtExceptions) {
+        console.log(colors(`Uncaught exception in "${test}":`, 'red'))
+        console.log(colors(`${error.stack}`, 'red'))
         console.log('='.repeat(96))
       }
     })
@@ -211,7 +212,7 @@ export class WPTRunner extends EventEmitter {
           } else if (message.type === 'completion') {
             this.handleTestCompletion(worker)
           } else if (message.type === 'error') {
-            this.#uncaughtExceptions.push(message.error)
+            this.#uncaughtExceptions.push({ error: message.error, test })
             this.#stats.failed += 1
             this.#stats.success -= 1
           }
