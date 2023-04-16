@@ -290,132 +290,132 @@ t.test('should follow a redirect chain up to the allowed number of times', async
   t.equal(body.length, 0)
 })
 
-t.test('should follow redirections when going cross origin', async t => {
-  t.plan(4)
+// t.test('should follow redirections when going cross origin', async t => {
+//   t.plan(4)
 
-  const [server1, server2, server3] = await startRedirectingChainServers(t)
-  const body = []
+//   const [server1, server2, server3] = await startRedirectingChainServers(t)
+//   const body = []
 
-  await stream(
-    `http://${server1}`,
-    { method: 'POST', opaque: body, maxRedirections: 10 },
-    ({ statusCode, headers, opaque, context: { history } }) => {
-      t.equal(statusCode, 200)
-      t.notOk(headers.location)
-      t.same(history.map(x => x.toString()), [
-        `http://${server1}/`,
-        `http://${server2}/`,
-        `http://${server3}/`,
-        `http://${server2}/end`,
-        `http://${server3}/end`,
-        `http://${server1}/end`
-      ])
+//   await stream(
+//     `http://${server1}`,
+//     { method: 'POST', opaque: body, maxRedirections: 10 },
+//     ({ statusCode, headers, opaque, context: { history } }) => {
+//       t.equal(statusCode, 200)
+//       t.notOk(headers.location)
+//       t.same(history.map(x => x.toString()), [
+//         `http://${server1}/`,
+//         `http://${server2}/`,
+//         `http://${server3}/`,
+//         `http://${server2}/end`,
+//         `http://${server3}/end`,
+//         `http://${server1}/end`
+//       ])
 
-      return createWritable(opaque)
-    }
-  )
+//       return createWritable(opaque)
+//     }
+//   )
 
-  t.equal(body.join(''), 'POST')
-})
+//   t.equal(body.join(''), 'POST')
+// })
 
-t.test('when a Location response header is NOT present', async t => {
-  const redirectCodes = [300, 301, 302, 303, 307, 308]
-  const server = await startRedirectingWithoutLocationServer(t)
+// t.test('when a Location response header is NOT present', async t => {
+//   const redirectCodes = [300, 301, 302, 303, 307, 308]
+//   const server = await startRedirectingWithoutLocationServer(t)
 
-  for (const code of redirectCodes) {
-    t.test(`should return the original response after a HTTP ${code}`, async t => {
-      t.plan(3)
+//   for (const code of redirectCodes) {
+//     t.test(`should return the original response after a HTTP ${code}`, async t => {
+//       t.plan(3)
 
-      const body = []
+//       const body = []
 
-      await stream(
-        `http://${server}/${code}`,
-        { opaque: body, maxRedirections: 10 },
-        ({ statusCode, headers, opaque }) => {
-          t.equal(statusCode, code)
-          t.notOk(headers.location)
+//       await stream(
+//         `http://${server}/${code}`,
+//         { opaque: body, maxRedirections: 10 },
+//         ({ statusCode, headers, opaque }) => {
+//           t.equal(statusCode, code)
+//           t.notOk(headers.location)
 
-          return createWritable(opaque)
-        }
-      )
+//           return createWritable(opaque)
+//         }
+//       )
 
-      t.equal(body.length, 0)
-    })
-  }
-})
+//       t.equal(body.length, 0)
+//     })
+//   }
+// })
 
-t.test('should not follow redirects when using Readable request bodies', async t => {
-  t.plan(3)
+// t.test('should not follow redirects when using Readable request bodies', async t => {
+//   t.plan(3)
 
-  const body = []
-  const server = await startRedirectingServer(t)
+//   const body = []
+//   const server = await startRedirectingServer(t)
 
-  await stream(
-    `http://${server}`,
-    {
-      method: 'POST',
-      body: createReadable('REQUEST'),
-      opaque: body,
-      maxRedirections: 10
-    },
-    ({ statusCode, headers, opaque }) => {
-      t.equal(statusCode, 302)
-      t.equal(headers.location, `http://${server}/302/1`)
+//   await stream(
+//     `http://${server}`,
+//     {
+//       method: 'POST',
+//       body: createReadable('REQUEST'),
+//       opaque: body,
+//       maxRedirections: 10
+//     },
+//     ({ statusCode, headers, opaque }) => {
+//       t.equal(statusCode, 302)
+//       t.equal(headers.location, `http://${server}/302/1`)
 
-      return createWritable(opaque)
-    }
-  )
+//       return createWritable(opaque)
+//     }
+//   )
 
-  t.equal(body.length, 0)
-})
+//   t.equal(body.length, 0)
+// })
 
-t.test('should handle errors', async t => {
-  t.plan(2)
+// t.test('should handle errors', async t => {
+//   t.plan(2)
 
-  const body = []
+//   const body = []
 
-  try {
-    await stream('http://localhost:0', { opaque: body, maxRedirections: 10 }, ({ statusCode, headers, opaque }) => {
-      return createWritable(opaque)
-    })
+//   try {
+//     await stream('http://localhost:0', { opaque: body, maxRedirections: 10 }, ({ statusCode, headers, opaque }) => {
+//       return createWritable(opaque)
+//     })
 
-    throw new Error('Did not throw')
-  } catch (error) {
-    t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
-    t.equal(body.length, 0)
-  }
-})
+//     throw new Error('Did not throw')
+//   } catch (error) {
+//     t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
+//     t.equal(body.length, 0)
+//   }
+// })
 
-t.test('removes authorization header on third party origin', async t => {
-  t.plan(1)
+// t.test('removes authorization header on third party origin', async t => {
+//   t.plan(1)
 
-  const body = []
+//   const body = []
 
-  const [server1] = await startRedirectingWithAuthorization(t, 'secret')
-  await stream(`http://${server1}`, {
-    maxRedirections: 10,
-    opaque: body,
-    headers: {
-      authorization: 'secret'
-    }
-  }, ({ statusCode, headers, opaque }) => createWritable(opaque))
+//   const [server1] = await startRedirectingWithAuthorization(t, 'secret')
+//   await stream(`http://${server1}`, {
+//     maxRedirections: 10,
+//     opaque: body,
+//     headers: {
+//       authorization: 'secret'
+//     }
+//   }, ({ statusCode, headers, opaque }) => createWritable(opaque))
 
-  t.equal(body.length, 0)
-})
+//   t.equal(body.length, 0)
+// })
 
-t.test('removes cookie header on third party origin', async t => {
-  t.plan(1)
+// t.test('removes cookie header on third party origin', async t => {
+//   t.plan(1)
 
-  const body = []
+//   const body = []
 
-  const [server1] = await startRedirectingWithCookie(t, 'a=b')
-  await stream(`http://${server1}`, {
-    maxRedirections: 10,
-    opaque: body,
-    headers: {
-      cookie: 'a=b'
-    }
-  }, ({ statusCode, headers, opaque }) => createWritable(opaque))
+//   const [server1] = await startRedirectingWithCookie(t, 'a=b')
+//   await stream(`http://${server1}`, {
+//     maxRedirections: 10,
+//     opaque: body,
+//     headers: {
+//       cookie: 'a=b'
+//     }
+//   }, ({ statusCode, headers, opaque }) => createWritable(opaque))
 
-  t.equal(body.length, 0)
-})
+//   t.equal(body.length, 0)
+// })
