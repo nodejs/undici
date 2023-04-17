@@ -1648,7 +1648,7 @@ describe('node-fetch', () => {
 
   it('should allow manual redirect handling', function () {
     this.timeout(5000)
-    const url = 'https://httpbin.org/status/302'
+    const url = `${base}redirect/302`
     const options = {
       redirect: 'manual'
     }
@@ -1656,7 +1656,7 @@ describe('node-fetch', () => {
       expect(res.status).to.equal(302)
       expect(res.url).to.equal(url)
       expect(res.type).to.equal('basic')
-      expect(res.headers.get('Location')).to.equal('/redirect/1')
+      expect(res.headers.get('Location')).to.equal('/inspect')
       expect(res.ok).to.be.false
     })
   })

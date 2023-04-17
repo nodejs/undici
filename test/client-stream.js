@@ -786,7 +786,7 @@ test('stream legacy needDrain', (t) => {
     })
   })
 
-  test('steam throwOnError', (t) => {
+  test('stream throwOnError', (t) => {
     t.plan(2)
 
     const errStatusCode = 500

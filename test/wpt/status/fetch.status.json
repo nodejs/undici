@@ -37,6 +37,10 @@
           "Empty string integrity for opaque response"
         ]
       },
+      "keepalive.any.js": {
+        "note": "document is not defined",
+        "skip": true
+      },
       "mode-no-cors.sub.any.js": {
         "note": "undici doesn't implement CORs",
         "skip": true
@@ -205,6 +209,10 @@
           "redirect response with empty Location, manual mode"
         ]
       },
+      "redirect-keepalive.any.js": {
+        "note": "document is not defined",
+        "skip": true
+      },
       "redirect-location-escape.tentative.any.js": {
         "note": "TODO(@KhafraDev): crashes runner",
         "skip": true
@@ -226,7 +234,12 @@
           "Redirect 307 in \"manual\" mode with data location",
           "Redirect 308 in \"manual\" mode without location",
           "Redirect 308 in \"manual\" mode with invalid location",
-          "Redirect 308 in \"manual\" mode with data location"
+          "Redirect 308 in \"manual\" mode with data location",
+          "Redirect 301 in \"manual\" mode with valid location",
+          "Redirect 302 in \"manual\" mode with valid location",
+          "Redirect 303 in \"manual\" mode with valid location",
+          "Redirect 307 in \"manual\" mode with valid location",
+          "Redirect 308 in \"manual\" mode with valid location"
         ]
       },
       "redirect-method.any.js": {

@@ -99,7 +99,6 @@ git sparse-checkout add /resources
 git sparse-checkout add /common
 git sparse-checkout add /mimesniff
 git sparse-checkout add /interfaces
-git sparse-checkout add /resources
 ```
 </details>
 
