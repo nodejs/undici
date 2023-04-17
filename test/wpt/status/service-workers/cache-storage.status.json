@@ -1,0 +1,7 @@
+{
+    "cache-storage": {
+      "cache-abort.https.any.js": {
+        "skip": true
+      }
+    }
+}
