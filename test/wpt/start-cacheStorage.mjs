@@ -3,8 +3,6 @@ import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { fork } from 'child_process'
 import { on } from 'events'
-import { CacheStorage } from '../../lib/cache/cachestorage.js'
-import { kConstruct } from '../../lib/cache/symbols.js'
 
 const serverPath = fileURLToPath(join(import.meta.url, '../server/server.mjs'))
 
