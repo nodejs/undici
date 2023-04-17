@@ -15,6 +15,13 @@
       "fail": [
         "Cache.put with a VARY:* opaque response should not reject"
       ]
+    },
+    "cache-match.https.any.js": {
+      "note": "requires https server",
+      "fail": [
+        "cors-exposed header should be stored correctly.",
+        "Cache.match ignores vary headers on opaque response."
+      ]
     }
   }
 }
