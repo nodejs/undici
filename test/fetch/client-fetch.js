@@ -79,96 +79,96 @@ test('request arrayBuffer', (t) => {
   })
 })
 
-// test('should set type of blob object to the value of the `Content-Type` header from response', (t) => {
-//   t.plan(1)
+test('should set type of blob object to the value of the `Content-Type` header from response', (t) => {
+  t.plan(1)
 
-//   const obj = { asd: true }
-//   const server = createServer((req, res) => {
-//     res.setHeader('Content-Type', 'application/json')
-//     res.end(JSON.stringify(obj))
-//   })
-//   t.teardown(server.close.bind(server))
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const response = await fetch(`http://localhost:${server.address().port}`)
-//     t.equal('application/json', (await response.blob()).type)
-//   })
-// })
+  server.listen(0, async () => {
+    const response = await fetch(`http://localhost:${server.address().port}`)
+    t.equal('application/json', (await response.blob()).type)
+  })
+})
 
-// test('pre aborted with readable request body', (t) => {
-//   t.plan(2)
+test('pre aborted with readable request body', (t) => {
+  t.plan(2)
 
-//   const server = createServer((req, res) => {
-//   })
-//   t.teardown(server.close.bind(server))
+  const server = createServer((req, res) => {
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const ac = new AbortController()
-//     ac.abort()
-//     await fetch(`http://localhost:${server.address().port}`, {
-//       signal: ac.signal,
-//       method: 'POST',
-//       body: new ReadableStream({
-//         async cancel (reason) {
-//           t.equal(reason.name, 'AbortError')
-//         }
-//       }),
-//       duplex: 'half'
-//     }).catch(err => {
-//       t.equal(err.name, 'AbortError')
-//     })
-//   })
-// })
+  server.listen(0, async () => {
+    const ac = new AbortController()
+    ac.abort()
+    await fetch(`http://localhost:${server.address().port}`, {
+      signal: ac.signal,
+      method: 'POST',
+      body: new ReadableStream({
+        async cancel (reason) {
+          t.equal(reason.name, 'AbortError')
+        }
+      }),
+      duplex: 'half'
+    }).catch(err => {
+      t.equal(err.name, 'AbortError')
+    })
+  })
+})
 
-// test('pre aborted with closed readable request body', (t) => {
-//   t.plan(2)
+test('pre aborted with closed readable request body', (t) => {
+  t.plan(2)
 
-//   const server = createServer((req, res) => {
-//   })
-//   t.teardown(server.close.bind(server))
+  const server = createServer((req, res) => {
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const ac = new AbortController()
-//     ac.abort()
-//     const body = new ReadableStream({
-//       async start (c) {
-//         t.pass()
-//         c.close()
-//       },
-//       async cancel (reason) {
-//         t.fail()
-//       }
-//     })
-//     queueMicrotask(() => {
-//       fetch(`http://localhost:${server.address().port}`, {
-//         signal: ac.signal,
-//         method: 'POST',
-//         body,
-//         duplex: 'half'
-//       }).catch(err => {
-//         t.equal(err.name, 'AbortError')
-//       })
-//     })
-//   })
-// })
+  server.listen(0, async () => {
+    const ac = new AbortController()
+    ac.abort()
+    const body = new ReadableStream({
+      async start (c) {
+        t.pass()
+        c.close()
+      },
+      async cancel (reason) {
+        t.fail()
+      }
+    })
+    queueMicrotask(() => {
+      fetch(`http://localhost:${server.address().port}`, {
+        signal: ac.signal,
+        method: 'POST',
+        body,
+        duplex: 'half'
+      }).catch(err => {
+        t.equal(err.name, 'AbortError')
+      })
+    })
+  })
+})
 
-// test('unsupported formData 1', (t) => {
-//   t.plan(1)
+test('unsupported formData 1', (t) => {
+  t.plan(1)
 
-//   const server = createServer((req, res) => {
-//     res.setHeader('content-type', 'asdasdsad')
-//     res.end()
-//   })
-//   t.teardown(server.close.bind(server))
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'asdasdsad')
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, () => {
-//     fetch(`http://localhost:${server.address().port}`)
-//       .then(res => res.formData())
-//       .catch(err => {
-//         t.equal(err.name, 'TypeError')
-//       })
-//   })
-// })
+  server.listen(0, () => {
+    fetch(`http://localhost:${server.address().port}`)
+      .then(res => res.formData())
+      .catch(err => {
+        t.equal(err.name, 'TypeError')
+      })
+  })
+})
 
 // test('multipart formdata not base64', async (t) => {
 //   t.plan(2)
