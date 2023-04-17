@@ -2,6 +2,10 @@
     "cache-storage": {
       "cache-abort.https.any.js": {
         "skip": true
+      },
+      "cache-storage-buckets.https.any.js": {
+        "skip": true,
+        "note": "navigator is not defined"
       }
     }
 }
