@@ -21,7 +21,7 @@ test('MockPool.reply headers are an object, not an array - issue #2078', async (
     path: '/foo',
     method: 'GET'
   }).reply((options) => {
-    t.ok(!Array.isArray(options))
+    t.ok(!Array.isArray(options.headers))
 
     return { statusCode: 200 }
   })
