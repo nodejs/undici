@@ -32,6 +32,10 @@ const server = createServer(async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   switch (fullUrl.pathname) {
+    case '/service-workers/cache-storage/resources/blank.html': {
+      res.setHeader('content-type', 'text/html')
+      // fall through
+    }
     case '/fetch/content-encoding/resources/foo.octetstream.gz':
     case '/fetch/content-encoding/resources/foo.text.gz':
     case '/fetch/api/resources/cors-top.txt':
