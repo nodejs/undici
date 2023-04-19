@@ -104,7 +104,7 @@
     "ws": "^8.11.0"
   },
   "engines": {
-    "node": "19"
+    "node": ">=19"
   },
   "standard": {
     "env": [
