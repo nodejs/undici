@@ -575,100 +575,100 @@ test('unsupported formData 1', (t) => {
 //   })
 // })
 
-// // https://github.com/nodejs/undici/issues/1527
-// test('fetching with Request object - issue #1527', async (t) => {
-//   const server = createServer((req, res) => {
-//     t.pass()
-//     res.end()
-//   }).listen(0)
+// https://github.com/nodejs/undici/issues/1527
+test('fetching with Request object - issue #1527', async (t) => {
+  const server = createServer((req, res) => {
+    t.pass()
+    res.end()
+  }).listen(0)
 
-//   t.teardown(server.close.bind(server))
-//   await once(server, 'listening')
+  t.teardown(server.close.bind(server))
+  await once(server, 'listening')
 
-//   const body = JSON.stringify({ foo: 'bar' })
-//   const request = new Request(`http://localhost:${server.address().port}`, {
-//     method: 'POST',
-//     body
-//   })
+  const body = JSON.stringify({ foo: 'bar' })
+  const request = new Request(`http://localhost:${server.address().port}`, {
+    method: 'POST',
+    body
+  })
 
-//   await t.resolves(fetch(request))
-//   t.end()
-// })
+  await t.resolves(fetch(request))
+  t.end()
+})
 
-// test('do not decode redirect body', (t) => {
-//   t.plan(3)
+test('do not decode redirect body', (t) => {
+  t.plan(3)
 
-//   const obj = { asd: true }
-//   const server = createServer((req, res) => {
-//     if (req.url === '/resource') {
-//       t.pass('we redirect')
-//       res.statusCode = 301
-//       res.setHeader('location', '/resource/')
-//       // Some dumb http servers set the content-encoding gzip
-//       // even if there is no response
-//       res.setHeader('content-encoding', 'gzip')
-//       res.end()
-//       return
-//     }
-//     t.pass('actual response')
-//     res.setHeader('content-encoding', 'gzip')
-//     res.end(gzipSync(JSON.stringify(obj)))
-//   })
-//   t.teardown(server.close.bind(server))
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    if (req.url === '/resource') {
+      t.pass('we redirect')
+      res.statusCode = 301
+      res.setHeader('location', '/resource/')
+      // Some dumb http servers set the content-encoding gzip
+      // even if there is no response
+      res.setHeader('content-encoding', 'gzip')
+      res.end()
+      return
+    }
+    t.pass('actual response')
+    res.setHeader('content-encoding', 'gzip')
+    res.end(gzipSync(JSON.stringify(obj)))
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const body = await fetch(`http://localhost:${server.address().port}/resource`)
-//     t.strictSame(JSON.stringify(obj), await body.text())
-//   })
-// })
+  server.listen(0, async () => {
+    const body = await fetch(`http://localhost:${server.address().port}/resource`)
+    t.strictSame(JSON.stringify(obj), await body.text())
+  })
+})
 
-// test('decode non-redirect body with location header', (t) => {
-//   t.plan(2)
+test('decode non-redirect body with location header', (t) => {
+  t.plan(2)
 
-//   const obj = { asd: true }
-//   const server = createServer((req, res) => {
-//     t.pass('response')
-//     res.statusCode = 201
-//     res.setHeader('location', '/resource/')
-//     res.setHeader('content-encoding', 'gzip')
-//     res.end(gzipSync(JSON.stringify(obj)))
-//   })
-//   t.teardown(server.close.bind(server))
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    t.pass('response')
+    res.statusCode = 201
+    res.setHeader('location', '/resource/')
+    res.setHeader('content-encoding', 'gzip')
+    res.end(gzipSync(JSON.stringify(obj)))
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const body = await fetch(`http://localhost:${server.address().port}/resource`)
-//     t.strictSame(JSON.stringify(obj), await body.text())
-//   })
-// })
+  server.listen(0, async () => {
+    const body = await fetch(`http://localhost:${server.address().port}/resource`)
+    t.strictSame(JSON.stringify(obj), await body.text())
+  })
+})
 
-// test('Receiving non-Latin1 headers', async (t) => {
-//   const ContentDisposition = [
-//     'inline; filename=rock&roll.png',
-//     'inline; filename="rock\'n\'roll.png"',
-//     'inline; filename="image â\x80\x94 copy (1).png"; filename*=UTF-8\'\'image%20%E2%80%94%20copy%20(1).png',
-//     'inline; filename="_å\x9C\x96ç\x89\x87_ð\x9F\x96¼_image_.png"; filename*=UTF-8\'\'_%E5%9C%96%E7%89%87_%F0%9F%96%BC_image_.png',
-//     'inline; filename="100 % loading&perf.png"; filename*=UTF-8\'\'100%20%25%20loading%26perf.png'
-//   ]
+test('Receiving non-Latin1 headers', async (t) => {
+  const ContentDisposition = [
+    'inline; filename=rock&roll.png',
+    'inline; filename="rock\'n\'roll.png"',
+    'inline; filename="image â\x80\x94 copy (1).png"; filename*=UTF-8\'\'image%20%E2%80%94%20copy%20(1).png',
+    'inline; filename="_å\x9C\x96ç\x89\x87_ð\x9F\x96¼_image_.png"; filename*=UTF-8\'\'_%E5%9C%96%E7%89%87_%F0%9F%96%BC_image_.png',
+    'inline; filename="100 % loading&perf.png"; filename*=UTF-8\'\'100%20%25%20loading%26perf.png'
+  ]
 
-//   const server = createServer((req, res) => {
-//     for (let i = 0; i < ContentDisposition.length; i++) {
-//       res.setHeader(`Content-Disposition-${i + 1}`, ContentDisposition[i])
-//     }
+  const server = createServer((req, res) => {
+    for (let i = 0; i < ContentDisposition.length; i++) {
+      res.setHeader(`Content-Disposition-${i + 1}`, ContentDisposition[i])
+    }
 
-//     res.end()
-//   }).listen(0)
+    res.end()
+  }).listen(0)
 
-//   t.teardown(server.close.bind(server))
-//   await once(server, 'listening')
+  t.teardown(server.close.bind(server))
+  await once(server, 'listening')
 
-//   const url = `http://localhost:${server.address().port}`
-//   const response = await fetch(url, { method: 'HEAD' })
-//   const cdHeaders = [...response.headers]
-//     .filter(([k]) => k.startsWith('content-disposition'))
-//     .map(([, v]) => v)
-//   const lengths = cdHeaders.map(h => h.length)
+  const url = `http://localhost:${server.address().port}`
+  const response = await fetch(url, { method: 'HEAD' })
+  const cdHeaders = [...response.headers]
+    .filter(([k]) => k.startsWith('content-disposition'))
+    .map(([, v]) => v)
+  const lengths = cdHeaders.map(h => h.length)
 
-//   t.same(cdHeaders, ContentDisposition)
-//   t.same(lengths, [30, 34, 94, 104, 90])
-//   t.end()
-// })
+  t.same(cdHeaders, ContentDisposition)
+  t.same(lengths, [30, 34, 94, 104, 90])
+  t.end()
+})
