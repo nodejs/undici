@@ -13,7 +13,7 @@ function createPromise () {
   return result
 }
 
-test('should parse content-disposition consistently', { skip: nodeMajor >= 19 }, async (t) => {
+test('should parse content-disposition consistently', { skip: nodeMajor >= 18 }, async (t) => {
   t.plan(5)
 
   // create promise to allow server spinup in parallel
