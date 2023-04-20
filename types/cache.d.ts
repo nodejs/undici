@@ -8,6 +8,11 @@ export interface CacheStorage {
   keys (): Promise<string[]>
 }
 
+declare const CacheStorage: {
+  prototype: CacheStorage
+  new(): CacheStorage
+}
+
 export interface Cache {
   match (request: RequestInfo, options?: CacheQueryOptions): Promise<Response | undefined>,
   matchAll (request?: RequestInfo, options?: CacheQueryOptions): Promise<readonly Response[]>,
@@ -27,3 +32,5 @@ export interface CacheQueryOptions {
 export interface MultiCacheQueryOptions extends CacheQueryOptions {
   cacheName?: string
 }
+
+export declare const caches: CacheStorage
