@@ -32,6 +32,10 @@ const server = createServer(async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   switch (fullUrl.pathname) {
+    case '/service-workers/cache-storage/resources/blank.html': {
+      res.setHeader('content-type', 'text/html')
+      // fall through
+    }
     case '/fetch/content-encoding/resources/foo.octetstream.gz':
     case '/fetch/content-encoding/resources/foo.text.gz':
     case '/fetch/api/resources/cors-top.txt':
@@ -357,9 +361,20 @@ const server = createServer(async (req, res) => {
       res.end('')
       return
     }
+    case '/resources/simple.txt': {
+      res.end(readFileSync(join(tests, 'service-workers/service-worker', fullUrl.pathname), 'utf-8'))
+      return
+    }
+    case '/resources/fetch-status.py': {
+      const status = Number(fullUrl.searchParams.get('status'))
+
+      res.statusCode = status
+      res.end()
+      return
+    }
     default: {
       res.statusCode = 200
-      res.end('body')
+      res.end(fullUrl.toString())
     }
   }
 }).listen(0)

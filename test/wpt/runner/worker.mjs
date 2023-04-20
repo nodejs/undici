@@ -9,6 +9,9 @@ import {
 } from '../../../index.js'
 import { CloseEvent } from '../../../lib/websocket/events.js'
 import { WebSocket } from '../../../lib/websocket/websocket.js'
+import { Cache } from '../../../lib/cache/cache.js'
+import { CacheStorage } from '../../../lib/cache/cachestorage.js'
+import { kConstruct } from '../../../lib/cache/symbols.js'
 
 const { initScripts, meta, test, url, path } = workerData
 
@@ -74,6 +77,18 @@ Object.defineProperties(globalThis, {
     ...globalPropertyDescriptors,
     // See https://github.com/nodejs/node/pull/45659
     value: buffer.Blob
+  },
+  caches: {
+    ...globalPropertyDescriptors,
+    value: new CacheStorage(kConstruct)
+  },
+  Cache: {
+    ...globalPropertyDescriptors,
+    value: Cache
+  },
+  CacheStorage: {
+    ...globalPropertyDescriptors,
+    value: CacheStorage
   }
 })
 
