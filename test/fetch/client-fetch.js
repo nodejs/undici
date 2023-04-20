@@ -393,187 +393,187 @@ test('unsupported formData 1', (t) => {
 //   })
 // })
 
-// test('redirect with stream', (t) => {
-//   t.plan(3)
+test('redirect with stream', (t) => {
+  t.plan(3)
 
-//   const location = '/asd'
-//   const body = 'hello!'
-//   const server = createServer(async (req, res) => {
-//     res.writeHead(302, { location })
-//     let count = 0
-//     const l = setInterval(() => {
-//       res.write(body[count++])
-//       if (count === body.length) {
-//         res.end()
-//         clearInterval(l)
-//       }
-//     }, 50)
-//   })
-//   t.teardown(server.close.bind(server))
+  const location = '/asd'
+  const body = 'hello!'
+  const server = createServer(async (req, res) => {
+    res.writeHead(302, { location })
+    let count = 0
+    const l = setInterval(() => {
+      res.write(body[count++])
+      if (count === body.length) {
+        res.end()
+        clearInterval(l)
+      }
+    }, 50)
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const res = await fetch(`http://localhost:${server.address().port}`, {
-//       redirect: 'manual'
-//     })
-//     t.equal(res.status, 302)
-//     t.equal(res.headers.get('location'), location)
-//     t.equal(await res.text(), body)
-//   })
-// })
+  server.listen(0, async () => {
+    const res = await fetch(`http://localhost:${server.address().port}`, {
+      redirect: 'manual'
+    })
+    t.equal(res.status, 302)
+    t.equal(res.headers.get('location'), location)
+    t.equal(await res.text(), body)
+  })
+})
 
-// test('fail to extract locked body', (t) => {
-//   t.plan(1)
+test('fail to extract locked body', (t) => {
+  t.plan(1)
 
-//   const stream = new ReadableStream({})
-//   const reader = stream.getReader()
-//   try {
-//     // eslint-disable-next-line
-//     new Response(stream)
-//   } catch (err) {
-//     t.equal(err.name, 'TypeError')
-//   }
-//   reader.cancel()
-// })
+  const stream = new ReadableStream({})
+  const reader = stream.getReader()
+  try {
+    // eslint-disable-next-line
+    new Response(stream)
+  } catch (err) {
+    t.equal(err.name, 'TypeError')
+  }
+  reader.cancel()
+})
 
-// test('fail to extract locked body', (t) => {
-//   t.plan(1)
+test('fail to extract locked body', (t) => {
+  t.plan(1)
 
-//   const stream = new ReadableStream({})
-//   const reader = stream.getReader()
-//   try {
-//     // eslint-disable-next-line
-//     new Request('http://asd', {
-//       method: 'PUT',
-//       body: stream,
-//       keepalive: true
-//     })
-//   } catch (err) {
-//     t.equal(err.message, 'keepalive')
-//   }
-//   reader.cancel()
-// })
+  const stream = new ReadableStream({})
+  const reader = stream.getReader()
+  try {
+    // eslint-disable-next-line
+    new Request('http://asd', {
+      method: 'PUT',
+      body: stream,
+      keepalive: true
+    })
+  } catch (err) {
+    t.equal(err.message, 'keepalive')
+  }
+  reader.cancel()
+})
 
-// test('post FormData with Blob', (t) => {
-//   t.plan(1)
+test('post FormData with Blob', (t) => {
+  t.plan(1)
 
-//   const body = new FormData()
-//   body.append('field1', new Blob(['asd1']))
+  const body = new FormData()
+  body.append('field1', new Blob(['asd1']))
 
-//   const server = createServer((req, res) => {
-//     req.pipe(res)
-//   })
-//   t.teardown(server.close.bind(server))
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const res = await fetch(`http://localhost:${server.address().port}`, {
-//       method: 'PUT',
-//       body
-//     })
-//     t.ok(/asd1/.test(await res.text()))
-//   })
-// })
+  server.listen(0, async () => {
+    const res = await fetch(`http://localhost:${server.address().port}`, {
+      method: 'PUT',
+      body
+    })
+    t.ok(/asd1/.test(await res.text()))
+  })
+})
 
-// test('post FormData with File', (t) => {
-//   t.plan(2)
+test('post FormData with File', (t) => {
+  t.plan(2)
 
-//   const body = new FormData()
-//   body.append('field1', new File(['asd1'], 'filename123'))
+  const body = new FormData()
+  body.append('field1', new File(['asd1'], 'filename123'))
 
-//   const server = createServer((req, res) => {
-//     req.pipe(res)
-//   })
-//   t.teardown(server.close.bind(server))
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const res = await fetch(`http://localhost:${server.address().port}`, {
-//       method: 'PUT',
-//       body
-//     })
-//     const result = await res.text()
-//     t.ok(/asd1/.test(result))
-//     t.ok(/filename123/.test(result))
-//   })
-// })
+  server.listen(0, async () => {
+    const res = await fetch(`http://localhost:${server.address().port}`, {
+      method: 'PUT',
+      body
+    })
+    const result = await res.text()
+    t.ok(/asd1/.test(result))
+    t.ok(/filename123/.test(result))
+  })
+})
 
-// test('invalid url', async (t) => {
-//   t.plan(1)
+test('invalid url', async (t) => {
+  t.plan(1)
 
-//   try {
-//     await fetch('http://invalid')
-//   } catch (e) {
-//     t.match(e.cause.message, 'invalid')
-//   }
-// })
+  try {
+    await fetch('http://invalid')
+  } catch (e) {
+    t.match(e.cause.message, 'invalid')
+  }
+})
 
-// test('custom agent', (t) => {
-//   t.plan(2)
+test('custom agent', (t) => {
+  t.plan(2)
 
-//   const obj = { asd: true }
-//   const server = createServer((req, res) => {
-//     res.end(JSON.stringify(obj))
-//   })
-//   t.teardown(server.close.bind(server))
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const dispatcher = new Client('http://localhost:' + server.address().port, {
-//       keepAliveTimeout: 1,
-//       keepAliveMaxTimeout: 1
-//     })
-//     const oldDispatch = dispatcher.dispatch
-//     dispatcher.dispatch = function (options, handler) {
-//       t.pass('custom dispatcher')
-//       return oldDispatch.call(this, options, handler)
-//     }
-//     t.teardown(server.close.bind(server))
-//     const body = await fetch(`http://localhost:${server.address().port}`, {
-//       dispatcher
-//     })
-//     t.strictSame(obj, await body.json())
-//   })
-// })
+  server.listen(0, async () => {
+    const dispatcher = new Client('http://localhost:' + server.address().port, {
+      keepAliveTimeout: 1,
+      keepAliveMaxTimeout: 1
+    })
+    const oldDispatch = dispatcher.dispatch
+    dispatcher.dispatch = function (options, handler) {
+      t.pass('custom dispatcher')
+      return oldDispatch.call(this, options, handler)
+    }
+    t.teardown(server.close.bind(server))
+    const body = await fetch(`http://localhost:${server.address().port}`, {
+      dispatcher
+    })
+    t.strictSame(obj, await body.json())
+  })
+})
 
-// test('custom agent node fetch', (t) => {
-//   t.plan(2)
+test('custom agent node fetch', (t) => {
+  t.plan(2)
 
-//   const obj = { asd: true }
-//   const server = createServer((req, res) => {
-//     res.end(JSON.stringify(obj))
-//   })
-//   t.teardown(server.close.bind(server))
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const dispatcher = new Client('http://localhost:' + server.address().port, {
-//       keepAliveTimeout: 1,
-//       keepAliveMaxTimeout: 1
-//     })
-//     const oldDispatch = dispatcher.dispatch
-//     dispatcher.dispatch = function (options, handler) {
-//       t.pass('custom dispatcher')
-//       return oldDispatch.call(this, options, handler)
-//     }
-//     t.teardown(server.close.bind(server))
-//     const body = await nodeFetch.fetch(`http://localhost:${server.address().port}`, {
-//       dispatcher
-//     })
-//     t.strictSame(obj, await body.json())
-//   })
-// })
+  server.listen(0, async () => {
+    const dispatcher = new Client('http://localhost:' + server.address().port, {
+      keepAliveTimeout: 1,
+      keepAliveMaxTimeout: 1
+    })
+    const oldDispatch = dispatcher.dispatch
+    dispatcher.dispatch = function (options, handler) {
+      t.pass('custom dispatcher')
+      return oldDispatch.call(this, options, handler)
+    }
+    t.teardown(server.close.bind(server))
+    const body = await nodeFetch.fetch(`http://localhost:${server.address().port}`, {
+      dispatcher
+    })
+    t.strictSame(obj, await body.json())
+  })
+})
 
-// test('error on redirect', async (t) => {
-//   const server = createServer((req, res) => {
-//     res.statusCode = 302
-//     res.end()
-//   })
-//   t.teardown(server.close.bind(server))
+test('error on redirect', async (t) => {
+  const server = createServer((req, res) => {
+    res.statusCode = 302
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
 
-//   server.listen(0, async () => {
-//     const errorCause = await fetch(`http://localhost:${server.address().port}`, {
-//       redirect: 'error'
-//     }).catch((e) => e.cause)
+  server.listen(0, async () => {
+    const errorCause = await fetch(`http://localhost:${server.address().port}`, {
+      redirect: 'error'
+    }).catch((e) => e.cause)
 
-//     t.equal(errorCause.message, 'unexpected redirect')
-//   })
-// })
+    t.equal(errorCause.message, 'unexpected redirect')
+  })
+})
 
 // https://github.com/nodejs/undici/issues/1527
 test('fetching with Request object - issue #1527', async (t) => {
