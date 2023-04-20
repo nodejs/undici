@@ -7,12 +7,6 @@
       "skip": true,
       "note": "navigator is not defined"
     },
-    "cache-storage-match.https.any.js": {
-      "fail": [
-        "CacheStorageMatch from one of many caches by name",
-        "CacheStorageMatch with empty cache name provided"
-      ]
-    },
     "cache-put.https.any.js": {
       "note": "probably can be fixed",
       "fail": [

@@ -127,7 +127,7 @@ if (util.nodeMajor > 16 || (util.nodeMajor === 16 && util.nodeMinor >= 8)) {
 
   // Cache & CacheStorage are tightly coupled with fetch. Even if it may run
   // in an older version of Node, it doesn't have any use without fetch.
-  module.exports.CacheStorage = new CacheStorage(kConstruct)
+  module.exports.caches = new CacheStorage(kConstruct)
 }
 
 if (util.nodeMajor >= 16) {
