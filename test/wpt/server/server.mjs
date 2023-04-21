@@ -36,6 +36,7 @@ const server = createServer(async (req, res) => {
       res.setHeader('content-type', 'text/html')
       // fall through
     }
+    case '/service-workers/cache-storage/resources/simple.txt':
     case '/fetch/content-encoding/resources/foo.octetstream.gz':
     case '/fetch/content-encoding/resources/foo.text.gz':
     case '/fetch/api/resources/cors-top.txt':
@@ -361,11 +362,7 @@ const server = createServer(async (req, res) => {
       res.end('')
       return
     }
-    case '/resources/simple.txt': {
-      res.end(readFileSync(join(tests, 'service-workers/service-worker', fullUrl.pathname), 'utf-8'))
-      return
-    }
-    case '/resources/fetch-status.py': {
+    case '/service-workers/cache-storage/resources/fetch-status.py': {
       const status = Number(fullUrl.searchParams.get('status'))
 
       res.statusCode = status

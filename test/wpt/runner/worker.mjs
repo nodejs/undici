@@ -94,7 +94,6 @@ Object.defineProperties(globalThis, {
 
 // self is required by testharness
 // GLOBAL is required by self
-// TODO(@KhafraDev): globalThis.location isn't being set to the URL we use in setGlobalOrigin
 runInThisContext(`
   globalThis.self = globalThis
   globalThis.GLOBAL = {
@@ -109,7 +108,7 @@ runInThisContext(`
     }
   }
   globalThis.window = globalThis
-  globalThis.location = new URL('${url}')
+  globalThis.location = new URL('${urlPath.replace(/\\/g, '/')}', '${url}')
   globalThis.Window = Object.getPrototypeOf(globalThis).constructor
 `)
 
@@ -143,7 +142,7 @@ add_completion_callback((_, status) => {
   })
 })
 
-setGlobalOrigin(new URL(urlPath, url))
+setGlobalOrigin(globalThis.location)
 
 // Inject any script the user provided before
 // running the tests.
