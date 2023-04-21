@@ -1,32 +1,56 @@
 'use strict'
 
+const { createSecureServer } = require('node:http2')
+const { once } = require('node:events')
+
 const { test } = require('tap')
-const { Client, errors } = require('..')
-const { createSecureServer } = require('http2')
 const pem = require('https-pem')
 
-test('throw http2 not supported error', (t) => {
-  t.plan(1)
+const { Client } = require('..')
 
-  const server = createSecureServer({ key: pem.key, cert: pem.cert }, (req, res) => {
-    res.stream.respond({ 'content-type': 'text/plain' })
-    res.stream.end('hello')
-  }).on('unknownProtocol', (socket) => {
-    // continue sending data in http2 to our http1.1 client to trigger error
-    socket.write('PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n')
+test('Should support H2 connection', async t => {
+  const body = []
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    t.equal(headers['x-my-header'], 'foo')
+    t.equal(headers[':method'], 'GET')
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': 'hello',
+      ':status': 200
+    })
+    stream.end('hello h2!')
   })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+
+  t.plan(6)
   t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
 
-  server.listen(0, () => {
-    const client = new Client(`https://localhost:${server.address().port}`, {
-      tls: {
-        rejectUnauthorized: false
-      }
-    })
-    t.teardown(client.close.bind(client))
-
-    client.request({ path: '/', method: 'GET' }, (err, data) => {
-      t.type(err, errors.HTTPParserError)
-    })
+  const response = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
   })
+
+  response.body.on('data', chunk => {
+    body.push(chunk)
+  })
+
+  await once(response.body, 'end')
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.equal(response.headers['x-custom-h2'], 'hello')
+  t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
