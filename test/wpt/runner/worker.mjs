@@ -94,6 +94,7 @@ Object.defineProperties(globalThis, {
 
 // self is required by testharness
 // GLOBAL is required by self
+// TODO(@KhafraDev): globalThis.location isn't being set to the URL we use in setGlobalOrigin
 runInThisContext(`
   globalThis.self = globalThis
   globalThis.GLOBAL = {
