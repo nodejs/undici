@@ -7,10 +7,6 @@
       "skip": true,
       "note": "navigator is not defined"
     },
-    "cache-storage-match.https.any.js": {
-      "skip": true,
-      "note": "CacheStorage.prototype.match isnt implemented yet"
-    },
     "cache-put.https.any.js": {
       "note": "probably can be fixed",
       "fail": [
