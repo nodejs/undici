@@ -53,7 +53,8 @@
         "fail": [
           "origin-when-cross-origin policy on a cross-origin URL",
           "origin-when-cross-origin policy on a cross-origin URL after same-origin redirection",
-          "origin-when-cross-origin policy on a same-origin URL after cross-origin redirection"
+          "origin-when-cross-origin policy on a same-origin URL after cross-origin redirection",
+          "origin-when-cross-origin policy on a same-origin URL"
         ]
       },
       "request-forbidden-headers.any.js": {

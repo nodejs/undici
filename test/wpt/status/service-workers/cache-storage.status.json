@@ -25,7 +25,6 @@
     "cache-delete.https.any.js": {
       "note": "spec bug? - https://github.com/w3c/ServiceWorker/issues/1677 (first fail)",
       "fail": [
-        "Cache.delete called with a string URL",
         "Cache.delete with ignoreSearch option (when it is specified as false)"
       ]
     },
