@@ -68,7 +68,7 @@ interface WebSocket extends EventTarget {
 
 export declare const WebSocket: {
   prototype: WebSocket
-  new (url: string | URL, protocols?: string | string[] | WebSocketInit, options?: WebSocketInit): WebSocket
+  new (url: string | URL, protocols?: string | string[] | WebSocketInit): WebSocket
   readonly CLOSED: number
   readonly CLOSING: number
   readonly CONNECTING: number
