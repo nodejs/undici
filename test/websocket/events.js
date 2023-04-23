@@ -99,3 +99,106 @@ test('Event handlers', (t) => {
     t.equal(ws.onmessage, listen)
   })
 })
+
+test('CloseEvent WPTs ported', (t) => {
+  t.test('initCloseEvent', (t) => {
+    // Taken from websockets/interfaces/CloseEvent/historical.html
+    t.notOk('initCloseEvent' in CloseEvent.prototype)
+    t.notOk('initCloseEvent' in new CloseEvent('close'))
+
+    t.end()
+  })
+
+  t.test('CloseEvent constructor', (t) => {
+    // Taken from websockets/interfaces/CloseEvent/constructor.html
+
+    {
+      const event = new CloseEvent('foo')
+
+      t.ok(event instanceof CloseEvent, 'should be a CloseEvent')
+      t.equal(event.type, 'foo')
+      t.notOk(event.bubbles, 'bubbles')
+      t.notOk(event.cancelable, 'cancelable')
+      t.notOk(event.wasClean, 'wasClean')
+      t.equal(event.code, 0)
+      t.equal(event.reason, '')
+    }
+
+    {
+      const event = new CloseEvent('foo', {
+        bubbles: true,
+        cancelable: true,
+        wasClean: true,
+        code: 7,
+        reason: 'x'
+      })
+      t.ok(event instanceof CloseEvent, 'should be a CloseEvent')
+      t.equal(event.type, 'foo')
+      t.ok(event.bubbles, 'bubbles')
+      t.ok(event.cancelable, 'cancelable')
+      t.ok(event.wasClean, 'wasClean')
+      t.equal(event.code, 7)
+      t.equal(event.reason, 'x')
+    }
+
+    t.end()
+  })
+
+  t.end()
+})
+
+test('ErrorEvent WPTs ported', (t) => {
+  t.test('Synthetic ErrorEvent', (t) => {
+    // Taken from html/webappapis/scripting/events/event-handler-processing-algorithm-error/document-synthetic-errorevent.html
+
+    {
+      const e = new ErrorEvent('error')
+      t.equal(e.message, '')
+      t.equal(e.filename, '')
+      t.equal(e.lineno, 0)
+      t.equal(e.colno, 0)
+      t.equal(e.error, undefined)
+    }
+
+    {
+      const e = new ErrorEvent('error', { error: null })
+      t.equal(e.error, null)
+    }
+
+    {
+      const e = new ErrorEvent('error', { error: undefined })
+      t.equal(e.error, undefined)
+    }
+
+    {
+      const e = new ErrorEvent('error', { error: 'foo' })
+      t.equal(e.error, 'foo')
+    }
+
+    t.end()
+  })
+
+  t.test('webidl', (t) => {
+    // Taken from webidl/ecmascript-binding/no-regexp-special-casing.any.js
+
+    const regExp = new RegExp()
+    regExp.message = 'some message'
+
+    const errorEvent = new ErrorEvent('type', regExp)
+
+    t.equal(errorEvent.message, 'some message')
+
+    t.end()
+  })
+
+  t.test('initErrorEvent', (t) => {
+    // Taken from workers/Worker_dispatchEvent_ErrorEvent.htm
+
+    const e = new ErrorEvent('error')
+    t.notOk('initErrorEvent' in e, 'should not be supported')
+
+    t.end()
+  })
+
+  t.end()
+})
