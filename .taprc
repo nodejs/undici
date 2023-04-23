@@ -5,4 +5,3 @@ coverage: false
 expose-gc: true
 timeout: 60
 check-coverage: false
-node-arg: --experimental-wasm-simd
