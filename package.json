@@ -61,7 +61,7 @@
     "bench": "PORT=3042 concurrently -k -s first npm:bench:server npm:bench:run",
     "bench:server": "node benchmarks/server.js",
     "prebench:run": "node benchmarks/wait.js",
-    "bench:run": "CONNECTIONS=1 node --experimental-wasm-simd benchmarks/benchmark.js; CONNECTIONS=50 node --experimental-wasm-simd benchmarks/benchmark.js",
+    "bench:run": "CONNECTIONS=1 node benchmarks/benchmark.js; CONNECTIONS=50 node benchmarks/benchmark.js",
     "serve:website": "docsify serve .",
     "prepare": "husky install",
     "fuzz": "jsfuzz test/fuzzing/fuzz.js corpus"
