@@ -11,6 +11,7 @@ import {
   EventListenerOrEventListenerObject
 } from './patch'
 import Dispatcher from './dispatcher'
+import { HeadersInit } from './fetch'
 
 export type BinaryType = 'blob' | 'arraybuffer'
 
@@ -125,5 +126,6 @@ export declare const MessageEvent: {
 
 interface WebSocketInit {
   protocols?: string | string[],
-  dispatcher?: Dispatcher
+  dispatcher?: Dispatcher,
+  headers?: HeadersInit
 }
