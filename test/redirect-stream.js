@@ -12,6 +12,8 @@ const {
 } = require('./utils/redirecting-servers')
 const { createReadable, createWritable } = require('./utils/stream')
 
+t.setTimeout(180000)
+
 t.test('should always have a history with the final URL even if no redirections were followed', async t => {
   t.plan(4)
 

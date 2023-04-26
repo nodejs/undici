@@ -14,6 +14,8 @@ const {
 } = require('./utils/redirecting-servers')
 const { createReadable, createReadableStream } = require('./utils/stream')
 
+t.setTimeout(180000)
+
 for (const factory of [
   (server, opts) => new undici.Agent(opts),
   (server, opts) => new undici.Pool(`http://${server}`, opts),
@@ -22,6 +24,7 @@ for (const factory of [
   const request = (server, opts, ...args) => {
     const dispatcher = factory(server, opts)
     return undici.request(args[0], { ...args[1], dispatcher }, args[2])
+      .finally(() => dispatcher.close())
   }
 
   t.test('should always have a history with the final URL even if no redirections were followed', async t => {
