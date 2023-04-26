@@ -2,7 +2,7 @@
 
 'use strict'
 
-const { test } = require('tap')
+const { test, teardown } = require('tap')
 const {
   Request,
   Headers,
@@ -475,3 +475,5 @@ test('set-cookie headers get cleared when passing a Request as first param', (t)
   t.same(req2.headers.getSetCookie(), [])
   t.end()
 })
+
+teardown(() => process.exit())
