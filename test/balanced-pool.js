@@ -515,7 +515,16 @@ for (const [index, { config, expected, expectedRatios, iterations = 9, expectedC
       try {
         await client.request({ path: '/', method: 'GET' })
       } catch (e) {
-        const serverWithError = servers.find(server => server.port === e.port) || servers.find(server => server.port === e.socket.remotePort)
+        const serverWithError =
+          servers.find(server => server.port === e.port) ||
+          servers.find(server => {
+            if (typeof AggregateError === 'function' && e instanceof AggregateError) {
+              return e.errors.some(e => server.port === (e.socket?.remotePort ?? e.port))
+            }
+
+            return server.port === e.socket.remotePort
+          })
+
         serverWithError.requestsCount++
 
         if (e.code === 'ECONNREFUSED') {
