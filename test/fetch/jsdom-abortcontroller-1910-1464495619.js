@@ -10,11 +10,15 @@ const { JSDOM } = require('jsdom')
 test('third party AbortControllers', async (t) => {
   const server = createServer((_, res) => res.end()).listen(0)
 
-  t.teardown(server.close.bind(server))
-  await once(server, 'listening')
-
   const { AbortController } = new JSDOM().window
-  const controller = new AbortController()
+  let controller = new AbortController()
+
+  t.teardown(() => {
+    controller.abort()
+    controller = null
+    return server.close()
+  })
+  await once(server, 'listening')
 
   await t.resolves(fetch(`http://localhost:${server.address().port}`, {
     signal: controller.signal
