@@ -14,6 +14,7 @@ const skip = nodeMajor < 18 || (nodeMajor === 18 && nodeMinor < 2)
 
 test('should create a PerformanceResourceTiming after each fetch request', { skip }, (t) => {
   t.plan(6)
+
   const obs = new PerformanceObserver(list => {
     const entries = list.getEntries()
     t.equal(entries.length, 1)
@@ -36,11 +37,10 @@ test('should create a PerformanceResourceTiming after each fetch request', { ski
 
   const server = createServer((req, res) => {
     res.end('ok')
-  })
-  t.teardown(server.close.bind(server))
-
-  server.listen(0, async () => {
+  }).listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
     t.strictSame('ok', await body.text())
   })
+
+  t.teardown(server.close.bind(server))
 })
