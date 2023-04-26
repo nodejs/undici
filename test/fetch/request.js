@@ -8,7 +8,6 @@ const {
   Headers,
   fetch
 } = require('../../')
-const { kState } = require('../../lib/fetch/symbols.js')
 const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
@@ -199,7 +198,7 @@ test('undefined window', t => {
 
 test('undefined body', t => {
   const req = new Request('http://asd', { body: undefined })
-  t.equal(req[kState].body, null)
+  t.equal(req.body, null)
   t.end()
 })
 
@@ -298,7 +297,7 @@ test('post aborted signal', t => {
     } else {
       t.pass()
     }
-  })
+  }, { once: true })
   ac.abort('gwak')
 })
 
@@ -346,7 +345,7 @@ test('post aborted signal cloned', t => {
     } else {
       t.pass()
     }
-  })
+  }, { once: true })
   ac.abort('gwak')
 })
 
