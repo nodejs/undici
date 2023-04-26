@@ -2,7 +2,7 @@
 
 'use strict'
 
-const { test } = require('tap')
+const { test, teardown } = require('tap')
 const { createServer } = require('http')
 const { ReadableStream } = require('stream/web')
 const { Blob } = require('buffer')
@@ -672,3 +672,5 @@ test('Receiving non-Latin1 headers', async (t) => {
   t.same(lengths, [30, 34, 94, 104, 90])
   t.end()
 })
+
+teardown(() => process.exit())
