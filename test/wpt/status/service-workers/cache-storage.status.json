@@ -11,38 +11,13 @@
       "note": "probably can be fixed",
       "fail": [
         "Cache.put with a VARY:* opaque response should not reject",
-        "Cache.put with opaque-filtered HTTP 206 response",
-        "Cache.put with a relative URL"
+        "Cache.put with opaque-filtered HTTP 206 response"
       ]
     },
     "cache-match.https.any.js": {
       "note": "requires https server",
       "fail": [
-        "cors-exposed header should be stored correctly.",
-        "Cache.match ignores vary headers on opaque response."
-      ]
-    },
-    "cache-delete.https.any.js": {
-      "note": "spec bug? - https://github.com/w3c/ServiceWorker/issues/1677 (first fail)",
-      "fail": [
-        "Cache.delete with ignoreSearch option (when it is specified as false)"
-      ]
-    },
-    "cache-keys.https.any.js": {
-      "note": "probably can be fixed",
-      "fail": [
-        "Cache.keys with ignoreSearch option (request with search parameters)",
-        "Cache.keys without parameters",
-        "Cache.keys with explicitly undefined request"
-      ]
-    },
-    "cache-matchAll.https.any.js": {
-      "note": "probably can be fixed",
-      "fail": [
-        "Cache.matchAll with ignoreSearch option (request with search parameters)",
-        "Cache.matchAll without parameters",
-        "Cache.matchAll with explicitly undefined request",
-        "Cache.matchAll with explicitly undefined request and empty options"
+        "cors-exposed header should be stored correctly."
       ]
     }
   }
