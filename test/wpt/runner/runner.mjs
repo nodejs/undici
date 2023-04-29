@@ -150,8 +150,9 @@ export class WPTRunner extends EventEmitter {
       return [test, code, meta]
     })
 
+    console.log('='.repeat(96))
+
     for (const [test, code, meta] of files) {
-      console.log('='.repeat(96))
       console.log(`Started ${test}`)
 
       const status = resolveStatusPath(test, this.#status)
