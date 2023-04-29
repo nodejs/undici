@@ -42,7 +42,7 @@
   ],
   "scripts": {
     "build:node": "npx esbuild@0.14.38 index-fetch.js --bundle --platform=node --outfile=undici-fetch.js",
-    "prebuild:wasm": "docker build -t llhttp_wasm_builder -f build/Dockerfile .",
+    "prebuild:wasm": "node build/wasm.js --prebuild",
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
     "lint:fix": "standard --fix | snazzy",
