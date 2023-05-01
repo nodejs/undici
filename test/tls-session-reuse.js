@@ -4,7 +4,7 @@ const { readFileSync } = require('fs')
 const { join } = require('path')
 const https = require('https')
 const crypto = require('crypto')
-const { test } = require('tap')
+const { test, teardown } = require('tap')
 const { Client, Pool } = require('..')
 const { kSocket } = require('../lib/core/symbols')
 const { nodeMajor } = require('../lib/core/util')
@@ -181,3 +181,5 @@ test('A pool should be able to reuse TLS sessions between clients', {
 
   t.end()
 })
+
+teardown(() => process.exit())

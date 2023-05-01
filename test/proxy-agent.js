@@ -1,6 +1,6 @@
 'use strict'
 
-const { test } = require('tap')
+const { test, teardown } = require('tap')
 const { request, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('..')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { nodeMajor } = require('../lib/core/util')
@@ -692,3 +692,5 @@ function buildSSLProxy () {
     server.listen(0, () => resolve(server))
   })
 }
+
+teardown(() => process.exit())

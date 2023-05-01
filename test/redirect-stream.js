@@ -419,3 +419,5 @@ t.test('removes cookie header on third party origin', async t => {
 
   t.equal(body.length, 0)
 })
+
+t.teardown(() => process.exit())

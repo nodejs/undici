@@ -1,6 +1,6 @@
 'use strict'
 
-const { test } = require('tap')
+const { test, teardown } = require('tap')
 const http = require('http')
 const { PassThrough } = require('stream')
 const { kRunning } = require('../lib/core/symbols')
@@ -705,3 +705,5 @@ test('the dispatcher is truly global', t => {
   t.equal(agent, undiciFresh.getGlobalDispatcher())
   t.end()
 })
+
+teardown(() => process.exit())
