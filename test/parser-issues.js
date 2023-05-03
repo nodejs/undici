@@ -1,6 +1,6 @@
 const net = require('net')
 const { test } = require('tap')
-const { Client } = require('..')
+const { Client, errors } = require('..')
 
 test('https://github.com/mcollina/undici/issues/268', (t) => {
   t.plan(2)
@@ -40,7 +40,7 @@ test('https://github.com/mcollina/undici/issues/268', (t) => {
 })
 
 test('parser fail', (t) => {
-  t.plan(3)
+  t.plan(2)
 
   const server = net.createServer(socket => {
     socket.write('HTT/1.1 200 OK\r\n')
@@ -56,8 +56,7 @@ test('parser fail', (t) => {
       path: '/'
     }, (err, data) => {
       t.ok(err)
-      t.equal(err.code, 'HPE_INVALID_CONSTANT')
-      t.equal(err.message, 'Expected HTTP/')
+      t.type(err, errors.HTTPParserError)
     })
   })
 })
