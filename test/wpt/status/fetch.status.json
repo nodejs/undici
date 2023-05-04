@@ -99,6 +99,14 @@
         ]
       }
     },
+    "body": {
+      "mime-type.any.js": {
+        "note": "fails on all platforms, https://wpt.fyi/results/fetch/api/body/mime-type.any.html?label=master&label=experimental&product=chrome&product=firefox&product=safari&product=node.js&product=deno&aligned",
+        "fail": [
+          "Response: Extract a MIME type with clone"
+        ]
+      }
+    },
     "cors": {
       "note": "undici doesn't implement CORs",
       "skip": true
