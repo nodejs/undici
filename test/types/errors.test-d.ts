@@ -1,8 +1,11 @@
 import { expectAssignable } from 'tsd'
 import { errors } from '../..'
 import Client from '../../types/client'
+import { IncomingHttpHeaders } from "../../types/header";
 
 expectAssignable<errors.UndiciError>(new errors.UndiciError())
+expectAssignable<string>(new errors.UndiciError().name)
+expectAssignable<string>(new errors.UndiciError().code)
 
 expectAssignable<errors.UndiciError>(new errors.ConnectTimeoutError())
 expectAssignable<errors.ConnectTimeoutError>(new errors.ConnectTimeoutError())
@@ -28,6 +31,10 @@ expectAssignable<errors.UndiciError>(new errors.ResponseStatusCodeError())
 expectAssignable<errors.ResponseStatusCodeError>(new errors.ResponseStatusCodeError())
 expectAssignable<'ResponseStatusCodeError'>(new errors.ResponseStatusCodeError().name)
 expectAssignable<'UND_ERR_RESPONSE_STATUS_CODE'>(new errors.ResponseStatusCodeError().code)
+expectAssignable<number>(new errors.ResponseStatusCodeError().status)
+expectAssignable<number>(new errors.ResponseStatusCodeError().statusCode)
+expectAssignable<IncomingHttpHeaders | string[] | null>(new errors.ResponseStatusCodeError().headers)
+expectAssignable<null | Record<string, any> | string>(new errors.ResponseStatusCodeError().body)
 
 expectAssignable<errors.UndiciError>(new errors.InvalidArgumentError())
 expectAssignable<errors.InvalidArgumentError>(new errors.InvalidArgumentError())
