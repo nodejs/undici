@@ -169,8 +169,6 @@ test('Should handle h2 request with body (stream)', async t => {
     t.equal(headers[':path'], '/')
     t.equal(headers[':scheme'], 'https')
 
-    console.log('request received and valid')
-
     stream.on('data', chunk => requestChunks.push(chunk))
 
     stream.respond({
