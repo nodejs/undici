@@ -18,7 +18,7 @@ test('do not leak', (t) => {
     if (done) {
       return
     }
-    url ??= new URL(`http://127.0.0.1:${server.address().port}`)
+    url = url ?? new URL(`http://127.0.0.1:${server.address().port}`)
     const controller = new AbortController()
     fetch(url, { signal: controller.signal })
       .then(res => res.arrayBuffer())

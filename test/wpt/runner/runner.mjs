@@ -273,7 +273,7 @@ export class WPTRunner extends EventEmitter {
         } else if (file.allowUnexpectedFailures || topLevel.allowUnexpectedFailures || file.fail?.includes(name)) {
           if (!file.allowUnexpectedFailures && !topLevel.allowUnexpectedFailures) {
             if (Array.isArray(file.fail)) {
-              this.#statusOutput[path] ??= []
+              this.#statusOutput[path] = this.#statusOutput[path] ?? []
               this.#statusOutput[path].push(name)
             }
           }
