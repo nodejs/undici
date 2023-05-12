@@ -3,7 +3,6 @@
 const { test, teardown } = require('tap')
 const { request, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('..')
 const { InvalidArgumentError } = require('../lib/core/errors')
-const { nodeMajor } = require('../lib/core/util')
 const { readFileSync } = require('fs')
 const { join } = require('path')
 const ProxyAgent = require('../lib/proxy-agent')
@@ -367,7 +366,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
   proxyAgent.close()
 })
 
-test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', { skip: nodeMajor < 16 }, async (t) => {
+test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async (t) => {
   t.plan(2)
   const defaultDispatcher = getGlobalDispatcher()
 

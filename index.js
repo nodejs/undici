@@ -19,6 +19,8 @@ const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 const DecoratorHandler = require('./lib/handler/DecoratorHandler')
 const RedirectHandler = require('./lib/handler/RedirectHandler')
 const createRedirectInterceptor = require('./lib/interceptor/redirectInterceptor')
+const { deleteCookie, getCookies, getSetCookies, setCookie } = require('./lib/cookies')
+const { parseMIMEType, serializeAMimeType } = require('./lib/fetch/dataURL')
 
 let hasCrypto
 try {
@@ -130,19 +132,13 @@ if (util.nodeMajor > 16 || (util.nodeMajor === 16 && util.nodeMinor >= 8)) {
   module.exports.caches = new CacheStorage(kConstruct)
 }
 
-if (util.nodeMajor >= 16) {
-  const { deleteCookie, getCookies, getSetCookies, setCookie } = require('./lib/cookies')
+module.exports.deleteCookie = deleteCookie
+module.exports.getCookies = getCookies
+module.exports.getSetCookies = getSetCookies
+module.exports.setCookie = setCookie
 
-  module.exports.deleteCookie = deleteCookie
-  module.exports.getCookies = getCookies
-  module.exports.getSetCookies = getSetCookies
-  module.exports.setCookie = setCookie
-
-  const { parseMIMEType, serializeAMimeType } = require('./lib/fetch/dataURL')
-
-  module.exports.parseMIMEType = parseMIMEType
-  module.exports.serializeAMimeType = serializeAMimeType
-}
+module.exports.parseMIMEType = parseMIMEType
+module.exports.serializeAMimeType = serializeAMimeType
 
 if (util.nodeMajor >= 18 && hasCrypto) {
   const { WebSocket } = require('./lib/websocket/websocket')

@@ -2,7 +2,6 @@
 
 const t = require('tap')
 const undici = require('..')
-const { nodeMajor } = require('../lib/core/util')
 const {
   startRedirectingServer,
   startRedirectingWithBodyServer,
@@ -312,7 +311,7 @@ for (const factory of [
     }
   })
 
-  t.test('should not follow redirects when using ReadableStream request bodies', { skip: nodeMajor < 16 }, async t => {
+  t.test('should not follow redirects when using ReadableStream request bodies', async t => {
     const server = await startRedirectingServer(t)
 
     const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/301`, {

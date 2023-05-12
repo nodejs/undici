@@ -11,7 +11,6 @@ const {
   Writable,
   PassThrough
 } = require('stream')
-const { nodeMajor } = require('../lib/core/util')
 
 test('pipeline get', (t) => {
   t.plan(17)
@@ -536,11 +535,7 @@ test('pipeline abort piped res', (t) => {
     })
       .on('error', (err) => {
         // Node < 13 doesn't always detect premature close.
-        if (nodeMajor < 13) {
-          t.ok(err)
-        } else {
-          t.equal(err.code, 'UND_ERR_ABORTED')
-        }
+        t.equal(err.code, 'UND_ERR_ABORTED')
       })
       .end()
   })

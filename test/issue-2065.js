@@ -7,7 +7,7 @@ const { once } = require('events')
 const { createReadStream } = require('fs')
 const { File, FormData, request } = require('..')
 
-if (nodeMajor < 16 || (nodeMajor === 16 && nodeMinor < 8)) {
+if (nodeMajor === 16 && nodeMinor < 8) {
   skip('FormData is not available in node < v16.8.0')
   process.exit()
 }

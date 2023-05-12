@@ -5,7 +5,6 @@ const { createServer } = require('http')
 const { promisify } = require('util')
 const { MockAgent, MockPool, getGlobalDispatcher, setGlobalDispatcher, request } = require('..')
 const { kUrl } = require('../lib/core/symbols')
-const { nodeMajor } = require('../lib/core/util')
 const { kDispatches } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { MockInterceptor } = require('../lib/mock/mock-interceptor')
@@ -323,7 +322,7 @@ test('MockPool - correct errors when consuming invalid JSON body', async (t) => 
   t.end()
 })
 
-test('MockPool - allows matching headers in fetch', { skip: nodeMajor < 16 }, async (t) => {
+test('MockPool - allows matching headers in fetch', async (t) => {
   const { fetch } = require('../index')
 
   const oldDispatcher = getGlobalDispatcher()
