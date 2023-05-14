@@ -476,4 +476,15 @@ test('set-cookie headers get cleared when passing a Request as first param', (t)
   t.end()
 })
 
+// https://github.com/nodejs/undici/issues/2124
+test('request.referrer', (t) => {
+  for (const referrer of ['about://client', 'about://client:1234']) {
+    const request = new Request('http://a', { referrer })
+
+    t.equal(request.referrer, 'about:client')
+  }
+
+  t.end()
+})
+
 teardown(() => process.exit())
