@@ -640,15 +640,13 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should decompress slightly invalid gzip response', () => {
+  it('should decompress slightly invalid gzip response', async () => {
     const url = `${base}gzip-truncated`
-    return fetch(url).then(res => {
-      expect(res.headers.get('content-type')).to.equal('text/plain')
-      return res.text().then(result => {
-        expect(result).to.be.a('string')
-        expect(result).to.equal('hello world')
-      })
-    })
+    const res = await fetch(url)
+    expect(res.headers.get('content-type')).to.equal('text/plain')
+    const result = await res.text()
+    expect(result).to.be.a('string')
+    expect(result).to.equal('hello world')
   })
 
   it('should decompress deflate response', () => {
