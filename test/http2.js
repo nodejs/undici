@@ -3,13 +3,14 @@
 const { createSecureServer } = require('node:http2')
 const { createReadStream, readFileSync } = require('node:fs')
 const { once } = require('node:events')
+const { Blob } = require('node:buffer')
 
 const { test, plan } = require('tap')
 const pem = require('https-pem')
 
 const { Client } = require('..')
 
-plan(5)
+plan(7)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -313,6 +314,129 @@ test('Should handle h2 request with body (iterable)', async t => {
       'x-my-header': 'foo'
     },
     body: iterableBody
+  })
+
+  response.body.on('data', chunk => {
+    responseBody.push(chunk)
+  })
+
+  await once(response.body, 'end')
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.equal(response.headers['x-custom-h2'], 'foo')
+  t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+  t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+})
+
+test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
+  const server = createSecureServer(pem)
+  const expectedBody = 'asd'
+  const requestChunks = []
+  const responseBody = []
+  const body = new Blob(['asd'], {
+    type: 'application/json'
+  })
+
+  server.on('stream', async (stream, headers) => {
+    t.equal(headers[':method'], 'POST')
+    t.equal(headers[':path'], '/')
+    t.equal(headers[':scheme'], 'https')
+
+    stream.on('data', chunk => requestChunks.push(chunk))
+
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    })
+
+    stream.end('hello h2!')
+  })
+
+  t.plan(8)
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  const response = await client.request({
+    path: '/',
+    method: 'POST',
+    headers: {
+      'x-my-header': 'foo'
+    },
+    body
+  })
+
+  response.body.on('data', chunk => {
+    responseBody.push(chunk)
+  })
+
+  await once(response.body, 'end')
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.equal(response.headers['x-custom-h2'], 'foo')
+  t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+  t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+})
+
+test('Should handle h2 request with body (Blob:ArrayBuffer)', { skip: !Blob }, async t => {
+  const server = createSecureServer(pem)
+  const expectedBody = 'hello'
+  const requestChunks = []
+  const responseBody = []
+  const buf = Buffer.from(expectedBody)
+  const body = new ArrayBuffer(buf.byteLength)
+
+  buf.copy(new Uint8Array(body))
+
+  server.on('stream', async (stream, headers) => {
+    t.equal(headers[':method'], 'POST')
+    t.equal(headers[':path'], '/')
+    t.equal(headers[':scheme'], 'https')
+
+    stream.on('data', chunk => requestChunks.push(chunk))
+
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    })
+
+    stream.end('hello h2!')
+  })
+
+  t.plan(8)
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  const response = await client.request({
+    path: '/',
+    method: 'POST',
+    headers: {
+      'x-my-header': 'foo'
+    },
+    body
   })
 
   response.body.on('data', chunk => {
