@@ -9,7 +9,7 @@ const pem = require('https-pem')
 
 const { Client } = require('..')
 
-plan(4)
+plan(5)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -120,15 +120,6 @@ test('Should handle h2 request with body (string or buffer)', async t => {
   const requestBodyBuffer = []
   let reqCounter = 0
 
-  // server.on('checkContinue', (request, response) => {
-  //   t.equal(request.headers['x-my-header'], 'foo')
-  //   t.equal(request.headers[':method'], 'POST')
-
-  //   console.log(request)
-
-  //   response.writeContinue()
-  // })
-
   server.on('stream', async (stream, headers) => {
     reqCounter++
     if (reqCounter === 1) {
@@ -183,7 +174,6 @@ test('Should handle h2 request with body (string or buffer)', async t => {
       'x-my-header': 'foo'
     },
     body: Buffer.from('hello from client!', 'utf-8')
-    // expectContinue: true
   })
 
   response2.body.on('data', chunk => {
@@ -255,6 +245,74 @@ test('Should handle h2 request with body (stream)', async t => {
       'x-my-header': 'foo'
     },
     body: stream
+  })
+
+  response.body.on('data', chunk => {
+    responseBody.push(chunk)
+  })
+
+  await once(response.body, 'end')
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.equal(response.headers['x-custom-h2'], 'foo')
+  t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+  t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+})
+
+test('Should handle h2 request with body (iterable)', async t => {
+  const server = createSecureServer(pem)
+  const expectedBody = 'hello'
+  const requestChunks = []
+  const responseBody = []
+  const iterableBody = {
+    [Symbol.iterator]: function * () {
+      const end = expectedBody.length - 1
+      for (let i = 0; i < end + 1; i++) {
+        yield expectedBody[i]
+      }
+
+      return expectedBody[end]
+    }
+  }
+
+  server.on('stream', async (stream, headers) => {
+    t.equal(headers[':method'], 'POST')
+    t.equal(headers[':path'], '/')
+    t.equal(headers[':scheme'], 'https')
+
+    stream.on('data', chunk => requestChunks.push(chunk))
+
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    })
+
+    stream.end('hello h2!')
+  })
+
+  t.plan(8)
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  const response = await client.request({
+    path: '/',
+    method: 'POST',
+    headers: {
+      'x-my-header': 'foo'
+    },
+    body: iterableBody
   })
 
   response.body.on('data', chunk => {
