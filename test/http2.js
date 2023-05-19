@@ -65,6 +65,7 @@ test('Should handle h2 continue', async t => {
   const responseBody = []
 
   server.on('request', (request, response) => {
+    t.equal(request.headers.expect, '100-continue')
     t.equal(request.headers['x-my-header'], 'foo')
     t.equal(request.headers[':method'], 'POST')
 
@@ -77,7 +78,7 @@ test('Should handle h2 continue', async t => {
     response.end('hello h2!')
   })
 
-  t.plan(8)
+  t.plan(7)
 
   server.listen(0)
   await once(server, 'listening')
