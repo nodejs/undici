@@ -61,13 +61,16 @@ test('Should support H2 connection', async t => {
 
 test('Should handle h2 continue', async t => {
   const requestBody = []
-  const server = createSecureServer(pem)
+  const server = createSecureServer(pem, (request, response) => {
+    console.log('request handler called')
+  })
   const responseBody = []
 
-  server.on('request', (request, response) => {
+  server.on('checkContinue', (request, response) => {
     t.equal(request.headers.expect, '100-continue')
     t.equal(request.headers['x-my-header'], 'foo')
     t.equal(request.headers[':method'], 'POST')
+    response.writeContinue()
 
     request.on('data', chunk => requestBody.push(chunk))
 
@@ -160,7 +163,6 @@ test('Should handle h2 request with body (string or buffer)', async t => {
       'x-my-header': 'foo'
     },
     body: 'hello from client!'
-    // expectContinue: true
   })
 
   response1.body.on('data', chunk => {
