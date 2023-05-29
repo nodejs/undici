@@ -39,7 +39,8 @@ deprecations (removed features) here -->
 
 ## Status
 
-KEY: S = Skipped, x = complete
+<!-- KEY: S = Skipped, x = complete -->
+
 
 - [ ] I have read and agreed to the [Developer's Certificate of Origin][cert]
 - [ ] Tested
