@@ -2,6 +2,8 @@
 
 * [Guides](#guides)
   * [Update `llhttp`](#update-llhttp)
+* [Commit Message Guidelines](#commit-message-guidelines)
+* [Pull Request Guidelines](#pull-request-guidelines)
   * [Lint](#lint)
   * [Test](#test)
   * [Coverage](#coverage)
@@ -9,10 +11,8 @@
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
   * [Moderation Policy](#moderation-policy)
 
-<a id="guides"></a>
 ## Guides
 
-<a id="update-llhttp"></a>
 ### Update `llhttp`
 
 The HTTP parser used by `undici` is a WebAssembly build of [`llhttp`](https://github.com/nodejs/llhttp).
@@ -78,7 +78,6 @@ cd <your-path-to-undici>
 npm run build:wasm
 ```
 
-<a id="update-wpts"></a>
 ### Update `WPTs`
 
 `undici` runs a subset of the [`web-platform-tests`](https://github.com/web-platform-tests/wpt).
@@ -129,7 +128,22 @@ git sparse-checkout add /common
 # etc
 ```
 
+
+## Commit Message Guidelines
+
+We follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages.
+
+EG: `feat(name of feature): description of feature`
+
+## Pull Request Guidelines
+
+We follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) for pull request titles.
+
+EG: `feat(name of feature): description of feature`
+
 #### Run the tests
+
+Before merging a pull request, make sure that the tests are passing.
 
 Run the tests to ensure that any new failures are marked as such.
 
@@ -139,29 +153,26 @@ You can mark tests as failing in their corresponding [status](./test/wpt/status)
 npm run test:wpt
 ```
 
-<a id="lint"></a>
-
 ### Lint
 
 ```bash
 npm run lint
 ```
 
-<a id="test"></a>
 ### Test
 
 ```bash
 npm run test
 ```
 
-<a id="coverage"></a>
 ### Coverage
 
 ```bash
 npm run coverage
 ```
 
-<a id="developers-certificate-of-origin"></a>
+
+
 ## Developer's Certificate of Origin 1.1
 
 By making a contribution to this project, I certify that:
