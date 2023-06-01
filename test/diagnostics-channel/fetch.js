@@ -14,7 +14,7 @@ try {
 
 const { createServer } = require('http')
 
-t.plan(35)
+t.plan(37)
 
 const server = createServer((req, res) => {
   res.setHeader('Content-Type', 'text/plain')
@@ -54,14 +54,16 @@ diagnosticsChannel.channel('tracing:undici:end').subscribe(({ input, init, resul
 })
 
 let asyncStartCalled = 0
-diagnosticsChannel.channel('tracing:undici:asyncStart').subscribe(({ input, init }) => {
+diagnosticsChannel.channel('tracing:undici:asyncStart').subscribe(({ input, init, result }) => {
   asyncStartCalled += 1
   if (init.redirect) {
     t.equal(input, 'badrequest')
     t.same(init, { redirect: 'error' })
+    t.notOk(result)
   } else {
     t.equal(input, `http://localhost:${server.address().port}`)
     t.same(init, {})
+    t.ok(result)
   }
 })
 
