@@ -202,3 +202,75 @@ diagnosticsChannel.channel('undici:websocket:pong').subscribe(({ payload }) => {
   console.log(payload)
 })
 ```
+
+[TracingChannel](https://nodejs.org/api/diagnostics_channel.html#class-tracingchannel) is used to trace `fetch` (currently available only on Node.js v19+).
+
+## `tracing:undici:start`
+
+This message is published after `fetch` has been called.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('tracing:undici:start').subscribe(({ input, init }) => {
+  console.log('url', input)
+  console.log('init', init)
+})
+```
+
+## `tracing:undici:asyncStart`
+
+This message is published after `fetch` resolves.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('tracing:undici:asyncStart').subscribe(({ input, init, result }) => {
+  console.log('url', input)
+  console.log('init', init)
+  console.log('response', result)
+})
+```
+
+## `tracing:undici:end`
+
+This message is published after `fetch` has been called.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('tracing:undici:end').subscribe(({ input, init, error }) => {
+  console.log('url', input)
+  console.log('init', init)
+  console.log('error', error)
+})
+```
+
+## `tracing:undici:asyncEnd`
+
+This message is published after `fetch` resolves.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('tracing:undici:asyncEnd').subscribe(({ input, init, result, error }) => {
+  console.log('url', input)
+  console.log('init', init)
+  console.log('response', result)
+  // error should be undefined
+})
+```
+
+## `tracing:undici:error`
+
+This message is published when an error is thrown or promise rejects while calling `fetch`.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('tracing:undici:error').subscribe(({ input, init, error }) => {
+  console.log('url', input)
+  console.log('init', init)
+  console.log('error', error)
+})
+```

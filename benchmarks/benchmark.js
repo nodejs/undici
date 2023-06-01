@@ -18,6 +18,7 @@ const parallelRequests = parseInt(process.env.PARALLEL, 10) || 100
 const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
 const bodyTimeout = parseInt(process.env.BODY_TIMEOUT, 10) || 0
 const dest = {}
+const diagnosticsChannel = require('diagnostics_channel')
 
 if (process.env.PORT) {
   dest.port = process.env.PORT
@@ -258,6 +259,15 @@ const experiments = {
 if (process.env.PORT) {
   // fetch does not support the socket
   experiments['undici - fetch'] = () => {
+    return makeParallelRequests(resolve => {
+      fetch(dest.url).then(res => {
+        res.body.pipeTo(new WritableStream({ write () {}, close () { resolve() } }))
+      }).catch(console.log)
+    })
+  }
+
+  experiments['undici - fetch (with tracing channel)'] = () => {
+    diagnosticsChannel.channel('tracing:undici:asyncEnd').subscribe(() => {})
     return makeParallelRequests(resolve => {
       fetch(dest.url).then(res => {
         res.body.pipeTo(new WritableStream({ write () {}, close () { resolve() } }))
