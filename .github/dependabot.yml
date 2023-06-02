@@ -11,3 +11,13 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+
+  - package-ecosystem: docker
+    directory: /build
+    schedule:
+      interval: daily
+
+  - package-ecosystem: pip
+    directory: /test/wpt/tests/resources/test
+    schedule:
+      interval: daily
