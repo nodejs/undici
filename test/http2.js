@@ -61,9 +61,7 @@ test('Should support H2 connection', async t => {
 
 test('Should handle h2 continue', async t => {
   const requestBody = []
-  const server = createSecureServer(pem, (request, response) => {
-    console.log('request handler called')
-  })
+  const server = createSecureServer(pem, () => {})
   const responseBody = []
 
   server.on('checkContinue', (request, response) => {
@@ -117,21 +115,14 @@ test('Should handle h2 continue', async t => {
   t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
 })
 
-test('Should handle h2 request with body (string or buffer)', async t => {
+test('Should handle h2 request with body (string or buffer) - dispatch', t => {
   const server = createSecureServer(pem)
-  const responseBody1 = []
-  const responseBody2 = []
-  const requestBodyString = []
-  const requestBodyBuffer = []
-  let reqCounter = 0
+  const expectedBody = 'hello from client!'
+  const response = []
+  const requestBody = []
 
   server.on('stream', async (stream, headers) => {
-    reqCounter++
-    if (reqCounter === 1) {
-      stream.on('data', chunk => requestBodyString.push(chunk))
-    } else {
-      stream.on('data', chunk => requestBodyBuffer.push(chunk))
-    }
+    stream.on('data', chunk => requestBody.push(chunk))
 
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
@@ -142,67 +133,53 @@ test('Should handle h2 request with body (string or buffer)', async t => {
     stream.end('hello h2!')
   })
 
-  t.plan(10)
+  t.plan(7)
 
-  server.listen(0)
-  await once(server, 'listening')
+  server.listen(0, () => {
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      }
+    })
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
-    connect: {
-      rejectUnauthorized: false
-    }
+    t.teardown(server.close.bind(server))
+    t.teardown(client.close.bind(client))
+
+    client.dispatch({
+      path: '/',
+      method: 'POST',
+      headers: {
+        'x-my-header': 'foo',
+        'content-type': 'text/plain'
+      },
+      body: expectedBody
+    }, {
+      onConnect () {
+        t.ok(true)
+      },
+      onError (err) {
+        t.error(err)
+      },
+      onHeaders (statusCode, headers) {
+        t.equal(statusCode, 200)
+        t.equal(headers['content-type'], 'text/plain; charset=utf-8')
+        t.equal(headers['x-custom-h2'], 'foo')
+      },
+      onData (chunk) {
+        response.push(chunk)
+      },
+      onBodySent (body) {
+        t.equal(body.toString('utf-8'), expectedBody)
+      },
+      onComplete () {
+        t.equal(Buffer.concat(response).toString('utf-8'), 'hello h2!')
+        t.equal(
+          Buffer.concat(requestBody).toString('utf-8'),
+          'hello from client!'
+        )
+      }
+    })
   })
-
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
-
-  const response1 = await client.request({
-    path: '/',
-    method: 'POST',
-    headers: {
-      'x-my-header': 'foo'
-    },
-    body: 'hello from client!'
-  })
-
-  response1.body.on('data', chunk => {
-    responseBody1.push(chunk)
-  })
-
-  await once(response1.body, 'end')
-
-  const response2 = await client.request({
-    path: '/',
-    method: 'POST',
-    headers: {
-      'x-my-header': 'foo'
-    },
-    body: Buffer.from('hello from client!', 'utf-8')
-  })
-
-  response2.body.on('data', chunk => {
-    responseBody2.push(chunk)
-  })
-
-  await once(response2.body, 'end')
-
-  t.equal(response1.statusCode, 200)
-  t.equal(response1.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response1.headers['x-custom-h2'], 'foo')
-  t.equal(Buffer.concat(responseBody1).toString('utf-8'), 'hello h2!')
-  t.equal(
-    Buffer.concat(requestBodyString).toString('utf-8'),
-    'hello from client!'
-  )
-
-  t.equal(response2.statusCode, 200)
-  t.equal(response2.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response2.headers['x-custom-h2'], 'foo')
-  t.equal(Buffer.concat(responseBody2).toString('utf-8'), 'hello h2!')
-  t.equal(
-    Buffer.concat(requestBodyBuffer).toString('utf-8'),
-    'hello from client!'
-  )
 })
 
 test('Should handle h2 request with body (stream)', async t => {
