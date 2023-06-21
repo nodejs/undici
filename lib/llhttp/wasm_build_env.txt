@@ -1,0 +1,32 @@
+alpine-baselayout-data-3.4.0-r0 - Alpine base dir structure and init scripts
+musl-1.2.3-r4 - the musl c library (libc) implementation
+busybox-1.35.0-r29 - Size optimized toolbox of many common UNIX utilities
+busybox-binsh-1.35.0-r29 - busybox ash /bin/sh
+alpine-baselayout-3.4.0-r0 - Alpine base dir structure and init scripts
+alpine-keys-2.4-r1 - Public keys for Alpine Linux packages
+ca-certificates-bundle-20220614-r4 - Pre generated bundle of Mozilla certificates
+libcrypto3-3.0.8-r3 - Crypto library from openssl
+libssl3-3.0.8-r3 - SSL shared libraries
+ssl_client-1.35.0-r29 - EXternal ssl_client for busybox wget
+zlib-1.2.13-r0 - A compression/decompression Library
+apk-tools-2.12.10-r1 - Alpine Package Keeper - package manager for alpine
+scanelf-1.3.5-r1 - Scan ELF binaries for stuff
+musl-utils-1.2.3-r4 - the musl c library (libc) implementation
+libc-utils-0.7.2-r3 - Meta package to pull in correct libc
+libgcc-12.2.1_git20220924-r4 - GNU C compiler runtime libraries
+libstdc++-12.2.1_git20220924-r4 - GNU C++ standard runtime library
+libffi-3.4.4-r0 - portable, high level programming interface to various calling conventions.
+xz-libs-5.2.9-r0 - Library and CLI tools for XZ and LZMA compressed files (libraries)
+libxml2-2.10.4-r0 - XML parsing library, version 2
+zstd-libs-1.5.5-r0 - Zstandard - Fast real-time compression algorithm (libraries)
+llvm15-libs-15.0.7-r0 - LLVM 15 runtime library
+clang15-libs-15.0.7-r0 - A C language family front-end for LLVM (libraries)
+libstdc++-dev-12.2.1_git20220924-r4 - GNU C++ standard runtime library (development files)
+clang15-15.0.7-r0 - A C language family front-end for LLVM
+lld-libs-15.0.7-r0 - The LLVM Linker (libraries)
+lld-15.0.7-r0 - The LLVM Linker
+wasi-libc-0.20220525-r1 - WASI libc implementation for WebAssembly
+wasi-libcxx-15.0.7-r0 - WASI LLVM C++ standard library
+wasi-libcxxabi-15.0.7-r0 - WASI Low level support for the LLVM C++ standard library.
+wasi-compiler-rt-15.0.7-r0 - WASI LLVM compiler runtime
+wasi-sdk-16-r0 - WASI-enabled WebAssembly C/C++ toolchain
