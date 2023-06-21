@@ -10,7 +10,7 @@ const pem = require('https-pem')
 
 const { Client } = require('..')
 
-plan(7)
+plan(8)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -113,6 +113,52 @@ test('Should handle h2 continue', async t => {
   t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
   t.equal(response.headers['x-custom-h2'], 'foo')
   t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+})
+
+test('Dispatcher#Connect', t => {
+  const server = createSecureServer(pem)
+  const expectedBody = 'hello from client!'
+  let requestBody = ''
+
+  server.on('stream', async (stream, headers) => {
+    stream.setEncoding('utf-8')
+    stream.on('data', chunk => {
+      requestBody += chunk
+    })
+
+    stream.respond({ ':status': 200, 'x-custom': 'custom-header' })
+    stream.end('hello h2!')
+  })
+
+  t.plan(6)
+
+  server.listen(0, () => {
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      }
+    })
+
+    t.teardown(server.close.bind(server))
+    t.teardown(client.close.bind(client))
+
+    let result = ''
+    client.connect({ path: '/' }, (err, { socket }) => {
+      t.error(err)
+      socket.on('data', chunk => { result += chunk })
+      socket.on('response', (headers) => {
+        t.equal(headers[':status'], 200)
+        t.equal(headers['x-custom'], 'custom-header')
+        t.notOk(socket.closed)
+      })
+
+      socket.once('end', () => {
+        t.equal(requestBody, expectedBody)
+        t.equal(result, 'hello h2!')
+      })
+      socket.end(expectedBody)
+    })
+  })
 })
 
 test('Should handle h2 request with body (string or buffer) - dispatch', t => {
