@@ -36,7 +36,12 @@ if (process.argv[2] === '--docker') {
 }
 
 // Gather information about the tools used for the build
-execSync(`apk info -vv >${join(WASM_OUT, 'wasm_build_env.txt')}`, { stdio: 'inherit' })
+const buildInfo = execSync('apk info -v').toString()
+if (!buildInfo.includes('wasi-sdk')) {
+  console.log('Failed to generate build environment information')
+  process.exit(-1)
+}
+writeFileSync(join(WASM_OUT, 'wasm_build_env.txt'), buildInfo)
 
 // Build wasm binary
 execSync(`clang \
