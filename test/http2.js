@@ -4,14 +4,14 @@ const { createSecureServer } = require('node:http2')
 const { createReadStream, readFileSync } = require('node:fs')
 const { once } = require('node:events')
 const { Blob } = require('node:buffer')
-const { Writable } = require('node:stream')
+const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
 const { test, plan } = require('tap')
 const pem = require('https-pem')
 
 const { Client } = require('..')
 
-plan(9)
+plan(10)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -161,6 +161,65 @@ test('Dispatcher#Stream', t => {
 
     t.equal(Buffer.concat(bufs).toString('utf-8'), 'hello h2!')
     t.equal(requestBody, expectedBody)
+  })
+})
+
+test('Dispatcher#Pipeline', t => {
+  const server = createSecureServer(pem)
+  const expectedBody = 'hello from client!'
+  const bufs = []
+  let requestBody = ''
+
+  server.on('stream', async (stream, headers) => {
+    stream.setEncoding('utf-8')
+    stream.on('data', chunk => {
+      requestBody += chunk
+    })
+
+    stream.respond({ ':status': 200, 'x-custom': 'custom-header' })
+    stream.end('hello h2!')
+  })
+
+  t.plan(5)
+
+  server.listen(0, () => {
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      }
+    })
+
+    t.teardown(server.close.bind(server))
+    t.teardown(client.close.bind(client))
+
+    pipeline(
+      new Readable({
+        read () {
+          this.push(Buffer.from(expectedBody))
+          this.push(null)
+        }
+      }),
+      client.pipeline(
+        { path: '/', method: 'POST', body: expectedBody },
+        ({ statusCode, headers, body }) => {
+          t.equal(statusCode, 200)
+          t.equal(headers['x-custom'], 'custom-header')
+
+          return pipeline(body, new PassThrough(), () => {})
+        }
+      ),
+      new Writable({
+        write (chunk, _, cb) {
+          bufs.push(chunk)
+          cb()
+        }
+      }),
+      (err) => {
+        t.error(err)
+        t.equal(Buffer.concat(bufs).toString('utf-8'), 'hello h2!')
+        t.equal(requestBody, expectedBody)
+      }
+    )
   })
 })
 
@@ -347,7 +406,7 @@ test('Should handle h2 request with body (iterable)', async t => {
   const requestChunks = []
   const responseBody = []
   const iterableBody = {
-    [Symbol.iterator]: function* () {
+    [Symbol.iterator]: function * () {
       const end = expectedBody.length - 1
       for (let i = 0; i < end + 1; i++) {
         yield expectedBody[i]
