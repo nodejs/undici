@@ -11,7 +11,7 @@ const pem = require('https-pem')
 
 const { Client } = require('..')
 
-plan(11)
+plan(12)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -296,6 +296,59 @@ test('Dispatcher#Upgrade', t => {
       t.equal(error.message, 'Upgrade not supported for H2')
     }
   })
+})
+
+test('Dispatcher#destroy', async t => {
+  const promises = []
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    setTimeout(stream.end.bind(stream), 1500)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+
+  t.plan(3)
+  t.teardown(server.close.bind(server))
+
+  promises.push(client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  }))
+
+  promises.push(client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  }))
+
+  promises.push(client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  }))
+
+  await client.destroy()
+
+  const results = await Promise.allSettled(promises)
+
+  t.equal(results[0].status, 'rejected')
+  t.equal(results[1].status, 'rejected')
+  t.equal(results[2].status, 'rejected')
 })
 
 test('Should handle h2 request with body (string or buffer) - dispatch', t => {
