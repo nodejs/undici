@@ -78,6 +78,10 @@ cd <your-path-to-undici>
 npm run build:wasm
 ```
 
+#### Commit the contents of lib/llhttp
+
+Create a commit which includes all of the updated files in lib/llhttp.
+
 <a id="update-wpts"></a>
 ### Update `WPTs`
 

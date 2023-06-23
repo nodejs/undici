@@ -35,6 +35,14 @@ if (process.argv[2] === '--docker') {
   process.exit(0)
 }
 
+// Gather information about the tools used for the build
+const buildInfo = execSync('apk info -v').toString()
+if (!buildInfo.includes('wasi-sdk')) {
+  console.log('Failed to generate build environment information')
+  process.exit(-1)
+}
+writeFileSync(join(WASM_OUT, 'wasm_build_env.txt'), buildInfo)
+
 // Build wasm binary
 execSync(`clang \
  --sysroot=/usr/share/wasi-sysroot \
@@ -60,7 +68,7 @@ execSync(`clang \
 const base64Wasm = readFileSync(join(WASM_OUT, 'llhttp.wasm')).toString('base64')
 writeFileSync(
   join(WASM_OUT, 'llhttp-wasm.js'),
-  `module.exports = "${base64Wasm}";\n`
+  `module.exports = '${base64Wasm}'\n`
 )
 
 // Build wasm simd binary
@@ -89,5 +97,5 @@ execSync(`clang \
 const base64WasmSimd = readFileSync(join(WASM_OUT, 'llhttp_simd.wasm')).toString('base64')
 writeFileSync(
   join(WASM_OUT, 'llhttp_simd-wasm.js'),
-  `module.exports = "${base64WasmSimd}";\n`
+  `module.exports = '${base64WasmSimd}'\n`
 )
