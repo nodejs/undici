@@ -11,7 +11,7 @@ const pem = require('https-pem')
 
 const { Client } = require('..')
 
-plan(10)
+plan(11)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -268,6 +268,33 @@ test('Dispatcher#Connect', t => {
       })
       socket.end(expectedBody)
     })
+  })
+})
+
+test('Dispatcher#Upgrade', t => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', async (stream, headers) => {
+    stream.end()
+  })
+
+  t.plan(1)
+
+  server.listen(0, async () => {
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      }
+    })
+
+    t.teardown(server.close.bind(server))
+    t.teardown(client.close.bind(client))
+
+    try {
+      await client.upgrade({ path: '/' })
+    } catch (error) {
+      t.equal(error.message, 'Upgrade not supported for H2')
+    }
   })
 })
 
