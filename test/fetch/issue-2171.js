@@ -1,6 +1,7 @@
 'use strict'
 
 const { fetch } = require('../..')
+const { DOMException } = require('../../lib/fetch/constants')
 const { once } = require('events')
 const { createServer } = require('http')
 const { test } = require('tap')
