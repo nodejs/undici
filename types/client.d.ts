@@ -72,6 +72,8 @@ export declare namespace Client {
     autoSelectFamily?: boolean;
     /** The amount of time in milliseconds to wait for a connection attempt to finish before trying the next address when using the `autoSelectFamily` option. */
     autoSelectFamilyAttemptTimeout?: number; 
+    // TODO
+    allowH2?: boolean;
   }
   export interface SocketInfo {
     localAddress?: string
