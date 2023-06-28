@@ -11,7 +11,7 @@ const pem = require('https-pem')
 
 const { Client } = require('..')
 
-plan(12)
+plan(14)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -58,6 +58,51 @@ test('Should support H2 connection', async t => {
   t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
   t.equal(response.headers['x-custom-h2'], 'hello')
   t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
+})
+
+test('Should throw if bad allowH2 has been pased', async t => {
+  try {
+    // eslint-disable-next-line
+    new Client('https://localhost:1000', {
+      allowH2: 'true'
+    })
+    t.fail()
+  } catch (error) {
+    t.equal(error.message, 'allowH2 must be a valid boolean value')
+  }
+})
+
+test('Request should fail if allowH2 is false and server advertises h2 only', async t => {
+  const server = createSecureServer({
+    ...pem,
+    allowHTTP1: false,
+    ALPNProtocols: ['http/1.1']
+  }, (req, res) => {
+    t.fail('Should not create a valid h2 stream')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    allowH2: false,
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  const response = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  })
+
+  t.equal(response.statusCode, 403)
 })
 
 test('Should handle h2 continue', async t => {
@@ -214,7 +259,7 @@ test('Dispatcher#Pipeline', t => {
           cb()
         }
       }),
-      (err) => {
+      err => {
         t.error(err)
         t.equal(Buffer.concat(bufs).toString('utf-8'), 'hello h2!')
         t.equal(requestBody, expectedBody)
@@ -318,29 +363,35 @@ test('Dispatcher#destroy', async t => {
   t.plan(3)
   t.teardown(server.close.bind(server))
 
-  promises.push(client.request({
-    path: '/',
-    method: 'GET',
-    headers: {
-      'x-my-header': 'foo'
-    }
-  }))
+  promises.push(
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    })
+  )
 
-  promises.push(client.request({
-    path: '/',
-    method: 'GET',
-    headers: {
-      'x-my-header': 'foo'
-    }
-  }))
+  promises.push(
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    })
+  )
 
-  promises.push(client.request({
-    path: '/',
-    method: 'GET',
-    headers: {
-      'x-my-header': 'foo'
-    }
-  }))
+  promises.push(
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    })
+  )
 
   await client.destroy()
 
