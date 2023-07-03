@@ -11,7 +11,7 @@ const pem = require('https-pem')
 
 const { Client } = require('..')
 
-plan(14)
+plan(15)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -58,6 +58,65 @@ test('Should support H2 connection', async t => {
   t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
   t.equal(response.headers['x-custom-h2'], 'hello')
   t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
+})
+
+test('Should support H2 GOAWAY (server-side)', async t => {
+  const body = []
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    t.equal(headers['x-my-header'], 'foo')
+    t.equal(headers[':method'], 'GET')
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': 'hello',
+      ':status': 200
+    })
+    stream.end('hello h2!')
+  })
+
+  server.on('session', (session) => {
+    setTimeout(() => {
+      session.goaway(204)
+    }, 1000)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+
+  t.plan(9)
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  const response = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  })
+
+  response.body.on('data', chunk => {
+    body.push(chunk)
+  })
+
+  await once(response.body, 'end')
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.equal(response.headers['x-custom-h2'], 'hello')
+  t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
+
+  const [url, disconnectClient, err] = await once(client, 'disconnect')
+
+  t.type(url, URL)
+  t.same(disconnectClient, [client])
+  t.equal(err.message, 'HTTP/2: "GOAWAY" frame received with code 204')
 })
 
 test('Should throw if bad allowH2 has been pased', async t => {
