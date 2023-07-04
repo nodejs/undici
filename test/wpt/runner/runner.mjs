@@ -228,19 +228,15 @@ export class WPTRunner extends EventEmitter {
           if (variant) console.log('Variant:', variant)
           console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
           console.log('='.repeat(96))
-
+        } catch (e) {
+          console.log(`${test} timed out after ${timeout}ms`)
+        } finally {
           if (result?.subtests.length > 0) {
             writeFileSync(this.#reportPath, JSON.stringify(report))
           }
 
           finishedFiles++
           activeWorkers.delete(worker)
-        } catch (e) {
-          console.log(`${test} timed out after ${timeout}ms`)
-          queueMicrotask(() => {
-            throw e
-          })
-          return
         }
       }
     }
