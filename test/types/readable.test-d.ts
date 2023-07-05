@@ -15,7 +15,7 @@ expectAssignable<BodyReadable>(new BodyReadable())
   expectAssignable<Promise<string>>(readable.text())
 
   // json
-  expectAssignable<Promise<any>>(readable.json())
+  expectAssignable<Promise<unknown>>(readable.json())
 
   // blob
   expectAssignable<Promise<Blob>>(readable.blob())

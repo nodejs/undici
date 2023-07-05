@@ -119,5 +119,5 @@ declare const { body }: Dispatcher.ResponseData;
   expectType<Promise<Blob>>(body.blob())
   expectType<Promise<never>>(body.formData())
   expectType<Promise<string>>(body.text())
-  expectType<Promise<any>>(body.json())
+  expectType<Promise<unknown>>(body.json())
 }
