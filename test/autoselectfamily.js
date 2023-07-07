@@ -6,10 +6,18 @@ const { Resolver } = require('dns')
 const dnsPacket = require('dns-packet')
 const { createServer } = require('http')
 const { Client, Agent, request } = require('..')
-const { nodeHasAutoSelectFamily, nodeMajor } = require('../lib/core/util')
+const { nodeHasAutoSelectFamily } = require('../lib/core/util')
 
-if (nodeMajor >= 20) {
-  skip('some tests are failing')
+/*
+ * IMPORTANT
+ *
+ * As only some version of Node have autoSelectFamily enabled by default (>= 20), make sure the option is always
+ * explicitly passed in tests in this file to avoid compatibility problems across release lines.
+ *
+ */
+
+if (!nodeHasAutoSelectFamily) {
+  skip('autoSelectFamily is not supportee')
   process.exit()
 }
 
@@ -59,66 +67,26 @@ function createDnsServer (ipv6Addr, ipv4Addr, cb) {
   })
 }
 
-if (nodeHasAutoSelectFamily) {
-  test('with autoSelectFamily enable the request succeeds when using request', (t) => {
-    t.plan(3)
+test('with autoSelectFamily enable the request succeeds when using request', (t) => {
+  t.plan(3)
 
-    createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-      const server = createServer((req, res) => {
-        res.end('hello')
-      })
-
-      t.teardown(() => {
-        server.close()
-        dnsServer.close()
-      })
-
-      server.listen(0, '127.0.0.1', () => {
-        const agent = new Agent({ connect: { lookup }, autoSelectFamily: true })
-
-        request(
-          `http://example.org:${server.address().port}/`, {
-            method: 'GET',
-            dispatcher: agent
-          }, (err, { statusCode, body }) => {
-            t.error(err)
-
-            let response = Buffer.alloc(0)
-
-            body.on('data', chunk => {
-              response = Buffer.concat([response, chunk])
-            })
-
-            body.on('end', () => {
-              t.strictSame(statusCode, 200)
-              t.strictSame(response.toString('utf-8'), 'hello')
-            })
-          })
-      })
+  createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
+    const server = createServer((req, res) => {
+      res.end('hello')
     })
-  })
 
-  test('with autoSelectFamily enable the request succeeds when using a client', (t) => {
-    t.plan(3)
+    t.teardown(() => {
+      server.close()
+      dnsServer.close()
+    })
 
-    createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-      const server = createServer((req, res) => {
-        res.end('hello')
-      })
+    server.listen(0, '127.0.0.1', () => {
+      const agent = new Agent({ connect: { lookup }, autoSelectFamily: true })
 
-      t.teardown(() => {
-        server.close()
-        dnsServer.close()
-      })
-
-      server.listen(0, '127.0.0.1', () => {
-        const client = new Client(`http://example.org:${server.address().port}`, { connect: { lookup }, autoSelectFamily: true })
-
-        t.teardown(client.destroy.bind(client))
-
-        client.request({
-          path: '/',
-          method: 'GET'
+      request(
+        `http://example.org:${server.address().port}/`, {
+          method: 'GET',
+          dispatcher: agent
         }, (err, { statusCode, body }) => {
           t.error(err)
 
@@ -133,10 +101,48 @@ if (nodeHasAutoSelectFamily) {
             t.strictSame(response.toString('utf-8'), 'hello')
           })
         })
+    })
+  })
+})
+
+test('with autoSelectFamily enable the request succeeds when using a client', (t) => {
+  t.plan(3)
+
+  createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
+    const server = createServer((req, res) => {
+      res.end('hello')
+    })
+
+    t.teardown(() => {
+      server.close()
+      dnsServer.close()
+    })
+
+    server.listen(0, '127.0.0.1', () => {
+      const client = new Client(`http://example.org:${server.address().port}`, { connect: { lookup }, autoSelectFamily: true })
+
+      t.teardown(client.destroy.bind(client))
+
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err, { statusCode, body }) => {
+        t.error(err)
+
+        let response = Buffer.alloc(0)
+
+        body.on('data', chunk => {
+          response = Buffer.concat([response, chunk])
+        })
+
+        body.on('end', () => {
+          t.strictSame(statusCode, 200)
+          t.strictSame(response.toString('utf-8'), 'hello')
+        })
       })
     })
   })
-}
+})
 
 test('with autoSelectFamily disabled the request fails when using request', (t) => {
   t.plan(1)
@@ -152,7 +158,7 @@ test('with autoSelectFamily disabled the request fails when using request', (t) 
     })
 
     server.listen(0, '127.0.0.1', () => {
-      const agent = new Agent({ connect: { lookup } })
+      const agent = new Agent({ connect: { lookup, autoSelectFamily: false } })
 
       request(`http://example.org:${server.address().port}`, {
         method: 'GET',
@@ -178,7 +184,7 @@ test('with autoSelectFamily disabled the request fails when using a client', (t)
     })
 
     server.listen(0, '127.0.0.1', () => {
-      const client = new Client(`http://example.org:${server.address().port}`, { connect: { lookup } })
+      const client = new Client(`http://example.org:${server.address().port}`, { connect: { lookup, autoSelectFamily: false } })
       t.teardown(client.destroy.bind(client))
 
       client.request({
