@@ -49,13 +49,13 @@ The benchmarks below have the [simd](https://github.com/WebAssembly/simd) featur
 import { request } from 'undici'
 
 const {
-  statusCode,
+  status,
   headers,
   trailers,
   body
 } = await request('http://localhost:3000/foo')
 
-console.log('response received', statusCode)
+console.log('response received', status)
 console.log('headers', headers)
 
 for await (const data of body) {
@@ -79,13 +79,13 @@ Example usage:
 import { request } from 'undici'
 
 const {
-  statusCode,
+  status,
   headers,
   trailers,
   body
 } = await request('http://localhost:3000/foo')
 
-console.log('response received', statusCode)
+console.log('response received', status)
 console.log('headers', headers)
 console.log('data', await body.json())
 console.log('trailers', trailers)
