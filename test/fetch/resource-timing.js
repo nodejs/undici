@@ -13,21 +13,23 @@ const {
 const skip = nodeMajor < 18 || (nodeMajor === 18 && nodeMinor < 2)
 
 test('should create a PerformanceResourceTiming after each fetch request', { skip }, (t) => {
-  t.plan(6)
+  t.plan(8)
 
   const obs = new PerformanceObserver(list => {
+    const expectedResourceEntryName = `http://localhost:${server.address().port}/`
+
     const entries = list.getEntries()
     t.equal(entries.length, 1)
     const [entry] = entries
-    t.same(entry.name, {
-      href: `http://localhost:${server.address().port}/`,
-      origin: `http://localhost:${server.address().port}`,
-      protocol: 'http'
-    })
+    t.same(entry.name, expectedResourceEntryName)
     t.strictSame(entry.entryType, 'resource')
 
     t.ok(entry.duration >= 0)
     t.ok(entry.startTime >= 0)
+
+    const entriesByName = list.getEntriesByName(expectedResourceEntryName)
+    t.equal(entriesByName.length, 1)
+    t.strictSame(entriesByName[0], entry)
 
     obs.disconnect()
     performance.clearResourceTimings()
