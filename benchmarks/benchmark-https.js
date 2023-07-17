@@ -1,14 +1,18 @@
 'use strict'
 
-const http = require('http')
+const https = require('https')
 const os = require('os')
 const path = require('path')
+const { readFileSync } = require('fs')
 const { table } = require('table')
 const { Writable } = require('stream')
 const { WritableStream } = require('stream/web')
 const { isMainThread } = require('worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
+
+const ca = readFileSync(path.join(__dirname, '..', 'test', 'fixtures', 'ca.pem'), 'utf8')
+const servername = 'agent1'
 
 const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
 const errorThreshold = parseInt(process.env.ERROR_TRESHOLD, 10) || 3
@@ -21,14 +25,16 @@ const dest = {}
 
 if (process.env.PORT) {
   dest.port = process.env.PORT
-  dest.url = `http://localhost:${process.env.PORT}`
+  dest.url = `https://localhost:${process.env.PORT}`
 } else {
-  dest.url = 'http://localhost'
+  dest.url = 'https://localhost'
   dest.socketPath = path.join(os.tmpdir(), 'undici.sock')
 }
 
-const httpBaseOptions = {
-  protocol: 'http:',
+const httpsBaseOptions = {
+  ca,
+  servername,
+  protocol: 'https:',
   hostname: 'localhost',
   method: 'GET',
   path: '/',
@@ -43,19 +49,25 @@ const httpBaseOptions = {
   ...dest
 }
 
-const httpNoKeepAliveOptions = {
-  ...httpBaseOptions,
-  agent: new http.Agent({
+const httpsNoKeepAliveOptions = {
+  ...httpsBaseOptions,
+  agent: new https.Agent({
     keepAlive: false,
-    maxSockets: connections
+    maxSockets: connections,
+    // rejectUnauthorized: false,
+    ca,
+    servername
   })
 }
 
-const httpKeepAliveOptions = {
-  ...httpBaseOptions,
-  agent: new http.Agent({
+const httpsKeepAliveOptions = {
+  ...httpsBaseOptions,
+  agent: new https.Agent({
     keepAlive: true,
-    maxSockets: connections
+    maxSockets: connections,
+    // rejectUnauthorized: false,
+    ca,
+    servername
   })
 }
 
@@ -67,9 +79,14 @@ const undiciOptions = {
 }
 
 const Class = connections > 1 ? Pool : Client
-const dispatcher = new Class(httpBaseOptions.url, {
+const dispatcher = new Class(httpsBaseOptions.url, {
   pipelining,
   connections,
+  connect: {
+    // rejectUnauthorized: false,
+    ca,
+    servername
+  },
   ...dest
 })
 
@@ -77,7 +94,9 @@ setGlobalDispatcher(new Agent({
   pipelining,
   connections,
   connect: {
-    rejectUnauthorized: false
+    // rejectUnauthorized: false,
+    ca,
+    servername
   }
 }))
 
@@ -179,9 +198,9 @@ function printResults (results) {
 }
 
 const experiments = {
-  'http - no keepalive' () {
+  'https - no keepalive' () {
     return makeParallelRequests(resolve => {
-      http.get(httpNoKeepAliveOptions, res => {
+      https.get(httpsNoKeepAliveOptions, res => {
         res
           .pipe(
             new Writable({
@@ -194,9 +213,9 @@ const experiments = {
       })
     })
   },
-  'http - keepalive' () {
+  'https - keepalive' () {
     return makeParallelRequests(resolve => {
-      http.get(httpKeepAliveOptions, res => {
+      https.get(httpsKeepAliveOptions, res => {
         res
           .pipe(
             new Writable({
@@ -265,7 +284,7 @@ if (process.env.PORT) {
   // fetch does not support the socket
   experiments['undici - fetch'] = () => {
     return makeParallelRequests(resolve => {
-      fetch(dest.url).then(res => {
+      fetch(dest.url, {}).then(res => {
         res.body.pipeTo(new WritableStream({ write () { }, close () { resolve() } }))
       }).catch(console.log)
     })
