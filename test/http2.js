@@ -464,8 +464,18 @@ test('Dispatcher#destroy', async t => {
     }
   })
 
-  t.plan(3)
+  t.plan(4)
   t.teardown(server.close.bind(server))
+
+  promises.push(
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    })
+  )
 
   promises.push(
     client.request({
@@ -504,6 +514,7 @@ test('Dispatcher#destroy', async t => {
   t.equal(results[0].status, 'rejected')
   t.equal(results[1].status, 'rejected')
   t.equal(results[2].status, 'rejected')
+  t.equal(results[3].status, 'rejected')
 })
 
 test('Should handle h2 request with body (string or buffer) - dispatch', t => {
