@@ -20,9 +20,8 @@ Extends: [`AgentOptions`](Agent.md#parameter-agentoptions)
 * **token** `string` (optional) - It can be passed by a string of token for authentication.
 * **auth** `string` (**deprecated**) - Use token.
 * **clientFactory** `(origin: URL, opts: Object) => Dispatcher` (optional) - Default: `(origin, opts) => new Pool(origin, opts)`
-* **requestTls** `BuildOptions` (optional) - creates the underlying socket via the connector builder
-* **proxyTls** `BuildOptions` (optional) - creates the underlying socket via the connector builder
-* **factory** `(_origin: URL, opts: Object) => Dispatcher` (optional) - Default: `(_origin: URL, opts: Object) => new Agent(opts)`
+* **requestTls** `BuildOptions` (optional) - creates the underlying socket via the connector builder. [TLS docs](https://nodejs.org/api/tls.html#tlsconnectoptions-callback).
+* **proxyTls** `BuildOptions` (optional) - creates the underlying socket via the connector builder. [TLS docs](https://nodejs.org/api/tls.html#tlsconnectoptions-callback).
 
 Examples:
 
