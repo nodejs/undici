@@ -66,6 +66,7 @@ test('Should support H2 connection (headers as array)', async t => {
 
   server.on('stream', (stream, headers) => {
     t.equal(headers['x-my-header'], 'foo')
+    t.equal(headers['x-my-drink'], 'coffee,tea')
     t.equal(headers[':method'], 'GET')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
@@ -84,14 +85,14 @@ test('Should support H2 connection (headers as array)', async t => {
     }
   })
 
-  t.plan(6)
+  t.plan(7)
   t.teardown(server.close.bind(server))
   t.teardown(client.close.bind(client))
 
   const response = await client.request({
     path: '/',
     method: 'GET',
-    headers: ['x-my-header', 'foo']
+    headers: ['x-my-header', 'foo', 'x-my-drink', ['coffee', 'tea']]
   })
 
   response.body.on('data', chunk => {
