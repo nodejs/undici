@@ -726,7 +726,7 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
   const server = createServer(async (req, res) => {
     const contentType = req.headers['content-type']
     // ensure we received a multipart/form-data header
-    t.ok(/^multipart\/form-data; boundary=-+formdata-undici-0.\d+$/.test(contentType))
+    t.ok(/^multipart\/form-data; boundary=-+formdata-undici-0\d+$/.test(contentType))
 
     const chunks = []
 
