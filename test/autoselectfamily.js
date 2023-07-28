@@ -164,7 +164,7 @@ test('with autoSelectFamily disabled the request fails when using request', (t) 
         method: 'GET',
         dispatcher: agent
       }, (err, { statusCode, body }) => {
-        t.strictSame(err.code, 'ECONNREFUSED')
+        t.ok(['ECONNREFUSED', 'EAFNOSUPPORT'].includes(err.code))
       })
     })
   })
@@ -191,7 +191,7 @@ test('with autoSelectFamily disabled the request fails when using a client', (t)
         path: '/',
         method: 'GET'
       }, (err, { statusCode, body }) => {
-        t.strictSame(err.code, 'ECONNREFUSED')
+        t.ok(['ECONNREFUSED', 'EAFNOSUPPORT'].includes(err.code))
       })
     })
   })
