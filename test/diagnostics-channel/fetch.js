@@ -28,7 +28,7 @@ const server = createServer((req, res) => {
 t.teardown(server.close.bind(server))
 
 let startCalled = 0
-diagnosticsChannel.channel('tracing:undici:start').subscribe(({ input, init }) => {
+diagnosticsChannel.channel('undici:fetch:start').subscribe(({ input, init }) => {
   startCalled += 1
   if (init.redirect) {
     t.equal(input, 'badrequest')
@@ -40,7 +40,7 @@ diagnosticsChannel.channel('tracing:undici:start').subscribe(({ input, init }) =
 })
 
 let endCalled = 0
-diagnosticsChannel.channel('tracing:undici:end').subscribe(({ input, init, result, error }) => {
+diagnosticsChannel.channel('undici:fetch:end').subscribe(({ input, init, result, error }) => {
   endCalled += 1
   if (init.redirect) {
     t.equal(input, 'badrequest')
@@ -54,7 +54,7 @@ diagnosticsChannel.channel('tracing:undici:end').subscribe(({ input, init, resul
 })
 
 let asyncStartCalled = 0
-diagnosticsChannel.channel('tracing:undici:asyncStart').subscribe(({ input, init, result }) => {
+diagnosticsChannel.channel('undici:fetch:asyncStart').subscribe(({ input, init, result }) => {
   asyncStartCalled += 1
   if (init.redirect) {
     t.equal(input, 'badrequest')
@@ -68,7 +68,7 @@ diagnosticsChannel.channel('tracing:undici:asyncStart').subscribe(({ input, init
 })
 
 let asyncEndCalled = 0
-diagnosticsChannel.channel('tracing:undici:asyncEnd').subscribe(async ({ input, init, result, error }) => {
+diagnosticsChannel.channel('undici:fetch:asyncEnd').subscribe(async ({ input, init, result, error }) => {
   asyncEndCalled += 1
   if (init.redirect) {
     t.equal(input, 'badrequest')
@@ -86,7 +86,7 @@ diagnosticsChannel.channel('tracing:undici:asyncEnd').subscribe(async ({ input, 
 })
 
 let errorCalled = 0
-diagnosticsChannel.channel('tracing:undici:error').subscribe(async ({ input, init, error }) => {
+diagnosticsChannel.channel('undici:fetch:error').subscribe(async ({ input, init, error }) => {
   errorCalled += 1
   if (init.redirect) {
     t.equal(input, 'badrequest')
