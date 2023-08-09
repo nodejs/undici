@@ -266,8 +266,8 @@ if (process.env.PORT) {
     })
   }
 
-  experiments['undici - fetch (with tracing channel)'] = () => {
-    diagnosticsChannel.channel('tracing:undici:asyncEnd').subscribe(() => {})
+  experiments['undici - fetch (with diagnostics channel)'] = () => {
+    diagnosticsChannel.channel('undici:fetch:asyncEnd').subscribe(() => {})
     return makeParallelRequests(resolve => {
       fetch(dest.url).then(res => {
         res.body.pipeTo(new WritableStream({ write () {}, close () { resolve() } }))

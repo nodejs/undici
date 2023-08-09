@@ -203,73 +203,74 @@ diagnosticsChannel.channel('undici:websocket:pong').subscribe(({ payload }) => {
 })
 ```
 
-[TracingChannel](https://nodejs.org/api/diagnostics_channel.html#class-tracingchannel) is used to trace `fetch` (currently available only on Node.js v19+).
+The below channels collectively act as [`tracingChannel.tracePromise`](https://nodejs.org/api/diagnostics_channel.html#tracingchanneltracepromisefn-context-thisarg-args) on `fetch`. So all of them will publish the arguments passed to `fetch`.
 
-## `tracing:undici:start`
+## `undici:fetch:start`
 
-This message is published after `fetch` has been called.
+This message is published when `fetch` is called, and will publish the arguments passed to `fetch`.
 
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('tracing:undici:start').subscribe(({ input, init }) => {
-  console.log('url', input)
+diagnosticsChannel.channel('undici:fetch:start').subscribe(({ input, init }) => {
+  console.log('input', input)
   console.log('init', init)
 })
 ```
 
-## `tracing:undici:asyncStart`
+## `undici:fetch:end`
 
-This message is published after `fetch` resolves.
+This message is published at the end of `fetch`'s execution, and will publish any `error` from the synchronous part of `fetch`. Since `fetch` is asynchronous, this should be empty. This channel will publish the same values as `undici:fetch:start`, but we are including it to track when `fetch` finishes execution and to be consistent with [`TracingChannel`](https://nodejs.org/api/diagnostics_channel.html#class-tracingchannel).
 
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('tracing:undici:asyncStart').subscribe(({ input, init, result }) => {
-  console.log('url', input)
+diagnosticsChannel.channel('undici:fetch:end').subscribe(({ input, init, error }) => {
+  console.log('input', input)
+  console.log('init', init)
+  console.log('error', error) // should be empty
+})
+```
+
+## `undici:fetch:asyncStart`
+
+This message is published after `fetch` resolves or rejects. If `fetch` resolves, it publishes the response in `result`. If it rejects, it publishes the error in `error`.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:fetch:asyncStart').subscribe(({ input, init, result, error }) => {
+  console.log('input', input)
   console.log('init', init)
   console.log('response', result)
-})
-```
-
-## `tracing:undici:end`
-
-This message is published after `fetch` has been called.
-
-```js
-import diagnosticsChannel from 'diagnostics_channel'
-
-diagnosticsChannel.channel('tracing:undici:end').subscribe(({ input, init, error }) => {
-  console.log('url', input)
-  console.log('init', init)
   console.log('error', error)
 })
 ```
 
-## `tracing:undici:asyncEnd`
+## `undici:fetch:asyncEnd`
 
-This message is published after `fetch` resolves.
+This channel gets published the same values as and at the same time as `undici:fetch:asyncStart` in the case of [`tracingChannel.tracePromise`](https://nodejs.org/api/diagnostics_channel.html#tracingchanneltracepromisefn-context-thisarg-args)
 
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('tracing:undici:asyncEnd').subscribe(({ input, init, result, error }) => {
-  console.log('url', input)
+diagnosticsChannel.channel('undici:fetch:asyncEnd').subscribe(({ input, init, result, error }) => {
+  console.log('input', input)
   console.log('init', init)
   console.log('response', result)
-  // error should be undefined
+  console.log('error', error)
 })
 ```
 
-## `tracing:undici:error`
+## `undici:fetch:error`
 
 This message is published when an error is thrown or promise rejects while calling `fetch`.
 
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('tracing:undici:error').subscribe(({ input, init, error }) => {
-  console.log('url', input)
+diagnosticsChannel.channel('undici:fetch:error').subscribe(({ input, init, error }) => {
+  console.log('input', input)
   console.log('init', init)
   console.log('error', error)
 })
