@@ -412,6 +412,12 @@ test('Dispatcher#Connect', t => {
         t.notOk(socket.closed)
       })
 
+      // We need to handle the error event although
+      // is not controlled by Undici, the fact that a session
+      // is destroyed and destroys subsequent streams, causes
+      // unhandled errors to surface if not handling this event.
+      socket.on('error', () => {})
+
       socket.once('end', () => {
         t.equal(requestBody, expectedBody)
         t.equal(result, 'hello h2!')
