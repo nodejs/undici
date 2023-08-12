@@ -259,7 +259,7 @@ test('busboy emit error', async (t) => {
   const formRaw = await tempRes.text()
 
   const server = createServer((req, res) => {
-    res.setHeader('content-type', 'multipart/form-data; boundary=wrongboundary')
+    res.setHeader('content-type', 'multipart/form-data')
     res.write(formRaw)
     res.end()
   })
