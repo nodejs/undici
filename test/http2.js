@@ -34,7 +34,8 @@ test('Should support H2 connection', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    }
+    },
+    allowH2: true
   })
 
   t.plan(6)
@@ -82,7 +83,8 @@ test('Should support H2 connection (headers as array)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    }
+    },
+    allowH2: true
   })
 
   t.plan(7)
@@ -133,7 +135,8 @@ test('Should support H2 GOAWAY (server-side)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    }
+    },
+    allowH2: true
   })
 
   t.plan(9)
@@ -242,7 +245,8 @@ test('Should handle h2 continue', async t => {
     connect: {
       rejectUnauthorized: false
     },
-    expectContinue: true
+    expectContinue: true,
+    allowH2: true
   })
 
   t.teardown(server.close.bind(server))
@@ -291,7 +295,8 @@ test('Dispatcher#Stream', t => {
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      }
+      },
+      allowH2: true
     })
 
     t.teardown(server.close.bind(server))
@@ -339,7 +344,8 @@ test('Dispatcher#Pipeline', t => {
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      }
+      },
+      allowH2: true
     })
 
     t.teardown(server.close.bind(server))
@@ -397,7 +403,8 @@ test('Dispatcher#Connect', t => {
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      }
+      },
+      allowH2: true
     })
 
     t.teardown(server.close.bind(server))
@@ -443,7 +450,8 @@ test('Dispatcher#Upgrade', t => {
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      }
+      },
+      allowH2: true
     })
 
     t.teardown(server.close.bind(server))
@@ -471,7 +479,8 @@ test('Dispatcher#destroy', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    }
+    },
+    allowH2: true
   })
 
   t.plan(4)
@@ -551,7 +560,8 @@ test('Should handle h2 request with body (string or buffer) - dispatch', t => {
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      }
+      },
+      allowH2: true
     })
 
     t.teardown(server.close.bind(server))
@@ -628,7 +638,8 @@ test('Should handle h2 request with body (stream)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    }
+    },
+    allowH2: true
   })
 
   t.teardown(server.close.bind(server))
@@ -696,7 +707,8 @@ test('Should handle h2 request with body (iterable)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    }
+    },
+    allowH2: true
   })
 
   t.teardown(server.close.bind(server))
@@ -757,7 +769,8 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    }
+    },
+    allowH2: true
   })
 
   t.teardown(server.close.bind(server))
@@ -822,7 +835,8 @@ test(
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      }
+      },
+      allowH2: true
     })
 
     t.teardown(server.close.bind(server))
@@ -877,7 +891,8 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async t =>
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    }
+    },
+    allowH2: true
   })
 
   const response = await fetch(
@@ -933,7 +948,8 @@ test('[Fetch] Should handle h2 request with body (stream)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    }
+    },
+    allowH2: true
   })
 
   t.teardown(server.close.bind(server))
@@ -963,70 +979,67 @@ test('[Fetch] Should handle h2 request with body (stream)', async t => {
   t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
 })
 
-test(
-  'Should handle h2 request with body (Blob)',
-  { skip: !Blob },
-  async t => {
-    const server = createSecureServer(pem)
-    const expectedBody = 'asd'
-    const requestChunks = []
-    const body = new Blob(['asd'], {
-      type: 'text/plain'
+test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
+  const server = createSecureServer(pem)
+  const expectedBody = 'asd'
+  const requestChunks = []
+  const body = new Blob(['asd'], {
+    type: 'text/plain'
+  })
+
+  server.on('stream', async (stream, headers) => {
+    t.equal(headers[':method'], 'POST')
+    t.equal(headers[':path'], '/')
+    t.equal(headers[':scheme'], 'https')
+
+    stream.on('data', chunk => requestChunks.push(chunk))
+
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
     })
 
-    server.on('stream', async (stream, headers) => {
-      t.equal(headers[':method'], 'POST')
-      t.equal(headers[':path'], '/')
-      t.equal(headers[':scheme'], 'https')
+    stream.end('hello h2!')
+  })
 
-      stream.on('data', chunk => requestChunks.push(chunk))
+  t.plan(8)
 
-      stream.respond({
-        'content-type': 'text/plain; charset=utf-8',
-        'x-custom-h2': headers['x-my-header'],
-        ':status': 200
-      })
+  server.listen(0)
+  await once(server, 'listening')
 
-      stream.end('hello h2!')
-    })
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
 
-    t.plan(8)
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
 
-    server.listen(0)
-    await once(server, 'listening')
-
-    const client = new Client(`https://localhost:${server.address().port}`, {
-      connect: {
-        rejectUnauthorized: false
+  const response = await fetch(
+    `https://localhost:${server.address().port}/`,
+    // Needs to be passed to disable the reject unauthorized
+    {
+      body,
+      method: 'POST',
+      dispatcher: client,
+      headers: {
+        'x-my-header': 'foo',
+        'content-type': 'text-plain'
       }
-    })
+    }
+  )
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+  const responseBody = await response.arrayBuffer()
 
-    const response = await fetch(
-      `https://localhost:${server.address().port}/`,
-      // Needs to be passed to disable the reject unauthorized
-      {
-        body,
-        method: 'POST',
-        dispatcher: client,
-        headers: {
-          'x-my-header': 'foo',
-          'content-type': 'text-plain'
-        }
-      }
-    )
-
-    const responseBody = await response.arrayBuffer()
-
-    t.equal(response.status, 200)
-    t.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8')
-    t.equal(response.headers.get('x-custom-h2'), 'foo')
-    t.same(new TextDecoder().decode(responseBody).toString(), 'hello h2!')
-    t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
-  }
-)
+  t.equal(response.status, 200)
+  t.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8')
+  t.equal(response.headers.get('x-custom-h2'), 'foo')
+  t.same(new TextDecoder().decode(responseBody).toString(), 'hello h2!')
+  t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+})
 
 test(
   'Should handle h2 request with body (Blob:ArrayBuffer)',
@@ -1065,7 +1078,8 @@ test(
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      }
+      },
+      allowH2: true
     })
 
     t.teardown(server.close.bind(server))
