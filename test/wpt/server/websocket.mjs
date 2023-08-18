@@ -11,9 +11,16 @@ const wss = new WebSocketServer({
   handleProtocols: (protocols) => [...protocols].join(', ')
 })
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, request) => {
   ws.on('message', (data, isBinary) => {
     const str = data.toString('utf-8')
+
+    if (request.url === '/receive-many-with-backpressure') {
+      setTimeout(() => {
+        ws.send(str.length.toString(), { binary: false })
+      }, 100)
+      return
+    }
 
     if (str === 'Goodbye') {
       // Close-server-initiated-close.any.js sends a "Goodbye" message
