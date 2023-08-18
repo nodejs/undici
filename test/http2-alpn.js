@@ -57,7 +57,8 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for GET', async (t) => 
     connect: {
       ca,
       servername: 'agent1'
-    }
+    },
+    allowH2: true
   })
 
   // close the client on teardown
@@ -203,7 +204,8 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for POST', async (t) =>
     connect: {
       ca,
       servername: 'agent1'
-    }
+    },
+    allowH2: true
   })
 
   // close the client on teardown
