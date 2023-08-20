@@ -11,7 +11,7 @@ const pem = require('https-pem')
 
 const { Client, fetch } = require('..')
 
-plan(20)
+plan(21)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -177,6 +177,30 @@ test('Should throw if bad allowH2 has been pased', async t => {
     t.fail()
   } catch (error) {
     t.equal(error.message, 'allowH2 must be a valid boolean value')
+  }
+})
+
+test('Should throw if bad maxConcurrentStreams has been pased', async t => {
+  try {
+    // eslint-disable-next-line
+    new Client('https://localhost:1000', {
+      allowH2: true,
+      maxConcurrentStreams: {}
+    })
+    t.fail()
+  } catch (error) {
+    t.equal(error.message, 'maxConcurrentStreams must be a possitive integer, greater than 0')
+  }
+
+  try {
+    // eslint-disable-next-line
+    new Client('https://localhost:1000', {
+      allowH2: true,
+      maxConcurrentStreams: -1
+    })
+    t.fail()
+  } catch (error) {
+    t.equal(error.message, 'maxConcurrentStreams must be a possitive integer, greater than 0')
   }
 })
 
