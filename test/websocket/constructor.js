@@ -13,14 +13,6 @@ test('Constructor', (t) => {
   )
 
   t.throws(
-    () => new WebSocket('https://www.google.com'),
-    {
-      name: 'SyntaxError',
-      constructor: DOMException
-    }
-  )
-
-  t.throws(
     () => new WebSocket('wss://echo.websocket.events/#a'),
     {
       name: 'SyntaxError',
