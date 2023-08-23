@@ -189,7 +189,10 @@ test('Should throw if bad maxConcurrentStreams has been pased', async t => {
     })
     t.fail()
   } catch (error) {
-    t.equal(error.message, 'maxConcurrentStreams must be a possitive integer, greater than 0')
+    t.equal(
+      error.message,
+      'maxConcurrentStreams must be a possitive integer, greater than 0'
+    )
   }
 
   try {
@@ -200,7 +203,10 @@ test('Should throw if bad maxConcurrentStreams has been pased', async t => {
     })
     t.fail()
   } catch (error) {
-    t.equal(error.message, 'maxConcurrentStreams must be a possitive integer, greater than 0')
+    t.equal(
+      error.message,
+      'maxConcurrentStreams must be a possitive integer, greater than 0'
+    )
   }
 })
 
@@ -643,8 +649,6 @@ test('Should handle h2 request with body (stream)', async t => {
     t.equal(headers[':path'], '/')
     t.equal(headers[':scheme'], 'https')
 
-    stream.on('data', chunk => requestChunks.push(chunk))
-
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': headers['x-my-header'],
@@ -652,6 +656,10 @@ test('Should handle h2 request with body (stream)', async t => {
     })
 
     stream.end('hello h2!')
+
+    for await (const chunk of stream) {
+      requestChunks.push(chunk)
+    }
   })
 
   t.plan(8)
@@ -678,11 +686,9 @@ test('Should handle h2 request with body (stream)', async t => {
     body: stream
   })
 
-  response.body.on('data', chunk => {
+  for await (const chunk of response.body) {
     responseBody.push(chunk)
-  })
-
-  await once(response.body, 'end')
+  }
 
   t.equal(response.statusCode, 200)
   t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
