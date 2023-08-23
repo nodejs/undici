@@ -443,6 +443,30 @@ test('should throw when proxy does not return 200', async (t) => {
   t.end()
 })
 
+test('pass ProxyAgent proxy status code error when using fetch - #2161', async (t) => {
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+
+  proxy.authenticate = function (req, fn) {
+    fn(null, false)
+  }
+
+  const proxyAgent = new ProxyAgent(proxyUrl)
+  try {
+    await fetch(serverUrl, { dispatcher: proxyAgent })
+  } catch (e) {
+    t.hasProp(e, 'cause')
+  }
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+  t.end()
+})
+
 test('Proxy via HTTP to HTTPS endpoint', async (t) => {
   t.plan(4)
 
