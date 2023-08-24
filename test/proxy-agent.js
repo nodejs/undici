@@ -443,7 +443,7 @@ test('should throw when proxy does not return 200', async (t) => {
   t.end()
 })
 
-test('pass ProxyAgent proxy status code error when using fetch - #2161', async (t) => {
+test('pass ProxyAgent proxy status code error when using fetch - #2161', { skip: nodeMajor < 16 }, async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
