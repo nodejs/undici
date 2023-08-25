@@ -35,12 +35,8 @@
         ]
       },
       "integrity.sub.any.js": {
-        "note": "TODO(@KhafraDev): sha-512 tests can probably be fixed",
         "fail": [
-          "Empty string integrity for opaque response",
-          "SHA-512 integrity with missing padding",
-          "SHA-512 integrity base64url encoded",
-          "SHA-512 integrity base64url encoded with missing padding"
+          "Empty string integrity for opaque response"
         ]
       },
       "keepalive.any.js": {
