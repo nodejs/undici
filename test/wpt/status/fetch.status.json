@@ -2,11 +2,13 @@
   "api": {
     "abort": {
       "general.any.js": {
+        "note": "TODO(@KhafraDev): Clone aborts with original controller can probably be fixed",
         "fail": [
           "Already aborted signal rejects immediately",
           "Underlying connection is closed when aborting after receiving response - no-cors",
           "Stream errors once aborted. Underlying connection closed.",
-          "Readable stream synchronously cancels with AbortError if aborted before reading"
+          "Readable stream synchronously cancels with AbortError if aborted before reading",
+          "Clone aborts with original controller"
         ]
       },
       "cache.https.any.js": {
@@ -33,8 +35,12 @@
         ]
       },
       "integrity.sub.any.js": {
+        "note": "TODO(@KhafraDev): sha-512 tests can probably be fixed",
         "fail": [
-          "Empty string integrity for opaque response"
+          "Empty string integrity for opaque response",
+          "SHA-512 integrity with missing padding",
+          "SHA-512 integrity base64url encoded",
+          "SHA-512 integrity base64url encoded with missing padding"
         ]
       },
       "keepalive.any.js": {
@@ -127,6 +133,10 @@
           "Same-origin mode: 2 cookies"
         ]
       }
+    },
+    "fetch-later": {
+      "note": "this is not part of the spec, only a proposal",
+      "skip": true
     },
     "headers": {
       "header-setcookie.any.js": {

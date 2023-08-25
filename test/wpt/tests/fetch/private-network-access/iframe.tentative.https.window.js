@@ -1,6 +1,13 @@
+// META: script=/common/subset-tests-by-key.js
 // META: script=/common/dispatcher/dispatcher.js
 // META: script=/common/utils.js
 // META: script=resources/support.sub.js
+// META: timeout=long
+// META: variant=?include=from-local
+// META: variant=?include=from-private
+// META: variant=?include=from-public
+// META: variant=?include=from-treat-as-public
+// META: variant=?include=grandparent
 //
 // Spec: https://wicg.github.io/private-network-access/#integration-fetch
 //
@@ -18,22 +25,22 @@ setup(() => {
 //
 // All fetches unaffected by Private Network Access.
 
-promise_test_parallel(t => iframeTest(t, {
+subsetTestByKey("from-local", promise_test_parallel, t => iframeTest(t, {
   source: { server: Server.HTTPS_LOCAL },
   target: { server: Server.HTTPS_LOCAL },
-  expected: IframeTestResult.SUCCESS,
+  expected: FrameTestResult.SUCCESS,
 }), "local to local: no preflight required.");
 
-promise_test_parallel(t => iframeTest(t, {
+subsetTestByKey("from-local", promise_test_parallel, t => iframeTest(t, {
   source: { server: Server.HTTPS_LOCAL },
   target: { server: Server.HTTPS_PRIVATE },
-  expected: IframeTestResult.SUCCESS,
+  expected: FrameTestResult.SUCCESS,
 }), "local to private: no preflight required.");
 
-promise_test_parallel(t => iframeTest(t, {
+subsetTestByKey("from-local", promise_test_parallel, t => iframeTest(t, {
   source: { server: Server.HTTPS_LOCAL },
   target: { server: Server.HTTPS_PUBLIC },
-  expected: IframeTestResult.SUCCESS,
+  expected: FrameTestResult.SUCCESS,
 }), "local to public: no preflight required.");
 
 // Generates tests of preflight behavior for a single (source, target) pair.
@@ -47,6 +54,7 @@ promise_test_parallel(t => iframeTest(t, {
 //   - success
 //
 function makePreflightTests({
+  key,
   sourceName,
   sourceServer,
   sourceTreatAsPublic,
@@ -67,7 +75,7 @@ function makePreflightTests({
       server: targetServer,
       behavior: { preflight: PreflightBehavior.failure() },
     },
-    expected: IframeTestResult.FAILURE,
+    expected: FrameTestResult.FAILURE,
   }), prefix + "failed preflight.");
 
   promise_test_parallel(t => iframeTest(t, {
@@ -76,7 +84,7 @@ function makePreflightTests({
       server: targetServer,
       behavior: { preflight: PreflightBehavior.noCorsHeader(token()) },
     },
-    expected: IframeTestResult.FAILURE,
+    expected: FrameTestResult.FAILURE,
   }), prefix + "missing CORS headers.");
 
   promise_test_parallel(t => iframeTest(t, {
@@ -85,7 +93,7 @@ function makePreflightTests({
       server: targetServer,
       behavior: { preflight: PreflightBehavior.noPnaHeader(token()) },
     },
-    expected: IframeTestResult.FAILURE,
+    expected: FrameTestResult.FAILURE,
   }), prefix + "missing PNA header.");
 
   promise_test_parallel(t => iframeTest(t, {
@@ -94,7 +102,7 @@ function makePreflightTests({
       server: targetServer,
       behavior: { preflight: PreflightBehavior.success(token()) },
     },
-    expected: IframeTestResult.SUCCESS,
+    expected: FrameTestResult.SUCCESS,
   }), prefix + "success.");
 }
 
@@ -103,23 +111,23 @@ function makePreflightTests({
 // Fetches to the local address space require a successful preflight response
 // carrying a PNA-specific header.
 
-makePreflightTests({
+subsetTestByKey('from-private', makePreflightTests, {
   sourceServer: Server.HTTPS_PRIVATE,
-  sourceName: "private",
+  sourceName: 'private',
   targetServer: Server.HTTPS_LOCAL,
-  targetName: "local",
+  targetName: 'local',
 });
 
-promise_test_parallel(t => iframeTest(t, {
+subsetTestByKey("from-private", promise_test_parallel, t => iframeTest(t, {
   source: { server: Server.HTTPS_PRIVATE },
   target: { server: Server.HTTPS_PRIVATE },
-  expected: IframeTestResult.SUCCESS,
+  expected: FrameTestResult.SUCCESS,
 }), "private to private: no preflight required.");
 
-promise_test_parallel(t => iframeTest(t, {
+subsetTestByKey("from-private", promise_test_parallel, t => iframeTest(t, {
   source: { server: Server.HTTPS_PRIVATE },
   target: { server: Server.HTTPS_PUBLIC },
-  expected: IframeTestResult.SUCCESS,
+  expected: FrameTestResult.SUCCESS,
 }), "private to public: no preflight required.");
 
 // Source: public secure context.
@@ -127,30 +135,30 @@ promise_test_parallel(t => iframeTest(t, {
 // Fetches to the local and private address spaces require a successful
 // preflight response carrying a PNA-specific header.
 
-makePreflightTests({
+subsetTestByKey('from-public', makePreflightTests, {
   sourceServer: Server.HTTPS_PUBLIC,
   sourceName: "public",
   targetServer: Server.HTTPS_LOCAL,
   targetName: "local",
 });
 
-makePreflightTests({
+subsetTestByKey('from-public', makePreflightTests, {
   sourceServer: Server.HTTPS_PUBLIC,
   sourceName: "public",
   targetServer: Server.HTTPS_PRIVATE,
   targetName: "private",
 });
 
-promise_test_parallel(t => iframeTest(t, {
+subsetTestByKey("from-public", promise_test_parallel, t => iframeTest(t, {
   source: { server: Server.HTTPS_PUBLIC },
   target: { server: Server.HTTPS_PUBLIC },
-  expected: IframeTestResult.SUCCESS,
+  expected: FrameTestResult.SUCCESS,
 }), "public to public: no preflight required.");
 
 // The following tests verify that `CSP: treat-as-public-address` makes
 // documents behave as if they had been served from a public IP address.
 
-makePreflightTests({
+subsetTestByKey('from-treat-as-public', makePreflightTests, {
   sourceServer: Server.HTTPS_LOCAL,
   sourceTreatAsPublic: true,
   sourceName: "treat-as-public-address",
@@ -158,16 +166,20 @@ makePreflightTests({
   targetName: "local",
 });
 
-promise_test_parallel(t => iframeTest(t, {
-  source: {
-    server: Server.HTTPS_LOCAL,
-    treatAsPublic: true,
-  },
-  target: { server: Server.HTTPS_LOCAL },
-  expected: IframeTestResult.SUCCESS,
-}), "treat-as-public-address to local (same-origin): no preflight required.");
+subsetTestByKey(
+  'from-treat-as-public', promise_test_parallel,
+  t => iframeTest(t, {
+    source: {
+      server: Server.HTTPS_LOCAL,
+      treatAsPublic: true,
+    },
+    target: {server: Server.HTTPS_LOCAL},
+    expected: FrameTestResult.SUCCESS,
+  }),
+  'treat-as-public-address to local (same-origin): no preflight required.'
+);
 
-makePreflightTests({
+subsetTestByKey('from-treat-as-public', makePreflightTests, {
   sourceServer: Server.HTTPS_LOCAL,
   sourceTreatAsPublic: true,
   sourceName: "treat-as-public-address",
@@ -175,49 +187,57 @@ makePreflightTests({
   targetName: "private",
 });
 
-promise_test_parallel(t => iframeTest(t, {
-  source: {
-    server: Server.HTTPS_LOCAL,
-    treatAsPublic: true,
-  },
-  target: { server: Server.HTTPS_PUBLIC },
-  expected: IframeTestResult.SUCCESS,
-}), "treat-as-public-address to public: no preflight required.");
+subsetTestByKey(
+  'from-treat-as-public', promise_test_parallel,
+  t => iframeTest(t, {
+    source: {
+      server: Server.HTTPS_LOCAL,
+      treatAsPublic: true,
+    },
+    target: {server: Server.HTTPS_PUBLIC},
+    expected: FrameTestResult.SUCCESS,
+  }),
+  'treat-as-public-address to public: no preflight required.'
+);
 
-promise_test_parallel(t => iframeTest(t, {
-  source: {
-    server: Server.HTTPS_LOCAL,
-    treatAsPublic: true,
-  },
-  target: {
-    server: Server.HTTPS_PUBLIC,
-    behavior: { preflight: PreflightBehavior.optionalSuccess(token()) }
-  },
-  expected: IframeTestResult.SUCCESS,
-}), "treat-as-public-address to local: optional preflight");
+subsetTestByKey(
+  'from-treat-as-public', promise_test_parallel,
+  t => iframeTest(t, {
+    source: {
+      server: Server.HTTPS_LOCAL,
+      treatAsPublic: true,
+    },
+    target: {
+      server: Server.HTTPS_PUBLIC,
+      behavior: {preflight: PreflightBehavior.optionalSuccess(token())}
+    },
+    expected: FrameTestResult.SUCCESS,
+  }),
+  'treat-as-public-address to local: optional preflight'
+);
 
 // The following tests verify that when a grandparent frame navigates its
 // grandchild, the IP address space of the grandparent is compared against the
 // IP address space of the response. Indeed, the navigation initiator in this
 // case is the grandparent, not the parent.
 
-iframeGrandparentTest({
-  name: "local to local, grandparent navigates: no preflight required.",
+subsetTestByKey('grandparent', iframeGrandparentTest, {
+  name: 'local to local, grandparent navigates: no preflight required.',
   grandparentServer: Server.HTTPS_LOCAL,
-  child: { server: Server.HTTPS_PUBLIC },
-  grandchild: { server: Server.OTHER_HTTPS_LOCAL },
-  expected: IframeTestResult.SUCCESS,
+  child: {server: Server.HTTPS_PUBLIC},
+  grandchild: {server: Server.OTHER_HTTPS_LOCAL},
+  expected: FrameTestResult.SUCCESS,
 });
 
-iframeGrandparentTest({
+subsetTestByKey('grandparent', iframeGrandparentTest, {
   name: "local to local (same-origin), grandparent navigates: no preflight required.",
   grandparentServer: Server.HTTPS_LOCAL,
   child: { server: Server.HTTPS_PUBLIC },
   grandchild: { server: Server.HTTPS_LOCAL },
-  expected: IframeTestResult.SUCCESS,
+  expected: FrameTestResult.SUCCESS,
 });
 
-iframeGrandparentTest({
+subsetTestByKey('grandparent', iframeGrandparentTest, {
   name: "public to local, grandparent navigates: failure.",
   grandparentServer: Server.HTTPS_PUBLIC,
   child: {
@@ -228,10 +248,10 @@ iframeGrandparentTest({
     server: Server.HTTPS_LOCAL,
     behavior: { preflight: PreflightBehavior.failure() },
   },
-  expected: IframeTestResult.FAILURE,
+  expected: FrameTestResult.FAILURE,
 });
 
-iframeGrandparentTest({
+subsetTestByKey('grandparent', iframeGrandparentTest, {
   name: "public to local, grandparent navigates: success.",
   grandparentServer: Server.HTTPS_PUBLIC,
   child: {
@@ -242,5 +262,5 @@ iframeGrandparentTest({
     server: Server.HTTPS_LOCAL,
     behavior: { preflight: PreflightBehavior.success(token()) },
   },
-  expected: IframeTestResult.SUCCESS,
+  expected: FrameTestResult.SUCCESS,
 });
