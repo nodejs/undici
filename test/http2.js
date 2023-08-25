@@ -655,11 +655,11 @@ test('Should handle h2 request with body (stream)', async t => {
       ':status': 200
     })
 
-    stream.end('hello h2!')
-
     for await (const chunk of stream) {
       requestChunks.push(chunk)
     }
+
+    stream.end('hello h2!')
   })
 
   t.plan(8)
