@@ -248,3 +248,9 @@ test('constructing Response with third party FormData body', async (t) => {
   t.equal(contentType[0], 'multipart/form-data; boundary')
   t.ok((await res.text()).startsWith(`--${contentType[1]}`))
 })
+
+test('static methods have correct number of mandatory arguments', async (t) => {
+  t.equal(Response.error.length, 0)
+  t.equal(Response.json.length, 1)
+  t.equal(Response.redirect.length, 1)
+})
