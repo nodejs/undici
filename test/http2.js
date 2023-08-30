@@ -11,7 +11,9 @@ const pem = require('https-pem')
 
 const { Client } = require('..')
 
-plan(17)
+const isGreaterThanv20 = Number(process.version.slice(1).split('.')[0]) >= 20
+
+plan(18)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -210,41 +212,92 @@ test('Should throw if bad maxConcurrentStreams has been pased', async t => {
   }
 })
 
-test('Request should fail if allowH2 is false and server advertises h2 only', async t => {
-  const server = createSecureServer(
-    {
-      ...pem,
-      allowHTTP1: false,
-      ALPNProtocols: ['http/1.1']
-    },
-    (req, res) => {
-      t.fail('Should not create a valid h2 stream')
+test(
+  'Request should fail if allowH2 is false and server advertises h1 only',
+  { skip: isGreaterThanv20 },
+  async t => {
+    const server = createSecureServer(
+      {
+        ...pem,
+        allowHTTP1: false,
+        ALPNProtocols: ['http/1.1']
+      },
+      (req, res) => {
+        t.fail('Should not create a valid h2 stream')
+      }
+    )
+
+    server.listen(0)
+    await once(server, 'listening')
+
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      allowH2: false,
+      connect: {
+        rejectUnauthorized: false
+      }
+    })
+
+    t.teardown(server.close.bind(server))
+    t.teardown(client.close.bind(client))
+
+    const response = await client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    })
+
+    t.equal(response.statusCode, 403)
+  }
+)
+
+test(
+  '[v20] Request should fail if allowH2 is false and server advertises h1 only',
+  { skip: !isGreaterThanv20 },
+  async t => {
+    const server = createSecureServer(
+      {
+        ...pem,
+        allowHTTP1: false,
+        ALPNProtocols: ['http/1.1']
+      },
+      (req, res) => {
+        t.fail('Should not create a valid h2 stream')
+      }
+    )
+
+    server.listen(0)
+    await once(server, 'listening')
+
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      allowH2: false,
+      connect: {
+        rejectUnauthorized: false
+      }
+    })
+
+    t.teardown(server.close.bind(server))
+    t.teardown(client.close.bind(client))
+    t.plan(2)
+
+    try {
+      await client.request({
+        path: '/',
+        method: 'GET',
+        headers: {
+          'x-my-header': 'foo'
+        }
+      })
+    } catch (error) {
+      t.equal(
+        error.message,
+        'Client network socket disconnected before secure TLS connection was established'
+      )
+      t.equal(error.code, 'ECONNRESET')
     }
-  )
-
-  server.listen(0)
-  await once(server, 'listening')
-
-  const client = new Client(`https://localhost:${server.address().port}`, {
-    allowH2: false,
-    connect: {
-      rejectUnauthorized: false
-    }
-  })
-
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
-
-  const response = await client.request({
-    path: '/',
-    method: 'GET',
-    headers: {
-      'x-my-header': 'foo'
-    }
-  })
-
-  t.equal(response.statusCode, 403)
-})
+  }
+)
 
 test('Should handle h2 continue', async t => {
   const requestBody = []
