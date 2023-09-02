@@ -1,3 +1,5 @@
+'use strict'
+
 const { execSync } = require('node:child_process')
 const { test } = require('tap')
 
