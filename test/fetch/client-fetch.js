@@ -272,6 +272,18 @@ test('busboy emit error', async (t) => {
   await t.rejects(res.formData(), 'Unexpected end of multipart data')
 })
 
+// https://github.com/nodejs/undici/issues/2244
+test('parsing formData preserve full path on files', async (t) => {
+  t.plan(1)
+  const formData = new FormData()
+  formData.append('field1', new File(['foo'], 'a/b/c/foo.txt'))
+
+  const tempRes = new Response(formData)
+  const form = await tempRes.formData()
+
+  t.equal(form.get('field1').name, 'a/b/c/foo.txt')
+})
+
 test('urlencoded formData', (t) => {
   t.plan(2)
 
