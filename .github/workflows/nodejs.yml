@@ -4,9 +4,7 @@
 
 name: Node CI
 
-on: [push, pull_request]
-
-jobs:
+on: [ pull_request]
   build:
     name: Test
     uses: pkgjs/action/.github/workflows/node-test.yaml@v0.1.7
