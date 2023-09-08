@@ -2,15 +2,24 @@
 
 const { createServer } = require('http')
 
+function close (server) {
+  return function () {
+    return new Promise(resolve => {
+      // server.closeAllConnections()
+      server.close(resolve)
+    })
+  }
+}
+
 function startServer (t, handler) {
   return new Promise(resolve => {
     const server = createServer(handler)
 
     server.listen(0, () => {
-      resolve(`localhost:${server.address().port}`)
+      resolve(`127.0.0.1:${server.address().port}`)
     })
 
-    t.teardown(server.close.bind(server))
+    t.teardown(close(server))
   })
 }
 
