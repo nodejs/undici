@@ -5,7 +5,9 @@ const { createServer } = require('http')
 function close (server) {
   return function () {
     return new Promise(resolve => {
-      server.closeAllConnections()
+      if (typeof server.closeAllConnections === 'function') {
+        server.closeAllConnections()
+      }
       server.close(resolve)
     })
   }
