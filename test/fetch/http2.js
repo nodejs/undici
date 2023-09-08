@@ -11,8 +11,6 @@ const pem = require('https-pem')
 
 const { Client, fetch } = require('../..')
 
-const hasToWeb = typeof Readable.toWeb === 'function'
-
 plan(4)
 
 test('[Fetch] Should handle h2 request with body (string or buffer)', async t => {
