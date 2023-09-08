@@ -5,7 +5,7 @@ const { createServer } = require('http')
 function close (server) {
   return function () {
     return new Promise(resolve => {
-      // server.closeAllConnections()
+      server.closeAllConnections()
       server.close(resolve)
     })
   }
@@ -16,7 +16,7 @@ function startServer (t, handler) {
     const server = createServer(handler)
 
     server.listen(0, () => {
-      resolve(`127.0.0.1:${server.address().port}`)
+      resolve(`localhost:${server.address().port}`)
     })
 
     t.teardown(close(server))
