@@ -22,7 +22,7 @@ for (const factory of [
   const request = (server, opts, ...args) => {
     const dispatcher = factory(server, opts)
     return undici.request(args[0], { ...args[1], dispatcher }, args[2])
-      .finally(() => dispatcher.destroy())
+      .finally(() => dispatcher.close().catch(() => {}))
   }
 
   t.test('should always have a history with the final URL even if no redirections were followed', async t => {
