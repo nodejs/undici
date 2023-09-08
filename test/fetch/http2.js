@@ -4,6 +4,7 @@ const { createSecureServer } = require('node:http2')
 const { createReadStream, readFileSync } = require('node:fs')
 const { once } = require('node:events')
 const { Blob } = require('node:buffer')
+const { Readable } = require('node:stream')
 
 const { test, plan } = require('tap')
 const pem = require('https-pem')
@@ -112,7 +113,7 @@ test('[Fetch] Should handle h2 request with body (stream)', async t => {
         'x-my-header': 'foo',
         'content-type': 'text-plain'
       },
-      body: stream,
+      body: Readable.toWeb(stream),
       duplex: 'half'
     }
   )

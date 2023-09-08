@@ -6,7 +6,9 @@ function close (server) {
   return function () {
     return new Promise(resolve => {
       if (typeof server.closeAllConnections === 'function') {
-        server.closeAllConnections()
+        setImmediate(() => {
+          server.closeAllConnections()
+        })
       }
       server.close(resolve)
     })
