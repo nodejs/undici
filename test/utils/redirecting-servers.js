@@ -2,13 +2,13 @@
 
 const { createServer } = require('http')
 
+const isNode20 = process.version.startsWith('v20.')
+
 function close (server) {
   return function () {
     return new Promise(resolve => {
-      if (typeof server.closeAllConnections === 'function') {
-        setImmediate(() => {
-          server.closeAllConnections()
-        })
+      if (isNode20) {
+        server.closeAllConnections()
       }
       server.close(resolve)
     })
