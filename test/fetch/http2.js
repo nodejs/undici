@@ -11,6 +11,8 @@ const pem = require('https-pem')
 
 const { Client, fetch } = require('../..')
 
+const hasToWeb = typeof Readable.toWeb === 'function'
+
 plan(4)
 
 test('[Fetch] Should handle h2 request with body (string or buffer)', async t => {
@@ -66,7 +68,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async t =>
   t.equal(responseBody, expectedRequestBody)
 })
 
-test('[Fetch] Should handle h2 request with body (stream)', async t => {
+test('[Fetch] Should handle h2 request with body (stream)', { skip: !hasToWeb }, async t => {
   const server = createSecureServer(pem)
   const expectedBody = readFileSync(__filename, 'utf-8')
   const stream = createReadStream(__filename)
