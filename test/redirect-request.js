@@ -19,16 +19,16 @@ for (const factory of [
   (server, opts) => new undici.Pool(`http://${server}`, opts),
   (server, opts) => new undici.Client(`http://${server}`, opts)
 ]) {
-  const request = (server, opts, ...args) => {
+  const request = (t, server, opts, ...args) => {
     const dispatcher = factory(server, opts)
+    t.teardown(() => dispatcher.close())
     return undici.request(args[0], { ...args[1], dispatcher }, args[2])
-      .finally(() => dispatcher.close().catch(() => {}))
   }
 
   t.test('should always have a history with the final URL even if no redirections were followed', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream, context: { history } } = await request(server, undefined, `http://${server}/200?key=value`, {
+    const { statusCode, headers, body: bodyStream, context: { history } } = await request(t, server, undefined, `http://${server}/200?key=value`, {
       maxRedirections: 10
     })
 
@@ -43,7 +43,7 @@ for (const factory of [
   t.test('should not follow redirection by default if not using RedirectAgent', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}`)
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}`)
     const body = await bodyStream.text()
 
     t.equal(statusCode, 302)
@@ -54,7 +54,7 @@ for (const factory of [
   t.test('should follow redirection after a HTTP 300', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream, context: { history } } = await request(server, undefined, `http://${server}/300?key=value`, {
+    const { statusCode, headers, body: bodyStream, context: { history } } = await request(t, server, undefined, `http://${server}/300?key=value`, {
       maxRedirections: 10
     })
 
@@ -76,7 +76,7 @@ for (const factory of [
   t.test('should follow redirection after a HTTP 300 default', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream, context: { history } } = await request(server, { maxRedirections: 10 }, `http://${server}/300?key=value`)
+    const { statusCode, headers, body: bodyStream, context: { history } } = await request(t, server, { maxRedirections: 10 }, `http://${server}/300?key=value`)
     const body = await bodyStream.text()
 
     t.equal(statusCode, 200)
@@ -95,7 +95,7 @@ for (const factory of [
   t.test('should follow redirection after a HTTP 301', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/301`, {
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/301`, {
       method: 'POST',
       body: 'REQUEST',
       maxRedirections: 10
@@ -111,7 +111,7 @@ for (const factory of [
   t.test('should follow redirection after a HTTP 302', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/302`, {
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/302`, {
       method: 'PUT',
       body: Buffer.from('REQUEST'),
       maxRedirections: 10
@@ -127,7 +127,7 @@ for (const factory of [
   t.test('should follow redirection after a HTTP 303 changing method to GET', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/303`, {
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/303`, {
       method: 'PATCH',
       body: 'REQUEST',
       maxRedirections: 10
@@ -143,7 +143,7 @@ for (const factory of [
   t.test('should remove Host and request body related headers when following HTTP 303 (array)', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/303`, {
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/303`, {
       method: 'PATCH',
       headers: [
         'Content-Encoding',
@@ -174,7 +174,7 @@ for (const factory of [
   t.test('should remove Host and request body related headers when following HTTP 303 (object)', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/303`, {
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/303`, {
       method: 'PATCH',
       headers: {
         'Content-Encoding': 'gzip',
@@ -198,7 +198,7 @@ for (const factory of [
   t.test('should follow redirection after a HTTP 307', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/307`, {
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/307`, {
       method: 'DELETE',
       maxRedirections: 10
     })
@@ -213,7 +213,7 @@ for (const factory of [
   t.test('should follow redirection after a HTTP 308', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/308`, {
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/308`, {
       method: 'OPTIONS',
       maxRedirections: 10
     })
@@ -228,7 +228,7 @@ for (const factory of [
   t.test('should ignore HTTP 3xx response bodies', async t => {
     const server = await startRedirectingWithBodyServer(t)
 
-    const { statusCode, headers, body: bodyStream, context: { history } } = await request(server, undefined, `http://${server}/`, {
+    const { statusCode, headers, body: bodyStream, context: { history } } = await request(t, server, undefined, `http://${server}/`, {
       maxRedirections: 10
     })
 
@@ -243,7 +243,7 @@ for (const factory of [
   t.test('should ignore query after redirection', async t => {
     const server = await startRedirectingWithQueryParams(t)
 
-    const { statusCode, headers, context: { history } } = await request(server, undefined, `http://${server}/`, {
+    const { statusCode, headers, context: { history } } = await request(t, server, undefined, `http://${server}/`, {
       maxRedirections: 10,
       query: { param1: 'first' }
     })
@@ -256,7 +256,7 @@ for (const factory of [
   t.test('should follow a redirect chain up to the allowed number of times', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream, context: { history } } = await request(server, undefined, `http://${server}/300`, {
+    const { statusCode, headers, body: bodyStream, context: { history } } = await request(t, server, undefined, `http://${server}/300`, {
       maxRedirections: 2
     })
 
@@ -273,7 +273,7 @@ for (const factory of [
     const server = await startRedirectingWithoutLocationServer(t)
 
     for (const code of redirectCodes) {
-      const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/${code}`, {
+      const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/${code}`, {
         maxRedirections: 10
       })
 
@@ -287,7 +287,7 @@ for (const factory of [
 
   t.test('should not allow invalid maxRedirections arguments', async t => {
     try {
-      await request('localhost', undefined, 'http://localhost', {
+      await request(t, 'localhost', undefined, 'http://localhost', {
         method: 'GET',
         maxRedirections: 'INVALID'
       })
@@ -300,7 +300,7 @@ for (const factory of [
 
   t.test('should not allow invalid maxRedirections arguments default', async t => {
     try {
-      await request('localhost', {
+      await request(t, 'localhost', {
         maxRedirections: 'INVALID'
       }, 'http://localhost', {
         method: 'GET'
@@ -315,7 +315,7 @@ for (const factory of [
   t.test('should not follow redirects when using ReadableStream request bodies', { skip: nodeMajor < 16 }, async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/301`, {
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/301`, {
       method: 'POST',
       body: createReadableStream('REQUEST'),
       maxRedirections: 10
@@ -331,7 +331,7 @@ for (const factory of [
   t.test('should not follow redirects when using Readable request bodies', async t => {
     const server = await startRedirectingServer(t)
 
-    const { statusCode, headers, body: bodyStream } = await request(server, undefined, `http://${server}/301`, {
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/301`, {
       method: 'POST',
       body: createReadable('REQUEST'),
       maxRedirections: 10
