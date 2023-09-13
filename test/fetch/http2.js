@@ -67,7 +67,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async t =>
 })
 
 // Skipping for now, there is something odd in the way the body is handled
-test('[Fetch] Should handle h2 request with body (stream)', { skip: true }, async t => {
+test('[Fetch] Should handle h2 request with body (stream)', async t => {
   const server = createSecureServer(pem)
   const expectedBody = readFileSync(__filename, 'utf-8')
   const stream = createReadStream(__filename)
@@ -78,8 +78,6 @@ test('[Fetch] Should handle h2 request with body (stream)', { skip: true }, asyn
     t.equal(headers[':path'], '/')
     t.equal(headers[':scheme'], 'https')
 
-    stream.on('data', chunk => requestChunks.push(chunk))
-
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': headers['x-my-header'],
@@ -87,6 +85,10 @@ test('[Fetch] Should handle h2 request with body (stream)', { skip: true }, asyn
     })
 
     stream.end('hello h2!')
+
+    for await (const chunk of stream) {
+      requestChunks.push(chunk)
+    }
   })
 
   t.plan(8)
