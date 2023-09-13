@@ -11,7 +11,57 @@ const pem = require('https-pem')
 
 const { Client, fetch } = require('../..')
 
-plan(4)
+plan(5)
+
+test('[Fetch] Simple GET with h2', async t => {
+  const server = createSecureServer(pem)
+  const expectedRequestBody = 'hello h2!'
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      'x-method': headers[':method'],
+      ':status': 200
+    })
+
+    stream.end(expectedRequestBody)
+  })
+
+  t.plan(3)
+
+  server.listen()
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  const response = await fetch(
+    `https://localhost:${server.address().port}/`,
+    // Needs to be passed to disable the reject unauthorized
+    {
+      method: 'GET',
+      dispatcher: client,
+      headers: {
+        'x-my-header': 'foo',
+        'content-type': 'text-plain'
+      }
+    }
+  )
+
+  const responseBody = await response.text()
+
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  t.equal(responseBody, expectedRequestBody)
+  t.equal(response.headers.get('x-method'), 'GET')
+  t.equal(response.headers.get('x-custom-h2'), 'foo')
+})
 
 test('[Fetch] Should handle h2 request with body (string or buffer)', async t => {
   const server = createSecureServer(pem)
