@@ -384,7 +384,9 @@ const send = (message) => {
   }
 }
 
-send({ server: `http://localhost:${server.address().port}` })
+const url = `http://localhost:${server.address().port}`
+console.log('server opened ' + url)
+send({ server: url })
 
 process.on('message', (message) => {
   if (message === 'shutdown') {

@@ -73,7 +73,13 @@ const dispatcher = new Class(httpBaseOptions.url, {
   ...dest
 })
 
-setGlobalDispatcher(new Agent({ pipelining, connections }))
+setGlobalDispatcher(new Agent({
+  pipelining,
+  connections,
+  connect: {
+    rejectUnauthorized: false
+  }
+}))
 
 class SimpleRequest {
   constructor (resolve) {
@@ -84,7 +90,7 @@ class SimpleRequest {
     }).on('finish', resolve)
   }
 
-  onConnect (abort) {}
+  onConnect (abort) { }
 
   onHeaders (statusCode, headers, resume) {
     this.dst.on('drain', resume)
@@ -260,7 +266,7 @@ if (process.env.PORT) {
   experiments['undici - fetch'] = () => {
     return makeParallelRequests(resolve => {
       fetch(dest.url).then(res => {
-        res.body.pipeTo(new WritableStream({ write () {}, close () { resolve() } }))
+        res.body.pipeTo(new WritableStream({ write () { }, close () { resolve() } }))
       }).catch(console.log)
     })
   }
