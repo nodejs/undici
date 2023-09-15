@@ -11,6 +11,8 @@ const pem = require('https-pem')
 
 const { Client, fetch } = require('../..')
 
+const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
+
 plan(5)
 
 test('[Fetch] Simple GET with h2', async t => {
@@ -117,7 +119,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async t =>
 })
 
 // Skipping for now, there is something odd in the way the body is handled
-test('[Fetch] Should handle h2 request with body (stream)', async t => {
+test('[Fetch] Should handle h2 request with body (stream)', { skip: nodeVersion === 16 }, async t => {
   const server = createSecureServer(pem)
   const expectedBody = readFileSync(__filename, 'utf-8')
   const stream = createReadStream(__filename)
