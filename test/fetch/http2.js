@@ -11,7 +11,59 @@ const pem = require('https-pem')
 
 const { Client, fetch } = require('../..')
 
-plan(4)
+const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
+
+plan(5)
+
+test('[Fetch] Simple GET with h2', async t => {
+  const server = createSecureServer(pem)
+  const expectedRequestBody = 'hello h2!'
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      'x-method': headers[':method'],
+      ':status': 200
+    })
+
+    stream.end(expectedRequestBody)
+  })
+
+  t.plan(3)
+
+  server.listen()
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  const response = await fetch(
+    `https://localhost:${server.address().port}/`,
+    // Needs to be passed to disable the reject unauthorized
+    {
+      method: 'GET',
+      dispatcher: client,
+      headers: {
+        'x-my-header': 'foo',
+        'content-type': 'text-plain'
+      }
+    }
+  )
+
+  const responseBody = await response.text()
+
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  t.equal(responseBody, expectedRequestBody)
+  t.equal(response.headers.get('x-method'), 'GET')
+  t.equal(response.headers.get('x-custom-h2'), 'foo')
+})
 
 test('[Fetch] Should handle h2 request with body (string or buffer)', async t => {
   const server = createSecureServer(pem)
@@ -67,7 +119,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async t =>
 })
 
 // Skipping for now, there is something odd in the way the body is handled
-test('[Fetch] Should handle h2 request with body (stream)', { skip: true }, async t => {
+test('[Fetch] Should handle h2 request with body (stream)', { skip: nodeVersion === 16 }, async t => {
   const server = createSecureServer(pem)
   const expectedBody = readFileSync(__filename, 'utf-8')
   const stream = createReadStream(__filename)
@@ -78,8 +130,6 @@ test('[Fetch] Should handle h2 request with body (stream)', { skip: true }, asyn
     t.equal(headers[':path'], '/')
     t.equal(headers[':scheme'], 'https')
 
-    stream.on('data', chunk => requestChunks.push(chunk))
-
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': headers['x-my-header'],
@@ -87,6 +137,10 @@ test('[Fetch] Should handle h2 request with body (stream)', { skip: true }, asyn
     })
 
     stream.end('hello h2!')
+
+    for await (const chunk of stream) {
+      requestChunks.push(chunk)
+    }
   })
 
   t.plan(8)
