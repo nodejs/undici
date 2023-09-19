@@ -1,8 +1,10 @@
 'use strict'
 
-const http = require('http')
+const { connect } = require('http2')
+const { createSecureContext } = require('tls')
 const os = require('os')
 const path = require('path')
+const { readFileSync } = require('fs')
 const { table } = require('table')
 const { Writable } = require('stream')
 const { WritableStream } = require('stream/web')
@@ -10,8 +12,11 @@ const { isMainThread } = require('worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
+const ca = readFileSync(path.join(__dirname, '..', 'test', 'fixtures', 'ca.pem'), 'utf8')
+const servername = 'agent1'
+
 const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
-const errorThreshold = parseInt(process.env.ERROR_TRESHOLD, 10) || 3
+const errorThreshold = parseInt(process.env.ERROR_THRESHOLD, 10) || 3
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
 const parallelRequests = parseInt(process.env.PARALLEL, 10) || 100
@@ -21,14 +26,16 @@ const dest = {}
 
 if (process.env.PORT) {
   dest.port = process.env.PORT
-  dest.url = `http://localhost:${process.env.PORT}`
+  dest.url = `https://localhost:${process.env.PORT}`
 } else {
-  dest.url = 'http://localhost'
+  dest.url = 'https://localhost'
   dest.socketPath = path.join(os.tmpdir(), 'undici.sock')
 }
 
-const httpBaseOptions = {
-  protocol: 'http:',
+const httpsBaseOptions = {
+  ca,
+  servername,
+  protocol: 'https:',
   hostname: 'localhost',
   method: 'GET',
   path: '/',
@@ -43,20 +50,9 @@ const httpBaseOptions = {
   ...dest
 }
 
-const httpNoKeepAliveOptions = {
-  ...httpBaseOptions,
-  agent: new http.Agent({
-    keepAlive: false,
-    maxSockets: connections
-  })
-}
-
-const httpKeepAliveOptions = {
-  ...httpBaseOptions,
-  agent: new http.Agent({
-    keepAlive: true,
-    maxSockets: connections
-  })
+const http2ClientOptions = {
+  secureContext: createSecureContext({ ca }),
+  servername
 }
 
 const undiciOptions = {
@@ -67,17 +63,26 @@ const undiciOptions = {
 }
 
 const Class = connections > 1 ? Pool : Client
-const dispatcher = new Class(httpBaseOptions.url, {
+const dispatcher = new Class(httpsBaseOptions.url, {
+  allowH2: true,
   pipelining,
   connections,
+  connect: {
+    rejectUnauthorized: false,
+    ca,
+    servername
+  },
   ...dest
 })
 
 setGlobalDispatcher(new Agent({
+  allowH2: true,
   pipelining,
   connections,
   connect: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    ca,
+    servername
   }
 }))
 
@@ -179,33 +184,25 @@ function printResults (results) {
 }
 
 const experiments = {
-  'http - no keepalive' () {
+  'http2 - request' () {
     return makeParallelRequests(resolve => {
-      http.get(httpNoKeepAliveOptions, res => {
-        res
-          .pipe(
-            new Writable({
-              write (chunk, encoding, callback) {
-                callback()
-              }
-            })
-          )
-          .on('finish', resolve)
-      })
-    })
-  },
-  'http - keepalive' () {
-    return makeParallelRequests(resolve => {
-      http.get(httpKeepAliveOptions, res => {
-        res
-          .pipe(
-            new Writable({
-              write (chunk, encoding, callback) {
-                callback()
-              }
-            })
-          )
-          .on('finish', resolve)
+      connect(dest.url, http2ClientOptions, (session) => {
+        const headers = {
+          ':path': '/',
+          ':method': 'GET',
+          ':scheme': 'https',
+          ':authority': `localhost:${dest.port}`
+        }
+
+        const request = session.request(headers)
+
+        request.pipe(
+          new Writable({
+            write (chunk, encoding, callback) {
+              callback()
+            }
+          })
+        ).on('finish', resolve)
       })
     })
   },
@@ -228,17 +225,26 @@ const experiments = {
   },
   'undici - request' () {
     return makeParallelRequests(resolve => {
-      dispatcher.request(undiciOptions).then(({ body }) => {
-        body
-          .pipe(
-            new Writable({
-              write (chunk, encoding, callback) {
-                callback()
-              }
+      try {
+        dispatcher.request(undiciOptions).then(({ body }) => {
+          body
+            .pipe(
+              new Writable({
+                write (chunk, encoding, callback) {
+                  callback()
+                }
+              })
+            )
+            .on('error', (err) => {
+              console.log('undici - request - dispatcher.request - body - error', err)
             })
-          )
-          .on('finish', resolve)
-      })
+            .on('finish', () => {
+              resolve()
+            })
+        })
+      } catch (err) {
+        console.error('undici - request - dispatcher.request - requestCount', err)
+      }
     })
   },
   'undici - stream' () {
@@ -265,7 +271,7 @@ if (process.env.PORT) {
   // fetch does not support the socket
   experiments['undici - fetch'] = () => {
     return makeParallelRequests(resolve => {
-      fetch(dest.url).then(res => {
+      fetch(dest.url, {}).then(res => {
         res.body.pipeTo(new WritableStream({ write () { }, close () { resolve() } }))
       }).catch(console.log)
     })
