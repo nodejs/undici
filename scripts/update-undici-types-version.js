@@ -12,7 +12,7 @@ const packageTypesJSONRaw = fs.readFileSync(packageTypesJSONPath, 'utf-8')
 const packageTypesJSON = JSON.parse(packageTypesJSONRaw)
 packageTypesJSON.version = version
 
-fs.writeFileSync(packageJSONPath, JSON.stringify(packageTypesJSON, null, 2))
+fs.writeFileSync(packageTypesJSONPath, JSON.stringify(packageTypesJSON, null, 2))
 
 childProcess.execSync('git add types/package.json', { cwd: path.join(__dirname, '..') })
 childProcess.execSync(`git commit -n -m 'undici-type@${version}'`, { cwd: path.join(__dirname, '..') })
