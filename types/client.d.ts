@@ -1,7 +1,6 @@
 import { URL } from 'url'
 import { TlsOptions } from 'tls'
 import Dispatcher from './dispatcher'
-import DispatchInterceptor from './dispatcher'
 import buildConnector from "./connector";
 
 /**
@@ -19,7 +18,7 @@ export class Client extends Dispatcher {
 
 export declare namespace Client {
   export interface OptionsInterceptors {
-    Client: readonly DispatchInterceptor[];
+    Client: readonly Dispatcher.DispatchInterceptor[];
   }
   export interface Options {
     /** TODO */

@@ -68,6 +68,18 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   expectAssignable<Client>(new Client('', {
     autoSelectFamilyAttemptTimeout: 300e3
   }))
+  expectAssignable<Client>(new Client('', {
+    interceptors: {
+      Client: [(dispatcher) => {
+        expectAssignable<Dispatcher['dispatch']>(dispatcher);
+        return (opts, handlers) => {
+          expectAssignable<Dispatcher.DispatchOptions>(opts);
+          expectAssignable<Dispatcher.DispatchHandlers>(handlers);
+          return dispatcher(opts, handlers)
+        }
+      }]
+    }
+  }))
 }
 
 {
