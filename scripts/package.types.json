@@ -1,0 +1,20 @@
+{
+  "name": "undici-types",
+  "version": null,
+  "description": "A stand-alone types package for Undici",
+  "homepage": "https://undici.nodejs.org",
+  "bugs": {
+    "url": "https://github.com/nodejs/undici/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nodejs/undici.git"
+  },
+  "license": "MIT",
+  "types": "index.d.ts",
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "files": [
+    "index.d.ts",
+    "types"
+  ]
+}
