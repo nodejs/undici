@@ -13,7 +13,7 @@ const { Client, Agent } = require('..')
 
 const isGreaterThanv20 = Number(process.version.slice(1).split('.')[0]) >= 20
 
-plan(18)
+plan(19)
 
 test('Should support H2 connection', async t => {
   const body = []
