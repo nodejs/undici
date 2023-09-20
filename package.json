@@ -11,11 +11,40 @@
     "url": "git+https://github.com/nodejs/undici.git"
   },
   "license": "MIT",
-  "author": "Matteo Collina <hello@matteocollina.com>",
   "contributors": [
+    {
+      "name": "Daniele Belardi",
+      "url": "https://github.com/dnlup",
+      "author": true
+    },
+    {
+      "name": "Ethan Arrowood",
+      "url": "https://github.com/ethan-arrowood",
+      "author": true
+    },
+    {
+      "name": "Matteo Collina",
+      "url": "https://github.com/mcollina",
+      "author": true
+    },
+    {
+      "name": "Matthew Aitken",
+      "url": "https://github.com/KhafraDev",
+      "author": true
+    },
     {
       "name": "Robert Nagy",
       "url": "https://github.com/ronag",
+      "author": true
+    },
+    {
+      "name": "Szymon Marczak",
+      "url": "https://github.com/szmarczak",
+      "author": true
+    },
+    {
+      "name": "Tomas Della Vedova",
+      "url": "https://github.com/delvedor",
       "author": true
     }
   ],
@@ -31,7 +60,7 @@
     "whatwg"
   ],
   "main": "index.js",
-  "types": "index.d.ts",
+  "types": "types/index.d.ts",
   "files": [
     "*.d.ts",
     "index.js",
