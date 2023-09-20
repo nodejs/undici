@@ -9,7 +9,7 @@ const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 const { test, plan } = require('tap')
 const pem = require('https-pem')
 
-const { Client } = require('..')
+const { Client, Agent } = require('..')
 
 const isGreaterThanv20 = Number(process.version.slice(1).split('.')[0]) >= 20
 
@@ -947,3 +947,52 @@ test(
     t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
   }
 )
+
+test('Agent should support H2 connection', async t => {
+  const body = []
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    t.equal(headers['x-my-header'], 'foo')
+    t.equal(headers[':method'], 'GET')
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': 'hello',
+      ':status': 200
+    })
+    stream.end('hello h2!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Agent({
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.plan(6)
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  const response = await client.request({
+    origin: `https://localhost:${server.address().port}`,
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  })
+
+  response.body.on('data', chunk => {
+    body.push(chunk)
+  })
+
+  await once(response.body, 'end')
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.equal(response.headers['x-custom-h2'], 'hello')
+  t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
+})
