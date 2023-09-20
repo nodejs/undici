@@ -60,7 +60,7 @@
     "whatwg"
   ],
   "main": "index.js",
-  "types": "types/index.d.ts",
+  "types": "index.d.ts",
   "files": [
     "*.d.ts",
     "index.js",
