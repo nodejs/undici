@@ -15,4 +15,4 @@ packageTypesJSON.version = version
 fs.writeFileSync(packageTypesJSONPath, JSON.stringify(packageTypesJSON, null, 2))
 
 childProcess.execSync('git add types/package.json', { cwd: path.join(__dirname, '..') })
-childProcess.execSync(`git commit -n -m 'undici-type@${version}'`, { cwd: path.join(__dirname, '..') })
+childProcess.execSync(`git commit -n -m 'undici-types@${version}'`, { cwd: path.join(__dirname, '..') })
