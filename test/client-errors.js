@@ -256,7 +256,7 @@ errorAndChunkedEncodingPipelining(consts.ASYNC_ITERATOR)
 
 test('invalid options throws', (t) => {
   try {
-    new Client({ port: 'foobar' }) // eslint-disable-line
+    new Client({ port: 'foobar', protocol: 'https:' }) // eslint-disable-line
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
@@ -374,7 +374,7 @@ test('invalid options throws', (t) => {
     t.fail()
   } catch (err) {
     t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'Invalid URL hostname: the hostname must be a string or null/undefined.')
+    t.equal(err.message, 'Invalid URL protocol: the URL must start with `http:` or `https:`.')
   }
 
   try {
