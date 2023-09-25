@@ -14,9 +14,8 @@ const packageTypesJSON = {
   repository: packageJSON.repository,
   license: packageJSON.license,
   types: 'index.d.ts',
-  files: [ '*.d.ts' ],
-  contributors: packageJSON.contributors,
-
+  files: ['*.d.ts'],
+  contributors: packageJSON.contributors
 }
 
 const packageTypesPath = path.join(__dirname, '..', 'types', 'package.json')
