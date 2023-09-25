@@ -14,7 +14,7 @@ jobs:
           node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
-      - run: node scripts/update-undici-types-version.js
+      - run: node scripts/generate-undici-types-package-json.js
       - run: cd types
       - run: npm publish
         env:
