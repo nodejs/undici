@@ -131,6 +131,6 @@
     ]
   },
   "dependencies": {
-    "@fastify/busboy": "^1.2.1"
+    "@fastify/busboy": "^2.0.0"
   }
 }
