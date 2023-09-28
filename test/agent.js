@@ -268,7 +268,7 @@ test('multiple connections', t => {
   })
 })
 
-test('agent should go through factory with correct parameters', (t) => {
+test('agent should call factory with URL parameter', (t) => {
   t.plan(4)
   const wanted = 'payload'
 
