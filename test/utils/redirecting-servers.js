@@ -2,6 +2,19 @@
 
 const { createServer } = require('http')
 
+const isNode20 = process.version.startsWith('v20.')
+
+function close (server) {
+  return function () {
+    return new Promise(resolve => {
+      if (isNode20) {
+        server.closeAllConnections()
+      }
+      server.close(resolve)
+    })
+  }
+}
+
 function startServer (t, handler) {
   return new Promise(resolve => {
     const server = createServer(handler)
@@ -10,7 +23,7 @@ function startServer (t, handler) {
       resolve(`localhost:${server.address().port}`)
     })
 
-    t.teardown(server.close.bind(server))
+    t.teardown(close(server))
   })
 }
 
