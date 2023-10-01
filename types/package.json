@@ -1,6 +1,6 @@
 {
   "name": "undici-types",
-  "version": "5.25.1",
+  "version": "5.25.3",
   "description": "A stand-alone types package for Undici",
   "homepage": "https://undici.nodejs.org",
   "bugs": {
