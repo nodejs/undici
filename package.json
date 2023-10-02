@@ -93,7 +93,6 @@
     "bench:run": "CONNECTIONS=1 node benchmarks/benchmark.js; CONNECTIONS=50 node benchmarks/benchmark.js",
     "serve:website": "docsify serve .",
     "prepare": "husky install",
-    "postpublish": "node scripts/update-undici-types-version.js && cd types && npm publish",
     "fuzz": "jsfuzz test/fuzzing/fuzz.js corpus"
   },
   "devDependencies": {
