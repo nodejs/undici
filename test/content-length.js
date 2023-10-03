@@ -7,7 +7,7 @@ const { Readable } = require('stream')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
 
 test('request invalid content-length', (t) => {
-  t.plan(10)
+  t.plan(11)
 
   const server = createServer((req, res) => {
     res.end()
@@ -131,6 +131,16 @@ test('request invalid content-length', (t) => {
         'content-length': 4
       },
       body: ['asasdasdasdd']
+    }, (err, data) => {
+      t.type(err, errors.RequestContentLengthMismatchError)
+    })
+
+    client.request({
+      path: '/',
+      method: 'DELETE',
+      headers: {
+        'content-length': 4
+      }
     }, (err, data) => {
       t.type(err, errors.RequestContentLengthMismatchError)
     })
@@ -326,6 +336,31 @@ test('request streaming with Readable.from(buf)', (t) => {
           t.pass()
           t.end()
         })
+    })
+  })
+})
+
+test('request DELETE and content-length=0', (t) => {
+  t.plan(2)
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'DELETE',
+      headers: {
+        'content-length': 0
+      }
+    }, (err) => {
+      t.error(err)
+    })
+    client.on('disconnect', () => {
+      t.pass()
     })
   })
 })
