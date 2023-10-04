@@ -2449,7 +2449,7 @@ test('MockAgent - using fetch yields a headers object in the reply callback', { 
       accept: '*/*',
       'accept-language': '*',
       'sec-fetch-mode': 'cors',
-      'user-agent': 'undici',
+      'user-agent': 'node',
       'accept-encoding': 'gzip, deflate'
     })
 
