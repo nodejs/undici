@@ -19,7 +19,12 @@ test('Should support H2 connection', async t => {
   const body = []
   const server = createSecureServer(pem)
 
-  server.on('stream', (stream, headers) => {
+  server.on('stream', (stream, headers, _flags, rawHeaders) => {
+    t.same(
+      rawHeaders.filter((key, index) => index % 2 === 0 && key.startsWith(':')),
+      [':authority', ':method', ':path', ':scheme']
+    )
+
     t.equal(headers['x-my-header'], 'foo')
     t.equal(headers[':method'], 'GET')
     stream.respond({
@@ -40,7 +45,7 @@ test('Should support H2 connection', async t => {
     allowH2: true
   })
 
-  t.plan(6)
+  t.plan(7)
   t.teardown(server.close.bind(server))
   t.teardown(client.close.bind(client))
 
