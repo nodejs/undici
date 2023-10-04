@@ -389,7 +389,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', { ski
     accept: '*/*',
     'accept-language': '*',
     'sec-fetch-mode': 'cors',
-    'user-agent': 'node',
+    'user-agent': 'undici',
     'accept-encoding': 'gzip, deflate'
   }
 
