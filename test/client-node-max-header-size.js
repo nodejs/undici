@@ -3,7 +3,7 @@
 const { execSync } = require('node:child_process')
 const { test } = require('tap')
 
-const command = 'node -e "require(\'./undici-fetch\').fetch(\'https://httpbin.org/get\')"'
+const command = 'node -e "require(\'.\').request(\'https://httpbin.org/get\')"'
 
 test("respect Node.js' --max-http-header-size", async (t) => {
   t.throws(
