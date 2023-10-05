@@ -6,8 +6,6 @@ const { test } = require('tap')
 const command = 'node -e "require(\'.\').fetch(\'https://httpbin.org/get\')"'
 
 test("respect Node.js' --max-http-header-size", async (t) => {
-
-
   t.throws(
     () => execSync(`${command} --max-http-header-size=1`),
     /UND_ERR_HEADERS_OVERFLOW/,
