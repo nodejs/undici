@@ -7,19 +7,23 @@ const { Blob } = require('node:buffer')
 const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
 const { test, plan } = require('tap')
+const { gte } = require('semver')
 const pem = require('https-pem')
 
 const { Client, Agent } = require('..')
 
-const isGreaterThanv20 = Number(process.version.slice(1).split('.')[0]) >= 20
+const isGreaterThanv20 = gte(process.version.slice(1), '20.0.0')
+// NOTE: node versions <16.14.1 have a bug which changes the order of pseudo-headers
+// https://github.com/nodejs/node/pull/41735
+const hasPseudoHeadersOrderFix = gte(process.version.slice(1), '16.14.1')
 
-plan(19)
+plan(20)
 
 test('Should support H2 connection', async t => {
   const body = []
   const server = createSecureServer(pem)
 
-  server.on('stream', (stream, headers) => {
+  server.on('stream', (stream, headers, _flags, rawHeaders) => {
     t.equal(headers['x-my-header'], 'foo')
     t.equal(headers[':method'], 'GET')
     stream.respond({
@@ -996,3 +1000,49 @@ test('Agent should support H2 connection', async t => {
   t.equal(response.headers['x-custom-h2'], 'hello')
   t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
+
+test(
+  'Should provide pseudo-headers in proper order',
+  { skip: !hasPseudoHeadersOrderFix },
+  async t => {
+    const server = createSecureServer(pem)
+    server.on('stream', (stream, _headers, _flags, rawHeaders) => {
+      t.same(rawHeaders, [
+        ':authority',
+        `localhost:${server.address().port}`,
+        ':method',
+        'GET',
+        ':path',
+        '/',
+        ':scheme',
+        'https'
+      ])
+
+      stream.respond({
+        'content-type': 'text/plain; charset=utf-8',
+        ':status': 200
+      })
+      stream.end()
+    })
+
+    server.listen(0)
+    await once(server, 'listening')
+
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      },
+      allowH2: true
+    })
+
+    t.teardown(server.close.bind(server))
+    t.teardown(client.close.bind(client))
+
+    const response = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+
+    t.equal(response.statusCode, 200)
+  }
+)
