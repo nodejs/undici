@@ -268,7 +268,7 @@ test('multiple connections', t => {
   })
 })
 
-test('agent should call factory with URL parameter', (t) => {
+test('agent factory supports URL parameter', (t) => {
   t.plan(2)
 
   const noopHandler = {
@@ -298,6 +298,42 @@ test('agent should call factory with URL parameter', (t) => {
   server.listen(0, () => {
     t.doesNotThrow(() => dispatcher.dispatch({
       origin: new URL(`http://localhost:${server.address().port}`),
+      path: '/',
+      method: 'GET'
+    }, noopHandler))
+  })
+})
+
+test('agent factory supports string parameter', (t) => {
+  t.plan(2)
+
+  const noopHandler = {
+    onConnect () {},
+    onHeaders () {},
+    onData () {},
+    onComplete () {
+      server.close()
+    },
+    onError (err) {
+      throw err
+    }
+  }
+
+  const dispatcher = new Agent({
+    factory: (origin, opts) => {
+      t.ok(typeof origin === 'string')
+      return new Pool(origin, opts)
+    }
+  })
+
+  const server = http.createServer((req, res) => {
+    res.setHeader('Content-Type', 'text/plain')
+    res.end('asd')
+  })
+
+  server.listen(0, () => {
+    t.doesNotThrow(() => dispatcher.dispatch({
+      origin: `http://localhost:${server.address().port}`,
       path: '/',
       method: 'GET'
     }, noopHandler))
