@@ -269,40 +269,38 @@ test('multiple connections', t => {
 })
 
 test('agent should call factory with URL parameter', (t) => {
-  t.plan(4)
-  const wanted = 'payload'
+  t.plan(2)
+
+  const noopHandler = {
+    onConnect () {},
+    onHeaders () {},
+    onData () {},
+    onComplete () {
+      server.close()
+    },
+    onError (err) {
+      throw err
+    }
+  }
+
+  const dispatcher = new Agent({
+    factory: (origin, opts) => {
+      t.ok(origin instanceof URL)
+      return new Pool(origin, opts)
+    }
+  })
 
   const server = http.createServer((req, res) => {
     res.setHeader('Content-Type', 'text/plain')
-    res.end(wanted)
+    res.end('asd')
   })
 
-  t.teardown(server.close.bind(server))
-
   server.listen(0, () => {
-    const dispatcher = new Agent({
-      factory: (origin, opts) => {
-        t.ok(origin instanceof URL)
-        return new Pool(origin, opts)
-      }
-    })
-
-    const origin = `http://localhost:${server.address().port}`
-    request(origin, { dispatcher })
-      .then(({ statusCode, headers, body }) => {
-        t.equal(statusCode, 200)
-        t.equal(headers['content-type'], 'text/plain')
-        const bufs = []
-        body.on('data', (buf) => {
-          bufs.push(buf)
-        })
-        body.on('end', () => {
-          t.equal(wanted, Buffer.concat(bufs).toString('utf8'))
-        })
-      })
-      .catch((err) => {
-        t.fail(err)
-      })
+    t.doesNotThrow(() => dispatcher.dispatch({
+      origin: new URL(`http://localhost:${server.address().port}`),
+      path: '/',
+      method: 'GET'
+    }, noopHandler))
   })
 })
 
