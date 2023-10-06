@@ -7,7 +7,7 @@ const { Readable } = require('stream')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
 
 test('request invalid content-length', (t) => {
-  t.plan(11)
+  t.plan(8)
 
   const server = createServer((req, res) => {
     res.end()
@@ -63,26 +63,6 @@ test('request invalid content-length', (t) => {
 
     client.request({
       path: '/',
-      method: 'HEAD',
-      headers: {
-        'content-length': 10
-      }
-    }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET',
-      headers: {
-        'content-length': 0
-      }
-    }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
-    })
-
-    client.request({
-      path: '/',
       method: 'GET',
       headers: {
         'content-length': 4
@@ -131,16 +111,6 @@ test('request invalid content-length', (t) => {
         'content-length': 4
       },
       body: ['asasdasdasdd']
-    }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
-    })
-
-    client.request({
-      path: '/',
-      method: 'DELETE',
-      headers: {
-        'content-length': 4
-      }
     }, (err, data) => {
       t.type(err, errors.RequestContentLengthMismatchError)
     })
@@ -359,6 +329,52 @@ test('request DELETE and content-length=0', (t) => {
     }, (err) => {
       t.error(err)
     })
+    client.on('disconnect', () => {
+      t.pass()
+    })
+  })
+})
+
+test('content-length shouldSendContentLength=false', (t) => {
+  t.plan(5)
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'HEAD',
+      headers: {
+        'content-length': 10
+      }
+    }, (err) => {
+      t.error(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'content-length': 0
+      }
+    }, (err) => {
+      t.error(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'DELETE',
+      headers: {
+        'content-length': 4
+      }
+    }, (err) => {
+      t.error(err)
+    })
+
     client.on('disconnect', () => {
       t.pass()
     })
