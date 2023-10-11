@@ -17,7 +17,7 @@ const isGreaterThanv20 = gte(process.version.slice(1), '20.0.0')
 // https://github.com/nodejs/node/pull/41735
 const hasPseudoHeadersOrderFix = gte(process.version.slice(1), '16.14.1')
 
-plan(21)
+plan(22)
 
 test('Should support H2 connection', async t => {
   const body = []
