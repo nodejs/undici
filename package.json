@@ -67,8 +67,7 @@
     "index-fetch.js",
     "lib",
     "types",
-    "docs",
-    "scripts/esbuild-build.mjs"
+    "docs"
   ],
   "scripts": {
     "build:node": "npx esbuild@0.19.4 index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1",
