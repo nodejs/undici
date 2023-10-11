@@ -110,7 +110,6 @@ test('Should support H2 connection(multiple requests)', async t => {
         'content-type': 'text/plain; charset=utf-8',
         'x-my-header': 'foo'
       },
-      // FIXME: If send a Buffer or string, the stream will not end, causing it to get stuck.
       body: Readable.from(sendBody)
     })
 
