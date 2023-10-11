@@ -67,7 +67,8 @@
     "index-fetch.js",
     "lib",
     "types",
-    "docs"
+    "docs",
+    "scripts/esbuild-build.mjs"
   ],
   "scripts": {
     "build:node": "node scripts/esbuild-build.mjs",
