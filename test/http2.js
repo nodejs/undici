@@ -147,13 +147,11 @@ test('Should support H2 connection(POST Buffer)', async t => {
 
   const sendBody = 'hello!'
   const body = []
-  console.log(`before request ${sendBody}`)
   const response = await client.request({
     path: '/',
     method: 'POST',
     body: sendBody
   })
-  console.log(`after request ${sendBody}`)
 
   response.body.on('data', chunk => {
     body.push(chunk)
