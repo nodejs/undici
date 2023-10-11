@@ -1,3 +1,5 @@
+name: Publish undici-types
+
 on:
   push:
     tags:
@@ -18,7 +20,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - run: npm install
       - run: node scripts/generate-undici-types-package-json.js
-      - run: cd types
       - run: npm publish
+        working-directory: './types'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
