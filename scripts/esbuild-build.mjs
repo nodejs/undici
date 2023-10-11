@@ -4,7 +4,6 @@ import fs from 'node:fs'
 const exampleOnLoadPlugin = {
   name: 'example',
   setup (build) {
-    // Load ".txt" files and return an array of words
     build.onLoad({ filter: /lib\/fetch\/index.js/ }, async (args) => {
       const text = await fs.promises.readFile(args.path, 'utf8')
 
