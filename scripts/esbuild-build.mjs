@@ -4,7 +4,7 @@ import fs from 'node:fs'
 const bundle = {
   name: 'bundle',
   setup (build) {
-    build.onLoad({ filter: /lib\/fetch\/index.js/ }, async (args) => {
+    build.onLoad({ filter: /lib(\/|\\)fetch(\/|\\)index.js/ }, async (args) => {
       const text = await fs.promises.readFile(args.path, 'utf8')
 
       return {
