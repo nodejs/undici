@@ -17,7 +17,7 @@ const isGreaterThanv20 = gte(process.version.slice(1), '20.0.0')
 // https://github.com/nodejs/node/pull/41735
 const hasPseudoHeadersOrderFix = gte(process.version.slice(1), '16.14.1')
 
-plan(20)
+plan(21)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -65,6 +65,65 @@ test('Should support H2 connection', async t => {
   t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
   t.equal(response.headers['x-custom-h2'], 'hello')
   t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
+})
+
+test('Should support H2 connection(multiple requests)', async t => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', async (stream, headers, _flags, rawHeaders) => {
+    t.equal(headers['x-my-header'], 'foo')
+    t.equal(headers[':method'], 'POST')
+    const reqData = []
+    stream.on('data', chunk => reqData.push(chunk.toString()))
+    await once(stream, 'end')
+    const reqBody = reqData.join('')
+    t.equal(reqBody.length > 0, true)
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': 'hello',
+      ':status': 200
+    })
+    stream.end(`hello h2! ${reqBody}`)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.plan(21)
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  for (let i = 0; i < 3; i++) {
+    const sendBody = `seq ${i}`
+    const body = []
+    const response = await client.request({
+      path: '/',
+      method: 'POST',
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        'x-my-header': 'foo'
+      },
+      // FIXME: If send a Buffer or string, the stream will not end, causing it to get stuck.
+      body: Readable.from(sendBody)
+    })
+
+    response.body.on('data', chunk => {
+      body.push(chunk)
+    })
+
+    await once(response.body, 'end')
+    t.equal(response.statusCode, 200)
+    t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
+    t.equal(response.headers['x-custom-h2'], 'hello')
+    t.equal(Buffer.concat(body).toString('utf8'), `hello h2! ${sendBody}`)
+  }
 })
 
 test('Should support H2 connection (headers as array)', async t => {
