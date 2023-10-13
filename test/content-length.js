@@ -290,7 +290,7 @@ test('request streaming with Readable.from(buf)', (t) => {
 })
 
 test('request DELETE, content-length=0, with body', (t) => {
-  t.plan(3)
+  t.plan(4)
   const server = createServer((req, res) => {
     res.end()
   })
@@ -310,7 +310,7 @@ test('request DELETE, content-length=0, with body', (t) => {
           this.push('asd')
           this.push(null)
         }
-      }),
+      })
     }, (err) => {
       t.type(err, errors.RequestContentLengthMismatchError)
     })
@@ -321,7 +321,8 @@ test('request DELETE, content-length=0, with body', (t) => {
       headers: {
         'content-length': 0
       }
-    }, (err) => {
+    }, (err, resp) => {
+      t.equal(resp.headers['content-length'], '0')
       t.error(err)
     })
 
@@ -332,7 +333,7 @@ test('request DELETE, content-length=0, with body', (t) => {
 })
 
 test('content-length shouldSendContentLength=false', (t) => {
-  t.plan(9)
+  t.plan(12)
   const server = createServer((req, res) => {
     res.end()
   })
@@ -343,11 +344,23 @@ test('content-length shouldSendContentLength=false', (t) => {
 
     client.request({
       path: '/',
+      method: 'PUT',
+      headers: {
+        'content-length': 0
+      }
+    }, (err, resp) => {
+      t.equal(resp.headers['content-length'], '0')
+      t.error(err)
+    })
+
+    client.request({
+      path: '/',
       method: 'HEAD',
       headers: {
         'content-length': 10
       }
-    }, (err) => {
+    }, (err, resp) => {
+      t.equal(resp.headers['content-length'], undefined)
       t.error(err)
     })
 
