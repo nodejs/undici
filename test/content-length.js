@@ -7,7 +7,7 @@ const { Readable } = require('stream')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
 
 test('request invalid content-length', (t) => {
-  t.plan(6)
+  t.plan(7)
 
   const server = createServer((req, res) => {
     res.end()
@@ -75,6 +75,17 @@ test('request invalid content-length', (t) => {
     client.request({
       path: '/',
       method: 'GET',
+      headers: {
+        'content-length': 4
+      },
+      body: ['asasdasdasdd']
+    }, (err, data) => {
+      t.type(err, errors.RequestContentLengthMismatchError)
+    })
+
+    client.request({
+      path: '/',
+      method: 'DELETE',
       headers: {
         'content-length': 4
       },
@@ -278,8 +289,8 @@ test('request streaming with Readable.from(buf)', (t) => {
   })
 })
 
-test('request DELETE and content-length=0', (t) => {
-  t.plan(2)
+test('request DELETE, content-length=0, with body', (t) => {
+  t.plan(3)
   const server = createServer((req, res) => {
     res.end()
   })
@@ -293,10 +304,27 @@ test('request DELETE and content-length=0', (t) => {
       method: 'DELETE',
       headers: {
         'content-length': 0
+      },
+      body: new Readable({
+        read () {
+          this.push('asd')
+          this.push(null)
+        }
+      }),
+    }, (err) => {
+      t.type(err, errors.RequestContentLengthMismatchError)
+    })
+
+    client.request({
+      path: '/',
+      method: 'DELETE',
+      headers: {
+        'content-length': 0
       }
     }, (err) => {
       t.error(err)
     })
+
     client.on('disconnect', () => {
       t.pass()
     })
@@ -304,7 +332,7 @@ test('request DELETE and content-length=0', (t) => {
 })
 
 test('content-length shouldSendContentLength=false', (t) => {
-  t.plan(8)
+  t.plan(9)
   const server = createServer((req, res) => {
     res.end()
   })
@@ -335,16 +363,6 @@ test('content-length shouldSendContentLength=false', (t) => {
 
     client.request({
       path: '/',
-      method: 'DELETE',
-      headers: {
-        'content-length': 4
-      }
-    }, (err) => {
-      t.error(err)
-    })
-
-    client.request({
-      path: '/',
       method: 'GET',
       headers: {
         'content-length': 4
@@ -362,6 +380,22 @@ test('content-length shouldSendContentLength=false', (t) => {
     client.request({
       path: '/',
       method: 'GET',
+      headers: {
+        'content-length': 4
+      },
+      body: new Readable({
+        read () {
+          this.push('asasdasdasdd')
+          this.push(null)
+        }
+      })
+    }, (err) => {
+      t.error(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'HEAD',
       headers: {
         'content-length': 4
       },
