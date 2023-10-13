@@ -413,7 +413,7 @@ test('request blob', { skip: nodeMajor < 16 }, (t) => {
 })
 
 test('request arrayBuffer', (t) => {
-  t.plan(1)
+  t.plan(2)
 
   const obj = { asd: true }
   const server = createServer((req, res) => {
@@ -429,7 +429,10 @@ test('request arrayBuffer', (t) => {
       path: '/',
       method: 'GET'
     })
-    t.strictSame(Buffer.from(JSON.stringify(obj)), Buffer.from(await body.arrayBuffer()))
+    const ab = await body.arrayBuffer()
+
+    t.strictSame(Buffer.from(JSON.stringify(obj)), Buffer.from(ab))
+    t.ok(ab instanceof ArrayBuffer)
   })
 })
 
