@@ -290,9 +290,12 @@ test('request streaming with Readable.from(buf)', (t) => {
 })
 
 test('request DELETE, content-length=0, with body', (t) => {
-  t.plan(4)
+  t.plan(5)
   const server = createServer((req, res) => {
     res.end()
+  })
+  server.on('request', (req, res) => {
+    t.equal(req.headers['content-length'], undefined)
   })
   t.teardown(server.close.bind(server))
   server.listen(0, () => {
@@ -333,9 +336,22 @@ test('request DELETE, content-length=0, with body', (t) => {
 })
 
 test('content-length shouldSendContentLength=false', (t) => {
-  t.plan(12)
+  t.plan(15)
   const server = createServer((req, res) => {
     res.end()
+  })
+  server.on('request', (req, res) => {
+    switch (req.url) {
+      case '/put0':
+        t.equal(req.headers['content-length'], '0')
+        break
+      case '/head':
+        t.equal(req.headers['content-length'], undefined)
+        break
+      case '/get':
+        t.equal(req.headers['content-length'], undefined)
+        break
+    }
   })
   t.teardown(server.close.bind(server))
   server.listen(0, () => {
@@ -343,7 +359,7 @@ test('content-length shouldSendContentLength=false', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({
-      path: '/',
+      path: '/put0',
       method: 'PUT',
       headers: {
         'content-length': 0
@@ -354,7 +370,7 @@ test('content-length shouldSendContentLength=false', (t) => {
     })
 
     client.request({
-      path: '/',
+      path: '/head',
       method: 'HEAD',
       headers: {
         'content-length': 10
@@ -365,7 +381,7 @@ test('content-length shouldSendContentLength=false', (t) => {
     })
 
     client.request({
-      path: '/',
+      path: '/get',
       method: 'GET',
       headers: {
         'content-length': 0
