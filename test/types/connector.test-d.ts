@@ -4,7 +4,7 @@ import {ConnectionOptions, TLSSocket} from 'tls'
 import {Socket} from 'net'
 import {IpcNetConnectOpts, NetConnectOpts, TcpNetConnectOpts} from "net";
 
-const connector = buildConnector({ rejectUnauthorized: false })
+const connector = buildConnector({ rejectUnauthorized: false, allowH2: false })
 expectAssignable<Client>(new Client('', {
   connect (opts: buildConnector.Options, cb: buildConnector.Callback) {
     connector(opts, (...args) => {

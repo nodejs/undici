@@ -300,3 +300,32 @@ test('response invalid content length with close', (t) => {
     })
   })
 })
+
+test('request streaming with Readable.from(buf)', (t) => {
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'PUT',
+      body: Readable.from(Buffer.from('hello'))
+    }, (err, data) => {
+      const chunks = []
+      t.error(err)
+      data.body
+        .on('data', (chunk) => {
+          chunks.push(chunk)
+        })
+        .on('end', () => {
+          t.equal(Buffer.concat(chunks).toString(), 'hello')
+          t.pass()
+          t.end()
+        })
+    })
+  })
+})
