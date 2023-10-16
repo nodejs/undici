@@ -1,0 +1,26 @@
+name: Publish undici-types
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+      - uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+        with:
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm install
+      - run: node scripts/generate-undici-types-package-json.js
+      - run: npm publish
+        working-directory: './types'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

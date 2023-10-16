@@ -4,6 +4,8 @@ import { fileURLToPath } from 'url'
 import { fork } from 'child_process'
 import { on } from 'events'
 
+const { WPT_REPORT } = process.env
+
 if (process.env.CI) {
   // TODO(@KhafraDev): figure out *why* these tests are flaky in the CI.
   // process.exit(0)
@@ -19,7 +21,10 @@ child.on('exit', (code) => process.exit(code))
 
 for await (const [message] of on(child, 'message')) {
   if (message.server) {
-    const runner = new WPTRunner('websockets', message.server)
+    const runner = new WPTRunner('websockets', message.server, {
+      appendReport: !!WPT_REPORT,
+      reportPath: WPT_REPORT
+    })
     runner.run()
 
     runner.once('completion', () => {
