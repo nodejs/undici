@@ -50,7 +50,7 @@ export interface SpecIterable<T> {
   [Symbol.iterator](): SpecIterator<T>;
 }
 
-export type HeadersInit = string[][] | Record<string, string | ReadonlyArray<string>> | Headers
+export type HeadersInit = string[][] | Record<string, string | ReadonlyArray<string> | undefined> | Headers
 
 export declare class Headers implements SpecIterable<[string, string]> {
   constructor (init?: HeadersInit)
