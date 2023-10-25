@@ -671,6 +671,8 @@ test('dispatch onBodySent not a function', (t) => {
 })
 
 test('dispatch onBodySent buffer', (t) => {
+  t.plan(3)
+
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
@@ -688,6 +690,9 @@ test('dispatch onBodySent buffer', (t) => {
       onBodySent (chunk) {
         t.equal(chunk.toString(), body)
       },
+      onRequestSent () {
+        t.pass()
+      },
       onError (err) {
         throw err
       },
@@ -695,13 +700,14 @@ test('dispatch onBodySent buffer', (t) => {
       onHeaders () {},
       onData () {},
       onComplete () {
-        t.end()
+        t.pass()
       }
     })
   })
 })
 
 test('dispatch onBodySent stream', (t) => {
+  t.plan(8)
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
@@ -723,6 +729,9 @@ test('dispatch onBodySent stream', (t) => {
         t.equal(chunks[currentChunk++], chunk)
         sentBytes += Buffer.byteLength(chunk)
       },
+      onRequestSent () {
+        t.pass()
+      },
       onError (err) {
         throw err
       },
@@ -732,7 +741,7 @@ test('dispatch onBodySent stream', (t) => {
       onComplete () {
         t.equal(currentChunk, chunks.length)
         t.equal(sentBytes, toSendBytes)
-        t.end()
+        t.pass()
       }
     })
   })
