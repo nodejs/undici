@@ -87,9 +87,11 @@ async function deleteRequest (port = 3001) {
 
   console.log('response received', statusCode)
   console.log('headers', headers)
-  // For a DELETE request we expect a 204 response with no body if successful, in which case getting the body content with .text() or .json() will fail
-  if (statusCode !== 204) {
+  // For a DELETE request we expect a 204 response with no body if successful, in which case getting the body content with .json() will fail
+  if (statusCode === 204) {
     console.log('delete successful')
+    // always consume the body if there is one:
+    await body.dump()
   } else {
     const data = await body.text()
     console.log('received unexpected data', data)
