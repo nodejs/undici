@@ -1,7 +1,9 @@
-'use strict'
 
-const { request } = require('../')
+## undici.request() examples
 
+### A simple GET request, read the response body as text:
+```js
+const { request } = require('undici')
 async function getRequest (port = 3001) {
   // A simple GET request
   const {
@@ -15,10 +17,12 @@ async function getRequest (port = 3001) {
   console.log('headers', headers)
   console.log('data', data)
 }
+```
 
+### A JSON POST request, read the response body as json:
+```js
+const { request } = require('undici')
 async function postJSONRequest (port = 3001) {
-  // Make a JSON POST request:
-
   const requestBody = {
     hello: 'JSON POST Example body'
   }
@@ -38,7 +42,11 @@ async function postJSONRequest (port = 3001) {
   console.log('headers', headers)
   console.log('data', decodedJson)
 }
+```
 
+### A Form POST request, read the response body as text:
+```js
+const { request } = require('undici')
 async function postFormRequest (port = 3001) {
   // Make a URL-encoded form POST request:
   const qs = require('querystring')
@@ -61,7 +69,11 @@ async function postFormRequest (port = 3001) {
   console.log('headers', headers)
   console.log('data', data)
 }
+```
 
+### A DELETE request
+```js
+const { request } = require('undici')
 async function deleteRequest (port = 3001) {
   // Make a DELETE request
   const {
@@ -83,10 +95,4 @@ async function deleteRequest (port = 3001) {
     console.log('received unexpected data', data)
   }
 }
-
-module.exports = {
-  getRequest,
-  postJSONRequest,
-  postFormRequest,
-  deleteRequest
-}
+```
