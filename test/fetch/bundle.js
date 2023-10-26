@@ -25,3 +25,17 @@ test('bundle sets constructor.name and .name properly', (t) => {
 
   t.end()
 })
+
+test('regression test for https://github.com/nodejs/node/issues/50263', (t) => {
+  const request = new Request('https://a', {
+    headers: {
+      test: 'abc'
+    },
+    method: 'POST'
+  })
+
+  const request1 = new Request(request, { body: 'does not matter' })
+
+  t.equal(request1.headers.get('test'), 'abc')
+  t.end()
+})
