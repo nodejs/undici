@@ -90,7 +90,6 @@ tap.test('strictContentLength: false', (t) => {
           'content-length': 10
         }
       }, (err, data) => {
-        assertEmitWarningCalledAndReset()
         t.error(err)
       })
 
@@ -101,7 +100,6 @@ tap.test('strictContentLength: false', (t) => {
           'content-length': 0
         }
       }, (err, data) => {
-        assertEmitWarningCalledAndReset()
         t.error(err)
       })
 
@@ -118,7 +116,6 @@ tap.test('strictContentLength: false', (t) => {
           }
         })
       }, (err, data) => {
-        assertEmitWarningCalledAndReset()
         t.error(err)
       })
 
@@ -135,7 +132,6 @@ tap.test('strictContentLength: false', (t) => {
           }
         })
       }, (err, data) => {
-        assertEmitWarningCalledAndReset()
         t.error(err)
       })
     })

@@ -7,7 +7,7 @@ const { Readable } = require('stream')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
 
 test('request invalid content-length', (t) => {
-  t.plan(10)
+  t.plan(7)
 
   const server = createServer((req, res) => {
     res.end()
@@ -63,58 +63,6 @@ test('request invalid content-length', (t) => {
 
     client.request({
       path: '/',
-      method: 'HEAD',
-      headers: {
-        'content-length': 10
-      }
-    }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET',
-      headers: {
-        'content-length': 0
-      }
-    }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET',
-      headers: {
-        'content-length': 4
-      },
-      body: new Readable({
-        read () {
-          this.push('asd')
-          this.push(null)
-        }
-      })
-    }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET',
-      headers: {
-        'content-length': 4
-      },
-      body: new Readable({
-        read () {
-          this.push('asasdasdasdd')
-          this.push(null)
-        }
-      })
-    }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
-    })
-
-    client.request({
-      path: '/',
       method: 'GET',
       headers: {
         'content-length': 4
@@ -127,6 +75,17 @@ test('request invalid content-length', (t) => {
     client.request({
       path: '/',
       method: 'GET',
+      headers: {
+        'content-length': 4
+      },
+      body: ['asasdasdasdd']
+    }, (err, data) => {
+      t.type(err, errors.RequestContentLengthMismatchError)
+    })
+
+    client.request({
+      path: '/',
+      method: 'DELETE',
       headers: {
         'content-length': 4
       },
@@ -326,6 +285,161 @@ test('request streaming with Readable.from(buf)', (t) => {
           t.pass()
           t.end()
         })
+    })
+  })
+})
+
+test('request DELETE, content-length=0, with body', (t) => {
+  t.plan(5)
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  server.on('request', (req, res) => {
+    t.equal(req.headers['content-length'], undefined)
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/',
+      method: 'DELETE',
+      headers: {
+        'content-length': 0
+      },
+      body: new Readable({
+        read () {
+          this.push('asd')
+          this.push(null)
+        }
+      })
+    }, (err) => {
+      t.type(err, errors.RequestContentLengthMismatchError)
+    })
+
+    client.request({
+      path: '/',
+      method: 'DELETE',
+      headers: {
+        'content-length': 0
+      }
+    }, (err, resp) => {
+      t.equal(resp.headers['content-length'], '0')
+      t.error(err)
+    })
+
+    client.on('disconnect', () => {
+      t.pass()
+    })
+  })
+})
+
+test('content-length shouldSendContentLength=false', (t) => {
+  t.plan(15)
+  const server = createServer((req, res) => {
+    res.end()
+  })
+  server.on('request', (req, res) => {
+    switch (req.url) {
+      case '/put0':
+        t.equal(req.headers['content-length'], '0')
+        break
+      case '/head':
+        t.equal(req.headers['content-length'], undefined)
+        break
+      case '/get':
+        t.equal(req.headers['content-length'], undefined)
+        break
+    }
+  })
+  t.teardown(server.close.bind(server))
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.request({
+      path: '/put0',
+      method: 'PUT',
+      headers: {
+        'content-length': 0
+      }
+    }, (err, resp) => {
+      t.equal(resp.headers['content-length'], '0')
+      t.error(err)
+    })
+
+    client.request({
+      path: '/head',
+      method: 'HEAD',
+      headers: {
+        'content-length': 10
+      }
+    }, (err, resp) => {
+      t.equal(resp.headers['content-length'], undefined)
+      t.error(err)
+    })
+
+    client.request({
+      path: '/get',
+      method: 'GET',
+      headers: {
+        'content-length': 0
+      }
+    }, (err) => {
+      t.error(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'content-length': 4
+      },
+      body: new Readable({
+        read () {
+          this.push('asd')
+          this.push(null)
+        }
+      })
+    }, (err) => {
+      t.error(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'content-length': 4
+      },
+      body: new Readable({
+        read () {
+          this.push('asasdasdasdd')
+          this.push(null)
+        }
+      })
+    }, (err) => {
+      t.error(err)
+    })
+
+    client.request({
+      path: '/',
+      method: 'HEAD',
+      headers: {
+        'content-length': 4
+      },
+      body: new Readable({
+        read () {
+          this.push('asasdasdasdd')
+          this.push(null)
+        }
+      })
+    }, (err) => {
+      t.error(err)
+    })
+
+    client.on('disconnect', () => {
+      t.pass()
     })
   })
 })
