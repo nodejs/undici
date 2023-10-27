@@ -14,6 +14,7 @@ test('request examples', async (t) => {
     } else if (req.method === 'POST') {
       res.statusCode = 200
       if (req.url === '/json') {
+        res.setHeader('content-type', 'application/json')
         res.end('{"hello":"JSON Response"}')
       } else {
         res.end('hello=form')
@@ -24,9 +25,18 @@ test('request examples', async (t) => {
     }
   })
 
+  const errorServer = createServer((req, res) => {
+    lastReq = req
+    res.statusCode = 400
+    res.setHeader('content-type', 'application/json')
+    res.end('{"error":"an error"}')
+  })
+
   t.teardown(exampleServer.close.bind(exampleServer))
+  t.teardown(errorServer.close.bind(errorServer))
 
   await exampleServer.listen(0)
+  await errorServer.listen(0)
 
   await examples.getRequest(exampleServer.address().port)
   t.equal(lastReq.method, 'GET')
@@ -40,6 +50,9 @@ test('request examples', async (t) => {
   t.equal(lastReq.headers['content-type'], 'application/x-www-form-urlencoded')
 
   await examples.deleteRequest(exampleServer.address().port)
+  t.equal(lastReq.method, 'DELETE')
+
+  await examples.deleteRequest(errorServer.address().port)
   t.equal(lastReq.method, 'DELETE')
 
   t.end()
