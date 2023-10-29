@@ -34,6 +34,7 @@ declare namespace RetryHandler {
      *
      * @type {number}
      * @memberof RetryOptions
+     * @default 5
      */
     max?: number;
     /**
@@ -41,6 +42,7 @@ declare namespace RetryHandler {
      *
      * @type {number}
      * @memberof RetryOptions
+     * @default 30000
      */
     maxTimeout?: number;
     /**
@@ -48,6 +50,7 @@ declare namespace RetryHandler {
      *
      * @type {number}
      * @memberof RetryOptions
+     * @default 500
      */
     minTimeout?: number;
     /**
@@ -55,8 +58,17 @@ declare namespace RetryHandler {
      *
      * @type {number}
      * @memberof RetryOptions
+     * @default 2
      */
     timeoutFactor?: number;
+    /**
+     * It enables to automatically infer timeout between retries based on the `Retry-After` header.
+     *
+     * @type {boolean}
+     * @memberof RetryOptions
+     * @default true
+     */
+    retryAfter?: boolean;
     /**
      * HTTP methods to retry.
      *
@@ -88,15 +100,6 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      */
     status?: number[];
-    /**
-     * It enables to automatically infer timeout between retries based on the `Retry-After` header.
-     *
-     * @type {boolean}
-     * @memberof RetryOptions
-     * @default true
-     * 
-     */
-    retryAfter?: boolean;
   }
 
   export interface RetryHandlers {
