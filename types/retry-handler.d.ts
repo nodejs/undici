@@ -36,7 +36,7 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      * @default 5
      */
-    max?: number;
+    maxRetries?: number;
     /**
      * Max number of milliseconds allow between retries
      *
@@ -74,6 +74,7 @@ declare namespace RetryHandler {
      *
      * @type {Dispatcher.HttpMethod[]}
      * @memberof RetryOptions
+     * @default ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE'],
      */
     methods?: Dispatcher.HttpMethod[];
     /**
@@ -91,6 +92,7 @@ declare namespace RetryHandler {
      * Error codes to be retried. e.g. `ECONNRESET`, `ENOTFOUND`, `ETIMEDOUT`, `ECONNREFUSED`, etc.
      *
      * @type {string[]}
+     * @default ['ECONNRESET','ECONNREFUSED','ENOTFOUND','ENETDOWN','ENETUNREACH','EHOSTDOWN','EHOSTUNREACH','EPIPE']
      */
     codes?: string[];
     /**
@@ -98,6 +100,7 @@ declare namespace RetryHandler {
      *
      * @type {number[]}
      * @memberof RetryOptions
+     * @default [500, 502, 503, 504, 429],
      */
     status?: number[];
   }
