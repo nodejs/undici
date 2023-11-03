@@ -83,12 +83,13 @@ test('validateHandler', (t) => {
 })
 
 test('parseHeaders', (t) => {
-  t.plan(5)
+  t.plan(6)
   t.same(util.parseHeaders(['key', 'value']), { key: 'value' })
   t.same(util.parseHeaders([Buffer.from('key'), Buffer.from('value')]), { key: 'value' })
   t.same(util.parseHeaders(['Key', 'Value']), { key: 'Value' })
   t.same(util.parseHeaders(['Key', 'value', 'key', 'Value']), { key: ['value', 'Value'] })
   t.same(util.parseHeaders(['key', ['value1', 'value2', 'value3']]), { key: ['value1', 'value2', 'value3'] })
+  t.same(util.parseHeaders([Buffer.from('key'), [Buffer.from('value1'), Buffer.from('value2'), Buffer.from('value3')]]), { key: ['value1', 'value2', 'value3'] })
 })
 
 test('parseRawHeaders', (t) => {

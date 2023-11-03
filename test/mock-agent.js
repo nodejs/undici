@@ -2594,5 +2594,9 @@ test('MockAgent - headers should be array of strings', async (t) => {
     method: 'GET'
   })
 
-  t.equal(headers['set-cookie'].length, 3)
+  t.same(headers['set-cookie'], [
+    'foo=bar',
+    'bar=baz',
+    'baz=qux'
+  ])
 })
