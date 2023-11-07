@@ -11,7 +11,10 @@ function isGlobalAvailable () {
     return true
   }
 
-  return process.execArgv.includes('--experimental-websocket')
+  const [nodeMajor] = process.versions.node.split('.').map(v => Number(v))
+
+  // TODO: keep this up to date when backports to earlier majors happen
+  return nodeMajor >= 21
 }
 
 if (process.env.CI) {
