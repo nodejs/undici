@@ -1,17 +1,24 @@
 import { WPTRunner } from './runner/runner.mjs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
-import { fork } from 'child_process'
+import { fork, execSync } from 'child_process'
 import { on } from 'events'
+import { argv } from 'process'
 
 const { WPT_REPORT } = process.env
+
+function isExperimentalAvailable () {
+  console.log('execSync Result in CI', execSync(`${argv[0]} --expose-internals --print 'typeof require("internal/options").getOptionValue("--experimental-websocket") === "boolean"'`, { encoding: 'utf8' }))
+
+  return execSync(`${argv[0]} --expose-internals --print 'typeof require("internal/options").getOptionValue("--experimental-websocket") === "boolean"'`, { encoding: 'utf8' }) === 'true'
+}
 
 function isGlobalAvailable () {
   if (typeof WebSocket !== 'undefined') {
     return true
   }
 
-  return process.execArgv.includes('--experimental-websocket')
+  return isExperimentalAvailable()
 }
 
 if (process.env.CI) {
@@ -30,7 +37,7 @@ child.on('exit', (code) => process.exit(code))
 for await (const [message] of on(child, 'message')) {
   if (message.server) {
     const runner = new WPTRunner('websockets', message.server, {
-      appendReport: !!WPT_REPORT && isGlobalAvailable(),
+      appendReport: isGlobalAvailable() && !!WPT_REPORT,
       reportPath: WPT_REPORT
     })
     runner.run()
