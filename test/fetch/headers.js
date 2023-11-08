@@ -638,6 +638,15 @@ tap.test('request-no-cors guard', (t) => {
 })
 
 tap.test('invalid headers', (t) => {
+
+  t.doesNotThrow(() => new Headers({ "abcdefghijklmnopqrstuvwxyz0123456789!#$%&'*+-.^_`|~": "test" }))
+
+  const chars = `"(),/:;<=>?@[\\]{}`.split("");
+
+  for (const char of chars) {
+    t.throws(() => new Headers({ [char]: "test" }), TypeError, `The string "${char}" should throw an error.`)
+  }
+
   for (const byte of ['\r', '\n', '\t', ' ', String.fromCharCode(128), '']) {
     t.throws(() => {
       new Headers().set(byte, 'test')
