@@ -38,22 +38,23 @@ test('Issue#2415', async (t) => {
 
   await response.text()
 
-  let canGetH2PseudoHeaders
+  let canGetH2PseudoHeaders = false
 
   try {
     response.headers.get(':status')
     canGetH2PseudoHeaders = true
   } catch (e) {
-    canGetH2PseudoHeaders = false
+    // do nothing
   }
 
   t.doesNotThrow(() => {
     if (canGetH2PseudoHeaders) {
-      const status = response.headers.get(':status')
-      if (status === undefined) return
-      throw new TypeError(
-        'It should not be possible to get the pseudo-headers `:status`.'
-      )
+      const status = response.headers.has(':status')
+      if (status) {
+        throw new TypeError(
+          'It should not be possible to get the pseudo-headers `:status`.'
+        )
+      }
     }
   })
 
