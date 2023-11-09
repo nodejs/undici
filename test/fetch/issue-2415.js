@@ -49,10 +49,21 @@ test('Issue#2415', async (t) => {
 
   t.doesNotThrow(() => {
     if (canGetH2PseudoHeaders) {
-      const status = response.headers.has(':status')
-      if (status) {
+      const hasStatus = response.headers.has(':status')
+      if (hasStatus) {
         throw new TypeError(
           'It should not be possible to get the pseudo-headers `:status`.'
+        )
+      }
+    }
+  })
+
+  t.doesNotThrow(() => {
+    if (canGetH2PseudoHeaders) {
+      for (const key of response.headers.keys()) {
+        t.notOk(
+          key.startsWith(':'),
+          `The pseudo-headers \`${key}\` must not be included in \`Headers#keys\`.`
         )
       }
     }
