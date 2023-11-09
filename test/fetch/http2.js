@@ -84,7 +84,7 @@ test('[Fetch] Simple GET with h2', async t => {
     stream.end(expectedRequestBody)
   })
 
-  t.plan(3)
+  t.plan(4)
 
   server.listen()
   await once(server, 'listening')
@@ -117,6 +117,9 @@ test('[Fetch] Simple GET with h2', async t => {
   t.equal(responseBody, expectedRequestBody)
   t.equal(response.headers.get('x-method'), 'GET')
   t.equal(response.headers.get('x-custom-h2'), 'foo')
+
+  // See https://fetch.spec.whatwg.org/#concept-response-status-message
+  t.equal(response.statusText, '')
 })
 
 test('[Fetch] Should handle h2 request with body (string or buffer)', async t => {
