@@ -19,7 +19,7 @@ Extends: [`Dispatch.DispatchOptions`](Dispatcher.md#parameter-dispatchoptions).
 
 #### `RetryOptions`
 
-- **retry** `(err: Error, state: RetryState, opts: RetryOptions) => number | null` (optional) - Function to be called after every retry. It should return the number of milliseconds to wait before retrying or `null` to stop retrying.
+- **retry** `(err: Error, context: RetryContext, done: (result?: boolean) => void) => void` (optional) - Function to be called after every retry. It should call the `done` parameter to try the request once more.
 - **maxRetries** `number` (optional) - Maximum number of retries. Default: `5`
 - **maxTimeout** `number` (optional) - Maximum number of milliseconds to wait before retrying. Default: `30000` (30 seconds)
 - **minTimeout** `number` (optional) - Minimum number of milliseconds to wait before retrying. Default: `500` (half a second)
@@ -29,6 +29,12 @@ Extends: [`Dispatch.DispatchOptions`](Dispatcher.md#parameter-dispatchoptions).
 - **methods** `string[]` (optional) - Array of HTTP methods to retry. Default: `['GET', 'PUT', 'HEAD', 'OPTIONS', 'DELETE']`
 - **statusCodes** `number[]` (optional) - Array of HTTP status codes to retry. Default: `[429, 500, 502, 503, 504]`
 - **errorCodes** `string[]` (optional) - Array of Error codes to retry. Default: `['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'ENETDOWN','ENETUNREACH', 'EHOSTDOWN', 
+
+
+**`RetryContext`**
+
+- `state`: `RetryState` - Current retry state. It can be mutated.
+- `opts`: `Dispatch.DispatchOptions & RetryOptions` - Options passed to the retry handler.
 
 ### Parameter `RetryHandlers`
 
@@ -41,7 +47,23 @@ Examples:
 const client = new Client(`http://localhost:${server.address().port}`);
 const chunks = [];
 const handler = new RetryHandler(
-  dispatchOptions,
+  {
+    ...dispatchOptions,
+    retryOptions: {
+      // custom retry function
+      retry: function (err, state, done) {
+        counter++;
+
+        if (err.code && err.code === "UND_ERR_DESTROYED") {
+          return null;
+        }
+
+        if (err.statusCode === 206) return done(false);
+        
+        setTimeout(done, 800);
+      },
+    }
+  },
   {
     dispatch: (...args) => {
       return client.dispatch(...args);
@@ -62,47 +84,9 @@ const handler = new RetryHandler(
       },
     },
   },
-  {
-    // custom retry function
-    retry: function (err) {
-      counter++;
-
-      if (err.code && err.code === "UND_ERR_DESTROYED") {
-        return null;
-      }
-
-      return err.statusCode === 206 ? null : 800;
-    },
-  }
 );
 ```
 
-#### Example - Basic ProxyAgent instantiation
-
-This will instantiate the ProxyAgent. It will not do anything until registered as the agent to use with requests.
-
-```js
-import { ProxyAgent } from "undici";
-
-const proxyAgent = new ProxyAgent("my.proxy.server");
-```
-
-#### Example - Basic Proxy Request with global agent dispatcher
-
-```js
-import { setGlobalDispatcher, request, ProxyAgent } from "undici";
-
-const proxyAgent = new ProxyAgent("my.proxy.server");
-setGlobalDispatcher(proxyAgent);
-
-const { statusCode, body } = await request("http://localhost:3000/foo");
-
-console.log("response received", statusCode); // response received 200
-
-for await (const data of body) {
-  console.log("data", data.toString("utf8")); // data foo
-}
-```
 
 #### Example - Basic RetryHandler with defaults
 

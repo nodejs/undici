@@ -12,15 +12,18 @@ tap.test('Should retry status code', t => {
   const server = createServer()
   const dispatchOptions = {
     retryOptions: {
-      retry: err => {
+      retry: (err, { state, opts }, done) => {
         counter++
 
         if (
           err.statusCode === 500 ||
           err.message.includes('other side closed')
         ) {
-          return 500
+          setTimeout(done, 500)
+          return
         }
+
+        return done(false)
       }
     },
     method: 'GET',
@@ -378,14 +381,16 @@ tap.test('Should handle 206 partial content', t => {
 
   const dispatchOptions = {
     retryOptions: {
-      retry: function (err) {
+      retry: function (err, _, done) {
         counter++
 
         if (err.code && err.code === 'UND_ERR_DESTROYED') {
-          return null
+          return done(false)
         }
 
-        return err.statusCode === 206 ? null : 800
+        if (err.statusCode === 206) done(false)
+
+        setTimeout(done, 800)
       }
     },
     method: 'GET',

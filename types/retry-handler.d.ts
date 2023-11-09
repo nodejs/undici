@@ -16,8 +16,13 @@ declare namespace RetryHandler {
 
   export type RetryCallback = (
     err: Error,
-    state: RetryState,
-    opts: RetryOptions
+    context: {
+      state: RetryState;
+      opts: Dispatcher.DispatchOptions & {
+        retryOptions?: RetryHandler.RetryOptions;
+      };
+    },
+    done: (result?: boolean) => void
   ) => number | null;
 
   export interface RetryOptions {
