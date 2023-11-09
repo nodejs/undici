@@ -4,9 +4,10 @@ export default RetryHandler;
 
 declare class RetryHandler implements Dispatcher.DispatchHandlers {
   constructor(
-    options: Dispatcher.DispatchOptions,
-    retryHandlers: RetryHandler.RetryHandlers,
-    retryOptions?: RetryHandler.RetryOptions
+    options: Dispatcher.DispatchOptions & {
+      retryOptions?: RetryHandler.RetryOptions;
+    },
+    retryHandlers: RetryHandler.RetryHandlers
   );
 }
 
@@ -78,23 +79,12 @@ declare namespace RetryHandler {
      */
     methods?: Dispatcher.HttpMethod[];
     /**
-     * It enables automatic retry between requets on idempotent methods.
-     * The method should be defined as safe accordingly to https://developer.mozilla.org/en-US/docs/Glossary/Safe/HTTP
-     *
-     * Note: It takes presedence over the `methods` option.
-     * 
-     * @type {boolean}
-     * @memberof RetryOptions
-     * @default false
-     */
-    idempotent?: boolean;
-    /**
      * Error codes to be retried. e.g. `ECONNRESET`, `ENOTFOUND`, `ETIMEDOUT`, `ECONNREFUSED`, etc.
      *
      * @type {string[]}
      * @default ['ECONNRESET','ECONNREFUSED','ENOTFOUND','ENETDOWN','ENETUNREACH','EHOSTDOWN','EHOSTUNREACH','EPIPE']
      */
-    codes?: string[];
+    errorCodes?: string[];
     /**
      * HTTP status codes to be retried.
      *
@@ -102,7 +92,7 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      * @default [500, 502, 503, 504, 429],
      */
-    status?: number[];
+    statusCodes?: number[];
   }
 
   export interface RetryHandlers {
