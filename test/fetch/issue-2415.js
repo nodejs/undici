@@ -38,6 +38,9 @@ test('Issue#2415', async (t) => {
 
   await response.text()
 
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
   let canGetH2PseudoHeaders = false
 
   try {
@@ -58,16 +61,14 @@ test('Issue#2415', async (t) => {
     }
   })
 
-  t.doesNotThrow(() => {
-    if (canGetH2PseudoHeaders) {
-      for (const key of response.headers.keys()) {
-        t.notOk(
-          key.startsWith(':'),
+  if (canGetH2PseudoHeaders) {
+    for (const key of response.headers.keys()) {
+      t.notOk(
+        key.startsWith(':'),
           `The pseudo-headers \`${key}\` must not be included in \`Headers#keys\`.`
-        )
-      }
+      )
     }
-  })
+  }
 
   t.end()
 })
