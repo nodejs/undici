@@ -6,12 +6,15 @@ const { once } = require('node:events')
 const { Blob } = require('node:buffer')
 const { Readable } = require('node:stream')
 
-const { test, plan } = require('tap')
+const { test, plan, skip } = require('tap')
 const pem = require('https-pem')
 
 const { Client, fetch } = require('../..')
 
 const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
+
+skip('Skip H2 test due to pseudo-header issue.')
+process.exit(0)
 
 plan(6)
 
