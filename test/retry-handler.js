@@ -23,7 +23,7 @@ tap.test('Should retry status code', t => {
           return
         }
 
-        return done(false)
+        return done(err)
       }
     },
     method: 'GET',
@@ -388,7 +388,7 @@ tap.test('Should handle 206 partial content', t => {
           return done(false)
         }
 
-        if (err.statusCode === 206) done(false)
+        if (err.statusCode === 206) return done(err)
 
         setTimeout(done, 800)
       }
@@ -519,15 +519,6 @@ tap.test('Should handle 206 partial content - bad-etag', t => {
             t.equal(Buffer.concat(chunks).toString('utf-8'), 'abc')
             t.equal(err.code, 'UND_ERR_REQ_RETRY')
           }
-        }
-      },
-      {
-        retry: function (err) {
-          if (err.code && err.code === 'UND_ERR_DESTROYED') {
-            return null
-          }
-
-          return err.statusCode === 206 ? null : 800
         }
       }
     )

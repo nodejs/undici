@@ -14,6 +14,15 @@ declare class RetryHandler implements Dispatcher.DispatchHandlers {
 declare namespace RetryHandler {
   export type RetryState = { counter: number; currentTimeout: number };
 
+  export type RetryContext = {
+    state: RetryState;
+    opts: Dispatcher.DispatchOptions & {
+      retryOptions?: RetryHandler.RetryOptions;
+    };
+  }
+
+  export type OnRetryCallback = (result?: Error | null) => void;
+
   export type RetryCallback = (
     err: Error,
     context: {
@@ -22,7 +31,7 @@ declare namespace RetryHandler {
         retryOptions?: RetryHandler.RetryOptions;
       };
     },
-    done: (result?: boolean) => void
+    callback: OnRetryCallback
   ) => number | null;
 
   export interface RetryOptions {

@@ -8,7 +8,7 @@ A handler class that implements the retry logic for a request.
 
 Arguments:
 
-- **options** `Dispatch.DispatchOptions & RetryOptions` (required) - It is an intersection of `Dispatcher.DispatchOptions`  and `RetryOptions`.
+- **options** `Dispatch.DispatchOptions & RetryOptions` (required) - It is an intersection of `Dispatcher.DispatchOptions` and `RetryOptions`.
 - **retryHandlers** `RetryHandlers` (required) - Object containing the `dispatch` to be used on every retry, and `handler` for handling the `dispatch` lifecycle.
 
 Returns: `retryHandler`
@@ -19,7 +19,7 @@ Extends: [`Dispatch.DispatchOptions`](Dispatcher.md#parameter-dispatchoptions).
 
 #### `RetryOptions`
 
-- **retry** `(err: Error, context: RetryContext, done: (result?: boolean) => void) => void` (optional) - Function to be called after every retry. It should call the `done` parameter to try the request once more.
+- **retry** `(err: Error, context: RetryContext, callback: (err?: Error | null) => void) => void` (optional) - Function to be called after every retry. It should pass error if no more retries should be performed.
 - **maxRetries** `number` (optional) - Maximum number of retries. Default: `5`
 - **maxTimeout** `number` (optional) - Maximum number of milliseconds to wait before retrying. Default: `30000` (30 seconds)
 - **minTimeout** `number` (optional) - Minimum number of milliseconds to wait before retrying. Default: `500` (half a second)
@@ -28,8 +28,7 @@ Extends: [`Dispatch.DispatchOptions`](Dispatcher.md#parameter-dispatchoptions).
 -
 - **methods** `string[]` (optional) - Array of HTTP methods to retry. Default: `['GET', 'PUT', 'HEAD', 'OPTIONS', 'DELETE']`
 - **statusCodes** `number[]` (optional) - Array of HTTP status codes to retry. Default: `[429, 500, 502, 503, 504]`
-- **errorCodes** `string[]` (optional) - Array of Error codes to retry. Default: `['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'ENETDOWN','ENETUNREACH', 'EHOSTDOWN', 
-
+- **errorCodes** `string[]` (optional) - Array of Error codes to retry. Default: `['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'ENETDOWN','ENETUNREACH', 'EHOSTDOWN',
 
 **`RetryContext`**
 
@@ -51,18 +50,22 @@ const handler = new RetryHandler(
     ...dispatchOptions,
     retryOptions: {
       // custom retry function
-      retry: function (err, state, done) {
+      retry: function (err, state, callback) {
         counter++;
 
         if (err.code && err.code === "UND_ERR_DESTROYED") {
-          return null;
+          callback(err);
+          return;
         }
 
-        if (err.statusCode === 206) return done(false);
-        
-        setTimeout(done, 800);
+        if (err.statusCode === 206) {
+          callback(err);
+          return;
+        }
+
+        setTimeout(() => callback(null), 1000);
       },
-    }
+    },
   },
   {
     dispatch: (...args) => {
@@ -83,10 +86,9 @@ const handler = new RetryHandler(
         // handle error properly
       },
     },
-  },
+  }
 );
 ```
-
 
 #### Example - Basic RetryHandler with defaults
 
