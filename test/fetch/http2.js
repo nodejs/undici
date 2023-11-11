@@ -6,15 +6,12 @@ const { once } = require('node:events')
 const { Blob } = require('node:buffer')
 const { Readable } = require('node:stream')
 
-const { test, plan, skip } = require('tap')
+const { test, plan } = require('tap')
 const pem = require('https-pem')
 
 const { Client, fetch } = require('../..')
 
 const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
-
-skip('Skip H2 test due to pseudo-header issue.')
-process.exit(0)
 
 plan(6)
 
@@ -87,7 +84,7 @@ test('[Fetch] Simple GET with h2', async t => {
     stream.end(expectedRequestBody)
   })
 
-  t.plan(4)
+  t.plan(5)
 
   server.listen()
   await once(server, 'listening')
@@ -120,6 +117,10 @@ test('[Fetch] Simple GET with h2', async t => {
   t.equal(responseBody, expectedRequestBody)
   t.equal(response.headers.get('x-method'), 'GET')
   t.equal(response.headers.get('x-custom-h2'), 'foo')
+  // https://github.com/nodejs/undici/issues/2415
+  t.throws(() => {
+    response.headers.get(':status')
+  }, TypeError)
 
   // See https://fetch.spec.whatwg.org/#concept-response-status-message
   t.equal(response.statusText, '')
