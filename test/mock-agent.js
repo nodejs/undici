@@ -2602,7 +2602,7 @@ test('MockAgent - headers should be array of strings', async (t) => {
 })
 
 // https://github.com/nodejs/undici/issues/2418
-test('MockAgent - Sending ReadableStream body', async (t) => {
+test('MockAgent - Sending ReadableStream body', { skip: nodeMajor < 16 }, async (t) => {
   t.plan(1)
   const { fetch } = require('..')
   const ReadableStream = globalThis.ReadableStream || require('stream/web').ReadableStream
