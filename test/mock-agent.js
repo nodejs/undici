@@ -2600,3 +2600,38 @@ test('MockAgent - headers should be array of strings', async (t) => {
     'baz=qux'
   ])
 })
+
+// https://github.com/nodejs/undici/issues/2418
+test('MockAgent - Sending ReadableStream body', { skip: nodeMajor < 16 }, async (t) => {
+  t.plan(1)
+  const { fetch } = require('..')
+  const ReadableStream = globalThis.ReadableStream || require('stream/web').ReadableStream
+
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    req.pipe(res)
+  })
+
+  t.teardown(mockAgent.close.bind(mockAgent))
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const url = `http://localhost:${server.address().port}`
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: new ReadableStream({
+      start (controller) {
+        controller.enqueue('test')
+        controller.close()
+      }
+    }),
+    duplex: 'half'
+  })
+
+  t.same(await response.text(), 'test')
+})
