@@ -194,6 +194,7 @@ tap.test('Headers delete', t => {
     t.throws(() => headers.delete('invalid @ header ? name'), 'throws on invalid name')
   })
 
+  // https://github.com/nodejs/undici/issues/2429
   t.test('`Headers#delete` returns undefined', t => {
     t.plan(2)
     const headers = new Headers({ test: 'test' })
