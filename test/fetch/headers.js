@@ -302,7 +302,7 @@ tap.test('Headers set', t => {
 
     t.same(headers.set('a', 'b'), undefined)
 
-    t.notOk(headers.set('c') instanceof Map)
+    t.notOk(headers.set('c', 'd') instanceof Map)
   })
 })
 
