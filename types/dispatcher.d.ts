@@ -2,7 +2,7 @@ import { URL } from 'url'
 import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
 import { Blob } from 'buffer'
-import { IncomingHttpHeaders } from './header'
+import { IncomingH2PseudoHeaders, IncomingHttpHeaders } from './header'
 import BodyReadable from './readable'
 import { FormData } from './formdata'
 import Errors from './errors'
@@ -169,12 +169,14 @@ declare namespace Dispatcher {
   export interface ConnectData {
     statusCode: number;
     headers: IncomingHttpHeaders;
+    pseudoHeaders: IncomingH2PseudoHeaders;
     socket: Duplex;
     opaque: unknown;
   }
   export interface ResponseData {
     statusCode: number;
     headers: IncomingHttpHeaders;
+    pseudoHeaders: IncomingH2PseudoHeaders;
     body: BodyReadable & BodyMixin;
     trailers: Record<string, string>;
     opaque: unknown;
@@ -183,6 +185,7 @@ declare namespace Dispatcher {
   export interface PipelineHandlerData {
     statusCode: number;
     headers: IncomingHttpHeaders;
+    pseudoHeaders: IncomingH2PseudoHeaders;
     opaque: unknown;
     body: BodyReadable;
     context: object;
