@@ -160,7 +160,7 @@ tap.test('Headers append', t => {
 })
 
 tap.test('Headers delete', t => {
-  t.plan(3)
+  t.plan(4)
 
   t.test('deletes valid header entry from instance', t => {
     t.plan(3)
@@ -192,6 +192,14 @@ tap.test('Headers delete', t => {
 
     t.throws(() => headers.delete(), 'throws on missing namee')
     t.throws(() => headers.delete('invalid @ header ? name'), 'throws on invalid name')
+  })
+
+  t.test('`Headers#delete` returns undefined', t => {
+    t.plan(2)
+    const headers = new Headers({ test: 'test' })
+
+    t.same(headers.delete('test'), undefined)
+    t.same(headers.delete('test2'), undefined)
   })
 })
 
