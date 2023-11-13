@@ -250,7 +250,7 @@ tap.test('Headers has', t => {
 })
 
 tap.test('Headers set', t => {
-  t.plan(4)
+  t.plan(5)
 
   t.test('sets valid header entry to instance', t => {
     t.plan(2)
@@ -293,6 +293,16 @@ tap.test('Headers set', t => {
     t.throws(() => headers.set(), 'throws on missing name and value')
     t.throws(() => headers.set('undici'), 'throws on missing value')
     t.throws(() => headers.set('invalid @ header ? name', 'valid value'), 'throws on invalid name')
+  })
+
+  // https://github.com/nodejs/undici/issues/2431
+  t.test('`Headers#set` returns undefined', t => {
+    t.plan(2)
+    const headers = new Headers()
+
+    t.same(headers.set('a', 'b'), undefined)
+
+    t.notOk(headers.set('c') instanceof Map)
   })
 })
 
