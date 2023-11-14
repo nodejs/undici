@@ -13,7 +13,7 @@ const { Client, fetch } = require('../..')
 
 const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
 
-plan(6)
+plan(7)
 
 test('[Fetch] Issue#2311', async t => {
   const expectedBody = 'hello from client!'
@@ -375,3 +375,41 @@ test(
     t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
   }
 )
+
+test('Issue#2415', async (t) => {
+  t.plan(1)
+  const server = createSecureServer(pem)
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      ':status': 200
+    })
+    stream.end('test')
+  })
+
+  server.listen()
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  const response = await fetch(
+    `https://localhost:${server.address().port}/`,
+    // Needs to be passed to disable the reject unauthorized
+    {
+      method: 'GET',
+      dispatcher: client
+    }
+  )
+
+  await response.text()
+
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  t.doesNotThrow(() => new Headers(response.headers))
+})
