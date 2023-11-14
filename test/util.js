@@ -121,3 +121,19 @@ test('buildURL', { skip: util.nodeMajor >= 12 }, (t) => {
 
   t.end()
 })
+
+test('getHeadersFromParsedHeaders', t => {
+  t.plan(1)
+  t.same(util.getHeadersFromParsedHeaders({ ':status': 200, host: 'localhost' }), { host: 'localhost' })
+})
+
+test('getHeadersFromParsedRawHeaders', t => {
+  t.plan(1)
+  t.same(util.getHeadersFromParsedRawHeaders([':status', 200, 'host', 'localhost']), ['host', 'localhost'])
+})
+
+test('parseAndGetHeaders', t => {
+  t.plan(2)
+  t.same(util.parseAndGetHeaders({ ':status': 200, host: 'localhost' }, null), { headers: { host: 'localhost' }, rawHeaders: { ':status': 200, host: 'localhost' } })
+  t.same(util.parseAndGetHeaders(['host', 'localhost'], 'raw'), { headers: ['host', 'localhost'], rawHeaders: ['host', 'localhost'] })
+})
