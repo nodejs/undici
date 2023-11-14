@@ -122,7 +122,7 @@ test('buildURL', { skip: util.nodeMajor >= 12 }, (t) => {
   t.end()
 })
 
-test('getHeadersFromParsedHeaders', t => {
+test('omitPseudoHeaders', t => {
   t.plan(1)
-  t.same(util.getHeadersFromParsedHeaders({ ':status': 200, host: 'localhost' }), { host: 'localhost' })
+  t.same(util.omitPseudoHeaders({ ':status': 200, host: 'localhost' }), { host: 'localhost' })
 })
