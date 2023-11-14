@@ -2,7 +2,7 @@ import { URL } from 'url'
 import { Duplex, Readable, Writable } from 'stream'
 import { EventEmitter } from 'events'
 import { Blob } from 'buffer'
-import { IncomingHttpHeaders } from './header'
+import { IncomingHttpHeaders, IncomingRawHttpHeaders } from './header'
 import BodyReadable from './readable'
 import { FormData } from './formdata'
 import Errors from './errors'
@@ -169,12 +169,14 @@ declare namespace Dispatcher {
   export interface ConnectData {
     statusCode: number;
     headers: IncomingHttpHeaders;
+    rawHeaders: IncomingRawHttpHeaders;
     socket: Duplex;
     opaque: unknown;
   }
   export interface ResponseData {
     statusCode: number;
     headers: IncomingHttpHeaders;
+    rawHeaders: IncomingRawHttpHeaders;
     body: BodyReadable & BodyMixin;
     trailers: Record<string, string>;
     opaque: unknown;
@@ -183,6 +185,7 @@ declare namespace Dispatcher {
   export interface PipelineHandlerData {
     statusCode: number;
     headers: IncomingHttpHeaders;
+    rawHeaders: IncomingRawHttpHeaders;
     opaque: unknown;
     body: BodyReadable;
     context: object;
@@ -193,12 +196,14 @@ declare namespace Dispatcher {
   }
   export interface UpgradeData {
     headers: IncomingHttpHeaders;
+    rawHeaders: IncomingRawHttpHeaders;
     socket: Duplex;
     opaque: unknown;
   }
   export interface StreamFactoryData {
     statusCode: number;
     headers: IncomingHttpHeaders;
+    rawHeaders: IncomingRawHttpHeaders;
     opaque: unknown;
     context: object;
   }
@@ -211,7 +216,7 @@ declare namespace Dispatcher {
     /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
     onUpgrade?(statusCode: number, headers: Buffer[] | string[] | null, socket: Duplex): void;
     /** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
-    onHeaders?(statusCode: number, headers: Buffer[] | string[] | null, resume: () => void): boolean;
+    onHeaders?(statusCode: number, headers: Buffer[] | string[] | null, resume: () => void, statusText: string): boolean;
     /** Invoked when response payload data is received. */
     onData?(chunk: Buffer): boolean;
     /** Invoked when response payload and trailers have been received and the request has completed. */
