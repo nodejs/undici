@@ -169,7 +169,6 @@ declare namespace Dispatcher {
   export interface ConnectData {
     statusCode: number;
     headers: IncomingHttpHeaders;
-    rawHeaders: IncomingRawHttpHeaders;
     socket: Duplex;
     opaque: unknown;
   }
@@ -196,7 +195,6 @@ declare namespace Dispatcher {
   }
   export interface UpgradeData {
     headers: IncomingHttpHeaders;
-    rawHeaders: IncomingRawHttpHeaders;
     socket: Duplex;
     opaque: unknown;
   }
