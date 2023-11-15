@@ -209,7 +209,7 @@ Returns: `Boolean` - `false` if dispatcher is busy and further dispatch calls wo
 * **onConnect** `(abort: () => void, context: object) => void` - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
 * **onError** `(error: Error) => void` - Invoked when an error has occurred. May not throw.
 * **onUpgrade** `(statusCode: number, headers: Buffer[], socket: Duplex) => void` (optional) - Invoked when request is upgraded. Required if `DispatchOptions.upgrade` is defined or `DispatchOptions.method === 'CONNECT'`.
-* **onHeaders** `(statusCode: number, headers: Buffer[], resume: () => void, statusText: string) => boolean` - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. Not required for `upgrade` requests.
+* **onHeaders** `(statusCode: number, headers: Buffer[], resume: () => void, statusTextOrRawHeaders: string) => boolean` - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. If h2, it is rawHeaders instead of statusText, if http/1.1 it remains as string. Not required for `upgrade` requests.
 * **onData** `(chunk: Buffer) => boolean` - Invoked when response payload data is received. Not required for `upgrade` requests.
 * **onComplete** `(trailers: Buffer[]) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
 * **onBodySent** `(chunk: string | Buffer | Uint8Array) => void` - Invoked when a body chunk is sent to the server. Not required. For a stream or iterable body this will be invoked for every chunk. For other body types, it will be invoked once after the body is sent.
@@ -385,6 +385,7 @@ Extends: [`RequestOptions`](#parameter-requestoptions)
 
 * **statusCode** `number`
 * **headers** `Record<string, string | string[] | undefined>`
+* **rawHeaders** `Record<string, string | string[] | number | undefined>`
 * **opaque** `unknown`
 * **body** `stream.Readable`
 * **context** `object`
@@ -479,6 +480,7 @@ The `RequestOptions.method` property should not be value `'CONNECT'`.
 
 * **statusCode** `number`
 * **headers** `Record<string, string | string[]>` - Note that all header keys are lower-cased, e. g. `content-type`.
+* **rawHeaders** `Record<string, string | string[] | number | undefined>` - Almost the same as **headers**, but in the case of h2 there is a pseudo-headers.
 * **body** `stream.Readable` which also implements [the body mixin from the Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
 * **trailers** `Record<string, string>` - This object starts out
   as empty and will be mutated to contain trailers after `body` has emitted `'end'`.
@@ -646,6 +648,7 @@ Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback
 
 * **statusCode** `number`
 * **headers** `Record<string, string | string[] | undefined>`
+* **rawHeaders** `Record<string, string | string[] | number | undefined>`
 * **opaque** `unknown`
 * **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received.
 
