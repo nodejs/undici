@@ -845,3 +845,28 @@ test('stream legacy needDrain', (t) => {
     })
   })
 })
+
+test('rawHeaders must be equal to headers', (t) => {
+  t.plan(2)
+  const server = createServer(async (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain', 'x-powered-by': 'NodeJS' })
+    res.end()
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.teardown(client.destroy.bind(client))
+
+    client.stream({
+      path: '/',
+      method: 'GET',
+      opaque: []
+    }, (data) => {
+      t.equal(data.rawHeaders, data.headers)
+    }, () => {
+      t.pass()
+    })
+  })
+})
