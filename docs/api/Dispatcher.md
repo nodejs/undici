@@ -385,7 +385,7 @@ Extends: [`RequestOptions`](#parameter-requestoptions)
 
 * **statusCode** `number`
 * **headers** `Record<string, string | string[] | undefined>`
-* **rawHeaders** `Record<string, string | string[] | number | undefined>`
+* **rawHeaders** `Record<string, string | string[] | number | undefined>` - Almost the same as **headers**, but in the case of h2 there is a pseudo-headers.
 * **opaque** `unknown`
 * **body** `stream.Readable`
 * **context** `object`
@@ -648,7 +648,7 @@ Returns: `void | Promise<StreamData>` - Only returns a `Promise` if no `callback
 
 * **statusCode** `number`
 * **headers** `Record<string, string | string[] | undefined>`
-* **rawHeaders** `Record<string, string | string[] | number | undefined>`
+* **rawHeaders** `Record<string, string | string[] | number | undefined>`- Almost the same as **headers**, but in the case of h2 there is a pseudo-headers.
 * **opaque** `unknown`
 * **onInfo** `({statusCode: number, headers: Record<string, string | string[]>}) => void | null` (optional) - Default: `null` - Callback collecting all the info headers (HTTP 100-199) received.
 
