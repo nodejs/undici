@@ -141,7 +141,7 @@ declare namespace Dispatcher {
     /** Default: 0 */
     maxRedirections?: number;
     /** Default: `null` */
-    onInfo?: (info: { statusCode: number, headers: Record<string, string | string[]> }) => void;
+    onInfo?: (info: { statusCode: number, headers: Record<string, string | string[]>, rawHeaders: Record<string, string | string[] | number> }) => void;
     /** Default: `null` */
     responseHeader?: 'raw' | null;
     /** Default: `64 KiB` */
