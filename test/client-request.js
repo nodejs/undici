@@ -1011,7 +1011,7 @@ test('rawHeaders must be equal to headers', (t) => {
 
     const res = await client.request({
       path: '/',
-      method: 'GET',
+      method: 'GET'
     })
 
     await res.body.text()
