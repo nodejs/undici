@@ -1155,7 +1155,7 @@ test(
   }
 )
 
-test('The h2 pseudo-headers is not included in the header.', async t => {
+test('The h2 pseudo-headers is not included in the header', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers) => {
