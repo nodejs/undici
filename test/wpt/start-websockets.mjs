@@ -11,10 +11,10 @@ function isGlobalAvailable () {
     return true
   }
 
-  const [nodeMajor] = process.versions.node.split('.').map(v => Number(v))
+  const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(v => Number(v))
 
   // TODO: keep this up to date when backports to earlier majors happen
-  return nodeMajor >= 21
+  return nodeMajor >= 21 || (nodeMajor === 20 && nodeMinor >= 10)
 }
 
 if (process.env.CI) {
