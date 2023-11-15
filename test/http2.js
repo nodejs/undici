@@ -17,7 +17,7 @@ const isGreaterThanv20 = gte(process.version.slice(1), '20.0.0')
 // https://github.com/nodejs/node/pull/41735
 const hasPseudoHeadersOrderFix = gte(process.version.slice(1), '16.14.1')
 
-plan(22)
+plan(23)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -1154,3 +1154,40 @@ test(
     t.equal(response.statusCode, 200)
   }
 )
+
+test('The h2 pseudo-headers is not included in the header.', async t => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    stream.respond({
+      ':status': 200
+    })
+    stream.end('hello h2!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Agent({
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.plan(3)
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  const response = await client.request({
+    origin: `https://localhost:${server.address().port}`,
+    path: '/',
+    method: 'GET'
+  })
+
+  await response.body.text()
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers[':status'], undefined)
+  t.equal(response.rawHeaders[':status'], 200)
+})
