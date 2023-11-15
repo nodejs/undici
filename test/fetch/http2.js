@@ -9,7 +9,7 @@ const { Readable } = require('node:stream')
 const { test, plan } = require('tap')
 const pem = require('https-pem')
 
-const { Client, fetch } = require('../..')
+const { Client, fetch, Headers } = require('../..')
 
 const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
 
