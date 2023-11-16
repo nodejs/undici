@@ -1168,7 +1168,7 @@ test('The h2 pseudo-headers is not included in the header', async t => {
   server.listen(0)
   await once(server, 'listening')
 
-  const client = new Agent({
+  const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -1180,7 +1180,6 @@ test('The h2 pseudo-headers is not included in the header', async t => {
   t.teardown(client.close.bind(client))
 
   const response = await client.request({
-    origin: `https://localhost:${server.address().port}`,
     path: '/',
     method: 'GET'
   })
