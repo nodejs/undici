@@ -487,4 +487,14 @@ test('request.referrer', (t) => {
   t.end()
 })
 
+// https://github.com/nodejs/undici/issues/2445
+test('Clone the set-cookie header when Request is passed as the first parameter and no header is passed.', (t) => {
+  t.plan(2)
+  const request = new Request('http://localhost', { headers: { 'set-cookie': 'A' } })
+  const request2 = new Request(request)
+  request2.headers.append('set-cookie', 'B')
+  t.equal(request.headers.getSetCookie().join(', '), request.headers.get('set-cookie'))
+  t.equal(request2.headers.getSetCookie().join(', '), request2.headers.get('set-cookie'))
+})
+
 teardown(() => process.exit())
