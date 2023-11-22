@@ -13,7 +13,7 @@ const { Client, fetch, Headers } = require('../..')
 
 const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
 
-plan(7)
+plan(8)
 
 test('[Fetch] Issue#2311', async t => {
   const expectedBody = 'hello from client!'
@@ -438,7 +438,7 @@ test('Issue #2386', async t => {
     stream.end(JSON.stringify(expectedResponseBody))
   })
 
-  t.plan(3)
+  t.plan(4)
 
   server.listen(0)
   await once(server, 'listening')
@@ -470,6 +470,7 @@ test('Issue #2386', async t => {
     )
 
     controller.abort()
+    t.pass()
   } catch (error) {
     t.error(error)
   }
