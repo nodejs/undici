@@ -253,5 +253,5 @@ test('constructing Response with third party FormData body', async (t) => {
 test('Issue#2465', async (t) => {
   t.plan(1)
   const response = new Response(new SharedArrayBuffer(0))
-  t.equal(await response.text() === '[object SharedArrayBuffer]')
+  t.equal(await response.text(), '[object SharedArrayBuffer]')
 })
