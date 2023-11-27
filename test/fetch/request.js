@@ -507,8 +507,8 @@ test('keys to object prototypes method', (t) => {
 // https://github.com/nodejs/undici/issues/2465
 test('Issue#2465', async (t) => {
   t.plan(1)
-  const response = new Request(new SharedArrayBuffer(0))
-  t.equal(await response.text(), '[object SharedArrayBuffer]')
+  const request = new Request('http://localhost', { body: new SharedArrayBuffer(0), method: 'POST' })
+  t.equal(await request.text(), '[object SharedArrayBuffer]')
 })
 
 teardown(() => process.exit())
