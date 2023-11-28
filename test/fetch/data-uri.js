@@ -193,7 +193,7 @@ test('https://domain.com/?', (t) => {
 })
 
 // https://github.com/nodejs/undici/issues/2474
-test('data url to include the hash', async (t) => {
+test('data url that includes the hash', async (t) => {
   t.plan(2)
   const dataURL = 'data:,node#js#'
   const serialized = URLSerializer(new URL(dataURL), true)
