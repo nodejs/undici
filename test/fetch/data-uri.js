@@ -191,3 +191,17 @@ test('https://domain.com/?', (t) => {
   const serialized = URLSerializer(new URL(domain))
   t.equal(serialized, domain)
 })
+
+// https://github.com/nodejs/undici/issues/2474
+test('data url to include the hash', async (t) => {
+  t.plan(2)
+  const dataURL = 'data:,node#js#'
+  const serialized = URLSerializer(new URL(dataURL), true)
+  t.equal('data:,node', serialized)
+  try {
+    const res = await fetch(dataURL)
+    t.equal(await res.text(), 'node')
+  } catch (error) {
+    t.fail(`failed to fetch ${dataURL}`)
+  }
+})
