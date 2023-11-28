@@ -193,11 +193,18 @@ test('https://domain.com/?', (t) => {
 })
 
 // https://github.com/nodejs/undici/issues/2474
+test('hash url', (t) => {
+  t.plan(1)
+  const domain = 'https://domain.com/#a#b'
+  const url = new URL(domain)
+  const serialized = URLSerializer(url, true)
+  t.equal(serialized, url.href.substring(0, url.href.length - url.hash.length))
+})
+
+// https://github.com/nodejs/undici/issues/2474
 test('data url that includes the hash', async (t) => {
-  t.plan(2)
+  t.plan(1)
   const dataURL = 'data:,node#js#'
-  const serialized = URLSerializer(new URL(dataURL), true)
-  t.equal('data:,node', serialized)
   try {
     const res = await fetch(dataURL)
     t.equal(await res.text(), 'node')
