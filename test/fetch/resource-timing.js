@@ -53,7 +53,7 @@ test('should include encodedBodySize in performance entry', { skip }, (t) => {
     const [entry] = list.getEntries()
     t.equal(entry.encodedBodySize, 2)
     t.equal(entry.decodedBodySize, 2)
-    t.equal(entry.transferSize, 2+300)
+    t.equal(entry.transferSize, 2 + 300)
 
     obs.disconnect()
     performance.clearResourceTimings()
