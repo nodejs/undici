@@ -544,9 +544,8 @@ tap.test('Should handle 206 partial content - bad-etag', t => {
   })
 })
 
-tap.test('retrying a request with a body', { only: true }, t => {
+tap.test('retrying a request with a body', t => {
   let counter = 0
-  const chunks = []
   const server = createServer()
   const dispatchOptions = {
     retryOptions: {
@@ -572,7 +571,7 @@ tap.test('retrying a request with a body', { only: true }, t => {
     body: JSON.stringify({ hello: 'world' })
   }
 
-  t.plan(4)
+  t.plan(1)
 
   server.on('request', (req, res) => {
     switch (counter) {
