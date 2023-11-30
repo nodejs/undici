@@ -46,3 +46,27 @@ test('should create a PerformanceResourceTiming after each fetch request', { ski
 
   t.teardown(server.close.bind(server))
 })
+
+test('should include encodedBodySize in performance entry', { skip }, (t) => {
+  t.plan(4)
+  const obs = new PerformanceObserver(list => {
+    const [entry] = list.getEntries()
+    t.equal(entry.encodedBodySize, 2)
+    t.equal(entry.decodedBodySize, 2)
+    t.equal(entry.transferSize, 2 + 300)
+
+    obs.disconnect()
+    performance.clearResourceTimings()
+  })
+
+  obs.observe({ entryTypes: ['resource'] })
+
+  const server = createServer((req, res) => {
+    res.end('ok')
+  }).listen(0, async () => {
+    const body = await fetch(`http://localhost:${server.address().port}`)
+    t.strictSame('ok', await body.text())
+  })
+
+  t.teardown(server.close.bind(server))
+})
