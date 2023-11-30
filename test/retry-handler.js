@@ -5,6 +5,7 @@ const { once } = require('node:events')
 const tap = require('tap')
 
 const { RetryHandler, Client } = require('..')
+const { RequestHandler } = require('../lib/api/api-request')
 
 tap.test('Should retry status code', t => {
   let counter = 0
@@ -540,5 +541,82 @@ tap.test('Should handle 206 partial content - bad-etag', t => {
       server.close()
       await once(server, 'close')
     })
+  })
+})
+
+tap.test('retrying a request with a body', t => {
+  let counter = 0
+  const server = createServer()
+  const dispatchOptions = {
+    retryOptions: {
+      retry: (err, { state, opts }, done) => {
+        counter++
+
+        if (
+          err.statusCode === 500 ||
+          err.message.includes('other side closed')
+        ) {
+          setTimeout(done, 500)
+          return
+        }
+
+        return done(err)
+      }
+    },
+    method: 'POST',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({ hello: 'world' })
+  }
+
+  t.plan(1)
+
+  server.on('request', (req, res) => {
+    switch (counter) {
+      case 0:
+        req.destroy()
+        return
+      case 1:
+        res.writeHead(500)
+        res.end('failed')
+        return
+      case 2:
+        res.writeHead(200)
+        res.end('hello world!')
+        return
+      default:
+        t.fail()
+    }
+  })
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: new RequestHandler(dispatchOptions, (err, data) => {
+        t.error(err)
+      })
+    })
+
+    t.teardown(async () => {
+      await client.close()
+      server.close()
+
+      await once(server, 'close')
+    })
+
+    client.dispatch(
+      {
+        method: 'POST',
+        path: '/',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ hello: 'world' })
+      },
+      handler
+    )
   })
 })
