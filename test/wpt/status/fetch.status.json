@@ -71,6 +71,10 @@
           "Fetch with TacO and mode \"cors\" needs an Origin header"
         ]
       },
+      "request-private-network-headers.tentative.any.js": {
+        "note": "undici doesn't filter headers",
+        "skip": true
+      },
       "request-referrer.any.js": {
         "note": "TODO(@KhafraDev): url referrer test could probably be fixed",
         "fail": [
