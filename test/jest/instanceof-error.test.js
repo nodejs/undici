@@ -10,7 +10,6 @@ jest.useRealTimers()
 
 it('isErrorLike sanity check', () => {
   const { isErrorLike } = require('../../lib/fetch/util')
-  const { DOMException } = require('../../lib/fetch/constants')
   const error = new DOMException('')
 
   // https://github.com/facebook/jest/issues/2549
