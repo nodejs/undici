@@ -232,6 +232,10 @@
         "note": "document is not defined",
         "skip": true
       },
+      "redirect-keepalive.https.any.js": {
+        "note": "document is not defined",
+        "skip": true
+      },
       "redirect-location-escape.tentative.any.js": {
         "note": "TODO(@KhafraDev): crashes runner",
         "skip": true
