@@ -2,16 +2,13 @@ const { MockAgent, setGlobalDispatcher, request } = require('../../index')
 
 /* global afterAll, expect, it, AbortController */
 
-const runIf = (condition) => condition ? it : it.skip
-
-const nodeMajor = Number(process.versions.node.split('.', 1)[0])
 const mockAgent = new MockAgent()
 
 afterAll(async () => {
   await mockAgent.close()
 })
 
-runIf(nodeMajor >= 16)('Jest works with MockScope.delay - issue #1327', async () => {
+it('Jest works with MockScope.delay - issue #1327', async () => {
   mockAgent.disableNetConnect()
   setGlobalDispatcher(mockAgent)
 

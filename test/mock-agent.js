@@ -7,12 +7,12 @@ const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
 const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/errors')
-const { nodeMajor } = require('../lib/core/util')
 const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
 const { kAgent } = require('../lib/mock/mock-symbols')
 const Dispatcher = require('../lib/dispatcher')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
+const { fetch } = require('..')
 
 test('MockAgent - constructor', t => {
   t.plan(5)
@@ -2399,9 +2399,7 @@ test('MockAgent - clients are not garbage collected', async (t) => {
 })
 
 // https://github.com/nodejs/undici/issues/1321
-test('MockAgent - using fetch yields correct statusText', { skip: nodeMajor < 16 }, async (t) => {
-  const { fetch } = require('..')
-
+test('MockAgent - using fetch yields correct statusText', async (t) => {
   const mockAgent = new MockAgent()
   mockAgent.disableNetConnect()
   setGlobalDispatcher(mockAgent)
@@ -2432,9 +2430,7 @@ test('MockAgent - using fetch yields correct statusText', { skip: nodeMajor < 16
 })
 
 // https://github.com/nodejs/undici/issues/1556
-test('MockAgent - using fetch yields a headers object in the reply callback', { skip: nodeMajor < 16 }, async (t) => {
-  const { fetch } = require('..')
-
+test('MockAgent - using fetch yields a headers object in the reply callback', async (t) => {
   const mockAgent = new MockAgent()
   mockAgent.disableNetConnect()
   t.teardown(mockAgent.close.bind(mockAgent))
@@ -2464,9 +2460,7 @@ test('MockAgent - using fetch yields a headers object in the reply callback', { 
 })
 
 // https://github.com/nodejs/undici/issues/1579
-test('MockAgent - headers in mock dispatcher intercept should be case-insensitive', { skip: nodeMajor < 16 }, async (t) => {
-  const { fetch } = require('..')
-
+test('MockAgent - headers in mock dispatcher intercept should be case-insensitive', async (t) => {
   const mockAgent = new MockAgent()
   mockAgent.disableNetConnect()
   setGlobalDispatcher(mockAgent)
@@ -2495,9 +2489,7 @@ test('MockAgent - headers in mock dispatcher intercept should be case-insensitiv
 })
 
 // https://github.com/nodejs/undici/issues/1757
-test('MockAgent - reply callback can be asynchronous', { skip: nodeMajor < 16 }, async (t) => {
-  const { fetch } = require('..')
-
+test('MockAgent - reply callback can be asynchronous', async (t) => {
   class MiniflareDispatcher extends Dispatcher {
     constructor (inner, options) {
       super(options)
@@ -2601,9 +2593,8 @@ test('MockAgent - headers should be array of strings', async (t) => {
 })
 
 // https://github.com/nodejs/undici/issues/2418
-test('MockAgent - Sending ReadableStream body', { skip: nodeMajor < 16 }, async (t) => {
+test('MockAgent - Sending ReadableStream body', async (t) => {
   t.plan(1)
-  const { fetch } = require('..')
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)

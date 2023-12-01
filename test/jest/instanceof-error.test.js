@@ -8,10 +8,7 @@ const { once } = require('events')
 // https://github.com/facebook/jest/issues/11607#issuecomment-899068995
 jest.useRealTimers()
 
-const runIf = (condition) => condition ? it : it.skip
-const nodeMajor = Number(process.versions.node.split('.', 1)[0])
-
-runIf(nodeMajor >= 16)('isErrorLike sanity check', () => {
+it('isErrorLike sanity check', () => {
   const { isErrorLike } = require('../../lib/fetch/util')
   const { DOMException } = require('../../lib/fetch/constants')
   const error = new DOMException('')
@@ -21,7 +18,7 @@ runIf(nodeMajor >= 16)('isErrorLike sanity check', () => {
   expect(isErrorLike(error)).toBeTruthy()
 })
 
-runIf(nodeMajor >= 16)('Real use-case', async () => {
+it('Real use-case', async () => {
   const { fetch } = require('../..')
 
   const ac = new AbortController()
