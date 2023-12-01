@@ -36,6 +36,7 @@ const server = createServer(async (req, res) => {
       res.setHeader('content-type', 'text/html')
       // fall through
     }
+    case '/fetch/content-encoding/resources/big.text.gz':
     case '/service-workers/cache-storage/resources/simple.txt':
     case '/fetch/content-encoding/resources/foo.octetstream.gz':
     case '/fetch/content-encoding/resources/foo.text.gz':
