@@ -6,7 +6,6 @@ const path = require('path')
 const { readFileSync } = require('fs')
 const { table } = require('table')
 const { Writable } = require('stream')
-const { WritableStream } = require('stream/web')
 const { isMainThread } = require('worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')

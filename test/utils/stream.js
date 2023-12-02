@@ -2,8 +2,6 @@
 
 const { Readable, Writable } = require('stream')
 
-let ReadableStream
-
 function createReadable (data) {
   return new Readable({
     read () {
@@ -41,7 +39,6 @@ class Source {
 }
 
 function createReadableStream (data) {
-  ReadableStream = require('stream/web').ReadableStream
   return new ReadableStream(new Source(data))
 }
 

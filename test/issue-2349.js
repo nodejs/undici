@@ -1,14 +1,8 @@
 'use strict'
 
-const { test, skip } = require('tap')
-const { nodeMajor } = require('../lib/core/util')
+const { test } = require('tap')
 const { Writable } = require('stream')
 const { MockAgent, errors, stream } = require('..')
-
-if (nodeMajor < 16) {
-  skip('only for node 16')
-  process.exit(0)
-}
 
 test('stream() does not fail after request has been aborted', async (t) => {
   t.plan(1)

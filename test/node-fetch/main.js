@@ -27,7 +27,6 @@ const RequestOrig = require('../../lib/fetch/request.js').Request
 const ResponseOrig = require('../../lib/fetch/response.js').Response
 const TestServer = require('./utils/server.js')
 const chaiTimeout = require('./utils/chai-timeout.js')
-const { ReadableStream } = require('stream/web')
 
 function isNodeLowerThan (version) {
   return !~process.version.localeCompare(version, undefined, { numeric: true })

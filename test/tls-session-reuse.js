@@ -7,7 +7,6 @@ const crypto = require('crypto')
 const { test, teardown } = require('tap')
 const { Client, Pool } = require('..')
 const { kSocket } = require('../lib/core/symbols')
-const { nodeMajor } = require('../lib/core/util')
 
 const options = {
   key: readFileSync(join(__dirname, 'fixtures', 'key.pem'), 'utf8'),
@@ -15,9 +14,7 @@ const options = {
 }
 const ca = readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
 
-test('A client should disable session caching', {
-  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
-}, t => {
+test('A client should disable session caching', t => {
   const clientSessions = {}
   let serverRequests = 0
 
@@ -93,9 +90,7 @@ test('A client should disable session caching', {
   t.end()
 })
 
-test('A pool should be able to reuse TLS sessions between clients', {
-  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
-}, t => {
+test('A pool should be able to reuse TLS sessions between clients', t => {
   let serverRequests = 0
 
   const REQ_COUNT = 10
