@@ -100,9 +100,6 @@ jobs:
     inputs:
       versionSpec: '3.11'
   - template: tools/ci/azure/checkout.yml
-  - template: tools/ci/azure/pip_install.yml
-    parameters:
-      packages: virtualenv
   - template: tools/ci/azure/install_fonts.yml
   - template: tools/ci/azure/install_certs.yml
   - template: tools/ci/azure/color_profile.yml
@@ -144,8 +141,7 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      # TODO(#40525): Revert back to 3.7 once the Mac agent's Python v3.7 contains bz2 again.
-      versionSpec: '3.7.16'
+      versionSpec: '3.7'
   - template: tools/ci/azure/checkout.yml
   - template: tools/ci/azure/tox_pytest.yml
     parameters:
@@ -177,8 +173,7 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      # TODO(#40525): Revert back to 3.7 once the Mac agent's Python v3.7 contains bz2 again.
-      versionSpec: '3.7.16'
+      versionSpec: '3.7'
   - template: tools/ci/azure/checkout.yml
   - template: tools/ci/azure/tox_pytest.yml
     parameters:
@@ -211,8 +206,7 @@ jobs:
   # full checkout required
   - task: UsePythonVersion@0
     inputs:
-      # TODO(#40525): Revert back to 3.7 once the Mac agent's Python v3.7 contains bz2 again.
-      versionSpec: '3.7.16'
+      versionSpec: '3.7'
   - template: tools/ci/azure/install_chrome.yml
   - template: tools/ci/azure/install_firefox.yml
   - template: tools/ci/azure/update_hosts.yml
@@ -373,9 +367,6 @@ jobs:
       versionSpec: '3.11'
   - template: tools/ci/azure/system_info.yml
   - template: tools/ci/azure/checkout.yml
-  - template: tools/ci/azure/pip_install.yml
-    parameters:
-      packages: virtualenv
   - template: tools/ci/azure/install_certs.yml
   - template: tools/ci/azure/install_edge.yml
     parameters:
@@ -412,9 +403,6 @@ jobs:
       versionSpec: '3.11'
   - template: tools/ci/azure/system_info.yml
   - template: tools/ci/azure/checkout.yml
-  - template: tools/ci/azure/pip_install.yml
-    parameters:
-      packages: virtualenv
   - template: tools/ci/azure/install_certs.yml
   - template: tools/ci/azure/install_edge.yml
     parameters:
@@ -450,9 +438,6 @@ jobs:
     inputs:
       versionSpec: '3.11'
   - template: tools/ci/azure/checkout.yml
-  - template: tools/ci/azure/pip_install.yml
-    parameters:
-      packages: virtualenv
   - template: tools/ci/azure/install_certs.yml
   - template: tools/ci/azure/install_edge.yml
     parameters:
@@ -488,9 +473,6 @@ jobs:
     inputs:
       versionSpec: '3.11'
   - template: tools/ci/azure/checkout.yml
-  - template: tools/ci/azure/pip_install.yml
-    parameters:
-      packages: virtualenv
   - template: tools/ci/azure/install_certs.yml
   - template: tools/ci/azure/color_profile.yml
   - template: tools/ci/azure/install_safari.yml
@@ -531,9 +513,6 @@ jobs:
     inputs:
       versionSpec: '3.11'
   - template: tools/ci/azure/checkout.yml
-  - template: tools/ci/azure/pip_install.yml
-    parameters:
-      packages: virtualenv
   - template: tools/ci/azure/install_certs.yml
   - template: tools/ci/azure/color_profile.yml
   - template: tools/ci/azure/install_safari.yml
@@ -571,9 +550,6 @@ jobs:
     inputs:
       versionSpec: '3.11'
   - template: tools/ci/azure/checkout.yml
-  - template: tools/ci/azure/pip_install.yml
-    parameters:
-      packages: virtualenv
   - template: tools/ci/azure/install_certs.yml
   - template: tools/ci/azure/color_profile.yml
   - template: tools/ci/azure/update_hosts.yml
