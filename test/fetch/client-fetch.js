@@ -4,7 +4,6 @@
 
 const { test, teardown } = require('tap')
 const { createServer } = require('http')
-const { ReadableStream } = require('stream/web')
 const { Blob } = require('buffer')
 const { fetch, Response, Request, FormData, File } = require('../..')
 const { Client, setGlobalDispatcher, Agent } = require('../..')

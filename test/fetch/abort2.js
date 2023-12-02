@@ -4,7 +4,6 @@ const { test } = require('tap')
 const { fetch } = require('../..')
 const { createServer } = require('http')
 const { once } = require('events')
-const { DOMException } = require('../../lib/fetch/constants')
 
 /* global AbortController */
 

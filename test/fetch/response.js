@@ -4,7 +4,6 @@ const { test } = require('tap')
 const {
   Response
 } = require('../../')
-const { ReadableStream } = require('stream/web')
 const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
