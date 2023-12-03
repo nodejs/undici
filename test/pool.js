@@ -24,7 +24,7 @@ const {
   errors
 } = require('..')
 
-test('throws when connection is inifinite', (t) => {
+test('throws when connection is infinite', (t) => {
   t.plan(2)
 
   try {

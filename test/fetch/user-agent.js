@@ -1,15 +1,9 @@
 'use strict'
 
-const { test, skip } = require('tap')
+const { test } = require('tap')
 const events = require('events')
 const http = require('http')
 const undici = require('../../')
-const { nodeMajor } = require('../../lib/core/util')
-
-if (nodeMajor === 16) {
-  skip('esbuild uses static blocks with --keep-names which node 16.8 does not have')
-  process.exit()
-}
 
 const nodeBuild = require('../../undici-fetch.js')
 

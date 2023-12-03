@@ -10,7 +10,7 @@ const {
   performance
 } = require('perf_hooks')
 
-const skip = nodeMajor < 18 || (nodeMajor === 18 && nodeMinor < 2)
+const skip = nodeMajor === 18 && nodeMinor < 2
 
 test('should create a PerformanceResourceTiming after each fetch request', { skip }, (t) => {
   t.plan(8)

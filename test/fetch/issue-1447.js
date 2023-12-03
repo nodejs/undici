@@ -1,12 +1,6 @@
 'use strict'
 
-const { test, skip } = require('tap')
-const { nodeMajor } = require('../../lib/core/util')
-
-if (nodeMajor === 16) {
-  skip('esbuild uses static blocks with --keep-names which node 16.8 does not have')
-  process.exit()
-}
+const { test } = require('tap')
 
 const undici = require('../..')
 const { fetch: theoreticalGlobalFetch } = require('../../undici-fetch')
