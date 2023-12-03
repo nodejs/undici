@@ -282,7 +282,7 @@ test('Should support H2 GOAWAY (server-side)', async t => {
   t.equal(err.message, 'HTTP/2: "GOAWAY" frame received with code 204')
 })
 
-test('Should throw if bad allowH2 has been pased', async t => {
+test('Should throw if bad allowH2 has been passed', async t => {
   try {
     // eslint-disable-next-line
     new Client('https://localhost:1000', {
@@ -294,7 +294,7 @@ test('Should throw if bad allowH2 has been pased', async t => {
   }
 })
 
-test('Should throw if bad maxConcurrentStreams has been pased', async t => {
+test('Should throw if bad maxConcurrentStreams has been passed', async t => {
   try {
     // eslint-disable-next-line
     new Client('https://localhost:1000', {
@@ -305,7 +305,7 @@ test('Should throw if bad maxConcurrentStreams has been pased', async t => {
   } catch (error) {
     t.equal(
       error.message,
-      'maxConcurrentStreams must be a possitive integer, greater than 0'
+      'maxConcurrentStreams must be a positive integer, greater than 0'
     )
   }
 
@@ -319,7 +319,7 @@ test('Should throw if bad maxConcurrentStreams has been pased', async t => {
   } catch (error) {
     t.equal(
       error.message,
-      'maxConcurrentStreams must be a possitive integer, greater than 0'
+      'maxConcurrentStreams must be a positive integer, greater than 0'
     )
   }
 })
