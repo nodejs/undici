@@ -10,7 +10,7 @@ const { isMainThread } = require('worker_threads')
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
 const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
-const errorThreshold = parseInt(process.env.ERROR_TRESHOLD, 10) || 3
+const errorThreshold = parseInt(process.env.ERROR_THRESHOLD, 10) || 3
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
 const parallelRequests = parseInt(process.env.PARALLEL, 10) || 100
