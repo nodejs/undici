@@ -482,7 +482,7 @@ const cases = [
 
 for (const [index, { config, expected, expectedRatios, iterations = 9, expectedConnectionRefusedErrors = 0, expectedSocketErrors = 0, maxWeightPerServer, errorPenalty = 10, only = false, skip = false }] of cases.entries()) {
   test(`weighted round robin - case ${index}`, { only, skip }, async (t) => {
-    // cerate an array to store succesfull reqeusts
+    // create an array to store successful requests
     const requestLog = []
 
     // create instances of the test servers according to the config
