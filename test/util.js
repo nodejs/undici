@@ -6,6 +6,7 @@ const { Stream } = require('stream')
 const { EventEmitter } = require('events')
 
 const util = require('../lib/core/util')
+const { headerNameLowerCasedRecord } = require('../lib/core/constants')
 const { InvalidArgumentError } = require('../lib/core/errors')
 
 test('isStream', (t) => {
@@ -120,4 +121,9 @@ test('buildURL', (t) => {
   }
 
   t.end()
+})
+
+test('headerNameLowerCasedRecord', (t) => {
+  t.plan(1)
+  t.ok(typeof headerNameLowerCasedRecord.hasOwnProperty === 'undefined')
 })
