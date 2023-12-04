@@ -620,3 +620,72 @@ tap.test('retrying a request with a body', t => {
     )
   })
 })
+
+tap.test('should not error if request is not meant to be retried', t => {
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.writeHead(400)
+    res.end('Bad request')
+  })
+
+  t.plan(3)
+
+  const dispatchOptions = {
+    retryOptions: {
+      method: 'GET',
+      path: '/',
+      headers: {
+        'content-type': 'application/json'
+      }
+    }
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const chunks = []
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: {
+        onConnect () {
+          t.pass()
+        },
+        onBodySent () {
+          t.pass()
+        },
+        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          t.equal(status, 400)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.equal(Buffer.concat(chunks).toString('utf-8'), 'Bad request')
+        },
+        onError (err) {
+          console.log({ err })
+          t.fail()
+        }
+      }
+    })
+
+    t.teardown(async () => {
+      await client.close()
+      server.close()
+
+      await once(server, 'close')
+    })
+
+    client.dispatch(
+      {
+        method: 'GET',
+        path: '/',
+        headers: {
+          'content-type': 'application/json'
+        }
+      },
+      handler
+    )
+  })
+})
