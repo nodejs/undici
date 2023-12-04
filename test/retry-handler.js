@@ -621,7 +621,7 @@ tap.test('retrying a request with a body', t => {
   })
 })
 
-tap.test('should not error if request is not meant to be retried', { only: true }, t => {
+tap.test('should not error if request is not meant to be retried', t => {
   const server = createServer()
   server.on('request', (req, res) => {
     res.writeHead(400)
