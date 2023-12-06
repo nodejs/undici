@@ -1,7 +1,6 @@
 'use strict'
 
-const t = require('tap')
-const { test } = t
+const { test } = require('tap')
 const { Stream } = require('stream')
 const { EventEmitter } = require('events')
 
@@ -85,12 +84,22 @@ test('validateHandler', (t) => {
 
 test('parseHeaders', (t) => {
   t.plan(6)
-  t.same(util.parseHeaders(['key', 'value']), { key: 'value' })
-  t.same(util.parseHeaders([Buffer.from('key'), Buffer.from('value')]), { key: 'value' })
-  t.same(util.parseHeaders(['Key', 'Value']), { key: 'Value' })
-  t.same(util.parseHeaders(['Key', 'value', 'key', 'Value']), { key: ['value', 'Value'] })
-  t.same(util.parseHeaders(['key', ['value1', 'value2', 'value3']]), { key: ['value1', 'value2', 'value3'] })
-  t.same(util.parseHeaders([Buffer.from('key'), [Buffer.from('value1'), Buffer.from('value2'), Buffer.from('value3')]]), { key: ['value1', 'value2', 'value3'] })
+  t.same(util.parseHeaders(['key', 'value']), false, { key: 'value' })
+  t.same(util.parseHeaders([Buffer.from('key'), Buffer.from('value')]), false, { key: 'value' })
+  t.same(util.parseHeaders(['Key', 'Value']), false, { key: 'Value' })
+  t.same(util.parseHeaders(['Key', 'value', 'key', 'Value']), false, { key: ['value', 'Value'] })
+  t.same(util.parseHeaders(['key', ['value1', 'value2', 'value3']]), false, { key: ['value1', 'value2', 'value3'] })
+  t.same(util.parseHeaders([Buffer.from('key'), [Buffer.from('value1'), Buffer.from('value2'), Buffer.from('value3')]]), false, { key: ['value1', 'value2', 'value3'] })
+})
+
+test('parseHeaders allowUnsafe', (t) => {
+  t.plan(6)
+  t.same(util.parseHeaders(['key', 'value']), true, { key: 'value' })
+  t.same(util.parseHeaders([Buffer.from('key'), Buffer.from('value')]), true, { key: 'value' })
+  t.same(util.parseHeaders(['Key', 'Value']), true, { key: 'Value' })
+  t.same(util.parseHeaders(['Key', 'value', 'key', 'Value']), true, { key: ['value', 'Value'] })
+  t.same(util.parseHeaders(['key', ['value1', 'value2', 'value3']]), true, { key: ['value1', 'value2', 'value3'] })
+  t.same(util.parseHeaders([Buffer.from('key'), [Buffer.from('value1'), Buffer.from('value2'), Buffer.from('value3')]]), true, { key: ['value1', 'value2', 'value3'] })
 })
 
 test('parseRawHeaders', (t) => {
@@ -125,5 +134,5 @@ test('buildURL', (t) => {
 
 test('headerNameLowerCasedRecord', (t) => {
   t.plan(1)
-  t.ok(typeof headerNameLowerCasedRecord.hasOwnProperty === 'undefined')
+  t.ok(typeof headerNameLowerCasedRecord.hasOwnProperty !== 'function')
 })
