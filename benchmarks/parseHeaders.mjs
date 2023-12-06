@@ -47,4 +47,6 @@ group('parseHeaders (irregular)', () => {
   })
 })
 
+await new Promise((resolve) => setTimeout(resolve, 7000))
+
 await run()
