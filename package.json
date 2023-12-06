@@ -162,6 +162,7 @@
     ]
   },
   "dependencies": {
-    "@fastify/busboy": "^2.0.0"
+    "@fastify/busboy": "^2.0.0",
+    "cacheable-lookup": "^6.0.0"
   }
 }
