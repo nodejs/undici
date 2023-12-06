@@ -47,5 +47,4 @@ group('parseHeaders (irregular)', () => {
   })
 })
 
-
 await run()
