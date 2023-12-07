@@ -17,18 +17,21 @@ test('Ternary Search Tree', (t) => {
   }
   const tst = new TernarySearchTree()
 
-  /** @type {string[]} */
-  const random = new Array(5000)
-    .fill(0)
-    .map(() => generateAsciiString((Math.random() * 100 + 5) | 0))
-  const randomBuffer = random.map((c) => Buffer.from(c))
+  const LENGTH = 5000
 
-  for (let i = 0; i < random.length; ++i) {
-    const key = random[i] = random[i].toLowerCase()
-    tst.insert(Buffer.from(key), key)
+  /** @type {string[]} */
+  const random = new Array(LENGTH)
+  const randomBuffer = new Array(LENGTH)
+
+  for (let i = 0; i < LENGTH; ++i) {
+    const key = generateAsciiString((Math.random() * 100 + 5) | 0)
+    const lowerCasedKey = random[i] = key.toLowerCase()
+    randomBuffer[i] = Buffer.from(key)
+    tst.insert(Buffer.from(lowerCasedKey), lowerCasedKey)
   }
+
   t.test('all', (t) => {
-    for (let i = 0; i < randomBuffer.length; ++i) {
+    for (let i = 0; i < LENGTH; ++i) {
       t.equal(tst.lookup(randomBuffer[i]), random[i])
     }
     t.end()
