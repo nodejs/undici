@@ -17,7 +17,7 @@ const tree = new Tree()
 const tst = new TernarySearchTree()
 
 /** @type {string[]} */
-const random = new Array(1000)
+const random = new Array(5000)
   .fill(0)
   .map(() => generateAsciiString((Math.random() * 100 + 5) | 0))
 const randomBuffer = random.map((c) => Buffer.from(c))
