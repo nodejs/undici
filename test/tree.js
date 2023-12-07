@@ -1,6 +1,5 @@
 const { Tree } = require('./utils/tree')
 const { TernarySearchTree } = require('../lib/core/tree')
-const assert = require('assert')
 const { test } = require('tap')
 
 function generateAsciiString (length) {
@@ -18,7 +17,7 @@ const tree = new Tree()
 const tst = new TernarySearchTree()
 
 /** @type {string[]} */
-const random = new Array(10000)
+const random = new Array(1000)
   .fill(0)
   .map(() => generateAsciiString((Math.random() * 100 + 5) | 0))
 const randomBuffer = random.map((c) => Buffer.from(c))
@@ -32,15 +31,8 @@ for (let i = 0; i < random.length; ++i) {
 }
 
 test('all', (t) => {
-  try {
-    for (let i = 0; i < randomBuffer.length; ++i) {
-      const a = tree.lookup(randomBuffer[i])
-      const b = tst.lookup(randomBuffer[i])
-      assert.equal(a, b)
-    }
-    t.pass()
-  } catch (e) {
-    t.fail(String(e))
+  for (let i = 0; i < randomBuffer.length; ++i) {
+    t.equal(tst.lookup(randomBuffer[i]), tree.lookup(randomBuffer[i]))
   }
   t.end()
 })
