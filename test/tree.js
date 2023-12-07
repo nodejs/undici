@@ -21,6 +21,7 @@ test('Ternary Search Tree', (t) => {
 
   /** @type {string[]} */
   const random = new Array(LENGTH)
+  /** @type {Buffer[]} */
   const randomBuffer = new Array(LENGTH)
 
   for (let i = 0; i < LENGTH; ++i) {
