@@ -24,14 +24,12 @@ test('Ternary Search Tree', (t) => {
   const randomBuffer = random.map((c) => Buffer.from(c))
 
   for (let i = 0; i < random.length; ++i) {
-    const key = random[i]
-    const lowerCasedKey = key.toLowerCase()
-    const buffer = Buffer.from(lowerCasedKey)
-    tst.insert(buffer, lowerCasedKey)
+    const key = random[i] = random[i].toLowerCase()
+    tst.insert(Buffer.from(key), key)
   }
   t.test('all', (t) => {
     for (let i = 0; i < randomBuffer.length; ++i) {
-      t.equal(tst.lookup(randomBuffer[i]), random[i].toLowerCase())
+      t.equal(tst.lookup(randomBuffer[i]), random[i])
     }
     t.end()
   })
