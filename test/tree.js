@@ -5,11 +5,11 @@ const { test } = require('tap')
 
 test('Ternary Search Tree', (t) => {
   t.plan(1)
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const charactersLength = characters.length
+
   function generateAsciiString (length) {
     let result = ''
-    const characters =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    const charactersLength = characters.length
     for (let i = 0; i < length; ++i) {
       result += characters[Math.floor(Math.random() * charactersLength)]
     }
@@ -32,9 +32,9 @@ test('Ternary Search Tree', (t) => {
   }
 
   t.test('all', (t) => {
+    t.plan(LENGTH)
     for (let i = 0; i < LENGTH; ++i) {
       t.equal(tst.lookup(randomBuffer[i]), random[i])
     }
-    t.end()
   })
 })
