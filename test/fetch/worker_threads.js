@@ -13,7 +13,6 @@ if (isMainThread) {
   const THREADS = cpus().length - 1
   const ROUNDS = 10
   test('terminate the process correctly', async (t) => {
-    t.plan(1)
     const server = createServer((req, res) => {
       res.end('Hi')
     })
