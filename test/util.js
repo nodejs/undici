@@ -1,7 +1,6 @@
 'use strict'
 
-const t = require('tap')
-const { test } = t
+const { test } = require('tap')
 const { Stream } = require('stream')
 const { EventEmitter } = require('events')
 
@@ -125,5 +124,5 @@ test('buildURL', (t) => {
 
 test('headerNameLowerCasedRecord', (t) => {
   t.plan(1)
-  t.ok(typeof headerNameLowerCasedRecord.hasOwnProperty === 'undefined')
+  t.ok(typeof headerNameLowerCasedRecord.hasOwnProperty !== 'function')
 })

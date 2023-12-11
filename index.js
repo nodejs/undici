@@ -20,6 +20,7 @@ const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 const DecoratorHandler = require('./lib/handler/DecoratorHandler')
 const RedirectHandler = require('./lib/handler/RedirectHandler')
 const createRedirectInterceptor = require('./lib/interceptor/redirectInterceptor')
+const { parseHeaders } = require('./lib/core/util')
 
 let hasCrypto
 try {
@@ -45,6 +46,9 @@ module.exports.createRedirectInterceptor = createRedirectInterceptor
 
 module.exports.buildConnector = buildConnector
 module.exports.errors = errors
+module.exports.util = {
+  parseHeaders
+}
 
 function makeDispatcher (fn) {
   return (url, opts, handler) => {
