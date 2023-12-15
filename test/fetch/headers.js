@@ -741,3 +741,12 @@ tap.test('Headers.prototype.getSetCookie', (t) => {
 
   t.end()
 })
+
+tap.test('When the value is updated, update the cache', (t) => {
+  t.plan(2)
+  const expected = [['a', 'a'], ['b', 'b'], ['c', 'c']]
+  const headers = new Headers(expected)
+  t.same([...headers], expected)
+  headers.append('d', 'd')
+  t.same([...headers], [...expected, ['d', 'd']])
+})
