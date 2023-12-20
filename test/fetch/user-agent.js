@@ -4,6 +4,7 @@ const { test } = require('tap')
 const events = require('events')
 const http = require('http')
 const undici = require('../../')
+
 const nodeBuild = require('../../undici-fetch.js')
 
 test('user-agent defaults correctly', async (t) => {

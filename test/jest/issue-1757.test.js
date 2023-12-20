@@ -23,10 +23,7 @@ class MiniflareDispatcher extends Dispatcher {
   }
 }
 
-const runIf = (condition) => condition ? it : it.skip
-const nodeMajor = Number(process.versions.node.split('.', 1)[0])
-
-runIf(nodeMajor >= 16)('https://github.com/nodejs/undici/issues/1757', async () => {
+it('https://github.com/nodejs/undici/issues/1757', async () => {
   // fetch isn't exported in <16.8
   const { fetch } = require('../..')
 

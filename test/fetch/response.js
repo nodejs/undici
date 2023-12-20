@@ -4,7 +4,6 @@ const { test } = require('tap')
 const {
   Response
 } = require('../../')
-const { ReadableStream } = require('stream/web')
 const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
@@ -247,4 +246,11 @@ test('constructing Response with third party FormData body', async (t) => {
   const contentType = res.headers.get('content-type').split('=')
   t.equal(contentType[0], 'multipart/form-data; boundary')
   t.ok((await res.text()).startsWith(`--${contentType[1]}`))
+})
+
+// https://github.com/nodejs/undici/issues/2465
+test('Issue#2465', async (t) => {
+  t.plan(1)
+  const response = new Response(new SharedArrayBuffer(0))
+  t.equal(await response.text(), '[object SharedArrayBuffer]')
 })

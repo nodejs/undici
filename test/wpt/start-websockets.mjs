@@ -6,6 +6,17 @@ import { on } from 'events'
 
 const { WPT_REPORT } = process.env
 
+function isGlobalAvailable () {
+  if (typeof WebSocket !== 'undefined') {
+    return true
+  }
+
+  const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(v => Number(v))
+
+  // TODO: keep this up to date when backports to earlier majors happen
+  return nodeMajor >= 21 || (nodeMajor === 20 && nodeMinor >= 10)
+}
+
 if (process.env.CI) {
   // TODO(@KhafraDev): figure out *why* these tests are flaky in the CI.
   // process.exit(0)
@@ -22,7 +33,7 @@ child.on('exit', (code) => process.exit(code))
 for await (const [message] of on(child, 'message')) {
   if (message.server) {
     const runner = new WPTRunner('websockets', message.server, {
-      appendReport: !!WPT_REPORT,
+      appendReport: !!WPT_REPORT && isGlobalAvailable(),
       reportPath: WPT_REPORT
     })
     runner.run()

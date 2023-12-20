@@ -1,11 +1,11 @@
 'use strict'
 
-const t = require('tap')
-const { test } = t
+const { test } = require('tap')
 const { Stream } = require('stream')
 const { EventEmitter } = require('events')
 
 const util = require('../lib/core/util')
+const { headerNameLowerCasedRecord } = require('../lib/core/constants')
 const { InvalidArgumentError } = require('../lib/core/errors')
 
 test('isStream', (t) => {
@@ -83,12 +83,13 @@ test('validateHandler', (t) => {
 })
 
 test('parseHeaders', (t) => {
-  t.plan(5)
+  t.plan(6)
   t.same(util.parseHeaders(['key', 'value']), { key: 'value' })
   t.same(util.parseHeaders([Buffer.from('key'), Buffer.from('value')]), { key: 'value' })
   t.same(util.parseHeaders(['Key', 'Value']), { key: 'Value' })
   t.same(util.parseHeaders(['Key', 'value', 'key', 'Value']), { key: ['value', 'Value'] })
   t.same(util.parseHeaders(['key', ['value1', 'value2', 'value3']]), { key: ['value1', 'value2', 'value3'] })
+  t.same(util.parseHeaders([Buffer.from('key'), [Buffer.from('value1'), Buffer.from('value2'), Buffer.from('value3')]]), { key: ['value1', 'value2', 'value3'] })
 })
 
 test('parseRawHeaders', (t) => {
@@ -96,7 +97,7 @@ test('parseRawHeaders', (t) => {
   t.same(util.parseRawHeaders(['key', 'value', Buffer.from('key'), Buffer.from('value')]), ['key', 'value', 'key', 'value'])
 })
 
-test('buildURL', { skip: util.nodeMajor >= 12 }, (t) => {
+test('buildURL', (t) => {
   const tests = [
     [{ id: BigInt(123456) }, 'id=123456'],
     [{ date: new Date() }, 'date='],
@@ -119,4 +120,9 @@ test('buildURL', { skip: util.nodeMajor >= 12 }, (t) => {
   }
 
   t.end()
+})
+
+test('headerNameLowerCasedRecord', (t) => {
+  t.plan(1)
+  t.ok(typeof headerNameLowerCasedRecord.hasOwnProperty !== 'function')
 })

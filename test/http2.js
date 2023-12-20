@@ -17,7 +17,7 @@ const isGreaterThanv20 = gte(process.version.slice(1), '20.0.0')
 // https://github.com/nodejs/node/pull/41735
 const hasPseudoHeadersOrderFix = gte(process.version.slice(1), '16.14.1')
 
-plan(22)
+plan(23)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -282,7 +282,7 @@ test('Should support H2 GOAWAY (server-side)', async t => {
   t.equal(err.message, 'HTTP/2: "GOAWAY" frame received with code 204')
 })
 
-test('Should throw if bad allowH2 has been pased', async t => {
+test('Should throw if bad allowH2 has been passed', async t => {
   try {
     // eslint-disable-next-line
     new Client('https://localhost:1000', {
@@ -294,7 +294,7 @@ test('Should throw if bad allowH2 has been pased', async t => {
   }
 })
 
-test('Should throw if bad maxConcurrentStreams has been pased', async t => {
+test('Should throw if bad maxConcurrentStreams has been passed', async t => {
   try {
     // eslint-disable-next-line
     new Client('https://localhost:1000', {
@@ -305,7 +305,7 @@ test('Should throw if bad maxConcurrentStreams has been pased', async t => {
   } catch (error) {
     t.equal(
       error.message,
-      'maxConcurrentStreams must be a possitive integer, greater than 0'
+      'maxConcurrentStreams must be a positive integer, greater than 0'
     )
   }
 
@@ -319,7 +319,7 @@ test('Should throw if bad maxConcurrentStreams has been pased', async t => {
   } catch (error) {
     t.equal(
       error.message,
-      'maxConcurrentStreams must be a possitive integer, greater than 0'
+      'maxConcurrentStreams must be a positive integer, greater than 0'
     )
   }
 })
@@ -1154,3 +1154,38 @@ test(
     t.equal(response.statusCode, 200)
   }
 )
+
+test('The h2 pseudo-headers is not included in the headers', async t => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    stream.respond({
+      ':status': 200
+    })
+    stream.end('hello h2!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.plan(2)
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  const response = await client.request({
+    path: '/',
+    method: 'GET'
+  })
+
+  await response.body.text()
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers[':status'], undefined)
+})

@@ -487,4 +487,28 @@ test('request.referrer', (t) => {
   t.end()
 })
 
+// https://github.com/nodejs/undici/issues/2445
+test('Clone the set-cookie header when Request is passed as the first parameter and no header is passed.', (t) => {
+  t.plan(2)
+  const request = new Request('http://localhost', { headers: { 'set-cookie': 'A' } })
+  const request2 = new Request(request)
+  request2.headers.append('set-cookie', 'B')
+  t.equal(request.headers.getSetCookie().join(', '), request.headers.get('set-cookie'))
+  t.equal(request2.headers.getSetCookie().join(', '), request2.headers.get('set-cookie'))
+})
+
+// Tests for optimization introduced in https://github.com/nodejs/undici/pull/2456
+test('keys to object prototypes method', (t) => {
+  t.plan(1)
+  const request = new Request('http://localhost', { method: 'hasOwnProperty' })
+  t.ok(typeof request.method === 'string')
+})
+
+// https://github.com/nodejs/undici/issues/2465
+test('Issue#2465', async (t) => {
+  t.plan(1)
+  const request = new Request('http://localhost', { body: new SharedArrayBuffer(0), method: 'POST' })
+  t.equal(await request.text(), '[object SharedArrayBuffer]')
+})
+
 teardown(() => process.exit())

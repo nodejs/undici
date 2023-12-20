@@ -1,16 +1,10 @@
 'use strict'
 
-const { test, skip } = require('tap')
-const { nodeMajor, nodeMinor } = require('../lib/core/util')
+const { test } = require('tap')
 const { createServer } = require('http')
 const { once } = require('events')
 const { createReadStream } = require('fs')
 const { File, FormData, request } = require('..')
-
-if (nodeMajor < 16 || (nodeMajor === 16 && nodeMinor < 8)) {
-  skip('FormData is not available in node < v16.8.0')
-  process.exit()
-}
 
 test('undici.request with a FormData body should set content-length header', async (t) => {
   const server = createServer((req, res) => {

@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('tap')
-const { nodeMajor } = require('../lib/core/util')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 const {
   deleteMockDispatch,
@@ -145,16 +144,14 @@ test('getHeaderByName', (t) => {
   t.equal(getHeaderByName(headersArray, 'key'), 'value')
   t.equal(getHeaderByName(headersArray, 'anotherKey'), undefined)
 
-  if (nodeMajor >= 16) {
-    const { Headers } = require('../index')
+  const { Headers } = require('../index')
 
-    const headers = new Headers([
-      ['key', 'value']
-    ])
+  const headers = new Headers([
+    ['key', 'value']
+  ])
 
-    t.equal(getHeaderByName(headers, 'key'), 'value')
-    t.equal(getHeaderByName(headers, 'anotherKey'), null)
-  }
+  t.equal(getHeaderByName(headers, 'key'), 'value')
+  t.equal(getHeaderByName(headers, 'anotherKey'), null)
 
   t.end()
 })

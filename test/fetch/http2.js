@@ -9,11 +9,11 @@ const { Readable } = require('node:stream')
 const { test, plan } = require('tap')
 const pem = require('https-pem')
 
-const { Client, fetch } = require('../..')
+const { Client, fetch, Headers } = require('../..')
 
 const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
 
-plan(6)
+plan(7)
 
 test('[Fetch] Issue#2311', async t => {
   const expectedBody = 'hello from client!'
@@ -84,7 +84,7 @@ test('[Fetch] Simple GET with h2', async t => {
     stream.end(expectedRequestBody)
   })
 
-  t.plan(3)
+  t.plan(5)
 
   server.listen()
   await once(server, 'listening')
@@ -117,6 +117,13 @@ test('[Fetch] Simple GET with h2', async t => {
   t.equal(responseBody, expectedRequestBody)
   t.equal(response.headers.get('x-method'), 'GET')
   t.equal(response.headers.get('x-custom-h2'), 'foo')
+  // https://github.com/nodejs/undici/issues/2415
+  t.throws(() => {
+    response.headers.get(':status')
+  }, TypeError)
+
+  // See https://fetch.spec.whatwg.org/#concept-response-status-message
+  t.equal(response.statusText, '')
 })
 
 test('[Fetch] Should handle h2 request with body (string or buffer)', async t => {
@@ -193,11 +200,11 @@ test(
         ':status': 200
       })
 
-      stream.end('hello h2!')
-
       for await (const chunk of stream) {
         requestChunks.push(chunk)
       }
+
+      stream.end('hello h2!')
     })
 
     t.plan(8)
@@ -368,3 +375,41 @@ test(
     t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
   }
 )
+
+test('Issue#2415', async (t) => {
+  t.plan(1)
+  const server = createSecureServer(pem)
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      ':status': 200
+    })
+    stream.end('test')
+  })
+
+  server.listen()
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  const response = await fetch(
+    `https://localhost:${server.address().port}/`,
+    // Needs to be passed to disable the reject unauthorized
+    {
+      method: 'GET',
+      dispatcher: client
+    }
+  )
+
+  await response.text()
+
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  t.doesNotThrow(() => new Headers(response.headers))
+})

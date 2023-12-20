@@ -4,6 +4,18 @@
       "skip": true
     }
   },
+  "interfaces": {
+    "WebSocket": {
+      "close": {
+        "close-connecting-async.any.js": {
+          "note": "TODO - need to add route for handshake delay",
+          "fail": [
+            "close event should be fired asynchronously when WebSocket is connecting"
+          ]
+        }
+      }
+    }
+  },
   "Create-blocked-port.any.js": {
     "note": "TODO(@KhafraDev): investigate failure",
     "fail": [

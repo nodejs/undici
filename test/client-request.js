@@ -11,7 +11,6 @@ const { Readable } = require('stream')
 const net = require('net')
 const { promisify } = require('util')
 const { NotSupportedError } = require('../lib/core/errors')
-const { nodeMajor } = require('../lib/core/util')
 const { parseFormDataString } = require('./utils/formdata')
 
 test('request dump', (t) => {
@@ -387,7 +386,7 @@ test('request long multibyte text', (t) => {
   })
 })
 
-test('request blob', { skip: nodeMajor < 16 }, (t) => {
+test('request blob', (t) => {
   t.plan(2)
 
   const obj = { asd: true }
@@ -436,7 +435,7 @@ test('request arrayBuffer', (t) => {
   })
 })
 
-test('request body', { skip: nodeMajor < 16 }, (t) => {
+test('request body', (t) => {
   t.plan(1)
 
   const obj = { asd: true }
@@ -462,7 +461,7 @@ test('request body', { skip: nodeMajor < 16 }, (t) => {
   })
 })
 
-test('request post body no missing data', { skip: nodeMajor < 16 }, (t) => {
+test('request post body no missing data', (t) => {
   t.plan(2)
 
   const server = createServer(async (req, res) => {
@@ -495,7 +494,7 @@ test('request post body no missing data', { skip: nodeMajor < 16 }, (t) => {
   })
 })
 
-test('request post body no extra data handler', { skip: nodeMajor < 16 }, (t) => {
+test('request post body no extra data handler', (t) => {
   t.plan(3)
 
   const server = createServer(async (req, res) => {
@@ -663,7 +662,7 @@ test('request raw responseHeaders', async (t) => {
   t.pass()
 })
 
-test('request formData', { skip: nodeMajor < 16 }, (t) => {
+test('request formData', (t) => {
   t.plan(1)
 
   const obj = { asd: true }
@@ -718,7 +717,7 @@ test('request text2', (t) => {
   })
 })
 
-test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
+test('request with FormData body', (t) => {
   const { FormData } = require('../')
   const { Blob } = require('buffer')
 
@@ -767,24 +766,6 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
 
     t.end()
   })
-})
-
-test('request with FormData body on node < 16', { skip: nodeMajor >= 16 }, async (t) => {
-  t.plan(1)
-
-  // a FormData polyfill, for example
-  class FormData {}
-
-  const fd = new FormData()
-
-  const client = new Client('http://localhost:3000')
-  t.teardown(client.destroy.bind(client))
-
-  await t.rejects(client.request({
-    path: '/',
-    method: 'POST',
-    body: fd
-  }), errors.InvalidArgumentError)
 })
 
 test('request post body Buffer from string', (t) => {

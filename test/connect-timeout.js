@@ -8,7 +8,7 @@ const sleep = require('atomic-sleep')
 test('priotorise socket errors over timeouts', (t) => {
   t.plan(1)
   const connectTimeout = 1000
-  const client = new Pool('http://foobar.bar:1234', { connectTimeout: 1 })
+  const client = new Pool('http://foobar.bar:1234', { connectTimeout: 2 })
 
   client.request({ method: 'GET', path: '/foobar' })
     .then(() => t.fail())

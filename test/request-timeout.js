@@ -4,7 +4,6 @@ const { test } = require('tap')
 const { createReadStream, writeFileSync, unlinkSync } = require('fs')
 const { Client, errors } = require('..')
 const { kConnect } = require('../lib/core/symbols')
-const { nodeMajor } = require('../lib/core/util')
 const timers = require('../lib/timers')
 const { createServer } = require('http')
 const EventEmitter = require('events')
@@ -57,7 +56,7 @@ test('request timeout with readable body', (t) => {
       t.type(err, errors.HeadersTimeoutError)
     })
   })
-}, { skip: nodeMajor < 14 })
+})
 
 test('body timeout', (t) => {
   t.plan(2)
