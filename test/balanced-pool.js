@@ -437,7 +437,7 @@ const cases = [
     expectedRatios: [0.34, 0.34, 0.32],
 
     // Skip because the behavior of Node.js has changed
-    skip: nodeMajor >= 19
+    skip: nodeMajor >= 18
   },
 
   // 8
