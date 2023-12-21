@@ -26,8 +26,13 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<boolean>(dispatcher.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
 
   // connect
-  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ path: '', maxRedirections: 0 }))
-  expectAssignable<void>(dispatcher.connect({ path: '' }, (err, data) => {
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', maxRedirections: 0 }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: new URL('http://localhost'), path: '', maxRedirections: 0 }))
+  expectAssignable<void>(dispatcher.connect({ origin: '', path: '' }, (err, data) => {
+    expectAssignable<Error | null>(err)
+    expectAssignable<Dispatcher.ConnectData>(data)
+  }))
+  expectAssignable<void>(dispatcher.connect({ origin: new URL('http://localhost'), path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ConnectData>(data)
   }))

@@ -86,8 +86,13 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   }))
 
   // connect
-  expectAssignable<Promise<Dispatcher.ConnectData>>(agent.connect({ path: '' }))
-  expectAssignable<void>(agent.connect({ path: '' }, (err, data) => {
+  expectAssignable<Promise<Dispatcher.ConnectData>>(agent.connect({ origin: '', path: '' }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(agent.connect({ origin: new URL('http://localhost'), path: '' }))
+  expectAssignable<void>(agent.connect({ origin: '', path: '' }, (err, data) => {
+    expectAssignable<Error | null>(err)
+    expectAssignable<Dispatcher.ConnectData>(data)
+  }))
+  expectAssignable<void>(agent.connect({ origin: new URL('http://localhost'), path: '' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ConnectData>(data)
   }))
