@@ -21,6 +21,7 @@
   * [WebSocket](/docs/api/WebSocket.md "Undici API - WebSocket")
   * [MIME Type Parsing](/docs/api/ContentType.md "Undici API - MIME Type Parsing")
   * [CacheStorage](/docs/api/CacheStorage.md "Undici API - CacheStorage")
+  * [Util](/docs/api/Util.md "Undici API - Util")
 * Best Practices
   * [Proxy](/docs/best-practices/proxy.md "Connecting through a proxy")
   * [Client Certificate](/docs/best-practices/client-certificate.md "Connect using a client certificate")
