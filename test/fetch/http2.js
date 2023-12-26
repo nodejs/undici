@@ -13,7 +13,7 @@ const { Client, fetch, Headers } = require('../..')
 
 const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
 
-plan(7)
+plan(8)
 
 test('[Fetch] Issue#2311', async t => {
   const expectedBody = 'hello from client!'
@@ -412,4 +412,66 @@ test('Issue#2415', async (t) => {
   t.teardown(client.close.bind(client))
 
   t.doesNotThrow(() => new Headers(response.headers))
+})
+
+test('Issue #2386', async t => {
+  const server = createSecureServer(pem)
+  const body = Buffer.from('hello')
+  const requestChunks = []
+  const expectedResponseBody = { hello: 'h2' }
+  const controller = new AbortController()
+  const signal = controller.signal
+
+  server.on('stream', async (stream, headers) => {
+    t.equal(headers[':method'], 'PUT')
+    t.equal(headers[':path'], '/')
+    t.equal(headers[':scheme'], 'https')
+
+    stream.on('data', chunk => requestChunks.push(chunk))
+
+    stream.respond({
+      'content-type': 'application/json',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    })
+
+    stream.end(JSON.stringify(expectedResponseBody))
+  })
+
+  t.plan(4)
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  try {
+    await fetch(
+      `https://localhost:${server.address().port}/`,
+      // Needs to be passed to disable the reject unauthorized
+      {
+        body,
+        signal,
+        method: 'PUT',
+        dispatcher: client,
+        headers: {
+          'x-my-header': 'foo',
+          'content-type': 'text-plain'
+        }
+      }
+    )
+
+    controller.abort()
+    t.pass()
+  } catch (error) {
+    t.error(error)
+  }
 })
