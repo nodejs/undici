@@ -2,9 +2,9 @@
 
 const { test } = require('tap')
 const {
-  Response
+  Response,
+  FormData
 } = require('../../')
-const { ReadableStream } = require('stream/web')
 const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
@@ -247,4 +247,43 @@ test('constructing Response with third party FormData body', async (t) => {
   const contentType = res.headers.get('content-type').split('=')
   t.equal(contentType[0], 'multipart/form-data; boundary')
   t.ok((await res.text()).startsWith(`--${contentType[1]}`))
+})
+
+// https://github.com/nodejs/undici/issues/2465
+test('Issue#2465', async (t) => {
+  t.plan(1)
+  const response = new Response(new SharedArrayBuffer(0))
+  t.equal(await response.text(), '[object SharedArrayBuffer]')
+})
+
+test('Check the Content-Type of invalid formData', (t) => {
+  t.plan(4)
+
+  t.test('_application/x-www-form-urlencoded', async (t) => {
+    t.plan(1)
+    const response = new Response('x=y', { headers: { 'content-type': '_application/x-www-form-urlencoded' } })
+    await t.rejects(response.formData(), TypeError)
+  })
+
+  t.test('_multipart/form-data', async (t) => {
+    t.plan(1)
+    const formData = new FormData()
+    formData.append('x', 'y')
+    const response = new Response(formData, { headers: { 'content-type': '_multipart/form-data' } })
+    await t.rejects(response.formData(), TypeError)
+  })
+
+  t.test('application/x-www-form-urlencoded_', async (t) => {
+    t.plan(1)
+    const response = new Response('x=y', { headers: { 'content-type': 'application/x-www-form-urlencoded_' } })
+    await t.rejects(response.formData(), TypeError)
+  })
+
+  t.test('multipart/form-data_', async (t) => {
+    t.plan(1)
+    const formData = new FormData()
+    formData.append('x', 'y')
+    const response = new Response(formData, { headers: { 'content-type': 'multipart/form-data_' } })
+    await t.rejects(response.formData(), TypeError)
+  })
 })

@@ -121,6 +121,7 @@ declare namespace Dispatcher {
     expectContinue?: boolean;
   }
   export interface ConnectOptions {
+    origin: string | URL;
     path: string;
     /** Default: `null` */
     headers?: IncomingHttpHeaders | string[] | null;
@@ -210,6 +211,8 @@ declare namespace Dispatcher {
     onError?(err: Error): void;
     /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
     onUpgrade?(statusCode: number, headers: Buffer[] | string[] | null, socket: Duplex): void;
+    /** Invoked when response is received, before headers have been read. **/
+    onResponseStarted?(): void;
     /** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
     onHeaders?(statusCode: number, headers: Buffer[] | string[] | null, resume: () => void, statusText: string): boolean;
     /** Invoked when response payload data is received. */

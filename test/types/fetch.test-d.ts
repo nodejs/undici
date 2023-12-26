@@ -42,7 +42,7 @@ expectType<HeadersInit | undefined>(requestInit.headers)
 expectType<BodyInit | undefined>(requestInit.body)
 expectType<RequestRedirect | undefined>(requestInit.redirect)
 expectType<string | undefined>(requestInit.integrity)
-expectType<AbortSignal | undefined>(requestInit.signal)
+expectType<AbortSignal | null | undefined>(requestInit.signal)
 expectType<RequestCredentials | undefined>(requestInit.credentials)
 expectType<RequestMode | undefined>(requestInit.mode)
 expectType<string | undefined>(requestInit.referrer);

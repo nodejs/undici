@@ -119,7 +119,7 @@ Returns a promise with the result of the `Dispatcher.request` method.
 
 Calls `options.dispatcher.request(options)`.
 
-See [Dispatcher.request](./docs/api/Dispatcher.md#dispatcherrequestoptions-callback) for more details.
+See [Dispatcher.request](./docs/api/Dispatcher.md#dispatcherrequestoptions-callback) for more details, and [request examples](./examples/README.md) for examples.
 
 ### `undici.stream([url, options, ]factory): Promise`
 
@@ -179,8 +179,6 @@ Implements [fetch](https://fetch.spec.whatwg.org/#fetch-method).
 
 * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch
 * https://fetch.spec.whatwg.org/#fetch-method
-
-Only supported on Node 16.8+.
 
 Basic usage example:
 

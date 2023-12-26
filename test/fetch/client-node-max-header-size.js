@@ -1,13 +1,7 @@
 'use strict'
 
 const { execSync } = require('node:child_process')
-const { test, skip } = require('tap')
-const { nodeMajor } = require('../../lib/core/util')
-
-if (nodeMajor === 16) {
-  skip('esbuild uses static blocks with --keep-names which node 16.8 does not have')
-  process.exit()
-}
+const { test } = require('tap')
 
 const command = 'node -e "require(\'./undici-fetch.js\').fetch(\'https://httpbin.org/get\')"'
 

@@ -269,6 +269,13 @@ const PreflightBehavior = {
     "preflight-headers": "cors+pna",
     "expect-single-preflight": true,
   }),
+
+  // The preflight response should succeed and allow origins and headers for
+  // navigations.
+  navigation: (uuid) => ({
+    "preflight-uuid": uuid,
+    "preflight-headers": "navigation",
+  }),
 };
 
 // Methods generate behavior specifications for how `resources/preflight.py`
@@ -456,25 +463,45 @@ async function iframeTest(t, { source, target, expected }) {
   const result = await Promise.race([
       messagePromise.then((data) => data.message),
       new Promise((resolve) => {
-        t.step_timeout(() => resolve("timeout"), 500 /* ms */);
+        t.step_timeout(() => resolve("timeout"), 2000 /* ms */);
       }),
   ]);
 
   assert_equals(result, expected);
 }
 
+const WindowOpenTestResult = {
+  SUCCESS: "success",
+  FAILURE: "failure",
+};
+
+async function windowOpenTest(t, { source, target, expected }) {
+  const targetUrl = preflightUrl(target);
+
+  const sourceUrl =
+      resolveUrl("resources/opener.html", sourceResolveOptions(source));
+  sourceUrl.searchParams.set("url", targetUrl);
+
+  const iframe = await appendIframe(t, document, sourceUrl);
+  const reply = futureMessage({ source: iframe.contentWindow });
+
+  iframe.contentWindow.postMessage({ url: targetUrl.href }, "*");
+
+  assert_equals(await reply, expected);
+}
+
 // Similar to `iframeTest`, but replaced iframes with fenced frames.
 async function fencedFrameTest(t, { source, target, expected }) {
   // Allows running tests in parallel.
   const target_url = preflightUrl(target);
-  target_url.searchParams.set("file", "fenced-frame-local-network-access-target.https.html");
+  target_url.searchParams.set("file", "fenced-frame-private-network-access-target.https.html");
   target_url.searchParams.set("is-loaded-in-fenced-frame", true);
 
   const frame_loaded_key = token();
   const child_frame_target = generateURL(target_url, [frame_loaded_key]);
 
   const source_url =
-      resolveUrl("resources/fenced-frame-local-network-access.https.html", sourceResolveOptions(source));
+      resolveUrl("resources/fenced-frame-private-network-access.https.html", sourceResolveOptions(source));
   source_url.searchParams.set("fenced_frame_url", child_frame_target);
 
   const urn = await generateURNFromFledge(source_url, []);

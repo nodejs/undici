@@ -4,6 +4,8 @@ const { test } = require('tap')
 const http = require('http')
 const { Client, Pool, errors } = require('..')
 const stream = require('stream')
+const { createSecureServer } = require('node:http2')
+const pem = require('https-pem')
 
 test('dispatch invalid opts', (t) => {
   t.plan(14)
@@ -810,6 +812,107 @@ test('dispatch onBodySent throws error', (t) => {
       onHeaders () {},
       onData () {},
       onComplete () {}
+    })
+  })
+})
+
+test('dispatches in expected order', (t) => {
+  const server = http.createServer((req, res) => {
+    res.end('ended')
+  })
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+
+    t.plan(1)
+    t.teardown(client.close.bind(client))
+
+    const dispatches = []
+
+    client.dispatch({
+      path: '/',
+      method: 'POST',
+      body: 'body'
+    }, {
+      onConnect () {
+        dispatches.push('onConnect')
+      },
+      onBodySent () {
+        dispatches.push('onBodySent')
+      },
+      onResponseStarted () {
+        dispatches.push('onResponseStarted')
+      },
+      onHeaders () {
+        dispatches.push('onHeaders')
+      },
+      onData () {
+        dispatches.push('onData')
+      },
+      onComplete () {
+        dispatches.push('onComplete')
+        t.same(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+      },
+      onError (err) {
+        t.error(err)
+      }
+    })
+  })
+})
+
+test('dispatches in expected order for http2', (t) => {
+  const server = createSecureServer(pem)
+  server.on('stream', (stream) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      ':status': 200
+    })
+    stream.end('ended')
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, () => {
+    const client = new Pool(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      },
+      allowH2: true
+    })
+
+    t.plan(1)
+    t.teardown(client.close.bind(client))
+
+    const dispatches = []
+
+    client.dispatch({
+      path: '/',
+      method: 'POST',
+      body: 'body'
+    }, {
+      onConnect () {
+        dispatches.push('onConnect')
+      },
+      onBodySent () {
+        dispatches.push('onBodySent')
+      },
+      onResponseStarted () {
+        dispatches.push('onResponseStarted')
+      },
+      onHeaders () {
+        dispatches.push('onHeaders')
+      },
+      onData () {
+        dispatches.push('onData')
+      },
+      onComplete () {
+        dispatches.push('onComplete')
+        t.same(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+      },
+      onError (err) {
+        t.error(err)
+      }
     })
   })
 })

@@ -497,4 +497,18 @@ test('Clone the set-cookie header when Request is passed as the first parameter 
   t.equal(request2.headers.getSetCookie().join(', '), request2.headers.get('set-cookie'))
 })
 
+// Tests for optimization introduced in https://github.com/nodejs/undici/pull/2456
+test('keys to object prototypes method', (t) => {
+  t.plan(1)
+  const request = new Request('http://localhost', { method: 'hasOwnProperty' })
+  t.ok(typeof request.method === 'string')
+})
+
+// https://github.com/nodejs/undici/issues/2465
+test('Issue#2465', async (t) => {
+  t.plan(1)
+  const request = new Request('http://localhost', { body: new SharedArrayBuffer(0), method: 'POST' })
+  t.equal(await request.text(), '[object SharedArrayBuffer]')
+})
+
 teardown(() => process.exit())
