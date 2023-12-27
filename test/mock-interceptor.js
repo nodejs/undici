@@ -69,7 +69,7 @@ test('MockInterceptor - reply callback', t => {
 })
 
 test('MockInterceptor - reply options callback', t => {
-  t.plan(2)
+  t.plan(3)
 
   t.test('should return MockScope', t => {
     t.plan(2)
@@ -109,6 +109,26 @@ test('MockInterceptor - reply options callback', t => {
       onData: () => {},
       onComplete: () => {}
     })
+  })
+
+  t.test('should return MockScope, async callback', (t) => {
+    t.plan(1)
+
+    const mockInterceptor = new MockInterceptor(
+      {
+        path: '',
+        method: ''
+      },
+      []
+    )
+    const result = mockInterceptor.reply(async (options) => {
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      return {
+        statusCode: 200,
+        data: 'hello'
+      }
+    })
+    t.type(result, MockScope)
   })
 
   t.test('should error if passed options invalid', async (t) => {
