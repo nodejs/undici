@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, describe, after } = require('node:test')
+const { test, describe } = require('node:test')
 const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
 const { WebSocket, Dispatcher, Agent } = require('../..')
@@ -24,18 +24,19 @@ describe('WebSocketInit', () => {
       ws.send(Buffer.from('hello, world'))
     })
 
-    after(server.close.bind(server))
-
     const ws = new WebSocket(`ws://localhost:${server.address().port}`, {
       dispatcher: new WsDispatcher()
     })
 
-    ws.onerror = assert.fail
+    return new Promise((resolve, reject) => {
+      ws.onerror = reject
 
-    ws.addEventListener('message', async (event) => {
-      assert.equal(await event.data.text(), 'hello, world')
-      server.close()
-      ws.close()
+      ws.addEventListener('message', async (event) => {
+        assert.equal(await event.data.text(), 'hello, world')
+        server.close()
+        ws.close()
+        resolve()
+      })
     })
   })
 })
