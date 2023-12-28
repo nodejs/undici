@@ -44,7 +44,7 @@ class FakeIdleMonitor {
 self.IdleDetectorError = {};
 
 self.addMonitor = function addMonitor(threshold, monitorPtr, callback) {
-  throw new Error("expected to be overriden by tests");
+  throw new Error("expected to be overridden by tests");
 }
 
 async function close() {
