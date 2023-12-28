@@ -165,6 +165,3 @@ module.exports.MockClient = MockClient
 module.exports.MockPool = MockPool
 module.exports.MockAgent = MockAgent
 module.exports.mockErrors = mockErrors
-
-const DnsCache = require('./lib/core/dns-cache')
-module.exports.DnsCache = DnsCache
