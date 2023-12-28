@@ -27,13 +27,16 @@ test('Fragmented frame with a ping frame in the middle of it', () => {
 
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
-  ws.addEventListener('message', ({ data }) => {
-    assert.strictEqual(data, 'Hello')
-
-    ws.close()
-  })
-
   diagnosticsChannel.channel('undici:websocket:ping').subscribe(
     ({ payload }) => assert.deepStrictEqual(payload, Buffer.from('Hello'))
   )
+
+  return new Promise((resolve) => {
+    ws.addEventListener('message', ({ data }) => {
+      assert.strictEqual(data, 'Hello')
+
+      ws.close()
+      resolve()
+    })
+  })
 })
