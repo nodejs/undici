@@ -1,120 +1,131 @@
-const assert = require('node:assert');
-const {describe, test, beforeEach, afterEach} = require('node:test');
-const { WebSocketServer } = require('ws');
-const { WebSocket } = require('../..');
+'use strict'
+
+const { describe, test } = require('node:test')
+const assert = require('node:assert')
+const { WebSocketServer } = require('ws')
+const { WebSocket } = require('../..')
 
 describe('Close', () => {
-
-  let server;
-  beforeEach(() => {
-    return new Promise((resolve) => {
-      server = new WebSocketServer({ port: 0 });
-      server.on('listening', resolve);
-    })
-  });
-
-  afterEach(() => server.close());
-
   test('Close with code', () => {
     return new Promise((resolve) => {
+      const server = new WebSocketServer({ port: 0 })
+
       server.on('connection', (ws) => {
         ws.on('close', (code) => {
-          assert.equal(code, 1000);
-          resolve();
-        });
-      });
+          assert.equal(code, 1000)
+          server.close()
+          resolve()
+        })
+      })
 
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`);
-      ws.addEventListener('open', () => ws.close(1000));
+      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      ws.addEventListener('open', () => ws.close(1000))
     })
-  });
+  })
 
   test('Close with code and reason', () => {
     return new Promise((resolve) => {
+      const server = new WebSocketServer({ port: 0 })
+
       server.on('connection', (ws) => {
         ws.on('close', (code, reason) => {
-          assert.equal(code, 1000);
-          assert.deepStrictEqual(reason, Buffer.from('Goodbye'));
-          resolve();
-        });
-      });
+          assert.equal(code, 1000)
+          assert.deepStrictEqual(reason, Buffer.from('Goodbye'))
+          server.close()
+          resolve()
+        })
+      })
 
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`);
-      ws.addEventListener('open', () => ws.close(1000, 'Goodbye'));
+      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      ws.addEventListener('open', () => ws.close(1000, 'Goodbye'))
     })
-  });
+  })
 
   test('Close with invalid code', () => {
-   return new Promise((resolve) => {
-     const ws = new WebSocket(`ws://localhost:${server.address().port}`);
-     ws.addEventListener('open', () => {
-       assert.throws(
-         () => ws.close(2999),
-         {
-           name: 'InvalidAccessError',
-           message: 'invalid code'
-         }
-       );
+    const server = new WebSocketServer({ port: 0 })
 
-       assert.throws(
-         () => ws.close(5000),
-         {
-           name: 'InvalidAccessError',
-           message: 'invalid code'
-         }
-       );
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
-       resolve();
-     });
-   })
-  });
+    return new Promise((resolve) => {
+      ws.addEventListener('open', () => {
+        assert.throws(
+          () => ws.close(2999),
+          {
+            name: 'InvalidAccessError',
+            constructor: DOMException
+          }
+        )
+
+        assert.throws(
+          () => ws.close(5000),
+          {
+            name: 'InvalidAccessError',
+            constructor: DOMException
+          }
+        )
+
+        ws.close()
+        server.close()
+        resolve()
+      })
+    })
+  })
 
   test('Close with invalid reason', () => {
+    const server = new WebSocketServer({ port: 0 })
+
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
     return new Promise((resolve) => {
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`);
       ws.addEventListener('open', () => {
         assert.throws(
           () => ws.close(1000, 'a'.repeat(124)),
           {
             name: 'SyntaxError',
-            message: 'Reason must be less than 123 bytes; received 124'
+            constructor: DOMException
           }
-        );
+        )
 
-        resolve();
-      });
+        ws.close(1000)
+        server.close()
+        resolve()
+      })
     })
-  });
+  })
 
   test('Close with no code or reason', () => {
+    const server = new WebSocketServer({ port: 0 })
+
     return new Promise((resolve) => {
       server.on('connection', (ws) => {
         ws.on('close', (code, reason) => {
-          assert.equal(code, 1005);
-          assert.deepStrictEqual(reason, Buffer.alloc(0));
+          assert.equal(code, 1005)
+          assert.deepStrictEqual(reason, Buffer.alloc(0))
+          server.close()
           resolve()
-        });
-      });
+        })
+      })
 
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`);
-      ws.addEventListener('open', () => ws.close());
+      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      ws.addEventListener('open', () => ws.close())
     })
-  });
+  })
 
   test('Close with a 3000 status code', () => {
+    const server = new WebSocketServer({ port: 0 })
+
     return new Promise((resolve) => {
       server.on('connection', (ws) => {
         ws.on('close', (code, reason) => {
-          assert.equal(code, 3000);
-          assert.deepStrictEqual(reason, Buffer.alloc(0));
-          resolve();
-        });
-      });
+          assert.equal(code, 3000)
+          assert.deepStrictEqual(reason, Buffer.alloc(0))
+          server.close()
+          resolve()
+        })
+      })
 
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`);
-      ws.addEventListener('open', () => ws.close(3000));
+      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      ws.addEventListener('open', () => ws.close(3000))
     })
-  });
-
-});
-
+  })
+})
