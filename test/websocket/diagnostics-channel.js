@@ -1,74 +1,64 @@
 'use strict'
 
+const {describe, test} = require('node:test')
 const assert = require('node:assert')
-const { describe, it, before, after, beforeEach, afterEach } = require('node:test')
 const dc = require('diagnostics_channel')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 
-describe('diagnostics channel', () => {
-  let server
-  let listener
+describe('diagnostics channel', { concurrency: 1 }, () => {
+  test('undici:websocket:open', () => {
+    const server = new WebSocketServer({ port: 0 })
 
-  before((done) => {
-    server = new WebSocketServer({ port: 0 })
-    server.on('listening', done)
-  })
-
-  after((done) => {
-    server.close(done)
-  })
-
-  describe('undici:websocket:open', () => {
-    beforeEach(() => {
-      listener = ({ extensions, protocol }) => {
-        assert.strictEqual(extensions, null)
-        assert.strictEqual(protocol, 'chat')
-      }
-      dc.channel('undici:websocket:open').subscribe(listener)
+    server.on('connection', (ws) => {
+      ws.close(1000, 'goodbye')
     })
 
-    afterEach(() => {
-      dc.channel('undici:websocket:open').unsubscribe(listener)
-    })
+    const listener = ({ extensions, protocol }) => {
+      assert.equal(extensions, null)
+      assert.equal(protocol, 'chat')
+    }
 
-    it('should test WebSocket open event', (done) => {
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`, 'chat')
+    const { port } = server.address()
 
+    dc.channel('undici:websocket:open').subscribe(listener)
+
+    const ws = new WebSocket(`ws://localhost:${port}`, 'chat')
+
+    return new Promise((resolve) => {
       ws.addEventListener('open', () => {
-        assert.ok(true, 'Emitted open')
-        ws.close()
-        done()
+        dc.channel('undici:websocket:open').unsubscribe(listener)
+        server.close()
+        resolve()
       })
     })
   })
 
-  describe('undici:websocket:close', () => {
-    beforeEach(() => {
-      listener = ({ websocket, code, reason }) => {
-        assert(websocket instanceof WebSocket)
-        assert.strictEqual(code, 1000)
-        assert.strictEqual(reason, 'goodbye')
-      }
-      dc.channel('undici:websocket:close').subscribe(listener)
+  test('undici:websocket:close', () => {
+    const server = new WebSocketServer({ port: 0 })
+
+    server.on('connection', (ws) => {
+      ws.close(1000, 'goodbye')
     })
 
-    afterEach(() => {
-      dc.channel('undici:websocket:close').unsubscribe(listener)
-    })
+    const listener = ({ websocket, code, reason }) => {
+      assert.ok(websocket instanceof WebSocket)
+      assert.equal(code, 1000)
+      assert.equal(reason, 'goodbye')
+    }
 
-    it('should test WebSocket close event', (done) => {
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`, 'chat')
+    const { port } = server.address()
 
+    dc.channel('undici:websocket:close').subscribe(listener)
+
+    const ws = new WebSocket(`ws://localhost:${port}`, 'chat')
+
+    return new Promise((resolve) => {
       ws.addEventListener('close', () => {
-        assert.ok(true, 'Emitted close')
-        done()
-      })
-
-      server.on('connection', (ws) => {
-        ws.close(1000, 'goodbye')
+        dc.channel('undici:websocket:close').unsubscribe(listener)
+        server.close()
+        resolve()
       })
     })
   })
 })
-
