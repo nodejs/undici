@@ -1,12 +1,11 @@
 'use strict'
 
-const { test } = require('tap')
+const { test, describe, after } = require('node:test')
+const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
 const { WebSocket, Dispatcher, Agent } = require('../..')
 
-test('WebSocketInit', (t) => {
-  t.plan(2)
-
+describe('WebSocketInit', () => {
   class WsDispatcher extends Dispatcher {
     constructor () {
       super()
@@ -14,30 +13,27 @@ test('WebSocketInit', (t) => {
     }
 
     dispatch () {
-      t.pass()
       return this.agent.dispatch(...arguments)
     }
   }
 
-  t.test('WebSocketInit as 2nd param', (t) => {
-    t.plan(1)
-
+  test('WebSocketInit as 2nd param', () => {
     const server = new WebSocketServer({ port: 0 })
 
     server.on('connection', (ws) => {
       ws.send(Buffer.from('hello, world'))
     })
 
-    t.teardown(server.close.bind(server))
+    after(server.close.bind(server))
 
     const ws = new WebSocket(`ws://localhost:${server.address().port}`, {
       dispatcher: new WsDispatcher()
     })
 
-    ws.onerror = t.fail
+    ws.onerror = assert.fail
 
     ws.addEventListener('message', async (event) => {
-      t.equal(await event.data.text(), 'hello, world')
+      assert.equal(await event.data.text(), 'hello, world')
       server.close()
       ws.close()
     })

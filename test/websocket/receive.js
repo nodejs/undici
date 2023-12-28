@@ -1,12 +1,11 @@
 'use strict'
 
-const { test } = require('tap')
+const { test, after } = require('node:test')
+const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 
-test('Receiving a frame with a payload length > 2^31-1 bytes', (t) => {
-  t.plan(1)
-
+test('Receiving a frame with a payload length > 2^31-1 bytes', () => {
   const server = new WebSocketServer({ port: 0 })
 
   server.on('connection', (ws) => {
@@ -17,21 +16,19 @@ test('Receiving a frame with a payload length > 2^31-1 bytes', (t) => {
 
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
-  t.teardown(() => {
+  after(() => {
     ws.close()
     server.close()
   })
 
-  ws.onmessage = t.fail
+  ws.onmessage = assert.fail
 
   ws.addEventListener('error', (event) => {
-    t.type(event.error, Error) // error event is emitted
+    assert.ok(event.error instanceof Error) // error event is emitted
   })
 })
 
-test('Receiving an ArrayBuffer', (t) => {
-  t.plan(3)
-
+test('Receiving an ArrayBuffer', () => {
   const server = new WebSocketServer({ port: 0 })
 
   server.on('connection', (ws) => {
@@ -42,19 +39,19 @@ test('Receiving an ArrayBuffer', (t) => {
     })
   })
 
-  t.teardown(server.close.bind(server))
+  after(server.close.bind(server))
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
   ws.addEventListener('open', () => {
     ws.binaryType = 'what'
-    t.equal(ws.binaryType, 'blob')
+    assert.equal(ws.binaryType, 'blob')
 
     ws.binaryType = 'arraybuffer' // <--
     ws.send('Hello')
   })
 
   ws.addEventListener('message', ({ data }) => {
-    t.type(data, ArrayBuffer)
-    t.same(Buffer.from(data), Buffer.from('Hello'))
+    assert.ok(data instanceof ArrayBuffer)
+    assert.deepStrictEqual(Buffer.from(data), Buffer.from('Hello'))
   })
 })
