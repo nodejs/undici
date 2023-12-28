@@ -393,7 +393,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   }
 
   const expectedProxyHeaders = {
-    host: `localhost:${proxy.address().port}`,
+    host: `localhost:${server.address().port}`,
     connection: 'close'
   }
 
