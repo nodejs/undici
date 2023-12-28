@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
@@ -16,15 +16,15 @@ test('Receiving a frame with a payload length > 2^31-1 bytes', () => {
 
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
-  after(() => {
-    ws.close()
-    server.close()
-  })
+  return new Promise((resolve, reject) => {
+    ws.onmessage = reject
 
-  ws.onmessage = assert.fail
-
-  ws.addEventListener('error', (event) => {
-    assert.ok(event.error instanceof Error) // error event is emitted
+    ws.addEventListener('error', (event) => {
+      assert.ok(event.error instanceof Error) // error event is emitted
+      ws.close()
+      server.close()
+      resolve()
+    })
   })
 })
 
@@ -39,7 +39,6 @@ test('Receiving an ArrayBuffer', () => {
     })
   })
 
-  after(server.close.bind(server))
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
   ws.addEventListener('open', () => {
@@ -50,8 +49,12 @@ test('Receiving an ArrayBuffer', () => {
     ws.send('Hello')
   })
 
-  ws.addEventListener('message', ({ data }) => {
-    assert.ok(data instanceof ArrayBuffer)
-    assert.deepStrictEqual(Buffer.from(data), Buffer.from('Hello'))
+  return new Promise((resolve) => {
+    ws.addEventListener('message', ({ data }) => {
+      assert.ok(data instanceof ArrayBuffer)
+      assert.deepStrictEqual(Buffer.from(data), Buffer.from('Hello'))
+      server.close()
+      resolve()
+    })
   })
 })

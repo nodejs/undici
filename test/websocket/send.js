@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, after, describe } = require('node:test')
+const { test, describe } = require('node:test')
 const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
 const { Blob } = require('buffer')
@@ -27,13 +27,17 @@ test('Sending >= 2^16 bytes', () => {
     ws.send(payload)
   })
 
-  ws.addEventListener('message', async ({ data }) => {
-    assert.ok(data instanceof Blob)
-    assert.equal(data.size, payload.length)
-    assert.deepStrictEqual(Buffer.from(await data.arrayBuffer()), payload)
+  return new Promise((resolve) => {
+    ws.addEventListener('message', async ({ data }) => {
+      assert.ok(data instanceof Blob)
+      assert.equal(data.size, payload.length)
+      assert.deepStrictEqual(Buffer.from(await data.arrayBuffer()), payload)
 
-    ws.close()
-    server.close()
+      ws.close()
+      server.close()
+
+      resolve()
+    })
   })
 })
 
@@ -54,13 +58,16 @@ test('Sending >= 126, < 2^16 bytes', () => {
     ws.send(payload)
   })
 
-  ws.addEventListener('message', async ({ data }) => {
-    assert.ok(data instanceof Blob)
-    assert.equal(data.size, payload.length)
-    assert.deepStrictEqual(Buffer.from(await data.arrayBuffer()), payload)
+  return new Promise((resolve) => {
+    ws.addEventListener('message', async ({ data }) => {
+      assert.ok(data instanceof Blob)
+      assert.equal(data.size, payload.length)
+      assert.deepStrictEqual(Buffer.from(await data.arrayBuffer()), payload)
 
-    ws.close()
-    server.close()
+      ws.close()
+      server.close()
+      resolve()
+    })
   })
 })
 
@@ -81,38 +88,44 @@ test('Sending < 126 bytes', () => {
     ws.send(payload)
   })
 
-  ws.addEventListener('message', async ({ data }) => {
-    assert.ok(data instanceof Blob)
-    assert.equal(data.size, payload.length)
-    assert.deepStrictEqual(Buffer.from(await data.arrayBuffer()), payload)
+  return new Promise((resolve) => {
+    ws.addEventListener('message', async ({ data }) => {
+      assert.ok(data instanceof Blob)
+      assert.equal(data.size, payload.length)
+      assert.deepStrictEqual(Buffer.from(await data.arrayBuffer()), payload)
 
-    ws.close()
-    server.close()
+      ws.close()
+      server.close()
+      resolve()
+    })
   })
 })
 
 test('Sending data after close', () => {
   const server = new WebSocketServer({ port: 0 })
 
-  server.on('connection', (ws) => {
-    ws.on('message', assert.fail)
-  })
-
-  after(server.close.bind(server))
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
-  ws.addEventListener('open', () => {
-    ws.close()
-    ws.send('Some message')
-  })
+  return new Promise((resolve, reject) => {
+    server.on('connection', (ws) => {
+      ws.on('message', reject)
+    })
 
-  ws.addEventListener('error', assert.fail)
+    ws.addEventListener('open', () => {
+      ws.close()
+      ws.send('Some message')
+      server.close()
+
+      resolve()
+    })
+
+    ws.addEventListener('error', reject)
+  })
 })
 
 test('Sending data before connected', () => {
   const server = new WebSocketServer({ port: 0 })
 
-  after(server.close.bind(server))
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
   assert.throws(
@@ -124,27 +137,29 @@ test('Sending data before connected', () => {
   )
 
   assert.equal(ws.readyState, WebSocket.CONNECTING)
+  server.close()
 })
 
 describe('Sending data to a server', () => {
   test('Send with string', () => {
     const server = new WebSocketServer({ port: 0 })
 
-    server.on('connection', (ws) => {
-      ws.on('message', (data, isBinary) => {
-        assert.notOk(isBinary, 'Received text frame')
-        assert.deepStrictEqual(data, Buffer.from('message'))
-
-        ws.close(1000)
-      })
-    })
-
-    after(server.close.bind(server))
-
     const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
     ws.addEventListener('open', () => {
       ws.send('message')
+    })
+
+    return new Promise((resolve) => {
+      server.on('connection', (ws) => {
+        ws.on('message', (data, isBinary) => {
+          assert.ok(!isBinary, 'Received text frame')
+          assert.deepStrictEqual(data, Buffer.from('message'))
+          ws.close(1000)
+          server.close()
+          resolve()
+        })
+      })
     })
   })
 
@@ -155,20 +170,22 @@ describe('Sending data to a server', () => {
 
     const server = new WebSocketServer({ port: 0 })
 
-    server.on('connection', (ws) => {
-      ws.on('message', (data, isBinary) => {
-        assert.ok(isBinary)
-        assert.deepStrictEqual(new Uint8Array(data), message)
-
-        ws.close(1000)
-      })
-    })
-
-    after(server.close.bind(server))
     const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
     ws.addEventListener('open', () => {
       ws.send(ab)
+    })
+
+    return new Promise((resolve) => {
+      server.on('connection', (ws) => {
+        ws.on('message', (data, isBinary) => {
+          assert.ok(isBinary)
+          assert.deepStrictEqual(new Uint8Array(data), message)
+          ws.close(1000)
+          server.close()
+          resolve()
+        })
+      })
     })
   })
 
@@ -176,20 +193,22 @@ describe('Sending data to a server', () => {
     const blob = new Blob(['hello'])
     const server = new WebSocketServer({ port: 0 })
 
-    server.on('connection', (ws) => {
-      ws.on('message', (data, isBinary) => {
-        assert.ok(isBinary)
-        assert.deepStrictEqual(data, Buffer.from('hello'))
-
-        ws.close(1000)
-      })
-    })
-
-    after(server.close.bind(server))
     const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
     ws.addEventListener('open', () => {
       ws.send(blob)
+    })
+
+    return new Promise((resolve) => {
+      server.on('connection', (ws) => {
+        ws.on('message', (data, isBinary) => {
+          assert.ok(isBinary)
+          assert.deepStrictEqual(data, Buffer.from('hello'))
+          ws.close(1000)
+          server.close()
+          resolve()
+        })
+      })
     })
   })
 })
