@@ -18,7 +18,7 @@ test('MessageEvent', () => {
   assert.equal(noInitEvent.source, null)
   assert.ok(Array.isArray(noInitEvent.ports))
   assert.ok(Object.isFrozen(noInitEvent.ports))
-  assert.type(new MessageEvent('').initMessageEvent('message'), MessageEvent)
+  assert.ok(new MessageEvent('').initMessageEvent('message') instanceof MessageEvent)
 })
 
 test('CloseEvent', () => {
@@ -44,87 +44,75 @@ test('ErrorEvent', () => {
 })
 
 describe('Event handlers', () => {
-  let server;
-  let ws;
-
-  before((done) => {
-    server = new WebSocketServer({ port: 0 }, done);
-  });
+  const server = new WebSocketServer({ port: 0 })
+  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
   after(() => {
     server.close();
     ws.close();
   });
 
-  beforeEach(() => {
-    ws = new WebSocket(`ws://localhost:${server.address().port}`);
-  });
-
-  afterEach(() => {
-    ws.terminate();
-  });
-
   function listen() {}
 
   describe('onopen', () => {
-    it('should be null initially', () => {
+    test('should be null initially', () => {
       assert.strictEqual(ws.onopen, null);
     });
 
-    it('should not allow non-function assignments', () => {
+    test('should not allow non-function assignments', () => {
       ws.onopen = 3;
       assert.strictEqual(ws.onopen, null);
     });
 
-    it('should allow function assignments', () => {
+    test('should allow function assignments', () => {
       ws.onopen = listen;
       assert.strictEqual(ws.onopen, listen);
     });
   });
 
   describe('onerror', () => {
-    it('should be null initially', () => {
+    test('should be null initially', () => {
       assert.strictEqual(ws.onerror, null);
     });
 
-    it('should not allow non-function assignments', () => {
+    test('should not allow non-function assignments', () => {
       ws.onerror = 3;
       assert.strictEqual(ws.onerror, null);
     });
 
-    it('should allow function assignments', () => {
+    test('should allow function assignments', () => {
       ws.onerror = listen;
       assert.strictEqual(ws.onerror, listen);
     });
   });
 
   describe('onclose', () => {
-    it('should be null initially', () => {
+    test('should be null initially', () => {
       assert.strictEqual(ws.onclose, null);
     });
 
-    it('should not allow non-function assignments', () => {
+    test('should not allow non-function assignments', () => {
       ws.onclose = 3;
       assert.strictEqual(ws.onclose, null);
     });
 
-    it('should allow function assignments', () => {
+    test('should allow function assignments', () => {
       ws.onclose = listen;
       assert.strictEqual(ws.onclose, listen);
     });
   });
 
   describe('onmessage', () => {
-    it('should be null initially', () => {
+    test('should be null initially', () => {
       assert.strictEqual(ws.onmessage, null);
     });
 
-    it('should not allow non-function assignments', () => {
+    test('should not allow non-function assignments', () => {
       ws.onmessage = 3;
       assert.strictEqual(ws.onmessage, null);
     });
 
-    it('should allow function assignments', () => {
+    test('should allow function assignments', () => {
       ws.onmessage = listen;
       assert.strictEqual(ws.onmessage, listen);
     });
@@ -134,8 +122,8 @@ describe('Event handlers', () => {
 describe('CloseEvent WPTs ported', () => {
   test('initCloseEvent', () => {
     // Taken from websockets/interfaces/CloseEvent/historical.html
-    assert.notOk('initCloseEvent' in CloseEvent.prototype)
-    assert.notOk('initCloseEvent' in new CloseEvent('close'))
+    assert.ok(!('initCloseEvent' in CloseEvent.prototype))
+    assert.ok(!('initCloseEvent' in new CloseEvent('close')))
   })
 
   test('CloseEvent constructor', () => {
@@ -146,9 +134,9 @@ describe('CloseEvent WPTs ported', () => {
 
       assert.ok(event instanceof CloseEvent, 'should be a CloseEvent')
       assert.equal(event.type, 'foo')
-      assert.notOk(event.bubbles, 'bubbles')
-      assert.notOk(event.cancelable, 'cancelable')
-      assert.notOk(event.wasClean, 'wasClean')
+      assert.ok(!event.bubbles, 'bubbles')
+      assert.ok(!event.cancelable, 'cancelable')
+      assert.ok(!event.wasClean, 'wasClean')
       assert.equal(event.code, 0)
       assert.equal(event.reason, '')
     }
@@ -216,6 +204,6 @@ describe('ErrorEvent WPTs ported', () => {
     // Taken from workers/Worker_dispatchEvent_ErrorEvent.htm
 
     const e = new ErrorEvent('error')
-    assert.notOk('initErrorEvent' in e, 'should not be supported')
+    assert.ok(!('initErrorEvent' in e), 'should not be supported')
   })
 })
