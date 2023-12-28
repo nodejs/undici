@@ -18,7 +18,7 @@ if (!globalThis.Headers) {
 }
 
 test('Using global Headers', async (t) => {
-  await t.test('deleteCookies', (t) => {
+  await t.test('deleteCookies', () => {
     const headers = new Headers()
 
     assert.equal(headers.get('set-cookie'), null)
@@ -26,7 +26,7 @@ test('Using global Headers', async (t) => {
     assert.equal(headers.get('set-cookie'), 'undici=; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
   })
 
-  t.test('getCookies', (t) => {
+  await t.test('getCookies', () => {
     const headers = new Headers({
       cookie: 'get=cookies; and=attributes'
     })
@@ -34,7 +34,7 @@ test('Using global Headers', async (t) => {
     assert.deepEqual(getCookies(headers), { get: 'cookies', and: 'attributes' })
   })
 
-  await t.test('getSetCookies', (t) => {
+  await t.test('getSetCookies', () => {
     const headers = new Headers({
       'set-cookie': 'undici=getSetCookies; Secure'
     })
@@ -54,7 +54,7 @@ test('Using global Headers', async (t) => {
     }
   })
 
-  await t.test('setCookie', (t) => {
+  await t.test('setCookie', () => {
     const headers = new Headers()
 
     setCookie(headers, { name: 'undici', value: 'setCookie' })

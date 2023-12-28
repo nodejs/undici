@@ -34,7 +34,7 @@ const {
 
 // https://raw.githubusercontent.com/denoland/deno_std/b4239898d6c6b4cdbfd659a4ea1838cf4e656336/http/cookie_test.ts
 
-test('Cookie parser', (t) => {
+test('Cookie parser', () => {
   let headers = new Headers()
   assert.deepEqual(getCookies(headers), {})
   headers = new Headers()
@@ -58,7 +58,7 @@ test('Cookie parser', (t) => {
   })
 })
 
-test('Cookie Name Validation', (t) => {
+test('Cookie Name Validation', () => {
   const tokens = [
     '"id"',
     'id\t',
@@ -87,7 +87,7 @@ test('Cookie Name Validation', (t) => {
   })
 })
 
-test('Cookie Value Validation', (t) => {
+test('Cookie Value Validation', () => {
   const tokens = [
     '1f\tWa',
     '\t',
@@ -133,7 +133,7 @@ test('Cookie Value Validation', (t) => {
   )
 })
 
-test('Cookie Path Validation', (t) => {
+test('Cookie Path Validation', () => {
   const path = '/;domain=sub.domain.com'
   const headers = new Headers()
   assert.throws(
@@ -152,7 +152,7 @@ test('Cookie Path Validation', (t) => {
   )
 })
 
-test('Cookie Domain Validation', (t) => {
+test('Cookie Domain Validation', () => {
   const tokens = ['-domain.com', 'domain.org.', 'domain.org-']
   const headers = new Headers()
   tokens.forEach((domain) => {
@@ -173,7 +173,7 @@ test('Cookie Domain Validation', (t) => {
   })
 })
 
-test('Cookie Delete', (t) => {
+test('Cookie Delete', () => {
   let headers = new Headers()
   deleteCookie(headers, 'deno')
   assert.equal(
@@ -194,7 +194,7 @@ test('Cookie Delete', (t) => {
   )
 })
 
-test('Cookie Set', (t) => {
+test('Cookie Set', () => {
   let headers = new Headers()
   setCookie(headers, { name: 'Space', value: 'Cat' })
   assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
@@ -390,7 +390,7 @@ test('Cookie Set', (t) => {
   assert.equal(headers.get('Set-Cookie'), null)
 })
 
-test('Set-Cookie parser', (t) => {
+test('Set-Cookie parser', () => {
   let headers = new Headers({ 'set-cookie': 'Space=Cat' })
   assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
