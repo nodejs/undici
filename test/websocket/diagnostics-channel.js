@@ -1,6 +1,6 @@
 'use strict'
 
-const {describe, test} = require('node:test')
+const { describe, test } = require('node:test')
 const assert = require('node:assert')
 const dc = require('diagnostics_channel')
 const { WebSocketServer } = require('ws')

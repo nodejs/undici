@@ -10,16 +10,20 @@ test('Setting custom headers', (t) => {
     Authorization: 'Bearer base64orsomethingitreallydoesntmatter'
   }
 
-  class TestAgent extends Agent {
-    dispatch (options) {
-      assert.match(options.headers, headers)
-
-      return false
+  return new Promise((resolve, reject) => {
+    class TestAgent extends Agent {
+      dispatch (options) {
+        assert.match(options.headers, headers)
+        resolve()
+        return false
+      }
     }
-  }
 
-  new WebSocket('wss://echo.websocket.events', {
-    headers,
-    dispatcher: new TestAgent()
+    const ws = new WebSocket('wss://echo.websocket.events', {
+      headers,
+      dispatcher: new TestAgent()
+    })
+
+    ws.onclose = ws.onerror = ws.onmessage = reject
   })
 })

@@ -61,7 +61,8 @@ test('Multiple protocols are joined by a comma', () => {
       resolve()
     })
 
-    new WebSocket(`ws://localhost:${server.address().port}`, ['chat', 'echo'])
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`, ['chat', 'echo'])
+    ws.addEventListener('open', () => ws.close())
   })
 })
 

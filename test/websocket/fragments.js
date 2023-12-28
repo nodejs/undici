@@ -1,7 +1,7 @@
 'use strict'
 
 const assert = require('node:assert')
-const {test, after} = require('node:test')
+const { test, after } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 const diagnosticsChannel = require('diagnostics_channel')
@@ -28,7 +28,7 @@ test('Fragmented frame with a ping frame in the middle of it', () => {
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
   ws.addEventListener('message', ({ data }) => {
-    t.same(data, 'Hello')
+    assert.strictEqual(data, 'Hello')
 
     ws.close()
   })

@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, describe, before, after } = require('node:test')
+const { test, describe, after } = require('node:test')
 const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
 const { MessageEvent, CloseEvent, ErrorEvent } = require('../../lib/websocket/events')
@@ -48,76 +48,76 @@ describe('Event handlers', () => {
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
   after(() => {
-    server.close();
-    ws.close();
-  });
+    server.close()
+    ws.close()
+  })
 
-  function listen() {}
+  function listen () {}
 
   describe('onopen', () => {
     test('should be null initially', () => {
-      assert.strictEqual(ws.onopen, null);
-    });
+      assert.strictEqual(ws.onopen, null)
+    })
 
     test('should not allow non-function assignments', () => {
-      ws.onopen = 3;
-      assert.strictEqual(ws.onopen, null);
-    });
+      ws.onopen = 3
+      assert.strictEqual(ws.onopen, null)
+    })
 
     test('should allow function assignments', () => {
-      ws.onopen = listen;
-      assert.strictEqual(ws.onopen, listen);
-    });
-  });
+      ws.onopen = listen
+      assert.strictEqual(ws.onopen, listen)
+    })
+  })
 
   describe('onerror', () => {
     test('should be null initially', () => {
-      assert.strictEqual(ws.onerror, null);
-    });
+      assert.strictEqual(ws.onerror, null)
+    })
 
     test('should not allow non-function assignments', () => {
-      ws.onerror = 3;
-      assert.strictEqual(ws.onerror, null);
-    });
+      ws.onerror = 3
+      assert.strictEqual(ws.onerror, null)
+    })
 
     test('should allow function assignments', () => {
-      ws.onerror = listen;
-      assert.strictEqual(ws.onerror, listen);
-    });
-  });
+      ws.onerror = listen
+      assert.strictEqual(ws.onerror, listen)
+    })
+  })
 
   describe('onclose', () => {
     test('should be null initially', () => {
-      assert.strictEqual(ws.onclose, null);
-    });
+      assert.strictEqual(ws.onclose, null)
+    })
 
     test('should not allow non-function assignments', () => {
-      ws.onclose = 3;
-      assert.strictEqual(ws.onclose, null);
-    });
+      ws.onclose = 3
+      assert.strictEqual(ws.onclose, null)
+    })
 
     test('should allow function assignments', () => {
-      ws.onclose = listen;
-      assert.strictEqual(ws.onclose, listen);
-    });
-  });
+      ws.onclose = listen
+      assert.strictEqual(ws.onclose, listen)
+    })
+  })
 
   describe('onmessage', () => {
     test('should be null initially', () => {
-      assert.strictEqual(ws.onmessage, null);
-    });
+      assert.strictEqual(ws.onmessage, null)
+    })
 
     test('should not allow non-function assignments', () => {
-      ws.onmessage = 3;
-      assert.strictEqual(ws.onmessage, null);
-    });
+      ws.onmessage = 3
+      assert.strictEqual(ws.onmessage, null)
+    })
 
     test('should allow function assignments', () => {
-      ws.onmessage = listen;
-      assert.strictEqual(ws.onmessage, listen);
-    });
-  });
-});
+      ws.onmessage = listen
+      assert.strictEqual(ws.onmessage, listen)
+    })
+  })
+})
 
 describe('CloseEvent WPTs ported', () => {
   test('initCloseEvent', () => {
