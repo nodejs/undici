@@ -1,27 +1,28 @@
 'use strict'
 
-const { test } = require('tap')
+const { describe, test } = require('node:test')
+const assert = require('node:assert')
 const { webidl } = require('../../lib/fetch/webidl')
 
-test('webidl.interfaceConverter', (t) => {
+test('webidl.interfaceConverter', () => {
   class A {}
   class B {}
 
   const converter = webidl.interfaceConverter(A)
 
-  t.throws(() => {
+  assert.throws(() => {
     converter(new B())
   }, TypeError)
 
-  t.doesNotThrow(() => {
+  assert.doesNotThrow(() => {
     converter(new A())
   })
 
-  t.end()
+
 })
 
-test('webidl.dictionaryConverter', (t) => {
-  t.test('extraneous keys are provided', (t) => {
+describe('webidl.dictionaryConverter', () => {
+  test('extraneous keys are provided', () => {
     const converter = webidl.dictionaryConverter([
       {
         key: 'key',
@@ -31,7 +32,7 @@ test('webidl.dictionaryConverter', (t) => {
       }
     ])
 
-    t.same(
+    assert.deepStrictEqual(
       converter({
         a: 'b',
         key: 'string',
@@ -43,10 +44,10 @@ test('webidl.dictionaryConverter', (t) => {
       { key: 'string' }
     )
 
-    t.end()
+
   })
 
-  t.test('defaultValue with key = null', (t) => {
+  test('defaultValue with key = null', () => {
     const converter = webidl.dictionaryConverter([
       {
         key: 'key',
@@ -55,11 +56,11 @@ test('webidl.dictionaryConverter', (t) => {
       }
     ])
 
-    t.same(converter({ key: null }), { key: 0 })
-    t.end()
+    assert.deepStrictEqual(converter({ key: null }), { key: 0 })
+
   })
 
-  t.test('no defaultValue and optional', (t) => {
+  test('no defaultValue and optional', () => {
     const converter = webidl.dictionaryConverter([
       {
         key: 'key',
@@ -67,9 +68,9 @@ test('webidl.dictionaryConverter', (t) => {
       }
     ])
 
-    t.same(converter({ a: 'b', c: 'd' }), {})
-    t.end()
+    assert.deepStrictEqual(converter({ a: 'b', c: 'd' }), {})
+
   })
 
-  t.end()
+
 })
