@@ -1,6 +1,7 @@
 'use strict'
 
-const { test, skip } = require('tap')
+const { test, skip } = require('node:test')
+const assert = require('node:assert')
 const {
   deleteCookie,
   getCookies,
@@ -16,15 +17,13 @@ if (!globalThis.Headers) {
   process.exit(0)
 }
 
-test('Using global Headers', (t) => {
-  t.test('deleteCookies', (t) => {
+test('Using global Headers', async (t) => {
+  await t.test('deleteCookies', (t) => {
     const headers = new Headers()
 
-    t.equal(headers.get('set-cookie'), null)
+    assert.equal(headers.get('set-cookie'), null)
     deleteCookie(headers, 'undici')
-    t.equal(headers.get('set-cookie'), 'undici=; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
-
-    t.end()
+    assert.equal(headers.get('set-cookie'), 'undici=; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
   })
 
   t.test('getCookies', (t) => {
@@ -32,11 +31,10 @@ test('Using global Headers', (t) => {
       cookie: 'get=cookies; and=attributes'
     })
 
-    t.same(getCookies(headers), { get: 'cookies', and: 'attributes' })
-    t.end()
+    assert.deepEqual(getCookies(headers), { get: 'cookies', and: 'attributes' })
   })
 
-  t.test('getSetCookies', (t) => {
+  await t.test('getSetCookies', (t) => {
     const headers = new Headers({
       'set-cookie': 'undici=getSetCookies; Secure'
     })
@@ -44,9 +42,9 @@ test('Using global Headers', (t) => {
     const supportsCookies = getHeadersList(headers).cookies
 
     if (!supportsCookies) {
-      t.same(getSetCookies(headers), [])
+      assert.deepEqual(getSetCookies(headers), [])
     } else {
-      t.same(getSetCookies(headers), [
+      assert.deepEqual(getSetCookies(headers), [
         {
           name: 'undici',
           value: 'getSetCookies',
@@ -54,17 +52,12 @@ test('Using global Headers', (t) => {
         }
       ])
     }
-
-    t.end()
   })
 
-  t.test('setCookie', (t) => {
+  await t.test('setCookie', (t) => {
     const headers = new Headers()
 
     setCookie(headers, { name: 'undici', value: 'setCookie' })
-    t.equal(headers.get('Set-Cookie'), 'undici=setCookie')
-    t.end()
+    assert.equal(headers.get('Set-Cookie'), 'undici=setCookie')
   })
-
-  t.end()
 })
