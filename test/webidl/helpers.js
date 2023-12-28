@@ -17,8 +17,6 @@ test('webidl.interfaceConverter', () => {
   assert.doesNotThrow(() => {
     converter(new A())
   })
-
-
 })
 
 describe('webidl.dictionaryConverter', () => {
@@ -43,8 +41,6 @@ describe('webidl.dictionaryConverter', () => {
       }),
       { key: 'string' }
     )
-
-
   })
 
   test('defaultValue with key = null', () => {
@@ -57,7 +53,6 @@ describe('webidl.dictionaryConverter', () => {
     ])
 
     assert.deepStrictEqual(converter({ key: null }), { key: 0 })
-
   })
 
   test('no defaultValue and optional', () => {
@@ -69,8 +64,5 @@ describe('webidl.dictionaryConverter', () => {
     ])
 
     assert.deepStrictEqual(converter({ a: 'b', c: 'd' }), {})
-
   })
-
-
 })

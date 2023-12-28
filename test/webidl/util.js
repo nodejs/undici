@@ -15,8 +15,6 @@ test('Type(V)', () => {
   assert.equal(Type(1.23), 'Number')
   assert.equal(Type(1n), 'BigInt')
   assert.equal(Type({ a: 'b' }), 'Object')
-
-
 })
 
 test('ConvertToInt(V)', () => {
