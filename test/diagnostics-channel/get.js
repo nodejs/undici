@@ -26,6 +26,8 @@ test('Diagnostics channel - get', (t) => {
     res.end()
   })
 
+  after(server.close.bind(server))
+
   const reqHeaders = {
     foo: undefined,
     bar: 'bar'
@@ -120,8 +122,6 @@ test('Diagnostics channel - get', (t) => {
     assert.equal(endEmitted, false)
     assert.deepStrictEqual(trailers, [Buffer.from('foo'), Buffer.from('oof')])
   })
-
-  after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
