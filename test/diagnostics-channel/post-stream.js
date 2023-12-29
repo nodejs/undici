@@ -1,6 +1,6 @@
 'use strict'
 
-const {test, skip, after} = require('node:test')
+const { test, skip, after } = require('node:test')
 const assert = require('node:assert')
 const { Readable } = require('stream')
 

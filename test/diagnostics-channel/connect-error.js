@@ -1,6 +1,6 @@
 'use strict'
 
-const {test, skip} = require('node:test')
+const { test, skip } = require('node:test')
 const assert = require('node:assert')
 
 let diagnosticsChannel
@@ -58,5 +58,4 @@ test('Diagnostics channel - connect error', () => {
     assert.equal(err, connectError)
     client.close()
   })
-
 })
