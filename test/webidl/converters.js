@@ -1,38 +1,39 @@
 'use strict'
 
-const { test } = require('tap')
+const { describe, test } = require('node:test')
+const assert = require('node:assert')
 const { webidl } = require('../../lib/fetch/webidl')
 
-test('sequence', (t) => {
+test('sequence', () => {
   const converter = webidl.sequenceConverter(
     webidl.converters.DOMString
   )
 
-  t.same(converter([1, 2, 3]), ['1', '2', '3'])
+  assert.deepStrictEqual(converter([1, 2, 3]), ['1', '2', '3'])
 
-  t.throws(() => {
+  assert.throws(() => {
     converter(3)
   }, TypeError, 'disallows non-objects')
 
-  t.throws(() => {
+  assert.throws(() => {
     converter(null)
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     converter(undefined)
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     converter({})
   }, TypeError, 'no Symbol.iterator')
 
-  t.throws(() => {
+  assert.throws(() => {
     converter({
       [Symbol.iterator]: 42
     })
   }, TypeError, 'invalid Symbol.iterator')
 
-  t.throws(() => {
+  assert.throws(() => {
     converter(webidl.converters.sequence({
       [Symbol.iterator] () {
         return {
@@ -41,28 +42,24 @@ test('sequence', (t) => {
       }
     }))
   }, TypeError, 'invalid generator')
-
-  t.end()
 })
 
-test('webidl.dictionaryConverter', (t) => {
-  t.test('arguments', (t) => {
+describe('webidl.dictionaryConverter', () => {
+  test('arguments', () => {
     const converter = webidl.dictionaryConverter([])
 
-    t.throws(() => {
+    assert.throws(() => {
       converter(true)
     }, TypeError)
 
     for (const value of [{}, undefined, null]) {
-      t.doesNotThrow(() => {
+      assert.doesNotThrow(() => {
         converter(value)
       })
     }
-
-    t.end()
   })
 
-  t.test('required key', (t) => {
+  test('required key', () => {
     const converter = webidl.dictionaryConverter([
       {
         converter: () => true,
@@ -71,57 +68,51 @@ test('webidl.dictionaryConverter', (t) => {
       }
     ])
 
-    t.throws(() => {
+    assert.throws(() => {
       converter({ wrongKey: 'key' })
     }, TypeError)
 
-    t.doesNotThrow(() => {
+    assert.doesNotThrow(() => {
       converter({ Key: 'this key was required!' })
     })
-
-    t.end()
   })
-
-  t.end()
 })
 
-test('ArrayBuffer', (t) => {
-  t.throws(() => {
+test('ArrayBuffer', () => {
+  assert.throws(() => {
     webidl.converters.ArrayBuffer(true)
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     webidl.converters.ArrayBuffer({})
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     const sab = new SharedArrayBuffer(1024)
     webidl.converters.ArrayBuffer(sab, { allowShared: false })
   }, TypeError)
 
-  t.doesNotThrow(() => {
+  assert.doesNotThrow(() => {
     const sab = new SharedArrayBuffer(1024)
     webidl.converters.ArrayBuffer(sab)
   })
 
-  t.doesNotThrow(() => {
+  assert.doesNotThrow(() => {
     const ab = new ArrayBuffer(8)
     webidl.converters.ArrayBuffer(ab)
   })
-
-  t.end()
 })
 
-test('TypedArray', (t) => {
-  t.throws(() => {
+test('TypedArray', () => {
+  assert.throws(() => {
     webidl.converters.TypedArray(3)
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     webidl.converters.TypedArray({})
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     const uint8 = new Uint8Array([1, 2, 3])
     Object.defineProperty(uint8, 'buffer', {
       get () {
@@ -133,20 +124,18 @@ test('TypedArray', (t) => {
       allowShared: false
     })
   }, TypeError)
-
-  t.end()
 })
 
-test('DataView', (t) => {
-  t.throws(() => {
+test('DataView', () => {
+  assert.throws(() => {
     webidl.converters.DataView(3)
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     webidl.converters.DataView({})
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     const buffer = new ArrayBuffer(16)
     const view = new DataView(buffer, 0)
 
@@ -164,39 +153,33 @@ test('DataView', (t) => {
   const buffer = new ArrayBuffer(16)
   const view = new DataView(buffer, 0)
 
-  t.equal(webidl.converters.DataView(view), view)
-
-  t.end()
+  assert.equal(webidl.converters.DataView(view), view)
 })
 
-test('BufferSource', (t) => {
-  t.doesNotThrow(() => {
+test('BufferSource', () => {
+  assert.doesNotThrow(() => {
     const buffer = new ArrayBuffer(16)
     const view = new DataView(buffer, 0)
 
     webidl.converters.BufferSource(view)
   })
 
-  t.throws(() => {
+  assert.throws(() => {
     webidl.converters.BufferSource(3)
   }, TypeError)
-
-  t.end()
 })
 
-test('ByteString', (t) => {
-  t.doesNotThrow(() => {
+test('ByteString', () => {
+  assert.doesNotThrow(() => {
     webidl.converters.ByteString('')
   })
 
   // https://github.com/nodejs/undici/issues/1590
-  t.throws(() => {
+  assert.throws(() => {
     const char = String.fromCharCode(256)
     webidl.converters.ByteString(`invalid${char}char`)
   }, {
     message: 'Cannot convert argument to a ByteString because the character at ' +
              'index 7 has a value of 256 which is greater than 255.'
   })
-
-  t.end()
 })
