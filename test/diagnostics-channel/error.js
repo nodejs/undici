@@ -36,18 +36,21 @@ test('Diagnostics channel - error', () => {
     assert.equal(error.code, 'UND_ERR_SOCKET')
   })
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 300e3
-    })
+  return new Promise((resolve) => {
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`, {
+        keepAliveTimeout: 300e3
+      })
 
-    client.request({
-      path: '/',
-      method: 'GET',
-      headers: reqHeaders
-    }, (err, data) => {
-      assert.equal(err.code, 'UND_ERR_SOCKET')
-      client.close()
+      client.request({
+        path: '/',
+        method: 'GET',
+        headers: reqHeaders
+      }, (err, data) => {
+        assert.equal(err.code, 'UND_ERR_SOCKET')
+        client.close()
+        resolve()
+      })
     })
   })
 })

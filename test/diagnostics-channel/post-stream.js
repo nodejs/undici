@@ -120,30 +120,34 @@ test('Diagnostics channel - post stream', (t) => {
   })
 
   let endEmitted = false
-  diagnosticsChannel.channel('undici:request:trailers').subscribe(({ request, trailers }) => {
-    assert.equal(request.completed, true)
-    assert.equal(_req, request)
-    // This event is emitted after the last chunk has been added to the body stream,
-    // not when it was consumed by the application
-    assert.equal(endEmitted, false)
-    assert.deepStrictEqual(trailers, [Buffer.from('foo'), Buffer.from('oof')])
-  })
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 300e3
+  return new Promise((resolve) => {
+    diagnosticsChannel.channel('undici:request:trailers').subscribe(({ request, trailers }) => {
+      assert.equal(request.completed, true)
+      assert.equal(_req, request)
+      // This event is emitted after the last chunk has been added to the body stream,
+      // not when it was consumed by the application
+      assert.equal(endEmitted, false)
+      assert.deepStrictEqual(trailers, [Buffer.from('foo'), Buffer.from('oof')])
+      resolve()
     })
 
-    client.request({
-      path: '/',
-      method: 'POST',
-      headers: reqHeaders,
-      body
-    }, (err, data) => {
-      assert.ok(!err)
-      client.close()
-      data.body.on('end', function () {
-        endEmitted = true
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`, {
+        keepAliveTimeout: 300e3
+      })
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        headers: reqHeaders,
+        body
+      }, (err, data) => {
+        assert.ok(!err)
+        client.close()
+        data.body.on('end', function () {
+          endEmitted = true
+        })
       })
     })
   })

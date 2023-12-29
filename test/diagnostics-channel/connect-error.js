@@ -51,11 +51,14 @@ test('Diagnostics channel - connect error', () => {
     connect: (_, cb) => { cb(connectError, null) }
   })
 
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err, data) => {
-    assert.equal(err, connectError)
-    client.close()
+  return new Promise((resolve) => {
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      assert.equal(err, connectError)
+      client.close()
+      resolve()
+    })
   })
 })
