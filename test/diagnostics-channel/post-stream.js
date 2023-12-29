@@ -1,7 +1,7 @@
 'use strict'
 
 const { test, skip, after } = require('node:test')
-const assert = require('node:assert')
+const { tspl } = require('@matteo.collina/tspl')
 const { Readable } = require('stream')
 
 let diagnosticsChannel
@@ -17,6 +17,7 @@ const { Client } = require('../..')
 const { createServer } = require('http')
 
 test('Diagnostics channel - post stream', (t) => {
+  const assert = tspl(t, { plan: 33 })
   const server = createServer((req, res) => {
     req.resume()
     res.setHeader('Content-Type', 'text/plain')

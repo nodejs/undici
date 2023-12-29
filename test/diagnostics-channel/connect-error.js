@@ -1,7 +1,7 @@
 'use strict'
 
 const { test, skip } = require('node:test')
-const assert = require('node:assert')
+const { tspl } = require('@matteo.collina/tspl')
 
 let diagnosticsChannel
 
@@ -14,8 +14,9 @@ try {
 
 const { Client } = require('../..')
 
-test('Diagnostics channel - connect error', () => {
+test('Diagnostics channel - connect error', (t) => {
   const connectError = new Error('custom error')
+  const assert = tspl(t, { plan: 16 })
 
   let _connector
   diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectParams, connector }) => {
