@@ -237,13 +237,10 @@ const createResolver = () => {
 
 const resolver = createResolver()
 dnsStub.lookup = resolver.lookup
-const DNSResolver = proxyquire('../lib/core/dns-resolver', {
+const DNSResolver = proxyquire('../lib/dns-resolver', {
   'node:os': osStub,
   'node:dns': dnsStub
 })
-// await quibble.esm('node:dns', dnsExports, dnsExports)
-//
-// const DNSResolver = require('../lib/core/dns-resolver')
 
 const verify = (t, entry, value) => {
   if (Array.isArray(value)) {

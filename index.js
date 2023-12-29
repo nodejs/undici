@@ -166,5 +166,8 @@ module.exports.MockPool = MockPool
 module.exports.MockAgent = MockAgent
 module.exports.mockErrors = mockErrors
 
-const DNSResolver = require('./lib/core/dns-resolver')
+const DNSResolver = require('./lib/dns-resolver')
+const { getGlobalDNSResolver, setGlobalDNSResolver } = require('./lib/global-dns-resolver')
 module.exports.DNSResolver = DNSResolver
+module.exports.getGlobalDNSResolver = getGlobalDNSResolver
+module.exports.setGlobalDNSResolver = setGlobalDNSResolver

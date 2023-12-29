@@ -365,6 +365,62 @@ Returns: `URL`
 * **protocol** `string` (optional)
 * **search** `string` (optional)
 
+## DNS caching
+
+Undici provides DNS caching via the `DNSResolver` class.
+
+This functionality is coming from [cacheable-lookup](https://github.com/szmarczak/cacheable-lookup/tree/9e60c9f6e74a003692aec68f3ddad93afe613b8f) package.
+
+By default a global DNSResolver will be created and passed down by the agent to the pool.
+Here is an example of how to configure a custom DNSResolver:
+
+```js
+new Agent({
+    dnsResolver: {
+      lookupOptions: { family: 6, hints: ALL }
+    }
+  })
+```
+
+To disable DNS caching for an agent:
+
+```js
+new Agent({
+  dnsResolver: {
+    disable: true
+  }
+})
+```
+
+Provide your custom DNS resolver, it must implement the method `lookup`:
+
+```js
+new Agent({
+  DNSResolver: new MyCustomDNSResolver()
+})
+```
+You can get and set the global DNSResolver:
+
+```js
+const { fetch, setGlobalDNSResolver, getGlobalDNSResolver, DNSResolver } = require('undici')
+
+setGlobalDNSResolver(new DNSResolver({ resolver: custom.dnsResolver  }))
+
+await fetch('http://example.com')
+
+const dnsResolver = getGlobalDNSResolver()
+const entry = await dnsResolver.lookup('example.com')
+```
+
+dnsResolver arguments:
+
+* **lookupOptions**
+  * **family** `4 | 6 | 0` - Default: `0`
+  * **hints** [`getaddrinfo flags`](https://nodejs.org/api/dns.html#supported-getaddrinfo-flags)
+  * **all** `Boolean` - Default: `false`
+
+For other arguments see: https://github.com/szmarczak/cacheable-lookup/tree/9e60c9f6e74a003692aec68f3ddad93afe613b8f
+
 ## Specification Compliance
 
 This section documents parts of the HTTP/1.1 specification that Undici does
@@ -413,9 +469,9 @@ Refs: https://fetch.spec.whatwg.org/#atomic-http-redirect-handling
 
 If you experience problem when connecting to a remote server that is resolved by your DNS servers to a IPv6 (AAAA record)
 first, there are chances that your local router or ISP might have problem connecting to IPv6 networks. In that case
-undici will throw an error with code `UND_ERR_CONNECT_TIMEOUT`. 
+undici will throw an error with code `UND_ERR_CONNECT_TIMEOUT`.
 
-If the target server resolves to both a IPv6 and IPv4 (A records) address and you are using a compatible Node version 
+If the target server resolves to both a IPv6 and IPv4 (A records) address and you are using a compatible Node version
 (18.3.0 and above), you can fix the problem by providing the `autoSelectFamily` option (support by both `undici.request`
 and `undici.Agent`) which will enable the family autoselection algorithm when establishing the connection.
 
