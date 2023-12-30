@@ -1,61 +1,65 @@
 'use strict'
 
-const t = require('tap')
+const { test, skip } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 
 let diagnosticsChannel
 
 try {
   diagnosticsChannel = require('diagnostics_channel')
 } catch {
-  t.skip('missing diagnostics_channel')
+  skip('missing diagnostics_channel')
   process.exit(0)
 }
 
 const { Client } = require('../..')
 
-t.plan(16)
+test('Diagnostics channel - connect error', (t) => {
+  const connectError = new Error('custom error')
+  const assert = tspl(t, { plan: 16 })
 
-const connectError = new Error('custom error')
+  let _connector
+  diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectParams, connector }) => {
+    _connector = connector
 
-let _connector
-diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectParams, connector }) => {
-  _connector = connector
+    assert.equal(typeof _connector, 'function')
+    assert.equal(Object.keys(connectParams).length, 6)
 
-  t.equal(typeof _connector, 'function')
-  t.equal(Object.keys(connectParams).length, 6)
+    const { host, hostname, protocol, port, servername } = connectParams
 
-  const { host, hostname, protocol, port, servername } = connectParams
+    assert.equal(host, 'localhost:1234')
+    assert.equal(hostname, 'localhost')
+    assert.equal(port, '1234')
+    assert.equal(protocol, 'http:')
+    assert.equal(servername, null)
+  })
 
-  t.equal(host, 'localhost:1234')
-  t.equal(hostname, 'localhost')
-  t.equal(port, '1234')
-  t.equal(protocol, 'http:')
-  t.equal(servername, null)
-})
+  diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, connectParams, connector }) => {
+    assert.equal(Object.keys(connectParams).length, 6)
+    assert.equal(_connector, connector)
 
-diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, connectParams, connector }) => {
-  t.equal(Object.keys(connectParams).length, 6)
-  t.equal(_connector, connector)
+    const { host, hostname, protocol, port, servername } = connectParams
 
-  const { host, hostname, protocol, port, servername } = connectParams
+    assert.equal(error, connectError)
+    assert.equal(host, 'localhost:1234')
+    assert.equal(hostname, 'localhost')
+    assert.equal(port, '1234')
+    assert.equal(protocol, 'http:')
+    assert.equal(servername, null)
+  })
 
-  t.equal(error, connectError)
-  t.equal(host, 'localhost:1234')
-  t.equal(hostname, 'localhost')
-  t.equal(port, '1234')
-  t.equal(protocol, 'http:')
-  t.equal(servername, null)
-})
+  const client = new Client('http://localhost:1234', {
+    connect: (_, cb) => { cb(connectError, null) }
+  })
 
-const client = new Client('http://localhost:1234', {
-  connect: (_, cb) => { cb(connectError, null) }
-})
-
-t.teardown(client.close.bind(client))
-
-client.request({
-  path: '/',
-  method: 'GET'
-}, (err, data) => {
-  t.equal(err, connectError)
+  return new Promise((resolve) => {
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      assert.equal(err, connectError)
+      client.close()
+      resolve()
+    })
+  })
 })
