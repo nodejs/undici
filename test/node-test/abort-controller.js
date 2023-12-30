@@ -7,7 +7,6 @@ const { createServer } = require('http')
 const { createReadStream } = require('fs')
 const { wrapWithAsyncIterable } = require('../utils/async-iterators')
 const { tspl } = require('@matteo.collina/tspl')
-const { promiseWithResolvers } = require('../utils/promise')
 const { ttype } = require('../utils/node-test')
 
 const controllers = [{
@@ -30,8 +29,6 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     })
     t.after(server.close.bind(server))
 
-    const { promise, resolve } = promiseWithResolvers()
-
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       const abortController = new AbortControllerImpl()
@@ -41,11 +38,10 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
         ttype(p, err, errors.RequestAbortedError)
-        resolve()
       })
     })
 
-    await promise
+    await p.completed
   })
 
   test(`Abort ${controllerName} before sending request (no body)`, async (t) => {
@@ -61,9 +57,6 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     })
     t.after(server.close.bind(server))
 
-    const { promise: promise1, resolve: resolve1 } = promiseWithResolvers()
-    const { promise: promise2, resolve: resolve2 } = promiseWithResolvers()
-
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       const abortController = new AbortControllerImpl()
@@ -77,19 +70,17 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         })
         response.body.on('end', () => {
           p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
-          resolve1()
         })
       })
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
         ttype(p, err, errors.RequestAbortedError)
-        resolve2()
       })
 
       abortController.abort()
     })
 
-    await Promise.all([promise1, promise2])
+    await p.completed
   })
 
   test(`Abort ${controllerName} while waiting response (no body)`, async (t) => {
@@ -103,19 +94,16 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     })
     t.after(server.close.bind(server))
 
-    const { promise, resolve } = promiseWithResolvers()
-
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
         ttype(p, err, errors.RequestAbortedError)
-        resolve()
       })
     })
 
-    await promise
+    await p.completed
   })
 
   test(`Abort ${controllerName} while waiting response (write headers started) (no body)`, async (t) => {
@@ -130,19 +118,16 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     })
     t.after(server.close.bind(server))
 
-    const { promise, resolve } = promiseWithResolvers()
-
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
         ttype(p, err, errors.RequestAbortedError)
-        resolve()
       })
     })
 
-    await promise
+    await p.completed
   })
 
   test(`Abort ${controllerName} while waiting response (write headers and write body started) (no body)`, async (t) => {
@@ -155,8 +140,6 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     })
     t.after(server.close.bind(server))
 
-    const { promise, resolve } = promiseWithResolvers()
-
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       t.after(client.destroy.bind(client))
@@ -168,12 +151,11 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         })
         response.body.on('error', err => {
           ttype(p, err, errors.RequestAbortedError)
-          resolve()
         })
       })
     })
 
-    await promise
+    await p.completed
   })
 
   function waitingWithBody (body, type) { // eslint-disable-line
@@ -188,18 +170,15 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       })
       t.after(server.close.bind(server))
 
-      const { promise, resolve } = promiseWithResolvers()
       server.listen(0, () => {
         const client = new Client(`http://localhost:${server.address().port}`)
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {
           ttype(p, err, errors.RequestAbortedError)
-          resolve()
         })
       })
-
-      await promise
+      await p.completed
     })
   }
 
@@ -221,17 +200,15 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       })
       t.after(server.close.bind(server))
 
-      const { promise, resolve } = promiseWithResolvers()
       server.listen(0, () => {
         const client = new Client(`http://localhost:${server.address().port}`)
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {
           ttype(p, err, errors.RequestAbortedError)
-          resolve()
         })
       })
-      await promise
+      await p.completed
     })
   }
 
@@ -251,7 +228,6 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       })
       t.after(server.close.bind(server))
 
-      const { promise, resolve } = promiseWithResolvers()
       server.listen(0, () => {
         const client = new Client(`http://localhost:${server.address().port}`)
         t.after(client.destroy.bind(client))
@@ -263,11 +239,10 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
           })
           response.body.on('error', err => {
             ttype(p, err, errors.RequestAbortedError)
-            resolve()
           })
         })
       })
-      await promise
+      await p.completed
     })
   }
 
