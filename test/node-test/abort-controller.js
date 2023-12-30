@@ -169,6 +169,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       })
       t.after(server.close.bind(server))
 
+      const { promise, resolve } = promiseWithResolvers()
       server.listen(0, () => {
         const client = new Client(`http://localhost:${server.address().port}`)
         t.after(client.destroy.bind(client))
@@ -199,6 +200,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       })
       t.after(server.close.bind(server))
 
+      const { promise, resolve } = promiseWithResolvers()
       server.listen(0, () => {
         const client = new Client(`http://localhost:${server.address().port}`)
         t.after(client.destroy.bind(client))
@@ -227,6 +229,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       })
       t.after(server.close.bind(server))
 
+      const { promise, resolve } = promiseWithResolvers()
       server.listen(0, () => {
         const client = new Client(`http://localhost:${server.address().port}`)
         t.after(client.destroy.bind(client))
