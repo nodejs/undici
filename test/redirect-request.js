@@ -267,6 +267,29 @@ for (const factory of [
     t.equal(body.length, 0)
   })
 
+  t.test('should follow a redirect chain up to the allowed number of times for redirectionLimitReached', async t => {
+    const server = await startRedirectingServer(t)
+
+    try {
+      const { statusCode, headers, body: bodyStream, context: { history } } = await request(t, server, undefined, `http://${server}/300`, {
+        maxRedirections: 2
+      })
+
+      const body = await bodyStream.text()
+
+      t.equal(statusCode, 300)
+      t.equal(headers.location, `http://${server}/300/2`)
+      t.same(history.map(x => x.toString()), [`http://${server}/300`, `http://${server}/300/1`])
+      t.equal(body.length, 0)
+    } catch (error) {
+      if (error.message.startsWith('max redirects')) {
+        t.pass('Max redirects handled correctly')
+      } else {
+        t.fail(`Unexpected error: ${error.message}`)
+      }
+    }
+  })
+
   t.test('when a Location response header is NOT present', async t => {
     const redirectCodes = [300, 301, 302, 303, 307, 308]
     const server = await startRedirectingWithoutLocationServer(t)
