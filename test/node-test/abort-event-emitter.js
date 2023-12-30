@@ -8,7 +8,6 @@ const { createReadStream } = require('fs')
 const { Readable } = require('stream')
 const { tspl } = require('@matteo.collina/tspl')
 const { wrapWithAsyncIterable } = require('../utils/async-iterators')
-const { promiseWithResolvers } = require('../utils/promise')
 const { ttype } = require('../utils/node-test')
 
 test('Abort before sending request (no body)', async (t) => {
@@ -25,8 +24,6 @@ test('Abort before sending request (no body)', async (t) => {
 
   t.after(server.close.bind(server))
 
-  const { promise, resolve } = promiseWithResolvers()
-
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const ee = new EventEmitter()
@@ -40,7 +37,6 @@ test('Abort before sending request (no body)', async (t) => {
       })
       response.body.on('end', () => {
         p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
-        resolve()
       })
     })
 
@@ -60,7 +56,7 @@ test('Abort before sending request (no body)', async (t) => {
     ee.emit('abort')
   })
 
-  await promise
+  await p.completed
 })
 
 test('Abort before sending request (no body) async iterator', async (t) => {
@@ -77,8 +73,6 @@ test('Abort before sending request (no body) async iterator', async (t) => {
 
   t.after(server.close.bind(server))
 
-  const { promise, resolve } = promiseWithResolvers()
-
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const ee = new EventEmitter()
@@ -92,7 +86,6 @@ test('Abort before sending request (no body) async iterator', async (t) => {
       })
       response.body.on('end', () => {
         p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
-        resolve()
       })
     })
 
@@ -109,7 +102,7 @@ test('Abort before sending request (no body) async iterator', async (t) => {
     ee.emit('abort')
   })
 
-  await promise
+  await p.completed
 })
 
 test('Abort while waiting response (no body)', async (t) => {
@@ -123,19 +116,16 @@ test('Abort while waiting response (no body)', async (t) => {
   })
   t.after(server.close.bind(server))
 
-  const { promise, resolve } = promiseWithResolvers()
-
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       ttype(p, err, errors.RequestAbortedError)
-      resolve()
     })
   })
 
-  await promise
+  await p.completed
 })
 
 test('Abort while waiting response (write headers started) (no body)', async (t) => {
@@ -150,18 +140,16 @@ test('Abort while waiting response (write headers started) (no body)', async (t)
   })
   t.after(server.close.bind(server))
 
-  const { promise, resolve } = promiseWithResolvers()
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       ttype(p, err, errors.RequestAbortedError)
-      resolve()
     })
   })
 
-  await promise
+  await p.completed
 })
 
 test('Abort while waiting response (write headers and write body started) (no body)', async (t) => {
@@ -174,7 +162,6 @@ test('Abort while waiting response (write headers and write body started) (no bo
   })
   t.after(server.close.bind(server))
 
-  const { promise, resolve } = promiseWithResolvers()
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     t.after(client.destroy.bind(client))
@@ -186,11 +173,10 @@ test('Abort while waiting response (write headers and write body started) (no bo
       })
       response.body.on('error', err => {
         ttype(p, err, errors.RequestAbortedError)
-        resolve()
       })
     })
   })
-  await promise
+  await p.completed
 })
 
 function waitingWithBody (body, type) {
@@ -205,17 +191,15 @@ function waitingWithBody (body, type) {
     })
     t.after(server.close.bind(server))
 
-    const { promise, resolve } = promiseWithResolvers()
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
         ttype(p, err, errors.RequestAbortedError)
-        resolve()
       })
     })
-    await promise
+    await p.completed
   })
 }
 
@@ -237,17 +221,15 @@ function writeHeadersStartedWithBody (body, type) {
     })
     t.after(server.close.bind(server))
 
-    const { promise, resolve } = promiseWithResolvers()
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
         ttype(p, err, errors.RequestAbortedError)
-        resolve()
       })
     })
-    await promise
+    await p.completed
   })
 }
 
@@ -267,7 +249,6 @@ function writeBodyStartedWithBody (body, type) {
     })
     t.after(server.close.bind(server))
 
-    const { promise, resolve } = promiseWithResolvers()
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
       t.after(client.destroy.bind(client))
@@ -279,11 +260,10 @@ function writeBodyStartedWithBody (body, type) {
         })
         response.body.on('error', err => {
           ttype(p, err, errors.RequestAbortedError)
-          resolve()
         })
       })
     })
-    await promise
+    await p.completed
   })
 }
 
