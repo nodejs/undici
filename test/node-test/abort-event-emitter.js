@@ -42,7 +42,7 @@ test('Abort before sending request (no body)', async (t) => {
 
     const body = new Readable({ read () { } })
     body.on('error', (err) => {
-      ttype(p, err, errors.RequestAbortedError)
+      p.ok(ttype(err, errors.RequestAbortedError))
     })
     client.request({
       path: '/',
@@ -50,7 +50,7 @@ test('Abort before sending request (no body)', async (t) => {
       signal: ee,
       body
     }, (err, response) => {
-      ttype(p, err, errors.RequestAbortedError)
+      p.ok(ttype(err, errors.RequestAbortedError))
     })
 
     ee.emit('abort')
@@ -96,7 +96,7 @@ test('Abort before sending request (no body) async iterator', async (t) => {
       signal: ee,
       body
     }, (err, response) => {
-      ttype(p, err, errors.RequestAbortedError)
+      p.ok(ttype(err, errors.RequestAbortedError))
     })
 
     ee.emit('abort')
@@ -121,7 +121,7 @@ test('Abort while waiting response (no body)', async (t) => {
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      ttype(p, err, errors.RequestAbortedError)
+      p.ok(ttype(err, errors.RequestAbortedError))
     })
   })
 
@@ -145,7 +145,7 @@ test('Abort while waiting response (write headers started) (no body)', async (t)
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      ttype(p, err, errors.RequestAbortedError)
+      p.ok(ttype(err, errors.RequestAbortedError))
     })
   })
 
@@ -172,7 +172,7 @@ test('Abort while waiting response (write headers and write body started) (no bo
         ee.emit('abort')
       })
       response.body.on('error', err => {
-        ttype(p, err, errors.RequestAbortedError)
+        p.ok(ttype(err, errors.RequestAbortedError))
       })
     })
   })
@@ -196,7 +196,7 @@ function waitingWithBody (body, type) {
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
-        ttype(p, err, errors.RequestAbortedError)
+        p.ok(ttype(err, errors.RequestAbortedError))
       })
     })
     await p.completed
@@ -226,7 +226,7 @@ function writeHeadersStartedWithBody (body, type) {
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
-        ttype(p, err, errors.RequestAbortedError)
+        p.ok(ttype(err, errors.RequestAbortedError))
       })
     })
     await p.completed
@@ -259,7 +259,7 @@ function writeBodyStartedWithBody (body, type) {
           ee.emit('abort')
         })
         response.body.on('error', err => {
-          ttype(p, err, errors.RequestAbortedError)
+          p.ok(ttype(err, errors.RequestAbortedError))
         })
       })
     })
