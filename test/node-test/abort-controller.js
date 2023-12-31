@@ -37,7 +37,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       abortController.abort()
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        ttype(p, err, errors.RequestAbortedError)
+        p.ok(ttype(err, errors.RequestAbortedError))
       })
     })
 
@@ -74,7 +74,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       })
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        ttype(p, err, errors.RequestAbortedError)
+        p.ok(ttype(err, errors.RequestAbortedError))
       })
 
       abortController.abort()
@@ -99,7 +99,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        ttype(p, err, errors.RequestAbortedError)
+        p.ok(ttype(err, errors.RequestAbortedError))
       })
     })
 
@@ -123,7 +123,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        ttype(p, err, errors.RequestAbortedError)
+        p.ok(ttype(err, errors.RequestAbortedError))
       })
     })
 
@@ -150,7 +150,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
           abortController.abort()
         })
         response.body.on('error', err => {
-          ttype(p, err, errors.RequestAbortedError)
+          p.ok(ttype(err, errors.RequestAbortedError))
         })
       })
     })
@@ -175,7 +175,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {
-          ttype(p, err, errors.RequestAbortedError)
+          p.ok(ttype(err, errors.RequestAbortedError))
         })
       })
       await p.completed
@@ -205,7 +205,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {
-          ttype(p, err, errors.RequestAbortedError)
+          p.ok(ttype(err, errors.RequestAbortedError))
         })
       })
       await p.completed
@@ -238,7 +238,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
             abortController.abort()
           })
           response.body.on('error', err => {
-            ttype(p, err, errors.RequestAbortedError)
+            p.ok(ttype(err, errors.RequestAbortedError))
           })
         })
       })

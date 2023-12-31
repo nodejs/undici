@@ -2,14 +2,14 @@
  * A port of tap's `t.type` that can be used with `node:assert`
  * https://github.com/tapjs/tapjs/blob/511019b2ac0fa014370154c3a341a0e632f50b19/src/asserts/src/index.ts#L199
  */
-function ttype (plan, obj, klass) {
+function ttype (obj, klass) {
   const name =
         typeof klass === 'function'
           ? klass.name || '(anonymous constructor)'
           : klass
 
   if (obj === klass) {
-    return plan.ok(1)
+    return true
   }
 
   const tof = typeof obj
@@ -31,13 +31,13 @@ function ttype (plan, obj, klass) {
       (klass === 'array' && Array.isArray(obj)) ||
       (type === 'symbol' && klass === Symbol)
   ) {
-    return plan.ok(1)
+    return true
   }
 
   // simplest case, it literally is the same thing
   if (type === 'object' && klass !== 'object') {
     if (typeof klass === 'function') {
-      return plan.ok(obj instanceof klass)
+      return obj instanceof klass
     }
 
     // check prototype chain for name
@@ -47,12 +47,12 @@ function ttype (plan, obj, klass) {
     for (let p = obj; p; p = Object.getPrototypeOf(p)) {
       const ctor = p.constructor && p.constructor.name
       if (p === klass || ctor === name) {
-        return plan.ok(1)
+        return true
       }
     }
   }
 
-  return plan.strictEqual(type, name)
+  return type === name
 }
 
 module.exports = {
