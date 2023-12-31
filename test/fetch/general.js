@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('node:assert')
 const {
   File,
   FormData,
@@ -9,7 +10,7 @@ const {
   Response
 } = require('../../index')
 
-test('Symbol.toStringTag descriptor', (t) => {
+test('Symbol.toStringTag descriptor', () => {
   for (const cls of [
     File,
     FormData,
@@ -18,13 +19,11 @@ test('Symbol.toStringTag descriptor', (t) => {
     Response
   ]) {
     const desc = Object.getOwnPropertyDescriptor(cls.prototype, Symbol.toStringTag)
-    t.same(desc, {
+    assert.deepStrictEqual(desc, {
       value: cls.name,
       writable: false,
       enumerable: false,
       configurable: true
     })
   }
-
-  t.end()
 })
