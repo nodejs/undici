@@ -1,52 +1,57 @@
 'use strict'
 
-const t = require('tap')
+const { test, skip, after } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 
 let diagnosticsChannel
 
 try {
   diagnosticsChannel = require('diagnostics_channel')
 } catch {
-  t.skip('missing diagnostics_channel')
+  skip('missing diagnostics_channel')
   process.exit(0)
 }
 
 const { Client } = require('../..')
 const { createServer } = require('http')
 
-t.plan(3)
-
-const server = createServer((req, res) => {
-  res.destroy()
-})
-t.teardown(server.close.bind(server))
-
-const reqHeaders = {
-  foo: undefined,
-  bar: 'bar'
-}
-
-let _req
-diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
-  _req = request
-})
-
-diagnosticsChannel.channel('undici:request:error').subscribe(({ request, error }) => {
-  t.equal(_req, request)
-  t.equal(error.code, 'UND_ERR_SOCKET')
-})
-
-server.listen(0, () => {
-  const client = new Client(`http://localhost:${server.address().port}`, {
-    keepAliveTimeout: 300e3
+test('Diagnostics channel - error', (t) => {
+  const assert = tspl(t, { plan: 3 })
+  const server = createServer((req, res) => {
+    res.destroy()
   })
-  t.teardown(client.close.bind(client))
+  after(server.close.bind(server))
 
-  client.request({
-    path: '/',
-    method: 'GET',
-    headers: reqHeaders
-  }, (err, data) => {
-    t.equal(err.code, 'UND_ERR_SOCKET')
+  const reqHeaders = {
+    foo: undefined,
+    bar: 'bar'
+  }
+
+  let _req
+  diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
+    _req = request
+  })
+
+  diagnosticsChannel.channel('undici:request:error').subscribe(({ request, error }) => {
+    assert.equal(_req, request)
+    assert.equal(error.code, 'UND_ERR_SOCKET')
+  })
+
+  return new Promise((resolve) => {
+    server.listen(0, () => {
+      const client = new Client(`http://localhost:${server.address().port}`, {
+        keepAliveTimeout: 300e3
+      })
+
+      client.request({
+        path: '/',
+        method: 'GET',
+        headers: reqHeaders
+      }, (err, data) => {
+        assert.equal(err.code, 'UND_ERR_SOCKET')
+        client.close()
+        resolve()
+      })
+    })
   })
 })
