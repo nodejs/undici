@@ -2,7 +2,6 @@
 
 const { test, after } = require('node:test')
 const assert = require('node:assert/strict')
-// const { test: ttest } = require('tap')
 const http = require('http')
 const { PassThrough } = require('stream')
 const { kRunning } = require('../../lib/core/symbols')
