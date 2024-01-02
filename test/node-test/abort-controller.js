@@ -7,7 +7,6 @@ const { createServer } = require('http')
 const { createReadStream } = require('fs')
 const { wrapWithAsyncIterable } = require('../utils/async-iterators')
 const { tspl } = require('@matteo.collina/tspl')
-const { ttype } = require('../utils/node-test')
 
 const controllers = [{
   AbortControllerImpl: NPMAbortController,
@@ -37,7 +36,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       abortController.abort()
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        p.ok(ttype(err, errors.RequestAbortedError))
+        p.ok(err instanceof errors.RequestAbortedError)
       })
     })
 
@@ -74,7 +73,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       })
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        p.ok(ttype(err, errors.RequestAbortedError))
+        p.ok(err instanceof errors.RequestAbortedError)
       })
 
       abortController.abort()
@@ -99,7 +98,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        p.ok(ttype(err, errors.RequestAbortedError))
+        p.ok(err instanceof errors.RequestAbortedError)
       })
     })
 
@@ -123,7 +122,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        p.ok(ttype(err, errors.RequestAbortedError))
+        p.ok(err instanceof errors.RequestAbortedError)
       })
     })
 
@@ -150,7 +149,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
           abortController.abort()
         })
         response.body.on('error', err => {
-          p.ok(ttype(err, errors.RequestAbortedError))
+          p.ok(err instanceof errors.RequestAbortedError)
         })
       })
     })
@@ -175,7 +174,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {
-          p.ok(ttype(err, errors.RequestAbortedError))
+          p.ok(err instanceof errors.RequestAbortedError)
         })
       })
       await p.completed
@@ -205,7 +204,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {
-          p.ok(ttype(err, errors.RequestAbortedError))
+          p.ok(err instanceof errors.RequestAbortedError)
         })
       })
       await p.completed
@@ -238,7 +237,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
             abortController.abort()
           })
           response.body.on('error', err => {
-            p.ok(ttype(err, errors.RequestAbortedError))
+            p.ok(err instanceof errors.RequestAbortedError)
           })
         })
       })
