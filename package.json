@@ -96,7 +96,7 @@
     "fuzz": "jsfuzz test/fuzzing/fuzz.js corpus"
   },
   "devDependencies": {
-    "@matteo.collina/tspl": "^0.1.0",
+    "@matteo.collina/tspl": "^0.1.1",
     "@sinonjs/fake-timers": "^11.1.0",
     "@types/node": "^18.0.3",
     "abort-controller": "^3.0.0",
