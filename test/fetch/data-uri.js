@@ -1,6 +1,8 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('node:assert')
+const { tspl } = require('@matteo.collina/tspl')
 const {
   URLSerializer,
   collectASequenceOfCodePoints,
@@ -10,62 +12,52 @@ const {
 } = require('../../lib/fetch/dataURL')
 const { fetch } = require('../..')
 
-test('https://url.spec.whatwg.org/#concept-url-serializer', (t) => {
-  t.test('url scheme gets appended', (t) => {
+test('https://url.spec.whatwg.org/#concept-url-serializer', async (t) => {
+  await t.test('url scheme gets appended', () => {
     const url = new URL('https://www.google.com/')
     const serialized = URLSerializer(url)
 
-    t.ok(serialized.startsWith(url.protocol))
-    t.end()
+    assert.ok(serialized.startsWith(url.protocol))
   })
 
-  t.test('non-null url host with authentication', (t) => {
+  await t.test('non-null url host with authentication', () => {
     const url = new URL('https://username:password@google.com')
     const serialized = URLSerializer(url)
 
-    t.ok(serialized.includes(`//${url.username}:${url.password}`))
-    t.ok(serialized.endsWith('@google.com/'))
-    t.end()
+    assert.ok(serialized.includes(`//${url.username}:${url.password}`))
+    assert.ok(serialized.endsWith('@google.com/'))
   })
 
-  t.test('null url host', (t) => {
+  await t.test('null url host', () => {
     for (const url of ['web+demo:/.//not-a-host/', 'web+demo:/path/..//not-a-host/']) {
-      t.equal(
+      assert.strictEqual(
         URLSerializer(new URL(url)),
         'web+demo:/.//not-a-host/'
       )
     }
-
-    t.end()
   })
 
-  t.test('url with query works', (t) => {
-    t.equal(
+  await t.test('url with query works', () => {
+    assert.strictEqual(
       URLSerializer(new URL('https://www.google.com/?fetch=undici')),
       'https://www.google.com/?fetch=undici'
     )
-
-    t.end()
   })
 
-  t.test('exclude fragment', (t) => {
-    t.equal(
+  await t.test('exclude fragment', () => {
+    assert.strictEqual(
       URLSerializer(new URL('https://www.google.com/#frag')),
       'https://www.google.com/#frag'
     )
 
-    t.equal(
+    assert.strictEqual(
       URLSerializer(new URL('https://www.google.com/#frag'), true),
       'https://www.google.com/'
     )
-
-    t.end()
   })
-
-  t.end()
 })
 
-test('https://infra.spec.whatwg.org/#collect-a-sequence-of-code-points', (t) => {
+test('https://infra.spec.whatwg.org/#collect-a-sequence-of-code-points', () => {
   const input = 'text/plain;base64,'
   const position = { position: 0 }
   const result = collectASequenceOfCodePoints(
@@ -74,96 +66,84 @@ test('https://infra.spec.whatwg.org/#collect-a-sequence-of-code-points', (t) => 
     position
   )
 
-  t.strictSame(result, 'text/plain')
-  t.strictSame(position.position, input.indexOf(';'))
-  t.end()
+  assert.strictEqual(result, 'text/plain')
+  assert.strictEqual(position.position, input.indexOf(';'))
 })
 
-test('https://url.spec.whatwg.org/#string-percent-decode', (t) => {
-  t.test('encodes %{2} in range properly', (t) => {
+test('https://url.spec.whatwg.org/#string-percent-decode', async (t) => {
+  await t.test('encodes %{2} in range properly', () => {
     const input = '%FF'
     const percentDecoded = stringPercentDecode(input)
 
-    t.same(percentDecoded, new Uint8Array([255]))
-    t.end()
+    assert.deepStrictEqual(percentDecoded, new Uint8Array([255]))
   })
 
-  t.test('encodes %{2} not in range properly', (t) => {
+  await t.test('encodes %{2} not in range properly', () => {
     const input = 'Hello %XD World'
     const percentDecoded = stringPercentDecode(input)
     const expected = [...input].map(c => c.charCodeAt(0))
 
-    t.same(percentDecoded, expected)
-    t.end()
+    assert.deepStrictEqual(percentDecoded, new Uint8Array(expected))
   })
 
-  t.test('normal string works', (t) => {
+  await t.test('normal string works', () => {
     const input = 'Hello world'
     const percentDecoded = stringPercentDecode(input)
     const expected = [...input].map(c => c.charCodeAt(0))
 
-    t.same(percentDecoded, Uint8Array.from(expected))
-    t.end()
+    assert.deepStrictEqual(percentDecoded, Uint8Array.from(expected))
   })
-
-  t.end()
 })
 
-test('https://mimesniff.spec.whatwg.org/#parse-a-mime-type', (t) => {
-  t.same(parseMIMEType('text/plain'), {
+test('https://mimesniff.spec.whatwg.org/#parse-a-mime-type', () => {
+  assert.deepStrictEqual(parseMIMEType('text/plain'), {
     type: 'text',
     subtype: 'plain',
     parameters: new Map(),
     essence: 'text/plain'
   })
 
-  t.same(parseMIMEType('text/html;charset="shift_jis"iso-2022-jp'), {
+  assert.deepStrictEqual(parseMIMEType('text/html;charset="shift_jis"iso-2022-jp'), {
     type: 'text',
     subtype: 'html',
     parameters: new Map([['charset', 'shift_jis']]),
     essence: 'text/html'
   })
 
-  t.same(parseMIMEType('application/javascript'), {
+  assert.deepStrictEqual(parseMIMEType('application/javascript'), {
     type: 'application',
     subtype: 'javascript',
     parameters: new Map(),
     essence: 'application/javascript'
   })
-
-  t.end()
 })
 
-test('https://fetch.spec.whatwg.org/#collect-an-http-quoted-string', (t) => {
+test('https://fetch.spec.whatwg.org/#collect-an-http-quoted-string', async (t) => {
   // https://fetch.spec.whatwg.org/#example-http-quoted-string
-  t.test('first', (t) => {
+  await t.test('first', () => {
     const position = { position: 0 }
 
-    t.strictSame(collectAnHTTPQuotedString('"\\', {
+    assert.strictEqual(collectAnHTTPQuotedString('"\\', {
       position: 0
     }), '"\\')
-    t.strictSame(collectAnHTTPQuotedString('"\\', position, true), '\\')
-    t.strictSame(position.position, 2)
-    t.end()
+    assert.strictEqual(collectAnHTTPQuotedString('"\\', position, true), '\\')
+    assert.strictEqual(position.position, 2)
   })
 
-  t.test('second', (t) => {
+  await t.test('second', () => {
     const position = { position: 0 }
     const input = '"Hello" World'
 
-    t.strictSame(collectAnHTTPQuotedString(input, {
+    assert.strictEqual(collectAnHTTPQuotedString(input, {
       position: 0
     }), '"Hello"')
-    t.strictSame(collectAnHTTPQuotedString(input, position, true), 'Hello')
-    t.strictSame(position.position, 7)
-    t.end()
+    assert.strictEqual(collectAnHTTPQuotedString(input, position, true), 'Hello')
+    assert.strictEqual(position.position, 7)
   })
-
-  t.end()
 })
 
 // https://github.com/nodejs/undici/issues/1574
-test('too long base64 url', async (t) => {
+test('too long base64 url', async () => {
   const inputStr = 'a'.repeat(1 << 20)
   const base64 = Buffer.from(inputStr).toString('base64')
   const dataURIPrefix = 'data:application/octet-stream;base64,'
@@ -172,43 +152,43 @@ test('too long base64 url', async (t) => {
     const res = await fetch(dataURL)
     const buf = await res.arrayBuffer()
     const outputStr = Buffer.from(buf).toString('ascii')
-    t.same(outputStr, inputStr)
+    assert.strictEqual(outputStr, inputStr)
   } catch (e) {
-    t.fail(`failed to fetch ${dataURL}`)
+    assert.fail(`failed to fetch ${dataURL}`)
   }
 })
 
 test('https://domain.com/#', (t) => {
-  t.plan(1)
+  const { strictEqual } = tspl(t, { plan: 1 })
   const domain = 'https://domain.com/#a'
   const serialized = URLSerializer(new URL(domain))
-  t.equal(serialized, domain)
+  strictEqual(serialized, domain)
 })
 
 test('https://domain.com/?', (t) => {
-  t.plan(1)
+  const { strictEqual } = tspl(t, { plan: 1 })
   const domain = 'https://domain.com/?a=b'
   const serialized = URLSerializer(new URL(domain))
-  t.equal(serialized, domain)
+  strictEqual(serialized, domain)
 })
 
 // https://github.com/nodejs/undici/issues/2474
 test('hash url', (t) => {
-  t.plan(1)
+  const { strictEqual } = tspl(t, { plan: 1 })
   const domain = 'https://domain.com/#a#b'
   const url = new URL(domain)
   const serialized = URLSerializer(url, true)
-  t.equal(serialized, url.href.substring(0, url.href.length - url.hash.length))
+  strictEqual(serialized, url.href.substring(0, url.href.length - url.hash.length))
 })
 
 // https://github.com/nodejs/undici/issues/2474
 test('data url that includes the hash', async (t) => {
-  t.plan(1)
+  const { strictEqual, fail } = tspl(t, { plan: 1 })
   const dataURL = 'data:,node#js#'
   try {
     const res = await fetch(dataURL)
-    t.equal(await res.text(), 'node')
+    strictEqual(await res.text(), 'node')
   } catch (error) {
-    t.fail(`failed to fetch ${dataURL}`)
+    fail(`failed to fetch ${dataURL}`)
   }
 })

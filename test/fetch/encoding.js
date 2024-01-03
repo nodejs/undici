@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('node:assert')
 const { createServer } = require('http')
 const { once } = require('events')
 const { fetch } = require('../..')
@@ -23,13 +24,13 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
     brotli.end()
   }).listen(0)
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
   await once(server, 'listening')
 
   const response = await fetch(`http://localhost:${server.address().port}`)
 
-  t.equal(await response.text(), text)
-  t.equal(response.headers.get('content-encoding'), contentCodings)
+  assert.strictEqual(await response.text(), text)
+  assert.strictEqual(response.headers.get('content-encoding'), contentCodings)
 })
 
 test('response decompression according to content-encoding should be handled in a correct order', async (t) => {
@@ -49,10 +50,10 @@ test('response decompression according to content-encoding should be handled in 
     gzip.end()
   }).listen(0)
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
   await once(server, 'listening')
 
   const response = await fetch(`http://localhost:${server.address().port}`)
 
-  t.equal(await response.text(), text)
+  assert.strictEqual(await response.text(), text)
 })

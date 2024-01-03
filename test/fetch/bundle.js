@@ -1,26 +1,25 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('node:assert')
 
 const { Response, Request, FormData, Headers } = require('../../undici-fetch')
 
-test('bundle sets constructor.name and .name properly', (t) => {
-  t.equal(new Response().constructor.name, 'Response')
-  t.equal(Response.name, 'Response')
+test('bundle sets constructor.name and .name properly', () => {
+  assert.strictEqual(new Response().constructor.name, 'Response')
+  assert.strictEqual(Response.name, 'Response')
 
-  t.equal(new Request('http://a').constructor.name, 'Request')
-  t.equal(Request.name, 'Request')
+  assert.strictEqual(new Request('http://a').constructor.name, 'Request')
+  assert.strictEqual(Request.name, 'Request')
 
-  t.equal(new Headers().constructor.name, 'Headers')
-  t.equal(Headers.name, 'Headers')
+  assert.strictEqual(new Headers().constructor.name, 'Headers')
+  assert.strictEqual(Headers.name, 'Headers')
 
-  t.equal(new FormData().constructor.name, 'FormData')
-  t.equal(FormData.name, 'FormData')
-
-  t.end()
+  assert.strictEqual(new FormData().constructor.name, 'FormData')
+  assert.strictEqual(FormData.name, 'FormData')
 })
 
-test('regression test for https://github.com/nodejs/node/issues/50263', (t) => {
+test('regression test for https://github.com/nodejs/node/issues/50263', () => {
   const request = new Request('https://a', {
     headers: {
       test: 'abc'
@@ -30,6 +29,5 @@ test('regression test for https://github.com/nodejs/node/issues/50263', (t) => {
 
   const request1 = new Request(request, { body: 'does not matter' })
 
-  t.equal(request1.headers.get('test'), 'abc')
-  t.end()
+  assert.strictEqual(request1.headers.get('test'), 'abc')
 })
