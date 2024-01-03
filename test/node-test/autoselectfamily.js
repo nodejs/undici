@@ -1,12 +1,13 @@
 'use strict'
 
-const { test, skip } = require('tap')
+const { test, skip } = require('node:test')
 const dgram = require('dgram')
 const { Resolver } = require('dns')
 const dnsPacket = require('dns-packet')
 const { createServer } = require('http')
-const { Client, Agent, request } = require('..')
-const { nodeHasAutoSelectFamily } = require('../lib/core/util')
+const { Client, Agent, request } = require('../..')
+const { nodeHasAutoSelectFamily } = require('../../lib/core/util')
+const { tspl } = require('@matteo.collina/tspl')
 
 /*
  * IMPORTANT
@@ -67,15 +68,15 @@ function createDnsServer (ipv6Addr, ipv4Addr, cb) {
   })
 }
 
-test('with autoSelectFamily enable the request succeeds when using request', (t) => {
-  t.plan(3)
+test('with autoSelectFamily enable the request succeeds when using request', async (t) => {
+  const p = tspl(t, { plan: 3 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
     const server = createServer((req, res) => {
       res.end('hello')
     })
 
-    t.teardown(() => {
+    t.after(() => {
       server.close()
       dnsServer.close()
     })
@@ -88,7 +89,7 @@ test('with autoSelectFamily enable the request succeeds when using request', (t)
           method: 'GET',
           dispatcher: agent
         }, (err, { statusCode, body }) => {
-          t.error(err)
+          p.ifError(err)
 
           let response = Buffer.alloc(0)
 
@@ -97,23 +98,25 @@ test('with autoSelectFamily enable the request succeeds when using request', (t)
           })
 
           body.on('end', () => {
-            t.strictSame(statusCode, 200)
-            t.strictSame(response.toString('utf-8'), 'hello')
+            p.strictEqual(statusCode, 200)
+            p.strictEqual(response.toString('utf-8'), 'hello')
           })
         })
     })
   })
+
+  await p.completed
 })
 
-test('with autoSelectFamily enable the request succeeds when using a client', (t) => {
-  t.plan(3)
+test('with autoSelectFamily enable the request succeeds when using a client', async (t) => {
+  const p = tspl(t, { plan: 3 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
     const server = createServer((req, res) => {
       res.end('hello')
     })
 
-    t.teardown(() => {
+    t.after(() => {
       server.close()
       dnsServer.close()
     })
@@ -121,13 +124,13 @@ test('with autoSelectFamily enable the request succeeds when using a client', (t
     server.listen(0, '127.0.0.1', () => {
       const client = new Client(`http://example.org:${server.address().port}`, { connect: { lookup }, autoSelectFamily: true })
 
-      t.teardown(client.destroy.bind(client))
+      t.after(client.destroy.bind(client))
 
       client.request({
         path: '/',
         method: 'GET'
       }, (err, { statusCode, body }) => {
-        t.error(err)
+        p.ifError(err)
 
         let response = Buffer.alloc(0)
 
@@ -136,23 +139,25 @@ test('with autoSelectFamily enable the request succeeds when using a client', (t
         })
 
         body.on('end', () => {
-          t.strictSame(statusCode, 200)
-          t.strictSame(response.toString('utf-8'), 'hello')
+          p.strictEqual(statusCode, 200)
+          p.strictEqual(response.toString('utf-8'), 'hello')
         })
       })
     })
   })
+
+  await p.completed
 })
 
-test('with autoSelectFamily disabled the request fails when using request', (t) => {
-  t.plan(1)
+test('with autoSelectFamily disabled the request fails when using request', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
     const server = createServer((req, res) => {
       res.end('hello')
     })
 
-    t.teardown(() => {
+    t.after(() => {
       server.close()
       dnsServer.close()
     })
@@ -164,35 +169,39 @@ test('with autoSelectFamily disabled the request fails when using request', (t) 
         method: 'GET',
         dispatcher: agent
       }, (err, { statusCode, body }) => {
-        t.ok(['ECONNREFUSED', 'EAFNOSUPPORT'].includes(err.code))
+        p.ok(['ECONNREFUSED', 'EAFNOSUPPORT'].includes(err.code))
       })
     })
   })
+
+  await p.completed
 })
 
-test('with autoSelectFamily disabled the request fails when using a client', (t) => {
-  t.plan(1)
+test('with autoSelectFamily disabled the request fails when using a client', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
     const server = createServer((req, res) => {
       res.end('hello')
     })
 
-    t.teardown(() => {
+    t.after(() => {
       server.close()
       dnsServer.close()
     })
 
     server.listen(0, '127.0.0.1', () => {
       const client = new Client(`http://example.org:${server.address().port}`, { connect: { lookup, autoSelectFamily: false } })
-      t.teardown(client.destroy.bind(client))
+      t.after(client.destroy.bind(client))
 
       client.request({
         path: '/',
         method: 'GET'
       }, (err, { statusCode, body }) => {
-        t.ok(['ECONNREFUSED', 'EAFNOSUPPORT'].includes(err.code))
+        p.ok(['ECONNREFUSED', 'EAFNOSUPPORT'].includes(err.code))
       })
     })
   })
+
+  await p.completed
 })
