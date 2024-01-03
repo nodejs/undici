@@ -1,46 +1,47 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
 const EventEmitter = require('events')
-const { Client, errors } = require('..')
+const { Client, errors } = require('../..')
 const { createServer } = require('http')
 const { createReadStream } = require('fs')
 const { Readable } = require('stream')
-const { wrapWithAsyncIterable } = require('./utils/async-iterators')
+const { tspl } = require('@matteo.collina/tspl')
+const { wrapWithAsyncIterable } = require('../utils/async-iterators')
 
-test('Abort before sending request (no body)', (t) => {
-  t.plan(4)
+test('Abort before sending request (no body)', async (t) => {
+  const p = tspl(t, { plan: 4 })
 
   let count = 0
   const server = createServer((req, res) => {
     if (count === 1) {
-      t.fail('The second request should never be executed')
+      p.fail('The second request should never be executed')
     }
     count += 1
     res.end('hello')
   })
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const ee = new EventEmitter()
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.error(err)
+      p.ifError(err)
       const bufs = []
       response.body.on('data', (buf) => {
         bufs.push(buf)
       })
       response.body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
 
     const body = new Readable({ read () { } })
     body.on('error', (err) => {
-      t.type(err, errors.RequestAbortedError)
+      p.ok(err instanceof errors.RequestAbortedError)
     })
     client.request({
       path: '/',
@@ -48,15 +49,17 @@ test('Abort before sending request (no body)', (t) => {
       signal: ee,
       body
     }, (err, response) => {
-      t.type(err, errors.RequestAbortedError)
+      p.ok(err instanceof errors.RequestAbortedError)
     })
 
     ee.emit('abort')
   })
+
+  await p.completed
 })
 
-test('Abort before sending request (no body) async iterator', (t) => {
-  t.plan(3)
+test('Abort before sending request (no body) async iterator', async (t) => {
+  const p = tspl(t, { plan: 3 })
 
   let count = 0
   const server = createServer((req, res) => {
@@ -67,21 +70,21 @@ test('Abort before sending request (no body) async iterator', (t) => {
     res.end('hello')
   })
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const ee = new EventEmitter()
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.error(err)
+      p.ifError(err)
       const bufs = []
       response.body.on('data', (buf) => {
         bufs.push(buf)
       })
       response.body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
 
@@ -92,15 +95,17 @@ test('Abort before sending request (no body) async iterator', (t) => {
       signal: ee,
       body
     }, (err, response) => {
-      t.type(err, errors.RequestAbortedError)
+      p.ok(err instanceof errors.RequestAbortedError)
     })
 
     ee.emit('abort')
   })
+
+  await p.completed
 })
 
-test('Abort while waiting response (no body)', (t) => {
-  t.plan(1)
+test('Abort while waiting response (no body)', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const ee = new EventEmitter()
   const server = createServer((req, res) => {
@@ -108,20 +113,22 @@ test('Abort while waiting response (no body)', (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('hello world')
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      t.type(err, errors.RequestAbortedError)
+      p.ok(err instanceof errors.RequestAbortedError)
     })
   })
+
+  await p.completed
 })
 
-test('Abort while waiting response (write headers started) (no body)', (t) => {
-  t.plan(1)
+test('Abort while waiting response (write headers started) (no body)', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const ee = new EventEmitter()
   const server = createServer((req, res) => {
@@ -130,47 +137,50 @@ test('Abort while waiting response (write headers started) (no body)', (t) => {
     ee.emit('abort')
     res.end('hello world')
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      t.type(err, errors.RequestAbortedError)
+      p.ok(err instanceof errors.RequestAbortedError)
     })
   })
+
+  await p.completed
 })
 
-test('Abort while waiting response (write headers and write body started) (no body)', (t) => {
-  t.plan(2)
+test('Abort while waiting response (write headers and write body started) (no body)', async (t) => {
+  const p = tspl(t, { plan: 2 })
 
   const ee = new EventEmitter()
   const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.write('hello')
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      t.error(err)
+      p.ifError(err)
       response.body.on('data', () => {
         ee.emit('abort')
       })
       response.body.on('error', err => {
-        t.type(err, errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError)
       })
     })
   })
+  await p.completed
 })
 
 function waitingWithBody (body, type) {
-  test(`Abort while waiting response (with body ${type})`, (t) => {
-    t.plan(1)
+  test(`Abort while waiting response (with body ${type})`, async (t) => {
+    const p = tspl(t, { plan: 1 })
 
     const ee = new EventEmitter()
     const server = createServer((req, res) => {
@@ -178,16 +188,17 @@ function waitingWithBody (body, type) {
       res.setHeader('content-type', 'text/plain')
       res.end('hello world')
     })
-    t.teardown(server.close.bind(server))
+    t.after(server.close.bind(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
-      t.teardown(client.destroy.bind(client))
+      t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
-        t.type(err, errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError)
       })
     })
+    await p.completed
   })
 }
 
@@ -197,8 +208,8 @@ waitingWithBody(new Uint8Array([42]), 'Uint8Array')
 waitingWithBody(wrapWithAsyncIterable(createReadStream(__filename)), 'async-iterator')
 
 function writeHeadersStartedWithBody (body, type) {
-  test(`Abort while waiting response (write headers started) (with body ${type})`, (t) => {
-    t.plan(1)
+  test(`Abort while waiting response (write headers started) (with body ${type})`, async (t) => {
+    const p = tspl(t, { plan: 1 })
 
     const ee = new EventEmitter()
     const server = createServer((req, res) => {
@@ -207,16 +218,17 @@ function writeHeadersStartedWithBody (body, type) {
       ee.emit('abort')
       res.end('hello world')
     })
-    t.teardown(server.close.bind(server))
+    t.after(server.close.bind(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
-      t.teardown(client.destroy.bind(client))
+      t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
-        t.type(err, errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError)
       })
     })
+    await p.completed
   })
 }
 
@@ -226,30 +238,31 @@ writeHeadersStartedWithBody(new Uint8Array([42]), 'Uint8Array')
 writeHeadersStartedWithBody(wrapWithAsyncIterable(createReadStream(__filename)), 'async-iterator')
 
 function writeBodyStartedWithBody (body, type) {
-  test(`Abort while waiting response (write headers and write body started) (with body ${type})`, (t) => {
-    t.plan(2)
+  test(`Abort while waiting response (write headers and write body started) (with body ${type})`, async (t) => {
+    const p = tspl(t, { plan: 2 })
 
     const ee = new EventEmitter()
     const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.write('hello')
     })
-    t.teardown(server.close.bind(server))
+    t.after(server.close.bind(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
-      t.teardown(client.destroy.bind(client))
+      t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
-        t.error(err)
+        p.ifError(err)
         response.body.on('data', () => {
           ee.emit('abort')
         })
         response.body.on('error', err => {
-          t.type(err, errors.RequestAbortedError)
+          p.ok(err instanceof errors.RequestAbortedError)
         })
       })
     })
+    await p.completed
   })
 }
 

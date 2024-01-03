@@ -1,11 +1,12 @@
 'use strict'
 
-const { test } = require('tap')
-const { Client } = require('..')
+const { test } = require('node:test')
+const { Client } = require('../..')
 const { createServer } = require('http')
 const { createHook, executionAsyncId } = require('async_hooks')
 const { readFile } = require('fs')
 const { PassThrough } = require('stream')
+const { tspl } = require('@matteo.collina/tspl')
 
 const transactions = new Map()
 
@@ -32,13 +33,13 @@ const hook = createHook({
 
 hook.enable()
 
-test('async hooks', (t) => {
-  t.plan(31)
+test('async hooks', async (t) => {
+  const p = tspl(t, { plan: 31 })
 
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
     readFile(__filename, (err, buf) => {
-      t.error(err)
+      p.ifError(err)
       const buf1 = buf.slice(0, buf.length / 2)
       const buf2 = buf.slice(buf.length / 2)
       // we split the file so that it's received in 2 chunks
@@ -49,158 +50,164 @@ test('async hooks', (t) => {
       }, 10)
     })
   })
-  t.teardown(server.close.bind(server))
+  t.after(() => server.close.bind(server)())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    t.after(() => client.destroy.bind(client)())
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
+      p.ifError(err)
       body.resume()
-      t.strictSame(getCurrentTransaction(), null)
+      p.deepStrictEqual(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world2' })
 
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-        t.error(err)
-        t.strictSame(getCurrentTransaction(), { hello: 'world2' })
+        p.ifError(err)
+        p.deepStrictEqual(getCurrentTransaction(), { hello: 'world2' })
 
         body.once('data', () => {
-          t.pass()
+          p.ok(1, 1)
           body.resume()
         })
 
         body.on('end', () => {
-          t.pass()
+          p.ok(1, 1)
         })
       })
     })
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
+      p.ifError(err)
       body.resume()
-      t.strictSame(getCurrentTransaction(), null)
+      p.deepStrictEqual(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world' })
 
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-        t.error(err)
-        t.strictSame(getCurrentTransaction(), { hello: 'world' })
+        p.ifError(err)
+        p.deepStrictEqual(getCurrentTransaction(), { hello: 'world' })
 
         body.once('data', () => {
-          t.pass()
+          p.ok(1)
           body.resume()
         })
 
         body.on('end', () => {
-          t.pass()
+          p.ok(1)
         })
       })
     })
 
     client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
+      p.ifError(err)
       body.resume()
-      t.strictSame(getCurrentTransaction(), null)
+      p.deepStrictEqual(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world' })
 
       client.request({ path: '/', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
-        t.error(err)
-        t.strictSame(getCurrentTransaction(), { hello: 'world' })
+        p.ifError(err)
+        p.deepStrictEqual(getCurrentTransaction(), { hello: 'world' })
 
         body.once('data', () => {
-          t.pass()
+          p.ok(1)
           body.resume()
         })
 
         body.on('end', () => {
-          t.pass()
+          p.ok(1)
         })
       })
     })
 
     client.stream({ path: '/', method: 'GET' }, () => {
-      t.strictSame(getCurrentTransaction(), null)
+      p.strictEqual(getCurrentTransaction(), null)
       return new PassThrough().resume()
     }, (err) => {
-      t.error(err)
-      t.strictSame(getCurrentTransaction(), null)
+      p.ifError(err)
+      p.deepStrictEqual(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world' })
 
       client.stream({ path: '/', method: 'GET' }, () => {
-        t.strictSame(getCurrentTransaction(), { hello: 'world' })
+        p.deepStrictEqual(getCurrentTransaction(), { hello: 'world' })
         return new PassThrough().resume()
       }, (err) => {
-        t.error(err)
-        t.strictSame(getCurrentTransaction(), { hello: 'world' })
+        p.ifError(err)
+        p.deepStrictEqual(getCurrentTransaction(), { hello: 'world' })
       })
     })
   })
+
+  await p.completed
 })
 
-test('async hooks client is destroyed', (t) => {
-  t.plan(7)
+test('async hooks client is destroyed', async (t) => {
+  const p = tspl(t, { plan: 7 })
 
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
     readFile(__filename, (err, buf) => {
-      t.error(err)
+      p.ifError(err)
       res.write('asd')
     })
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', throwOnError: true }, (err, { body }) => {
-      t.error(err)
+      p.ifError(err)
       body.resume()
       body.on('error', (err) => {
-        t.ok(err)
+        p.ok(err)
       })
-      t.strictSame(getCurrentTransaction(), null)
+      p.deepStrictEqual(getCurrentTransaction(), null)
 
       setCurrentTransaction({ hello: 'world2' })
 
       client.request({ path: '/', method: 'GET' }, (err) => {
-        t.equal(err.message, 'The client is destroyed')
-        t.strictSame(getCurrentTransaction(), { hello: 'world2' })
+        p.strictEqual(err.message, 'The client is destroyed')
+        p.deepStrictEqual(getCurrentTransaction(), { hello: 'world2' })
       })
       client.destroy((err) => {
-        t.error(err)
+        p.ifError(err)
       })
     })
   })
+
+  await p.completed
 })
 
-test('async hooks pipeline handler', (t) => {
-  t.plan(2)
+test('async hooks pipeline handler', async (t) => {
+  const p = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => client.close.bind(client)())
 
     setCurrentTransaction({ hello: 'world2' })
 
     client
       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
-        t.strictSame(getCurrentTransaction(), { hello: 'world2' })
+        p.deepStrictEqual(getCurrentTransaction(), { hello: 'world2' })
         return body
       })
       .on('close', () => {
-        t.pass()
+        p.ok(1)
       })
       .resume()
       .end()
   })
+
+  await p.completed
 })
