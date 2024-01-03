@@ -167,6 +167,10 @@ test('BufferSource', () => {
   assert.throws(() => {
     webidl.converters.BufferSource(3)
   }, TypeError)
+
+  assert.throws(() => {
+    webidl.converters.BufferSource(new SharedArrayBuffer(0))
+  }, TypeError)
 })
 
 test('ByteString', () => {
