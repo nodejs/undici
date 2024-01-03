@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, after } = require('node:test')
+const { describe, test, after } = require('node:test')
 const assert = require('node:assert/strict')
 const http = require('http')
 const { PassThrough } = require('stream')
@@ -18,23 +18,19 @@ const {
 const importFresh = require('import-fresh')
 const { tspl } = require('@matteo.collina/tspl')
 
-test('setGlobalDispatcher', async t => {
-  const t1 = t.test('fails if agent does not implement `get` method', t => {
+describe('setGlobalDispatcher', () => {
+  after(() => {
+    // reset globalAgent to a fresh Agent instance for later tests
+    setGlobalDispatcher(new Agent())
+  })
+  test('fails if agent does not implement `get` method', t => {
     const p = tspl(t, { plan: 1 })
     p.throws(() => setGlobalDispatcher({ dispatch: 'not a function' }), errors.InvalidArgumentError)
   })
-
-  const t2 = t.test('sets global agent', async t => {
+  test('sets global agent', async t => {
     const p = tspl(t, { plan: 2 })
     p.doesNotThrow(() => setGlobalDispatcher(new Agent()))
     p.doesNotThrow(() => setGlobalDispatcher({ dispatch: () => {} }))
-  })
-
-  await Promise.all([t1, t2])
-
-  t.after(() => {
-    // reset globalAgent to a fresh Agent instance for later tests
-    setGlobalDispatcher(new Agent())
   })
 })
 
