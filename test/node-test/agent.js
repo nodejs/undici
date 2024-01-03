@@ -17,7 +17,6 @@ const {
 } = require('../..')
 const importFresh = require('import-fresh')
 const { tspl } = require('@matteo.collina/tspl')
-const { ttype } = require('../utils/node-test')
 
 test('setGlobalDispatcher', async t => {
   const t1 = t.test('fails if agent does not implement `get` method', t => {
@@ -78,7 +77,7 @@ test('agent should call callback after closing internal pools', async (t) => {
             p.fail('second request should not resolve')
           })
           .catch(err => {
-            ttype(p, err, errors.ClientDestroyedError)
+            p.ok(err instanceof errors.ClientDestroyedError)
           })
       })
     })
@@ -93,7 +92,7 @@ test('agent close throws when callback is not a function', t => {
   try {
     dispatcher.close({})
   } catch (err) {
-    ttype(p, err, errors.InvalidArgumentError)
+    p.ok(err instanceof errors.InvalidArgumentError)
   }
 })
 
@@ -130,7 +129,7 @@ test('agent should close internal pools', async (t) => {
           p.fail('second request should not resolve')
         })
         .catch(err => {
-          ttype(p, err, errors.ClientDestroyedError)
+          p.ok(err instanceof errors.ClientDestroyedError)
         })
     })
   })
@@ -160,7 +159,7 @@ test('agent should destroy internal pools and call callback', async (t) => {
         p.fail()
       })
       .catch(err => {
-        ttype(p, err, errors.ClientDestroyedError)
+        p.ok(err instanceof errors.ClientDestroyedError)
       })
 
     dispatcher.once('connect', () => {
@@ -170,7 +169,7 @@ test('agent should destroy internal pools and call callback', async (t) => {
             p.fail()
           })
           .catch(err => {
-            ttype(p, err, errors.ClientDestroyedError)
+            p.ok(err instanceof errors.ClientDestroyedError)
           })
       })
     })
@@ -185,7 +184,7 @@ test('agent destroy throws when callback is not a function', t => {
   try {
     dispatcher.destroy(new Error('mock error'), {})
   } catch (err) {
-    ttype(p, err, errors.InvalidArgumentError)
+    p.ok(err instanceof errors.InvalidArgumentError)
   }
 })
 
@@ -222,7 +221,7 @@ test('agent should destroy internal pools', async t => {
         p.fail()
       })
       .catch(err => {
-        ttype(p, err, errors.ClientDestroyedError)
+        p.ok(err instanceof errors.ClientDestroyedError)
       })
 
     dispatcher.once('connect', () => {
@@ -232,7 +231,7 @@ test('agent should destroy internal pools', async t => {
           p.fail()
         })
         .catch(err => {
-          ttype(p, err, errors.ClientDestroyedError)
+          p.ok(err instanceof errors.ClientDestroyedError)
         })
     })
   })
@@ -264,7 +263,7 @@ test('multiple connections', async t => {
     })
     dispatcher.on('disconnect', (origin, [dispatcher], error) => {
       p.ok(dispatcher)
-      ttype(p, error, errors.InformationalError)
+      p.ok(error instanceof errors.InformationalError)
       p.strictEqual(error.code, 'UND_ERR_INFO')
       p.strictEqual(error.message, 'reset')
     })
@@ -640,7 +639,7 @@ test('pipeline: fails with invalid URL', t => {
 test('pipeline: fails with invalid onInfo', async (t) => {
   const p = tspl(t, { plan: 2 })
   pipeline({ origin: 'http://localhost', path: '/', onInfo: 'foo' }, () => {}).on('error', (err) => {
-    ttype(p, err, errors.InvalidArgumentError)
+    p.ok(err instanceof errors.InvalidArgumentError)
     p.equal(err.message, 'invalid onInfo callback')
   })
   await p.completed
