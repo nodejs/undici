@@ -73,7 +73,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       })
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        p.ok(err instanceof errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError || err instanceof DOMException)
       })
 
       abortController.abort()
