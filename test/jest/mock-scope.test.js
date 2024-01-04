@@ -25,5 +25,5 @@ it('Jest works with MockScope.delay - issue #1327', async () => {
     signal: ac.signal
   })
 
-  await expect(promise).rejects.toThrowError('Request aborted')
+  await expect(promise).rejects.toThrowError('This operation was aborted')
 }, 1000)
