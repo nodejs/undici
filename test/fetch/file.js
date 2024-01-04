@@ -175,3 +175,16 @@ test('endings=native', async () => {
     assert.strictEqual(text, 'Hello\nWorld', `on ${process.platform} LF stays LF`)
   }
 })
+
+test('not allow SharedArrayBuffer', () => {
+  const buffer = new SharedArrayBuffer(0)
+  assert.throws(() => {
+    // eslint-disable-next-line no-new
+    new File([buffer], 'text.txt')
+  }, TypeError)
+
+  assert.throws(() => {
+    // eslint-disable-next-line no-new
+    new File([new Uint8Array(buffer)], 'text.txt')
+  }, TypeError)
+})
