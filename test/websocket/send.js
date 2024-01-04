@@ -211,4 +211,27 @@ describe('Sending data to a server', () => {
       })
     })
   })
+
+  test('Cannot send with SharedArrayBuffer', () => {
+    const sab = new SharedArrayBuffer(0)
+    const server = new WebSocketServer({ port: 0 })
+
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+    ws.addEventListener('open', () => {
+      ws.send(sab)
+    })
+
+    return new Promise((resolve) => {
+      server.on('connection', (ws) => {
+        ws.on('message', (data, isBinary) => {
+          assert.ok(!isBinary)
+          assert.deepStrictEqual(data, Buffer.from('[object SharedArrayBuffer]'))
+          ws.close(1000)
+          server.close()
+          resolve()
+        })
+      })
+    })
+  })
 })
