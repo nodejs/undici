@@ -787,7 +787,7 @@ test('dispatch onBodySent stream', async (t) => {
   await p.completed
 })
 
-test('dispatch onBodySent async-iterable', (t) => {
+test('dispatch onBodySent async-iterable', (t, done) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
@@ -796,7 +796,7 @@ test('dispatch onBodySent async-iterable', (t) => {
   const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(client.close.bind(client))
+    t.after(() => client.close.bind(client)())
     let sentBytes = 0
     let currentChunk = 0
     client.dispatch({
@@ -817,12 +817,13 @@ test('dispatch onBodySent async-iterable', (t) => {
       onComplete () {
         assert.strictEqual(currentChunk, chunks.length)
         assert.strictEqual(sentBytes, toSendBytes)
+        done()
       }
     })
   })
 })
 
-test('dispatch onBodySent throws error', (t) => {
+test('dispatch onBodySent throws error', (t, done) => {
   const server = http.createServer((req, res) => {
     res.end('ended')
   })
@@ -843,6 +844,7 @@ test('dispatch onBodySent throws error', (t) => {
       onError (err) {
         assert.ok(err instanceof Error)
         assert.strictEqual(err.message, 'fail')
+        done()
       },
       onConnect () {},
       onHeaders () {},
