@@ -1,24 +1,30 @@
 'use strict'
 
-const { test } = require('tap')
-const { Client, Pool } = require('..')
+const { test } = require('node:test')
+const { Client, Pool } = require('../../')
 const http = require('http')
 const https = require('https')
 const pem = require('https-pem')
 const fs = require('fs')
+const { tspl } = require('@matteo.collina/tspl')
 
 if (process.platform !== 'win32') {
-  test('http unix get', (t) => {
-    t.plan(7)
+  test('http unix get', async (t) => {
+    let client
+    const p = tspl(t, { plan: 7 })
 
     const server = http.createServer((req, res) => {
-      t.equal('/', req.url)
-      t.equal('GET', req.method)
-      t.equal('localhost', req.headers.host)
+      p.equal('/', req.url)
+      p.equal('GET', req.method)
+      p.equal('localhost', req.headers.host)
       res.setHeader('Content-Type', 'text/plain')
       res.end('hello')
     })
-    t.teardown(server.close.bind(server))
+
+    t.after(() => {
+      server.close()
+      client.close()
+    })
 
     try {
       fs.unlinkSync('/var/tmp/test3.sock')
@@ -27,41 +33,47 @@ if (process.platform !== 'win32') {
     }
 
     server.listen('/var/tmp/test3.sock', () => {
-      const client = new Client({
+      client = new Client({
         hostname: 'localhost',
         protocol: 'http:'
       }, {
         socketPath: '/var/tmp/test3.sock'
       })
-      t.teardown(client.close.bind(client))
 
       client.request({ path: '/', method: 'GET' }, (err, data) => {
-        t.error(err)
+        p.ifError(err)
         const { statusCode, headers, body } = data
-        t.equal(statusCode, 200)
-        t.equal(headers['content-type'], 'text/plain')
+        p.equal(statusCode, 200)
+        p.equal(headers['content-type'], 'text/plain')
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+          p.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
     })
+
+    await p.completed
   })
 
-  test('http unix get pool', (t) => {
-    t.plan(7)
+  test('http unix get pool', async (t) => {
+    let client
+    const p = tspl(t, { plan: 7 })
 
     const server = http.createServer((req, res) => {
-      t.equal('/', req.url)
-      t.equal('GET', req.method)
-      t.equal('localhost', req.headers.host)
+      p.equal('/', req.url)
+      p.equal('GET', req.method)
+      p.equal('localhost', req.headers.host)
       res.setHeader('Content-Type', 'text/plain')
       res.end('hello')
     })
-    t.teardown(server.close.bind(server))
+
+    t.after(() => {
+      server.close()
+      client.close()
+    })
 
     try {
       fs.unlinkSync('/var/tmp/test3.sock')
@@ -70,40 +82,46 @@ if (process.platform !== 'win32') {
     }
 
     server.listen('/var/tmp/test3.sock', () => {
-      const client = new Pool({
+      client = new Pool({
         hostname: 'localhost',
         protocol: 'http:'
       }, {
         socketPath: '/var/tmp/test3.sock'
       })
-      t.teardown(client.close.bind(client))
 
       client.request({ path: '/', method: 'GET' }, (err, data) => {
-        t.error(err)
+        p.ifError(err)
         const { statusCode, headers, body } = data
-        t.equal(statusCode, 200)
-        t.equal(headers['content-type'], 'text/plain')
+        p.equal(statusCode, 200)
+        p.equal(headers['content-type'], 'text/plain')
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+          p.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
     })
+
+    await p.completed
   })
 
-  test('https get with tls opts', (t) => {
-    t.plan(6)
+  test('https get with tls opts', async (t) => {
+    let client
+    const p = tspl(t, { plan: 6 })
 
     const server = https.createServer(pem, (req, res) => {
-      t.equal('/', req.url)
-      t.equal('GET', req.method)
+      p.equal('/', req.url)
+      p.equal('GET', req.method)
       res.setHeader('content-type', 'text/plain')
       res.end('hello')
     })
-    t.teardown(server.close.bind(server))
+
+    t.after(() => {
+      server.close()
+      client.close()
+    })
 
     try {
       fs.unlinkSync('/var/tmp/test3.sock')
@@ -111,31 +129,31 @@ if (process.platform !== 'win32') {
 
     }
 
-    server.listen('/var/tmp/test8.sock', () => {
-      const client = new Client({
+    server.listen('/var/tmp/test3.sock', () => {
+      client = new Client({
         hostname: 'localhost',
         protocol: 'https:'
       }, {
-        socketPath: '/var/tmp/test8.sock',
+        socketPath: '/var/tmp/test3.sock',
         tls: {
           rejectUnauthorized: false
         }
       })
-      t.teardown(client.close.bind(client))
 
       client.request({ path: '/', method: 'GET' }, (err, data) => {
-        t.error(err)
+        p.ifError(err)
         const { statusCode, headers, body } = data
-        t.equal(statusCode, 200)
-        t.equal(headers['content-type'], 'text/plain')
+        p.equal(statusCode, 200)
+        p.equal(headers['content-type'], 'text/plain')
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+          p.equal('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
     })
+    await p.completed
   })
 }
