@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('http')
 const { nodeMajor, nodeMinor } = require('../../lib/core/util')
 const { fetch } = require('../..')
@@ -12,27 +13,28 @@ const {
 
 const skip = nodeMajor === 18 && nodeMinor < 2
 
-test('should create a PerformanceResourceTiming after each fetch request', { skip }, (t) => {
-  t.plan(8)
+test('should create a PerformanceResourceTiming after each fetch request', { skip }, (t, done) => {
+  const { strictEqual, ok, deepStrictEqual } = tspl(t, { plan: 8 })
 
   const obs = new PerformanceObserver(list => {
     const expectedResourceEntryName = `http://localhost:${server.address().port}/`
 
     const entries = list.getEntries()
-    t.equal(entries.length, 1)
+    strictEqual(entries.length, 1)
     const [entry] = entries
-    t.same(entry.name, expectedResourceEntryName)
-    t.strictSame(entry.entryType, 'resource')
+    strictEqual(entry.name, expectedResourceEntryName)
+    strictEqual(entry.entryType, 'resource')
 
-    t.ok(entry.duration >= 0)
-    t.ok(entry.startTime >= 0)
+    ok(entry.duration >= 0)
+    ok(entry.startTime >= 0)
 
     const entriesByName = list.getEntriesByName(expectedResourceEntryName)
-    t.equal(entriesByName.length, 1)
-    t.strictSame(entriesByName[0], entry)
+    strictEqual(entriesByName.length, 1)
+    deepStrictEqual(entriesByName[0], entry)
 
     obs.disconnect()
     performance.clearResourceTimings()
+    done()
   })
 
   obs.observe({ entryTypes: ['resource'] })
@@ -41,22 +43,23 @@ test('should create a PerformanceResourceTiming after each fetch request', { ski
     res.end('ok')
   }).listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
-    t.strictSame('ok', await body.text())
+    strictEqual('ok', await body.text())
   })
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 })
 
-test('should include encodedBodySize in performance entry', { skip }, (t) => {
-  t.plan(4)
+test('should include encodedBodySize in performance entry', { skip }, (t, done) => {
+  const { strictEqual } = tspl(t, { plan: 4 })
   const obs = new PerformanceObserver(list => {
     const [entry] = list.getEntries()
-    t.equal(entry.encodedBodySize, 2)
-    t.equal(entry.decodedBodySize, 2)
-    t.equal(entry.transferSize, 2 + 300)
+    strictEqual(entry.encodedBodySize, 2)
+    strictEqual(entry.decodedBodySize, 2)
+    strictEqual(entry.transferSize, 2 + 300)
 
     obs.disconnect()
     performance.clearResourceTimings()
+    done()
   })
 
   obs.observe({ entryTypes: ['resource'] })
@@ -65,33 +68,34 @@ test('should include encodedBodySize in performance entry', { skip }, (t) => {
     res.end('ok')
   }).listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
-    t.strictSame('ok', await body.text())
+    strictEqual('ok', await body.text())
   })
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 })
 
-test('timing entries should be in order', { skip }, (t) => {
-  t.plan(13)
+test('timing entries should be in order', { skip }, (t, done) => {
+  const { ok, strictEqual } = tspl(t, { plan: 13 })
   const obs = new PerformanceObserver(list => {
     const [entry] = list.getEntries()
 
-    t.ok(entry.startTime > 0)
-    t.ok(entry.fetchStart >= entry.startTime)
-    t.ok(entry.domainLookupStart >= entry.fetchStart)
-    t.ok(entry.domainLookupEnd >= entry.domainLookupStart)
-    t.ok(entry.connectStart >= entry.domainLookupEnd)
-    t.ok(entry.connectEnd >= entry.connectStart)
-    t.ok(entry.requestStart >= entry.connectEnd)
-    t.ok(entry.responseStart >= entry.requestStart)
-    t.ok(entry.responseEnd >= entry.responseStart)
-    t.ok(entry.duration > 0)
+    ok(entry.startTime > 0)
+    ok(entry.fetchStart >= entry.startTime)
+    ok(entry.domainLookupStart >= entry.fetchStart)
+    ok(entry.domainLookupEnd >= entry.domainLookupStart)
+    ok(entry.connectStart >= entry.domainLookupEnd)
+    ok(entry.connectEnd >= entry.connectStart)
+    ok(entry.requestStart >= entry.connectEnd)
+    ok(entry.responseStart >= entry.requestStart)
+    ok(entry.responseEnd >= entry.responseStart)
+    ok(entry.duration > 0)
 
-    t.ok(entry.redirectStart === 0)
-    t.ok(entry.redirectEnd === 0)
+    ok(entry.redirectStart === 0)
+    ok(entry.redirectEnd === 0)
 
     obs.disconnect()
     performance.clearResourceTimings()
+    done()
   })
 
   obs.observe({ entryTypes: ['resource'] })
@@ -100,23 +104,24 @@ test('timing entries should be in order', { skip }, (t) => {
     res.end('ok')
   }).listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}/redirect`)
-    t.strictSame('ok', await body.text())
+    strictEqual('ok', await body.text())
   })
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 })
 
-test('redirect timing entries should be included when redirecting', { skip }, (t) => {
-  t.plan(4)
+test('redirect timing entries should be included when redirecting', { skip }, (t, done) => {
+  const { ok, strictEqual } = tspl(t, { plan: 4 })
   const obs = new PerformanceObserver(list => {
     const [entry] = list.getEntries()
 
-    t.ok(entry.redirectStart >= entry.startTime)
-    t.ok(entry.redirectEnd >= entry.redirectStart)
-    t.ok(entry.connectStart >= entry.redirectEnd)
+    ok(entry.redirectStart >= entry.startTime)
+    ok(entry.redirectEnd >= entry.redirectStart)
+    ok(entry.connectStart >= entry.redirectEnd)
 
     obs.disconnect()
     performance.clearResourceTimings()
+    done()
   })
 
   obs.observe({ entryTypes: ['resource'] })
@@ -131,8 +136,8 @@ test('redirect timing entries should be included when redirecting', { skip }, (t
     res.end('ok')
   }).listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}/redirect`)
-    t.strictSame('ok', await body.text())
+    strictEqual('ok', await body.text())
   })
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 })

@@ -1,11 +1,14 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 
 const undici = require('../..')
 const { fetch: theoreticalGlobalFetch } = require('../../undici-fetch')
 
 test('Mocking works with both fetches', async (t) => {
+  const { strictEqual } = tspl(t, { plan: 3 })
+
   const mockAgent = new undici.MockAgent()
   const body = JSON.stringify({ foo: 'bar' })
 
@@ -17,7 +20,7 @@ test('Mocking works with both fetches', async (t) => {
     path: '/path',
     method: 'POST',
     body (bodyString) {
-      t.equal(bodyString, body)
+      strictEqual(bodyString, body)
       return true
     }
   }).reply(200, { ok: 1 }).times(2)
@@ -35,6 +38,4 @@ test('Mocking works with both fetches', async (t) => {
     method: 'POST',
     body
   })
-
-  t.end()
 })
