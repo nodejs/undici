@@ -34,27 +34,24 @@ test('request with correct integrity checksum', (t, done) => {
   })
 })
 
-test('request with wrong integrity checksum', (t, done) => {
+test('request with wrong integrity checksum', async (t) => {
   const body = 'Hello world!'
   const hash = 'c0535e4be2b79ffd93291305436bf889314e4a3faec05ecffcbb7df31ad9e51b'
 
   const server = createServer((req, res) => {
     res.end(body)
-  })
+  }).listen(0)
 
   t.after(server.close.bind(server))
+  await once(server, 'listening')
 
-  server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha256-${hash}`
-    }).then(response => {
-      assert.ok(true)
-    }).catch((err) => {
-      assert.strictEqual(err.cause.message, 'integrity mismatch')
-    }).finally(() => {
-      done()
-    })
+  const expectedError = new TypeError('fetch failed', {
+    cause: new Error('integrity mismatch')
   })
+
+  await assert.rejects(fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha256-${hash}`
+  }), expectedError)
 })
 
 test('request with integrity checksum on encoded body', (t, done) => {
