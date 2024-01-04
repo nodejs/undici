@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Writable } = require('stream')
-const { MockAgent, errors, stream } = require('..')
+const { MockAgent, stream } = require('..')
 
 test('stream() does not fail after request has been aborted', async (t) => {
   t.plan(1)
