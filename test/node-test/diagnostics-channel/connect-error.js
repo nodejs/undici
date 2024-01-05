@@ -12,7 +12,7 @@ try {
   process.exit(0)
 }
 
-const { Client } = require('../..')
+const { Client } = require('../../..')
 
 test('Diagnostics channel - connect error', (t) => {
   const connectError = new Error('custom error')

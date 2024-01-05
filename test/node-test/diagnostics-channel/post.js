@@ -12,7 +12,7 @@ try {
   process.exit(0)
 }
 
-const { Client } = require('../..')
+const { Client } = require('../../..')
 const { createServer } = require('http')
 
 test('Diagnostics channel - post', (t) => {
