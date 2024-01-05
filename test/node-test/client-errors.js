@@ -781,7 +781,7 @@ test('validate request body', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => client.close.bind(client)())
+    t.after(() => { client.close() })
 
     client.request({
       path: '/',
@@ -1046,7 +1046,7 @@ test('retry idempotent inflight', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.after(() => client.close.bind(client)())
+    t.after(() => { client.close() })
 
     client.request({
       path: '/',
