@@ -12,7 +12,7 @@ try {
   process.exit(0)
 }
 
-const { Client } = require('../..')
+const { Client } = require('../../..')
 const { createServer } = require('http')
 
 test('Diagnostics channel - get', (t) => {
@@ -51,7 +51,7 @@ test('Diagnostics channel - get', (t) => {
     _connector = connector
 
     assert.equal(typeof _connector, 'function')
-    assert.equal(Object.keys(connectParams).length, 6)
+    assert.equal(Object.keys(connectParams).length, 7)
 
     const { host, hostname, protocol, port, servername } = connectParams
 
@@ -67,7 +67,7 @@ test('Diagnostics channel - get', (t) => {
     _socket = socket
 
     assert.equal(_connector, connector)
-    assert.equal(Object.keys(connectParams).length, 6)
+    assert.equal(Object.keys(connectParams).length, 7)
 
     const { host, hostname, protocol, port, servername } = connectParams
 

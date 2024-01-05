@@ -12,7 +12,7 @@ try {
   process.exit(0)
 }
 
-const { Client } = require('../../..')
+const { Client } = require('../../../')
 const { createServer } = require('http')
 
 test('Diagnostics channel - post', (t) => {
@@ -51,7 +51,7 @@ test('Diagnostics channel - post', (t) => {
     _connector = connector
 
     assert.equal(typeof _connector, 'function')
-    assert.equal(Object.keys(connectParams).length, 6)
+    assert.equal(Object.keys(connectParams).length, 7)
 
     const { host, hostname, protocol, port, servername } = connectParams
 
@@ -66,7 +66,7 @@ test('Diagnostics channel - post', (t) => {
   diagnosticsChannel.channel('undici:client:connected').subscribe(({ connectParams, socket, connector }) => {
     _socket = socket
 
-    assert.equal(Object.keys(connectParams).length, 6)
+    assert.equal(Object.keys(connectParams).length, 7)
     assert.equal(_connector, connector)
 
     const { host, hostname, protocol, port, servername } = connectParams
