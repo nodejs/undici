@@ -36,7 +36,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       abortController.abort()
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        p.ok(err instanceof errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError || err instanceof DOMException)
       })
     })
 
@@ -73,7 +73,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       })
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        p.ok(err instanceof errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError || err instanceof DOMException)
       })
 
       abortController.abort()
@@ -98,7 +98,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        p.ok(err instanceof errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError || err instanceof DOMException)
       })
     })
 
@@ -122,7 +122,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-        p.ok(err instanceof errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError || err instanceof DOMException)
       })
     })
 
@@ -149,7 +149,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
           abortController.abort()
         })
         response.body.on('error', err => {
-          p.ok(err instanceof errors.RequestAbortedError)
+          p.ok(err instanceof errors.RequestAbortedError || err instanceof DOMException)
         })
       })
     })
@@ -174,7 +174,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {
-          p.ok(err instanceof errors.RequestAbortedError)
+          p.ok(err instanceof errors.RequestAbortedError || err instanceof DOMException)
         })
       })
       await p.completed
@@ -204,7 +204,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {
-          p.ok(err instanceof errors.RequestAbortedError)
+          p.ok(err instanceof errors.RequestAbortedError || err instanceof DOMException)
         })
       })
       await p.completed
@@ -237,7 +237,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
             abortController.abort()
           })
           response.body.on('error', err => {
-            p.ok(err instanceof errors.RequestAbortedError)
+            p.ok(err instanceof errors.RequestAbortedError || err instanceof DOMException)
           })
         })
       })

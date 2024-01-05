@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Writable } = require('stream')
-const { MockAgent, errors, stream } = require('..')
+const { MockAgent, stream } = require('..')
 
 test('stream() does not fail after request has been aborted', async (t) => {
   t.plan(1)
@@ -21,7 +21,7 @@ test('stream() does not fail after request has been aborted', async (t) => {
   const parts = []
   const ac = new AbortController()
 
-  setTimeout(() => ac.abort('nevermind'), 5)
+  setTimeout(() => ac.abort(), 5)
 
   try {
     await stream(
@@ -42,6 +42,6 @@ test('stream() does not fail after request has been aborted', async (t) => {
     )
   } catch (error) {
     console.log(error)
-    t.equal(error instanceof errors.RequestAbortedError, true)
+    t.equal(error instanceof DOMException, true)
   }
 })
