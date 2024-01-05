@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('node:assert')
 const { createServer } = require('http')
 const { once } = require('events')
 const { fetch } = require('../..')
@@ -20,12 +21,12 @@ test('Redirecting with a body does not cancel the current request - #1776', asyn
     res.end()
   }).listen(0)
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
   await once(server, 'listening')
 
   const resp = await fetch(`http://localhost:${server.address().port}/redirect`)
-  t.equal(await resp.text(), '/redirect/')
-  t.ok(resp.redirected)
+  assert.strictEqual(await resp.text(), '/redirect/')
+  assert.ok(resp.redirected)
 })
 
 test('Redirecting with an empty body does not throw an error - #2027', async (t) => {
@@ -41,12 +42,12 @@ test('Redirecting with an empty body does not throw an error - #2027', async (t)
     res.end()
   }).listen(0)
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
   await once(server, 'listening')
 
   const resp = await fetch(`http://localhost:${server.address().port}/redirect`, { method: 'PUT', body: '' })
-  t.equal(await resp.text(), '/redirect/')
-  t.ok(resp.redirected)
+  assert.strictEqual(await resp.text(), '/redirect/')
+  assert.ok(resp.redirected)
 })
 
 test('Redirecting with a body does not fail to write body - #2543', async (t) => {
@@ -58,19 +59,19 @@ test('Redirecting with a body does not fail to write body - #2543', async (t) =>
     } else {
       let body = ''
       req.on('data', (chunk) => { body += chunk })
-      req.on('end', () => t.equals(body, 'body'))
+      req.on('end', () => assert.strictEqual(body, 'body'))
       res.write('ok')
       res.end()
     }
   }).listen(0)
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
   await once(server, 'listening')
 
   const resp = await fetch(`http://localhost:${server.address().port}/redirect`, {
     method: 'POST',
     body: 'body'
   })
-  t.equal(await resp.text(), 'ok')
-  t.ok(resp.redirected)
+  assert.strictEqual(await resp.text(), 'ok')
+  assert.ok(resp.redirected)
 })

@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('assert')
 const { Response } = require('../../')
 
 // https://github.com/web-platform-tests/wpt/pull/32825/
@@ -17,97 +18,81 @@ const INIT_TESTS = [
   [{ headers: { 'x-foo': 'bar' } }, 200, '', APPLICATION_JSON, { 'x-foo': 'bar' }]
 ]
 
-test('Check response returned by static json() with init', async (t) => {
+test('Check response returned by static json() with init', async () => {
   for (const [init, expectedStatus, expectedStatusText, expectedContentType, expectedHeaders] of INIT_TESTS) {
     const response = Response.json('hello world', init)
-    t.equal(response.type, 'default', "Response's type is default")
-    t.equal(response.status, expectedStatus, "Response's status is " + expectedStatus)
-    t.equal(response.statusText, expectedStatusText, "Response's statusText is " + JSON.stringify(expectedStatusText))
-    t.equal(response.headers.get('content-type'), expectedContentType, "Response's content-type is " + expectedContentType)
+    assert.strictEqual(response.type, 'default', "Response's type is default")
+    assert.strictEqual(response.status, expectedStatus, "Response's status is " + expectedStatus)
+    assert.strictEqual(response.statusText, expectedStatusText, "Response's statusText is " + JSON.stringify(expectedStatusText))
+    assert.strictEqual(response.headers.get('content-type'), expectedContentType, "Response's content-type is " + expectedContentType)
     for (const key in expectedHeaders) {
-      t.equal(response.headers.get(key), expectedHeaders[key], "Response's header " + key + ' is ' + JSON.stringify(expectedHeaders[key]))
+      assert.strictEqual(response.headers.get(key), expectedHeaders[key], "Response's header " + key + ' is ' + JSON.stringify(expectedHeaders[key]))
     }
 
     const data = await response.json()
-    t.equal(data, 'hello world', "Response's body is 'hello world'")
+    assert.strictEqual(data, 'hello world', "Response's body is 'hello world'")
   }
-
-  t.end()
 })
 
-test('Throws TypeError when calling static json() with an invalid status', (t) => {
+test('Throws TypeError when calling static json() with an invalid status', () => {
   const nullBodyStatus = [204, 205, 304]
 
   for (const status of nullBodyStatus) {
-    t.throws(() => {
+    assert.throws(() => {
       Response.json('hello world', { status })
     }, TypeError, `Throws TypeError when calling static json() with a status of ${status}`)
   }
-
-  t.end()
 })
 
-test('Check static json() encodes JSON objects correctly', async (t) => {
+test('Check static json() encodes JSON objects correctly', async () => {
   const response = Response.json({ foo: 'bar' })
   const data = await response.json()
-  t.equal(typeof data, 'object', "Response's json body is an object")
-  t.equal(data.foo, 'bar', "Response's json body is { foo: 'bar' }")
-
-  t.end()
+  assert.strictEqual(typeof data, 'object', "Response's json body is an object")
+  assert.strictEqual(data.foo, 'bar', "Response's json body is { foo: 'bar' }")
 })
 
-test('Check static json() throws when data is not encodable', (t) => {
-  t.throws(() => {
+test('Check static json() throws when data is not encodable', () => {
+  assert.throws(() => {
     Response.json(Symbol('foo'))
   }, TypeError)
-
-  t.end()
 })
 
-test('Check static json() throws when data is circular', (t) => {
+test('Check static json() throws when data is circular', () => {
   const a = { b: 1 }
   a.a = a
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.json(a)
   }, TypeError)
-
-  t.end()
 })
 
-test('Check static json() propagates JSON serializer errors', (t) => {
+test('Check static json() propagates JSON serializer errors', () => {
   class CustomError extends Error {
     name = 'CustomError'
   }
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.json({ get foo () { throw new CustomError('bar') } })
   }, CustomError)
-
-  t.end()
 })
 
 // note: these tests are not part of any WPTs
-test('unserializable values', (t) => {
-  t.throws(() => {
+test('unserializable values', () => {
+  assert.throws(() => {
     Response.json(Symbol('symbol'))
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.json(undefined)
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.json()
   }, TypeError)
-
-  t.end()
 })
 
-test('invalid init', (t) => {
-  t.throws(() => {
+test('invalid init', () => {
+  assert.throws(() => {
     Response.json(null, 3)
   }, TypeError)
-
-  t.end()
 })
