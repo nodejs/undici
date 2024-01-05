@@ -1,41 +1,36 @@
 'use strict'
 
-const { TernarySearchTree, tree } = require('../lib/core/tree')
-const { wellknownHeaderNames, headerNameLowerCasedRecord } = require('../lib/core/constants')
-const { test } = require('tap')
+const { TernarySearchTree, tree } = require('../../lib/core/tree')
+const { wellknownHeaderNames, headerNameLowerCasedRecord } = require('../../lib/core/constants')
+const { describe, test } = require('node:test')
+const assert = require('node:assert')
 
-test('Ternary Search Tree', (t) => {
-  t.plan(4)
-
-  t.test('The empty key cannot be added.', (t) => {
-    t.plan(2)
-    t.throws(() => new TernarySearchTree().insert(Buffer.from(''), ''))
+describe('Ternary Search Tree', () => {
+  test('The empty key cannot be added.', () => {
+    assert.throws(() => new TernarySearchTree().insert(Buffer.from(''), ''))
     const tst = new TernarySearchTree()
     tst.insert(Buffer.from('a'), 'a')
-    t.throws(() => tst.insert(Buffer.from(''), ''))
+    assert.throws(() => tst.insert(Buffer.from(''), ''))
   })
 
-  t.test('duplicate key', (t) => {
-    t.plan(2)
+  test('duplicate key', () => {
     const tst = new TernarySearchTree()
     const key = Buffer.from('a')
     tst.insert(key, 'a')
-    t.equal(tst.lookup(key), 'a')
+    assert.strictEqual(tst.lookup(key), 'a')
     tst.insert(key, 'b')
-    t.equal(tst.lookup(key), 'b')
+    assert.strictEqual(tst.lookup(key), 'b')
   })
 
-  t.test('tree', (t) => {
-    t.plan(wellknownHeaderNames.length)
+  test('tree', () => {
     for (let i = 0; i < wellknownHeaderNames.length; ++i) {
       const key = wellknownHeaderNames[i]
-      t.equal(tree.lookup(Buffer.from(key)), headerNameLowerCasedRecord[key])
+      assert.strictEqual(tree.lookup(Buffer.from(key)), headerNameLowerCasedRecord[key])
     }
   })
 
-  t.test('fuzz', (t) => {
+  test('fuzz', () => {
     const LENGTH = 2000
-    t.plan(LENGTH)
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
     const charactersLength = characters.length
 
@@ -61,7 +56,7 @@ test('Ternary Search Tree', (t) => {
     }
 
     for (let i = 0; i < LENGTH; ++i) {
-      t.equal(tst.lookup(randomBuffer[i]), random[i])
+      assert.strictEqual(tst.lookup(randomBuffer[i]), random[i])
     }
   })
 })
