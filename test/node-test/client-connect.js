@@ -29,7 +29,7 @@ test('basic connect', async (t) => {
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     const signal = new EE()
     const promise = client.connect({
@@ -69,7 +69,7 @@ test('connect error', async (t) => {
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     try {
       await client.connect({
@@ -137,7 +137,7 @@ test('connect wait for empty pipeline', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     client.request({
       path: '/',
@@ -242,7 +242,7 @@ test('basic connect error', async (t) => {
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     const _err = new Error()
     client.connect({

@@ -112,7 +112,7 @@ test('basic dispatch get', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     const bufs = []
     client.dispatch({
@@ -166,7 +166,7 @@ test('trailers dispatch get', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     const bufs = []
     client.dispatch({
@@ -214,7 +214,7 @@ test('dispatch onHeaders error', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     const _err = new Error()
     client.dispatch({
@@ -251,7 +251,7 @@ test('dispatch onComplete error', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     const _err = new Error()
     client.dispatch({
@@ -288,7 +288,7 @@ test('dispatch onData error', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     const _err = new Error()
     client.dispatch({
@@ -325,7 +325,7 @@ test('dispatch onConnect error', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     const _err = new Error()
     client.dispatch({
@@ -375,7 +375,7 @@ test('connect call onUpgrade once', async (t) => {
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     let recvData = ''
     let count = 0
@@ -427,7 +427,7 @@ test('dispatch onConnect missing', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -461,7 +461,7 @@ test('dispatch onHeaders missing', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -494,7 +494,7 @@ test('dispatch onData missing', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -527,7 +527,7 @@ test('dispatch onComplete missing', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -560,7 +560,7 @@ test('dispatch onError missing', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     try {
       client.dispatch({
@@ -628,7 +628,7 @@ test('dispatch upgrade onUpgrade missing', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -659,7 +659,7 @@ test('dispatch pool onError missing', async (t) => {
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     try {
       client.dispatch({
@@ -686,7 +686,7 @@ test('dispatch onBodySent not a function', async (t) => {
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -716,7 +716,7 @@ test('dispatch onBodySent buffer', async (t) => {
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
     const body = 'hello 🚀'
     client.dispatch({
       path: '/',
@@ -755,7 +755,7 @@ test('dispatch onBodySent stream', async (t) => {
   const body = stream.Readable.from(chunks)
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
     let sentBytes = 0
     let currentChunk = 0
     client.dispatch({
@@ -796,7 +796,7 @@ test('dispatch onBodySent async-iterable', (t, done) => {
   const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
     let sentBytes = 0
     let currentChunk = 0
     client.dispatch({
@@ -831,7 +831,7 @@ test('dispatch onBodySent throws error', (t, done) => {
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
     const body = 'hello'
     client.dispatch({
       path: '/',
@@ -865,7 +865,7 @@ test('dispatches in expected order', async (t) => {
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
 
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     const dispatches = []
 
@@ -924,7 +924,7 @@ test('dispatches in expected order for http2', async (t) => {
       allowH2: true
     })
 
-    t.after(() => { client.close() })
+    t.after(() => { return client.close() })
 
     const dispatches = []
 
