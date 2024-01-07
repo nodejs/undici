@@ -210,14 +210,12 @@ test('constructing a Response with a ReadableStream body', { skip: process.versi
     const response1 = new Response(readable)
     const response2 = response1.clone()
     const response3 = response1.clone()
-    // const response4 = response1.clone()
+    const response4 = response1.clone()
 
     await assert.rejects(response1.arrayBuffer(), TypeError)
     await assert.rejects(response2.text(), TypeError)
     await assert.rejects(response3.json(), TypeError)
-    // TODO: on Node v16.8.0, this throws a TypeError
-    // because the body is detected as disturbed.
-    // await t.rejects(response4.blob(), TypeError)
+    await assert.rejects(response4.blob(), TypeError)
   })
 })
 
