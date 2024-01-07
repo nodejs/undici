@@ -55,10 +55,6 @@ test('debug#fetch', async t => {
   child.stderr.setEncoding('utf8')
 
   for await (const chunk of child.stderr) {
-    if (chunk.includes('[UNDICI-WS] Warning')) {
-      continue
-    }
-
     assert.match(
       chunk,
       /(FETCH [0-9]+:) (connecting to|connected to|sending request|received response|trailers received|request to)/
