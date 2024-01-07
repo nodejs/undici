@@ -273,7 +273,7 @@ for (const factory of [
     try {
       const { statusCode, headers, body: bodyStream, context: { history } } = await request(t, server, undefined, `http://${server}/300`, {
         maxRedirections: 2,
-        redirectionLimitReached: 2
+        throwOnMaxRedirect: true
       })
 
       const body = await bodyStream.text()
