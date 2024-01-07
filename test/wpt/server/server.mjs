@@ -370,6 +370,42 @@ const server = createServer(async (req, res) => {
       res.end()
       return
     }
+    case '/service-workers/cache-storage/this-resource-should-not-exist':
+    case '/service-workers/cache-storage/this-does-not-exist-please-dont-create-it': {
+      res.statusCode = 404
+      res.end()
+      return
+    }
+    case '/service-workers/cache-storage/resources/vary.py': {
+      if (fullUrl.searchParams.has('clear-vary-value-override-cookie')) {
+        res.setHeader('cookie', '')
+        res.end('vary cookie cleared')
+        return
+      }
+
+      const setCookieVary = fullUrl.searchParams.get('set-vary-value-override-cookie') ?? ''
+
+      if (setCookieVary) {
+        res.setHeader('set-cookie', `vary-value-override=${setCookieVary}`)
+        res.end('vary cookie set')
+        return
+      }
+
+      const cookieVary = req.headers.cookie?.split(';').find((c) => c.includes('vary-value-override='))
+
+      if (cookieVary) {
+        res.setHeader('vary', `${cookieVary}`)
+      } else {
+        const queryVary = fullUrl.searchParams.get('vary')
+
+        if (queryVary) {
+          res.setHeader('vary', queryVary)
+        }
+      }
+
+      res.end('vary response')
+      return
+    }
     default: {
       res.statusCode = 200
       res.end(fullUrl.toString())
