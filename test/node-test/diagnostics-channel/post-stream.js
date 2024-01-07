@@ -2,6 +2,7 @@
 
 const { test, skip, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
+const { Readable } = require('stream')
 
 let diagnosticsChannel
 
@@ -12,12 +13,13 @@ try {
   process.exit(0)
 }
 
-const { Client } = require('../..')
+const { Client } = require('../../..')
 const { createServer } = require('http')
 
-test('Diagnostics channel - get', (t) => {
-  const assert = tspl(t, { plan: 32 })
+test('Diagnostics channel - post stream', (t) => {
+  const assert = tspl(t, { plan: 33 })
   const server = createServer((req, res) => {
+    req.resume()
     res.setHeader('Content-Type', 'text/plain')
     res.setHeader('trailer', 'foo')
     res.write('hello')
@@ -26,24 +28,24 @@ test('Diagnostics channel - get', (t) => {
     })
     res.end()
   })
-
   after(server.close.bind(server))
 
   const reqHeaders = {
     foo: undefined,
     bar: 'bar'
   }
+  const body = Readable.from(['hello', ' ', 'world'])
 
   let _req
   diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
     _req = request
-    assert.equal(request.origin, `http://localhost:${server.address().port}`)
     assert.equal(request.completed, false)
-    assert.equal(request.method, 'GET')
+    assert.equal(request.method, 'POST')
     assert.equal(request.path, '/')
     assert.equal(request.headers, 'bar: bar\r\n')
     request.addHeader('hello', 'world')
     assert.equal(request.headers, 'bar: bar\r\nhello: world\r\n')
+    assert.deepStrictEqual(request.body, body)
   })
 
   let _connector
@@ -51,7 +53,7 @@ test('Diagnostics channel - get', (t) => {
     _connector = connector
 
     assert.equal(typeof _connector, 'function')
-    assert.equal(Object.keys(connectParams).length, 6)
+    assert.equal(Object.keys(connectParams).length, 7)
 
     const { host, hostname, protocol, port, servername } = connectParams
 
@@ -66,8 +68,8 @@ test('Diagnostics channel - get', (t) => {
   diagnosticsChannel.channel('undici:client:connected').subscribe(({ connectParams, socket, connector }) => {
     _socket = socket
 
+    assert.equal(Object.keys(connectParams).length, 7)
     assert.equal(_connector, connector)
-    assert.equal(Object.keys(connectParams).length, 6)
 
     const { host, hostname, protocol, port, servername } = connectParams
 
@@ -83,7 +85,7 @@ test('Diagnostics channel - get', (t) => {
     assert.equal(_socket, socket)
 
     const expectedHeaders = [
-      'GET / HTTP/1.1',
+      'POST / HTTP/1.1',
       `host: localhost:${server.address().port}`,
       'connection: keep-alive',
       'bar: bar',
@@ -114,6 +116,10 @@ test('Diagnostics channel - get', (t) => {
     assert.equal(response.statusText, 'OK')
   })
 
+  diagnosticsChannel.channel('undici:request:bodySent').subscribe(({ request }) => {
+    assert.equal(_req, request)
+  })
+
   let endEmitted = false
 
   return new Promise((resolve) => {
@@ -134,12 +140,12 @@ test('Diagnostics channel - get', (t) => {
 
       client.request({
         path: '/',
-        method: 'GET',
-        headers: reqHeaders
+        method: 'POST',
+        headers: reqHeaders,
+        body
       }, (err, data) => {
         assert.ok(!err)
         client.close()
-
         data.body.on('end', function () {
           endEmitted = true
         })

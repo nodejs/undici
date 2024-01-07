@@ -12,7 +12,7 @@ try {
   process.exit(0)
 }
 
-const { Client } = require('../..')
+const { Client } = require('../../..')
 
 test('Diagnostics channel - connect error', (t) => {
   const connectError = new Error('custom error')
@@ -23,7 +23,7 @@ test('Diagnostics channel - connect error', (t) => {
     _connector = connector
 
     assert.equal(typeof _connector, 'function')
-    assert.equal(Object.keys(connectParams).length, 6)
+    assert.equal(Object.keys(connectParams).length, 7)
 
     const { host, hostname, protocol, port, servername } = connectParams
 
@@ -35,7 +35,7 @@ test('Diagnostics channel - connect error', (t) => {
   })
 
   diagnosticsChannel.channel('undici:client:connectError').subscribe(({ error, connectParams, connector }) => {
-    assert.equal(Object.keys(connectParams).length, 6)
+    assert.equal(Object.keys(connectParams).length, 7)
     assert.equal(_connector, connector)
 
     const { host, hostname, protocol, port, servername } = connectParams
