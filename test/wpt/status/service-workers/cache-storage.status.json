@@ -17,7 +17,8 @@
     "cache-match.https.any.js": {
       "note": "requires https server",
       "fail": [
-        "cors-exposed header should be stored correctly."
+        "cors-exposed header should be stored correctly.",
+        "Cache.match ignores vary headers on opaque response."
       ]
     }
   }
