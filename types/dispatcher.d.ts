@@ -229,7 +229,7 @@ declare namespace Dispatcher {
    * @link https://fetch.spec.whatwg.org/#body-mixin
    */
   interface BodyMixin {
-    readonly body?: never; // throws on node v16.6.0
+    readonly body?: never;
     readonly bodyUsed: boolean;
     arrayBuffer(): Promise<ArrayBuffer>;
     blob(): Promise<Blob>;
