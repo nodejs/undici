@@ -165,7 +165,7 @@ test('Modifying headers using Headers.prototype.set', () => {
 })
 
 // https://github.com/nodejs/node/issues/43838
-test('constructing a Response with a ReadableStream body', { skip: process.version.startsWith('v16.') }, async (t) => {
+test('constructing a Response with a ReadableStream body', async (t) => {
   const text = '{"foo":"bar"}'
   const uint8 = new TextEncoder().encode(text)
 
@@ -199,7 +199,7 @@ test('constructing a Response with a ReadableStream body', { skip: process.versi
     await assert.rejects(response.text(), TypeError)
   })
 
-  await t.test('Readable with ArrayBuffer chunk still throws', { skip: process.version.startsWith('v16.') }, async () => {
+  await t.test('Readable with ArrayBuffer chunk still throws', async () => {
     const readable = new ReadableStream({
       start (controller) {
         controller.enqueue(uint8.buffer)
@@ -210,14 +210,12 @@ test('constructing a Response with a ReadableStream body', { skip: process.versi
     const response1 = new Response(readable)
     const response2 = response1.clone()
     const response3 = response1.clone()
-    // const response4 = response1.clone()
+    const response4 = response1.clone()
 
     await assert.rejects(response1.arrayBuffer(), TypeError)
     await assert.rejects(response2.text(), TypeError)
     await assert.rejects(response3.json(), TypeError)
-    // TODO: on Node v16.8.0, this throws a TypeError
-    // because the body is detected as disturbed.
-    // await t.rejects(response4.blob(), TypeError)
+    await assert.rejects(response4.blob(), TypeError)
   })
 })
 

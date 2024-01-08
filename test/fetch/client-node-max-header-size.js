@@ -8,8 +8,7 @@ const command = 'node -e "require(\'./undici-fetch.js\').fetch(\'https://httpbin
 
 test("respect Node.js' --max-http-header-size", async () => {
   assert.throws(
-    // TODO: Drop the `--unhandled-rejections=throw` once we drop Node.js 14
-    () => execSync(`${command} --max-http-header-size=1 --unhandled-rejections=throw`),
+    () => execSync(`${command} --max-http-header-size=1`),
     /UND_ERR_HEADERS_OVERFLOW/,
     'max-http-header-size=1 should throw'
   )
