@@ -399,27 +399,17 @@ new Agent({
   DNSResolver: new MyCustomDNSResolver()
 })
 ```
-You can get and set the global DNSResolver:
 
-```js
-const { fetch, setGlobalDNSResolver, getGlobalDNSResolver, DNSResolver } = require('undici')
+All arguments match [`cacheable-lookup`](https://github.com/szmarczak/cacheable-lookup/tree/9e60c9f6e74a003692aec68f3ddad93afe613b8f) package
 
-setGlobalDNSResolver(new DNSResolver({ resolver: custom.dnsResolver  }))
-
-await fetch('http://example.com')
-
-const dnsResolver = getGlobalDNSResolver()
-const entry = await dnsResolver.lookup('example.com')
-```
-
-dnsResolver arguments:
+Extra arguments available in Undici:
 
 * **lookupOptions**
   * **family** `4 | 6 | 0` - Default: `0`
   * **hints** [`getaddrinfo flags`](https://nodejs.org/api/dns.html#supported-getaddrinfo-flags)
   * **all** `Boolean` - Default: `false`
 
-For other arguments see: https://github.com/szmarczak/cacheable-lookup/tree/9e60c9f6e74a003692aec68f3ddad93afe613b8f
+* **roundRobinStrategy** `'first' | 'random'` - Default: `'first'`
 
 ## Specification Compliance
 
