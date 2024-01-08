@@ -551,7 +551,6 @@ test('custom agent', (t, done) => {
       ok(true)
       return oldDispatch.call(this, options, handler)
     }
-    t.after(closeServerAsPromise(server))
     const body = await fetch(`http://localhost:${server.address().port}`, {
       dispatcher
     })
@@ -579,7 +578,6 @@ test('custom agent node fetch', (t, done) => {
       ok(true)
       return oldDispatch.call(this, options, handler)
     }
-    t.after(closeServerAsPromise(server))
     const body = await nodeFetch.fetch(`http://localhost:${server.address().port}`, {
       dispatcher
     })
