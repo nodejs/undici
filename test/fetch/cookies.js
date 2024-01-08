@@ -6,6 +6,7 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { fetch, Headers } = require('../..')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('Can receive set-cookie headers from a server using fetch - issue #1262', async (t) => {
   const server = createServer((req, res) => {
@@ -13,7 +14,7 @@ test('Can receive set-cookie headers from a server using fetch - issue #1262', a
     res.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const response = await fetch(`http://localhost:${server.address().port}`)
@@ -33,7 +34,7 @@ test('Can send cookies to a server with fetch - issue #1463', async (t) => {
     res.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const headersInit = [
@@ -55,7 +56,7 @@ test('Cookie header is delimited with a semicolon rather than a comma - issue #1
     res.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   await fetch(`http://localhost:${server.address().port}`, {

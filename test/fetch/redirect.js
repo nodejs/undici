@@ -5,6 +5,7 @@ const assert = require('node:assert')
 const { createServer } = require('http')
 const { once } = require('events')
 const { fetch } = require('../..')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 // https://github.com/nodejs/undici/issues/1776
 test('Redirecting with a body does not cancel the current request - #1776', async (t) => {
@@ -21,7 +22,7 @@ test('Redirecting with a body does not cancel the current request - #1776', asyn
     res.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const resp = await fetch(`http://localhost:${server.address().port}/redirect`)
@@ -42,7 +43,7 @@ test('Redirecting with an empty body does not throw an error - #2027', async (t)
     res.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const resp = await fetch(`http://localhost:${server.address().port}/redirect`, { method: 'PUT', body: '' })
@@ -65,7 +66,7 @@ test('Redirecting with a body does not fail to write body - #2543', async (t) =>
     }
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const resp = await fetch(`http://localhost:${server.address().port}/redirect`, {

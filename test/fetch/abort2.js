@@ -6,6 +6,8 @@ const { fetch } = require('../..')
 const { createServer } = require('http')
 const { once } = require('events')
 
+const { closeServerAsPromise } = require('../utils/node-http')
+
 /* global AbortController */
 
 test('parallel fetch with the same AbortController works as expected', async (t) => {
@@ -19,7 +21,7 @@ test('parallel fetch with the same AbortController works as expected', async (t)
     res.end(JSON.stringify(body))
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const abortController = new AbortController()
 

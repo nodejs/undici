@@ -8,6 +8,7 @@ const { kGuard } = require('../../lib/fetch/symbols')
 const { once } = require('events')
 const { fetch } = require('../..')
 const { createServer } = require('http')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('Headers initialization', async (t) => {
   await t.test('allows undefined', () => {
@@ -685,7 +686,7 @@ test('Headers.prototype.getSetCookie', async (t) => {
     }).listen(0)
 
     await once(server, 'listening')
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     const res = await fetch(`http://localhost:${server.address().port}`)
     const entries = Object.fromEntries(res.headers.entries())

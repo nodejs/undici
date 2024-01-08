@@ -15,6 +15,8 @@ const { gzipSync } = require('zlib')
 const { promisify } = require('util')
 const { randomFillSync, createHash } = require('crypto')
 
+const { closeServerAsPromise } = require('../utils/node-http')
+
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 1,
   keepAliveMaxTimeout: 1
@@ -41,7 +43,7 @@ test('request json', (t, done) => {
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
@@ -57,7 +59,7 @@ test('request text', (t, done) => {
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
@@ -73,7 +75,7 @@ test('request arrayBuffer', (t, done) => {
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
@@ -90,7 +92,7 @@ test('should set type of blob object to the value of the `Content-Type` header f
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify(obj))
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const response = await fetch(`http://localhost:${server.address().port}`)
@@ -104,7 +106,7 @@ test('pre aborted with readable request body', (t, done) => {
 
   const server = createServer((req, res) => {
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const ac = new AbortController()
@@ -129,7 +131,7 @@ test('pre aborted with closed readable request body', (t, done) => {
 
   const server = createServer((req, res) => {
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const ac = new AbortController()
@@ -163,7 +165,7 @@ test('unsupported formData 1', (t, done) => {
     res.setHeader('content-type', 'asdasdsad')
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     fetch(`http://localhost:${server.address().port}`)
@@ -193,7 +195,7 @@ test('multipart formdata not base64', async (t) => {
     res.write(formRaw)
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const listen = promisify(server.listen.bind(server))
   await listen(0)
@@ -221,7 +223,7 @@ test('multipart formdata base64', (t, done) => {
     }
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     fetch(`http://localhost:${server.address().port}`)
@@ -268,7 +270,7 @@ test('busboy emit error', async (t) => {
     res.write(formRaw)
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const listen = promisify(server.listen.bind(server))
   await listen(0)
@@ -296,7 +298,7 @@ test('urlencoded formData', (t, done) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
     res.end('field1=value1&field2=value2')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     fetch(`http://localhost:${server.address().port}`)
@@ -316,7 +318,7 @@ test('text with BOM', (t, done) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
     res.end('\uFEFFtest=\uFEFF')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     fetch(`http://localhost:${server.address().port}`)
@@ -335,7 +337,7 @@ test('formData with BOM', (t, done) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
     res.end('\uFEFFtest=\uFEFF')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     fetch(`http://localhost:${server.address().port}`)
@@ -353,7 +355,7 @@ test('locked blob body', (t, done) => {
   const server = createServer((req, res) => {
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const res = await fetch(`http://localhost:${server.address().port}`)
@@ -371,7 +373,7 @@ test('disturbed blob body', (t, done) => {
   const server = createServer((req, res) => {
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const res = await fetch(`http://localhost:${server.address().port}`)
@@ -403,7 +405,7 @@ test('redirect with body', (t, done) => {
       res.end(String(count))
     }
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const res = await fetch(`http://localhost:${server.address().port}`, {
@@ -431,7 +433,7 @@ test('redirect with stream', (t, done) => {
       }
     }, 50)
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const res = await fetch(`http://localhost:${server.address().port}`, {
@@ -485,7 +487,7 @@ test('post FormData with Blob', (t, done) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const res = await fetch(`http://localhost:${server.address().port}`, {
@@ -506,7 +508,7 @@ test('post FormData with File', (t, done) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const res = await fetch(`http://localhost:${server.address().port}`, {
@@ -537,7 +539,7 @@ test('custom agent', (t, done) => {
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const dispatcher = new Client('http://localhost:' + server.address().port, {
@@ -549,7 +551,7 @@ test('custom agent', (t, done) => {
       ok(true)
       return oldDispatch.call(this, options, handler)
     }
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
     const body = await fetch(`http://localhost:${server.address().port}`, {
       dispatcher
     })
@@ -565,7 +567,7 @@ test('custom agent node fetch', (t, done) => {
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const dispatcher = new Client('http://localhost:' + server.address().port, {
@@ -577,7 +579,7 @@ test('custom agent node fetch', (t, done) => {
       ok(true)
       return oldDispatch.call(this, options, handler)
     }
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
     const body = await nodeFetch.fetch(`http://localhost:${server.address().port}`, {
       dispatcher
     })
@@ -591,7 +593,7 @@ test('error on redirect', (t, done) => {
     res.statusCode = 302
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const errorCause = await fetch(`http://localhost:${server.address().port}`, {
@@ -610,7 +612,7 @@ test('fetching with Request object - issue #1527', async (t) => {
     res.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const body = JSON.stringify({ foo: 'bar' })
@@ -641,7 +643,7 @@ test('do not decode redirect body', (t, done) => {
     res.setHeader('content-encoding', 'gzip')
     res.end(gzipSync(JSON.stringify(obj)))
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}/resource`)
@@ -661,7 +663,7 @@ test('decode non-redirect body with location header', (t, done) => {
     res.setHeader('content-encoding', 'gzip')
     res.end(gzipSync(JSON.stringify(obj)))
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}/resource`)
@@ -687,7 +689,7 @@ test('Receiving non-Latin1 headers', async (t) => {
     res.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const url = `http://localhost:${server.address().port}`

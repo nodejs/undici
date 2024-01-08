@@ -7,6 +7,7 @@ const { createHook, executionAsyncId } = require('async_hooks')
 const { readFile } = require('fs')
 const { PassThrough } = require('stream')
 const { tspl } = require('@matteo.collina/tspl')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 const transactions = new Map()
 
@@ -154,7 +155,7 @@ test('async hooks client is destroyed', async (t) => {
       res.write('asd')
     })
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -189,7 +190,7 @@ test('async hooks pipeline handler', async (t) => {
   const server = createServer((req, res) => {
     res.end('hello')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)

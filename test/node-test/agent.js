@@ -17,6 +17,7 @@ const {
 } = require('../..')
 const importFresh = require('import-fresh')
 const { tspl } = require('@matteo.collina/tspl')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 describe('setGlobalDispatcher', () => {
   after(() => {
@@ -50,7 +51,7 @@ test('agent should call callback after closing internal pools', async (t) => {
     res.end(wanted)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const dispatcher = new Agent()
@@ -102,7 +103,7 @@ test('agent should close internal pools', async (t) => {
     res.end(wanted)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const dispatcher = new Agent()
@@ -143,7 +144,7 @@ test('agent should destroy internal pools and call callback', async (t) => {
     res.end(wanted)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const dispatcher = new Agent()
@@ -205,7 +206,7 @@ test('agent should destroy internal pools', async t => {
     res.end(wanted)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const dispatcher = new Agent()
@@ -246,7 +247,7 @@ test('multiple connections', async t => {
     })
     res.end('ok')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const origin = `http://localhost:${server.address().port}`
@@ -365,7 +366,7 @@ test('with globalAgent', async t => {
     res.end(wanted)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     request(`http://localhost:${server.address().port}`)
@@ -400,7 +401,7 @@ test('with local agent', async t => {
     res.end(wanted)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const dispatcher = new Agent({
     connect: {
@@ -451,7 +452,7 @@ test('with globalAgent', async t => {
     res.end(wanted)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     stream(
@@ -492,7 +493,7 @@ test('with a local agent', async t => {
     res.end(wanted)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const dispatcher = new Agent()
 
@@ -552,7 +553,7 @@ test('with globalAgent', async t => {
     res.end(wanted)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const bufs = []
@@ -593,7 +594,7 @@ test('with a local agent', async t => {
     res.end(wanted)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const dispatcher = new Agent()
 
@@ -734,7 +735,7 @@ test('drain', async t => {
     res.end('asd')
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     p.strictEqual(dispatcher.dispatch({
@@ -761,7 +762,7 @@ test('global api', async t => {
     req.pipe(res)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const origin = `http://localhost:${server.address().port}`

@@ -12,6 +12,8 @@ const pem = require('https-pem')
 
 const { Client, fetch, Headers } = require('../..')
 
+const { closeServerAsPromise } = require('../utils/node-http')
+
 const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
 
 test('[Fetch] Issue#2311', async (t) => {
@@ -62,7 +64,7 @@ test('[Fetch] Issue#2311', async (t) => {
 
   const responseBody = await response.text()
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   t.after(() => client.close())
 
   strictEqual(responseBody, expectedBody)
@@ -110,7 +112,7 @@ test('[Fetch] Simple GET with h2', async (t) => {
 
   const responseBody = await response.text()
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   t.after(() => client.close())
 
   strictEqual(responseBody, expectedRequestBody)
@@ -171,7 +173,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) 
 
   const responseBody = await response.text()
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   t.after(() => client.close())
 
   strictEqual(Buffer.concat(requestBody).toString('utf-8'), expectedBody)
@@ -218,7 +220,7 @@ test(
       allowH2: true
     })
 
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
     t.after(() => client.close())
 
     const response = await fetch(
@@ -281,7 +283,7 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async (t) => 
     allowH2: true
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   t.after(() => client.close())
 
   const response = await fetch(
@@ -348,7 +350,7 @@ test(
       allowH2: true
     })
 
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
     t.after(() => client.close())
 
     const response = await fetch(
@@ -407,7 +409,7 @@ test('Issue#2415', async (t) => {
 
   await response.text()
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   t.after(() => client.close())
 
   doesNotThrow(() => new Headers(response.headers))
@@ -449,7 +451,7 @@ test('Issue #2386', async (t) => {
     allowH2: true
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   t.after(() => client.close())
 
   await fetch(

@@ -7,6 +7,8 @@ const { fetch } = require('../..')
 const { createServer } = require('http')
 const { once } = require('events')
 
+const { closeServerAsPromise } = require('../utils/node-http')
+
 const { AbortController: NPMAbortController } = require('abort-controller')
 
 test('Allow the usage of custom implementation of AbortController', async (t) => {
@@ -19,7 +21,7 @@ test('Allow the usage of custom implementation of AbortController', async (t) =>
     res.end(JSON.stringify(body))
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0)
   await once(server, 'listening')
@@ -40,7 +42,7 @@ test('Allow the usage of custom implementation of AbortController', async (t) =>
 test('allows aborting with custom errors', async (t) => {
   const server = createServer().listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   await t.test('Using AbortSignal.timeout with cause', async () => {

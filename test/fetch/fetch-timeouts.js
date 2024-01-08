@@ -7,6 +7,7 @@ const { fetch, Agent } = require('../..')
 const timers = require('../../lib/timers')
 const { createServer } = require('http')
 const FakeTimers = require('@sinonjs/fake-timers')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('Fetch very long request, timeout overridden so no error', (t, done) => {
   const minutes = 6
@@ -29,7 +30,7 @@ test('Fetch very long request, timeout overridden so no error', (t, done) => {
     }, msToDelay)
     clock.tick(msToDelay + 1)
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     fetch(`http://localhost:${server.address().port}`, {

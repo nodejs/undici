@@ -6,6 +6,7 @@ const { createServer } = require('http')
 const { once } = require('events')
 const { fetch } = require('../..')
 const { createBrotliCompress, createGzip, createDeflate } = require('zlib')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('content-encoding header is case-iNsENsITIve', async (t) => {
   const contentCodings = 'GZiP, bR'
@@ -24,7 +25,7 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
     brotli.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const response = await fetch(`http://localhost:${server.address().port}`)
@@ -50,7 +51,7 @@ test('response decompression according to content-encoding should be handled in 
     gzip.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const response = await fetch(`http://localhost:${server.address().port}`)
