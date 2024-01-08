@@ -7,6 +7,7 @@ const { createServer } = require('http')
 const { createReadStream } = require('fs')
 const { wrapWithAsyncIterable } = require('../utils/async-iterators')
 const { tspl } = require('@matteo.collina/tspl')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 const controllers = [{
   AbortControllerImpl: NPMAbortController,
@@ -26,7 +27,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     const server = createServer((req, res) => {
       p.fail()
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -54,7 +55,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       count += 1
       res.end('hello')
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -91,7 +92,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       res.setHeader('content-type', 'text/plain')
       res.end('hello world')
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -115,7 +116,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       abortController.abort()
       res.end('hello world')
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -137,7 +138,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.write('hello')
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -167,7 +168,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         res.setHeader('content-type', 'text/plain')
         res.end('hello world')
       })
-      t.after(server.close.bind(server))
+      t.after(closeServerAsPromise(server))
 
       server.listen(0, () => {
         const client = new Client(`http://localhost:${server.address().port}`)
@@ -197,7 +198,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         abortController.abort()
         res.end('hello world')
       })
-      t.after(server.close.bind(server))
+      t.after(closeServerAsPromise(server))
 
       server.listen(0, () => {
         const client = new Client(`http://localhost:${server.address().port}`)
@@ -225,7 +226,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
         res.writeHead(200, { 'content-type': 'text/plain' })
         res.write('hello')
       })
-      t.after(server.close.bind(server))
+      t.after(closeServerAsPromise(server))
 
       server.listen(0, () => {
         const client = new Client(`http://localhost:${server.address().port}`)

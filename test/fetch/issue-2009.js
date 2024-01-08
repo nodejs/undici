@@ -5,6 +5,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
 const { createServer } = require('http')
 const { once } = require('events')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('issue 2009', async (t) => {
   const { doesNotReject } = tspl(t, { plan: 10 })
@@ -16,7 +17,7 @@ test('issue 2009', async (t) => {
     res.socket.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   for (let i = 0; i < 10; i++) {

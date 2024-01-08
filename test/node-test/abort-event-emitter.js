@@ -8,6 +8,7 @@ const { createReadStream } = require('fs')
 const { Readable } = require('stream')
 const { tspl } = require('@matteo.collina/tspl')
 const { wrapWithAsyncIterable } = require('../utils/async-iterators')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('Abort before sending request (no body)', async (t) => {
   const p = tspl(t, { plan: 4 })
@@ -21,7 +22,7 @@ test('Abort before sending request (no body)', async (t) => {
     res.end('hello')
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -70,7 +71,7 @@ test('Abort before sending request (no body) async iterator', async (t) => {
     res.end('hello')
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -113,7 +114,7 @@ test('Abort while waiting response (no body)', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('hello world')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -137,7 +138,7 @@ test('Abort while waiting response (write headers started) (no body)', async (t)
     ee.emit('abort')
     res.end('hello world')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -159,7 +160,7 @@ test('Abort while waiting response (write headers and write body started) (no bo
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.write('hello')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -188,7 +189,7 @@ function waitingWithBody (body, type) {
       res.setHeader('content-type', 'text/plain')
       res.end('hello world')
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -218,7 +219,7 @@ function writeHeadersStartedWithBody (body, type) {
       ee.emit('abort')
       res.end('hello world')
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -246,7 +247,7 @@ function writeBodyStartedWithBody (body, type) {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.write('hello')
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)

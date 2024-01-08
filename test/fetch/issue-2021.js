@@ -5,6 +5,7 @@ const assert = require('node:assert')
 const { once } = require('events')
 const { createServer } = require('http')
 const { fetch } = require('../..')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 // https://github.com/nodejs/undici/issues/2021
 test('content-length header is removed on redirect', async (t) => {
@@ -18,7 +19,7 @@ test('content-length header is removed on redirect', async (t) => {
     res.end()
   }).listen(0).unref()
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const body = 'a+b+c'

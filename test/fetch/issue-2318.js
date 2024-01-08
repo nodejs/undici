@@ -5,6 +5,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { once } = require('events')
 const { createServer } = require('http')
 const { fetch } = require('../..')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('Undici overrides user-provided `Host` header', async (t) => {
   const { strictEqual } = tspl(t, { plan: 1 })
@@ -15,7 +16,7 @@ test('Undici overrides user-provided `Host` header', async (t) => {
     res.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   await fetch(`http://localhost:${server.address().port}`, {

@@ -5,6 +5,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('http')
 const { nodeMajor, nodeMinor } = require('../../lib/core/util')
 const { fetch } = require('../..')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 const {
   PerformanceObserver,
@@ -46,7 +47,7 @@ test('should create a PerformanceResourceTiming after each fetch request', { ski
     strictEqual('ok', await body.text())
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 })
 
 test('should include encodedBodySize in performance entry', { skip }, (t, done) => {
@@ -71,7 +72,7 @@ test('should include encodedBodySize in performance entry', { skip }, (t, done) 
     strictEqual('ok', await body.text())
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 })
 
 test('timing entries should be in order', { skip }, (t, done) => {
@@ -107,7 +108,7 @@ test('timing entries should be in order', { skip }, (t, done) => {
     strictEqual('ok', await body.text())
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 })
 
 test('redirect timing entries should be included when redirecting', { skip }, (t, done) => {
@@ -139,5 +140,5 @@ test('redirect timing entries should be included when redirecting', { skip }, (t
     strictEqual('ok', await body.text())
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 })

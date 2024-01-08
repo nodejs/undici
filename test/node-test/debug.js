@@ -9,7 +9,7 @@ test('debug#websocket', async t => {
   const assert = tspl(t, { plan: 5 })
   const child = spawn(
     process.execPath,
-    [join(__dirname, 'fixtures/websocket.js')],
+    [join(__dirname, '../fixtures/websocket.js')],
     {
       env: {
         NODE_DEBUG: 'websocket'
@@ -40,7 +40,7 @@ test('debug#fetch', async t => {
   const assert = tspl(t, { plan: 10 })
   const child = spawn(
     process.execPath,
-    [join(__dirname, 'fixtures/fetch.js')],
+    [join(__dirname, '../fixtures/fetch.js')],
     {
       env: {
         NODE_DEBUG: 'fetch'
@@ -67,7 +67,7 @@ test('debug#undici', async t => {
   const assert = tspl(t, { plan: 10 })
   const child = spawn(
     process.execPath,
-    [join(__dirname, 'fixtures/undici.js')],
+    [join(__dirname, '../fixtures/undici.js')],
     {
       env: {
         NODE_DEBUG: 'undici'

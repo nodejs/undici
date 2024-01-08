@@ -11,6 +11,7 @@ const {
   Request,
   fetch
 } = require('../..')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 afterEach(() => setGlobalOrigin(undefined))
 
@@ -80,7 +81,7 @@ test('fetch', async (t) => {
     }).listen(0)
 
     setGlobalOrigin(`http://localhost:${server.address().port}`)
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
     await once(server, 'listening')
 
     await assert.doesNotReject(fetch('/relative/path'))
@@ -93,7 +94,7 @@ test('fetch', async (t) => {
     }).listen(0)
 
     setGlobalOrigin(`http://localhost:${server.address().port}`)
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
     await once(server, 'listening')
 
     const response = await fetch('/relative/path')

@@ -5,13 +5,14 @@ const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
 const { createServer } = require('http')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('do not leak', (t, done) => {
   const { ok } = tspl(t, { plan: 1 })
   const server = createServer((req, res) => {
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   let url
   let isDone = false

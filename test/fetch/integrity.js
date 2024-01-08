@@ -7,6 +7,7 @@ const { createHash, getHashes } = require('crypto')
 const { gzipSync } = require('zlib')
 const { fetch, setGlobalDispatcher, Agent } = require('../..')
 const { once } = require('events')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 const supportedHashes = getHashes()
 
@@ -23,7 +24,7 @@ test('request with correct integrity checksum', (t, done) => {
     res.end(body)
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const response = await fetch(`http://localhost:${server.address().port}`, {
@@ -42,7 +43,7 @@ test('request with wrong integrity checksum', async (t) => {
     res.end(body)
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const expectedError = new TypeError('fetch failed', {
@@ -63,7 +64,7 @@ test('request with integrity checksum on encoded body', (t, done) => {
     res.end(gzipSync(body))
   })
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const response = await fetch(`http://localhost:${server.address().port}`, {
@@ -79,7 +80,7 @@ test('request with a totally incorrect integrity', async (t) => {
     res.end()
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   await assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
@@ -95,7 +96,7 @@ test('request with mixed in/valid integrities', async (t) => {
     res.end(body)
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   await assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
@@ -111,7 +112,7 @@ test('request with sha384 hash', { skip: !supportedHashes.includes('sha384') }, 
     res.end(body)
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   // request should succeed
@@ -133,7 +134,7 @@ test('request with sha512 hash', { skip: !supportedHashes.includes('sha512') }, 
     res.end(body)
   }).listen(0)
 
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   // request should succeed
