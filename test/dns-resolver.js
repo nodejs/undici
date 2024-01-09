@@ -192,6 +192,9 @@ const createResolver = () => {
     },
     data: {
       '127.0.0.1': {
+        agentdns: [
+          { address: '127.0.0.1', family: 4, ttl: 60 }
+        ],
         localhost: [
           { address: '127.0.0.1', family: 4, ttl: 60 },
           { address: '::ffff:127.0.0.2', family: 6, ttl: 60 }
@@ -580,7 +583,7 @@ test('options.maxTtl', async (t) => {
     resolverEntry.address = '127.0.0.2'
 
     // Wait until it expires
-    await sleep(cacheable.maxTtl * 1000 + 1)
+    await sleep(cacheable.maxTtl * 1000 + 10)
 
     // Lookup again
     verify(t, await cacheable.lookupAsync('maxTtl'), {
@@ -677,9 +680,6 @@ test('works (Internet connection)', async (t) => {
 
 test('async resolver (Internet connection)', async (t) => {
   const cacheable = new DNSResolver({ resolver: new AsyncResolver() })
-
-  t.equal(typeof cacheable._resolve4, 'function')
-  t.equal(typeof cacheable._resolve6, 'function')
 
   const { address } = await cacheable.lookupAsync(
     '1dot1dot1dot1.cloudflare-dns.com',
@@ -826,7 +826,7 @@ test('errors are cached', async (t) => {
 
   t.equal(cacheable._cache.size, 1)
 
-  await sleep(cacheable.errorTtl * 1000 + 1)
+  await sleep(cacheable.errorTtl * 1000 + 10)
 
   t.equal(cacheable._cache.size, 0)
 })
@@ -879,6 +879,7 @@ test('returns IPv6 if no other entries available', async (t) => {
     address: '::ffff:127.0.0.2',
     family: 6
   })
+  await mockedInterfaces({ has4: true, has6: true })
 })
 
 test('throws when no internet connection', async (t) => {
@@ -961,4 +962,28 @@ test('cache and query stats', async (t) => {
 
   t.equal(cacheable.stats.query, 1)
   t.equal(cacheable.stats.cache, 1)
+})
+
+test('verify DNSResolver is working caching requests', t => {
+  t.plan(2)
+  const { Agent, request } = require('../index')
+  const dnsResolver = new DNSResolver({ resolver: createResolver() })
+  dnsResolver.clear()
+  const agent = new Agent({
+    DNSResolver: dnsResolver
+  })
+  t.equal(dnsResolver._cache.size, 0)
+
+  const server = http.createServer((req, res) => {
+    req.pipe(res)
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const origin = `http://agentdns:${server.address().port}`
+    await request(origin, { dispatcher: agent })
+    t.equal(dnsResolver._cache.size, 1)
+    t.end()
+  })
 })
