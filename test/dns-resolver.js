@@ -964,7 +964,7 @@ test('cache and query stats', async (t) => {
   t.equal(cacheable.stats.cache, 1)
 })
 
-test('verify DNSResolver is working caching requests', t => {
+test('agent: verify DNSResolver is working caching requests', t => {
   t.plan(2)
   const { Agent, request } = require('../index')
   const dnsResolver = new DNSResolver({ resolver: createResolver() })
@@ -984,6 +984,30 @@ test('verify DNSResolver is working caching requests', t => {
     const origin = `http://agentdns:${server.address().port}`
     await request(origin, { dispatcher: agent })
     t.equal(dnsResolver._cache.size, 1)
+    t.end()
+  })
+})
+
+test('agent verify DNSResolver is disabled', t => {
+  t.plan(2)
+  const { Agent, request } = require('../index')
+  const dnsResolver = new DNSResolver({ resolver: createResolver() })
+  dnsResolver.clear()
+  const agent = new Agent({
+    dnsResolverOptions: { disable: true }
+  })
+  t.equal(dnsResolver._cache.size, 0)
+
+  const server = http.createServer((req, res) => {
+    req.pipe(res)
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const origin = `http://localhost:${server.address().port}`
+    await request(origin, { dispatcher: agent })
+    t.equal(dnsResolver._cache.size, 0)
     t.end()
   })
 })
