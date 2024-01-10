@@ -376,7 +376,7 @@ Here is an example of how to configure a custom DNSResolver:
 
 ```js
 new Agent({
-    dnsResolver: {
+    dnsResolverOptions: {
       lookupOptions: { family: 6, hints: ALL }
     }
   })
@@ -386,7 +386,7 @@ To disable DNS caching for an agent:
 
 ```js
 new Agent({
-  dnsResolver: {
+  dnsResolverOptions: {
     disable: true
   }
 })
@@ -409,7 +409,7 @@ Extra arguments available in Undici:
   * **hints** [`getaddrinfo flags`](https://nodejs.org/api/dns.html#supported-getaddrinfo-flags)
   * **all** `Boolean` - Default: `false`
 
-* **roundRobinStrategy** `'first' | 'random'` - Default: `'first'`
+* **scheduling** `'first' | 'random'` - Default: `'first'`
 
 ## Specification Compliance
 

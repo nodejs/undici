@@ -34,6 +34,7 @@ const http = require('node:http')
 const { test } = require('tap')
 const originalDns = require('node:dns')
 const proxyquire = require('proxyquire')
+const { kDnsCacheSize, kDnsHostnamesToFallback } = require('../lib/core/symbols')
 const osStub = {}
 const dnsStub = {
   ...originalDns
@@ -692,11 +693,11 @@ test('clear() works', async (t) => {
   const cacheable = new DNSResolver({ resolver })
 
   await cacheable.lookupAsync('localhost')
-  t.equal(cacheable._cache.size, 1)
+  t.equal(cacheable[kDnsCacheSize], 1)
 
   cacheable.clear()
 
-  t.equal(cacheable._cache.size, 0)
+  t.equal(cacheable[kDnsCacheSize], 0)
 })
 
 test('ttl works', async (t) => {
@@ -706,11 +707,11 @@ test('ttl works', async (t) => {
     cacheable.lookupAsync('temporary'),
     cacheable.lookupAsync('ttl')
   ])
-  t.equal(cacheable._cache.size, 2)
+  t.equal(cacheable[kDnsCacheSize], 2)
 
   await sleep(2001)
 
-  t.equal(cacheable._cache.size, 0)
+  t.equal(cacheable[kDnsCacheSize], 0)
 })
 
 test('fallback works', async (t) => {
@@ -726,7 +727,7 @@ test('fallback works', async (t) => {
   t.equal(entries[1].address, '127.0.0.2')
   t.equal(entries[1].family, 4)
 
-  t.equal(cacheable._cache.size, 0)
+  t.equal(cacheable[kDnsCacheSize], 0)
 
   await cacheable.lookupAsync('osHostname', { all: true })
 
@@ -738,7 +739,7 @@ test('fallback works', async (t) => {
 
   await sleep(100)
 
-  t.equal(cacheable._hostnamesToFallback.size, 0)
+  t.equal(cacheable[kDnsHostnamesToFallback], 0)
 })
 
 test('fallback works if ip change', async (t) => {
@@ -759,7 +760,7 @@ test('fallback works if ip change', async (t) => {
   t.equal(entries[1].address, '127.0.0.2')
   t.equal(entries[1].family, 4)
 
-  t.equal(cacheable._cache.size, 0)
+  t.equal(cacheable[kDnsCacheSize], 0)
 
   // Second call: enter in `if (this._hostnamesToFallback.has(hostname)) {`
   // And use _dnsLookup
@@ -783,7 +784,7 @@ test('fallback works if ip change', async (t) => {
   t.equal(entries2[1].address, '127.0.0.4')
   t.equal(entries2[1].family, 4)
 
-  t.equal(cacheable._cache.size, 0)
+  t.equal(cacheable[kDnsCacheSize], 0)
 
   delete resolver.lookupData.osHostnameChange
 })
@@ -824,11 +825,11 @@ test('errors are cached', async (t) => {
     code: 'ENOTFOUND'
   })
 
-  t.equal(cacheable._cache.size, 1)
+  t.equal(cacheable[kDnsCacheSize], 1)
 
   await sleep(cacheable.errorTtl * 1000 + 10)
 
-  t.equal(cacheable._cache.size, 0)
+  t.equal(cacheable[kDnsCacheSize], 0)
 })
 
 test('passing family as options', async (t) => {
@@ -852,7 +853,7 @@ test('clear(hostname) works', async (t) => {
 
   cacheable.clear('localhost')
 
-  t.equal(cacheable._cache.size, 1)
+  t.equal(cacheable[kDnsCacheSize], 1)
 })
 
 test('prevents overloading DNS', async (t) => {
@@ -967,12 +968,12 @@ test('cache and query stats', async (t) => {
 test('agent: verify DNSResolver is working caching requests', t => {
   t.plan(2)
   const { Agent, request } = require('../index')
-  const dnsResolver = new DNSResolver({ resolver: createResolver() })
+  const dnsResolver = new DNSResolver({ resolver })
   dnsResolver.clear()
   const agent = new Agent({
     DNSResolver: dnsResolver
   })
-  t.equal(dnsResolver._cache.size, 0)
+  t.equal(dnsResolver[kDnsCacheSize], 0)
 
   const server = http.createServer((req, res) => {
     req.pipe(res)
@@ -983,7 +984,7 @@ test('agent: verify DNSResolver is working caching requests', t => {
   server.listen(0, async () => {
     const origin = `http://agentdns:${server.address().port}`
     await request(origin, { dispatcher: agent })
-    t.equal(dnsResolver._cache.size, 1)
+    t.equal(dnsResolver[kDnsCacheSize], 1)
     t.end()
   })
 })
@@ -991,12 +992,12 @@ test('agent: verify DNSResolver is working caching requests', t => {
 test('agent verify DNSResolver is disabled', t => {
   t.plan(2)
   const { Agent, request } = require('../index')
-  const dnsResolver = new DNSResolver({ resolver: createResolver() })
+  const dnsResolver = new DNSResolver({ resolver })
   dnsResolver.clear()
   const agent = new Agent({
     dnsResolverOptions: { disable: true }
   })
-  t.equal(dnsResolver._cache.size, 0)
+  t.equal(dnsResolver[kDnsCacheSize], 0)
 
   const server = http.createServer((req, res) => {
     req.pipe(res)
@@ -1007,7 +1008,7 @@ test('agent verify DNSResolver is disabled', t => {
   server.listen(0, async () => {
     const origin = `http://localhost:${server.address().port}`
     await request(origin, { dispatcher: agent })
-    t.equal(dnsResolver._cache.size, 0)
+    t.equal(dnsResolver[kDnsCacheSize], 0)
     t.end()
   })
 })
