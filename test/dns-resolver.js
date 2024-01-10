@@ -971,7 +971,7 @@ test('agent: verify DNSResolver is working caching requests', t => {
   const dnsResolver = new DNSResolver({ resolver })
   dnsResolver.clear()
   const agent = new Agent({
-    DNSResolver: dnsResolver
+    dnsResolver
   })
   t.equal(dnsResolver[kDnsCacheSize], 0)
 

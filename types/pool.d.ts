@@ -2,6 +2,7 @@ import Client from './client'
 import TPoolStats from './pool-stats'
 import { URL } from 'url'
 import Dispatcher from "./dispatcher";
+import DNSResolver from "./dns-resolver";
 
 export default Pool
 
@@ -34,6 +35,8 @@ declare namespace Pool {
     /** The max number of clients to create. `null` if no limit. Default `null`. */
     connections?: number | null;
 
-    interceptors?: { Pool?: readonly Dispatcher.DispatchInterceptor[] } & Client.Options["interceptors"]
+    interceptors?: { Pool?: readonly Dispatcher.DispatchInterceptor[] } & Client.Options["interceptors"];
+
+    dnsResolver?: typeof DNSResolver;
   }
 }

@@ -396,7 +396,7 @@ Provide your custom DNS resolver, it must implement the method `lookup`:
 
 ```js
 new Agent({
-  DNSResolver: new MyCustomDNSResolver()
+  dnsResolver: new MyCustomDNSResolver()
 })
 ```
 

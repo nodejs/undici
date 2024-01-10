@@ -1,6 +1,7 @@
 import { URL } from 'url'
 import Pool from './pool'
 import Dispatcher from "./dispatcher";
+import DNSResolver from './dns-resolver';
 
 export default Agent
 
@@ -22,6 +23,8 @@ declare namespace Agent {
     maxRedirections?: number;
 
     interceptors?: { Agent?: readonly Dispatcher.DispatchInterceptor[] } & Pool.Options["interceptors"]
+
+    dnsResolverOptions: DNSResolver.Options;
   }
 
   export interface DispatchOptions extends Dispatcher.DispatchOptions {
