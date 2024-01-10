@@ -1,112 +1,114 @@
 'use strict'
 
-const { test } = require('tap')
-const { BalancedPool, Pool, Client, errors } = require('..')
-const { nodeMajor } = require('../lib/core/util')
+const { describe, test } = require('node:test')
+const assert = require('node:assert/strict')
+const { BalancedPool, Pool, Client, errors } = require('../..')
+const { nodeMajor } = require('../../lib/core/util')
 const { createServer } = require('http')
 const { promisify } = require('util')
+const { tspl } = require('@matteo.collina/tspl')
 
 test('throws when factory is not a function', (t) => {
-  t.plan(2)
+  const p = tspl(t, { plan: 2 })
 
   try {
     new BalancedPool(null, { factory: '' }) // eslint-disable-line
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'factory must be a function.')
+    p.ok(err instanceof errors.InvalidArgumentError)
+    p.strictEqual(err.message, 'factory must be a function.')
   }
 })
 
 test('add/remove upstreams', (t) => {
-  t.plan(7)
+  const p = tspl(t, { plan: 7 })
 
   const upstream01 = 'http://localhost:1'
   const upstream02 = 'http://localhost:2'
 
   const pool = new BalancedPool()
-  t.same(pool.upstreams, [])
+  p.deepStrictEqual(pool.upstreams, [])
 
   // try to remove non-existent upstream
   pool.removeUpstream(upstream01)
-  t.same(pool.upstreams, [])
+  p.deepStrictEqual(pool.upstreams, [])
 
   pool.addUpstream(upstream01)
-  t.same(pool.upstreams, [upstream01])
+  p.deepStrictEqual(pool.upstreams, [upstream01])
 
   // try to add the same upstream
   pool.addUpstream(upstream01)
-  t.same(pool.upstreams, [upstream01])
+  p.deepStrictEqual(pool.upstreams, [upstream01])
 
   pool.addUpstream(upstream02)
-  t.same(pool.upstreams, [upstream01, upstream02])
+  p.deepStrictEqual(pool.upstreams, [upstream01, upstream02])
 
   pool.removeUpstream(upstream02)
-  t.same(pool.upstreams, [upstream01])
+  p.deepStrictEqual(pool.upstreams, [upstream01])
 
   pool.removeUpstream(upstream01)
-  t.same(pool.upstreams, [])
+  p.deepStrictEqual(pool.upstreams, [])
 })
 
 test('basic get', async (t) => {
-  t.plan(16)
+  const p = tspl(t, { plan: 16 })
 
   let server1Called = 0
   const server1 = createServer((req, res) => {
     server1Called++
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    p.strictEqual('/', req.url)
+    p.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server1.close.bind(server1))
+  t.after(server1.close.bind(server1))
 
   await promisify(server1.listen).call(server1, 0)
 
   let server2Called = 0
   const server2 = createServer((req, res) => {
     server2Called++
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    p.strictEqual('/', req.url)
+    p.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server2.close.bind(server2))
+  t.after(server2.close.bind(server2))
 
   await promisify(server2.listen).call(server2, 0)
 
   const client = new BalancedPool()
   client.addUpstream(`http://localhost:${server1.address().port}`)
   client.addUpstream(`http://localhost:${server2.address().port}`)
-  t.teardown(client.destroy.bind(client))
+  t.after(client.destroy.bind(client))
 
   {
     const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
-    t.equal(statusCode, 200)
-    t.equal(headers['content-type'], 'text/plain')
-    t.equal('hello', await body.text())
+    p.strictEqual(statusCode, 200)
+    p.strictEqual(headers['content-type'], 'text/plain')
+    p.strictEqual('hello', await body.text())
   }
 
   {
     const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
-    t.equal(statusCode, 200)
-    t.equal(headers['content-type'], 'text/plain')
-    t.equal('hello', await body.text())
+    p.strictEqual(statusCode, 200)
+    p.strictEqual(headers['content-type'], 'text/plain')
+    p.strictEqual('hello', await body.text())
   }
 
-  t.equal(server1Called, 1)
-  t.equal(server2Called, 1)
+  p.strictEqual(server1Called, 1)
+  p.strictEqual(server2Called, 1)
 
-  t.equal(client.destroyed, false)
-  t.equal(client.closed, false)
+  p.strictEqual(client.destroyed, false)
+  p.strictEqual(client.closed, false)
   await client.close()
-  t.equal(client.destroyed, true)
-  t.equal(client.closed, true)
+  p.strictEqual(client.destroyed, true)
+  p.strictEqual(client.closed, true)
 })
 
-test('connect/disconnect event(s)', (t) => {
+test('connect/disconnect event(s)', async (t) => {
   const clients = 2
 
-  t.plan(clients * 5)
+  const p = tspl(t, { plan: clients * 5 })
 
   const server = createServer((req, res) => {
     res.writeHead(200, {
@@ -115,22 +117,22 @@ test('connect/disconnect event(s)', (t) => {
     })
     res.end('ok')
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const pool = new BalancedPool(`http://localhost:${server.address().port}`, {
       connections: clients,
       keepAliveTimeoutThreshold: 100
     })
-    t.teardown(pool.close.bind(pool))
+    t.after(() => pool.close.bind(pool)())
 
     pool.on('connect', (origin, [pool, pool2, client]) => {
-      t.equal(client instanceof Client, true)
+      p.ok(client instanceof Client)
     })
     pool.on('disconnect', (origin, [pool, pool2, client], error) => {
-      t.ok(client instanceof Client)
-      t.type(error, errors.InformationalError)
-      t.equal(error.code, 'UND_ERR_INFO')
+      p.ok(client instanceof Client)
+      p.ok(error instanceof errors.InformationalError)
+      p.strictEqual(error.code, 'UND_ERR_INFO')
     })
 
     for (let i = 0; i < clients; i++) {
@@ -138,23 +140,25 @@ test('connect/disconnect event(s)', (t) => {
         path: '/',
         method: 'GET'
       }, (err, { headers, body }) => {
-        t.error(err)
+        p.ifError(err)
         body.resume()
       })
     }
   })
+
+  await p.completed
 })
 
-test('busy', (t) => {
-  t.plan(8 * 6 + 2 + 1)
+test('busy', async (t) => {
+  const p = tspl(t, { plan: 8 * 6 + 2 + 1 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    p.strictEqual('/', req.url)
+    p.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, async () => {
     const client = new BalancedPool(`http://localhost:${server.address().port}`, {
@@ -162,32 +166,34 @@ test('busy', (t) => {
       pipelining: 2
     })
     client.on('drain', () => {
-      t.pass()
+      p.ok(1)
     })
     client.on('connect', () => {
-      t.pass()
+      p.ok(1)
     })
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     for (let n = 1; n <= 8; ++n) {
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-        t.error(err)
-        t.equal(statusCode, 200)
-        t.equal(headers['content-type'], 'text/plain')
+        p.ifError(err)
+        p.strictEqual(statusCode, 200)
+        p.strictEqual(headers['content-type'], 'text/plain')
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+          p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
     }
   })
+
+  await p.completed
 })
 
 test('factory option with basic get request', async (t) => {
-  t.plan(12)
+  const p = tspl(t, { plan: 12 })
 
   let factoryCalled = 0
   const opts = {
@@ -202,48 +208,48 @@ test('factory option with basic get request', async (t) => {
   let serverCalled = 0
   const server = createServer((req, res) => {
     serverCalled++
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    p.strictEqual('/', req.url)
+    p.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   await promisify(server.listen).call(server, 0)
 
   client.addUpstream(`http://localhost:${server.address().port}`)
 
-  t.same(client.upstreams, [`http://localhost:${server.address().port}`])
+  p.deepStrictEqual(client.upstreams, [`http://localhost:${server.address().port}`])
 
-  t.teardown(client.destroy.bind(client))
+  t.after(client.destroy.bind(client))
 
   {
     const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
-    t.equal(statusCode, 200)
-    t.equal(headers['content-type'], 'text/plain')
-    t.equal('hello', await body.text())
+    p.strictEqual(statusCode, 200)
+    p.strictEqual(headers['content-type'], 'text/plain')
+    p.strictEqual('hello', await body.text())
   }
 
-  t.equal(serverCalled, 1)
-  t.equal(factoryCalled, 1)
+  p.strictEqual(serverCalled, 1)
+  p.strictEqual(factoryCalled, 1)
 
-  t.equal(client.destroyed, false)
-  t.equal(client.closed, false)
+  p.strictEqual(client.destroyed, false)
+  p.strictEqual(client.closed, false)
   await client.close()
-  t.equal(client.destroyed, true)
-  t.equal(client.closed, true)
+  p.strictEqual(client.destroyed, true)
+  p.strictEqual(client.closed, true)
 })
 
 test('throws when upstream is missing', async (t) => {
-  t.plan(2)
+  const p = tspl(t, { plan: 2 })
 
   const pool = new BalancedPool()
 
   try {
     await pool.request({ path: '/', method: 'GET' })
   } catch (e) {
-    t.type(e, errors.BalancedPoolMissingUpstreamError)
-    t.equal(e.message, 'No upstream has been added to the BalancedPool')
+    p.ok(e instanceof errors.BalancedPoolMissingUpstreamError)
+    p.strictEqual(e.message, 'No upstream has been added to the BalancedPool')
   }
 })
 
@@ -480,42 +486,43 @@ const cases = [
 
 ]
 
-for (const [index, { config, expected, expectedRatios, iterations = 9, expectedConnectionRefusedErrors = 0, expectedSocketErrors = 0, maxWeightPerServer, errorPenalty = 10, only = false, skip = false }] of cases.entries()) {
-  test(`weighted round robin - case ${index}`, { only, skip }, async (t) => {
+describe('weighted round robin', () => {
+  for (const [index, { config, expected, expectedRatios, iterations = 9, expectedConnectionRefusedErrors = 0, expectedSocketErrors = 0, maxWeightPerServer, errorPenalty = 10, skip = false }] of cases.entries()) {
+    test(`case ${index}`, { skip }, async (t) => {
     // create an array to store successful requests
-    const requestLog = []
+      const requestLog = []
 
-    // create instances of the test servers according to the config
-    const servers = config.map((serverConfig) => new TestServer({
-      config: serverConfig,
-      onRequest: (server) => {
-        requestLog.push(server.name)
-      }
-    }))
-    t.teardown(() => servers.map(server => server.stop()))
+      // create instances of the test servers according to the config
+      const servers = config.map((serverConfig) => new TestServer({
+        config: serverConfig,
+        onRequest: (server) => {
+          requestLog.push(server.name)
+        }
+      }))
+      t.after(() => servers.map(server => server.stop()))
 
-    // start all servers to get a port so that we can build the upstream urls to supply them to undici
-    await Promise.all(servers.map(server => server.start()))
+      // start all servers to get a port so that we can build the upstream urls to supply them to undici
+      await Promise.all(servers.map(server => server.start()))
 
-    // build upstream urls
-    const urls = servers.map(server => `http://localhost:${server.port}`)
+      // build upstream urls
+      const urls = servers.map(server => `http://localhost:${server.port}`)
 
-    // add upstreams
-    const client = new BalancedPool(urls[0], { maxWeightPerServer, errorPenalty })
-    urls.slice(1).map(url => client.addUpstream(url))
+      // add upstreams
+      const client = new BalancedPool(urls[0], { maxWeightPerServer, errorPenalty })
+      urls.slice(1).map(url => client.addUpstream(url))
 
-    let connectionRefusedErrors = 0
-    let socketErrors = 0
-    for (let i = 0; i < iterations; i++) {
+      let connectionRefusedErrors = 0
+      let socketErrors = 0
+      for (let i = 0; i < iterations; i++) {
       // setup test servers for the next iteration
 
-      await Promise.all(servers.map(server => server.prepareForIteration(i)))
+        await Promise.all(servers.map(server => server.prepareForIteration(i)))
 
-      // send a request using undinci
-      try {
-        await client.request({ path: '/', method: 'GET' })
-      } catch (e) {
-        const serverWithError =
+        // send a request using undinci
+        try {
+          await client.request({ path: '/', method: 'GET' })
+        } catch (e) {
+          const serverWithError =
           servers.find(server => server.port === e.port) ||
           servers.find(server => {
             if (typeof AggregateError === 'function' && e instanceof AggregateError) {
@@ -525,42 +532,43 @@ for (const [index, { config, expected, expectedRatios, iterations = 9, expectedC
             return server.port === e.socket.remotePort
           })
 
-        serverWithError.requestsCount++
+          serverWithError.requestsCount++
 
-        if (e.code === 'ECONNREFUSED') {
-          requestLog.push(`${serverWithError.name}/connectionRefused`)
-          connectionRefusedErrors++
-        }
-        if (e.code === 'UND_ERR_SOCKET') {
-          requestLog.push(`${serverWithError.name}/socketError`)
+          if (e.code === 'ECONNREFUSED') {
+            requestLog.push(`${serverWithError.name}/connectionRefused`)
+            connectionRefusedErrors++
+          }
+          if (e.code === 'UND_ERR_SOCKET') {
+            requestLog.push(`${serverWithError.name}/socketError`)
 
-          socketErrors++
+            socketErrors++
+          }
         }
       }
-    }
-    const totalRequests = servers.reduce((acc, server) => {
-      return acc + server.requestsCount
-    }, 0)
+      const totalRequests = servers.reduce((acc, server) => {
+        return acc + server.requestsCount
+      }, 0)
 
-    t.equal(totalRequests, iterations)
+      assert.strictEqual(totalRequests, iterations)
 
-    t.equal(connectionRefusedErrors, expectedConnectionRefusedErrors)
-    t.equal(socketErrors, expectedSocketErrors)
+      assert.strictEqual(connectionRefusedErrors, expectedConnectionRefusedErrors)
+      assert.strictEqual(socketErrors, expectedSocketErrors)
 
-    if (expectedRatios) {
-      const ratios = servers.reduce((acc, el) => {
-        acc[el.name] = 0
-        return acc
-      }, {})
-      requestLog.map(el => ratios[el[0]]++)
+      if (expectedRatios) {
+        const ratios = servers.reduce((acc, el) => {
+          acc[el.name] = 0
+          return acc
+        }, {})
+        requestLog.map(el => ratios[el[0]]++)
 
-      t.match(Object.keys(ratios).map(k => ratios[k] / iterations), expectedRatios)
-    }
+        assert.deepStrictEqual(Object.keys(ratios).map(k => ratios[k] / iterations), expectedRatios)
+      }
 
-    if (expected) {
-      t.match(requestLog.slice(0, expected.length), expected)
-    }
+      if (expected) {
+        assert.deepStrictEqual(requestLog.slice(0, expected.length), expected)
+      }
 
-    await client.close()
-  })
-}
+      await client.close()
+    })
+  }
+})

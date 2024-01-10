@@ -1,14 +1,15 @@
 'use strict'
 
-const { test } = require('tap')
-const { Client, errors } = require('..')
+const { test } = require('node:test')
+const { Client, errors } = require('../..')
 const { createServer } = require('http')
 const { Readable } = require('stream')
+const { tspl } = require('@matteo.collina/tspl')
 
 class OnAbortError extends Error {}
 
-test('aborted response errors', (t) => {
-  t.plan(3)
+test('aborted response errors', async (t) => {
+  const p = tspl(t, { plan: 3 })
 
   const server = createServer()
   server.once('request', (req, res) => {
@@ -16,37 +17,39 @@ test('aborted response errors', (t) => {
     // due to bug in readable-stream.
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
+      p.ifError(err)
       body.destroy()
       body
         .on('error', err => {
-          t.type(err, errors.RequestAbortedError)
+          p.ok(err instanceof errors.RequestAbortedError)
         })
         .on('close', () => {
-          t.pass()
+          p.ok(1)
         })
     })
   })
+
+  await p.completed
 })
 
-test('aborted req', (t) => {
-  t.plan(1)
+test('aborted req', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(4 + 1, 'a'))
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     client.request({
       method: 'POST',
@@ -59,22 +62,24 @@ test('aborted req', (t) => {
         }
       })
     }, (err) => {
-      t.type(err, errors.RequestAbortedError)
+      p.ok(err instanceof errors.RequestAbortedError)
     })
   })
+
+  await p.completed
 })
 
-test('abort', (t) => {
-  t.plan(2)
+test('abort', async (t) => {
+  const p = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     client.dispatch({
       method: 'GET',
@@ -84,37 +89,39 @@ test('abort', (t) => {
         setImmediate(abort)
       },
       onHeaders () {
-        t.fail()
+        p.ok(0)
       },
       onData () {
-        t.fail()
+        p.ok(0)
       },
       onComplete () {
-        t.fail()
+        p.ok(0)
       },
       onError (err) {
-        t.type(err, errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError)
       }
     })
 
     client.on('disconnect', () => {
-      t.pass()
+      p.ok(1)
     })
   })
+
+  await p.completed
 })
 
-test('abort pipelined', (t) => {
-  t.plan(6)
+test('abort pipelined', async (t) => {
+  const p = tspl(t, { plan: 6 })
 
   const server = createServer((req, res) => {
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     let counter = 0
     client.dispatch({
@@ -126,19 +133,19 @@ test('abort pipelined', (t) => {
         if (counter++ === 1) {
           abort()
         }
-        t.pass()
+        p.ok(1)
       },
       onHeaders () {
-        t.fail()
+        p.ok(0)
       },
       onData () {
-        t.fail()
+        p.ok(0)
       },
       onComplete () {
-        t.fail()
+        p.ok(0)
       },
       onError (err) {
-        t.type(err, errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError)
       }
     })
 
@@ -150,36 +157,38 @@ test('abort pipelined', (t) => {
         abort()
       },
       onHeaders () {
-        t.fail()
+        p.ok(0)
       },
       onData () {
-        t.fail()
+        p.ok(0)
       },
       onComplete () {
-        t.fail()
+        p.ok(0)
       },
       onError (err) {
-        t.type(err, errors.RequestAbortedError)
+        p.ok(err instanceof errors.RequestAbortedError)
       }
     })
 
     client.on('disconnect', () => {
-      t.pass()
+      p.ok(1)
     })
   })
+
+  await p.completed
 })
 
-test('propagate unallowed throws in request.onError', (t) => {
-  t.plan(2)
+test('propagate unallowed throws in request.onError', async (t) => {
+  const p = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    t.after(client.destroy.bind(client))
 
     client.dispatch({
       method: 'GET',
@@ -189,13 +198,13 @@ test('propagate unallowed throws in request.onError', (t) => {
         setImmediate(abort)
       },
       onHeaders () {
-        t.pass()
+        p.ok(0)
       },
       onData () {
-        t.pass()
+        p.ok(0)
       },
       onComplete () {
-        t.pass()
+        p.ok(0)
       },
       onError () {
         throw new OnAbortError('error')
@@ -203,11 +212,13 @@ test('propagate unallowed throws in request.onError', (t) => {
     })
 
     client.on('error', (err) => {
-      t.type(err, OnAbortError)
+      p.ok(err instanceof OnAbortError)
     })
 
     client.on('disconnect', () => {
-      t.pass()
+      p.ok(1)
     })
   })
+
+  await p.completed
 })

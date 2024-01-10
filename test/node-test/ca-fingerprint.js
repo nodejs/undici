@@ -2,9 +2,10 @@
 
 const crypto = require('crypto')
 const https = require('https')
-const { test } = require('tap')
-const { Client, buildConnector } = require('..')
+const { test } = require('node:test')
+const { Client, buildConnector } = require('../..')
 const pem = require('https-pem')
+const { tspl } = require('@matteo.collina/tspl')
 
 const caFingerprint = getFingerprint(pem.cert.toString()
   .split('\n')
@@ -13,8 +14,8 @@ const caFingerprint = getFingerprint(pem.cert.toString()
   .join('')
 )
 
-test('Validate CA fingerprint with a custom connector', t => {
-  t.plan(2)
+test('Validate CA fingerprint with a custom connector', async t => {
+  const p = tspl(t, { plan: 2 })
 
   const server = https.createServer(pem, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
@@ -38,7 +39,7 @@ test('Validate CA fingerprint with a custom connector', t => {
       }
     })
 
-    t.teardown(() => {
+    t.after(() => {
       client.close()
       server.close()
     })
@@ -47,19 +48,21 @@ test('Validate CA fingerprint with a custom connector', t => {
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      p.ifError(err)
 
       data.body
         .resume()
         .on('end', () => {
-          t.pass()
+          p.ok(1)
         })
     })
   })
+
+  await p.completed
 })
 
-test('Bad CA fingerprint with a custom connector', t => {
-  t.plan(2)
+test('Bad CA fingerprint with a custom connector', async t => {
+  const p = tspl(t, { plan: 2 })
 
   const server = https.createServer(pem, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
@@ -83,7 +86,7 @@ test('Bad CA fingerprint with a custom connector', t => {
       }
     })
 
-    t.teardown(() => {
+    t.after(() => {
       client.close()
       server.close()
     })
@@ -92,10 +95,12 @@ test('Bad CA fingerprint with a custom connector', t => {
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      t.equal(err.message, 'Fingerprint does not match')
-      t.equal(data.body, undefined)
+      p.strictEqual(err.message, 'Fingerprint does not match')
+      p.strictEqual(data.body, undefined)
     })
   })
+
+  await p.completed
 })
 
 function getIssuerCertificate (socket) {
