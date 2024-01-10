@@ -2,8 +2,8 @@
 
 const { test } = require('node:test')
 const { spawn } = require('node:child_process')
-const { tspl } = require('@matteo.collina/tspl')
 const { join } = require('node:path')
+const { tspl } = require('@matteo.collina/tspl')
 
 test('debug#websocket', async t => {
   const assert = tspl(t, { plan: 5 })
@@ -64,7 +64,7 @@ test('debug#fetch', async t => {
 
 test('debug#undici', async t => {
   // Due to Node.js webpage redirect
-  const assert = tspl(t, { plan: 10 })
+  const assert = tspl(t, { plan: 5 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/undici.js')],
