@@ -847,6 +847,7 @@ test('parser error', async (t) => {
   server.once('connection', (socket) => {
     socket.write('asd\n\r213123')
   })
+  // FIXME: use closeServerAsPromise
   t.after(server.close.bind(server))
 
   server.listen(0, () => {
