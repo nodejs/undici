@@ -8,6 +8,7 @@ const stream = require('stream')
 const { createSecureServer } = require('node:http2')
 const pem = require('https-pem')
 const { tspl } = require('@matteo.collina/tspl')
+const { closeServerAsPromise, closeClientAndServerAsPromise } = require('../utils/node-http')
 
 test('dispatch invalid opts', (t) => {
   const p = tspl(t, { plan: 14 })
@@ -102,7 +103,7 @@ test('basic dispatch get', async (t) => {
     p.strictEqual(undefined, req.headers['content-length'])
     res.end('hello')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const reqHeaders = {
     foo: undefined,
@@ -157,7 +158,7 @@ test('trailers dispatch get', async (t) => {
     res.setHeader('Trailer', 'Content-MD5')
     res.end('hello')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const reqHeaders = {
     foo: undefined,
@@ -210,7 +211,7 @@ test('dispatch onHeaders error', async (t) => {
   const server = http.createServer((req, res) => {
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -247,7 +248,7 @@ test('dispatch onComplete error', async (t) => {
   const server = http.createServer((req, res) => {
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -284,7 +285,7 @@ test('dispatch onData error', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -321,7 +322,7 @@ test('dispatch onConnect error', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -371,7 +372,7 @@ test('connect call onUpgrade once', async (t) => {
       socket.end(data)
     })
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -423,7 +424,7 @@ test('dispatch onConnect missing', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -457,7 +458,7 @@ test('dispatch onHeaders missing', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -490,7 +491,7 @@ test('dispatch onData missing', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -523,7 +524,7 @@ test('dispatch onComplete missing', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -556,7 +557,7 @@ test('dispatch onError missing', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -593,7 +594,7 @@ test('dispatch CONNECT onUpgrade missing', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -624,7 +625,7 @@ test('dispatch upgrade onUpgrade missing', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -655,7 +656,7 @@ test('dispatch pool onError missing', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
@@ -682,7 +683,7 @@ test('dispatch onBodySent not a function', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
@@ -712,7 +713,7 @@ test('dispatch onBodySent buffer', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
@@ -749,7 +750,7 @@ test('dispatch onBodySent stream', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   const chunks = ['he', 'llo', 'world', '🚀']
   const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
   const body = stream.Readable.from(chunks)
@@ -791,7 +792,7 @@ test('dispatch onBodySent async-iterable', (t, done) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   const chunks = ['he', 'llo', 'world', '🚀']
   const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
   server.listen(0, () => {
@@ -827,7 +828,7 @@ test('dispatch onBodySent throws error', (t, done) => {
   const server = http.createServer((req, res) => {
     res.end('ended')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
@@ -858,7 +859,7 @@ test('dispatches in expected order', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ended')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const p = tspl(t, { plan: 1 })
 
@@ -912,8 +913,6 @@ test('dispatches in expected order for http2', async (t) => {
     stream.end('ended')
   })
 
-  t.after(server.close.bind(server))
-
   const p = tspl(t, { plan: 1 })
 
   server.listen(0, () => {
@@ -924,7 +923,7 @@ test('dispatches in expected order for http2', async (t) => {
       allowH2: true
     })
 
-    t.after(() => { return client.close() })
+    t.after(closeClientAndServerAsPromise(client, server))
 
     const dispatches = []
 
