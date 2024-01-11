@@ -6,6 +6,7 @@ const http = require('http')
 const EE = require('events')
 const { kBusy } = require('../../lib/core/symbols')
 const { tspl } = require('@matteo.collina/tspl')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('basic connect', async (t) => {
   const p = tspl(t, { plan: 3 })
@@ -25,7 +26,7 @@ test('basic connect', async (t) => {
       socket.end(data)
     })
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -65,7 +66,7 @@ test('connect error', async (t) => {
   server.on('connect', (req, socket, firstBodyChunk) => {
     socket.destroy()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -131,7 +132,7 @@ test('connect wait for empty pipeline', async (t) => {
       socket.end(data)
     })
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
@@ -188,7 +189,7 @@ test('connect aborted', async (t) => {
   server.on('connect', (req, c, firstBodyChunk) => {
     p.ok(0)
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
@@ -238,7 +239,7 @@ test('basic connect error', async (t) => {
       socket.end(data)
     })
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -268,7 +269,7 @@ test('connect invalid signal', async (t) => {
   server.on('connect', (req, c, firstBodyChunk) => {
     p.ok(0)
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -301,6 +302,7 @@ test('connect aborted after connect', async (t) => {
   server.on('connect', (req, c, firstBodyChunk) => {
     signal.emit('abort')
   })
+  // FIXME: use closeServerAsPromise
   t.after(server.close.bind(server))
 
   server.listen(0, () => {
