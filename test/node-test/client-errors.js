@@ -13,6 +13,8 @@ const { tspl } = require('@matteo.collina/tspl')
 const { kSocket } = require('../../lib/core/symbols')
 const { wrapWithAsyncIterable, maybeWrapStream, consts } = require('../utils/async-iterators')
 
+const { closeServerAsPromise } = require('../utils/node-http')
+
 class IteratorError extends Error {}
 
 test('GET errors and reconnect with pipelining 1', async (t) => {
@@ -32,7 +34,7 @@ test('GET errors and reconnect with pipelining 1', async (t) => {
       res.end('hello')
     })
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
@@ -86,7 +88,7 @@ test('GET errors and reconnect with pipelining 3', async (t) => {
       res.end('hello')
     }
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
@@ -148,7 +150,7 @@ function errorAndPipelining (type) {
         res.end('hello')
       })
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -223,7 +225,7 @@ function errorAndChunkedEncodingPipelining (type) {
         res.end('hello')
       })
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -564,7 +566,7 @@ test('POST which fails should error response', async (t) => {
       res.destroy()
     })
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -659,7 +661,7 @@ test('client destroy cleanup', async (t) => {
       })
     })
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     client = new Client(`http://localhost:${server.address().port}`)
@@ -689,7 +691,7 @@ test('throwing async-iterator causes error', async (t) => {
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(4 + 1, 'a'))
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -723,7 +725,7 @@ test('client async-iterator destroy cleanup', async (t) => {
       })
     })
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     client = new Client(`http://localhost:${server.address().port}`)
@@ -753,7 +755,7 @@ test('GET errors body', async (t) => {
       res.destroy()
     }, 19)
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -777,7 +779,7 @@ test('validate request body', async (t) => {
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -869,7 +871,7 @@ function socketFailWrite (type) {
     const server = createServer()
     server.once('request', (req, res) => {
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -910,7 +912,7 @@ function socketFailEndWrite (type) {
     server.once('request', (req, res) => {
       res.end()
     })
-    t.after(server.close.bind(server))
+    t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
@@ -957,7 +959,7 @@ test('queued request should not fail on socket destroy', async (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
@@ -996,7 +998,7 @@ test('queued request should fail on client destroy', async (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
@@ -1040,7 +1042,7 @@ test('retry idempotent inflight', async (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
@@ -1131,7 +1133,7 @@ test('CONNECT throws in next tick', async (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1195,7 +1197,7 @@ test('invalid body chunk does not crash', async (t) => {
   server.on('request', (req, res) => {
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1243,7 +1245,7 @@ test('headers overflow', (t, done) => {
     })
     res.end()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
@@ -1267,7 +1269,7 @@ test('SocketError should expose socket details (net)', async (t) => {
   server.once('request', (req, res) => {
     res.destroy()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1301,7 +1303,7 @@ test('SocketError should expose socket details (tls)', async (t) => {
   server.once('request', (req, res) => {
     res.destroy()
   })
-  t.after(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`https://localhost:${server.address().port}`, {
