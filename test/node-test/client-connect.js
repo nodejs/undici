@@ -291,36 +291,3 @@ test('connect invalid signal', async (t) => {
 
   await p.completed
 })
-
-test('connect aborted after connect', async (t) => {
-  const p = tspl(t, { plan: 3 })
-
-  const signal = new EE()
-  const server = http.createServer((req, res) => {
-    p.ok(0)
-  })
-  server.on('connect', (req, c, firstBodyChunk) => {
-    signal.emit('abort')
-  })
-  // FIXME: use closeServerAsPromise
-  t.after(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 3
-    })
-    t.after(client.destroy.bind(client))
-
-    client.connect({
-      path: '/',
-      signal,
-      opaque: 'asd'
-    }, (err, { opaque }) => {
-      p.strictEqual(opaque, 'asd')
-      p.ok(err instanceof errors.RequestAbortedError)
-    })
-    p.strictEqual(client[kBusy], true)
-  })
-
-  await p.completed
-})

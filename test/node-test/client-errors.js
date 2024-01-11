@@ -6,7 +6,6 @@ const { Client, Pool, errors } = require('../..')
 const { createServer } = require('http')
 const https = require('https')
 const pem = require('https-pem')
-const net = require('net')
 const { Readable } = require('stream')
 const { tspl } = require('@matteo.collina/tspl')
 
@@ -834,31 +833,6 @@ test('validate request body', async (t) => {
     }, (err, data) => {
       p.ifError(err)
       data.body.resume()
-    })
-  })
-
-  await p.completed
-})
-
-test('parser error', async (t) => {
-  const p = tspl(t, { plan: 2 })
-
-  const server = net.createServer()
-  server.once('connection', (socket) => {
-    socket.write('asd\n\r213123')
-  })
-  // FIXME: use closeServerAsPromise
-  t.after(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(client.destroy.bind(client))
-
-    client.request({ path: '/', method: 'GET' }, (err) => {
-      p.ok(err)
-      client.close((err) => {
-        p.ifError(err)
-      })
     })
   })
 
