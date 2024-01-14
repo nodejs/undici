@@ -25,9 +25,11 @@ test('debug#websocket', async t => {
 
   for await (const chunk of child.stderr) {
     if (chunk.includes('[UNDICI-WS] Warning')) {
+      // Ignoring experimental warning
       continue
     }
 
+    console.log(chunk)
     assert.match(
       chunk,
       /(WEBSOCKET [0-9]+:) (connecting to|connected to|sending request|connection opened|closed connection)/
