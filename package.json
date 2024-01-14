@@ -81,7 +81,7 @@
     "test:fetch": "npm run build:node && borp --expose-gc --coverage -p \"test/fetch/*.js\" && borp --coverage -p \"test/webidl/*.js\"",
     "test:jest": "jest",
     "test:tap": "tap test/*.js",
-    "test:node-test": "borp --coverage -p \"test/node-test/debug.js\"",
+    "test:node-test": "borp --coverage -p \"test/node-test/**/*.js\"",
     "test:tdd": "tap test/*.js --coverage -w",
     "test:tdd:node-test": "borp -p \"test/node-test/**/*.js\" -w",
     "test:typescript": "tsd && tsc --skipLibCheck test/imports/undici-import.ts",
