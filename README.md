@@ -18,34 +18,31 @@ npm i undici
 ## Benchmarks
 
 The benchmark is a simple `hello world` [example](benchmarks/benchmark.js) using a
-number of unix sockets (connections) with a pipelining depth of 10 running on Node 20.6.0.
+50 TCP connections with a pipelining depth of 10 running on Node 20.6.0.
 
-### Connections 1
-
-
-| Tests               | Samples |        Result | Tolerance | Difference with slowest |
-|---------------------|---------|---------------|-----------|-------------------------|
-| http - no keepalive |      15 |  5.32 req/sec |  ± 2.61 % |                       - |
-| http - keepalive    |      10 |  5.35 req/sec |  ± 2.47 % |                + 0.44 % |
-| undici - fetch      |      15 | 41.85 req/sec |  ± 2.49 % |              + 686.04 % |
-| undici - pipeline   |      40 | 50.36 req/sec |  ± 2.77 % |              + 845.92 % |
-| undici - stream     |      15 | 60.58 req/sec |  ± 2.75 % |             + 1037.72 % |
-| undici - request    |      10 | 61.19 req/sec |  ± 2.60 % |             + 1049.24 % |
-| undici - dispatch   |      20 | 64.84 req/sec |  ± 2.81 % |             + 1117.81 % |
-
-
-### Connections 50
-
-| Tests               | Samples |           Result | Tolerance | Difference with slowest |
-|---------------------|---------|------------------|-----------|-------------------------|
-| undici - fetch      |      30 |  2107.19 req/sec |  ± 2.69 % |                       - |
-| http - no keepalive |      10 |  2698.90 req/sec |  ± 2.68 % |               + 28.08 % |
-| http - keepalive    |      10 |  4639.49 req/sec |  ± 2.55 % |              + 120.17 % |
-| undici - pipeline   |      40 |  6123.33 req/sec |  ± 2.97 % |              + 190.59 % |
-| undici - stream     |      50 |  9426.51 req/sec |  ± 2.92 % |              + 347.35 % |
-| undici - request    |      10 | 10162.88 req/sec |  ± 2.13 % |              + 382.29 % |
-| undici - dispatch   |      50 | 11191.11 req/sec |  ± 2.98 % |              + 431.09 % |
-
+│ Tests               │ Samples │          Result │ Tolerance │ Difference with slowest │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ got                 │      40 │ 1676.51 req/sec │  ± 2.93 % │                       - │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ undici - fetch      │      30 │ 2081.23 req/sec │  ± 2.91 % │               + 24.14 % │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ http - no keepalive │      30 │ 2477.88 req/sec │  ± 2.73 % │               + 47.80 % │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ axios               │      20 │ 2673.40 req/sec │  ± 2.54 % │               + 59.46 % │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ node-fetch          │      10 │ 2776.09 req/sec │  ± 1.16 % │               + 65.59 % │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ request             │      10 │ 3458.80 req/sec │  ± 0.92 % │              + 106.31 % │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ http - keepalive    │      40 │ 4415.13 req/sec │  ± 3.00 % │              + 163.35 % │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ undici - pipeline   │      10 │ 5912.29 req/sec │  ± 3.00 % │              + 252.65 % │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ undici - request    │      80 │ 7829.95 req/sec │  ± 2.92 % │              + 367.04 % │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ undici - stream     │      65 │ 8221.08 req/sec │  ± 2.86 % │              + 390.37 % │
+|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
+│ undici - dispatch   │      60 │ 9600.55 req/sec │  ± 2.88 % │              + 472.65 % │
 
 ## Quick Start
 
@@ -62,9 +59,7 @@ const {
 console.log('response received', statusCode)
 console.log('headers', headers)
 
-for await (const data of body) {
-  console.log('data', data)
-}
+for await (const data of body) { console.log('data', data) }
 
 console.log('trailers', trailers)
 ```
