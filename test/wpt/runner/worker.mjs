@@ -13,7 +13,7 @@ import { Cache } from '../../../lib/cache/cache.js'
 import { CacheStorage } from '../../../lib/cache/cachestorage.js'
 import { kConstruct } from '../../../lib/cache/symbols.js'
 // TODO(@KhafraDev): move this import once its added to index
-import { EventSource } from '../../../lib/eventsource/eventsource.js'
+import { EventSource } from '../../../lib/eventsource/index.js'
 
 const { initScripts, meta, test, url, path } = workerData
 
@@ -119,7 +119,7 @@ runInThisContext(`
 `)
 
 if (meta.title) {
-  runInThisContext(`globalThis.META_TITLE = "${meta.title.replace(/"/g, '\\"')}"`)
+  runInThisContext(`globalThis.META_TITLE = "${meta.title.replace(/"/g, '\\"').replace(/`/g, '\\`')}"`)
 }
 
 const harness = readFileSync(join(basePath, '/resources/testharness.js'), 'utf-8')
