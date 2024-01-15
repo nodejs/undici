@@ -13,9 +13,5 @@ async function main () {
   ev.onopen = event => {
     console.log(event)
   }
-  setTimeout(() => {
-    console.log('close')
-    ev.close()
-  }, 3000)
 }
 main()

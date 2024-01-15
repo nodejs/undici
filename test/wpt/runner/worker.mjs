@@ -119,7 +119,7 @@ runInThisContext(`
 `)
 
 if (meta.title) {
-  runInThisContext(`globalThis.META_TITLE = "${meta.title.replace(/"/g, '\\"').replace(/`/g, '\\`')}"`)
+  runInThisContext(`globalThis.META_TITLE = "${meta.title.replace(/"/g, '\\"')}"`)
 }
 
 const harness = readFileSync(join(basePath, '/resources/testharness.js'), 'utf-8')
