@@ -12,6 +12,7 @@ import { WebSocket } from '../../../lib/websocket/websocket.js'
 import { Cache } from '../../../lib/cache/cache.js'
 import { CacheStorage } from '../../../lib/cache/cachestorage.js'
 import { kConstruct } from '../../../lib/cache/symbols.js'
+import { webcrypto } from 'node:crypto'
 
 const { initScripts, meta, test, url, path } = workerData
 
@@ -89,6 +90,11 @@ Object.defineProperties(globalThis, {
   CacheStorage: {
     ...globalPropertyDescriptors,
     value: CacheStorage
+  },
+  // TODO: remove once node 18 is dropped
+  crypto: {
+    ...globalPropertyDescriptors,
+    value: webcrypto
   }
 })
 
