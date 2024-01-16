@@ -9,6 +9,14 @@ const { isMainThread } = require('worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
+let nodeFetch
+const axios = require('axios')
+let got
+
+const util = require('util')
+const _request = require('request')
+const request = util.promisify(_request)
+
 const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
 const errorThreshold = parseInt(process.env.ERROR_THRESHOLD, 10) || 3
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
@@ -269,10 +277,62 @@ if (process.env.PORT) {
       }).catch(console.log)
     })
   }
+
+  experiments['node-fetch'] = () => {
+    return makeParallelRequests(resolve => {
+      nodeFetch(dest.url).then(res => {
+        res.body.pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
+      }).catch(console.log)
+    })
+  }
+
+  experiments.axios = () => {
+    return makeParallelRequests(resolve => {
+      axios.get(dest.url, { responseType: 'stream' }).then(res => {
+        res.data.pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
+      }).catch(console.log)
+    })
+  }
+
+  experiments.got = () => {
+    return makeParallelRequests(resolve => {
+      got.get(dest.url).then(res => {
+        res.pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
+      }).catch(console.log)
+    })
+  }
+
+  experiments.request = () => {
+    return makeParallelRequests(resolve => {
+      request(dest.url).then(res => {
+        res.pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
+      }).catch(console.log)
+    })
+  }
 }
 
 async function main () {
   const { cronometro } = await import('cronometro')
+  const _nodeFetch = await import('node-fetch')
+  nodeFetch = _nodeFetch.default
+  const _got = await import('got')
+  got = _got.default
 
   cronometro(
     experiments,
