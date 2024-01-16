@@ -194,7 +194,7 @@ test('async hooks pipeline handler', async (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => client.close.bind(client)())
+    t.after(() => { return client.close() })
 
     setCurrentTransaction({ hello: 'world2' })
 

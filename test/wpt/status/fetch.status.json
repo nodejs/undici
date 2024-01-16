@@ -92,9 +92,14 @@
         "skip": true
       },
       "scheme-blob.sub.any.js": {
-        "note": "fails everywhere",
+        "note": "fail: fails everywhere, flaky: only node 18",
         "fail": [
           "Fetching URL.createObjectURL(invalid_type_blob) is OK"
+        ],
+        "flaky": [
+          "Fetching URL.createObjectURL(empty_blob) is OK",
+          "Fetching URL.createObjectURL(empty_type_blob) is OK",
+          "Fetching URL.createObjectURL(empty_data_blob) is OK"
         ]
       },
       "status.h2.any.js": {
@@ -417,6 +422,12 @@
         "note": "this is a bug in webstreams, see https://github.com/nodejs/node/issues/46786",
         "skip": true
       }
+    },
+    "idlharness.any.js": {
+      "note": "https://github.com/nodejs/undici/issues/1666#issuecomment-1275177704",
+      "fail": [
+        "Window interface: operation fetch(RequestInfo, optional RequestInit)"
+      ]
     }
   },
   "content-length": {

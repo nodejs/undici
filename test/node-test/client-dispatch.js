@@ -1,14 +1,17 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('node:assert/strict')
 const http = require('http')
-const { Client, Pool, errors } = require('..')
+const { Client, Pool, errors } = require('../..')
 const stream = require('stream')
 const { createSecureServer } = require('node:http2')
 const pem = require('https-pem')
+const { tspl } = require('@matteo.collina/tspl')
+const { closeServerAsPromise, closeClientAndServerAsPromise } = require('../utils/node-http')
 
 test('dispatch invalid opts', (t) => {
-  t.plan(14)
+  const p = tspl(t, { plan: 14 })
 
   const client = new Client('http://localhost:5000')
 
@@ -19,8 +22,8 @@ test('dispatch invalid opts', (t) => {
       upgrade: 1
     }, null)
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'handler must be an object')
+    p.ok(err instanceof errors.InvalidArgumentError)
+    p.strictEqual(err.message, 'handler must be an object')
   }
 
   try {
@@ -30,8 +33,8 @@ test('dispatch invalid opts', (t) => {
       upgrade: 1
     }, 'asd')
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
-    t.equal(err.message, 'handler must be an object')
+    p.ok(err instanceof errors.InvalidArgumentError)
+    p.strictEqual(err.message, 'handler must be an object')
   }
 
   client.dispatch({
@@ -40,8 +43,8 @@ test('dispatch invalid opts', (t) => {
     upgrade: 1
   }, {
     onError (err) {
-      t.type(err, errors.InvalidArgumentError)
-      t.equal(err.message, 'upgrade must be a string')
+      p.ok(err instanceof errors.InvalidArgumentError)
+      p.strictEqual(err.message, 'upgrade must be a string')
     }
   })
 
@@ -51,8 +54,8 @@ test('dispatch invalid opts', (t) => {
     headersTimeout: 'asd'
   }, {
     onError (err) {
-      t.type(err, errors.InvalidArgumentError)
-      t.equal(err.message, 'invalid headersTimeout')
+      p.ok(err instanceof errors.InvalidArgumentError)
+      p.strictEqual(err.message, 'invalid headersTimeout')
     }
   })
 
@@ -62,8 +65,8 @@ test('dispatch invalid opts', (t) => {
     bodyTimeout: 'asd'
   }, {
     onError (err) {
-      t.type(err, errors.InvalidArgumentError)
-      t.equal(err.message, 'invalid bodyTimeout')
+      p.ok(err instanceof errors.InvalidArgumentError)
+      p.strictEqual(err.message, 'invalid bodyTimeout')
     }
   })
 
@@ -74,33 +77,33 @@ test('dispatch invalid opts', (t) => {
     bodyTimeout: 'asd'
   }, {
     onError (err) {
-      t.type(err, errors.InvalidArgumentError)
-      t.equal(err.message, 'invalid bodyTimeout')
+      p.ok(err instanceof errors.InvalidArgumentError)
+      p.strictEqual(err.message, 'invalid bodyTimeout')
     }
   })
 
   client.dispatch(null, {
     onError (err) {
-      t.type(err, errors.InvalidArgumentError)
-      t.equal(err.message, 'opts must be an object.')
+      p.ok(err instanceof errors.InvalidArgumentError)
+      p.strictEqual(err.message, 'opts must be an object.')
     }
   })
 })
 
-test('basic dispatch get', (t) => {
-  t.plan(11)
+test('basic dispatch get', async (t) => {
+  const p = tspl(t, { plan: 11 })
 
   const server = http.createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
-    t.equal(`localhost:${server.address().port}`, req.headers.host)
-    t.equal(undefined, req.headers.foo)
-    t.equal('bar', req.headers.bar)
-    t.equal('', req.headers.baz)
-    t.equal(undefined, req.headers['content-length'])
+    p.strictEqual('/', req.url)
+    p.strictEqual('GET', req.method)
+    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    p.strictEqual(undefined, req.headers.foo)
+    p.strictEqual('bar', req.headers.bar)
+    p.strictEqual('', req.headers.baz)
+    p.strictEqual(undefined, req.headers['content-length'])
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const reqHeaders = {
     foo: undefined,
@@ -110,7 +113,7 @@ test('basic dispatch get', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     const bufs = []
     client.dispatch({
@@ -121,39 +124,41 @@ test('basic dispatch get', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.equal(statusCode, 200)
-        t.equal(Array.isArray(headers), true)
+        p.strictEqual(statusCode, 200)
+        p.strictEqual(Array.isArray(headers), true)
       },
       onData (buf) {
         bufs.push(buf)
       },
       onComplete (trailers) {
-        t.same(trailers, [])
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        p.deepStrictEqual(trailers, [])
+        p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       },
       onError () {
-        t.fail()
+        p.ok(0)
       }
     })
   })
+
+  await p.completed
 })
 
-test('trailers dispatch get', (t) => {
-  t.plan(12)
+test('trailers dispatch get', async (t) => {
+  const p = tspl(t, { plan: 12 })
 
   const server = http.createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
-    t.equal(`localhost:${server.address().port}`, req.headers.host)
-    t.equal(undefined, req.headers.foo)
-    t.equal('bar', req.headers.bar)
-    t.equal(undefined, req.headers['content-length'])
+    p.strictEqual('/', req.url)
+    p.strictEqual('GET', req.method)
+    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    p.strictEqual(undefined, req.headers.foo)
+    p.strictEqual('bar', req.headers.bar)
+    p.strictEqual(undefined, req.headers['content-length'])
     res.addTrailers({ 'Content-MD5': 'test' })
     res.setHeader('Content-Type', 'text/plain')
     res.setHeader('Trailer', 'Content-MD5')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const reqHeaders = {
     foo: undefined,
@@ -162,7 +167,7 @@ test('trailers dispatch get', (t) => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     const bufs = []
     client.dispatch({
@@ -173,42 +178,44 @@ test('trailers dispatch get', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.equal(statusCode, 200)
-        t.equal(Array.isArray(headers), true)
+        p.strictEqual(statusCode, 200)
+        p.strictEqual(Array.isArray(headers), true)
         {
           const contentTypeIdx = headers.findIndex(x => x.toString() === 'Content-Type')
-          t.equal(headers[contentTypeIdx + 1].toString(), 'text/plain')
+          p.strictEqual(headers[contentTypeIdx + 1].toString(), 'text/plain')
         }
       },
       onData (buf) {
         bufs.push(buf)
       },
       onComplete (trailers) {
-        t.equal(Array.isArray(trailers), true)
+        p.strictEqual(Array.isArray(trailers), true)
         {
           const contentMD5Idx = trailers.findIndex(x => x.toString() === 'Content-MD5')
-          t.equal(trailers[contentMD5Idx + 1].toString(), 'test')
+          p.strictEqual(trailers[contentMD5Idx + 1].toString(), 'test')
         }
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       },
       onError () {
-        t.fail()
+        p.ok(0)
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onHeaders error', (t) => {
-  t.plan(1)
+test('dispatch onHeaders error', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const server = http.createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     const _err = new Error()
     client.dispatch({
@@ -221,29 +228,31 @@ test('dispatch onHeaders error', (t) => {
         throw _err
       },
       onData (buf) {
-        t.fail()
+        p.ok(0)
       },
       onComplete (trailers) {
-        t.fail()
+        p.ok(0)
       },
       onError (err) {
-        t.equal(err, _err)
+        p.strictEqual(err, _err)
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onComplete error', (t) => {
-  t.plan(2)
+test('dispatch onComplete error', async (t) => {
+  const p = tspl(t, { plan: 2 })
 
   const server = http.createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     const _err = new Error()
     client.dispatch({
@@ -253,32 +262,34 @@ test('dispatch onComplete error', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.pass()
+        p.ok(1)
       },
       onData (buf) {
-        t.fail()
+        p.ok(0)
       },
       onComplete (trailers) {
         throw _err
       },
       onError (err) {
-        t.equal(err, _err)
+        p.strictEqual(err, _err)
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onData error', (t) => {
-  t.plan(2)
+test('dispatch onData error', async (t) => {
+  const p = tspl(t, { plan: 2 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     const _err = new Error()
     client.dispatch({
@@ -288,32 +299,34 @@ test('dispatch onData error', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.pass()
+        p.ok(1)
       },
       onData (buf) {
         throw _err
       },
       onComplete (trailers) {
-        t.fail()
+        p.ok(0)
       },
       onError (err) {
-        t.equal(err, _err)
+        p.strictEqual(err, _err)
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onConnect error', (t) => {
-  t.plan(1)
+test('dispatch onConnect error', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     const _err = new Error()
     client.dispatch({
@@ -324,26 +337,28 @@ test('dispatch onConnect error', (t) => {
         throw _err
       },
       onHeaders (statusCode, headers) {
-        t.fail()
+        p.ok(0)
       },
       onData (buf) {
-        t.fail()
+        p.ok(0)
       },
       onComplete (trailers) {
-        t.fail()
+        p.ok(0)
       },
       onError (err) {
-        t.equal(err, _err)
+        p.strictEqual(err, _err)
       }
     })
   })
+
+  await p.completed
 })
 
-test('connect call onUpgrade once', (t) => {
-  t.plan(2)
+test('connect call onUpgrade once', async (t) => {
+  const p = tspl(t, { plan: 2 })
 
   const server = http.createServer((c) => {
-    t.fail()
+    p.ok(0)
   })
   server.on('connect', (req, socket, firstBodyChunk) => {
     socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
@@ -357,11 +372,11 @@ test('connect call onUpgrade once', (t) => {
       socket.end(data)
     })
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     let recvData = ''
     let count = 0
@@ -375,43 +390,45 @@ test('connect call onUpgrade once', (t) => {
         t.pass('should not throw')
       },
       onUpgrade (statusCode, headers, socket) {
-        t.equal(count++, 0)
+        p.strictEqual(count++, 0)
 
         socket.on('data', (d) => {
           recvData += d
         })
 
         socket.on('end', () => {
-          t.equal(recvData.toString(), 'Body')
+          p.strictEqual(recvData.toString(), 'Body')
         })
 
         socket.write('Body')
         socket.end()
       },
       onData (buf) {
-        t.fail()
+        p.ok(0)
       },
       onComplete (trailers) {
-        t.fail()
+        p.ok(0)
       },
       onError () {
-        t.fail()
+        p.ok(0)
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onConnect missing', (t) => {
-  t.plan(1)
+test('dispatch onConnect missing', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -427,23 +444,25 @@ test('dispatch onConnect missing', (t) => {
         t.pass('should not throw')
       },
       onError (err) {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
+        p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onHeaders missing', (t) => {
-  t.plan(1)
+test('dispatch onHeaders missing', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -452,29 +471,31 @@ test('dispatch onHeaders missing', (t) => {
       onConnect () {
       },
       onData (buf) {
-        t.fail('should not throw')
+        p.ok(0, 'should not throw')
       },
       onComplete (trailers) {
-        t.fail('should not throw')
+        p.ok(0, 'should not throw')
       },
       onError (err) {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
+        p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onData missing', (t) => {
-  t.plan(1)
+test('dispatch onData missing', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -483,29 +504,31 @@ test('dispatch onData missing', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.fail('should not throw')
+        p.ok(0, 'should not throw')
       },
       onComplete (trailers) {
-        t.fail('should not throw')
+        p.ok(0, 'should not throw')
       },
       onError (err) {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
+        p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onComplete missing', (t) => {
-  t.plan(1)
+test('dispatch onComplete missing', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -514,29 +537,31 @@ test('dispatch onComplete missing', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.fail()
+        p.ok(0)
       },
       onData (buf) {
-        t.fail()
+        p.ok(0)
       },
       onError (err) {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
+        p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onError missing', (t) => {
-  t.plan(1)
+test('dispatch onError missing', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     try {
       client.dispatch({
@@ -546,32 +571,34 @@ test('dispatch onError missing', (t) => {
         onConnect () {
         },
         onHeaders (statusCode, headers) {
-          t.fail()
+          p.ok(0)
         },
         onData (buf) {
-          t.fail()
+          p.ok(0)
         },
         onComplete (trailers) {
-          t.fail()
+          p.ok(0)
         }
       })
     } catch (err) {
-      t.equal(err.code, 'UND_ERR_INVALID_ARG')
+      p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
     }
   })
+
+  await p.completed
 })
 
-test('dispatch CONNECT onUpgrade missing', (t) => {
-  t.plan(2)
+test('dispatch CONNECT onUpgrade missing', async (t) => {
+  const p = tspl(t, { plan: 2 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    t.after(() => client.destroy.bind(client)())
 
     client.dispatch({
       path: '/',
@@ -583,24 +610,26 @@ test('dispatch CONNECT onUpgrade missing', (t) => {
       onHeaders (statusCode, headers) {
       },
       onError (err) {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
-        t.equal(err.message, 'invalid onUpgrade method')
+        p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        p.strictEqual(err.message, 'invalid onUpgrade method')
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch upgrade onUpgrade missing', (t) => {
-  t.plan(2)
+test('dispatch upgrade onUpgrade missing', async (t) => {
+  const p = tspl(t, { plan: 2 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -612,24 +641,26 @@ test('dispatch upgrade onUpgrade missing', (t) => {
       onHeaders (statusCode, headers) {
       },
       onError (err) {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
-        t.equal(err.message, 'invalid onUpgrade method')
+        p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        p.strictEqual(err.message, 'invalid onUpgrade method')
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch pool onError missing', (t) => {
-  t.plan(2)
+test('dispatch pool onError missing', async (t) => {
+  const p = tspl(t, { plan: 2 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     try {
       client.dispatch({
@@ -639,22 +670,24 @@ test('dispatch pool onError missing', (t) => {
       }, {
       })
     } catch (err) {
-      t.equal(err.code, 'UND_ERR_INVALID_ARG')
-      t.equal(err.message, 'invalid onError method')
+      p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+      p.strictEqual(err.message, 'invalid onError method')
     }
   })
+
+  await p.completed
 })
 
-test('dispatch onBodySent not a function', (t) => {
-  t.plan(2)
+test('dispatch onBodySent not a function', async (t) => {
+  const p = tspl(t, { plan: 2 })
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     client.dispatch({
       path: '/',
@@ -665,24 +698,26 @@ test('dispatch onBodySent not a function', (t) => {
       onHeaders () {},
       onData () {},
       onError (err) {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
-        t.equal(err.message, 'invalid onBodySent method')
+        p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        p.strictEqual(err.message, 'invalid onBodySent method')
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onBodySent buffer', (t) => {
-  t.plan(3)
+test('dispatch onBodySent buffer', async (t) => {
+  const p = tspl(t, { plan: 3 })
 
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
     const body = 'hello 🚀'
     client.dispatch({
       path: '/',
@@ -690,10 +725,10 @@ test('dispatch onBodySent buffer', (t) => {
       body
     }, {
       onBodySent (chunk) {
-        t.equal(chunk.toString(), body)
+        p.strictEqual(chunk.toString(), body)
       },
       onRequestSent () {
-        t.pass()
+        p.ok(1)
       },
       onError (err) {
         throw err
@@ -702,24 +737,26 @@ test('dispatch onBodySent buffer', (t) => {
       onHeaders () {},
       onData () {},
       onComplete () {
-        t.pass()
+        p.ok(1)
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onBodySent stream', (t) => {
-  t.plan(8)
+test('dispatch onBodySent stream', async (t) => {
+  const p = tspl(t, { plan: 8 })
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   const chunks = ['he', 'llo', 'world', '🚀']
   const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
   const body = stream.Readable.from(chunks)
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
     let sentBytes = 0
     let currentChunk = 0
     client.dispatch({
@@ -728,11 +765,11 @@ test('dispatch onBodySent stream', (t) => {
       body
     }, {
       onBodySent (chunk) {
-        t.equal(chunks[currentChunk++], chunk)
+        p.strictEqual(chunks[currentChunk++], chunk)
         sentBytes += Buffer.byteLength(chunk)
       },
       onRequestSent () {
-        t.pass()
+        p.ok(1)
       },
       onError (err) {
         throw err
@@ -741,24 +778,26 @@ test('dispatch onBodySent stream', (t) => {
       onHeaders () {},
       onData () {},
       onComplete () {
-        t.equal(currentChunk, chunks.length)
-        t.equal(sentBytes, toSendBytes)
-        t.pass()
+        p.strictEqual(currentChunk, chunks.length)
+        p.strictEqual(sentBytes, toSendBytes)
+        p.ok(1)
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatch onBodySent async-iterable', (t) => {
+test('dispatch onBodySent async-iterable', (t, done) => {
   const server = http.createServer((req, res) => {
     res.end('ad')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   const chunks = ['he', 'llo', 'world', '🚀']
   const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
     let sentBytes = 0
     let currentChunk = 0
     client.dispatch({
@@ -767,7 +806,7 @@ test('dispatch onBodySent async-iterable', (t) => {
       body: chunks
     }, {
       onBodySent (chunk) {
-        t.equal(chunks[currentChunk++], chunk)
+        assert.strictEqual(chunks[currentChunk++], chunk)
         sentBytes += Buffer.byteLength(chunk)
       },
       onError (err) {
@@ -777,23 +816,23 @@ test('dispatch onBodySent async-iterable', (t) => {
       onHeaders () {},
       onData () {},
       onComplete () {
-        t.equal(currentChunk, chunks.length)
-        t.equal(sentBytes, toSendBytes)
-        t.end()
+        assert.strictEqual(currentChunk, chunks.length)
+        assert.strictEqual(sentBytes, toSendBytes)
+        done()
       }
     })
   })
 })
 
-test('dispatch onBodySent throws error', (t) => {
+test('dispatch onBodySent throws error', (t, done) => {
   const server = http.createServer((req, res) => {
     res.end('ended')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
     const body = 'hello'
     client.dispatch({
       path: '/',
@@ -804,9 +843,9 @@ test('dispatch onBodySent throws error', (t) => {
         throw new Error('fail')
       },
       onError (err) {
-        t.type(err, Error)
-        t.equal(err.message, 'fail')
-        t.end()
+        assert.ok(err instanceof Error)
+        assert.strictEqual(err.message, 'fail')
+        done()
       },
       onConnect () {},
       onHeaders () {},
@@ -816,17 +855,18 @@ test('dispatch onBodySent throws error', (t) => {
   })
 })
 
-test('dispatches in expected order', (t) => {
+test('dispatches in expected order', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ended')
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
+
+  const p = tspl(t, { plan: 1 })
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
 
-    t.plan(1)
-    t.teardown(client.close.bind(client))
+    t.after(() => { return client.close() })
 
     const dispatches = []
 
@@ -852,16 +892,18 @@ test('dispatches in expected order', (t) => {
       },
       onComplete () {
         dispatches.push('onComplete')
-        t.same(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
       },
       onError (err) {
-        t.error(err)
+        p.ifError(err)
       }
     })
   })
+
+  await p.completed
 })
 
-test('dispatches in expected order for http2', (t) => {
+test('dispatches in expected order for http2', async (t) => {
   const server = createSecureServer(pem)
   server.on('stream', (stream) => {
     stream.respond({
@@ -871,7 +913,7 @@ test('dispatches in expected order for http2', (t) => {
     stream.end('ended')
   })
 
-  t.teardown(server.close.bind(server))
+  const p = tspl(t, { plan: 1 })
 
   server.listen(0, () => {
     const client = new Pool(`https://localhost:${server.address().port}`, {
@@ -881,8 +923,7 @@ test('dispatches in expected order for http2', (t) => {
       allowH2: true
     })
 
-    t.plan(1)
-    t.teardown(client.close.bind(client))
+    t.after(closeClientAndServerAsPromise(client, server))
 
     const dispatches = []
 
@@ -908,11 +949,13 @@ test('dispatches in expected order for http2', (t) => {
       },
       onComplete () {
         dispatches.push('onComplete')
-        t.same(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
       },
       onError (err) {
-        t.error(err)
+        p.ifError(err)
       }
     })
   })
+
+  await p.completed
 })
