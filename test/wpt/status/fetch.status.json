@@ -92,9 +92,14 @@
         "skip": true
       },
       "scheme-blob.sub.any.js": {
-        "note": "fails everywhere",
+        "note": "fail: fails everywhere, flaky: only node 18",
         "fail": [
           "Fetching URL.createObjectURL(invalid_type_blob) is OK"
+        ],
+        "flaky": [
+          "Fetching URL.createObjectURL(empty_blob) is OK",
+          "Fetching URL.createObjectURL(empty_type_blob) is OK",
+          "Fetching URL.createObjectURL(empty_data_blob) is OK"
         ]
       },
       "status.h2.any.js": {
