@@ -371,24 +371,33 @@ Undici provides DNS caching via the `DNSResolver` class.
 
 This functionality is coming from [cacheable-lookup](https://github.com/szmarczak/cacheable-lookup/tree/9e60c9f6e74a003692aec68f3ddad93afe613b8f) package.
 
-By default a global DNSResolver will be created and passed down by the agent to the pool.
+By default this functionality is disabled.
+
+You can enable the default DNSResolver and pass it down by the agent to the pool by setting `dnsResolver` to `true`.
+
+```js
+new Agent({
+    dnsResolver: true
+})
+```
+
+
 Here is an example of how to configure a custom DNSResolver:
 
 ```js
 new Agent({
-    dnsResolverOptions: {
-      lookupOptions: { family: 6, hints: ALL }
-    }
-  })
+  dnsResolver: true,
+  dnsResolverOptions: {
+    lookupOptions: { family: 6, hints: ALL }
+  }
+})
 ```
 
 To disable DNS caching for an agent:
 
 ```js
 new Agent({
-  dnsResolverOptions: {
-    disable: true
-  }
+  dnsResolver: false
 })
 ```
 

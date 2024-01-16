@@ -989,13 +989,35 @@ test('agent: verify DNSResolver is working caching requests', t => {
   })
 })
 
+test('agent verify DNSResolver is disabled by default', t => {
+  t.plan(2)
+  const { Agent, request } = require('../index')
+  const dnsResolver = new DNSResolver({ resolver })
+  dnsResolver.clear()
+  const agent = new Agent()
+  t.equal(dnsResolver[kDnsCacheSize], 0)
+
+  const server = http.createServer((req, res) => {
+    req.pipe(res)
+  })
+
+  t.teardown(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const origin = `http://localhost:${server.address().port}`
+    await request(origin, { dispatcher: agent })
+    t.equal(dnsResolver[kDnsCacheSize], 0)
+    t.end()
+  })
+})
+
 test('agent verify DNSResolver is disabled', t => {
   t.plan(2)
   const { Agent, request } = require('../index')
   const dnsResolver = new DNSResolver({ resolver })
   dnsResolver.clear()
   const agent = new Agent({
-    dnsResolverOptions: { disable: true }
+    dnsResolver: false
   })
   t.equal(dnsResolver[kDnsCacheSize], 0)
 
