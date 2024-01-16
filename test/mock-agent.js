@@ -2624,3 +2624,33 @@ test('MockAgent - Sending ReadableStream body', async (t) => {
 
   t.same(await response.text(), 'test')
 })
+
+// https://github.com/nodejs/undici/issues/2616
+test('MockAgent - headers should be array of strings (fetch)', async (t) => {
+  t.plan(1)
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+
+  t.teardown(mockAgent.close.bind(mockAgent))
+
+  const mockPool = mockAgent.get('http://localhost:3000')
+
+  mockPool
+    .intercept({
+      path: '/foo',
+      method: 'GET'
+    })
+    .reply(200, 'foo', {
+      headers: {
+        'set-cookie': ['foo=bar', 'bar=baz', 'baz=qux']
+      }
+    })
+
+  const response = await fetch('http://localhost:3000/foo', {
+    method: 'GET'
+  })
+
+  t.same(response.headers.getSetCookie(), ['foo=bar', 'bar=baz', 'baz=qux'])
+})
