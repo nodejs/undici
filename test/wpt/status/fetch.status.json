@@ -417,6 +417,12 @@
         "note": "this is a bug in webstreams, see https://github.com/nodejs/node/issues/46786",
         "skip": true
       }
+    },
+    "idlharness.any.js": {
+      "note": "https://github.com/nodejs/undici/issues/1666#issuecomment-1275177704",
+      "fail": [
+        "Window interface: operation fetch(RequestInfo, optional RequestInit)"
+      ]
     }
   },
   "content-length": {
