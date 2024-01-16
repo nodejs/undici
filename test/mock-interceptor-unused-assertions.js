@@ -7,7 +7,7 @@ const util = require('../lib/core/util')
 
 // Since Node.js v21 `console.table` rows are aligned to the left
 // https://github.com/nodejs/node/pull/50135
-const tableRowsAlignedToLeft = util.nodeMajor >= 21
+const tableRowsAlignedToLeft = util.nodeMajor >= 21 || (util.nodeMajor === 20 && util.nodeMinor >= 11)
 
 // Avoid colors in the output for inline snapshots.
 const pendingInterceptorsFormatter = new PendingInterceptorsFormatter({ disableColors: true })
