@@ -313,7 +313,7 @@ export class WPTRunner extends EventEmitter {
       `skipped: ${skipped}`
     )
 
-    process.exit(failed - expectedFailures ? 1 : 0)
+    process.exit(failed - expectedFailures ? 1 : process.exitCode)
   }
 
   addInitScript (code) {
