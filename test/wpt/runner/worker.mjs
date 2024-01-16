@@ -90,13 +90,16 @@ Object.defineProperties(globalThis, {
   CacheStorage: {
     ...globalPropertyDescriptors,
     value: CacheStorage
-  },
-  // TODO: remove once node 18 is dropped
-  crypto: {
-    ...globalPropertyDescriptors,
-    value: webcrypto
   }
 })
+
+// TODO: remove once node 18 is dropped
+if (!globalThis.crypto) {
+  Object.defineProperty(globalThis, 'crypto', {
+    ...globalPropertyDescriptors,
+    value: webcrypto
+  })
+}
 
 // self is required by testharness
 // GLOBAL is required by self
