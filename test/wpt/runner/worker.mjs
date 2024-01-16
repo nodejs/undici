@@ -12,6 +12,7 @@ import { WebSocket } from '../../../lib/websocket/websocket.js'
 import { Cache } from '../../../lib/cache/cache.js'
 import { CacheStorage } from '../../../lib/cache/cachestorage.js'
 import { kConstruct } from '../../../lib/cache/symbols.js'
+import { webcrypto } from 'node:crypto'
 
 const { initScripts, meta, test, url, path } = workerData
 
@@ -91,6 +92,14 @@ Object.defineProperties(globalThis, {
     value: CacheStorage
   }
 })
+
+// TODO: remove once node 18 is dropped
+if (!globalThis.crypto) {
+  Object.defineProperty(globalThis, 'crypto', {
+    ...globalPropertyDescriptors,
+    value: webcrypto
+  })
+}
 
 // self is required by testharness
 // GLOBAL is required by self
