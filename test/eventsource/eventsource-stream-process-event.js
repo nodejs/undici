@@ -5,15 +5,15 @@ const { test, describe } = require('node:test')
 const { EventSourceStream } = require('../../lib/eventsource/eventsource-stream')
 
 describe('EventSourceStream - processEvent', () => {
-  const defaultEventSourceState = {
+  const defaultEventSourceSettings = {
     origin: 'example.com',
     reconnectionTime: 1000
   }
 
   test('Should set the defined origin as the origin of the MessageEvent', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -35,8 +35,8 @@ describe('EventSourceStream - processEvent', () => {
 
   test('Should set reconnectionTime to 4000 if event contains retry field', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -49,8 +49,8 @@ describe('EventSourceStream - processEvent', () => {
 
   test('Dispatches a MessageEvent with data', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -74,8 +74,8 @@ describe('EventSourceStream - processEvent', () => {
 
   test('Dispatches a MessageEvent with lastEventId, when event contains id field', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -96,8 +96,8 @@ describe('EventSourceStream - processEvent', () => {
   test('Dispatches a MessageEvent with lastEventId, reusing the persisted', () => {
     // lastEventId
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState,
+      eventSourceSettings: {
+        ...defaultEventSourceSettings,
         lastEventId: '1234'
       }
     })
@@ -116,8 +116,8 @@ describe('EventSourceStream - processEvent', () => {
 
   test('Dispatches a MessageEvent with type custom, when event contains type field', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 

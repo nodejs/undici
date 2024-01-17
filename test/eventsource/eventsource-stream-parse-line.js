@@ -5,15 +5,15 @@ const { test, describe } = require('node:test')
 const { EventSourceStream } = require('../../lib/eventsource/eventsource-stream')
 
 describe('EventSourceStream - parseLine', () => {
-  const defaultEventSourceState = {
+  const defaultEventSourceSettings = {
     origin: 'example.com',
     reconnectionTime: 1000
   }
 
   test('Should set the data field with empty string if not containing data', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -31,8 +31,8 @@ describe('EventSourceStream - parseLine', () => {
 
   test('Should set the data field with empty string if not containing data (containing space after colon)', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -50,8 +50,8 @@ describe('EventSourceStream - parseLine', () => {
 
   test('Should set the data field with a string containing space if having more than one space after colon', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -69,8 +69,8 @@ describe('EventSourceStream - parseLine', () => {
 
   test('Should set value properly, even if the line contains multiple colons', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -88,8 +88,8 @@ describe('EventSourceStream - parseLine', () => {
 
   test('Should set the data field when containing data', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -107,8 +107,8 @@ describe('EventSourceStream - parseLine', () => {
 
   test('Should ignore comments', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -126,8 +126,8 @@ describe('EventSourceStream - parseLine', () => {
 
   test('Should set retry field', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -145,8 +145,8 @@ describe('EventSourceStream - parseLine', () => {
 
   test('Should set id field', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -164,8 +164,8 @@ describe('EventSourceStream - parseLine', () => {
 
   test('Should set id field', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
@@ -183,8 +183,8 @@ describe('EventSourceStream - parseLine', () => {
 
   test('Should ignore invalid field', () => {
     const stream = new EventSourceStream({
-      eventSourceState: {
-        ...defaultEventSourceState
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
       }
     })
 
