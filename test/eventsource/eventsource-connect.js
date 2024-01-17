@@ -142,3 +142,89 @@ describe('EventSource - sending correct request headers', () => {
     }
   })
 })
+
+describe('EventSource - received response must have content-type to be text/event-stream', () => {
+  test('should send request with accept text/event-stream', async () => {
+    const server = http.createServer((req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end()
+    })
+
+    server.listen(0)
+    await events.once(server, 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    eventSourceInstance.onopen = () => {
+      eventSourceInstance.close()
+      server.close()
+    }
+
+    eventSourceInstance.onerror = () => {
+      assert.fail('Should not have errored')
+    }
+  })
+
+  test('should send request with accept text/event-stream;', async () => {
+    const server = http.createServer((req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream;' })
+      res.end()
+    })
+
+    server.listen(0)
+    await events.once(server, 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    eventSourceInstance.onopen = () => {
+      eventSourceInstance.close()
+      server.close()
+    }
+
+    eventSourceInstance.onerror = () => {
+      assert.fail('Should not have errored')
+    }
+  })
+
+  test('should handle content-type text/event-stream;charset=UTF-8 properly', async () => {
+    const server = http.createServer((req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream;charset=UTF-8' })
+      res.end()
+    })
+
+    server.listen(0)
+    await events.once(server, 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    eventSourceInstance.onopen = () => {
+      eventSourceInstance.close()
+      server.close()
+    }
+
+    eventSourceInstance.onerror = () => {
+      assert.fail('Should not have errored')
+    }
+  })
+
+  test('should throw if content-type is text/html properly', async () => {
+    const server = http.createServer((req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/html' })
+      res.end()
+    })
+
+    server.listen(0)
+    await events.once(server, 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    eventSourceInstance.onopen = () => {
+      assert.fail('Should not have opened')
+    }
+
+    eventSourceInstance.onerror = () => {
+      eventSourceInstance.close()
+      server.close()
+    }
+  })
+})
