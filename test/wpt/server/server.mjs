@@ -413,7 +413,6 @@ const server = createServer(async (req, res) => {
       const sleep = parseInt(fullUrl.searchParams.get('sleep') ?? '0')
 
       res.setHeader('content-type', mime)
-      res.setHeader('test', 'wtf')
       res.write(message + newline + '\n')
 
       if (sleep !== 0) {
