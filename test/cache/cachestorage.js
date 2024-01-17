@@ -149,9 +149,13 @@ test('Cache - put', async (t) => {
 
   await t.test('http/s scheme when method is not GET', async () => {
     await assert.rejects(
-      () => storage.put(new Request('url://localhost', {
-        method: 'POST'
-      }), new Response('url://')),
+      () =>
+        storage.put(
+          new Request('url://localhost', {
+            method: 'POST'
+          }),
+          new Response('url://')
+        ),
       TypeError
     )
   })
@@ -193,6 +197,18 @@ test('Cache - put', async (t) => {
             }
           })
         ),
+      TypeError
+    )
+  })
+
+  // TODO
+
+  await t.test('body already consumed.', async () => {
+    const response = new Response('body')
+    await response.text()
+
+    await assert.rejects(
+      () => storage.put('https://localhost/bodyUsed', response),
       TypeError
     )
   })
