@@ -73,25 +73,24 @@ test('CacheStorage - match', async () => {
   const v1Storage = await caches.open('v1')
   await caches.open('v2')
   await v1Storage.put(
-    new Request('https://localhost'),
+    new Request('https://localhost/v1'),
     new Response('cache from v1')
   )
 
   assert.strictEqual(
-    await (await caches.match('https://localhost')).text(),
+    await (await caches.match('https://localhost/v1')).text(),
     'cache from v1'
   )
 
   assert.strictEqual(
-    await caches.match('https://localhost', { cacheName: 'v2' }),
+    await caches.match('https://localhost/v2', { cacheName: 'v1' }),
     undefined
   )
-})
 
-test('CacheStorage - open', async () => {
-  const caches = new CacheStorage(kConstruct)
-  await assert.doesNotReject(() => caches.open('test'))
-  assert.notStrictEqual(await caches.open('v1'), await caches.open('v1'))
+  assert.strictEqual(
+    await caches.match('https://localhost/v1', { cacheName: 'v2' }),
+    undefined
+  )
 })
 
 test('CacheStorage - has', async () => {
@@ -99,6 +98,12 @@ test('CacheStorage - has', async () => {
   await caches.open('v1')
   assert(await caches.has('v1'))
   assert(!(await caches.has('v2')))
+})
+
+test('CacheStorage - open', async () => {
+  const caches = new CacheStorage(kConstruct)
+  await assert.doesNotReject(() => caches.open('test'))
+  assert.notStrictEqual(await caches.open('v1'), await caches.open('v1'))
 })
 
 test('CacheStorage - delete', async () => {
@@ -126,9 +131,10 @@ test('CacheStorage - keys', async () => {
 test('Cache - match', async () => {
   const caches = new CacheStorage(kConstruct)
   const storage = await caches.open('test')
-  await storage.put(new Request('https://localhost'), new Response('Hi'))
+  await storage.put(new Request('https://localhost/v1'), new Response('Hi'))
   assert.strictEqual(
-    await (await storage.match('https://localhost')).text(),
+    await (await storage.match('https://localhost/v1')).text(),
     'Hi'
   )
+  assert.strictEqual(await storage.match('https://localhost/v2'), undefined)
 })
