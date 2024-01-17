@@ -13,7 +13,7 @@ import { Cache } from '../../../lib/cache/cache.js'
 import { CacheStorage } from '../../../lib/cache/cachestorage.js'
 import { kConstruct } from '../../../lib/cache/symbols.js'
 // TODO(@KhafraDev): move this import once its added to index
-import { EventSource } from '../../../lib/eventsource/index.js'
+import { EventSource } from '../../../lib/eventsource/eventsource.js'
 import { webcrypto } from 'node:crypto'
 
 const { initScripts, meta, test, url, path } = workerData

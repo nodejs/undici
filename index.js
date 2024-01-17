@@ -150,6 +150,6 @@ module.exports.MockPool = MockPool
 module.exports.MockAgent = MockAgent
 module.exports.mockErrors = mockErrors
 
-const { EventSource } = require('./lib/eventsource')
+const { EventSource } = require('./lib/eventsource/eventsource')
 
 module.exports.EventSource = EventSource

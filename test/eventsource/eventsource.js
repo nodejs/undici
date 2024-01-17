@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const events = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
-const { EventSource } = require('../../lib/eventsource')
+const { EventSource } = require('../../lib/eventsource/eventsource')
 
 describe('EventSource - constructor', () => {
   test('Not providing url argument should throw', () => {
