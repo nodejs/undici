@@ -78,12 +78,12 @@ test('CacheStorage - match', async () => {
   )
 
   assert.strictEqual(
-    await (await caches.match(('https://localhost')))?.text(),
+    await (await caches.match('https://localhost')).text(),
     'cache from v1'
   )
 
   assert.strictEqual(
-    await caches.match(('https://localhost'), { cacheName: 'v2' }),
+    await caches.match('https://localhost', { cacheName: 'v2' }),
     undefined
   )
 })
@@ -99,6 +99,16 @@ test('CacheStorage - has', async () => {
   await caches.open('v1')
   assert(await caches.has('v1'))
   assert(!(await caches.has('v2')))
+})
+
+test('CacheStorage - delete', async () => {
+  const caches = new CacheStorage(kConstruct)
+
+  await caches.open('v1')
+  assert(await caches.has('v1'))
+
+  await caches.delete('v1')
+  assert(!(await caches.has('v1')))
 })
 
 test('Cache - match', async () => {
