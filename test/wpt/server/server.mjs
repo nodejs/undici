@@ -406,6 +406,24 @@ const server = createServer(async (req, res) => {
       res.end('vary response')
       return
     }
+    case '/eventsource/resources/message.py': {
+      const mime = fullUrl.searchParams.get('mime') ?? 'text/event-stream'
+      const message = fullUrl.searchParams.get('message') ?? 'data: data'
+      const newline = fullUrl.searchParams.get('newline') === 'none' ? '' : '\n\n'
+      const sleep = parseInt(fullUrl.searchParams.get('sleep') ?? '0')
+
+      res.setHeader('content-type', mime)
+      res.setHeader('test', 'wtf')
+      res.write(message + newline + '\n')
+
+      if (sleep !== 0) {
+        setTimeout(() => {
+          res.end()
+        }, sleep)
+      }
+
+      return
+    }
     default: {
       res.statusCode = 200
       res.end(fullUrl.toString())
