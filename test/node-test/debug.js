@@ -16,52 +16,67 @@ test('debug#websocket', async t => {
       }
     }
   )
+  const chunks = []
+  const assertions = [
+    /(WEBSOCKET [0-9]+:) (connecting to)/,
+    // Skip the chunk that comes with the experimental warning
+    /(\[UNDICI-WS\])/,
+    /(WEBSOCKET [0-9]+:) (connected to)/,
+    /(WEBSOCKET [0-9]+:) (sending request)/,
+    /(WEBSOCKET [0-9]+:) (connection opened)/,
+    /(WEBSOCKET [0-9]+:) (closed connection to)/
+  ]
 
   t.after(() => {
     child.kill()
   })
 
   child.stderr.setEncoding('utf8')
-
-  for await (const chunk of child.stderr) {
-    if (chunk.includes('[UNDICI-WS] Warning')) {
-      // Ignoring experimental warning
-      continue
+  child.stderr.on('data', chunk => {
+    chunks.push(chunk)
+  })
+  child.stderr.on('end', () => {
+    for (let i = 1; i < chunks.length; i++) {
+      assert.match(chunks[i], assertions[i])
     }
+  })
 
-    console.log(chunk)
-    assert.match(
-      chunk,
-      /(WEBSOCKET [0-9]+:) (connecting to|connected to|sending request|connection opened|closed connection)/
-    )
-  }
+  await assert.completed
 })
 
 test('debug#fetch', async t => {
-  // Due to Node.js webpage redirect
-  const assert = tspl(t, { plan: 10 })
+  const assert = tspl(t, { plan: 5 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/fetch.js')],
     {
-      env: {
-        NODE_DEBUG: 'fetch'
-      }
+      env: Object.assign({}, process.env, { NODE_DEBUG: 'fetch' })
     }
   )
+  const chunks = []
+  const assertions = [
+    /(FETCH [0-9]+:) (connecting to)/,
+    /(FETCH [0-9]+:) (connected to)/,
+    /(FETCH [0-9]+:) (sending request)/,
+    /(FETCH [0-9]+:) (received response)/,
+    /(FETCH [0-9]+:) (trailers received)/
+  ]
 
   t.after(() => {
     child.kill()
   })
 
   child.stderr.setEncoding('utf8')
+  child.stderr.on('data', chunk => {
+    chunks.push(chunk)
+  })
+  child.stderr.on('end', () => {
+    for (let i = 0; i < chunks.length; i++) {
+      assert.match(chunks[i], assertions[i])
+    }
+  })
 
-  for await (const chunk of child.stderr) {
-    assert.match(
-      chunk,
-      /(FETCH [0-9]+:) (connecting to|connected to|sending request|received response|trailers received|request to)/
-    )
-  }
+  await assert.completed
 })
 
 test('debug#undici', async t => {
@@ -76,17 +91,28 @@ test('debug#undici', async t => {
       }
     }
   )
+  const chunks = []
+  const assertions = [
+    /(UNDICI [0-9]+:) (connecting to)/,
+    /(UNDICI [0-9]+:) (connected to)/,
+    /(UNDICI [0-9]+:) (sending request)/,
+    /(UNDICI [0-9]+:) (received response)/,
+    /(UNDICI [0-9]+:) (trailers received)/
+  ]
 
   t.after(() => {
     child.kill()
   })
 
   child.stderr.setEncoding('utf8')
+  child.stderr.on('data', chunk => {
+    chunks.push(chunk)
+  })
+  child.stderr.on('end', () => {
+    for (let i = 0; i < chunks.length; i++) {
+      assert.match(chunks[i], assertions[i])
+    }
+  })
 
-  for await (const chunk of child.stderr) {
-    assert.match(
-      chunk,
-      /(UNDICI [0-9]+:) (connecting to|connected to|sending request|received response|trailers received|request to)/
-    )
-  }
+  await assert.completed
 })
