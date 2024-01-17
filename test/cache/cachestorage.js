@@ -123,6 +123,9 @@ test('CacheStorage - keys', async () => {
 
   await caches.open('v2')
   assert.deepStrictEqual(await caches.keys(), ['v1', 'v2'])
+
+  // await caches.delete('v1')
+  // assert.deepStrictEqual(await caches.keys(), ['v2'])
 })
 
 test('Cache - match', async () => {
@@ -136,13 +139,46 @@ test('Cache - match', async () => {
   assert.strictEqual(await storage.match('https://localhost/v2'), undefined)
 })
 
-test('Cache - put', async () => {
+test('Cache - put', async (t) => {
   const caches = new CacheStorage(kConstruct)
   const storage = await caches.open('test')
   // put(RequestInfo, Response)
   await storage.put('https://localhost/v1', new Response('v1'))
   // put(Request, Response)
   await storage.put(new Request('https://localhost/v2'), new Response('v2'))
+
+  await t.test('Scheme of the url is not http or https.', async () => {
+    await assert.rejects(
+      () => storage.put('blob://localhost', new Response('blob://')),
+      TypeError
+    )
+  })
+
+  await t.test('method is not GET.', async () => {
+    await assert.rejects(
+      () =>
+        storage.put(
+          new Request('https://localhost/post', {
+            method: 'POST'
+          }),
+          new Response('POST')
+        ),
+      TypeError
+    )
+  })
+
+  await t.test('HTTP status is 206.', async () => {
+    await assert.rejects(
+      () =>
+        storage.put(
+          'https://localhost/206',
+          new Response('206 Partial Content', {
+            status: 206
+          })
+        ),
+      TypeError
+    )
+  })
 
   // TODO
 })
