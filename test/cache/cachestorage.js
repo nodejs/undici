@@ -5,6 +5,7 @@ const assert = require('node:assert')
 const { kConstruct } = require('../../lib/core/symbols')
 const { Cache } = require('../../lib/cache/cache')
 const { CacheStorage } = require('../../lib/cache/cachestorage')
+const { Request, Response } = require('../..')
 
 describe('create instance', () => {
   test('illegal constructor', () => {
@@ -67,7 +68,17 @@ describe('Cache - brand in check', () => {
   )
 })
 
-test('open CacheStorage', async () => {
+test('CacheStorage - match', async () => {
+  const caches = new CacheStorage(kConstruct)
+  const storage = await caches.open('test')
+  await storage.put(new Request('https://localhost'), new Response('Hi'))
+  assert.strictEqual(
+    await (await storage.match('https://localhost')).text(),
+    'Hi'
+  )
+})
+
+test('CacheStorage - open', async () => {
   const caches = new CacheStorage(kConstruct)
   await assert.doesNotReject(() => caches.open('test'))
 })
