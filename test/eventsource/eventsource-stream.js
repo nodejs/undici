@@ -32,6 +32,78 @@ describe('EventSourceStream', () => {
     }
   })
 
+  test('Should also process CR as EOL.', () => {
+    const content = Buffer.from('data: Hello\r\r', 'utf8')
+
+    const stream = new EventSourceStream()
+
+    stream.processEvent = function (event) {
+      assert.strictEqual(typeof event, 'object')
+      assert.strictEqual(event.event, undefined)
+      assert.strictEqual(event.data, 'Hello')
+      assert.strictEqual(event.id, undefined)
+      assert.strictEqual(event.retry, undefined)
+    }
+
+    for (let i = 0; i < content.length; i++) {
+      stream.write(Buffer.from([content[i]]))
+    }
+  })
+
+  test('Should also process CRLF as EOL.', () => {
+    const content = Buffer.from('data: Hello\r\n\r\n', 'utf8')
+
+    const stream = new EventSourceStream()
+
+    stream.processEvent = function (event) {
+      assert.strictEqual(typeof event, 'object')
+      assert.strictEqual(event.event, undefined)
+      assert.strictEqual(event.data, 'Hello')
+      assert.strictEqual(event.id, undefined)
+      assert.strictEqual(event.retry, undefined)
+    }
+
+    for (let i = 0; i < content.length; i++) {
+      stream.write(Buffer.from([content[i]]))
+    }
+  })
+
+  test('Should also process mixed CR and CRLF as EOL.', () => {
+    const content = Buffer.from('data: Hello\r\r\n', 'utf8')
+
+    const stream = new EventSourceStream()
+
+    stream.processEvent = function (event) {
+      assert.strictEqual(typeof event, 'object')
+      assert.strictEqual(event.event, undefined)
+      assert.strictEqual(event.data, 'Hello')
+      assert.strictEqual(event.id, undefined)
+      assert.strictEqual(event.retry, undefined)
+    }
+
+    for (let i = 0; i < content.length; i++) {
+      stream.write(Buffer.from([content[i]]))
+    }
+  })
+
+  test('Should also process mixed LF and CRLF as EOL.', () => {
+    const content = Buffer.from('data: Hello\n\r\n', 'utf8')
+
+    const stream = new EventSourceStream()
+
+    stream.processEvent = function (event) {
+      assert.strictEqual(typeof event, 'object')
+      assert.strictEqual(event.event, undefined)
+      assert.strictEqual(event.data, 'Hello')
+      assert.strictEqual(event.id, undefined)
+      assert.strictEqual(event.retry, undefined)
+    }
+
+    for (let i = 0; i < content.length; i++) {
+      stream.write(Buffer.from([content[i]]))
+    }
+  })
+
   test('Should ignore comments', () => {
     const content = Buffer.from(':data: Hello\n\n', 'utf8')
 

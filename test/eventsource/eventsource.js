@@ -10,6 +10,146 @@ describe('EventSource - constructor', () => {
   test('Not providing url argument should throw', () => {
     assert.throws(() => new EventSource(), TypeError)
   })
+  test('Throw DOMException if URL is invalid', () => {
+    assert.throws(() => new EventSource('http:'), { message: /Invalid URL/ })
+  })
+})
+
+describe('EventSource - withCredentials', () => {
+  test('withCredentials should be false by default', async () => {
+    const server = http.createServer((req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end()
+    })
+
+    server.listen(0)
+    await events.once(server, 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    eventSourceInstance.onopen = () => {
+      assert.strictEqual(eventSourceInstance.withCredentials, false)
+      eventSourceInstance.close()
+      server.close()
+    }
+
+    eventSourceInstance.onerror = () => {
+      assert.fail('Should not have errored')
+    }
+  })
+
+  test('withCredentials can be set to true', async () => {
+    const server = http.createServer((req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end()
+    })
+
+    server.listen(0)
+    await events.once(server, 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`, { withCredentials: true })
+    eventSourceInstance.onopen = () => {
+      assert.strictEqual(eventSourceInstance.withCredentials, true)
+      eventSourceInstance.close()
+      server.close()
+    }
+
+    eventSourceInstance.onerror = () => {
+      assert.fail('Should not have errored')
+    }
+  })
+})
+
+describe('EventSource - sending correct request headers', () => {
+  test('should send request with connection keep-alive', async () => {
+    const server = http.createServer((req, res) => {
+      assert.strictEqual(req.headers.connection, 'keep-alive')
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end()
+    })
+
+    server.listen(0)
+    await events.once(server, 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    eventSourceInstance.onopen = () => {
+      eventSourceInstance.close()
+      server.close()
+    }
+
+    eventSourceInstance.onerror = () => {
+      assert.fail('Should not have errored')
+    }
+  })
+
+  test('should send request with sec-fetch-mode set to cors', async () => {
+    const server = http.createServer((req, res) => {
+      assert.strictEqual(req.headers['sec-fetch-mode'], 'cors')
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end()
+    })
+
+    server.listen(0)
+    await events.once(server, 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    eventSourceInstance.onopen = () => {
+      eventSourceInstance.close()
+      server.close()
+    }
+
+    eventSourceInstance.onerror = () => {
+      assert.fail('Should not have errored')
+    }
+  })
+
+  test('should send request with pragma and cache-control set to no-cache', async () => {
+    const server = http.createServer((req, res) => {
+      assert.strictEqual(req.headers['cache-control'], 'no-cache')
+      assert.strictEqual(req.headers.pragma, 'no-cache')
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end()
+    })
+
+    server.listen(0)
+    await events.once(server, 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    eventSourceInstance.onopen = () => {
+      eventSourceInstance.close()
+      server.close()
+    }
+
+    eventSourceInstance.onerror = () => {
+      assert.fail('Should not have errored')
+    }
+  })
+
+  test('should send request with accept text/event-stream', async () => {
+    const server = http.createServer((req, res) => {
+      assert.strictEqual(req.headers.accept, 'text/event-stream')
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end()
+    })
+
+    server.listen(0)
+    await events.once(server, 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    eventSourceInstance.onopen = () => {
+      eventSourceInstance.close()
+      server.close()
+    }
+
+    eventSourceInstance.onerror = () => {
+      assert.fail('Should not have errored')
+    }
+  })
 })
 
 describe('EventSource - eventhandler idl', async () => {
@@ -39,9 +179,19 @@ describe('EventSource - eventhandler idl', async () => {
       assert.strictEqual(EventSource[type], undefined)
 
       // The eventhandler idl accepts functions.
-      function fn () { }
+      function fn () {
+        assert.fail('Should not have called the eventhandler')
+      }
       eventSourceInstance[type] = fn
       assert.strictEqual(eventSourceInstance[type], fn)
+
+      // The eventhandler idl can be set to another function.
+      function fn2 () { }
+      eventSourceInstance[type] = fn2
+      assert.strictEqual(eventSourceInstance[type], fn2)
+
+      // The eventhandler idl overrides the previous function.
+      eventSourceInstance.dispatchEvent(new Event(type))
 
       eventSourceInstance.close()
       done++
