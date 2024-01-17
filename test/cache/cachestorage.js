@@ -68,6 +68,26 @@ describe('Cache - brand in check', () => {
   )
 })
 
+test('CacheStorage - match', async () => {
+  const caches = new CacheStorage(kConstruct)
+  const v1Storage = await caches.open('v1')
+  await caches.open('v2')
+  await v1Storage.put(
+    new Request('https://localhost'),
+    new Response('cache from v1')
+  )
+
+  assert.strictEqual(
+    await (await caches.match(('https://localhost')))?.text(),
+    'cache from v1'
+  )
+
+  assert.strictEqual(
+    await caches.match(('https://localhost'), { cacheName: 'v2' }),
+    undefined
+  )
+})
+
 test('CacheStorage - open', async () => {
   const caches = new CacheStorage(kConstruct)
   await assert.doesNotReject(() => caches.open('test'))
@@ -78,7 +98,7 @@ test('CacheStorage - has', async () => {
   const caches = new CacheStorage(kConstruct)
   await caches.open('v1')
   assert(await caches.has('v1'))
-  assert(!await caches.has('v2'))
+  assert(!(await caches.has('v2')))
 })
 
 test('Cache - match', async () => {
