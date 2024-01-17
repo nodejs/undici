@@ -38,7 +38,11 @@ describe('EventSourceStream', () => {
     const stream = new EventSourceStream()
 
     stream.processEvent = function (event) {
-      assert.fail('Should not be called')
+      assert.strictEqual(typeof event, 'object')
+      assert.strictEqual(event.event, undefined)
+      assert.strictEqual(event.data, undefined)
+      assert.strictEqual(event.id, undefined)
+      assert.strictEqual(event.retry, undefined)
     }
 
     for (let i = 0; i < content.length; i++) {

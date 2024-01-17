@@ -10,6 +10,25 @@ describe('EventSourceStream - parseLine', () => {
     reconnectionTime: 1000
   }
 
+  test('Should push an unmodified event when line is empty', () => {
+    const stream = new EventSourceStream({
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
+      }
+    })
+
+    const event = {}
+
+    stream.parseLine(Buffer.from('', 'utf8'), event)
+
+    assert.strictEqual(typeof event, 'object')
+    assert.strictEqual(Object.keys(event).length, 0)
+    assert.strictEqual(event.data, undefined)
+    assert.strictEqual(event.id, undefined)
+    assert.strictEqual(event.event, undefined)
+    assert.strictEqual(event.retry, undefined)
+  })
+
   test('Should set the data field with empty string if not containing data', () => {
     const stream = new EventSourceStream({
       eventSourceSettings: {
