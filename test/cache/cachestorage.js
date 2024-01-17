@@ -111,6 +111,18 @@ test('CacheStorage - delete', async () => {
   assert(!(await caches.has('v1')))
 })
 
+test('CacheStorage - keys', async () => {
+  const caches = new CacheStorage(kConstruct)
+
+  assert.deepStrictEqual(await caches.keys(), [])
+
+  await caches.open('v1')
+  assert.deepStrictEqual(await caches.keys(), ['v1'])
+
+  await caches.open('v2')
+  assert.deepStrictEqual(await caches.keys(), ['v1', 'v2'])
+})
+
 test('Cache - match', async () => {
   const caches = new CacheStorage(kConstruct)
   const storage = await caches.open('test')
