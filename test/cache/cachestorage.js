@@ -147,9 +147,11 @@ test('Cache - put', async (t) => {
   // put(Request, Response)
   await storage.put(new Request('https://localhost/v2'), new Response('v2'))
 
-  await t.test('Scheme of the url is not http or https.', async () => {
+  await t.test('http/s scheme when method is not GET', async () => {
     await assert.rejects(
-      () => storage.put('blob://localhost', new Response('blob://')),
+      () => storage.put(new Request('url://localhost', {
+        method: 'POST'
+      }), new Response('url://')),
       TypeError
     )
   })
