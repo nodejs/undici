@@ -182,6 +182,21 @@ test('Cache - put', async (t) => {
     )
   })
 
+  await t.test('VARY:* Response', async () => {
+    await assert.rejects(
+      () =>
+        storage.put(
+          'https://localhost/very',
+          new Response('VARY:*', {
+            headers: {
+              VARY: '*'
+            }
+          })
+        ),
+      TypeError
+    )
+  })
+
   // TODO
 })
 
