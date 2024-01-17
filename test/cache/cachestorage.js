@@ -68,7 +68,20 @@ describe('Cache - brand in check', () => {
   )
 })
 
-test('CacheStorage - match', async () => {
+test('CacheStorage - open', async () => {
+  const caches = new CacheStorage(kConstruct)
+  await assert.doesNotReject(() => caches.open('test'))
+  assert.notStrictEqual(await caches.open('v1'), await caches.open('v1'))
+})
+
+test('CacheStorage - has', async () => {
+  const caches = new CacheStorage(kConstruct)
+  await caches.open('v1')
+  assert(await caches.has('v1'))
+  assert(!await caches.has('v2'))
+})
+
+test('Cache - match', async () => {
   const caches = new CacheStorage(kConstruct)
   const storage = await caches.open('test')
   await storage.put(new Request('https://localhost'), new Response('Hi'))
@@ -76,9 +89,4 @@ test('CacheStorage - match', async () => {
     await (await storage.match('https://localhost')).text(),
     'Hi'
   )
-})
-
-test('CacheStorage - open', async () => {
-  const caches = new CacheStorage(kConstruct)
-  await assert.doesNotReject(() => caches.open('test'))
 })
