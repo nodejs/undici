@@ -72,10 +72,7 @@ test('CacheStorage - match', async () => {
   const caches = new CacheStorage(kConstruct)
   const v1Storage = await caches.open('v1')
   await caches.open('v2')
-  await v1Storage.put(
-    new Request('https://localhost/v1'),
-    new Response('cache from v1')
-  )
+  await v1Storage.put('https://localhost/v1', new Response('cache from v1'))
 
   assert.strictEqual(
     await (await caches.match('https://localhost/v1')).text(),
@@ -131,10 +128,19 @@ test('CacheStorage - keys', async () => {
 test('Cache - match', async () => {
   const caches = new CacheStorage(kConstruct)
   const storage = await caches.open('test')
-  await storage.put(new Request('https://localhost/v1'), new Response('Hi'))
+  await storage.put('https://localhost/v1', new Response('Hi'))
   assert.strictEqual(
     await (await storage.match('https://localhost/v1')).text(),
     'Hi'
   )
   assert.strictEqual(await storage.match('https://localhost/v2'), undefined)
+})
+
+test('Cache - put', async () => {
+  const caches = new CacheStorage(kConstruct)
+  const storage = await caches.open('test')
+  // put(RequestInfo, Response)
+  await storage.put('https://localhost/v1', new Response('v1'))
+  // put(Request, Response)
+  await storage.put(new Request('https://localhost/v1/2'), new Response('v1'))
 })
