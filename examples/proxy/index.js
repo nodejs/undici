@@ -72,13 +72,13 @@ async function run () {
   // WebSocket client
   const ws = new WebSocket('ws://localhost:4002')
   ws.on('open', () => {
-    ws.send('Hello, WebSocket Server!');
-  });
+    ws.send('Hello, WebSocket Server!')
+  })
 
   ws.on('message', message => {
     console.log(`WebSocket Server says: ${message}`)
-    ws.close();
-  });
+    ws.close()
+  })
 }
 
 run()
