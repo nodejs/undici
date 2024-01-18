@@ -301,13 +301,16 @@ export class WPTRunner extends EventEmitter {
    * Called after every test has completed.
    */
   handleRunnerCompletion () {
-    console.log(this.#statusOutput) // tests that failed
+    // tests that failed
+    if (Object.keys(this.#statusOutput).length !== 0) {
+      console.log(this.#statusOutput)
+    }
 
     this.emit('completion')
     const { completed, failed, success, expectedFailures, skipped } = this.#stats
     console.log(
       `[${this.#folderName}]: ` +
-      `Completed: ${completed}, failed: ${failed}, success: ${success}, ` +
+      `completed: ${completed}, failed: ${failed}, success: ${success}, ` +
       `expected failures: ${expectedFailures}, ` +
       `unexpected failures: ${failed - expectedFailures}, ` +
       `skipped: ${skipped}`
