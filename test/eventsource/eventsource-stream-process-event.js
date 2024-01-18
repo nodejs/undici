@@ -20,9 +20,9 @@ describe('EventSourceStream - processEvent', () => {
     stream.on('data', (event) => {
       assert.strictEqual(typeof event, 'object')
       assert.strictEqual(event.type, 'message')
-      assert.strictEqual(event.payload.data, null)
-      assert.strictEqual(event.payload.lastEventId, undefined)
-      assert.strictEqual(event.payload.origin, 'example.com')
+      assert.strictEqual(event.options.data, null)
+      assert.strictEqual(event.options.lastEventId, undefined)
+      assert.strictEqual(event.options.origin, 'example.com')
       assert.strictEqual(stream.state.reconnectionTime, 1000)
     })
 
@@ -57,9 +57,9 @@ describe('EventSourceStream - processEvent', () => {
     stream.on('data', (event) => {
       assert.strictEqual(typeof event, 'object')
       assert.strictEqual(event.type, 'message')
-      assert.strictEqual(event.payload.data, 'Hello')
-      assert.strictEqual(event.payload.lastEventId, undefined)
-      assert.strictEqual(event.payload.origin, 'example.com')
+      assert.strictEqual(event.options.data, 'Hello')
+      assert.strictEqual(event.options.lastEventId, undefined)
+      assert.strictEqual(event.options.origin, 'example.com')
       assert.strictEqual(stream.state.reconnectionTime, 1000)
     })
 
@@ -82,9 +82,9 @@ describe('EventSourceStream - processEvent', () => {
     stream.on('data', (event) => {
       assert.strictEqual(typeof event, 'object')
       assert.strictEqual(event.type, 'message')
-      assert.strictEqual(event.payload.data, null)
-      assert.strictEqual(event.payload.lastEventId, '1234')
-      assert.strictEqual(event.payload.origin, 'example.com')
+      assert.strictEqual(event.options.data, null)
+      assert.strictEqual(event.options.lastEventId, '1234')
+      assert.strictEqual(event.options.origin, 'example.com')
       assert.strictEqual(stream.state.reconnectionTime, 1000)
     })
 
@@ -105,9 +105,9 @@ describe('EventSourceStream - processEvent', () => {
     stream.on('data', (event) => {
       assert.strictEqual(typeof event, 'object')
       assert.strictEqual(event.type, 'message')
-      assert.strictEqual(event.payload.data, null)
-      assert.strictEqual(event.payload.lastEventId, '1234')
-      assert.strictEqual(event.payload.origin, 'example.com')
+      assert.strictEqual(event.options.data, null)
+      assert.strictEqual(event.options.lastEventId, '1234')
+      assert.strictEqual(event.options.origin, 'example.com')
       assert.strictEqual(stream.state.reconnectionTime, 1000)
     })
 
@@ -124,9 +124,9 @@ describe('EventSourceStream - processEvent', () => {
     stream.on('data', (event) => {
       assert.strictEqual(typeof event, 'object')
       assert.strictEqual(event.type, 'custom')
-      assert.strictEqual(event.payload.data, null)
-      assert.strictEqual(event.payload.lastEventId, undefined)
-      assert.strictEqual(event.payload.origin, 'example.com')
+      assert.strictEqual(event.options.data, null)
+      assert.strictEqual(event.options.lastEventId, undefined)
+      assert.strictEqual(event.options.origin, 'example.com')
       assert.strictEqual(stream.state.reconnectionTime, 1000)
     })
 
