@@ -281,4 +281,18 @@ describe('EventSourceStream', () => {
     }
     stream.write(content)
   })
+
+  test('newline test', () => {
+    const content = Buffer.from('data:test\n data\ndata\nfoobar:xxx\njustsometext\n:thisisacommentyay\ndata:test\n\n', 'utf8')
+    const stream = new EventSourceStream()
+
+    stream.processEvent = function (event) {
+      assert.strictEqual(typeof event, 'object')
+      assert.strictEqual(event.event, undefined)
+      assert.strictEqual(event.id, undefined)
+      assert.strictEqual(event.retry, undefined)
+      assert.strictEqual(event.data, 'test\n\ntest')
+    }
+    stream.write(content)
+  })
 })

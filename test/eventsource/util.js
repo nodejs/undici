@@ -8,6 +8,7 @@ test('isValidLastEventId', () => {
   assert.strictEqual(isValidLastEventId('valid'), true)
   assert.strictEqual(isValidLastEventId('in\u0000valid'), false)
   assert.strictEqual(isValidLastEventId('in\x00valid'), false)
+  assert.strictEqual(isValidLastEventId('…'), true)
 
   assert.strictEqual(isValidLastEventId(null), false)
   assert.strictEqual(isValidLastEventId(undefined), false)

@@ -423,6 +423,22 @@ const server = createServer(async (req, res) => {
 
       return
     }
+    case '/eventsource/resources/last-event-id.py': {
+      const lastEventId = req.headers['Last-Event-ID'] ?? ''
+      const idValue = fullUrl.searchParams.get('idvalue') ?? '\u2026'
+
+      res.setHeader('content-type', 'text/event-stream')
+
+      if (lastEventId) {
+        res.write(`data: ${lastEventId}\n\n`)
+        res.end()
+      } else {
+        res.write(`id: ${idValue}\nretry: 200\ndata: hello\n\n`)
+        res.end()
+      }
+
+      return
+    }
     default: {
       res.statusCode = 200
       res.end(fullUrl.toString())
