@@ -131,6 +131,8 @@ declare namespace Dispatcher {
     opaque?: unknown;
     /** Default: 0 */
     maxRedirections?: number;
+    /** Default: false */
+    redirectionLimitReached?: boolean;
     /** Default: `null` */
     responseHeader?: 'raw' | null;
   }
@@ -141,6 +143,8 @@ declare namespace Dispatcher {
     signal?: AbortSignal | EventEmitter | null;
     /** Default: 0 */
     maxRedirections?: number;
+    /** Default: false */
+    redirectionLimitReached?: boolean;
     /** Default: `null` */
     onInfo?: (info: { statusCode: number, headers: Record<string, string | string[]> }) => void;
     /** Default: `null` */
@@ -164,6 +168,8 @@ declare namespace Dispatcher {
     signal?: AbortSignal | EventEmitter | null;
     /** Default: 0 */
     maxRedirections?: number;
+    /** Default: false */
+    redirectionLimitReached?: boolean;
     /** Default: `null` */
     responseHeader?: 'raw' | null;
   }
