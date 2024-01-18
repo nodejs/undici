@@ -219,4 +219,44 @@ describe('EventSourceStream - parseLine', () => {
     assert.strictEqual(event.event, undefined)
     assert.strictEqual(event.retry, undefined)
   })
+
+  test('bogus retry', () => {
+    const stream = new EventSourceStream({
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
+      }
+    })
+
+    const event = {}
+    'retry:3000\nretry:1000x\ndata:x'.split('\n').forEach((line) => {
+      stream.parseLine(Buffer.from(line, 'utf8'), event)
+    })
+
+    assert.strictEqual(typeof event, 'object')
+    assert.strictEqual(Object.keys(event).length, 2)
+    assert.strictEqual(event.data, 'x')
+    assert.strictEqual(event.id, undefined)
+    assert.strictEqual(event.event, undefined)
+    assert.strictEqual(event.retry, '3000')
+  })
+
+  test('bogus id', () => {
+    const stream = new EventSourceStream({
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
+      }
+    })
+
+    const event = {}
+    'id:3000\nid:30\x000\ndata:x'.split('\n').forEach((line) => {
+      stream.parseLine(Buffer.from(line, 'utf8'), event)
+    })
+
+    assert.strictEqual(typeof event, 'object')
+    assert.strictEqual(Object.keys(event).length, 2)
+    assert.strictEqual(event.data, 'x')
+    assert.strictEqual(event.id, '3000')
+    assert.strictEqual(event.event, undefined)
+    assert.strictEqual(event.retry, undefined)
+  })
 })

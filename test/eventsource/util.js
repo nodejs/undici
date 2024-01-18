@@ -17,5 +17,6 @@ test('isValidLastEventId', () => {
 
 test('isASCIINumber', () => {
   assert.strictEqual(isASCIINumber('123'), true)
+  assert.strictEqual(isASCIINumber(''), false)
   assert.strictEqual(isASCIINumber('123a'), false)
 })
