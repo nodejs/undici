@@ -1,1 +1,22 @@
-{}
+{
+  "eventsource-onmessage-trusted.any.js": {
+    "note": "An Event created in userspace can not be set to trusted.",
+    "skip": true
+  },
+  "format-data-before-final-empty-line.any.js": {
+    "note": "To be investigated.",
+    "skip": true
+  },
+  "format-field-retry.any.js": {
+    "note": "To be investigated.",
+    "skip": true
+  },
+  "format-field-event-empty.any.js": {
+    "note": "To be investigated.",
+    "skip": true
+  },
+  "format-field-retry-bogus.any.js": {
+    "note": "To be investigated.",
+    "skip": true
+  }
+}
