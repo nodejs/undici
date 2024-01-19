@@ -66,6 +66,26 @@ const httpKeepAliveOptions = {
   })
 }
 
+const axiosAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: connections
+})
+
+const fetchAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: connections
+})
+
+const gotAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: connections
+})
+
+const requestAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: connections
+})
+
 const undiciOptions = {
   path: '/',
   method: 'GET',
@@ -280,7 +300,7 @@ if (process.env.PORT) {
 
   experiments['node-fetch'] = () => {
     return makeParallelRequests(resolve => {
-      nodeFetch(dest.url).then(res => {
+      nodeFetch(dest.url, { agent: fetchAgent }).then(res => {
         res.body.pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
@@ -292,7 +312,7 @@ if (process.env.PORT) {
 
   experiments.axios = () => {
     return makeParallelRequests(resolve => {
-      axios.get(dest.url, { responseType: 'stream' }).then(res => {
+      axios.get(dest.url, { responseType: 'stream', httpAgent: axiosAgent }).then(res => {
         res.data.pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
@@ -304,7 +324,7 @@ if (process.env.PORT) {
 
   experiments.got = () => {
     return makeParallelRequests(resolve => {
-      got.get(dest.url).then(res => {
+      got.get(dest.url, null, { http: gotAgent }).then(res => {
         res.pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
@@ -316,7 +336,7 @@ if (process.env.PORT) {
 
   experiments.request = () => {
     return makeParallelRequests(resolve => {
-      request(dest.url).then(res => {
+      request(dest.url, { agent: requestAgent }).then(res => {
         res.pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
