@@ -71,7 +71,6 @@ const axiosAgent = new http.Agent({
   maxSockets: connections
 })
 
-
 const fetchAgent = new http.Agent({
   keepAlive: true,
   maxSockets: connections
