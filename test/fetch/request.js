@@ -10,10 +10,13 @@ const {
   Headers,
   fetch
 } = require('../../')
+const { fromInnerRequest, makeRequest } = require('../../lib/fetch/request')
 const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
+const { kState, kGuard, kRealm, kSignal, kHeaders } = require('../../lib/fetch/symbols')
+const { kHeadersList } = require('../../lib/core/symbols')
 
 const hasSignalReason = 'reason' in AbortSignal.prototype
 
@@ -472,9 +475,8 @@ test('Clone the set-cookie header when Request is passed as the first parameter 
 
 // Tests for optimization introduced in https://github.com/nodejs/undici/pull/2456
 test('keys to object prototypes method', (t) => {
-  const { ok } = tspl(t, { plan: 1 })
   const request = new Request('http://localhost', { method: 'hasOwnProperty' })
-  ok(typeof request.method === 'string')
+  assert(typeof request.method === 'string')
 })
 
 // https://github.com/nodejs/undici/issues/2465
@@ -482,4 +484,23 @@ test('Issue#2465', async (t) => {
   const { strictEqual } = tspl(t, { plan: 1 })
   const request = new Request('http://localhost', { body: new SharedArrayBuffer(0), method: 'POST' })
   strictEqual(await request.text(), '[object SharedArrayBuffer]')
+})
+
+test('fromInnerRequest', () => {
+  const realm = { settingsObject: {} }
+  const innerRequest = makeRequest({
+    urlList: [new URL('http://asd')],
+    client: realm.settingsObject
+  })
+  const signal = new AbortController().signal
+  const request = fromInnerRequest(innerRequest, signal, 'immutable', realm)
+
+  // check property
+  assert.strictEqual(request[kState], innerRequest)
+  assert.strictEqual(request[kRealm], realm)
+  assert.strictEqual(request[kSignal], signal)
+  assert.strictEqual(request[kSignal][kRealm], realm)
+  assert.strictEqual(request[kHeaders][kHeadersList], innerRequest.headersList)
+  assert.strictEqual(request[kHeaders][kGuard], 'immutable')
+  assert.strictEqual(request[kHeaders][kRealm], realm)
 })
