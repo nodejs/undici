@@ -15,7 +15,7 @@ const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
-const { kState, kGuard, kRealm } = require('../../lib/fetch/symbols')
+const { kState, kGuard, kRealm, kSignal, kHeaders } = require('../../lib/fetch/symbols')
 const { kHeadersList } = require('../../lib/core/symbols')
 
 const hasSignalReason = 'reason' in AbortSignal.prototype
@@ -487,19 +487,20 @@ test('Issue#2465', async (t) => {
 })
 
 test('fromInnerRequest', () => {
-  const innerRequest = makeRequest({})
-  const signal = new AbortController().signal
   const realm = { settingsObject: {} }
+  const innerRequest = makeRequest({
+    urlList: [new URL('http://asd')],
+    client: realm.settingsObject
+  })
+  const signal = new AbortController().signal
   const request = fromInnerRequest(innerRequest, signal, 'immutable', realm)
 
-  // check instance
-  assert(request instanceof Request)
-  assert(request.headers instanceof Headers)
-  assert(request.signal instanceof AbortSignal)
-
+  // check property
   assert.strictEqual(request[kState], innerRequest)
   assert.strictEqual(request[kRealm], realm)
-  assert.strictEqual(request.signal, signal)
-  assert.strictEqual(request.headers[kHeadersList], request.headersList)
-  assert.strictEqual(request.headers[kGuard], 'immutable')
+  assert.strictEqual(request[kSignal], signal)
+  assert.strictEqual(request[kSignal][kRealm], realm)
+  assert.strictEqual(request[kHeaders][kHeadersList], innerRequest.headersList)
+  assert.strictEqual(request[kHeaders][kGuard], 'immutable')
+  assert.strictEqual(request[kHeaders][kRealm], realm)
 })
