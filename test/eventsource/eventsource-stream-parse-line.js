@@ -259,4 +259,24 @@ describe('EventSourceStream - parseLine', () => {
     assert.strictEqual(event.event, undefined)
     assert.strictEqual(event.retry, undefined)
   })
+
+  test('empty event', () => {
+    const stream = new EventSourceStream({
+      eventSourceSettings: {
+        ...defaultEventSourceSettings
+      }
+    })
+
+    const event = {}
+    'event: \ndata:data'.split('\n').forEach((line) => {
+      stream.parseLine(Buffer.from(line, 'utf8'), event)
+    })
+
+    assert.strictEqual(typeof event, 'object')
+    assert.strictEqual(Object.keys(event).length, 1)
+    assert.strictEqual(event.data, 'data')
+    assert.strictEqual(event.id, undefined)
+    assert.strictEqual(event.event, undefined)
+    assert.strictEqual(event.retry, undefined)
+  })
 })

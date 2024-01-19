@@ -415,11 +415,9 @@ const server = createServer(async (req, res) => {
       res.setHeader('content-type', mime)
       res.write(message + newline + '\n')
 
-      if (sleep !== 0) {
-        setTimeout(() => {
-          res.end()
-        }, sleep)
-      }
+      setTimeout(() => {
+        res.end()
+      }, sleep)
 
       return
     }
