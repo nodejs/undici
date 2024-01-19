@@ -10,10 +10,13 @@ const {
   Headers,
   fetch
 } = require('../../')
+const { fromInnerRequest, makeRequest } = require('../../lib/fetch/request')
 const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
+const { kState, kGuard, kRealm } = require('../../lib/fetch/symbols')
+const { kHeadersList } = require('../../lib/core/symbols')
 
 const hasSignalReason = 'reason' in AbortSignal.prototype
 
@@ -472,9 +475,8 @@ test('Clone the set-cookie header when Request is passed as the first parameter 
 
 // Tests for optimization introduced in https://github.com/nodejs/undici/pull/2456
 test('keys to object prototypes method', (t) => {
-  const { ok } = tspl(t, { plan: 1 })
   const request = new Request('http://localhost', { method: 'hasOwnProperty' })
-  ok(typeof request.method === 'string')
+  assert(typeof request.method === 'string')
 })
 
 // https://github.com/nodejs/undici/issues/2465
@@ -482,4 +484,22 @@ test('Issue#2465', async (t) => {
   const { strictEqual } = tspl(t, { plan: 1 })
   const request = new Request('http://localhost', { body: new SharedArrayBuffer(0), method: 'POST' })
   strictEqual(await request.text(), '[object SharedArrayBuffer]')
+})
+
+test('fromInnerRequest', () => {
+  const innerRequest = makeRequest({})
+  const signal = new AbortController().signal
+  const realm = { settingsObject: {} }
+  const request = fromInnerRequest(innerRequest, signal, 'immutable', realm)
+
+  // check instance
+  assert(request instanceof Request)
+  assert(request.headers instanceof Headers)
+  assert(request.signal instanceof AbortSignal)
+
+  assert.strictEqual(request[kState], innerRequest)
+  assert.strictEqual(request[kRealm].settingsObject, realm.settingsObject)
+  assert.strictEqual(request.signal, signal)
+  assert.strictEqual(request.headers[kHeadersList], request.headersList)
+  assert.strictEqual(request.headers[kGuard], 'immutable')
 })
