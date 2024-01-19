@@ -2,9 +2,5 @@
   "eventsource-onmessage-trusted.any.js": {
     "note": "An Event created in userspace can not be set to trusted.",
     "skip": true
-  },
-  "format-field-event-empty.any.js": {
-    "note": "To be investigated.",
-    "skip": true
   }
 }
