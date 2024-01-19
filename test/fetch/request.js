@@ -498,7 +498,7 @@ test('fromInnerRequest', () => {
   assert(request.signal instanceof AbortSignal)
 
   assert.strictEqual(request[kState], innerRequest)
-  assert.strictEqual(request[kRealm].settingsObject, realm.settingsObject)
+  assert.strictEqual(request[kRealm], realm)
   assert.strictEqual(request.signal, signal)
   assert.strictEqual(request.headers[kHeadersList], request.headersList)
   assert.strictEqual(request.headers[kGuard], 'immutable')
