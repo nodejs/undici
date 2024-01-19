@@ -29,7 +29,7 @@ describe('EventSource - redirecting', () => {
         assert.fail('Should not have errored')
       }
       eventSourceInstance.onopen = () => {
-        // assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/target`)
+        assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/redirect`)
         eventSourceInstance.close()
         server.close()
       }
@@ -54,8 +54,7 @@ describe('EventSource - redirecting', () => {
     const eventSourceInstance = new EventSource(`http://localhost:${port}/redirect`)
     eventSourceInstance.onerror = (event) => {
       assert.strictEqual(event.message, 'No content')
-      // TODO: fetching does not set the url properly?
-      // assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/target`)
+      assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/redirect`)
       assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
       server.close()
     }
@@ -84,6 +83,38 @@ describe('EventSource - redirecting', () => {
       assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/redirect`)
       assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
       server.close()
+    }
+  })
+
+  test('Should set origin attribute of messages after redirecting', async () => {
+    const targetServer = http.createServer((req, res) => {
+      if (res.req.url === '/target') {
+        res.writeHead(200, undefined, { 'Content-Type': 'text/event-stream' })
+        res.write('event: message\ndata: test\n\n')
+      }
+    })
+    targetServer.listen(0)
+    await events.once(targetServer, 'listening')
+    const targetPort = targetServer.address().port
+
+    const sourceServer = http.createServer((req, res) => {
+      res.writeHead(301, undefined, { Location: `http://127.0.0.1:${targetPort}/target` })
+      res.end()
+    })
+    sourceServer.listen(0)
+    await events.once(sourceServer, 'listening')
+
+    const sourcePort = sourceServer.address().port
+
+    const eventSourceInstance = new EventSource(`http://127.0.0.1:${sourcePort}/redirect`)
+    eventSourceInstance.onmessage = (event) => {
+      assert.strictEqual(event.origin, `http://127.0.0.1:${targetPort}`)
+      eventSourceInstance.close()
+      targetServer.close()
+      sourceServer.close()
+    }
+    eventSourceInstance.onerror = (e) => {
+      assert.fail('Should not have errored')
     }
   })
 })
