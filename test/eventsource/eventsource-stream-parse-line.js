@@ -212,9 +212,8 @@ describe('EventSourceStream - parseLine', () => {
     stream.parseLine(Buffer.from('comment: invalid', 'utf8'), event)
 
     assert.strictEqual(typeof event, 'object')
-    assert.strictEqual(Object.keys(event).length, 1)
+    assert.strictEqual(Object.keys(event).length, 0)
     assert.strictEqual(event.data, undefined)
-    assert.strictEqual(event.comment, 'invalid')
     assert.strictEqual(event.id, undefined)
     assert.strictEqual(event.event, undefined)
     assert.strictEqual(event.retry, undefined)
