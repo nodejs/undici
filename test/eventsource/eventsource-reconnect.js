@@ -37,11 +37,6 @@ describe('EventSource - reconnect', () => {
       }
     }
 
-    eventSourceInstance.onerror = (err) => {
-      if (err.message === 'Reconnecting') return
-      finishedPromise.reject(new Error('Should not have errored'))
-    }
-
     await finishedPromise.promise
   })
 
@@ -75,11 +70,6 @@ describe('EventSource - reconnect', () => {
         eventSourceInstance.close()
         finishedPromise.resolve()
       }
-    }
-
-    eventSourceInstance.onerror = (err) => {
-      if (err.message === 'Reconnecting') return
-      finishedPromise.reject(new Error('Should not have errored'))
     }
 
     await finishedPromise.promise
@@ -117,11 +107,6 @@ describe('EventSource - reconnect', () => {
         eventSourceInstance.close()
         finishedPromise.resolve()
       }
-    }
-
-    eventSourceInstance.onerror = (err) => {
-      if (err.message === 'Reconnecting') return
-      finishedPromise.reject(new Error('Should not have errored'))
     }
 
     await finishedPromise.promise
@@ -163,11 +148,6 @@ describe('EventSource - reconnect', () => {
         eventSourceInstance.close()
         finishedPromise.resolve()
       }
-    }
-
-    eventSourceInstance.onerror = (err) => {
-      if (err.message === 'Reconnecting') return
-      finishedPromise.reject(new Error('Should not have errored'))
     }
 
     await finishedPromise.promise

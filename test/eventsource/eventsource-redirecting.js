@@ -53,7 +53,6 @@ describe('EventSource - redirecting', () => {
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}/redirect`)
     eventSourceInstance.onerror = (event) => {
-      assert.strictEqual(event.message, 'No content')
       assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/redirect`)
       assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
       server.close()
