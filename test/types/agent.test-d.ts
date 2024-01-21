@@ -1,12 +1,14 @@
 import { Duplex, Readable, Writable } from 'stream'
 import { expectAssignable } from 'tsd'
-import { Agent, Dispatcher } from '../..'
+import { Agent, DNSResolver, Dispatcher } from '../..'
 import { URL } from 'url'
 
 expectAssignable<Agent>(new Agent())
 expectAssignable<Agent>(new Agent({}))
 expectAssignable<Agent>(new Agent({ maxRedirections: 1 }))
 expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
+expectAssignable<Agent>(new Agent({ dnsResolver: new DNSResolver() }))
+expectAssignable<Agent>(new Agent({ dnsResolverOptions: { cache: new Map() } }))
 
 {
   const agent = new Agent()

@@ -8,12 +8,12 @@ declare class DNSResolver {
     lookup(
         hostname: string,
         family: number,
-        callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void,
+        callback: (err: NodeJS.ErrnoException | null, address: string, family: number, ttl: number, expires: number) => void,
     ): void;
     lookup(
         hostname: string,
         options: LookupOneOptions,
-        callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void,
+        callback: (err: NodeJS.ErrnoException | null, address: string, family: number, ttl: number, expires: number) => void,
     ): void;
     lookup(
         hostname: string,
@@ -27,15 +27,12 @@ declare class DNSResolver {
     ): void;
     lookup(
         hostname: string,
-        callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void,
+        callback: (err: NodeJS.ErrnoException | null, address: string, family: number, ttl: number, expires: number) => void,
     ): void;
-    server: {
-      get: () => string[];
-      set: (servers: string[]) => void;
-    }
-    lookupAsync: (hostname: string, options: LookupOptions) => Promise<LookupAddress | LookupAddress[]>
-    queryAndCache: (hostname: string) => Promise<LookupAddress[]>;
-    query: (hostname: string) => Promise<LookupAddress[]>;
+    servers: string[]
+    lookupAsync: (hostname: string, options: LookupOptions | number) => Promise<DNSResolver.LookupAddress | DNSResolver.LookupAddress[]>
+    queryAndCache: (hostname: string) => Promise<DNSResolver.LookupAddress[]>;
+    query: (hostname: string) => Promise<DNSResolver.LookupAddress[]>;
     updateInterfaceInfo: () => void;
     clear: (hostname?: string) => void;
 }
@@ -52,10 +49,11 @@ declare namespace DNSResolver {
     address: string;
     family: 4 | 6;
     ttl: number;
+    expires: number;
   }
 
   export interface Options {
-    lookupOptions: {
+    lookupOptions?: {
       family?: 4 | 6 | 0;
       hints?: number;
       all?: boolean;
@@ -64,8 +62,8 @@ declare namespace DNSResolver {
     cache?: Map<string, LookupAddress[]> | CacheInterface;
     fallbackDuration?: number;
     errorTtl?: number;
-    resolver: typeof promises.Resolver;
-    lookup: typeof lookup;
-    roundRobinStrategy: 'first';
+    resolver?: typeof promises.Resolver;
+    lookup?: typeof lookup;
+    scheduling?: 'first' | 'random';
   }
 }

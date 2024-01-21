@@ -37,6 +37,6 @@ declare namespace Pool {
 
     interceptors?: { Pool?: readonly Dispatcher.DispatchInterceptor[] } & Client.Options["interceptors"];
 
-    dnsResolver?: typeof DNSResolver;
+    dnsResolver?: DNSResolver;
   }
 }

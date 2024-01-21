@@ -24,7 +24,7 @@ declare namespace Agent {
 
     interceptors?: { Agent?: readonly Dispatcher.DispatchInterceptor[] } & Pool.Options["interceptors"]
 
-    dnsResolverOptions: DNSResolver.Options;
+    dnsResolverOptions?: DNSResolver.Options;
   }
 
   export interface DispatchOptions extends Dispatcher.DispatchOptions {
