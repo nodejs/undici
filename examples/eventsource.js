@@ -5,7 +5,7 @@ const { EventSource } = require('../')
 
 async function main () {
   const url = `https://smee.io/${randomBytes(8).toString('base64url')}`
-  console.log(`Connecting to event source server ${url}}`)
+  console.log(`Connecting to event source server ${url}`)
   const ev = new EventSource(url)
   ev.onmessage = console.log
   ev.onerror = console.log
