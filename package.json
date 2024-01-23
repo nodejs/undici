@@ -70,7 +70,7 @@
     "docs"
   ],
   "scripts": {
-    "build:node": "npx esbuild@0.19.4 index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1 --keep-names",
+    "build:node": "npx esbuild index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1 --keep-names",
     "prebuild:wasm": "node build/wasm.js --prebuild",
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
@@ -113,6 +113,7 @@
     "delay": "^5.0.0",
     "dns-packet": "^5.4.0",
     "docsify-cli": "^4.4.3",
+    "esbuild": "^0.19.4",
     "form-data": "^4.0.0",
     "formdata-node": "^6.0.3",
     "https-pem": "^3.0.0",
