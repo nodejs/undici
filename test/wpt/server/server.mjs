@@ -406,6 +406,37 @@ const server = createServer(async (req, res) => {
       res.end('vary response')
       return
     }
+    case '/eventsource/resources/message.py': {
+      const mime = fullUrl.searchParams.get('mime') ?? 'text/event-stream'
+      const message = fullUrl.searchParams.get('message') ?? 'data: data'
+      const newline = fullUrl.searchParams.get('newline') === 'none' ? '' : '\n\n'
+      const sleep = parseInt(fullUrl.searchParams.get('sleep') ?? '0')
+
+      res.setHeader('content-type', mime)
+      res.write(message + newline + '\n')
+
+      setTimeout(() => {
+        res.end()
+      }, sleep)
+
+      return
+    }
+    case '/eventsource/resources/last-event-id.py': {
+      const lastEventId = req.headers['Last-Event-ID'] ?? ''
+      const idValue = fullUrl.searchParams.get('idvalue') ?? '\u2026'
+
+      res.setHeader('content-type', 'text/event-stream')
+
+      if (lastEventId) {
+        res.write(`data: ${lastEventId}\n\n`)
+        res.end()
+      } else {
+        res.write(`id: ${idValue}\nretry: 200\ndata: hello\n\n`)
+        res.end()
+      }
+
+      return
+    }
     default: {
       res.statusCode = 200
       res.end(fullUrl.toString())
