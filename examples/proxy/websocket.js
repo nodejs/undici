@@ -1,16 +1,16 @@
-const WebSocket = require('ws');
+const WebSocket = require('ws')
 
-function createWebSocketServer() {
-  const wss = new WebSocket.Server({ noServer: true });
+function createWebSocketServer () {
+  const wss = new WebSocket.Server({ noServer: true })
 
   wss.on('connection', ws => {
     ws.on('message', message => {
-      console.log(`Received message: ${message}`);
-      ws.send('Received your message!');
-    });
-  });
+      console.log(`Received message: ${message}`)
+      ws.send('Received your message!')
+    })
+  })
 
-  return wss;
+  return wss
 }
 
-module.exports = createWebSocketServer;
+module.exports = createWebSocketServer

@@ -2,6 +2,7 @@ const { Pool, Client } = require('../../')
 const http = require('http')
 const proxy = require('./proxy')
 const createWebSocketServer = require('./websocket')
+const WebSocket = require('ws')
 
 const pool = new Pool('http://localhost:4001', {
   connections: 256,
