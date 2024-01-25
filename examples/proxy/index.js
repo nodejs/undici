@@ -1,8 +1,6 @@
 const { Pool, Client } = require('../../')
 const http = require('http')
 const proxy = require('./proxy')
-const createWebSocketServer = require('./websocket')
-const WebSocket = require('ws')
 
 const pool = new Pool('http://localhost:4001', {
   connections: 256,
@@ -32,23 +30,6 @@ async function run () {
       http.createServer((req, res) => {
         res.end('hello world')
       }).listen(4001, resolve)
-    }),
-    new Promise(resolve => {
-      // WebSocket server
-      const server = http.createServer((req, res) => {
-        res.writeHead(200, { 'Content-Type': 'text/plain' })
-        res.end('WebSocket server is running!')
-      })
-
-      const wss = createWebSocketServer()
-
-      server.on('upgrade', (request, socket, head) => {
-        wss.handleUpgrade(request, socket, head, ws => {
-          wss.emit('connection', ws, request)
-        })
-      })
-
-      server.listen(4002, resolve)
     })
   ])
 
@@ -61,17 +42,6 @@ async function run () {
   for await (const chunk of body) {
     console.log(String(chunk))
   }
-
-  // WebSocket client
-  const ws = new WebSocket('ws://localhost:4002')
-  ws.on('open', () => {
-    ws.send('Hello, WebSocket Server!')
-  })
-
-  ws.on('message', message => {
-    console.log(`WebSocket Server says: ${message}`)
-    ws.close()
-  })
 }
 
 run()
