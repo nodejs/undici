@@ -238,7 +238,13 @@ export class WPTRunner extends EventEmitter {
           console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
           console.log('='.repeat(96))
         } catch (e) {
-          console.log(`${test} timed out after ${timeout}ms`)
+          // If the worker is terminated by the timeout signal, the test is marked as failed
+          this.#stats.testsFailed += 1
+          console.log(colors(`[${finishedFiles}/${total}] FAILED - ${test}`, 'red'))
+
+          if (variant) console.log('Variant:', variant)
+          console.log(`Test timed out after ${timeout}ms`)
+          console.log('='.repeat(96))
         } finally {
           if (this.#appendReport && result?.subtests.length > 0) {
             writeFileSync(this.#reportPath, JSON.stringify(report))
