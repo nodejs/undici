@@ -58,11 +58,13 @@ export class WPTRunner extends EventEmitter {
   #reportPath
 
   #stats = {
-    completed: 0,
-    failed: 0,
-    success: 0,
+    subtestsCompleted: 0,
+    subtestsFailed: 0,
+    subtestsPassed: 0,
     expectedFailures: 0,
-    skipped: 0
+    testsFailed: 0,
+    testsPassed: 0,
+    testsSkipped: 0
   }
 
   constructor (folder, url, { appendReport = false, reportPath } = {}) {
@@ -158,7 +160,7 @@ export class WPTRunner extends EventEmitter {
       const status = resolveStatusPath(test, this.#status)
 
       if (status.file.skip || status.topLevel.skip) {
-        this.#stats.skipped += 1
+        this.#stats.testsSkipped += 1
 
         console.log(colors(`[${finishedFiles}/${total}] SKIPPED - ${test}`, 'yellow'))
         console.log('='.repeat(96))
@@ -187,19 +189,19 @@ export class WPTRunner extends EventEmitter {
           }
         })
 
-        let result, report
+        const fileUrl = new URL(`/${this.#folderName}${test.slice(this.#folderPath.length)}`, 'http://wpt')
+        fileUrl.pathname = fileUrl.pathname.replace(/\.js$/, '.html')
+        fileUrl.search = variant
+        const result = {
+          test: fileUrl.href.slice(fileUrl.origin.length),
+          subtests: [],
+          status: ''
+        }
+
+        let report
         if (this.#appendReport) {
           report = JSON.parse(readFileSync(this.#reportPath))
-
-          const fileUrl = new URL(`/${this.#folderName}${test.slice(this.#folderPath.length)}`, 'http://wpt')
-          fileUrl.pathname = fileUrl.pathname.replace(/\.js$/, '.html')
-          fileUrl.search = variant
-
-          result = {
-            test: fileUrl.href.slice(fileUrl.origin.length),
-            subtests: [],
-            status: 'OK'
-          }
+          result.status = 'OK'
           report.results.push(result)
         }
 
@@ -214,8 +216,8 @@ export class WPTRunner extends EventEmitter {
             this.handleTestCompletion(worker)
           } else if (message.type === 'error') {
             this.#uncaughtExceptions.push({ error: message.error, test })
-            this.#stats.failed += 1
-            this.#stats.success -= 1
+            this.#stats.subtestsFailed += 1
+            this.#stats.subtestsPassed -= 1
           }
         })
 
@@ -224,14 +226,21 @@ export class WPTRunner extends EventEmitter {
             signal: AbortSignal.timeout(timeout)
           })
 
-          console.log(colors(`[${finishedFiles}/${total}] PASSED - ${test}`, 'green'))
+          if (result?.subtests.every((subtest) => subtest.status === 'PASS')) {
+            this.#stats.testsPassed += 1
+            console.log(colors(`[${finishedFiles}/${total}] PASSED - ${test}`, 'green'))
+          } else {
+            this.#stats.testsFailed += 1
+            console.log(colors(`[${finishedFiles}/${total}] FAILED - ${test}`, 'red'))
+          }
+
           if (variant) console.log('Variant:', variant)
           console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
           console.log('='.repeat(96))
         } catch (e) {
           console.log(`${test} timed out after ${timeout}ms`)
         } finally {
-          if (result?.subtests.length > 0) {
+          if (this.#appendReport && result?.subtests.length > 0) {
             writeFileSync(this.#reportPath, JSON.stringify(report))
           }
 
@@ -245,16 +254,16 @@ export class WPTRunner extends EventEmitter {
   }
 
   /**
-   * Called after a test has succeeded or failed.
+   * Called after a subtest has succeeded or failed.
    */
   handleIndividualTestCompletion (message, status, path, meta, wptResult) {
     const { file, topLevel } = status
 
     if (message.type === 'result') {
-      this.#stats.completed += 1
+      this.#stats.subtestsCompleted += 1
 
       if (message.result.status === 1) {
-        this.#stats.failed += 1
+        this.#stats.subtestsFailed += 1
 
         wptResult?.subtests.push({
           status: 'FAIL',
@@ -284,7 +293,7 @@ export class WPTRunner extends EventEmitter {
           status: 'PASS',
           name: sanitizeUnpairedSurrogates(message.result.name)
         })
-        this.#stats.success += 1
+        this.#stats.subtestsPassed += 1
       }
     }
   }
@@ -307,16 +316,23 @@ export class WPTRunner extends EventEmitter {
     }
 
     this.emit('completion')
-    const { completed, failed, success, expectedFailures, skipped } = this.#stats
+
+    const { testsPassed, testsFailed, testsSkipped } = this.#stats
     console.log(
-      `[${this.#folderName}]: ` +
-      `completed: ${completed}, failed: ${failed}, success: ${success}, ` +
-      `expected failures: ${expectedFailures}, ` +
-      `unexpected failures: ${failed - expectedFailures}, ` +
-      `skipped: ${skipped}`
+      `Test    results for folder [${this.#folderName}]: ` +
+      `completed: ${this.#files.length}, passed: ${testsPassed}, failed: ${testsFailed}, ` +
+      `skipped: ${testsSkipped}`
     )
 
-    process.exit(failed - expectedFailures ? 1 : process.exitCode)
+    const { subtestsCompleted, subtestsFailed, subtestsPassed, expectedFailures } = this.#stats
+    console.log(
+      `Subtest results for folder [${this.#folderName}]: ` +
+      `completed: ${subtestsCompleted}, failed: ${subtestsFailed}, passed: ${subtestsPassed}, ` +
+      `expected failures: ${expectedFailures}, ` +
+      `unexpected failures: ${subtestsFailed - expectedFailures}`
+    )
+
+    process.exit(subtestsPassed - expectedFailures ? 1 : process.exitCode)
   }
 
   addInitScript (code) {
