@@ -6,6 +6,7 @@
   * [Test](#test)
   * [Coverage](#coverage)
   * [Update `WPTs`](#update-wpts)
+  * [Building for externally shared node builtins](#external-builds)
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
   * [Moderation Policy](#moderation-policy)
 
@@ -164,6 +165,15 @@ npm run test
 ```bash
 npm run coverage
 ```
+
+<a id="external-builds"></a>
+### Building for externally shared node builtins
+
+If you are packaging `undici` for a distro, this might help if you would like to use
+an unbundled version instead of bundling one in `libnode.so`.
+
+To enable this, pass `EXTERNAL_PATH=/path/to/global/node_modules/undici` to `build/wasm.js`.
+You shall also pass this path to `--shared-builtin-undici/undici-path` in Node.js's `configure.py`.
 
 <a id="developers-certificate-of-origin"></a>
 ## Developer's Certificate of Origin 1.1
