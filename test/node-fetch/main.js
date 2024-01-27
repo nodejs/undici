@@ -659,7 +659,7 @@ describe('node-fetch', () => {
     })
   })
 
-  xit('should decompress deflate raw response from old apache server', () => {
+  it('should decompress deflate raw response from old apache server', () => {
     const url = `${base}deflate-raw`
     return fetch(url).then(res => {
       expect(res.headers.get('content-type')).to.equal('text/plain')
