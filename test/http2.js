@@ -7,15 +7,11 @@ const { Blob } = require('node:buffer')
 const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
 const { test, plan } = require('tap')
-const { gte } = require('semver')
 const pem = require('https-pem')
 
 const { Client, Agent } = require('..')
 
-const isGreaterThanv20 = gte(process.version.slice(1), '20.0.0')
-// NOTE: node versions <16.14.1 have a bug which changes the order of pseudo-headers
-// https://github.com/nodejs/node/pull/41735
-const hasPseudoHeadersOrderFix = gte(process.version.slice(1), '16.14.1')
+const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 
 plan(24)
 
@@ -1170,7 +1166,6 @@ test('Agent should support H2 connection', async t => {
 
 test(
   'Should provide pseudo-headers in proper order',
-  { skip: !hasPseudoHeadersOrderFix },
   async t => {
     const server = createSecureServer(pem)
     server.on('stream', (stream, _headers, _flags, rawHeaders) => {
