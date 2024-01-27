@@ -3,7 +3,6 @@
 const http = require('http')
 const os = require('os')
 const path = require('path')
-const { table } = require('table')
 const { Writable } = require('stream')
 const { isMainThread } = require('worker_threads')
 
@@ -149,7 +148,13 @@ function printResults (results) {
     .sort((a, b) => (!a[1].success ? -1 : b[1].mean - a[1].mean))
     .map(([name, result]) => {
       if (!result.success) {
-        return [name, result.size, 'Errored', 'N/A', 'N/A']
+        return {
+          Tests: name,
+          Samples: result.size,
+          Result: 'Errored',
+          Tolerance: 'N/A',
+          'Difference with Slowest': 'N/A'
+        }
       }
 
       // Calculate throughput and relative performance
@@ -161,48 +166,16 @@ function printResults (results) {
         last = mean
       }
 
-      return [
-        name,
-        size,
-        `${((connections * 1e9) / mean).toFixed(2)} req/sec`,
-        `± ${((standardError / mean) * 100).toFixed(2)} %`,
-        relative > 0 ? `+ ${relative.toFixed(2)} %` : '-'
-      ]
+      return {
+        Tests: name,
+        Samples: size,
+        Result: `${((connections * 1e9) / mean).toFixed(2)} req/sec`,
+        Tolerance: `± ${((standardError / mean) * 100).toFixed(2)} %`,
+        'Difference with slowest': relative > 0 ? `+ ${relative.toFixed(2)} %` : '-'
+      }
     })
 
-  console.log(results)
-
-  // Add the header row
-  rows.unshift(['Tests', 'Samples', 'Result', 'Tolerance', 'Difference with slowest'])
-
-  return table(rows, {
-    columns: {
-      0: {
-        alignment: 'left'
-      },
-      1: {
-        alignment: 'right'
-      },
-      2: {
-        alignment: 'right'
-      },
-      3: {
-        alignment: 'right'
-      },
-      4: {
-        alignment: 'right'
-      }
-    },
-    drawHorizontalLine: (index, size) => index > 0 && index < size,
-    border: {
-      bodyLeft: '│',
-      bodyRight: '│',
-      bodyJoin: '│',
-      joinLeft: '|',
-      joinRight: '|',
-      joinJoin: '|'
-    }
-  })
+  return console.table(rows)
 }
 
 const experiments = {
@@ -366,7 +339,7 @@ async function main () {
         throw err
       }
 
-      console.log(printResults(results))
+      printResults(results)
       dispatcher.destroy()
     }
   )
