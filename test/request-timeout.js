@@ -433,7 +433,7 @@ test('client.destroy should cancel the timeout', (t) => {
 test('client.close should wait for the timeout', (t) => {
   t.plan(2)
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
   t.teardown(clock.uninstall.bind(clock))
 
   const orgTimers = { ...timers }
