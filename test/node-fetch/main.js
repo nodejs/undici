@@ -10,8 +10,8 @@ const crypto = require('crypto')
 const chaiPromised = require('chai-as-promised')
 const chaiIterator = require('chai-iterator')
 const chaiString = require('chai-string')
-const delay = require('delay')
 const { Blob } = require('buffer')
+const { setTimeout: delay } = require('timers/promises')
 
 const {
   fetch,
