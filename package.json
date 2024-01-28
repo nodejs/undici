@@ -65,6 +65,7 @@
     "*.d.ts",
     "index.js",
     "index-fetch.js",
+    "loader.js",
     "lib",
     "types",
     "docs"
