@@ -2,8 +2,8 @@
 
 const { test, afterEach } = require('node:test')
 const assert = require('node:assert')
-const { createServer } = require('http')
-const { once } = require('events')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
 const {
   getGlobalOrigin,
   setGlobalOrigin,

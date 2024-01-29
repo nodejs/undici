@@ -2,10 +2,10 @@
 
 const { test } = require('node:test')
 const { Client } = require('../..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { createHook, executionAsyncId } = require('async_hooks')
-const { readFile } = require('fs')
-const { PassThrough } = require('stream')
+const { readFile } = require('node:fs')
+const { PassThrough } = require('node:stream')
 const { tspl } = require('@matteo.collina/tspl')
 const { closeServerAsPromise } = require('../utils/node-http')
 

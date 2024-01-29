@@ -1,11 +1,11 @@
 'use strict'
 
 const { test } = require('node:test')
-const EventEmitter = require('events')
+const EventEmitter = require('node:events')
 const { Client, errors } = require('../..')
-const { createServer } = require('http')
-const { createReadStream } = require('fs')
-const { Readable } = require('stream')
+const { createServer } = require('node:http')
+const { createReadStream } = require('node:fs')
+const { Readable } = require('node:stream')
 const { tspl } = require('@matteo.collina/tspl')
 const { wrapWithAsyncIterable } = require('../utils/async-iterators')
 const { closeServerAsPromise } = require('../utils/node-http')

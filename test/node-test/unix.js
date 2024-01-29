@@ -2,10 +2,10 @@
 
 const { test } = require('node:test')
 const { Client, Pool } = require('../../')
-const http = require('http')
-const https = require('https')
+const http = require('node:http')
+const https = require('node:https')
 const pem = require('https-pem')
-const fs = require('fs')
+const fs = require('node:fs')
 const { tspl } = require('@matteo.collina/tspl')
 
 if (process.platform !== 'win32') {

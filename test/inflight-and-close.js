@@ -2,7 +2,7 @@
 
 const t = require('tap')
 const { request } = require('..')
-const http = require('http')
+const http = require('node:http')
 
 const server = http.createServer((req, res) => {
   res.writeHead(200)

@@ -1,7 +1,7 @@
 'use strict'
 
 const { Client } = require('../..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 /* global test, expect */
 
 test('should work in jest', async () => {

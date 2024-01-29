@@ -4,7 +4,7 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 test('do not leak', (t, done) => {

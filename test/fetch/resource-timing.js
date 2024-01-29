@@ -2,7 +2,7 @@
 
 const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { nodeMajor, nodeMinor } = require('../../lib/core/util')
 const { fetch } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')

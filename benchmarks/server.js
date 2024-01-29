@@ -1,10 +1,10 @@
 'use strict'
 
-const { unlinkSync } = require('fs')
-const { createServer } = require('http')
-const os = require('os')
-const path = require('path')
-const cluster = require('cluster')
+const { unlinkSync } = require('node:fs')
+const { createServer } = require('node:http')
+const os = require('node:os')
+const path = require('node:path')
+const cluster = require('node:cluster')
 
 const socketPath = path.join(os.tmpdir(), 'undici.sock')
 

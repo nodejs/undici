@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('assert')
+const assert = require('node:assert')
 const { Response } = require('../../')
 
 // https://github.com/web-platform-tests/wpt/pull/32825/

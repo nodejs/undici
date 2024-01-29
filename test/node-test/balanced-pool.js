@@ -4,8 +4,8 @@ const { describe, test } = require('node:test')
 const assert = require('node:assert/strict')
 const { BalancedPool, Pool, Client, errors } = require('../..')
 const { nodeMajor } = require('../../lib/core/util')
-const { createServer } = require('http')
-const { promisify } = require('util')
+const { createServer } = require('node:http')
+const { promisify } = require('node:util')
 const { tspl } = require('@matteo.collina/tspl')
 
 test('throws when factory is not a function', (t) => {

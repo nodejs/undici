@@ -1,11 +1,11 @@
 'use strict'
 
-const https = require('https')
-const os = require('os')
-const path = require('path')
-const { readFileSync } = require('fs')
-const { Writable } = require('stream')
-const { isMainThread } = require('worker_threads')
+const https = require('node:https')
+const os = require('node:os')
+const path = require('node:path')
+const { readFileSync } = require('node:fs')
+const { Writable } = require('node:stream')
+const { isMainThread } = require('node:worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 

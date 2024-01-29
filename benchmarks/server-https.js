@@ -1,10 +1,10 @@
 'use strict'
 
-const { unlinkSync, readFileSync } = require('fs')
-const { createServer } = require('https')
-const os = require('os')
-const path = require('path')
-const cluster = require('cluster')
+const { unlinkSync, readFileSync } = require('node:fs')
+const { createServer } = require('node:https')
+const os = require('node:os')
+const path = require('node:path')
+const cluster = require('node:cluster')
 
 const key = readFileSync(path.join(__dirname, '..', 'test', 'fixtures', 'key.pem'), 'utf8')
 const cert = readFileSync(path.join(__dirname, '..', 'test', 'fixtures', 'cert.pem'), 'utf8')

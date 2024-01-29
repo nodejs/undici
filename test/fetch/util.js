@@ -1,11 +1,11 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('assert')
+const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const util = require('../../lib/fetch/util')
 const { HeadersList } = require('../../lib/fetch/headers')
-const { createHash } = require('crypto')
+const { createHash } = require('node:crypto')
 
 test('responseURL', (t) => {
   const { ok } = tspl(t, { plan: 2 })

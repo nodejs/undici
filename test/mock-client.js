@@ -1,8 +1,8 @@
 'use strict'
 
 const { test } = require('tap')
-const { createServer } = require('http')
-const { promisify } = require('util')
+const { createServer } = require('node:http')
+const { promisify } = require('node:util')
 const { MockAgent, MockClient, setGlobalDispatcher, request } = require('..')
 const { kUrl } = require('../lib/core/symbols')
 const { kDispatches } = require('../lib/mock/mock-symbols')

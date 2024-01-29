@@ -1,6 +1,6 @@
 'use strict'
 
-const { Blob } = require('buffer')
+const { Blob } = require('node:buffer')
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')

@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { PassThrough } = require('stream')
+const { PassThrough } = require('node:stream')
 
 test(t => {
   t.plan(2)

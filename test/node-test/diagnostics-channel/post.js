@@ -13,7 +13,7 @@ try {
 }
 
 const { Client } = require('../../../')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 
 test('Diagnostics channel - post', (t) => {
   const assert = tspl(t, { plan: 33 })

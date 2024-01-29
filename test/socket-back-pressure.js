@@ -1,8 +1,8 @@
 'use strict'
 
 const { Client } = require('..')
-const { createServer } = require('http')
-const { Readable } = require('stream')
+const { createServer } = require('node:http')
+const { Readable } = require('node:stream')
 const { test } = require('tap')
 
 test('socket back-pressure', (t) => {

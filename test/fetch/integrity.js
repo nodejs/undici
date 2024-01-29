@@ -2,11 +2,11 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { createServer } = require('http')
-const { createHash, getHashes } = require('crypto')
-const { gzipSync } = require('zlib')
+const { createServer } = require('node:http')
+const { createHash, getHashes } = require('node:crypto')
+const { gzipSync } = require('node:zlib')
 const { fetch, setGlobalDispatcher, Agent } = require('../..')
-const { once } = require('events')
+const { once } = require('node:events')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 const supportedHashes = getHashes()

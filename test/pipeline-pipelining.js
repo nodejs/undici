@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { kConnect } = require('../lib/core/symbols')
 const { kBusy, kPending, kRunning } = require('../lib/core/symbols')
 

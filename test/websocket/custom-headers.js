@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('assert')
+const assert = require('node:assert')
 const { Agent, WebSocket } = require('../..')
 
 test('Setting custom headers', (t) => {
