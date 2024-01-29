@@ -2,7 +2,7 @@
 
 const { describe, test } = require('node:test')
 const assert = require('node:assert')
-const dc = require('diagnostics_channel')
+const dc = require('node:diagnostics_channel')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 

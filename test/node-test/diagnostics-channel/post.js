@@ -6,7 +6,7 @@ const { tspl } = require('@matteo.collina/tspl')
 let diagnosticsChannel
 
 try {
-  diagnosticsChannel = require('diagnostics_channel')
+  diagnosticsChannel = require('node:diagnostics_channel')
 } catch {
   skip('missing diagnostics_channel')
   process.exit(0)

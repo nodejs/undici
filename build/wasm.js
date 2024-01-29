@@ -1,6 +1,6 @@
 'use strict'
 
-const { execSync } = require('child_process')
+const { execSync } = require('node:child_process')
 const { writeFileSync, readFileSync } = require('node:fs')
 const { join, resolve, basename } = require('node:path')
 

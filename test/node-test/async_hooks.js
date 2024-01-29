@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const { Client } = require('../..')
 const { createServer } = require('node:http')
-const { createHook, executionAsyncId } = require('async_hooks')
+const { createHook, executionAsyncId } = require('node:async_hooks')
 const { readFile } = require('node:fs')
 const { PassThrough } = require('node:stream')
 const { tspl } = require('@matteo.collina/tspl')

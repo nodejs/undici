@@ -10,7 +10,7 @@ const { closeServerAsPromise } = require('../utils/node-http')
 const {
   PerformanceObserver,
   performance
-} = require('perf_hooks')
+} = require('node:perf_hooks')
 
 const skip = nodeMajor === 18 && nodeMinor < 2
 
