@@ -4,8 +4,8 @@ const { test } = require('tap')
 const { Client } = require('..')
 const timers = require('../lib/timers')
 const { kConnect } = require('../lib/core/symbols')
-const { createServer } = require('net')
-const http = require('http')
+const { createServer } = require('node:net')
+const http = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 
 test('keep-alive header', (t) => {

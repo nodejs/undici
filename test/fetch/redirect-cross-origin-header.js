@@ -2,8 +2,8 @@
 
 const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
-const { createServer } = require('http')
-const { once } = require('events')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
 const { fetch } = require('../..')
 
 test('Cross-origin redirects clear forbidden headers', async (t) => {

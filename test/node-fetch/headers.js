@@ -1,6 +1,6 @@
 /* eslint no-unused-expressions: "off" */
 
-const { format } = require('util')
+const { format } = require('node:util')
 const chai = require('chai')
 const chaiIterator = require('chai-iterator')
 const { Headers } = require('../../lib/fetch/headers.js')

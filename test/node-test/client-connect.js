@@ -2,8 +2,8 @@
 
 const { test } = require('node:test')
 const { Client, errors } = require('../..')
-const http = require('http')
-const EE = require('events')
+const http = require('node:http')
+const EE = require('node:events')
 const { kBusy } = require('../../lib/core/symbols')
 const { tspl } = require('@matteo.collina/tspl')
 const { closeServerAsPromise } = require('../utils/node-http')

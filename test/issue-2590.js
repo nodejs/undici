@@ -2,8 +2,8 @@
 
 const { test } = require('tap')
 const { request } = require('..')
-const { createServer } = require('http')
-const { once } = require('events')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
 
 test('aborting request with custom reason', async (t) => {
   const server = createServer(() => {}).listen(0)

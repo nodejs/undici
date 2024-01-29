@@ -1,9 +1,9 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('assert')
-const events = require('events')
-const http = require('http')
+const assert = require('node:assert')
+const events = require('node:events')
+const http = require('node:http')
 const undici = require('../../')
 const { closeServerAsPromise } = require('../utils/node-http')
 

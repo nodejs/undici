@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client, Pool, errors } = require('..')
-const net = require('net')
+const net = require('node:net')
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(ms))
 
 test('prioritize socket errors over timeouts', (t) => {

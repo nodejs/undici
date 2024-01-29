@@ -1,8 +1,8 @@
 'use strict'
 
 const { fetch } = require('../..')
-const { once } = require('events')
-const { createServer } = require('http')
+const { once } = require('node:events')
+const { createServer } = require('node:http')
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { closeServerAsPromise } = require('../utils/node-http')

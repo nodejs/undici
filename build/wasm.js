@@ -1,8 +1,8 @@
 'use strict'
 
-const { execSync } = require('child_process')
-const { writeFileSync, readFileSync } = require('fs')
-const { join, resolve, basename } = require('path')
+const { execSync } = require('node:child_process')
+const { writeFileSync, readFileSync } = require('node:fs')
+const { join, resolve, basename } = require('node:path')
 
 const ROOT = resolve(__dirname, '../')
 const WASM_SRC = resolve(__dirname, '../deps/llhttp')

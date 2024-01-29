@@ -1,6 +1,6 @@
 'use strict'
 
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 
 const isNode20 = process.version.startsWith('v20.')
 

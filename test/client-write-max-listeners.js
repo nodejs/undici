@@ -2,8 +2,8 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { createServer } = require('http')
-const { Readable } = require('stream')
+const { createServer } = require('node:http')
+const { Readable } = require('node:stream')
 
 test('socket close listener does not leak', (t) => {
   t.plan(32)

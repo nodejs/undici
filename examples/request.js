@@ -41,7 +41,7 @@ async function postJSONRequest (port = 3001) {
 
 async function postFormRequest (port = 3001) {
   // Make a URL-encoded form POST request:
-  const qs = require('querystring')
+  const qs = require('node:querystring')
 
   const requestBody = {
     hello: 'URL Encoded Example body'

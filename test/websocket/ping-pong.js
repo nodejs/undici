@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
-const diagnosticsChannel = require('diagnostics_channel')
+const diagnosticsChannel = require('node:diagnostics_channel')
 const { WebSocket } = require('../..')
 
 test('Receives ping and parses body', () => {

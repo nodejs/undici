@@ -3,7 +3,7 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
-const { Blob } = require('buffer')
+const { Blob } = require('node:buffer')
 const { WebSocket } = require('../..')
 
 // the following three tests exercise different code paths because of the three

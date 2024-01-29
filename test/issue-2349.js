@@ -2,7 +2,7 @@
 
 const { test } = require('node:test')
 const { rejects } = require('node:assert')
-const { Writable } = require('stream')
+const { Writable } = require('node:stream')
 const { MockAgent, stream } = require('..')
 
 test('stream() does not fail after request has been aborted', () => {

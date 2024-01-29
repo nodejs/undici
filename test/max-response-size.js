@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 
 test('max response size', (t) => {
   t.plan(4)

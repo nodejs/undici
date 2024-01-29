@@ -3,7 +3,7 @@
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const timers = require('../lib/timers')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 
 test('timeout with pipelining 1', (t) => {

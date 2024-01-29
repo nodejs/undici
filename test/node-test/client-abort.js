@@ -2,8 +2,8 @@
 
 const { test } = require('node:test')
 const { Client, errors } = require('../..')
-const { createServer } = require('http')
-const { Readable } = require('stream')
+const { createServer } = require('node:http')
+const { Readable } = require('node:stream')
 const { tspl } = require('@matteo.collina/tspl')
 
 class OnAbortError extends Error {}

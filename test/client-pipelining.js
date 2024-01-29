@@ -2,10 +2,10 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { createServer } = require('http')
-const { finished, Readable } = require('stream')
+const { createServer } = require('node:http')
+const { finished, Readable } = require('node:stream')
 const { kConnect } = require('../lib/core/symbols')
-const EE = require('events')
+const EE = require('node:events')
 const { kBusy, kRunning, kSize } = require('../lib/core/symbols')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
 

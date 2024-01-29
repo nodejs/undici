@@ -2,8 +2,8 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { Stream } = require('stream')
-const { EventEmitter } = require('events')
+const { Stream } = require('node:stream')
+const { EventEmitter } = require('node:events')
 
 const util = require('../../lib/core/util')
 const { headerNameLowerCasedRecord } = require('../../lib/core/constants')

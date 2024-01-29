@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 
 test('CRLF Injection in Nodejs ‘undici’ via host', (t) => {
   t.plan(1)

@@ -2,9 +2,9 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const { createServer } = require('http')
-const { PassThrough, Writable, Readable } = require('stream')
-const EE = require('events')
+const { createServer } = require('node:http')
+const { PassThrough, Writable, Readable } = require('node:stream')
+const EE = require('node:events')
 
 test('stream get', (t) => {
   t.plan(9)

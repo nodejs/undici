@@ -1,6 +1,6 @@
 'use strict'
 
-const { Readable, Writable } = require('stream')
+const { Readable, Writable } = require('node:stream')
 
 function createReadable (data) {
   return new Readable({

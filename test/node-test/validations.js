@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('node:test')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { Client } = require('../../')
 const { tspl } = require('@matteo.collina/tspl')
 

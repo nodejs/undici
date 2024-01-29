@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const net = require('net')
+const net = require('node:net')
 
 test('connect-connectionError', t => {
   t.plan(2)

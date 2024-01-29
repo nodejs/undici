@@ -2,8 +2,8 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { createServer } = require('http')
-const { Blob } = require('buffer')
+const { createServer } = require('node:http')
+const { Blob } = require('node:buffer')
 
 test('request post blob', { skip: !Blob }, (t) => {
   t.plan(4)

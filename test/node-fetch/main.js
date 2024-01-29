@@ -2,15 +2,15 @@
 /* globals AbortController */
 
 // Test tools
-const zlib = require('zlib')
-const stream = require('stream')
-const vm = require('vm')
+const zlib = require('node:zlib')
+const stream = require('node:stream')
+const vm = require('node:vm')
 const chai = require('chai')
-const crypto = require('crypto')
+const crypto = require('node:crypto')
 const chaiPromised = require('chai-as-promised')
 const chaiIterator = require('chai-iterator')
 const chaiString = require('chai-string')
-const { Blob } = require('buffer')
+const { Blob } = require('node:buffer')
 const { setTimeout: delay } = require('timers/promises')
 
 const {

@@ -1,5 +1,5 @@
-const net = require('net')
-const { pipeline } = require('stream')
+const net = require('node:net')
+const { pipeline } = require('node:stream')
 const createError = require('http-errors')
 
 module.exports = async function proxy (ctx, client) {

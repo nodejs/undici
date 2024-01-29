@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 
 test('handle a lot of headers', (t) => {
   t.plan(3)

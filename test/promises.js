@@ -2,8 +2,8 @@
 
 const { test } = require('tap')
 const { Client, Pool } = require('..')
-const { createServer } = require('http')
-const { readFileSync, createReadStream } = require('fs')
+const { createServer } = require('node:http')
+const { readFileSync, createReadStream } = require('node:fs')
 const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 
 test('basic get, async await support', (t) => {

@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { kSocket, kSize } = require('../lib/core/symbols')
 
 test('close waits for queued requests to finish', (t) => {

@@ -2,9 +2,9 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const http = require('http')
+const http = require('node:http')
 const { Client, Pool, errors } = require('../..')
-const stream = require('stream')
+const stream = require('node:stream')
 const { createSecureServer } = require('node:http2')
 const pem = require('https-pem')
 const { tspl } = require('@matteo.collina/tspl')
