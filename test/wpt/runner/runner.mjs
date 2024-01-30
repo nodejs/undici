@@ -58,13 +58,13 @@ export class WPTRunner extends EventEmitter {
   #reportPath
 
   #stats = {
-    subtestsCompleted: 0,
-    subtestsFailed: 0,
-    subtestsPassed: 0,
+    completedTests: 0,
+    failedTests: 0,
+    passedTests: 0,
     expectedFailures: 0,
-    testsFailed: 0,
-    testsPassed: 0,
-    testsSkipped: 0
+    failedFiles: 0,
+    passedFiles: 0,
+    skippedFiles: 0
   }
 
   constructor (folder, url, { appendReport = false, reportPath } = {}) {
@@ -160,7 +160,7 @@ export class WPTRunner extends EventEmitter {
       const status = resolveStatusPath(test, this.#status)
 
       if (status.file.skip || status.topLevel.skip) {
-        this.#stats.testsSkipped += 1
+        this.#stats.skippedFiles += 1
 
         console.log(colors(`[${finishedFiles}/${total}] SKIPPED - ${test}`, 'yellow'))
         console.log('='.repeat(96))
@@ -216,8 +216,8 @@ export class WPTRunner extends EventEmitter {
             this.handleTestCompletion(worker)
           } else if (message.type === 'error') {
             this.#uncaughtExceptions.push({ error: message.error, test })
-            this.#stats.subtestsFailed += 1
-            this.#stats.subtestsPassed -= 1
+            this.#stats.failedTests += 1
+            this.#stats.passedTests -= 1
           }
         })
 
@@ -226,24 +226,24 @@ export class WPTRunner extends EventEmitter {
             signal: AbortSignal.timeout(timeout)
           })
 
-          if (result?.subtests.every((subtest) => subtest.status === 'PASS')) {
-            this.#stats.testsPassed += 1
-            console.log(colors(`[${finishedFiles}/${total}] PASSED - ${test}`, 'green'))
-          } else {
-            this.#stats.testsFailed += 1
+          if (result.subtests.some((subtest) => subtest?.isExpectedFailure === false)) {
+            this.#stats.failedFiles += 1
             console.log(colors(`[${finishedFiles}/${total}] FAILED - ${test}`, 'red'))
+          } else {
+            this.#stats.passedFiles += 1
+            console.log(colors(`[${finishedFiles}/${total}] PASSED - ${test}`, 'green'))
           }
 
           if (variant) console.log('Variant:', variant)
-          console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
+          console.log(`Test File took ${(performance.now() - start).toFixed(2)}ms`)
           console.log('='.repeat(96))
         } catch (e) {
           // If the worker is terminated by the timeout signal, the test is marked as failed
-          this.#stats.testsFailed += 1
+          this.#stats.failedFiles += 1
           console.log(colors(`[${finishedFiles}/${total}] FAILED - ${test}`, 'red'))
 
           if (variant) console.log('Variant:', variant)
-          console.log(`Test timed out after ${timeout}ms`)
+          console.log(`Test File timed out after ${timeout}ms`)
           console.log('='.repeat(96))
         } finally {
           if (this.#appendReport && result?.subtests.length > 0) {
@@ -260,47 +260,48 @@ export class WPTRunner extends EventEmitter {
   }
 
   /**
-   * Called after a subtest has succeeded or failed.
+   * Called after a test has succeeded or failed.
    */
   handleIndividualTestCompletion (message, status, path, meta, wptResult) {
+    this.#stats.completedTests += 1
+
     const { file, topLevel } = status
+    const isFailure = message.result.status === 1
 
-    if (message.type === 'result') {
-      this.#stats.subtestsCompleted += 1
+    const testResult = {
+      status: isFailure? 'FAIL' : 'PASS',
+      name: sanitizeUnpairedSurrogates(message.result.name),
+    }
 
-      if (message.result.status === 1) {
-        this.#stats.subtestsFailed += 1
+    if (isFailure) {
+      this.#stats.failedTests += 1
 
-        wptResult?.subtests.push({
-          status: 'FAIL',
-          name: sanitizeUnpairedSurrogates(message.result.name),
-          message: sanitizeUnpairedSurrogates(message.result.message)
-        })
+      const name = normalizeName(message.result.name)
+      const sanitizedMessage = sanitizeUnpairedSurrogates(message.result.message)
 
-        const name = normalizeName(message.result.name)
+      if (file.flaky?.includes(name)) {
+        this.#stats.expectedFailures += 1
+        wptResult?.subtests.push({...testResult, message: sanitizedMessage, isExpectedFailure: true})
 
-        if (file.flaky?.includes(name)) {
-          this.#stats.expectedFailures += 1
-        } else if (file.allowUnexpectedFailures || topLevel.allowUnexpectedFailures || file.fail?.includes(name)) {
-          if (!file.allowUnexpectedFailures && !topLevel.allowUnexpectedFailures) {
-            if (Array.isArray(file.fail)) {
-              this.#statusOutput[path] ??= []
-              this.#statusOutput[path].push(name)
-            }
+      } else if (file.allowUnexpectedFailures || topLevel.allowUnexpectedFailures || file.fail?.includes(name)) {
+        if (!file.allowUnexpectedFailures && !topLevel.allowUnexpectedFailures) {
+          if (Array.isArray(file.fail)) {
+            this.#statusOutput[path] ??= []
+            this.#statusOutput[path].push(name)
           }
-
-          this.#stats.expectedFailures += 1
-        } else {
-          process.exitCode = 1
-          console.error(message.result)
         }
+        this.#stats.expectedFailures += 1
+        wptResult?.subtests.push({...testResult, message: sanitizedMessage, isExpectedFailure: true})
+
       } else {
-        wptResult?.subtests.push({
-          status: 'PASS',
-          name: sanitizeUnpairedSurrogates(message.result.name)
-        })
-        this.#stats.subtestsPassed += 1
+        wptResult?.subtests.push({...testResult, message: sanitizedMessage, isExpectedFailure: false})
+
+        process.exitCode = 1
+        console.error(message.result)
       }
+    } else {
+      this.#stats.passedTests += 1
+      wptResult?.subtests.push(testResult)
     }
   }
 
@@ -323,22 +324,22 @@ export class WPTRunner extends EventEmitter {
 
     this.emit('completion')
 
-    const { testsPassed, testsFailed, testsSkipped } = this.#stats
+    const { passedFiles, failedFiles, skippedFiles } = this.#stats
     console.log(
-      `Test    results for folder [${this.#folderName}]: ` +
-      `completed: ${this.#files.length}, passed: ${testsPassed}, failed: ${testsFailed}, ` +
-      `skipped: ${testsSkipped}`
+      `File results for folder [${this.#folderName}]: ` +
+      `completed: ${this.#files.length}, passed: ${passedFiles}, failed: ${failedFiles}, ` +
+      `skipped: ${skippedFiles}`
     )
 
-    const { subtestsCompleted, subtestsFailed, subtestsPassed, expectedFailures } = this.#stats
+    const { completedTests, failedTests, passedTests, expectedFailures } = this.#stats
     console.log(
-      `Subtest results for folder [${this.#folderName}]: ` +
-      `completed: ${subtestsCompleted}, failed: ${subtestsFailed}, passed: ${subtestsPassed}, ` +
+      `Test results for folder [${this.#folderName}]: ` +
+      `completed: ${completedTests}, failed: ${failedTests}, passed: ${passedTests}, ` +
       `expected failures: ${expectedFailures}, ` +
-      `unexpected failures: ${subtestsFailed - expectedFailures}`
+      `unexpected failures: ${failedTests - expectedFailures}`
     )
 
-    process.exit(subtestsPassed - expectedFailures ? 1 : process.exitCode)
+    process.exit(failedTests - expectedFailures ? 1 : process.exitCode)
   }
 
   addInitScript (code) {
