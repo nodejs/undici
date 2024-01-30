@@ -235,7 +235,7 @@ export class WPTRunner extends EventEmitter {
           }
 
           if (variant) console.log('Variant:', variant)
-          console.log(`Test File took ${(performance.now() - start).toFixed(2)}ms`)
+          console.log(`File took ${(performance.now() - start).toFixed(2)}ms`)
           console.log('='.repeat(96))
         } catch (e) {
           // If the worker is terminated by the timeout signal, the test is marked as failed
@@ -243,7 +243,7 @@ export class WPTRunner extends EventEmitter {
           console.log(colors(`[${finishedFiles}/${total}] FAILED - ${test}`, 'red'))
 
           if (variant) console.log('Variant:', variant)
-          console.log(`Test File timed out after ${timeout}ms`)
+          console.log(`File timed out after ${timeout}ms`)
           console.log('='.repeat(96))
         } finally {
           if (this.#appendReport && result?.subtests.length > 0) {
@@ -269,8 +269,8 @@ export class WPTRunner extends EventEmitter {
     const isFailure = message.result.status === 1
 
     const testResult = {
-      status: isFailure? 'FAIL' : 'PASS',
-      name: sanitizeUnpairedSurrogates(message.result.name),
+      status: isFailure ? 'FAIL' : 'PASS',
+      name: sanitizeUnpairedSurrogates(message.result.name)
     }
 
     if (isFailure) {
@@ -281,8 +281,7 @@ export class WPTRunner extends EventEmitter {
 
       if (file.flaky?.includes(name)) {
         this.#stats.expectedFailures += 1
-        wptResult?.subtests.push({...testResult, message: sanitizedMessage, isExpectedFailure: true})
-
+        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure: true })
       } else if (file.allowUnexpectedFailures || topLevel.allowUnexpectedFailures || file.fail?.includes(name)) {
         if (!file.allowUnexpectedFailures && !topLevel.allowUnexpectedFailures) {
           if (Array.isArray(file.fail)) {
@@ -291,11 +290,9 @@ export class WPTRunner extends EventEmitter {
           }
         }
         this.#stats.expectedFailures += 1
-        wptResult?.subtests.push({...testResult, message: sanitizedMessage, isExpectedFailure: true})
-
+        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure: true })
       } else {
-        wptResult?.subtests.push({...testResult, message: sanitizedMessage, isExpectedFailure: false})
-
+        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure: false })
         process.exitCode = 1
         console.error(message.result)
       }
