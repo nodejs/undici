@@ -71,7 +71,7 @@
     "docs"
   ],
   "scripts": {
-    "build:node": "npx esbuild@0.20.0 index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1",
+    "build:node": "npx esbuild@0.20.0 index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1 --keep-names",
     "prebuild:wasm": "node build/wasm.js --prebuild",
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
