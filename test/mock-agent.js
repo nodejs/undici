@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
+const { stub } = require('sinon')
 const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
@@ -383,6 +384,44 @@ test('MockAgent - basic intercept with request', async (t) => {
   t.same(jsonResponse, {
     foo: 'bar'
   })
+})
+
+test('MockAgent - basic missed request', async (t) => {
+  t.plan(5)
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello from the other side')
+  })
+  t.teardown(server.close.bind(server))
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+  const onMissedRequest = stub()
+  const mockAgent = new MockAgent({ onMissedRequest })
+
+  setGlobalDispatcher(mockAgent)
+  t.teardown(mockAgent.close.bind(mockAgent))
+  const mockPool = mockAgent.get(baseUrl)
+
+  mockPool.intercept({
+    path: '/justatest?hello=there&see=ya',
+    method: 'GET'
+  }).reply(200, { wont: 'match' }, {
+    headers: { 'content-type': 'application/json' }
+  })
+
+  const { statusCode, headers, body } = await request(`${baseUrl}/justatest?hello=there&another=one`, {
+    method: 'GET'
+  })
+
+  t.equal(statusCode, 200, 'Status code is 200')
+  t.equal(headers['content-type'], 'text/plain', 'Content type is text/plain')
+  const responseBody = await getResponse(body)
+  t.equal(responseBody, 'hello from the other side', 'Body is from the local server')
+  t.equal(onMissedRequest.calledOnce, true, 'onMissedRequest calledOnce')
+  t.ok(onMissedRequest.firstCall.args[0].message.includes('Mock dispatch not matched for path \'/justatest?another=one&hello=there\''), 'Error message matches')
 })
 
 test('MockAgent - should support local agents', async (t) => {
