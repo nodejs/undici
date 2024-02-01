@@ -2,7 +2,7 @@
 /* global WeakRef, FinalizationRegistry */
 
 const { test } = require('tap')
-const { createServer } = require('net')
+const { createServer } = require('node:net')
 const { Client, Pool } = require('..')
 
 const SKIP = typeof WeakRef === 'undefined' || typeof FinalizationRegistry === 'undefined'

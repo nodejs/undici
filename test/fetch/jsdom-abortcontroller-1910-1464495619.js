@@ -1,8 +1,9 @@
 'use strict'
 
-const { test } = require('tap')
-const { createServer } = require('http')
-const { once } = require('events')
+const { test } = require('node:test')
+const assert = require('node:assert')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
 const { fetch } = require('../..')
 const { JSDOM } = require('jsdom')
 
@@ -13,14 +14,14 @@ test('third party AbortControllers', async (t) => {
   const { AbortController } = new JSDOM().window
   let controller = new AbortController()
 
-  t.teardown(() => {
+  t.after(() => {
     controller.abort()
     controller = null
     return server.close()
   })
   await once(server, 'listening')
 
-  await t.resolves(fetch(`http://localhost:${server.address().port}`, {
+  await assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
     signal: controller.signal
   }))
 })

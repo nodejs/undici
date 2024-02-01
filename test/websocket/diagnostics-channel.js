@@ -1,16 +1,13 @@
 'use strict'
 
-const t = require('tap')
-const dc = require('diagnostics_channel')
+const { describe, test } = require('node:test')
+const assert = require('node:assert')
+const dc = require('node:diagnostics_channel')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 
-t.test('diagnostics channel', { jobs: 1 }, (t) => {
-  t.plan(2)
-
-  t.test('undici:websocket:open', (t) => {
-    t.plan(3)
-
+describe('diagnostics channel', { concurrency: 1 }, () => {
+  test('undici:websocket:open', () => {
     const server = new WebSocketServer({ port: 0 })
 
     server.on('connection', (ws) => {
@@ -18,14 +15,9 @@ t.test('diagnostics channel', { jobs: 1 }, (t) => {
     })
 
     const listener = ({ extensions, protocol }) => {
-      t.equal(extensions, null)
-      t.equal(protocol, 'chat')
+      assert.equal(extensions, null)
+      assert.equal(protocol, 'chat')
     }
-
-    t.teardown(() => {
-      dc.channel('undici:websocket:open').unsubscribe(listener)
-      return server.close()
-    })
 
     const { port } = server.address()
 
@@ -33,14 +25,16 @@ t.test('diagnostics channel', { jobs: 1 }, (t) => {
 
     const ws = new WebSocket(`ws://localhost:${port}`, 'chat')
 
-    ws.addEventListener('open', () => {
-      t.pass('Emitted open')
+    return new Promise((resolve) => {
+      ws.addEventListener('open', () => {
+        dc.channel('undici:websocket:open').unsubscribe(listener)
+        server.close()
+        resolve()
+      })
     })
   })
 
-  t.test('undici:websocket:close', (t) => {
-    t.plan(4)
-
+  test('undici:websocket:close', () => {
     const server = new WebSocketServer({ port: 0 })
 
     server.on('connection', (ws) => {
@@ -48,15 +42,10 @@ t.test('diagnostics channel', { jobs: 1 }, (t) => {
     })
 
     const listener = ({ websocket, code, reason }) => {
-      t.type(websocket, WebSocket)
-      t.equal(code, 1000)
-      t.equal(reason, 'goodbye')
+      assert.ok(websocket instanceof WebSocket)
+      assert.equal(code, 1000)
+      assert.equal(reason, 'goodbye')
     }
-
-    t.teardown(() => {
-      dc.channel('undici:websocket:close').unsubscribe(listener)
-      return server.close()
-    })
 
     const { port } = server.address()
 
@@ -64,8 +53,12 @@ t.test('diagnostics channel', { jobs: 1 }, (t) => {
 
     const ws = new WebSocket(`ws://localhost:${port}`, 'chat')
 
-    ws.addEventListener('close', () => {
-      t.pass('Emitted open')
+    return new Promise((resolve) => {
+      ws.addEventListener('close', () => {
+        dc.channel('undici:websocket:close').unsubscribe(listener)
+        server.close()
+        resolve()
+      })
     })
   })
 })

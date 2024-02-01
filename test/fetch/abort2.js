@@ -1,9 +1,12 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('node:assert')
 const { fetch } = require('../..')
-const { createServer } = require('http')
-const { once } = require('events')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
+
+const { closeServerAsPromise } = require('../utils/node-http')
 
 /* global AbortController */
 
@@ -18,7 +21,7 @@ test('parallel fetch with the same AbortController works as expected', async (t)
     res.end(JSON.stringify(body))
   })
 
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   const abortController = new AbortController()
 
@@ -49,11 +52,9 @@ test('parallel fetch with the same AbortController works as expected', async (t)
     return a
   }, { resolved: [], rejected: [] })
 
-  t.equal(rejected.length, 9) // out of 10 requests, only 1 should succeed
-  t.equal(resolved.length, 1)
+  assert.strictEqual(rejected.length, 9) // out of 10 requests, only 1 should succeed
+  assert.strictEqual(resolved.length, 1)
 
-  t.ok(rejected.every(rej => rej.reason?.code === DOMException.ABORT_ERR))
-  t.same(resolved[0].value, body)
-
-  t.end()
+  assert.ok(rejected.every(rej => rej.reason?.code === DOMException.ABORT_ERR))
+  assert.deepStrictEqual(resolved[0].value, body)
 })

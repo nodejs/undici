@@ -1,7 +1,7 @@
 'use strict'
 
-const crypto = require('crypto')
-const https = require('https')
+const crypto = require('node:crypto')
+const https = require('node:https')
 const { Client, buildConnector } = require('../..')
 const pem = require('https-pem')
 

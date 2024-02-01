@@ -1,8 +1,8 @@
-const stream = require('stream')
-const http = require('http')
+const stream = require('node:stream')
+const http = require('node:http')
 
 const chai = require('chai')
-const { Blob } = require('buffer')
+const { Blob } = require('node:buffer')
 
 const Request = require('../../lib/fetch/request.js').Request
 const TestServer = require('./utils/server.js')

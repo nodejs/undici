@@ -1,9 +1,11 @@
 'use strict'
 
-const { test } = require('tap')
-const events = require('events')
-const http = require('http')
+const { test } = require('node:test')
+const assert = require('node:assert')
+const events = require('node:events')
+const http = require('node:http')
 const undici = require('../../')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 const nodeBuild = require('../../undici-fetch.js')
 
@@ -11,7 +13,7 @@ test('user-agent defaults correctly', async (t) => {
   const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ userAgentHeader: req.headers['user-agent'] }))
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   server.listen(0)
   await events.once(server, 'listening')
@@ -21,6 +23,6 @@ test('user-agent defaults correctly', async (t) => {
     undici.fetch(url).then((body) => body.json())
   ])
 
-  t.same(nodeBuildJSON.userAgentHeader, 'node')
-  t.same(undiciJSON.userAgentHeader, 'undici')
+  assert.strictEqual(nodeBuildJSON.userAgentHeader, 'node')
+  assert.strictEqual(undiciJSON.userAgentHeader, 'undici')
 })

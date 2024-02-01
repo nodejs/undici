@@ -1,12 +1,11 @@
 'use strict'
 
-const { test } = require('tap')
-const { Writable } = require('stream')
-const { MockAgent, errors, stream } = require('..')
+const { test } = require('node:test')
+const { rejects } = require('node:assert')
+const { Writable } = require('node:stream')
+const { MockAgent, stream } = require('..')
 
-test('stream() does not fail after request has been aborted', async (t) => {
-  t.plan(1)
-
+test('stream() does not fail after request has been aborted', () => {
   const mockAgent = new MockAgent()
 
   mockAgent.disableNetConnect()
@@ -21,10 +20,10 @@ test('stream() does not fail after request has been aborted', async (t) => {
   const parts = []
   const ac = new AbortController()
 
-  setTimeout(() => ac.abort('nevermind'), 5)
+  setTimeout(() => ac.abort(), 5)
 
-  try {
-    await stream(
+  rejects(
+    stream(
       'http://localhost:3333/',
       {
         opaque: { parts },
@@ -39,9 +38,7 @@ test('stream() does not fail after request has been aborted', async (t) => {
           }
         })
       }
-    )
-  } catch (error) {
-    console.log(error)
-    t.equal(error instanceof errors.RequestAbortedError, true)
-  }
+    ),
+    new DOMException('This operation was aborted', 'AbortError')
+  )
 })

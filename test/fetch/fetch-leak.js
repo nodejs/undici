@@ -1,21 +1,23 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('node:assert')
+const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
+const { closeServerAsPromise } = require('../utils/node-http')
 
-test('do not leak', (t) => {
-  t.plan(1)
-
+test('do not leak', (t, done) => {
+  const { ok } = tspl(t, { plan: 1 })
   const server = createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
 
   let url
-  let done = false
+  let isDone = false
   server.listen(0, function attack () {
-    if (done) {
+    if (isDone) {
       return
     }
     url ??= new URL(`http://127.0.0.1:${server.address().port}`)
@@ -29,16 +31,17 @@ test('do not leak', (t) => {
   let prev = Infinity
   let count = 0
   const interval = setInterval(() => {
-    done = true
+    isDone = true
     global.gc()
     const next = process.memoryUsage().heapUsed
     if (next <= prev) {
-      t.pass()
+      ok(true)
+      done()
     } else if (count++ > 20) {
-      t.fail()
+      assert.fail()
     } else {
       prev = next
     }
   }, 1e3)
-  t.teardown(() => clearInterval(interval))
+  t.after(() => clearInterval(interval))
 })

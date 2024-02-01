@@ -1,8 +1,8 @@
 'use strict'
 
-const { execSync } = require('child_process')
-const { writeFileSync, readFileSync } = require('fs')
-const { join, resolve } = require('path')
+const { execSync } = require('node:child_process')
+const { writeFileSync, readFileSync } = require('node:fs')
+const { join, resolve, basename } = require('node:path')
 
 const ROOT = resolve(__dirname, '../')
 const WASM_SRC = resolve(__dirname, '../deps/llhttp')
@@ -14,6 +14,8 @@ const WASM_CC = process.env.WASM_CC || 'clang'
 let WASM_CFLAGS = process.env.WASM_CFLAGS || '--sysroot=/usr/share/wasi-sysroot -target wasm32-unknown-wasi'
 let WASM_LDFLAGS = process.env.WASM_LDFLAGS || ''
 const WASM_LDLIBS = process.env.WASM_LDLIBS || ''
+
+const EXTERNAL_PATH = process.env.EXTERNAL_PATH
 
 // These are relevant for undici and should not be overridden
 WASM_CFLAGS += ' -Ofast -fno-exceptions -fvisibility=hidden -mexec-model=reactor'
@@ -60,6 +62,23 @@ if (hasApk) {
   writeFileSync(join(WASM_OUT, 'wasm_build_env.txt'), buildInfo)
 }
 
+const writeWasmChunk = EXTERNAL_PATH
+  ? (path, dest) => {
+      const base64 = readFileSync(join(WASM_OUT, path)).toString('base64')
+      writeFileSync(join(WASM_OUT, dest), `
+const { Buffer } = require('node:buffer')
+
+module.exports = Buffer.from('${base64}', 'base64')
+`)
+    }
+  : (path, dest) => {
+      writeFileSync(join(WASM_OUT, dest), `
+const { fs } = require('node:fs')
+
+module.exports = fs.readFileSync(require.resolve('./${basename(path)}'))
+`)
+    }
+
 // Build wasm binary
 execSync(`${WASM_CC} ${WASM_CFLAGS} ${WASM_LDFLAGS} \
  ${join(WASM_SRC, 'src')}/*.c \
@@ -67,11 +86,7 @@ execSync(`${WASM_CC} ${WASM_CFLAGS} ${WASM_LDFLAGS} \
  -o ${join(WASM_OUT, 'llhttp.wasm')} \
  ${WASM_LDLIBS}`, { stdio: 'inherit' })
 
-const base64Wasm = readFileSync(join(WASM_OUT, 'llhttp.wasm')).toString('base64')
-writeFileSync(
-  join(WASM_OUT, 'llhttp-wasm.js'),
-  `module.exports = '${base64Wasm}'\n`
-)
+writeWasmChunk('llhttp.wasm', 'llhttp-wasm.js')
 
 // Build wasm simd binary
 execSync(`${WASM_CC} ${WASM_CFLAGS} -msimd128 ${WASM_LDFLAGS} \
@@ -80,8 +95,12 @@ execSync(`${WASM_CC} ${WASM_CFLAGS} -msimd128 ${WASM_LDFLAGS} \
  -o ${join(WASM_OUT, 'llhttp_simd.wasm')} \
  ${WASM_LDLIBS}`, { stdio: 'inherit' })
 
-const base64WasmSimd = readFileSync(join(WASM_OUT, 'llhttp_simd.wasm')).toString('base64')
-writeFileSync(
-  join(WASM_OUT, 'llhttp_simd-wasm.js'),
-  `module.exports = '${base64WasmSimd}'\n`
-)
+writeWasmChunk('llhttp_simd.wasm', 'llhttp_simd-wasm.js')
+
+if (EXTERNAL_PATH) {
+  writeFileSync(join(ROOT, 'loader.js'), `
+'use strict'
+
+module.exports = require('node:module').createRequire('${EXTERNAL_PATH}/loader.js')('./index-fetch.js')
+`)
+}

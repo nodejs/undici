@@ -2,8 +2,8 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { createServer } = require('http')
-const net = require('net')
+const { createServer } = require('node:http')
+const net = require('node:net')
 
 test('ignore informational response', (t) => {
   t.plan(2)

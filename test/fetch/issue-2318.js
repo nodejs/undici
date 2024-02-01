@@ -1,20 +1,22 @@
 'use strict'
 
-const { test } = require('tap')
-const { once } = require('events')
-const { createServer } = require('http')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
+const { once } = require('node:events')
+const { createServer } = require('node:http')
 const { fetch } = require('../..')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('Undici overrides user-provided `Host` header', async (t) => {
-  t.plan(1)
+  const { strictEqual } = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
-    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    strictEqual(req.headers.host, `localhost:${server.address().port}`)
 
     res.end()
   }).listen(0)
 
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   await fetch(`http://localhost:${server.address().port}`, {

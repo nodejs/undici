@@ -2,15 +2,15 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const EE = require('events')
-const { createServer } = require('http')
+const EE = require('node:events')
+const { createServer } = require('node:http')
 const {
   pipeline,
   Readable,
   Transform,
   Writable,
   PassThrough
-} = require('stream')
+} = require('node:stream')
 
 test('pipeline get', (t) => {
   t.plan(17)

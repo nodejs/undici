@@ -1,9 +1,9 @@
 'use strict'
 
 const { test } = require('tap')
-const { createServer } = require('http')
-const { once } = require('events')
-const { createReadStream } = require('fs')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
+const { createReadStream } = require('node:fs')
 const { File, FormData, request } = require('..')
 
 test('undici.request with a FormData body should set content-length header', async (t) => {

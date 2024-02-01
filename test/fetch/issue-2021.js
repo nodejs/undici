@@ -1,9 +1,11 @@
 'use strict'
 
-const { test } = require('tap')
-const { once } = require('events')
-const { createServer } = require('http')
+const { test } = require('node:test')
+const assert = require('node:assert')
+const { once } = require('node:events')
+const { createServer } = require('node:http')
 const { fetch } = require('../..')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 // https://github.com/nodejs/undici/issues/2021
 test('content-length header is removed on redirect', async (t) => {
@@ -17,12 +19,12 @@ test('content-length header is removed on redirect', async (t) => {
     res.end()
   }).listen(0).unref()
 
-  t.teardown(server.close.bind(server))
+  t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
   const body = 'a+b+c'
 
-  await t.resolves(fetch(`http://localhost:${server.address().port}/redirect`, {
+  await assert.doesNotReject(fetch(`http://localhost:${server.address().port}/redirect`, {
     method: 'POST',
     body,
     headers: {

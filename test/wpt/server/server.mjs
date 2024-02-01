@@ -370,6 +370,73 @@ const server = createServer(async (req, res) => {
       res.end()
       return
     }
+    case '/service-workers/cache-storage/this-resource-should-not-exist':
+    case '/service-workers/cache-storage/this-does-not-exist-please-dont-create-it': {
+      res.statusCode = 404
+      res.end()
+      return
+    }
+    case '/service-workers/cache-storage/resources/vary.py': {
+      if (fullUrl.searchParams.has('clear-vary-value-override-cookie')) {
+        res.setHeader('cookie', '')
+        res.end('vary cookie cleared')
+        return
+      }
+
+      const setCookieVary = fullUrl.searchParams.get('set-vary-value-override-cookie') ?? ''
+
+      if (setCookieVary) {
+        res.setHeader('set-cookie', `vary-value-override=${setCookieVary}`)
+        res.end('vary cookie set')
+        return
+      }
+
+      const cookieVary = req.headers.cookie?.split(';').find((c) => c.includes('vary-value-override='))
+
+      if (cookieVary) {
+        res.setHeader('vary', `${cookieVary}`)
+      } else {
+        const queryVary = fullUrl.searchParams.get('vary')
+
+        if (queryVary) {
+          res.setHeader('vary', queryVary)
+        }
+      }
+
+      res.end('vary response')
+      return
+    }
+    case '/eventsource/resources/message.py': {
+      const mime = fullUrl.searchParams.get('mime') ?? 'text/event-stream'
+      const message = fullUrl.searchParams.get('message') ?? 'data: data'
+      const newline = fullUrl.searchParams.get('newline') === 'none' ? '' : '\n\n'
+      const sleep = parseInt(fullUrl.searchParams.get('sleep') ?? '0')
+
+      res.setHeader('content-type', mime)
+      res.write(message + newline + '\n')
+
+      setTimeout(() => {
+        res.end()
+      }, sleep)
+
+      return
+    }
+    case '/eventsource/resources/last-event-id.py': {
+      const lastEventId = req.headers['Last-Event-ID'] ?? ''
+      const idValue = fullUrl.searchParams.get('idvalue') ?? '\u2026'
+
+      res.setHeader('content-type', 'text/event-stream')
+
+      if (lastEventId) {
+        res.write(`data: ${lastEventId}\n\n`)
+        res.end()
+      } else {
+        res.write(`id: ${idValue}\nretry: 200\ndata: hello\n\n`)
+        res.end()
+      }
+
+      return
+    }
     default: {
       res.statusCode = 200
       res.end(fullUrl.toString())

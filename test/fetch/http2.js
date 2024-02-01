@@ -6,16 +6,17 @@ const { once } = require('node:events')
 const { Blob } = require('node:buffer')
 const { Readable } = require('node:stream')
 
-const { test, plan } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const pem = require('https-pem')
 
 const { Client, fetch, Headers } = require('../..')
 
+const { closeClientAndServerAsPromise } = require('../utils/node-http')
+
 const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
 
-plan(8)
-
-test('[Fetch] Issue#2311', async t => {
+test('[Fetch] Issue#2311', async (t) => {
   const expectedBody = 'hello from client!'
 
   const server = createSecureServer(pem, async (req, res) => {
@@ -35,7 +36,7 @@ test('[Fetch] Issue#2311', async t => {
     res.end(body)
   })
 
-  t.plan(1)
+  const { strictEqual } = tspl(t, { plan: 1 })
 
   server.listen()
   await once(server, 'listening')
@@ -63,13 +64,12 @@ test('[Fetch] Issue#2311', async t => {
 
   const responseBody = await response.text()
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t.after(closeClientAndServerAsPromise(client, server))
 
-  t.equal(responseBody, expectedBody)
+  strictEqual(responseBody, expectedBody)
 })
 
-test('[Fetch] Simple GET with h2', async t => {
+test('[Fetch] Simple GET with h2', async (t) => {
   const server = createSecureServer(pem)
   const expectedRequestBody = 'hello h2!'
 
@@ -84,7 +84,7 @@ test('[Fetch] Simple GET with h2', async t => {
     stream.end(expectedRequestBody)
   })
 
-  t.plan(5)
+  const { strictEqual, throws } = tspl(t, { plan: 5 })
 
   server.listen()
   await once(server, 'listening')
@@ -111,22 +111,21 @@ test('[Fetch] Simple GET with h2', async t => {
 
   const responseBody = await response.text()
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t.after(closeClientAndServerAsPromise(client, server))
 
-  t.equal(responseBody, expectedRequestBody)
-  t.equal(response.headers.get('x-method'), 'GET')
-  t.equal(response.headers.get('x-custom-h2'), 'foo')
+  strictEqual(responseBody, expectedRequestBody)
+  strictEqual(response.headers.get('x-method'), 'GET')
+  strictEqual(response.headers.get('x-custom-h2'), 'foo')
   // https://github.com/nodejs/undici/issues/2415
-  t.throws(() => {
+  throws(() => {
     response.headers.get(':status')
   }, TypeError)
 
   // See https://fetch.spec.whatwg.org/#concept-response-status-message
-  t.equal(response.statusText, '')
+  strictEqual(response.statusText, '')
 })
 
-test('[Fetch] Should handle h2 request with body (string or buffer)', async t => {
+test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) => {
   const server = createSecureServer(pem)
   const expectedBody = 'hello from client!'
   const expectedRequestBody = 'hello h2!'
@@ -144,7 +143,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async t =>
     stream.end(expectedRequestBody)
   })
 
-  t.plan(2)
+  const { strictEqual } = tspl(t, { plan: 2 })
 
   server.listen()
   await once(server, 'listening')
@@ -172,27 +171,28 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async t =>
 
   const responseBody = await response.text()
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t.after(closeClientAndServerAsPromise(client, server))
 
-  t.equal(Buffer.concat(requestBody).toString('utf-8'), expectedBody)
-  t.equal(responseBody, expectedRequestBody)
+  strictEqual(Buffer.concat(requestBody).toString('utf-8'), expectedBody)
+  strictEqual(responseBody, expectedRequestBody)
 })
 
 // Skipping for now, there is something odd in the way the body is handled
 test(
   '[Fetch] Should handle h2 request with body (stream)',
   { skip: nodeVersion === 16 },
-  async t => {
+  async (t) => {
     const server = createSecureServer(pem)
     const expectedBody = readFileSync(__filename, 'utf-8')
     const stream = createReadStream(__filename)
     const requestChunks = []
 
+    const { strictEqual } = tspl(t, { plan: 8 })
+
     server.on('stream', async (stream, headers) => {
-      t.equal(headers[':method'], 'PUT')
-      t.equal(headers[':path'], '/')
-      t.equal(headers[':scheme'], 'https')
+      strictEqual(headers[':method'], 'PUT')
+      strictEqual(headers[':path'], '/')
+      strictEqual(headers[':scheme'], 'https')
 
       stream.respond({
         'content-type': 'text/plain; charset=utf-8',
@@ -207,8 +207,6 @@ test(
       stream.end('hello h2!')
     })
 
-    t.plan(8)
-
     server.listen(0)
     await once(server, 'listening')
 
@@ -219,8 +217,7 @@ test(
       allowH2: true
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+    t.after(closeClientAndServerAsPromise(client, server))
 
     const response = await fetch(
       `https://localhost:${server.address().port}/`,
@@ -239,14 +236,14 @@ test(
 
     const responseBody = await response.text()
 
-    t.equal(response.status, 200)
-    t.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8')
-    t.equal(response.headers.get('x-custom-h2'), 'foo')
-    t.equal(responseBody, 'hello h2!')
-    t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+    strictEqual(response.status, 200)
+    strictEqual(response.headers.get('content-type'), 'text/plain; charset=utf-8')
+    strictEqual(response.headers.get('x-custom-h2'), 'foo')
+    strictEqual(responseBody, 'hello h2!')
+    strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
   }
 )
-test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
+test('Should handle h2 request with body (Blob)', { skip: !Blob }, async (t) => {
   const server = createSecureServer(pem)
   const expectedBody = 'asd'
   const requestChunks = []
@@ -254,10 +251,12 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
     type: 'text/plain'
   })
 
+  const { strictEqual } = tspl(t, { plan: 8 })
+
   server.on('stream', async (stream, headers) => {
-    t.equal(headers[':method'], 'POST')
-    t.equal(headers[':path'], '/')
-    t.equal(headers[':scheme'], 'https')
+    strictEqual(headers[':method'], 'POST')
+    strictEqual(headers[':path'], '/')
+    strictEqual(headers[':scheme'], 'https')
 
     stream.on('data', chunk => requestChunks.push(chunk))
 
@@ -270,8 +269,6 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
     stream.end('hello h2!')
   })
 
-  t.plan(8)
-
   server.listen(0)
   await once(server, 'listening')
 
@@ -282,8 +279,7 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
     allowH2: true
   })
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t.after(closeClientAndServerAsPromise(client, server))
 
   const response = await fetch(
     `https://localhost:${server.address().port}/`,
@@ -301,17 +297,17 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
 
   const responseBody = await response.arrayBuffer()
 
-  t.equal(response.status, 200)
-  t.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8')
-  t.equal(response.headers.get('x-custom-h2'), 'foo')
-  t.same(new TextDecoder().decode(responseBody).toString(), 'hello h2!')
-  t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+  strictEqual(response.status, 200)
+  strictEqual(response.headers.get('content-type'), 'text/plain; charset=utf-8')
+  strictEqual(response.headers.get('x-custom-h2'), 'foo')
+  strictEqual(new TextDecoder().decode(responseBody).toString(), 'hello h2!')
+  strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
 })
 
 test(
   'Should handle h2 request with body (Blob:ArrayBuffer)',
   { skip: !Blob },
-  async t => {
+  async (t) => {
     const server = createSecureServer(pem)
     const expectedBody = 'hello'
     const requestChunks = []
@@ -321,10 +317,12 @@ test(
 
     buf.copy(new Uint8Array(body))
 
+    const { strictEqual, deepStrictEqual } = tspl(t, { plan: 8 })
+
     server.on('stream', async (stream, headers) => {
-      t.equal(headers[':method'], 'PUT')
-      t.equal(headers[':path'], '/')
-      t.equal(headers[':scheme'], 'https')
+      strictEqual(headers[':method'], 'PUT')
+      strictEqual(headers[':path'], '/')
+      strictEqual(headers[':scheme'], 'https')
 
       stream.on('data', chunk => requestChunks.push(chunk))
 
@@ -337,8 +335,6 @@ test(
       stream.end(JSON.stringify(expectedResponseBody))
     })
 
-    t.plan(8)
-
     server.listen(0)
     await once(server, 'listening')
 
@@ -349,8 +345,7 @@ test(
       allowH2: true
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+    t.after(closeClientAndServerAsPromise(client, server))
 
     const response = await fetch(
       `https://localhost:${server.address().port}/`,
@@ -368,16 +363,16 @@ test(
 
     const responseBody = await response.json()
 
-    t.equal(response.status, 200)
-    t.equal(response.headers.get('content-type'), 'application/json')
-    t.equal(response.headers.get('x-custom-h2'), 'foo')
-    t.same(responseBody, expectedResponseBody)
-    t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+    strictEqual(response.status, 200)
+    strictEqual(response.headers.get('content-type'), 'application/json')
+    strictEqual(response.headers.get('x-custom-h2'), 'foo')
+    deepStrictEqual(responseBody, expectedResponseBody)
+    strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
   }
 )
 
 test('Issue#2415', async (t) => {
-  t.plan(1)
+  const { doesNotThrow } = tspl(t, { plan: 1 })
   const server = createSecureServer(pem)
 
   server.on('stream', async (stream, headers) => {
@@ -408,13 +403,12 @@ test('Issue#2415', async (t) => {
 
   await response.text()
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t.after(closeClientAndServerAsPromise(client, server))
 
-  t.doesNotThrow(() => new Headers(response.headers))
+  doesNotThrow(() => new Headers(response.headers))
 })
 
-test('Issue #2386', async t => {
+test('Issue #2386', async (t) => {
   const server = createSecureServer(pem)
   const body = Buffer.from('hello')
   const requestChunks = []
@@ -422,10 +416,12 @@ test('Issue #2386', async t => {
   const controller = new AbortController()
   const signal = controller.signal
 
+  const { strictEqual, ok } = tspl(t, { plan: 4 })
+
   server.on('stream', async (stream, headers) => {
-    t.equal(headers[':method'], 'PUT')
-    t.equal(headers[':path'], '/')
-    t.equal(headers[':scheme'], 'https')
+    strictEqual(headers[':method'], 'PUT')
+    strictEqual(headers[':path'], '/')
+    strictEqual(headers[':scheme'], 'https')
 
     stream.on('data', chunk => requestChunks.push(chunk))
 
@@ -438,8 +434,6 @@ test('Issue #2386', async t => {
     stream.end(JSON.stringify(expectedResponseBody))
   })
 
-  t.plan(4)
-
   server.listen(0)
   await once(server, 'listening')
 
@@ -450,28 +444,23 @@ test('Issue #2386', async t => {
     allowH2: true
   })
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t.after(closeClientAndServerAsPromise(client, server))
 
-  try {
-    await fetch(
-      `https://localhost:${server.address().port}/`,
-      // Needs to be passed to disable the reject unauthorized
-      {
-        body,
-        signal,
-        method: 'PUT',
-        dispatcher: client,
-        headers: {
-          'x-my-header': 'foo',
-          'content-type': 'text-plain'
-        }
+  await fetch(
+    `https://localhost:${server.address().port}/`,
+    // Needs to be passed to disable the reject unauthorized
+    {
+      body,
+      signal,
+      method: 'PUT',
+      dispatcher: client,
+      headers: {
+        'x-my-header': 'foo',
+        'content-type': 'text-plain'
       }
-    )
+    }
+  )
 
-    controller.abort()
-    t.pass()
-  } catch (error) {
-    t.error(error)
-  }
+  controller.abort()
+  ok(true)
 })

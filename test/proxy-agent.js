@@ -3,12 +3,12 @@
 const { test, teardown } = require('tap')
 const { request, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('..')
 const { InvalidArgumentError } = require('../lib/core/errors')
-const { readFileSync } = require('fs')
-const { join } = require('path')
+const { readFileSync } = require('node:fs')
+const { join } = require('node:path')
 const ProxyAgent = require('../lib/proxy-agent')
 const Pool = require('../lib/pool')
-const { createServer } = require('http')
-const https = require('https')
+const { createServer } = require('node:http')
+const https = require('node:https')
 const proxy = require('proxy')
 
 test('should throw error when no uri is provided', (t) => {
@@ -393,7 +393,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   }
 
   const expectedProxyHeaders = {
-    host: `localhost:${proxy.address().port}`,
+    host: `localhost:${server.address().port}`,
     connection: 'close'
   }
 

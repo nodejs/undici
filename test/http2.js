@@ -7,17 +7,13 @@ const { Blob } = require('node:buffer')
 const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
 const { test, plan } = require('tap')
-const { gte } = require('semver')
 const pem = require('https-pem')
 
 const { Client, Agent } = require('..')
 
-const isGreaterThanv20 = gte(process.version.slice(1), '20.0.0')
-// NOTE: node versions <16.14.1 have a bug which changes the order of pseudo-headers
-// https://github.com/nodejs/node/pull/41735
-const hasPseudoHeadersOrderFix = gte(process.version.slice(1), '16.14.1')
+const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 
-plan(23)
+plan(24)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -731,6 +727,65 @@ test('Dispatcher#destroy', async t => {
   t.equal(results[3].status, 'rejected')
 })
 
+test('Should handle h2 request without body', async t => {
+  const server = createSecureServer(pem)
+  const expectedBody = ''
+  const requestChunks = []
+  const responseBody = []
+
+  server.on('stream', async (stream, headers) => {
+    t.equal(headers[':method'], 'POST')
+    t.equal(headers[':path'], '/')
+    t.equal(headers[':scheme'], 'https')
+
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    })
+
+    for await (const chunk of stream) {
+      requestChunks.push(chunk)
+    }
+
+    stream.end('hello h2!')
+  })
+
+  t.plan(9)
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  const response = await client.request({
+    path: '/',
+    method: 'POST',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  })
+
+  for await (const chunk of response.body) {
+    responseBody.push(chunk)
+  }
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.equal(response.headers['x-custom-h2'], 'foo')
+  t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+  t.equal(requestChunks.length, 0)
+  t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+})
+
 test('Should handle h2 request with body (string or buffer) - dispatch', t => {
   const server = createSecureServer(pem)
   const expectedBody = 'hello from client!'
@@ -1111,7 +1166,6 @@ test('Agent should support H2 connection', async t => {
 
 test(
   'Should provide pseudo-headers in proper order',
-  { skip: !hasPseudoHeadersOrderFix },
   async t => {
     const server = createSecureServer(pem)
     server.on('stream', (stream, _headers, _flags, rawHeaders) => {

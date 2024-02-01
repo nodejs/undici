@@ -1,9 +1,9 @@
 'use strict'
 
-const { readFileSync } = require('fs')
-const { join } = require('path')
-const https = require('https')
-const crypto = require('crypto')
+const { readFileSync } = require('node:fs')
+const { join } = require('node:path')
+const https = require('node:https')
+const crypto = require('node:crypto')
 const { test, teardown } = require('tap')
 const { Client, Pool } = require('..')
 const { kSocket } = require('../lib/core/symbols')

@@ -1,10 +1,10 @@
 'use strict'
 
-const { Worker, isMainThread, workerData } = require('worker_threads')
+const { Worker, isMainThread, workerData } = require('node:worker_threads')
 
 if (isMainThread) {
   const tap = require('tap')
-  const { createServer } = require('http')
+  const { createServer } = require('node:http')
 
   tap.test('client automatically closes itself when idle', t => {
     t.plan(1)

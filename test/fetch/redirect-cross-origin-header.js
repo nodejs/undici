@@ -1,23 +1,24 @@
 'use strict'
 
-const { test } = require('tap')
-const { createServer } = require('http')
-const { once } = require('events')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
 const { fetch } = require('../..')
 
 test('Cross-origin redirects clear forbidden headers', async (t) => {
-  t.plan(5)
+  const { strictEqual } = tspl(t, { plan: 5 })
 
   const server1 = createServer((req, res) => {
-    t.equal(req.headers.cookie, undefined)
-    t.equal(req.headers.authorization, undefined)
+    strictEqual(req.headers.cookie, undefined)
+    strictEqual(req.headers.authorization, undefined)
 
     res.end('redirected')
   }).listen(0)
 
   const server2 = createServer((req, res) => {
-    t.equal(req.headers.authorization, 'test')
-    t.equal(req.headers.cookie, 'ddd=dddd')
+    strictEqual(req.headers.authorization, 'test')
+    strictEqual(req.headers.cookie, 'ddd=dddd')
 
     res.writeHead(302, {
       ...req.headers,
@@ -26,7 +27,7 @@ test('Cross-origin redirects clear forbidden headers', async (t) => {
     res.end()
   }).listen(0)
 
-  t.teardown(() => {
+  t.after(() => {
     server1.close()
     server2.close()
   })
@@ -44,5 +45,5 @@ test('Cross-origin redirects clear forbidden headers', async (t) => {
   })
 
   const text = await res.text()
-  t.equal(text, 'redirected')
+  strictEqual(text, 'redirected')
 })

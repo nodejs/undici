@@ -1,6 +1,6 @@
-const http = require('http')
-const zlib = require('zlib')
-const { once } = require('events')
+const http = require('node:http')
+const zlib = require('node:zlib')
+const { once } = require('node:events')
 const Busboy = require('@fastify/busboy')
 
 module.exports = class TestServer {

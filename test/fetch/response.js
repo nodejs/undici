@@ -1,40 +1,45 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('node:assert')
+const { tspl } = require('@matteo.collina/tspl')
 const {
   Response,
   FormData
 } = require('../../')
+const { fromInnerResponse, makeResponse } = require('../../lib/fetch/response')
 const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
+const { kState, kGuard, kRealm, kHeaders } = require('../../lib/fetch/symbols')
+const { kHeadersList } = require('../../lib/core/symbols')
 
-test('arg validation', async (t) => {
+test('arg validation', async () => {
   // constructor
-  t.throws(() => {
+  assert.throws(() => {
     // eslint-disable-next-line
     new Response(null, 0)
   }, TypeError)
-  t.throws(() => {
+  assert.throws(() => {
     // eslint-disable-next-line
     new Response(null, {
       status: 99
     })
   }, RangeError)
-  t.throws(() => {
+  assert.throws(() => {
     // eslint-disable-next-line
     new Response(null, {
       status: 600
     })
   }, RangeError)
-  t.throws(() => {
+  assert.throws(() => {
     // eslint-disable-next-line
     new Response(null, {
       status: '600'
     })
   }, RangeError)
-  t.throws(() => {
+  assert.throws(() => {
     // eslint-disable-next-line
     new Response(null, {
       statusText: '\u0000'
@@ -42,7 +47,7 @@ test('arg validation', async (t) => {
   }, TypeError)
 
   for (const nullStatus of [204, 205, 304]) {
-    t.throws(() => {
+    assert.throws(() => {
       // eslint-disable-next-line
       new Response(new ArrayBuffer(16), {
         status: nullStatus
@@ -50,54 +55,54 @@ test('arg validation', async (t) => {
     }, TypeError)
   }
 
-  t.doesNotThrow(() => {
+  assert.doesNotThrow(() => {
     Response.prototype[Symbol.toStringTag].charAt(0)
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.prototype.type.toString()
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.prototype.url.toString()
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.prototype.redirected.toString()
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.prototype.status.toString()
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.prototype.ok.toString()
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.prototype.statusText.toString()
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.prototype.headers.toString()
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     // eslint-disable-next-line no-unused-expressions
     Response.prototype.body
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     // eslint-disable-next-line no-unused-expressions
     Response.prototype.bodyUsed
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     Response.prototype.clone.call(null)
   }, TypeError)
 
-  await t.rejects(async () => {
-    await new Response('http://localhost').text.call({
+  await assert.rejects(
+    new Response('http://localhost').text.call({
       blob () {
         return {
           text () {
@@ -105,32 +110,27 @@ test('arg validation', async (t) => {
           }
         }
       }
-    })
-  }, TypeError)
-
-  t.end()
+    }), TypeError)
 })
 
-test('response clone', (t) => {
+test('response clone', () => {
   // https://github.com/nodejs/undici/issues/1122
   const response1 = new Response(null, { status: 201 })
   const response2 = new Response(undefined, { status: 201 })
 
-  t.equal(response1.body, response1.clone().body)
-  t.equal(response2.body, response2.clone().body)
-  t.equal(response2.body, null)
-  t.end()
+  assert.deepStrictEqual(response1.body, response1.clone().body)
+  assert.deepStrictEqual(response2.body, response2.clone().body)
+  assert.strictEqual(response2.body, null)
 })
 
-test('Symbol.toStringTag', (t) => {
+test('Symbol.toStringTag', () => {
   const resp = new Response()
 
-  t.equal(resp[Symbol.toStringTag], 'Response')
-  t.equal(Response.prototype[Symbol.toStringTag], 'Response')
-  t.end()
+  assert.strictEqual(resp[Symbol.toStringTag], 'Response')
+  assert.strictEqual(Response.prototype[Symbol.toStringTag], 'Response')
 })
 
-test('async iterable body', async (t) => {
+test('async iterable body', async () => {
   const asyncIterable = {
     async * [Symbol.asyncIterator] () {
       yield 'a'
@@ -140,12 +140,11 @@ test('async iterable body', async (t) => {
   }
 
   const response = new Response(asyncIterable)
-  t.equal(await response.text(), 'abc')
-  t.end()
+  assert.strictEqual(await response.text(), 'abc')
 })
 
 // https://github.com/nodejs/node/pull/43752#issuecomment-1179678544
-test('Modifying headers using Headers.prototype.set', (t) => {
+test('Modifying headers using Headers.prototype.set', () => {
   const response = new Response('body', {
     headers: {
       'content-type': 'test/test',
@@ -158,24 +157,22 @@ test('Modifying headers using Headers.prototype.set', (t) => {
   response.headers.set('content-type', 'application/wasm')
   response.headers.set('Content-Encoding', 'world/hello')
 
-  t.equal(response.headers.get('content-type'), 'application/wasm')
-  t.equal(response.headers.get('Content-Encoding'), 'world/hello')
+  assert.strictEqual(response.headers.get('content-type'), 'application/wasm')
+  assert.strictEqual(response.headers.get('Content-Encoding'), 'world/hello')
 
   response2.headers.delete('content-type')
   response2.headers.delete('Content-Encoding')
 
-  t.equal(response2.headers.get('content-type'), null)
-  t.equal(response2.headers.get('Content-Encoding'), null)
-
-  t.end()
+  assert.strictEqual(response2.headers.get('content-type'), null)
+  assert.strictEqual(response2.headers.get('Content-Encoding'), null)
 })
 
 // https://github.com/nodejs/node/issues/43838
-test('constructing a Response with a ReadableStream body', { skip: process.version.startsWith('v16.') }, async (t) => {
+test('constructing a Response with a ReadableStream body', async (t) => {
   const text = '{"foo":"bar"}'
   const uint8 = new TextEncoder().encode(text)
 
-  t.test('Readable stream with Uint8Array chunks', async (t) => {
+  await t.test('Readable stream with Uint8Array chunks', async () => {
     const readable = new ReadableStream({
       start (controller) {
         controller.enqueue(uint8)
@@ -187,14 +184,12 @@ test('constructing a Response with a ReadableStream body', { skip: process.versi
     const response2 = response1.clone()
     const response3 = response1.clone()
 
-    t.equal(await response1.text(), text)
-    t.same(await response2.arrayBuffer(), uint8.buffer)
-    t.same(await response3.json(), JSON.parse(text))
-
-    t.end()
+    assert.strictEqual(await response1.text(), text)
+    assert.deepStrictEqual(await response2.arrayBuffer(), uint8.buffer)
+    assert.deepStrictEqual(await response3.json(), JSON.parse(text))
   })
 
-  t.test('Readable stream with non-Uint8Array chunks', async (t) => {
+  await t.test('Readable stream with non-Uint8Array chunks', async () => {
     const readable = new ReadableStream({
       start (controller) {
         controller.enqueue(text) // string
@@ -204,12 +199,10 @@ test('constructing a Response with a ReadableStream body', { skip: process.versi
 
     const response = new Response(readable)
 
-    await t.rejects(response.text(), TypeError)
-
-    t.end()
+    await assert.rejects(response.text(), TypeError)
   })
 
-  t.test('Readable with ArrayBuffer chunk still throws', { skip: process.version.startsWith('v16.') }, async (t) => {
+  await t.test('Readable with ArrayBuffer chunk still throws', async () => {
     const readable = new ReadableStream({
       start (controller) {
         controller.enqueue(uint8.buffer)
@@ -220,70 +213,78 @@ test('constructing a Response with a ReadableStream body', { skip: process.versi
     const response1 = new Response(readable)
     const response2 = response1.clone()
     const response3 = response1.clone()
-    // const response4 = response1.clone()
+    const response4 = response1.clone()
 
-    await t.rejects(response1.arrayBuffer(), TypeError)
-    await t.rejects(response2.text(), TypeError)
-    await t.rejects(response3.json(), TypeError)
-    // TODO: on Node v16.8.0, this throws a TypeError
-    // because the body is detected as disturbed.
-    // await t.rejects(response4.blob(), TypeError)
-
-    t.end()
+    await assert.rejects(response1.arrayBuffer(), TypeError)
+    await assert.rejects(response2.text(), TypeError)
+    await assert.rejects(response3.json(), TypeError)
+    await assert.rejects(response4.blob(), TypeError)
   })
-
-  t.end()
 })
 
-test('constructing Response with third party Blob body', async (t) => {
+test('constructing Response with third party Blob body', async () => {
   const blob = new ThirdPartyBlob(['text'])
   const res = new Response(blob)
-  t.equal(await res.text(), 'text')
+  assert.strictEqual(await res.text(), 'text')
 })
-test('constructing Response with third party FormData body', async (t) => {
+test('constructing Response with third party FormData body', async () => {
   const form = new ThirdPartyFormData()
   form.set('key', 'value')
   const res = new Response(form)
   const contentType = res.headers.get('content-type').split('=')
-  t.equal(contentType[0], 'multipart/form-data; boundary')
-  t.ok((await res.text()).startsWith(`--${contentType[1]}`))
+  assert.strictEqual(contentType[0], 'multipart/form-data; boundary')
+  assert.ok((await res.text()).startsWith(`--${contentType[1]}`))
 })
 
 // https://github.com/nodejs/undici/issues/2465
 test('Issue#2465', async (t) => {
-  t.plan(1)
+  const { strictEqual } = tspl(t, { plan: 1 })
   const response = new Response(new SharedArrayBuffer(0))
-  t.equal(await response.text(), '[object SharedArrayBuffer]')
+  strictEqual(await response.text(), '[object SharedArrayBuffer]')
 })
 
-test('Check the Content-Type of invalid formData', (t) => {
-  t.plan(4)
-
-  t.test('_application/x-www-form-urlencoded', async (t) => {
-    t.plan(1)
+test('Check the Content-Type of invalid formData', async (t) => {
+  await t.test('_application/x-www-form-urlencoded', async (t) => {
+    const { rejects } = tspl(t, { plan: 1 })
     const response = new Response('x=y', { headers: { 'content-type': '_application/x-www-form-urlencoded' } })
-    await t.rejects(response.formData(), TypeError)
+    await rejects(response.formData(), TypeError)
   })
 
-  t.test('_multipart/form-data', async (t) => {
-    t.plan(1)
+  await t.test('_multipart/form-data', async (t) => {
+    const { rejects } = tspl(t, { plan: 1 })
     const formData = new FormData()
     formData.append('x', 'y')
     const response = new Response(formData, { headers: { 'content-type': '_multipart/form-data' } })
-    await t.rejects(response.formData(), TypeError)
+    await rejects(response.formData(), TypeError)
   })
 
-  t.test('application/x-www-form-urlencoded_', async (t) => {
-    t.plan(1)
+  await t.test('application/x-www-form-urlencoded_', async (t) => {
+    const { rejects } = tspl(t, { plan: 1 })
     const response = new Response('x=y', { headers: { 'content-type': 'application/x-www-form-urlencoded_' } })
-    await t.rejects(response.formData(), TypeError)
+    await rejects(response.formData(), TypeError)
   })
 
-  t.test('multipart/form-data_', async (t) => {
-    t.plan(1)
+  await t.test('multipart/form-data_', async (t) => {
+    const { rejects } = tspl(t, { plan: 1 })
     const formData = new FormData()
     formData.append('x', 'y')
     const response = new Response(formData, { headers: { 'content-type': 'multipart/form-data_' } })
-    await t.rejects(response.formData(), TypeError)
+    await rejects(response.formData(), TypeError)
   })
+})
+
+test('fromInnerResponse', () => {
+  const realm = { settingsObject: {} }
+  const innerResponse = makeResponse({
+    urlList: [new URL('http://asd')]
+  })
+
+  const response = fromInnerResponse(innerResponse, 'immutable', realm)
+
+  // check property
+  assert.strictEqual(response[kState], innerResponse)
+  assert.strictEqual(response[kRealm], realm)
+  assert.strictEqual(response[kHeaders][kHeadersList], innerResponse.headersList)
+  assert.strictEqual(response[kHeaders][kGuard], 'immutable')
+  assert.strictEqual(response[kHeaders][kRealm], realm)
 })

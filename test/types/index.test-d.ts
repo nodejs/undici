@@ -17,7 +17,7 @@ expectAssignable<typeof FileReader>(Undici.FileReader)
 const client = new Undici.Client('', {})
 const handler: Dispatcher.DispatchHandlers =  {}
 
-expectAssignable<RedirectHandler>(new Undici.RedirectHandler(client, 10, {
+const redirectHandler = new Undici.RedirectHandler(client, 10, {
   path: '/', method: 'GET'
-}, handler))
-expectAssignable<DecoratorHandler>(new Undici.DecoratorHandler(handler))
+}, handler, false) as RedirectHandler;
+expectAssignable<RedirectHandler>(redirectHandler);

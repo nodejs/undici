@@ -3,6 +3,11 @@
 const { test, beforeEach, afterEach } = require('tap')
 const { MockAgent, setGlobalDispatcher } = require('..')
 const PendingInterceptorsFormatter = require('../lib/mock/pending-interceptors-formatter')
+const util = require('../lib/core/util')
+
+// Since Node.js v21 `console.table` rows are aligned to the left
+// https://github.com/nodejs/node/pull/50135
+const tableRowsAlignedToLeft = util.nodeMajor >= 21 || (util.nodeMajor === 20 && util.nodeMinor >= 11)
 
 // Avoid colors in the output for inline snapshots.
 const pendingInterceptorsFormatter = new PendingInterceptorsFormatter({ disableColors: true })
@@ -40,7 +45,17 @@ test('1 pending interceptor', t => {
 
   const err = t.throws(() => mockAgentWithOneInterceptor().assertNoPendingInterceptors({ pendingInterceptorsFormatter }))
 
-  t.same(err.message, `
+  t.same(err.message, tableRowsAlignedToLeft
+    ? `
+1 interceptor is pending:
+
+┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
+│ (index) │ Method │ Origin                │ Path │ Status code │ Persistent │ Invocations │ Remaining │
+├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
+│ 0       │ 'GET'  │ 'https://example.com' │ '/'  │ 200         │ '❌'       │ 0           │ 1         │
+└─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
+`.trim()
+    : `
 1 interceptor is pending:
 
 ┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
@@ -61,7 +76,18 @@ test('2 pending interceptors', t => {
     .reply(204, 'OK')
   const err = t.throws(() => withTwoInterceptors.assertNoPendingInterceptors({ pendingInterceptorsFormatter }))
 
-  t.same(err.message, `
+  t.same(err.message, tableRowsAlignedToLeft
+    ? `
+2 interceptors are pending:
+
+┌─────────┬────────┬──────────────────────────┬──────────────┬─────────────┬────────────┬─────────────┬───────────┐
+│ (index) │ Method │ Origin                   │ Path         │ Status code │ Persistent │ Invocations │ Remaining │
+├─────────┼────────┼──────────────────────────┼──────────────┼─────────────┼────────────┼─────────────┼───────────┤
+│ 0       │ 'GET'  │ 'https://example.com'    │ '/'          │ 200         │ '❌'       │ 0           │ 1         │
+│ 1       │ 'GET'  │ 'https://localhost:9999' │ '/some/path' │ 204         │ '❌'       │ 0           │ 1         │
+└─────────┴────────┴──────────────────────────┴──────────────┴─────────────┴────────────┴─────────────┴───────────┘
+`.trim()
+    : `
 2 interceptors are pending:
 
 ┌─────────┬────────┬──────────────────────────┬──────────────┬─────────────┬────────────┬─────────────┬───────────┐
@@ -123,7 +149,20 @@ test('Variations of persist(), times(), and pending status', async t => {
 
   const err = t.throws(() => agent.assertNoPendingInterceptors({ pendingInterceptorsFormatter }))
 
-  t.same(err.message, `
+  t.same(err.message, tableRowsAlignedToLeft
+    ? `
+4 interceptors are pending:
+
+┌─────────┬────────┬──────────────────────────┬──────────────────────┬─────────────┬────────────┬─────────────┬───────────┐
+│ (index) │ Method │ Origin                   │ Path                 │ Status code │ Persistent │ Invocations │ Remaining │
+├─────────┼────────┼──────────────────────────┼──────────────────────┼─────────────┼────────────┼─────────────┼───────────┤
+│ 0       │ 'GET'  │ 'https://example.com'    │ '/'                  │ 200         │ '❌'       │ 0           │ 1         │
+│ 1       │ 'GET'  │ 'https://localhost:9999' │ '/persistent/unused' │ 200         │ '✅'       │ 0           │ Infinity  │
+│ 2       │ 'GET'  │ 'https://localhost:9999' │ '/times/partial'     │ 200         │ '❌'       │ 1           │ 4         │
+│ 3       │ 'GET'  │ 'https://localhost:9999' │ '/times/unused'      │ 200         │ '❌'       │ 0           │ 2         │
+└─────────┴────────┴──────────────────────────┴──────────────────────┴─────────────┴────────────┴─────────────┴───────────┘
+`.trim()
+    : `
 4 interceptors are pending:
 
 ┌─────────┬────────┬──────────────────────────┬──────────────────────┬─────────────┬────────────┬─────────────┬───────────┐
@@ -172,7 +211,17 @@ test('defaults to rendering output with terminal color when process.env.CI is un
 
   const err = t.throws(
     () => mockAgentWithOneInterceptor().assertNoPendingInterceptors())
-  t.same(err.message, `
+  t.same(err.message, tableRowsAlignedToLeft
+    ? `
+1 interceptor is pending:
+
+┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
+│ (index) │ Method │ Origin                │ Path │ Status code │ Persistent │ Invocations │ Remaining │
+├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
+│ 0       │ \u001b[32m'GET'\u001b[39m  │ \u001b[32m'https://example.com'\u001b[39m │ \u001b[32m'/'\u001b[39m  │ \u001b[33m200\u001b[39m         │ \u001b[32m'❌'\u001b[39m       │ \u001b[33m0\u001b[39m           │ \u001b[33m1\u001b[39m         │
+└─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
+`.trim()
+    : `
 1 interceptor is pending:
 
 ┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐

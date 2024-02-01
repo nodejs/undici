@@ -1,8 +1,8 @@
 'use strict'
 
-const net = require('net')
+const net = require('node:net')
 const fs = require('fs/promises')
-const path = require('path')
+const path = require('node:path')
 const serverFuzzFnMap = require('./server')
 const clientFuzzFnMap = require('./client')
 

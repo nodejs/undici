@@ -4,12 +4,12 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const { createServer } = require('http')
-const EE = require('events')
+const { createServer } = require('node:http')
+const EE = require('node:events')
 const { kConnect } = require('../lib/core/symbols')
-const { Readable } = require('stream')
-const net = require('net')
-const { promisify } = require('util')
+const { Readable } = require('node:stream')
+const net = require('node:net')
+const { promisify } = require('node:util')
 const { NotSupportedError } = require('../lib/core/errors')
 const { parseFormDataString } = require('./utils/formdata')
 
@@ -719,7 +719,7 @@ test('request text2', (t) => {
 
 test('request with FormData body', (t) => {
   const { FormData } = require('../')
-  const { Blob } = require('buffer')
+  const { Blob } = require('node:buffer')
 
   const fd = new FormData()
   fd.set('key', 'value')

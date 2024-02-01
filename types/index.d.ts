@@ -20,6 +20,7 @@ import DNSResolver from './dns-resolver'
 
 export * from './util'
 export * from './cookies'
+export * from './eventsource'
 export * from './fetch'
 export * from './file'
 export * from './filereader'

@@ -2,10 +2,10 @@
 
 const { test } = require('tap')
 const { Client, Pool, errors } = require('..')
-const net = require('net')
-const sleep = require('atomic-sleep')
+const net = require('node:net')
+const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(ms))
 
-test('priotorise socket errors over timeouts', (t) => {
+test('prioritize socket errors over timeouts', (t) => {
   t.plan(1)
   const connectTimeout = 1000
   const client = new Pool('http://foobar.bar:1234', { connectTimeout: 2 })

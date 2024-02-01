@@ -1,13 +1,20 @@
 'use strict'
 
-const http = require('http')
-const os = require('os')
-const path = require('path')
-const { table } = require('table')
-const { Writable } = require('stream')
-const { isMainThread } = require('worker_threads')
+const http = require('node:http')
+const os = require('node:os')
+const path = require('node:path')
+const { Writable } = require('node:stream')
+const { isMainThread } = require('node:worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
+
+let nodeFetch
+const axios = require('axios')
+let got
+
+const util = require('node:util')
+const _request = require('request')
+const request = util.promisify(_request)
 
 const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
 const errorThreshold = parseInt(process.env.ERROR_THRESHOLD, 10) || 3
@@ -57,6 +64,26 @@ const httpKeepAliveOptions = {
     maxSockets: connections
   })
 }
+
+const axiosAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: connections
+})
+
+const fetchAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: connections
+})
+
+const gotAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: connections
+})
+
+const requestAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: connections
+})
 
 const undiciOptions = {
   path: '/',
@@ -121,7 +148,13 @@ function printResults (results) {
     .sort((a, b) => (!a[1].success ? -1 : b[1].mean - a[1].mean))
     .map(([name, result]) => {
       if (!result.success) {
-        return [name, result.size, 'Errored', 'N/A', 'N/A']
+        return {
+          Tests: name,
+          Samples: result.size,
+          Result: 'Errored',
+          Tolerance: 'N/A',
+          'Difference with Slowest': 'N/A'
+        }
       }
 
       // Calculate throughput and relative performance
@@ -133,48 +166,16 @@ function printResults (results) {
         last = mean
       }
 
-      return [
-        name,
-        size,
-        `${((connections * 1e9) / mean).toFixed(2)} req/sec`,
-        `± ${((standardError / mean) * 100).toFixed(2)} %`,
-        relative > 0 ? `+ ${relative.toFixed(2)} %` : '-'
-      ]
+      return {
+        Tests: name,
+        Samples: size,
+        Result: `${((connections * 1e9) / mean).toFixed(2)} req/sec`,
+        Tolerance: `± ${((standardError / mean) * 100).toFixed(2)} %`,
+        'Difference with slowest': relative > 0 ? `+ ${relative.toFixed(2)} %` : '-'
+      }
     })
 
-  console.log(results)
-
-  // Add the header row
-  rows.unshift(['Tests', 'Samples', 'Result', 'Tolerance', 'Difference with slowest'])
-
-  return table(rows, {
-    columns: {
-      0: {
-        alignment: 'left'
-      },
-      1: {
-        alignment: 'right'
-      },
-      2: {
-        alignment: 'right'
-      },
-      3: {
-        alignment: 'right'
-      },
-      4: {
-        alignment: 'right'
-      }
-    },
-    drawHorizontalLine: (index, size) => index > 0 && index < size,
-    border: {
-      bodyLeft: '│',
-      bodyRight: '│',
-      bodyJoin: '│',
-      joinLeft: '|',
-      joinRight: '|',
-      joinJoin: '|'
-    }
-  })
+  return console.table(rows)
 }
 
 const experiments = {
@@ -269,10 +270,62 @@ if (process.env.PORT) {
       }).catch(console.log)
     })
   }
+
+  experiments['node-fetch'] = () => {
+    return makeParallelRequests(resolve => {
+      nodeFetch(dest.url, { agent: fetchAgent }).then(res => {
+        res.body.pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
+      }).catch(console.log)
+    })
+  }
+
+  experiments.axios = () => {
+    return makeParallelRequests(resolve => {
+      axios.get(dest.url, { responseType: 'stream', httpAgent: axiosAgent }).then(res => {
+        res.data.pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
+      }).catch(console.log)
+    })
+  }
+
+  experiments.got = () => {
+    return makeParallelRequests(resolve => {
+      got.get(dest.url, null, { http: gotAgent }).then(res => {
+        res.pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
+      }).catch(console.log)
+    })
+  }
+
+  experiments.request = () => {
+    return makeParallelRequests(resolve => {
+      request(dest.url, { agent: requestAgent }).then(res => {
+        res.pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
+      }).catch(console.log)
+    })
+  }
 }
 
 async function main () {
   const { cronometro } = await import('cronometro')
+  const _nodeFetch = await import('node-fetch')
+  nodeFetch = _nodeFetch.default
+  const _got = await import('got')
+  got = _got.default
 
   cronometro(
     experiments,
@@ -286,7 +339,7 @@ async function main () {
         throw err
       }
 
-      console.log(printResults(results))
+      printResults(results)
       dispatcher.destroy()
     }
   )

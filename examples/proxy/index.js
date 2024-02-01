@@ -1,5 +1,5 @@
 const { Pool, Client } = require('../../')
-const http = require('http')
+const http = require('node:http')
 const proxy = require('./proxy')
 
 const pool = new Pool('http://localhost:4001', {
@@ -45,5 +45,3 @@ async function run () {
 }
 
 run()
-
-// TODO: Add websocket example.

@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 
 test('handle headers as array', (t) => {
   t.plan(1)
