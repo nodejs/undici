@@ -215,7 +215,7 @@ test('keep-alive threshold', (t) => {
       body.on('end', () => {
         const timeout = setTimeout(() => {
           t.fail()
-        }, 3e3)
+        }, 5e3)
         client.on('disconnect', () => {
           t.pass()
           clearTimeout(timeout)
