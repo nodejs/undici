@@ -2,8 +2,8 @@
 
 const { describe, test, after } = require('node:test')
 const assert = require('node:assert/strict')
-const http = require('http')
-const { PassThrough } = require('stream')
+const http = require('node:http')
+const { PassThrough } = require('node:stream')
 const { kRunning } = require('../../lib/core/symbols')
 const {
   Agent,

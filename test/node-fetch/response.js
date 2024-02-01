@@ -1,10 +1,10 @@
 /* eslint no-unused-expressions: "off" */
 
 const chai = require('chai')
-const stream = require('stream')
+const stream = require('node:stream')
 const { Response } = require('../../lib/fetch/response.js')
 const TestServer = require('./utils/server.js')
-const { Blob } = require('buffer')
+const { Blob } = require('node:buffer')
 const { kState } = require('../../lib/fetch/symbols.js')
 
 const { expect } = chai

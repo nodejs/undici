@@ -3,10 +3,10 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { Client, Pool, errors } = require('../..')
-const { createServer } = require('http')
-const https = require('https')
+const { createServer } = require('node:http')
+const https = require('node:https')
 const pem = require('https-pem')
-const { Readable } = require('stream')
+const { Readable } = require('node:stream')
 const { tspl } = require('@matteo.collina/tspl')
 
 const { kSocket } = require('../../lib/core/symbols')

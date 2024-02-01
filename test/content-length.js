@@ -2,8 +2,8 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const { createServer } = require('http')
-const { Readable } = require('stream')
+const { createServer } = require('node:http')
+const { Readable } = require('node:stream')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
 
 test('request invalid content-length', (t) => {

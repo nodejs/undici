@@ -1,17 +1,17 @@
 'use strict'
 
-const { readFileSync, createReadStream } = require('fs')
-const { createServer } = require('http')
-const { Readable } = require('stream')
+const { readFileSync, createReadStream } = require('node:fs')
+const { createServer } = require('node:http')
+const { Readable } = require('node:stream')
 const { test } = require('tap')
 const { Client, errors } = require('..')
 const { kSocket } = require('../lib/core/symbols')
 const { wrapWithAsyncIterable } = require('./utils/async-iterators')
-const EE = require('events')
+const EE = require('node:events')
 const { kUrl, kSize, kConnect, kBusy, kConnected, kRunning } = require('../lib/core/symbols')
 
 const hasIPv6 = (() => {
-  const iFaces = require('os').networkInterfaces()
+  const iFaces = require('node:os').networkInterfaces()
   const re = process.platform === 'win32' ? /Loopback Pseudo-Interface/ : /lo/
   return Object.keys(iFaces).some(
     (name) => re.test(name) && iFaces[name].some(({ family }) => family === 6)

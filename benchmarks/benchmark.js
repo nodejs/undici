@@ -1,10 +1,10 @@
 'use strict'
 
-const http = require('http')
-const os = require('os')
-const path = require('path')
-const { Writable } = require('stream')
-const { isMainThread } = require('worker_threads')
+const http = require('node:http')
+const os = require('node:os')
+const path = require('node:path')
+const { Writable } = require('node:stream')
+const { isMainThread } = require('node:worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
@@ -12,7 +12,7 @@ let nodeFetch
 const axios = require('axios')
 let got
 
-const util = require('util')
+const util = require('node:util')
 const _request = require('request')
 const request = util.promisify(_request)
 

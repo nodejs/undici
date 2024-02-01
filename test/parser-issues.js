@@ -1,4 +1,4 @@
-const net = require('net')
+const net = require('node:net')
 const { test } = require('tap')
 const { Client, errors } = require('..')
 

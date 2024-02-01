@@ -4,8 +4,8 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
-const { createServer } = require('http')
-const { once } = require('events')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
 
 const { closeServerAsPromise } = require('../utils/node-http')
 

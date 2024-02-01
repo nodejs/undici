@@ -5,9 +5,9 @@ const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { Headers, fill } = require('../../lib/fetch/headers')
 const { kGuard } = require('../../lib/fetch/symbols')
-const { once } = require('events')
+const { once } = require('node:events')
 const { fetch } = require('../..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 test('Headers initialization', async (t) => {

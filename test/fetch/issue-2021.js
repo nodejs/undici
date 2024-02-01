@@ -2,8 +2,8 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { once } = require('events')
-const { createServer } = require('http')
+const { once } = require('node:events')
+const { createServer } = require('node:http')
 const { fetch } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
 

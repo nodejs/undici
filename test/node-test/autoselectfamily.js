@@ -1,10 +1,10 @@
 'use strict'
 
 const { test, skip } = require('node:test')
-const dgram = require('dgram')
-const { Resolver } = require('dns')
+const dgram = require('node:dgram')
+const { Resolver } = require('node:dns')
 const dnsPacket = require('dns-packet')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { Client, Agent, request } = require('../..')
 const { nodeHasAutoSelectFamily } = require('../../lib/core/util')
 const { tspl } = require('@matteo.collina/tspl')

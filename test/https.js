@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { createServer } = require('https')
+const { createServer } = require('node:https')
 const pem = require('https-pem')
 
 test('https get with tls opts', (t) => {

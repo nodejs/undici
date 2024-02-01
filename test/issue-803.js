@@ -2,8 +2,8 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { createServer } = require('http')
-const EE = require('events')
+const { createServer } = require('node:http')
+const EE = require('node:events')
 
 test('https://github.com/nodejs/undici/issues/803', (t) => {
   t.plan(2)

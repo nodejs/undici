@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 const timers = require('../lib/timers')
 
