@@ -644,3 +644,14 @@ test('Cookie setCookie does not throw if headers is an instance of undici owns H
     maxAge: 3
   })
 })
+
+test('Cookie setCookie does not throw if headers is an instance of the global Headers class', () => {
+  const headers = new globalThis.Headers()
+  setCookie(headers, {
+    name: 'key',
+    value: 'Cat',
+    httpOnly: true,
+    secure: true,
+    maxAge: 3
+  })
+})
