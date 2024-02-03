@@ -640,3 +640,72 @@ test('Cookie setCookie does not throw if headers is an instance of the global He
     maxAge: 3
   })
 })
+
+test('Cookie getCookies throws if headers is not of type Headers', () => {
+  class Headers {
+    [Symbol.toStringTag] = 'CustomHeaders'
+  }
+  const headers = new Headers()
+  assert.throws(
+    () => {
+      getCookies(headers)
+    },
+    new TypeError('Illegal invocation')
+  )
+})
+
+test('Cookie getCookies does not throw if headers is an instance of undici owns Headers class', () => {
+  const headers = new Headers()
+  getCookies(headers)
+})
+
+test('Cookie getCookie does not throw if headers is an instance of the global Headers class', () => {
+  const headers = new globalThis.Headers()
+  getCookies(headers)
+})
+
+test('Cookie getSetCookies throws if headers is not of type Headers', () => {
+  class Headers {
+    [Symbol.toStringTag] = 'CustomHeaders'
+  }
+  const headers = new Headers({ 'set-cookie': 'Space=Cat' })
+  assert.throws(
+    () => {
+      getSetCookies(headers)
+    },
+    new TypeError('Illegal invocation')
+  )
+})
+
+test('Cookie getSetCookies does not throw if headers is an instance of undici owns Headers class', () => {
+  const headers = new Headers({ 'set-cookie': 'Space=Cat' })
+  getSetCookies(headers)
+})
+
+test('Cookie setCookie does not throw if headers is an instance of the global Headers class', () => {
+  const headers = new globalThis.Headers({ 'set-cookie': 'Space=Cat' })
+  getSetCookies(headers)
+})
+
+test('Cookie deleteCookie throws if headers is not of type Headers', () => {
+  class Headers {
+    [Symbol.toStringTag] = 'CustomHeaders'
+  }
+  const headers = new Headers()
+  assert.throws(
+    () => {
+      deleteCookie(headers, 'deno')
+    },
+    new TypeError('Illegal invocation')
+  )
+})
+
+test('Cookie deleteCookie does not throw if headers is an instance of undici owns Headers class', () => {
+  const headers = new Headers()
+  deleteCookie(headers, 'deno')
+})
+
+test('Cookie getCookie does not throw if headers is an instance of the global Headers class', () => {
+  const headers = new globalThis.Headers()
+  deleteCookie(headers, 'deno')
+})
