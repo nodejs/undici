@@ -82,7 +82,7 @@ test('Cookie Name Validation', () => {
           maxAge: 3
         })
       },
-      Error
+      new Error('Invalid cookie name')
     )
   })
 })
@@ -116,7 +116,7 @@ test('Cookie Value Validation', () => {
           }
         )
       },
-      Error,
+      new Error('Invalid header value'),
       "RFC2616 cookie 'Space'"
     )
   })
@@ -128,7 +128,7 @@ test('Cookie Value Validation', () => {
         value: 'United Kingdom'
       })
     },
-    Error,
+    new Error('Invalid header value'),
     "RFC2616 cookie 'location' cannot contain character ' '"
   )
 })
@@ -147,7 +147,7 @@ test('Cookie Path Validation', () => {
         maxAge: 3
       })
     },
-    Error,
+    new Error('Invalid cookie path'),
     path + ": Invalid cookie path char ';'"
   )
 })
@@ -167,7 +167,7 @@ test('Cookie Domain Validation', () => {
           maxAge: 3
         })
       },
-      Error,
+      new Error('Invalid cookie domain'),
       'Invalid first/last char in cookie domain: ' + domain
     )
   })
