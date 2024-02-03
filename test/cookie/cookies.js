@@ -599,3 +599,37 @@ test('Set-Cookie parser', () => {
   headers = new Headers()
   assert.deepEqual(getSetCookies(headers), [])
 })
+
+test('Cookie setCookie throws if headers is not of type Headers', () => {
+  class Headers {
+    [Symbol.toStringTag] = 'CustomHeaders'
+  }
+  const headers = new Headers()
+  assert.throws(
+    () => {
+      setCookie(headers, {
+        name: 'key',
+        value: 'Cat',
+        httpOnly: true,
+        secure: true,
+        maxAge: 3
+      })
+    },
+    new TypeError('Illegal invocation')
+  )
+})
+
+test('Cookie setCookie does not throw if headers is an instance of a custom Headers class', () => {
+  class Headers {
+    [Symbol.toStringTag] = 'Headers'
+    append () { }
+  }
+  const headers = new Headers()
+  setCookie(headers, {
+    name: 'key',
+    value: 'Cat',
+    httpOnly: true,
+    secure: true,
+    maxAge: 3
+  })
+})
