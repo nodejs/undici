@@ -78,7 +78,7 @@
     "lint:fix": "standard --fix | snazzy",
     "test": "node scripts/generate-pem && npm run test:tap && npm run test:node-fetch && npm run test:fetch && npm run test:cookies && npm run test:eventsource && npm run test:wpt && npm run test:websocket && npm run test:jest && npm run test:typescript && npm run test:node-test",
     "test:cookies": "borp --coverage -p \"test/cookie/*.js\"",
-    "test:node-fetch": "mocha --exit test/node-fetch",
+    "test:node-fetch": "borp --coverage -p \"test/node-fetch/**/*.js\"",
     "test:eventsource": "npm run build:node && borp --expose-gc --coverage -p \"test/eventsource/*.js\"",
     "test:fetch": "npm run build:node && borp --expose-gc --coverage -p \"test/fetch/*.js\" && borp --coverage -p \"test/webidl/*.js\"",
     "test:jest": "jest",
@@ -105,10 +105,6 @@
     "@types/node": "^18.0.3",
     "abort-controller": "^3.0.0",
     "borp": "^0.5.0",
-    "chai": "^4.3.4",
-    "chai-as-promised": "^7.1.1",
-    "chai-iterator": "^3.0.2",
-    "chai-string": "^1.5.0",
     "concurrently": "^8.0.1",
     "cronometro": "^2.0.2",
     "dns-packet": "^5.4.0",
@@ -122,7 +118,6 @@
     "jsdom": "^24.0.0",
     "jsfuzz": "^1.0.15",
     "mitata": "^0.1.8",
-    "mocha": "^10.0.0",
     "p-timeout": "^3.2.0",
     "pre-commit": "^1.2.2",
     "proxy": "^1.0.2",
@@ -145,7 +140,7 @@
   },
   "standard": {
     "env": [
-      "mocha"
+      "jest"
     ],
     "ignore": [
       "lib/llhttp/constants.js",
