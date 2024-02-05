@@ -6,11 +6,12 @@ const { once } = require('events')
 const { fetch } = require('../..')
 
 test('Cross-origin redirects clear forbidden headers', async (t) => {
-  t.plan(5)
+  t.plan(6)
 
   const server1 = createServer((req, res) => {
     t.equal(req.headers.cookie, undefined)
     t.equal(req.headers.authorization, undefined)
+    t.equal(req.headers['proxy-authorization'], undefined)
 
     res.end('redirected')
   }).listen(0)
@@ -39,7 +40,8 @@ test('Cross-origin redirects clear forbidden headers', async (t) => {
   const res = await fetch(`http://localhost:${server2.address().port}`, {
     headers: {
       Authorization: 'test',
-      Cookie: 'ddd=dddd'
+      Cookie: 'ddd=dddd',
+      'Proxy-Authorization': 'test'
     }
   })
 
