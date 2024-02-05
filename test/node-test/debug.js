@@ -5,6 +5,9 @@ const { spawn } = require('node:child_process')
 const { join } = require('node:path')
 const { tspl } = require('@matteo.collina/tspl')
 
+// eslint-disable-next-line no-control-regex
+const removeEscapeColorsRE = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g
+
 test('debug#websocket', async t => {
   const assert = tspl(t, { plan: 6 })
   const child = spawn(
@@ -32,9 +35,9 @@ test('debug#websocket', async t => {
     chunks.push(chunk)
   })
   child.stderr.on('end', () => {
-    assert.strictEqual(chunks.length, assertions.length)
+    assert.strictEqual(chunks.length, assertions.length, JSON.stringify(chunks))
     for (let i = 1; i < chunks.length; i++) {
-      assert.match(chunks[i], assertions[i])
+      assert.match(chunks[i].replace(removeEscapeColorsRE, ''), assertions[i])
     }
   })
 
@@ -65,9 +68,9 @@ test('debug#fetch', async t => {
     chunks.push(chunk)
   })
   child.stderr.on('end', () => {
-    assert.strictEqual(chunks.length, assertions.length)
+    assert.strictEqual(chunks.length, assertions.length, JSON.stringify(chunks))
     for (let i = 0; i < chunks.length; i++) {
-      assert.match(chunks[i], assertions[i])
+      assert.match(chunks[i].replace(removeEscapeColorsRE, ''), assertions[i])
     }
   })
 
@@ -101,9 +104,9 @@ test('debug#undici', async t => {
     chunks.push(chunk)
   })
   child.stderr.on('end', () => {
-    assert.strictEqual(chunks.length, assertions.length)
+    assert.strictEqual(chunks.length, assertions.length, JSON.stringify(chunks))
     for (let i = 0; i < chunks.length; i++) {
-      assert.match(chunks[i], assertions[i])
+      assert.match(chunks[i].replace(removeEscapeColorsRE, ''), assertions[i])
     }
   })
 
