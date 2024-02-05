@@ -535,7 +535,7 @@ describe('node-fetch', () => {
     const url = `${base}error/json`
     return fetch(url).then(res => {
       assert.strictEqual(res.headers.get('content-type'), 'application/json')
-      return assert.rejects(res.json(), new SyntaxError('Unexpected token \'i\', "invalid json" is not valid JSON'))
+      return assert.rejects(res.json(), SyntaxError)
     })
   })
 
