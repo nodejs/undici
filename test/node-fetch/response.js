@@ -47,22 +47,21 @@ describe('Response', () => {
       assert.ok(enumerableProperties.includes(toCheck))
     }
 
-    // TODO
-    // for (const toCheck of [
-    //   'body',
-    //   'bodyUsed',
-    //   'type',
-    //   'url',
-    //   'status',
-    //   'ok',
-    //   'redirected',
-    //   'statusText',
-    //   'headers'
-    // ]) {
-    //   assert.throws(() => {
-    //     res[toCheck] = 'abc'
-    //   }, Error)
-    // }
+    for (const toCheck of [
+      'body',
+      'bodyUsed',
+      'type',
+      'url',
+      'status',
+      'ok',
+      'redirected',
+      'statusText',
+      'headers'
+    ]) {
+      assert.throws(() => {
+        res[toCheck] = 'abc'
+      }, new TypeError(`Cannot set property ${toCheck} of #<Response> which has only a getter`))
+    }
   })
 
   it('should support empty options', async () => {
