@@ -58,11 +58,17 @@ test('debug#fetch', async t => {
   )
   const chunks = []
   const assertions = [
+    /(FETCH [0-9]+:) (fetch has started)/,
     /(FETCH [0-9]+:) (connecting to)/,
+    /(FETCH [0-9]+:) (fetch has received)/,
     /(FETCH [0-9]+:) (connected to)/,
     /(FETCH [0-9]+:) (sending request)/,
     /(FETCH [0-9]+:) (received response)/,
     /(FETCH [0-9]+:) (trailers received)/,
+    /(FETCH [0-9]+:) (fetch has received)/,
+    /(FETCH [0-9]+:) (fetch has received)/,
+    /(FETCH [0-9]+:) (fetch has received)/,
+    /(FETCH [0-9]+:) (fetch has received)/,
     /^$/
   ]
 

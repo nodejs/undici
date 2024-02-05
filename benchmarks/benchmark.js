@@ -25,6 +25,7 @@ const pipelining = parseInt(process.env.PIPELINING, 10) || 10
 const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
 const bodyTimeout = parseInt(process.env.BODY_TIMEOUT, 10) || 0
 const dest = {}
+const diagnosticsChannel = require('node:diagnostics_channel')
 
 if (process.env.PORT) {
   dest.port = process.env.PORT
