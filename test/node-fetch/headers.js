@@ -3,7 +3,7 @@
 const assert = require('node:assert')
 const { describe, it } = require('node:test')
 const { format } = require('node:util')
-const { Headers } = require('../../lib/fetch/headers.js')
+const { Headers } = require('../../index.js')
 
 describe('Headers', () => {
   it('should have attributes conforming to Web IDL', () => {

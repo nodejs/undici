@@ -20,8 +20,8 @@ const {
   Agent
 } = require('../../index.js')
 const HeadersOrig = require('../../lib/fetch/headers.js').Headers
-const RequestOrig = require('../../lib/fetch/request.js').Request
 const ResponseOrig = require('../../lib/fetch/response.js').Response
+const RequestOrig = require('../../lib/fetch/request.js').Request
 const TestServer = require('./utils/server.js')
 
 const {

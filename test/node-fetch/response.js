@@ -3,7 +3,7 @@
 const assert = require('node:assert')
 const { describe, it, before, after } = require('node:test')
 const stream = require('node:stream')
-const { Response } = require('../../lib/fetch/response.js')
+const { Response } = require('../../index.js')
 const TestServer = require('./utils/server.js')
 const { Blob } = require('node:buffer')
 const { kState } = require('../../lib/fetch/symbols.js')
