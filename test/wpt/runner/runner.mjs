@@ -254,6 +254,7 @@ export class WPTRunner extends EventEmitter {
       this.#stats.completed += 1
 
       if (message.result.status === 1) {
+        let expectedFailure = false
         this.#stats.failed += 1
 
         wptResult?.subtests.push({
@@ -265,6 +266,7 @@ export class WPTRunner extends EventEmitter {
         const name = normalizeName(message.result.name)
 
         if (file.flaky?.includes(name)) {
+          expectedFailure = true
           this.#stats.expectedFailures += 1
         } else if (file.allowUnexpectedFailures || topLevel.allowUnexpectedFailures || file.fail?.includes(name)) {
           if (!file.allowUnexpectedFailures && !topLevel.allowUnexpectedFailures) {
@@ -274,10 +276,14 @@ export class WPTRunner extends EventEmitter {
             }
           }
 
+          expectedFailure = true
           this.#stats.expectedFailures += 1
         } else {
           process.exitCode = 1
           console.error(message.result)
+        }
+        if (!expectedFailure) {
+          process._rawDebug(`Failed test: ${path}`)
         }
       } else {
         wptResult?.subtests.push({
