@@ -10,9 +10,10 @@ const { setTimeout: sleep } = require('timers/promises')
 
 const { closeServerAsPromise } = require('../utils/node-http')
 
-test('Allow the usage of custom implementation of AbortController', async (t) => {
+test('pull dont\'t push', async (t) => {
   let count = 0
   let socket
+  const max = 1_000_000
   const server = createServer((req, res) => {
     res.statusCode = 200
     socket = res.socket
@@ -21,7 +22,7 @@ test('Allow the usage of custom implementation of AbortController', async (t) =>
     const stream = new Readable({
       read () {
         this.push('a')
-        if (count++ > 1000000) {
+        if (count++ > max) {
           this.push(null)
         }
       }
@@ -42,12 +43,14 @@ test('Allow the usage of custom implementation of AbortController', async (t) =>
   // Some time is needed to fill the buffer
   await sleep(1000)
 
-  assert.strictEqual(socket.bytesWritten < 1024 * 1024, true) // 1 MB
   socket.destroy()
+  assert.strictEqual(count < max, true) // the stream should be closed before the max
 
   // consume the  stream
   try {
     /* eslint-disable-next-line no-empty, no-unused-vars */
-    for await (const chunk of res.body) {}
+    for await (const chunk of res.body) {
+      // process._rawDebug('chunk', chunk)
+    }
   } catch {}
 })
