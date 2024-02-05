@@ -10,7 +10,7 @@ const { setTimeout: sleep } = require('timers/promises')
 
 const { closeServerAsPromise } = require('../utils/node-http')
 
-test('Allow the usage of custom implementation of AbortController', async (t) => {
+test('pull dont\'t push', async (t) => {
   let count = 0
   let socket
   const max = 1_000_000
