@@ -274,14 +274,16 @@ export class WPTRunner extends EventEmitter {
     }
 
     if (isFailure) {
+      let isExpectedFailure = false
       this.#stats.failedTests += 1
 
       const name = normalizeName(message.result.name)
       const sanitizedMessage = sanitizeUnpairedSurrogates(message.result.message)
 
       if (file.flaky?.includes(name)) {
+        isExpectedFailure = true
         this.#stats.expectedFailures += 1
-        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure: true })
+        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure })
       } else if (file.allowUnexpectedFailures || topLevel.allowUnexpectedFailures || file.fail?.includes(name)) {
         if (!file.allowUnexpectedFailures && !topLevel.allowUnexpectedFailures) {
           if (Array.isArray(file.fail)) {
@@ -289,12 +291,17 @@ export class WPTRunner extends EventEmitter {
             this.#statusOutput[path].push(name)
           }
         }
+
+        isExpectedFailure = true
         this.#stats.expectedFailures += 1
-        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure: true })
+        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure })
       } else {
-        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure: false })
+        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure })
         process.exitCode = 1
         console.error(message.result)
+      }
+      if (!isExpectedFailure) {
+        process._rawDebug(`Failed test: ${path}`)
       }
     } else {
       this.#stats.passedTests += 1

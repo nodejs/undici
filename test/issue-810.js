@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const net = require('net')
+const net = require('node:net')
 
 test('https://github.com/mcollina/undici/issues/810', (t) => {
   t.plan(3)

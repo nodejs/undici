@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { fetch } = require('../..')
-const { Blob } = require('buffer')
+const { Blob } = require('node:buffer')
 
 test('fetching blob: uris', async (t) => {
   const blobContents = 'hello world'

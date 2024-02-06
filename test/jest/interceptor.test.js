@@ -1,6 +1,6 @@
 'use strict'
 
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { Agent, request } = require('../../index')
 const DecoratorHandler = require('../../lib/handler/DecoratorHandler')
 /* global expect */

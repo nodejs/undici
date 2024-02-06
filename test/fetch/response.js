@@ -1,16 +1,19 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('assert')
+const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const {
   Response,
   FormData
 } = require('../../')
+const { fromInnerResponse, makeResponse } = require('../../lib/fetch/response')
 const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
+const { kState, kGuard, kRealm, kHeaders } = require('../../lib/fetch/symbols')
+const { kHeadersList } = require('../../lib/core/symbols')
 
 test('arg validation', async () => {
   // constructor
@@ -268,4 +271,20 @@ test('Check the Content-Type of invalid formData', async (t) => {
     const response = new Response(formData, { headers: { 'content-type': 'multipart/form-data_' } })
     await rejects(response.formData(), TypeError)
   })
+})
+
+test('fromInnerResponse', () => {
+  const realm = { settingsObject: {} }
+  const innerResponse = makeResponse({
+    urlList: [new URL('http://asd')]
+  })
+
+  const response = fromInnerResponse(innerResponse, 'immutable', realm)
+
+  // check property
+  assert.strictEqual(response[kState], innerResponse)
+  assert.strictEqual(response[kRealm], realm)
+  assert.strictEqual(response[kHeaders][kHeadersList], innerResponse.headersList)
+  assert.strictEqual(response[kHeaders][kGuard], 'immutable')
+  assert.strictEqual(response[kHeaders][kRealm], realm)
 })

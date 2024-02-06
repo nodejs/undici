@@ -1,14 +1,14 @@
 'use strict'
 
-const { EventEmitter } = require('events')
-const { createServer } = require('http')
-const net = require('net')
+const { EventEmitter } = require('node:events')
+const { createServer } = require('node:http')
+const net = require('node:net')
 const {
   finished,
   PassThrough,
   Readable
-} = require('stream')
-const { promisify } = require('util')
+} = require('node:stream')
+const { promisify } = require('node:util')
 const proxyquire = require('proxyquire')
 const { test } = require('tap')
 const {

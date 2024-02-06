@@ -2,10 +2,10 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { createServer } = require('http')
-const { once } = require('events')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
 const { fetch } = require('../..')
-const { createBrotliCompress, createGzip, createDeflate } = require('zlib')
+const { createBrotliCompress, createGzip, createDeflate } = require('node:zlib')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 test('content-encoding header is case-iNsENsITIve', async (t) => {

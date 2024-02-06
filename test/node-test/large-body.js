@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('node:test')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { request } = require('../../')
 const { strictEqual } = require('node:assert')
 

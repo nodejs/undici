@@ -5,8 +5,11 @@ const { spawn } = require('node:child_process')
 const { join } = require('node:path')
 const { tspl } = require('@matteo.collina/tspl')
 
+// eslint-disable-next-line no-control-regex
+const removeEscapeColorsRE = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g
+
 test('debug#websocket', async t => {
-  const assert = tspl(t, { plan: 5 })
+  const assert = tspl(t, { plan: 6 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/websocket.js')],
@@ -27,25 +30,23 @@ test('debug#websocket', async t => {
     /(WEBSOCKET [0-9]+:) (closed connection to)/
   ]
 
-  t.after(() => {
-    child.kill()
-  })
-
   child.stderr.setEncoding('utf8')
   child.stderr.on('data', chunk => {
     chunks.push(chunk)
   })
   child.stderr.on('end', () => {
+    assert.strictEqual(chunks.length, assertions.length, JSON.stringify(chunks))
     for (let i = 1; i < chunks.length; i++) {
-      assert.match(chunks[i], assertions[i])
+      assert.match(chunks[i].replace(removeEscapeColorsRE, ''), assertions[i])
     }
   })
 
   await assert.completed
+  child.kill()
 })
 
 test('debug#fetch', async t => {
-  const assert = tspl(t, { plan: 5 })
+  const assert = tspl(t, { plan: 6 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/fetch.js')],
@@ -62,26 +63,24 @@ test('debug#fetch', async t => {
     /(FETCH [0-9]+:) (trailers received)/
   ]
 
-  t.after(() => {
-    child.kill()
-  })
-
   child.stderr.setEncoding('utf8')
   child.stderr.on('data', chunk => {
     chunks.push(chunk)
   })
   child.stderr.on('end', () => {
+    assert.strictEqual(chunks.length, assertions.length, JSON.stringify(chunks))
     for (let i = 0; i < chunks.length; i++) {
-      assert.match(chunks[i], assertions[i])
+      assert.match(chunks[i].replace(removeEscapeColorsRE, ''), assertions[i])
     }
   })
 
   await assert.completed
+  child.kill()
 })
 
 test('debug#undici', async t => {
   // Due to Node.js webpage redirect
-  const assert = tspl(t, { plan: 5 })
+  const assert = tspl(t, { plan: 6 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/undici.js')],
@@ -100,19 +99,17 @@ test('debug#undici', async t => {
     /(UNDICI [0-9]+:) (trailers received)/
   ]
 
-  t.after(() => {
-    child.kill()
-  })
-
   child.stderr.setEncoding('utf8')
   child.stderr.on('data', chunk => {
     chunks.push(chunk)
   })
   child.stderr.on('end', () => {
+    assert.strictEqual(chunks.length, assertions.length, JSON.stringify(chunks))
     for (let i = 0; i < chunks.length; i++) {
-      assert.match(chunks[i], assertions[i])
+      assert.match(chunks[i].replace(removeEscapeColorsRE, ''), assertions[i])
     }
   })
 
   await assert.completed
+  child.kill()
 })

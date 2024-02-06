@@ -2,9 +2,9 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { createServer } = require('http')
-const { once } = require('events')
-const { Blob } = require('buffer')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
+const { Blob } = require('node:buffer')
 const { fetch, FormData } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
 

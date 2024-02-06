@@ -2,7 +2,7 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 
@@ -155,7 +155,7 @@ test('Server sends invalid Sec-WebSocket-Accept header', () => {
 test('Server sends invalid Sec-WebSocket-Extensions header', () => {
   return new Promise((resolve, reject) => {
     const uid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-    const { createHash } = require('crypto')
+    const { createHash } = require('node:crypto')
 
     const server = createServer((req, res) => {
       const key = req.headers['sec-websocket-key']
@@ -186,7 +186,7 @@ test('Server sends invalid Sec-WebSocket-Extensions header', () => {
 
 test('Server sends invalid Sec-WebSocket-Extensions header', () => {
   const uid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-  const { createHash } = require('crypto')
+  const { createHash } = require('node:crypto')
 
   return new Promise((resolve, reject) => {
     const server = createServer((req, res) => {

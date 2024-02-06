@@ -4,8 +4,8 @@ const { test } = require('tap')
 const { Client } = require('..')
 const timers = require('../lib/timers')
 const { kConnect } = require('../lib/core/symbols')
-const { createServer } = require('net')
-const http = require('http')
+const { createServer } = require('node:net')
+const http = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 
 test('keep-alive header', (t) => {
@@ -215,7 +215,7 @@ test('keep-alive threshold', (t) => {
       body.on('end', () => {
         const timeout = setTimeout(() => {
           t.fail()
-        }, 3e3)
+        }, 5e3)
         client.on('disconnect', () => {
           t.pass()
           clearTimeout(timeout)

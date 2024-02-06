@@ -2,9 +2,9 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const net = require('net')
-const http = require('http')
-const EE = require('events')
+const net = require('node:net')
+const http = require('node:http')
+const EE = require('node:events')
 const { kBusy } = require('../lib/core/symbols')
 
 test('basic upgrade', (t) => {

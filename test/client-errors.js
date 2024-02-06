@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client } = require('..')
-const net = require('net')
+const net = require('node:net')
 
 // TODO: move to test/node-test/client-connect.js
 test('parser error', (t) => {

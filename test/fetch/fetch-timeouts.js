@@ -5,7 +5,7 @@ const { tspl } = require('@matteo.collina/tspl')
 
 const { fetch, Agent } = require('../..')
 const timers = require('../../lib/timers')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { closeServerAsPromise } = require('../utils/node-http')
 

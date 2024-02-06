@@ -1,7 +1,7 @@
 'use strict'
 
-const { createServer } = require('http')
-const { once } = require('events')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
 
 /* global expect, it, jest, AbortController */
 

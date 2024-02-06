@@ -2,8 +2,8 @@
 
 const { test } = require('tap')
 const { Client, errors } = require('..')
-const http = require('http')
-const EE = require('events')
+const http = require('node:http')
+const EE = require('node:events')
 const { kBusy } = require('../lib/core/symbols')
 
 // TODO: move to test/node-test/client-connect.js

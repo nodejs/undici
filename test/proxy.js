@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { Client, Pool } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const proxy = require('proxy')
 
 test('connect through proxy', async (t) => {

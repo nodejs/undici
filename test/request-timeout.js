@@ -1,12 +1,12 @@
 'use strict'
 
 const { test } = require('tap')
-const { createReadStream, writeFileSync, unlinkSync } = require('fs')
+const { createReadStream, writeFileSync, unlinkSync } = require('node:fs')
 const { Client, errors } = require('..')
 const { kConnect } = require('../lib/core/symbols')
 const timers = require('../lib/timers')
-const { createServer } = require('http')
-const EventEmitter = require('events')
+const { createServer } = require('node:http')
+const EventEmitter = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { AbortController } = require('abort-controller')
 const {
@@ -14,7 +14,7 @@ const {
   Readable,
   Writable,
   PassThrough
-} = require('stream')
+} = require('node:stream')
 
 test('request timeout', (t) => {
   t.plan(1)
@@ -433,7 +433,7 @@ test('client.destroy should cancel the timeout', (t) => {
 test('client.close should wait for the timeout', (t) => {
   t.plan(2)
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
   t.teardown(clock.uninstall.bind(clock))
 
   const orgTimers = { ...timers }

@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const { test, after } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
-const diagnosticsChannel = require('diagnostics_channel')
+const diagnosticsChannel = require('node:diagnostics_channel')
 
 test('Fragmented frame with a ping frame in the middle of it', () => {
   const server = new WebSocketServer({ port: 0 })
