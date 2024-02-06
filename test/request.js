@@ -2,7 +2,7 @@
 
 const { createServer } = require('node:http')
 const { test } = require('tap')
-const { request } = require('..')
+const { request, errors } = require('..')
 
 test('no-slash/one-slash pathname should be included in req.path', async (t) => {
   const pathServer = createServer((req, res) => {
@@ -248,7 +248,7 @@ test('DispatchOptions#reset', scope => {
 })
 
 test('Should include headers from iterable objects', scope => {
-  scope.plan(3)
+  scope.plan(4)
 
   scope.test('Should include headers built with Headers global object', async t => {
     const server = createServer((req, res) => {
@@ -343,6 +343,39 @@ test('Should include headers from iterable objects', scope => {
       origin: `http://localhost:${server.address().port}`,
       reset: true,
       headers
+    })
+  })
+
+  scope.test('Should throw error if headers iterable object does not yield key-value pairs', async t => {
+    const server = createServer((req, res) => {
+      res.end('hello')
+    })
+
+    const headers = {
+      * [Symbol.iterator] () {
+        yield 'Bad formatted header'
+      }
+    }
+
+    t.plan(2)
+
+    t.teardown(server.close.bind(server))
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true,
+      headers
+    }).catch((err) => {
+      t.type(err, errors.InvalidArgumentError)
+      t.equal(err.message, 'headers must be in key-value pair format')
     })
   })
 })
