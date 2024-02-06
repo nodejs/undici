@@ -104,7 +104,7 @@
     "@sinonjs/fake-timers": "^11.1.0",
     "@types/node": "^18.0.3",
     "abort-controller": "^3.0.0",
-    "borp": "^0.5.0",
+    "borp": "^0.9.1",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "chai-iterator": "^3.0.2",
