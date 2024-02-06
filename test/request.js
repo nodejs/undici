@@ -246,3 +246,103 @@ test('DispatchOptions#reset', scope => {
     })
   })
 })
+
+test('Should include headers from iterable objects', scope => {
+  scope.plan(3)
+
+  scope.test('Should include headers built with Headers global object', async t => {
+    const server = createServer((req, res) => {
+      t.equal('GET', req.method)
+      t.equal(`localhost:${server.address().port}`, req.headers.host)
+      t.equal(req.headers.hello, 'world')
+      res.statusCode = 200
+      res.end('hello')
+    })
+
+    const headers = new Headers()
+    headers.set('hello', 'world')
+
+    t.plan(3)
+
+    t.teardown(server.close.bind(server))
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true,
+      headers
+    })
+  })
+
+  scope.test('Should include headers built with Map', async t => {
+    const server = createServer((req, res) => {
+      t.equal('GET', req.method)
+      t.equal(`localhost:${server.address().port}`, req.headers.host)
+      t.equal(req.headers.hello, 'world')
+      res.statusCode = 200
+      res.end('hello')
+    })
+
+    const headers = new Map()
+    headers.set('hello', 'world')
+
+    t.plan(3)
+
+    t.teardown(server.close.bind(server))
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true,
+      headers
+    })
+  })
+
+  scope.test('Should include headers built with custom iterable object', async t => {
+    const server = createServer((req, res) => {
+      t.equal('GET', req.method)
+      t.equal(`localhost:${server.address().port}`, req.headers.host)
+      t.equal(req.headers.hello, 'world')
+      res.statusCode = 200
+      res.end('hello')
+    })
+
+    const headers = {
+      * [Symbol.iterator] () {
+        yield ['hello', 'world']
+      }
+    }
+
+    t.plan(3)
+
+    t.teardown(server.close.bind(server))
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true,
+      headers
+    })
+  })
+})
