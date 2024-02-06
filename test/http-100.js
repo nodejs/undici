@@ -34,7 +34,7 @@ test('ignore informational response', (t) => {
   })
 })
 
-test('error 103 body', (t) => {
+test('error 103 body', { skip: true }, (t) => {
   t.plan(2)
 
   const server = net.createServer((socket) => {

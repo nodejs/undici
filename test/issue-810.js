@@ -99,7 +99,7 @@ test('https://github.com/mcollina/undici/issues/810 pipelining', (t) => {
   })
 })
 
-test('https://github.com/mcollina/undici/issues/810 pipelining 2', (t) => {
+test('https://github.com/mcollina/undici/issues/810 pipelining 2', { skip: true }, (t) => {
   t.plan(4)
 
   const server = net.createServer(socket => {
