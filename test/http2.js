@@ -13,7 +13,7 @@ const { Client, Agent } = require('..')
 
 const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 
-plan(24)
+plan(25)
 
 test('Should support H2 connection', async t => {
   const body = []
@@ -1242,4 +1242,34 @@ test('The h2 pseudo-headers is not included in the headers', async t => {
 
   t.equal(response.statusCode, 200)
   t.equal(response.headers[':status'], undefined)
+})
+
+test('Should throw informational error on half-closed streams (remote)', async t => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    stream.destroy()
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.plan(2)
+  t.teardown(server.close.bind(server))
+  t.teardown(client.close.bind(client))
+
+  await client.request({
+    path: '/',
+    method: 'GET'
+  }).catch(err => {
+    t.equal(err.message, 'HTTP/2: stream half-closed (remote)')
+    t.equal(err.code, 'UND_ERR_INFO')
+  })
 })
