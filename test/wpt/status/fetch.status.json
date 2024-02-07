@@ -385,10 +385,6 @@
           "Check that no-cors request constructor is filtering headers provided as init parameter",
           "Check that no-cors request constructor is filtering headers provided as part of request parameter"
         ]
-      },
-      "request-init-priority.any.js": {
-        "note": "undici doesn't implement priority hints, yet(?)",
-        "skip": true
       }
     },
     "response": {
