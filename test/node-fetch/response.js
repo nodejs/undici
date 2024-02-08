@@ -1,13 +1,12 @@
-/* eslint no-unused-expressions: "off" */
+'use strict'
 
-const chai = require('chai')
+const assert = require('node:assert')
+const { describe, it, before, after } = require('node:test')
 const stream = require('node:stream')
-const { Response } = require('../../lib/fetch/response.js')
+const { Response } = require('../../index.js')
 const TestServer = require('./utils/server.js')
 const { Blob } = require('node:buffer')
 const { kState } = require('../../lib/fetch/symbols.js')
-
-const { expect } = chai
 
 describe('Response', () => {
   const local = new TestServer()
@@ -45,32 +44,30 @@ describe('Response', () => {
       'headers',
       'clone'
     ]) {
-      expect(enumerableProperties).to.contain(toCheck)
+      assert.ok(enumerableProperties.includes(toCheck))
     }
 
-    // TODO
-    // for (const toCheck of [
-    //   'body',
-    //   'bodyUsed',
-    //   'type',
-    //   'url',
-    //   'status',
-    //   'ok',
-    //   'redirected',
-    //   'statusText',
-    //   'headers'
-    // ]) {
-    //   expect(() => {
-    //     res[toCheck] = 'abc'
-    //   }).to.throw()
-    // }
+    for (const toCheck of [
+      'body',
+      'bodyUsed',
+      'type',
+      'url',
+      'status',
+      'ok',
+      'redirected',
+      'statusText',
+      'headers'
+    ]) {
+      assert.throws(() => {
+        res[toCheck] = 'abc'
+      }, new TypeError(`Cannot set property ${toCheck} of #<Response> which has only a getter`))
+    }
   })
 
-  it('should support empty options', () => {
+  it('should support empty options', async () => {
     const res = new Response(stream.Readable.from('a=1'))
-    return res.text().then(result => {
-      expect(result).to.equal('a=1')
-    })
+    const result = await res.text()
+    assert.strictEqual(result, 'a=1')
   })
 
   it('should support parsing headers', () => {
@@ -79,36 +76,33 @@ describe('Response', () => {
         a: '1'
       }
     })
-    expect(res.headers.get('a')).to.equal('1')
+    assert.strictEqual(res.headers.get('a'), '1')
   })
 
-  it('should support text() method', () => {
+  it('should support text() method', async () => {
     const res = new Response('a=1')
-    return res.text().then(result => {
-      expect(result).to.equal('a=1')
-    })
+    const result = await res.text()
+    assert.strictEqual(result, 'a=1')
   })
 
-  it('should support json() method', () => {
+  it('should support json() method', async () => {
     const res = new Response('{"a":1}')
-    return res.json().then(result => {
-      expect(result.a).to.equal(1)
-    })
+    const result = await res.json()
+    assert.deepStrictEqual(result, { a: 1 })
   })
 
   if (Blob) {
-    it('should support blob() method', () => {
+    it('should support blob() method', async () => {
       const res = new Response('a=1', {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain'
         }
       })
-      return res.blob().then(result => {
-        expect(result).to.be.an.instanceOf(Blob)
-        expect(result.size).to.equal(3)
-        expect(result.type).to.equal('text/plain')
-      })
+      const result = await res.blob()
+      assert.ok(result instanceof Blob)
+      assert.strictEqual(result.size, 3)
+      assert.strictEqual(result.type, 'text/plain')
     })
   }
 
@@ -123,129 +117,129 @@ describe('Response', () => {
     })
     res[kState].urlList = [new URL(base)]
     const cl = res.clone()
-    expect(cl.headers.get('a')).to.equal('1')
-    expect(cl.type).to.equal('default')
-    expect(cl.url).to.equal(base)
-    expect(cl.status).to.equal(346)
-    expect(cl.statusText).to.equal('production')
-    expect(cl.ok).to.be.false
+    assert.strictEqual(cl.headers.get('a'), '1')
+    assert.strictEqual(cl.type, 'default')
+    assert.strictEqual(cl.url, base)
+    assert.strictEqual(cl.status, 346)
+    assert.strictEqual(cl.statusText, 'production')
+    assert.strictEqual(cl.ok, false)
     // Clone body shouldn't be the same body
-    expect(cl.body).to.not.equal(body)
+    assert.notStrictEqual(cl.body, body)
     return Promise.all([cl.text(), res.text()]).then(results => {
-      expect(results[0]).to.equal('a=1')
-      expect(results[1]).to.equal('a=1')
+      assert.strictEqual(results[0], 'a=1')
+      assert.strictEqual(results[1], 'a=1')
     })
   })
 
-  it('should support stream as body', () => {
+  it('should support stream as body', async () => {
     const body = stream.Readable.from('a=1')
     const res = new Response(body)
-    return res.text().then(result => {
-      expect(result).to.equal('a=1')
-    })
+    const result = await res.text()
+
+    assert.strictEqual(result, 'a=1')
   })
 
-  it('should support string as body', () => {
+  it('should support string as body', async () => {
     const res = new Response('a=1')
-    return res.text().then(result => {
-      expect(result).to.equal('a=1')
-    })
+    const result = await res.text()
+
+    assert.strictEqual(result, 'a=1')
   })
 
-  it('should support buffer as body', () => {
+  it('should support buffer as body', async () => {
     const res = new Response(Buffer.from('a=1'))
-    return res.text().then(result => {
-      expect(result).to.equal('a=1')
-    })
+    const result = await res.text()
+
+    assert.strictEqual(result, 'a=1')
   })
 
-  it('should support ArrayBuffer as body', () => {
+  it('should support ArrayBuffer as body', async () => {
     const encoder = new TextEncoder()
     const fullbuffer = encoder.encode('a=12345678901234').buffer
     const res = new Response(fullbuffer)
     new Uint8Array(fullbuffer)[0] = 0
-    return res.text().then(result => {
-      expect(result).to.equal('a=12345678901234')
-    })
+
+    const result = await res.text()
+    assert.strictEqual(result, 'a=12345678901234')
   })
 
   it('should support blob as body', async () => {
     const res = new Response(new Blob(['a=1']))
-    return res.text().then(result => {
-      expect(result).to.equal('a=1')
-    })
+    const result = await res.text()
+
+    assert.strictEqual(result, 'a=1')
   })
 
-  it('should support Uint8Array as body', () => {
+  it('should support Uint8Array as body', async () => {
     const encoder = new TextEncoder()
     const fullbuffer = encoder.encode('a=12345678901234').buffer
     const body = new Uint8Array(fullbuffer, 2, 9)
     const res = new Response(body)
     body[0] = 0
-    return res.text().then(result => {
-      expect(result).to.equal('123456789')
-    })
+
+    const result = await res.text()
+    assert.strictEqual(result, '123456789')
   })
 
-  it('should support BigUint64Array as body', () => {
+  it('should support BigUint64Array as body', async () => {
     const encoder = new TextEncoder()
     const fullbuffer = encoder.encode('a=12345678901234').buffer
     const body = new BigUint64Array(fullbuffer, 8, 1)
     const res = new Response(body)
     body[0] = 0n
-    return res.text().then(result => {
-      expect(result).to.equal('78901234')
-    })
+
+    const result = await res.text()
+    assert.strictEqual(result, '78901234')
   })
 
-  it('should support DataView as body', () => {
+  it('should support DataView as body', async () => {
     const encoder = new TextEncoder()
     const fullbuffer = encoder.encode('a=12345678901234').buffer
     const body = new Uint8Array(fullbuffer, 2, 9)
     const res = new Response(body)
     body[0] = 0
-    return res.text().then(result => {
-      expect(result).to.equal('123456789')
-    })
+
+    const result = await res.text()
+    assert.strictEqual(result, '123456789')
   })
 
   it('should default to null as body', () => {
     const res = new Response()
-    expect(res.body).to.equal(null)
+    assert.strictEqual(res.body, null)
 
-    return res.text().then(result => expect(result).to.equal(''))
+    return res.text().then(result => assert.strictEqual(result, ''))
   })
 
   it('should default to 200 as status code', () => {
     const res = new Response(null)
-    expect(res.status).to.equal(200)
+    assert.strictEqual(res.status, 200)
   })
 
   it('should default to empty string as url', () => {
     const res = new Response()
-    expect(res.url).to.equal('')
+    assert.strictEqual(res.url, '')
   })
 
   it('should support error() static method', () => {
     const res = Response.error()
-    expect(res).to.be.an.instanceof(Response)
-    expect(res.type).to.equal('error')
-    expect(res.status).to.equal(0)
-    expect(res.statusText).to.equal('')
+    assert.ok(res instanceof Response)
+    assert.strictEqual(res.status, 0)
+    assert.strictEqual(res.statusText, '')
+    assert.strictEqual(res.type, 'error')
   })
 
   it('should support undefined status', () => {
     const res = new Response(null, { status: undefined })
-    expect(res.status).to.equal(200)
+    assert.strictEqual(res.status, 200)
   })
 
   it('should support undefined statusText', () => {
     const res = new Response(null, { statusText: undefined })
-    expect(res.statusText).to.equal('')
+    assert.strictEqual(res.statusText, '')
   })
 
   it('should not set bodyUsed to undefined', () => {
     const res = new Response()
-    expect(res.bodyUsed).to.be.false
+    assert.strictEqual(res.bodyUsed, false)
   })
 })
