@@ -32,7 +32,7 @@ test('https://github.com/mcollina/undici/issues/268', (t) => {
       data.body
         .resume()
       setTimeout(() => {
-        t.pass()
+        t.ok(true, 'pass')
         data.body.on('error', () => {})
       }, 2e3)
     })

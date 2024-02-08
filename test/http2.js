@@ -829,7 +829,7 @@ test('Should handle h2 request with body (string or buffer) - dispatch', t => {
       },
       {
         onConnect () {
-          t.ok(true)
+          t.ok(true, 'pass')
         },
         onError (err) {
           t.error(err)

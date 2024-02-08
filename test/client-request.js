@@ -36,7 +36,7 @@ test('request dump', (t) => {
       t.error(err)
       body.dump().then(() => {
         dumped = true
-        t.pass()
+        t.ok(true, 'pass')
       })
     })
   })
@@ -270,7 +270,7 @@ test('destroy socket abruptly with keep-alive', { skip: true }, async (t) => {
     /* eslint-enable */
     t.fail('no error')
   } catch (err) {
-    t.pass('error happened')
+    t.ok(true, 'error happened')
   }
 })
 
@@ -490,7 +490,7 @@ test('request post body no missing data', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
 })
 
@@ -527,7 +527,7 @@ test('request post body no extra data handler', (t) => {
       maxRedirections: 0
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
 })
 
@@ -552,7 +552,7 @@ test('request with onInfo callback', (t) => {
     })
     t.equal(infos.length, 1)
     t.equal(infos[0].statusCode, 102)
-    t.pass()
+    t.ok(true, 'pass')
   })
 })
 
@@ -585,7 +585,7 @@ test('request with onInfo callback but socket is destroyed before end of respons
     }
     t.equal(infos.length, 1)
     t.equal(infos[0].statusCode, 102)
-    t.pass()
+    t.ok(true, 'pass')
   })
 })
 
@@ -622,7 +622,7 @@ test('request onInfo callback headers parsing', async (t) => {
   t.equal(infos.length, 1)
   t.equal(infos[0].statusCode, 103)
   t.same(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
-  t.pass()
+  t.ok(true, 'pass')
 })
 
 test('request raw responseHeaders', async (t) => {
@@ -659,7 +659,7 @@ test('request raw responseHeaders', async (t) => {
   t.equal(infos.length, 1)
   t.same(infos[0].headers, ['Link', '</style.css>; rel=preload; as=style'])
   t.same(headers, ['Date', 'Sat, 09 Oct 2010 14:28:02 GMT', 'Connection', 'close'])
-  t.pass()
+  t.ok(true, 'pass')
 })
 
 test('request formData', (t) => {
@@ -793,7 +793,7 @@ test('request post body Buffer from string', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
 })
 
@@ -823,7 +823,7 @@ test('request post body Buffer from buffer', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
 })
 
@@ -853,7 +853,7 @@ test('request post body Uint8Array', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
 })
 
@@ -883,7 +883,7 @@ test('request post body Uint32Array', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
 })
 
@@ -913,7 +913,7 @@ test('request post body Float64Array', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
 })
 
@@ -943,7 +943,7 @@ test('request post body BigUint64Array', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
 })
 
@@ -973,6 +973,6 @@ test('request post body DataView', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
 })

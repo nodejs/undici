@@ -201,7 +201,7 @@ test('pipeline invalid handler return after destroy should not error', (t) => {
         t.equal(err.message, 'asd')
       })
       .on('close', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
       .end()
   })
@@ -315,7 +315,7 @@ test('pipeline backpressure', (t) => {
         duplex.resume()
       })
     }).on('end', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })
@@ -412,7 +412,7 @@ test('pipeline destroy and throw handler', (t) => {
         t.type(err, errors.RequestAbortedError)
       })
       .on('close', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
   })
 })
@@ -443,7 +443,7 @@ test('pipeline abort res', (t) => {
         }, 100)
         client.on('disconnect', () => {
           clearTimeout(timeout)
-          t.pass()
+          t.ok(true, 'pass')
         })
       })
       return body
@@ -789,7 +789,7 @@ test('pipeline legacy stream', (t) => {
       })
       .resume()
       .on('end', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
       .end()
   })
@@ -896,7 +896,7 @@ test('pipeline body without destroy', (t) => {
     })
       .end()
       .on('end', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
       .resume()
   })

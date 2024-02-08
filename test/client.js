@@ -469,7 +469,7 @@ test('basic head', (t) => {
       body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
 
@@ -480,7 +480,7 @@ test('basic head', (t) => {
       body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })
@@ -509,7 +509,7 @@ test('basic head (IPv6)', { skip: !hasIPv6 }, (t) => {
       body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
 
@@ -520,7 +520,7 @@ test('basic head (IPv6)', { skip: !hasIPv6 }, (t) => {
       body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })
@@ -611,7 +611,7 @@ test('head with host header', (t) => {
       body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })
@@ -1061,7 +1061,7 @@ test('basic POST with empty stream', (t) => {
           t.fail()
         })
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })
@@ -1124,7 +1124,7 @@ test('10 times HEAD', (t) => {
         body
           .resume()
           .on('end', () => {
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
     }
@@ -1256,7 +1256,7 @@ test('multiple destroy callback', (t) => {
       data.body
         .resume()
         .on('error', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
       client.destroy(new Error(), (err) => {
         t.error(err)
@@ -1316,7 +1316,7 @@ test('only one streaming req at a time', (t) => {
         data.body
           .resume()
           .on('end', () => {
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
       t.equal(client[kBusy], true)
@@ -1370,7 +1370,7 @@ test('only one async iterating req at a time', (t) => {
         data.body
           .resume()
           .on('end', () => {
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
       t.equal(client[kBusy], true)
@@ -1399,7 +1399,7 @@ test('300 requests succeed', (t) => {
         data.body.on('data', (chunk) => {
           t.equal(chunk.toString(), 'asd')
         }).on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
       })
     }
@@ -1650,7 +1650,7 @@ test('emit disconnect after destroy', t => {
       let disconnected = false
       client.on('disconnect', () => {
         disconnected = true
-        t.pass()
+        t.ok(true, 'pass')
       })
       client.destroy(() => {
         t.equal(disconnected, true)
@@ -1684,7 +1684,7 @@ test('end response before request', t => {
         t.fail()
       })
       .on('end', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
       .resume()
     client.on('disconnect', (url, targets, err) => {
@@ -1808,7 +1808,7 @@ test('async iterator error from server destroys early', (t) => {
         yield 'inner-value'
         t.fail('should not get here, iterator should be destroyed')
       } finally {
-        t.ok(true)
+        t.ok(true, 'pass')
       }
     })()
     client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
@@ -1848,7 +1848,7 @@ test('regular iterator error from server closes early', (t) => {
         t.fail('should not get here, iterator should be destroyed')
         yield 'zzz'
       } finally {
-        t.ok(true)
+        t.ok(true, 'pass')
       }
     })()
     client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
@@ -1885,7 +1885,7 @@ test('async iterator early return closes early', (t) => {
         yield 'inner-value'
         t.fail('should not get here, iterator should be destroyed')
       } finally {
-        t.ok(true)
+        t.ok(true, 'pass')
       }
     })()
     client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
@@ -1916,7 +1916,7 @@ test('async iterator yield unsupported TypedArray', (t) => {
         yield new Int32Array([1])
         t.fail('should not get here, iterator should be destroyed')
       } finally {
-        t.ok(true)
+        t.ok(true, 'pass')
       }
     })()
     client.request({ path: '/', method: 'POST', body }, (err) => {
@@ -1946,7 +1946,7 @@ test('async iterator yield object error', (t) => {
         yield {}
         t.fail('should not get here, iterator should be destroyed')
       } finally {
-        t.ok(true)
+        t.ok(true, 'pass')
       }
     })()
     client.request({ path: '/', method: 'POST', body }, (err) => {

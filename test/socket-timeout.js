@@ -12,7 +12,7 @@ test('timeout with pipelining 1', (t) => {
   const server = createServer()
 
   server.once('request', (req, res) => {
-    t.pass('first request received, we are letting this timeout on the client')
+    t.ok(true, 'first request received, we are letting this timeout on the client')
 
     server.once('request', (req, res) => {
       t.equal('/', req.url)

@@ -284,7 +284,7 @@ for (const factory of [
       t.equal(body.length, 0)
     } catch (error) {
       if (error.message.startsWith('max redirects')) {
-        t.pass('Max redirects handled correctly')
+        t.ok(true, 'Max redirects handled correctly')
       } else {
         t.fail(`Unexpected error: ${error.message}`)
       }

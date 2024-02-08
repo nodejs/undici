@@ -11,7 +11,7 @@ test('close waits for queued requests to finish', (t) => {
   const server = createServer()
 
   server.on('request', (req, res) => {
-    t.pass('request received')
+    t.ok(true, 'request received')
     res.end('hello')
   })
   t.teardown(server.close.bind(server))

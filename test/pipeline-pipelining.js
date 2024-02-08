@@ -65,7 +65,7 @@ test('pipeline pipelining retry', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.once('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
 
     client[kConnect](() => {
@@ -101,7 +101,7 @@ test('pipeline pipelining retry', (t) => {
       })
 
       client.close(() => {
-        t.pass()
+        t.ok(true, 'pass')
       })
     })
   })

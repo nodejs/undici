@@ -60,10 +60,10 @@ tap.test('Should retry status code', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onBodySent () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.equal(status, 200)
@@ -145,10 +145,10 @@ tap.test('Should use retry-after header for retries', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onBodySent () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.equal(status, 200)
@@ -231,10 +231,10 @@ tap.test('Should use retry-after header for retries (date)', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onBodySent () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.equal(status, 200)
@@ -314,10 +314,10 @@ tap.test('Should retry with defaults', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onBodySent () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.equal(status, 200)
@@ -364,7 +364,7 @@ tap.test('Should handle 206 partial content', t => {
   let x = 0
   const server = createServer((req, res) => {
     if (x === 0) {
-      t.pass()
+      t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
       res.write('abc')
       setTimeout(() => {
@@ -411,13 +411,13 @@ tap.test('Should handle 206 partial content', t => {
       },
       handler: {
         onRequestSent () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onBodySent () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.equal(status, 200)
@@ -464,7 +464,7 @@ tap.test('Should handle 206 partial content - bad-etag', t => {
   let x = 0
   const server = createServer((req, res) => {
     if (x === 0) {
-      t.pass()
+      t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
       res.write('abc')
       setTimeout(() => {
@@ -500,13 +500,13 @@ tap.test('Should handle 206 partial content - bad-etag', t => {
         },
         handler: {
           onConnect () {
-            t.pass()
+            t.ok(true, 'pass')
           },
           onBodySent () {
-            t.pass()
+            t.ok(true, 'pass')
           },
           onHeaders (status, _rawHeaders, resume, _statusMessage) {
-            t.pass()
+            t.ok(true, 'pass')
             return true
           },
           onData (chunk) {
@@ -647,10 +647,10 @@ tap.test('should not error if request is not meant to be retried', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onBodySent () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.equal(status, 400)

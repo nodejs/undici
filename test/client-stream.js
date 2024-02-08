@@ -729,7 +729,7 @@ test('stream needDrain', (t) => {
     })
 
     p.then(() => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })
@@ -782,7 +782,7 @@ test('stream legacy needDrain', (t) => {
     })
 
     p.then(() => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 

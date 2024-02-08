@@ -38,13 +38,13 @@ test('multiple reconnect', (t) => {
       data.body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
 
     client.on('disconnect', () => {
       if (++n === 1) {
-        t.pass()
+        t.ok(true, 'pass')
       }
       process.nextTick(() => {
         clock.tick(1000)
