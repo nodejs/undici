@@ -14,7 +14,7 @@ test('MockScope - delay', t => {
       method: ''
     }, [])
     const result = mockScope.delay(200)
-    t.type(result, MockScope)
+    t.ok(result instanceof MockScope)
   })
 
   t.test('should error if passed options invalid', t => {
@@ -41,7 +41,7 @@ test('MockScope - persist', t => {
       method: ''
     }, [])
     const result = mockScope.persist()
-    t.type(result, MockScope)
+    t.ok(result instanceof MockScope)
   })
 })
 
@@ -55,7 +55,7 @@ test('MockScope - times', t => {
       method: ''
     }, [])
     const result = mockScope.times(200)
-    t.type(result, MockScope)
+    t.ok(result instanceof MockScope)
   })
 
   t.test('should error if passed options invalid', t => {

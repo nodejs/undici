@@ -36,7 +36,7 @@ test('timeout with pipelining 1', (t) => {
       method: 'GET',
       opaque: 'asd'
     }, (err, data) => {
-      t.type(err, errors.HeadersTimeoutError) // we are expecting an error
+      t.ok(err instanceof errors.HeadersTimeoutError) // we are expecting an error
       t.equal(data.opaque, 'asd')
     })
 

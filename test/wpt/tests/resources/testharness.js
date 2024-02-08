@@ -1247,7 +1247,7 @@
      */
     function is_node(object)
     {
-        // I use duck-typing instead of instanceof, because
+        // I use duck-typing instead of instanceof because
         // instanceof doesn't work if the node is from another window (like an
         // iframe's contentWindow):
         // http://www.w3.org/Bugs/Public/show_bug.cgi?id=12295

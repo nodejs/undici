@@ -34,14 +34,14 @@ test('https://github.com/mcollina/undici/issues/810', (t) => {
         // t.fail() FIX: Should fail.
         t.pass()
       }).on('error', err => (
-        t.type(err, errors.HTTPParserError)
+        t.ok(err instanceof errors.HTTPParserError)
       ))
     })
     client.request({
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      t.type(err, errors.HTTPParserError)
+      t.ok(err instanceof errors.HTTPParserError)
     })
   })
 })
@@ -129,7 +129,7 @@ test('https://github.com/mcollina/undici/issues/810 pipelining 2', (t) => {
       method: 'GET'
     }, (err, data) => {
       t.equal(err.code, 'HPE_INVALID_CONSTANT')
-      t.type(err, errors.HTTPParserError)
+      t.ok(err instanceof errors.HTTPParserError)
     })
   })
 })

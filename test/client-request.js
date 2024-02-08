@@ -117,7 +117,7 @@ test('request abort before headers', (t) => {
         method: 'GET',
         signal
       }, (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
         t.equal(signal.listenerCount('abort'), 0)
       })
       t.equal(signal.listenerCount('abort'), 1)
@@ -127,7 +127,7 @@ test('request abort before headers', (t) => {
         method: 'GET',
         signal
       }, (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
         t.equal(signal.listenerCount('abort'), 0)
       })
       t.equal(signal.listenerCount('abort'), 2)
