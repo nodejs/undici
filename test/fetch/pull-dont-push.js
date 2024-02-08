@@ -36,9 +36,7 @@ test('pull dont\'t push', async (t) => {
   server.listen(0)
   await once(server, 'listening')
 
-  t.diagnostic('server listening on port %d', server.address().port)
   const res = await fetch(`http://localhost:${server.address().port}`)
-  t.diagnostic('fetched')
 
   // Some time is needed to fill the buffer
   await sleep(1000)

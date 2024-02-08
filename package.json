@@ -1,6 +1,6 @@
 {
   "name": "undici",
-  "version": "6.6.1",
+  "version": "6.6.2",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
   "homepage": "https://undici.nodejs.org",
   "bugs": {
@@ -105,7 +105,7 @@
     "@types/node": "^18.0.3",
     "abort-controller": "^3.0.0",
     "axios": "^1.6.5",
-    "borp": "^0.5.0",
+    "borp": "^0.9.1",
     "concurrently": "^8.0.1",
     "cronometro": "^2.0.2",
     "dns-packet": "^5.4.0",
