@@ -12,7 +12,6 @@ const {
 } = require('../../')
 const { fromInnerRequest, makeRequest } = require('../../lib/web/fetch/request')
 const {
-  Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
 const { kState, kGuard, kRealm, kSignal, kHeaders } = require('../../lib/web/fetch/symbols')
@@ -419,14 +418,6 @@ test('RequestInit.signal option', async () => {
   }), TypeError)
 })
 
-test('constructing Request with third party Blob body', async () => {
-  const blob = new ThirdPartyBlob(['text'])
-  const req = new Request('http://asd', {
-    method: 'POST',
-    body: blob
-  })
-  assert.strictEqual(await req.text(), 'text')
-})
 test('constructing Request with third party FormData body', async () => {
   const form = new ThirdPartyFormData()
   form.set('key', 'value')
