@@ -73,7 +73,6 @@ const handler = new RetryHandler(
     },
     handler: {
       onConnect() {},
-      onBodySent() {},
       onHeaders(status, _rawHeaders, resume, _statusMessage) {
         // do something with headers
       },
@@ -98,7 +97,6 @@ const handler = new RetryHandler(dispatchOptions, {
   dispatch: client.dispatch.bind(client),
   handler: {
     onConnect() {},
-    onBodySent() {},
     onHeaders(status, _rawHeaders, resume, _statusMessage) {},
     onData(chunk) {},
     onComplete() {},
