@@ -32,7 +32,7 @@ test('https://github.com/mcollina/undici/issues/810', (t) => {
       t.error(err)
       data.body.resume().on('end', () => {
         // t.fail() FIX: Should fail.
-        t.pass()
+        t.ok(true, 'pass')
       }).on('error', err => (
         t.type(err, errors.HTTPParserError)
       ))
@@ -66,7 +66,7 @@ test('https://github.com/mcollina/undici/issues/810 no pipelining', (t) => {
       t.error(err)
       data.body.resume().on('end', () => {
         // t.fail() FIX: Should fail.
-        t.pass()
+        t.ok(true, 'pass')
       })
     })
   })
@@ -93,7 +93,7 @@ test('https://github.com/mcollina/undici/issues/810 pipelining', (t) => {
       t.error(err)
       data.body.resume().on('end', () => {
         // t.fail() FIX: Should fail.
-        t.pass()
+        t.ok(true, 'pass')
       })
     })
   })
@@ -120,7 +120,7 @@ test('https://github.com/mcollina/undici/issues/810 pipelining 2', (t) => {
       t.error(err)
       data.body.resume().on('end', () => {
         // t.fail() FIX: Should fail.
-        t.pass()
+        t.ok(true, 'pass')
       })
     })
 

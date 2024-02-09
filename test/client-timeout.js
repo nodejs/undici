@@ -187,7 +187,7 @@ test('parser resume with no body timeout', (t) => {
 
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError (err) {
         t.error(err)

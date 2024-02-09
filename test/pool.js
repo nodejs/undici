@@ -423,10 +423,10 @@ test('busy', (t) => {
       pipelining: 2
     })
     client.on('drain', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
     client.on('connect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
     t.teardown(client.destroy.bind(client))
 
@@ -623,7 +623,7 @@ test('300 requests succeed', (t) => {
         data.body.on('data', (chunk) => {
           t.equal(chunk.toString(), 'asd')
         }).on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
       })
     }
@@ -716,7 +716,7 @@ test('pool dispatch error', (t) => {
       onData (chunk) {
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError () {
       }
@@ -772,7 +772,7 @@ test('pool request abort in queue', (t) => {
       onData (chunk) {
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError () {
       }
@@ -817,7 +817,7 @@ test('pool stream abort in queue', (t) => {
       onData (chunk) {
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError () {
       }
@@ -862,7 +862,7 @@ test('pool pipeline abort in queue', (t) => {
       onData (chunk) {
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError () {
       }
@@ -1014,11 +1014,11 @@ test('pool close waits for all requests', (t) => {
     })
 
     client.close(() => {
-      t.pass()
+      t.ok(true, 'pass')
     })
 
     client.close(() => {
-      t.pass()
+      t.ok(true, 'pass')
     })
 
     client.request({
@@ -1087,7 +1087,7 @@ test('pool destroy fails queued requests', (t) => {
 
     t.equal(client.destroyed, false)
     client.destroy(_err, () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
     t.equal(client.destroyed, true)
 

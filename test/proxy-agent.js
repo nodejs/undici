@@ -46,7 +46,7 @@ test('use proxy-agent to connect through proxy', async (t) => {
   const parsedOrigin = new URL(serverUrl)
 
   proxy.on('connect', () => {
-    t.pass('should connect to proxy')
+    t.ok(true, 'should connect to proxy')
   })
 
   server.on('request', (req, res) => {
@@ -81,7 +81,7 @@ test('use proxy agent to connect through proxy using Pool', async (t) => {
 
   proxy.authenticate = async function (req, fn) {
     if (++connectCount === 2) {
-      t.pass('second connect should arrive while first is still inflight')
+      t.ok(true, 'second connect should arrive while first is still inflight')
       resolveFirstConnect()
       fn(null, true)
     } else {
@@ -122,7 +122,7 @@ test('use proxy-agent to connect through proxy using path with params', async (t
   const parsedOrigin = new URL(serverUrl)
 
   proxy.on('connect', () => {
-    t.pass('should call proxy')
+    t.ok(true, 'should call proxy')
   })
   server.on('request', (req, res) => {
     t.equal(req.url, '/hello?foo=bar')
@@ -161,11 +161,11 @@ test('use proxy-agent with auth', async (t) => {
   const parsedOrigin = new URL(serverUrl)
 
   proxy.authenticate = function (req, fn) {
-    t.pass('authentication should be called')
+    t.ok(true, 'authentication should be called')
     fn(null, req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`)
   }
   proxy.on('connect', () => {
-    t.pass('proxy should be called')
+    t.ok(true, 'proxy should be called')
   })
 
   server.on('request', (req, res) => {
@@ -205,11 +205,11 @@ test('use proxy-agent with token', async (t) => {
   const parsedOrigin = new URL(serverUrl)
 
   proxy.authenticate = function (req, fn) {
-    t.pass('authentication should be called')
+    t.ok(true, 'authentication should be called')
     fn(null, req.headers['proxy-authorization'] === `Bearer ${Buffer.from('user:pass').toString('base64')}`)
   }
   proxy.on('connect', () => {
-    t.pass('proxy should be called')
+    t.ok(true, 'proxy should be called')
   })
 
   server.on('request', (req, res) => {
@@ -341,7 +341,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
   t.teardown(() => setGlobalDispatcher(defaultDispatcher))
 
   proxy.on('connect', () => {
-    t.pass('should call proxy')
+    t.ok(true, 'should call proxy')
   })
   server.on('request', (req, res) => {
     t.equal(req.url, '/hello?foo=bar')
@@ -432,7 +432,7 @@ test('should throw when proxy does not return 200', async (t) => {
     await request(serverUrl, { dispatcher: proxyAgent })
     t.fail()
   } catch (e) {
-    t.pass()
+    t.ok(true, 'pass')
     t.ok(e)
   }
 
@@ -492,7 +492,7 @@ test('Proxy via HTTP to HTTPS endpoint', async (t) => {
   })
 
   server.on('secureConnection', () => {
-    t.pass('server should be connected secured')
+    t.ok(true, 'server should be connected secured')
   })
 
   proxy.on('secureConnection', () => {
@@ -500,7 +500,7 @@ test('Proxy via HTTP to HTTPS endpoint', async (t) => {
   })
 
   proxy.on('connect', function () {
-    t.pass('proxy should be connected')
+    t.ok(true, 'proxy should be connected')
   })
 
   proxy.on('request', function () {
@@ -553,15 +553,15 @@ test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
   })
 
   server.on('secureConnection', () => {
-    t.pass('server should be connected secured')
+    t.ok(true, 'server should be connected secured')
   })
 
   proxy.on('secureConnection', () => {
-    t.pass('proxy over http should call secureConnection')
+    t.ok(true, 'proxy over http should call secureConnection')
   })
 
   proxy.on('connect', function () {
-    t.pass('proxy should be connected')
+    t.ok(true, 'proxy should be connected')
   })
 
   proxy.on('request', function () {
@@ -610,7 +610,7 @@ test('Proxy via HTTPS to HTTP endpoint', async (t) => {
   })
 
   proxy.on('secureConnection', () => {
-    t.pass('proxy over http should call secureConnection')
+    t.ok(true, 'proxy over http should call secureConnection')
   })
 
   proxy.on('request', function () {
@@ -652,7 +652,7 @@ test('Proxy via HTTP to HTTP endpoint', async (t) => {
   })
 
   proxy.on('connect', () => {
-    t.pass('connect to proxy')
+    t.ok(true, 'connect to proxy')
   })
 
   proxy.on('request', function () {

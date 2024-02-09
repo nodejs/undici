@@ -55,7 +55,7 @@ test('error 103 body', (t) => {
       t.equal(err.code, 'HPE_INVALID_CONSTANT')
     })
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })
@@ -79,7 +79,7 @@ test('error 100 body', (t) => {
       t.equal(err.message, 'bad response')
     })
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })
@@ -103,7 +103,7 @@ test('error 101 upgrade', (t) => {
       t.equal(err.message, 'bad upgrade')
     })
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })

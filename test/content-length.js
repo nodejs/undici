@@ -109,9 +109,9 @@ function invalidContentLength (bodyType) {
       t.teardown(client.destroy.bind(client))
 
       client.once('disconnect', () => {
-        t.pass()
+        t.ok(true, 'pass')
         client.once('disconnect', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
       })
 
@@ -217,7 +217,7 @@ test('request streaming no body data when content-length=0', (t) => {
           t.fail()
         })
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })
@@ -282,7 +282,7 @@ test('request streaming with Readable.from(buf)', (t) => {
         })
         .on('end', () => {
           t.equal(Buffer.concat(chunks).toString(), 'hello')
-          t.pass()
+          t.ok(true, 'pass')
           t.end()
         })
     })
@@ -330,7 +330,7 @@ test('request DELETE, content-length=0, with body', (t) => {
     })
 
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })
@@ -439,7 +439,7 @@ test('content-length shouldSendContentLength=false', (t) => {
     })
 
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })

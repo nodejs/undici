@@ -316,7 +316,7 @@ test('upgrade aborted', (t) => {
     signal.emit('abort')
 
     client.close(() => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })

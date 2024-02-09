@@ -32,7 +32,7 @@ test('request post blob', { skip: !Blob }, (t) => {
     }, (err, data) => {
       t.error(err)
       data.body.resume().on('end', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
     })
   })
@@ -66,7 +66,7 @@ test('request post arrayBuffer', { skip: !Blob }, (t) => {
     }, (err, data) => {
       t.error(err)
       data.body.resume().on('end', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
     })
   })

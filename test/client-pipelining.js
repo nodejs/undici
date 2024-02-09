@@ -355,7 +355,7 @@ function errordInflightPost (bodyType) {
             serverRes.end()
           })
           .on('end', () => {
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
     })
@@ -391,7 +391,7 @@ test('pipelining non-idempotent', (t) => {
       data.body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
           ended = true
         })
     })
@@ -449,7 +449,7 @@ function pipeliningNonIdempotentWithBody (bodyType) {
         data.body
           .resume()
           .on('end', () => {
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
 
@@ -504,7 +504,7 @@ function pipeliningHeadBusy (bodyType) {
             data.body
               .resume()
               .on('end', () => {
-                t.pass()
+                t.ok(true, 'pass')
               })
           })
           body.push(null)
@@ -525,7 +525,7 @@ function pipeliningHeadBusy (bodyType) {
               .resume()
               .on('end', () => {
                 ended = true
-                t.pass()
+                t.ok(true, 'pass')
               })
           })
           body.push(null)
@@ -575,7 +575,7 @@ test('pipelining empty pipeline before reset', (t) => {
         data.body
           .resume()
           .on('end', () => {
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
       t.equal(client[kBusy], false)
@@ -590,7 +590,7 @@ test('pipelining empty pipeline before reset', (t) => {
           .resume()
           .on('end', () => {
             ended = true
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
       t.equal(client[kBusy], true)
@@ -628,7 +628,7 @@ function pipeliningIdempotentBusy (bodyType) {
           data.body
             .resume()
             .on('end', () => {
-              t.pass()
+              t.ok(true, 'pass')
             })
         })
         body.push(null)
@@ -649,7 +649,7 @@ function pipeliningIdempotentBusy (bodyType) {
             data.body
               .resume()
               .on('end', () => {
-                t.pass()
+                t.ok(true, 'pass')
               })
           })
           body.push(null)
@@ -688,7 +688,7 @@ function pipeliningIdempotentBusy (bodyType) {
             data.body
               .resume()
               .on('end', () => {
-                t.pass()
+                t.ok(true, 'pass')
               })
           })
           body.push(null)
@@ -734,7 +734,7 @@ test('pipelining blocked', (t) => {
       data.body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
     client.request({
@@ -745,7 +745,7 @@ test('pipelining blocked', (t) => {
       data.body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })
