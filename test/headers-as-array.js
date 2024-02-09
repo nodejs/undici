@@ -103,7 +103,7 @@ test('fail if headers array is odd', (t) => {
       method: 'GET',
       headers
     }, (err) => {
-      t.type(err, errors.InvalidArgumentError)
+      t.ok(err instanceof errors.InvalidArgumentError)
       t.equal(err.message, 'headers array must be even')
     })
   })

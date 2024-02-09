@@ -31,7 +31,7 @@ test('connect aborted after connect', (t) => {
       opaque: 'asd'
     }, (err, { opaque }) => {
       t.equal(opaque, 'asd')
-      t.type(err, errors.RequestAbortedError)
+      t.ok(err instanceof errors.RequestAbortedError)
     })
     t.equal(client[kBusy], true)
   })

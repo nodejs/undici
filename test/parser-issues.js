@@ -56,7 +56,7 @@ test('parser fail', (t) => {
       path: '/'
     }, (err, data) => {
       t.ok(err)
-      t.type(err, errors.HTTPParserError)
+      t.ok(err instanceof errors.HTTPParserError)
     })
   })
 })

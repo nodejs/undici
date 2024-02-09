@@ -273,7 +273,7 @@ test('Should support H2 GOAWAY (server-side)', async t => {
 
   const [url, disconnectClient, err] = await once(client, 'disconnect')
 
-  t.type(url, URL)
+  t.ok(url instanceof URL)
   t.same(disconnectClient, [client])
   t.equal(err.message, 'HTTP/2: "GOAWAY" frame received with code 204')
 })

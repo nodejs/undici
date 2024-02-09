@@ -41,7 +41,7 @@ test('connect-timeout', t => {
     path: '/',
     method: 'GET'
   }, (err) => {
-    t.type(err, errors.ConnectTimeoutError)
+    t.ok(err instanceof errors.ConnectTimeoutError)
     clearTimeout(timeout)
   })
 })
@@ -62,7 +62,7 @@ test('connect-timeout', t => {
     path: '/',
     method: 'GET'
   }, (err) => {
-    t.type(err, errors.ConnectTimeoutError)
+    t.ok(err instanceof errors.ConnectTimeoutError)
     clearTimeout(timeout)
   })
 })

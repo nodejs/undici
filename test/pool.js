@@ -30,7 +30,7 @@ test('throws when connection is infinite', (t) => {
   try {
     new Pool(null, { connections: 0 / 0 }) // eslint-disable-line
   } catch (e) {
-    t.type(e, errors.InvalidArgumentError)
+    t.ok(e instanceof errors.InvalidArgumentError)
     t.equal(e.message, 'invalid connections')
   }
 })
@@ -41,7 +41,7 @@ test('throws when connections is negative', (t) => {
   try {
     new Pool(null, { connections: -1 }) // eslint-disable-line no-new
   } catch (e) {
-    t.type(e, errors.InvalidArgumentError)
+    t.ok(e instanceof errors.InvalidArgumentError)
     t.equal(e.message, 'invalid connections')
   }
 })
@@ -52,7 +52,7 @@ test('throws when connection is not number', (t) => {
   try {
     new Pool(null, { connections: true }) // eslint-disable-line no-new
   } catch (e) {
-    t.type(e, errors.InvalidArgumentError)
+    t.ok(e instanceof errors.InvalidArgumentError)
     t.equal(e.message, 'invalid connections')
   }
 })
@@ -63,7 +63,7 @@ test('throws when factory is not a function', (t) => {
   try {
     new Pool(null, { factory: '' }) // eslint-disable-line no-new
   } catch (e) {
-    t.type(e, errors.InvalidArgumentError)
+    t.ok(e instanceof errors.InvalidArgumentError)
     t.equal(e.message, 'factory must be a function.')
   }
 })
@@ -100,7 +100,7 @@ test('connect/disconnect event(s)', (t) => {
     })
     pool.on('disconnect', (origin, [pool, client], error) => {
       t.ok(client instanceof Client)
-      t.type(error, errors.InformationalError)
+      t.ok(error instanceof errors.InformationalError)
       t.equal(error.code, 'UND_ERR_INFO')
       t.equal(error.message, 'socket idle timeout')
     })
@@ -155,7 +155,7 @@ test('basic get', (t) => {
       client.destroy((err) => {
         t.error(err)
         client.close((err) => {
-          t.type(err, errors.ClientDestroyedError)
+          t.ok(err instanceof errors.ClientDestroyedError)
         })
       })
     })
@@ -198,7 +198,7 @@ test('URL as arg', (t) => {
       client.destroy((err) => {
         t.error(err)
         client.close((err) => {
-          t.type(err, errors.ClientDestroyedError)
+          t.ok(err instanceof errors.ClientDestroyedError)
         })
       })
     })
@@ -225,7 +225,7 @@ test('basic get error async/await', (t) => {
     await client.destroy()
 
     await client.close().catch((err) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
 })
@@ -596,7 +596,7 @@ test('pool pipeline args validation', (t) => {
   const ret = client.pipeline(null, () => {})
   ret.on('error', (err) => {
     t.ok(/opts/.test(err.message))
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 })
 
@@ -1025,7 +1025,7 @@ test('pool close waits for all requests', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.type(err, errors.ClientClosedError)
+      t.ok(err instanceof errors.ClientClosedError)
     })
   })
 })
@@ -1050,7 +1050,7 @@ test('pool destroyed', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
 })
@@ -1095,7 +1095,7 @@ test('pool destroy fails queued requests', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
 })

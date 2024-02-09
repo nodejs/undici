@@ -13,7 +13,7 @@ test('mockErrors', (t) => {
       t.plan(4)
 
       const mockError = new mockErrors.MockNotMatchedError()
-      t.type(mockError, errors.UndiciError)
+      t.ok(mockError instanceof errors.UndiciError)
       t.same(mockError.name, 'MockNotMatchedError')
       t.same(mockError.code, 'UND_MOCK_ERR_MOCK_NOT_MATCHED')
       t.same(mockError.message, 'The request does not match any registered mock dispatches')
@@ -23,7 +23,7 @@ test('mockErrors', (t) => {
       t.plan(4)
 
       const mockError = new mockErrors.MockNotMatchedError('custom message')
-      t.type(mockError, errors.UndiciError)
+      t.ok(mockError instanceof errors.UndiciError)
       t.same(mockError.name, 'MockNotMatchedError')
       t.same(mockError.code, 'UND_MOCK_ERR_MOCK_NOT_MATCHED')
       t.same(mockError.message, 'custom message')

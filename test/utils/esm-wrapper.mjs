@@ -67,13 +67,13 @@ test('imported errors work with request args validation', (t) => {
   const client = new Client('http://localhost:5000')
 
   client.request(null, (err) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   try {
     client.request(null, 'asd')
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
 })
 
@@ -83,7 +83,7 @@ test('imported errors work with request args validation promise', (t) => {
   const client = new Client('http://localhost:5000')
 
   client.request(null).catch((err) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 })
 

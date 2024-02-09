@@ -25,7 +25,7 @@ test('should validate content-type CRLF Injection', (t) => {
       })
       t.fail('request should fail')
     } catch (e) {
-      t.type(e, errors.InvalidArgumentError)
+      t.ok(e instanceof errors.InvalidArgumentError)
       t.equal(e.message, 'invalid content-type header')
     }
   })
