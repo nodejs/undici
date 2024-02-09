@@ -2,7 +2,7 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { Client } = require('..')
+const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const net = require('node:net')
 const { once } = require('node:events')
@@ -59,7 +59,7 @@ test('error 103 body', async (t) => {
     path: '/',
     method: 'GET'
   }, (err) => {
-    t.strictEqual(err.code, 'HPE_INVALID_CONSTANT')
+    t.ok(err instanceof errors.HTTPParserError)
   })
   client.on('disconnect', () => {
     t.ok(true, 'pass')
