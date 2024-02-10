@@ -1,10 +1,8 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert/strict')
 const http = require('node:http')
 const { Client, Pool, errors } = require('../..')
-const stream = require('node:stream')
 const { createSecureServer } = require('node:http2')
 const pem = require('https-pem')
 const { tspl } = require('@matteo.collina/tspl')
@@ -678,183 +676,6 @@ test('dispatch pool onError missing', async (t) => {
   await p.completed
 })
 
-test('dispatch onBodySent not a function', async (t) => {
-  const p = tspl(t, { plan: 2 })
-  const server = http.createServer((req, res) => {
-    res.end('ad')
-  })
-  t.after(closeServerAsPromise(server))
-
-  server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { return client.close() })
-
-    client.dispatch({
-      path: '/',
-      method: 'GET'
-    }, {
-      onBodySent: '42',
-      onConnect () {},
-      onHeaders () {},
-      onData () {},
-      onError (err) {
-        p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-        p.strictEqual(err.message, 'invalid onBodySent method')
-      }
-    })
-  })
-
-  await p.completed
-})
-
-test('dispatch onBodySent buffer', async (t) => {
-  const p = tspl(t, { plan: 3 })
-
-  const server = http.createServer((req, res) => {
-    res.end('ad')
-  })
-  t.after(closeServerAsPromise(server))
-
-  server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { return client.close() })
-    const body = 'hello 🚀'
-    client.dispatch({
-      path: '/',
-      method: 'POST',
-      body
-    }, {
-      onBodySent (chunk) {
-        p.strictEqual(chunk.toString(), body)
-      },
-      onRequestSent () {
-        p.ok(1)
-      },
-      onError (err) {
-        throw err
-      },
-      onConnect () {},
-      onHeaders () {},
-      onData () {},
-      onComplete () {
-        p.ok(1)
-      }
-    })
-  })
-
-  await p.completed
-})
-
-test('dispatch onBodySent stream', async (t) => {
-  const p = tspl(t, { plan: 8 })
-  const server = http.createServer((req, res) => {
-    res.end('ad')
-  })
-  t.after(closeServerAsPromise(server))
-  const chunks = ['he', 'llo', 'world', '🚀']
-  const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
-  const body = stream.Readable.from(chunks)
-  server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { return client.close() })
-    let sentBytes = 0
-    let currentChunk = 0
-    client.dispatch({
-      path: '/',
-      method: 'POST',
-      body
-    }, {
-      onBodySent (chunk) {
-        p.strictEqual(chunks[currentChunk++], chunk)
-        sentBytes += Buffer.byteLength(chunk)
-      },
-      onRequestSent () {
-        p.ok(1)
-      },
-      onError (err) {
-        throw err
-      },
-      onConnect () {},
-      onHeaders () {},
-      onData () {},
-      onComplete () {
-        p.strictEqual(currentChunk, chunks.length)
-        p.strictEqual(sentBytes, toSendBytes)
-        p.ok(1)
-      }
-    })
-  })
-
-  await p.completed
-})
-
-test('dispatch onBodySent async-iterable', (t, done) => {
-  const server = http.createServer((req, res) => {
-    res.end('ad')
-  })
-  t.after(closeServerAsPromise(server))
-  const chunks = ['he', 'llo', 'world', '🚀']
-  const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
-  server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { return client.close() })
-    let sentBytes = 0
-    let currentChunk = 0
-    client.dispatch({
-      path: '/',
-      method: 'POST',
-      body: chunks
-    }, {
-      onBodySent (chunk) {
-        assert.strictEqual(chunks[currentChunk++], chunk)
-        sentBytes += Buffer.byteLength(chunk)
-      },
-      onError (err) {
-        throw err
-      },
-      onConnect () {},
-      onHeaders () {},
-      onData () {},
-      onComplete () {
-        assert.strictEqual(currentChunk, chunks.length)
-        assert.strictEqual(sentBytes, toSendBytes)
-        done()
-      }
-    })
-  })
-})
-
-test('dispatch onBodySent throws error', (t, done) => {
-  const server = http.createServer((req, res) => {
-    res.end('ended')
-  })
-  t.after(closeServerAsPromise(server))
-
-  server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
-    t.after(() => { return client.close() })
-    const body = 'hello'
-    client.dispatch({
-      path: '/',
-      method: 'POST',
-      body
-    }, {
-      onBodySent (chunk) {
-        throw new Error('fail')
-      },
-      onError (err) {
-        assert.ok(err instanceof Error)
-        assert.strictEqual(err.message, 'fail')
-        done()
-      },
-      onConnect () {},
-      onHeaders () {},
-      onData () {},
-      onComplete () {}
-    })
-  })
-})
-
 test('dispatches in expected order', async (t) => {
   const server = http.createServer((req, res) => {
     res.end('ended')
@@ -878,12 +699,6 @@ test('dispatches in expected order', async (t) => {
       onConnect () {
         dispatches.push('onConnect')
       },
-      onBodySent () {
-        dispatches.push('onBodySent')
-      },
-      onResponseStarted () {
-        dispatches.push('onResponseStarted')
-      },
       onHeaders () {
         dispatches.push('onHeaders')
       },
@@ -892,7 +707,7 @@ test('dispatches in expected order', async (t) => {
       },
       onComplete () {
         dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+        p.deepStrictEqual(dispatches, ['onConnect', 'onHeaders', 'onData', 'onComplete'])
       },
       onError (err) {
         p.ifError(err)
@@ -935,12 +750,6 @@ test('dispatches in expected order for http2', async (t) => {
       onConnect () {
         dispatches.push('onConnect')
       },
-      onBodySent () {
-        dispatches.push('onBodySent')
-      },
-      onResponseStarted () {
-        dispatches.push('onResponseStarted')
-      },
       onHeaders () {
         dispatches.push('onHeaders')
       },
@@ -949,7 +758,7 @@ test('dispatches in expected order for http2', async (t) => {
       },
       onComplete () {
         dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+        p.deepStrictEqual(dispatches, ['onConnect', 'onHeaders', 'onData', 'onComplete'])
       },
       onError (err) {
         p.ifError(err)

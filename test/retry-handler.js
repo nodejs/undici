@@ -62,9 +62,6 @@ tap.test('Should retry status code', t => {
         onConnect () {
           t.pass()
         },
-        onBodySent () {
-          t.pass()
-        },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.equal(status, 200)
           return true
@@ -145,9 +142,6 @@ tap.test('Should use retry-after header for retries', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
-        },
-        onBodySent () {
           t.pass()
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -233,9 +227,6 @@ tap.test('Should use retry-after header for retries (date)', t => {
         onConnect () {
           t.pass()
         },
-        onBodySent () {
-          t.pass()
-        },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.equal(status, 200)
           return true
@@ -314,9 +305,6 @@ tap.test('Should retry with defaults', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
-        },
-        onBodySent () {
           t.pass()
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -401,7 +389,7 @@ tap.test('Should handle 206 partial content', t => {
     }
   }
 
-  t.plan(8)
+  t.plan(6)
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -410,13 +398,7 @@ tap.test('Should handle 206 partial content', t => {
         return client.dispatch(...args)
       },
       handler: {
-        onRequestSent () {
-          t.pass()
-        },
         onConnect () {
-          t.pass()
-        },
-        onBodySent () {
           t.pass()
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -500,9 +482,6 @@ tap.test('Should handle 206 partial content - bad-etag', t => {
         },
         handler: {
           onConnect () {
-            t.pass()
-          },
-          onBodySent () {
             t.pass()
           },
           onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -647,9 +626,6 @@ tap.test('should not error if request is not meant to be retried', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
-        },
-        onBodySent () {
           t.pass()
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
