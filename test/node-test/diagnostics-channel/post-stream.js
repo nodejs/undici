@@ -17,7 +17,7 @@ const { Client } = require('../../..')
 const { createServer } = require('node:http')
 
 test('Diagnostics channel - post stream', (t) => {
-  const assert = tspl(t, { plan: 33 })
+  const assert = tspl(t, { plan: 32 })
   const server = createServer((req, res) => {
     req.resume()
     res.setHeader('Content-Type', 'text/plain')
@@ -114,10 +114,6 @@ test('Diagnostics channel - post stream', (t) => {
     ]
     assert.deepStrictEqual(response.headers, expectedHeaders)
     assert.equal(response.statusText, 'OK')
-  })
-
-  diagnosticsChannel.channel('undici:request:bodySent').subscribe(({ request }) => {
-    assert.equal(_req, request)
   })
 
   let endEmitted = false

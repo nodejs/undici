@@ -86,11 +86,3 @@ Called when the request is complete.
 Parameters:
 
 - **trailers** `object` - The trailers received.
-
-#### `onBodySent(chunk)`
-
-Called when the request body is sent.
-
-Parameters:
-
-- **chunk** `Buffer` - The chunk of the request body sent.

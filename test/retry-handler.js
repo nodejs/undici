@@ -63,9 +63,6 @@ test('Should retry status code', async t => {
         onConnect () {
           t.ok(true, 'pass')
         },
-        onBodySent () {
-          t.ok(true, 'pass')
-        },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.strictEqual(status, 200)
           return true
@@ -148,9 +145,6 @@ test('Should use retry-after header for retries', async t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -238,9 +232,6 @@ test('Should use retry-after header for retries (date)', async t => {
         onConnect () {
           t.ok(true, 'pass')
         },
-        onBodySent () {
-          t.ok(true, 'pass')
-        },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.strictEqual(status, 200)
           return true
@@ -323,9 +314,6 @@ test('Should retry with defaults', async t => {
         onConnect () {
           t.ok(true, 'pass')
         },
-        onBodySent () {
-          t.ok(true, 'pass')
-        },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.strictEqual(status, 200)
           return true
@@ -366,7 +354,7 @@ test('Should retry with defaults', async t => {
 })
 
 test('Should handle 206 partial content', async t => {
-  t = tspl(t, { plan: 8 })
+  t = tspl(t, { plan: 6 })
 
   const chunks = []
   let counter = 0
@@ -419,13 +407,7 @@ test('Should handle 206 partial content', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onRequestSent () {
-          t.ok(true, 'pass')
-        },
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -511,9 +493,6 @@ test('Should handle 206 partial content - bad-etag', async t => {
         },
         handler: {
           onConnect () {
-            t.ok(true, 'pass')
-          },
-          onBodySent () {
             t.ok(true, 'pass')
           },
           onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -662,9 +641,6 @@ test('should not error if request is not meant to be retried', async t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {

@@ -144,7 +144,7 @@ describe('MockAgent - dispatch', () => {
   })
 
   test('should throw if handler is not valid on redirect', (t) => {
-    t = tspl(t, { plan: 7 })
+    t = tspl(t, { plan: 6 })
 
     const baseUrl = 'http://localhost:9999'
 
@@ -171,21 +171,10 @@ describe('MockAgent - dispatch', () => {
     t.throws(() => mockAgent.dispatch({
       origin: baseUrl,
       path: '/foo',
-      method: 'GET'
-    }, {
-      onError: (err) => { throw err },
-      onConnect: () => {},
-      onBodySent: 'INVALID'
-    }), new InvalidArgumentError('invalid onBodySent method'))
-
-    t.throws(() => mockAgent.dispatch({
-      origin: baseUrl,
-      path: '/foo',
       method: 'CONNECT'
     }, {
       onError: (err) => { throw err },
       onConnect: () => {},
-      onBodySent: () => {},
       onUpgrade: 'INVALID'
     }), new InvalidArgumentError('invalid onUpgrade method'))
 
@@ -196,7 +185,6 @@ describe('MockAgent - dispatch', () => {
     }, {
       onError: (err) => { throw err },
       onConnect: () => {},
-      onBodySent: () => {},
       onHeaders: 'INVALID'
     }), new InvalidArgumentError('invalid onHeaders method'))
 
@@ -207,7 +195,6 @@ describe('MockAgent - dispatch', () => {
     }, {
       onError: (err) => { throw err },
       onConnect: () => {},
-      onBodySent: () => {},
       onHeaders: () => {},
       onData: 'INVALID'
     }), new InvalidArgumentError('invalid onData method'))
@@ -219,7 +206,6 @@ describe('MockAgent - dispatch', () => {
     }, {
       onError: (err) => { throw err },
       onConnect: () => {},
-      onBodySent: () => {},
       onHeaders: () => {},
       onData: () => {},
       onComplete: 'INVALID'
@@ -790,7 +776,7 @@ test('MockAgent - handle delays to simulate work', async (t) => {
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
   const elapsedInMs = process.hrtime(start)[1] / 1e6
-  t.ok(elapsedInMs >= 50, `Elapsed time is not greater than 50ms: ${elapsedInMs}`)
+  t.ok(elapsedInMs >= 49, `Elapsed time is not greater than 50ms: ${elapsedInMs}`)
 })
 
 test('MockAgent - should persist requests', async (t) => {

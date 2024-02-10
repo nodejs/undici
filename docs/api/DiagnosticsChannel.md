@@ -27,17 +27,6 @@ diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
 
 Note: a request is only loosely completed to a given socket.
 
-
-## `undici:request:bodySent`
-
-```js
-import diagnosticsChannel from 'diagnostics_channel'
-
-diagnosticsChannel.channel('undici:request:bodySent').subscribe(({ request }) => {
-  // request is the same object undici:request:create
-})
-```
-
 ## `undici:request:headers`
 
 This message is published after the response headers have been received, i.e. the response has been completed.
