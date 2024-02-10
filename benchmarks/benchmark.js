@@ -10,6 +10,7 @@ const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
 let nodeFetch
 const axios = require('axios')
+const superagent = require('superagent')
 let got
 
 const util = require('node:util')
@@ -316,6 +317,16 @@ if (process.env.PORT) {
           }
         })).on('finish', resolve)
       }).catch(console.log)
+    })
+  }
+
+  experiments.superagent = () => {
+    return makeParallelRequests(resolve => {
+      superagent.get(dest.url).pipe(new Writable({
+        write (chunk, encoding, callback) {
+          callback()
+        }
+      })).on('finish', resolve)
     })
   }
 }
