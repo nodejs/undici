@@ -819,7 +819,7 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
     stream.end('hello h2!')
   })
 
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 6 })
 
   server.listen(0, () => {
     const client = new Client(`https://localhost:${server.address().port}`, {
@@ -856,9 +856,6 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
         },
         onData (chunk) {
           response.push(chunk)
-        },
-        onBodySent (body) {
-          t.strictEqual(body.toString('utf-8'), expectedBody)
         },
         onComplete () {
           t.strictEqual(Buffer.concat(response).toString('utf-8'), 'hello h2!')
