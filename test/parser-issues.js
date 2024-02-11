@@ -32,7 +32,7 @@ test('https://github.com/mcollina/undici/issues/268', (t) => {
       data.body
         .resume()
       setTimeout(() => {
-        t.pass()
+        t.ok(true, 'pass')
         data.body.on('error', () => {})
       }, 2e3)
     })
@@ -56,7 +56,7 @@ test('parser fail', (t) => {
       path: '/'
     }, (err, data) => {
       t.ok(err)
-      t.type(err, errors.HTTPParserError)
+      t.ok(err instanceof errors.HTTPParserError)
     })
   })
 })

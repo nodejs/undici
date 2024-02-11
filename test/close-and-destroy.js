@@ -11,7 +11,7 @@ test('close waits for queued requests to finish', (t) => {
   const server = createServer()
 
   server.on('request', (req, res) => {
-    t.pass('request received')
+    t.ok(true, 'request received')
     res.end('hello')
   })
   t.teardown(server.close.bind(server))
@@ -72,10 +72,10 @@ test('destroy invoked all pending callbacks', (t) => {
       client.destroy()
     })
     client.request({ path: '/', method: 'GET' }, (err) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
     client.request({ path: '/', method: 'GET' }, (err) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
 })
@@ -99,11 +99,11 @@ test('destroy invoked all pending callbacks ticked', (t) => {
     let ticked = false
     client.request({ path: '/', method: 'GET' }, (err) => {
       t.equal(ticked, true)
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
     client.request({ path: '/', method: 'GET' }, (err) => {
       t.equal(ticked, true)
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
     client.destroy()
     ticked = true
@@ -223,10 +223,10 @@ test('closed and destroyed errors', (t) => {
     t.error(err)
   })
   client.request({ path: '/', method: 'GET' }, (err) => {
-    t.type(err, errors.ClientClosedError)
+    t.ok(err instanceof errors.ClientClosedError)
     client.destroy()
     client.request({ path: '/', method: 'GET' }, (err) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
 })
@@ -239,10 +239,10 @@ test('close after and destroy should error', (t) => {
 
   client.destroy()
   client.close((err) => {
-    t.type(err, errors.ClientDestroyedError)
+    t.ok(err instanceof errors.ClientDestroyedError)
   })
   client.close().catch((err) => {
-    t.type(err, errors.ClientDestroyedError)
+    t.ok(err instanceof errors.ClientDestroyedError)
   })
 })
 

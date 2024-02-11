@@ -40,7 +40,7 @@ test('refresh timeout on pause', (t) => {
 
       },
       onError (err) {
-        t.type(err, errors.BodyTimeoutError)
+        t.ok(err instanceof errors.BodyTimeoutError)
       }
     })
   })
@@ -96,7 +96,7 @@ test('start headers timeout after request body', (t) => {
       },
       onError (err) {
         t.equal(body.readableEnded, true)
-        t.type(err, errors.HeadersTimeoutError)
+        t.ok(err instanceof errors.HeadersTimeoutError)
       }
     })
   })
@@ -153,7 +153,7 @@ test('start headers timeout after async iterator request body', (t) => {
 
       },
       onError (err) {
-        t.type(err, errors.HeadersTimeoutError)
+        t.ok(err instanceof errors.HeadersTimeoutError)
       }
     })
   })
@@ -187,7 +187,7 @@ test('parser resume with no body timeout', (t) => {
 
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError (err) {
         t.error(err)

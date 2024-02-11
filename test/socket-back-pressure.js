@@ -47,7 +47,7 @@ test('socket back-pressure', (t) => {
           }, 1e3)
         })
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })

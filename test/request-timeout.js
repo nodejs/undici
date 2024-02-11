@@ -31,7 +31,7 @@ test('request timeout', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
   })
 })
@@ -53,7 +53,7 @@ test('request timeout with readable body', (t) => {
 
     const body = createReadStream(tempfile)
     client.request({ path: '/', method: 'POST', body }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
   })
 })
@@ -84,7 +84,7 @@ test('body timeout', (t) => {
       body.on('data', () => {
         clock.tick(100)
       }).on('error', (err) => {
-        t.type(err, errors.BodyTimeoutError)
+        t.ok(err instanceof errors.BodyTimeoutError)
       })
     })
 
@@ -117,7 +117,7 @@ test('overridden request timeout', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', headersTimeout: 50 }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     clock.tick(50)
@@ -150,7 +150,7 @@ test('overridden body timeout', (t) => {
       body.on('data', () => {
         clock.tick(100)
       }).on('error', (err) => {
-        t.type(err, errors.BodyTimeoutError)
+        t.ok(err instanceof errors.BodyTimeoutError)
       })
     })
 
@@ -186,7 +186,7 @@ test('With EE signal', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     clock.tick(50)
@@ -221,7 +221,7 @@ test('With abort-controller signal', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     clock.tick(50)
@@ -257,7 +257,7 @@ test('Abort before timeout (EE)', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      t.type(err, errors.RequestAbortedError)
+      t.ok(err instanceof errors.RequestAbortedError)
       clock.tick(100)
     })
   })
@@ -292,7 +292,7 @@ test('Abort before timeout (abort-controller)', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-      t.type(err, errors.RequestAbortedError)
+      t.ok(err instanceof errors.RequestAbortedError)
       clock.tick(100)
     })
   })
@@ -326,15 +326,15 @@ test('Timeout with pipelining', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
   })
 })
@@ -366,7 +366,7 @@ test('Global option', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     clock.tick(50)
@@ -400,7 +400,7 @@ test('Request options overrides global option', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     clock.tick(50)
@@ -421,7 +421,7 @@ test('client.destroy should cancel the timeout', (t) => {
     })
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
 
     client.destroy(err => {
@@ -453,7 +453,7 @@ test('client.close should wait for the timeout', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     client.close((err) => {
@@ -477,7 +477,7 @@ test('Validation', (t) => {
     })
     t.teardown(client.destroy.bind(client))
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
 
   try {
@@ -486,7 +486,7 @@ test('Validation', (t) => {
     })
     t.teardown(client.destroy.bind(client))
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
 
   try {
@@ -495,7 +495,7 @@ test('Validation', (t) => {
     })
     t.teardown(client.destroy.bind(client))
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
 
   try {
@@ -504,7 +504,7 @@ test('Validation', (t) => {
     })
     t.teardown(client.destroy.bind(client))
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
 })
 
@@ -623,7 +623,7 @@ test('stream timeout', (t) => {
     }, (result) => {
       t.fail('Should not be called')
     }, (err) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
   })
 })
@@ -661,7 +661,7 @@ test('stream custom timeout', (t) => {
     }, (result) => {
       t.fail('Should not be called')
     }, (err) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
   })
 })
@@ -715,7 +715,7 @@ test('pipeline timeout', (t) => {
         }
       }),
       (err) => {
-        t.type(err, errors.HeadersTimeoutError)
+        t.ok(err instanceof errors.HeadersTimeoutError)
       }
     )
   })
@@ -772,7 +772,7 @@ test('pipeline timeout', (t) => {
         }
       }),
       (err) => {
-        t.type(err, errors.HeadersTimeoutError)
+        t.ok(err instanceof errors.HeadersTimeoutError)
       }
     )
   })
@@ -806,7 +806,7 @@ test('client.close should not deadlock', (t) => {
         path: '/',
         method: 'GET'
       }, (err, response) => {
-        t.type(err, errors.HeadersTimeoutError)
+        t.ok(err instanceof errors.HeadersTimeoutError)
       })
 
       client.close((err) => {

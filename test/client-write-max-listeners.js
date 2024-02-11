@@ -29,7 +29,7 @@ test('socket close listener does not leak', async (t) => {
 
   const onRequest = (err, data) => {
     t.ifError(err)
-    data.body.on('end', () => t.ok(true)).resume()
+    data.body.on('end', () => t.ok(true, 'pass')).resume()
   }
 
   function onWarning (warning) {

@@ -12,14 +12,14 @@ const server = http.createServer((req, res) => {
   const url = `http://127.0.0.1:${this.address().port}`
   request(url)
     .then(({ statusCode, headers, body }) => {
-      t.pass('first response')
+      t.ok(true, 'first response')
       body.resume()
       body.on('close', function () {
-        t.pass('first body closed')
+        t.ok(true, 'first body closed')
       })
       return request(url)
         .then(({ statusCode, headers, body }) => {
-          t.pass('second response')
+          t.ok(true, 'second response')
           body.resume()
           body.on('close', function () {
             server.close()

@@ -34,7 +34,7 @@ test('handle a lot of headers', (t) => {
       data.body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })

@@ -12,7 +12,7 @@ test('timeout with pipelining 1', (t) => {
   const server = createServer()
 
   server.once('request', (req, res) => {
-    t.pass('first request received, we are letting this timeout on the client')
+    t.ok(true, 'first request received, we are letting this timeout on the client')
 
     server.once('request', (req, res) => {
       t.equal('/', req.url)
@@ -36,7 +36,7 @@ test('timeout with pipelining 1', (t) => {
       method: 'GET',
       opaque: 'asd'
     }, (err, data) => {
-      t.type(err, errors.HeadersTimeoutError) // we are expecting an error
+      t.ok(err instanceof errors.HeadersTimeoutError) // we are expecting an error
       t.equal(data.opaque, 'asd')
     })
 

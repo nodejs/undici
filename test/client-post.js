@@ -75,7 +75,7 @@ test('request post arrayBuffer', { skip: !Blob }, async (t) => {
   }, (err, data) => {
     t.ifError(err)
     data.body.resume().on('end', () => {
-      t.ok(true)
+      t.ok(true, 'pass')
     })
   })
 

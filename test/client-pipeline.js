@@ -201,7 +201,7 @@ test('pipeline invalid handler return after destroy should not error', (t) => {
         t.equal(err.message, 'asd')
       })
       .on('close', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
       .end()
   })
@@ -315,7 +315,7 @@ test('pipeline backpressure', (t) => {
         duplex.resume()
       })
     }).on('end', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })
@@ -340,7 +340,7 @@ test('pipeline invalid handler return', (t) => {
       body.on('error', () => {})
     })
       .on('error', (err) => {
-        t.type(err, errors.InvalidReturnValueError)
+        t.ok(err instanceof errors.InvalidReturnValueError)
       })
       .end()
 
@@ -353,7 +353,7 @@ test('pipeline invalid handler return', (t) => {
       return {}
     })
       .on('error', (err) => {
-        t.type(err, errors.InvalidReturnValueError)
+        t.ok(err instanceof errors.InvalidReturnValueError)
       })
       .end()
   })
@@ -409,10 +409,10 @@ test('pipeline destroy and throw handler', (t) => {
     })
       .end()
       .on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
       .on('close', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
   })
 })
@@ -443,13 +443,13 @@ test('pipeline abort res', (t) => {
         }, 100)
         client.on('disconnect', () => {
           clearTimeout(timeout)
-          t.pass()
+          t.ok(true, 'pass')
         })
       })
       return body
     })
       .on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
       .end()
   })
@@ -474,7 +474,7 @@ test('pipeline abort server res', (t) => {
       t.fail()
     })
       .on('error', (err) => {
-        t.type(err, errors.SocketError)
+        t.ok(err instanceof errors.SocketError)
       })
       .end()
   })
@@ -505,7 +505,7 @@ test('pipeline abort duplex', (t) => {
       }, () => {
         t.fail()
       }).destroy().on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
     })
   })
@@ -558,7 +558,7 @@ test('pipeline abort piped res 2', (t) => {
     }, ({ body }) => {
       const pt = new PassThrough()
       body.on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
       setImmediate(() => {
         pt.destroy()
@@ -567,7 +567,7 @@ test('pipeline abort piped res 2', (t) => {
       return pt
     })
       .on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
       .end()
   })
@@ -628,7 +628,7 @@ test('pipeline abort server res after headers', (t) => {
       return data.body
     })
       .on('error', (err) => {
-        t.type(err, errors.SocketError)
+        t.ok(err instanceof errors.SocketError)
       })
       .end()
   })
@@ -656,7 +656,7 @@ test('pipeline w/ write abort server res after headers', (t) => {
       return data.body
     })
       .on('error', (err) => {
-        t.type(err, errors.SocketError)
+        t.ok(err instanceof errors.SocketError)
       })
       .resume()
       .write('asd')
@@ -713,7 +713,7 @@ test('pipeline args validation', (t) => {
   const ret = client.pipeline(null, () => {})
   ret.on('error', (err) => {
     t.ok(/opts/.test(err.message))
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 })
 
@@ -789,7 +789,7 @@ test('pipeline legacy stream', (t) => {
       })
       .resume()
       .on('end', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
       .end()
   })
@@ -866,7 +866,7 @@ test('pipeline CONNECT throw', (t) => {
     }, () => {
       t.fail()
     }).on('error', (err) => {
-      t.type(err, errors.InvalidArgumentError)
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
     client.on('disconnect', () => {
       t.fail()
@@ -896,7 +896,7 @@ test('pipeline body without destroy', (t) => {
     })
       .end()
       .on('end', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
       .resume()
   })
@@ -1030,7 +1030,7 @@ test('pipeline abort after headers', (t) => {
     })
       .end()
       .on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
   })
 })

@@ -12,7 +12,7 @@ test('connect-connectionError', async t => {
   after(() => client.close())
 
   client.once('connectionError', () => {
-    t.ok(true)
+    t.ok(true, 'pass')
   })
 
   const _err = new Error('kaboom')

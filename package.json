@@ -71,7 +71,7 @@
     "docs"
   ],
   "scripts": {
-    "build:node": "npx esbuild@0.19.4 index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1 --keep-names",
+    "build:node": "npx esbuild@0.19.4 index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1 --keep-names && node scripts/strip-comments.js",
     "prebuild:wasm": "node build/wasm.js --prebuild",
     "build:wasm": "node build/wasm.js --docker",
     "lint": "standard | snazzy",
@@ -103,6 +103,7 @@
     "@matteo.collina/tspl": "^0.1.1",
     "@sinonjs/fake-timers": "^11.1.0",
     "@types/node": "^18.0.3",
+    "@types/superagent": "^8.1.3",
     "abort-controller": "^3.0.0",
     "axios": "^1.6.5",
     "borp": "^0.9.1",
@@ -128,6 +129,7 @@
     "sinon": "^17.0.1",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
+    "superagent": "^8.1.2",
     "tap": "^16.1.0",
     "tsd": "^0.30.1",
     "typescript": "^5.0.2",
