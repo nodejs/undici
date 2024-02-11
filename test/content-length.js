@@ -25,7 +25,7 @@ test('request invalid content-length', (t) => {
       },
       body: 'asd'
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -36,7 +36,7 @@ test('request invalid content-length', (t) => {
       },
       body: 'asdasdasdasdasdasda'
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -47,7 +47,7 @@ test('request invalid content-length', (t) => {
       },
       body: Buffer.alloc(9)
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -58,7 +58,7 @@ test('request invalid content-length', (t) => {
       },
       body: Buffer.alloc(11)
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -69,7 +69,7 @@ test('request invalid content-length', (t) => {
       },
       body: ['asd']
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -80,7 +80,7 @@ test('request invalid content-length', (t) => {
       },
       body: ['asasdasdasdd']
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -91,7 +91,7 @@ test('request invalid content-length', (t) => {
       },
       body: ['asasdasdasdd']
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
   })
 })
@@ -109,9 +109,9 @@ function invalidContentLength (bodyType) {
       t.teardown(client.destroy.bind(client))
 
       client.once('disconnect', () => {
-        t.pass()
+        t.ok(true, 'pass')
         client.once('disconnect', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
       })
 
@@ -130,7 +130,7 @@ function invalidContentLength (bodyType) {
           }
         }), bodyType)
       }, (err, data) => {
-        t.type(err, errors.RequestContentLengthMismatchError)
+        t.ok(err instanceof errors.RequestContentLengthMismatchError)
       })
 
       client.request({
@@ -148,7 +148,7 @@ function invalidContentLength (bodyType) {
           }
         }), bodyType)
       }, (err, data) => {
-        t.type(err, errors.RequestContentLengthMismatchError)
+        t.ok(err instanceof errors.RequestContentLengthMismatchError)
       })
     })
   })
@@ -184,7 +184,7 @@ function zeroContentLength (bodyType) {
           }
         }), bodyType)
       }, (err, data) => {
-        t.type(err, errors.RequestContentLengthMismatchError)
+        t.ok(err instanceof errors.RequestContentLengthMismatchError)
       })
     })
   })
@@ -217,7 +217,7 @@ test('request streaming no body data when content-length=0', (t) => {
           t.fail()
         })
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })
@@ -282,7 +282,7 @@ test('request streaming with Readable.from(buf)', (t) => {
         })
         .on('end', () => {
           t.equal(Buffer.concat(chunks).toString(), 'hello')
-          t.pass()
+          t.ok(true, 'pass')
           t.end()
         })
     })
@@ -315,7 +315,7 @@ test('request DELETE, content-length=0, with body', (t) => {
         }
       })
     }, (err) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -330,7 +330,7 @@ test('request DELETE, content-length=0, with body', (t) => {
     })
 
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })
@@ -439,7 +439,7 @@ test('content-length shouldSendContentLength=false', (t) => {
     })
 
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })

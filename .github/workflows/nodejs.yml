@@ -7,6 +7,7 @@ name: Node CI
 on:
   push:
     branches:
+     - main
      - current
      - next
      - 'v*'
@@ -22,7 +23,7 @@ jobs:
       timeout-minutes: 15
       post-test-steps: |
         - name: Coverage Report
-          uses: codecov/codecov-action@v3
+          uses: codecov/codecov-action@v4
   automerge:
     if: >
       github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'

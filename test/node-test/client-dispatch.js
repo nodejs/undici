@@ -387,7 +387,7 @@ test('connect call onUpgrade once', async (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.pass('should not throw')
+        t.ok(true, 'should not throw')
       },
       onUpgrade (statusCode, headers, socket) {
         p.strictEqual(count++, 0)
@@ -435,13 +435,13 @@ test('dispatch onConnect missing', async (t) => {
       method: 'GET'
     }, {
       onHeaders (statusCode, headers) {
-        t.pass('should not throw')
+        t.ok(true, 'should not throw')
       },
       onData (buf) {
-        t.pass('should not throw')
+        t.ok(true, 'should not throw')
       },
       onComplete (trailers) {
-        t.pass('should not throw')
+        t.ok(true, 'should not throw')
       },
       onError (err) {
         p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')

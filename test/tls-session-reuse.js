@@ -70,7 +70,7 @@ test('A client should disable session caching', t => {
             if (queue.length !== 0) {
               return request()
             }
-            t.pass()
+            t.ok(true, 'pass')
           })
         })
       }
@@ -170,7 +170,7 @@ test('A pool should be able to reuse TLS sessions between clients', t => {
 
       t.equal(numSessions, 2)
       t.equal(serverRequests, 2 + REQ_COUNT * 2)
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 

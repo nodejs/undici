@@ -151,7 +151,7 @@ test('upgrade invalid opts', (t) => {
   const client = new Client('http://localhost:5432')
 
   client.upgrade(null, err => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
     t.equal(err.message, 'invalid opts')
   })
 
@@ -159,7 +159,7 @@ test('upgrade invalid opts', (t) => {
     client.upgrade(null, null)
     t.fail()
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
     t.equal(err.message, 'invalid opts')
   }
 
@@ -167,7 +167,7 @@ test('upgrade invalid opts', (t) => {
     client.upgrade({ path: '/' }, null)
     t.fail()
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
     t.equal(err.message, 'invalid callback')
   }
 })
@@ -308,7 +308,7 @@ test('upgrade aborted', (t) => {
       opaque: 'asd'
     }, (err, { opaque }) => {
       t.equal(opaque, 'asd')
-      t.type(err, errors.RequestAbortedError)
+      t.ok(err instanceof errors.RequestAbortedError)
       t.equal(signal.listenerCount('abort'), 0)
     })
     t.equal(client[kBusy], true)
@@ -316,7 +316,7 @@ test('upgrade aborted', (t) => {
     signal.emit('abort')
 
     client.close(() => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
 })
@@ -351,7 +351,7 @@ test('basic aborted after res', (t) => {
       protocol: 'Websocket',
       signal
     }, (err) => {
-      t.type(err, errors.RequestAbortedError)
+      t.ok(err instanceof errors.RequestAbortedError)
     })
   })
 })
@@ -408,7 +408,7 @@ test('upgrade disconnect', (t) => {
 
     client.on('disconnect', (origin, [self], error) => {
       t.equal(client, self)
-      t.type(error, Error)
+      t.ok(error instanceof Error)
     })
 
     client
@@ -417,7 +417,7 @@ test('upgrade disconnect', (t) => {
         t.fail()
       })
       .catch(error => {
-        t.type(error, Error)
+        t.ok(error instanceof Error)
       })
   })
 })
@@ -446,7 +446,7 @@ test('upgrade invalid signal', (t) => {
       opaque: 'asd'
     }, (err, { opaque }) => {
       t.equal(opaque, 'asd')
-      t.type(err, errors.InvalidArgumentError)
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
   })
 })

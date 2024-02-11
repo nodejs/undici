@@ -84,7 +84,7 @@ test('max response size', (t) => {
         t.error(err)
         body.on('error', (err) => {
           t.ok(err)
-          t.type(err, errors.ResponseExceededMaxSizeError)
+          t.ok(err instanceof errors.ResponseExceededMaxSizeError)
         })
       })
     })

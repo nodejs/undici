@@ -34,7 +34,7 @@ test('keep-alive header', (t) => {
           t.fail()
         }, 4e3)
         client.on('disconnect', () => {
-          t.pass()
+          t.ok(true, 'pass')
           clearTimeout(timeout)
         })
       }).resume()
@@ -76,7 +76,7 @@ test('keep-alive header 0', (t) => {
       t.error(err)
       body.on('end', () => {
         client.on('disconnect', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
         clock.tick(600)
       }).resume()
@@ -110,7 +110,7 @@ test('keep-alive header 1', (t) => {
           t.fail()
         }, 0)
         client.on('disconnect', () => {
-          t.pass()
+          t.ok(true, 'pass')
           clearTimeout(timeout)
         })
       }).resume()
@@ -144,7 +144,7 @@ test('keep-alive header no postfix', (t) => {
           t.fail()
         }, 4e3)
         client.on('disconnect', () => {
-          t.pass()
+          t.ok(true, 'pass')
           clearTimeout(timeout)
         })
       }).resume()
@@ -180,7 +180,7 @@ test('keep-alive not timeout', (t) => {
           t.fail()
         }, 3e3)
         client.on('disconnect', () => {
-          t.pass()
+          t.ok(true, 'pass')
           clearTimeout(timeout)
         })
       }).resume()
@@ -215,9 +215,9 @@ test('keep-alive threshold', (t) => {
       body.on('end', () => {
         const timeout = setTimeout(() => {
           t.fail()
-        }, 3e3)
+        }, 5e3)
         client.on('disconnect', () => {
-          t.pass()
+          t.ok(true, 'pass')
           clearTimeout(timeout)
         })
       }).resume()
@@ -254,7 +254,7 @@ test('keep-alive max keepalive', (t) => {
           t.fail()
         }, 3e3)
         client.on('disconnect', () => {
-          t.pass()
+          t.ok(true, 'pass')
           clearTimeout(timeout)
         })
       }).resume()
@@ -296,7 +296,7 @@ test('connection close', (t) => {
           }, 3e3)
           client.once('disconnect', () => {
             close = false
-            t.pass()
+            t.ok(true, 'pass')
             clearTimeout(timeout)
           })
         }).resume()
@@ -312,7 +312,7 @@ test('connection close', (t) => {
             t.fail()
           }, 3e3)
           client.once('disconnect', () => {
-            t.pass()
+            t.ok(true, 'pass')
             clearTimeout(timeout)
           })
         }).resume()
@@ -350,7 +350,7 @@ test('Disable keep alive', (t) => {
         }, (err, { body }) => {
           t.error(err)
           body.on('end', () => {
-            t.pass()
+            t.ok(true, 'pass')
           }).resume()
         })
       }).resume()

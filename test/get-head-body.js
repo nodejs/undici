@@ -21,7 +21,7 @@ test('GET and HEAD with body should reset connection', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
 
     client.request({
@@ -145,7 +145,7 @@ test('HEAD should reset connection', (t) => {
     t.teardown(client.destroy.bind(client))
 
     client.once('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
 
     client.request({
@@ -172,7 +172,7 @@ test('HEAD should reset connection', (t) => {
             t.error(err)
             data.body.resume()
             data.body.on('end', () => {
-              t.pass()
+              t.ok(true, 'pass')
             })
           })
           t.equal(client[kBusy], true)

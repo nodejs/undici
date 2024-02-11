@@ -2,7 +2,7 @@
 
 const { createServer } = require('node:http')
 const { test } = require('tap')
-const { request } = require('..')
+const { request, errors } = require('..')
 
 test('no-slash/one-slash pathname should be included in req.path', async (t) => {
   const pathServer = createServer((req, res) => {
@@ -243,6 +243,139 @@ test('DispatchOptions#reset', scope => {
       headers: {
         connection: 'close'
       }
+    })
+  })
+})
+
+test('Should include headers from iterable objects', scope => {
+  scope.plan(4)
+
+  scope.test('Should include headers built with Headers global object', async t => {
+    const server = createServer((req, res) => {
+      t.equal('GET', req.method)
+      t.equal(`localhost:${server.address().port}`, req.headers.host)
+      t.equal(req.headers.hello, 'world')
+      res.statusCode = 200
+      res.end('hello')
+    })
+
+    const headers = new Headers()
+    headers.set('hello', 'world')
+
+    t.plan(3)
+
+    t.teardown(server.close.bind(server))
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true,
+      headers
+    })
+  })
+
+  scope.test('Should include headers built with Map', async t => {
+    const server = createServer((req, res) => {
+      t.equal('GET', req.method)
+      t.equal(`localhost:${server.address().port}`, req.headers.host)
+      t.equal(req.headers.hello, 'world')
+      res.statusCode = 200
+      res.end('hello')
+    })
+
+    const headers = new Map()
+    headers.set('hello', 'world')
+
+    t.plan(3)
+
+    t.teardown(server.close.bind(server))
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true,
+      headers
+    })
+  })
+
+  scope.test('Should include headers built with custom iterable object', async t => {
+    const server = createServer((req, res) => {
+      t.equal('GET', req.method)
+      t.equal(`localhost:${server.address().port}`, req.headers.host)
+      t.equal(req.headers.hello, 'world')
+      res.statusCode = 200
+      res.end('hello')
+    })
+
+    const headers = {
+      * [Symbol.iterator] () {
+        yield ['hello', 'world']
+      }
+    }
+
+    t.plan(3)
+
+    t.teardown(server.close.bind(server))
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true,
+      headers
+    })
+  })
+
+  scope.test('Should throw error if headers iterable object does not yield key-value pairs', async t => {
+    const server = createServer((req, res) => {
+      res.end('hello')
+    })
+
+    const headers = {
+      * [Symbol.iterator] () {
+        yield 'Bad formatted header'
+      }
+    }
+
+    t.plan(2)
+
+    t.teardown(server.close.bind(server))
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true,
+      headers
+    }).catch((err) => {
+      t.type(err, errors.InvalidArgumentError)
+      t.equal(err.message, 'headers must be in key-value pair format')
     })
   })
 })

@@ -58,11 +58,13 @@ export class WPTRunner extends EventEmitter {
   #reportPath
 
   #stats = {
-    completed: 0,
-    failed: 0,
-    success: 0,
+    completedTests: 0,
+    failedTests: 0,
+    passedTests: 0,
     expectedFailures: 0,
-    skipped: 0
+    failedFiles: 0,
+    passedFiles: 0,
+    skippedFiles: 0
   }
 
   constructor (folder, url, { appendReport = false, reportPath } = {}) {
@@ -158,7 +160,7 @@ export class WPTRunner extends EventEmitter {
       const status = resolveStatusPath(test, this.#status)
 
       if (status.file.skip || status.topLevel.skip) {
-        this.#stats.skipped += 1
+        this.#stats.skippedFiles += 1
 
         console.log(colors(`[${finishedFiles}/${total}] SKIPPED - ${test}`, 'yellow'))
         console.log('='.repeat(96))
@@ -187,19 +189,19 @@ export class WPTRunner extends EventEmitter {
           }
         })
 
-        let result, report
+        const fileUrl = new URL(`/${this.#folderName}${test.slice(this.#folderPath.length)}`, 'http://wpt')
+        fileUrl.pathname = fileUrl.pathname.replace(/\.js$/, '.html')
+        fileUrl.search = variant
+        const result = {
+          test: fileUrl.href.slice(fileUrl.origin.length),
+          subtests: [],
+          status: ''
+        }
+
+        let report
         if (this.#appendReport) {
           report = JSON.parse(readFileSync(this.#reportPath))
-
-          const fileUrl = new URL(`/${this.#folderName}${test.slice(this.#folderPath.length)}`, 'http://wpt')
-          fileUrl.pathname = fileUrl.pathname.replace(/\.js$/, '.html')
-          fileUrl.search = variant
-
-          result = {
-            test: fileUrl.href.slice(fileUrl.origin.length),
-            subtests: [],
-            status: 'OK'
-          }
+          result.status = 'OK'
           report.results.push(result)
         }
 
@@ -214,8 +216,8 @@ export class WPTRunner extends EventEmitter {
             this.handleTestCompletion(worker)
           } else if (message.type === 'error') {
             this.#uncaughtExceptions.push({ error: message.error, test })
-            this.#stats.failed += 1
-            this.#stats.success -= 1
+            this.#stats.failedTests += 1
+            this.#stats.passedTests -= 1
           }
         })
 
@@ -224,14 +226,27 @@ export class WPTRunner extends EventEmitter {
             signal: AbortSignal.timeout(timeout)
           })
 
-          console.log(colors(`[${finishedFiles}/${total}] PASSED - ${test}`, 'green'))
+          if (result.subtests.some((subtest) => subtest?.isExpectedFailure === false)) {
+            this.#stats.failedFiles += 1
+            console.log(colors(`[${finishedFiles}/${total}] FAILED - ${test}`, 'red'))
+          } else {
+            this.#stats.passedFiles += 1
+            console.log(colors(`[${finishedFiles}/${total}] PASSED - ${test}`, 'green'))
+          }
+
           if (variant) console.log('Variant:', variant)
-          console.log(`Test took ${(performance.now() - start).toFixed(2)}ms`)
+          console.log(`File took ${(performance.now() - start).toFixed(2)}ms`)
           console.log('='.repeat(96))
         } catch (e) {
-          console.log(`${test} timed out after ${timeout}ms`)
+          // If the worker is terminated by the timeout signal, the test is marked as failed
+          this.#stats.failedFiles += 1
+          console.log(colors(`[${finishedFiles}/${total}] FAILED - ${test}`, 'red'))
+
+          if (variant) console.log('Variant:', variant)
+          console.log(`File timed out after ${timeout}ms`)
+          console.log('='.repeat(96))
         } finally {
-          if (result?.subtests.length > 0) {
+          if (this.#appendReport && result?.subtests.length > 0) {
             writeFileSync(this.#reportPath, JSON.stringify(report))
           }
 
@@ -248,44 +263,49 @@ export class WPTRunner extends EventEmitter {
    * Called after a test has succeeded or failed.
    */
   handleIndividualTestCompletion (message, status, path, meta, wptResult) {
+    this.#stats.completedTests += 1
+
     const { file, topLevel } = status
+    const isFailure = message.result.status === 1
 
-    if (message.type === 'result') {
-      this.#stats.completed += 1
+    const testResult = {
+      status: isFailure ? 'FAIL' : 'PASS',
+      name: sanitizeUnpairedSurrogates(message.result.name)
+    }
 
-      if (message.result.status === 1) {
-        this.#stats.failed += 1
+    if (isFailure) {
+      let isExpectedFailure = false
+      this.#stats.failedTests += 1
 
-        wptResult?.subtests.push({
-          status: 'FAIL',
-          name: sanitizeUnpairedSurrogates(message.result.name),
-          message: sanitizeUnpairedSurrogates(message.result.message)
-        })
+      const name = normalizeName(message.result.name)
+      const sanitizedMessage = sanitizeUnpairedSurrogates(message.result.message)
 
-        const name = normalizeName(message.result.name)
-
-        if (file.flaky?.includes(name)) {
-          this.#stats.expectedFailures += 1
-        } else if (file.allowUnexpectedFailures || topLevel.allowUnexpectedFailures || file.fail?.includes(name)) {
-          if (!file.allowUnexpectedFailures && !topLevel.allowUnexpectedFailures) {
-            if (Array.isArray(file.fail)) {
-              this.#statusOutput[path] ??= []
-              this.#statusOutput[path].push(name)
-            }
+      if (file.flaky?.includes(name)) {
+        isExpectedFailure = true
+        this.#stats.expectedFailures += 1
+        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure })
+      } else if (file.allowUnexpectedFailures || topLevel.allowUnexpectedFailures || file.fail?.includes(name)) {
+        if (!file.allowUnexpectedFailures && !topLevel.allowUnexpectedFailures) {
+          if (Array.isArray(file.fail)) {
+            this.#statusOutput[path] ??= []
+            this.#statusOutput[path].push(name)
           }
-
-          this.#stats.expectedFailures += 1
-        } else {
-          process.exitCode = 1
-          console.error(message.result)
         }
+
+        isExpectedFailure = true
+        this.#stats.expectedFailures += 1
+        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure })
       } else {
-        wptResult?.subtests.push({
-          status: 'PASS',
-          name: sanitizeUnpairedSurrogates(message.result.name)
-        })
-        this.#stats.success += 1
+        wptResult?.subtests.push({ ...testResult, message: sanitizedMessage, isExpectedFailure })
+        process.exitCode = 1
+        console.error(message.result)
       }
+      if (!isExpectedFailure) {
+        process._rawDebug(`Failed test: ${path}`)
+      }
+    } else {
+      this.#stats.passedTests += 1
+      wptResult?.subtests.push(testResult)
     }
   }
 
@@ -307,16 +327,23 @@ export class WPTRunner extends EventEmitter {
     }
 
     this.emit('completion')
-    const { completed, failed, success, expectedFailures, skipped } = this.#stats
+
+    const { passedFiles, failedFiles, skippedFiles } = this.#stats
     console.log(
-      `[${this.#folderName}]: ` +
-      `completed: ${completed}, failed: ${failed}, success: ${success}, ` +
-      `expected failures: ${expectedFailures}, ` +
-      `unexpected failures: ${failed - expectedFailures}, ` +
-      `skipped: ${skipped}`
+      `File results for folder [${this.#folderName}]: ` +
+      `completed: ${this.#files.length}, passed: ${passedFiles}, failed: ${failedFiles}, ` +
+      `skipped: ${skippedFiles}`
     )
 
-    process.exit(failed - expectedFailures ? 1 : process.exitCode)
+    const { completedTests, failedTests, passedTests, expectedFailures } = this.#stats
+    console.log(
+      `Test results for folder [${this.#folderName}]: ` +
+      `completed: ${completedTests}, failed: ${failedTests}, passed: ${passedTests}, ` +
+      `expected failures: ${expectedFailures}, ` +
+      `unexpected failures: ${failedTests - expectedFailures}`
+    )
+
+    process.exit(failedTests - expectedFailures ? 1 : process.exitCode)
   }
 
   addInitScript (code) {

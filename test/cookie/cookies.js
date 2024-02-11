@@ -82,7 +82,7 @@ test('Cookie Name Validation', () => {
           maxAge: 3
         })
       },
-      Error
+      new Error('Invalid cookie name')
     )
   })
 })
@@ -116,7 +116,7 @@ test('Cookie Value Validation', () => {
           }
         )
       },
-      Error,
+      new Error('Invalid header value'),
       "RFC2616 cookie 'Space'"
     )
   })
@@ -128,7 +128,7 @@ test('Cookie Value Validation', () => {
         value: 'United Kingdom'
       })
     },
-    Error,
+    new Error('Invalid header value'),
     "RFC2616 cookie 'location' cannot contain character ' '"
   )
 })
@@ -147,7 +147,7 @@ test('Cookie Path Validation', () => {
         maxAge: 3
       })
     },
-    Error,
+    new Error('Invalid cookie path'),
     path + ": Invalid cookie path char ';'"
   )
 })
@@ -167,7 +167,7 @@ test('Cookie Domain Validation', () => {
           maxAge: 3
         })
       },
-      Error,
+      new Error('Invalid cookie domain'),
       'Invalid first/last char in cookie domain: ' + domain
     )
   })
@@ -598,4 +598,114 @@ test('Set-Cookie parser', () => {
 
   headers = new Headers()
   assert.deepEqual(getSetCookies(headers), [])
+})
+
+test('Cookie setCookie throws if headers is not of type Headers', () => {
+  class Headers {
+    [Symbol.toStringTag] = 'CustomHeaders'
+  }
+  const headers = new Headers()
+  assert.throws(
+    () => {
+      setCookie(headers, {
+        name: 'key',
+        value: 'Cat',
+        httpOnly: true,
+        secure: true,
+        maxAge: 3
+      })
+    },
+    new TypeError('Illegal invocation')
+  )
+})
+
+test('Cookie setCookie does not throw if headers is an instance of undici owns Headers class', () => {
+  const headers = new Headers()
+  setCookie(headers, {
+    name: 'key',
+    value: 'Cat',
+    httpOnly: true,
+    secure: true,
+    maxAge: 3
+  })
+})
+
+test('Cookie setCookie does not throw if headers is an instance of the global Headers class', () => {
+  const headers = new globalThis.Headers()
+  setCookie(headers, {
+    name: 'key',
+    value: 'Cat',
+    httpOnly: true,
+    secure: true,
+    maxAge: 3
+  })
+})
+
+test('Cookie getCookies throws if headers is not of type Headers', () => {
+  class Headers {
+    [Symbol.toStringTag] = 'CustomHeaders'
+  }
+  const headers = new Headers()
+  assert.throws(
+    () => {
+      getCookies(headers)
+    },
+    new TypeError('Illegal invocation')
+  )
+})
+
+test('Cookie getCookies does not throw if headers is an instance of undici owns Headers class', () => {
+  const headers = new Headers()
+  getCookies(headers)
+})
+
+test('Cookie getCookie does not throw if headers is an instance of the global Headers class', () => {
+  const headers = new globalThis.Headers()
+  getCookies(headers)
+})
+
+test('Cookie getSetCookies throws if headers is not of type Headers', () => {
+  class Headers {
+    [Symbol.toStringTag] = 'CustomHeaders'
+  }
+  const headers = new Headers({ 'set-cookie': 'Space=Cat' })
+  assert.throws(
+    () => {
+      getSetCookies(headers)
+    },
+    new TypeError('Illegal invocation')
+  )
+})
+
+test('Cookie getSetCookies does not throw if headers is an instance of undici owns Headers class', () => {
+  const headers = new Headers({ 'set-cookie': 'Space=Cat' })
+  getSetCookies(headers)
+})
+
+test('Cookie setCookie does not throw if headers is an instance of the global Headers class', () => {
+  const headers = new globalThis.Headers({ 'set-cookie': 'Space=Cat' })
+  getSetCookies(headers)
+})
+
+test('Cookie deleteCookie throws if headers is not of type Headers', () => {
+  class Headers {
+    [Symbol.toStringTag] = 'CustomHeaders'
+  }
+  const headers = new Headers()
+  assert.throws(
+    () => {
+      deleteCookie(headers, 'deno')
+    },
+    new TypeError('Illegal invocation')
+  )
+})
+
+test('Cookie deleteCookie does not throw if headers is an instance of undici owns Headers class', () => {
+  const headers = new Headers()
+  deleteCookie(headers, 'deno')
+})
+
+test('Cookie getCookie does not throw if headers is an instance of the global Headers class', () => {
+  const headers = new globalThis.Headers()
+  deleteCookie(headers, 'deno')
 })

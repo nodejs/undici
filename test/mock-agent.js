@@ -26,7 +26,7 @@ test('MockAgent - constructor', t => {
     t.plan(1)
 
     const mockAgent = new MockAgent()
-    t.type(mockAgent, Dispatcher)
+    t.ok(mockAgent instanceof Dispatcher)
   })
 
   t.test('sets up mock agent with single connection', t => {
@@ -62,7 +62,7 @@ test('MockAgent - get', t => {
     t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockClient = mockAgent.get(baseUrl)
-    t.type(mockClient, MockClient)
+    t.ok(mockClient instanceof MockClient)
   })
 
   t.test('should return MockPool', (t) => {
@@ -74,7 +74,7 @@ test('MockAgent - get', t => {
     t.teardown(mockAgent.close.bind(mockAgent))
 
     const mockPool = mockAgent.get(baseUrl)
-    t.type(mockPool, MockPool)
+    t.ok(mockPool instanceof MockPool)
   })
 
   t.test('should return the same instance if already created', (t) => {
@@ -241,7 +241,7 @@ test('MockAgent - .close should clean up registered pools', async (t) => {
 
   // Register a pool
   const mockPool = mockAgent.get(baseUrl)
-  t.type(mockPool, MockPool)
+  t.ok(mockPool instanceof MockPool)
 
   t.equal(mockPool[kConnected], 1)
   t.equal(mockAgent[kClients].size, 1)
@@ -259,7 +259,7 @@ test('MockAgent - .close should clean up registered clients', async (t) => {
 
   // Register a pool
   const mockClient = mockAgent.get(baseUrl)
-  t.type(mockClient, MockClient)
+  t.ok(mockClient instanceof MockClient)
 
   t.equal(mockClient[kConnected], 1)
   t.equal(mockAgent[kClients].size, 1)
@@ -996,7 +996,7 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
   try {
     await request(`${baseUrl}/foo`, { method: 'GET' })
   } catch (err) {
-    t.type(err, ClientDestroyedError)
+    t.ok(err instanceof ClientDestroyedError)
   }
 })
 
@@ -1030,7 +1030,7 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
   try {
     await request(`${baseUrl}/foo`, { method: 'GET' })
   } catch (err) {
-    t.type(err, ClientDestroyedError)
+    t.ok(err instanceof ClientDestroyedError)
   }
 })
 

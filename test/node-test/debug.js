@@ -5,8 +5,11 @@ const { spawn } = require('node:child_process')
 const { join } = require('node:path')
 const { tspl } = require('@matteo.collina/tspl')
 
+// eslint-disable-next-line no-control-regex
+const removeEscapeColorsRE = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g
+
 test('debug#websocket', async t => {
-  const assert = tspl(t, { plan: 5 })
+  const assert = tspl(t, { plan: 8 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/websocket.js')],
@@ -21,31 +24,32 @@ test('debug#websocket', async t => {
     /(WEBSOCKET [0-9]+:) (connecting to)/,
     // Skip the chunk that comes with the experimental warning
     /(\[UNDICI-WS\])/,
+    /\(Use `node --trace-warnings \.\.\.` to show where the warning was created\)/,
     /(WEBSOCKET [0-9]+:) (connected to)/,
     /(WEBSOCKET [0-9]+:) (sending request)/,
     /(WEBSOCKET [0-9]+:) (connection opened)/,
-    /(WEBSOCKET [0-9]+:) (closed connection to)/
+    /(WEBSOCKET [0-9]+:) (closed connection to)/,
+    /^$/
   ]
-
-  t.after(() => {
-    child.kill()
-  })
 
   child.stderr.setEncoding('utf8')
   child.stderr.on('data', chunk => {
     chunks.push(chunk)
   })
   child.stderr.on('end', () => {
-    for (let i = 1; i < chunks.length; i++) {
-      assert.match(chunks[i], assertions[i])
+    const lines = extractLines(chunks)
+    assert.strictEqual(lines.length, assertions.length)
+    for (let i = 1; i < lines.length; i++) {
+      assert.match(lines[i], assertions[i])
     }
   })
 
   await assert.completed
+  child.kill()
 })
 
 test('debug#fetch', async t => {
-  const assert = tspl(t, { plan: 5 })
+  const assert = tspl(t, { plan: 7 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/fetch.js')],
@@ -59,29 +63,29 @@ test('debug#fetch', async t => {
     /(FETCH [0-9]+:) (connected to)/,
     /(FETCH [0-9]+:) (sending request)/,
     /(FETCH [0-9]+:) (received response)/,
-    /(FETCH [0-9]+:) (trailers received)/
+    /(FETCH [0-9]+:) (trailers received)/,
+    /^$/
   ]
-
-  t.after(() => {
-    child.kill()
-  })
 
   child.stderr.setEncoding('utf8')
   child.stderr.on('data', chunk => {
     chunks.push(chunk)
   })
   child.stderr.on('end', () => {
-    for (let i = 0; i < chunks.length; i++) {
-      assert.match(chunks[i], assertions[i])
+    const lines = extractLines(chunks)
+    assert.strictEqual(lines.length, assertions.length)
+    for (let i = 0; i < lines.length; i++) {
+      assert.match(lines[i], assertions[i])
     }
   })
 
   await assert.completed
+  child.kill()
 })
 
 test('debug#undici', async t => {
   // Due to Node.js webpage redirect
-  const assert = tspl(t, { plan: 5 })
+  const assert = tspl(t, { plan: 7 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/undici.js')],
@@ -97,22 +101,29 @@ test('debug#undici', async t => {
     /(UNDICI [0-9]+:) (connected to)/,
     /(UNDICI [0-9]+:) (sending request)/,
     /(UNDICI [0-9]+:) (received response)/,
-    /(UNDICI [0-9]+:) (trailers received)/
+    /(UNDICI [0-9]+:) (trailers received)/,
+    /^$/
   ]
-
-  t.after(() => {
-    child.kill()
-  })
 
   child.stderr.setEncoding('utf8')
   child.stderr.on('data', chunk => {
     chunks.push(chunk)
   })
   child.stderr.on('end', () => {
-    for (let i = 0; i < chunks.length; i++) {
-      assert.match(chunks[i], assertions[i])
+    const lines = extractLines(chunks)
+    assert.strictEqual(lines.length, assertions.length)
+    for (let i = 0; i < lines.length; i++) {
+      assert.match(lines[i], assertions[i])
     }
   })
 
   await assert.completed
+  child.kill()
 })
+
+function extractLines (chunks) {
+  return chunks
+    .join('')
+    .split('\n')
+    .map(v => v.replace(removeEscapeColorsRE, ''))
+}

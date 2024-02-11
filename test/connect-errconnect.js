@@ -11,7 +11,7 @@ test('connect-connectionError', t => {
   t.teardown(client.close.bind(client))
 
   client.once('connectionError', () => {
-    t.pass()
+    t.ok(true, 'pass')
   })
 
   const _err = new Error('kaboom')
