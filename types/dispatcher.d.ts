@@ -98,7 +98,7 @@ declare namespace Dispatcher {
     path: string;
     method: HttpMethod;
     /** Default: `null` */
-    body?: string | Buffer | Uint8Array | Readable | null | FormData;
+    body?: string | Buffer | Uint8Array | Readable | null | FormData | Function;
     /** Default: `null` */
     headers?: IncomingHttpHeaders | string[] | null;
     /** Query string params to be embedded in the request URL. Default: `null` */
