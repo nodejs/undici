@@ -10,7 +10,7 @@ const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
 let nodeFetch
 const axios = require('axios')
-const superagent = require('superagent')
+let superagent
 let got
 
 const util = require('node:util')
@@ -82,6 +82,11 @@ const gotAgent = new http.Agent({
 })
 
 const requestAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: connections
+})
+
+const superagentAgent = new http.Agent({
   keepAlive: true,
   maxSockets: connections
 })
@@ -337,6 +342,9 @@ async function main () {
   nodeFetch = _nodeFetch.default
   const _got = await import('got')
   got = _got.default
+  const _superagent = await import('superagent')
+  // https://github.com/ladjs/superagent/issues/1540#issue-561464561
+  superagent = _superagent.agent().use((req) => req.agent(superagentAgent))
 
   cronometro(
     experiments,
