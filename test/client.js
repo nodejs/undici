@@ -1055,6 +1055,7 @@ test('basic POST with empty stream', (t) => {
       method: 'POST',
       body
     }, (err, { statusCode, headers, body }) => {
+      console.error(err)
       t.error(err)
       body
         .on('data', () => {
