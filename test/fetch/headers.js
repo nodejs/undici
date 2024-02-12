@@ -472,6 +472,21 @@ test('Headers as Iterable', async (t) => {
 
     deepStrictEqual([...headers], expected)
   })
+
+  await t.test('Headers iterator', (t) => {
+    const HeadersIteratorNext = Function.call.bind(Object.getPrototypeOf(new Headers()[Symbol.iterator]()).next)
+
+    const init = [
+      ['a', '1'],
+      ['b', '2']
+    ]
+
+    const headers = new Headers(init)
+    const iterator = headers[Symbol.iterator]()
+    assert.deepStrictEqual(HeadersIteratorNext(iterator), { value: init[0], done: false })
+    assert.deepStrictEqual(HeadersIteratorNext(iterator), { value: init[1], done: false })
+    assert.deepStrictEqual(HeadersIteratorNext(iterator), { value: undefined, done: true })
+  })
 })
 
 test('arg validation', () => {
