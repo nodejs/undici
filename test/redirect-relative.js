@@ -1,15 +1,16 @@
 'use strict'
 
-const t = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test } = require('node:test')
 const { request } = require('..')
 const {
   startRedirectingWithRelativePath
 } = require('./utils/redirecting-servers')
 
-t.test('should redirect to relative URL according to RFC 7231', async t => {
-  t.plan(2)
+test('should redirect to relative URL according to RFC 7231', async t => {
+  t = tspl(t, { plan: 2 })
 
-  const server = await startRedirectingWithRelativePath(t)
+  const server = await startRedirectingWithRelativePath()
 
   const { statusCode, body } = await request(`http://${server}`, {
     maxRedirections: 3
@@ -17,6 +18,6 @@ t.test('should redirect to relative URL according to RFC 7231', async t => {
 
   const finalPath = await body.text()
 
-  t.equal(statusCode, 200)
-  t.equal(finalPath, '/absolute/b')
+  t.strictEqual(statusCode, 200)
+  t.strictEqual(finalPath, '/absolute/b')
 })
