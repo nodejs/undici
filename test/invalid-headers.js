@@ -1,13 +1,14 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 
 test('invalid headers', (t) => {
-  t.plan(10)
+  t = tspl(t, { plan: 10 })
 
   const client = new Client('http://localhost:3000')
-  t.teardown(client.destroy.bind(client))
+  after(() => client.close())
   client.request({
     path: '/',
     method: 'GET',
