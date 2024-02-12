@@ -1,18 +1,19 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test } = require('node:test')
 const { Client } = require('..')
 const { PassThrough } = require('node:stream')
 
-test(t => {
-  t.plan(2)
+test('connect-abort', async t => {
+  t = tspl(t, { plan: 2 })
 
   const client = new Client('http://localhost:1234', {
     connect: (_, cb) => {
       client.destroy()
       cb(null, new PassThrough({
         destroy (err, cb) {
-          t.same(err?.name, 'ClientDestroyedError')
+          t.strictEqual(err.name, 'ClientDestroyedError')
           cb(null)
         }
       }))
@@ -23,6 +24,8 @@ test(t => {
     path: '/',
     method: 'GET'
   }, (err, data) => {
-    t.same(err?.name, 'ClientDestroyedError')
+    t.strictEqual(err.name, 'ClientDestroyedError')
   })
+
+  await t.completed
 })
