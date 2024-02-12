@@ -1,28 +1,26 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { describe, test, after } = require('node:test')
 const { MockInterceptor, MockScope } = require('../lib/mock/mock-interceptor')
 const MockAgent = require('../lib/mock/mock-agent')
 const { kDispatchKey } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
 
-test('MockInterceptor - path', t => {
-  t.plan(1)
-  t.test('should remove hash fragment from paths', t => {
-    t.plan(1)
+describe('MockInterceptor - path', () => {
+  test('should remove hash fragment from paths', t => {
+    t = tspl(t, { plan: 1 })
     const mockInterceptor = new MockInterceptor({
       path: '#foobar',
       method: ''
     }, [])
-    t.equal(mockInterceptor[kDispatchKey].path, '')
+    t.strictEqual(mockInterceptor[kDispatchKey].path, '')
   })
 })
 
-test('MockInterceptor - reply', t => {
-  t.plan(2)
-
-  t.test('should return MockScope', t => {
-    t.plan(1)
+describe('MockInterceptor - reply', () => {
+  test('should return MockScope', t => {
+    t = tspl(t, { plan: 1 })
     const mockInterceptor = new MockInterceptor({
       path: '',
       method: ''
@@ -31,8 +29,8 @@ test('MockInterceptor - reply', t => {
     t.ok(result instanceof MockScope)
   })
 
-  t.test('should error if passed options invalid', t => {
-    t.plan(2)
+  test('should error if passed options invalid', t => {
+    t = tspl(t, { plan: 2 })
 
     const mockInterceptor = new MockInterceptor({
       path: '',
@@ -43,11 +41,9 @@ test('MockInterceptor - reply', t => {
   })
 })
 
-test('MockInterceptor - reply callback', t => {
-  t.plan(2)
-
-  t.test('should return MockScope', t => {
-    t.plan(1)
+describe('MockInterceptor - reply callback', () => {
+  test('should return MockScope', t => {
+    t = tspl(t, { plan: 1 })
     const mockInterceptor = new MockInterceptor({
       path: '',
       method: ''
@@ -56,23 +52,21 @@ test('MockInterceptor - reply callback', t => {
     t.ok(result instanceof MockScope)
   })
 
-  t.test('should error if passed options invalid', t => {
-    t.plan(2)
+  test('should error if passed options invalid', t => {
+    t = tspl(t, { plan: 2 })
 
     const mockInterceptor = new MockInterceptor({
       path: '',
       method: ''
     }, [])
     t.throws(() => mockInterceptor.reply(), new InvalidArgumentError('statusCode must be defined'))
-    t.throws(() => mockInterceptor.reply(200, () => {}, 'hello'), new InvalidArgumentError('responseOptions must be an object'))
+    t.throws(() => mockInterceptor.reply(200, () => { }, 'hello'), new InvalidArgumentError('responseOptions must be an object'))
   })
 })
 
-test('MockInterceptor - reply options callback', t => {
-  t.plan(2)
-
-  t.test('should return MockScope', t => {
-    t.plan(2)
+describe('MockInterceptor - reply options callback', () => {
+  test('should return MockScope', t => {
+    t = tspl(t, { plan: 2 })
 
     const mockInterceptor = new MockInterceptor({
       path: '',
@@ -88,7 +82,7 @@ test('MockInterceptor - reply options callback', t => {
 
     const baseUrl = 'http://localhost:9999'
     const mockAgent = new MockAgent()
-    t.teardown(mockAgent.close.bind(mockAgent))
+    after(() => mockAgent.close())
 
     const mockPool = mockAgent.get(baseUrl)
 
@@ -96,7 +90,7 @@ test('MockInterceptor - reply options callback', t => {
       path: '/test',
       method: 'GET'
     }).reply((options) => {
-      t.strictSame(options, { path: '/test', method: 'GET', headers: { foo: 'bar' } })
+      t.deepStrictEqual(options, { path: '/test', method: 'GET', headers: { foo: 'bar' } })
       return { statusCode: 200, data: 'hello' }
     })
 
@@ -105,25 +99,25 @@ test('MockInterceptor - reply options callback', t => {
       method: 'GET',
       headers: { foo: 'bar' }
     }, {
-      onHeaders: () => {},
-      onData: () => {},
-      onComplete: () => {}
+      onHeaders: () => { },
+      onData: () => { },
+      onComplete: () => { }
     })
   })
 
-  t.test('should error if passed options invalid', async (t) => {
-    t.plan(3)
+  test('should error if passed options invalid', async (t) => {
+    t = tspl(t, { plan: 3 })
 
     const baseUrl = 'http://localhost:9999'
     const mockAgent = new MockAgent()
-    t.teardown(mockAgent.close.bind(mockAgent))
+    after(() => mockAgent.close())
 
     const mockPool = mockAgent.get(baseUrl)
 
     mockPool.intercept({
       path: '/test',
       method: 'GET'
-    }).reply(() => {})
+    }).reply(() => { })
 
     mockPool.intercept({
       path: '/test3',
@@ -146,36 +140,34 @@ test('MockInterceptor - reply options callback', t => {
       path: '/test',
       method: 'GET'
     }, {
-      onHeaders: () => {},
-      onData: () => {},
-      onComplete: () => {}
+      onHeaders: () => { },
+      onData: () => { },
+      onComplete: () => { }
     }), new InvalidArgumentError('reply options callback must return an object'))
 
     t.throws(() => mockPool.dispatch({
       path: '/test3',
       method: 'GET'
     }, {
-      onHeaders: () => {},
-      onData: () => {},
-      onComplete: () => {}
+      onHeaders: () => { },
+      onData: () => { },
+      onComplete: () => { }
     }), new InvalidArgumentError('responseOptions must be an object'))
 
     t.throws(() => mockPool.dispatch({
       path: '/test4',
       method: 'GET'
     }, {
-      onHeaders: () => {},
-      onData: () => {},
-      onComplete: () => {}
+      onHeaders: () => { },
+      onData: () => { },
+      onComplete: () => { }
     }), new InvalidArgumentError('statusCode must be defined'))
   })
 })
 
-test('MockInterceptor - replyWithError', t => {
-  t.plan(2)
-
-  t.test('should return MockScope', t => {
-    t.plan(1)
+describe('MockInterceptor - replyWithError', () => {
+  test('should return MockScope', t => {
+    t = tspl(t, { plan: 1 })
     const mockInterceptor = new MockInterceptor({
       path: '',
       method: ''
@@ -184,8 +176,8 @@ test('MockInterceptor - replyWithError', t => {
     t.ok(result instanceof MockScope)
   })
 
-  t.test('should error if passed options invalid', t => {
-    t.plan(1)
+  test('should error if passed options invalid', t => {
+    t = tspl(t, { plan: 1 })
 
     const mockInterceptor = new MockInterceptor({
       path: '',
@@ -195,11 +187,9 @@ test('MockInterceptor - replyWithError', t => {
   })
 })
 
-test('MockInterceptor - defaultReplyHeaders', t => {
-  t.plan(2)
-
-  t.test('should return MockInterceptor', t => {
-    t.plan(1)
+describe('MockInterceptor - defaultReplyHeaders', () => {
+  test('should return MockInterceptor', t => {
+    t = tspl(t, { plan: 1 })
     const mockInterceptor = new MockInterceptor({
       path: '',
       method: ''
@@ -208,8 +198,8 @@ test('MockInterceptor - defaultReplyHeaders', t => {
     t.ok(result instanceof MockInterceptor)
   })
 
-  t.test('should error if passed options invalid', t => {
-    t.plan(1)
+  test('should error if passed options invalid', t => {
+    t = tspl(t, { plan: 1 })
 
     const mockInterceptor = new MockInterceptor({
       path: '',
@@ -219,11 +209,9 @@ test('MockInterceptor - defaultReplyHeaders', t => {
   })
 })
 
-test('MockInterceptor - defaultReplyTrailers', t => {
-  t.plan(2)
-
-  t.test('should return MockInterceptor', t => {
-    t.plan(1)
+describe('MockInterceptor - defaultReplyTrailers', () => {
+  test('should return MockInterceptor', t => {
+    t = tspl(t, { plan: 1 })
     const mockInterceptor = new MockInterceptor({
       path: '',
       method: ''
@@ -232,8 +220,8 @@ test('MockInterceptor - defaultReplyTrailers', t => {
     t.ok(result instanceof MockInterceptor)
   })
 
-  t.test('should error if passed options invalid', t => {
-    t.plan(1)
+  test('should error if passed options invalid', t => {
+    t = tspl(t, { plan: 1 })
 
     const mockInterceptor = new MockInterceptor({
       path: '',
@@ -243,11 +231,9 @@ test('MockInterceptor - defaultReplyTrailers', t => {
   })
 })
 
-test('MockInterceptor - replyContentLength', t => {
-  t.plan(1)
-
-  t.test('should return MockInterceptor', t => {
-    t.plan(1)
+describe('MockInterceptor - replyContentLength', () => {
+  test('should return MockInterceptor', t => {
+    t = tspl(t, { plan: 1 })
     const mockInterceptor = new MockInterceptor({
       path: '',
       method: ''
