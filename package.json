@@ -108,7 +108,7 @@
     "axios": "^1.6.5",
     "borp": "^0.9.1",
     "concurrently": "^8.0.1",
-    "cronometro": "^2.0.2",
+    "cronometro": "^3.0.1",
     "dns-packet": "^5.4.0",
     "docsify-cli": "^4.4.3",
     "form-data": "^4.0.0",
