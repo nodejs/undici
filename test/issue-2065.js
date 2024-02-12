@@ -1,18 +1,21 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { createReadStream } = require('node:fs')
 const { File, FormData, request } = require('..')
 
 test('undici.request with a FormData body should set content-length header', async (t) => {
+  t = tspl(t, { plan: 1 })
+
   const server = createServer((req, res) => {
     t.ok(req.headers['content-length'])
     res.end()
   }).listen(0)
 
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   await once(server, 'listening')
 
   const body = new FormData()
@@ -25,12 +28,14 @@ test('undici.request with a FormData body should set content-length header', asy
 })
 
 test('undici.request with a FormData stream value should set transfer-encoding header', async (t) => {
+  t = tspl(t, { plan: 1 })
+
   const server = createServer((req, res) => {
-    t.equal(req.headers['transfer-encoding'], 'chunked')
+    t.strictEqual(req.headers['transfer-encoding'], 'chunked')
     res.end()
   }).listen(0)
 
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   await once(server, 'listening')
 
   class BlobFromStream {
