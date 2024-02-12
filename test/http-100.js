@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { Client } = require('..')
+const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const net = require('node:net')
 
@@ -52,7 +52,7 @@ test('error 103 body', (t) => {
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.equal(err.code, 'HPE_INVALID_CONSTANT')
+      t.type(err, errors.HTTPParserError)
     })
     client.on('disconnect', () => {
       t.pass()

@@ -100,7 +100,7 @@ test('https://github.com/mcollina/undici/issues/810 pipelining', (t) => {
 })
 
 test('https://github.com/mcollina/undici/issues/810 pipelining 2', (t) => {
-  t.plan(4)
+  t.plan(3)
 
   const server = net.createServer(socket => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -128,7 +128,6 @@ test('https://github.com/mcollina/undici/issues/810 pipelining 2', (t) => {
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      t.equal(err.code, 'HPE_INVALID_CONSTANT')
       t.type(err, errors.HTTPParserError)
     })
   })

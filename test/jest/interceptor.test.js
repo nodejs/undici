@@ -143,14 +143,6 @@ describe('interceptors with NtlmRequestHandler', () => {
         return this.handler.onComplete(...args)
       }
     }
-
-    onBodySent (...args) {
-      if (this.requestCount < 2) {
-        // Do nothing
-      } else {
-        return this.handler.onBodySent(...args)
-      }
-    }
   }
   let server
 
