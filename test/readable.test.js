@@ -1,9 +1,12 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test } = require('node:test')
 const Readable = require('../lib/api/readable')
 
 test('avoid body reordering', async function (t) {
+  t = tspl(t, { plan: 1 })
+
   function resume () {
   }
   function abort () {
@@ -19,28 +22,25 @@ test('avoid body reordering', async function (t) {
 
   const text = await r.text()
 
-  t.equal(text, 'helloworld')
+  t.strictEqual(text, 'helloworld')
 })
 
 test('destroy timing text', async function (t) {
-  t.plan(1)
+  t = tspl(t, { plan: 1 })
 
   function resume () {
   }
   function abort () {
   }
-  const _err = new Error('kaboom')
+
   const r = new Readable({ resume, abort })
-  r.destroy(_err)
-  try {
-    await r.text()
-  } catch (err) {
-    t.same(err, _err)
-  }
+  r.destroy(new Error('kaboom'))
+
+  t.rejects(r.text(), new Error('kaboom'))
 })
 
 test('destroy timing promise', async function (t) {
-  t.plan(1)
+  t = tspl(t, { plan: 1 })
 
   function resume () {
   }
