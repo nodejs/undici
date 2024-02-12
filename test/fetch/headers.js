@@ -474,7 +474,7 @@ test('Headers as Iterable', async (t) => {
   })
 
   await t.test('always use the same prototype Iterator', (t) => {
-    const HeadersIteratorNext = Function.call.bind(Object.getPrototypeOf(new Headers()[Symbol.iterator]()).next)
+    const HeadersIteratorNext = Function.call.bind(new Headers()[Symbol.iterator]().next)
 
     const init = [
       ['a', '1'],
