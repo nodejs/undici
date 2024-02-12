@@ -473,7 +473,7 @@ test('Headers as Iterable', async (t) => {
     deepStrictEqual([...headers], expected)
   })
 
-  await t.test('Headers iterator', (t) => {
+  await t.test('always use the same prototype Iterator', (t) => {
     const HeadersIteratorNext = Function.call.bind(Object.getPrototypeOf(new Headers()[Symbol.iterator]()).next)
 
     const init = [
