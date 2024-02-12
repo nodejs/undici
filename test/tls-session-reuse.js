@@ -1,10 +1,11 @@
 'use strict'
 
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after, describe } = require('node:test')
 const { readFileSync } = require('node:fs')
 const { join } = require('node:path')
 const https = require('node:https')
 const crypto = require('node:crypto')
-const { test, teardown } = require('tap')
 const { Client, Pool } = require('..')
 const { kSocket } = require('../lib/core/symbols')
 
@@ -14,12 +15,12 @@ const options = {
 }
 const ca = readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
 
-test('A client should disable session caching', t => {
+describe('A client should disable session caching', () => {
   const clientSessions = {}
   let serverRequests = 0
 
-  t.test('Prepare request', t => {
-    t.plan(3)
+  test('Prepare request', async t => {
+    t = tspl(t, { plan: 3 })
     const server = https.createServer(options, (req, res) => {
       if (req.url === '/drop-key') {
         server.setTicketKeys(crypto.randomBytes(48))
@@ -40,7 +41,7 @@ test('A client should disable session caching', t => {
         maxCachedSessions: 0
       })
 
-      t.teardown(() => {
+      after(() => {
         client.close()
         server.close()
       })
@@ -64,7 +65,7 @@ test('A client should disable session caching', t => {
           delete tls.ciphers
         }
         client.request(options, (err, data) => {
-          t.error(err)
+          t.ifError(err)
           clientSessions[options.name] = client[kSocket].getSession()
           data.body.resume().on('end', () => {
             if (queue.length !== 0) {
@@ -76,28 +77,29 @@ test('A client should disable session caching', t => {
       }
       request()
     })
+
+    await t.completed
   })
 
-  t.test('Verify cached sessions', t => {
-    t.plan(2)
-    t.equal(serverRequests, 2)
-    t.not(
+  test('Verify cached sessions', async t => {
+    t = tspl(t, { plan: 2 })
+    t.strictEqual(serverRequests, 2)
+    t.notEqual(
       clientSessions.first.toString('hex'),
       clientSessions.second.toString('hex')
     )
+    await t.completed
   })
-
-  t.end()
 })
 
-test('A pool should be able to reuse TLS sessions between clients', t => {
+describe('A pool should be able to reuse TLS sessions between clients', () => {
   let serverRequests = 0
 
   const REQ_COUNT = 10
   const ASSERT_PERFORMANCE_GAIN = false
 
-  t.test('Prepare request', t => {
-    t.plan(2 + 1 + (ASSERT_PERFORMANCE_GAIN ? 1 : 0))
+  test('Prepare request', async t => {
+    t = tspl(t, { plan: 2 + 1 + (ASSERT_PERFORMANCE_GAIN ? 1 : 0) })
     const server = https.createServer(options, (req, res) => {
       serverRequests++
       res.end()
@@ -137,7 +139,7 @@ test('A pool should be able to reuse TLS sessions between clients', t => {
         numSessions++
       })
 
-      t.teardown(() => {
+      after(() => {
         poolWithSessionReuse.close()
         poolWithoutSessionReuse.close()
         server.close()
@@ -168,13 +170,11 @@ test('A pool should be able to reuse TLS sessions between clients', t => {
       await runRequests(poolWithoutSessionReuse, REQ_COUNT, false)
       await runRequests(poolWithSessionReuse, REQ_COUNT, true)
 
-      t.equal(numSessions, 2)
-      t.equal(serverRequests, 2 + REQ_COUNT * 2)
+      t.strictEqual(numSessions, 2)
+      t.strictEqual(serverRequests, 2 + REQ_COUNT * 2)
       t.ok(true, 'pass')
     })
+
+    await t.completed
   })
-
-  t.end()
 })
-
-teardown(() => process.exit())
