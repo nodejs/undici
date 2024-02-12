@@ -1,19 +1,22 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after, describe } = require('node:test')
 const { Client, Pool, errors } = require('..')
 const net = require('node:net')
+const assert = require('node:assert')
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(ms))
 
-test('prioritize socket errors over timeouts', (t) => {
-  t.plan(1)
+// Using describe instead of test to avoid the timeout
+describe('prioritize socket errors over timeouts', () => {
+  const t = tspl({ ...assert, after: () => {} }, { plan: 1 })
   const connectTimeout = 1000
   const client = new Pool('http://foobar.bar:1234', { connectTimeout: 2 })
 
   client.request({ method: 'GET', path: '/foobar' })
     .then(() => t.fail())
     .catch((err) => {
-      t.equal(err.code, 'ENOTFOUND')
+      t.strictEqual(err.code, 'ENOTFOUND')
     })
 
   // block for 1s which is enough for the dns lookup to complete and TO to fire
@@ -25,13 +28,13 @@ net.connect = function (options) {
   return new net.Socket(options)
 }
 
-test('connect-timeout', t => {
-  t.plan(1)
+test('connect-timeout', async t => {
+  t = tspl(t, { plan: 1 })
 
   const client = new Client('http://localhost:9000', {
     connectTimeout: 1e3
   })
-  t.teardown(client.close.bind(client))
+  after(() => client.close())
 
   const timeout = setTimeout(() => {
     t.fail()
@@ -44,15 +47,17 @@ test('connect-timeout', t => {
     t.ok(err instanceof errors.ConnectTimeoutError)
     clearTimeout(timeout)
   })
+
+  await t.completed
 })
 
-test('connect-timeout', t => {
-  t.plan(1)
+test('connect-timeout', async t => {
+  t = tspl(t, { plan: 1 })
 
   const client = new Pool('http://localhost:9000', {
     connectTimeout: 1e3
   })
-  t.teardown(client.close.bind(client))
+  after(() => client.close())
 
   const timeout = setTimeout(() => {
     t.fail()
@@ -65,4 +70,6 @@ test('connect-timeout', t => {
     t.ok(err instanceof errors.ConnectTimeoutError)
     clearTimeout(timeout)
   })
+
+  await t.completed
 })
