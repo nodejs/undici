@@ -36,7 +36,7 @@ test('destroy timing text', async function (t) {
   const r = new Readable({ resume, abort })
   r.destroy(new Error('kaboom'))
 
-  t.rejects(r.text(), new Error('kaboom'))
+  await t.rejects(r.text(), new Error('kaboom'))
 })
 
 test('destroy timing promise', async function (t) {
