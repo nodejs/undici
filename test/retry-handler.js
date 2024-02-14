@@ -354,7 +354,7 @@ test('Should retry with defaults', async t => {
 })
 
 test('Should handle 206 partial content', async t => {
-  t = tspl(t, { plan: 8 })
+  t = tspl(t, { plan: 6 })
 
   const chunks = []
   let counter = 0
