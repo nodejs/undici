@@ -1,20 +1,20 @@
 'use strict'
 
-const { test, skip } = require('node:test')
+const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 
 let diagnosticsChannel
+let skip = false
 
 try {
   diagnosticsChannel = require('node:diagnostics_channel')
 } catch {
-  skip('missing diagnostics_channel')
-  process.exit(0)
+  skip = true
 }
 
 const { Client } = require('../../..')
 
-test('Diagnostics channel - connect error', (t) => {
+test('Diagnostics channel - connect error', { skip }, (t) => {
   const connectError = new Error('custom error')
   const assert = tspl(t, { plan: 16 })
 
