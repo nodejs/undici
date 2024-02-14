@@ -6,11 +6,7 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:net')
 const { Client, Pool } = require('..')
 
-const skip = (
-  typeof WeakRef === 'undefined' ||
-  typeof FinalizationRegistry === 'undefined' ||
-  typeof global.gc === 'undefined'
-)
+const skip = typeof global.gc === 'undefined'
 
 setInterval(() => {
   global.gc()

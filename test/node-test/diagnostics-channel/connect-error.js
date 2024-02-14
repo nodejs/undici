@@ -2,19 +2,10 @@
 
 const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
-
-let diagnosticsChannel
-let skip = false
-
-try {
-  diagnosticsChannel = require('node:diagnostics_channel')
-} catch {
-  skip = true
-}
-
+const diagnosticsChannel = require('node:diagnostics_channel')
 const { Client } = require('../../..')
 
-test('Diagnostics channel - connect error', { skip }, (t) => {
+test('Diagnostics channel - connect error', (t) => {
   const connectError = new Error('custom error')
   const assert = tspl(t, { plan: 16 })
 

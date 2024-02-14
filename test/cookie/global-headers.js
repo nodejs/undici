@@ -10,11 +10,8 @@ const {
 } = require('../..')
 const { getHeadersList } = require('../../lib/cookies/util')
 
-/* global Headers */
-const skip = !globalThis.Headers
-
 describe('Using global Headers', async () => {
-  test('deleteCookies', { skip }, () => {
+  test('deleteCookies', () => {
     const headers = new Headers()
 
     assert.equal(headers.get('set-cookie'), null)
@@ -22,7 +19,7 @@ describe('Using global Headers', async () => {
     assert.equal(headers.get('set-cookie'), 'undici=; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
   })
 
-  test('getCookies', { skip }, () => {
+  test('getCookies', () => {
     const headers = new Headers({
       cookie: 'get=cookies; and=attributes'
     })
@@ -30,7 +27,7 @@ describe('Using global Headers', async () => {
     assert.deepEqual(getCookies(headers), { get: 'cookies', and: 'attributes' })
   })
 
-  test('getSetCookies', { skip }, () => {
+  test('getSetCookies', () => {
     const headers = new Headers({
       'set-cookie': 'undici=getSetCookies; Secure'
     })
@@ -50,7 +47,7 @@ describe('Using global Headers', async () => {
     }
   })
 
-  test('setCookie', { skip }, () => {
+  test('setCookie', () => {
     const headers = new Headers()
 
     setCookie(headers, { name: 'undici', value: 'setCookie' })

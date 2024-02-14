@@ -2,20 +2,11 @@
 
 const { test, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
-
-let diagnosticsChannel
-let skip = false
-
-try {
-  diagnosticsChannel = require('node:diagnostics_channel')
-} catch {
-  skip = true
-}
-
+const diagnosticsChannel = require('node:diagnostics_channel')
 const { Client } = require('../../../')
 const { createServer } = require('node:http')
 
-test('Diagnostics channel - post', { skip }, (t) => {
+test('Diagnostics channel - post', (t) => {
   const assert = tspl(t, { plan: 33 })
   const server = createServer((req, res) => {
     req.resume()

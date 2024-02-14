@@ -3,20 +3,11 @@
 const { test, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const { Readable } = require('node:stream')
-
-let diagnosticsChannel
-let skip = false
-
-try {
-  diagnosticsChannel = require('node:diagnostics_channel')
-} catch {
-  skip = true
-}
-
+const diagnosticsChannel = require('node:diagnostics_channel')
 const { Client } = require('../../..')
 const { createServer } = require('node:http')
 
-test('Diagnostics channel - post stream', { skip }, (t) => {
+test('Diagnostics channel - post stream', (t) => {
   const assert = tspl(t, { plan: 33 })
   const server = createServer((req, res) => {
     req.resume()
