@@ -101,6 +101,8 @@ if (EXTERNAL_PATH) {
   writeFileSync(join(ROOT, 'loader.js'), `
 'use strict'
 
+globalThis.__UNDICI_IS_NODE__ = true
 module.exports = require('node:module').createRequire('${EXTERNAL_PATH}/loader.js')('./index-fetch.js')
+delete globalThis.__UNDICI_IS_NODE__
 `)
 }

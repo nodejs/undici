@@ -1,13 +1,16 @@
 'use strict'
+
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-
-const tap = require('tap')
 
 const { RetryHandler, Client } = require('..')
 const { RequestHandler } = require('../lib/api/api-request')
 
-tap.test('Should retry status code', t => {
+test('Should retry status code', async t => {
+  t = tspl(t, { plan: 4 })
+
   let counter = 0
   const chunks = []
   const server = createServer()
@@ -34,8 +37,6 @@ tap.test('Should retry status code', t => {
     }
   }
 
-  t.plan(4)
-
   server.on('request', (req, res) => {
     switch (counter) {
       case 0:
@@ -60,10 +61,10 @@ tap.test('Should retry status code', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
-          t.equal(status, 200)
+          t.strictEqual(status, 200)
           return true
         },
         onData (chunk) {
@@ -71,8 +72,8 @@ tap.test('Should retry status code', t => {
           return true
         },
         onComplete () {
-          t.equal(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
-          t.equal(counter, 2)
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
+          t.strictEqual(counter, 2)
         },
         onError () {
           t.fail()
@@ -80,7 +81,7 @@ tap.test('Should retry status code', t => {
       }
     })
 
-    t.teardown(async () => {
+    after(async () => {
       await client.close()
       server.close()
 
@@ -98,9 +99,13 @@ tap.test('Should retry status code', t => {
       handler
     )
   })
+
+  await t.completed
 })
 
-tap.test('Should use retry-after header for retries', t => {
+test('Should use retry-after header for retries', async t => {
+  t = tspl(t, { plan: 4 })
+
   let counter = 0
   const chunks = []
   const server = createServer()
@@ -112,8 +117,6 @@ tap.test('Should use retry-after header for retries', t => {
       'content-type': 'application/json'
     }
   }
-
-  t.plan(4)
 
   server.on('request', (req, res) => {
     switch (counter) {
@@ -142,10 +145,10 @@ tap.test('Should use retry-after header for retries', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
-          t.equal(status, 200)
+          t.strictEqual(status, 200)
           return true
         },
         onData (chunk) {
@@ -153,15 +156,15 @@ tap.test('Should use retry-after header for retries', t => {
           return true
         },
         onComplete () {
-          t.equal(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
         },
         onError (err) {
-          t.error(err)
+          t.ifError(err)
         }
       }
     })
 
-    t.teardown(async () => {
+    after(async () => {
       await client.close()
       server.close()
 
@@ -179,9 +182,13 @@ tap.test('Should use retry-after header for retries', t => {
       handler
     )
   })
+
+  await t.completed
 })
 
-tap.test('Should use retry-after header for retries (date)', t => {
+test('Should use retry-after header for retries (date)', async t => {
+  t = tspl(t, { plan: 4 })
+
   let counter = 0
   const chunks = []
   const server = createServer()
@@ -193,8 +200,6 @@ tap.test('Should use retry-after header for retries (date)', t => {
       'content-type': 'application/json'
     }
   }
-
-  t.plan(4)
 
   server.on('request', (req, res) => {
     switch (counter) {
@@ -225,10 +230,10 @@ tap.test('Should use retry-after header for retries (date)', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
-          t.equal(status, 200)
+          t.strictEqual(status, 200)
           return true
         },
         onData (chunk) {
@@ -236,15 +241,15 @@ tap.test('Should use retry-after header for retries (date)', t => {
           return true
         },
         onComplete () {
-          t.equal(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
         },
         onError (err) {
-          t.error(err)
+          t.ifError(err)
         }
       }
     })
 
-    t.teardown(async () => {
+    after(async () => {
       await client.close()
       server.close()
 
@@ -262,9 +267,13 @@ tap.test('Should use retry-after header for retries (date)', t => {
       handler
     )
   })
+
+  await t.completed
 })
 
-tap.test('Should retry with defaults', t => {
+test('Should retry with defaults', async t => {
+  t = tspl(t, { plan: 3 })
+
   let counter = 0
   const chunks = []
   const server = createServer()
@@ -297,18 +306,16 @@ tap.test('Should retry with defaults', t => {
     }
   })
 
-  t.plan(3)
-
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
-          t.equal(status, 200)
+          t.strictEqual(status, 200)
           return true
         },
         onData (chunk) {
@@ -316,15 +323,15 @@ tap.test('Should retry with defaults', t => {
           return true
         },
         onComplete () {
-          t.equal(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
         },
         onError (err) {
-          t.error(err)
+          t.ifError(err)
         }
       }
     })
 
-    t.teardown(async () => {
+    after(async () => {
       await client.close()
       server.close()
 
@@ -342,9 +349,13 @@ tap.test('Should retry with defaults', t => {
       handler
     )
   })
+
+  await t.completed
 })
 
-tap.test('Should handle 206 partial content', t => {
+test('Should handle 206 partial content', async t => {
+  t = tspl(t, { plan: 8 })
+
   const chunks = []
   let counter = 0
 
@@ -352,14 +363,14 @@ tap.test('Should handle 206 partial content', t => {
   let x = 0
   const server = createServer((req, res) => {
     if (x === 0) {
-      t.pass()
+      t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.same(req.headers.range, 'bytes=3-')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-')
       res.setHeader('content-range', 'bytes 3-6/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
@@ -389,8 +400,6 @@ tap.test('Should handle 206 partial content', t => {
     }
   }
 
-  t.plan(6)
-
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
@@ -399,10 +408,10 @@ tap.test('Should handle 206 partial content', t => {
       },
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
-          t.equal(status, 200)
+          t.strictEqual(status, 200)
           return true
         },
         onData (chunk) {
@@ -410,8 +419,8 @@ tap.test('Should handle 206 partial content', t => {
           return true
         },
         onComplete () {
-          t.equal(Buffer.concat(chunks).toString('utf-8'), 'abcdef')
-          t.equal(counter, 1)
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abcdef')
+          t.strictEqual(counter, 1)
         },
         onError () {
           t.fail()
@@ -430,30 +439,34 @@ tap.test('Should handle 206 partial content', t => {
       handler
     )
 
-    t.teardown(async () => {
+    after(async () => {
       await client.close()
 
       server.close()
       await once(server, 'close')
     })
   })
+
+  await t.completed
 })
 
-tap.test('Should handle 206 partial content - bad-etag', t => {
+test('Should handle 206 partial content - bad-etag', async t => {
+  t = tspl(t, { plan: 6 })
+
   const chunks = []
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
   const server = createServer((req, res) => {
     if (x === 0) {
-      t.pass()
+      t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.same(req.headers.range, 'bytes=3-')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-')
       res.setHeader('content-range', 'bytes 3-6/6')
       res.setHeader('etag', 'erwsd')
       res.statusCode = 206
@@ -470,8 +483,6 @@ tap.test('Should handle 206 partial content - bad-etag', t => {
     }
   }
 
-  t.plan(6)
-
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const handler = new RetryHandler(
@@ -482,10 +493,10 @@ tap.test('Should handle 206 partial content - bad-etag', t => {
         },
         handler: {
           onConnect () {
-            t.pass()
+            t.ok(true, 'pass')
           },
           onHeaders (status, _rawHeaders, resume, _statusMessage) {
-            t.pass()
+            t.ok(true, 'pass')
             return true
           },
           onData (chunk) {
@@ -493,11 +504,11 @@ tap.test('Should handle 206 partial content - bad-etag', t => {
             return true
           },
           onComplete () {
-            t.error('should not complete')
+            t.ifError('should not complete')
           },
           onError (err) {
-            t.equal(Buffer.concat(chunks).toString('utf-8'), 'abc')
-            t.equal(err.code, 'UND_ERR_REQ_RETRY')
+            t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
+            t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
           }
         }
       }
@@ -514,16 +525,18 @@ tap.test('Should handle 206 partial content - bad-etag', t => {
       handler
     )
 
-    t.teardown(async () => {
+    after(async () => {
       await client.close()
 
       server.close()
       await once(server, 'close')
     })
   })
+
+  await t.completed
 })
 
-tap.test('retrying a request with a body', t => {
+test('retrying a request with a body', async t => {
   let counter = 0
   const server = createServer()
   const dispatchOptions = {
@@ -550,7 +563,7 @@ tap.test('retrying a request with a body', t => {
     body: JSON.stringify({ hello: 'world' })
   }
 
-  t.plan(1)
+  t = tspl(t, { plan: 1 })
 
   server.on('request', (req, res) => {
     switch (counter) {
@@ -575,11 +588,11 @@ tap.test('retrying a request with a body', t => {
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: new RequestHandler(dispatchOptions, (err, data) => {
-        t.error(err)
+        t.ifError(err)
       })
     })
 
-    t.teardown(async () => {
+    after(async () => {
       await client.close()
       server.close()
 
@@ -598,16 +611,18 @@ tap.test('retrying a request with a body', t => {
       handler
     )
   })
+
+  await t.completed
 })
 
-tap.test('should not error if request is not meant to be retried', t => {
+test('should not error if request is not meant to be retried', async t => {
+  t = tspl(t, { plan: 3 })
+
   const server = createServer()
   server.on('request', (req, res) => {
     res.writeHead(400)
     res.end('Bad request')
   })
-
-  t.plan(3)
 
   const dispatchOptions = {
     retryOptions: {
@@ -626,10 +641,10 @@ tap.test('should not error if request is not meant to be retried', t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.pass()
+          t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
-          t.equal(status, 400)
+          t.strictEqual(status, 400)
           return true
         },
         onData (chunk) {
@@ -637,7 +652,7 @@ tap.test('should not error if request is not meant to be retried', t => {
           return true
         },
         onComplete () {
-          t.equal(Buffer.concat(chunks).toString('utf-8'), 'Bad request')
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'Bad request')
         },
         onError (err) {
           console.log({ err })
@@ -646,7 +661,7 @@ tap.test('should not error if request is not meant to be retried', t => {
       }
     })
 
-    t.teardown(async () => {
+    after(async () => {
       await client.close()
       server.close()
 
@@ -664,4 +679,6 @@ tap.test('should not error if request is not meant to be retried', t => {
       handler
     )
   })
+
+  await t.completed
 })

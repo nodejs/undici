@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 const EE = require('node:events')
 const { createServer } = require('node:http')
@@ -12,30 +13,30 @@ const {
   PassThrough
 } = require('node:stream')
 
-test('pipeline get', (t) => {
-  t.plan(17)
+test('pipeline get', async (t) => {
+  t = tspl(t, { plan: 17 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
-    t.equal(`localhost:${server.address().port}`, req.headers.host)
-    t.equal(undefined, req.headers['content-length'])
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual(undefined, req.headers['content-length'])
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     {
       const bufs = []
       const signal = new EE()
       client.pipeline({ signal, path: '/', method: 'GET' }, ({ statusCode, headers, body }) => {
-        t.equal(statusCode, 200)
-        t.equal(headers['content-type'], 'text/plain')
-        t.equal(signal.listenerCount('abort'), 1)
+        t.strictEqual(statusCode, 200)
+        t.strictEqual(headers['content-type'], 'text/plain')
+        t.strictEqual(signal.listenerCount('abort'), 1)
         return body
       })
         .end()
@@ -43,19 +44,19 @@ test('pipeline get', (t) => {
           bufs.push(buf)
         })
         .on('end', () => {
-          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+          t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
         })
         .on('close', () => {
-          t.equal(signal.listenerCount('abort'), 0)
+          t.strictEqual(signal.listenerCount('abort'), 0)
         })
-      t.equal(signal.listenerCount('abort'), 1)
+      t.strictEqual(signal.listenerCount('abort'), 1)
     }
 
     {
       const bufs = []
       client.pipeline({ path: '/', method: 'GET' }, ({ statusCode, headers, body }) => {
-        t.equal(statusCode, 200)
-        t.equal(headers['content-type'], 'text/plain')
+        t.strictEqual(statusCode, 200)
+        t.strictEqual(headers['content-type'], 'text/plain')
         return body
       })
         .end()
@@ -63,23 +64,25 @@ test('pipeline get', (t) => {
           bufs.push(buf)
         })
         .on('end', () => {
-          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+          t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
         })
     }
   })
+
+  await t.completed
 })
 
-test('pipeline echo', (t) => {
-  t.plan(2)
+test('pipeline echo', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     let res = ''
     const buf1 = Buffer.alloc(1e3).toString()
@@ -104,19 +107,21 @@ test('pipeline echo', (t) => {
           callback()
         },
         final (callback) {
-          t.equal(res, buf1 + buf2)
+          t.strictEqual(res, buf1 + buf2)
           callback()
         }
       }),
       (err) => {
-        t.error(err)
+        t.ifError(err)
       }
     )
   })
+
+  await t.completed
 })
 
-test('pipeline ignore request body', (t) => {
-  t.plan(2)
+test('pipeline ignore request body', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   let done
   const server = createServer((req, res) => {
@@ -124,11 +129,11 @@ test('pipeline ignore request body', (t) => {
     res.end()
     done()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     let res = ''
     const buf1 = Buffer.alloc(1e3).toString()
@@ -153,71 +158,77 @@ test('pipeline ignore request body', (t) => {
           callback()
         },
         final (callback) {
-          t.equal(res, 'asd')
+          t.strictEqual(res, 'asd')
           callback()
         }
       }),
       (err) => {
-        t.error(err)
+        t.ifError(err)
       }
     )
   })
+
+  await t.completed
 })
 
-test('pipeline invalid handler', (t) => {
-  t.plan(1)
+test('pipeline invalid handler', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const client = new Client('http://localhost:5000')
   client.pipeline({}, null).on('error', (err) => {
     t.ok(/handler/.test(err))
   })
+
+  await t.completed
 })
 
-test('pipeline invalid handler return after destroy should not error', (t) => {
-  t.plan(3)
+test('pipeline invalid handler return after destroy should not error', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 3
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const dup = client.pipeline({
       path: '/',
       method: 'GET'
     }, ({ body }) => {
       body.on('error', (err) => {
-        t.equal(err.message, 'asd')
+        t.strictEqual(err.message, 'asd')
       })
       dup.destroy(new Error('asd'))
       return {}
     })
       .on('error', (err) => {
-        t.equal(err.message, 'asd')
+        t.strictEqual(err.message, 'asd')
       })
       .on('close', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline error body', (t) => {
-  t.plan(2)
+test('pipeline error body', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     const buf = Buffer.alloc(1e6).toString()
     pipeline(
@@ -245,19 +256,21 @@ test('pipeline error body', (t) => {
       }
     )
   })
+
+  await t.completed
 })
 
-test('pipeline destroy body', (t) => {
-  t.plan(2)
+test('pipeline destroy body', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     const buf = Buffer.alloc(1e6).toString()
     pipeline(
@@ -285,19 +298,21 @@ test('pipeline destroy body', (t) => {
       }
     )
   })
+
+  await t.completed
 })
 
-test('pipeline backpressure', (t) => {
-  t.plan(1)
+test('pipeline backpressure', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const buf = Buffer.alloc(1e6).toString()
     const duplex = client.pipeline({
@@ -315,22 +330,24 @@ test('pipeline backpressure', (t) => {
         duplex.resume()
       })
     }).on('end', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
+
+  await t.completed
 })
 
-test('pipeline invalid handler return', (t) => {
-  t.plan(2)
+test('pipeline invalid handler return', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -340,7 +357,7 @@ test('pipeline invalid handler return', (t) => {
       body.on('error', () => {})
     })
       .on('error', (err) => {
-        t.type(err, errors.InvalidReturnValueError)
+        t.ok(err instanceof errors.InvalidReturnValueError)
       })
       .end()
 
@@ -353,23 +370,25 @@ test('pipeline invalid handler return', (t) => {
       return {}
     })
       .on('error', (err) => {
-        t.type(err, errors.InvalidReturnValueError)
+        t.ok(err instanceof errors.InvalidReturnValueError)
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline throw handler', (t) => {
-  t.plan(1)
+test('pipeline throw handler', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -380,23 +399,25 @@ test('pipeline throw handler', (t) => {
       throw new Error('asd')
     })
       .on('error', (err) => {
-        t.equal(err.message, 'asd')
+        t.strictEqual(err.message, 'asd')
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline destroy and throw handler', (t) => {
-  t.plan(2)
+test('pipeline destroy and throw handler', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const dup = client.pipeline({
       path: '/',
@@ -409,27 +430,29 @@ test('pipeline destroy and throw handler', (t) => {
     })
       .end()
       .on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
       .on('close', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
   })
+
+  await t.completed
 })
 
-test('pipeline abort res', (t) => {
-  t.plan(2)
+test('pipeline abort res', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   let _res
   const server = createServer((req, res) => {
     res.write('asd')
     _res = res
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -443,29 +466,31 @@ test('pipeline abort res', (t) => {
         }, 100)
         client.on('disconnect', () => {
           clearTimeout(timeout)
-          t.pass()
+          t.ok(true, 'pass')
         })
       })
       return body
     })
       .on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline abort server res', (t) => {
-  t.plan(1)
+test('pipeline abort server res', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.destroy()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -474,29 +499,31 @@ test('pipeline abort server res', (t) => {
       t.fail()
     })
       .on('error', (err) => {
-        t.type(err, errors.SocketError)
+        t.ok(err instanceof errors.SocketError)
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline abort duplex', (t) => {
-  t.plan(2)
+test('pipeline abort duplex', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({
       path: '/',
       method: 'PUT'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body.resume()
 
       client.pipeline({
@@ -505,23 +532,25 @@ test('pipeline abort duplex', (t) => {
       }, () => {
         t.fail()
       }).destroy().on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
     })
   })
+
+  await t.completed
 })
 
-test('pipeline abort piped res', (t) => {
-  t.plan(1)
+test('pipeline abort piped res', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.write('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -534,23 +563,25 @@ test('pipeline abort piped res', (t) => {
       return pipeline(body, pt, () => {})
     })
       .on('error', (err) => {
-        t.equal(err.code, 'UND_ERR_ABORTED')
+        t.strictEqual(err.code, 'UND_ERR_ABORTED')
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline abort piped res 2', (t) => {
-  t.plan(2)
+test('pipeline abort piped res 2', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.write('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -558,7 +589,7 @@ test('pipeline abort piped res 2', (t) => {
     }, ({ body }) => {
       const pt = new PassThrough()
       body.on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
       setImmediate(() => {
         pt.destroy()
@@ -567,23 +598,25 @@ test('pipeline abort piped res 2', (t) => {
       return pt
     })
       .on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline abort piped res 3', (t) => {
-  t.plan(2)
+test('pipeline abort piped res 3', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.write('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -591,7 +624,7 @@ test('pipeline abort piped res 3', (t) => {
     }, ({ body }) => {
       const pt = new PassThrough()
       body.on('error', (err) => {
-        t.equal(err.message, 'asd')
+        t.strictEqual(err.message, 'asd')
       })
       setImmediate(() => {
         pt.destroy(new Error('asd'))
@@ -600,25 +633,27 @@ test('pipeline abort piped res 3', (t) => {
       return pt
     })
       .on('error', (err) => {
-        t.equal(err.message, 'asd')
+        t.strictEqual(err.message, 'asd')
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline abort server res after headers', (t) => {
-  t.plan(1)
+test('pipeline abort server res after headers', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   let _res
   const server = createServer((req, res) => {
     res.write('asd')
     _res = res
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -628,25 +663,27 @@ test('pipeline abort server res after headers', (t) => {
       return data.body
     })
       .on('error', (err) => {
-        t.type(err, errors.SocketError)
+        t.ok(err instanceof errors.SocketError)
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline w/ write abort server res after headers', (t) => {
-  t.plan(1)
+test('pipeline w/ write abort server res after headers', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   let _res
   const server = createServer((req, res) => {
     req.pipe(res)
     _res = res
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -656,26 +693,28 @@ test('pipeline w/ write abort server res after headers', (t) => {
       return data.body
     })
       .on('error', (err) => {
-        t.type(err, errors.SocketError)
+        t.ok(err instanceof errors.SocketError)
       })
       .resume()
       .write('asd')
   })
+
+  await t.completed
 })
 
-test('destroy in push', (t) => {
-  t.plan(3)
+test('destroy in push', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   let _res
   const server = createServer((req, res) => {
     res.write('asd')
     _res = res
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.pipeline({ path: '/', method: 'GET' }, ({ body }) => {
       body.once('data', () => {
@@ -698,36 +737,40 @@ test('destroy in push', (t) => {
         buf = chunk.toString()
         _res.end()
       }).on('end', () => {
-        t.equal('asd', buf)
+        t.strictEqual('asd', buf)
       })
       return body
     }).resume().end()
   })
+
+  await t.completed
 })
 
-test('pipeline args validation', (t) => {
-  t.plan(2)
+test('pipeline args validation', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const client = new Client('http://localhost:5000')
 
   const ret = client.pipeline(null, () => {})
   ret.on('error', (err) => {
     t.ok(/opts/.test(err.message))
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
+
+  await t.completed
 })
 
-test('pipeline factory throw not unhandled', (t) => {
-  t.plan(1)
+test('pipeline factory throw not unhandled', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.write('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -740,19 +783,21 @@ test('pipeline factory throw not unhandled', (t) => {
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline destroy before dispatch', (t) => {
-  t.plan(1)
+test('pipeline destroy before dispatch', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client
       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
@@ -764,10 +809,12 @@ test('pipeline destroy before dispatch', (t) => {
       .end()
       .destroy()
   })
+
+  await t.completed
 })
 
-test('pipeline legacy stream', (t) => {
-  t.plan(1)
+test('pipeline legacy stream', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.write(Buffer.alloc(16e3))
@@ -775,11 +822,11 @@ test('pipeline legacy stream', (t) => {
       res.end(Buffer.alloc(16e3))
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client
       .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
@@ -789,23 +836,25 @@ test('pipeline legacy stream', (t) => {
       })
       .resume()
       .on('end', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline objectMode', (t) => {
-  t.plan(1)
+test('pipeline objectMode', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end(JSON.stringify({ asd: 1 }))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client
       .pipeline({ path: '/', method: 'GET', objectMode: true }, ({ body }) => {
@@ -817,26 +866,28 @@ test('pipeline objectMode', (t) => {
         }), () => {})
       })
       .on('data', data => {
-        t.strictSame(data, { asd: 1 })
+        t.deepStrictEqual(data, { asd: 1 })
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline invalid opts', (t) => {
-  t.plan(2)
+test('pipeline invalid opts', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end(JSON.stringify({ asd: 1 }))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.close((err) => {
-      t.error(err)
+      t.ifError(err)
     })
     client
       .pipeline({ path: '/', method: 'GET', objectMode: true }, ({ body }) => {
@@ -846,19 +897,21 @@ test('pipeline invalid opts', (t) => {
         t.ok(err)
       })
   })
+
+  await t.completed
 })
 
-test('pipeline CONNECT throw', (t) => {
-  t.plan(1)
+test('pipeline CONNECT throw', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -866,25 +919,27 @@ test('pipeline CONNECT throw', (t) => {
     }, () => {
       t.fail()
     }).on('error', (err) => {
-      t.type(err, errors.InvalidArgumentError)
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
     client.on('disconnect', () => {
       t.fail()
     })
   })
+
+  await t.completed
 })
 
-test('pipeline body without destroy', (t) => {
-  t.plan(1)
+test('pipeline body without destroy', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.pipeline({
       path: '/',
@@ -896,24 +951,26 @@ test('pipeline body without destroy', (t) => {
     })
       .end()
       .on('end', () => {
-        t.pass()
+        t.ok(true, 'pass')
       })
       .resume()
   })
+
+  await t.completed
 })
 
-test('pipeline ignore 1xx', (t) => {
-  t.plan(1)
+test('pipeline ignore 1xx', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.writeProcessing()
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     let buf = ''
     client.pipeline({
@@ -924,24 +981,27 @@ test('pipeline ignore 1xx', (t) => {
         buf += chunk
       })
       .on('end', () => {
-        t.equal(buf, 'hello')
+        t.strictEqual(buf, 'hello')
       })
       .end()
   })
+
+  await t.completed
 })
-test('pipeline ignore 1xx and use onInfo', (t) => {
-  t.plan(3)
+
+test('pipeline ignore 1xx and use onInfo', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const infos = []
   const server = createServer((req, res) => {
     res.writeProcessing()
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     let buf = ''
     client.pipeline({
@@ -955,16 +1015,18 @@ test('pipeline ignore 1xx and use onInfo', (t) => {
         buf += chunk
       })
       .on('end', () => {
-        t.equal(buf, 'hello')
-        t.equal(infos.length, 1)
-        t.equal(infos[0].statusCode, 102)
+        t.strictEqual(buf, 'hello')
+        t.strictEqual(infos.length, 1)
+        t.strictEqual(infos[0].statusCode, 102)
       })
       .end()
   })
+
+  await t.completed
 })
 
-test('pipeline backpressure', (t) => {
-  t.plan(1)
+test('pipeline backpressure', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const expected = Buffer.alloc(1e6).toString()
 
@@ -972,11 +1034,11 @@ test('pipeline backpressure', (t) => {
     res.writeProcessing()
     res.end(expected)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     let buf = ''
     client.pipeline({
@@ -996,13 +1058,15 @@ test('pipeline backpressure', (t) => {
         buf += chunk
       })
       .on('end', () => {
-        t.equal(buf, expected)
+        t.strictEqual(buf, expected)
       })
   })
+
+  await t.completed
 })
 
-test('pipeline abort after headers', (t) => {
-  t.plan(1)
+test('pipeline abort after headers', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.writeProcessing()
@@ -1011,11 +1075,11 @@ test('pipeline abort after headers', (t) => {
       res.write('asd')
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const signal = new EE()
     client.pipeline({
@@ -1030,7 +1094,9 @@ test('pipeline abort after headers', (t) => {
     })
       .end()
       .on('error', (err) => {
-        t.type(err, errors.RequestAbortedError)
+        t.ok(err instanceof errors.RequestAbortedError)
       })
   })
+
+  await t.completed
 })

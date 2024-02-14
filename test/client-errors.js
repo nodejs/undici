@@ -1,28 +1,31 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client } = require('..')
 const net = require('node:net')
 
 // TODO: move to test/node-test/client-connect.js
-test('parser error', (t) => {
-  t.plan(2)
+test('parser error', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = net.createServer()
   server.once('connection', (socket) => {
     socket.write('asd\n\r213123')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err) => {
       t.ok(err)
       client.close((err) => {
-        t.error(err)
+        t.ifError(err)
       })
     })
   })
+
+  await t.completed
 })

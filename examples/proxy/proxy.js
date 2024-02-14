@@ -1,6 +1,8 @@
+'use strict'
+
 const net = require('node:net')
 const { pipeline } = require('node:stream')
-const createError = require('http-errors')
+const { STATUS_CODES } = require('node:http')
 
 module.exports = async function proxy (ctx, client) {
   const { req, socket, proxyName } = ctx
@@ -214,13 +216,13 @@ function getHeaders ({
     ].join(';'))
   } else if (forwarded) {
     // The forwarded header should not be included in response.
-    throw new createError.BadGateway()
+    throw new BadGateway()
   }
 
   if (proxyName) {
     if (via) {
       if (via.split(',').some(name => name.endsWith(proxyName))) {
-        throw new createError.LoopDetected()
+        throw new LoopDetected()
       }
       via += ', '
     }
@@ -253,4 +255,64 @@ function printIp (address, port) {
     str = `"${str}"`
   }
   return str
+}
+
+class BadGateway extends Error {
+  constructor (message = STATUS_CODES[502]) {
+    super(message)
+  }
+
+  toString () {
+    return `BadGatewayError: ${this.message}`
+  }
+
+  get name () {
+    return 'BadGatewayError'
+  }
+
+  get status () {
+    return 502
+  }
+
+  get statusCode () {
+    return 502
+  }
+
+  get expose () {
+    return false
+  }
+
+  get headers () {
+    return undefined
+  }
+}
+
+class LoopDetected extends Error {
+  constructor (message = STATUS_CODES[508]) {
+    super(message)
+  }
+
+  toString () {
+    return `LoopDetectedError: ${this.message}`
+  }
+
+  get name () {
+    return 'LoopDetectedError'
+  }
+
+  get status () {
+    return 508
+  }
+
+  get statusCode () {
+    return 508
+  }
+
+  get expose () {
+    return false
+  }
+
+  get headers () {
+    return undefined
+  }
 }

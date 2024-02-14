@@ -1,12 +1,14 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
+const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 
-test('request timeout with slow readable body', (t) => {
-  t.plan(1)
+test('request timeout with slow readable body', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer(async (req, res) => {
     let str = ''
@@ -15,34 +17,37 @@ test('request timeout with slow readable body', (t) => {
     }
     res.end(str)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 50 })
-    t.teardown(client.close.bind(client))
+  server.listen(0)
 
-    const body = new Readable({
-      read () {
-        if (this._reading) {
-          return
-        }
-        this._reading = true
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 50 })
+  after(() => client.close())
 
-        this.push('asd')
-        setTimeout(() => {
-          this.push('asd')
-          this.push(null)
-        }, 2e3)
+  const body = new Readable({
+    read () {
+      if (this._reading) {
+        return
       }
-    })
-    client.request({
-      path: '/',
-      method: 'POST',
-      headersTimeout: 1e3,
-      body
-    }, async (err, response) => {
-      t.error(err)
-      await response.body.dump()
-    })
+      this._reading = true
+
+      this.push('asd')
+      setTimeout(() => {
+        this.push('asd')
+        this.push(null)
+      }, 2e3)
+    }
   })
+  client.request({
+    path: '/',
+    method: 'POST',
+    headersTimeout: 1e3,
+    body
+  }, async (err, response) => {
+    t.ifError(err)
+    await response.body.dump()
+  })
+
+  await t.completed
 })
