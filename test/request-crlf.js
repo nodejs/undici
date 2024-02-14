@@ -1,11 +1,13 @@
 'use strict'
 
+const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('node:http')
-const { test } = require('tap')
+const { test, after } = require('node:test')
 const { request, errors } = require('..')
+const { once } = require('node:events')
 
-test('should validate content-type CRLF Injection', (t) => {
-  t.plan(2)
+test('should validate content-type CRLF Injection', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     t.fail('should not receive any request')
@@ -13,20 +15,22 @@ test('should validate content-type CRLF Injection', (t) => {
     res.end('hello')
   })
 
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, async () => {
-    try {
-      await request(`http://localhost:${server.address().port}`, {
-        method: 'GET',
-        headers: {
-          'content-type': 'application/json\r\n\r\nGET /foo2 HTTP/1.1'
-        }
-      })
-      t.fail('request should fail')
-    } catch (e) {
-      t.type(e, errors.InvalidArgumentError)
-      t.equal(e.message, 'invalid content-type header')
-    }
-  })
+  server.listen(0)
+
+  await once(server, 'listening')
+  try {
+    await request(`http://localhost:${server.address().port}`, {
+      method: 'GET',
+      headers: {
+        'content-type': 'application/json\r\n\r\nGET /foo2 HTTP/1.1'
+      }
+    })
+    t.fail('request should fail')
+  } catch (e) {
+    t.ok(e instanceof errors.InvalidArgumentError)
+    t.strictEqual(e.message, 'invalid content-type header')
+  }
+  await t.completed
 })

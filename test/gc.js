@@ -1,18 +1,23 @@
 'use strict'
 /* global WeakRef, FinalizationRegistry */
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { createServer } = require('node:net')
 const { Client, Pool } = require('..')
 
-const SKIP = typeof WeakRef === 'undefined' || typeof FinalizationRegistry === 'undefined'
+const SKIP = (
+  typeof WeakRef === 'undefined' ||
+  typeof FinalizationRegistry === 'undefined' ||
+  typeof global.gc === 'undefined'
+)
 
 setInterval(() => {
   global.gc()
 }, 100).unref()
 
-test('gc should collect the client if, and only if, there are no active sockets', { skip: SKIP }, t => {
-  t.plan(4)
+test('gc should collect the client if, and only if, there are no active sockets', { skip: SKIP }, async t => {
+  t = tspl(t, { plan: 4 })
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -21,15 +26,15 @@ test('gc should collect the client if, and only if, there are no active sockets'
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   let weakRef
   let disconnected = false
 
   const registry = new FinalizationRegistry((data) => {
-    t.equal(data, 'test')
-    t.equal(disconnected, true)
-    t.equal(weakRef.deref(), undefined)
+    t.strictEqual(data, 'test')
+    t.strictEqual(disconnected, true)
+    t.strictEqual(weakRef.deref(), undefined)
   })
 
   server.listen(0, () => {
@@ -47,14 +52,16 @@ test('gc should collect the client if, and only if, there are no active sockets'
       path: '/',
       method: 'GET'
     }, (err, { body }) => {
-      t.error(err)
+      t.ifError(err)
       body.resume()
     })
   })
+
+  await t.completed
 })
 
-test('gc should collect the pool if, and only if, there are no active sockets', { skip: SKIP }, t => {
-  t.plan(4)
+test('gc should collect the pool if, and only if, there are no active sockets', { skip: SKIP }, async t => {
+  t = tspl(t, { plan: 4 })
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -63,15 +70,15 @@ test('gc should collect the pool if, and only if, there are no active sockets', 
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   let weakRef
   let disconnected = false
 
   const registry = new FinalizationRegistry((data) => {
-    t.equal(data, 'test')
-    t.equal(disconnected, true)
-    t.equal(weakRef.deref(), undefined)
+    t.strictEqual(data, 'test')
+    t.strictEqual(disconnected, true)
+    t.strictEqual(weakRef.deref(), undefined)
   })
 
   server.listen(0, () => {
@@ -91,8 +98,10 @@ test('gc should collect the pool if, and only if, there are no active sockets', 
       path: '/',
       method: 'GET'
     }, (err, { body }) => {
-      t.error(err)
+      t.ifError(err)
       body.resume()
     })
   })
+
+  await t.completed
 })

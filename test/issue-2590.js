@@ -1,14 +1,16 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { request } = require('..')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 
 test('aborting request with custom reason', async (t) => {
+  t = tspl(t, { plan: 3 })
   const server = createServer(() => {}).listen(0)
 
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   await once(server, 'listening')
 
   const timeout = AbortSignal.timeout(0)
@@ -25,11 +27,13 @@ test('aborting request with custom reason', async (t) => {
 
   await t.rejects(
     request(`http://localhost:${server.address().port}`, { signal: ac.signal }),
-    ac.signal.reason
+    /Request aborted/
   )
 
   await t.rejects(
     request(`http://localhost:${server.address().port}`, { signal: ac2.signal }),
     { code: 'UND_ERR_ABORTED' }
   )
+
+  await t.completed
 })

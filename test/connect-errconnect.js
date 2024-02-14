@@ -1,17 +1,18 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client } = require('..')
 const net = require('node:net')
 
-test('connect-connectionError', t => {
-  t.plan(2)
+test('connect-connectionError', async t => {
+  t = tspl(t, { plan: 2 })
 
   const client = new Client('http://localhost:9000')
-  t.teardown(client.close.bind(client))
+  after(() => client.close())
 
   client.once('connectionError', () => {
-    t.pass()
+    t.ok(true, 'pass')
   })
 
   const _err = new Error('kaboom')
@@ -27,6 +28,8 @@ test('connect-connectionError', t => {
     path: '/',
     method: 'GET'
   }, (err) => {
-    t.equal(err, _err)
+    t.strictEqual(err, _err)
   })
+
+  await t.completed
 })

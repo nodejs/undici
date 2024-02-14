@@ -1,21 +1,22 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
 
-test('request invalid content-length', (t) => {
-  t.plan(7)
+test('request invalid content-length', async (t) => {
+  t = tspl(t, { plan: 7 })
 
   const server = createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.close())
 
     client.request({
       path: '/',
@@ -25,7 +26,7 @@ test('request invalid content-length', (t) => {
       },
       body: 'asd'
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -36,7 +37,7 @@ test('request invalid content-length', (t) => {
       },
       body: 'asdasdasdasdasdasda'
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -47,7 +48,7 @@ test('request invalid content-length', (t) => {
       },
       body: Buffer.alloc(9)
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -58,7 +59,7 @@ test('request invalid content-length', (t) => {
       },
       body: Buffer.alloc(11)
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -69,7 +70,7 @@ test('request invalid content-length', (t) => {
       },
       body: ['asd']
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -80,7 +81,7 @@ test('request invalid content-length', (t) => {
       },
       body: ['asasdasdasdd']
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -91,27 +92,29 @@ test('request invalid content-length', (t) => {
       },
       body: ['asasdasdasdd']
     }, (err, data) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
   })
+
+  await t.completed
 })
 
 function invalidContentLength (bodyType) {
-  test(`request streaming ${bodyType} invalid content-length`, (t) => {
-    t.plan(4)
+  test(`request streaming ${bodyType} invalid content-length`, async (t) => {
+    t = tspl(t, { plan: 4 })
 
     const server = createServer((req, res) => {
       res.end()
     })
-    t.teardown(server.close.bind(server))
+    after(() => server.close())
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
-      t.teardown(client.destroy.bind(client))
+      after(() => client.close())
 
       client.once('disconnect', () => {
-        t.pass()
+        t.ok(true, 'pass')
         client.once('disconnect', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
       })
 
@@ -130,7 +133,7 @@ function invalidContentLength (bodyType) {
           }
         }), bodyType)
       }, (err, data) => {
-        t.type(err, errors.RequestContentLengthMismatchError)
+        t.ok(err instanceof errors.RequestContentLengthMismatchError)
       })
 
       client.request({
@@ -148,9 +151,10 @@ function invalidContentLength (bodyType) {
           }
         }), bodyType)
       }, (err, data) => {
-        t.type(err, errors.RequestContentLengthMismatchError)
+        t.ok(err instanceof errors.RequestContentLengthMismatchError)
       })
     })
+    await t.completed
   })
 }
 
@@ -158,16 +162,16 @@ invalidContentLength(consts.STREAM)
 invalidContentLength(consts.ASYNC_ITERATOR)
 
 function zeroContentLength (bodyType) {
-  test(`request ${bodyType} streaming data when content-length=0`, (t) => {
-    t.plan(1)
+  test(`request ${bodyType} streaming data when content-length=0`, async (t) => {
+    t = tspl(t, { plan: 1 })
 
     const server = createServer((req, res) => {
       res.end()
     })
-    t.teardown(server.close.bind(server))
+    after(() => server.close())
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`)
-      t.teardown(client.destroy.bind(client))
+      after(() => client.close())
 
       client.request({
         path: '/',
@@ -184,25 +188,26 @@ function zeroContentLength (bodyType) {
           }
         }), bodyType)
       }, (err, data) => {
-        t.type(err, errors.RequestContentLengthMismatchError)
+        t.ok(err instanceof errors.RequestContentLengthMismatchError)
       })
     })
+    await t.completed
   })
 }
 
 zeroContentLength(consts.STREAM)
 zeroContentLength(consts.ASYNC_ITERATOR)
 
-test('request streaming no body data when content-length=0', (t) => {
-  t.plan(2)
+test('request streaming no body data when content-length=0', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.close())
 
     client.request({
       path: '/',
@@ -211,20 +216,22 @@ test('request streaming no body data when content-length=0', (t) => {
         'content-length': 0
       }
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body
         .on('data', () => {
           t.fail()
         })
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })
+
+  await t.completed
 })
 
-test('response invalid content length with close', (t) => {
-  t.plan(3)
+test('response invalid content length with close', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     res.writeHead(200, {
@@ -232,42 +239,44 @@ test('response invalid content length with close', (t) => {
     })
     res.end('123')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 0
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.close())
 
     client.on('disconnect', (origin, client, err) => {
-      t.equal(err.code, 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
+      t.strictEqual(err.code, 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
     })
 
     client.request({
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body
         .on('end', () => {
           t.fail()
         })
         .on('error', (err) => {
-          t.equal(err.code, 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
+          t.strictEqual(err.code, 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
         })
         .resume()
     })
   })
+
+  await t.completed
 })
 
-test('request streaming with Readable.from(buf)', (t) => {
+test('request streaming with Readable.from(buf)', async (t) => {
   const server = createServer((req, res) => {
     req.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.close())
 
     client.request({
       path: '/',
@@ -275,32 +284,34 @@ test('request streaming with Readable.from(buf)', (t) => {
       body: Readable.from(Buffer.from('hello'))
     }, (err, data) => {
       const chunks = []
-      t.error(err)
+      t.ifError(err)
       data.body
         .on('data', (chunk) => {
           chunks.push(chunk)
         })
         .on('end', () => {
-          t.equal(Buffer.concat(chunks).toString(), 'hello')
-          t.pass()
+          t.strictEqual(Buffer.concat(chunks).toString(), 'hello')
+          t.ok(true, 'pass')
           t.end()
         })
     })
   })
+
+  await t.completed
 })
 
-test('request DELETE, content-length=0, with body', (t) => {
-  t.plan(5)
+test('request DELETE, content-length=0, with body', async (t) => {
+  t = tspl(t, { plan: 5 })
   const server = createServer((req, res) => {
     res.end()
   })
   server.on('request', (req, res) => {
-    t.equal(req.headers['content-length'], undefined)
+    t.strictEqual(req.headers['content-length'], undefined)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.close())
 
     client.request({
       path: '/',
@@ -315,7 +326,7 @@ test('request DELETE, content-length=0, with body', (t) => {
         }
       })
     }, (err) => {
-      t.type(err, errors.RequestContentLengthMismatchError)
+      t.ok(err instanceof errors.RequestContentLengthMismatchError)
     })
 
     client.request({
@@ -325,38 +336,41 @@ test('request DELETE, content-length=0, with body', (t) => {
         'content-length': 0
       }
     }, (err, resp) => {
-      t.equal(resp.headers['content-length'], '0')
-      t.error(err)
+      t.strictEqual(resp.headers['content-length'], '0')
+      t.ifError(err)
     })
 
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
+
+  await t.completed
 })
 
-test('content-length shouldSendContentLength=false', (t) => {
-  t.plan(15)
+test('content-length shouldSendContentLength=false', async (t) => {
+  t = tspl(t, { plan: 15 })
+
   const server = createServer((req, res) => {
     res.end()
   })
   server.on('request', (req, res) => {
     switch (req.url) {
       case '/put0':
-        t.equal(req.headers['content-length'], '0')
+        t.strictEqual(req.headers['content-length'], '0')
         break
       case '/head':
-        t.equal(req.headers['content-length'], undefined)
+        t.strictEqual(req.headers['content-length'], undefined)
         break
       case '/get':
-        t.equal(req.headers['content-length'], undefined)
+        t.strictEqual(req.headers['content-length'], undefined)
         break
     }
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.close())
 
     client.request({
       path: '/put0',
@@ -365,8 +379,8 @@ test('content-length shouldSendContentLength=false', (t) => {
         'content-length': 0
       }
     }, (err, resp) => {
-      t.equal(resp.headers['content-length'], '0')
-      t.error(err)
+      t.strictEqual(resp.headers['content-length'], '0')
+      t.ifError(err)
     })
 
     client.request({
@@ -376,8 +390,8 @@ test('content-length shouldSendContentLength=false', (t) => {
         'content-length': 10
       }
     }, (err, resp) => {
-      t.equal(resp.headers['content-length'], undefined)
-      t.error(err)
+      t.strictEqual(resp.headers['content-length'], undefined)
+      t.ifError(err)
     })
 
     client.request({
@@ -387,7 +401,7 @@ test('content-length shouldSendContentLength=false', (t) => {
         'content-length': 0
       }
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
     })
 
     client.request({
@@ -403,7 +417,7 @@ test('content-length shouldSendContentLength=false', (t) => {
         }
       })
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
     })
 
     client.request({
@@ -419,7 +433,7 @@ test('content-length shouldSendContentLength=false', (t) => {
         }
       })
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
     })
 
     client.request({
@@ -435,11 +449,13 @@ test('content-length shouldSendContentLength=false', (t) => {
         }
       })
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
     })
 
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
+
+  await t.completed
 })

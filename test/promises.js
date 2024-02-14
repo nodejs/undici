@@ -1,47 +1,50 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client, Pool } = require('..')
 const { createServer } = require('node:http')
 const { readFileSync, createReadStream } = require('node:fs')
 const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 
-test('basic get, async await support', (t) => {
-  t.plan(5)
+test('basic get, async await support', async (t) => {
+  t = tspl(t, { plan: 5 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     try {
       const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     } catch (err) {
       t.fail(err)
     }
   })
+
+  await t.completed
 })
 
 function postServer (t, expected) {
   return function (req, res) {
-    t.equal(req.url, '/')
-    t.equal(req.method, 'POST')
+    t.strictEqual(req.url, '/')
+    t.strictEqual(req.method, 'POST')
 
     req.setEncoding('utf8')
     let data = ''
@@ -49,79 +52,83 @@ function postServer (t, expected) {
     req.on('data', function (d) { data += d })
 
     req.on('end', () => {
-      t.equal(data, expected)
+      t.strictEqual(data, expected)
       res.end('hello')
     })
   }
 }
 
-test('basic POST with string, async await support', (t) => {
-  t.plan(5)
+test('basic POST with string, async await support', async (t) => {
+  t = tspl(t, { plan: 5 })
 
   const expected = readFileSync(__filename, 'utf8')
 
   const server = createServer(postServer(t, expected))
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     try {
       const { statusCode, body } = await client.request({ path: '/', method: 'POST', body: expected })
-      t.equal(statusCode, 200)
+      t.strictEqual(statusCode, 200)
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     } catch (err) {
       t.fail(err)
     }
   })
+
+  await t.completed
 })
 
-test('basic POST with Buffer, async await support', (t) => {
-  t.plan(5)
+test('basic POST with Buffer, async await support', async (t) => {
+  t = tspl(t, { plan: 5 })
 
   const expected = readFileSync(__filename)
 
   const server = createServer(postServer(t, expected.toString()))
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     try {
       const { statusCode, body } = await client.request({ path: '/', method: 'POST', body: expected })
-      t.equal(statusCode, 200)
+      t.strictEqual(statusCode, 200)
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     } catch (err) {
       t.fail(err)
     }
   })
+
+  await t.completed
 })
 
-test('basic POST with stream, async await support', (t) => {
-  t.plan(5)
+test('basic POST with stream, async await support', async (t) => {
+  t = tspl(t, { plan: 5 })
 
   const expected = readFileSync(__filename, 'utf8')
 
   const server = createServer(postServer(t, expected))
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     try {
       const { statusCode, body } = await client.request({
@@ -132,31 +139,33 @@ test('basic POST with stream, async await support', (t) => {
         },
         body: createReadStream(__filename)
       })
-      t.equal(statusCode, 200)
+      t.strictEqual(statusCode, 200)
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     } catch (err) {
       t.fail(err)
     }
   })
+
+  await t.completed
 })
 
-test('basic POST with async-iterator, async await support', (t) => {
-  t.plan(5)
+test('basic POST with async-iterator, async await support', async (t) => {
+  t = tspl(t, { plan: 5 })
 
   const expected = readFileSync(__filename, 'utf8')
 
   const server = createServer(postServer(t, expected))
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     try {
       const { statusCode, body } = await client.request({
@@ -167,23 +176,25 @@ test('basic POST with async-iterator, async await support', (t) => {
         },
         body: wrapWithAsyncIterable(createReadStream(__filename))
       })
-      t.equal(statusCode, 200)
+      t.strictEqual(statusCode, 200)
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     } catch (err) {
       t.fail(err)
     }
   })
+
+  await t.completed
 })
 
-test('20 times GET with pipelining 10, async await support', (t) => {
+test('20 times GET with pipelining 10, async await support', async (t) => {
   const num = 20
-  t.plan(2 * num + 1)
+  t = tspl(t, { plan: 2 * num + 1 })
 
   const sleep = ms => new Promise((resolve, reject) => {
     setTimeout(resolve, ms)
@@ -197,7 +208,7 @@ test('20 times GET with pipelining 10, async await support', (t) => {
     countGreaterThanOne = countGreaterThanOne || count > 1
     res.end(req.url)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   // needed to check for a warning on the maxListeners on the socket
   function onWarning (warning) {
@@ -206,7 +217,7 @@ test('20 times GET with pipelining 10, async await support', (t) => {
     }
   }
   process.on('warning', onWarning)
-  t.teardown(() => {
+  after(() => {
     process.removeListener('warning', onWarning)
   })
 
@@ -214,7 +225,7 @@ test('20 times GET with pipelining 10, async await support', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 10
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     for (let i = 0; i < num; i++) {
       makeRequest(i)
@@ -228,18 +239,20 @@ test('20 times GET with pipelining 10, async await support', (t) => {
       }
     }
   })
+
+  await t.completed
 })
 
 async function makeRequestAndExpectUrl (client, i, t) {
   try {
     const { statusCode, body } = await client.request({ path: '/' + i, method: 'GET' })
-    t.equal(statusCode, 200)
+    t.strictEqual(statusCode, 200)
     const bufs = []
     body.on('data', (buf) => {
       bufs.push(buf)
     })
     body.on('end', () => {
-      t.equal('/' + i, Buffer.concat(bufs).toString('utf8'))
+      t.strictEqual('/' + i, Buffer.concat(bufs).toString('utf8'))
     })
   } catch (err) {
     t.fail(err)
@@ -247,34 +260,36 @@ async function makeRequestAndExpectUrl (client, i, t) {
   return true
 }
 
-test('pool, async await support', (t) => {
-  t.plan(5)
+test('pool, async await support', async (t) => {
+  t = tspl(t, { plan: 5 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     try {
       const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     } catch (err) {
       t.fail(err)
     }
   })
+
+  await t.completed
 })

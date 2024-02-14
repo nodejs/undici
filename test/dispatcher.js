@@ -1,14 +1,14 @@
 'use strict'
 
-const t = require('tap')
-const { test } = t
+const { tspl } = require('@matteo.collina/tspl')
+const { test } = require('node:test')
 
 const Dispatcher = require('../lib/dispatcher')
 
 class PoorImplementation extends Dispatcher {}
 
 test('dispatcher implementation', (t) => {
-  t.plan(6)
+  t = tspl(t, { plan: 6 })
 
   const dispatcher = new Dispatcher()
   t.throws(() => dispatcher.dispatch(), Error, 'throws on unimplemented dispatch')

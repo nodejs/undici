@@ -1,26 +1,27 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const { PassThrough, Writable, Readable } = require('node:stream')
 const EE = require('node:events')
 
-test('stream get', (t) => {
-  t.plan(9)
+test('stream get', async (t) => {
+  t = tspl(t, { plan: 9 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
-    t.equal(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     const signal = new EE()
     client.stream({
@@ -29,81 +30,85 @@ test('stream get', (t) => {
       method: 'GET',
       opaque: new PassThrough()
     }, ({ statusCode, headers, opaque: pt }) => {
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       pt.on('data', (buf) => {
         bufs.push(buf)
       })
       pt.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
       return pt
     }, (err) => {
-      t.equal(signal.listenerCount('abort'), 0)
-      t.error(err)
+      t.strictEqual(signal.listenerCount('abort'), 0)
+      t.ifError(err)
     })
-    t.equal(signal.listenerCount('abort'), 1)
+    t.strictEqual(signal.listenerCount('abort'), 1)
   })
+
+  await t.completed
 })
 
-test('stream promise get', (t) => {
-  t.plan(6)
+test('stream promise get', async (t) => {
+  t = tspl(t, { plan: 6 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
-    t.equal(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     await client.stream({
       path: '/',
       method: 'GET',
       opaque: new PassThrough()
     }, ({ statusCode, headers, opaque: pt }) => {
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       pt.on('data', (buf) => {
         bufs.push(buf)
       })
       pt.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
       return pt
     })
   })
+
+  await t.completed
 })
 
-test('stream GET destroy res', (t) => {
-  t.plan(14)
+test('stream GET destroy res', async (t) => {
+  t = tspl(t, { plan: 14 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
-    t.equal(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.stream({
       path: '/',
       method: 'GET'
     }, ({ statusCode, headers }) => {
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
 
       const pt = new PassThrough()
         .on('error', (err) => {
@@ -122,26 +127,28 @@ test('stream GET destroy res', (t) => {
       path: '/',
       method: 'GET'
     }, ({ statusCode, headers }) => {
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
 
       let ret = ''
       const pt = new PassThrough()
       pt.on('data', chunk => {
         ret += chunk
       }).on('end', () => {
-        t.equal(ret, 'hello')
+        t.strictEqual(ret, 'hello')
       })
 
       return pt
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
     })
   })
+
+  await t.completed
 })
 
-test('stream GET remote destroy', (t) => {
-  t.plan(4)
+test('stream GET remote destroy', async (t) => {
+  t = tspl(t, { plan: 4 })
 
   const server = createServer((req, res) => {
     res.write('asd')
@@ -149,11 +156,11 @@ test('stream GET remote destroy', (t) => {
       res.destroy()
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.stream({
       path: '/',
@@ -181,10 +188,12 @@ test('stream GET remote destroy', (t) => {
       t.ok(err)
     })
   })
+
+  await t.completed
 })
 
-test('stream response resume back pressure and non standard error', (t) => {
-  t.plan(5)
+test('stream response resume back pressure and non standard error', async (t) => {
+  t = tspl(t, { plan: 5 })
 
   const server = createServer((req, res) => {
     res.write(Buffer.alloc(1e3))
@@ -193,11 +202,11 @@ test('stream response resume back pressure and non standard error', (t) => {
       res.end()
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     const pt = new PassThrough()
     client.stream({
@@ -207,12 +216,12 @@ test('stream response resume back pressure and non standard error', (t) => {
       pt.on('data', () => {
         pt.emit('error', new Error('kaboom'))
       }).once('error', (err) => {
-        t.equal(err.message, 'kaboom')
+        t.strictEqual(err.message, 'kaboom')
       })
       return pt
     }, (err) => {
       t.ok(err)
-      t.equal(pt.destroyed, true)
+      t.strictEqual(pt.destroyed, true)
     })
 
     client.once('disconnect', (err) => {
@@ -227,85 +236,91 @@ test('stream response resume back pressure and non standard error', (t) => {
       pt.resume()
       return pt
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
     })
   })
+
+  await t.completed
 })
 
-test('stream waits only for writable side', (t) => {
-  t.plan(2)
+test('stream waits only for writable side', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(1e3))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     const pt = new PassThrough({ autoDestroy: false })
     client.stream({
       path: '/',
       method: 'GET'
     }, () => pt, (err) => {
-      t.error(err)
-      t.equal(pt.destroyed, false)
+      t.ifError(err)
+      t.strictEqual(pt.destroyed, false)
     })
   })
+
+  await t.completed
 })
 
-test('stream args validation', (t) => {
-  t.plan(3)
+test('stream args validation', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const client = new Client('http://localhost:5000')
   client.stream({
     path: '/',
     method: 'GET'
   }, null, (err) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   client.stream(null, null, (err) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   try {
     client.stream(null, null, 'asd')
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
 })
 
-test('stream args validation promise', (t) => {
-  t.plan(2)
+test('stream args validation promise', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const client = new Client('http://localhost:5000')
   client.stream({
     path: '/',
     method: 'GET'
   }, null).catch((err) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   client.stream(null, null).catch((err) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
+
+  await t.completed
 })
 
-test('stream destroy if not readable', (t) => {
-  t.plan(2)
+test('stream destroy if not readable', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   const pt = new PassThrough()
   pt.readable = false
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -313,23 +328,25 @@ test('stream destroy if not readable', (t) => {
     }, () => {
       return pt
     }, (err) => {
-      t.error(err)
-      t.equal(pt.destroyed, true)
+      t.ifError(err)
+      t.strictEqual(pt.destroyed, true)
     })
   })
+
+  await t.completed
 })
 
-test('stream server side destroy', (t) => {
-  t.plan(1)
+test('stream server side destroy', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.destroy()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -337,22 +354,24 @@ test('stream server side destroy', (t) => {
     }, () => {
       t.fail()
     }, (err) => {
-      t.type(err, errors.SocketError)
+      t.ok(err instanceof errors.SocketError)
     })
   })
+
+  await t.completed
 })
 
-test('stream invalid return', (t) => {
-  t.plan(1)
+test('stream invalid return', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.write('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -360,22 +379,24 @@ test('stream invalid return', (t) => {
     }, () => {
       return {}
     }, (err) => {
-      t.type(err, errors.InvalidReturnValueError)
+      t.ok(err instanceof errors.InvalidReturnValueError)
     })
   })
+
+  await t.completed
 })
 
-test('stream body without destroy', (t) => {
-  t.plan(1)
+test('stream body without destroy', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -386,22 +407,24 @@ test('stream body without destroy', (t) => {
       pt.resume()
       return pt
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
     })
   })
+
+  await t.completed
 })
 
-test('stream factory abort', (t) => {
-  t.plan(3)
+test('stream factory abort', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(client.destroy.bind(client))
 
     const signal = new EE()
     client.stream({
@@ -412,24 +435,26 @@ test('stream factory abort', (t) => {
       signal.emit('abort')
       return new PassThrough()
     }, (err) => {
-      t.equal(signal.listenerCount('abort'), 0)
-      t.type(err, errors.RequestAbortedError)
+      t.strictEqual(signal.listenerCount('abort'), 0)
+      t.ok(err instanceof errors.RequestAbortedError)
     })
-    t.equal(signal.listenerCount('abort'), 1)
+    t.strictEqual(signal.listenerCount('abort'), 1)
   })
+
+  await t.completed
 })
 
-test('stream factory throw', (t) => {
-  t.plan(3)
+test('stream factory throw', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(client.destroy.bind(client))
 
     client.stream({
       path: '/',
@@ -437,7 +462,7 @@ test('stream factory throw', (t) => {
     }, () => {
       throw new Error('asd')
     }, (err) => {
-      t.equal(err.message, 'asd')
+      t.strictEqual(err.message, 'asd')
     })
     client.stream({
       path: '/',
@@ -445,7 +470,7 @@ test('stream factory throw', (t) => {
     }, () => {
       throw new Error('asd')
     }, (err) => {
-      t.equal(err.message, 'asd')
+      t.strictEqual(err.message, 'asd')
     })
     client.stream({
       path: '/',
@@ -453,44 +478,48 @@ test('stream factory throw', (t) => {
     }, () => {
       return new PassThrough()
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
     })
   })
+
+  await t.completed
 })
 
-test('stream CONNECT throw', (t) => {
-  t.plan(1)
+test('stream CONNECT throw', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(client.destroy.bind(client))
 
     client.stream({
       path: '/',
       method: 'CONNECT'
     }, () => {
     }, (err) => {
-      t.type(err, errors.InvalidArgumentError)
+      t.ok(err instanceof errors.InvalidArgumentError)
     })
   })
+
+  await t.completed
 })
 
-test('stream abort after complete', (t) => {
-  t.plan(1)
+test('stream abort after complete', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(client.destroy.bind(client))
 
     const pt = new PassThrough()
     const signal = new EE()
@@ -501,23 +530,25 @@ test('stream abort after complete', (t) => {
     }, () => {
       return pt
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
       signal.emit('abort')
     })
   })
+
+  await t.completed
 })
 
-test('stream abort before dispatch', (t) => {
-  t.plan(1)
+test('stream abort before dispatch', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(client.destroy.bind(client))
 
     const pt = new PassThrough()
     const signal = new EE()
@@ -528,48 +559,52 @@ test('stream abort before dispatch', (t) => {
     }, () => {
       return pt
     }, (err) => {
-      t.type(err, errors.RequestAbortedError)
+      t.ok(err instanceof errors.RequestAbortedError)
     })
     signal.emit('abort')
   })
+
+  await t.completed
 })
 
-test('trailers', (t) => {
-  t.plan(2)
+test('trailers', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.writeHead(200, { Trailer: 'Content-MD5' })
     res.addTrailers({ 'Content-MD5': 'test' })
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.stream({
       path: '/',
       method: 'GET'
     }, () => new PassThrough(), (err, data) => {
-      t.error(err)
-      t.strictSame(data.trailers, { 'content-md5': 'test' })
+      t.ifError(err)
+      t.deepStrictEqual(data.trailers, { 'content-md5': 'test' })
     })
   })
+
+  await t.completed
 })
 
-test('stream ignore 1xx', (t) => {
-  t.plan(2)
+test('stream ignore 1xx', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.writeProcessing()
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     let buf = ''
     client.stream({
@@ -581,25 +616,27 @@ test('stream ignore 1xx', (t) => {
         callback()
       }
     }), (err, data) => {
-      t.error(err)
-      t.equal(buf, 'hello')
+      t.ifError(err)
+      t.strictEqual(buf, 'hello')
     })
   })
+
+  await t.completed
 })
 
-test('stream ignore 1xx and use onInfo', (t) => {
-  t.plan(4)
+test('stream ignore 1xx and use onInfo', async (t) => {
+  t = tspl(t, { plan: 4 })
 
   const infos = []
   const server = createServer((req, res) => {
     res.writeProcessing()
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     let buf = ''
     client.stream({
@@ -614,16 +651,18 @@ test('stream ignore 1xx and use onInfo', (t) => {
         callback()
       }
     }), (err, data) => {
-      t.error(err)
-      t.equal(buf, 'hello')
-      t.equal(infos.length, 1)
-      t.equal(infos[0].statusCode, 102)
+      t.ifError(err)
+      t.strictEqual(buf, 'hello')
+      t.strictEqual(infos.length, 1)
+      t.strictEqual(infos[0].statusCode, 102)
     })
   })
+
+  await t.completed
 })
 
-test('stream backpressure', (t) => {
-  t.plan(2)
+test('stream backpressure', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const expected = Buffer.alloc(1e6).toString()
 
@@ -631,11 +670,11 @@ test('stream backpressure', (t) => {
     res.writeProcessing()
     res.end(expected)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     let buf = ''
     client.stream({
@@ -648,49 +687,53 @@ test('stream backpressure', (t) => {
         process.nextTick(callback)
       }
     }), (err, data) => {
-      t.error(err)
-      t.equal(buf, expected)
+      t.ifError(err)
+      t.strictEqual(buf, expected)
     })
   })
+
+  await t.completed
 })
 
-test('stream body destroyed on invalid callback', (t) => {
-  t.plan(1)
+test('stream body destroyed on invalid callback', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(client.destroy.bind(client))
 
     const body = new Readable({
-      read () {}
+      read () { }
     })
     try {
       client.stream({
         path: '/',
         method: 'GET',
         body
-      }, () => {}, null)
+      }, () => { }, null)
     } catch (err) {
-      t.equal(body.destroyed, true)
+      t.strictEqual(body.destroyed, true)
     }
   })
+
+  await t.completed
 })
 
-test('stream needDrain', (t) => {
-  t.plan(3)
+test('stream needDrain', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(4096))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(() => {
+    after(() => {
       client.destroy()
     })
 
@@ -715,8 +758,8 @@ test('stream needDrain', (t) => {
       path: '/',
       method: 'GET'
     }, () => {
-      t.equal(dst._writableState.needDrain, true)
-      t.equal(dst.writableNeedDrain, true)
+      t.strictEqual(dst._writableState.needDrain, true)
+      t.strictEqual(dst.writableNeedDrain, true)
 
       setImmediate(() => {
         dst.write = (...args) => {
@@ -729,22 +772,24 @@ test('stream needDrain', (t) => {
     })
 
     p.then(() => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
+
+  await t.completed
 })
 
-test('stream legacy needDrain', (t) => {
-  t.plan(3)
+test('stream legacy needDrain', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     res.end(Buffer.alloc(4096))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(() => {
+    after(() => {
       client.destroy()
     })
 
@@ -768,8 +813,8 @@ test('stream legacy needDrain', (t) => {
       path: '/',
       method: 'GET'
     }, () => {
-      t.equal(dst._writableState.needDrain, true)
-      t.equal(dst.writableNeedDrain, undefined)
+      t.strictEqual(dst._writableState.needDrain, true)
+      t.strictEqual(dst.writableNeedDrain, undefined)
 
       setImmediate(() => {
         dst.write = (...args) => {
@@ -782,66 +827,70 @@ test('stream legacy needDrain', (t) => {
     })
 
     p.then(() => {
-      t.pass()
+      t.ok(true, 'pass')
     })
   })
+  await t.completed
+})
 
-  test('stream throwOnError', (t) => {
-    t.plan(2)
+test('stream throwOnError', async (t) => {
+  t = tspl(t, { plan: 3 })
 
-    const errStatusCode = 500
-    const errMessage = 'Internal Server Error'
+  const errStatusCode = 500
+  const errMessage = 'Internal Server Error'
 
-    const server = createServer((req, res) => {
-      res.writeHead(errStatusCode, { 'Content-Type': 'text/plain' })
-      res.end(errMessage)
-    })
-    t.teardown(server.close.bind(server))
+  const server = createServer((req, res) => {
+    res.writeHead(errStatusCode, { 'Content-Type': 'text/plain' })
+    res.end(errMessage)
+  })
+  after(() => server.close())
 
-    server.listen(0, async () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
-      t.teardown(client.close.bind(client))
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.close())
 
-      client.stream({
-        path: '/',
-        method: 'GET',
-        throwOnError: true,
-        opaque: new PassThrough()
-      }, ({ opaque: pt }) => {
-        pt.on('data', () => {
-          t.fail()
-        })
-        return pt
-      }, (e) => {
-        t.equal(e.status, errStatusCode)
-        t.equal(e.body, errMessage)
-        t.end()
+    client.stream({
+      path: '/',
+      method: 'GET',
+      throwOnError: true,
+      opaque: new PassThrough()
+    }, ({ opaque: pt }) => {
+      pt.on('data', () => {
+        t.fail()
       })
+      return pt
+    }, (e) => {
+      t.strictEqual(e.status, errStatusCode)
+      t.strictEqual(e.body, errMessage)
+      t.ok(true, 'end')
     })
   })
 
-  test('steam throwOnError=true, error on stream', (t) => {
-    t.plan(1)
+  await t.completed
+})
 
-    const server = createServer((req, res) => {
-      res.end('asd')
-    })
-    t.teardown(server.close.bind(server))
+test('steam throwOnError=true, error on stream', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-    server.listen(0, async () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
-      t.teardown(client.close.bind(client))
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  after(() => server.close())
 
-      client.stream({
-        path: '/',
-        method: 'GET',
-        throwOnError: true,
-        opaque: new PassThrough()
-      }, () => {
-        throw new Error('asd')
-      }, (e) => {
-        t.equal(e.message, 'asd')
-      })
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.close())
+
+    client.stream({
+      path: '/',
+      method: 'GET',
+      throwOnError: true,
+      opaque: new PassThrough()
+    }, () => {
+      throw new Error('asd')
+    }, (e) => {
+      t.strictEqual(e.message, 'asd')
     })
   })
+  await t.completed
 })

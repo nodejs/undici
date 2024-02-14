@@ -1,11 +1,12 @@
 'use strict'
 
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const https = require('node:https')
 const { once } = require('node:events')
 const { createSecureServer } = require('node:http2')
 const { readFileSync } = require('node:fs')
 const { join } = require('node:path')
-const { test } = require('tap')
 
 const { Client } = require('..')
 
@@ -15,7 +16,7 @@ const cert = readFileSync(join(__dirname, 'fixtures', 'cert.pem'), 'utf8')
 const ca = readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
 
 test('Should upgrade to HTTP/2 when HTTPS/1 is available for GET', async (t) => {
-  t.plan(10)
+  t = tspl(t, { plan: 10 })
 
   const body = []
   const httpsBody = []
@@ -47,7 +48,7 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for GET', async (t) => 
   await once(server, 'listening')
 
   // close the server on teardown
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   // set the port
   const port = server.address().port
@@ -62,7 +63,7 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for GET', async (t) => 
   })
 
   // close the client on teardown
-  t.teardown(client.close.bind(client))
+  after(() => client.close())
 
   // make an undici request using where it wants http/2
   const response = await client.request({
@@ -110,7 +111,7 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for GET', async (t) => 
       reject(err)
     })
 
-    t.teardown(httpsRequest.destroy.bind(httpsRequest))
+    after(() => httpsRequest.destroy())
   })
 
   t.equal(httpsResponse.statusCode, 200)
@@ -124,7 +125,7 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for GET', async (t) => 
 })
 
 test('Should upgrade to HTTP/2 when HTTPS/1 is available for POST', async (t) => {
-  t.plan(15)
+  t = tspl(t, { plan: 15 })
 
   const requestChunks = []
   const responseBody = []
@@ -194,7 +195,7 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for POST', async (t) =>
   await once(server, 'listening')
 
   // close the server on teardown
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   // set the port
   const port = server.address().port
@@ -209,7 +210,7 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for POST', async (t) =>
   })
 
   // close the client on teardown
-  t.teardown(client.close.bind(client))
+  after(() => client.close())
 
   // make an undici request using where it wants http/2
   const response = await client.request({
@@ -265,7 +266,7 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for POST', async (t) =>
 
     httpsRequest.write(Buffer.from(body))
 
-    t.teardown(httpsRequest.destroy.bind(httpsRequest))
+    after(() => httpsRequest.destroy())
   })
 
   t.equal(httpsResponse.statusCode, 201)

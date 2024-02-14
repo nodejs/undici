@@ -1,32 +1,27 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { describe, test } = require('node:test')
 const { mockErrors, errors } = require('..')
 
-test('mockErrors', (t) => {
-  t.plan(1)
+describe('MockNotMatchedError', () => {
+  test('should implement an UndiciError', t => {
+    t = tspl(t, { plan: 4 })
 
-  t.test('MockNotMatchedError', t => {
-    t.plan(2)
+    const mockError = new mockErrors.MockNotMatchedError()
+    t.ok(mockError instanceof errors.UndiciError)
+    t.deepStrictEqual(mockError.name, 'MockNotMatchedError')
+    t.deepStrictEqual(mockError.code, 'UND_MOCK_ERR_MOCK_NOT_MATCHED')
+    t.deepStrictEqual(mockError.message, 'The request does not match any registered mock dispatches')
+  })
 
-    t.test('should implement an UndiciError', t => {
-      t.plan(4)
+  test('should set a custom message', t => {
+    t = tspl(t, { plan: 4 })
 
-      const mockError = new mockErrors.MockNotMatchedError()
-      t.type(mockError, errors.UndiciError)
-      t.same(mockError.name, 'MockNotMatchedError')
-      t.same(mockError.code, 'UND_MOCK_ERR_MOCK_NOT_MATCHED')
-      t.same(mockError.message, 'The request does not match any registered mock dispatches')
-    })
-
-    t.test('should set a custom message', t => {
-      t.plan(4)
-
-      const mockError = new mockErrors.MockNotMatchedError('custom message')
-      t.type(mockError, errors.UndiciError)
-      t.same(mockError.name, 'MockNotMatchedError')
-      t.same(mockError.code, 'UND_MOCK_ERR_MOCK_NOT_MATCHED')
-      t.same(mockError.message, 'custom message')
-    })
+    const mockError = new mockErrors.MockNotMatchedError('custom message')
+    t.ok(mockError instanceof errors.UndiciError)
+    t.deepStrictEqual(mockError.name, 'MockNotMatchedError')
+    t.deepStrictEqual(mockError.code, 'UND_MOCK_ERR_MOCK_NOT_MATCHED')
+    t.deepStrictEqual(mockError.message, 'custom message')
   })
 })

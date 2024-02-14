@@ -5,7 +5,7 @@
     await import('./utils/esm-wrapper.mjs')
   } catch (e) {
     if (e.message === 'Not supported') {
-      require('tap') // shows skipped
+      require('node:test') // shows skipped
       return
     }
     console.error(e.stack)

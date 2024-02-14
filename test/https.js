@@ -1,20 +1,21 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client } = require('..')
 const { createServer } = require('node:https')
 const pem = require('https-pem')
 
-test('https get with tls opts', (t) => {
-  t.plan(6)
+test('https get with tls opts', async (t) => {
+  t = tspl(t, { plan: 6 })
 
   const server = createServer(pem, (req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`https://localhost:${server.address().port}`, {
@@ -22,33 +23,35 @@ test('https get with tls opts', (t) => {
         rejectUnauthorized: false
       }
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.ifError(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
+
+  await t.completed
 })
 
-test('https get with tls opts ip', (t) => {
-  t.plan(6)
+test('https get with tls opts ip', async (t) => {
+  t = tspl(t, { plan: 6 })
 
   const server = createServer(pem, (req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`https://127.0.0.1:${server.address().port}`, {
@@ -56,19 +59,21 @@ test('https get with tls opts ip', (t) => {
         rejectUnauthorized: false
       }
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.ifError(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
   })
+
+  await t.completed
 })
