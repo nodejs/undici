@@ -21,10 +21,39 @@ An Undici [Client](Client.md) can be best described as a state machine. The foll
   * At any point in time, the *destroy* event will transition the `Client` from the **processing** state to the **destroyed** state, destroying any queued requests.
 * The **destroyed** state is a final state and the `Client` is no longer functional.
 
-![A state diagram representing an Undici Client instance](../assets/lifecycle-diagram.png)
+A state diagram representing an Undici Client instance:
 
-> The diagram was generated using Mermaid.js Live Editor. Modify the state diagram [here](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoic3RhdGVEaWFncmFtLXYyXG4gICAgWypdIC0tPiBpZGxlXG4gICAgaWRsZSAtLT4gcGVuZGluZyA6IGNvbm5lY3RcbiAgICBpZGxlIC0tPiBkZXN0cm95ZWQgOiBkZXN0cm95L2Nsb3NlXG4gICAgXG4gICAgcGVuZGluZyAtLT4gaWRsZSA6IHRpbWVvdXRcbiAgICBwZW5kaW5nIC0tPiBkZXN0cm95ZWQgOiBkZXN0cm95XG5cbiAgICBzdGF0ZSBjbG9zZV9mb3JrIDw8Zm9yaz4-XG4gICAgcGVuZGluZyAtLT4gY2xvc2VfZm9yayA6IGNsb3NlXG4gICAgY2xvc2VfZm9yayAtLT4gcHJvY2Vzc2luZ1xuICAgIGNsb3NlX2ZvcmsgLS0-IGRlc3Ryb3llZFxuXG4gICAgcGVuZGluZyAtLT4gcHJvY2Vzc2luZyA6IHByb2Nlc3NcblxuICAgIHByb2Nlc3NpbmcgLS0-IHBlbmRpbmcgOiBrZWVwYWxpdmVcbiAgICBwcm9jZXNzaW5nIC0tPiBkZXN0cm95ZWQgOiBkb25lXG4gICAgcHJvY2Vzc2luZyAtLT4gZGVzdHJveWVkIDogZGVzdHJveVxuXG4gICAgc3RhdGUgcHJvY2Vzc2luZyB7XG4gICAgICAgIHJ1bm5pbmcgLS0-IGJ1c3kgOiBuZWVkRHJhaW5cbiAgICAgICAgYnVzeSAtLT4gcnVubmluZyA6IGRyYWluQ29tcGxldGVcbiAgICAgICAgcnVubmluZyAtLT4gWypdIDoga2VlcGFsaXZlXG4gICAgICAgIHJ1bm5pbmcgLS0-IGNsb3NpbmcgOiBjbG9zZVxuICAgICAgICBjbG9zaW5nIC0tPiBbKl0gOiBkb25lXG4gICAgICAgIFsqXSAtLT4gcnVubmluZ1xuICAgIH1cbiAgICAiLCJtZXJtYWlkIjp7InRoZW1lIjoiYmFzZSJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)
+```mermaid
+stateDiagram-v2
+  [*] --> idle
+  idle --> pending : connect
+  idle --> destroyed : destroy/close
+  
+  pending --> idle : timeout
+  pending --> destroyed : destroy
 
+  state close_fork <<fork>>
+  pending --> close_fork : close
+  close_fork --> processing
+  close_fork --> destroyed
+
+  pending --> processing : process
+
+  processing --> pending : keepalive
+  processing --> destroyed : done
+  processing --> destroyed : destroy
+
+  destroyed --> [*]
+
+  state processing {
+      [*] --> running
+      running --> closing : close
+      running --> busy : needDrain
+      busy --> running : drainComplete
+      running --> [*] : keepalive
+      closing --> [*] : done
+  }
+```
 ## State details
 
 ### idle
