@@ -144,7 +144,7 @@ describe('MockAgent - dispatch', () => {
   })
 
   test('should throw if handler is not valid on redirect', (t) => {
-    t = tspl(t, { plan: 7 })
+    t = tspl(t, { plan: 6 })
 
     const baseUrl = 'http://localhost:9999'
 
