@@ -2,10 +2,11 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { Client } = require('..')
 const { createServer } = require('node:http')
 const net = require('node:net')
 const { once } = require('node:events')
+
+const { Client, errors } = require('..')
 
 test('ignore informational response', async (t) => {
   t = tspl(t, { plan: 2 })
@@ -48,22 +49,28 @@ test('error 103 body', async (t) => {
     socket.write('\r\n')
     socket.write('a\r\n')
   })
-  after(() => server.close())
+
   server.listen(0)
 
   await once(server, 'listening')
+
+  after(() => server.close())
+
   const client = new Client(`http://localhost:${server.address().port}`)
+
   after(() => client.close())
 
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err) => {
-    t.strictEqual(err.code, 'HPE_INVALID_CONSTANT')
-  })
   client.on('disconnect', () => {
     t.ok(true, 'pass')
   })
+
+  await client.request({
+    path: '/',
+    method: 'GET'
+  }).catch(err => {
+    t.ok(err instanceof errors.HTTPParserError)
+  })
+
   await t.completed
 })
 
