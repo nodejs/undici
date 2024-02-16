@@ -129,3 +129,8 @@ test('test/parallel/test-worker-message-port.js', () => {
   assert(event.cancelable)
   assert(event.defaultPrevented)
 })
+
+test('bug in node core', () => {
+  // In node core, this will throw an error.
+  new MessageEvent('', null) // eslint-disable-line no-new
+})
