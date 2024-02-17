@@ -90,7 +90,7 @@ for (const factory of [
 
     const server = await startRedirectingServer()
 
-    const { statusCode, headers, body: bodyStream, context: { history } } = await request(t, server, { maxRedirections: 10 }, `http://${server}/300?key=value`)
+    const { statusCode, headers, body: bodyStream, context: { history } } = await request(t, server, undefined, `http://${server}/300?key=value`, { maxRedirections: 10 })
     const body = await bodyStream.text()
 
     t.strictEqual(statusCode, 200)
@@ -380,10 +380,9 @@ for (const factory of [
     t = tspl(t, { plan: 1 })
 
     try {
-      await request(t, 'localhost', {
+      await request(t, 'localhost', undefined, 'http://localhost', {
+        method: 'GET',
         maxRedirections: 'INVALID'
-      }, 'http://localhost', {
-        method: 'GET'
       })
 
       t.fail('Did not throw')
