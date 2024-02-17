@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, skip } = require('node:test')
+const { test } = require('node:test')
 const dgram = require('node:dgram')
 const { Resolver } = require('node:dns')
 const dnsPacket = require('dns-packet')
@@ -16,11 +16,7 @@ const { tspl } = require('@matteo.collina/tspl')
  * explicitly passed in tests in this file to avoid compatibility problems across release lines.
  *
  */
-
-if (!nodeHasAutoSelectFamily) {
-  skip('autoSelectFamily is not supportee')
-  process.exit()
-}
+const skip = !nodeHasAutoSelectFamily
 
 function _lookup (resolver, hostname, options, cb) {
   resolver.resolve(hostname, 'ANY', (err, replies) => {
@@ -68,7 +64,7 @@ function createDnsServer (ipv6Addr, ipv4Addr, cb) {
   })
 }
 
-test('with autoSelectFamily enable the request succeeds when using request', async (t) => {
+test('with autoSelectFamily enable the request succeeds when using request', { skip }, async (t) => {
   const p = tspl(t, { plan: 3 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
@@ -108,7 +104,7 @@ test('with autoSelectFamily enable the request succeeds when using request', asy
   await p.completed
 })
 
-test('with autoSelectFamily enable the request succeeds when using a client', async (t) => {
+test('with autoSelectFamily enable the request succeeds when using a client', { skip }, async (t) => {
   const p = tspl(t, { plan: 3 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
@@ -149,7 +145,7 @@ test('with autoSelectFamily enable the request succeeds when using a client', as
   await p.completed
 })
 
-test('with autoSelectFamily disabled the request fails when using request', async (t) => {
+test('with autoSelectFamily disabled the request fails when using request', { skip }, async (t) => {
   const p = tspl(t, { plan: 1 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
@@ -177,7 +173,7 @@ test('with autoSelectFamily disabled the request fails when using request', asyn
   await p.completed
 })
 
-test('with autoSelectFamily disabled the request fails when using a client', async (t) => {
+test('with autoSelectFamily disabled the request fails when using a client', { skip }, async (t) => {
   const p = tspl(t, { plan: 1 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {

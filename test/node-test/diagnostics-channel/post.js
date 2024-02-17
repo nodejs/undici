@@ -1,17 +1,8 @@
 'use strict'
 
-const { test, skip, after } = require('node:test')
+const { test, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
-
-let diagnosticsChannel
-
-try {
-  diagnosticsChannel = require('node:diagnostics_channel')
-} catch {
-  skip('missing diagnostics_channel')
-  process.exit(0)
-}
-
+const diagnosticsChannel = require('node:diagnostics_channel')
 const { Client } = require('../../../')
 const { createServer } = require('node:http')
 
