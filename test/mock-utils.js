@@ -87,6 +87,60 @@ describe('getMockDispatch', () => {
       method: 'wrong'
     }), new MockNotMatchedError('Mock dispatch not matched for path \'wrong\''))
   })
+
+  test('it should throw if no dispatch matches method', (t) => {
+    t = tspl(t, { plan: 1 })
+    const dispatches = [
+      {
+        path: 'path',
+        method: 'method',
+        consumed: false
+      }
+    ]
+
+    t.throws(() => getMockDispatch(dispatches, {
+      path: 'path',
+      method: 'wrong'
+    }), new MockNotMatchedError('Mock dispatch not matched for method \'wrong\' on path \'path\''))
+  })
+
+  test('it should throw if no dispatch matches body', (t) => {
+    t = tspl(t, { plan: 1 })
+    const dispatches = [
+      {
+        path: 'path',
+        method: 'method',
+        body: 'body',
+        consumed: false
+      }
+    ]
+
+    t.throws(() => getMockDispatch(dispatches, {
+      path: 'path',
+      method: 'method',
+      body: 'wrong'
+    }), new MockNotMatchedError('Mock dispatch not matched for body \'wrong\' on path \'path\''))
+  })
+
+  test('it should throw if no dispatch matches headers', (t) => {
+    t = tspl(t, { plan: 1 })
+    const dispatches = [
+      {
+        path: 'path',
+        method: 'method',
+        body: 'body',
+        headers: { key: 'value' },
+        consumed: false
+      }
+    ]
+
+    t.throws(() => getMockDispatch(dispatches, {
+      path: 'path',
+      method: 'method',
+      body: 'body',
+      headers: { key: 'wrong' }
+    }), new MockNotMatchedError('Mock dispatch not matched for headers \'{"key":"wrong"}\' on path \'path\''))
+  })
 })
 
 describe('getResponseData', () => {
