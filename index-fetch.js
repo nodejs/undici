@@ -16,5 +16,6 @@ module.exports.Response = require('./lib/fetch/response').Response
 module.exports.Request = require('./lib/fetch/request').Request
 
 module.exports.WebSocket = require('./lib/websocket/websocket').WebSocket
+module.exports.MessageEvent = require('./lib/websocket/events').MessageEvent
 
 module.exports.EventSource = require('./lib/eventsource/eventsource').EventSource
