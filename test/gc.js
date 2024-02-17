@@ -6,17 +6,13 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:net')
 const { Client, Pool } = require('..')
 
-const SKIP = (
-  typeof WeakRef === 'undefined' ||
-  typeof FinalizationRegistry === 'undefined' ||
-  typeof global.gc === 'undefined'
-)
+const skip = typeof global.gc === 'undefined'
 
 setInterval(() => {
   global.gc()
 }, 100).unref()
 
-test('gc should collect the client if, and only if, there are no active sockets', { skip: SKIP }, async t => {
+test('gc should collect the client if, and only if, there are no active sockets', { skip }, async t => {
   t = tspl(t, { plan: 4 })
 
   const server = createServer((socket) => {
@@ -60,7 +56,7 @@ test('gc should collect the client if, and only if, there are no active sockets'
   await t.completed
 })
 
-test('gc should collect the pool if, and only if, there are no active sockets', { skip: SKIP }, async t => {
+test('gc should collect the pool if, and only if, there are no active sockets', { skip }, async t => {
   t = tspl(t, { plan: 4 })
 
   const server = createServer((socket) => {
