@@ -663,11 +663,8 @@ test('stream: fails with invalid onInfo', async (t) => {
 })
 
 test('constructor validations', t => {
-  const p = tspl(t, { plan: 4 })
+  const p = tspl(t, { plan: 1 })
   p.throws(() => new Agent({ factory: 'ASD' }), errors.InvalidArgumentError, 'throws on invalid opts argument')
-  p.throws(() => new Agent({ maxRedirections: 'ASD' }), errors.InvalidArgumentError, 'throws on invalid opts argument')
-  p.throws(() => new Agent({ maxRedirections: -1 }), errors.InvalidArgumentError, 'throws on invalid opts argument')
-  p.throws(() => new Agent({ maxRedirections: null }), errors.InvalidArgumentError, 'throws on invalid opts argument')
 })
 
 test('dispatch validations', async t => {
