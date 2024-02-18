@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { colors, handlePipes, normalizeName, parseMeta, resolveStatusPath } from './util.mjs'
 
+const alwaysExit0 = process.env.GITHUB_WORKFLOW === 'Daily WPT report'
+
 const basePath = fileURLToPath(join(import.meta.url, '../..'))
 const testPath = join(basePath, 'tests')
 const statusPath = join(basePath, 'status')
@@ -343,7 +345,11 @@ export class WPTRunner extends EventEmitter {
       `unexpected failures: ${failedTests - expectedFailures}`
     )
 
-    process.exit(failedTests - expectedFailures ? 1 : process.exitCode)
+    if (alwaysExit0) {
+      process.exit(0)
+    } else {
+      process.exit(failedTests - expectedFailures ? 1 : process.exitCode)
+    }
   }
 
   addInitScript (code) {
