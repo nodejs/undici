@@ -3,10 +3,10 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { fetch } = require('../..')
-const { createServer } = require('http')
-const { once } = require('events')
-const { Readable, pipeline } = require('stream')
-const { setTimeout: sleep } = require('timers/promises')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
+const { Readable, pipeline } = require('node:stream')
+const { setTimeout: sleep } = require('node:timers/promises')
 
 const { closeServerAsPromise } = require('../utils/node-http')
 

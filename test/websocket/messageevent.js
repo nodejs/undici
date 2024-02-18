@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('assert')
+const assert = require('node:assert')
 const { MessageEvent } = require('../..')
 
 test('test/parallel/test-messageevent-brandcheck.js', () => {
