@@ -36,7 +36,7 @@ test('should always have a history with the final URL even if no redirections we
   t.strictEqual(body.join(''), `GET /5 key=value :: host@${server} connection@keep-alive`)
 })
 
-test('should not follow redirection by default if not using RedirectAgent', async t => {
+test('should not follow redirection by default if max redirect = 0', async t => {
   t = tspl(t, { plan: 3 })
 
   const body = []
