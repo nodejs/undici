@@ -20,8 +20,6 @@ declare namespace Agent {
     factory?(origin: string | URL, opts: Object): Dispatcher;
     /** Integer. Default: `0` */
     maxRedirections?: number;
-
-    interceptors?: { Agent?: readonly Dispatcher.DispatchInterceptor[] } & Pool.Options["interceptors"]
   }
 
   export interface DispatchOptions extends Dispatcher.DispatchOptions {
