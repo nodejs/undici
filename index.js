@@ -137,7 +137,11 @@ const { parseMIMEType, serializeAMimeType } = require('./lib/fetch/dataURL')
 module.exports.parseMIMEType = parseMIMEType
 module.exports.serializeAMimeType = serializeAMimeType
 
+const { CloseEvent, ErrorEvent, MessageEvent } = require('./lib/websocket/events')
 module.exports.WebSocket = require('./lib/websocket/websocket').WebSocket
+module.exports.CloseEvent = CloseEvent
+module.exports.ErrorEvent = ErrorEvent
+module.exports.MessageEvent = MessageEvent
 
 module.exports.request = makeDispatcher(api.request)
 module.exports.stream = makeDispatcher(api.stream)

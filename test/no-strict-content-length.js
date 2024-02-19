@@ -1,23 +1,28 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
+const { ok } = require('node:assert')
 const { test, after, describe } = require('node:test')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
-const sinon = require('sinon')
 const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 
-describe('strictContentLength: false', (t) => {
-  const emitWarningStub = sinon.stub(process, 'emitWarning')
+describe('strictContentLength: false', () => {
+  const emitWarningOriginal = process.emitWarning
+  let emitWarningCalled = false
+
+  process.emitWarning = function () {
+    emitWarningCalled = true
+  }
 
   function assertEmitWarningCalledAndReset () {
-    sinon.assert.called(emitWarningStub)
-    emitWarningStub.resetHistory()
+    ok(emitWarningCalled)
+    emitWarningCalled = false
   }
 
   after(() => {
-    emitWarningStub.restore()
+    process.emitWarning = emitWarningOriginal
   })
 
   test('request invalid content-length', async (t) => {

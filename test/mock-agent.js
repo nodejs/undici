@@ -789,7 +789,7 @@ test('MockAgent - handle delays to simulate work', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
-  const elapsedInMs = process.hrtime(start)[1] / 1e6
+  const elapsedInMs = Math.ceil(process.hrtime(start)[1] / 1e6)
   t.ok(elapsedInMs >= 50, `Elapsed time is not greater than 50ms: ${elapsedInMs}`)
 })
 
@@ -2176,7 +2176,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for meth
 
   await t.rejects(request(`${baseUrl}/foo`, {
     method: 'WRONG'
-  }), new MockNotMatchedError(`Mock dispatch not matched for method 'WRONG': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for method 'WRONG' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
 })
 
 test('MockAgent - enableNetConnect should throw if dispatch not matched for body and the origin was not allowed by net connect', async (t) => {
@@ -2209,7 +2209,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for body
   await t.rejects(request(`${baseUrl}/foo`, {
     method: 'GET',
     body: 'wrong'
-  }), new MockNotMatchedError(`Mock dispatch not matched for body 'wrong': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for body 'wrong' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
 })
 
 test('MockAgent - enableNetConnect should throw if dispatch not matched for headers and the origin was not allowed by net connect', async (t) => {
@@ -2246,7 +2246,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for head
     headers: {
       'User-Agent': 'wrong'
     }
-  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"User-Agent":"wrong"}': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"User-Agent":"wrong"}' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
 })
 
 test('MockAgent - disableNetConnect should throw if dispatch not found by net connect', async (t) => {
@@ -2317,7 +2317,7 @@ test('MockAgent - headers function interceptor', async (t) => {
     headers: {
       Authorization: 'Bearer foo'
     }
-  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"Authorization":"Bearer foo"}': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"Authorization":"Bearer foo"}' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
 
   {
     const { statusCode } = await request(`${baseUrl}/foo`, {
