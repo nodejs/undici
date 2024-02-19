@@ -89,6 +89,7 @@ test('parseHeaders', () => {
 
 test('parseRawHeaders', () => {
   assert.deepEqual(util.parseRawHeaders(['key', 'value', Buffer.from('key'), Buffer.from('value')]), ['key', 'value', 'key', 'value'])
+  assert.deepEqual(util.parseRawHeaders(['content-length', 'value', 'content-disposition', 'form-data; name="fieldName"']), ['content-length', 'value', 'content-disposition', 'form-data; name="fieldName"'])
 })
 
 test('buildURL', () => {
