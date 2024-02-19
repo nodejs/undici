@@ -53,7 +53,7 @@ describe('MockInterceptor - reply callback', () => {
   })
 
   test('should error if passed options invalid', t => {
-    t = tspl(t, { plan: 2 })
+    t = tspl(t, { plan: 3 })
 
     const mockInterceptor = new MockInterceptor({
       path: '',
@@ -61,6 +61,7 @@ describe('MockInterceptor - reply callback', () => {
     }, [])
     t.throws(() => mockInterceptor.reply(), new InvalidArgumentError('statusCode must be defined'))
     t.throws(() => mockInterceptor.reply(200, () => { }, 'hello'), new InvalidArgumentError('responseOptions must be an object'))
+    t.throws(() => mockInterceptor.reply(200, () => { }, null), new InvalidArgumentError('responseOptions must be an object'))
   })
 })
 
