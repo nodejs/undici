@@ -86,7 +86,7 @@
     "bench:server": "node benchmarks/server.js",
     "prebench:run": "node benchmarks/wait.js",
     "bench:run": "SAMPLES=100 CONNECTIONS=50 node benchmarks/benchmark.js",
-    "serve:website": "docsify serve .",
+    "serve:website": "echo 'Documentation has been moved to `\/documentation`'",
     "prepare": "husky install",
     "fuzz": "jsfuzz test/fuzzing/fuzz.js corpus"
   },
@@ -101,7 +101,6 @@
     "concurrently": "^8.0.1",
     "cronometro": "^3.0.1",
     "dns-packet": "^5.4.0",
-    "docsify-cli": "^4.4.3",
     "form-data": "^4.0.0",
     "formdata-node": "^6.0.3",
     "got": "^14.0.0",

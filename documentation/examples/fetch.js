@@ -1,6 +1,6 @@
 'use strict'
 
-const { fetch } = require('../')
+const { fetch } = require('../../')
 
 async function main () {
   const res = await fetch('http://localhost:3001/')

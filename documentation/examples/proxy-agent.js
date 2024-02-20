@@ -1,6 +1,6 @@
 'use strict'
 
-const { request, setGlobalDispatcher, ProxyAgent } = require('../')
+const { request, setGlobalDispatcher, ProxyAgent } = require('../..')
 
 setGlobalDispatcher(new ProxyAgent('http://localhost:8000/'))
 

@@ -1,6 +1,6 @@
 'use strict'
 
-const { request } = require('../')
+const { request } = require('../../')
 
 async function getRequest (port = 3001) {
   // A simple GET request
