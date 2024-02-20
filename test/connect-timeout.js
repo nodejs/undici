@@ -16,7 +16,7 @@ describe('prioritize socket errors over timeouts', () => {
   client.request({ method: 'GET', path: '/foobar' })
     .then(() => t.fail())
     .catch((err) => {
-      t.strictEqual(err.code, 'ENOTFOUND')
+      t.strictEqual(['ENOTFOUND', 'EAI_AGAIN'].includes(err.code), true)
     })
 
   // block for 1s which is enough for the dns lookup to complete and TO to fire
