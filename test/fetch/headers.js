@@ -719,3 +719,30 @@ test('When the value is updated, update the cache', (t) => {
   headers.append('d', 'd')
   deepStrictEqual([...headers], [...expected, ['d', 'd']])
 })
+
+test('Symbol.iterator is only accessed once', (t) => {
+  const { ok } = tspl(t, { plan: 1 })
+
+  const dict = new Proxy({}, {
+    get () {
+      ok(true)
+
+      return function * () {}
+    }
+  })
+
+  new Headers(dict) // eslint-disable-line no-new
+})
+
+test('Invalid Symbol.iterators', (t) => {
+  const { throws } = tspl(t, { plan: 3 })
+
+  throws(() => new Headers({ [Symbol.iterator]: null }), TypeError)
+  throws(() => new Headers({ [Symbol.iterator]: undefined }), TypeError)
+  throws(() => {
+    const obj = { [Symbol.iterator]: null }
+    Object.defineProperty(obj, Symbol.iterator, { enumerable: false })
+
+    new Headers(obj) // eslint-disable-line no-new
+  }, TypeError)
+})
