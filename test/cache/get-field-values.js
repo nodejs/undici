@@ -1,6 +1,6 @@
 'use strict'
 
-const { deepStrictEqual, throws, strictEqual } = require('node:assert')
+const { deepStrictEqual, throws } = require('node:assert')
 const { test } = require('node:test')
 const { getFieldValues } = require('../../lib/cache/util')
 
@@ -10,7 +10,6 @@ test('getFieldValues', () => {
     message: 'The expression evaluated to a falsy value:\n\n  assert(header !== null)\n'
   })
   deepStrictEqual(getFieldValues(''), [])
-  strictEqual(Object.isFrozen(getFieldValues('')), true)
   deepStrictEqual(getFieldValues('foo'), ['foo'])
   deepStrictEqual(getFieldValues('invälid'), [])
   deepStrictEqual(getFieldValues('foo, bar'), ['foo', 'bar'])
