@@ -6,6 +6,7 @@ const errors = require('./lib/core/errors')
 const Pool = require('./lib/pool')
 const BalancedPool = require('./lib/balanced-pool')
 const Agent = require('./lib/agent')
+const DNSResolver = require('./lib/dns-resolver')
 const util = require('./lib/core/util')
 const { InvalidArgumentError } = errors
 const api = require('./lib/api')
@@ -153,6 +154,8 @@ module.exports.MockClient = MockClient
 module.exports.MockPool = MockPool
 module.exports.MockAgent = MockAgent
 module.exports.mockErrors = mockErrors
+
+module.exports.DNSResolver = DNSResolver
 
 const { EventSource } = require('./lib/eventsource/eventsource')
 
