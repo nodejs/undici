@@ -4,7 +4,7 @@ const { Blob } = require('node:buffer')
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
-const { File, FileLike } = require('../../lib/fetch/file')
+const { File, FileLike } = require('../../lib/web/fetch/file')
 
 test('args validation', (t) => {
   const { throws, doesNotThrow, strictEqual } = tspl(t, { plan: 14 })

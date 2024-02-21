@@ -2,8 +2,8 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { WebsocketFrameSend } = require('../../lib/websocket/frame')
-const { opcodes } = require('../../lib/websocket/constants')
+const { WebsocketFrameSend } = require('../../lib/web/websocket/frame')
+const { opcodes } = require('../../lib/web/websocket/constants')
 
 test('Writing 16-bit frame length value at correct offset when buffer has a non-zero byteOffset', () => {
   /*

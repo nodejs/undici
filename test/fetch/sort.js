@@ -2,7 +2,7 @@
 
 const { describe, test } = require('node:test')
 const assert = require('node:assert')
-const { sort, heapSort, binaryInsertionSort, introSort } = require('../../lib/fetch/sort')
+const { sort, heapSort, binaryInsertionSort, introSort } = require('../../lib/web/fetch/sort')
 
 function generateRandomNumberArray (length) {
   const array = new Uint16Array(length)

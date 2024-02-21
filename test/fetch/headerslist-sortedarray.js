@@ -2,7 +2,7 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { HeadersList, compareHeaderName } = require('../../lib/fetch/headers')
+const { HeadersList, compareHeaderName } = require('../../lib/web/fetch/headers')
 
 const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
 const charactersLength = characters.length
