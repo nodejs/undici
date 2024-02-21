@@ -25,6 +25,7 @@
   * [CacheStorage](/docs/api/CacheStorage.md "Undici API - CacheStorage")
   * [Util](/docs/api/Util.md "Undici API - Util")
   * [RedirectHandler](/docs/api/RedirectHandler.md "Undici API - RedirectHandler")
+  * [RedirectHandler](/docs/api/RetryHandler.md "Undici API - RetryHandler")
 * Best Practices
   * [Proxy](/docs/best-practices/proxy.md "Connecting through a proxy")
   * [Client Certificate](/docs/best-practices/client-certificate.md "Connect using a client certificate")
