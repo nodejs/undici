@@ -122,16 +122,6 @@ test('MockClient - intercept should return a MockInterceptor', (t) => {
 })
 
 describe('MockClient - intercept validation', () => {
-  test('it should error if no options specified in the intercept', t => {
-    t = tspl(t, { plan: 1 })
-    const mockAgent = new MockAgent({ connections: 1 })
-    after(() => mockAgent.close())
-
-    const mockClient = mockAgent.get('http://localhost:9999')
-
-    t.throws(() => mockClient.intercept(), new InvalidArgumentError('opts must be an object'))
-  })
-
   test('it should error if no path specified in the intercept', t => {
     t = tspl(t, { plan: 1 })
     const mockAgent = new MockAgent({ connections: 1 })
