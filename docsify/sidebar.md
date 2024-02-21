@@ -8,6 +8,7 @@
   * [BalancedPool](/docs/api/BalancedPool.md "Undici API - BalancedPool")
   * [Agent](/docs/api/Agent.md "Undici API - Agent")
   * [ProxyAgent](/docs/api/ProxyAgent.md "Undici API - ProxyAgent")
+  * [RetryAgent](/docs/api/RetryAgent.md "Undici API - RetryAgent")
   * [Connector](/docs/api/Connector.md "Custom connector")
   * [Errors](/docs/api/Errors.md "Undici API - Errors")
   * [EventSource](/docs/api/EventSource.md "Undici API - EventSource")
