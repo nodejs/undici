@@ -35,8 +35,7 @@ test('Should support H2 connection', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t = tspl(t, { plan: 6 })
@@ -87,8 +86,7 @@ test('Should support H2 connection(multiple requests)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t = tspl(t, { plan: 21 })
@@ -142,8 +140,7 @@ test('Should support H2 connection (headers as array)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t = tspl(t, { plan: 7 })
@@ -190,8 +187,7 @@ test('Should support H2 connection(POST Buffer)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t = tspl(t, { plan: 6 })
@@ -244,8 +240,7 @@ test('Should support H2 GOAWAY (server-side)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t = tspl(t, { plan: 9 })
@@ -297,7 +292,6 @@ test('Should throw if bad maxConcurrentStreams has been passed', async t => {
   try {
     // eslint-disable-next-line
     new Client('https://localhost:1000', {
-      allowH2: true,
       maxConcurrentStreams: {}
     })
     t.fail()
@@ -311,7 +305,6 @@ test('Should throw if bad maxConcurrentStreams has been passed', async t => {
   try {
     // eslint-disable-next-line
     new Client('https://localhost:1000', {
-      allowH2: true,
       maxConcurrentStreams: -1
     })
     t.fail()
@@ -346,7 +339,6 @@ test(
     await once(server, 'listening')
 
     const client = new Client(`https://localhost:${server.address().port}`, {
-      allowH2: false,
       connect: {
         rejectUnauthorized: false
       }
@@ -443,8 +435,7 @@ test('Should handle h2 continue', async t => {
     connect: {
       rejectUnauthorized: false
     },
-    expectContinue: true,
-    allowH2: true
+    expectContinue: true
   })
 
   after(() => server.close())
@@ -493,8 +484,7 @@ test('Dispatcher#Stream', async t => {
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      },
-      allowH2: true
+      }
     })
 
     after(() => server.close())
@@ -544,8 +534,7 @@ test('Dispatcher#Pipeline', async t => {
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      },
-      allowH2: true
+      }
     })
 
     after(() => server.close())
@@ -605,8 +594,7 @@ test('Dispatcher#Connect', async t => {
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      },
-      allowH2: true
+      }
     })
 
     after(() => server.close())
@@ -654,8 +642,7 @@ test('Dispatcher#Upgrade', async t => {
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      },
-      allowH2: true
+      }
     })
 
     after(() => server.close())
@@ -685,8 +672,7 @@ test('Dispatcher#destroy', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t = tspl(t, { plan: 4 })
@@ -774,8 +760,7 @@ test('Should handle h2 request without body', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   after(() => server.close())
@@ -825,8 +810,7 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      },
-      allowH2: true
+      }
     })
 
     after(() => server.close())
@@ -904,8 +888,7 @@ test('Should handle h2 request with body (stream)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   after(() => server.close())
@@ -971,8 +954,7 @@ test('Should handle h2 request with body (iterable)', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   after(() => server.close())
@@ -1033,8 +1015,7 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   after(() => server.close())
@@ -1099,8 +1080,7 @@ test(
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      },
-      allowH2: true
+      }
     })
 
     after(() => server.close())
@@ -1150,8 +1130,7 @@ test('Agent should support H2 connection', async t => {
   const client = new Agent({
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t = tspl(t, { plan: 6 })
@@ -1209,8 +1188,7 @@ test(
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      },
-      allowH2: true
+      }
     })
 
     after(() => server.close())
@@ -1243,8 +1221,7 @@ test('The h2 pseudo-headers is not included in the headers', async t => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t = tspl(t, { plan: 2 })
@@ -1275,8 +1252,7 @@ test('Should throw informational error on half-closed streams (remote)', async t
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t = tspl(t, { plan: 2 })

@@ -44,8 +44,7 @@ test('[Fetch] Issue#2311', async (t) => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   const response = await fetch(
@@ -92,8 +91,7 @@ test('[Fetch] Simple GET with h2', async (t) => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   const response = await fetch(
@@ -151,8 +149,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) 
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   const response = await fetch(
@@ -213,8 +210,7 @@ test(
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      },
-      allowH2: true
+      }
     })
 
     t.after(closeClientAndServerAsPromise(client, server))
@@ -275,8 +271,7 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async (t) => 
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t.after(closeClientAndServerAsPromise(client, server))
@@ -341,8 +336,7 @@ test(
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      },
-      allowH2: true
+      }
     })
 
     t.after(closeClientAndServerAsPromise(client, server))
@@ -388,8 +382,7 @@ test('Issue#2415', async (t) => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   const response = await fetch(
@@ -440,8 +433,7 @@ test('Issue #2386', async (t) => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t.after(closeClientAndServerAsPromise(client, server))
