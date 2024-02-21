@@ -5,9 +5,12 @@ const valid = 'Space=Cat; Secure; HttpOnly; Max-Age=2'
 const invalid = 'Space=Cat; Secure; HttpOnly; Max-Age=2\x7F'
 
 group('isCTLExcludingHtab', () => {
-  bench(valid, () => {
-    isCTLExcludingHtab(valid)
-    isCTLExcludingHtab(invalid)
+  bench(`valid: ${valid}`, () => {
+    return isCTLExcludingHtab(valid)
+  })
+
+  bench(`invalid: ${invalid}`, () => {
+    return isCTLExcludingHtab(invalid)
   })
 })
 
