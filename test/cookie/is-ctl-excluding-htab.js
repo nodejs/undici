@@ -5,7 +5,7 @@ const { strictEqual } = require('node:assert')
 
 const {
   isCTLExcludingHtab
-} = require('../../lib/cookies/util')
+} = require('../../lib/web/cookies/util')
 
 describe('isCTLExcludingHtab', () => {
   test('should return false for 0x00 - 0x08 characters', () => {
