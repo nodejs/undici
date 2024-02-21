@@ -175,7 +175,7 @@ function printResults (results) {
       return {
         Tests: name,
         Samples: size,
-        Result: `${((connections * 1e9) / mean).toFixed(2)} req/sec`,
+        Result: `${((parallelRequests * 1e9) / mean).toFixed(2)} req/sec`,
         Tolerance: `± ${((standardError / mean) * 100).toFixed(2)} %`,
         'Difference with slowest': relative > 0 ? `+ ${relative.toFixed(2)} %` : '-'
       }
