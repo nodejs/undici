@@ -19,9 +19,9 @@ const {
   setGlobalDispatcher,
   Agent
 } = require('../../index.js')
-const HeadersOrig = require('../../lib/fetch/headers.js').Headers
-const ResponseOrig = require('../../lib/fetch/response.js').Response
-const RequestOrig = require('../../lib/fetch/request.js').Request
+const HeadersOrig = require('../../lib/web/fetch/headers.js').Headers
+const ResponseOrig = require('../../lib/web/fetch/response.js').Response
+const RequestOrig = require('../../lib/web/fetch/request.js').Request
 const TestServer = require('./utils/server.js')
 
 const {

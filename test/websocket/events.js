@@ -3,7 +3,7 @@
 const { test, describe, after } = require('node:test')
 const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
-const { MessageEvent, CloseEvent, ErrorEvent } = require('../../lib/websocket/events')
+const { MessageEvent, CloseEvent, ErrorEvent } = require('../../lib/web/websocket/events')
 const { WebSocket } = require('../..')
 
 test('MessageEvent', () => {

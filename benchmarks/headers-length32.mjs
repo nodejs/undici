@@ -1,5 +1,5 @@
 import { bench, run } from 'mitata'
-import { Headers } from '../lib/fetch/headers.js'
+import { Headers } from '../lib/web/fetch/headers.js'
 
 const headers = new Headers(
   [

@@ -1,5 +1,5 @@
 import { bench, group, run } from 'mitata'
-import { sort, heapSort, introSort } from '../lib/fetch/sort.js'
+import { sort, heapSort, introSort } from '../lib/web/fetch/sort.js'
 
 function compare (a, b) {
   return a < b ? -1 : 1

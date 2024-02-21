@@ -7,13 +7,13 @@ import { parentPort, workerData } from 'node:worker_threads'
 import {
   fetch, File, FileReader, FormData, Headers, Request, Response, setGlobalOrigin
 } from '../../../index.js'
-import { CloseEvent } from '../../../lib/websocket/events.js'
-import { WebSocket } from '../../../lib/websocket/websocket.js'
-import { Cache } from '../../../lib/cache/cache.js'
-import { CacheStorage } from '../../../lib/cache/cachestorage.js'
-import { kConstruct } from '../../../lib/cache/symbols.js'
+import { CloseEvent } from '../../../lib/web/websocket/events.js'
+import { WebSocket } from '../../../lib/web/websocket/websocket.js'
+import { Cache } from '../../../lib/web/cache/cache.js'
+import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
+import { kConstruct } from '../../../lib/web/cache/symbols.js'
 // TODO(@KhafraDev): move this import once its added to index
-import { EventSource } from '../../../lib/eventsource/eventsource.js'
+import { EventSource } from '../../../lib/web/eventsource/eventsource.js'
 import { webcrypto } from 'node:crypto'
 
 const { initScripts, meta, test, url, path } = workerData
