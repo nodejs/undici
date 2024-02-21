@@ -9,7 +9,7 @@ const {
   stringPercentDecode,
   parseMIMEType,
   collectAnHTTPQuotedString
-} = require('../../lib/fetch/dataURL')
+} = require('../../lib/web/fetch/dataURL')
 const { fetch } = require('../..')
 
 test('https://url.spec.whatwg.org/#concept-url-serializer', async (t) => {

@@ -3,8 +3,8 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
-const util = require('../../lib/fetch/util')
-const { HeadersList } = require('../../lib/fetch/headers')
+const util = require('../../lib/web/fetch/util')
+const { HeadersList } = require('../../lib/web/fetch/headers')
 const { createHash } = require('node:crypto')
 
 test('responseURL', (t) => {

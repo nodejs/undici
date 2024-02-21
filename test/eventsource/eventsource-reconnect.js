@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const events = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
-const { EventSource, defaultReconnectionTime } = require('../../lib/eventsource/eventsource')
+const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
 
 describe('EventSource - reconnect', () => {
   test('Should reconnect on connection close', async () => {
