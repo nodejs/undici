@@ -40,7 +40,6 @@ for (const [name, length] of Object.entries(settings)) {
     // sort(array, compare)
     bench('Array#sort', () => array.sort(compare))
     bench('sort (intro sort)', () => sort(array, compare))
-    // bench('tim sort', () => timSort(array, compare, 0, array.length))
 
     // sort(array, start, end, compare)
     bench('intro sort', () => introSort(array, 0, array.length, compare))

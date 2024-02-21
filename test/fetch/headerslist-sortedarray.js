@@ -27,7 +27,6 @@ test('toSortedArray (fast-path)', () => {
   }
 })
 
-// Do we really need it?
 test('toSortedArray (slow-path)', () => {
   for (let i = 0; i < SORT_RUN; ++i) {
     const headersList = new HeadersList()
