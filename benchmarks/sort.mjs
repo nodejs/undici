@@ -1,6 +1,5 @@
 import { bench, group, run } from 'mitata'
-import { sort, binaryInsertionSort, heapSort, introSort } from '../lib/fetch/sort.js'
-// import { sort as timSort } from './tim-sort.mjs'
+import { sort, heapSort, introSort } from '../lib/fetch/sort.js'
 
 function compare (a, b) {
   return a < b ? -1 : 1
@@ -29,30 +28,23 @@ for (const [name, length] of Object.entries(settings)) {
     const array = Array.from(new Array(length), () => generateAsciiString(12))
     // sort(array, compare)
     bench('Array#sort', () => array.slice().sort(compare))
-    bench('sort (mixed sort)', () => sort(array.slice(), compare))
-    // bench('tim sort', () => timSort(array.slice(), compare, 0, array.length))
+    bench('sort (intro sort)', () => sort(array.slice(), compare))
 
     // sort(array, start, end, compare)
     bench('intro sort', () => introSort(array.slice(), 0, array.length, compare))
     bench('heap sort', () => heapSort(array.slice(), 0, array.length, compare))
-
-    // Do not run them in large arrays as they are slow.
-    if (array.length <= 1000) bench('binary insertion sort', () => binaryInsertionSort(array.slice(), 0, array.length, compare))
   })
 
   group(`sort sortedArray (${name})`, () => {
     const array = Array.from(new Array(length), () => generateAsciiString(12)).sort(compare)
     // sort(array, compare)
     bench('Array#sort', () => array.sort(compare))
-    bench('sort (mixed sort)', () => sort(array, compare))
+    bench('sort (intro sort)', () => sort(array, compare))
     // bench('tim sort', () => timSort(array, compare, 0, array.length))
 
     // sort(array, start, end, compare)
     bench('intro sort', () => introSort(array, 0, array.length, compare))
     bench('heap sort', () => heapSort(array, 0, array.length, compare))
-
-    // Do not run them in large arrays as they are slow.
-    if (array.length <= 1000) bench('binary insertion sort', () => binaryInsertionSort(array, 0, array.length, compare))
   })
 }
 
