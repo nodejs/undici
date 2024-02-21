@@ -5,7 +5,7 @@
  */
 type Converter<T> = (object: unknown) => T
 
-type SequenceConverter<T> = (object: unknown) => T[]
+type SequenceConverter<T> = (object: unknown, iterable?: IterableIterator<T>) => T[]
 
 type RecordConverter<K extends string, V> = (object: unknown) => Record<K, V>
 

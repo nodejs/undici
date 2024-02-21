@@ -13,6 +13,13 @@ describe('Ternary Search Tree', () => {
     assert.throws(() => tst.insert(Buffer.from(''), ''))
   })
 
+  test('looking up not inserted key returns null', () => {
+    assert.throws(() => new TernarySearchTree().insert(Buffer.from(''), ''))
+    const tst = new TernarySearchTree()
+    tst.insert(Buffer.from('a'), 'a')
+    assert.strictEqual(tst.lookup(Buffer.from('non-existant')), null)
+  })
+
   test('duplicate key', () => {
     const tst = new TernarySearchTree()
     const key = Buffer.from('a')
