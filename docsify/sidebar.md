@@ -8,6 +8,7 @@
   * [BalancedPool](/docs/api/BalancedPool.md "Undici API - BalancedPool")
   * [Agent](/docs/api/Agent.md "Undici API - Agent")
   * [ProxyAgent](/docs/api/ProxyAgent.md "Undici API - ProxyAgent")
+  * [RetryAgent](/docs/api/RetryAgent.md "Undici API - RetryAgent")
   * [Connector](/docs/api/Connector.md "Custom connector")
   * [Errors](/docs/api/Errors.md "Undici API - Errors")
   * [EventSource](/docs/api/EventSource.md "Undici API - EventSource")
@@ -25,6 +26,7 @@
   * [CacheStorage](/docs/api/CacheStorage.md "Undici API - CacheStorage")
   * [Util](/docs/api/Util.md "Undici API - Util")
   * [RedirectHandler](/docs/api/RedirectHandler.md "Undici API - RedirectHandler")
+  * [RetryHandler](/docs/api/RetryHandler.md "Undici API - RetryHandler")
 * Best Practices
   * [Proxy](/docs/best-practices/proxy.md "Connecting through a proxy")
   * [Client Certificate](/docs/best-practices/client-certificate.md "Connect using a client certificate")

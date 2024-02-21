@@ -2,7 +2,7 @@
 
 const assert = require('node:assert')
 const { test, describe } = require('node:test')
-const { EventSourceStream } = require('../../lib/eventsource/eventsource-stream')
+const { EventSourceStream } = require('../../lib/web/eventsource/eventsource-stream')
 
 describe('EventSourceStream - processEvent', () => {
   const defaultEventSourceSettings = {

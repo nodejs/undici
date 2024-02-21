@@ -6,7 +6,7 @@ const stream = require('node:stream')
 const { Response } = require('../../index.js')
 const TestServer = require('./utils/server.js')
 const { Blob } = require('node:buffer')
-const { kState } = require('../../lib/fetch/symbols.js')
+const { kState } = require('../../lib/web/fetch/symbols.js')
 
 describe('Response', () => {
   const local = new TestServer()
