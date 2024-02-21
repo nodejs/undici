@@ -25,7 +25,6 @@ The benchmark is a simple `hello world` [example](benchmarks/benchmark.js) using
 
 The benchmark was run on Linux on top of Node 20.10.0.
 
-```
 ┌─────────┬───────────────────────┬─────────┬────────────────────┬────────────┬─────────────────────────┐
 │ (index) │         Tests         │ Samples │       Result       │ Tolerance  │ Difference with slowest │
 ├─────────┼───────────────────────┼─────────┼────────────────────┼────────────┼─────────────────────────┤
@@ -42,7 +41,6 @@ The benchmark was run on Linux on top of Node 20.10.0.
 │   10    │   'undici - stream'   │   10    │ '24282.13 req/sec' │ '± 1.94 %' │      '+ 604.94 %'       │
 │   11    │  'undici - dispatch'  │   20    │ '24441.95 req/sec' │ '± 2.68 %' │      '+ 609.58 %'       │
 └─────────┴───────────────────────┴─────────┴────────────────────┴────────────┴─────────────────────────┘
-```
 
 ## Quick Start
 
