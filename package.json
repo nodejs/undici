@@ -142,5 +142,8 @@
     "testMatch": [
       "<rootDir>/test/jest/**"
     ]
+  },
+  "dependencies": {
+    "dc-polyfill": "^0.1.3"
   }
 }

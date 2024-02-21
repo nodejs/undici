@@ -4,10 +4,10 @@ const { tspl } = require('@matteo.collina/tspl')
 const { describe, test, before, after } = require('node:test')
 const { fetch } = require('../../..')
 
-let diagnosticsChannel
+let dc
 let skip = false
 try {
-  diagnosticsChannel = require('node:diagnostics_channel')
+  dc = require('dc-polyfill')
 } catch {
   skip = true
 }
@@ -34,8 +34,7 @@ describe('diagnosticsChannel for fetch', { skip }, () => {
     t = tspl(t, { plan: 42 })
 
     let startCalled = 0
-
-    diagnosticsChannel.channel('undici:fetch:start').subscribe(({ input, init }) => {
+    dc.channel('tracing:undici:fetch:start').subscribe(({ input, init }) => {
       startCalled += 1
       if (init.redirect) {
         t.strictEqual(input, 'badrequest')
@@ -47,7 +46,7 @@ describe('diagnosticsChannel for fetch', { skip }, () => {
     })
 
     let endCalled = 0
-    diagnosticsChannel.channel('undici:fetch:end').subscribe(({ input, init, result, error }) => {
+    dc.channel('tracing:undici:fetch:end').subscribe(({ input, init, result, error }) => {
       endCalled += 1
       if (init.redirect) {
         t.strictEqual(input, 'badrequest')
@@ -60,7 +59,7 @@ describe('diagnosticsChannel for fetch', { skip }, () => {
     })
 
     let asyncStartCalled = 0
-    diagnosticsChannel.channel('undici:fetch:asyncStart').subscribe(({ input, init, result, error }) => {
+    dc.channel('tracing:undici:fetch:asyncStart').subscribe(({ input, init, result, error }) => {
       asyncStartCalled += 1
       if (init.redirect) {
         t.strictEqual(input, 'badrequest')
@@ -73,7 +72,7 @@ describe('diagnosticsChannel for fetch', { skip }, () => {
     })
 
     let asyncEndCalled = 0
-    diagnosticsChannel.channel('undici:fetch:asyncEnd').subscribe(async ({ input, init, result, error }) => {
+    dc.channel('tracing:undici:fetch:asyncEnd').subscribe(async ({ input, init, result, error }) => {
       asyncEndCalled += 1
       if (init.redirect) {
         t.strictEqual(input, 'badrequest')
@@ -91,7 +90,7 @@ describe('diagnosticsChannel for fetch', { skip }, () => {
     })
 
     let errorCalled = 0
-    diagnosticsChannel.channel('undici:fetch:error').subscribe(async ({ input, init, error }) => {
+    dc.channel('tracing:undici:fetch:error').subscribe(async ({ input, init, error }) => {
       errorCalled += 1
       if (init.redirect) {
         t.strictEqual(input, 'badrequest')
