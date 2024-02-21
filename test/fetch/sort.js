@@ -12,13 +12,13 @@ function generateRandomNumberArray (length) {
   return array
 }
 
+const compare = (a, b) => a - b
+
+const SORT_RUN = 4000
+
+const SORT_ELEMENT = 200
+
 describe('sort', () => {
-  const compare = (a, b) => a - b
-
-  const SORT_RUN = 4000
-
-  const SORT_ELEMENT = 200
-
   const arrays = new Array(SORT_RUN)
   const expectedArrays = new Array(SORT_RUN)
 
@@ -55,12 +55,6 @@ describe('sort', () => {
 })
 
 describe('sorted', () => {
-  const compare = (a, b) => a - b
-
-  const SORT_RUN = 4000
-
-  const SORT_ELEMENT = 200
-
   const arrays = new Array(SORT_RUN)
   const expectedArrays = new Array(SORT_RUN)
 
