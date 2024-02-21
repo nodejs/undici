@@ -53,3 +53,44 @@ describe('sort', () => {
     }
   })
 })
+
+describe('sorted', () => {
+  const compare = (a, b) => a - b
+
+  const SORT_RUN = 4000
+
+  const SORT_ELEMENT = 200
+
+  const arrays = new Array(SORT_RUN)
+  const expectedArrays = new Array(SORT_RUN)
+
+  for (let i = 0; i < SORT_RUN; ++i) {
+    const array = generateRandomNumberArray(SORT_ELEMENT).sort(compare)
+    arrays[i] = array
+    expectedArrays[i] = array.slice()
+  }
+
+  test('binary insertion sort', () => {
+    for (let i = 0; i < SORT_RUN; ++i) {
+      assert.deepStrictEqual(binaryInsertionSort(arrays[i].slice(), 0, SORT_ELEMENT, compare), expectedArrays[i])
+    }
+  })
+
+  test('heap sort', () => {
+    for (let i = 0; i < SORT_RUN; ++i) {
+      assert.deepStrictEqual(heapSort(arrays[i].slice(), 0, SORT_ELEMENT, compare), expectedArrays[i])
+    }
+  })
+
+  test('intro sort', () => {
+    for (let i = 0; i < SORT_RUN; ++i) {
+      assert.deepStrictEqual(introSort(arrays[i].slice(), 0, SORT_ELEMENT, compare), expectedArrays[i])
+    }
+  })
+
+  test('sort', () => {
+    for (let i = 0; i < SORT_RUN; ++i) {
+      assert.deepStrictEqual(sort(arrays[i].slice(), compare), expectedArrays[i])
+    }
+  })
+})
