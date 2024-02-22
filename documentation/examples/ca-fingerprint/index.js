@@ -2,7 +2,7 @@
 
 const crypto = require('node:crypto')
 const https = require('node:https')
-const { Client, buildConnector } = require('../..')
+const { Client, buildConnector } = require('../../../')
 const pem = require('https-pem')
 
 const caFingerprint = getFingerprint(pem.cert.toString()

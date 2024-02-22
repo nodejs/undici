@@ -1,7 +1,7 @@
 'use strict'
 
 const { randomBytes } = require('node:crypto')
-const { EventSource } = require('../')
+const { EventSource } = require('../../')
 
 async function main () {
   const url = `https://smee.io/${randomBytes(8).toString('base64url')}`
