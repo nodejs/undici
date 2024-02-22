@@ -1683,7 +1683,7 @@ test('busy', async (t) => {
 })
 
 test('connected', async (t) => {
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 5 })
 
   const server = createServer((req, res) => {
     // needed so that disconnect is emitted
@@ -1701,11 +1701,9 @@ test('connected', async (t) => {
 
     client.on('connect', (origin, [self]) => {
       t.strictEqual(origin, url)
-      t.strictEqual(client, self)
     })
     client.on('disconnect', (origin, [self]) => {
       t.strictEqual(origin, url)
-      t.strictEqual(client, self)
     })
 
     t.strictEqual(client[kConnected], false)

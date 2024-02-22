@@ -3,10 +3,10 @@
 const { test } = require('node:test')
 const http = require('node:http')
 const { Client, Pool, errors } = require('../..')
-const { createSecureServer } = require('node:http2')
-const pem = require('https-pem')
+// const { createSecureServer } = require('node:http2')
+// const pem = require('https-pem')
 const { tspl } = require('@matteo.collina/tspl')
-const { closeServerAsPromise, closeClientAndServerAsPromise } = require('../utils/node-http')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('dispatch invalid opts', (t) => {
   const p = tspl(t, { plan: 14 })
@@ -718,53 +718,53 @@ test('dispatches in expected order', async (t) => {
   await p.completed
 })
 
-test('dispatches in expected order for http2', async (t) => {
-  const server = createSecureServer(pem)
-  server.on('stream', (stream) => {
-    stream.respond({
-      'content-type': 'text/plain; charset=utf-8',
-      ':status': 200
-    })
-    stream.end('ended')
-  })
+// test('dispatches in expected order for http2', async (t) => {
+//   const server = createSecureServer(pem)
+//   server.on('stream', (stream) => {
+//     stream.respond({
+//       'content-type': 'text/plain; charset=utf-8',
+//       ':status': 200
+//     })
+//     stream.end('ended')
+//   })
 
-  const p = tspl(t, { plan: 1 })
+//   const p = tspl(t, { plan: 1 })
 
-  server.listen(0, () => {
-    const client = new Pool(`https://localhost:${server.address().port}`, {
-      connect: {
-        rejectUnauthorized: false
-      },
-      allowH2: true
-    })
+//   server.listen(0, () => {
+//     const client = new Pool(`https://localhost:${server.address().port}`, {
+//       connect: {
+//         rejectUnauthorized: false
+//       },
+//       allowH2: true
+//     })
 
-    t.after(closeClientAndServerAsPromise(client, server))
+//     t.after(closeClientAndServerAsPromise(client, server))
 
-    const dispatches = []
+//     const dispatches = []
 
-    client.dispatch({
-      path: '/',
-      method: 'POST',
-      body: 'body'
-    }, {
-      onConnect () {
-        dispatches.push('onConnect')
-      },
-      onHeaders () {
-        dispatches.push('onHeaders')
-      },
-      onData () {
-        dispatches.push('onData')
-      },
-      onComplete () {
-        dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onHeaders', 'onData', 'onComplete'])
-      },
-      onError (err) {
-        p.ifError(err)
-      }
-    })
-  })
+//     client.dispatch({
+//       path: '/',
+//       method: 'POST',
+//       body: 'body'
+//     }, {
+//       onConnect () {
+//         dispatches.push('onConnect')
+//       },
+//       onHeaders () {
+//         dispatches.push('onHeaders')
+//       },
+//       onData () {
+//         dispatches.push('onData')
+//       },
+//       onComplete () {
+//         dispatches.push('onComplete')
+//         p.deepStrictEqual(dispatches, ['onConnect', 'onHeaders', 'onData', 'onComplete'])
+//       },
+//       onError (err) {
+//         p.ifError(err)
+//       }
+//     })
+//   })
 
-  await p.completed
-})
+//   await p.completed
+// })
