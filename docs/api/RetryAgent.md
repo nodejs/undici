@@ -9,7 +9,7 @@ Wraps a `undici.RetryHandler`.
 
 Arguments:
 
-* **dispatcher** `undici.Dispatcher` (required) - the  dispactgher to wrap
+* **dispatcher** `undici.Dispatcher` (required) - the dispatcher to wrap
 * **options** `RetryHandlerOptions` (optional) - the options
 
 Returns: `ProxyAgent`
