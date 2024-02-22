@@ -16,7 +16,7 @@ Returns: `ProxyAgent`
 
 Extends: [`AgentOptions`](Agent.md#parameter-agentoptions)
 
-* **uri** `string` (required) - It can be passed either by a string or a object containing `uri` as string.
+* **uri** `string | URL` (required) - The URI of the proxy server.  This can be provided as a string, as an instance of the URL class, or as an object with a `uri` property of type string.
 * **token** `string` (optional) - It can be passed by a string of token for authentication.
 * **auth** `string` (**deprecated**) - Use token.
 * **clientFactory** `(origin: URL, opts: Object) => Dispatcher` (optional) - Default: `(origin, opts) => new Pool(origin, opts)`
@@ -29,6 +29,8 @@ Examples:
 import { ProxyAgent } from 'undici'
 
 const proxyAgent = new ProxyAgent('my.proxy.server')
+// or
+const proxyAgent = new ProxyAgent(new URL('my.proxy.server'))
 // or
 const proxyAgent = new ProxyAgent({ uri: 'my.proxy.server' })
 ```
