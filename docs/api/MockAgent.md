@@ -38,6 +38,14 @@ const agent = new Agent()
 const mockAgent = new MockAgent({ agent })
 ```
 
+### Example - MockAgent instantiation with missed request callback
+
+```js
+import { MockAgent } from 'undici'
+
+const mockAgent = new MockAgent({ onMissedRequest: (error) => console.log(`A request wasn't handled: ${error.message}`) })
+```
+
 ## Instance Methods
 
 ### `MockAgent.get(origin)`
