@@ -86,7 +86,7 @@
     "bench:server": "node benchmarks/server.js",
     "prebench:run": "node benchmarks/wait.js",
     "bench:run": "SAMPLES=100 CONNECTIONS=50 node benchmarks/benchmark.js",
-    "serve:website": "echo 'Documentation has been moved to `\/documentation`'",
+    "serve:website": "echo \"Error: Documentation has been moved to '\/documentation'\" && exit 1",
     "prepare": "husky install",
     "fuzz": "jsfuzz test/fuzzing/fuzz.js corpus"
   },
