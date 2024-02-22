@@ -17,23 +17,31 @@ npm i undici
 
 ## Benchmarks
 
-The benchmark is a simple `hello world` [example](benchmarks/benchmark.js) using a
-50 TCP connections with a pipelining depth of 10 running on Node 20.10.0.
+The benchmark is a simple `hello world` [example](benchmarks/benchmark.js) using:
+
+* 50 TCP connections
+* A pipelining factor of 10 for undici
+* 200 parallel requests issued per iteration (sample)
+
+The benchmark was run on Linux on top of Node 20.10.0.
 
 ```
-│ Tests               │ Samples │          Result │ Tolerance │ Difference with slowest │
-|─────────────────────|─────────|─────────────────|───────────|─────────────────────────|
-│ got                 │      45 │ 1661.71 req/sec │  ± 2.93 % │                       - │
-│ node-fetch          │      20 │ 2164.81 req/sec │  ± 2.63 % │               + 30.28 % │
-│ undici - fetch      │      35 │ 2274.27 req/sec │  ± 2.70 % │               + 36.86 % │
-│ http - no keepalive │      15 │ 2376.04 req/sec │  ± 2.99 % │               + 42.99 % │
-│ axios               │      25 │ 2612.93 req/sec │  ± 2.89 % │               + 57.24 % │
-│ request             │      40 │ 2712.19 req/sec │  ± 2.92 % │               + 63.22 % │
-│ http - keepalive    │      45 │ 4393.25 req/sec │  ± 2.86 % │              + 164.38 % │
-│ undici - pipeline   │      45 │ 5484.69 req/sec │  ± 2.87 % │              + 230.06 % │
-│ undici - request    │      55 │ 7773.98 req/sec │  ± 2.93 % │              + 367.83 % │
-│ undici - stream     │      70 │ 8425.96 req/sec │  ± 2.91 % │              + 407.07 % │
-│ undici - dispatch   │      50 │ 9488.99 req/sec │  ± 2.85 % │              + 471.04 % │
+┌─────────┬───────────────────────┬─────────┬────────────────────┬────────────┬─────────────────────────┐
+│ (index) │         Tests         │ Samples │       Result       │ Tolerance  │ Difference with slowest │
+├─────────┼───────────────────────┼─────────┼────────────────────┼────────────┼─────────────────────────┤
+│    0    │         'got'         │   25    │ '3444.59 req/sec'  │ '± 2.88 %' │           '-'           │
+│    1    │     'node-fetch'      │   20    │ '4927.30 req/sec'  │ '± 2.46 %' │       '+ 43.04 %'       │
+│    2    │   'undici - fetch'    │   10    │ '5043.80 req/sec'  │ '± 1.87 %' │       '+ 46.43 %'       │
+│    3    │       'request'       │   35    │ '6389.13 req/sec'  │ '± 2.93 %' │       '+ 85.48 %'       │
+│    4    │        'axios'        │   25    │ '6920.61 req/sec'  │ '± 2.76 %' │      '+ 100.91 %'       │
+│    5    │ 'http - no keepalive' │   10    │ '9357.37 req/sec'  │ '± 2.24 %' │      '+ 171.65 %'       │
+│    6    │  'http - keepalive'   │   30    │ '9921.36 req/sec'  │ '± 2.83 %' │      '+ 188.03 %'       │
+│    7    │     'superagent'      │   10    │ '10118.35 req/sec' │ '± 2.18 %' │      '+ 193.75 %'       │
+│    8    │  'undici - pipeline'  │   10    │ '17106.69 req/sec' │ '± 1.46 %' │      '+ 396.62 %'       │
+│    9    │  'undici - request'   │   20    │ '21611.80 req/sec' │ '± 2.50 %' │      '+ 527.41 %'       │
+│   10    │   'undici - stream'   │   10    │ '24282.13 req/sec' │ '± 1.94 %' │      '+ 604.94 %'       │
+│   11    │  'undici - dispatch'  │   20    │ '24441.95 req/sec' │ '± 2.68 %' │      '+ 609.58 %'       │
+└─────────┴───────────────────────┴─────────┴────────────────────┴────────────┴─────────────────────────┘
 ```
 
 ## Quick Start
