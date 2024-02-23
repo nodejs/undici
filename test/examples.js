@@ -4,7 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('node:http')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
-const examples = require('../examples/request.js')
+const examples = require('../docs/examples/request.js')
 
 test('request examples', async (t) => {
   t = tspl(t, { plan: 7 })

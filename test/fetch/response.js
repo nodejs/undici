@@ -7,12 +7,12 @@ const {
   Response,
   FormData
 } = require('../../')
-const { fromInnerResponse, makeResponse } = require('../../lib/fetch/response')
+const { fromInnerResponse, makeResponse } = require('../../lib/web/fetch/response')
 const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
-const { kState, kGuard, kRealm, kHeaders } = require('../../lib/fetch/symbols')
+const { kState, kGuard, kRealm, kHeaders } = require('../../lib/web/fetch/symbols')
 const { kHeadersList } = require('../../lib/core/symbols')
 
 test('arg validation', async () => {

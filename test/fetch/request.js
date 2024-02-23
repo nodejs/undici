@@ -10,12 +10,12 @@ const {
   Headers,
   fetch
 } = require('../../')
-const { fromInnerRequest, makeRequest } = require('../../lib/fetch/request')
+const { fromInnerRequest, makeRequest } = require('../../lib/web/fetch/request')
 const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
-const { kState, kGuard, kRealm, kSignal, kHeaders } = require('../../lib/fetch/symbols')
+const { kState, kGuard, kRealm, kSignal, kHeaders } = require('../../lib/web/fetch/symbols')
 const { kHeadersList } = require('../../lib/core/symbols')
 
 const hasSignalReason = 'reason' in AbortSignal.prototype

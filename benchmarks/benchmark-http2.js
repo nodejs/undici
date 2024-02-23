@@ -1,7 +1,5 @@
 'use strict'
 
-const { connect } = require('node:http2')
-const { createSecureContext } = require('node:tls')
 const os = require('node:os')
 const path = require('node:path')
 const { readFileSync } = require('node:fs')
@@ -46,11 +44,6 @@ const httpsBaseOptions = {
     numberKey: 256
   },
   ...dest
-}
-
-const http2ClientOptions = {
-  secureContext: createSecureContext({ ca }),
-  servername
 }
 
 const undiciOptions = {
@@ -113,7 +106,9 @@ class SimpleRequest {
 }
 
 function makeParallelRequests (cb) {
-  return Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise(cb)))
+  const res = Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise(cb)))
+  res.catch(console.error)
+  return res
 }
 
 function printResults (results) {
@@ -143,10 +138,12 @@ function printResults (results) {
         last = mean
       }
 
+      console.log(mean)
+
       return {
         Tests: name,
         Samples: size,
-        Result: `${((connections * 1e9) / mean).toFixed(2)} req/sec`,
+        Result: `${((1e9 * parallelRequests) / mean).toFixed(2)} req/sec`,
         Tolerance: `± ${((standardError / mean) * 100).toFixed(2)} %`,
         'Difference with slowest': relative > 0 ? `+ ${relative.toFixed(2)} %` : '-'
       }
@@ -156,28 +153,6 @@ function printResults (results) {
 }
 
 const experiments = {
-  'http2 - request' () {
-    return makeParallelRequests(resolve => {
-      connect(dest.url, http2ClientOptions, (session) => {
-        const headers = {
-          ':path': '/',
-          ':method': 'GET',
-          ':scheme': 'https',
-          ':authority': `localhost:${dest.port}`
-        }
-
-        const request = session.request(headers)
-
-        request.pipe(
-          new Writable({
-            write (chunk, encoding, callback) {
-              callback()
-            }
-          })
-        ).on('finish', resolve)
-      })
-    })
-  },
   'undici - pipeline' () {
     return makeParallelRequests(resolve => {
       dispatcher

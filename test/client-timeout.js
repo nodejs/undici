@@ -6,7 +6,7 @@ const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 const FakeTimers = require('@sinonjs/fake-timers')
-const timers = require('../lib/timers')
+const timers = require('../lib/util/timers')
 
 test('refresh timeout on pause', async (t) => {
   t = tspl(t, { plan: 1 })

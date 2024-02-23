@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const events = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
-const { EventSource } = require('../../lib/eventsource/eventsource')
+const { EventSource } = require('../../lib/web/eventsource/eventsource')
 
 describe('EventSource - status error', () => {
   [204, 205, 210, 299, 404, 410, 503].forEach((statusCode) => {

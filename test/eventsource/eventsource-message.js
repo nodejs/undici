@@ -5,7 +5,7 @@ const events = require('node:events')
 const http = require('node:http')
 const { setTimeout } = require('node:timers/promises')
 const { test, describe } = require('node:test')
-const { EventSource } = require('../../lib/eventsource/eventsource')
+const { EventSource } = require('../../lib/web/eventsource/eventsource')
 
 describe('EventSource - message', () => {
   test('Should not emit a message if only retry field was sent', async () => {

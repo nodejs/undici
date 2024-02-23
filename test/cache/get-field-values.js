@@ -2,7 +2,7 @@
 
 const { deepStrictEqual, throws } = require('node:assert')
 const { test } = require('node:test')
-const { getFieldValues } = require('../../lib/cache/util')
+const { getFieldValues } = require('../../lib/web/cache/util')
 
 test('getFieldValues', () => {
   throws(() => getFieldValues(null), {

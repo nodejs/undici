@@ -8,7 +8,7 @@ const {
   getSetCookies,
   setCookie
 } = require('../..')
-const { getHeadersList } = require('../../lib/cookies/util')
+const { getHeadersList } = require('../../lib/web/cookies/util')
 
 describe('Using global Headers', async () => {
   test('deleteCookies', () => {
