@@ -5,8 +5,7 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 
-const { Client } = require('..')
-const retry = require('../lib/interceptor/retry')
+const { RetryHandler, Client } = require('..')
 const { RequestHandler } = require('../lib/api/api-request')
 
 test('Should retry status code', async t => {
@@ -15,6 +14,28 @@ test('Should retry status code', async t => {
   let counter = 0
   const chunks = []
   const server = createServer()
+  const dispatchOptions = {
+    retryOptions: {
+      retry: (err, { state, opts }, done) => {
+        counter++
+
+        if (
+          err.statusCode === 500 ||
+          err.message.includes('other side closed')
+        ) {
+          setTimeout(done, 500)
+          return
+        }
+
+        return done(err)
+      }
+    },
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
 
   server.on('request', (req, res) => {
     switch (counter) {
@@ -36,26 +57,29 @@ test('Should retry status code', async t => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    const handler = {
-      onConnect () {
-        t.ok(true, 'pass')
-      },
-      onHeaders (status, _rawHeaders, resume, _statusMessage) {
-        t.strictEqual(status, 200)
-        return true
-      },
-      onData (chunk) {
-        chunks.push(chunk)
-        return true
-      },
-      onComplete () {
-        t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
-        t.strictEqual(counter, 2)
-      },
-      onError () {
-        t.fail()
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: {
+        onConnect () {
+          t.ok(true, 'pass')
+        },
+        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          t.strictEqual(status, 200)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
+          t.strictEqual(counter, 2)
+        },
+        onError () {
+          t.fail()
+        }
       }
-    }
+    })
 
     after(async () => {
       await client.close()
@@ -64,21 +88,7 @@ test('Should retry status code', async t => {
       await once(server, 'close')
     })
 
-    client.compose(retry({
-      retry: (err, { state, opts }, done) => {
-        counter++
-
-        if (
-          err.statusCode === 500 ||
-          err.message.includes('other side closed')
-        ) {
-          setTimeout(done, 500)
-          return
-        }
-
-        return done(err)
-      }
-    })).dispatch(
+    client.dispatch(
       {
         method: 'GET',
         path: '/',
@@ -100,6 +110,13 @@ test('Should use retry-after header for retries', async t => {
   const chunks = []
   const server = createServer()
   let checkpoint
+  const dispatchOptions = {
+    method: 'PUT',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
 
   server.on('request', (req, res) => {
     switch (counter) {
@@ -124,25 +141,28 @@ test('Should use retry-after header for retries', async t => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    const handler = {
-      onConnect () {
-        t.ok(true, 'pass')
-      },
-      onHeaders (status, _rawHeaders, resume, _statusMessage) {
-        t.strictEqual(status, 200)
-        return true
-      },
-      onData (chunk) {
-        chunks.push(chunk)
-        return true
-      },
-      onComplete () {
-        t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
-      },
-      onError (err) {
-        t.ifError(err)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: {
+        onConnect () {
+          t.ok(true, 'pass')
+        },
+        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          t.strictEqual(status, 200)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
+        },
+        onError (err) {
+          t.ifError(err)
+        }
       }
-    }
+    })
 
     after(async () => {
       await client.close()
@@ -151,9 +171,7 @@ test('Should use retry-after header for retries', async t => {
       await once(server, 'close')
     })
 
-    client.compose(retry({
-
-    })).dispatch(
+    client.dispatch(
       {
         method: 'PUT',
         path: '/',
@@ -175,6 +193,13 @@ test('Should use retry-after header for retries (date)', async t => {
   const chunks = []
   const server = createServer()
   let checkpoint
+  const dispatchOptions = {
+    method: 'PUT',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
 
   server.on('request', (req, res) => {
     switch (counter) {
@@ -201,25 +226,28 @@ test('Should use retry-after header for retries (date)', async t => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    const handler = {
-      onConnect () {
-        t.ok(true, 'pass')
-      },
-      onHeaders (status, _rawHeaders, resume, _statusMessage) {
-        t.strictEqual(status, 200)
-        return true
-      },
-      onData (chunk) {
-        chunks.push(chunk)
-        return true
-      },
-      onComplete () {
-        t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
-      },
-      onError (err) {
-        t.ifError(err)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: {
+        onConnect () {
+          t.ok(true, 'pass')
+        },
+        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          t.strictEqual(status, 200)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
+        },
+        onError (err) {
+          t.ifError(err)
+        }
       }
-    }
+    })
 
     after(async () => {
       await client.close()
@@ -228,8 +256,7 @@ test('Should use retry-after header for retries (date)', async t => {
       await once(server, 'close')
     })
 
-    client.compose(retry({
-    })).dispatch(
+    client.dispatch(
       {
         method: 'PUT',
         path: '/',
@@ -250,6 +277,13 @@ test('Should retry with defaults', async t => {
   let counter = 0
   const chunks = []
   const server = createServer()
+  const dispatchOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
 
   server.on('request', (req, res) => {
     switch (counter) {
@@ -274,25 +308,28 @@ test('Should retry with defaults', async t => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    const handler = {
-      onConnect () {
-        t.ok(true, 'pass')
-      },
-      onHeaders (status, _rawHeaders, resume, _statusMessage) {
-        t.strictEqual(status, 200)
-        return true
-      },
-      onData (chunk) {
-        chunks.push(chunk)
-        return true
-      },
-      onComplete () {
-        t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
-      },
-      onError (err) {
-        t.ifError(err)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: {
+        onConnect () {
+          t.ok(true, 'pass')
+        },
+        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          t.strictEqual(status, 200)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
+        },
+        onError (err) {
+          t.ifError(err)
+        }
       }
-    }
+    })
 
     after(async () => {
       await client.close()
@@ -301,7 +338,7 @@ test('Should retry with defaults', async t => {
       await once(server, 'close')
     })
 
-    client.compose(retry()).dispatch(
+    client.dispatch(
       {
         method: 'GET',
         path: '/',
@@ -342,30 +379,8 @@ test('Should handle 206 partial content', async t => {
     x++
   })
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    const handler = {
-      onConnect () {
-        t.ok(true, 'pass')
-      },
-      onHeaders (status, _rawHeaders, resume, _statusMessage) {
-        t.strictEqual(status, 200)
-        return true
-      },
-      onData (chunk) {
-        chunks.push(chunk)
-        return true
-      },
-      onComplete () {
-        t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abcdef')
-        t.strictEqual(counter, 1)
-      },
-      onError () {
-        t.fail()
-      }
-    }
-
-    client.compose(retry({
+  const dispatchOptions = {
+    retryOptions: {
       retry: function (err, _, done) {
         counter++
 
@@ -377,7 +392,43 @@ test('Should handle 206 partial content', async t => {
 
         setTimeout(done, 800)
       }
-    })).dispatch(
+    },
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: (...args) => {
+        return client.dispatch(...args)
+      },
+      handler: {
+        onConnect () {
+          t.ok(true, 'pass')
+        },
+        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          t.strictEqual(status, 200)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abcdef')
+          t.strictEqual(counter, 1)
+        },
+        onError () {
+          t.fail()
+        }
+      }
+    })
+
+    client.dispatch(
       {
         method: 'GET',
         path: '/',
@@ -424,30 +475,46 @@ test('Should handle 206 partial content - bad-etag', async t => {
     x++
   })
 
+  const dispatchOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    const handler = {
-      onConnect () {
-        t.ok(true, 'pass')
-      },
-      onHeaders (status, _rawHeaders, resume, _statusMessage) {
-        t.ok(true, 'pass')
-        return true
-      },
-      onData (chunk) {
-        chunks.push(chunk)
-        return true
-      },
-      onComplete () {
-        t.ifError('should not complete')
-      },
-      onError (err) {
-        t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
-        t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
+    const handler = new RetryHandler(
+      dispatchOptions,
+      {
+        dispatch: (...args) => {
+          return client.dispatch(...args)
+        },
+        handler: {
+          onConnect () {
+            t.ok(true, 'pass')
+          },
+          onHeaders (status, _rawHeaders, resume, _statusMessage) {
+            t.ok(true, 'pass')
+            return true
+          },
+          onData (chunk) {
+            chunks.push(chunk)
+            return true
+          },
+          onComplete () {
+            t.ifError('should not complete')
+          },
+          onError (err) {
+            t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
+            t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
+          }
+        }
       }
-    }
+    )
 
-    client.compose(retry()).dispatch(
+    client.dispatch(
       {
         method: 'GET',
         path: '/',
@@ -472,6 +539,29 @@ test('Should handle 206 partial content - bad-etag', async t => {
 test('retrying a request with a body', async t => {
   let counter = 0
   const server = createServer()
+  const dispatchOptions = {
+    retryOptions: {
+      retry: (err, { state, opts }, done) => {
+        counter++
+
+        if (
+          err.statusCode === 500 ||
+          err.message.includes('other side closed')
+        ) {
+          setTimeout(done, 500)
+          return
+        }
+
+        return done(err)
+      }
+    },
+    method: 'POST',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({ hello: 'world' })
+  }
 
   t = tspl(t, { plan: 1 })
 
@@ -495,15 +585,11 @@ test('retrying a request with a body', async t => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    const handler = new RequestHandler({
-      method: 'POST',
-      path: '/',
-      headers: {
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({ hello: 'world' })
-    }, (err, data) => {
-      t.ifError(err)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: new RequestHandler(dispatchOptions, (err, data) => {
+        t.ifError(err)
+      })
     })
 
     after(async () => {
@@ -513,21 +599,7 @@ test('retrying a request with a body', async t => {
       await once(server, 'close')
     })
 
-    client.compose(retry({
-      retry: (err, { state, opts }, done) => {
-        counter++
-
-        if (
-          err.statusCode === 500 ||
-          err.message.includes('other side closed')
-        ) {
-          setTimeout(done, 500)
-          return
-        }
-
-        return done(err)
-      }
-    })).dispatch(
+    client.dispatch(
       {
         method: 'POST',
         path: '/',
@@ -552,29 +624,42 @@ test('should not error if request is not meant to be retried', async t => {
     res.end('Bad request')
   })
 
+  const dispatchOptions = {
+    retryOptions: {
+      method: 'GET',
+      path: '/',
+      headers: {
+        'content-type': 'application/json'
+      }
+    }
+  }
+
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     const chunks = []
-    const handler = {
-      onConnect () {
-        t.ok(true, 'pass')
-      },
-      onHeaders (status, _rawHeaders, resume, _statusMessage) {
-        t.strictEqual(status, 400)
-        return true
-      },
-      onData (chunk) {
-        chunks.push(chunk)
-        return true
-      },
-      onComplete () {
-        t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'Bad request')
-      },
-      onError (err) {
-        console.log({ err })
-        t.fail()
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: {
+        onConnect () {
+          t.ok(true, 'pass')
+        },
+        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          t.strictEqual(status, 400)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'Bad request')
+        },
+        onError (err) {
+          console.log({ err })
+          t.fail()
+        }
       }
-    }
+    })
 
     after(async () => {
       await client.close()
@@ -583,7 +668,7 @@ test('should not error if request is not meant to be retried', async t => {
       await once(server, 'close')
     })
 
-    client.compose(retry()).dispatch(
+    client.dispatch(
       {
         method: 'GET',
         path: '/',
