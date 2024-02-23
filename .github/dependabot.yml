@@ -13,7 +13,7 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
-    directory: /documentation
+    directory: /docs
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
