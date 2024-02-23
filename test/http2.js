@@ -15,7 +15,6 @@ const { Client, Agent } = require('..')
 const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 
 test('Should support H2 connection', async t => {
-  const body = []
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
@@ -51,15 +50,12 @@ test('Should support H2 connection', async t => {
     }
   })
 
-  response.body.on('data', chunk => {
-    body.push(chunk)
-  })
+  const data = await response.body.text()
 
-  await once(response.body, 'end')
   t.strictEqual(response.statusCode, 200)
   t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
   t.strictEqual(response.headers['x-custom-h2'], 'hello')
-  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  t.strictEqual(data, 'hello h2!')
 })
 
 test('Should support H2 connection(multiple requests)', async t => {
