@@ -29,9 +29,10 @@ test('using auth in combination with token should throw', (t) => {
   )
 })
 
-test('should accept string and object as options', (t) => {
-  t = tspl(t, { plan: 2 })
+test('should accept string, URL and object as options', (t) => {
+  t = tspl(t, { plan: 3 })
   t.doesNotThrow(() => new ProxyAgent('http://example.com'))
+  t.doesNotThrow(() => new ProxyAgent(new URL('http://example.com')))
   t.doesNotThrow(() => new ProxyAgent({ uri: 'http://example.com' }))
 })
 
@@ -125,6 +126,47 @@ test('use proxy-agent to connect through proxy using path with params', async (t
   proxy.on('connect', () => {
     t.ok(true, 'should call proxy')
   })
+  server.on('request', (req, res) => {
+    t.strictEqual(req.url, '/hello?foo=bar')
+    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    res.setHeader('content-type', 'application/json')
+    res.end(JSON.stringify({ hello: 'world' }))
+  })
+
+  const {
+    statusCode,
+    headers,
+    body
+  } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
+  const json = await body.json()
+
+  t.strictEqual(statusCode, 200)
+  t.deepStrictEqual(json, { hello: 'world' })
+  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
+test('use proxy-agent to connect through proxy with basic auth in URL', async (t) => {
+  t = tspl(t, { plan: 7 })
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = new URL(`http://user:pass@localhost:${proxy.address().port}`)
+  const proxyAgent = new ProxyAgent(proxyUrl)
+  const parsedOrigin = new URL(serverUrl)
+
+  proxy.authenticate = function (req, fn) {
+    t.ok(true, 'authentication should be called')
+    fn(null, req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`)
+  }
+  proxy.on('connect', () => {
+    t.ok(true, 'proxy should be called')
+  })
+
   server.on('request', (req, res) => {
     t.strictEqual(req.url, '/hello?foo=bar')
     t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
