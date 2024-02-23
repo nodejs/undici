@@ -44,7 +44,7 @@ test('use proxy-agent to connect through proxy', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor(proxyUrl))
+  const proxyAgent = new Agent().compose(proxyInterceptor(proxyUrl))
   const parsedOrigin = new URL(serverUrl)
 
   proxy.on('connect', () => {
@@ -103,7 +103,7 @@ test('use proxy agent to connect through proxy using Pool', async (t) => {
   const clientFactory = (url, options) => {
     return new Pool(url, options)
   }
-  const proxyAgent = new Agent().intercept(proxyInterceptor({ auth: Buffer.from('user:pass').toString('base64'), uri: proxyUrl, clientFactory }))
+  const proxyAgent = new Agent().compose(proxyInterceptor({ auth: Buffer.from('user:pass').toString('base64'), uri: proxyUrl, clientFactory }))
   const firstRequest = request(`${serverUrl}`, { dispatcher: proxyAgent })
   const secondRequest = await request(`${serverUrl}`, { dispatcher: proxyAgent })
   t.strictEqual((await firstRequest).statusCode, 200)
@@ -120,7 +120,7 @@ test('use proxy-agent to connect through proxy using path with params', async (t
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor(proxyUrl))
+  const proxyAgent = new Agent().compose(proxyInterceptor(proxyUrl))
   const parsedOrigin = new URL(serverUrl)
 
   proxy.on('connect', () => {
@@ -156,7 +156,7 @@ test('use proxy-agent with auth', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor({
+  const proxyAgent = new Agent().compose(proxyInterceptor({
     auth: Buffer.from('user:pass').toString('base64'),
     uri: proxyUrl
   }))
@@ -200,7 +200,7 @@ test('use proxy-agent with token', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor({
+  const proxyAgent = new Agent().compose(proxyInterceptor({
     token: `Bearer ${Buffer.from('user:pass').toString('base64')}`,
     uri: proxyUrl
   }))
@@ -244,7 +244,7 @@ test('use proxy-agent with custom headers', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor({
+  const proxyAgent = new Agent().compose(proxyInterceptor({
     uri: proxyUrl,
     headers: {
       'User-Agent': 'Foobar/1.0.0'
@@ -277,7 +277,7 @@ test('sending proxy-authorization in request headers should throw', async (t) =>
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor(proxyUrl))
+  const proxyAgent = new Agent().compose(proxyInterceptor(proxyUrl))
 
   server.on('request', (req, res) => {
     res.end(JSON.stringify({ hello: 'world' }))
@@ -336,7 +336,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor(proxyUrl))
+  const proxyAgent = new Agent().compose(proxyInterceptor(proxyUrl))
   const parsedOrigin = new URL(serverUrl)
   setGlobalDispatcher(proxyAgent)
 
@@ -378,7 +378,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
-  const proxyAgent = new Agent().intercept(proxyInterceptor(proxyUrl))
+  const proxyAgent = new Agent().compose(proxyInterceptor(proxyUrl))
   setGlobalDispatcher(proxyAgent)
 
   after(() => setGlobalDispatcher(defaultDispatcher))
@@ -431,7 +431,7 @@ test('should throw when proxy does not return 200', async (t) => {
     fn(null, false)
   }
 
-  const proxyAgent = new Agent().intercept(proxyInterceptor(proxyUrl))
+  const proxyAgent = new Agent().compose(proxyInterceptor(proxyUrl))
   try {
     await request(serverUrl, { dispatcher: proxyAgent })
     t.fail()
@@ -458,7 +458,7 @@ test('pass ProxyAgent proxy status code error when using fetch - #2161', async (
     fn(null, false)
   }
 
-  const proxyAgent = new Agent().intercept(proxyInterceptor(proxyUrl))
+  const proxyAgent = new Agent().compose(proxyInterceptor(proxyUrl))
   try {
     await fetch(serverUrl, { dispatcher: proxyAgent })
   } catch (e) {
@@ -480,7 +480,7 @@ test('Proxy via HTTP to HTTPS endpoint', async (t) => {
 
   const serverUrl = `https://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor({
+  const proxyAgent = new Agent().compose(proxyInterceptor({
     uri: proxyUrl,
     requestTls: {
       ca: [
@@ -532,7 +532,7 @@ test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
 
   const serverUrl = `https://localhost:${server.address().port}`
   const proxyUrl = `https://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor({
+  const proxyAgent = new Agent().compose(proxyInterceptor({
     uri: proxyUrl,
     proxyTls: {
       ca: [
@@ -593,7 +593,7 @@ test('Proxy via HTTPS to HTTP endpoint', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `https://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor({
+  const proxyAgent = new Agent().compose(proxyInterceptor({
     uri: proxyUrl,
     proxyTls: {
       ca: [
@@ -642,7 +642,7 @@ test('Proxy via HTTP to HTTP endpoint', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new Agent().intercept(proxyInterceptor(proxyUrl))
+  const proxyAgent = new Agent().compose(proxyInterceptor(proxyUrl))
 
   server.on('request', function (req, res) {
     t.ok(!req.connection.encrypted)

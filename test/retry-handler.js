@@ -64,7 +64,7 @@ test('Should retry status code', async t => {
       await once(server, 'close')
     })
 
-    client.intercept(retry({
+    client.compose(retry({
       retry: (err, { state, opts }, done) => {
         counter++
 
@@ -151,7 +151,7 @@ test('Should use retry-after header for retries', async t => {
       await once(server, 'close')
     })
 
-    client.intercept(retry({
+    client.compose(retry({
 
     })).dispatch(
       {
@@ -228,7 +228,7 @@ test('Should use retry-after header for retries (date)', async t => {
       await once(server, 'close')
     })
 
-    client.intercept(retry({
+    client.compose(retry({
     })).dispatch(
       {
         method: 'PUT',
@@ -301,7 +301,7 @@ test('Should retry with defaults', async t => {
       await once(server, 'close')
     })
 
-    client.intercept(retry()).dispatch(
+    client.compose(retry()).dispatch(
       {
         method: 'GET',
         path: '/',
@@ -365,7 +365,7 @@ test('Should handle 206 partial content', async t => {
       }
     }
 
-    client.intercept(retry({
+    client.compose(retry({
       retry: function (err, _, done) {
         counter++
 
@@ -447,7 +447,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
       }
     }
 
-    client.intercept(retry()).dispatch(
+    client.compose(retry()).dispatch(
       {
         method: 'GET',
         path: '/',
@@ -513,7 +513,7 @@ test('retrying a request with a body', async t => {
       await once(server, 'close')
     })
 
-    client.intercept(retry({
+    client.compose(retry({
       retry: (err, { state, opts }, done) => {
         counter++
 
@@ -583,7 +583,7 @@ test('should not error if request is not meant to be retried', async t => {
       await once(server, 'close')
     })
 
-    client.intercept(retry()).dispatch(
+    client.compose(retry()).dispatch(
       {
         method: 'GET',
         path: '/',
