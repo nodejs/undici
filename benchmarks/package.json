@@ -1,0 +1,20 @@
+{
+  "name": "benchmarks",
+  "scripts": {
+    "bench": "PORT=3042 concurrently -k -s first npm:bench:server npm:bench:run",
+    "bench:server": "node ./server.js",
+    "prebench:run": "node ./wait.js",
+    "bench:run": "SAMPLES=100 CONNECTIONS=50 node ./benchmark.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "concurrently": "^8.2.2",
+    "cronometro": "^3.0.1",
+    "got": "^14.2.0",
+    "mitata": "^0.1.11",
+    "node-fetch": "^3.3.2",
+    "request": "^2.88.2",
+    "superagent": "^8.1.2",
+    "wait-on": "^7.2.0"
+  }
+}
