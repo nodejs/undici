@@ -76,10 +76,8 @@
         "skip": true
       },
       "request-referrer.any.js": {
-        "note": "TODO(@KhafraDev): url referrer test could probably be fixed",
         "fail": [
-          "about:client referrer",
-          "url referrer"
+          "about:client referrer"
         ]
       },
       "request-upload.any.js": {
