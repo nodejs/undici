@@ -11,7 +11,7 @@ const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/erro
 const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
 const { kAgent } = require('../lib/mock/mock-symbols')
-const Dispatcher = require('../lib/dispatcher')
+const Dispatcher = require('../lib/dispatcher/dispatcher')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 const { fetch } = require('..')
 
