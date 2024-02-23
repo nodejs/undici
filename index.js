@@ -5,8 +5,6 @@ const Dispatcher = require('./lib/dispatcher/dispatcher')
 const Pool = require('./lib/dispatcher/pool')
 const BalancedPool = require('./lib/dispatcher/balanced-pool')
 const Agent = require('./lib/dispatcher/agent')
-const ProxyAgent = require('./lib/dispatcher/proxy-agent')
-const RetryAgent = require('./lib/dispatcher/retry-agent')
 const errors = require('./lib/core/errors')
 const util = require('./lib/core/util')
 const { InvalidArgumentError } = errors
@@ -16,11 +14,7 @@ const MockClient = require('./lib/mock/mock-client')
 const MockAgent = require('./lib/mock/mock-agent')
 const MockPool = require('./lib/mock/mock-pool')
 const mockErrors = require('./lib/mock/mock-errors')
-const RetryHandler = require('./lib/handler/RetryHandler')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
-const DecoratorHandler = require('./lib/handler/DecoratorHandler')
-const RedirectHandler = require('./lib/handler/RedirectHandler')
-const createRedirectInterceptor = require('./lib/interceptor/redirectInterceptor')
 
 Object.assign(Dispatcher.prototype, api)
 
@@ -29,13 +23,12 @@ module.exports.Client = Client
 module.exports.Pool = Pool
 module.exports.BalancedPool = BalancedPool
 module.exports.Agent = Agent
-module.exports.ProxyAgent = ProxyAgent
-module.exports.RetryAgent = RetryAgent
-module.exports.RetryHandler = RetryHandler
 
-module.exports.DecoratorHandler = DecoratorHandler
-module.exports.RedirectHandler = RedirectHandler
-module.exports.createRedirectInterceptor = createRedirectInterceptor
+module.exports.interceptor = {
+  redirect: require('./lib/interceptor/redirect'),
+  retry: require('./lib/interceptor/retry'),
+  proxy: require('./lib/interceptor/proxy')
+}
 
 module.exports.buildConnector = buildConnector
 module.exports.errors = errors

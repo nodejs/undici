@@ -5,17 +5,12 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 
-const { RetryAgent, Client } = require('..')
+const { interceptor, Client } = require('..')
 test('Should retry status code', async t => {
   t = tspl(t, { plan: 2 })
 
   let counter = 0
   const server = createServer()
-  const opts = {
-    maxRetries: 5,
-    timeout: 1,
-    timeoutFactor: 1
-  }
 
   server.on('request', (req, res) => {
     switch (counter++) {
@@ -37,7 +32,11 @@ test('Should retry status code', async t => {
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    const agent = new RetryAgent(client, opts)
+    const agent = client.compose(interceptor.retry({
+      maxRetries: 5,
+      timeout: 1,
+      timeoutFactor: 1
+    }))
 
     after(async () => {
       await agent.close()

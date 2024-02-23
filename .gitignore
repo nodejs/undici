@@ -79,3 +79,5 @@ fuzz-results-*.json
 # Bundle output
 undici-fetch.js
 /test/imports/undici-import.js
+
+.tap
