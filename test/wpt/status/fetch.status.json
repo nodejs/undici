@@ -403,15 +403,6 @@
           "Consume empty FormData response body as text"
         ]
       },
-      "response-consume-stream.any.js": {
-        "fail": [
-          "Read blob response's body as readableStream with mode=byob",
-          "Read text response's body as readableStream with mode=byob",
-          "Read URLSearchParams response's body as readableStream with mode=byob",
-          "Read array buffer response's body as readableStream with mode=byob",
-          "Read form data response's body as readableStream with mode=byob"
-        ]
-      },
       "response-error-from-stream.any.js": {
         "fail": [
           "ReadableStream start() Error propagates to Response.formData() Promise",
