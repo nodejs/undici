@@ -3,7 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
-const timers = require('../lib/timers')
+const timers = require('../lib/util/timers')
 const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 

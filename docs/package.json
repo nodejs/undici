@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "name": "@undici/documentation",
+  "description": "Documentation site for the `undici` package.",
+  "scripts": {
+    "serve": "docsify serve ."
+  },
+  "dependencies": {
+    "docsify-cli": "^4.4.4"
+  }
+}
