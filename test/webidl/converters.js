@@ -193,6 +193,7 @@ test('webidl.util.Stringify', (t) => {
     [true, 'true'],
     [0, '0'],
     ['hello', 'hello'],
+    ['', '""'],
     [null, 'null'],
     [undefined, 'undefined']
   ]
