@@ -81,7 +81,7 @@ test('use proxy agent to connect through proxy using Pool', async (t) => {
   let resolveFirstConnect
   let connectCount = 0
 
-  proxy.authenticate = async function (req, fn) {
+  proxy.authenticate = async function (req) {
     if (++connectCount === 2) {
       t.ok(true, 'second connect should arrive while first is still inflight')
       resolveFirstConnect()
@@ -161,7 +161,7 @@ test('use proxy-agent to connect through proxy with basic auth in URL', async (t
 
   proxy.authenticate = function (req, fn) {
     t.ok(true, 'authentication should be called')
-    fn(null, req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`)
+    return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`
   }
   proxy.on('connect', () => {
     t.ok(true, 'proxy should be called')
