@@ -24,7 +24,7 @@ describe('Ternary Search Tree', () => {
     const tst = new TernarySearchTree()
     tst.insert('a', 'a')
     // throw on TstNode
-    assert.throws(() => tst.insert('a\x80', 'a'))
+    assert.throws(() => tst.insert('\x80', 'a'))
   })
 
   test('duplicate key', () => {
