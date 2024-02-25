@@ -28,12 +28,14 @@ test('undici.request with a FormData body should set content-length header', asy
 })
 
 test('undici.request with a FormData stream value should set transfer-encoding header', { skip: !openAsBlob }, async (t) => {
+  const { ok } = tspl(t, { plan: 1 })
+
   const server = createServer((req, res) => {
-    t.ok(req.headers['content-type'].startsWith('multipart/form-data'))
+    ok(req.headers['content-type'].startsWith('multipart/form-data'))
     res.end()
   }).listen(0)
 
-  t.teardown(server.close.bind(server))
+  t.after(server.close.bind(server))
   await once(server, 'listening')
 
   const body = new FormData()
