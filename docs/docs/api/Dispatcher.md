@@ -817,6 +817,131 @@ try {
 }
 ```
 
+### `Dispatcher.compose(interceptors[, interceptor])`
+
+Compose a new dispatcher from the current dispatcher and the given interceptors.
+
+> _Notes_:
+> - The order of the interceptors is important. The first interceptor will be the first to be called.
+> - It is important to note that the `interceptor` function should return a `Dispatcher` instance.
+> - Any fork of the chain of `interceptors` can lead to unexpected results, it is important that an interceptor returns a `Dispatcher` instance that forwards the request to the next interceptor in the chain.
+
+Arguments:
+
+* **interceptors** `Interceptor[]`: It is an array of `Interceptor` functions passed as only argument, or several interceptors passed as separate arguments.
+
+Returns: `Dispatcher`.
+
+#### Parameter: `Interceptor`
+
+A function that takes a `Dispatcher` instance and returns a `Dispatcher` instance.
+
+#### Example 1 - Basic Compose
+
+```js
+import { RedirectHandler, Dispatcher } from 'undici'
+
+class RedirectDispatcher extends Dispatcher {
+  #opts
+  #dispatcher
+
+  constructor (dispatcher, opts) {
+    super()
+
+    this.#dispatcher = dispatcher
+    this.#opts = opts
+  }
+
+  dispatch (opts, handler) {
+    return this.#dispatcher.dispatch(
+      opts,
+      new RedirectHandler(this.#dispatcher, opts, this.#opts, handler)
+    )
+  }
+
+  close (...args) {
+    return this.#dispatcher.close(...args)
+  }
+
+  destroy (...args) {
+    return this.#dispatcher.destroy(...args)
+  }
+}
+
+const redirectInterceptor = dispatcher => new RedirectDispatcher(dispatcher, opts)
+
+const client = new Client('http://localhost:3000')
+  .compose(redirectInterceptor)
+```
+
+#### Example 2 - Chained Compose
+
+```js
+import { RedirectHandler, Dispatcher, RetryHandler } from 'undici'
+
+class RedirectDispatcher extends Dispatcher {
+  #opts
+  #dispatcher
+
+  constructor (dispatcher, opts) {
+    super()
+
+    this.#dispatcher = dispatcher
+    this.#opts = opts
+  }
+
+  dispatch (opts, handler) {
+    return this.#dispatcher.dispatch(
+      opts,
+      new RedirectHandler(this.#dispatcher, opts, this.#opts, handler)
+    )
+  }
+
+  close (...args) {
+    return this.#dispatcher.close(...args)
+  }
+
+  destroy (...args) {
+    return this.#dispatcher.destroy(...args)
+  }
+}
+
+class RetryDispatcher extends Dispatcher {
+  #dispatcher
+  #opts
+
+  constructor (dispatcher, opts) {
+    super()
+
+    this.#dispatcher = dispatcher
+    this.#opts = opts
+  }
+
+  dispatch (opts, handler) {
+    return this.#dispatcher.dispatch(
+      opts,
+      new RetryHandler(this.#dispatcher, opts, this.#opts, handler)
+    )
+  }
+
+  close (...args) {
+    return this.#dispatcher.close(...args)
+  }
+
+  destroy (...args) {
+    return this.#dispatcher.destroy(...args)
+  }
+}
+
+
+const redirectInterceptor = dispatcher => new RedirectDispatcher(dispatcher, opts)
+const retryInterceptor = dispatcher => new RetryDispatcher(dispatcher, opts)
+
+const client = new Client('http://localhost:3000')
+  .compose(redirectInterceptor)
+  .compose(retryInterceptor)
+```
+
 ## Instance Events
 
 ### Event: `'connect'`
