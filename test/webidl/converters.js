@@ -188,8 +188,8 @@ test('webidl.util.Stringify', (t) => {
   const pairs = [
     [Object.create(null), '{}'],
     [{ a: 'b' }, '{"a":"b"}'],
-    [Symbol('sym'), 'sym'],
-    [Symbol.iterator, 'Symbol.iterator'], // well-known symbol
+    [Symbol('sym'), 'Symbol(sym)'],
+    [Symbol.iterator, 'Symbol(Symbol.iterator)'], // well-known symbol
     [true, 'true'],
     [0, '0'],
     ['hello', 'hello'],
