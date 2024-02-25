@@ -6,7 +6,7 @@ const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
-const timers = require('../lib/timers')
+const timers = require('../lib/util/timers')
 
 test('multiple reconnect', async (t) => {
   t = tspl(t, { plan: 5 })

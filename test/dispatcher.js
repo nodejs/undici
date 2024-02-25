@@ -3,7 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 
-const Dispatcher = require('../lib/dispatcher')
+const Dispatcher = require('../lib/dispatcher/dispatcher')
 
 class PoorImplementation extends Dispatcher {}
 

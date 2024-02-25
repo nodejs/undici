@@ -1,11 +1,13 @@
 'use strict'
 
-const Client = require('./lib/client')
-const Dispatcher = require('./lib/dispatcher')
+const Client = require('./lib/dispatcher/client')
+const Dispatcher = require('./lib/dispatcher/dispatcher')
+const Pool = require('./lib/dispatcher/pool')
+const BalancedPool = require('./lib/dispatcher/balanced-pool')
+const Agent = require('./lib/dispatcher/agent')
+const ProxyAgent = require('./lib/dispatcher/proxy-agent')
+const RetryAgent = require('./lib/dispatcher/retry-agent')
 const errors = require('./lib/core/errors')
-const Pool = require('./lib/pool')
-const BalancedPool = require('./lib/balanced-pool')
-const Agent = require('./lib/agent')
 const util = require('./lib/core/util')
 const { InvalidArgumentError } = errors
 const api = require('./lib/api')
@@ -14,8 +16,6 @@ const MockClient = require('./lib/mock/mock-client')
 const MockAgent = require('./lib/mock/mock-agent')
 const MockPool = require('./lib/mock/mock-pool')
 const mockErrors = require('./lib/mock/mock-errors')
-const Proxy = require('./lib/interceptor/proxy')
-const RetryAgent = require('./lib/retry-agent')
 const RetryHandler = require('./lib/handler/RetryHandler')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 const DecoratorHandler = require('./lib/handler/DecoratorHandler')
@@ -106,7 +106,7 @@ module.exports.fetch = async function fetch (init, options = undefined) {
   try {
     return await fetchImpl(init, options)
   } catch (err) {
-    if (typeof err === 'object') {
+    if (err && typeof err === 'object') {
       Error.captureStackTrace(err, this)
     }
 

@@ -10,7 +10,7 @@ const { kDispatches } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const { MockInterceptor } = require('../lib/mock/mock-interceptor')
 const { getResponse } = require('../lib/mock/mock-utils')
-const Dispatcher = require('../lib/dispatcher')
+const Dispatcher = require('../lib/dispatcher/dispatcher')
 
 describe('MockClient - constructor', () => {
   test('fails if opts.agent does not implement `get` method', t => {

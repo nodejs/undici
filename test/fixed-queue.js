@@ -3,7 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 
-const FixedQueue = require('../lib/node/fixed-queue')
+const FixedQueue = require('../lib/dispatcher/fixed-queue')
 
 test('fixed queue 1', (t) => {
   t = tspl(t, { plan: 5 })

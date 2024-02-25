@@ -17,7 +17,7 @@ If you proxy requires basic authentication, you can send it via the `proxy-autho
 ```js
 import { Client } from 'undici'
 import { createServer } from 'http'
-import proxy from 'proxy'
+import { createProxy } from 'proxy'
 
 const server = await buildServer()
 const proxyServer = await buildProxy()
@@ -59,7 +59,7 @@ function buildServer () {
 
 function buildProxy () {
   return new Promise((resolve, reject) => {
-    const server = proxy(createServer())
+    const server = createProxy(createServer())
     server.listen(0, () => resolve(server))
   })
 }
@@ -70,7 +70,7 @@ function buildProxy () {
 ```js
 import { Client } from 'undici'
 import { createServer } from 'http'
-import proxy from 'proxy'
+import { createProxy } from 'proxy'
 
 const server = await buildServer()
 const proxyServer = await buildProxy()
@@ -78,8 +78,8 @@ const proxyServer = await buildProxy()
 const serverUrl = `http://localhost:${server.address().port}`
 const proxyUrl = `http://localhost:${proxyServer.address().port}`
 
-proxyServer.authenticate = function (req, fn) {
-  fn(null, req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`)
+proxyServer.authenticate = function (req) {
+  return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`
 }
 
 server.on('request', (req, res) => {
@@ -119,7 +119,7 @@ function buildServer () {
 
 function buildProxy () {
   return new Promise((resolve, reject) => {
-    const server = proxy(createServer())
+    const server = createProxy(createServer())
     server.listen(0, () => resolve(server))
   })
 }

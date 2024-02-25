@@ -366,7 +366,7 @@ test('backpressure algorithm', async (t) => {
     }
   }
 
-  const Pool = proxyquire('../lib/pool', {
+  const Pool = proxyquire('../lib/dispatcher/pool', {
     './client': FakeClient
   })
 
