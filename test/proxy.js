@@ -50,7 +50,7 @@ test('connect through proxy with auth', async (t) => {
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
-  proxy.authenticate = function (req, res) {
+  proxy.authenticate = function (req) {
     return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`
   }
 
@@ -92,7 +92,7 @@ test('connect through proxy with auth but invalid credentials', async (t) => {
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
-  proxy.authenticate = function (req, res) {
+  proxy.authenticate = function (req) {
     return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:no-pass').toString('base64')}`
   }
 
