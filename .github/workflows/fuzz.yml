@@ -2,18 +2,21 @@ name: Fuzzing
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   fuzzing:
     name: Fuzz
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: lts/*
 
@@ -26,7 +29,7 @@ jobs:
         run: |
           npm run fuzz
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         if: ${{ failure() }}
         with:
           name: undici-fuzz-results-${{ github.sha }}

@@ -1,0 +1,127 @@
+{
+  "stream": {
+    "tentative": {
+      "skip": true
+    }
+  },
+  "interfaces": {
+    "WebSocket": {
+      "close": {
+        "close-connecting-async.any.js": {
+          "note": "TODO - need to add route for handshake delay",
+          "fail": [
+            "close event should be fired asynchronously when WebSocket is connecting"
+          ]
+        }
+      }
+    }
+  },
+  "Create-blocked-port.any.js": {
+    "note": "TODO(@KhafraDev): investigate failure",
+    "fail": [
+      "Basic check"
+    ]
+  },
+  "Send-binary-arraybufferview-float32.any.js": {
+    "note": "TODO(@KhafraDev): investigate failure",
+    "fail": [
+      "Send binary data on a WebSocket - ArrayBufferView - Float32Array - Connection should be closed"
+    ]
+  },
+  "Send-binary-arraybufferview-float64.any.js": {
+    "note": "TODO(@KhafraDev): investigate failure",
+    "fail": [
+      "Send binary data on a WebSocket - ArrayBufferView - Float64Array - Connection should be closed"
+    ]
+  },
+  "Send-binary-arraybufferview-int16-offset.any.js": {
+    "note": "TODO(@KhafraDev): investigate failure",
+    "fail": [
+      "Send binary data on a WebSocket - ArrayBufferView - Int16Array with offset - Connection should be closed"
+    ]
+  },
+  "Send-binary-arraybufferview-int32.any.js": {
+    "note": "TODO(@KhafraDev): investigate failure",
+    "fail": [
+      "Send binary data on a WebSocket - ArrayBufferView - Int32Array - Connection should be closed"
+    ]
+  },
+  "Send-binary-arraybufferview-uint16-offset-length.any.js": {
+    "note": "TODO(@KhafraDev): investigate failure",
+    "fail": [
+      "Send binary data on a WebSocket - ArrayBufferView - Uint16Array with offset and length - Connection should be closed"
+    ]
+  },
+  "Send-binary-arraybufferview-uint32-offset.any.js": {
+    "note": "TODO(@KhafraDev): investigate failure",
+    "fail": [
+      "Send binary data on a WebSocket - ArrayBufferView - Uint32Array with offset - Connection should be closed"
+    ]
+  },
+  "basic-auth.any.js": {
+    "note": "TODO(@KhafraDev): investigate failure",
+    "fail": [
+      "HTTP basic authentication should work with WebSockets"
+    ]
+  },
+  "Create-on-worker-shutdown.any.js": {
+    "skip": true,
+    "//": "Node.js workers are different from web workers & don't work with blob: urls"
+  },
+  "Close-delayed.any.js": {
+    "skip": true
+  },
+  "bufferedAmount-unchanged-by-sync-xhr.any.js": {
+    "skip": true,
+    "//": "Node.js doesn't have XMLHttpRequest nor does this test make sense regardless"
+  },
+  "referrer.any.js": {
+    "skip": true
+  },
+  "Send-binary-blob.any.js": {
+    "flaky": [
+      "Send binary data on a WebSocket - Blob - Connection should be closed"
+    ]
+  },
+  "Send-65K-data.any.js": {
+    "flaky": [
+      "Send 65K data on a WebSocket - Connection should be closed"
+    ]
+  },
+  "Send-binary-65K-arraybuffer.any.js": {
+    "flaky": [
+      "Send 65K binary data on a WebSocket - ArrayBuffer - Connection should be closed"
+    ]
+  },
+  "Send-0byte-data.any.js": {
+    "flaky": [
+      "Send 0 byte data on a WebSocket - Connection should be closed"
+    ]
+  },
+  "send-many-64K-messages-with-backpressure.any.js": {
+    "note": "probably flaky based on other flaky tests.",
+    "flaky": [
+      "sending 50 messages of size 65536 with backpressure applied should not hang"
+    ]
+  },
+  "back-forward-cache-with-closed-websocket-connection-ccns.tentative.window.js": {
+    "skip": true,
+    "note": "browser-only test"
+  },
+  "back-forward-cache-with-closed-websocket-connection.window.js": {
+    "skip": true,
+    "note": "browser-only test"
+  },
+  "back-forward-cache-with-open-websocket-connection-ccns.tentative.window.js": {
+    "skip": true,
+    "note": "browser-only test"
+  },
+  "back-forward-cache-with-open-websocket-connection.window.js": {
+    "skip": true,
+    "note": "browser-only test"
+  },
+  "mixed-content.https.any.js": {
+    "note": "node has no concept of origin, thus there is no 'secure' or 'insecure' contexts",
+    "skip": true
+  }
+}

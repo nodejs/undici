@@ -1,11 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
-const { createReadStream, writeFileSync, unlinkSync } = require('fs')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
+const { createReadStream, writeFileSync, unlinkSync } = require('node:fs')
 const { Client, errors } = require('..')
 const { kConnect } = require('../lib/core/symbols')
-const { createServer } = require('http')
-const EventEmitter = require('events')
+const timers = require('../lib/util/timers')
+const { createServer } = require('node:http')
+const EventEmitter = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { AbortController } = require('abort-controller')
 const {
@@ -13,85 +15,101 @@ const {
   Readable,
   Writable,
   PassThrough
-} = require('stream')
+} = require('node:stream')
 
-const nodeMajor = Number(process.versions.node.split('.')[0])
-
-test('request timeout', (t) => {
-  t.plan(1)
+test('request timeout', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 1000)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 500 })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
   })
+
+  await t.completed
 })
 
-test('request timeout with readable body', (t) => {
-  t.plan(1)
+test('request timeout with readable body', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   const tempfile = `${__filename}.10mb.txt`
   writeFileSync(tempfile, Buffer.alloc(10 * 1024 * 1024))
-  t.teardown(() => unlinkSync(tempfile))
+  after(() => unlinkSync(tempfile))
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 1e3 })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const body = createReadStream(tempfile)
     client.request({ path: '/', method: 'POST', body }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
   })
-}, { skip: nodeMajor < 14 })
 
-test('body timeout', (t) => {
-  t.plan(2)
+  await t.completed
+})
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+test('body timeout', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     res.write('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, { bodyTimeout: 50 })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err, { body }) => {
-      t.error(err)
+      t.ifError(err)
       body.on('data', () => {
         clock.tick(100)
       }).on('error', (err) => {
-        t.type(err, errors.BodyTimeoutError)
+        t.ok(err instanceof errors.BodyTimeoutError)
       })
     })
 
     clock.tick(50)
   })
+
+  await t.completed
 })
 
-test('overridden request timeout', (t) => {
-  t.plan(1)
+test('overridden request timeout', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -99,53 +117,69 @@ test('overridden request timeout', (t) => {
     }, 100)
     clock.tick(100)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 500 })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET', headersTimeout: 50 }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     clock.tick(50)
   })
+
+  await t.completed
 })
 
-test('overridden body timeout', (t) => {
-  t.plan(2)
+test('overridden body timeout', async (t) => {
+  t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     res.write('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, { bodyTimeout: 500 })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET', bodyTimeout: 50 }, (err, { body }) => {
-      t.error(err)
+      t.ifError(err)
       body.on('data', () => {
         clock.tick(100)
       }).on('error', (err) => {
-        t.type(err, errors.BodyTimeoutError)
+        t.ok(err instanceof errors.BodyTimeoutError)
       })
     })
 
     clock.tick(50)
   })
+
+  await t.completed
 })
 
-test('With EE signal', (t) => {
-  t.plan(1)
+test('With EE signal', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -153,28 +187,36 @@ test('With EE signal', (t) => {
     }, 100)
     clock.tick(100)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 50
     })
     const ee = new EventEmitter()
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     clock.tick(50)
   })
+
+  await t.completed
 })
 
-test('With abort-controller signal', (t) => {
-  t.plan(1)
+test('With abort-controller signal', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -182,28 +224,36 @@ test('With abort-controller signal', (t) => {
     }, 100)
     clock.tick(100)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 50
     })
     const abortController = new AbortController()
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     clock.tick(50)
   })
+
+  await t.completed
 })
 
-test('Abort before timeout (EE)', (t) => {
-  t.plan(1)
+test('Abort before timeout (EE)', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const ee = new EventEmitter()
   const server = createServer((req, res) => {
@@ -213,26 +263,34 @@ test('Abort before timeout (EE)', (t) => {
     ee.emit('abort')
     clock.tick(50)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 50
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
-      t.type(err, errors.RequestAbortedError)
+      t.ok(err instanceof errors.RequestAbortedError)
       clock.tick(100)
     })
   })
+
+  await t.completed
 })
 
-test('Abort before timeout (abort-controller)', (t) => {
-  t.plan(1)
+test('Abort before timeout (abort-controller)', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const abortController = new AbortController()
   const server = createServer((req, res) => {
@@ -242,26 +300,34 @@ test('Abort before timeout (abort-controller)', (t) => {
     abortController.abort()
     clock.tick(50)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 50
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-      t.type(err, errors.RequestAbortedError)
+      t.ok(err instanceof errors.RequestAbortedError)
       clock.tick(100)
     })
   })
+
+  await t.completed
 })
 
-test('Timeout with pipelining', (t) => {
-  t.plan(3)
+test('Timeout with pipelining', async (t) => {
+  t = tspl(t, { plan: 3 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -269,34 +335,42 @@ test('Timeout with pipelining', (t) => {
     }, 100)
     clock.tick(50)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 10,
       headersTimeout: 50
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
   })
+
+  await t.completed
 })
 
-test('Global option', (t) => {
-  t.plan(1)
+test('Global option', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -304,27 +378,35 @@ test('Global option', (t) => {
     }, 100)
     clock.tick(100)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 50
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     clock.tick(50)
   })
+
+  await t.completed
 })
 
-test('Request options overrides global option', (t) => {
-  t.plan(1)
+test('Request options overrides global option', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -332,29 +414,31 @@ test('Request options overrides global option', (t) => {
     }, 100)
     clock.tick(100)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 50
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     clock.tick(50)
   })
+
+  await t.completed
 })
 
-test('client.destroy should cancel the timeout', (t) => {
-  t.plan(2)
+test('client.destroy should cancel the timeout', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
@@ -362,37 +446,45 @@ test('client.destroy should cancel the timeout', (t) => {
     })
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
 
     client.destroy(err => {
-      t.error(err)
+      t.ifError(err)
     })
   })
+
+  await t.completed
 })
 
-test('client.close should wait for the timeout', (t) => {
-  t.plan(2)
+test('client.close should wait for the timeout', async (t) => {
+  t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 100
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     client.close((err) => {
-      t.error(err)
+      t.ifError(err)
     })
 
     client.on('connect', () => {
@@ -401,53 +493,63 @@ test('client.close should wait for the timeout', (t) => {
       })
     })
   })
+
+  await t.completed
 })
 
-test('Validation', (t) => {
-  t.plan(4)
+test('Validation', async (t) => {
+  t = tspl(t, { plan: 4 })
 
   try {
     const client = new Client('http://localhost:3000', {
       headersTimeout: 'foobar'
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
 
   try {
     const client = new Client('http://localhost:3000', {
       headersTimeout: -1
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
 
   try {
     const client = new Client('http://localhost:3000', {
       bodyTimeout: 'foobar'
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
 
   try {
     const client = new Client('http://localhost:3000', {
       bodyTimeout: -1
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
+
+  await t.completed
 })
 
-test('Disable request timeout', (t) => {
-  t.plan(2)
+test('Disable request timeout', async (t) => {
+  t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -455,35 +557,43 @@ test('Disable request timeout', (t) => {
     }, 32e3)
     clock.tick(33e3)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 0,
       connectTimeout: 0
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.error(err)
+      t.ifError(err)
       const bufs = []
       response.body.on('data', (buf) => {
         bufs.push(buf)
       })
       response.body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
 
     clock.tick(31e3)
   })
+
+  await t.completed
 })
 
-test('Disable request timeout for a single request', (t) => {
-  t.plan(2)
+test('Disable request timeout for a single request', async (t) => {
+  t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -491,47 +601,55 @@ test('Disable request timeout for a single request', (t) => {
     }, 32e3)
     clock.tick(33e3)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 0,
       connectTimeout: 0
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
-      t.error(err)
+      t.ifError(err)
       const bufs = []
       response.body.on('data', (buf) => {
         bufs.push(buf)
       })
       response.body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
 
     clock.tick(31e3)
   })
+
+  await t.completed
 })
 
-test('stream timeout', (t) => {
-  t.plan(1)
+test('stream timeout', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
-    }, 31e3)
-    clock.tick(31e3)
+    }, 301e3)
+    clock.tick(301e3)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, { connectTimeout: 0 })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.stream({
       path: '/',
@@ -540,16 +658,24 @@ test('stream timeout', (t) => {
     }, (result) => {
       t.fail('Should not be called')
     }, (err) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
   })
+
+  await t.completed
 })
 
-test('stream custom timeout', (t) => {
-  t.plan(1)
+test('stream custom timeout', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -557,13 +683,13 @@ test('stream custom timeout', (t) => {
     }, 31e3)
     clock.tick(31e3)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 30e3
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.stream({
       path: '/',
@@ -572,28 +698,36 @@ test('stream custom timeout', (t) => {
     }, (result) => {
       t.fail('Should not be called')
     }, (err) => {
-      t.type(err, errors.HeadersTimeoutError)
+      t.ok(err instanceof errors.HeadersTimeoutError)
     })
   })
+
+  await t.completed
 })
 
-test('pipeline timeout', (t) => {
-  t.plan(1)
+test('pipeline timeout', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
       req.pipe(res)
-    }, 31e3)
-    clock.tick(31e3)
+    }, 301e3)
+    clock.tick(301e3)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const buf = Buffer.alloc(1e6).toString()
     pipeline(
@@ -620,17 +754,25 @@ test('pipeline timeout', (t) => {
         }
       }),
       (err) => {
-        t.type(err, errors.HeadersTimeoutError)
+        t.ok(err instanceof errors.HeadersTimeoutError)
       }
     )
   })
+
+  await t.completed
 })
 
-test('pipeline timeout', (t) => {
-  t.plan(1)
+test('pipeline timeout', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -638,13 +780,13 @@ test('pipeline timeout', (t) => {
     }, 31e3)
     clock.tick(31e3)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       headersTimeout: 30e3
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const buf = Buffer.alloc(1e6).toString()
     pipeline(
@@ -671,42 +813,51 @@ test('pipeline timeout', (t) => {
         }
       }),
       (err) => {
-        t.type(err, errors.HeadersTimeoutError)
+        t.ok(err instanceof errors.HeadersTimeoutError)
       }
     )
   })
+
+  await t.completed
 })
 
-test('client.close should not deadlock', (t) => {
-  t.plan(2)
+test('client.close should not deadlock', async (t) => {
+  t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
+
+  const orgTimers = { ...timers }
+  Object.assign(timers, { setTimeout, clearTimeout })
+  after(() => {
+    Object.assign(timers, orgTimers)
+  })
 
   const server = createServer((req, res) => {
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       bodyTimeout: 200,
       headersTimeout: 100
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client[kConnect](() => {
       client.request({
         path: '/',
         method: 'GET'
       }, (err, response) => {
-        t.type(err, errors.HeadersTimeoutError)
+        t.ok(err instanceof errors.HeadersTimeoutError)
       })
 
       client.close((err) => {
-        t.error(err)
+        t.ifError(err)
       })
 
       clock.tick(100)
     })
   })
+  await t.completed
 })

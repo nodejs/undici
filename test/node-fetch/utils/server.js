@@ -1,7 +1,7 @@
-const http = require('http')
-const zlib = require('zlib')
-const { once } = require('events')
-const newBusboy = require('busboy')
+const http = require('node:http')
+const zlib = require('node:zlib')
+const { once } = require('node:events')
+const Busboy = require('@fastify/busboy')
 
 module.exports = class TestServer {
   constructor () {
@@ -227,22 +227,6 @@ module.exports = class TestServer {
       }, 1000)
     }
 
-    if (p === '/timeout60s') {
-      setTimeout(() => {
-        res.statusCode = 200
-        res.setHeader('Content-Type', 'text/plain')
-        res.end('text')
-      }, 60_000)
-    }
-
-    if (p === '/timeout300s') {
-      setTimeout(() => {
-        res.statusCode = 200
-        res.setHeader('Content-Type', 'text/plain')
-        res.end('text')
-      }, 300_000)
-    }
-
     if (p === '/slow') {
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/plain')
@@ -451,7 +435,7 @@ module.exports = class TestServer {
     if (p === '/multipart') {
       res.statusCode = 200
       res.setHeader('Content-Type', 'application/json')
-      const busboy = newBusboy({ headers: request.headers })
+      const busboy = new Busboy({ headers: request.headers })
       let body = ''
       busboy.on('file', async (fieldName, file, fileName) => {
         body += `${fieldName}=${fileName}`

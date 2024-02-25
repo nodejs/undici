@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import BodyReadable = require('../../types/readable')
+import BodyReadable from '../../types/readable'
 import { Blob } from 'buffer'
 
 expectAssignable<BodyReadable>(new BodyReadable())
@@ -15,7 +15,7 @@ expectAssignable<BodyReadable>(new BodyReadable())
   expectAssignable<Promise<string>>(readable.text())
 
   // json
-  expectAssignable<Promise<any>>(readable.json())
+  expectAssignable<Promise<unknown>>(readable.json())
 
   // blob
   expectAssignable<Promise<Blob>>(readable.blob())

@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, describe } = require('node:test')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 const {
   deleteMockDispatch,
@@ -11,7 +12,7 @@ const {
 } = require('../lib/mock/mock-utils')
 
 test('deleteMockDispatch - should do nothing if not able to find mock dispatch', (t) => {
-  t.plan(1)
+  t = tspl(t, { plan: 1 })
 
   const key = {
     url: 'url',
@@ -23,11 +24,9 @@ test('deleteMockDispatch - should do nothing if not able to find mock dispatch',
   t.doesNotThrow(() => deleteMockDispatch([], key))
 })
 
-test('getMockDispatch', (t) => {
-  t.plan(3)
-
-  t.test('it should find a mock dispatch', (t) => {
-    t.plan(1)
+describe('getMockDispatch', () => {
+  test('it should find a mock dispatch', (t) => {
+    t = tspl(t, { plan: 1 })
     const dispatches = [
       {
         path: 'path',
@@ -40,15 +39,15 @@ test('getMockDispatch', (t) => {
       path: 'path',
       method: 'method'
     })
-    t.same(result, {
+    t.deepStrictEqual(result, {
       path: 'path',
       method: 'method',
       consumed: false
     })
   })
 
-  t.test('it should skip consumed dispatches', (t) => {
-    t.plan(1)
+  test('it should skip consumed dispatches', (t) => {
+    t = tspl(t, { plan: 1 })
     const dispatches = [
       {
         path: 'path',
@@ -66,15 +65,15 @@ test('getMockDispatch', (t) => {
       path: 'path',
       method: 'method'
     })
-    t.same(result, {
+    t.deepStrictEqual(result, {
       path: 'path',
       method: 'method',
       consumed: false
     })
   })
 
-  t.test('it should throw if dispatch not found', (t) => {
-    t.plan(1)
+  test('it should throw if dispatch not found', (t) => {
+    t = tspl(t, { plan: 1 })
     const dispatches = [
       {
         path: 'path',
@@ -88,31 +87,85 @@ test('getMockDispatch', (t) => {
       method: 'wrong'
     }), new MockNotMatchedError('Mock dispatch not matched for path \'wrong\''))
   })
+
+  test('it should throw if no dispatch matches method', (t) => {
+    t = tspl(t, { plan: 1 })
+    const dispatches = [
+      {
+        path: 'path',
+        method: 'method',
+        consumed: false
+      }
+    ]
+
+    t.throws(() => getMockDispatch(dispatches, {
+      path: 'path',
+      method: 'wrong'
+    }), new MockNotMatchedError('Mock dispatch not matched for method \'wrong\' on path \'path\''))
+  })
+
+  test('it should throw if no dispatch matches body', (t) => {
+    t = tspl(t, { plan: 1 })
+    const dispatches = [
+      {
+        path: 'path',
+        method: 'method',
+        body: 'body',
+        consumed: false
+      }
+    ]
+
+    t.throws(() => getMockDispatch(dispatches, {
+      path: 'path',
+      method: 'method',
+      body: 'wrong'
+    }), new MockNotMatchedError('Mock dispatch not matched for body \'wrong\' on path \'path\''))
+  })
+
+  test('it should throw if no dispatch matches headers', (t) => {
+    t = tspl(t, { plan: 1 })
+    const dispatches = [
+      {
+        path: 'path',
+        method: 'method',
+        body: 'body',
+        headers: { key: 'value' },
+        consumed: false
+      }
+    ]
+
+    t.throws(() => getMockDispatch(dispatches, {
+      path: 'path',
+      method: 'method',
+      body: 'body',
+      headers: { key: 'wrong' }
+    }), new MockNotMatchedError('Mock dispatch not matched for headers \'{"key":"wrong"}\' on path \'path\''))
+  })
 })
 
-test('getResponseData', (t) => {
-  t.plan(3)
-
-  t.test('it should stringify objects', (t) => {
-    t.plan(1)
+describe('getResponseData', () => {
+  test('it should stringify objects', (t) => {
+    t = tspl(t, { plan: 1 })
     const responseData = getResponseData({ str: 'string', num: 42 })
-    t.equal(responseData, '{"str":"string","num":42}')
+    t.strictEqual(responseData, '{"str":"string","num":42}')
   })
 
-  t.test('it should return strings untouched', (t) => {
-    t.plan(1)
+  test('it should return strings untouched', (t) => {
+    t = tspl(t, { plan: 1 })
     const responseData = getResponseData('test')
-    t.equal(responseData, 'test')
+    t.strictEqual(responseData, 'test')
   })
 
-  t.test('it should return buffers untouched', (t) => {
-    t.plan(1)
+  test('it should return buffers untouched', (t) => {
+    t = tspl(t, { plan: 1 })
     const responseData = getResponseData(Buffer.from('test'))
     t.ok(Buffer.isBuffer(responseData))
   })
 })
 
 test('getStatusText', (t) => {
+  t = tspl(t, { plan: 64 })
+
   for (const statusCode of [
     100, 101, 102, 103, 200, 201, 202, 203,
     204, 205, 206, 207, 208, 226, 300, 301,
@@ -126,34 +179,34 @@ test('getStatusText', (t) => {
     t.ok(getStatusText(statusCode))
   }
 
-  t.equal(getStatusText(420), 'unknown')
+  t.strictEqual(getStatusText(420), 'unknown')
 
   t.end()
 })
 
 test('getHeaderByName', (t) => {
+  t = tspl(t, { plan: 6 })
+
   const headersRecord = {
     key: 'value'
   }
 
-  t.equal(getHeaderByName(headersRecord, 'key'), 'value')
-  t.equal(getHeaderByName(headersRecord, 'anotherKey'), undefined)
+  t.strictEqual(getHeaderByName(headersRecord, 'key'), 'value')
+  t.strictEqual(getHeaderByName(headersRecord, 'anotherKey'), undefined)
 
   const headersArray = ['key', 'value']
 
-  t.equal(getHeaderByName(headersArray, 'key'), 'value')
-  t.equal(getHeaderByName(headersArray, 'anotherKey'), undefined)
+  t.strictEqual(getHeaderByName(headersArray, 'key'), 'value')
+  t.strictEqual(getHeaderByName(headersArray, 'anotherKey'), undefined)
 
-  if (Number(process.versions.node.split('.')[0]) >= 16) {
-    const { Headers } = require('../index')
+  const { Headers } = require('../index')
 
-    const headers = new Headers([
-      ['key', 'value']
-    ])
+  const headers = new Headers([
+    ['key', 'value']
+  ])
 
-    t.equal(getHeaderByName(headers, 'key'), 'value')
-    t.equal(getHeaderByName(headers, 'anotherKey'), null)
-  }
+  t.strictEqual(getHeaderByName(headers, 'key'), 'value')
+  t.strictEqual(getHeaderByName(headers, 'anotherKey'), null)
 
   t.end()
 })

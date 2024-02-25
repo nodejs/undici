@@ -1,16 +1,17 @@
 'use strict'
 
-const { EventEmitter } = require('events')
-const { createServer } = require('http')
-const net = require('net')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
+const { EventEmitter } = require('node:events')
+const { createServer } = require('node:http')
+const net = require('node:net')
 const {
   finished,
   PassThrough,
   Readable
-} = require('stream')
-const { promisify } = require('util')
+} = require('node:stream')
+const { promisify } = require('node:util')
 const proxyquire = require('proxyquire')
-const { test } = require('tap')
 const {
   kBusy,
   kPending,
@@ -24,60 +25,60 @@ const {
   errors
 } = require('..')
 
-test('throws when connection is inifinite', (t) => {
-  t.plan(2)
+test('throws when connection is infinite', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   try {
     new Pool(null, { connections: 0 / 0 }) // eslint-disable-line
   } catch (e) {
-    t.type(e, errors.InvalidArgumentError)
-    t.equal(e.message, 'invalid connections')
+    t.ok(e instanceof errors.InvalidArgumentError)
+    t.strictEqual(e.message, 'invalid connections')
   }
 })
 
-test('throws when connections is negative', (t) => {
-  t.plan(2)
+test('throws when connections is negative', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   try {
     new Pool(null, { connections: -1 }) // eslint-disable-line no-new
   } catch (e) {
-    t.type(e, errors.InvalidArgumentError)
-    t.equal(e.message, 'invalid connections')
+    t.ok(e instanceof errors.InvalidArgumentError)
+    t.strictEqual(e.message, 'invalid connections')
   }
 })
 
-test('throws when connection is not number', (t) => {
-  t.plan(2)
+test('throws when connection is not number', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   try {
     new Pool(null, { connections: true }) // eslint-disable-line no-new
   } catch (e) {
-    t.type(e, errors.InvalidArgumentError)
-    t.equal(e.message, 'invalid connections')
+    t.ok(e instanceof errors.InvalidArgumentError)
+    t.strictEqual(e.message, 'invalid connections')
   }
 })
 
-test('throws when factory is not a function', (t) => {
-  t.plan(2)
+test('throws when factory is not a function', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   try {
     new Pool(null, { factory: '' }) // eslint-disable-line no-new
   } catch (e) {
-    t.type(e, errors.InvalidArgumentError)
-    t.equal(e.message, 'factory must be a function.')
+    t.ok(e instanceof errors.InvalidArgumentError)
+    t.strictEqual(e.message, 'factory must be a function.')
   }
 })
 
-test('does not throw when connect is a function', (t) => {
-  t.plan(1)
+test('does not throw when connect is a function', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   t.doesNotThrow(() => new Pool('http://localhost', { connect: () => {} }))
 })
 
-test('connect/disconnect event(s)', (t) => {
+test('connect/disconnect event(s)', async (t) => {
   const clients = 2
 
-  t.plan(clients * 6)
+  t = tspl(t, { plan: clients * 6 })
 
   const server = createServer((req, res) => {
     res.writeHead(200, {
@@ -86,23 +87,23 @@ test('connect/disconnect event(s)', (t) => {
     })
     res.end('ok')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const pool = new Pool(`http://localhost:${server.address().port}`, {
       connections: clients,
       keepAliveTimeoutThreshold: 100
     })
-    t.teardown(pool.close.bind(pool))
+    after(() => pool.close())
 
     pool.on('connect', (origin, [pool, client]) => {
-      t.equal(client instanceof Client, true)
+      t.strictEqual(client instanceof Client, true)
     })
     pool.on('disconnect', (origin, [pool, client], error) => {
       t.ok(client instanceof Client)
-      t.type(error, errors.InformationalError)
-      t.equal(error.code, 'UND_ERR_INFO')
-      t.equal(error.message, 'socket idle timeout')
+      t.ok(error instanceof errors.InformationalError)
+      t.strictEqual(error.code, 'UND_ERR_INFO')
+      t.strictEqual(error.message, 'socket idle timeout')
     })
 
     for (let i = 0; i < clients; i++) {
@@ -110,112 +111,118 @@ test('connect/disconnect event(s)', (t) => {
         path: '/',
         method: 'GET'
       }, (err, { headers, body }) => {
-        t.error(err)
+        t.ifError(err)
         body.resume()
       })
     }
   })
+
+  await t.completed
 })
 
-test('basic get', (t) => {
-  t.plan(14)
+test('basic get', async (t) => {
+  t = tspl(t, { plan: 14 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
-    t.equal(client[kUrl].origin, `http://localhost:${server.address().port}`)
+    t.strictEqual(client[kUrl].origin, `http://localhost:${server.address().port}`)
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.ifError(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
 
-    t.equal(client.destroyed, false)
-    t.equal(client.closed, false)
+    t.strictEqual(client.destroyed, false)
+    t.strictEqual(client.closed, false)
     client.close((err) => {
-      t.error(err)
-      t.equal(client.destroyed, true)
+      t.ifError(err)
+      t.strictEqual(client.destroyed, true)
       client.destroy((err) => {
-        t.error(err)
+        t.ifError(err)
         client.close((err) => {
-          t.type(err, errors.ClientDestroyedError)
+          t.ok(err instanceof errors.ClientDestroyedError)
         })
       })
     })
-    t.equal(client.closed, true)
+    t.strictEqual(client.closed, true)
   })
+
+  await t.completed
 })
 
-test('URL as arg', (t) => {
-  t.plan(9)
+test('URL as arg', async (t) => {
+  t = tspl(t, { plan: 9 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const url = new URL('http://localhost')
     url.port = server.address().port
     const client = new Pool(url)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-      t.error(err)
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.ifError(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
     })
 
     client.close((err) => {
-      t.error(err)
+      t.ifError(err)
       client.destroy((err) => {
-        t.error(err)
+        t.ifError(err)
         client.close((err) => {
-          t.type(err, errors.ClientDestroyedError)
+          t.ok(err instanceof errors.ClientDestroyedError)
         })
       })
     })
   })
+
+  await t.completed
 })
 
-test('basic get error async/await', (t) => {
-  t.plan(2)
+test('basic get error async/await', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.destroy()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     await client.request({ path: '/', method: 'GET' })
       .catch((err) => {
@@ -225,27 +232,31 @@ test('basic get error async/await', (t) => {
     await client.destroy()
 
     await client.close().catch((err) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
+
+  await t.completed
 })
 
 test('basic get with async/await', async (t) => {
+  t = tspl(t, { plan: 4 })
+
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   await promisify(server.listen.bind(server))(0)
   const client = new Pool(`http://localhost:${server.address().port}`)
-  t.teardown(client.destroy.bind(client))
+  after(() => client.destroy())
 
   const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
-  t.equal(statusCode, 200)
-  t.equal(headers['content-type'], 'text/plain')
+  t.strictEqual(statusCode, 200)
+  t.strictEqual(headers['content-type'], 'text/plain')
 
   body.resume()
   await promisify(finished)(body)
@@ -255,36 +266,40 @@ test('basic get with async/await', async (t) => {
 })
 
 test('stream get async/await', async (t) => {
+  t = tspl(t, { plan: 4 })
+
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   await promisify(server.listen.bind(server))(0)
   const client = new Pool(`http://localhost:${server.address().port}`)
-  t.teardown(client.destroy.bind(client))
+  after(() => client.destroy())
 
   await client.stream({ path: '/', method: 'GET' }, ({ statusCode, headers }) => {
-    t.equal(statusCode, 200)
-    t.equal(headers['content-type'], 'text/plain')
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
     return new PassThrough()
   })
+
+  await t.completed
 })
 
-test('stream get error async/await', (t) => {
-  t.plan(1)
+test('stream get error async/await', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.destroy()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     await client.stream({ path: '/', method: 'GET' }, () => {
 
@@ -293,27 +308,29 @@ test('stream get error async/await', (t) => {
         t.ok(err)
       })
   })
+
+  await t.completed
 })
 
-test('pipeline get', (t) => {
-  t.plan(5)
+test('pipeline get', async (t) => {
+  t = tspl(t, { plan: 5 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const bufs = []
     client.pipeline({ path: '/', method: 'GET' }, ({ statusCode, headers, body }) => {
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(headers['content-type'], 'text/plain')
       return body
     })
       .end()
@@ -321,12 +338,16 @@ test('pipeline get', (t) => {
         bufs.push(buf)
       })
       .on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
   })
+
+  await t.completed
 })
 
-test('backpressure algorithm', (t) => {
+test('backpressure algorithm', async (t) => {
+  t = tspl(t, { plan: 12 })
+
   const seen = []
   let total = 0
 
@@ -345,7 +366,7 @@ test('backpressure algorithm', (t) => {
     }
   }
 
-  const Pool = proxyquire('../lib/pool', {
+  const Pool = proxyquire('../lib/dispatcher/pool', {
     './client': FakeClient
   })
 
@@ -361,11 +382,11 @@ test('backpressure algorithm', (t) => {
   pool.dispatch({}, noopHandler)
 
   const d1 = seen.shift() // d1 = c0
-  t.equal(d1.id, 0)
+  t.strictEqual(d1.id, 0)
   const d2 = seen.shift() // d2 = c0
-  t.equal(d2.id, 0)
+  t.strictEqual(d2.id, 0)
 
-  t.equal(d1.id, d2.id)
+  t.strictEqual(d1.id, d2.id)
 
   writeMore = false
 
@@ -374,12 +395,12 @@ test('backpressure algorithm', (t) => {
   pool.dispatch({}, noopHandler) // d4 = c1
 
   const d3 = seen.shift()
-  t.equal(d3.id, 0)
+  t.strictEqual(d3.id, 0)
   const d4 = seen.shift()
-  t.equal(d4.id, 1)
+  t.strictEqual(d4.id, 1)
 
-  t.equal(d3.id, d2.id)
-  t.not(d3.id, d4.id)
+  t.strictEqual(d3.id, d2.id)
+  t.notEqual(d3.id, d4.id)
 
   writeMore = true
 
@@ -392,28 +413,28 @@ test('backpressure algorithm', (t) => {
   pool.dispatch({}, noopHandler) // d6 = c0
 
   const d5 = seen.shift()
-  t.equal(d5.id, 1)
+  t.strictEqual(d5.id, 1)
   const d6 = seen.shift()
-  t.equal(d6.id, 0)
+  t.strictEqual(d6.id, 0)
 
-  t.equal(d5.id, d4.id)
-  t.equal(d3.id, d6.id)
+  t.strictEqual(d5.id, d4.id)
+  t.strictEqual(d3.id, d6.id)
 
-  t.equal(total, 3)
+  t.strictEqual(total, 3)
 
   t.end()
 })
 
-test('busy', (t) => {
-  t.plan(8 * 16 + 2 + 1)
+test('busy', async (t) => {
+  t = tspl(t, { plan: 8 * 16 + 2 + 1 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   const connections = 2
 
@@ -423,50 +444,52 @@ test('busy', (t) => {
       pipelining: 2
     })
     client.on('drain', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
     client.on('connect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     for (let n = 1; n <= 8; ++n) {
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-        t.error(err)
-        t.equal(statusCode, 200)
-        t.equal(headers['content-type'], 'text/plain')
+        t.ifError(err)
+        t.strictEqual(statusCode, 200)
+        t.strictEqual(headers['content-type'], 'text/plain')
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+          t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
-      t.equal(client[kPending], n)
-      t.equal(client[kBusy], n > 1)
-      t.equal(client[kSize], n)
-      t.equal(client[kRunning], 0)
+      t.strictEqual(client[kPending], n)
+      t.strictEqual(client[kBusy], n > 1)
+      t.strictEqual(client[kSize], n)
+      t.strictEqual(client[kRunning], 0)
 
-      t.equal(client.stats.connected, 0)
-      t.equal(client.stats.free, 0)
-      t.equal(client.stats.queued, Math.max(n - connections, 0))
-      t.equal(client.stats.pending, n)
-      t.equal(client.stats.size, n)
-      t.equal(client.stats.running, 0)
+      t.strictEqual(client.stats.connected, 0)
+      t.strictEqual(client.stats.free, 0)
+      t.strictEqual(client.stats.queued, Math.max(n - connections, 0))
+      t.strictEqual(client.stats.pending, n)
+      t.strictEqual(client.stats.size, n)
+      t.strictEqual(client.stats.running, 0)
     }
   })
+
+  await t.completed
 })
 
-test('invalid pool dispatch options', (t) => {
-  t.plan(2)
+test('invalid pool dispatch options', async (t) => {
+  t = tspl(t, { plan: 2 })
   const pool = new Pool('http://notahost')
   t.throws(() => pool.dispatch({}), errors.InvalidArgumentError, 'throws on invalid handler')
   t.throws(() => pool.dispatch({}, {}), errors.InvalidArgumentError, 'throws on invalid handler')
 })
 
-test('pool upgrade promise', (t) => {
-  t.plan(2)
+test('pool upgrade promise', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = net.createServer((c) => {
     c.on('data', (d) => {
@@ -482,11 +505,11 @@ test('pool upgrade promise', (t) => {
       c.end()
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     const { headers, socket } = await client.upgrade({
       path: '/',
@@ -500,20 +523,22 @@ test('pool upgrade promise', (t) => {
     })
 
     socket.on('close', () => {
-      t.equal(recvData.toString(), 'Body')
+      t.strictEqual(recvData.toString(), 'Body')
     })
 
-    t.same(headers, {
+    t.deepStrictEqual(headers, {
       hello: 'world',
       connection: 'upgrade',
       upgrade: 'websocket'
     })
     socket.end()
   })
+
+  await t.completed
 })
 
-test('pool connect', (t) => {
-  t.plan(1)
+test('pool connect', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((c) => {
     t.fail()
@@ -530,11 +555,11 @@ test('pool connect', (t) => {
       socket.end(data)
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     const { socket } = await client.connect({
       path: '/'
@@ -546,25 +571,27 @@ test('pool connect', (t) => {
     })
 
     socket.on('end', () => {
-      t.equal(recvData.toString(), 'Body')
+      t.strictEqual(recvData.toString(), 'Body')
     })
 
     socket.write('Body')
     socket.end()
   })
+
+  await t.completed
 })
 
-test('pool dispatch', (t) => {
-  t.plan(2)
+test('pool dispatch', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     let buf = ''
     client.dispatch({
@@ -574,64 +601,70 @@ test('pool dispatch', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.equal(statusCode, 200)
+        t.strictEqual(statusCode, 200)
       },
       onData (chunk) {
         buf += chunk
       },
       onComplete () {
-        t.equal(buf, 'asd')
+        t.strictEqual(buf, 'asd')
       },
       onError () {
       }
     })
   })
+
+  await t.completed
 })
 
-test('pool pipeline args validation', (t) => {
-  t.plan(2)
+test('pool pipeline args validation', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const client = new Pool('http://localhost:5000')
 
   const ret = client.pipeline(null, () => {})
   ret.on('error', (err) => {
     t.ok(/opts/.test(err.message))
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
+
+  await t.completed
 })
 
-test('300 requests succeed', (t) => {
-  t.plan(300 * 3)
+test('300 requests succeed', async (t) => {
+  t = tspl(t, { plan: 300 * 3 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     for (let n = 0; n < 300; ++n) {
       client.request({
         path: '/',
         method: 'GET'
       }, (err, data) => {
-        t.error(err)
+        t.ifError(err)
         data.body.on('data', (chunk) => {
-          t.equal(chunk.toString(), 'asd')
+          t.strictEqual(chunk.toString(), 'asd')
         }).on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
       })
     }
   })
+
+  await t.completed
 })
 
-test('pool connect error', (t) => {
-  t.plan(1)
+test('pool connect error', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((c) => {
     t.fail()
@@ -639,11 +672,11 @@ test('pool connect error', (t) => {
   server.on('connect', (req, socket, firstBodyChunk) => {
     socket.destroy()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     try {
       await client.connect({
@@ -653,10 +686,12 @@ test('pool connect error', (t) => {
       t.ok(err)
     }
   })
+
+  await t.completed
 })
 
-test('pool upgrade error', (t) => {
-  t.plan(1)
+test('pool upgrade error', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = net.createServer((c) => {
     c.on('data', (d) => {
@@ -671,11 +706,11 @@ test('pool upgrade error', (t) => {
       // Ignore error.
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     try {
       await client.upgrade({
@@ -687,22 +722,24 @@ test('pool upgrade error', (t) => {
       t.ok(err)
     }
   })
+
+  await t.completed
 })
 
-test('pool dispatch error', (t) => {
-  t.plan(3)
+test('pool dispatch error', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.dispatch({
       path: '/',
@@ -711,12 +748,12 @@ test('pool dispatch error', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.equal(statusCode, 200)
+        t.strictEqual(statusCode, 200)
       },
       onData (chunk) {
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError () {
       }
@@ -739,26 +776,28 @@ test('pool dispatch error', (t) => {
         t.fail()
       },
       onError (err) {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       }
     })
   })
+
+  await t.completed
 })
 
-test('pool request abort in queue', (t) => {
-  t.plan(3)
+test('pool request abort in queue', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.dispatch({
       path: '/',
@@ -767,12 +806,12 @@ test('pool request abort in queue', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.equal(statusCode, 200)
+        t.strictEqual(statusCode, 200)
       },
       onData (chunk) {
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError () {
       }
@@ -784,26 +823,28 @@ test('pool request abort in queue', (t) => {
       method: 'GET',
       signal
     }, (err) => {
-      t.equal(err.code, 'UND_ERR_ABORTED')
+      t.strictEqual(err.code, 'UND_ERR_ABORTED')
     })
     signal.emit('abort')
   })
+
+  await t.completed
 })
 
-test('pool stream abort in queue', (t) => {
-  t.plan(3)
+test('pool stream abort in queue', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.dispatch({
       path: '/',
@@ -812,12 +853,12 @@ test('pool stream abort in queue', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.equal(statusCode, 200)
+        t.strictEqual(statusCode, 200)
       },
       onData (chunk) {
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError () {
       }
@@ -829,26 +870,28 @@ test('pool stream abort in queue', (t) => {
       method: 'GET',
       signal
     }, ({ body }) => body, (err) => {
-      t.equal(err.code, 'UND_ERR_ABORTED')
+      t.strictEqual(err.code, 'UND_ERR_ABORTED')
     })
     signal.emit('abort')
   })
+
+  await t.completed
 })
 
-test('pool pipeline abort in queue', (t) => {
-  t.plan(3)
+test('pool pipeline abort in queue', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.dispatch({
       path: '/',
@@ -857,12 +900,12 @@ test('pool pipeline abort in queue', (t) => {
       onConnect () {
       },
       onHeaders (statusCode, headers) {
-        t.equal(statusCode, 200)
+        t.strictEqual(statusCode, 200)
       },
       onData (chunk) {
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError () {
       }
@@ -874,26 +917,28 @@ test('pool pipeline abort in queue', (t) => {
       method: 'GET',
       signal
     }, ({ body }) => body).end().on('error', (err) => {
-      t.equal(err.code, 'UND_ERR_ABORTED')
+      t.strictEqual(err.code, 'UND_ERR_ABORTED')
     })
     signal.emit('abort')
   })
+
+  await t.completed
 })
 
-test('pool stream constructor error destroy body', (t) => {
-  t.plan(4)
+test('pool stream constructor error destroy body', async (t) => {
+  t = tspl(t, { plan: 4 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     {
       const body = new Readable({
@@ -910,8 +955,8 @@ test('pool stream constructor error destroy body', (t) => {
       }, () => {
         t.fail()
       }, (err) => {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
-        t.equal(body.destroyed, true)
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(body.destroyed, true)
       })
     }
 
@@ -927,27 +972,29 @@ test('pool stream constructor error destroy body', (t) => {
       }, () => {
         t.fail()
       }, (err) => {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
-        t.equal(body.destroyed, true)
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(body.destroyed, true)
       })
     }
   })
+
+  await t.completed
 })
 
-test('pool request constructor error destroy body', (t) => {
-  t.plan(4)
+test('pool request constructor error destroy body', async (t) => {
+  t = tspl(t, { plan: 4 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     {
       const body = new Readable({
@@ -962,8 +1009,8 @@ test('pool request constructor error destroy body', (t) => {
           'transfer-encoding': 'fail'
         }
       }, (err) => {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
-        t.equal(body.destroyed, true)
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(body.destroyed, true)
       })
     }
 
@@ -977,125 +1024,132 @@ test('pool request constructor error destroy body', (t) => {
         method: 'CONNECT',
         body
       }, (err) => {
-        t.equal(err.code, 'UND_ERR_INVALID_ARG')
-        t.equal(body.destroyed, true)
+        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+        t.strictEqual(body.destroyed, true)
       })
     }
   })
+
+  await t.completed
 })
 
-test('pool close waits for all requests', (t) => {
-  t.plan(5)
+test('pool close waits for all requests', async (t) => {
+  t = tspl(t, { plan: 5 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
     })
 
     client.request({
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.error(err)
+      t.ifError(err)
     })
 
     client.close(() => {
-      t.pass()
+      t.ok(true, 'pass')
     })
 
     client.close(() => {
-      t.pass()
+      t.ok(true, 'pass')
     })
 
     client.request({
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.type(err, errors.ClientClosedError)
+      t.ok(err instanceof errors.ClientClosedError)
     })
   })
+
+  await t.completed
 })
 
-test('pool destroyed', (t) => {
-  t.plan(1)
+test('pool destroyed', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.destroy()
     client.request({
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
+
+  await t.completed
 })
 
-test('pool destroy fails queued requests', (t) => {
-  t.plan(6)
+test('pool destroy fails queued requests', async (t) => {
+  t = tspl(t, { plan: 6 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const _err = new Error()
     client.request({
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.equal(err, _err)
+      t.strictEqual(err, _err)
     })
 
     client.request({
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.equal(err, _err)
+      t.strictEqual(err, _err)
     })
 
-    t.equal(client.destroyed, false)
+    t.strictEqual(client.destroyed, false)
     client.destroy(_err, () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
-    t.equal(client.destroyed, true)
+    t.strictEqual(client.destroyed, true)
 
     client.request({
       path: '/',
       method: 'GET'
     }, (err) => {
-      t.type(err, errors.ClientDestroyedError)
+      t.ok(err instanceof errors.ClientDestroyedError)
     })
   })
+  await t.completed
 })

@@ -1,5 +1,7 @@
+import { tspl } from '@matteo.collina/tspl'
 import { createServer } from 'http'
-import tap from 'tap'
+import { test, after } from 'node:test'
+import { once } from 'node:events'
 import {
   Agent,
   Client,
@@ -14,89 +16,90 @@ import {
   stream
 } from '../../index.js'
 
-const { test } = tap
-
-test('imported Client works with basic GET', (t) => {
-  t.plan(10)
+test('imported Client works with basic GET', async (t) => {
+  t = tspl(t, { plan: 10 })
 
   const server = createServer((req, res) => {
-    t.equal('/', req.url)
-    t.equal('GET', req.method)
-    t.equal(`localhost:${server.address().port}`, req.headers.host)
-    t.equal(undefined, req.headers.foo)
-    t.equal('bar', req.headers.bar)
-    t.equal(undefined, req.headers['content-length'])
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual(undefined, req.headers.foo)
+    t.strictEqual('bar', req.headers.bar)
+    t.strictEqual(undefined, req.headers['content-length'])
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
 
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   const reqHeaders = {
     foo: undefined,
     bar: 'bar'
   }
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+  server.listen(0)
 
-    client.request({
-      path: '/',
-      method: 'GET',
-      headers: reqHeaders
-    }, (err, data) => {
-      t.error(err)
-      const { statusCode, headers, body } = data
-      t.equal(statusCode, 200)
-      t.equal(headers['content-type'], 'text/plain')
-      const bufs = []
-      body.on('data', (buf) => {
-        bufs.push(buf)
-      })
-      body.on('end', () => {
-        t.equal('hello', Buffer.concat(bufs).toString('utf8'))
-      })
+  await once(server, 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: reqHeaders
+  }, (err, data) => {
+    t.ifError(err)
+    const { statusCode, headers, body } = data
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
+    const bufs = []
+    body.on('data', (buf) => {
+      bufs.push(buf)
+    })
+    body.on('end', () => {
+      t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
     })
   })
+  await t.completed
 })
 
 test('imported errors work with request args validation', (t) => {
-  t.plan(2)
+  t = tspl(t, { plan: 2 })
 
   const client = new Client('http://localhost:5000')
 
   client.request(null, (err) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   try {
     client.request(null, 'asd')
   } catch (err) {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   }
 })
 
 test('imported errors work with request args validation promise', (t) => {
-  t.plan(1)
+  t = tspl(t, { plan: 1 })
 
   const client = new Client('http://localhost:5000')
 
   client.request(null).catch((err) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 })
 
 test('named exports', (t) => {
-  t.equal(typeof Client, 'function')
-  t.equal(typeof Pool, 'function')
-  t.equal(typeof Agent, 'function')
-  t.equal(typeof request, 'function')
-  t.equal(typeof stream, 'function')
-  t.equal(typeof pipeline, 'function')
-  t.equal(typeof connect, 'function')
-  t.equal(typeof upgrade, 'function')
-  t.equal(typeof setGlobalDispatcher, 'function')
-  t.equal(typeof getGlobalDispatcher, 'function')
-  t.end()
+  t = tspl(t, { plan: 10 })
+  t.strictEqual(typeof Client, 'function')
+  t.strictEqual(typeof Pool, 'function')
+  t.strictEqual(typeof Agent, 'function')
+  t.strictEqual(typeof request, 'function')
+  t.strictEqual(typeof stream, 'function')
+  t.strictEqual(typeof pipeline, 'function')
+  t.strictEqual(typeof connect, 'function')
+  t.strictEqual(typeof upgrade, 'function')
+  t.strictEqual(typeof setGlobalDispatcher, 'function')
+  t.strictEqual(typeof getGlobalDispatcher, 'function')
 })

@@ -1,0 +1,6 @@
+{
+  "eventsource-onmessage-trusted.any.js": {
+    "note": "An Event created in userspace can not be set to trusted.",
+    "skip": true
+  }
+}

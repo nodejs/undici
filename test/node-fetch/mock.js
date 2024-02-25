@@ -1,7 +1,8 @@
-/* eslint no-unused-expressions: "off" */
+'use strict'
 
 // Test tools
-const chai = require('chai')
+const assert = require('node:assert')
+const { describe, it } = require('node:test')
 
 const {
   fetch,
@@ -9,8 +10,6 @@ const {
   setGlobalDispatcher,
   Headers
 } = require('../../index.js')
-
-const { expect } = chai
 
 describe('node-fetch with MockAgent', () => {
   it('should match the url', async () => {
@@ -30,8 +29,8 @@ describe('node-fetch with MockAgent', () => {
       method: 'GET'
     })
 
-    expect(res.status).to.equal(200)
-    expect(await res.json()).to.deep.equal({ success: true })
+    assert.strictEqual(res.status, 200)
+    assert.deepStrictEqual(await res.json(), { success: true })
   })
 
   it('should match the body', async () => {
@@ -55,8 +54,8 @@ describe('node-fetch with MockAgent', () => {
       body: 'request body'
     })
 
-    expect(res.status).to.equal(200)
-    expect(await res.json()).to.deep.equal({ success: true })
+    assert.strictEqual(res.status, 200)
+    assert.deepStrictEqual(await res.json(), { success: true })
   })
 
   it('should match the headers', async () => {
@@ -79,8 +78,9 @@ describe('node-fetch with MockAgent', () => {
       method: 'GET',
       headers: new Headers({ 'User-Agent': 'undici' })
     })
-    expect(res.status).to.equal(200)
-    expect(await res.json()).to.deep.equal({ success: true })
+
+    assert.strictEqual(res.status, 200)
+    assert.deepStrictEqual(await res.json(), { success: true })
   })
 
   it('should match the headers with a matching function', async () => {
@@ -93,8 +93,8 @@ describe('node-fetch with MockAgent', () => {
         path: '/test',
         method: 'GET',
         headers (headers) {
-          expect(headers).to.be.an('object')
-          expect(headers).to.have.property('user-agent', 'undici')
+          assert.strictEqual(typeof headers, 'object')
+          assert.strictEqual(headers['user-agent'], 'undici')
           return true
         }
       })
@@ -106,7 +106,7 @@ describe('node-fetch with MockAgent', () => {
       headers: new Headers({ 'User-Agent': 'undici' })
     })
 
-    expect(res.status).to.equal(200)
-    expect(await res.json()).to.deep.equal({ success: true })
+    assert.strictEqual(res.status, 200)
+    assert.deepStrictEqual(await res.json(), { success: true })
   })
 })

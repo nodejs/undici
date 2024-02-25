@@ -1,10 +1,11 @@
-import Client = require('./client')
-import Dispatcher = require('./dispatcher')
-import TPoolStats = require('./pool-stats')
+import Client from './client'
+import TPoolStats from './pool-stats'
 import { URL } from 'url'
-import {DispatchInterceptor} from "./dispatcher";
+import Dispatcher from "./dispatcher";
 
-export = Pool
+export default Pool
+
+type PoolConnectOptions = Omit<Dispatcher.ConnectOptions, "origin">;
 
 declare class Pool extends Dispatcher {
   constructor(url: string | URL, options?: Pool.Options)
@@ -14,6 +15,15 @@ declare class Pool extends Dispatcher {
   destroyed: boolean;
   /** Aggregate stats for a Pool. */
   readonly stats: TPoolStats;
+
+  // Override dispatcher APIs.
+  override connect(
+    options: PoolConnectOptions
+  ): Promise<Dispatcher.ConnectData>;
+  override connect(
+    options: PoolConnectOptions,
+    callback: (err: Error | null, data: Dispatcher.ConnectData) => void
+  ): void;
 }
 
 declare namespace Pool {
@@ -24,6 +34,6 @@ declare namespace Pool {
     /** The max number of clients to create. `null` if no limit. Default `null`. */
     connections?: number | null;
 
-    interceptors?: { Pool?: readonly DispatchInterceptor[] } & Client.Options["interceptors"]
+    interceptors?: { Pool?: readonly Dispatcher.DispatchInterceptor[] } & Client.Options["interceptors"]
   }
 }

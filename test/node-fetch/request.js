@@ -1,13 +1,13 @@
-const stream = require('stream')
-const http = require('http')
+'use strict'
 
-const chai = require('chai')
-const { Blob } = require('buffer')
+const assert = require('node:assert')
+const { describe, it, before, after } = require('node:test')
+const stream = require('node:stream')
+const http = require('node:http')
+const { Blob } = require('node:buffer')
 
-const Request = require('../../lib/fetch/request.js').Request
+const { Request } = require('../../index.js')
 const TestServer = require('./utils/server.js')
-
-const { expect } = chai
 
 describe('Request', () => {
   const local = new TestServer()
@@ -43,47 +43,47 @@ describe('Request', () => {
       'clone',
       'signal'
     ]) {
-      expect(enumerableProperties).to.contain(toCheck)
+      assert.ok(enumerableProperties.includes(toCheck))
     }
 
-    // for (const toCheck of [
-    //   'body', 'bodyUsed', 'method', 'url', 'headers', 'redirect', 'signal'
-    // ]) {
-    //   expect(() => {
-    //     request[toCheck] = 'abc'
-    //   }).to.throw()
-    // }
+    for (const toCheck of [
+      'body', 'bodyUsed', 'method', 'url', 'headers', 'redirect', 'signal'
+    ]) {
+      assert.throws(() => {
+        request[toCheck] = 'abc'
+      }, new TypeError(`Cannot set property ${toCheck} of #<Request> which has only a getter`))
+    }
   })
 
-  // it('should support wrapping Request instance', () => {
-  //   const url = `${base}hello`
+  it.skip('should support wrapping Request instance', () => {
+    const url = `${base}hello`
 
-  //   const form = new FormData()
-  //   form.append('a', '1')
-  //   const { signal } = new AbortController()
+    const form = new FormData()
+    form.append('a', '1')
+    const { signal } = new AbortController()
 
-  //   const r1 = new Request(url, {
-  //     method: 'POST',
-  //     follow: 1,
-  //     body: form,
-  //     signal
-  //   })
-  //   const r2 = new Request(r1, {
-  //     follow: 2
-  //   })
+    const r1 = new Request(url, {
+      method: 'POST',
+      follow: 1,
+      body: form,
+      signal
+    })
+    const r2 = new Request(r1, {
+      follow: 2
+    })
 
-  //   expect(r2.url).to.equal(url)
-  //   expect(r2.method).to.equal('POST')
-  //   expect(r2.signal).to.equal(signal)
-  //   // Note that we didn't clone the body
-  //   expect(r2.body).to.equal(form)
-  //   expect(r1.follow).to.equal(1)
-  //   expect(r2.follow).to.equal(2)
-  //   expect(r1.counter).to.equal(0)
-  //   expect(r2.counter).to.equal(0)
-  // })
+    assert.strictEqual(r2.url, url)
+    assert.strictEqual(r2.method, 'POST')
+    assert.strictEqual(r2.signal[Symbol.toStringTag], 'AbortSignal')
+    // Note that we didn't clone the body
+    assert.strictEqual(r2.body, form)
+    assert.strictEqual(r1.follow, 1)
+    assert.strictEqual(r2.follow, 2)
+    assert.strictEqual(r1.counter, 0)
+    assert.strictEqual(r2.counter, 0)
+  })
 
-  xit('should override signal on derived Request instances', () => {
+  it.skip('should override signal on derived Request instances', () => {
     const parentAbortController = new AbortController()
     const derivedAbortController = new AbortController()
     const parentRequest = new Request(`${base}hello`, {
@@ -92,11 +92,11 @@ describe('Request', () => {
     const derivedRequest = new Request(parentRequest, {
       signal: derivedAbortController.signal
     })
-    expect(parentRequest.signal).to.equal(parentAbortController.signal)
-    expect(derivedRequest.signal).to.equal(derivedAbortController.signal)
+    assert.strictEqual(parentRequest.signal, parentAbortController.signal)
+    assert.strictEqual(derivedRequest.signal, derivedAbortController.signal)
   })
 
-  xit('should allow removing signal on derived Request instances', () => {
+  it.skip('should allow removing signal on derived Request instances', () => {
     const parentAbortController = new AbortController()
     const parentRequest = new Request(`${base}hello`, {
       signal: parentAbortController.signal
@@ -104,29 +104,25 @@ describe('Request', () => {
     const derivedRequest = new Request(parentRequest, {
       signal: null
     })
-    expect(parentRequest.signal).to.equal(parentAbortController.signal)
-    expect(derivedRequest.signal).to.equal(null)
+    assert.strictEqual(parentRequest.signal, parentAbortController.signal)
+    assert.strictEqual(derivedRequest.signal, null)
   })
 
   it('should throw error with GET/HEAD requests with body', () => {
-    expect(() => new Request(base, { body: '' }))
-      .to.throw(TypeError)
-    expect(() => new Request(base, { body: 'a' }))
-      .to.throw(TypeError)
-    expect(() => new Request(base, { body: '', method: 'HEAD' }))
-      .to.throw(TypeError)
-    expect(() => new Request(base, { body: 'a', method: 'HEAD' }))
-      .to.throw(TypeError)
-    expect(() => new Request(base, { body: 'a', method: 'get' }))
-      .to.throw(TypeError)
-    expect(() => new Request(base, { body: 'a', method: 'head' }))
-      .to.throw(TypeError)
+    assert.throws(() => new Request(base, { body: '' }), new TypeError('Request with GET/HEAD method cannot have body.'))
+    assert.throws(() => new Request(base, { body: 'a' }), new TypeError('Request with GET/HEAD method cannot have body.'))
+    assert.throws(() => new Request(base, { body: '', method: 'HEAD' }), new TypeError('Request with GET/HEAD method cannot have body.'))
+    assert.throws(() => new Request(base, { body: 'a', method: 'HEAD' }), new TypeError('Request with GET/HEAD method cannot have body.'))
+    assert.throws(() => new Request(base, { body: '', method: 'get' }), new TypeError('Request with GET/HEAD method cannot have body.'))
+    assert.throws(() => new Request(base, { body: 'a', method: 'get' }), new TypeError('Request with GET/HEAD method cannot have body.'))
+    assert.throws(() => new Request(base, { body: '', method: 'head' }), new TypeError('Request with GET/HEAD method cannot have body.'))
+    assert.throws(() => new Request(base, { body: 'a', method: 'head' }), new TypeError('Request with GET/HEAD method cannot have body.'))
   })
 
   it('should default to null as body', () => {
     const request = new Request(base)
-    expect(request.body).to.equal(null)
-    return request.text().then(result => expect(result).to.equal(''))
+    assert.strictEqual(request.body, null)
+    return request.text().then(result => assert.strictEqual(result, ''))
   })
 
   it('should support parsing headers', () => {
@@ -136,8 +132,8 @@ describe('Request', () => {
         a: '1'
       }
     })
-    expect(request.url).to.equal(url)
-    expect(request.headers.get('a')).to.equal('1')
+    assert.strictEqual(request.url, url)
+    assert.strictEqual(request.headers.get('a'), '1')
   })
 
   it('should support arrayBuffer() method', () => {
@@ -146,11 +142,11 @@ describe('Request', () => {
       method: 'POST',
       body: 'a=1'
     })
-    expect(request.url).to.equal(url)
+    assert.strictEqual(request.url, url)
     return request.arrayBuffer().then(result => {
-      expect(result).to.be.an.instanceOf(ArrayBuffer)
+      assert.ok(result instanceof ArrayBuffer)
       const string = String.fromCharCode.apply(null, new Uint8Array(result))
-      expect(string).to.equal('a=1')
+      assert.strictEqual(string, 'a=1')
     })
   })
 
@@ -160,9 +156,9 @@ describe('Request', () => {
       method: 'POST',
       body: 'a=1'
     })
-    expect(request.url).to.equal(url)
+    assert.strictEqual(request.url, url)
     return request.text().then(result => {
-      expect(result).to.equal('a=1')
+      assert.strictEqual(result, 'a=1')
     })
   })
 
@@ -172,9 +168,9 @@ describe('Request', () => {
       method: 'POST',
       body: '{"a":1}'
     })
-    expect(request.url).to.equal(url)
+    assert.strictEqual(request.url, url)
     return request.json().then(result => {
-      expect(result.a).to.equal(1)
+      assert.strictEqual(result.a, 1)
     })
   })
 
@@ -184,11 +180,11 @@ describe('Request', () => {
       method: 'POST',
       body: Buffer.from('a=1')
     })
-    expect(request.url).to.equal(url)
+    assert.strictEqual(request.url, url)
     return request.blob().then(result => {
-      expect(result).to.be.an.instanceOf(Blob)
-      expect(result.size).to.equal(3)
-      expect(result.type).to.equal('')
+      assert.ok(result instanceof Blob)
+      assert.strictEqual(result.size, 3)
+      assert.strictEqual(result.type, '')
     })
   })
 
@@ -211,16 +207,16 @@ describe('Request', () => {
       duplex: 'half'
     })
     const cl = request.clone()
-    expect(cl.url).to.equal(url)
-    expect(cl.method).to.equal('POST')
-    expect(cl.redirect).to.equal('manual')
-    expect(cl.headers.get('b')).to.equal('2')
-    expect(cl.method).to.equal('POST')
+    assert.strictEqual(cl.url, url)
+    assert.strictEqual(cl.method, 'POST')
+    assert.strictEqual(cl.redirect, 'manual')
+    assert.strictEqual(cl.headers.get('b'), '2')
+    assert.strictEqual(cl.method, 'POST')
     // Clone body shouldn't be the same body
-    expect(cl.body).to.not.equal(body)
+    assert.notDeepEqual(cl.body, body)
     return Promise.all([cl.text(), request.text()]).then(results => {
-      expect(results[0]).to.equal('a=1')
-      expect(results[1]).to.equal('a=1')
+      assert.strictEqual(results[0], 'a=1')
+      assert.strictEqual(results[1], 'a=1')
     })
   })
 
@@ -233,7 +229,7 @@ describe('Request', () => {
     })
     new Uint8Array(body)[0] = 0
     return request.text().then(result => {
-      expect(result).to.equal('a=12345678901234')
+      assert.strictEqual(result, 'a=12345678901234')
     })
   })
 
@@ -247,7 +243,7 @@ describe('Request', () => {
     })
     body[0] = 0
     return request.text().then(result => {
-      expect(result).to.equal('123456789')
+      assert.strictEqual(result, '123456789')
     })
   })
 
@@ -261,7 +257,7 @@ describe('Request', () => {
     })
     body[0] = 0n
     return request.text().then(result => {
-      expect(result).to.equal('78901234')
+      assert.strictEqual(result, '78901234')
     })
   })
 
@@ -275,7 +271,7 @@ describe('Request', () => {
     })
     body[0] = 0
     return request.text().then(result => {
-      expect(result).to.equal('123456789')
+      assert.strictEqual(result, '123456789')
     })
   })
 })

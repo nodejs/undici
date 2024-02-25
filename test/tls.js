@@ -5,7 +5,7 @@
 // const { test } = require('tap')
 // const { Client } = require('..')
 // const { kSocket } = require('../lib/core/symbols')
-// const { Readable } = require('stream')
+// const { Readable } = require('node:stream')
 // const { kRunning } = require('../lib/core/symbols')
 
 // test('tls get 1', (t) => {
@@ -22,7 +22,7 @@
 //     data.body
 //       .resume()
 //       .on('end', () => {
-//         t.pass()
+//         t.ok(true, 'pass')
 //       })
 //   })
 // })
@@ -45,7 +45,7 @@
 //     data.body
 //       .resume()
 //       .on('end', () => {
-//         t.pass()
+//         t.ok(true, 'pass')
 //       })
 //   })
 // })
@@ -71,10 +71,10 @@
 //     data.body
 //       .resume()
 //       .on('end', () => {
-//         t.pass()
+//         t.ok(true, 'pass')
 //       })
 //     client.once('disconnect', () => {
-//       t.pass()
+//       t.ok(true, 'pass')
 //       didDisconnect = true
 //     })
 //   })
@@ -133,14 +133,14 @@
 //       data.body
 //         .resume()
 //         .on('end', () => {
-//           t.pass()
+//           t.ok(true, 'pass')
 //         })
 //     })
 
 //     data.body
 //       .resume()
 //       .on('end', () => {
-//         t.pass()
+//         t.ok(true, 'pass')
 //       })
 //   })
 // })
@@ -166,10 +166,10 @@
 //     data.body
 //       .resume()
 //       .on('end', () => {
-//         t.pass()
+//         t.ok(true, 'pass')
 //       })
 //     client.once('disconnect', () => {
-//       t.pass()
+//       t.ok(true, 'pass')
 //       didDisconnect = true
 //     })
 //   })

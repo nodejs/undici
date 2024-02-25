@@ -1,5 +1,5 @@
 import {expectAssignable} from "tsd";
 import Undici from "../..";
-import Dispatcher, {DispatchInterceptor} from "../../types/dispatcher";
+import Dispatcher from "../../types/dispatcher";
 
-expectAssignable<DispatchInterceptor>(Undici.createRedirectInterceptor({ maxRedirections: 3 }))
+expectAssignable<Dispatcher.DispatchInterceptor>(Undici.createRedirectInterceptor({ maxRedirections: 3 }))

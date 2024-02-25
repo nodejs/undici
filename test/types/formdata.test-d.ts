@@ -2,9 +2,9 @@ import { Blob } from 'buffer'
 import { Readable } from 'stream'
 import { expectAssignable, expectType } from 'tsd'
 import { File, FormData, SpecIterableIterator } from '../..'
-import { DispatchOptions } from '../../types/dispatcher'
+import Dispatcher from '../../types/dispatcher'
 
-declare const dispatcherOptions: DispatchOptions
+declare const dispatcherOptions: Dispatcher.DispatchOptions
 
 declare const blob: Blob
 const formData = new FormData()

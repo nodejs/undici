@@ -1,4 +1,4 @@
-import { WPTRunner } from './runner/runner/runner.mjs'
+import { WPTRunner } from './runner/runner.mjs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { fork } from 'child_process'
@@ -10,15 +10,17 @@ const child = fork(serverPath, [], {
   stdio: ['pipe', 'pipe', 'pipe', 'ipc']
 })
 
+child.on('exit', (code) => process.exit(code))
+
 for await (const [message] of on(child, 'message')) {
   if (message.server) {
     const runner = new WPTRunner('FileAPI', message.server)
     runner.run()
 
     runner.once('completion', () => {
-      child.send('shutdown')
+      if (child.connected) {
+        child.send('shutdown')
+      }
     })
-  } else if (message.message === 'shutdown') {
-    process.exit()
   }
 }

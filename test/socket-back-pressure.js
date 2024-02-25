@@ -1,12 +1,14 @@
 'use strict'
 
+const { tspl } = require('@matteo.collina/tspl')
+const { once } = require('node:events')
 const { Client } = require('..')
-const { createServer } = require('http')
-const { Readable } = require('stream')
-const { test } = require('tap')
+const { createServer } = require('node:http')
+const { Readable } = require('node:stream')
+const { test, after } = require('node:test')
 
-test('socket back-pressure', (t) => {
-  t.plan(3)
+test('socket back-pressure', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer()
   let bytesWritten = 0
@@ -25,30 +27,32 @@ test('socket back-pressure', (t) => {
   server.on('request', (req, res) => {
     src.pipe(res)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1
-    })
-    t.teardown(client.destroy.bind(client))
+  server.listen(0)
 
-    client.request({ path: '/', method: 'GET', opaque: 'asd' }, (err, data) => {
-      t.error(err)
-      data.body
-        .resume()
-        .once('data', () => {
-          data.body.pause()
-          // TODO: Try to avoid timeout.
-          setTimeout(() => {
-            t.ok(data.body._readableState.length < bytesWritten - data.body._readableState.highWaterMark)
-            src.push(null)
-            data.body.resume()
-          }, 1e3)
-        })
-        .on('end', () => {
-          t.pass()
-        })
-    })
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`, {
+    pipelining: 1
   })
+  after(() => client.close())
+
+  client.request({ path: '/', method: 'GET', opaque: 'asd' }, (err, data) => {
+    t.ifError(err)
+    data.body
+      .resume()
+      .once('data', () => {
+        data.body.pause()
+        // TODO: Try to avoid timeout.
+        setTimeout(() => {
+          t.ok(data.body._readableState.length < bytesWritten - data.body._readableState.highWaterMark)
+          src.push(null)
+          data.body.resume()
+        }, 1e3)
+      })
+      .on('end', () => {
+        t.ok(true, 'pass')
+      })
+  })
+  await t.completed
 })

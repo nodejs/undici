@@ -1,19 +1,67 @@
 {
-	"File-constructor.any.js": {
-		"fail": [
-			"Using type in File constructor: nonparsable"
-		]
-	},
+  "file": {
+    "File-constructor.any.js": {
+      "flaky": [
+        "Using type in File constructor: nonparsable"
+      ]
+    }
+  },
+  "blob": {
+    "Blob-constructor.any.js": {
+      "skip": true
+    },
+    "Blob-stream.any.js": {
+      "fail": [
+        "Reading Blob.stream() with BYOB reader"
+      ]
+    }
+  },
+  "url": {
+    "url-with-xhr.any.js": {
+      "skip": true
+    },
+    "url-with-fetch.any.js": {
+      "note": "needs investigation",
+      "fail": [
+        "Only exact matches should revoke URLs, using fetch",
+        "Revoke blob URL after creating Request, will fetch",
+        "Revoke blob URL after creating Request, then clone Request, will fetch"
+      ]
+    },
+    "url-format.any.js": {
+      "fail": [
+        "Origin of Blob URL matches our origin",
+        "Blob URL parses correctly",
+        "Origin of Blob URL matches our origin for Files"
+      ]
+    }
+  },
+  "reading-data-section": {
+    "filereader_result.any.js": {
+      "note": "has to do with html microtask queue being different than queueMicrotask",
+      "skip": true
+    },
+    "filereader_events.any.js": {
+      "note": "has to do with html microtask queue being different than queueMicrotask",
+      "fail": [
+        "events are dispatched in the correct order for an empty blob",
+        "events are dispatched in the correct order for a non-empty blob"
+      ]
+    }
+  },
 	"idlharness.any.js": {
-		"fail": [
-			"URL interface: operation revokeObjectURL(DOMString)",
-			"URL interface: operation createObjectURL((Blob or MediaSource))",
+		"note": "These flaky tests only fail in < node v19; add in a way to mark them as such eventually",
+		"flaky": [
 			"Blob interface: attribute size",
 			"Blob interface: attribute type",
 			"Blob interface: operation slice(optional long long, optional long long, optional DOMString)",
 			"Blob interface: operation stream()",
 			"Blob interface: operation text()",
 			"Blob interface: operation arrayBuffer()",
+			"URL interface: operation createObjectURL((Blob or MediaSource))",
+			"URL interface: operation revokeObjectURL(DOMString)"
+		],
+		"fail": [
 			"FileList interface: existence and properties of interface object",
 			"FileList interface object length",
 			"FileList interface object name",
@@ -22,12 +70,6 @@
 			"FileList interface: existence and properties of interface prototype object's @@unscopables property",
 			"FileList interface: operation item(unsigned long)",
 			"FileList interface: attribute length"
-		]
-	},
-	"filereader_events.any.js": {
-		"fail": [
-			"events are dispatched in the correct order for an empty blob",
-			"events are dispatched in the correct order for a non-empty blob"
 		]
 	}
 }

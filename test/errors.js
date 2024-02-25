@@ -1,7 +1,7 @@
 'use strict'
 
-const t = require('tap')
-const { test } = t
+const { tspl } = require('@matteo.collina/tspl')
+const { describe, test } = require('node:test')
 
 const errors = require('../lib/core/errors')
 
@@ -26,55 +26,52 @@ const scenarios = [
   createScenario(errors.ClientClosedError, 'The client is closed', 'ClientClosedError', 'UND_ERR_CLOSED'),
   createScenario(errors.SocketError, 'Socket error', 'SocketError', 'UND_ERR_SOCKET'),
   createScenario(errors.NotSupportedError, 'Not supported error', 'NotSupportedError', 'UND_ERR_NOT_SUPPORTED'),
-  createScenario(errors.ResponseContentLengthMismatchError, 'Response body length does not match content-length header', 'ResponseContentLengthMismatchError', 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
+  createScenario(errors.ResponseContentLengthMismatchError, 'Response body length does not match content-length header', 'ResponseContentLengthMismatchError', 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH'),
+  createScenario(errors.ResponseExceededMaxSizeError, 'Response content exceeded max size', 'ResponseExceededMaxSizeError', 'UND_ERR_RES_EXCEEDED_MAX_SIZE')
 ]
 
 scenarios.forEach(scenario => {
-  test(scenario.name, t => {
+  describe(scenario.name, () => {
     const SAMPLE_MESSAGE = 'sample message'
 
     const errorWithDefaultMessage = () => new scenario.ErrorClass()
     const errorWithProvidedMessage = () => new scenario.ErrorClass(SAMPLE_MESSAGE)
 
     test('should use default message', t => {
-      t.plan(1)
+      t = tspl(t, { plan: 1 })
 
       const error = errorWithDefaultMessage()
 
-      t.equal(error.message, scenario.defaultMessage)
+      t.strictEqual(error.message, scenario.defaultMessage)
     })
 
     test('should use provided message', t => {
-      t.plan(1)
+      t = tspl(t, { plan: 1 })
 
       const error = errorWithProvidedMessage()
 
-      t.equal(error.message, SAMPLE_MESSAGE)
+      t.strictEqual(error.message, SAMPLE_MESSAGE)
     })
 
     test('should have proper fields', t => {
-      t.plan(6)
+      t = tspl(t, { plan: 6 })
       const errorInstances = [errorWithDefaultMessage(), errorWithProvidedMessage()]
       errorInstances.forEach(error => {
-        t.equal(error.name, scenario.name)
-        t.equal(error.code, scenario.code)
+        t.strictEqual(error.name, scenario.name)
+        t.strictEqual(error.code, scenario.code)
         t.ok(error.stack)
       })
     })
-
-    t.end()
   })
 })
 
-test('Default HTTPParseError Codes', t => {
+describe('Default HTTPParseError Codes', () => {
   test('code and data should be undefined when not set', t => {
-    t.plan(2)
+    t = tspl(t, { plan: 2 })
 
     const error = new errors.HTTPParserError('HTTPParserError')
 
-    t.equal(error.code, undefined)
-    t.equal(error.data, undefined)
+    t.strictEqual(error.code, undefined)
+    t.strictEqual(error.data, undefined)
   })
-
-  t.end()
 })

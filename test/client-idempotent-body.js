@@ -1,11 +1,12 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 
-test('idempotent retry', (t) => {
-  t.plan(11)
+test('idempotent retry', async (t) => {
+  t = tspl(t, { plan: 11 })
 
   const body = 'world'
   const server = createServer((req, res) => {
@@ -13,17 +14,17 @@ test('idempotent retry', (t) => {
     req.on('data', data => {
       buf += data
     }).on('end', () => {
-      t.strictSame(buf, body)
+      t.strictEqual(buf, body)
       res.end()
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     const _err = new Error()
 
@@ -36,8 +37,10 @@ test('idempotent retry', (t) => {
       }, () => {
         throw _err
       }, (err) => {
-        t.equal(err, _err)
+        t.strictEqual(err, _err)
       })
     }
   })
+
+  await t.completed
 })

@@ -5,6 +5,8 @@
   * [Lint](#lint)
   * [Test](#test)
   * [Coverage](#coverage)
+  * [Update `WPTs`](#update-wpts)
+  * [Building for externally shared node builtins](#external-builds)
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
   * [Moderation Policy](#moderation-policy)
 
@@ -77,6 +79,71 @@ cd <your-path-to-undici>
 npm run build:wasm
 ```
 
+#### Commit the contents of lib/llhttp
+
+Create a commit which includes all of the updated files in lib/llhttp.
+
+<a id="update-wpts"></a>
+### Update `WPTs`
+
+`undici` runs a subset of the [`web-platform-tests`](https://github.com/web-platform-tests/wpt).
+
+Here are the steps to update them.
+
+<details>
+<summary>Skip the tutorial</summary>
+
+```bash
+git clone --depth 1 --single-branch --branch epochs/daily --filter=blob:none --sparse https://github.com/web-platform-tests/wpt.git test/wpt/tests
+cd test/wpt/tests
+
+git sparse-checkout add /resources
+git sparse-checkout add /interfaces
+git sparse-checkout add /common
+git sparse-checkout add /fetch
+git sparse-checkout add /FileAPI
+git sparse-checkout add /xhr
+git sparse-checkout add /websockets
+git sparse-checkout add /mimesniff
+git sparse-checkout add /storage
+git sparse-checkout add /service-workers
+```
+</details>
+
+#### Sparse-clone the [wpt](https://github.com/web-platform-tests/wpt) repo
+
+```bash
+git clone --depth 1 --single-branch --branch epochs/daily --filter=blob:none --sparse https://github.com/web-platform-tests/wpt.git test/wpt/tests
+
+cd test/wpt/tests
+
+```
+
+#### Checkout the tests
+
+Only run the commands for the folder(s) you want to update.
+
+```bash
+git sparse-checkout add /fetch
+git sparse-checkout add /FileAPI
+git sparse-checkout add /xhr
+git sparse-checkout add /websockets
+git sparse-checkout add /resources
+git sparse-checkout add /common
+
+# etc
+```
+
+#### Run the tests
+
+Run the tests to ensure that any new failures are marked as such.
+
+You can mark tests as failing in their corresponding [status](./test/wpt/status) file.
+
+```bash
+npm run test:wpt
+```
+
 <a id="lint"></a>
 
 ### Lint
@@ -98,6 +165,15 @@ npm run test
 ```bash
 npm run coverage
 ```
+
+<a id="external-builds"></a>
+### Building for externally shared node builtins
+
+If you are packaging `undici` for a distro, this might help if you would like to use
+an unbundled version instead of bundling one in `libnode.so`.
+
+To enable this, pass `EXTERNAL_PATH=/path/to/global/node_modules/undici` to `build/wasm.js`.
+You shall also pass this path to `--shared-builtin-undici/undici-path` in Node.js's `configure.py`.
 
 <a id="developers-certificate-of-origin"></a>
 ## Developer's Certificate of Origin 1.1
@@ -132,4 +208,4 @@ By making a contribution to this project, I certify that:
 The [Node.js Moderation Policy] applies to this project.
 
 [Node.js Moderation Policy]:
-https://github.com/nodejs/admin/blob/master/Moderation-Policy.md
+https://github.com/nodejs/admin/blob/main/Moderation-Policy.md

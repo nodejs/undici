@@ -1,13 +1,14 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 
 test('invalid headers', (t) => {
-  t.plan(10)
+  t = tspl(t, { plan: 10 })
 
   const client = new Client('http://localhost:3000')
-  t.teardown(client.destroy.bind(client))
+  after(() => client.close())
   client.request({
     path: '/',
     method: 'GET',
@@ -15,7 +16,7 @@ test('invalid headers', (t) => {
       'content-length': 'asd'
     }
   }, (err, data) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   client.request({
@@ -23,7 +24,7 @@ test('invalid headers', (t) => {
     method: 'GET',
     headers: 1
   }, (err, data) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   client.request({
@@ -33,7 +34,7 @@ test('invalid headers', (t) => {
       'transfer-encoding': 'chunked'
     }
   }, (err, data) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   client.request({
@@ -43,17 +44,17 @@ test('invalid headers', (t) => {
       upgrade: 'asd'
     }
   }, (err, data) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   client.request({
     path: '/',
     method: 'GET',
     headers: {
-      connection: 'close'
+      connection: 'asd'
     }
   }, (err, data) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   client.request({
@@ -63,7 +64,7 @@ test('invalid headers', (t) => {
       'keep-alive': 'timeout=5'
     }
   }, (err, data) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   client.request({
@@ -73,7 +74,7 @@ test('invalid headers', (t) => {
       foo: {}
     }
   }, (err, data) => {
-    t.type(err, errors.InvalidArgumentError)
+    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   client.request({
@@ -83,7 +84,7 @@ test('invalid headers', (t) => {
       expect: '100-continue'
     }
   }, (err, data) => {
-    t.type(err, errors.NotSupportedError)
+    t.ok(err instanceof errors.NotSupportedError)
   })
 
   client.request({
@@ -93,7 +94,7 @@ test('invalid headers', (t) => {
       Expect: '100-continue'
     }
   }, (err, data) => {
-    t.type(err, errors.NotSupportedError)
+    t.ok(err instanceof errors.NotSupportedError)
   })
 
   client.request({
@@ -103,6 +104,6 @@ test('invalid headers', (t) => {
       expect: 'asd'
     }
   }, (err, data) => {
-    t.type(err, errors.NotSupportedError)
+    t.ok(err instanceof errors.NotSupportedError)
   })
 })

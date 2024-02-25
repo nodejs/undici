@@ -1,21 +1,22 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client } = require('..')
-const { createServer } = require('http')
-const { Readable } = require('stream')
-const EE = require('events')
+const { createServer } = require('node:http')
+const { Readable } = require('node:stream')
+const EE = require('node:events')
 
-test('stream body without destroy', (t) => {
-  t.plan(2)
+test('stream body without destroy', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const signal = new EE()
     const body = new Readable({ read () {} })
@@ -33,19 +34,21 @@ test('stream body without destroy', (t) => {
     })
     signal.emit('abort')
   })
+
+  await t.completed
 })
 
-test('IncomingMessage', (t) => {
-  t.plan(2)
+test('IncomingMessage', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const proxyClient = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(proxyClient.destroy.bind(proxyClient))
+    after(() => proxyClient.destroy())
 
     const proxy = createServer((req, res) => {
       proxyClient.request({
@@ -53,23 +56,25 @@ test('IncomingMessage', (t) => {
         method: 'PUT',
         body: req
       }, (err, data) => {
-        t.error(err)
+        t.ifError(err)
         data.body.pipe(res)
       })
     })
-    t.teardown(proxy.close.bind(proxy))
+    after(() => proxy.close())
 
     proxy.listen(0, () => {
       const client = new Client(`http://localhost:${proxy.address().port}`)
-      t.teardown(client.destroy.bind(client))
+      after(() => client.destroy())
 
       client.request({
         path: '/',
         method: 'PUT',
         body: 'hello world'
       }, (err, data) => {
-        t.error(err)
+        t.ifError(err)
       })
     })
   })
+
+  await t.completed
 })
