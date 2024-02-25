@@ -185,17 +185,21 @@ test('ByteString', () => {
 })
 
 test('webidl.util.Stringify', (t) => {
+  const circular = {}
+  circular.circular = circular
+
   const pairs = [
-    [Object.create(null), '{}'],
-    [{ a: 'b' }, '{"a":"b"}'],
+    [Object.create(null), '[Object: null prototype] {}'],
+    [{ a: 'b' }, "{ a: 'b' }"],
     [Symbol('sym'), 'Symbol(sym)'],
     [Symbol.iterator, 'Symbol(Symbol.iterator)'], // well-known symbol
     [true, 'true'],
     [0, '0'],
-    ['hello', 'hello'],
+    ['hello', '"hello"'],
     ['', '""'],
     [null, 'null'],
-    [undefined, 'undefined']
+    [undefined, 'undefined'],
+    [circular, '<ref *1> { circular: [Circular *1] }']
   ]
 
   for (const [value, expected] of pairs) {
