@@ -103,7 +103,7 @@ test('test/parallel/test-worker-message-port.js', () => {
   })
   assert.throws(() => new MessageEvent('message', { source: {} }), {
     constructor: TypeError,
-    message: 'MessagePort: Expected [object Object] to be an instance of MessagePort.'
+    message: 'MessagePort: Expected {} to be an instance of MessagePort.'
   })
   assert.throws(() => new MessageEvent('message', { ports: 0 }), {
     constructor: TypeError,
@@ -117,7 +117,7 @@ test('test/parallel/test-worker-message-port.js', () => {
     new MessageEvent('message', { ports: [{}] })
   , {
     constructor: TypeError,
-    message: 'MessagePort: Expected [object Object] to be an instance of MessagePort.'
+    message: 'MessagePort: Expected {} to be an instance of MessagePort.'
   })
 
   assert(new MessageEvent('message') instanceof Event)
