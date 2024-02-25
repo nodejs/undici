@@ -18,7 +18,8 @@
       "note": "requires https server",
       "fail": [
         "cors-exposed header should be stored correctly.",
-        "Cache.match ignores vary headers on opaque response."
+        "Cache.match ignores vary headers on opaque response.",
+        "Cache.match blob should be sliceable"
       ]
     }
   }

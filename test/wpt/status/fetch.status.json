@@ -331,10 +331,24 @@
         "note": "undici doesn't implement an http cache",
         "skip": true
       },
+      "request-consume.any.js": {
+        "note": "FileReader tests TODO (@KhafraDev): upstream PR to remove FileReader dependency",
+        "fail": [
+          "Consume String request's body as blob",
+          "Consume ArrayBuffer request's body as blob",
+          "Consume Uint8Array request's body as blob",
+          "Consume Int8Array request's body as blob",
+          "Consume Float32Array request's body as blob",
+          "Consume DataView request's body as blob",
+          "Consume blob response's body as blob",
+          "Consume blob response's body as blob (empty blob as input)"
+        ]
+      },
       "request-consume-empty.any.js": {
         "note": "the semantics about this test are being discussed - https://github.com/web-platform-tests/wpt/pull/3950",
         "fail": [
-          "Consume empty FormData request body as text"
+          "Consume empty FormData request body as text",
+          "Consume request's body as blob"
         ]
       },
       "request-disturbed.any.js": {
@@ -400,7 +414,8 @@
       },
       "response-consume-empty.any.js": {
         "fail": [
-          "Consume empty FormData response body as text"
+          "Consume empty FormData response body as text",
+          "Consume response's body as blob"
         ]
       },
       "response-consume-stream.any.js": {
