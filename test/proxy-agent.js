@@ -10,7 +10,7 @@ const ProxyAgent = require('../lib/proxy-agent')
 const Pool = require('../lib/pool')
 const { createServer } = require('node:http')
 const https = require('node:https')
-const proxy = require('proxy')
+const { createProxy } = require('proxy')
 
 test('should throw error when no uri is provided', (t) => {
   t = tspl(t, { plan: 2 })
@@ -84,12 +84,12 @@ test('use proxy agent to connect through proxy using Pool', async (t) => {
     if (++connectCount === 2) {
       t.ok(true, 'second connect should arrive while first is still inflight')
       resolveFirstConnect()
-      fn(null, true)
+      return true
     } else {
       await new Promise((resolve) => {
         resolveFirstConnect = resolve
       })
-      fn(null, true)
+      return true
     }
   }
 
@@ -161,9 +161,9 @@ test('use proxy-agent with auth', async (t) => {
   })
   const parsedOrigin = new URL(serverUrl)
 
-  proxy.authenticate = function (req, fn) {
+  proxy.authenticate = function (req) {
     t.ok(true, 'authentication should be called')
-    fn(null, req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`)
+    return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`
   }
   proxy.on('connect', () => {
     t.ok(true, 'proxy should be called')
@@ -205,9 +205,9 @@ test('use proxy-agent with token', async (t) => {
   })
   const parsedOrigin = new URL(serverUrl)
 
-  proxy.authenticate = function (req, fn) {
+  proxy.authenticate = function (req) {
     t.ok(true, 'authentication should be called')
-    fn(null, req.headers['proxy-authorization'] === `Bearer ${Buffer.from('user:pass').toString('base64')}`)
+    return req.headers['proxy-authorization'] === `Bearer ${Buffer.from('user:pass').toString('base64')}`
   }
   proxy.on('connect', () => {
     t.ok(true, 'proxy should be called')
@@ -418,7 +418,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
 })
 
 test('should throw when proxy does not return 200', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t = tspl(t, { plan: 3 })
 
   const server = await buildServer()
   const proxy = await buildProxy()
@@ -426,8 +426,9 @@ test('should throw when proxy does not return 200', async (t) => {
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
-  proxy.authenticate = function (req, fn) {
-    fn(null, false)
+  proxy.authenticate = function (_req) {
+    t.ok(true, 'should call authenticate')
+    return false
   }
 
   const proxyAgent = new ProxyAgent(proxyUrl)
@@ -446,15 +447,16 @@ test('should throw when proxy does not return 200', async (t) => {
 })
 
 test('pass ProxyAgent proxy status code error when using fetch - #2161', async (t) => {
-  t = tspl(t, { plan: 1 })
+  t = tspl(t, { plan: 2 })
   const server = await buildServer()
   const proxy = await buildProxy()
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
-  proxy.authenticate = function (req, fn) {
-    fn(null, false)
+  proxy.authenticate = function (_req) {
+    t.ok(true, 'should call authenticate')
+    return false
   }
 
   const proxyAgent = new ProxyAgent(proxyUrl)
@@ -700,8 +702,8 @@ function buildSSLServer () {
 function buildProxy (listener) {
   return new Promise((resolve) => {
     const server = listener
-      ? proxy(createServer(listener))
-      : proxy(createServer())
+      ? createProxy(createServer(listener))
+      : createProxy(createServer())
     server.listen(0, () => resolve(server))
   })
 }
@@ -716,7 +718,7 @@ function buildSSLProxy () {
   }
 
   return new Promise((resolve) => {
-    const server = proxy(https.createServer(serverOptions))
+    const server = createProxy(https.createServer(serverOptions))
     server.listen(0, () => resolve(server))
   })
 }
