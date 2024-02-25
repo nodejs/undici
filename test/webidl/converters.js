@@ -183,3 +183,21 @@ test('ByteString', () => {
              'index 7 has a value of 256 which is greater than 255.'
   })
 })
+
+test('webidl.util.Stringify', (t) => {
+  const pairs = [
+    [Object.create(null), '{}'],
+    [{ a: 'b' }, '{"a":"b"}'],
+    [Symbol('sym'), 'sym'],
+    [Symbol.iterator, 'Symbol.iterator'], // well-known symbol
+    [true, 'true'],
+    [0, '0'],
+    ['hello', 'hello'],
+    [null, 'null'],
+    [undefined, 'undefined']
+  ]
+
+  for (const [value, expected] of pairs) {
+    assert.deepStrictEqual(webidl.util.Stringify(value), expected)
+  }
+})
