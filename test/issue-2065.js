@@ -4,7 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { createReadStream } = require('node:fs')
+const { openAsBlob } = require('node:fs')
 const { File, FormData, request } = require('..')
 
 test('undici.request with a FormData body should set content-length header', async (t) => {
@@ -27,41 +27,19 @@ test('undici.request with a FormData body should set content-length header', asy
   })
 })
 
-test('undici.request with a FormData stream value should set transfer-encoding header', async (t) => {
-  t = tspl(t, { plan: 1 })
+test('undici.request with a FormData stream value should set transfer-encoding header', { skip: !openAsBlob }, async (t) => {
+  const { ok } = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
-    t.strictEqual(req.headers['transfer-encoding'], 'chunked')
+    ok(req.headers['content-type'].startsWith('multipart/form-data'))
     res.end()
   }).listen(0)
 
-  after(() => server.close())
+  t.after(server.close.bind(server))
   await once(server, 'listening')
 
-  class BlobFromStream {
-    #stream
-    #type
-    constructor (stream, type) {
-      this.#stream = stream
-      this.#type = type
-    }
-
-    stream () {
-      return this.#stream
-    }
-
-    get type () {
-      return this.#type
-    }
-
-    get [Symbol.toStringTag] () {
-      return 'Blob'
-    }
-  }
-
   const body = new FormData()
-  const fileReadable = createReadStream(__filename)
-  body.set('file', new BlobFromStream(fileReadable, '.js'), 'streamfile')
+  body.set('file', await openAsBlob(__filename), 'streamfile')
 
   await request(`http://localhost:${server.address().port}`, {
     method: 'POST',

@@ -4,7 +4,6 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { FormData, File, Response } = require('../../')
-const { Blob: ThirdPartyBlob } = require('formdata-node')
 const { Blob } = require('node:buffer')
 const { isFormDataLike } = require('../../lib/core/util')
 const ThirdPartyFormDataInvalid = require('form-data')
@@ -102,17 +101,6 @@ test('append file', () => {
 test('append blob', async () => {
   const form = new FormData()
   form.set('asd', new Blob(['asd1'], { type: 'text/plain' }))
-
-  assert.strictEqual(form.has('asd'), true)
-  assert.strictEqual(form.get('asd').type, 'text/plain')
-  assert.strictEqual(await form.get('asd').text(), 'asd1')
-  form.delete('asd')
-  assert.strictEqual(form.get('asd'), null)
-})
-
-test('append third-party blob', async () => {
-  const form = new FormData()
-  form.set('asd', new ThirdPartyBlob(['asd1'], { type: 'text/plain' }))
 
   assert.strictEqual(form.has('asd'), true)
   assert.strictEqual(form.get('asd').type, 'text/plain')

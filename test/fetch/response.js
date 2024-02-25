@@ -9,7 +9,6 @@ const {
 } = require('../../')
 const { fromInnerResponse, makeResponse } = require('../../lib/web/fetch/response')
 const {
-  Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
 const { kState, kGuard, kRealm, kHeaders } = require('../../lib/web/fetch/symbols')
@@ -222,11 +221,6 @@ test('constructing a Response with a ReadableStream body', async (t) => {
   })
 })
 
-test('constructing Response with third party Blob body', async () => {
-  const blob = new ThirdPartyBlob(['text'])
-  const res = new Response(blob)
-  assert.strictEqual(await res.text(), 'text')
-})
 test('constructing Response with third party FormData body', async () => {
   const form = new ThirdPartyFormData()
   form.set('key', 'value')

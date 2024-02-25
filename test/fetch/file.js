@@ -4,10 +4,10 @@ const { Blob } = require('node:buffer')
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
-const { File, FileLike } = require('../../lib/web/fetch/file')
+const { File } = require('../../lib/web/fetch/file')
 
 test('args validation', (t) => {
-  const { throws, doesNotThrow, strictEqual } = tspl(t, { plan: 14 })
+  const { throws, doesNotThrow, strictEqual } = tspl(t, { plan: 4 })
 
   throws(() => {
     File.prototype.name.toString()
@@ -19,36 +19,7 @@ test('args validation', (t) => {
     File.prototype[Symbol.toStringTag].charAt(0)
   }, TypeError)
 
-  throws(() => {
-    FileLike.prototype.stream.call(null)
-  }, TypeError)
-  throws(() => {
-    FileLike.prototype.arrayBuffer.call(null)
-  }, TypeError)
-  throws(() => {
-    FileLike.prototype.slice.call(null)
-  }, TypeError)
-  throws(() => {
-    FileLike.prototype.text.call(null)
-  }, TypeError)
-  throws(() => {
-    FileLike.prototype.size.toString()
-  }, TypeError)
-  throws(() => {
-    FileLike.prototype.type.toString()
-  }, TypeError)
-  throws(() => {
-    FileLike.prototype.name.toString()
-  }, TypeError)
-  throws(() => {
-    FileLike.prototype.lastModified.toString()
-  }, TypeError)
-  doesNotThrow(() => {
-    FileLike.prototype[Symbol.toStringTag].charAt(0)
-  }, TypeError)
-
   strictEqual(File.prototype[Symbol.toStringTag], 'File')
-  strictEqual(FileLike.prototype[Symbol.toStringTag], 'File')
 })
 
 test('return value of File.lastModified', (t) => {
@@ -61,9 +32,8 @@ test('return value of File.lastModified', (t) => {
 })
 
 test('Symbol.toStringTag', (t) => {
-  const { strictEqual } = tspl(t, { plan: 2 })
+  const { strictEqual } = tspl(t, { plan: 1 })
   strictEqual(new File([], '')[Symbol.toStringTag], 'File')
-  strictEqual(new FileLike()[Symbol.toStringTag], 'File')
 })
 
 test('arguments', () => {
