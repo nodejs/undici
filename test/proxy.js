@@ -4,7 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 const { Client, Pool } = require('..')
 const { createServer } = require('node:http')
-const proxy = require('proxy')
+const { createProxy } = require('proxy')
 
 test('connect through proxy', async (t) => {
   t = tspl(t, { plan: 3 })
@@ -50,8 +50,8 @@ test('connect through proxy with auth', async (t) => {
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
-  proxy.authenticate = function (req, fn) {
-    fn(null, req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`)
+  proxy.authenticate = function (req, res) {
+    return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`
   }
 
   server.on('request', (req, res) => {
@@ -77,6 +77,40 @@ test('connect through proxy with auth', async (t) => {
   }
   t.strictEqual(response.statusCode, 200)
   t.deepStrictEqual(JSON.parse(data), { hello: 'world' })
+
+  server.close()
+  proxy.close()
+  client.close()
+})
+
+test('connect through proxy with auth but invalid credentials', async (t) => {
+  t = tspl(t, { plan: 1 })
+
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+
+  proxy.authenticate = function (req, res) {
+    return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:no-pass').toString('base64')}`
+  }
+
+  server.on('request', (req, res) => {
+    t.fail('should not be called')
+  })
+
+  const client = new Client(proxyUrl)
+
+  const response = await client.request({
+    method: 'GET',
+    path: serverUrl + '/hello?foo=bar',
+    headers: {
+      'proxy-authorization': `Basic ${Buffer.from('user:pass').toString('base64')}`
+    }
+  })
+
+  t.strictEqual(response.statusCode, 407)
 
   server.close()
   proxy.close()
@@ -127,7 +161,7 @@ function buildServer () {
 
 function buildProxy () {
   return new Promise((resolve, reject) => {
-    const server = proxy(createServer())
+    const server = createProxy(createServer())
     server.listen(0, () => resolve(server))
   })
 }
