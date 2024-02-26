@@ -8,7 +8,7 @@ import { server } from './server.mjs'
 
 const wss = new WebSocketServer({
   server,
-  handleProtocols: (protocols) => [...protocols].join(', ')
+  handleProtocols: (protocols) => protocols.values().next().value
 })
 
 wss.on('connection', (ws, request) => {
