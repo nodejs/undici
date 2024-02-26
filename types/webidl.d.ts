@@ -62,6 +62,11 @@ interface WebidlUtil {
    * @see https://webidl.spec.whatwg.org/#abstract-opdef-converttoint
    */
   IntegerPart (N: number): number
+
+  /**
+   * Stringifies {@param V}
+   */
+  Stringify (V: any): string
 }
 
 interface WebidlConverters {
