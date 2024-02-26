@@ -5,25 +5,26 @@ const { test, after, describe } = require('node:test')
 const { Client, Pool, errors } = require('..')
 const net = require('node:net')
 const assert = require('node:assert')
-const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(ms))
 
 // Using describe instead of test to avoid the timeout
-describe('prioritize socket errors over timeouts', () => {
+describe('prioritize socket errors over timeouts', async () => {
   const t = tspl({ ...assert, after: () => {} }, { plan: 1 })
-  const connectTimeout = 1000
-  const client = new Pool('http://foobar.bar:1234', { connectTimeout: 2 })
+  const client = new Pool('http://foobar.bar:1234', { connectTimeout: 1 })
 
   client.request({ method: 'GET', path: '/foobar' })
     .then(() => t.fail())
     .catch((err) => {
-      t.strictEqual(['ENOTFOUND', 'EAI_AGAIN'].includes(err.code), true)
+      t.strictEqual(err.code !== 'UND_ERR_CONNECT_TIMEOUT', true)
     })
 
-  // block for 1s which is enough for the dns lookup to complete and TO to fire
-  sleep(connectTimeout)
+  // block for 1s which is enough for the dns lookup to complete and the
+  // Timeout to fire
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(1000))
+
+  await t.completed
 })
 
-// never connect
+// mock net.connect to avoid the dns lookup
 net.connect = function (options) {
   return new net.Socket(options)
 }
