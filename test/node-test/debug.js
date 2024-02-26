@@ -52,7 +52,7 @@ test('debug#websocket', { skip }, async t => {
 })
 
 test('debug#fetch', { skip }, async t => {
-  const assert = tspl(t, { plan: 6 })
+  const assert = tspl(t, { plan: 8 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/fetch.js')],
@@ -63,9 +63,11 @@ test('debug#fetch', { skip }, async t => {
   const chunks = []
   const assertions = [
     /FETCH [0-9]+: fetch started/,
+    /FETCH [0-9]+: fetch async started/,
     /FETCH [0-9]+: fetch request to/,
-    /FETCH [0-9]+: fetch received response from/,
     /FETCH [0-9]+: fetch ended/,
+    /FETCH [0-9]+: fetch received response from/,
+    /FETCH [0-9]+: fetch async ended/,
     /^$/
   ]
 
