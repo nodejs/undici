@@ -1,5 +1,5 @@
 import { bench, group, run } from 'mitata'
-import { parseHeaders } from '../lib/core/util.js'
+import { parseHeaders } from '../../lib/core/util.js'
 
 const target = [
   {

@@ -1,5 +1,5 @@
 import { bench, group, run } from 'mitata'
-import { parseRawHeaders } from '../lib/core/util.js'
+import { parseRawHeaders } from '../../lib/core/util.js'
 
 const rawHeadersMixed = ['key', 'value', Buffer.from('key'), Buffer.from('value')]
 const rawHeadersOnlyStrings = ['key', 'value', 'key', 'value']

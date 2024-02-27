@@ -1,5 +1,5 @@
 import { bench, group, run } from 'mitata'
-import { Headers } from '../lib/web/fetch/headers.js'
+import { Headers } from '../../lib/web/fetch/headers.js'
 
 const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 const charactersLength = characters.length
