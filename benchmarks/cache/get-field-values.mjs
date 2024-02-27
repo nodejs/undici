@@ -1,5 +1,5 @@
 import { bench, group, run } from 'mitata'
-import { getFieldValues } from '../lib/web/cache/util.js'
+import { getFieldValues } from '../../lib/web/cache/util.js'
 
 const values = [
   '',

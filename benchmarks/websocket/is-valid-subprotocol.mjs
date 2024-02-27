@@ -1,5 +1,5 @@
 import { bench, group, run } from 'mitata'
-import { isValidSubprotocol } from '../lib/web/websocket/util.js'
+import { isValidSubprotocol } from '../../lib/web/websocket/util.js'
 
 const valid = 'valid'
 const invalid = 'invalid '
