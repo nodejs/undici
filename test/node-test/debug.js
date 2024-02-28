@@ -67,8 +67,6 @@ test('debug#fetch', async t => {
     /(FETCH [0-9]+:) (trailers received)/,
     /(FETCH [0-9]+:) (fetch has received)/,
     /(FETCH [0-9]+:) (fetch has received)/,
-    /(FETCH [0-9]+:) (fetch has received)/,
-    /(FETCH [0-9]+:) (fetch has received)/,
     /^$/
   ]
 
