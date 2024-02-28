@@ -79,15 +79,6 @@ module.exports = fs.readFileSync(require.resolve('./${basename(path)}'))
 `)
     }
 
-// Build wasm binary
-execSync(`${WASM_CC} ${WASM_CFLAGS} ${WASM_LDFLAGS} \
- ${join(WASM_SRC, 'src')}/*.c \
- -I${join(WASM_SRC, 'include')} \
- -o ${join(WASM_OUT, 'llhttp.wasm')} \
- ${WASM_LDLIBS}`, { stdio: 'inherit' })
-
-writeWasmChunk('llhttp.wasm', 'llhttp-wasm.js')
-
 // Build wasm simd binary
 execSync(`${WASM_CC} ${WASM_CFLAGS} -msimd128 ${WASM_LDFLAGS} \
  ${join(WASM_SRC, 'src')}/*.c \
