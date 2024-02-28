@@ -2282,7 +2282,7 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
 })
 
 test('MockAgent - headers function interceptor', async (t) => {
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 8 })
 
   const server = createServer((req, res) => {
     t.fail('should not be called')
@@ -2310,7 +2310,7 @@ test('MockAgent - headers function interceptor', async (t) => {
       t.strictEqual(typeof headers, 'object')
       return !Object.keys(headers).includes('authorization')
     }
-  }).reply(200, 'foo').times(2)
+  }).reply(200, 'foo').times(3)
 
   await t.rejects(request(`${baseUrl}/foo`, {
     method: 'GET',
@@ -2318,6 +2318,11 @@ test('MockAgent - headers function interceptor', async (t) => {
       Authorization: 'Bearer foo'
     }
   }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"Authorization":"Bearer foo"}' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+
+  await t.rejects(request(`${baseUrl}/foo`, {
+    method: 'GET',
+    headers: ['Authorization', 'Bearer foo']
+  }), new MockNotMatchedError(`Mock dispatch not matched for headers '["Authorization","Bearer foo"]' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
 
   {
     const { statusCode } = await request(`${baseUrl}/foo`, {
