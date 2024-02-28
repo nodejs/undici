@@ -29,7 +29,7 @@ module.exports.Client = Client
 module.exports.Pool = Pool
 module.exports.BalancedPool = BalancedPool
 module.exports.Agent = Agent
-module.exports.ProxyAgent = Proxy.ProxyAgent
+module.exports.ProxyAgent = ProxyAgent
 module.exports.RetryAgent = RetryAgent
 module.exports.RetryHandler = RetryHandler
 
@@ -37,7 +37,7 @@ module.exports.DecoratorHandler = DecoratorHandler
 module.exports.RedirectHandler = RedirectHandler
 module.exports.createRedirectInterceptor = createRedirectInterceptor
 module.exports.interceptors = {
-  proxy: Proxy.interceptor,
+  proxy: require('./lib/interceptor/proxy'),
   redirect: require('./lib/interceptor/redirect'),
   retry: require('./lib/interceptor/retry')
 }
