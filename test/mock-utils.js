@@ -8,7 +8,8 @@ const {
   getMockDispatch,
   getResponseData,
   getStatusText,
-  getHeaderByName
+  getHeaderByName,
+  buildHeadersFromArray
 } = require('../lib/mock/mock-utils')
 
 test('deleteMockDispatch - should do nothing if not able to find mock dispatch', (t) => {
@@ -209,4 +210,17 @@ test('getHeaderByName', (t) => {
   t.strictEqual(getHeaderByName(headers, 'anotherKey'), null)
 
   t.end()
+})
+
+describe('buildHeadersFromArray', () => {
+  test('it should build headers from array', (t) => {
+    t = tspl(t, { plan: 2 })
+
+    const headers = buildHeadersFromArray([
+      'key', 'value'
+    ])
+
+    t.deepStrictEqual(Object.keys(headers).length, 1)
+    t.strictEqual(headers.key, 'value')
+  })
 })
