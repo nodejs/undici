@@ -52,7 +52,7 @@ describe('validateCookieValue', () => {
     throws(() => validateCookieValue('"'), new Error('Invalid cookie value'))
   })
 
-  test('should throw for " character', () => {
+  test('should throw for , character', () => {
     throws(() => validateCookieValue(','), new Error('Invalid cookie value'))
   })
 
