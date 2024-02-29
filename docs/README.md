@@ -62,9 +62,11 @@ The `body` mixins are the most common way to format the request/response body. M
 
 - [`.arrayBuffer()`](https://fetch.spec.whatwg.org/#dom-body-arraybuffer)
 - [`.blob()`](https://fetch.spec.whatwg.org/#dom-body-blob)
-- [`.formData()`](https://fetch.spec.whatwg.org/#dom-body-formdata)
 - [`.json()`](https://fetch.spec.whatwg.org/#dom-body-json)
 - [`.text()`](https://fetch.spec.whatwg.org/#dom-body-text)
+
+> [!NOTE]
+> The body returned from `undici.request` does not implement `.formData()`.
 
 Example usage:
 

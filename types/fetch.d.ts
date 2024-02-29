@@ -40,7 +40,7 @@ export class BodyMixin {
    * @example
    * ```js
    * import { Busboy } from '@fastify/busboy'
-   * import { Readable } from 'node:streams'
+   * import { Readable } from 'node:stream'
    * 
    * const response = await fetch('...')
    * const busboy = new Busboy({ headers: { 'content-type': response.headers.get('content-type') } })
