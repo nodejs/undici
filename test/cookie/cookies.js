@@ -116,7 +116,7 @@ test('Cookie Value Validation', () => {
           }
         )
       },
-      new Error('Invalid header value'),
+      new Error('Invalid cookie value'),
       "RFC2616 cookie 'Space'"
     )
   })
@@ -128,7 +128,7 @@ test('Cookie Value Validation', () => {
         value: 'United Kingdom'
       })
     },
-    new Error('Invalid header value'),
+    new Error('Invalid cookie value'),
     "RFC2616 cookie 'location' cannot contain character ' '"
   )
 })
