@@ -1,5 +1,5 @@
 import { bench, group, run } from 'mitata'
-import { tree } from '../lib/core/tree.js'
+import { tree } from '../../lib/core/tree.js'
 
 const contentLength = Buffer.from('Content-Length')
 const contentLengthUpperCase = Buffer.from('Content-Length'.toUpperCase())

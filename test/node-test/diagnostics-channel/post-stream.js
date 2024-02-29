@@ -33,9 +33,9 @@ test('Diagnostics channel - post stream', (t) => {
     assert.equal(request.completed, false)
     assert.equal(request.method, 'POST')
     assert.equal(request.path, '/')
-    assert.equal(request.headers, 'bar: bar\r\n')
+    assert.deepStrictEqual(request.headers, ['bar', 'bar'])
     request.addHeader('hello', 'world')
-    assert.equal(request.headers, 'bar: bar\r\nhello: world\r\n')
+    assert.deepStrictEqual(request.headers, ['bar', 'bar', 'hello', 'world'])
     assert.deepStrictEqual(request.body, body)
   })
 

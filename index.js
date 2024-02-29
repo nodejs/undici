@@ -16,11 +16,11 @@ const MockClient = require('./lib/mock/mock-client')
 const MockAgent = require('./lib/mock/mock-agent')
 const MockPool = require('./lib/mock/mock-pool')
 const mockErrors = require('./lib/mock/mock-errors')
-const RetryHandler = require('./lib/handler/RetryHandler')
+const RetryHandler = require('./lib/handler/retry-handler')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
-const DecoratorHandler = require('./lib/handler/DecoratorHandler')
-const RedirectHandler = require('./lib/handler/RedirectHandler')
-const createRedirectInterceptor = require('./lib/interceptor/redirectInterceptor')
+const DecoratorHandler = require('./lib/handler/decorator-handler')
+const RedirectHandler = require('./lib/handler/redirect-handler')
+const createRedirectInterceptor = require('./lib/interceptor/redirect-interceptor')
 
 Object.assign(Dispatcher.prototype, api)
 
@@ -139,7 +139,7 @@ module.exports.getCookies = getCookies
 module.exports.getSetCookies = getSetCookies
 module.exports.setCookie = setCookie
 
-const { parseMIMEType, serializeAMimeType } = require('./lib/web/fetch/dataURL')
+const { parseMIMEType, serializeAMimeType } = require('./lib/web/fetch/data-url')
 
 module.exports.parseMIMEType = parseMIMEType
 module.exports.serializeAMimeType = serializeAMimeType

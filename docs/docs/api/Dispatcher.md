@@ -980,10 +980,12 @@ Emitted when dispatcher is no longer busy.
 
 ## Parameter: `UndiciHeaders`
 
-* `Record<string, string | string[] | undefined> | string[] | null`
+* `Record<string, string | string[] | undefined> | string[] | Iterable<[string, string | string[] | undefined]> | null`
 
-Header arguments such as `options.headers` in [`Client.dispatch`](Client.md#clientdispatchoptions-handlers) can be specified in two forms; either as an object specified by the `Record<string, string | string[] | undefined>` (`IncomingHttpHeaders`) type, or an array of strings. An array representation of a header list must have an even length or an `InvalidArgumentError` will be thrown.
-
+Header arguments such as `options.headers` in [`Client.dispatch`](Client.md#clientdispatchoptions-handlers) can be specified in three forms:
+* As an object specified by the `Record<string, string | string[] | undefined>` (`IncomingHttpHeaders`) type.
+* As an array of strings. An array representation of a header list must have an even length, or an `InvalidArgumentError` will be thrown.
+* As an iterable that can encompass `Headers`, `Map`, or a custom iterator returning key-value pairs.
 Keys are lowercase and values are not modified.
 
 Response headers will derive a `host` from the `url` of the [Client](Client.md#class-client) instance if no `host` header was previously specified.
@@ -1010,4 +1012,38 @@ Response headers will derive a `host` from the `url` of the [Client](Client.md#c
   'host', 'mysite.com',
   'accept', '*/*'
 ]
+```
+
+### Example 3 - Iterable
+
+```js
+new Headers({
+  'content-length': '123',
+  'content-type': 'text/plain',
+  connection: 'keep-alive',
+  host: 'mysite.com',
+  accept: '*/*'
+})
+```
+or
+```js
+new Map([
+  ['content-length', '123'],
+  ['content-type', 'text/plain'],
+  ['connection', 'keep-alive'],
+  ['host', 'mysite.com'],
+  ['accept', '*/*']
+])
+```
+or
+```js
+{
+  *[Symbol.iterator] () {
+    yield ['content-length', '123']
+    yield ['content-type', 'text/plain']
+    yield ['connection', 'keep-alive']
+    yield ['host', 'mysite.com']
+    yield ['accept', '*/*']
+  }
+}
 ```
