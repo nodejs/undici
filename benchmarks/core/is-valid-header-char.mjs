@@ -32,10 +32,10 @@ group(`isValidHeaderChar# ${html}`, () => {
     return headerCharRegex.exec(html) === null
   })
   bench('charCodeAt', () => {
-    return charCodeAtApproach(html) === true
+    return charCodeAtApproach(html)
   })
   bench('isValidHeaderChar', () => {
-    return isValidHeaderChar(html) === true
+    return isValidHeaderChar(html)
   })
 })
 
