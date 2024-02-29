@@ -12,7 +12,9 @@ In Node versions v18.13.0 and above and v19.2.0 and above, undici will default t
 
 ## FormData
 
-This API is implemented as per the standard, you can find documentation on [MDN](https://developer.mozilla.org/en-US/docs/Web/API/FormData)
+This API is implemented as per the standard, you can find documentation on [MDN](https://developer.mozilla.org/en-US/docs/Web/API/FormData).
+
+If any parameters are passed to the FormData constructor other than `undefined`, an error will be thrown. Other parameters are ignored.
 
 ## Response
 
