@@ -34,7 +34,7 @@ export class BodyMixin {
   readonly arrayBuffer: () => Promise<ArrayBuffer>
   readonly blob: () => Promise<Blob>
   /**
-   * @deprecated This method is not recommended in server environments.
+   * @deprecated This method is not recommended for parsing multipart/form-data bodies in server environments.
    * It is recommended to use a library such as [@fastify/busboy](https://www.npmjs.com/package/@fastify/busboy) as follows:
    * 
    * @example
