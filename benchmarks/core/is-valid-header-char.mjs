@@ -39,7 +39,7 @@ group(`isValidHeaderChar# ${html}`, () => {
   })
 })
 
-group(`isValidHeaderChar ${json}`, () => {
+group(`isValidHeaderChar# ${json}`, () => {
   bench('regexp.test', () => {
     return !headerCharRegex.test(json)
   })
