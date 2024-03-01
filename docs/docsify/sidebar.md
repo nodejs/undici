@@ -1,6 +1,7 @@
 <!-- Sidebar for Docsify -->
 
 * [**Home**](/ "Node.js Undici")
+* [Examples](/examples/ "Undici Examples")
 * API
   * [Dispatcher](/docs/api/Dispatcher.md "Undici API - Dispatcher")
   * [Client](/docs/api/Client.md "Undici API - Client")
