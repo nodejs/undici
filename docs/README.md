@@ -94,7 +94,7 @@ For more information about their behavior, please reference the body mixin from 
 
 ## Common API Methods
 
-This section documents our most commonly used API methods. Additional APIs are documented in their own files within the API folder and are accessible via the navigation list on the left side of the docs site.
+This section documents our most commonly used API methods. Additional APIs are documented in their own files within the [docs](./docs) folder and are accessible via the navigation list on the left side of the docs site.
 
 ### `undici.request([url, options]): Promise`
 
