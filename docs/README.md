@@ -60,9 +60,13 @@ console.log('trailers', trailers)
 
 The `body` mixins are the most common way to format the request/response body. Mixins include:
 
-- [`.formData()`](https://fetch.spec.whatwg.org/#dom-body-formdata)
+- [`.arrayBuffer()`](https://fetch.spec.whatwg.org/#dom-body-arraybuffer)
+- [`.blob()`](https://fetch.spec.whatwg.org/#dom-body-blob)
 - [`.json()`](https://fetch.spec.whatwg.org/#dom-body-json)
 - [`.text()`](https://fetch.spec.whatwg.org/#dom-body-text)
+
+> [!NOTE]
+> The body returned from `undici.request` does not implement `.formData()`.
 
 Example usage:
 
@@ -226,7 +230,7 @@ await fetch('https://example.com', { body: data, method: 'POST', duplex: 'half' 
 
 - half
 
-In this implementation of fetch, `request.duplex` must be set if `request.body` is `ReadableStream` or `Async Iterables`. And fetch requests are currently always be full duplex. More detail refer to [Fetch Standard.](https://fetch.spec.whatwg.org/#dom-requestinit-duplex)
+In this implementation of fetch, `request.duplex` must be set if `request.body` is `ReadableStream` or `Async Iterables`, however, fetch requests are currently always full duplex. For more detail refer to the [Fetch Standard.](https://fetch.spec.whatwg.org/#dom-requestinit-duplex).
 
 #### `response.body`
 
