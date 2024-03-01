@@ -31,7 +31,7 @@ describe('diagnosticsChannel for fetch', { skip }, () => {
   after(() => { server.close() })
 
   test('fetch', async t => {
-    t = tspl(t, { plan: 42 })
+    t = tspl(t, { plan: 34 })
 
     let startCalled = 0
     dc.channel('tracing:undici:fetch:start').subscribe(({ input, init }) => {
@@ -112,8 +112,8 @@ describe('diagnosticsChannel for fetch', { skip }, () => {
       server.close()
       t.strictEqual(startCalled, 2)
       t.strictEqual(endCalled, 2)
-      t.strictEqual(asyncStartCalled, 3)
-      t.strictEqual(asyncEndCalled, 3)
+      t.strictEqual(asyncStartCalled, 2)
+      t.strictEqual(asyncEndCalled, 2)
       t.strictEqual(errorCalled, 1)
     })
 
