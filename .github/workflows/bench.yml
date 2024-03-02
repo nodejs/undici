@@ -51,7 +51,7 @@ jobs:
         working-directory: ./benchmarks
 
   benchmark_post_current:
-    name: benchmark (post) current
+    name: post benchmark current
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -73,7 +73,7 @@ jobs:
         working-directory: ./benchmarks
 
   benchmark_post_branch:
-    name: benchmark (post) branch
+    name: post benchmark branch
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
