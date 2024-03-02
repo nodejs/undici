@@ -26,6 +26,8 @@ const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
 const bodyTimeout = parseInt(process.env.BODY_TIMEOUT, 10) || 0
 const dest = {}
 
+const buffer = '_'.repeat(128 * 1024)
+
 if (process.env.PORT) {
   dest.port = process.env.PORT
   dest.url = `http://localhost:${process.env.PORT}`
@@ -34,12 +36,18 @@ if (process.env.PORT) {
   dest.socketPath = path.join(os.tmpdir(), 'undici.sock')
 }
 
+const headers = {
+  'Content-Type': 'text/plain; charset=UTF-8',
+  'Content-Length': `${Buffer.byteLength(buffer)}`
+}
+
 /** @type {http.RequestOptions} */
 const httpBaseOptions = {
   protocol: 'http:',
   hostname: 'localhost',
-  method: 'GET',
+  method: 'POST',
   path: '/',
+  headers,
   ...dest
 }
 
@@ -86,11 +94,14 @@ const superagentAgent = new http.Agent({
   maxSockets: connections
 })
 
+/** @type {import("..").Dispatcher.DispatchOptions} */
 const undiciOptions = {
   path: '/',
-  method: 'GET',
+  method: 'POST',
   headersTimeout,
-  bodyTimeout
+  bodyTimeout,
+  body: buffer,
+  headers
 }
 
 const Class = connections > 1 ? Pool : Client
@@ -186,7 +197,7 @@ function printResults (results) {
 const experiments = {
   'http - no keepalive' () {
     return makeParallelRequests(resolve => {
-      http.get(httpNoKeepAliveOptions, res => {
+      const request = http.request(httpNoKeepAliveOptions, res => {
         res
           .pipe(
             new Writable({
@@ -197,11 +208,12 @@ const experiments = {
           )
           .on('finish', resolve)
       })
+      request.end(buffer)
     })
   },
   'http - keepalive' () {
     return makeParallelRequests(resolve => {
-      http.get(httpKeepAliveOptions, res => {
+      const request = http.request(httpKeepAliveOptions, res => {
         res
           .pipe(
             new Writable({
@@ -212,6 +224,7 @@ const experiments = {
           )
           .on('finish', resolve)
       })
+      request.end(buffer)
     })
   },
   'undici - pipeline' () {
@@ -267,18 +280,28 @@ const experiments = {
 }
 
 if (process.env.PORT) {
+  /** @type {RequestInit} */
+  const fetchOptions = {
+    method: 'POST',
+    body: buffer,
+    headers
+  }
   // fetch does not support the socket
   experiments['undici - fetch'] = () => {
     return makeParallelRequests(resolve => {
-      fetch(dest.url).then(res => {
+      fetch(dest.url, fetchOptions).then(res => {
         res.body.pipeTo(new WritableStream({ write () { }, close () { resolve() } }))
       }).catch(console.log)
     })
   }
 
+  const nodeFetchOptions = {
+    ...fetchOptions,
+    agent: fetchAgent
+  }
   experiments['node-fetch'] = () => {
     return makeParallelRequests(resolve => {
-      nodeFetch(dest.url, { agent: fetchAgent }).then(res => {
+      nodeFetch(dest.url, nodeFetchOptions).then(res => {
         res.body.pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
@@ -288,9 +311,17 @@ if (process.env.PORT) {
     })
   }
 
+  const axiosOptions = {
+    url: dest.url,
+    method: 'POST',
+    headers,
+    responseType: 'stream',
+    httpAgent: axiosAgent,
+    data: buffer
+  }
   experiments.axios = () => {
     return makeParallelRequests(resolve => {
-      axios.get(dest.url, { responseType: 'stream', httpAgent: axiosAgent }).then(res => {
+      axios.request(axiosOptions).then(res => {
         res.data.pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
@@ -300,9 +331,17 @@ if (process.env.PORT) {
     })
   }
 
+  const gotOptions = {
+    method: 'POST',
+    headers,
+    agent: {
+      http: gotAgent
+    },
+    body: buffer
+  }
   experiments.got = () => {
     return makeParallelRequests(resolve => {
-      got.get(dest.url, { agent: { http: gotAgent } }).then(res => {
+      got(dest.url, gotOptions).then(res => {
         res.pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
@@ -312,9 +351,16 @@ if (process.env.PORT) {
     })
   }
 
+  const requestOptions = {
+    url: dest.url,
+    method: 'POST',
+    headers,
+    agent: requestAgent,
+    data: buffer
+  }
   experiments.request = () => {
     return makeParallelRequests(resolve => {
-      request(dest.url, { agent: requestAgent }).then(res => {
+      request(requestOptions).then(res => {
         res.pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
@@ -326,11 +372,16 @@ if (process.env.PORT) {
 
   experiments.superagent = () => {
     return makeParallelRequests(resolve => {
-      superagent.get(dest.url).pipe(new Writable({
-        write (chunk, encoding, callback) {
-          callback()
-        }
-      })).on('finish', resolve)
+      superagent
+        .post(dest.url)
+        .send(buffer)
+        .set('Content-Type', 'text/plain; charset=UTF-8')
+        .set('Content-Length', `${Buffer.byteLength(buffer)}`)
+        .pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
     })
   }
 }

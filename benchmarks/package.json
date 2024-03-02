@@ -2,9 +2,12 @@
   "name": "benchmarks",
   "scripts": {
     "bench": "PORT=3042 concurrently -k -s first npm:bench:server npm:bench:run",
+    "bench-post": "PORT=3042 concurrently -k -s first npm:bench:server npm:bench-post:run",
     "bench:server": "node ./server.js",
     "prebench:run": "node ./wait.js",
-    "bench:run": "SAMPLES=100 CONNECTIONS=50 node ./benchmark.js"
+    "bench:run": "SAMPLES=100 CONNECTIONS=50 node ./benchmark.js",
+    "prebench-post:run": "node ./wait.js",
+    "bench-post:run": "SAMPLES=100 CONNECTIONS=50 node ./post-benchmark.js"
   },
   "dependencies": {
     "axios": "^1.6.7",
