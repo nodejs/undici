@@ -1,9 +1,11 @@
 'use strict'
 
-const { describe, test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
+const { describe, test, after } = require('node:test')
 const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
+const { kReadyState } = require('../../lib/web/websocket/symbols')
 
 describe('Close', () => {
   test('Close with code', () => {
@@ -127,5 +129,54 @@ describe('Close', () => {
       const ws = new WebSocket(`ws://localhost:${server.address().port}`)
       ws.addEventListener('open', () => ws.close(3000))
     })
+  })
+
+  test('calling close twice will only trigger the close event once', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const server = new WebSocketServer({ port: 0 })
+
+    after(() => server.close())
+
+    server.on('connection', (ws) => {
+      ws.on('close', (code) => {
+        t.strictEqual(code, 1000)
+      })
+    })
+
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    ws.addEventListener('open', () => {
+      ws.close(1000)
+      ws.close(1000)
+    })
+
+    await t.completed
+  })
+
+  test('calling close when connection is open but close handshake has started does not result in sending the handshake again', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const server = new WebSocketServer({ port: 0 })
+
+    after(() => server.close())
+
+    server.on('connection', (ws) => {
+      ws.on('close', (code) => {
+        t.strictEqual(code, 1000)
+      })
+    })
+
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    ws.addEventListener('open', () => {
+      // .close() will start the close handshake and set the readyState to
+      // CLOSING
+      ws.close(1000)
+      // set the readyState to OPEN to simulate the close handshake being
+      // started but not yet completed
+      ws[kReadyState] = ws.OPEN
+      ws.close(1000)
+    })
+
+    await t.completed
   })
 })
