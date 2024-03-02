@@ -391,10 +391,8 @@
     },
     "response": {
       "response-clone.any.js": {
-        "fail": [
-          "Check response clone use structureClone for teed ReadableStreams (ArrayBufferchunk)",
-          "Check response clone use structureClone for teed ReadableStreams (DataViewchunk)"
-        ]
+        "note": "Node streams are too buggy currently.",
+        "skip": true
       },
       "response-consume-empty.any.js": {
         "fail": [
