@@ -26,7 +26,8 @@ const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
 const bodyTimeout = parseInt(process.env.BODY_TIMEOUT, 10) || 0
 const dest = {}
 
-const buffer = '_'.repeat(128 * 1024)
+const data = '_'.repeat(128 * 1024)
+const dataLength = `${Buffer.byteLength(data)}`
 
 if (process.env.PORT) {
   dest.port = process.env.PORT
@@ -38,7 +39,7 @@ if (process.env.PORT) {
 
 const headers = {
   'Content-Type': 'text/plain; charset=UTF-8',
-  'Content-Length': `${Buffer.byteLength(buffer)}`
+  'Content-Length': dataLength
 }
 
 /** @type {http.RequestOptions} */
@@ -100,7 +101,7 @@ const undiciOptions = {
   method: 'POST',
   headersTimeout,
   bodyTimeout,
-  body: buffer,
+  body: data,
   headers
 }
 
@@ -208,7 +209,7 @@ const experiments = {
           )
           .on('finish', resolve)
       })
-      request.end(buffer)
+      request.end(data)
     })
   },
   'http - keepalive' () {
@@ -224,7 +225,7 @@ const experiments = {
           )
           .on('finish', resolve)
       })
-      request.end(buffer)
+      request.end(data)
     })
   },
   'undici - pipeline' () {
@@ -283,7 +284,7 @@ if (process.env.PORT) {
   /** @type {RequestInit} */
   const fetchOptions = {
     method: 'POST',
-    body: buffer,
+    body: data,
     headers
   }
   // fetch does not support the socket
@@ -317,7 +318,7 @@ if (process.env.PORT) {
     headers,
     responseType: 'stream',
     httpAgent: axiosAgent,
-    data: buffer
+    data
   }
   experiments.axios = () => {
     return makeParallelRequests(resolve => {
@@ -337,7 +338,7 @@ if (process.env.PORT) {
     agent: {
       http: gotAgent
     },
-    body: buffer
+    body: data
   }
   experiments.got = () => {
     return makeParallelRequests(resolve => {
@@ -356,7 +357,7 @@ if (process.env.PORT) {
     method: 'POST',
     headers,
     agent: requestAgent,
-    data: buffer
+    data
   }
   experiments.request = () => {
     return makeParallelRequests(resolve => {
@@ -374,9 +375,9 @@ if (process.env.PORT) {
     return makeParallelRequests(resolve => {
       superagent
         .post(dest.url)
-        .send(buffer)
+        .send(data)
         .set('Content-Type', 'text/plain; charset=UTF-8')
-        .set('Content-Length', `${Buffer.byteLength(buffer)}`)
+        .set('Content-Length', dataLength)
         .pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
