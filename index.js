@@ -37,7 +37,7 @@ module.exports.DecoratorHandler = DecoratorHandler
 module.exports.RedirectHandler = RedirectHandler
 module.exports.createRedirectInterceptor = createRedirectInterceptor
 module.exports.interceptors = {
-  Proxy: require('./lib/interceptor/proxy'),
+  proxy: require('./lib/interceptor/proxy'),
   redirect: require('./lib/interceptor/redirect'),
   retry: require('./lib/interceptor/retry')
 }

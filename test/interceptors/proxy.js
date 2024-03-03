@@ -15,23 +15,22 @@ const {
   getGlobalDispatcher,
   setGlobalDispatcher,
   request,
-  Pool,
-  Dispatcher
+  Pool
 } = require('../..')
 const { InvalidArgumentError } = require('../../lib/core/errors')
-const { Proxy } = interceptors
+const { proxy: proxyInterceptor } = interceptors
 
 test('should throw error when no uri is provided', t => {
   t = tspl(t, { plan: 2 })
-  t.throws(() => new Proxy(), InvalidArgumentError)
-  t.throws(() => new Proxy(null, {}), InvalidArgumentError)
+  t.throws(() => proxyInterceptor(), InvalidArgumentError)
+  t.throws(() => proxyInterceptor({}), InvalidArgumentError)
 })
 
 test('using auth in combination with token should throw', t => {
   t = tspl(t, { plan: 1 })
   t.throws(
     () =>
-      new Proxy({}, {
+      proxyInterceptor({
         auth: 'foo',
         token: 'Bearer bar',
         uri: 'http://example.com'
@@ -42,26 +41,20 @@ test('using auth in combination with token should throw', t => {
 
 test('should accept string, URL and object as options', t => {
   t = tspl(t, { plan: 3 })
-  t.doesNotThrow(() => new Proxy({}, 'http://example.com'))
-  t.doesNotThrow(() => new Proxy({}, new URL('http://example.com')))
-  t.doesNotThrow(() => new Proxy({}, { uri: 'http://example.com' }))
+  t.doesNotThrow(() => proxyInterceptor('http://example.com'))
+  t.doesNotThrow(() => proxyInterceptor(new URL('http://example.com')))
+  t.doesNotThrow(() => proxyInterceptor({ uri: 'http://example.com' }))
 })
 
-test('use proxy-agent to connect through proxy', { skip: true }, async t => {
-  t = tspl(t, { plan: 8 })
-  const CustomDispatcher = class extends Dispatcher {
-    constructor (dispatcher) {
-      super()
-      this.dispatcher = dispatcher
-    }
+test('should work with nested dispatch', async t => {
+  t = tspl(t, { plan: 7 })
+  let counter = 0
+  const customDispatch = dispatcher => {
+    const binded = dispatcher.dispatch.bind(dispatcher)
+    return (opts, handler) => {
+      counter++
 
-    dispatch (opts, handler) {
-      t.ok(true, 'should call dispatch')
-      return this.dispatcher.dispatch(opts, handler)
-    }
-
-    close () {
-      return this.dispatcher.close()
+      return binded(opts, handler)
     }
   }
   const server = await buildServer()
@@ -73,9 +66,9 @@ test('use proxy-agent to connect through proxy', { skip: true }, async t => {
   const client = new Client(serverUrl)
   const parsedOrigin = new URL(serverUrl)
   const dispatcher = client.compose([
-    (dispatcher) => new CustomDispatcher(dispatcher),
-    (dispatcher) => new Proxy(dispatcher, proxyUrl),
-    (dispatcher) => new CustomDispatcher(dispatcher)
+    customDispatch, // not called
+    proxyInterceptor(proxyUrl), // chain restarted here
+    customDispatch
   ])
 
   proxy.on('connect', () => {
@@ -107,13 +100,14 @@ test('use proxy-agent to connect through proxy', { skip: true }, async t => {
     'keep-alive',
     'should remain the connection open'
   )
+  t.equal(counter, 1, 'should call customDispatch twice')
 
   server.close()
   proxy.close()
   await dispatcher.close()
 })
 
-test('use proxy-interceptor to connect through proxy when composing dispatcher', async t => {
+test('use proxy-agent to connect through proxy', async t => {
   t = tspl(t, { plan: 6 })
   const server = await buildServer()
   const proxy = await buildProxy()
@@ -124,9 +118,7 @@ test('use proxy-interceptor to connect through proxy when composing dispatcher',
   const client = new Client(serverUrl)
   const parsedOrigin = new URL(serverUrl)
 
-  const dispatcher = client.compose(
-    dispatcher => new Proxy(dispatcher, proxyUrl)
-  )
+  const dispatcher = client.compose(proxyInterceptor(proxyUrl))
 
   proxy.on('connect', () => {
     t.ok(true, 'should connect to proxy')
@@ -194,7 +186,7 @@ test('use proxy agent to connect through proxy using Pool', async t => {
   }
   const client = new Client(serverUrl)
   const dispatcher = client.compose(
-    dispatcher => new Proxy(dispatcher, {
+    proxyInterceptor({
       auth: Buffer.from('user:pass').toString('base64'),
       uri: proxyUrl,
       clientFactory
@@ -227,7 +219,7 @@ test('use proxy-agent to connect through proxy using path with params', async t 
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const client = new Client(serverUrl)
   const parsedOrigin = new URL(serverUrl)
-  const dispatcher = client.compose(dispatcher => new Proxy(dispatcher, proxyUrl))
+  const dispatcher = client.compose(proxyInterceptor(proxyUrl))
 
   proxy.on('connect', () => {
     t.ok(true, 'should call proxy')
@@ -272,7 +264,7 @@ test('use proxy-agent to connect through proxy with basic auth in URL', async t 
   const proxyUrl = `http://user:pass@localhost:${proxy.address().port}`
   const client = new Client(serverUrl)
   const parsedOrigin = new URL(serverUrl)
-  const dispatcher = client.compose(dispatcher => new Proxy(dispatcher, proxyUrl))
+  const dispatcher = client.compose(proxyInterceptor(proxyUrl))
 
   proxy.authenticate = function (req, fn) {
     t.ok(true, 'authentication should be called')
@@ -326,7 +318,7 @@ test('use proxy-agent with auth', async t => {
   const client = new Client(serverUrl)
   const parsedOrigin = new URL(serverUrl)
   const dispatcher = client.compose(
-    dispatcher => new Proxy(dispatcher, {
+    proxyInterceptor({
       auth: Buffer.from('user:pass').toString('base64'),
       uri: proxyUrl
     })
@@ -384,7 +376,7 @@ test('use proxy-agent with token', async t => {
   const client = new Client(serverUrl)
   const parsedOrigin = new URL(serverUrl)
   const dispatcher = client.compose(
-    dispatcher => new Proxy(dispatcher, {
+    proxyInterceptor({
       token: `Bearer ${Buffer.from('user:pass').toString('base64')}`,
       uri: proxyUrl
     })
@@ -441,7 +433,7 @@ test('use proxy-agent with custom headers', async t => {
   const proxyUrl = `http://user:pass@localhost:${proxy.address().port}`
   const client = new Client(serverUrl)
   const dispatcher = client.compose(
-    dispatcher => new Proxy(dispatcher, {
+    proxyInterceptor({
       uri: proxyUrl,
       headers: {
         'User-Agent': 'Foobar/1.0.0'
@@ -479,7 +471,7 @@ test('sending proxy-authorization in request headers should throw', async t => {
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const client = new Client(serverUrl)
   const dispatcher = client.compose(
-    dispatcher => new Proxy(dispatcher, {
+    proxyInterceptor({
       uri: proxyUrl
     })
   )
@@ -541,7 +533,7 @@ test('use proxy-agent with setGlobalDispatcher', async t => {
   const parsedOrigin = new URL(serverUrl)
   const defaultDispatcher = getGlobalDispatcher()
 
-  setGlobalDispatcher(defaultDispatcher.compose(dispatcher => new Proxy(dispatcher, proxyUrl)))
+  setGlobalDispatcher(defaultDispatcher.compose(proxyInterceptor(proxyUrl)))
   after(() => setGlobalDispatcher(defaultDispatcher))
 
   proxy.on('connect', () => {
@@ -587,7 +579,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  setGlobalDispatcher(defaultDispatcher.compose(dispatcher => new Proxy(dispatcher, proxyUrl)))
+  setGlobalDispatcher(defaultDispatcher.compose(proxyInterceptor(proxyUrl)))
 
   after(() => setGlobalDispatcher(defaultDispatcher))
 
@@ -638,7 +630,7 @@ test('should throw when proxy does not return 200', async t => {
     return false
   }
 
-  const client = new Client(serverUrl).compose(dispatcher => new Proxy(dispatcher, proxyUrl))
+  const client = new Client(serverUrl).compose(proxyInterceptor(proxyUrl))
   try {
     await client.request({ path: '/', method: 'GET' })
     t.fail()
@@ -664,7 +656,7 @@ test('pass ProxyAgent proxy status code error when using fetch - #2161', async t
     return false
   }
 
-  const client = new Client(serverUrl).compose(dispatcher => new Proxy(dispatcher, proxyUrl))
+  const client = new Client(serverUrl).compose(proxyInterceptor(proxyUrl))
   try {
     await fetch(serverUrl, { dispatcher: client })
     t.fail()
@@ -686,7 +678,7 @@ test('Proxy via HTTP to HTTPS endpoint', async t => {
   const serverUrl = `https://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const client = new Client(serverUrl).compose(
-    dispatcher => new Proxy(dispatcher, {
+    proxyInterceptor({
       uri: proxyUrl,
       requestTls: {
         ca: [
@@ -750,7 +742,7 @@ test('Proxy via HTTPS to HTTPS endpoint', async t => {
   const serverUrl = `https://localhost:${server.address().port}`
   const proxyUrl = `https://localhost:${proxy.address().port}`
   const proxyAgent = new Client(serverUrl).compose(
-    dispatcher => new Proxy(dispatcher, {
+    proxyInterceptor({
       uri: proxyUrl,
       proxyTls: {
         ca: [
@@ -825,7 +817,7 @@ test('Proxy via HTTPS to HTTP endpoint', async t => {
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `https://localhost:${proxy.address().port}`
   const proxyAgent = new Client(serverUrl).compose(
-    dispatcher => new Proxy(dispatcher, {
+    proxyInterceptor({
       uri: proxyUrl,
       proxyTls: {
         ca: [
@@ -881,7 +873,7 @@ test('Proxy via HTTP to HTTP endpoint', async t => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new Client(serverUrl).compose(dispatcher => new Proxy(dispatcher, proxyUrl))
+  const proxyAgent = new Client(serverUrl).compose(proxyInterceptor(proxyUrl))
 
   server.on('request', function (req, res) {
     t.ok(!req.connection.encrypted)
