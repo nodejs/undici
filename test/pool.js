@@ -11,7 +11,6 @@ const {
   Readable
 } = require('node:stream')
 const { promisify } = require('node:util')
-const proxyquire = require('proxyquire')
 const {
   kBusy,
   kPending,
@@ -366,17 +365,15 @@ test('backpressure algorithm', async (t) => {
     }
   }
 
-  const Pool = proxyquire('../lib/dispatcher/pool', {
-    './client': FakeClient
-  })
-
   const noopHandler = {
     onError (err) {
       throw err
     }
   }
 
-  const pool = new Pool('http://notahost')
+  const pool = new Pool('http://notahost', {
+    factory: () => new FakeClient()
+  })
 
   pool.dispatch({}, noopHandler)
   pool.dispatch({}, noopHandler)
