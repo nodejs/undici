@@ -808,5 +808,3 @@ test('the dispatcher is truly global', t => {
   const undiciFresh = importFresh('../../index.js')
   assert.strictEqual(agent, undiciFresh.getGlobalDispatcher())
 })
-
-after(() => process.exit())
