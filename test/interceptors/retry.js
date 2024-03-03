@@ -5,8 +5,7 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 
-const { RetryHandler, Client, interceptors } = require('../..')
-const { RequestHandler } = require('../../lib/api/api-request')
+const { Client, interceptors } = require('../..')
 const { retry } = interceptors
 
 test('Should retry status code', async t => {
