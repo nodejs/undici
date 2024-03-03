@@ -15,7 +15,6 @@ const {
   setGlobalDispatcher,
   getGlobalDispatcher
 } = require('../..')
-const importFresh = require('import-fresh')
 const { tspl } = require('@matteo.collina/tspl')
 const { closeServerAsPromise } = require('../utils/node-http')
 
@@ -805,6 +804,10 @@ test('connect is not valid', t => {
 
 test('the dispatcher is truly global', t => {
   const agent = getGlobalDispatcher()
-  const undiciFresh = importFresh('../../index.js')
+  assert.ok(require.resolve('../../index.js') in require.cache)
+  delete require.cache[require.resolve('../../index.js')]
+  assert.strictEqual(require.resolve('../../index.js') in require.cache, false)
+  const undiciFresh = require('../../index.js')
+  assert.ok(require.resolve('../../index.js') in require.cache)
   assert.strictEqual(agent, undiciFresh.getGlobalDispatcher())
 })
