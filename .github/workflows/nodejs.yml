@@ -98,6 +98,7 @@ jobs:
           NODE_V8_COVERAGE: ./coverage/tmp
 
       - name: Coverage Report
+        if: matrix.runs-on == 'ubuntu-latest'  && matrix.node-version == 20
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
