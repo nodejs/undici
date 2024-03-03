@@ -694,7 +694,7 @@ test('Headers.prototype.getSetCookie', async (t) => {
   })
 
   // https://github.com/nodejs/undici/issues/1935
-  await t.test('When Headers are cloned, so are the cookies', async (t) => {
+  await t.test('When Headers are cloned, so are the cookies (single entry)', async (t) => {
     const server = createServer((req, res) => {
       res.setHeader('Set-Cookie', 'test=onetwo')
       res.end('Hello World!')
@@ -707,6 +707,22 @@ test('Headers.prototype.getSetCookie', async (t) => {
     const entries = Object.fromEntries(res.headers.entries())
 
     assert.deepStrictEqual(res.headers.getSetCookie(), ['test=onetwo'])
+    assert.ok('set-cookie' in entries)
+  })
+
+  await t.test('When Headers are cloned, so are the cookies (multiple entries)', async (t) => {
+    const server = createServer((req, res) => {
+      res.setHeader('Set-Cookie', ['test=onetwo', 'test=onetwothree'])
+      res.end('Hello World!')
+    }).listen(0)
+
+    await once(server, 'listening')
+    t.after(closeServerAsPromise(server))
+
+    const res = await fetch(`http://localhost:${server.address().port}`)
+    const entries = Object.fromEntries(res.headers.entries())
+
+    assert.deepStrictEqual(res.headers.getSetCookie(), ['test=onetwo', 'test=onetwothree'])
     assert.ok('set-cookie' in entries)
   })
 })

@@ -2,7 +2,7 @@
 
 'use strict'
 
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('node:http')
@@ -700,5 +700,3 @@ test('Receiving non-Latin1 headers', async (t) => {
   assert.deepStrictEqual(cdHeaders, ContentDisposition)
   assert.deepStrictEqual(lengths, [30, 34, 94, 104, 90])
 })
-
-after(() => process.exit())
