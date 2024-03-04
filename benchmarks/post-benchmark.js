@@ -245,7 +245,7 @@ const experiments = {
           }
         }),
         (err) => {
-          if (err !== null) {
+          if (err != null) {
             console.log(err)
           }
           resolve()
