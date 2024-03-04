@@ -234,7 +234,7 @@ const experiments = {
         .pipeline(undiciOptions, data => {
           return data.body
         })
-        .end()
+        .end(data)
         .pipe(
           new Writable({
             write (chunk, encoding, callback) {
