@@ -2,7 +2,7 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
-const Readable = require('../lib/api/readable')
+const { Readable } = require('../lib/api/readable')
 
 test('avoid body reordering', async function (t) {
   t = tspl(t, { plan: 1 })
