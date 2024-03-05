@@ -39,12 +39,25 @@ const expected = [
 
   for (const [name, value] of fd) {
     if (typeof value === 'string') { // field
-      results.push({ type: 'field', name, val: value })
+      results.push({
+        type: 'field',
+        name,
+        val: value,
+        info: {
+          encoding: '7bit',
+          mimeType: 'text/plain'
+        }
+      })
     } else { // File
       results.push({
         type: 'file',
         name,
-        data: Buffer.from(await value.arrayBuffer())
+        data: Buffer.from(await value.arrayBuffer()),
+        info: {
+          filename: value.name,
+          encoding: '7bit',
+          mimeType: value.type
+        }
       })
     }
   }
