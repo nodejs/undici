@@ -27,6 +27,8 @@
   * [Util](/docs/api/Util.md "Undici API - Util")
   * [RedirectHandler](/docs/api/RedirectHandler.md "Undici API - RedirectHandler")
   * [RetryHandler](/docs/api/RetryHandler.md "Undici API - RetryHandler")
+* Examples
+  * [Undici Examples](/examples/ "Undici Examples")
 * Best Practices
   * [Proxy](/docs/best-practices/proxy.md "Connecting through a proxy")
   * [Client Certificate](/docs/best-practices/client-certificate.md "Connect using a client certificate")

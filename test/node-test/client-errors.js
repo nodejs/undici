@@ -1056,7 +1056,7 @@ test('retry idempotent inflight', async (t) => {
 })
 
 test('invalid opts', async (t) => {
-  const p = tspl(t, { plan: 2 })
+  const p = tspl(t, { plan: 5 })
 
   const client = new Client('http://localhost:5000')
   client.request(null, (err) => {
@@ -1064,6 +1064,22 @@ test('invalid opts', async (t) => {
   })
   client.pipeline(null).on('error', (err) => {
     p.ok(err instanceof errors.InvalidArgumentError)
+  })
+  client.request({
+    path: '/',
+    method: 'GET',
+    highWaterMark: '1000'
+  }, (err) => {
+    p.ok(err instanceof errors.InvalidArgumentError)
+    p.strictEqual(err.message, 'invalid highWaterMark')
+  })
+  client.request({
+    path: '/',
+    method: 'GET',
+    highWaterMark: -1
+  }, (err) => {
+    p.ok(err instanceof errors.InvalidArgumentError)
+    p.strictEqual(err.message, 'invalid highWaterMark')
   })
 
   await p.completed
