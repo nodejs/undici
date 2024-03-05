@@ -17,6 +17,8 @@ Returns: `ProxyAgent`
 Extends: [`AgentOptions`](Agent.md#parameter-agentoptions)
 
 * **uri** `string | URL` (required) - The URI of the proxy server.  This can be provided as a string, as an instance of the URL class, or as an object with a `uri` property of type string.
+If the `uri` is provided as a string or `uri` is an object with an `uri` property of type string, then it will be parsed into a `URL` object according to the [WHATWG URL Specification](https://url.spec.whatwg.org).
+For detailed information on the parsing process and potential validation errors, please refer to the ["Writing" section](https://url.spec.whatwg.org/#writing) of the WHATWG URL Specification.
 * **token** `string` (optional) - It can be passed by a string of token for authentication.
 * **auth** `string` (**deprecated**) - Use token.
 * **clientFactory** `(origin: URL, opts: Object) => Dispatcher` (optional) - Default: `(origin, opts) => new Pool(origin, opts)`
