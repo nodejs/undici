@@ -39,8 +39,6 @@ const tests = [
         name: 'file_name_0',
         val: 'super alpha file',
         info: {
-          nameTruncated: false,
-          valueTruncated: false,
           encoding: '7bit',
           mimeType: 'text/plain'
         }
@@ -50,8 +48,6 @@ const tests = [
         name: 'file_name_1',
         val: 'super beta file',
         info: {
-          nameTruncated: false,
-          valueTruncated: false,
           encoding: '7bit',
           mimeType: 'text/plain'
         }
@@ -103,8 +99,6 @@ const tests = [
         name: 'cont',
         val: 'some random content',
         info: {
-          nameTruncated: false,
-          valueTruncated: false,
           encoding: '7bit',
           mimeType: 'text/plain'
         }
@@ -114,8 +108,6 @@ const tests = [
         name: 'pass',
         val: 'some random pass',
         info: {
-          nameTruncated: false,
-          valueTruncated: false,
           encoding: '7bit',
           mimeType: 'text/plain'
         }
@@ -125,8 +117,6 @@ const tests = [
         name: 'bit',
         val: '2',
         info: {
-          nameTruncated: false,
-          valueTruncated: false,
           encoding: '7bit',
           mimeType: 'text/plain'
         }
@@ -281,8 +271,6 @@ const tests = [
         name: 'cont',
         val: 'some random content',
         info: {
-          nameTruncated: false,
-          valueTruncated: false,
           encoding: '7bit',
           mimeType: 'text/plain'
         }
@@ -350,8 +338,6 @@ const tests = [
         name: 'cont',
         val: '{}',
         info: {
-          nameTruncated: false,
-          valueTruncated: false,
           encoding: '7bit',
           mimeType: 'application/json'
         }
@@ -632,14 +618,32 @@ const tests = [
       results.push({ error: e.message })
     }
 
+    if (!fd[Symbol.iterator]) {
+      // TODO:
+      continue
+    }
+
     for (const [name, value] of fd) {
       if (typeof value === 'string') { // field
-        results.push({ type: 'field', name, val: value })
+        results.push({
+          type: 'field',
+          name,
+          val: value,
+          info: {
+            encoding: '7bit',
+            mimeType: 'text/plain'
+          }
+        })
       } else { // File
         results.push({
           type: 'file',
           name,
-          data: Buffer.from(await value.arrayBuffer())
+          data: Buffer.from(await value.arrayBuffer()),
+          info: {
+            filename: value.name,
+            encoding: '7bit',
+            mimeType: value.type
+          }
         })
       }
     }
