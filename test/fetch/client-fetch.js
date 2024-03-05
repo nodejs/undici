@@ -2,7 +2,7 @@
 
 'use strict'
 
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('node:http')
@@ -213,7 +213,16 @@ test('multipart formdata base64', (t, done) => {
 
   // Example form data with base64 encoding
   const data = randomFillSync(Buffer.alloc(256))
-  const formRaw = `------formdata-undici-0.5786922755719377\r\nContent-Disposition: form-data; name="file"; filename="test.txt"\r\nContent-Type: application/octet-stream\r\nContent-Transfer-Encoding: base64\r\n\r\n${data.toString('base64')}\r\n------formdata-undici-0.5786922755719377--`
+  const formRaw =
+    '------formdata-undici-0.5786922755719377\r\n' +
+    'Content-Disposition: form-data; name="file"; filename="test.txt"\r\n' +
+    'Content-Type: application/octet-stream\r\n' +
+    'Content-Transfer-Encoding: base64\r\n' +
+    '\r\n' +
+    data.toString('base64') +
+    '\r\n' +
+    '------formdata-undici-0.5786922755719377--'
+
   const server = createServer(async (req, res) => {
     res.setHeader('content-type', 'multipart/form-data; boundary=----formdata-undici-0.5786922755719377')
 
@@ -700,5 +709,3 @@ test('Receiving non-Latin1 headers', async (t) => {
   assert.deepStrictEqual(cdHeaders, ContentDisposition)
   assert.deepStrictEqual(lengths, [30, 34, 94, 104, 90])
 })
-
-after(() => process.exit())

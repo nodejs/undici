@@ -19,7 +19,7 @@ const headers = new Headers(
     'Width',
     'Accept-CH',
     'Via',
-    'Refresh',
+    'Set-Cookie',
     'Server',
     'Sec-Fetch-Dest',
     'Sec-CH-UA-Model',

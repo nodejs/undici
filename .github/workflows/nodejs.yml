@@ -9,8 +9,49 @@ on:
      - 'v*'
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
+  dependency-review:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@9129d7d40b8c12c1ed0f60400d00c92d437adcce # v4.1.3
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false          
+
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: lts/*
+      
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
   test:
+    name: Test with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -25,16 +66,14 @@ jobs:
           - windows-latest
     
     runs-on: ${{ matrix.runs-on }}
-
     steps:
-
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           persist-credentials: false          
 
       - name: Setup Node.js@${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: ${{ matrix.node-version }}
       
@@ -59,19 +98,47 @@ jobs:
           NODE_V8_COVERAGE: ./coverage/tmp
 
       - name: Coverage Report
+        if: matrix.runs-on == 'ubuntu-latest' && matrix.node-version == 20
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  test-types:
+    name: Test TypeScript types
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false          
+
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: lts/*
+      
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run typings tests
+        run: npm run test:typescript
+
   automerge:
     if: >
       github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
-    needs: test
+    needs:
+      - dependency-review
+      - test
+      - test-types
+      - lint
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
       contents: write
+      pull-requests: write
+      actions: write
     steps:
-    - uses: fastify/github-action-merge-dependabot@9e7bfb249c69139d7bdcd8d984f9665edd49020b # v3.10.1
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Merge Dependabot PR
+        uses: fastify/github-action-merge-dependabot@9e7bfb249c69139d7bdcd8d984f9665edd49020b # v3.10.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

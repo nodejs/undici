@@ -408,12 +408,6 @@
           "Read form data response's body as readableStream with mode=byob"
         ]
       },
-      "response-error-from-stream.any.js": {
-        "fail": [
-          "ReadableStream start() Error propagates to Response.formData() Promise",
-          "ReadableStream pull() Error propagates to Response.formData() Promise"
-        ]
-      },
       "response-stream-with-broken-then.any.js": {
         "note": "this is a bug in webstreams, see https://github.com/nodejs/node/issues/46786",
         "skip": true
