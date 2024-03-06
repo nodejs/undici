@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
-const { FormData, File, Response } = require('../../')
+const { FormData, File, Response, Request } = require('../../')
 const { Blob: ThirdPartyBlob } = require('formdata-node')
 const { Blob } = require('node:buffer')
 const { isFormDataLike } = require('../../lib/core/util')
@@ -370,4 +370,21 @@ test('FormData returned from bodyMixin.formData is not a clone', async () => {
 
   assert.strictEqual(fd2.get('foo'), 'baz')
   assert.strictEqual(fd.get('foo'), 'foo')
+})
+
+test('.formData() with multipart/form-data body that ends with --\r\n', async (t) => {
+  const request = new Request('http://localhost', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'multipart/form-data; boundary=----formdata-undici-0.6204674738279623'
+    },
+    body:
+      '------formdata-undici-0.6204674738279623\r\n' +
+      'Content-Disposition: form-data; name="fiŝo"\r\n' +
+      '\r\n' +
+      'value1\r\n' +
+      '------formdata-undici-0.6204674738279623--\r\n'
+  })
+
+  await request.formData()
 })

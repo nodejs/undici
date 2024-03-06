@@ -3,9 +3,8 @@
 const http = require('node:http')
 const os = require('node:os')
 const path = require('node:path')
-const { Writable } = require('node:stream')
+const { Writable, Readable, pipeline } = require('node:stream')
 const { isMainThread } = require('node:worker_threads')
-
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
 let nodeFetch
@@ -230,19 +229,28 @@ const experiments = {
   },
   'undici - pipeline' () {
     return makeParallelRequests(resolve => {
-      dispatcher
-        .pipeline(undiciOptions, data => {
+      pipeline(
+        new Readable({
+          read () {
+            this.push(data)
+            this.push(null)
+          }
+        }),
+        dispatcher.pipeline(undiciOptions, data => {
           return data.body
-        })
-        .end()
-        .pipe(
-          new Writable({
-            write (chunk, encoding, callback) {
-              callback()
-            }
-          })
-        )
-        .on('finish', resolve)
+        }),
+        new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        }),
+        (err) => {
+          if (err != null) {
+            console.log(err)
+          }
+          resolve()
+        }
+      )
     })
   },
   'undici - request' () {
@@ -357,7 +365,7 @@ if (process.env.PORT) {
     method: 'POST',
     headers,
     agent: requestAgent,
-    data
+    body: data
   }
   experiments.request = () => {
     return makeParallelRequests(resolve => {
