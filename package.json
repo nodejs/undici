@@ -72,7 +72,7 @@
     "test:cookies": "borp -p \"test/cookie/*.js\"",
     "test:node-fetch": "borp -p \"test/node-fetch/**/*.js\"",
     "test:eventsource": "npm run build:node && borp --expose-gc -p \"test/eventsource/*.js\"",
-    "test:fetch": "npm run build:node && borp --expose-gc -p \"test/fetch/*.js\" && borp -p \"test/webidl/*.js\"",
+    "test:fetch": "npm run build:node && borp --expose-gc -p \"test/fetch/*.js\" && borp -p \"test/webidl/*.js\" && borp -p \"test/busboy/*.js\"",
     "test:jest": "cross-env NODE_V8_COVERAGE= jest",
     "test:unit": "borp --expose-gc -p \"test/*.js\"",
     "test:node-test": "borp -p \"test/node-test/**/*.js\"",

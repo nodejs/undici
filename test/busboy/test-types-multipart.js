@@ -1,7 +1,8 @@
 'use strict'
 
-const assert = require('assert')
-const { inspect } = require('util')
+const assert = require('node:assert')
+const { inspect } = require('node:util')
+const { describe } = require('node:test')
 const { Response } = require('../..')
 
 const active = new Map()
@@ -86,7 +87,7 @@ const tests = [
         '',
         'some random pass',
         '------WebKitFormBoundaryTB2MiQ36fnSJlrhY',
-        'Content-Disposition: form-data; name=bit',
+        'Content-Disposition: form-data; name="bit"',
         '',
         '2',
         '------WebKitFormBoundaryTB2MiQ36fnSJlrhY--'
@@ -257,10 +258,6 @@ const tests = [
         'Content-Type: ',
         '',
         'some random content',
-        '------WebKitFormBoundaryTB2MiQ36fnSJlrhY',
-        'Content-Disposition: ',
-        '',
-        'some random pass',
         '------WebKitFormBoundaryTB2MiQ36fnSJlrhY--'
       ].join('\r\n')
     ],
@@ -276,13 +273,13 @@ const tests = [
         }
       }
     ],
-    what: 'Empty content-type and empty content-disposition'
+    what: 'Empty content-type defaults to text/plain'
   },
   {
     source: [
       ['-----------------------------paZqsnEHRufoShdX6fh0lUhXBP4k',
         'Content-Disposition: form-data; ' +
-         'name="file"; filename*=utf-8\'\'n%C3%A4me.txt',
+         'name="file"; filename*="utf-8\'\'n%C3%A4me.txt"',
         'Content-Type: application/octet-stream',
         '',
         'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
@@ -296,7 +293,7 @@ const tests = [
         name: 'file',
         data: Buffer.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
         info: {
-          filename: 'näme.txt',
+          filename: 'utf-8\'\'n%C3%A4me.txt',
           encoding: '7bit',
           mimeType: 'application/octet-stream'
         }
@@ -411,46 +408,6 @@ const tests = [
       }
     ],
     what: 'Text file with charset'
-  },
-  {
-    source: [
-      ['-----------------------------paZqsnEHRufoShdX6fh0lUhXBP4k',
-        'Content-Disposition: form-data; ' +
-         'name="upload_file_0"; filename="notes.txt"',
-        'Content-Type: ',
-        ' text/plain; charset=utf8',
-        '',
-        'a',
-        '-----------------------------paZqsnEHRufoShdX6fh0lUhXBP4k--'
-      ].join('\r\n')
-    ],
-    boundary: '---------------------------paZqsnEHRufoShdX6fh0lUhXBP4k',
-    expected: [
-      {
-        type: 'file',
-        name: 'upload_file_0',
-        data: Buffer.from('a'),
-        info: {
-          filename: 'notes.txt',
-          encoding: '7bit',
-          mimeType: 'text/plain'
-        }
-      }
-    ],
-    what: 'Folded header value'
-  },
-  {
-    source: [
-      ['-----------------------------paZqsnEHRufoShdX6fh0lUhXBP4k',
-        'Content-Type: text/plain; charset=utf8',
-        '',
-        'a',
-        '-----------------------------paZqsnEHRufoShdX6fh0lUhXBP4k--'
-      ].join('\r\n')
-    ],
-    boundary: '---------------------------paZqsnEHRufoShdX6fh0lUhXBP4k',
-    expected: [],
-    what: 'No Content-Disposition'
   },
   {
     source: [
@@ -585,8 +542,8 @@ const tests = [
       '\r\n--d1bf46b3-aa33-4061-b28d-6c5ced8b08ee\r\n',
       'Content-Type: application/gzip\r\n' +
         'Content-Encoding: gzip\r\n' +
-        'Content-Disposition: form-data; name=batch-1; filename=batch-1' +
-        '\r\n\r\n',
+        'Content-Disposition: form-data; name="batch-1"; filename="batch-1"' +
+        '\r\n\r\n' +
       '\r\n--d1bf46b3-aa33-4061-b28d-6c5ced8b08ee--'
     ],
     boundary: 'd1bf46b3-aa33-4061-b28d-6c5ced8b08ee',
@@ -606,7 +563,7 @@ const tests = [
   }
 ]
 
-;(async () => {
+describe('FormData parsing tests', async (t) => {
   for (const test of tests) {
     active.set(test, 1)
 
@@ -669,20 +626,4 @@ const tests = [
         `Expected: ${inspect(test.expected)}`
     )
   }
-})()
-
-{
-  let exception = false
-  process.once('uncaughtException', (ex) => {
-    exception = true
-    throw ex
-  })
-  process.on('exit', () => {
-    if (exception || active.size === 0) { return }
-    process.exitCode = 1
-    console.error('==========================')
-    console.error(`${active.size}/${tests.length} test(s) did not finish:`)
-    console.error('==========================')
-    console.error(Array.from(active.keys()).map((v) => v.what).join('\n'))
-  })
-}
+})

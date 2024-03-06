@@ -1,7 +1,8 @@
 'use strict'
 
-const assert = require('assert')
-const { inspect } = require('util')
+const assert = require('node:assert')
+const { inspect } = require('node:util')
+const { test } = require('node:test')
 const { Response } = require('../..')
 
 const input = Buffer.from([
@@ -27,7 +28,7 @@ const expected = [
   }
 ]
 
-;(async () => {
+test('unicode filename', async (t) => {
   const response = new Response(input, {
     headers: {
       'content-type': `multipart/form-data; boundary=${boundary}`
@@ -69,4 +70,4 @@ const expected = [
       `Parsed: ${inspect(results)}\n` +
       `Expected: ${inspect(expected)}`
   )
-})()
+})
