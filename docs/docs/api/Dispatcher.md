@@ -843,7 +843,7 @@ const { Client, RedirectHandler } = require('undici')
 
 const redirectInterceptor = dispatch => {
     return (opts, handler) => {
-      const { maxRedirections = globalMaxRedirections } = opts
+      const { maxRedirections } = opts
 
       if (!maxRedirections) {
         return dispatch(opts, handler)
@@ -873,7 +873,7 @@ const { Client, RedirectHandler, RetryHandler } = require('undici')
 
 const redirectInterceptor = dispatch => {
     return (opts, handler) => {
-      const { maxRedirections = globalMaxRedirections } = opts
+      const { maxRedirections } = opts
 
       if (!maxRedirections) {
         return dispatch(opts, handler)
@@ -892,8 +892,6 @@ const redirectInterceptor = dispatch => {
 
 const retryInterceptor = dispatch => {
   return function retryInterceptor (opts, handler) {
-    opts.retryOptions = { ...globalOpts, ...opts.retryOptions }
-
     return dispatch(
       opts,
       new RetryHandler(opts, {
