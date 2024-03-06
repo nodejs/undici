@@ -49,12 +49,11 @@ test('should accept string, URL and object as options', t => {
 test('should work with nested dispatch', async t => {
   t = tspl(t, { plan: 7 })
   let counter = 0
-  const customDispatch = dispatcher => {
-    const binded = dispatcher.dispatch.bind(dispatcher)
+  const customDispatch = dispatch => {
     return (opts, handler) => {
       counter++
 
-      return binded(opts, handler)
+      return dispatch(opts, handler)
     }
   }
   const server = await buildServer()
