@@ -5,22 +5,23 @@ const os = require('node:os')
 const path = require('node:path')
 const { Writable, Readable, pipeline } = require('node:stream')
 const { isMainThread } = require('node:worker_threads')
+
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
+
+const { makeParallelRequests, printResults } = require('./_util')
 
 let nodeFetch
 const axios = require('axios')
 let superagent
 let got
 
-const util = require('node:util')
-const _request = require('request')
-const request = util.promisify(_request)
+const { promisify } = require('node:util')
+const request = promisify(require('request'))
 
 const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
 const errorThreshold = parseInt(process.env.ERROR_THRESHOLD, 10) || 3
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
-const parallelRequests = parseInt(process.env.PARALLEL, 10) || 100
 const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
 const bodyTimeout = parseInt(process.env.BODY_TIMEOUT, 10) || 0
 const dest = {}
@@ -147,53 +148,6 @@ class SimpleRequest {
   }
 }
 
-function makeParallelRequests (cb) {
-  const promises = new Array(parallelRequests)
-  for (let i = 0; i < parallelRequests; ++i) {
-    promises[i] = new Promise(cb)
-  }
-  return Promise.all(promises)
-}
-
-function printResults (results) {
-  // Sort results by least performant first, then compare relative performances and also printing padding
-  let last
-
-  const rows = Object.entries(results)
-    // If any failed, put on the top of the list, otherwise order by mean, ascending
-    .sort((a, b) => (!a[1].success ? -1 : b[1].mean - a[1].mean))
-    .map(([name, result]) => {
-      if (!result.success) {
-        return {
-          Tests: name,
-          Samples: result.size,
-          Result: 'Errored',
-          Tolerance: 'N/A',
-          'Difference with Slowest': 'N/A'
-        }
-      }
-
-      // Calculate throughput and relative performance
-      const { size, mean, standardError } = result
-      const relative = last !== 0 ? (last / mean - 1) * 100 : 0
-
-      // Save the slowest for relative comparison
-      if (typeof last === 'undefined') {
-        last = mean
-      }
-
-      return {
-        Tests: name,
-        Samples: size,
-        Result: `${((parallelRequests * 1e9) / mean).toFixed(2)} req/sec`,
-        Tolerance: `± ${((standardError / mean) * 100).toFixed(2)} %`,
-        'Difference with slowest': relative > 0 ? `+ ${relative.toFixed(2)} %` : '-'
-      }
-    })
-
-  return console.table(rows)
-}
-
 const experiments = {
   'http - no keepalive' () {
     return makeParallelRequests(resolve => {
@@ -236,8 +190,8 @@ const experiments = {
             this.push(null)
           }
         }),
-        dispatcher.pipeline(undiciOptions, data => {
-          return data.body
+        dispatcher.pipeline(undiciOptions, ({ body }) => {
+          return body
         }),
         new Writable({
           write (chunk, encoding, callback) {
@@ -341,22 +295,23 @@ if (process.env.PORT) {
   }
 
   const gotOptions = {
+    url: dest.url,
     method: 'POST',
     headers,
     agent: {
       http: gotAgent
     },
+    // avoid body processing
+    isStream: true,
     body: data
   }
   experiments.got = () => {
     return makeParallelRequests(resolve => {
-      got(dest.url, gotOptions).then(res => {
-        res.pipe(new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
-        })).on('finish', resolve)
-      }).catch(console.log)
+      got(gotOptions).pipe(new Writable({
+        write (chunk, encoding, callback) {
+          callback()
+        }
+      })).on('finish', resolve)
     })
   }
 
@@ -365,16 +320,15 @@ if (process.env.PORT) {
     method: 'POST',
     headers,
     agent: requestAgent,
-    body: data
+    body: data,
+    // avoid body toString
+    encoding: null
   }
   experiments.request = () => {
     return makeParallelRequests(resolve => {
-      request(requestOptions).then(res => {
-        res.pipe(new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
-        })).on('finish', resolve)
+      request(requestOptions).then(() => {
+        // already body consumed
+        resolve()
       }).catch(console.log)
     })
   }
