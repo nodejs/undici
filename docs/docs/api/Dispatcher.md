@@ -822,9 +822,9 @@ try {
 Compose a new dispatcher from the current dispatcher and the given interceptors.
 
 > _Notes_:
-> - The order of the interceptors is important. The first interceptor will be the first to be called.
-> - It is important to note that the `interceptor` function should return a `Dispatcher` instance.
-> - Any fork of the chain of `interceptors` can lead to unexpected results, it is important that an interceptor returns a `Dispatcher` instance that forwards the request to the next interceptor in the chain.
+> - The order of the interceptors matters. The first interceptor will be the first to be called.
+> - It is important to note that the `interceptor` function should return a function that follows the `Dispatcher.dispatch` signature.
+> - Any fork of the chain of `interceptors` can lead to unexpected results.
 
 Arguments:
 
