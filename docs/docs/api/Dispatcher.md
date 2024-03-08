@@ -828,13 +828,13 @@ Compose a new dispatcher from the current dispatcher and the given interceptors.
 
 Arguments:
 
-* **interceptors** `Interceptor[interceptor[]]`: It is an array of `Interceptor` functions passed as only argument, or several interceptors passed as separate arguments. It can also support sevearl interceptors passed as positional arguments
+* **interceptors** `Interceptor[interceptor[]]`: It is an array of `Interceptor` functions passed as only argument, or several interceptors passed as separate arguments.
 
 Returns: `Dispatcher`.
 
 #### Parameter: `Interceptor`
 
-A function that takes a `dispatch` instance and returns a `dispatch`-like function.
+A function that takes a `dispatch` method and returns a `dispatch`-like function.
 
 #### Example 1 - Basic Compose
 
@@ -885,7 +885,7 @@ const redirectInterceptor = dispatch => {
         opts,
         handler
       )
-      opts = { ...opts, maxRedirections: 0 } // Stop sub dispatcher from also redirecting.
+      opts = { ...opts, maxRedirections: 0 }
       return dispatch(opts, redirectHandler)
     }
 }
