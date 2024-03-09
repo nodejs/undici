@@ -3,14 +3,97 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { request, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('..')
-const { InvalidArgumentError } = require('../lib/core/errors')
-const { readFileSync } = require('node:fs')
-const { join } = require('node:path')
+const { InvalidArgumentError, SecureProxyConnectionError } = require('../lib/core/errors')
 const ProxyAgent = require('../lib/dispatcher/proxy-agent')
 const Pool = require('../lib/dispatcher/pool')
 const { createServer } = require('node:http')
 const https = require('node:https')
 const { createProxy } = require('proxy')
+
+const certs = (() => {
+  const forge = require('node-forge')
+  const createCert = (cn, issuer, keyLength = 2048) => {
+    const keys = forge.pki.rsa.generateKeyPair(keyLength)
+    const cert = forge.pki.createCertificate()
+    cert.publicKey = keys.publicKey
+    cert.serialNumber = '' + Date.now()
+    cert.validity.notBefore = new Date()
+    cert.validity.notAfter = new Date()
+    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 10)
+
+    const attrs = [{
+      name: 'commonName',
+      value: cn
+    }]
+    cert.setSubject(attrs)
+    const isCa = issuer === undefined
+    cert.setExtensions([{
+      name: 'basicConstraints',
+      cA: isCa
+    }, {
+      name: 'keyUsage',
+      keyCertSign: true,
+      digitalSignature: true,
+      nonRepudiation: true,
+      keyEncipherment: true,
+      dataEncipherment: true
+    }, {
+      name: 'extKeyUsage',
+      serverAuth: true,
+      clientAuth: true,
+      codeSigning: true,
+      emailProtection: true,
+      timeStamping: true
+    }, {
+      name: 'nsCertType',
+      client: true,
+      server: true,
+      email: true,
+      objsign: true,
+      sslCA: isCa,
+      emailCA: isCa,
+      objCA: isCa
+    }])
+
+    const alg = forge.md.sha256.create()
+    if (issuer !== undefined) {
+      cert.setIssuer(issuer.certificate.subject.attributes)
+      cert.sign(issuer.privateKey, alg)
+    } else {
+      cert.setIssuer(attrs)
+      cert.sign(keys.privateKey, alg)
+    }
+    return {
+      privateKey: keys.privateKey,
+      publicKey: keys.publicKey,
+      certificate: cert
+    }
+  }
+
+  const root = createCert('CA')
+  const server = createCert('agent1', root)
+  const client = createCert('client', root)
+  const proxy = createCert('proxy', root)
+
+  return {
+    root: {
+      key: forge.pki.privateKeyToPem(root.privateKey),
+      crt: forge.pki.certificateToPem(root.certificate)
+    },
+    server: {
+      key: forge.pki.privateKeyToPem(server.privateKey),
+      crt: forge.pki.certificateToPem(server.certificate)
+    },
+    client: {
+      key: forge.pki.privateKeyToPem(client.privateKey),
+      crt: forge.pki.certificateToPem(client.certificate)
+    },
+    proxy: {
+      key: forge.pki.privateKeyToPem(proxy.privateKey),
+      crt: forge.pki.certificateToPem(proxy.certificate)
+    }
+  }
+})()
 
 test('should throw error when no uri is provided', (t) => {
   t = tspl(t, { plan: 2 })
@@ -527,10 +610,8 @@ test('Proxy via HTTP to HTTPS endpoint', async (t) => {
     uri: proxyUrl,
     requestTls: {
       ca: [
-        readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
+        certs.root.crt
       ],
-      key: readFileSync(join(__dirname, 'fixtures', 'client-key-2048.pem'), 'utf8'),
-      cert: readFileSync(join(__dirname, 'fixtures', 'client-crt-2048.pem'), 'utf8'),
       servername: 'agent1'
     }
   })
@@ -579,19 +660,14 @@ test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
     uri: proxyUrl,
     proxyTls: {
       ca: [
-        readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
+        certs.root.crt
       ],
-      key: readFileSync(join(__dirname, 'fixtures', 'client-key-2048.pem'), 'utf8'),
-      cert: readFileSync(join(__dirname, 'fixtures', 'client-crt-2048.pem'), 'utf8'),
-      servername: 'agent1',
-      rejectUnauthorized: false
+      servername: 'proxy'
     },
     requestTls: {
       ca: [
-        readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
+        certs.root.crt
       ],
-      key: readFileSync(join(__dirname, 'fixtures', 'client-key-2048.pem'), 'utf8'),
-      cert: readFileSync(join(__dirname, 'fixtures', 'client-crt-2048.pem'), 'utf8'),
       servername: 'agent1'
     }
   })
@@ -640,12 +716,9 @@ test('Proxy via HTTPS to HTTP endpoint', async (t) => {
     uri: proxyUrl,
     proxyTls: {
       ca: [
-        readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
+        certs.root.crt
       ],
-      key: readFileSync(join(__dirname, 'fixtures', 'client-key-2048.pem'), 'utf8'),
-      cert: readFileSync(join(__dirname, 'fixtures', 'client-crt-2048.pem'), 'utf8'),
-      servername: 'agent1',
-      rejectUnauthorized: false
+      servername: 'proxy'
     }
   })
 
@@ -720,6 +793,55 @@ test('Proxy via HTTP to HTTP endpoint', async (t) => {
   proxyAgent.close()
 })
 
+test('Proxy via HTTPS to HTTP fails on wrong SNI', async (t) => {
+  t = tspl(t, { plan: 2 })
+  const server = await buildServer()
+  const proxy = await buildSSLProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `https://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({
+    uri: proxyUrl,
+    proxyTls: {
+      ca: [
+        certs.root.crt
+      ]
+    }
+  })
+
+  server.on('request', function (req, res) {
+    t.ok(!req.connection.encrypted)
+    res.end(JSON.stringify(req.headers))
+  })
+
+  server.on('secureConnection', () => {
+    t.fail('server is http')
+  })
+
+  proxy.on('secureConnection', () => {
+    t.fail('proxy is http')
+  })
+
+  proxy.on('connect', () => {
+    t.ok(true, 'connect to proxy')
+  })
+
+  proxy.on('request', function () {
+    t.fail('proxy should never receive requests')
+  })
+
+  try {
+    await request(serverUrl, { dispatcher: proxyAgent })
+  } catch (e) {
+    t.ok(e instanceof SecureProxyConnectionError)
+    t.ok(e.cause.code === 'ERR_TLS_CERT_ALTNAME_INVALID')
+  }
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 function buildServer () {
   return new Promise((resolve) => {
     const server = createServer()
@@ -730,10 +852,10 @@ function buildServer () {
 function buildSSLServer () {
   const serverOptions = {
     ca: [
-      readFileSync(join(__dirname, 'fixtures', 'client-ca-crt.pem'), 'utf8')
+      certs.root.crt
     ],
-    key: readFileSync(join(__dirname, 'fixtures', 'key.pem'), 'utf8'),
-    cert: readFileSync(join(__dirname, 'fixtures', 'cert.pem'), 'utf8')
+    key: certs.server.key,
+    cert: certs.server.crt
   }
   return new Promise((resolve) => {
     const server = https.createServer(serverOptions)
@@ -753,10 +875,10 @@ function buildProxy (listener) {
 function buildSSLProxy () {
   const serverOptions = {
     ca: [
-      readFileSync(join(__dirname, 'fixtures', 'client-ca-crt.pem'), 'utf8')
+      certs.root.crt
     ],
-    key: readFileSync(join(__dirname, 'fixtures', 'key.pem'), 'utf8'),
-    cert: readFileSync(join(__dirname, 'fixtures', 'cert.pem'), 'utf8')
+    key: certs.proxy.key,
+    cert: certs.proxy.crt
   }
 
   return new Promise((resolve) => {
