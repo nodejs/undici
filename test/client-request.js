@@ -22,7 +22,6 @@ test('request dump big', async (t) => {
     while (res.write('asd')) {
       // Do nothing...
     }
-    res.on('drain', () => t.fail())
   })
   after(() => server.close())
 
@@ -39,6 +38,7 @@ test('request dump big', async (t) => {
       method: 'GET'
     }, (err, { body }) => {
       t.ifError(err)
+      body.on('data', () => t.fail())
       body.dump().then(() => {
         dumped = true
         t.ok(true, 'pass')
