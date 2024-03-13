@@ -1,6 +1,7 @@
 'use strict'
 
 const { FormData } = require('../../')
+const { inspect } = require('node:util')
 const { test } = require('node:test')
 const assert = require('node:assert')
 
@@ -11,5 +12,5 @@ test('FormData class custom inspection', () => {
 
   const expectedOutput = 'FormData:\nusername: john_doe\nemail: john@example.com\n'
 
-  assert.strictEqual(formData, expectedOutput)
+  assert.deepStrictEqual(inspect(formData), expectedOutput)
 })
