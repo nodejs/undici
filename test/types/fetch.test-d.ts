@@ -31,6 +31,7 @@ const requestInit2: RequestInit = {
 const requestInit3: RequestInit = {}
 // Test assignment. See https://github.com/whatwg/fetch/issues/1445
 requestInit3.credentials = 'include'
+const requestInit4: RequestInit = { body: null }
 
 declare const request: Request
 declare const headers: Headers
