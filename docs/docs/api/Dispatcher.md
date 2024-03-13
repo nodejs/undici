@@ -911,25 +911,6 @@ await client.request({ path: '/', method: 'GET' })
 
 #### Pre-built interceptors
 
-##### `proxy`
-
-The `proxy` interceptor allows you to connect to a proxy server before connecting to the origin server.
-
-It accepts the same arguments as the [`ProxyAgent` constructor](./ProxyAgent.md).
-
-**Example - Basic Proxy Interceptor**
-
-```js
-const { Client, interceptors } = require("undici");
-const { proxy } = interceptors;
-
-const client = new Client("http://example.com").compose(
-  proxy("http://proxy.com")
-);
-
-client.request({ path: "/" });
-```
-
 ##### `redirect`
 
 The `redirect` interceptor allows you to customize the way your dispatcher handles redirects.
