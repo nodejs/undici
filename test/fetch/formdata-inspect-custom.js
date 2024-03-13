@@ -11,5 +11,5 @@ test('FormData class custom inspection', () => {
 
   const expectedOutput = 'FormData:\nusername: john_doe\nemail: john@example.com\n'
 
-  assert.strictEqual(formData.toString(), expectedOutput)
+  assert.strictEqual(formData, expectedOutput)
 })
