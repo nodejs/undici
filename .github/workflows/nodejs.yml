@@ -64,6 +64,7 @@ jobs:
         runs-on: 
           - ubuntu-latest
           - windows-latest
+          - macos-latest
     
     runs-on: ${{ matrix.runs-on }}
     steps:
