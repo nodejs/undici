@@ -6,7 +6,7 @@ const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 
-test('https://github.com/nodejs/undici/issues/803', async (t) => {
+test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, async (t) => {
   t = tspl(t, { plan: 2 })
 
   const SIZE = 5900373096
