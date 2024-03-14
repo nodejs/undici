@@ -5,22 +5,26 @@ const { test, after } = require('node:test')
 const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
-const EE = require('node:events')
 
-test('https://github.com/nodejs/undici/issues/803', async (t) => {
+test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, async (t) => {
   t = tspl(t, { plan: 2 })
 
   const SIZE = 5900373096
+  const chunkSize = 65536
+  const parts = (SIZE / chunkSize) | 0
+  const lastPartSize = SIZE % chunkSize
+  const chunk = Buffer.allocUnsafe(chunkSize)
 
   const server = createServer(async (req, res) => {
     res.setHeader('content-length', SIZE)
-    let pos = 0
-    while (pos < SIZE) {
-      const len = Math.min(SIZE - pos, 65536)
-      if (!res.write(Buffer.allocUnsafe(len))) {
-        await EE.once(res, 'drain')
+    let i = 0
+    while (i++ < parts) {
+      if (res.write(chunk) === false) {
+        await once(res, 'drain')
       }
-      pos += len
+    }
+    if (res.write(chunk.subarray(0, lastPartSize)) === false) {
+      await once(res, 'drain')
     }
 
     res.end()
