@@ -10,7 +10,7 @@ test('FormData class custom inspection', () => {
   formData.append('username', 'john_doe')
   formData.append('email', 'john@example.com')
 
-  const expectedOutput = 'FormData:\nusername: john_doe\nemail: john@example.com\n'
+  const expectedOutput = "FormData { username: 'john_doe', email: 'john@example.com' }"
 
   assert.deepStrictEqual(inspect(formData), expectedOutput)
 })

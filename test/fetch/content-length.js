@@ -6,6 +6,7 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { Blob } = require('node:buffer')
 const { fetch, FormData } = require('../..')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 // https://github.com/nodejs/undici/issues/1783
 test('Content-Length is set when using a FormData body with fetch', async (t) => {
@@ -17,6 +18,7 @@ test('Content-Length is set when using a FormData body with fetch', async (t) =>
   }).listen(0)
 
   await once(server, 'listening')
+  t.after(closeServerAsPromise(server))
 
   const fd = new FormData()
   fd.set('file', new Blob(['hello world 👋'], { type: 'text/plain' }), 'readme.md')
@@ -25,5 +27,5 @@ test('Content-Length is set when using a FormData body with fetch', async (t) =>
   await fetch(`http://localhost:${server.address().port}`, {
     method: 'POST',
     body: fd
-  }).finally(() => server.close())
+  })
 })
