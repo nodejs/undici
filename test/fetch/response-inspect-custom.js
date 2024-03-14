@@ -16,11 +16,7 @@ describe('Response custom inspection', () => {
     const expectedOutput = `Response {
   status: 200,
   statusText: '',
-  headers: HeadersList {
-    cookies: null,
-    [Symbol(headers map)]: Map(0) {},
-    [Symbol(headers map sorted)]: null
-  },
+  headers: Headers {},
   body: null,
   bodyUsed: false,
   ok: true,
