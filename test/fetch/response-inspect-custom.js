@@ -8,7 +8,11 @@ const { Response } = require('../../')
 describe('Response custom inspection', () => {
   it('should return a custom inspect output', () => {
     const response = new Response(null)
-    const inspectedOutput = util.inspect(response)
+    const inspectedOutput = util.inspect(response, {
+      depth: null,
+      getters: true
+    })
+
     const expectedOutput = `Response {
   status: 200,
   statusText: '',
@@ -16,8 +20,15 @@ describe('Response custom inspection', () => {
     cookies: null,
     [Symbol(headers map)]: Map(0) {},
     [Symbol(headers map sorted)]: null
-  }
+  },
+  body: null,
+  bodyUsed: false,
+  ok: true,
+  redirected: false,
+  type: 'default',
+  url: ''
 }`
+
     assert.strictEqual(inspectedOutput, expectedOutput)
   })
 })

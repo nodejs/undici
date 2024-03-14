@@ -16,31 +16,7 @@ describe('Request custom inspection', () => {
 
     const inspectedOutput = util.inspect(request)
 
-    const expectedOutput = `{
-  method: 'POST',
-  url: 'https://example.com/api',
-  headers: Headers { 'Content-Type': 'application/json' },
-  destination: '',
-  referrer: 'about:client',
-  referrerPolicy: '',
-  mode: 'cors',
-  credentials: 'same-origin',
-  cache: 'default',
-  redirect: 'follow',
-  integrity: '',
-  keepalive: false,
-  isReloadNavigation: false,
-  isHistoryNavigation: false,
-  signal: AbortSignal { aborted: false },
-  body: null,
-  bodyUsed: false,
-  ok: undefined,
-  redirected: undefined,
-  status: undefined,
-  statusText: undefined,
-  type: undefined
-}`
-
+    const expectedOutput = '{\n  method: \'POST\',\n  url: \'https://example.com/api\',\n  headers: Headers { \'Content-Type\': \'application/json\' },\n  destination: \'\',\n  referrer: \'about:client\',\n  referrerPolicy: \'\',\n  mode: \'cors\',\n  credentials: \'same-origin\',\n  cache: \'default\',\n  redirect: \'follow\',\n  integrity: \'\',\n  keepalive: false,\n  isReloadNavigation: false,\n  isHistoryNavigation: false,\n  signal: AbortSignal { aborted: false }\n}'
     assert.strictEqual(inspectedOutput, expectedOutput)
   })
 })
