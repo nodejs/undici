@@ -24,10 +24,16 @@ if (cluster.isPrimary) {
   }
 } else {
   const buf = Buffer.alloc(64 * 1024, '_')
+
+  const headers = {
+    'Content-Length': `${buf.byteLength}`,
+    'Content-Type': 'text/plain; charset=UTF-8'
+  }
   let i = 0
-  const server = createServer((req, res) => {
+  const server = createServer((_req, res) => {
     i++
-    setTimeout(function () {
+    setTimeout(() => {
+      res.writeHead(200, headers)
       res.end(buf)
     }, timeout)
   }).listen(port)

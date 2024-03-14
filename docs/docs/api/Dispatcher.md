@@ -817,6 +817,141 @@ try {
 }
 ```
 
+### `Dispatcher.compose(interceptors[, interceptor])`
+
+Compose a new dispatcher from the current dispatcher and the given interceptors.
+
+> _Notes_:
+> - The order of the interceptors matters. The first interceptor will be the first to be called.
+> - It is important to note that the `interceptor` function should return a function that follows the `Dispatcher.dispatch` signature.
+> - Any fork of the chain of `interceptors` can lead to unexpected results.
+
+Arguments:
+
+* **interceptors** `Interceptor[interceptor[]]`: It is an array of `Interceptor` functions passed as only argument, or several interceptors passed as separate arguments.
+
+Returns: `Dispatcher`.
+
+#### Parameter: `Interceptor`
+
+A function that takes a `dispatch` method and returns a `dispatch`-like function.
+
+#### Example 1 - Basic Compose
+
+```js
+const { Client, RedirectHandler } = require('undici')
+
+const redirectInterceptor = dispatch => {
+    return (opts, handler) => {
+      const { maxRedirections } = opts
+
+      if (!maxRedirections) {
+        return dispatch(opts, handler)
+      }
+
+      const redirectHandler = new RedirectHandler(
+        dispatch,
+        maxRedirections,
+        opts,
+        handler
+      )
+      opts = { ...opts, maxRedirections: 0 } // Stop sub dispatcher from also redirecting.
+      return dispatch(opts, redirectHandler)
+    }
+}
+
+const client = new Client('http://localhost:3000')
+  .compose(redirectInterceptor)
+
+await client.request({ path: '/', method: 'GET' })
+```
+
+#### Example 2 - Chained Compose
+
+```js
+const { Client, RedirectHandler, RetryHandler } = require('undici')
+
+const redirectInterceptor = dispatch => {
+    return (opts, handler) => {
+      const { maxRedirections } = opts
+
+      if (!maxRedirections) {
+        return dispatch(opts, handler)
+      }
+
+      const redirectHandler = new RedirectHandler(
+        dispatch,
+        maxRedirections,
+        opts,
+        handler
+      )
+      opts = { ...opts, maxRedirections: 0 }
+      return dispatch(opts, redirectHandler)
+    }
+}
+
+const retryInterceptor = dispatch => {
+  return function retryInterceptor (opts, handler) {
+    return dispatch(
+      opts,
+      new RetryHandler(opts, {
+        handler,
+        dispatch
+      })
+    )
+  }
+}
+
+const client = new Client('http://localhost:3000')
+  .compose(redirectInterceptor)
+  .compose(retryInterceptor)
+
+await client.request({ path: '/', method: 'GET' })
+```
+
+#### Pre-built interceptors
+
+##### `redirect`
+
+The `redirect` interceptor allows you to customize the way your dispatcher handles redirects.
+
+It accepts the same arguments as the [`RedirectHandler` constructor](./RedirectHandler.md).
+
+**Example - Basic Redirect Interceptor**
+
+```js
+const { Client, interceptors } = require("undici");
+const { redirect } = interceptors;
+
+const client = new Client("http://example.com").compose(
+  redirect({ maxRedirections: 3, throwOnMaxRedirects: true })
+);
+client.request({ path: "/" })
+```
+
+##### `retry`
+
+The `retry` interceptor allows you to customize the way your dispatcher handles retries.
+
+It accepts the same arguments as the [`RetryHandler` constructor](./RetryHandler.md).
+
+**Example - Basic Redirect Interceptor**
+
+```js
+const { Client, interceptors } = require("undici");
+const { retry } = interceptors;
+
+const client = new Client("http://example.com").compose(
+  retry({
+    maxRetries: 3,
+    minTimeout: 1000,
+    maxTimeout: 10000,
+    timeoutFactor: 2,
+    retryAfter: true,
+  })
+);
+```
+
 ## Instance Events
 
 ### Event: `'connect'`

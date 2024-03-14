@@ -122,7 +122,7 @@ export interface RequestInit {
   method?: string
   keepalive?: boolean
   headers?: HeadersInit
-  body?: BodyInit
+  body?: BodyInit | null
   redirect?: RequestRedirect
   integrity?: string
   signal?: AbortSignal | null

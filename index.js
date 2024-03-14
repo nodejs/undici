@@ -36,6 +36,10 @@ module.exports.RetryHandler = RetryHandler
 module.exports.DecoratorHandler = DecoratorHandler
 module.exports.RedirectHandler = RedirectHandler
 module.exports.createRedirectInterceptor = createRedirectInterceptor
+module.exports.interceptors = {
+  redirect: require('./lib/interceptor/redirect'),
+  retry: require('./lib/interceptor/retry')
+}
 
 module.exports.buildConnector = buildConnector
 module.exports.errors = errors

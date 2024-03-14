@@ -14,6 +14,41 @@ const { promisify } = require('node:util')
 const { NotSupportedError } = require('../lib/core/errors')
 const { parseFormDataString } = require('./utils/formdata')
 
+test('request dump big', async (t) => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-length', 999999999)
+    while (res.write('asd')) {
+      // Do nothing...
+    }
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    let dumped = false
+    client.on('disconnect', () => {
+      t.strictEqual(dumped, true)
+    })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.ifError(err)
+      body.on('data', () => t.fail())
+      body.dump().then(() => {
+        dumped = true
+        t.ok(true, 'pass')
+      })
+    })
+  })
+
+  await t.completed
+})
+
 test('request dump', async (t) => {
   t = tspl(t, { plan: 3 })
 
