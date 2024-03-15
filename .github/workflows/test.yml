@@ -1,0 +1,53 @@
+name: Run tests
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: true
+        type: string
+      runs-on:
+        required: true
+        type: string
+
+jobs:
+  test:
+    name: Test with Node.js ${{ inputs.node-version }} on ${{ inputs.runs-on }}
+    timeout-minutes: 15
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js@${{ inputs.node-version }}
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Print version information
+        run: |
+          echo OS: $(node -p "os.version()")
+          echo Node.js: $(node --version)
+          echo npm: $(npm --version)
+          echo git: $(git --version)
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Print installed dependencies
+        run: npm ls --all
+        continue-on-error: true
+
+      - name: Run tests
+        run: npm run coverage:ci
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ./coverage/tmp
+
+      - name: Coverage Report
+        if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 20
+        uses: codecov/codecov-action@54bcd8715eee62d40e33596ef5e8f0f48dbbccab # v4.1.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

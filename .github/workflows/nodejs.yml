@@ -51,8 +51,6 @@ jobs:
         run: npm run lint
 
   test:
-    name: Test with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
-    timeout-minutes: 15
     strategy:
       fail-fast: false
       max-parallel: 0
@@ -61,48 +59,15 @@ jobs:
           - 18
           - 20
           - 21
-        runs-on: 
+        runs-on:
           - ubuntu-latest
           - windows-latest
           - macos-latest
-    
-    runs-on: ${{ matrix.runs-on }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          persist-credentials: false          
-
-      - name: Setup Node.js@${{ matrix.node-version }}
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: ${{ matrix.node-version }}
-      
-      - name: Print version information
-        run: |
-          echo OS: $(node -p "os.version()")
-          echo Node.js: $(node --version)
-          echo npm: $(npm --version)
-          echo git: $(git --version)
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Print installed dependencies
-        run: npm ls --all
-        continue-on-error: true
-  
-      - name: Run tests
-        run: npm run coverage:ci
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ./coverage/tmp
-
-      - name: Coverage Report
-        if: matrix.runs-on == 'ubuntu-latest' && matrix.node-version == 20
-        uses: codecov/codecov-action@54bcd8715eee62d40e33596ef5e8f0f48dbbccab # v4.1.0
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+    uses: ./.github/workflows/test.yml
+    with:
+      node-version: ${{ matrix.node-version }}
+      runs-on: ${{ matrix.runs-on }}
+    secrets: inherit
 
   test-types:
     name: Test TypeScript types
