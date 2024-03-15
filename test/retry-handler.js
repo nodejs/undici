@@ -17,7 +17,7 @@ test('Should retry status code', async t => {
   const dispatchOptions = {
     retryOptions: {
       retry: (err, { state, opts }, done) => {
-        counter++
+        counter = state.counter
 
         if (
           err.statusCode === 500 ||
