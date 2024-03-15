@@ -706,3 +706,75 @@ test('should not error if request is not meant to be retried', async t => {
 
   await t.completed
 })
+
+test('Should be able to properly pass the minTimeout to the RetryContext when constructing a RetryCallback function', async t => {
+  t = tspl(t, { plan: 2 })
+
+  let counter = 0
+  const server = createServer()
+  server.on('request', (req, res) => {
+    switch (counter) {
+      case 0:
+        res.writeHead(500)
+        res.end('failed')
+        return
+      case 1:
+        res.writeHead(200)
+        res.end('hello world!')
+        return
+      default:
+        t.fail()
+    }
+  })
+
+  const dispatchOptions = {
+    retryOptions: {
+      retry: (err, { state, opts }, done) => {
+        counter++
+        t.strictEqual(opts.retryOptions.minTimeout, 100)
+
+        if (err.statusCode === 500) {
+          return done()
+        }
+
+        return done(err)
+      },
+      minTimeout: 100
+    },
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: new RequestHandler(dispatchOptions, (err, data) => {
+        t.ifError(err)
+      })
+    })
+
+    after(async () => {
+      await client.close()
+      server.close()
+
+      await once(server, 'close')
+    })
+
+    client.dispatch(
+      {
+        method: 'GET',
+        path: '/',
+        headers: {
+          'content-type': 'application/json'
+        }
+      },
+      handler
+    )
+  })
+
+  await t.completed
+})
