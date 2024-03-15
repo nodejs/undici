@@ -127,6 +127,12 @@ expectAssignable<Dispatcher>(new Dispatcher())
 
 declare const { body }: Dispatcher.ResponseData;
 
+// compose
+{
+  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(new Dispatcher().dispatch, new Dispatcher().dispatch))
+  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([new Dispatcher().dispatch, new Dispatcher().dispatch]))
+}
+
 {
   // body mixin tests
   expectType<never | undefined>(body.body)
