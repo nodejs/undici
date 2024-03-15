@@ -34,6 +34,4 @@ export declare class File extends Blob {
    * The last modified date of the file as the number of milliseconds since the Unix epoch (January 1, 1970 at midnight). Files without a known last modified date return the current date.
    */
   readonly lastModified: number
-
-  readonly [Symbol.toStringTag]: string
 }

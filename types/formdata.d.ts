@@ -103,6 +103,4 @@ export declare class FormData {
    * An alias for FormData#entries()
    */
   [Symbol.iterator]: () => SpecIterableIterator<[string, FormDataEntryValue]>
-
-  readonly [Symbol.toStringTag]: string
 }
