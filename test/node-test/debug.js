@@ -47,13 +47,8 @@ test('debug#websocket', async t => {
   await assert.completed
 })
 
-<<<<<<< HEAD
 test('debug#fetch', async t => {
   const assert = tspl(t, { plan: 7 })
-=======
-test('debug#fetch', { skip }, async t => {
-  const assert = tspl(t, { plan: 10 })
->>>>>>> 18a6d62f (handlepromise will now publish error events, removing events from processresponse)
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/fetch.js')],
