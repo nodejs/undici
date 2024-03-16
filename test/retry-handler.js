@@ -17,6 +17,104 @@ test('Should retry status code', async t => {
   const dispatchOptions = {
     retryOptions: {
       retry: (err, { state, opts }, done) => {
+        ++counter
+
+        if (
+          err.statusCode === 500 ||
+          err.message.includes('other side closed')
+        ) {
+          setTimeout(done, 500)
+          return
+        }
+
+        return done(err)
+      }
+    },
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    switch (counter) {
+      case 0:
+        req.destroy()
+        return
+      case 1:
+        res.writeHead(500)
+        res.end('failed')
+        return
+      case 2:
+        res.writeHead(200)
+        res.end('hello world!')
+        return
+      default:
+        t.fail()
+    }
+  })
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: {
+        onConnect () {
+          t.ok(true, 'pass')
+        },
+        onBodySent () {
+          t.ok(true, 'pass')
+        },
+        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          t.strictEqual(status, 200)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
+          t.strictEqual(counter, 2)
+        },
+        onError () {
+          t.fail()
+        }
+      }
+    })
+
+    after(async () => {
+      await client.close()
+      server.close()
+
+      await once(server, 'close')
+    })
+
+    client.dispatch(
+      {
+        method: 'GET',
+        path: '/',
+        headers: {
+          'content-type': 'application/json'
+        }
+      },
+      handler
+    )
+  })
+
+  await t.completed
+})
+
+test('Should account for network and response errors', async t => {
+  t = tspl(t, { plan: 4 })
+
+  let counter = 0
+  const chunks = []
+  const server = createServer()
+  const dispatchOptions = {
+    retryOptions: {
+      retry: (err, { state, opts }, done) => {
         counter = state.counter
 
         if (
