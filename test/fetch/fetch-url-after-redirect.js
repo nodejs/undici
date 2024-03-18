@@ -54,7 +54,7 @@ test('location header with non-ASCII character redirects to a properly encoded u
    *         .map(n => parseInt(n, 16))
    *     )
    *     res.writeHead(302, {
-   *       Location: `/${}`
+   *       Location: `/${path}`
    *     })
    *     return res.end()
    *   }
