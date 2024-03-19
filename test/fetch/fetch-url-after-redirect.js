@@ -40,39 +40,10 @@ test('after redirecting the url of the response is set to the target url', async
 })
 
 test('location header with non-ASCII character redirects to a properly encoded url', async (t) => {
-  /**
-   * @example
-   * ```ts
-   * const server = createServer((req, res) => {
-   *   // redirect -> %EC%95%88%EB%85%95 (안녕), not %C3%AC%C2%95%C2%88%C3%AB%C2%85%C2%95
-   *   if (res.req.url.endsWith('/redirect')) {
-   *     const path = String.fromCharCode.apply(
-   *       null,
-   *       encodeURIComponent('안녕')
-   *         .split('%')
-   *         .slice(1)
-   *         .map(n => parseInt(n, 16))
-   *     )
-   *     res.writeHead(302, {
-   *       Location: `/${path}`
-   *     })
-   *     return res.end()
-   *   }
-   * })
-   * ```
-   */
-  const encodedPath = encodeURIComponent('안녕')
-  const nonEncodedPath = String.fromCharCode.apply(
-    null,
-    encodeURIComponent('안녕')
-      .split('%')
-      .slice(1)
-      .map(n => parseInt(n, 16))
-  )
-
+  // redirect -> %EC%95%88%EB%85%95 (안녕), not %C3%AC%C2%95%C2%88%C3%AB%C2%85%C2%95
   const server = createServer((req, res) => {
     if (res.req.url.endsWith('/redirect')) {
-      res.writeHead(302, undefined, { Location: `/${nonEncodedPath}` })
+      res.writeHead(302, undefined, { Location: `/${Buffer.from('안녕').toString('binary')}` })
       res.end()
     } else {
       res.writeHead(200, 'dummy', { 'Content-Type': 'text/plain' })
@@ -86,5 +57,5 @@ test('location header with non-ASCII character redirects to a properly encoded u
   const { port } = server.address()
   const response = await fetch(`http://127.0.0.1:${port}/redirect`)
 
-  assert.strictEqual(response.url, `http://127.0.0.1:${port}/${encodedPath}`)
+  assert.strictEqual(response.url, `http://127.0.0.1:${port}/${encodeURIComponent('안녕')}`)
 })
