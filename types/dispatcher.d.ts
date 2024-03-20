@@ -18,6 +18,9 @@ declare class Dispatcher extends EventEmitter {
   /** Starts two-way communications with the requested resource. */
   connect(options: Dispatcher.ConnectOptions): Promise<Dispatcher.ConnectData>;
   connect(options: Dispatcher.ConnectOptions, callback: (err: Error | null, data: Dispatcher.ConnectData) => void): void;
+  /** Compose a chain of dispatchers */
+  compose(dispatchers: Dispatcher['dispatch'][]): Dispatcher.ComposedDispatcher;
+  compose(...dispatchers: Dispatcher['dispatch'][]): Dispatcher.ComposedDispatcher;
   /** Performs an HTTP request. */
   request(options: Dispatcher.RequestOptions): Promise<Dispatcher.ResponseData>;
   request(options: Dispatcher.RequestOptions, callback: (err: Error | null, data: Dispatcher.ResponseData) => void): void;
@@ -93,6 +96,8 @@ declare class Dispatcher extends EventEmitter {
 }
 
 declare namespace Dispatcher {
+  export interface ComposedDispatcher extends Dispatcher {}
+  export type DispatcherInterceptor = (dispatch: Dispatcher['dispatch']) => Dispatcher['dispatch'];
   export interface DispatchOptions {
     origin?: string | URL;
     path: string;
