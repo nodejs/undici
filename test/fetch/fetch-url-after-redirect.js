@@ -38,3 +38,24 @@ test('after redirecting the url of the response is set to the target url', async
 
   assert.strictEqual(response.url, `http://127.0.0.1:${port}/target`)
 })
+
+test('location header with non-ASCII character redirects to a properly encoded url', async (t) => {
+  // redirect -> %EC%95%88%EB%85%95 (안녕), not %C3%AC%C2%95%C2%88%C3%AB%C2%85%C2%95
+  const server = createServer((req, res) => {
+    if (res.req.url.endsWith('/redirect')) {
+      res.writeHead(302, undefined, { Location: `/${Buffer.from('안녕').toString('binary')}` })
+      res.end()
+    } else {
+      res.writeHead(200, 'dummy', { 'Content-Type': 'text/plain' })
+      res.end()
+    }
+  })
+  t.after(closeServerAsPromise(server))
+
+  const listenAsync = promisify(server.listen.bind(server))
+  await listenAsync(0)
+  const { port } = server.address()
+  const response = await fetch(`http://127.0.0.1:${port}/redirect`)
+
+  assert.strictEqual(response.url, `http://127.0.0.1:${port}/${encodeURIComponent('안녕')}`)
+})
