@@ -10,3 +10,4 @@ lib/llhttp/llhttp.wasm
 !types/**/*
 !index.d.ts
 !docs/docs/**/*
+!scripts/strip-comments.js
