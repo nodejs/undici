@@ -2001,7 +2001,9 @@ test('async iterator early return closes early', async (t) => {
   await t.completed
 })
 
-test('async iterator yield unsupported TypedArray', async (t) => {
+test('async iterator yield unsupported TypedArray', {
+  skip: !!require('stream')._isArrayBufferView
+}, async (t) => {
   t = tspl(t, { plan: 3 })
   const server = createServer((req, res) => {
     req.on('end', () => {
