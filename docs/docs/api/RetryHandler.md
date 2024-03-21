@@ -35,6 +35,12 @@ Extends: [`Dispatch.DispatchOptions`](Dispatcher.md#parameter-dispatchoptions).
 - `state`: `RetryState` - Current retry state. It can be mutated.
 - `opts`: `Dispatch.DispatchOptions & RetryOptions` - Options passed to the retry handler.
 
+**`RetryState`**
+
+It represents the retry state for a given request.
+
+- `counter`: `number` - Current retry attempt.
+
 ### Parameter `RetryHandlers`
 
 - **dispatch** `(options: Dispatch.DispatchOptions, handlers: Dispatch.DispatchHandlers) => Promise<Dispatch.DispatchResponse>` (required) - Dispatch function to be called after every retry.
