@@ -129,8 +129,34 @@ declare const { body }: Dispatcher.ResponseData;
 
 // compose
 {
-  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(new Dispatcher().dispatch, new Dispatcher().dispatch))
-  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([new Dispatcher().dispatch, new Dispatcher().dispatch]))
+  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(
+    (dispatcher) => {
+      expectAssignable<Dispatcher['dispatch']>(dispatcher);
+      return (opts, handlers) => {
+        expectAssignable<Dispatcher.DispatchOptions>(opts);
+        expectAssignable<Dispatcher.DispatchHandlers>(handlers);
+        return dispatcher(opts, handlers)
+      }
+    }
+  ))
+  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([
+    (dispatcher) => {
+      expectAssignable<Dispatcher['dispatch']>(dispatcher);
+      return (opts, handlers) => {
+        expectAssignable<Dispatcher.DispatchOptions>(opts);
+        expectAssignable<Dispatcher.DispatchHandlers>(handlers);
+        return dispatcher(opts, handlers)
+      }
+    },
+    (dispatcher) => {
+      expectAssignable<Dispatcher['dispatch']>(dispatcher);
+      return (opts, handlers) => {
+        expectAssignable<Dispatcher.DispatchOptions>(opts);
+        expectAssignable<Dispatcher.DispatchHandlers>(handlers);
+        return dispatcher(opts, handlers)
+      }
+    }
+  ]))
 }
 
 {
