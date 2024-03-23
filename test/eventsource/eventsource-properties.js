@@ -8,7 +8,7 @@ test('EventSource.prototype properties are configured correctly', () => {
   const props = Object.entries(Object.getOwnPropertyDescriptors(EventSource.prototype))
 
   for (const [key, value] of props) {
-        if (key !== 'constructor') {
+    if (key !== 'constructor') {
       assert(value.enumerable, `${key} is not enumerable`)
     }
   }
