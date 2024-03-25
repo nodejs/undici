@@ -2067,6 +2067,48 @@ test('async iterator yield object error', async (t) => {
   await t.completed
 })
 
+test('Successfully get a Response when neither a Transfer-Encoding or Content-Length header is present', async (t) => {
+  t = tspl(t, { plan: 4 })
+  const server = createServer((req, res) => {
+    req.on('data', (data) => {
+    })
+    req.on('end', () => {
+      res.removeHeader('transfer-encoding')
+      res.writeHead(200, {
+        // Header isn't actually necessary, but tells node to close after response
+        connection: 'close',
+        foo: 'bar'
+      })
+      res.flushHeaders()
+      res.end('a response body')
+    })
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.close())
+
+    client.request({ path: '/', method: 'GET' }, (err, { body, headers }) => {
+      t.ifError(err)
+      t.equal(headers['content-length'], undefined)
+      t.equal(headers['transfer-encoding'], undefined)
+      const bufs = []
+      body.on('error', () => {
+        t.fail('Closing the connection is valid')
+      })
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.equal('a response body', Buffer.concat(bufs).toString('utf8'))
+      })
+    })
+  })
+
+  await t.completed
+})
+
 function buildParams (path) {
   const cleanPath = path.replace('/?', '').replace('/', '').split('&')
   const builtParams = cleanPath.reduce((acc, entry) => {
