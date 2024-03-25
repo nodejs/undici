@@ -1,5 +1,9 @@
 'use strict'
 
+const Dispatcher = require('./lib/dispatcher/dispatcher')
+const api = require('./lib/api')
+Object.assign(Dispatcher.prototype, api)
+
 const fetchImpl = require('./lib/web/fetch').fetch
 
 module.exports.fetch = function fetch (resource, init = undefined) {

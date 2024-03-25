@@ -17,7 +17,7 @@ const {
   FormData,
   Response,
   setGlobalDispatcher,
-  Agent
+  EnvHttpProxyAgent
 } = require('../../index.js')
 const HeadersOrig = require('../../lib/web/fetch/headers.js').Headers
 const ResponseOrig = require('../../lib/web/fetch/response.js').Response
@@ -34,7 +34,7 @@ describe('node-fetch', () => {
 
   before(async () => {
     await local.start()
-    setGlobalDispatcher(new Agent({
+    setGlobalDispatcher(new EnvHttpProxyAgent({
       connect: {
         rejectUnauthorized: false
       }
