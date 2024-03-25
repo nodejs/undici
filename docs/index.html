@@ -16,6 +16,15 @@
       name: 'Node.js Undici',
       repo: 'https://github.com/nodejs/undici',
       loadSidebar: 'docsify/sidebar.md',
+      search: {
+        noData: {
+          '/': 'No results!'
+        },
+        paths: ['docs/'],
+        placeholder: {
+          '/': 'Search'
+        }
+      },
       auto2top: true,
       subMaxLevel: 3,
       maxLevel: 3,
@@ -28,6 +37,7 @@
   </script>
   <!-- Docsify v4 -->
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
   <script type="module">
     import mermaid from "//cdn.jsdelivr.net/npm/mermaid@10.8.0/+esm";
     mermaid.initialize({ startOnLoad: true });
