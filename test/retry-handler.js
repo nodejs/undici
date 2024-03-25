@@ -876,3 +876,106 @@ test('Should be able to properly pass the minTimeout to the RetryContext when co
 
   await t.completed
 })
+test('Issue#2986 - Handle custom 206', { only: true }, async t => {
+  t = tspl(t, { plan: 8 })
+
+  const chunks = []
+  let counter = 0
+
+  // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
+  let x = 0
+  const server = createServer((req, res) => {
+    if (x === 0) {
+      t.deepStrictEqual(req.headers.range, 'bytes=0-3')
+      res.setHeader('etag', 'asd')
+      res.write('abc')
+      setTimeout(() => {
+        res.destroy()
+      }, 1e2)
+    } else if (x === 1) {
+      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('etag', 'asd')
+      res.statusCode = 206
+      res.end('def')
+    }
+    x++
+  })
+
+  const dispatchOptions = {
+    retryOptions: {
+      retry: function (err, _, done) {
+        counter++
+
+        if (err.code && err.code === 'UND_ERR_DESTROYED') {
+          return done(false)
+        }
+
+        if (err.statusCode === 206) return done(err)
+
+        setTimeout(done, 800)
+      }
+    },
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: (...args) => {
+        return client.dispatch(...args)
+      },
+      handler: {
+        onRequestSent () {
+          t.ok(true, 'pass')
+        },
+        onConnect () {
+          t.ok(true, 'pass')
+        },
+        onBodySent () {
+          t.ok(true, 'pass')
+        },
+        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          t.strictEqual(status, 200)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abcdef')
+          t.strictEqual(counter, 1)
+        },
+        onError () {
+          t.fail()
+        }
+      }
+    })
+
+    client.dispatch(
+      {
+        method: 'GET',
+        path: '/',
+        headers: {
+          'content-type': 'application/json',
+          Range: 'bytes=0-3'
+        }
+      },
+      handler
+    )
+
+    after(async () => {
+      await client.close()
+
+      server.close()
+      await once(server, 'close')
+    })
+  })
+
+  await t.completed
+})
