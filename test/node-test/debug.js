@@ -48,7 +48,7 @@ test('debug#websocket', async t => {
 })
 
 test('debug#fetch', async t => {
-  const assert = tspl(t, { plan: 7 })
+  const assert = tspl(t, { plan: 10 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/fetch.js')],
