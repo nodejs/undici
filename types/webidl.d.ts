@@ -158,10 +158,15 @@ interface WebidlConverters {
   [Key: string]: (...args: any[]) => unknown
 }
 
+interface WebidlIs {
+  BufferSource(V: any): V is NodeJS.TypedArray | DataView | ArrayBuffer
+}
+
 export interface Webidl {
   errors: WebidlErrors
   util: WebidlUtil
   converters: WebidlConverters
+  is: WebidlIs
 
   /**
    * @description Performs a brand-check on {@param V} to ensure it is a

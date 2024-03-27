@@ -1,7 +1,20 @@
 {
   "stream": {
     "tentative": {
-      "skip": true
+      "abort.any.js": {
+        "note": "investigate",
+        "skip": true
+      },
+      "backpressure-send.any.js": {
+        "note": "The test expects us to implement our own queue, rather than relying on an external one (ie. Duplex streams). The write promise will resolve very quickly, even if the message might not have been.",
+        "skip": true
+      },
+      "constructor.any.js": {
+        "note": "This test is either wrong, or a python server quirk where it only sends the first protocol...",
+        "fail": [
+          "setting a protocol in the constructor should work"
+        ]
+      }
     }
   },
   "interfaces": {
