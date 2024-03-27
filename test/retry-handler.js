@@ -876,7 +876,7 @@ test('Should be able to properly pass the minTimeout to the RetryContext when co
 
   await t.completed
 })
-test('Issue#2986 - Handle custom 206', { only: true }, async t => {
+test('Issue#2986 - Handle custom 206', async t => {
   t = tspl(t, { plan: 8 })
 
   const chunks = []
