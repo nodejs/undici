@@ -1294,3 +1294,88 @@ test('Should throw informational error on half-closed streams (remote)', async t
     t.strictEqual(err.code, 'UND_ERR_INFO')
   })
 })
+
+test('#2364 - Concurrent aborts', async t => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers, _flags, rawHeaders) => {
+    t.strictEqual(headers['x-my-header'], 'foo')
+    t.strictEqual(headers[':method'], 'GET')
+    setTimeout(() => {
+      stream.respond({
+        'content-type': 'text/plain; charset=utf-8',
+        'x-custom-h2': 'hello',
+        ':status': 200
+      })
+      stream.end('hello h2!')
+    }, 100)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 18 })
+  after(() => server.close())
+  after(() => client.close())
+  const controller = new AbortController()
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  }, (err, response) => {
+    t.ifError(err)
+    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+    t.strictEqual(response.headers['x-custom-h2'], 'hello')
+    t.strictEqual(response.statusCode, 200)
+    response.body.dump()
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    },
+    signal: controller.signal
+  }, (err, response) => {
+    t.strictEqual(err.name, 'AbortError')
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  }, (err, response) => {
+    t.ifError(err)
+    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+    t.strictEqual(response.headers['x-custom-h2'], 'hello')
+    t.strictEqual(response.statusCode, 200)
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    },
+    signal: controller.signal
+  }, (err, response) => {
+    t.strictEqual(err.name, 'AbortError')
+  })
+
+  controller.abort()
+
+  await t.completed
+})
