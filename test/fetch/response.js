@@ -288,3 +288,8 @@ test('fromInnerResponse', () => {
   assert.strictEqual(response[kHeaders][kGuard], 'immutable')
   assert.strictEqual(response[kHeaders][kRealm], realm)
 })
+
+test('surrogate pair', async () => {
+  const response = new Response('\ud801')
+  assert.deepStrictEqual(await response.text(), '\ufffd')
+})

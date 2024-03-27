@@ -504,3 +504,8 @@ test('fromInnerRequest', () => {
   assert.strictEqual(request[kHeaders][kGuard], 'immutable')
   assert.strictEqual(request[kHeaders][kRealm], realm)
 })
+
+test('surrogate pair url', async () => {
+  const request = new Request('https://asd/\ud801')
+  assert.deepStrictEqual(request.url, 'https://asd/%EF%BF%BD')
+})
