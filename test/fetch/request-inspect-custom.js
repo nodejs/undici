@@ -1,7 +1,7 @@
 'use strict'
 
 const { describe, it } = require('node:test')
-const assert = require('assert')
+const assert = require('node:assert')
 const util = require('node:util')
 const { Request } = require('../../')
 
