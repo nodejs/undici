@@ -69,6 +69,56 @@ jobs:
       runs-on: ${{ matrix.runs-on }}
     secrets: inherit
 
+  test-without-intl:
+    name: Test with Node.js ${{ matrix.version }} compiled --without-intl
+    strategy:
+      fail-fast: false
+      max-parallel: 0
+      matrix:
+        version: [20, 21]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Determine latest release
+        id: release
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          result-encoding: string
+          script: |
+            const req = await fetch('https://nodejs.org/download/release/index.json')
+            const releases = await req.json()
+
+            const latest = releases.find((r) => r.version.startsWith('v${{ matrix.version }}'))
+            return latest.version
+
+      - name: Download and extract source
+        run: curl https://nodejs.org/download/release/${{ steps.release.outputs.result }}/node-${{ steps.release.outputs.result }}.tar.xz | tar xfJ -
+
+      - name: Install ninja
+        run: sudo apt-get install ninja-build
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@faf867a11c028c0b483fb2ae72b6fc8f7d842714 #v1.2.12
+        with:
+          key: node${{ matrix.version }}
+
+      - name: Build
+        working-directory: ./node-${{ steps.release.outputs.result }}
+        run: |
+          export CC="ccache gcc"
+          export CXX="ccache g++"
+          ./configure --without-intl --ninja --prefix=./final
+          make
+          make install
+          echo "$(pwd)/final/bin" >> $GITHUB_PATH
+
+      - uses: ./.github/actions/test
+
   test-types:
     name: Test TypeScript types
     timeout-minutes: 15
@@ -97,6 +147,7 @@ jobs:
       - dependency-review
       - test
       - test-types
+      - test-without-intl
       - lint
     runs-on: ubuntu-latest
     permissions:

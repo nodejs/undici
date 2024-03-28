@@ -1,0 +1,28 @@
+name: Run tests
+runs:
+  using: "composite"
+  steps:
+    - name: Print version information
+      shell: bash
+      run: |
+        echo OS: $(node -p "os.version()")
+        echo Node.js: $(node --version)
+        echo npm: $(npm --version)
+        echo git: $(git --version)
+        echo icu config: $(node -e "console.log(process.config)" | grep icu)
+
+    - name: Install dependencies
+      shell: bash
+      run: npm install
+
+    - name: Print installed dependencies
+      shell: bash
+      run: npm ls --all
+      continue-on-error: true
+
+    - name: Run tests
+      shell: bash
+      run: npm run coverage:ci
+      env:
+        CI: true
+        NODE_V8_COVERAGE: ./coverage/tmp
