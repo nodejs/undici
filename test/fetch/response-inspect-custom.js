@@ -2,7 +2,7 @@
 
 const { describe, it } = require('node:test')
 const assert = require('assert')
-const util = require('util')
+const util = require('node:util')
 const { Response } = require('../../')
 
 describe('Response custom inspection', () => {
