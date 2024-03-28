@@ -1,8 +1,8 @@
 'use strict'
 
 const { describe, it } = require('node:test')
-const assert = require('assert')
-const util = require('util')
+const assert = require('node:assert')
+const util = require('node:util')
 const { Request } = require('../../')
 
 describe('Request custom inspection', () => {
