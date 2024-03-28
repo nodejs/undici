@@ -5,6 +5,9 @@ on:
   schedule:
     - cron: "0 10 * * *"
 
+permissions:
+  contents: read
+
 jobs:
   test:
     if: github.repository == 'nodejs/undici'

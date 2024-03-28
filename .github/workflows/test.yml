@@ -10,6 +10,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test with Node.js ${{ inputs.node-version }} on ${{ inputs.runs-on }}
