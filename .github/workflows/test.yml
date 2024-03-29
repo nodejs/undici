@@ -29,7 +29,25 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
-      - uses: ./.github/actions/test
+      - name: Print version information
+        run: |
+          echo OS: $(node -p "os.version()")
+          echo Node.js: $(node --version)
+          echo npm: $(npm --version)
+          echo git: $(git --version)
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Print installed dependencies
+        run: npm ls --all
+        continue-on-error: true
+
+      - name: Run tests
+        run: npm run coverage:ci
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ./coverage/tmp
 
       - name: Coverage Report
         if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 20
