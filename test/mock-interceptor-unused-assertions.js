@@ -11,8 +11,8 @@ const util = require('../lib/core/util')
 const tableRowsAlignedToLeft = util.nodeMajor >= 21 || (util.nodeMajor === 20 && util.nodeMinor >= 11)
 
 // `console.table` treats emoji as two character widths for cell width determination
-const Y = PendingInterceptorsFormatter.PERSISTENT
-const N = PendingInterceptorsFormatter.NOT_PERSISTENT
+const Y = process.versions.icu ? '✅' : 'Y '
+const N = process.versions.icu ? '❌' : 'N '
 
 // Avoid colors in the output for inline snapshots.
 const pendingInterceptorsFormatter = new PendingInterceptorsFormatter({ disableColors: true })
