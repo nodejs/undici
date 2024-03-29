@@ -8,10 +8,7 @@ const { tspl } = require('@matteo.collina/tspl')
 // eslint-disable-next-line no-control-regex
 const removeEscapeColorsRE = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g
 
-test('debug#websocket', async t => {
-  if (!process.versions.icu) {
-    return
-  }
+test('debug#websocket', { skip: !process.versions.icu }, async t => {
   const assert = tspl(t, { plan: 8 })
   const child = spawn(
     process.execPath,
