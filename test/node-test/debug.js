@@ -53,7 +53,7 @@ test('debug#fetch', async t => {
     process.execPath,
     [join(__dirname, '../fixtures/fetch.js')],
     {
-      env: Object.assign({}, process.env, { NODE_DEBUG: 'fetch', NO_PROXY: '*' })
+      env: Object.assign({}, process.env, { NODE_DEBUG: 'fetch' })
     }
   )
   const chunks = []
