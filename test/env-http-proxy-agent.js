@@ -4,7 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, describe, after, beforeEach } = require('node:test')
 const sinon = require('sinon')
 const { EnvHttpProxyAgent, ProxyAgent, Agent, fetch, MockAgent } = require('..')
-const { kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent, kClosed, kDestroyed } = require('../lib/core/symbols')
+const { kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent, kClosed, kDestroyed, kProxy } = require('../lib/core/symbols')
 
 const env = { ...process.env }
 
@@ -29,50 +29,70 @@ test('does not create any proxy agents if HTTP_PROXY and HTTPS_PROXY are not set
 })
 
 test('creates one proxy agent for both http and https when only HTTP_PROXY is defined', async (t) => {
-  t = tspl(t, { plan: 4 })
+  t = tspl(t, { plan: 5 })
   process.env.HTTP_PROXY = 'http://example.com:8080'
   const dispatcher = new EnvHttpProxyAgent()
   t.ok(dispatcher[kNoProxyAgent] instanceof Agent)
   t.ok(!(dispatcher[kNoProxyAgent] instanceof ProxyAgent))
   t.ok(dispatcher[kHttpProxyAgent] instanceof ProxyAgent)
+  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://example.com:8080/')
   t.deepStrictEqual(dispatcher[kHttpsProxyAgent], dispatcher[kHttpProxyAgent])
   return dispatcher.close()
 })
 
 test('creates separate proxy agent for http and https when HTTP_PROXY and HTTPS_PROXY are set', async (t) => {
-  t = tspl(t, { plan: 5 })
+  t = tspl(t, { plan: 6 })
   process.env.HTTP_PROXY = 'http://example.com:8080'
   process.env.HTTPS_PROXY = 'http://example.com:8443'
   const dispatcher = new EnvHttpProxyAgent()
   t.ok(dispatcher[kNoProxyAgent] instanceof Agent)
   t.ok(!(dispatcher[kNoProxyAgent] instanceof ProxyAgent))
   t.ok(dispatcher[kHttpProxyAgent] instanceof ProxyAgent)
-  t.notDeepStrictEqual(dispatcher[kHttpsProxyAgent], dispatcher[kHttpProxyAgent])
+  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://example.com:8080/')
   t.ok(dispatcher[kHttpsProxyAgent] instanceof ProxyAgent)
+  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://example.com:8443/')
   return dispatcher.close()
 })
 
 test('handles lowercase http_proxy and https_proxy', async (t) => {
-  t = tspl(t, { plan: 5 })
+  t = tspl(t, { plan: 6 })
   process.env.http_proxy = 'http://example.com:8080'
   process.env.https_proxy = 'http://example.com:8443'
   const dispatcher = new EnvHttpProxyAgent()
   t.ok(dispatcher[kNoProxyAgent] instanceof Agent)
   t.ok(!(dispatcher[kNoProxyAgent] instanceof ProxyAgent))
   t.ok(dispatcher[kHttpProxyAgent] instanceof ProxyAgent)
-  t.notDeepStrictEqual(dispatcher[kHttpsProxyAgent], dispatcher[kHttpProxyAgent])
+  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://example.com:8080/')
   t.ok(dispatcher[kHttpsProxyAgent] instanceof ProxyAgent)
+  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://example.com:8443/')
+  return dispatcher.close()
+})
+
+test('accepts httpProxy and httpsProxy options', async (t) => {
+  t = tspl(t, { plan: 6 })
+  const opts = {
+    httpProxy: 'http://example.com:8080',
+    httpsProxy: 'http://example.com:8443'
+  }
+  const dispatcher = new EnvHttpProxyAgent(opts)
+  t.ok(dispatcher[kNoProxyAgent] instanceof Agent)
+  t.ok(!(dispatcher[kNoProxyAgent] instanceof ProxyAgent))
+  t.ok(dispatcher[kHttpProxyAgent] instanceof ProxyAgent)
+  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://example.com:8080/')
+  t.ok(dispatcher[kHttpsProxyAgent] instanceof ProxyAgent)
+  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://example.com:8443/')
   return dispatcher.close()
 })
 
 test('creates a proxy agent only for https when only HTTPS_PROXY is set', async (t) => {
-  t = tspl(t, { plan: 4 })
+  t = tspl(t, { plan: 5 })
   process.env.HTTPS_PROXY = 'http://example.com:8443'
   const dispatcher = new EnvHttpProxyAgent()
   t.ok(dispatcher[kNoProxyAgent] instanceof Agent)
   t.ok(!(dispatcher[kNoProxyAgent] instanceof ProxyAgent))
   t.deepStrictEqual(dispatcher[kHttpProxyAgent], dispatcher[kNoProxyAgent])
   t.ok(dispatcher[kHttpsProxyAgent] instanceof ProxyAgent)
+  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://example.com:8443/')
   return dispatcher.close()
 })
 
@@ -98,7 +118,7 @@ test('destroys all agents', async (t) => {
   t.ok(dispatcher[kHttpsProxyAgent][kDestroyed])
 })
 
-const createEnvHttpProxyAgentWithMocks = () => {
+const createEnvHttpProxyAgentWithMocks = (opts = {}) => {
   const testPaths = ['/', '/example', '/32']
   const mockAgent = new MockAgent()
   let mockPool
@@ -109,7 +129,7 @@ const createEnvHttpProxyAgentWithMocks = () => {
   }
   process.env.HTTP_PROXY = 'http://localhost:8080'
   process.env.HTTPS_PROXY = 'http://localhost:8443'
-  const dispatcher = new EnvHttpProxyAgent({ factory })
+  const dispatcher = new EnvHttpProxyAgent({ ...opts, factory })
   const agentSymbols = [kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent]
   agentSymbols.forEach((agent) => {
     sinon.spy(dispatcher[agent], 'dispatch')
@@ -188,6 +208,21 @@ describe('NO_PROXY', () => {
     t = tspl(t, { plan: 9 })
     process.env.NO_PROXY = 'example'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks()
+    t.ok(await doesNotProxy('http://example'))
+    t.ok(await doesNotProxy('http://example:80'))
+    t.ok(await doesNotProxy('http://example:0'))
+    t.ok(await doesNotProxy('http://example:1337'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://sub.example'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://prefexample'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example.no'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://a.b.example'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://host/example'))
+    return dispatcher.close()
+  })
+
+  test('as an option', async (t) => {
+    t = tspl(t, { plan: 9 })
+    const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks({ noProxy: 'example' })
     t.ok(await doesNotProxy('http://example'))
     t.ok(await doesNotProxy('http://example:80'))
     t.ok(await doesNotProxy('http://example:0'))
