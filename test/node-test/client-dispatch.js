@@ -881,6 +881,10 @@ test('dispatches in expected order', async (t) => {
       onBodySent () {
         dispatches.push('onBodySent')
       },
+      onStart (resume) {
+        assert(typeof resume === 'function')
+        dispatches.push('onStart')
+      },
       onResponseStarted () {
         dispatches.push('onResponseStarted')
       },
@@ -892,7 +896,7 @@ test('dispatches in expected order', async (t) => {
       },
       onComplete () {
         dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onStart', 'onHeaders', 'onData', 'onComplete'])
       },
       onError (err) {
         p.ifError(err)
@@ -938,6 +942,10 @@ test('dispatches in expected order for http2', async (t) => {
       onBodySent () {
         dispatches.push('onBodySent')
       },
+      onStart (resume) {
+        assert(typeof resume === 'function')
+        dispatches.push('onStart')
+      },
       onResponseStarted () {
         dispatches.push('onResponseStarted')
       },
@@ -949,7 +957,7 @@ test('dispatches in expected order for http2', async (t) => {
       },
       onComplete () {
         dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onStart', 'onHeaders', 'onData', 'onComplete'])
       },
       onError (err) {
         p.ifError(err)
