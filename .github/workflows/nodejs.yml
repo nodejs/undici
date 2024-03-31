@@ -174,7 +174,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      actions: write
     steps:
       - name: Merge Dependabot PR
         uses: fastify/github-action-merge-dependabot@9e7bfb249c69139d7bdcd8d984f9665edd49020b # v3.10.1
