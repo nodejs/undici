@@ -851,8 +851,10 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
         },
         onHeaders (statusCode, headers) {
           t.strictEqual(statusCode, 200)
-          t.strictEqual(headers['content-type'], 'text/plain; charset=utf-8')
-          t.strictEqual(headers['x-custom-h2'], 'foo')
+          t.strictEqual(headers[0].toString('utf-8'), 'content-type')
+          t.strictEqual(headers[1].toString('utf-8'), 'text/plain; charset=utf-8')
+          t.strictEqual(headers[2].toString('utf-8'), 'x-custom-h2')
+          t.strictEqual(headers[3].toString('utf-8'), 'foo')
         },
         onData (chunk) {
           response.push(chunk)

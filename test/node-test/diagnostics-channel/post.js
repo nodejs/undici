@@ -7,7 +7,7 @@ const { Client } = require('../../../')
 const { createServer } = require('node:http')
 
 test('Diagnostics channel - post', (t) => {
-  const assert = tspl(t, { plan: 33 })
+  const assert = tspl(t, { plan: 31 })
   const server = createServer((req, res) => {
     req.resume()
     res.setHeader('Content-Type', 'text/plain')
@@ -32,9 +32,6 @@ test('Diagnostics channel - post', (t) => {
     assert.equal(request.method, 'POST')
     assert.equal(request.path, '/')
     assert.deepStrictEqual(request.headers, ['bar', 'bar'])
-    request.addHeader('hello', 'world')
-    assert.deepStrictEqual(request.headers, ['bar', 'bar', 'hello', 'world'])
-    assert.deepStrictEqual(request.body, Buffer.from('hello world'))
   })
 
   let _connector
@@ -77,8 +74,7 @@ test('Diagnostics channel - post', (t) => {
       'POST / HTTP/1.1',
       `host: localhost:${server.address().port}`,
       'connection: keep-alive',
-      'bar: bar',
-      'hello: world'
+      'bar: bar'
     ]
 
     assert.deepStrictEqual(headers, expectedHeaders.join('\r\n') + '\r\n')

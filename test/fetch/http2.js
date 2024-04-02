@@ -34,7 +34,7 @@ test('[Fetch] Issue#2311', async (t) => {
     res.end(body)
   })
 
-  const { strictEqual } = tspl(t, { plan: 1 })
+  const { strictEqual } = tspl(t, { plan: 2 })
 
   server.listen()
   await once(server, 'listening')
@@ -65,6 +65,7 @@ test('[Fetch] Issue#2311', async (t) => {
   t.after(closeClientAndServerAsPromise(client, server))
 
   strictEqual(responseBody, expectedBody)
+  strictEqual(response.headers.get('x-custom-h2'), 'foo')
 })
 
 test('[Fetch] Simple GET with h2', async (t) => {
