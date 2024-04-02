@@ -3,7 +3,7 @@
 const { Headers } = require('../../lib/web/fetch/headers')
 const { test } = require('node:test')
 const assert = require('node:assert')
-const util = require('util')
+const util = require('node:util')
 
 test('Headers class custom inspection', () => {
   const headers = new Headers()

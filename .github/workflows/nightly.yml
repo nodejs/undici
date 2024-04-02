@@ -5,26 +5,40 @@ on:
   schedule:
     - cron: "0 10 * * *"
 
+permissions:
+  contents: read
+
 jobs:
-  test:
+  test-linux:
     if: github.repository == 'nodejs/undici'
-    strategy:
-      fail-fast: false
-      max-parallel: 0
-      matrix:
-        runs-on:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
     uses: ./.github/workflows/test.yml
     with:
       node-version: 22-nightly
-      runs-on: ${{ matrix.runs-on }}
+      runs-on: ubuntu-latest
+    secrets: inherit
+
+  test-windows:
+    if: github.repository == 'nodejs/undici'
+    uses: ./.github/workflows/test.yml
+    with:
+      node-version: 22-nightly
+      runs-on: windows-latest
+    secrets: inherit
+
+  test-macos:
+    if: github.repository == 'nodejs/undici'
+    uses: ./.github/workflows/test.yml
+    with:
+      node-version: 22-nightly
+      runs-on: macos-latest
     secrets: inherit
 
   report-failure:
-    if: failure()
-    needs: test
+    if: ${{ always() && (needs.test-linux.result == 'failure' && needs.test-windows.result == 'failure' && needs.test-macos.result == 'failure') }}
+    needs:
+      - test-linux
+      - test-windows
+      - test-macos
     runs-on: ubuntu-latest
     permissions:
       issues: write
