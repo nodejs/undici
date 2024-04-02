@@ -5,6 +5,7 @@ const { test } = t
 
 const util = require('../../lib/fetch/util')
 const { HeadersList } = require('../../lib/fetch/headers')
+const { createHash } = require('crypto')
 
 test('responseURL', (t) => {
   t.plan(2)
@@ -278,4 +279,76 @@ test('setRequestReferrerPolicyOnRedirect', nested => {
 
     t.equal(request.referrerPolicy, initial)
   })
+})
+
+test('parseMetadata', (t) => {
+  t.test('should parse valid metadata with option', (t) => {
+    const body = 'Hello world!'
+    const hash256 = createHash('sha256').update(body).digest('base64')
+    const hash384 = createHash('sha384').update(body).digest('base64')
+    const hash512 = createHash('sha512').update(body).digest('base64')
+
+    const validMetadata = `sha256-${hash256} !@ sha384-${hash384} !@ sha512-${hash512} !@`
+    const result = util.parseMetadata(validMetadata)
+
+    t.same(result, [
+      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
+      { algo: 'sha384', hash: hash384.replace(/=/g, '') },
+      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
+    ])
+    t.end()
+  })
+
+  t.test('should parse valid metadata with non ASCII chars option', (t) => {
+    const body = 'Hello world!'
+    const hash256 = createHash('sha256').update(body).digest('base64')
+    const hash384 = createHash('sha384').update(body).digest('base64')
+    const hash512 = createHash('sha512').update(body).digest('base64')
+
+    const validMetadata = `sha256-${hash256} !© sha384-${hash384} !€ sha512-${hash512} !µ`
+    const result = util.parseMetadata(validMetadata)
+
+    t.same(result, [
+      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
+      { algo: 'sha384', hash: hash384.replace(/=/g, '') },
+      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
+    ])
+    t.end()
+  })
+
+  t.test('should parse valid metadata without option', (t) => {
+    const body = 'Hello world!'
+    const hash256 = createHash('sha256').update(body).digest('base64')
+    const hash384 = createHash('sha384').update(body).digest('base64')
+    const hash512 = createHash('sha512').update(body).digest('base64')
+
+    const validMetadata = `sha256-${hash256} sha384-${hash384} sha512-${hash512}`
+    const result = util.parseMetadata(validMetadata)
+
+    t.same(result, [
+      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
+      { algo: 'sha384', hash: hash384.replace(/=/g, '') },
+      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
+    ])
+    t.end()
+  })
+
+  t.test('should set hash as undefined when invalid base64 chars are provided', (t) => {
+    const body = 'Hello world!'
+    const hash256 = createHash('sha256').update(body).digest('base64')
+    const invalidHash384 = 'zifp5hE1Xl5LQQqQz[]Bq/iaq9Wb6jVb//T7EfTmbXD2aEP5c2ZdJr9YTDfcTE1ZH+'
+    const hash512 = createHash('sha512').update(body).digest('base64')
+
+    const validMetadata = `sha256-${hash256} sha384-${invalidHash384} sha512-${hash512}`
+    const result = util.parseMetadata(validMetadata)
+
+    t.same(result, [
+      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
+      { algo: 'sha384', hash: undefined },
+      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
+    ])
+    t.end()
+  })
+
+  t.end()
 })
