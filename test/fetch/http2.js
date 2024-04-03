@@ -68,6 +68,63 @@ test('[Fetch] Issue#2311', async (t) => {
   strictEqual(response.headers.get('x-custom-h2'), 'foo')
 })
 
+test('[Fetch] Issue#3046', async (t) => {
+  const server = createSecureServer(pem)
+  const expectedRequestBody = 'hello h2!'
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      'x-method': headers[':method'],
+      'set-cookie': [
+        'session=randomstring; httponly; secure; samesite=strict',
+        'session=randomstring2; httponly; secure; samesite=strict'
+      ],
+      ':status': 200
+    })
+
+    stream.end(expectedRequestBody)
+  })
+
+  const { strictEqual, deepStrictEqual } = tspl(t, { plan: 4 })
+
+  server.listen()
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  const response = await fetch(
+    `https://localhost:${server.address().port}/`,
+    // Needs to be passed to disable the reject unauthorized
+    {
+      method: 'GET',
+      dispatcher: client,
+      headers: {
+        'x-my-header': 'foo',
+        'content-type': 'text-plain'
+      }
+    }
+  )
+
+  const responseBody = await response.text()
+
+  t.after(closeClientAndServerAsPromise(client, server))
+
+  strictEqual(responseBody, expectedRequestBody)
+  strictEqual(response.headers.get('x-method'), 'GET')
+  strictEqual(response.headers.get('x-custom-h2'), 'foo')
+  deepStrictEqual(response.headers.getSetCookie(), [
+    'session=randomstring; httponly; secure; samesite=strict',
+    'session=randomstring2; httponly; secure; samesite=strict'
+  ])
+})
+
 test('[Fetch] Simple GET with h2', async (t) => {
   const server = createSecureServer(pem)
   const expectedRequestBody = 'hello h2!'
