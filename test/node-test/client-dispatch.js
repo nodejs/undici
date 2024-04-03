@@ -881,8 +881,9 @@ test('dispatches in expected order', async (t) => {
       onBodySent () {
         dispatches.push('onBodySent')
       },
-      onStart (resume) {
-        assert(typeof resume === 'function')
+      onStart (controller) {
+        assert(typeof controller.resume === 'function')
+        assert(typeof controller.pause === 'function')
         dispatches.push('onStart')
       },
       onResponseStarted () {
@@ -942,8 +943,9 @@ test('dispatches in expected order for http2', async (t) => {
       onBodySent () {
         dispatches.push('onBodySent')
       },
-      onStart (resume) {
-        assert(typeof resume === 'function')
+      onStart (controller) {
+        assert(typeof controller.resume === 'function')
+        assert(typeof controller.pause === 'function')
         dispatches.push('onStart')
       },
       onResponseStarted () {

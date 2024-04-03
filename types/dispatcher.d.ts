@@ -215,9 +215,18 @@ declare namespace Dispatcher {
     context: object;
   }
   export type StreamFactory = (data: StreamFactoryData) => Writable;
+
+  export interface Controller {
+    pause (): void;
+    resume (): void;
+    readonly paused: boolean;
+  }
+
   export interface DispatchHandlers {
     /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
     onConnect?(abort: () => void): void;
+    /** */
+    onStart?(controller: Controller): void;
     /** Invoked when an error has occurred. */
     onError?(err: Error): void;
     /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
