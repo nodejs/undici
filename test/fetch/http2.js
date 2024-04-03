@@ -462,3 +462,48 @@ test('Issue #2386', async (t) => {
   controller.abort()
   ok(true)
 })
+
+test('Issue #3046', async (t) => {
+  const server = createSecureServer(pem)
+
+  const { strictEqual, deepStrictEqual } = tspl(t, { plan: 6 })
+
+  server.on('stream', async (stream, headers) => {
+    strictEqual(headers[':method'], 'GET')
+    strictEqual(headers[':path'], '/')
+    strictEqual(headers[':scheme'], 'https')
+
+    stream.respond({
+      'set-cookie': ['hello=world', 'foo=bar'],
+      'content-type': 'text/html; charset=utf-8',
+      ':status': 200
+    })
+
+    stream.end('<h1>Hello World</h1>')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.after(closeClientAndServerAsPromise(client, server))
+
+  const response = await fetch(
+    `https://localhost:${server.address().port}/`,
+    // Needs to be passed to disable the reject unauthorized
+    {
+      method: 'GET',
+      dispatcher: client
+    }
+  )
+
+  strictEqual(response.status, 200)
+  strictEqual(response.headers.get('content-type'), 'text/html; charset=utf-8')
+  deepStrictEqual(response.headers.getSetCookie(), ['hello=world', 'foo=bar'])
+})
