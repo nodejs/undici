@@ -14,7 +14,7 @@ test('Implements " Iterator" properly', async (t) => {
       const IteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf([][Symbol.iterator]()))
       const iteratorProto = Object.getPrototypeOf(gen)
 
-      assert.ok(gen.constructor === Object)
+      assert.ok(gen.constructor === IteratorPrototype.constructor)
       assert.ok(gen.prototype === undefined)
       // eslint-disable-next-line no-proto
       assert.strictEqual(gen.__proto__[Symbol.toStringTag], 'Headers Iterator')
@@ -38,7 +38,7 @@ test('Implements " Iterator" properly', async (t) => {
       const IteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf([][Symbol.iterator]()))
       const iteratorProto = Object.getPrototypeOf(gen)
 
-      assert.ok(gen.constructor === Object)
+      assert.ok(gen.constructor === IteratorPrototype.constructor)
       assert.ok(gen.prototype === undefined)
       // eslint-disable-next-line no-proto
       assert.strictEqual(gen.__proto__[Symbol.toStringTag], 'FormData Iterator')
