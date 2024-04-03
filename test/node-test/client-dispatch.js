@@ -875,16 +875,11 @@ test('dispatches in expected order', async (t) => {
       method: 'POST',
       body: 'body'
     }, {
-      onConnect (controller) {
-        assert(typeof controller.resume === 'function')
-        assert(typeof controller.pause === 'function')
+      onConnect ({ controller }) {
         dispatches.push('onConnect')
       },
       onBodySent () {
         dispatches.push('onBodySent')
-      },
-      onStart () {
-        dispatches.push('onStart')
       },
       onResponseStarted () {
         dispatches.push('onResponseStarted')
@@ -897,7 +892,7 @@ test('dispatches in expected order', async (t) => {
       },
       onComplete () {
         dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onStart', 'onHeaders', 'onData', 'onComplete'])
+        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
       },
       onError (err) {
         p.ifError(err)
@@ -937,16 +932,11 @@ test('dispatches in expected order for http2', async (t) => {
       method: 'POST',
       body: 'body'
     }, {
-      onConnect (controller) {
-        assert(typeof controller.resume === 'function')
-        assert(typeof controller.pause === 'function')
+      onConnect ({ controller }) {
         dispatches.push('onConnect')
       },
       onBodySent () {
         dispatches.push('onBodySent')
-      },
-      onStart () {
-        dispatches.push('onStart')
       },
       onResponseStarted () {
         dispatches.push('onResponseStarted')
@@ -959,7 +949,7 @@ test('dispatches in expected order for http2', async (t) => {
       },
       onComplete () {
         dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onStart', 'onHeaders', 'onData', 'onComplete'])
+        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
       },
       onError (err) {
         p.ifError(err)

@@ -12,7 +12,7 @@ describe('Readable', () => {
     }
     function abort () {
     }
-    const r = new Readable({ controller: { resume, abort } })
+    const r = new Readable({ resume, abort })
 
     r.push(Buffer.from('hello'))
 
@@ -34,7 +34,7 @@ describe('Readable', () => {
     function abort () {
     }
 
-    const r = new Readable({ controller: { resume, abort } })
+    const r = new Readable({ resume, abort })
     r.destroy(new Error('kaboom'))
 
     await t.rejects(r.text(), new Error('kaboom'))
@@ -48,7 +48,7 @@ describe('Readable', () => {
     function abort () {
     }
     const r = await new Promise(resolve => {
-      const r = new Readable({ controller: { resume, abort } })
+      const r = new Readable({ resume, abort })
       r.destroy(new Error('kaboom'))
       resolve(r)
     })
@@ -67,7 +67,7 @@ describe('Readable', () => {
     }
     function abort () {
     }
-    const r = new Readable({ controller: { resume, abort } })
+    const r = new Readable({ resume, abort })
 
     r.push(Buffer.from('hello world'))
 
@@ -90,7 +90,7 @@ describe('Readable', () => {
     }
     function abort () {
     }
-    const r = new Readable({ controller: { resume, abort } })
+    const r = new Readable({ resume, abort })
 
     r.push(Buffer.from('{"hello": "world"}'))
 
@@ -110,7 +110,7 @@ describe('Readable', () => {
     }
     function abort () {
     }
-    const r = new Readable({ controller: { resume, abort } })
+    const r = new Readable({ resume, abort })
 
     r.push(Buffer.from('hello world'))
 
@@ -130,7 +130,7 @@ describe('Readable', () => {
     }
     function abort () {
     }
-    const r = new Readable({ controller: { resume, abort } })
+    const r = new Readable({ resume, abort })
 
     r.push('\uFEFF')
     r.push(Buffer.from('hello world'))
@@ -151,7 +151,7 @@ describe('Readable', () => {
     }
     function abort () {
     }
-    const r = new Readable({ controller: { resume, abort } })
+    const r = new Readable({ resume, abort })
 
     r.push(Buffer.from('hello world'))
 
