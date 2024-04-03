@@ -14,6 +14,10 @@ const { promisify } = require('node:util')
 const { NotSupportedError } = require('../lib/core/errors')
 const { parseFormDataString } = require('./utils/formdata')
 
+process.on('uncatchedException', (err) => {
+  console.error('###', err)
+})
+
 test('request dump big', async (t) => {
   t = tspl(t, { plan: 3 })
 
@@ -140,7 +144,7 @@ test('request hwm', async (t) => {
 })
 
 test('request abort before headers', async (t) => {
-  t = tspl(t, { plan: 6 })
+  t = tspl(t, { plan: 4 })
 
   const signal = new EE()
   const server = createServer((req, res) => {
@@ -162,7 +166,6 @@ test('request abort before headers', async (t) => {
         t.ok(err instanceof errors.RequestAbortedError)
         t.strictEqual(signal.listenerCount('abort'), 0)
       })
-      t.strictEqual(signal.listenerCount('abort'), 1)
 
       client.request({
         path: '/',
@@ -172,7 +175,6 @@ test('request abort before headers', async (t) => {
         t.ok(err instanceof errors.RequestAbortedError)
         t.strictEqual(signal.listenerCount('abort'), 0)
       })
-      t.strictEqual(signal.listenerCount('abort'), 2)
     })
   })
 

@@ -875,15 +875,15 @@ test('dispatches in expected order', async (t) => {
       method: 'POST',
       body: 'body'
     }, {
-      onConnect () {
+      onConnect (controller) {
+        assert(typeof controller.resume === 'function')
+        assert(typeof controller.pause === 'function')
         dispatches.push('onConnect')
       },
       onBodySent () {
         dispatches.push('onBodySent')
       },
-      onStart (controller) {
-        assert(typeof controller.resume === 'function')
-        assert(typeof controller.pause === 'function')
+      onStart () {
         dispatches.push('onStart')
       },
       onResponseStarted () {
@@ -937,15 +937,15 @@ test('dispatches in expected order for http2', async (t) => {
       method: 'POST',
       body: 'body'
     }, {
-      onConnect () {
+      onConnect (controller) {
+        assert(typeof controller.resume === 'function')
+        assert(typeof controller.pause === 'function')
         dispatches.push('onConnect')
       },
       onBodySent () {
         dispatches.push('onBodySent')
       },
-      onStart (controller) {
-        assert(typeof controller.resume === 'function')
-        assert(typeof controller.pause === 'function')
+      onStart () {
         dispatches.push('onStart')
       },
       onResponseStarted () {

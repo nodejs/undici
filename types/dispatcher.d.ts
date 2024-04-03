@@ -219,14 +219,16 @@ declare namespace Dispatcher {
   export interface Controller {
     pause (): void;
     resume (): void;
+    abort (err?: Error): void;
     readonly paused: boolean;
+    readonly aborted: boolean;
   }
 
   export interface DispatchHandlers {
     /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
-    onConnect?(abort: () => void): void;
+    onConnect?(controller: Controller): void;
     /** */
-    onStart?(controller: Controller): void;
+    onStart?(): void;
     /** Invoked when an error has occurred. */
     onError?(err: Error): void;
     /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
