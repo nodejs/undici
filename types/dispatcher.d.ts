@@ -225,6 +225,13 @@ declare namespace Dispatcher {
     abort(reason: Error): void;
   }
   export interface DispatchHandlers {
+    // Existing API
+
+    /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
+    onUpgrade?(statusCode: number, headers: Buffer[] | string[] | null, socket: Duplex): void;
+    /** Invoked when an error has occurred. */
+    onError?(err: Error): void;
+
     // New API
 
     /** Invoked after request is starting to be processed */
@@ -235,28 +242,20 @@ declare namespace Dispatcher {
     onRequestData?(chunk: Buffer | string): void;
     /** Invoked after request has finished sending */
     onRequestEnd?(): void;
-    /** Invoked after request has errored while sending */
-    onRequestError?(err: Error): void;
 
     /** Invoked after response is starting to be processed */
     onResponseStart?(controller: Controller): void;
     /** Invoked after headers data has been received */
-    onResponseHeaders?(headers: Record<string, string>, statusCode: number, statusText: string?): void;
+    onResponseHeaders?(headers: Record<string, string>, statusCode: number, statusText: string): void;
     /** Invoked after response payload data is received. */
     onResponseData?(chunk: Buffer | string): void;
     /** Invoked after response has finished */
     onResponseEnd?(): void;
-    /** Invoked after response has errored */
-    onResponseError?(err: Error): void;
 
     // Legacy API
 
-    /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
-    onUpgrade?(statusCode: number, headers: Buffer[] | string[] | null, socket: Duplex): void;
     /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
     onConnect?(abort: () => void): void;
-    /** Invoked when an error has occurred. */
-    onError?(err: Error): void;
     /** Invoked when response is received, before headers have been read. **/
     onResponseStarted?(): void;
     /** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
