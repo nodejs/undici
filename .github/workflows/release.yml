@@ -31,7 +31,12 @@ jobs:
           git config --global user.name "Matteo Collina"
           npm version ${{ inputs.version }} --git-tag-version=false
           git push origin HEAD:main
-      - run: npm publish --provenance --access public
+      - run: npm publish --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: node scripts/generate-undici-types-package-json.js
+      - run: npm publish --provenance
+        working-directory: './types'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: 'Create release notes'
