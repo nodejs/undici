@@ -227,21 +227,21 @@ declare namespace Dispatcher {
   export interface DispatchHandlers {
     // New API
 
-    /** Invoked before request is starting to be processed */
+    /** Invoked after request is starting to be processed */
     onRequestStart?(controller: Controller): void;
-    /** Invoked before headers data is sent */
+    /** Invoked after headers data is sent */
     onRequestHeaders?(headers: Record<string, string>): void;
-    /** Invoked before payload data is sent. */
+    /** Invoked after payload data is sent. */
     onRequestData?(chunk: Buffer | string): void;
     /** Invoked after request has finished sending */
     onRequestEnd?(): void;
     /** Invoked after request has errored while sending */
     onRequestError?(err: Error): void;
 
-    /** Invoked before response is starting to be processed */
+    /** Invoked after response is starting to be processed */
     onResponseStart?(controller: Controller): void;
-    /** Invoked after status headers data has been received */
-    onResponseHeaders?(headers: Record<string, string>): void;
+    /** Invoked after headers data has been received */
+    onResponseHeaders?(headers: Record<string, string>, statusCode: number, statusText: string?): void;
     /** Invoked after response payload data is received. */
     onResponseData?(chunk: Buffer | string): void;
     /** Invoked after response has finished */
