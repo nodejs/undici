@@ -215,13 +215,48 @@ declare namespace Dispatcher {
     context: object;
   }
   export type StreamFactory = (data: StreamFactoryData) => Writable;
+  export interface Controller {
+    readonly aborted: boolean;
+    readonly reason: Error;
+    readonly paused: boolean;
+
+    pause(): void;
+    resume(): void;
+    abort(reason: Error): void;
+  }
   export interface DispatchHandlers {
+    // New API
+
+    /** Invoked before request is starting to be processed */
+    onRequestStart?(controller: Controller): void;
+    /** Invoked before headers data is sent */
+    onRequestHeaders?(headers: Record<string, string>): void;
+    /** Invoked before payload data is sent. */
+    onRequestData?(chunk: Buffer | string): void;
+    /** Invoked after request has finished sending */
+    onRequestEnd?(): void;
+    /** Invoked after request has errored while sending */
+    onRequestError?(err: Error): void;
+
+    /** Invoked before response is starting to be processed */
+    onResponseStart?(controller: Controller): void;
+    /** Invoked after status headers data has been received */
+    onResponseHeaders?(headers: Record<string, string>): void;
+    /** Invoked after response payload data is received. */
+    onResponseData?(chunk: Buffer | string): void;
+    /** Invoked after response has finished */
+    onResponseEnd?(): void;
+    /** Invoked after response has errored */
+    onResponseError?(err: Error): void;
+
+    // Legacy API
+
+    /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
+    onUpgrade?(statusCode: number, headers: Buffer[] | string[] | null, socket: Duplex): void;
     /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
     onConnect?(abort: () => void): void;
     /** Invoked when an error has occurred. */
     onError?(err: Error): void;
-    /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
-    onUpgrade?(statusCode: number, headers: Buffer[] | string[] | null, socket: Duplex): void;
     /** Invoked when response is received, before headers have been read. **/
     onResponseStarted?(): void;
     /** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
@@ -232,6 +267,7 @@ declare namespace Dispatcher {
     onComplete?(trailers: string[] | null): void;
     /** Invoked when a body chunk is sent to the server. May be invoked multiple times for chunked requests */
     onBodySent?(chunkSize: number, totalBytesSent: number): void;
+
   }
   export type PipelineHandler = (data: PipelineHandlerData) => Readable;
   export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
