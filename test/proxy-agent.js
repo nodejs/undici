@@ -842,6 +842,35 @@ test('Proxy via HTTPS to HTTP fails on wrong SNI', async (t) => {
   proxyAgent.close()
 })
 
+test('ProxyAgent keeps customized host in request headers - #3019', async (t) => {
+  t = tspl(t, { plan: 2 })
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent(proxyUrl)
+  const customHost = 'example.com'
+
+  proxy.on('connect', (req) => {
+    t.strictEqual(req.headers.host, `localhost:${server.address().port}`)
+  })
+
+  server.on('request', (req, res) => {
+    t.strictEqual(req.headers.host, customHost)
+    res.end()
+  })
+
+  await request(serverUrl, {
+    headers: { Host: customHost },
+    dispatcher: proxyAgent
+  })
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 function buildServer () {
   return new Promise((resolve) => {
     const server = createServer()
