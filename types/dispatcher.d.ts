@@ -215,6 +215,15 @@ declare namespace Dispatcher {
     context: object;
   }
   export type StreamFactory = (data: StreamFactoryData) => Writable;
+  export interface Controller {
+    readonly aborted: boolean;
+    readonly reason: Error | null;
+    readonly paused: boolean;
+
+    pause(): void;
+    resume(): void;
+    abort(reason: Error): void;
+  }
   export interface DispatchHandlers {
     /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
     onConnect?(abort: () => void): void;
@@ -232,6 +241,34 @@ declare namespace Dispatcher {
     onComplete?(trailers: string[] | null): void;
     /** Invoked when a body chunk is sent to the server. May be invoked multiple times for chunked requests */
     onBodySent?(chunkSize: number, totalBytesSent: number): void;
+
+    // New API
+
+    /** Invoked after request is starting to be processed */
+    onRequestStart?(controller: Controller): void;
+    /** Invoked after headers data is sent */
+    onRequestHeaders?(headers: Record<string, string>): void;
+    /** Invoked after payload data is sent. */
+    onRequestData?(chunk: Buffer | string): void;
+    /** Invoked after trailers data is sent */
+    onRequestTrailers?(trailers: Record<string, string>): void;
+    /** Invoked after request has finished sending */
+    onRequestEnd?(): void;
+    /** Invoked after request has failed */
+    onRequestError?(err: Error): void;
+
+    /** Invoked after response is starting to be processed */
+    onResponseStart?(controller: Controller): void;
+    /** Invoked after headers data has been received */
+    onResponseHeaders?(headers: Record<string, string>, statusCode: number, statusText?: string): void;
+    /** Invoked after response payload data is received. */
+    onResponseData?(chunk: Buffer | string): void;
+    /** Invoked after trailers data has been received */
+    onResponseTrailers?(trailers: Record<string, string>): void;
+    /** Invoked after response has finished */
+    onResponseEnd?(): void;
+    /** Invoked after request has failed */
+    onResponseError?(err: Error): void;
   }
   export type PipelineHandler = (data: PipelineHandlerData) => Readable;
   export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
