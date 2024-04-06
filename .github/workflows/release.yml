@@ -55,6 +55,11 @@ jobs:
       - run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: node scripts/generate-undici-types-package-json.js
+      - run: npm publish --provenance
+        working-directory: './types'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   releasenotes:
     runs-on: ubuntu-latest
