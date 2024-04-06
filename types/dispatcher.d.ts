@@ -244,6 +244,9 @@ declare namespace Dispatcher {
 
     // New API
 
+    /** Invoked when handler is destroyed */
+    onDestroy?(): void;
+
     /** Invoked after request is starting to be processed */
     onRequestStart?(controller: Controller): void;
     /** Invoked after headers data is sent */
