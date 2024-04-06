@@ -1,5 +1,8 @@
 name: Publish package to npm
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -22,6 +25,8 @@ jobs:
     permissions:
       contents: write
       id-token: write
+
+    environment: release
 
     outputs:
       version: ${{ steps.bump.outputs.version }}
