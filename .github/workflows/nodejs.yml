@@ -140,6 +140,26 @@ jobs:
       - name: Run tests
         run: npm run test:javascript:withoutintl
 
+  test-fuzzing:
+    name: Fuzzing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: lts/*
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run fuzzing tests
+        run: npm run test:fuzzing
+
   test-types:
     name: Test TypeScript types
     timeout-minutes: 15
@@ -169,6 +189,7 @@ jobs:
       - test
       - test-types
       - test-without-intl
+      - test-fuzzing
       - lint
     runs-on: ubuntu-latest
     permissions:
