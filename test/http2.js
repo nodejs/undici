@@ -1381,3 +1381,64 @@ test('#2364 - Concurrent aborts', async t => {
 
   await t.completed
 })
+
+test('#3046 - GOAWAY Frame', { only: true }, async t => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    setTimeout(() => {
+      if (stream.closed) return
+      stream.end('Hello World')
+    }, 100)
+
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': 'hello',
+      ':status': 200
+    })
+  })
+
+  server.on('session', session => {
+    setTimeout(() => {
+      session.goaway()
+    }, 50)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 7 })
+  after(() => server.close())
+  after(() => client.close())
+
+  client.on('disconnect', (url, disconnectClient, err) => {
+    t.ok(url instanceof URL)
+    t.deepStrictEqual(disconnectClient, [client])
+    t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  }, (err, response) => {
+    t.ifError(err)
+    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+    t.strictEqual(response.headers['x-custom-h2'], 'hello')
+    t.strictEqual(response.statusCode, 200)
+    // We stop the sent the GOAWAY frame before the body is sent, as we received the GOAWAY frame
+    // before the DATA one, the body will be empty
+    response.body.dump()
+  })
+
+  await t.completed
+})
