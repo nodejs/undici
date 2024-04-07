@@ -869,6 +869,41 @@ test('stream throwOnError', async (t) => {
   await t.completed
 })
 
+test('stream throwOnError, body is bigger than CHUNK_LIMIT', async (t) => {
+  t = tspl(t, { plan: 3 })
+
+  const errStatusCode = 500
+
+  const server = createServer((req, res) => {
+    res.writeHead(errStatusCode, { 'Content-Type': 'text/plain' })
+    res.end(Buffer.alloc(128 * 1024 + 1))
+  })
+  after(() => server.close())
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.close())
+
+    client.stream({
+      path: '/',
+      method: 'GET',
+      throwOnError: true,
+      opaque: new PassThrough()
+    }, ({ opaque: pt }) => {
+      pt.on('data', () => {
+        t.fail()
+      })
+      return pt
+    }, (e) => {
+      t.strictEqual(e.status, errStatusCode)
+      t.strictEqual(e.body, undefined)
+      t.ok(true, 'end')
+    })
+  })
+
+  await t.completed
+})
+
 test('steam throwOnError=true, error on stream', async (t) => {
   t = tspl(t, { plan: 1 })
 
