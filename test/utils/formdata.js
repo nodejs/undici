@@ -1,3 +1,5 @@
+'use strict'
+
 const Busboy = require('@fastify/busboy')
 
 function parseFormDataString (

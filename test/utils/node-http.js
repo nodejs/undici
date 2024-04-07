@@ -1,3 +1,5 @@
+'use strict'
+
 const util = require('node:util')
 
 function closeServerAsPromise (server) {
