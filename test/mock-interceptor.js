@@ -107,7 +107,7 @@ describe('MockInterceptor - reply options callback', () => {
   })
 
   test('should error if passed options invalid', async (t) => {
-    t = tspl(t, { plan: 3 })
+    t = tspl(t, { plan: 4 })
 
     const baseUrl = 'http://localhost:9999'
     const mockAgent = new MockAgent()
@@ -116,9 +116,14 @@ describe('MockInterceptor - reply options callback', () => {
     const mockPool = mockAgent.get(baseUrl)
 
     mockPool.intercept({
-      path: '/test',
+      path: '/test-return-undefined',
       method: 'GET'
     }).reply(() => { })
+
+    mockPool.intercept({
+      path: '/test-return-null',
+      method: 'GET'
+    }).reply(() => { return null })
 
     mockPool.intercept({
       path: '/test3',
@@ -138,7 +143,16 @@ describe('MockInterceptor - reply options callback', () => {
     }))
 
     t.throws(() => mockPool.dispatch({
-      path: '/test',
+      path: '/test-return-undefined',
+      method: 'GET'
+    }, {
+      onHeaders: () => { },
+      onData: () => { },
+      onComplete: () => { }
+    }), new InvalidArgumentError('reply options callback must return an object'))
+
+    t.throws(() => mockPool.dispatch({
+      path: '/test-return-null',
       method: 'GET'
     }, {
       onHeaders: () => { },
