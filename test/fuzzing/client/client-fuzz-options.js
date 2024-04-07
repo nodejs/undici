@@ -8,10 +8,9 @@ const acceptableCodes = [
   'ENOTFOUND',
   'EAI_AGAIN',
   'ECONNREFUSED'
-  // ----
 ]
 
-async function fuzz (netServer, results, buf) {
+async function fuzz (address, results, buf) {
   const optionKeys = ['body', 'path', 'method', 'opaque', 'upgrade', buf]
   const options = {}
   for (const optionKey of optionKeys) {
@@ -21,7 +20,7 @@ async function fuzz (netServer, results, buf) {
   }
   results.options = options
   try {
-    const data = await request(`http://localhost:${netServer.address().port}`, options)
+    const data = await request(address, options)
     data.body.destroy().on('error', () => {})
   } catch (err) {
     results.err = err
@@ -29,7 +28,6 @@ async function fuzz (netServer, results, buf) {
     if (Object.values(errors).some(undiciError => err instanceof undiciError)) {
       // Okay error
     } else if (!acceptableCodes.includes(err.code)) {
-      console.log(`=== Options: ${JSON.stringify(options)} ===`)
       throw err
     }
   }
