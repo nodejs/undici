@@ -3,6 +3,7 @@
 const { strictEqual } = require('node:assert')
 const { test, describe } = require('node:test')
 const { isBlobLike } = require('../lib/core/util')
+const { Blob, File } = require('node:buffer')
 
 describe('isBlobLike', () => {
   test('buffer', () => {
@@ -10,14 +11,14 @@ describe('isBlobLike', () => {
     strictEqual(isBlobLike(buffer), false)
   })
 
-  test('blob', () => {
+  test('blob', { skip: !Blob }, () => {
     const blob = new Blob(['asd'], {
       type: 'application/json'
     })
     strictEqual(isBlobLike(blob), true)
   })
 
-  test('file', () => {
+  test('file', { skip: !File }, () => {
     const file = new File(['asd'], 'file.txt', {
       type: 'text/plain'
     })
