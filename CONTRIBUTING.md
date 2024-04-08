@@ -5,6 +5,7 @@
   * [Lint](#lint)
   * [Test](#test)
   * [Coverage](#coverage)
+  * [Releases](#releases)
   * [Update `WPTs`](#update-wpts)
   * [Building for externally shared node builtins](#external-builds)
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
@@ -165,6 +166,11 @@ npm run test
 ```bash
 npm run coverage
 ```
+
+<a id="releases"></a>
+### Issuing Releases
+
+Use the release github action.
 
 <a id="external-builds"></a>
 ### Building for externally shared node builtins
