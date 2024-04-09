@@ -2,6 +2,7 @@ import { Duplex, Readable, Writable } from 'stream'
 import { expectAssignable } from 'tsd'
 import { Client, Dispatcher } from '../..'
 import { URL } from 'url'
+import * as dns from 'node:dns'
 
 expectAssignable<Client>(new Client(''))
 expectAssignable<Client>(new Client('', {}))
@@ -40,6 +41,9 @@ expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
   }))
   expectAssignable<Client>(new Client('', {
     socketPath: '/var/run/docker.sock'
+  }))
+  expectAssignable<Client>(new Client('', {
+    lookup: dns.lookup
   }))
   expectAssignable<Client>(new Client('', {
     pipelining: 1

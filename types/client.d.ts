@@ -1,3 +1,4 @@
+import * as dns from "node:dns";
 import { URL } from 'url'
 import { TlsOptions } from 'tls'
 import Dispatcher from './dispatcher'
@@ -60,6 +61,8 @@ export declare namespace Client {
     keepAliveTimeoutThreshold?: number;
     /** TODO */
     socketPath?: string;
+    /** Custom DNS lookup function. Default: dns.lookup(). */
+    lookup?: Omit<typeof dns.lookup, '__promisify__'>;
     /** The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`. */
     pipelining?: number;
     /** @deprecated use the connect option instead */
