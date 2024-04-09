@@ -1382,7 +1382,7 @@ test('#2364 - Concurrent aborts', async t => {
   await t.completed
 })
 
-test('#3046 - GOAWAY Frame', { only: true }, async t => {
+test('#3046 - GOAWAY Frame', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers) => {
