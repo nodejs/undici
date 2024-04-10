@@ -1049,8 +1049,9 @@ test('Issue#3065 - fix bad destroy handling', async (t) => {
   await p.completed
 })
 
-test('Issue#3065 - fix bad destroy handling (h2)', { only: true }, async (t) => {
-  const p = tspl(t, { plan: 4 })
+test('Issue#3065 - fix bad destroy handling (h2)', async (t) => {
+  // Due to we handle the session, the request for h2 will fail on servername change
+  const p = tspl(t, { plan: 5 })
   const server = createSecureServer(pem)
   server.on('stream', (stream) => {
     stream.respond({
@@ -1101,10 +1102,11 @@ test('Issue#3065 - fix bad destroy handling (h2)', { only: true }, async (t) => 
       },
       onComplete () {
         dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders1', 'onData', 'onComplete'])
       },
       onError (err) {
-        p.ifError(err)
+        p.strictEqual(err.code, 'UND_ERR_INFO')
+        p.strictEqual(err.message, 'servername changed')
       }
     })
 
@@ -1124,14 +1126,14 @@ test('Issue#3065 - fix bad destroy handling (h2)', { only: true }, async (t) => 
         dispatches2.push('onResponseStarted')
       },
       onHeaders () {
-        dispatches2.push('onHeaders')
+        dispatches2.push('onHeaders2')
       },
       onData () {
         dispatches2.push('onData')
       },
       onComplete () {
         dispatches2.push('onComplete')
-        p.deepStrictEqual(dispatches2, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+        p.deepStrictEqual(dispatches2, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders2', 'onData', 'onComplete'])
       },
       onError (err) {
         p.ifError(err)
