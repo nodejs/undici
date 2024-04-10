@@ -819,7 +819,7 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
     stream.end('hello h2!')
   })
 
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 9 })
 
   server.listen(0, () => {
     const client = new Client(`https://localhost:${server.address().port}`, {
@@ -1228,6 +1228,8 @@ test(
 
     t.strictEqual(response.statusCode, 200)
 
+    await response.body.dump()
+
     await t.complete
   }
 )
@@ -1329,7 +1331,7 @@ test('#2364 - Concurrent aborts', async t => {
   const controller = new AbortController()
 
   client.request({
-    path: '/',
+    path: '/1',
     method: 'GET',
     headers: {
       'x-my-header': 'foo'
@@ -1343,7 +1345,7 @@ test('#2364 - Concurrent aborts', async t => {
   })
 
   client.request({
-    path: '/',
+    path: '/2',
     method: 'GET',
     headers: {
       'x-my-header': 'foo'
@@ -1354,7 +1356,7 @@ test('#2364 - Concurrent aborts', async t => {
   })
 
   client.request({
-    path: '/',
+    path: '/3',
     method: 'GET',
     headers: {
       'x-my-header': 'foo'
@@ -1364,10 +1366,11 @@ test('#2364 - Concurrent aborts', async t => {
     t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
     t.strictEqual(response.headers['x-custom-h2'], 'hello')
     t.strictEqual(response.statusCode, 200)
+    response.body.dump()
   })
 
   client.request({
-    path: '/',
+    path: '/4',
     method: 'GET',
     headers: {
       'x-my-header': 'foo'
