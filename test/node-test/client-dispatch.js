@@ -1048,3 +1048,98 @@ test('Issue#3065 - fix bad destroy handling', async (t) => {
 
   await p.completed
 })
+
+test('Issue#3065 - fix bad destroy handling (h2)', async (t) => {
+  // Due to we handle the session, the request for h2 will fail on servername change
+  const p = tspl(t, { plan: 5 })
+  const server = createSecureServer(pem)
+  server.on('stream', (stream) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      ':status': 200
+    })
+    stream.end('ended')
+  })
+
+  server.listen(0, () => {
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      },
+      allowH2: true
+    })
+
+    t.after(closeClientAndServerAsPromise(client, server))
+
+    const dispatches = []
+    const dispatches2 = []
+
+    client.once('disconnect', (...args) => {
+      const [,, err] = args
+      p.strictEqual(err.code, 'UND_ERR_INFO')
+      p.strictEqual(err.message, 'servername changed')
+    })
+
+    client.dispatch({
+      path: '/',
+      method: 'POST',
+      body: 'body'
+    }, {
+      onConnect () {
+        dispatches.push('onConnect')
+      },
+      onBodySent () {
+        dispatches.push('onBodySent')
+      },
+      onResponseStarted () {
+        dispatches.push('onResponseStarted')
+      },
+      onHeaders () {
+        dispatches.push('onHeaders1')
+      },
+      onData () {
+        dispatches.push('onData')
+      },
+      onComplete () {
+        dispatches.push('onComplete')
+        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders1', 'onData', 'onComplete'])
+      },
+      onError (err) {
+        p.strictEqual(err.code, 'UND_ERR_INFO')
+        p.strictEqual(err.message, 'servername changed')
+      }
+    })
+
+    client.dispatch({
+      servername: 'google.com',
+      path: '/',
+      method: 'POST',
+      body: 'body'
+    }, {
+      onConnect () {
+        dispatches2.push('onConnect')
+      },
+      onBodySent () {
+        dispatches2.push('onBodySent')
+      },
+      onResponseStarted () {
+        dispatches2.push('onResponseStarted')
+      },
+      onHeaders () {
+        dispatches2.push('onHeaders2')
+      },
+      onData () {
+        dispatches2.push('onData')
+      },
+      onComplete () {
+        dispatches2.push('onComplete')
+        p.deepStrictEqual(dispatches2, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders2', 'onData', 'onComplete'])
+      },
+      onError (err) {
+        p.ifError(err)
+      }
+    })
+  })
+
+  await p.completed
+})
