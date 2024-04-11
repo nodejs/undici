@@ -1,6 +1,6 @@
 'use strict'
 
-const { test } = require('node:test')
+const { describe, test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const util = require('../../lib/web/fetch/util')
@@ -336,5 +336,22 @@ test('parseMetadata', async (t) => {
       { algo: 'sha384', hash: undefined },
       { algo: 'sha512', hash: hash512.replace(/=/g, '') }
     ])
+  })
+})
+
+describe('urlHasHttpsScheme', () => {
+  const { urlHasHttpsScheme } = util
+
+  test('should return false for http url', () => {
+    assert.strictEqual(urlHasHttpsScheme('http://example.com'), false)
+  })
+  test('should return true for https url', () => {
+    assert.strictEqual(urlHasHttpsScheme('https://example.com'), true)
+  })
+  test('should return false for http object', () => {
+    assert.strictEqual(urlHasHttpsScheme({ protocol: 'http:' }), false)
+  })
+  test('should return true for https object', () => {
+    assert.strictEqual(urlHasHttpsScheme({ protocol: 'https:' }), true)
   })
 })
