@@ -53,27 +53,5 @@ jobs:
         with:
           script: |
             const defaultBranch = "${{ github.event.repository.default_branch }}"
-            const { owner, repo } = context.repo
-            const version = "v${{ steps.bump.outputs.version }}"
-
-            const { data: releases } = await github.rest.repos.listReleases({
-              owner,
-              repo
-            })
-
-            const { data: { body } } = await github.rest.repos.generateReleaseNotes({
-              owner,
-              repo,
-              tag_name: version,
-              target_commitish: defaultBranch,
-              previous_tag_name: releases[0]?.tag_name
-            });
-
-            await github.rest.pulls.create({
-              owner,
-              repo,
-              head: `release/${version}`,
-              base: defaultBranch,
-              title: `Create release ${version}`,
-              body
-            })
+            const versionTag = "v${{ steps.bump.outputs.version }}"
+            await require('./scripts/release').generatePr({ github, context, defaultBranch, versionTag })
