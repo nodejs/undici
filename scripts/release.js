@@ -16,7 +16,11 @@ const generateReleaseNotes = async ({ github, owner, repo, versionTag, defaultBr
     previous_tag_name: releases[0]?.tag_name
   })
 
-  return body
+  const bodyWithoutReleasePr = body.split('\n')
+    .filter((line) => !line.includes('[Release] v'))
+    .join('\n')
+
+  return bodyWithoutReleasePr
 }
 
 const generatePr = async ({ github, context, defaultBranch, versionTag }) => {
