@@ -2,6 +2,7 @@
 
 const os = require('node:os')
 const path = require('node:path')
+const http2 = require('node:http2')
 const { readFileSync } = require('node:fs')
 const { Writable } = require('node:stream')
 const { isMainThread } = require('node:worker_threads')
@@ -52,6 +53,10 @@ const undiciOptions = {
   headersTimeout,
   bodyTimeout
 }
+
+const http2NativeClient = http2.connect(httpsBaseOptions.url, {
+  rejectUnauthorized: false
+})
 
 const Class = connections > 1 ? Pool : Client
 const dispatcher = new Class(httpsBaseOptions.url, {
@@ -153,6 +158,30 @@ function printResults (results) {
 }
 
 const experiments = {
+  'native - http2' () {
+    return makeParallelRequests(resolve => {
+      const stream = http2NativeClient.request({
+        [http2.constants.HTTP2_HEADER_PATH]: httpsBaseOptions.path,
+        [http2.constants.HTTP2_HEADER_METHOD]: httpsBaseOptions.method
+      })
+
+      stream.end().on('response', () => {
+        stream.pipe(
+          new Writable({
+            write (chunk, encoding, callback) {
+              callback()
+            }
+          })
+        )
+          .on('error', (err) => {
+            console.log('http2 - request - response - error', err)
+          })
+          .on('finish', () => {
+            resolve()
+          })
+      })
+    })
+  },
   'undici - pipeline' () {
     return makeParallelRequests(resolve => {
       dispatcher
@@ -242,6 +271,7 @@ async function main () {
 
       printResults(results)
       dispatcher.destroy()
+      http2NativeClient.close()
     }
   )
 }
