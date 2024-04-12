@@ -16,40 +16,30 @@ function generateAsciiString (length) {
 const invalidIsomorphicEncodeValueRegex = /[^\x00-\xFF]/ // eslint-disable-line
 
 function isomorphicEncode1 (input) {
-  // 1. Assert: input contains no code points greater than U+00FF.
   for (let i = 0; i < input.length; i++) {
     if (input.charCodeAt(i) > 0xff) {
       throw new TypeError('Unreachable')
     }
   }
-  // 2. Return a byte sequence whose length is equal to input’s code
-  //    point length and whose bytes have the same values as the
-  //    values of input’s code points, in the same order
   return input
 }
 
-/**
- * @see https://infra.spec.whatwg.org/#isomorphic-encode
- * @param {string} input
- */
 function isomorphicEncode2 (input) {
-  // 1. Assert: input contains no code points greater than U+00FF.
   if (invalidIsomorphicEncodeValueRegex.test(input)) {
     throw new TypeError('Unreachable')
   }
-  // 2. Return a byte sequence whose length is equal to input’s code
-  //    point length and whose bytes have the same values as the
-  //    values of input’s code points, in the same order
   return input
 }
 
 const settings = {
-  small: `${generateAsciiString(10)}`,
-  middle: `${generateAsciiString(30)}`,
-  long: `${generateAsciiString(70)}`
+  small: 10,
+  middle: 30,
+  long: 70
 }
 
-for (const [runName, value] of Object.entries(settings)) {
+for (const [runName, length] of Object.entries(settings)) {
+  const value = generateAsciiString(length);
+
   [
     { name: `${runName} (valid)`, value },
     {
