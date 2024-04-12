@@ -71,6 +71,33 @@ async function postFormRequest (port = 3001) {
 }
 ```
 
+### A FormData request with file stream, read the response body as text
+
+```js
+const { request } = require('undici')
+const { openAsBlob } = require('fs')
+
+async function formDataBlobRequest () {
+  // Make a FormData request with file stream:
+
+  const formData = new FormData()
+  formData.append('field', 42)
+  formData.set('file', await openAsBlob('./index.mjs'))
+
+  const response = await request('http://127.0.0.1:3000', {
+    method: 'POST',
+    body: formData
+  })
+  console.log(await response.body.text())
+
+  const data = await body.text()
+  console.log('response received', statusCode)
+  console.log('headers', headers)
+  console.log('data', data)
+}
+
+```
+
 ### A DELETE request
 ```js
 const { request } = require('undici')

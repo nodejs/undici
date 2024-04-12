@@ -66,7 +66,10 @@ test('request timeout with readable body', async (t) => {
 test('body timeout', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -102,7 +105,10 @@ test('body timeout', async (t) => {
 test('overridden request timeout', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -136,7 +142,10 @@ test('overridden request timeout', async (t) => {
 test('overridden body timeout', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -172,7 +181,10 @@ test('overridden body timeout', async (t) => {
 test('With EE signal', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -209,7 +221,10 @@ test('With EE signal', async (t) => {
 test('With abort-controller signal', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -246,7 +261,10 @@ test('With abort-controller signal', async (t) => {
 test('Abort before timeout (EE)', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -283,7 +301,10 @@ test('Abort before timeout (EE)', async (t) => {
 test('Abort before timeout (abort-controller)', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -320,7 +341,10 @@ test('Abort before timeout (abort-controller)', async (t) => {
 test('Timeout with pipelining', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -363,7 +387,10 @@ test('Timeout with pipelining', async (t) => {
 test('Global option', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -399,7 +426,10 @@ test('Global option', async (t) => {
 test('Request options overrides global option', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -460,7 +490,10 @@ test('client.destroy should cancel the timeout', async (t) => {
 test('client.close should wait for the timeout', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -542,7 +575,10 @@ test('Validation', async (t) => {
 test('Disable request timeout', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -586,7 +622,10 @@ test('Disable request timeout', async (t) => {
 test('Disable request timeout for a single request', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -630,7 +669,10 @@ test('Disable request timeout for a single request', async (t) => {
 test('stream timeout', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -668,7 +710,10 @@ test('stream timeout', async (t) => {
 test('stream custom timeout', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -708,7 +753,10 @@ test('stream custom timeout', async (t) => {
 test('pipeline timeout', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -765,7 +813,10 @@ test('pipeline timeout', async (t) => {
 test('pipeline timeout', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -824,7 +875,10 @@ test('pipeline timeout', async (t) => {
 test('client.close should not deadlock', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }

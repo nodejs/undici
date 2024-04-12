@@ -5,6 +5,7 @@
   * [Lint](#lint)
   * [Test](#test)
   * [Coverage](#coverage)
+  * [Releases](#releases)
   * [Update `WPTs`](#update-wpts)
   * [Building for externally shared node builtins](#external-builds)
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
@@ -165,6 +166,12 @@ npm run test
 ```bash
 npm run coverage
 ```
+
+<a id="releases"></a>
+### Issuing Releases
+
+Release is automatic on commit to main which bumps the package.json version field.
+Use the "Create release PR" github action to generate a release PR.
 
 <a id="external-builds"></a>
 ### Building for externally shared node builtins
