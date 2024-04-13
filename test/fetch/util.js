@@ -1,6 +1,6 @@
 'use strict'
 
-const { test } = require('node:test')
+const { describe, test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const util = require('../../lib/web/fetch/util')
@@ -336,5 +336,60 @@ test('parseMetadata', async (t) => {
       { algo: 'sha384', hash: undefined },
       { algo: 'sha512', hash: hash512.replace(/=/g, '') }
     ])
+  })
+})
+
+describe('urlHasHttpsScheme', () => {
+  const { urlHasHttpsScheme } = util
+
+  test('should return false for http url', () => {
+    assert.strictEqual(urlHasHttpsScheme('http://example.com'), false)
+  })
+  test('should return true for https url', () => {
+    assert.strictEqual(urlHasHttpsScheme('https://example.com'), true)
+  })
+  test('should return false for http object', () => {
+    assert.strictEqual(urlHasHttpsScheme({ protocol: 'http:' }), false)
+  })
+  test('should return true for https object', () => {
+    assert.strictEqual(urlHasHttpsScheme({ protocol: 'https:' }), true)
+  })
+})
+
+describe('isValidHeaderValue', () => {
+  const { isValidHeaderValue } = util
+
+  test('should return true for valid string', () => {
+    assert.strictEqual(isValidHeaderValue('valid123'), true)
+    assert.strictEqual(isValidHeaderValue('va lid123'), true)
+    assert.strictEqual(isValidHeaderValue('va\tlid123'), true)
+  })
+  test('should return false for string containing NUL', () => {
+    assert.strictEqual(isValidHeaderValue('invalid\0'), false)
+    assert.strictEqual(isValidHeaderValue('in\0valid'), false)
+    assert.strictEqual(isValidHeaderValue('\0invalid'), false)
+  })
+  test('should return false for string containing CR', () => {
+    assert.strictEqual(isValidHeaderValue('invalid\r'), false)
+    assert.strictEqual(isValidHeaderValue('in\rvalid'), false)
+    assert.strictEqual(isValidHeaderValue('\rinvalid'), false)
+  })
+  test('should return false for string containing LF', () => {
+    assert.strictEqual(isValidHeaderValue('invalid\n'), false)
+    assert.strictEqual(isValidHeaderValue('in\nvalid'), false)
+    assert.strictEqual(isValidHeaderValue('\ninvalid'), false)
+  })
+
+  test('should return false for string with leading TAB', () => {
+    assert.strictEqual(isValidHeaderValue('\tinvalid'), false)
+  })
+  test('should return false for string with trailing TAB', () => {
+    assert.strictEqual(isValidHeaderValue('invalid\t'), false)
+  })
+  test('should return false for string with leading SPACE', () => {
+    assert.strictEqual(isValidHeaderValue(' invalid'), false)
+  })
+  test('should return false for string with trailing SPACE', () => {
+    assert.strictEqual(isValidHeaderValue('invalid '), false)
   })
 })
