@@ -5,6 +5,7 @@
   - [Lint](#lint)
   - [Test](#test)
   - [Coverage](#coverage)
+  - [Releases](#releases)
   - [Update `WPTs`](#update-wpts)
   - [Building for externally shared node builtins](#external-builds)
   - [Benchmarks](#benchmarks)
@@ -177,7 +178,12 @@ npm run test
 npm run coverage
 ```
 
-<a id="benchmarks"></a>
+<a id="releases"></a>
+
+### Issuing Releases
+
+Release is automatic on commit to main which bumps the package.json version field.
+Use the "Create release PR" github action to generate a release PR.
 
 <a id="external-builds"></a>
 
@@ -189,7 +195,7 @@ an unbundled version instead of bundling one in `libnode.so`.
 To enable this, pass `EXTERNAL_PATH=/path/to/global/node_modules/undici` to `build/wasm.js`.
 You shall also pass this path to `--shared-builtin-undici/undici-path` in Node.js's `configure.py`.
 
-<a id="developers-certificate-of-origin"></a>
+<a id="benchmarks"></a>
 
 ### Benchmarks
 
@@ -208,6 +214,8 @@ cd docs && npm i && npm run serve
 ```
 
 The documentation will be available at `http://localhost:3000`.
+
+<a id="developers-certificate-of-origin"></a>
 
 ## Developer's Certificate of Origin 1.1
 

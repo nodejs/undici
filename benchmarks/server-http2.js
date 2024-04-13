@@ -35,13 +35,19 @@ if (cluster.isPrimary) {
       cert,
       allowHTTP1: true,
       sessionTimeout
-    },
-    (req, res) => {
-      setTimeout(() => {
-        res.end(buf)
-      }, timeout)
     }
   )
+
+  server.on('stream', (stream) => {
+    setTimeout(() => {
+      stream.respond({
+        'content-type': 'text/plain; charset=utf-8',
+        ':status': 200
+      })
+
+      stream.setEncoding('utf-8').end(buf)
+    }, timeout)
+  })
 
   server.keepAliveTimeout = 600e3
 
