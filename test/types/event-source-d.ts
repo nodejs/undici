@@ -1,11 +1,10 @@
 import { URL } from 'url'
-import { expectType } from 'tsd'
+import { expectType, expectAssignable } from 'tsd'
 
-import {
-	EventSource,
-} from '../../'
+import { EventSource, EventSourceInit, Dispatcher } from '../../'
 
 declare const eventSource: EventSource
+declare const agent: Dispatcher
 
 expectType<() => void>(eventSource.close)
 expectType<string>(eventSource.url)
@@ -18,3 +17,7 @@ expectType<EventSource>(new EventSource('https://example.com', {}))
 expectType<EventSource>(new EventSource('https://example.com', {
 	withCredentials: true,
 }))
+
+expectAssignable<EventSourceInit>({ dispatcher: agent })
+expectAssignable<EventSourceInit>({ withCredentials: true })
+expectAssignable<EventSourceInit>({})
