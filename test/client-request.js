@@ -3,7 +3,7 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
+const { test, after, describe, before } = require('node:test')
 const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const EE = require('node:events')
@@ -11,7 +11,7 @@ const { kConnect } = require('../lib/core/symbols')
 const { Readable } = require('node:stream')
 const net = require('node:net')
 const { promisify } = require('node:util')
-const { NotSupportedError } = require('../lib/core/errors')
+const { NotSupportedError, InvalidArgumentError } = require('../lib/core/errors')
 const { parseFormDataString } = require('./utils/formdata')
 
 test('request dump big', async (t) => {
@@ -53,6 +53,7 @@ test('request dump', async (t) => {
   t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
+    res.setHeader('content-length', 5)
     res.end('hello')
   })
   after(() => server.close())
@@ -391,34 +392,148 @@ test('request text', async (t) => {
   await t.completed
 })
 
-test('empty host header', async (t) => {
-  t = tspl(t, { plan: 3 })
+describe('headers', () => {
+  describe('invalid headers', () => {
+    test('invalid header value - array with string with invalid character', async (t) => {
+      t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
-    res.end(req.headers.host)
-  })
-  after(() => server.close())
+      const client = new Client('http://localhost:8080')
+      after(() => client.destroy())
 
-  server.listen(0, async () => {
-    const serverAddress = `localhost:${server.address().port}`
-    const client = new Client(`http://${serverAddress}`)
-    after(() => client.destroy())
-
-    const getWithHost = async (host, wanted) => {
-      const { body } = await client.request({
+      t.rejects(client.request({
         path: '/',
         method: 'GET',
-        headers: { host }
-      })
-      t.strictEqual(await body.text(), wanted)
-    }
+        headers: { name: ['test\0'] }
+      }), new InvalidArgumentError('invalid name header'))
 
-    await getWithHost('test', 'test')
-    await getWithHost(undefined, serverAddress)
-    await getWithHost('', '')
+      await t.completed
+    })
+    test('invalid header value - array with POJO', async (t) => {
+      t = tspl(t, { plan: 1 })
+
+      const client = new Client('http://localhost:8080')
+      after(() => client.destroy())
+
+      t.rejects(client.request({
+        path: '/',
+        method: 'GET',
+        headers: { name: [{}] }
+      }), new InvalidArgumentError('invalid name header'))
+
+      await t.completed
+    })
+
+    test('invalid header value - string with invalid character', async (t) => {
+      t = tspl(t, { plan: 1 })
+
+      const client = new Client('http://localhost:8080')
+      after(() => client.destroy())
+
+      t.rejects(client.request({
+        path: '/',
+        method: 'GET',
+        headers: { name: 'test\0' }
+      }), new InvalidArgumentError('invalid name header'))
+
+      await t.completed
+    })
   })
 
-  await t.completed
+  describe('array', () => {
+    let serverAddress
+    const server = createServer((req, res) => {
+      res.end(JSON.stringify(req.headers))
+    })
+
+    before(async () => {
+      server.listen(0)
+      await EE.once(server, 'listening')
+      serverAddress = `localhost:${server.address().port}`
+    })
+
+    after(() => server.close())
+
+    test('empty host header', async (t) => {
+      t = tspl(t, { plan: 4 })
+
+      const client = new Client(`http://${serverAddress}`)
+      after(() => client.destroy())
+
+      const testCase = async (expected, actual) => {
+        const { body } = await client.request({
+          path: '/',
+          method: 'GET',
+          headers: expected
+        })
+
+        const result = await body.json()
+        t.deepStrictEqual(result, { ...result, ...actual })
+      }
+
+      await testCase({ key: [null] }, { key: '' })
+      await testCase({ key: ['test'] }, { key: 'test' })
+      await testCase({ key: ['test', 'true'] }, { key: 'test, true' })
+      await testCase({ key: ['test', true] }, { key: 'test, true' })
+
+      await t.completed
+    })
+  })
+
+  describe('host', () => {
+    let serverAddress
+    const server = createServer((req, res) => {
+      res.end(req.headers.host)
+    })
+
+    before(async () => {
+      server.listen(0)
+      await EE.once(server, 'listening')
+      serverAddress = `localhost:${server.address().port}`
+    })
+
+    after(() => server.close())
+
+    test('invalid host header', async (t) => {
+      t = tspl(t, { plan: 1 })
+
+      const client = new Client(`http://${serverAddress}`)
+      after(() => client.destroy())
+
+      t.rejects(client.request({
+        path: '/',
+        method: 'GET',
+        headers: {
+          host: [
+            'www.example.com'
+          ]
+        }
+      }), new InvalidArgumentError('invalid host header'))
+
+      await t.completed
+    })
+
+    test('empty host header', async (t) => {
+      t = tspl(t, { plan: 3 })
+
+      const client = new Client(`http://${serverAddress}`)
+      after(() => client.destroy())
+
+      const getWithHost = async (host, wanted) => {
+        const { body } = await client.request({
+          path: '/',
+          method: 'GET',
+          headers: { host }
+        })
+        t.strictEqual(await body.text(), wanted)
+      }
+
+      await getWithHost('test', 'test')
+      await getWithHost(undefined, serverAddress)
+      await getWithHost('', '')
+
+      await t.completed
+    })
+  })
 })
 
 test('request long multibyte text', async (t) => {
