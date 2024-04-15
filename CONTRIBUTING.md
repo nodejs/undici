@@ -8,11 +8,15 @@
   * [Releases](#releases)
   * [Update `WPTs`](#update-wpts)
   * [Building for externally shared node builtins](#external-builds)
+  *  [Benchmarks](#benchmarks
+  *  [Documentation](#documentation)
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
   * [Moderation Policy](#moderation-policy)
 
 <a id="guides"></a>
 ## Guides
+
+This is a collection of guides on how to run and update `undici`, and how to run different parts of the project.
 
 <a id="update-llhttp"></a>
 ### Update `llhttp`
@@ -36,6 +40,7 @@ git clone git@github.com:nodejs/llhttp.git
 
 cd llhttp
 ```
+
 #### Checkout a `llhttp` release
 
 ```bash
@@ -109,6 +114,7 @@ git sparse-checkout add /mimesniff
 git sparse-checkout add /storage
 git sparse-checkout add /service-workers
 ```
+
 </details>
 
 #### Sparse-clone the [wpt](https://github.com/web-platform-tests/wpt) repo
@@ -146,7 +152,6 @@ npm run test:wpt
 ```
 
 <a id="lint"></a>
-
 ### Lint
 
 ```bash
@@ -182,6 +187,24 @@ an unbundled version instead of bundling one in `libnode.so`.
 To enable this, pass `EXTERNAL_PATH=/path/to/global/node_modules/undici` to `build/wasm.js`.
 You shall also pass this path to `--shared-builtin-undici/undici-path` in Node.js's `configure.py`.
 
+<a id="benchmarks"></a>
+### Benchmarks
+
+```bash
+cd benchmarks && npm i && npm run bench
+```
+
+The benchmarks will be available at `http://localhost:3042`.
+
+<a id="documentation"></a>
+### Documentation
+
+```bash
+cd docs && npm i && npm run serve
+```
+
+The documentation will be available at `http://localhost:3000`.
+
 <a id="developers-certificate-of-origin"></a>
 ## Developer's Certificate of Origin 1.1
 
@@ -214,5 +237,4 @@ By making a contribution to this project, I certify that:
 
 The [Node.js Moderation Policy] applies to this project.
 
-[Node.js Moderation Policy]:
-https://github.com/nodejs/admin/blob/main/Moderation-Policy.md
+[Node.js Moderation Policy]: https://github.com/nodejs/admin/blob/main/Moderation-Policy.md
