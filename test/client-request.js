@@ -437,6 +437,21 @@ describe('headers', () => {
 
       await t.completed
     })
+
+    test('invalid header value - object', async (t) => {
+      t = tspl(t, { plan: 1 })
+
+      const client = new Client('http://localhost:8080')
+      after(() => client.destroy())
+
+      t.rejects(client.request({
+        path: '/',
+        method: 'GET',
+        headers: { name: new Date() }
+      }), new InvalidArgumentError('invalid name header'))
+
+      await t.completed
+    })
   })
 
   describe('array', () => {
