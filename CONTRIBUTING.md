@@ -1,26 +1,24 @@
 # Contributing to Undici
 
-- [Guides](#guides)
-  - [Update `llhttp`](#update-llhttp)
-  - [Lint](#lint)
-  - [Test](#test)
-  - [Coverage](#coverage)
-  - [Releases](#releases)
-  - [Update `WPTs`](#update-wpts)
-  - [Building for externally shared node builtins](#external-builds)
-  - [Benchmarks](#benchmarks)
-  - [Documentation](#documentation)
-- [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
-  - [Moderation Policy](#moderation-policy)
+* [Guides](#guides)
+  * [Update `llhttp`](#update-llhttp)
+  * [Lint](#lint)
+  * [Test](#test)
+  * [Coverage](#coverage)
+  * [Releases](#releases)
+  * [Update `WPTs`](#update-wpts)
+  * [Building for externally shared node builtins](#external-builds)
+  *  [Benchmarks](#benchmarks
+  *  [Documentation](#documentation)
+* [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
+  * [Moderation Policy](#moderation-policy)
 
 <a id="guides"></a>
-
 ## Guides
 
 This is a collection of guides on how to run and update `undici`, and how to run different parts of the project.
 
 <a id="update-llhttp"></a>
-
 ### Update `llhttp`
 
 The HTTP parser used by `undici` is a WebAssembly build of [`llhttp`](https://github.com/nodejs/llhttp).
@@ -92,7 +90,6 @@ npm run build:wasm
 Create a commit which includes all of the updated files in lib/llhttp.
 
 <a id="update-wpts"></a>
-
 ### Update `WPTs`
 
 `undici` runs a subset of the [`web-platform-tests`](https://github.com/web-platform-tests/wpt).
@@ -155,7 +152,6 @@ npm run test:wpt
 ```
 
 <a id="lint"></a>
-
 ### Lint
 
 ```bash
@@ -163,7 +159,6 @@ npm run lint
 ```
 
 <a id="test"></a>
-
 ### Test
 
 ```bash
@@ -171,7 +166,6 @@ npm run test
 ```
 
 <a id="coverage"></a>
-
 ### Coverage
 
 ```bash
@@ -179,14 +173,12 @@ npm run coverage
 ```
 
 <a id="releases"></a>
-
 ### Issuing Releases
 
 Release is automatic on commit to main which bumps the package.json version field.
 Use the "Create release PR" github action to generate a release PR.
 
 <a id="external-builds"></a>
-
 ### Building for externally shared node builtins
 
 If you are packaging `undici` for a distro, this might help if you would like to use
@@ -196,7 +188,6 @@ To enable this, pass `EXTERNAL_PATH=/path/to/global/node_modules/undici` to `bui
 You shall also pass this path to `--shared-builtin-undici/undici-path` in Node.js's `configure.py`.
 
 <a id="benchmarks"></a>
-
 ### Benchmarks
 
 ```bash
@@ -206,7 +197,6 @@ cd benchmarks && npm i && npm run bench
 The benchmarks will be available at `http://localhost:3042`.
 
 <a id="documentation"></a>
-
 ### Documentation
 
 ```bash
@@ -216,7 +206,6 @@ cd docs && npm i && npm run serve
 The documentation will be available at `http://localhost:3000`.
 
 <a id="developers-certificate-of-origin"></a>
-
 ## Developer's Certificate of Origin 1.1
 
 By making a contribution to this project, I certify that:
@@ -244,7 +233,6 @@ By making a contribution to this project, I certify that:
   this project or the open source license(s) involved.
 
 <a id="moderation-policy"></a>
-
 ### Moderation Policy
 
 The [Node.js Moderation Policy] applies to this project.
