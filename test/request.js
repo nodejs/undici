@@ -163,6 +163,20 @@ test('Absolute URL as pathname should be included in req.path', async (t) => {
   t.end()
 })
 
+describe('DispatchOptions#expectContinue', () => {
+  test('Should throw if invalid expectContinue option', async t => {
+    t = tspl(t, { plan: 1 })
+
+    await t.rejects(request({
+      method: 'GET',
+      origin: 'http://somehost.xyz',
+      expectContinue: 0
+    }), /invalid expectContinue/)
+
+    await t.completed
+  })
+})
+
 describe('DispatchOptions#reset', () => {
   test('Should throw if invalid reset option', async t => {
     t = tspl(t, { plan: 1 })

@@ -117,7 +117,7 @@ module.exports.Headers = require('./lib/web/fetch/headers').Headers
 module.exports.Response = require('./lib/web/fetch/response').Response
 module.exports.Request = require('./lib/web/fetch/request').Request
 module.exports.FormData = require('./lib/web/fetch/formdata').FormData
-module.exports.File = require('./lib/web/fetch/file').File
+module.exports.File = globalThis.File ?? require('node:buffer').File
 module.exports.FileReader = require('./lib/web/fileapi/filereader').FileReader
 
 const { setGlobalOrigin, getGlobalOrigin } = require('./lib/web/fetch/global')

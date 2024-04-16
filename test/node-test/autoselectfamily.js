@@ -6,7 +6,6 @@ const { Resolver } = require('node:dns')
 const dnsPacket = require('dns-packet')
 const { createServer } = require('node:http')
 const { Client, Agent, request } = require('../..')
-const { nodeHasAutoSelectFamily } = require('../../lib/core/util')
 const { tspl } = require('@matteo.collina/tspl')
 
 /*
@@ -16,7 +15,7 @@ const { tspl } = require('@matteo.collina/tspl')
  * explicitly passed in tests in this file to avoid compatibility problems across release lines.
  *
  */
-const skip = !nodeHasAutoSelectFamily
+const skip = false
 
 function _lookup (resolver, hostname, options, cb) {
   resolver.resolve(hostname, 'ANY', (err, replies) => {

@@ -386,7 +386,7 @@ test('invalid options throws', (t, done) => {
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
-    assert.strictEqual(err.message, 'Invalid URL protocol: the URL must start with `http:` or `https:`.')
+    assert.strictEqual(err.message, 'Invalid URL hostname: the hostname must be a string or null/undefined.')
   }
 
   try {
