@@ -957,7 +957,7 @@ const client = new Client("http://example.com").compose(
 The `dump` interceptor enables you to dump the response body from a request upon a given limit.
 
 **Options**
-- `maxSize` - The maximum size (in bytes) of the response body to dump. If the size exceeds this value then the connection will be closed. Default: `1048576`.
+- `maxSize` - The maximum size (in bytes) of the response body to dump. If the size of the request's body exceeds this value then the connection will be closed. Default: `1048576`.
 
 > The `Dispatcher#options` also gets extended with the option `dumpMaxSize` which can be used to set the default `maxSize` at a request-per-request basis.
 
