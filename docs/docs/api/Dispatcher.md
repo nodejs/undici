@@ -958,8 +958,10 @@ The `dump` interceptor enables you to dump the response body from a request upon
 
 **Options**
 - `maxSize` - The maximum size (in bytes) of the response body to dump. If the size of the request's body exceeds this value then the connection will be closed. Default: `1048576`.
+- `abortOnDumped` - States whether or not abort the request after the response's body being dumped. Default: `true`.
+- `waitForTrailers` - Hints the dispatcher to wait for trailers if the response's body has been dumped. Default: `false`.
 
-> The `Dispatcher#options` also gets extended with the option `dumpMaxSize` which can be used to set the default `maxSize` at a request-per-request basis.
+> The `Dispatcher#options` also gets extended with the options `dumpMaxSize`, `abortOnDumped`, and `waitForTrailers` which can be used to configure the interceptor at a request-per-request basis.
 
 **Example - Basic Dump Interceptor**
 
@@ -970,6 +972,8 @@ const { dump } = interceptors;
 const client = new Client("http://example.com").compose(
   dump({
     maxSize: 1024,
+    abortOnDumped: true,
+    waitForTrailers: false,
   })
 );
 
@@ -979,6 +983,8 @@ client.dispatch(
     path: "/",
     method: "GET",
     dumpMaxSize: 1024,
+    abortOnDumped: true,
+    waitForTrailers: false,
   },
   handler
 );
