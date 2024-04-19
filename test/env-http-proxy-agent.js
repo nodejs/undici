@@ -90,10 +90,10 @@ test('prefers options over env vars', async (t) => {
     httpProxy: 'http://opts.example.com:8080',
     httpsProxy: 'http://opts.example.com:8443'
   }
-  process.env.HTTP_PROXY = 'http://upper.example.com:8080'
-  process.env.HTTPS_PROXY = 'http://upper.example.com:8443'
   process.env.http_proxy = 'http://lower.example.com:8080'
   process.env.https_proxy = 'http://lower.example.com:8443'
+  process.env.HTTP_PROXY = 'http://upper.example.com:8080'
+  process.env.HTTPS_PROXY = 'http://upper.example.com:8443'
   const dispatcher = new EnvHttpProxyAgent(opts)
   t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://opts.example.com:8080/')
   t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://opts.example.com:8443/')
@@ -102,10 +102,10 @@ test('prefers options over env vars', async (t) => {
 
 test('prefers uppercase over lower case env vars', async (t) => {
   t = tspl(t, { plan: 2 })
-  process.env.HTTP_PROXY = 'http://upper.example.com:8080'
-  process.env.HTTPS_PROXY = 'http://upper.example.com:8443'
   process.env.http_proxy = 'http://lower.example.com:8080'
   process.env.https_proxy = 'http://lower.example.com:8443'
+  process.env.HTTP_PROXY = 'http://upper.example.com:8080'
+  process.env.HTTPS_PROXY = 'http://upper.example.com:8443'
   const dispatcher = new EnvHttpProxyAgent()
   t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://upper.example.com:8080/')
   t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://upper.example.com:8443/')
@@ -114,10 +114,10 @@ test('prefers uppercase over lower case env vars', async (t) => {
 
 test('prefers uppercase over lower case env vars even when empty', async (t) => {
   t = tspl(t, { plan: 2 })
-  process.env.HTTP_PROXY = ''
-  process.env.HTTPS_PROXY = ''
   process.env.http_proxy = 'http://lower.example.com:8080'
   process.env.https_proxy = 'http://lower.example.com:8443'
+  process.env.HTTP_PROXY = ''
+  process.env.HTTPS_PROXY = ''
   const dispatcher = new EnvHttpProxyAgent()
 
   t.deepStrictEqual(dispatcher[kHttpProxyAgent], dispatcher[kNoProxyAgent])
@@ -435,8 +435,8 @@ describe('NO_PROXY', () => {
 
   test('prefers uppercase over lower case', async (t) => {
     t = tspl(t, { plan: 2 })
-    process.env.NO_PROXY = 'example.com'
     process.env.no_proxy = 'sub.example.com'
+    process.env.NO_PROXY = 'example.com'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(6)
     t.ok(await doesNotProxy('http://example.com'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://sub.example.com'))
@@ -445,8 +445,8 @@ describe('NO_PROXY', () => {
 
   test('prefers uppercase over lower case even when it is empty', async (t) => {
     t = tspl(t, { plan: 1 })
-    process.env.NO_PROXY = ''
     process.env.no_proxy = 'example.com'
+    process.env.NO_PROXY = ''
     const { dispatcher, usesProxyAgent } = createEnvHttpProxyAgentWithMocks()
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example.com'))
     return dispatcher.close()

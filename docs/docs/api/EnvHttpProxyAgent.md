@@ -1,5 +1,7 @@
 # Class: EnvHttpProxyAgent
 
+Stability: Experimental.
+
 Extends: `undici.Dispatcher`
 
 EnvHttpProxyAgent automatically reads the proxy configuration from the environment variables `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` and sets up the proxy agents accordingly. When `HTTP_PROXY` and `HTTPS_PROXY` are set, `HTTP_PROXY` is used for HTTP requests and `HTTPS_PROXY` is used for HTTPS requests. If only `HTTP_PROXY` is set, `HTTP_PROXY` is used for both HTTP and HTTPS requests. If only `HTTPS_PROXY` is set, it is only used for HTTPS requests.
@@ -44,6 +46,23 @@ import { EnvHttpProxyAgent } from 'undici'
 const envHttpProxyAgent = new EnvHttpProxyAgent()
 ```
 
+#### Example - Basic Proxy Fetch with global agent dispatcher
+
+```js
+import { setGlobalDispatcher, fetch, EnvHttpProxyAgent } from 'undici'
+
+const envHttpProxyAgent = new EnvHttpProxyAgent()
+setGlobalDispatcher(envHttpProxyAgent)
+
+const { statusCode, body } = await fetch('http://localhost:3000/foo')
+
+console.log('response received', statusCode) // response received 200
+
+for await (const data of body) {
+  console.log('data', data.toString('utf8')) // data foo
+}
+```
+
 #### Example - Basic Proxy Request with global agent dispatcher
 
 ```js
@@ -78,7 +97,26 @@ console.log('response received', statusCode) // response received 200
 for await (const data of body) {
   console.log('data', data.toString('utf8')) // data foo
 }
+
+```#### Example - Basic Proxy Fetch with local agent dispatcher
+
+```js
+import { EnvHttpProxyAgent, fetch } from 'undici'
+
+const envHttpProxyAgent = new EnvHttpProxyAgent()
+
+const {
+  statusCode,
+  body
+} = await fetch('http://localhost:3000/foo', { dispatcher: envHttpProxyAgent })
+
+console.log('response received', statusCode) // response received 200
+
+for await (const data of body) {
+  console.log('data', data.toString('utf8')) // data foo
+}
 ```
+
 
 ## Instance Methods
 
