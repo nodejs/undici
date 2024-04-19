@@ -97,8 +97,9 @@ console.log('response received', statusCode) // response received 200
 for await (const data of body) {
   console.log('data', data.toString('utf8')) // data foo
 }
+```
 
-```#### Example - Basic Proxy Fetch with local agent dispatcher
+#### Example - Basic Proxy Fetch with local agent dispatcher
 
 ```js
 import { EnvHttpProxyAgent, fetch } from 'undici'
@@ -116,7 +117,6 @@ for await (const data of body) {
   console.log('data', data.toString('utf8')) // data foo
 }
 ```
-
 
 ## Instance Methods
 
