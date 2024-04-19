@@ -303,6 +303,7 @@ test('request streaming with Readable.from(buf)', async (t) => {
 test('request DELETE, content-length=0, with body', async (t) => {
   t = tspl(t, { plan: 5 })
   const server = createServer((req, res) => {
+    res.shouldKeepAlive = false
     res.end()
   })
   server.on('request', (req, res) => {
