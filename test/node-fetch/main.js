@@ -1385,7 +1385,7 @@ describe('node-fetch', () => {
       assert.strictEqual(res.headers.get('content-type'), 'text/plain')
       return res.text().then(() => {
         assert.strictEqual(res.bodyUsed, true)
-        return assert.rejects(res.text(), new TypeError('Body is unusable'))
+        return assert.rejects(res.text(), new TypeError('Body is unusable: Body has already been read'))
       })
     })
   })
