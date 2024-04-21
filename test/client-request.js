@@ -53,6 +53,7 @@ test('request dump', async (t) => {
   t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
+    res.shouldKeepAlive = false
     res.setHeader('content-length', 5)
     res.end('hello')
   })

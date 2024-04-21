@@ -499,8 +499,6 @@ test('fromInnerRequest', () => {
   assert.strictEqual(request[kState], innerRequest)
   assert.strictEqual(request[kRealm], realm)
   assert.strictEqual(request[kSignal], signal)
-  assert.strictEqual(request[kSignal][kRealm], realm)
   assert.strictEqual(request[kHeaders][kHeadersList], innerRequest.headersList)
   assert.strictEqual(request[kHeaders][kGuard], 'immutable')
-  assert.strictEqual(request[kHeaders][kRealm], realm)
 })

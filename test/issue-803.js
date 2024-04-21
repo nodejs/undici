@@ -8,16 +8,18 @@ const { createServer } = require('node:http')
 
 test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, async (t) => {
   t = tspl(t, { plan: 2 })
-
   const SIZE = 5900373096
-  const chunkSize = 65536
-  const parts = (SIZE / chunkSize) | 0
-  const lastPartSize = SIZE % chunkSize
-  const chunk = Buffer.allocUnsafe(chunkSize)
 
   const server = createServer(async (req, res) => {
+    const chunkSize = res.writableHighWaterMark << 5
+    const parts = (SIZE / chunkSize) | 0
+    const lastPartSize = SIZE % chunkSize
+    const chunk = Buffer.allocUnsafe(chunkSize)
+
+    res.shouldKeepAlive = false
     res.setHeader('content-length', SIZE)
     let i = 0
+
     while (i++ < parts) {
       if (res.write(chunk) === false) {
         await once(res, 'drain')
