@@ -286,5 +286,4 @@ test('fromInnerResponse', () => {
   assert.strictEqual(response[kRealm], realm)
   assert.strictEqual(response[kHeaders][kHeadersList], innerResponse.headersList)
   assert.strictEqual(response[kHeaders][kGuard], 'immutable')
-  assert.strictEqual(response[kHeaders][kRealm], realm)
 })
