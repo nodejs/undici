@@ -370,7 +370,7 @@ test('locked blob body', (t, done) => {
     const res = await fetch(`http://localhost:${server.address().port}`)
     const reader = res.body.getReader()
     res.blob().catch(err => {
-      strictEqual(err.message, 'Body is unusable')
+      strictEqual(err.message, 'Body is unusable: Body has already been read')
       reader.cancel()
     }).finally(done)
   })
@@ -390,7 +390,7 @@ test('disturbed blob body', (t, done) => {
       ok(true)
     })
     await res.blob().catch(err => {
-      strictEqual(err.message, 'Body is unusable')
+      strictEqual(err.message, 'Body is unusable: Body has already been read')
     })
     done()
   })
