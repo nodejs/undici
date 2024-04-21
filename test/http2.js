@@ -234,7 +234,7 @@ test('Should support H2 GOAWAY (server-side)', async t => {
 
   server.on('session', session => {
     setTimeout(() => {
-      session.goaway(204)
+      session.goaway(0)
     }, 1000)
   })
 
@@ -274,7 +274,7 @@ test('Should support H2 GOAWAY (server-side)', async t => {
 
   t.ok(url instanceof URL)
   t.deepStrictEqual(disconnectClient, [client])
-  t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 204')
+  t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
 })
 
 test('Should throw if bad allowH2 has been passed', async t => {
@@ -1427,20 +1427,21 @@ test('#3046 - GOAWAY Frame', async t => {
     t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
   })
 
-  client.request({
+  const response = await client.request({
     path: '/',
     method: 'GET',
     headers: {
       'x-my-header': 'foo'
     }
-  }, (err, response) => {
-    t.ifError(err)
-    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-    t.strictEqual(response.headers['x-custom-h2'], 'hello')
-    t.strictEqual(response.statusCode, 200)
-    // We stop the sent the GOAWAY frame before the body is sent, as we received the GOAWAY frame
-    // before the DATA one, the body will be empty
-    response.body.dump()
+  })
+
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.strictEqual(response.statusCode, 200)
+
+  t.rejects(response.body.text.bind(response.body), {
+    message: 'HTTP/2: "GOAWAY" frame received with code 0',
+    code: 'UND_ERR_ABORTED'
   })
 
   await t.completed
