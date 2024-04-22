@@ -491,7 +491,7 @@ describe('weighted round robin', () => {
       const urls = servers.map(server => `http://localhost:${server.port}`)
 
       // add upstreams
-      const client = new BalancedPool(urls[0], { maxWeightPerServer, errorPenalty })
+      const client = new BalancedPool(urls[0], { maxWeightPerServer, errorPenalty, keepAliveTimeoutThreshold: 100 })
       urls.slice(1).map(url => client.addUpstream(url))
 
       let connectionRefusedErrors = 0
