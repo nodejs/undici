@@ -4,11 +4,11 @@ Stability: Experimental.
 
 Extends: `undici.Dispatcher`
 
-EnvHttpProxyAgent automatically reads the proxy configuration from the environment variables `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` and sets up the proxy agents accordingly. When `HTTP_PROXY` and `HTTPS_PROXY` are set, `HTTP_PROXY` is used for HTTP requests and `HTTPS_PROXY` is used for HTTPS requests. If only `HTTP_PROXY` is set, `HTTP_PROXY` is used for both HTTP and HTTPS requests. If only `HTTPS_PROXY` is set, it is only used for HTTPS requests.
+EnvHttpProxyAgent automatically reads the proxy configuration from the environment variables `http_proxy`, `https_proxy`, and `no_proxy` and sets up the proxy agents accordingly. When `http_proxy` and `https_proxy` are set, `http_proxy` is used for HTTP requests and `https_proxy` is used for HTTPS requests. If only `http_proxy` is set, `http_proxy` is used for both HTTP and HTTPS requests. If only `https_proxy` is set, it is only used for HTTPS requests.
 
-`NO_PROXY` is a comma or space-separated list of hostnames that should not be proxied. The list may contain leading wildcard characters (`*`). If `NO_PROXY` is set, the EnvHttpProxyAgent will bypass the proxy for requests to hosts that match the list. If `NO_PROXY` is set to `"*"`, the EnvHttpProxyAgent will bypass the proxy for all requests.
+`no_proxy` is a comma or space-separated list of hostnames that should not be proxied. The list may contain leading wildcard characters (`*`). If `no_proxy` is set, the EnvHttpProxyAgent will bypass the proxy for requests to hosts that match the list. If `no_proxy` is set to `"*"`, the EnvHttpProxyAgent will bypass the proxy for all requests.
 
-Lower case environment variables are also supported: `http_proxy`, `https_proxy`, and `no_proxy`. However, if both the lower case and upper case environment variables are set, the lower case environment variables will be ignored.
+Uppercase environment variables are also supported: `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY`. However, if both the lowercase and uppercase environment variables are set, the uppercase environment variables will be ignored.
 
 ## `new EnvHttpProxyAgent([options])`
 
