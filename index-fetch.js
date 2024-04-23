@@ -1,5 +1,6 @@
 'use strict'
 
+const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 const EnvHttpProxyAgent = require('./lib/dispatcher/env-http-proxy-agent')
 const fetchImpl = require('./lib/web/fetch').fetch
 
@@ -23,3 +24,5 @@ module.exports.EventSource = require('./lib/web/eventsource/eventsource').EventS
 
 // Expose the fetch implementation to be enabled in Node.js core via a flag
 module.exports.EnvHttpProxyAgent = EnvHttpProxyAgent
+module.exports.getGlobalDispatcher = getGlobalDispatcher
+module.exports.setGlobalDispatcher = setGlobalDispatcher
