@@ -467,9 +467,9 @@ test('request.referrer', () => {
 test('Clone the set-cookie header when Request is passed as the first parameter and no header is passed.', (t) => {
   const request = new Request('http://localhost', { headers: { 'set-cookie': 'A' } })
   const request2 = new Request(request)
-  assert.strictDeepEqual([...request.headers], [['set-cookie', 'A']])
+  assert.deepStrictEqual([...request.headers], [['set-cookie', 'A']])
   request2.headers.append('set-cookie', 'B')
-  assert.strictDeepEqual([...request.headers], [['set-cookie', 'A']])
+  assert.deepStrictEqual([...request.headers], [['set-cookie', 'A']])
   assert.strictEqual(request.headers.getSetCookie().join(', '), request.headers.get('set-cookie'))
   assert.strictEqual(request2.headers.getSetCookie().join(', '), request2.headers.get('set-cookie'))
 })
