@@ -18,7 +18,7 @@ after(() => {
   process.env = { ...env }
 })
 
-test('does not create any proxy agents if HTTP_PROXY and HTTPS_PROXY are not set', async (t) => {
+test('does not create any proxy agents if http_proxy and https_proxy are not set', async (t) => {
   t = tspl(t, { plan: 4 })
   const dispatcher = new EnvHttpProxyAgent()
   t.ok(dispatcher[kNoProxyAgent] instanceof Agent)
@@ -28,9 +28,9 @@ test('does not create any proxy agents if HTTP_PROXY and HTTPS_PROXY are not set
   return dispatcher.close()
 })
 
-test('creates one proxy agent for both http and https when only HTTP_PROXY is defined', async (t) => {
+test('creates one proxy agent for both http and https when only http_proxy is defined', async (t) => {
   t = tspl(t, { plan: 5 })
-  process.env.HTTP_PROXY = 'http://example.com:8080'
+  process.env.http_proxy = 'http://example.com:8080'
   const dispatcher = new EnvHttpProxyAgent()
   t.ok(dispatcher[kNoProxyAgent] instanceof Agent)
   t.ok(!(dispatcher[kNoProxyAgent] instanceof ProxyAgent))
@@ -40,10 +40,10 @@ test('creates one proxy agent for both http and https when only HTTP_PROXY is de
   return dispatcher.close()
 })
 
-test('creates separate proxy agent for http and https when HTTP_PROXY and HTTPS_PROXY are set', async (t) => {
+test('creates separate proxy agent for http and https when http_proxy and https_proxy are set', async (t) => {
   t = tspl(t, { plan: 6 })
-  process.env.HTTP_PROXY = 'http://example.com:8080'
-  process.env.HTTPS_PROXY = 'http://example.com:8443'
+  process.env.http_proxy = 'http://example.com:8080'
+  process.env.https_proxy = 'http://example.com:8443'
   const dispatcher = new EnvHttpProxyAgent()
   t.ok(dispatcher[kNoProxyAgent] instanceof Agent)
   t.ok(!(dispatcher[kNoProxyAgent] instanceof ProxyAgent))
@@ -54,10 +54,10 @@ test('creates separate proxy agent for http and https when HTTP_PROXY and HTTPS_
   return dispatcher.close()
 })
 
-test('handles lowercase http_proxy and https_proxy', async (t) => {
+test('handles uppercase HTTP_PROXY and HTTPS_PROXY', async (t) => {
   t = tspl(t, { plan: 6 })
-  process.env.http_proxy = 'http://example.com:8080'
-  process.env.https_proxy = 'http://example.com:8443'
+  process.env.HTTP_PROXY = 'http://example.com:8080'
+  process.env.HTTPS_PROXY = 'http://example.com:8443'
   const dispatcher = new EnvHttpProxyAgent()
   t.ok(dispatcher[kNoProxyAgent] instanceof Agent)
   t.ok(!(dispatcher[kNoProxyAgent] instanceof ProxyAgent))
@@ -100,24 +100,24 @@ test('prefers options over env vars', async (t) => {
   return dispatcher.close()
 })
 
-test('prefers uppercase over lower case env vars', async (t) => {
+test('prefers lowercase over uppercase env vars', async (t) => {
   t = tspl(t, { plan: 2 })
-  process.env.http_proxy = 'http://lower.example.com:8080'
-  process.env.https_proxy = 'http://lower.example.com:8443'
   process.env.HTTP_PROXY = 'http://upper.example.com:8080'
   process.env.HTTPS_PROXY = 'http://upper.example.com:8443'
+  process.env.http_proxy = 'http://lower.example.com:8080'
+  process.env.https_proxy = 'http://lower.example.com:8443'
   const dispatcher = new EnvHttpProxyAgent()
-  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://upper.example.com:8080/')
-  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://upper.example.com:8443/')
+  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://lower.example.com:8080/')
+  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://lower.example.com:8443/')
   return dispatcher.close()
 })
 
-test('prefers uppercase over lower case env vars even when empty', async (t) => {
+test('prefers lowercase over uppercase env vars even when empty', async (t) => {
   t = tspl(t, { plan: 2 })
-  process.env.http_proxy = 'http://lower.example.com:8080'
-  process.env.https_proxy = 'http://lower.example.com:8443'
-  process.env.HTTP_PROXY = ''
-  process.env.HTTPS_PROXY = ''
+  process.env.HTTP_PROXY = 'http://upper.example.com:8080'
+  process.env.HTTP_PROXY = 'http://upper.example.com:8443'
+  process.env.http_proxy = ''
+  process.env.https_proxy = ''
   const dispatcher = new EnvHttpProxyAgent()
 
   t.deepStrictEqual(dispatcher[kHttpProxyAgent], dispatcher[kNoProxyAgent])
@@ -125,9 +125,9 @@ test('prefers uppercase over lower case env vars even when empty', async (t) => 
   return dispatcher.close()
 })
 
-test('creates a proxy agent only for https when only HTTPS_PROXY is set', async (t) => {
+test('creates a proxy agent only for https when only https_proxy is set', async (t) => {
   t = tspl(t, { plan: 5 })
-  process.env.HTTPS_PROXY = 'http://example.com:8443'
+  process.env.https_proxy = 'http://example.com:8443'
   const dispatcher = new EnvHttpProxyAgent()
   t.ok(dispatcher[kNoProxyAgent] instanceof Agent)
   t.ok(!(dispatcher[kNoProxyAgent] instanceof ProxyAgent))
@@ -139,8 +139,8 @@ test('creates a proxy agent only for https when only HTTPS_PROXY is set', async 
 
 test('closes all agents', async (t) => {
   t = tspl(t, { plan: 3 })
-  process.env.HTTP_PROXY = 'http://example.com:8080'
-  process.env.HTTPS_PROXY = 'http://example.com:8443'
+  process.env.http_proxy = 'http://example.com:8080'
+  process.env.https_proxy = 'http://example.com:8443'
   const dispatcher = new EnvHttpProxyAgent()
   await dispatcher.close()
   t.ok(dispatcher[kNoProxyAgent][kClosed])
@@ -150,8 +150,8 @@ test('closes all agents', async (t) => {
 
 test('destroys all agents', async (t) => {
   t = tspl(t, { plan: 3 })
-  process.env.HTTP_PROXY = 'http://example.com:8080'
-  process.env.HTTPS_PROXY = 'http://example.com:8443'
+  process.env.http_proxy = 'http://example.com:8080'
+  process.env.https_proxy = 'http://example.com:8443'
   const dispatcher = new EnvHttpProxyAgent()
   await dispatcher.destroy()
   t.ok(dispatcher[kNoProxyAgent][kDestroyed])
@@ -170,8 +170,8 @@ const createEnvHttpProxyAgentWithMocks = (plan = 1, opts = {}) => {
     }
     return mockPool
   }
-  process.env.HTTP_PROXY = 'http://localhost:8080'
-  process.env.HTTPS_PROXY = 'http://localhost:8443'
+  process.env.http_proxy = 'http://localhost:8080'
+  process.env.https_proxy = 'http://localhost:8443'
   const dispatcher = new EnvHttpProxyAgent({ ...opts, factory })
   const agentSymbols = [kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent]
   agentSymbols.forEach((agent) => {
@@ -201,10 +201,10 @@ test('uses the appropriate proxy for the protocol', async (t) => {
   return dispatcher.close()
 })
 
-describe('NO_PROXY', () => {
+describe('no_proxy', () => {
   test('set to *', async (t) => {
     t = tspl(t, { plan: 2 })
-    process.env.NO_PROXY = '*'
+    process.env.no_proxy = '*'
     const { dispatcher, doesNotProxy } = createEnvHttpProxyAgentWithMocks(2)
     t.ok(await doesNotProxy('https://example.com'))
     t.ok(await doesNotProxy('http://example.com'))
@@ -213,7 +213,7 @@ describe('NO_PROXY', () => {
 
   test('set but empty', async (t) => {
     t = tspl(t, { plan: 1 })
-    process.env.NO_PROXY = ''
+    process.env.no_proxy = ''
     const { dispatcher, usesProxyAgent } = createEnvHttpProxyAgentWithMocks()
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example.com'))
     return dispatcher.close()
@@ -221,7 +221,7 @@ describe('NO_PROXY', () => {
 
   test('no entries (comma)', async (t) => {
     t = tspl(t, { plan: 1 })
-    process.env.NO_PROXY = ','
+    process.env.no_proxy = ','
     const { dispatcher, usesProxyAgent } = createEnvHttpProxyAgentWithMocks()
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example.com'))
     return dispatcher.close()
@@ -229,7 +229,7 @@ describe('NO_PROXY', () => {
 
   test('no entries (whitespace)', async (t) => {
     t = tspl(t, { plan: 1 })
-    process.env.NO_PROXY = ' '
+    process.env.no_proxy = ' '
     const { dispatcher, usesProxyAgent } = createEnvHttpProxyAgentWithMocks()
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example.com'))
     return dispatcher.close()
@@ -237,7 +237,7 @@ describe('NO_PROXY', () => {
 
   test('no entries (multiple whitespace / commas)', async (t) => {
     t = tspl(t, { plan: 1 })
-    process.env.NO_PROXY = ',\t,,,\n,  ,\r'
+    process.env.no_proxy = ',\t,,,\n,  ,\r'
     const { dispatcher, usesProxyAgent } = createEnvHttpProxyAgentWithMocks()
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example.com'))
     return dispatcher.close()
@@ -245,7 +245,7 @@ describe('NO_PROXY', () => {
 
   test('single host', async (t) => {
     t = tspl(t, { plan: 9 })
-    process.env.NO_PROXY = 'example'
+    process.env.no_proxy = 'example'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(9)
     t.ok(await doesNotProxy('http://example'))
     t.ok(await doesNotProxy('http://example:80'))
@@ -276,7 +276,7 @@ describe('NO_PROXY', () => {
 
   test('subdomain', async (t) => {
     t = tspl(t, { plan: 8 })
-    process.env.NO_PROXY = 'sub.example'
+    process.env.no_proxy = 'sub.example'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(8)
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example:80'))
@@ -291,7 +291,7 @@ describe('NO_PROXY', () => {
 
   test('host + port', async (t) => {
     t = tspl(t, { plan: 12 })
-    process.env.NO_PROXY = 'example:80, localhost:3000'
+    process.env.no_proxy = 'example:80, localhost:3000'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(12)
     t.ok(await doesNotProxy('http://example'))
     t.ok(await doesNotProxy('http://example:80'))
@@ -310,7 +310,7 @@ describe('NO_PROXY', () => {
 
   test('host suffix', async (t) => {
     t = tspl(t, { plan: 9 })
-    process.env.NO_PROXY = '.example'
+    process.env.no_proxy = '.example'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(9)
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example:80'))
@@ -326,7 +326,7 @@ describe('NO_PROXY', () => {
 
   test('host suffix with *.', async (t) => {
     t = tspl(t, { plan: 9 })
-    process.env.NO_PROXY = '*.example'
+    process.env.no_proxy = '*.example'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(9)
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example:80'))
@@ -342,7 +342,7 @@ describe('NO_PROXY', () => {
 
   test('substring suffix', async (t) => {
     t = tspl(t, { plan: 10 })
-    process.env.NO_PROXY = '*example'
+    process.env.no_proxy = '*example'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(10)
     t.ok(await doesNotProxy('http://example'))
     t.ok(await doesNotProxy('http://example:80'))
@@ -359,7 +359,7 @@ describe('NO_PROXY', () => {
 
   test('arbitrary wildcards are NOT supported', async (t) => {
     t = tspl(t, { plan: 6 })
-    process.env.NO_PROXY = '.*example'
+    process.env.no_proxy = '.*example'
     const { dispatcher, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(6)
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://sub.example'))
@@ -372,7 +372,7 @@ describe('NO_PROXY', () => {
 
   test('IP addresses', async (t) => {
     t = tspl(t, { plan: 12 })
-    process.env.NO_PROXY = '[::1],[::2]:80,10.0.0.1,10.0.0.2:80'
+    process.env.no_proxy = '[::1],[::2]:80,10.0.0.1,10.0.0.2:80'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(12)
     t.ok(await doesNotProxy('http://[::1]/'))
     t.ok(await doesNotProxy('http://[::1]:80/'))
@@ -391,7 +391,7 @@ describe('NO_PROXY', () => {
 
   test('CIDR is NOT supported', async (t) => {
     t = tspl(t, { plan: 2 })
-    process.env.NO_PROXY = '127.0.0.1/32'
+    process.env.no_proxy = '127.0.0.1/32'
     const { dispatcher, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(2)
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://127.0.0.1'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://127.0.0.1/32'))
@@ -400,7 +400,7 @@ describe('NO_PROXY', () => {
 
   test('127.0.0.1 does NOT match localhost', async (t) => {
     t = tspl(t, { plan: 2 })
-    process.env.NO_PROXY = '127.0.0.1'
+    process.env.no_proxy = '127.0.0.1'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(2)
     t.ok(await doesNotProxy('http://127.0.0.1'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://localhost'))
@@ -409,7 +409,7 @@ describe('NO_PROXY', () => {
 
   test('protocols that have a default port', async (t) => {
     t = tspl(t, { plan: 6 })
-    process.env.NO_PROXY = 'xxx:21,xxx:70,xxx:80,xxx:443'
+    process.env.no_proxy = 'xxx:21,xxx:70,xxx:80,xxx:443'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(6)
     t.ok(await doesNotProxy('http://xxx'))
     t.ok(await doesNotProxy('http://xxx:80'))
@@ -420,9 +420,9 @@ describe('NO_PROXY', () => {
     return dispatcher.close()
   })
 
-  test('should not be case-sensitive', async (t) => {
+  test('should not be case sensitive', async (t) => {
     t = tspl(t, { plan: 6 })
-    process.env.no_proxy = 'XXX YYY ZzZ'
+    process.env.NO_PROXY = 'XXX YYY ZzZ'
     const { dispatcher, doesNotProxy } = createEnvHttpProxyAgentWithMocks(6)
     t.ok(await doesNotProxy('http://xxx'))
     t.ok(await doesNotProxy('http://XXX'))
@@ -433,20 +433,20 @@ describe('NO_PROXY', () => {
     return dispatcher.close()
   })
 
-  test('prefers uppercase over lower case', async (t) => {
+  test('prefers lowercase over uppercase', async (t) => {
     t = tspl(t, { plan: 2 })
-    process.env.no_proxy = 'sub.example.com'
-    process.env.NO_PROXY = 'example.com'
+    process.env.NO_PROXY = 'sub.example.com'
+    process.env.no_proxy = 'example.com'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(6)
     t.ok(await doesNotProxy('http://example.com'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://sub.example.com'))
     return dispatcher.close()
   })
 
-  test('prefers uppercase over lower case even when it is empty', async (t) => {
+  test('prefers lowercase over uppercase even when it is empty', async (t) => {
     t = tspl(t, { plan: 1 })
-    process.env.no_proxy = 'example.com'
-    process.env.NO_PROXY = ''
+    process.env.NO_PROXY = 'example.com'
+    process.env.no_proxy = ''
     const { dispatcher, usesProxyAgent } = createEnvHttpProxyAgentWithMocks()
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example.com'))
     return dispatcher.close()
@@ -454,11 +454,11 @@ describe('NO_PROXY', () => {
 
   test('handles env var changes', async (t) => {
     t = tspl(t, { plan: 4 })
-    process.env.NO_PROXY = 'example.com'
+    process.env.no_proxy = 'example.com'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(4)
     t.ok(await doesNotProxy('http://example.com'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://sub.example.com'))
-    process.env.NO_PROXY = 'sub.example.com'
+    process.env.no_proxy = 'sub.example.com'
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example.com'))
     t.ok(await doesNotProxy('http://sub.example.com'))
     return dispatcher.close()
@@ -469,7 +469,7 @@ describe('NO_PROXY', () => {
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(4, { noProxy: 'example.com' })
     t.ok(await doesNotProxy('http://example.com'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://sub.example.com'))
-    process.env.NO_PROXY = 'sub.example.com'
+    process.env.no_proxy = 'sub.example.com'
     t.ok(await doesNotProxy('http://example.com'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://sub.example.com'))
     return dispatcher.close()
