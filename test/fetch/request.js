@@ -449,7 +449,7 @@ test('set-cookie headers get cleared when passing a Request as first param', () 
 
   assert.deepStrictEqual([...req1.headers], [['set-cookie', 'a=1']])
   const req2 = new Request(req1, { headers: {} })
-
+  assert.deepStrictEqual([...req1.headers], [['set-cookie', 'a=1']])
   assert.deepStrictEqual([...req2.headers], [])
   assert.deepStrictEqual(req2.headers.getSetCookie(), [])
 })
@@ -465,12 +465,13 @@ test('request.referrer', () => {
 
 // https://github.com/nodejs/undici/issues/2445
 test('Clone the set-cookie header when Request is passed as the first parameter and no header is passed.', (t) => {
-  const { strictEqual } = tspl(t, { plan: 2 })
   const request = new Request('http://localhost', { headers: { 'set-cookie': 'A' } })
   const request2 = new Request(request)
+  assert.deepStrictEqual([...request.headers], [['set-cookie', 'A']])
   request2.headers.append('set-cookie', 'B')
-  strictEqual(request.headers.getSetCookie().join(', '), request.headers.get('set-cookie'))
-  strictEqual(request2.headers.getSetCookie().join(', '), request2.headers.get('set-cookie'))
+  assert.deepStrictEqual([...request.headers], [['set-cookie', 'A']])
+  assert.strictEqual(request.headers.getSetCookie().join(', '), request.headers.get('set-cookie'))
+  assert.strictEqual(request2.headers.getSetCookie().join(', '), request2.headers.get('set-cookie'))
 })
 
 // Tests for optimization introduced in https://github.com/nodejs/undici/pull/2456
