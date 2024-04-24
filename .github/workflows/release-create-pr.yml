@@ -6,9 +6,13 @@ permissions:
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'The version number to release (has priority over release_type)'
-        type: string
+      major_branch:
+        description: Major version branch
+        type: choice
+        default: main
+        options:
+          - main
+          - v5.x
       release_type:
         description: Type of release
         type: choice
@@ -16,7 +20,6 @@ on:
         options:
           - patch
           - minor
-          - major
 
 jobs:
   create-pr:
@@ -26,11 +29,10 @@ jobs:
       contents: write
       pull-requests: write
 
-    outputs:
-      version: ${{ steps.bump.outputs.version }}
-
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.major_branch }}
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -41,7 +43,7 @@ jobs:
       - name: Change version number and push
         id: bump
         run: |
-          npm version ${{ inputs.version || inputs.release_type }} --git-tag-version=false
+          npm version ${{ inputs.release_type }} --git-tag-version=false
           VERSION=`jq -r ".version" package.json`
           RELEASE_BRANCH="release/v$VERSION"
           git add -u
@@ -52,6 +54,5 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const defaultBranch = "${{ github.event.repository.default_branch }}"
             const versionTag = "v${{ steps.bump.outputs.version }}"
-            await require('./scripts/release').generatePr({ github, context, defaultBranch, versionTag })
+            await require('./scripts/release').generatePr({ github, context, versionTag })

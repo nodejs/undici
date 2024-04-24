@@ -3,7 +3,7 @@ name: Create release
 on:
   push:
     branches:
-     - main
+      - main
     paths:
       - package.json
 
@@ -26,12 +26,9 @@ jobs:
             const version = require("./package.json").version
             const versionTag = `v${version}`
 
-            const { data: releases } = await github.rest.repos.listReleases({
-              owner,
-              repo
-            })
+            const previousReleaseTag = await require('./scripts/release').previousReleaseTag({ github, context, versionTag })
 
-            if (versionTag !== releases[0]?.tag_name) {
+            if (versionTag !== previousReleaseTag) {
               return versionTag
             }
 
@@ -55,11 +52,11 @@ jobs:
       - run: npm install -g npm@latest
       - run: npm install
       - name: Create NPM release
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public --tag latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: node scripts/generate-undici-types-package-json.js
-      - run: npm publish --provenance
+      - run: npm publish --provenance --access public --tag latest
         working-directory: './types'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -67,6 +64,5 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const defaultBranch = "${{ github.event.repository.default_branch }}"
             const versionTag = "${{ needs.check-release-version.outputs.release-version }}"
-            await require('./scripts/release').release({ github, context, defaultBranch, versionTag })
+            await require('./scripts/release').release({ github, context, versionTag })
