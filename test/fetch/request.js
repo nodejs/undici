@@ -450,7 +450,6 @@ test('set-cookie headers get cleared when passing a Request as first param', () 
   assert.deepStrictEqual([...req1.headers], [['set-cookie', 'a=1']])
   const req2 = new Request(req1, { headers: {} })
   assert.deepStrictEqual([...req1.headers], [['set-cookie', 'a=1']])
-  
   assert.deepStrictEqual([...req2.headers], [])
   assert.deepStrictEqual(req2.headers.getSetCookie(), [])
 })
