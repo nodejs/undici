@@ -10,7 +10,6 @@ test('Headers retain keys case-sensitive', async (t) => {
   const assert = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
-    console.log(req.rawHeaders)
     assert.ok(req.rawHeaders.includes('Content-Type'))
 
     res.end()
