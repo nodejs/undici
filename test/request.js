@@ -403,4 +403,75 @@ describe('Should include headers from iterable objects', scope => {
       t.strictEqual(err.message, 'headers must be in key-value pair format')
     })
   })
+
+  test('Should throw error if headers are duplicates', async t => {
+    t = tspl(t, { plan: 2 })
+
+    const server = createServer((req, res) => {
+      res.end('hello')
+    })
+
+    const headers = {
+      * [Symbol.iterator] () {
+        yield ['hello', 'world']
+        yield ['hello', 'Pluto']
+      }
+    }
+
+    after(() => server.close())
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true,
+      headers
+    }).then((res) => {
+      t.fail('Should not succeed')
+    }).catch((err) => {
+      t.ok(err instanceof errors.InvalidArgumentError)
+      t.strictEqual(err.message, 'duplicated header key: hello')
+    })
+  })
+  test('Should throw error if headers are NOT strings', async t => {
+    t = tspl(t, { plan: 2 })
+
+    const server = createServer((req, res) => {
+      res.end('hello')
+    })
+
+    const headers = {
+      * [Symbol.iterator] () {
+        yield [{ hello: 'world' }, 'world']
+        yield [0, 'Pluto']
+      }
+    }
+
+    after(() => server.close())
+
+    await new Promise((resolve, reject) => {
+      server.listen(0, (err) => {
+        if (err != null) reject(err)
+        else resolve()
+      })
+    })
+
+    await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      reset: true,
+      headers
+    }).then((res) => {
+      t.fail('Should not succeed')
+    }).catch((err) => {
+      t.ok(err instanceof errors.InvalidArgumentError)
+      t.strictEqual(err.message, 'invalid header key, needs to be a "String"')
+    })
+  })
 })
