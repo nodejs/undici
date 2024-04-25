@@ -725,6 +725,12 @@ test('Headers.prototype.getSetCookie', async (t) => {
     assert.deepStrictEqual(res.headers.getSetCookie(), ['test=onetwo', 'test=onetwothree'])
     assert.ok('set-cookie' in entries)
   })
+
+  await t.test('When Headers are cloned, so are the cookies (Headers constructor)', () => {
+    const headers = new Headers([['set-cookie', 'a'], ['set-cookie', 'b']])
+
+    assert.deepStrictEqual([...headers], [...new Headers(headers)])
+  })
 })
 
 test('When the value is updated, update the cache', (t) => {
