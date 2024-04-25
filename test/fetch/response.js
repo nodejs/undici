@@ -12,7 +12,7 @@ const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
-const { kState, kGuard, kRealm, kHeaders } = require('../../lib/web/fetch/symbols')
+const { kState, kGuard, kHeaders } = require('../../lib/web/fetch/symbols')
 const { kHeadersList } = require('../../lib/core/symbols')
 
 test('arg validation', async () => {
@@ -274,17 +274,14 @@ test('Check the Content-Type of invalid formData', async (t) => {
 })
 
 test('fromInnerResponse', () => {
-  const realm = { settingsObject: {} }
   const innerResponse = makeResponse({
     urlList: [new URL('http://asd')]
   })
 
-  const response = fromInnerResponse(innerResponse, 'immutable', realm)
+  const response = fromInnerResponse(innerResponse, 'immutable')
 
   // check property
   assert.strictEqual(response[kState], innerResponse)
-  assert.strictEqual(response[kRealm], realm)
   assert.strictEqual(response[kHeaders][kHeadersList], innerResponse.headersList)
   assert.strictEqual(response[kHeaders][kGuard], 'immutable')
-  assert.strictEqual(response[kHeaders][kRealm], realm)
 })
