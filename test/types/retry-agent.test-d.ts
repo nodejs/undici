@@ -4,7 +4,7 @@ import { RetryAgent, Agent } from '../..'
 const dispatcher = new Agent()
 
 expectAssignable<RetryAgent>(new RetryAgent(dispatcher))
-expectAssignable<RetryAgent>(new RetryAgent(dispatcher, { maxRetries: 5, ifMatch: false }))
+expectAssignable<RetryAgent>(new RetryAgent(dispatcher, { maxRetries: 5 }))
 
 {
   const retryAgent = new RetryAgent(dispatcher)
