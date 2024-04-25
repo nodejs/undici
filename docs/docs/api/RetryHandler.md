@@ -29,6 +29,7 @@ Extends: [`Dispatch.DispatchOptions`](Dispatcher.md#parameter-dispatchoptions).
 - **methods** `string[]` (optional) - Array of HTTP methods to retry. Default: `['GET', 'PUT', 'HEAD', 'OPTIONS', 'DELETE']`
 - **statusCodes** `number[]` (optional) - Array of HTTP status codes to retry. Default: `[429, 500, 502, 503, 504]`
 - **errorCodes** `string[]` (optional) - Array of Error codes to retry. Default: `['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'ENETDOWN','ENETUNREACH', 'EHOSTDOWN', 'UND_ERR_SOCKET']`
+- **ifMatch** `boolean` (optional) - It enables the send of `if-match` pre-condition header if `etag` is present in the first response. Default: `true`
 
 **`RetryContext`**
 

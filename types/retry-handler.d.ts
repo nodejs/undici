@@ -107,6 +107,13 @@ declare namespace RetryHandler {
      * @default [500, 502, 503, 504, 429],
      */
     statusCodes?: number[];
+    /**
+     * Enables/disabled the usage of `If-Match` pre-condition header for retry requests.
+     * @type {boolean}
+     * @memberof RetryOptions
+     * @default true
+     */
+    ifMatch?: boolean;
   }
 
   export interface RetryHandlers {
