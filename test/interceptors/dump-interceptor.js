@@ -574,9 +574,8 @@ test('Should dump response body up to limit (dispatch opts)', async t => {
   await t.completed
 })
 
-// TODO: use a custom hanlder for this
-test('Should abort if content length grater than max size (dispatch opts)', { skip: true }, async t => {
-  t = tspl(t)
+test('Should abort if content length grater than max size (dispatch opts)', async t => {
+  t = tspl(t, { plan: 1 })
   const server = createServer((req, res) => {
     const buffer = Buffer.alloc(2 * 1024)
     res.writeHead(200, {
@@ -607,17 +606,15 @@ test('Should abort if content length grater than max size (dispatch opts)', { sk
     await once(server, 'close')
   })
 
-  try {
-    client.request(requestOptions)
-    console.log('moving')
-  } catch (error) {
-    console.log(error)
-  }
+  await t.rejects(
+    () => {
+      return client.request(requestOptions).then(res => res.body.text())
+    },
+    {
+      name: 'AbortError',
+      message: 'Response size (2048) larger than maxSize (1024)'
+    }
+  )
 
-  // t.throws(client.request.bind(client, requestOptions), {
-  //   name: 'AbortError',
-  //   message: 'Response size (2048) larger than maxSize (1024)'
-  // })
-
-  // await t.completed
+  await t.completed
 })
