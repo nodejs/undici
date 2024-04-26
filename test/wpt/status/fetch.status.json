@@ -2,13 +2,11 @@
   "api": {
     "abort": {
       "general.any.js": {
-        "note": "TODO(@KhafraDev): Clone aborts with original controller can probably be fixed",
         "fail": [
           "Already aborted signal rejects immediately",
           "Underlying connection is closed when aborting after receiving response - no-cors",
           "Stream errors once aborted. Underlying connection closed.",
-          "Readable stream synchronously cancels with AbortError if aborted before reading",
-          "Clone aborts with original controller"
+          "Readable stream synchronously cancels with AbortError if aborted before reading"
         ]
       },
       "cache.https.any.js": {
