@@ -17,11 +17,12 @@ module.exports.Headers = require('./lib/web/fetch/headers').Headers
 module.exports.Response = require('./lib/web/fetch/response').Response
 module.exports.Request = require('./lib/web/fetch/request').Request
 
-const { CloseEvent, ErrorEvent, MessageEvent } = require('./lib/web/websocket/events')
+const { CloseEvent, ErrorEvent, MessageEvent, createFastMessageEvent } = require('./lib/web/websocket/events')
 module.exports.WebSocket = require('./lib/web/websocket/websocket').WebSocket
 module.exports.CloseEvent = CloseEvent
 module.exports.ErrorEvent = ErrorEvent
 module.exports.MessageEvent = MessageEvent
+module.exports.createFastMessageEvent = createFastMessageEvent
 
 module.exports.EventSource = require('./lib/web/eventsource/eventsource').EventSource
 
