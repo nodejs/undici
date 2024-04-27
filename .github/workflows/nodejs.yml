@@ -181,6 +181,10 @@ jobs:
       - name: Run typings tests
         run: npm run test:typescript
 
+  test-llhttp-integrity:
+    name: Ensure integrity of llhttp wasm files
+    uses: uzlopak/undici/.github/workflows/llhttp-wasm-integrity.yml@llhttp-integrity
+
   automerge:
     if: >
       github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
@@ -190,6 +194,7 @@ jobs:
       - test-types
       - test-without-intl
       - test-fuzzing
+      - test-llhttp-integrity
       - lint
     runs-on: ubuntu-latest
     permissions:
