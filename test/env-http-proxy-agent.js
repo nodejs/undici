@@ -2,7 +2,6 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, describe, after, beforeEach } = require('node:test')
-const sinon = require('sinon')
 const { EnvHttpProxyAgent, ProxyAgent, Agent, fetch, MockAgent } = require('..')
 const { kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent, kClosed, kDestroyed, kProxy } = require('../lib/core/symbols')
 
@@ -174,15 +173,23 @@ const createEnvHttpProxyAgentWithMocks = (plan = 1, opts = {}) => {
   process.env.https_proxy = 'http://localhost:8443'
   const dispatcher = new EnvHttpProxyAgent({ ...opts, factory })
   const agentSymbols = [kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent]
-  agentSymbols.forEach((agent) => {
-    sinon.spy(dispatcher[agent], 'dispatch')
+  agentSymbols.forEach((agentSymbol) => {
+    const originalDispatch = dispatcher[agentSymbol].dispatch
+    dispatcher[agentSymbol].dispatch = function () {
+      dispatcher[agentSymbol].dispatch.called = true
+      return originalDispatch.apply(this, arguments)
+    }
+    dispatcher[agentSymbol].dispatch.called = false
   })
   const usesProxyAgent = async (agent, url) => {
     await fetch(url, { dispatcher })
     const result = agentSymbols.every((agentSymbol) => agent === agentSymbol
-      ? dispatcher[agentSymbol].dispatch.called
-      : dispatcher[agentSymbol].dispatch.notCalled)
-    agentSymbols.forEach((agent) => { dispatcher[agent].dispatch.resetHistory() })
+      ? dispatcher[agentSymbol].dispatch.called === true
+      : dispatcher[agentSymbol].dispatch.called === false)
+
+    agentSymbols.forEach((agentSymbol) => {
+      dispatcher[agentSymbol].dispatch.called = false
+    })
     return result
   }
   const doesNotProxy = usesProxyAgent.bind(this, kNoProxyAgent)
