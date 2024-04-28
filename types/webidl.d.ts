@@ -55,7 +55,9 @@ interface WebidlUtil {
     V: unknown,
     bitLength: number,
     signedness: 'signed' | 'unsigned',
-    opts?: ConvertToIntOpts
+    opts?: ConvertToIntOpts,
+    prefix: string,
+    argument: string
   ): number
 
   /**
@@ -73,14 +75,14 @@ interface WebidlConverters {
   /**
    * @see https://webidl.spec.whatwg.org/#es-DOMString
    */
-  DOMString (V: unknown, opts?: {
+  DOMString (V: unknown, prefix: string, argument: string, opts?: {
     legacyNullToEmptyString: boolean
   }): string
 
   /**
    * @see https://webidl.spec.whatwg.org/#es-ByteString
    */
-  ByteString (V: unknown): string
+  ByteString (V: unknown, prefix: string, argument: string): string
 
   /**
    * @see https://webidl.spec.whatwg.org/#es-USVString
