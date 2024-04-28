@@ -204,7 +204,7 @@ export interface Webidl {
    */
   dictionaryConverter (converters: {
     key: string,
-    defaultValue?: unknown,
+    defaultValue?: () => unknown,
     required?: boolean,
     converter: (...args: unknown[]) => unknown,
     allowedValues?: unknown[]
