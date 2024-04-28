@@ -76,10 +76,10 @@ test('Should not dump on abort', async t => {
 })
 
 test('Should dump on abort', async t => {
-  t = tspl(t, { plan: 2 })
+  t = tspl(t, { plan: 3 })
+  let offset = 0
   const server = createServer((req, res) => {
     const max = 1024 * 1024
-    let offset = 0
     const buffer = Buffer.alloc(max)
 
     res.writeHead(200, {
@@ -97,7 +97,7 @@ test('Should dump on abort', async t => {
       }
 
       res.write(chunk)
-    }, 250)
+    }, 0)
   })
 
   const abc = new AbortController()
@@ -126,11 +126,14 @@ test('Should dump on abort', async t => {
   const response = await client.request(requestOptions)
   t.equal(response.statusCode, 200)
 
-  await sleep(500)
   abc.abort()
 
-  const body = await response.body.text()
-  t.equal(body, '')
+  try {
+    await response.body.text()
+  } catch (error) {
+    t.equal(offset, 512)
+    t.equal(error.name, 'AbortError')
+  }
 
   await t.completed
 })
