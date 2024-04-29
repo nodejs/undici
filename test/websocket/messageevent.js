@@ -107,7 +107,7 @@ test('test/parallel/test-worker-message-port.js', () => {
   })
   assert.throws(() => new MessageEvent('message', { ports: 0 }), {
     constructor: TypeError,
-    message: 'MessageEvent constructor: eventInitDict.ports (0) is not an Object.'
+    message: 'MessageEvent constructor: eventInitDict.ports (0) is not iterable.'
   })
   assert.throws(() => new MessageEvent('message', { ports: [null] }), {
     constructor: TypeError,
