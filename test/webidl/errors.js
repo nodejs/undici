@@ -1,8 +1,8 @@
 'use strict'
 
-const { test } = require('node:test')
+const { test, describe } = require('node:test')
 const assert = require('node:assert')
-const { Headers } = require('../..')
+const { Headers, MessageEvent } = require('../..')
 
 test('ByteString', (t) => {
   const name = Symbol('')
@@ -20,4 +20,13 @@ test('ByteString', (t) => {
       new TypeError(`Headers.${method}: name is a symbol, which cannot be converted to a DOMString.`)
     )
   }
+})
+
+describe('dictionary converters', () => {
+  test('error message retains property name', () => {
+    assert.throws(
+      () => new MessageEvent('message', { source: 1 }),
+      new TypeError('MessageEvent constructor: Expected eventInitDict.source ("1") to be an instance of MessagePort.')
+    )
+  })
 })
