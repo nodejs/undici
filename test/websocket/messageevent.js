@@ -99,25 +99,25 @@ test('test/parallel/test-worker-message-port.js', () => {
 
   assert.throws(() => new MessageEvent('message', { source: 1 }), {
     constructor: TypeError,
-    message: 'MessagePort: Expected 1 to be an instance of MessagePort.'
+    message: 'MessageEvent constructor: Expected eventInitDict ("1") to be an instance of MessagePort.'
   })
   assert.throws(() => new MessageEvent('message', { source: {} }), {
     constructor: TypeError,
-    message: 'MessagePort: Expected {} to be an instance of MessagePort.'
+    message: 'MessageEvent constructor: Expected eventInitDict ("{}") to be an instance of MessagePort.'
   })
   assert.throws(() => new MessageEvent('message', { ports: 0 }), {
     constructor: TypeError,
-    message: 'Sequence: Value of type Number is not an Object.'
+    message: 'MessageEvent constructor: eventInitDict (0) is not an Object.'
   })
   assert.throws(() => new MessageEvent('message', { ports: [null] }), {
     constructor: TypeError,
-    message: 'MessagePort: Expected null to be an instance of MessagePort.'
+    message: 'MessageEvent constructor: Expected eventInitDict ("null") to be an instance of MessagePort.'
   })
   assert.throws(() =>
     new MessageEvent('message', { ports: [{}] })
   , {
     constructor: TypeError,
-    message: 'MessagePort: Expected {} to be an instance of MessagePort.'
+    message: 'MessageEvent constructor: Expected eventInitDict ("{}") to be an instance of MessagePort.'
   })
 
   assert(new MessageEvent('message') instanceof Event)
