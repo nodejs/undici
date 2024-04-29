@@ -20,7 +20,7 @@
     "mitata": "^0.1.11",
     "node-fetch": "^3.3.2",
     "request": "^2.88.2",
-    "superagent": "^8.1.2",
+    "superagent": "^9.0.2",
     "wait-on": "^7.2.0"
   }
 }
