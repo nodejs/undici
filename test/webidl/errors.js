@@ -30,3 +30,19 @@ describe('dictionary converters', () => {
     )
   })
 })
+
+describe('sequence converters', () => {
+  test('retains index', () => {
+    const { port1 } = new MessageChannel()
+
+    assert.throws(
+      () => new MessageEvent('type', { ports: [{}] }),
+      new TypeError('MessageEvent constructor: Expected eventInitDict.ports[0] ("{}") to be an instance of MessagePort.')
+    )
+
+    assert.throws(
+      () => new MessageEvent('type', { ports: [port1, {}] }),
+      new TypeError('MessageEvent constructor: Expected eventInitDict.ports[1] ("{}") to be an instance of MessagePort.')
+    )
+  })
+})
