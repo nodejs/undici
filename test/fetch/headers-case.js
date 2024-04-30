@@ -27,5 +27,6 @@ test('Headers retain keys case-sensitive', async (t) => {
   ]) {
     await fetch(url, { headers })
   }
-  await fetch(new Request(url, { headers: new Headers([['Content-Type', 'text/plain']]) }), { body: null })
+  // see https://github.com/nodejs/undici/pull/3183
+  await fetch(new Request(url, { headers: new Headers([['Content-Type', 'text/plain']]) }), { headers: undefined })
 })
