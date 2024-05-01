@@ -35,7 +35,7 @@ jobs:
             fi
           done < files.txt
 
-          echo "Should run integrity check $(cat $GITHUB_OUTPUT)"
+          echo "GITHUB_OUTPUT: $(cat $GITHUB_OUTPUT)"
 
   llhttp-wasm:
     if: ${{ github.event_name == 'pull_request' && needs.check.outputs.run_job == 'true' }} 
