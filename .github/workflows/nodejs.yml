@@ -183,7 +183,7 @@ jobs:
 
   test-llhttp-integrity:
     name: Ensure integrity of llhttp wasm files
-    uses: nodejs/undici/.github/workflows/llhttp-wasm-integrity.yml@main
+    uses: uzlopak/undici/.github/workflows/llhttp-wasm-integrity.yml@llhttp-integrity
 
   automerge:
     if: >
