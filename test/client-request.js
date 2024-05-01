@@ -1,59 +1,159 @@
+/* globals AbortController */
+
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after, describe, before } = require('node:test')
 const { Client, errors } = require('..')
-const { createServer } = require('http')
-const EE = require('events')
+const { createServer } = require('node:http')
+const EE = require('node:events')
 const { kConnect } = require('../lib/core/symbols')
-const { Readable } = require('stream')
-const net = require('net')
-const { promisify } = require('util')
-const { NotSupportedError } = require('../lib/core/errors')
-const { nodeMajor } = require('../lib/core/util')
+const { Readable } = require('node:stream')
+const net = require('node:net')
+const { promisify } = require('node:util')
+const { NotSupportedError, InvalidArgumentError } = require('../lib/core/errors')
 const { parseFormDataString } = require('./utils/formdata')
 
-test('request dump', (t) => {
-  t.plan(3)
+test('request dump big', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
-    res.end('hello')
+    res.setHeader('content-length', 999999999)
+    while (res.write('asd')) {
+      // Do nothing...
+    }
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     let dumped = false
     client.on('disconnect', () => {
-      t.equal(dumped, true)
+      t.strictEqual(dumped, true)
     })
     client.request({
       path: '/',
       method: 'GET'
     }, (err, { body }) => {
-      t.error(err)
+      t.ifError(err)
+      body.on('data', () => t.fail())
       body.dump().then(() => {
         dumped = true
-        t.pass()
+        t.ok(true, 'pass')
       })
     })
   })
+
+  await t.completed
 })
 
-test('request abort before headers', (t) => {
-  t.plan(6)
+test('request dump', async (t) => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer((req, res) => {
+    res.shouldKeepAlive = false
+    res.setHeader('content-length', 5)
+    res.end('hello')
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    let dumped = false
+    client.on('disconnect', () => {
+      t.strictEqual(dumped, true)
+    })
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.ifError(err)
+      body.dump().then(() => {
+        dumped = true
+        t.ok(true, 'pass')
+      })
+    })
+  })
+
+  await t.completed
+})
+
+test('request dump with abort signal', async (t) => {
+  t = tspl(t, { plan: 2 })
+  const server = createServer((req, res) => {
+    res.write('hello')
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.ifError(err)
+      let ac
+      if (!global.AbortController) {
+        const { AbortController } = require('abort-controller')
+        ac = new AbortController()
+      } else {
+        ac = new AbortController()
+      }
+      body.dump({ signal: ac.signal }).catch((err) => {
+        t.strictEqual(err.name, 'AbortError')
+        server.close()
+      })
+      ac.abort()
+    })
+  })
+
+  await t.completed
+})
+
+test('request hwm', async (t) => {
+  t = tspl(t, { plan: 2 })
+  const server = createServer((req, res) => {
+    res.write('hello')
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      highWaterMark: 1000
+    }, (err, { body }) => {
+      t.ifError(err)
+      t.deepStrictEqual(body.readableHighWaterMark, 1000)
+      body.dump()
+    })
+  })
+
+  await t.completed
+})
+
+test('request abort before headers', async (t) => {
+  t = tspl(t, { plan: 6 })
 
   const signal = new EE()
   const server = createServer((req, res) => {
     res.end('hello')
     signal.emit('abort')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client[kConnect](() => {
       client.request({
@@ -61,34 +161,36 @@ test('request abort before headers', (t) => {
         method: 'GET',
         signal
       }, (err) => {
-        t.type(err, errors.RequestAbortedError)
-        t.equal(signal.listenerCount('abort'), 0)
+        t.ok(err instanceof errors.RequestAbortedError)
+        t.strictEqual(signal.listenerCount('abort'), 0)
       })
-      t.equal(signal.listenerCount('abort'), 1)
+      t.strictEqual(signal.listenerCount('abort'), 1)
 
       client.request({
         path: '/',
         method: 'GET',
         signal
       }, (err) => {
-        t.type(err, errors.RequestAbortedError)
-        t.equal(signal.listenerCount('abort'), 0)
+        t.ok(err instanceof errors.RequestAbortedError)
+        t.strictEqual(signal.listenerCount('abort'), 0)
       })
-      t.equal(signal.listenerCount('abort'), 2)
+      t.strictEqual(signal.listenerCount('abort'), 2)
     })
   })
+
+  await t.completed
 })
 
-test('request body destroyed on invalid callback', (t) => {
-  t.plan(1)
+test('request body destroyed on invalid callback', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const body = new Readable({
       read () {}
@@ -100,24 +202,26 @@ test('request body destroyed on invalid callback', (t) => {
         body
       }, null)
     } catch (err) {
-      t.equal(body.destroyed, true)
+      t.strictEqual(body.destroyed, true)
     }
   })
+
+  await t.completed
 })
 
-test('trailers', (t) => {
-  t.plan(1)
+test('trailers', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.writeHead(200, { Trailer: 'Content-MD5' })
     res.addTrailers({ 'Content-MD5': 'test' })
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     const { body, trailers } = await client.request({
       path: '/',
@@ -127,13 +231,15 @@ test('trailers', (t) => {
     body
       .on('data', () => t.fail())
       .on('end', () => {
-        t.strictSame(trailers, { 'content-md5': 'test' })
+        t.deepStrictEqual(trailers, { 'content-md5': 'test' })
       })
   })
+
+  await t.completed
 })
 
-test('destroy socket abruptly', { skip: true }, async (t) => {
-  t.plan(2)
+test('destroy socket abruptly', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = net.createServer((socket) => {
     const lines = [
@@ -149,18 +255,18 @@ test('destroy socket abruptly', { skip: true }, async (t) => {
     // therefore we delay it to the next event loop run.
     setImmediate(socket.destroy.bind(socket))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   await promisify(server.listen.bind(server))(0)
   const client = new Client(`http://localhost:${server.address().port}`)
-  t.teardown(client.close.bind(client))
+  after(() => client.close())
 
   const { statusCode, body } = await client.request({
     path: '/',
     method: 'GET'
   })
 
-  t.equal(statusCode, 200)
+  t.strictEqual(statusCode, 200)
 
   body.setEncoding('utf8')
 
@@ -170,11 +276,11 @@ test('destroy socket abruptly', { skip: true }, async (t) => {
     actual += chunk
   }
 
-  t.equal(actual, 'the body')
+  t.strictEqual(actual, 'the body')
 })
 
-test('destroy socket abruptly with keep-alive', { skip: true }, async (t) => {
-  t.plan(2)
+test('destroy socket abruptly with keep-alive', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = net.createServer((socket) => {
     const lines = [
@@ -191,18 +297,18 @@ test('destroy socket abruptly with keep-alive', { skip: true }, async (t) => {
     // therefore we delay it to the next event loop run.
     setImmediate(socket.destroy.bind(socket))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   await promisify(server.listen.bind(server))(0)
   const client = new Client(`http://localhost:${server.address().port}`)
-  t.teardown(client.close.bind(client))
+  after(() => client.close())
 
   const { statusCode, body } = await client.request({
     path: '/',
     method: 'GET'
   })
 
-  t.equal(statusCode, 200)
+  t.strictEqual(statusCode, 200)
 
   body.setEncoding('utf8')
 
@@ -214,135 +320,274 @@ test('destroy socket abruptly with keep-alive', { skip: true }, async (t) => {
     /* eslint-enable */
     t.fail('no error')
   } catch (err) {
-    t.pass('error happened')
+    t.ok(true, 'error happened')
   }
 })
 
-test('request json', (t) => {
-  t.plan(1)
+test('request json', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
       method: 'GET'
     })
-    t.strictSame(obj, await body.json())
+    t.deepStrictEqual(obj, await body.json())
   })
+
+  await t.completed
 })
 
-test('request long multibyte json', (t) => {
-  t.plan(1)
+test('request long multibyte json', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const obj = { asd: 'あ'.repeat(100000) }
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
       method: 'GET'
     })
-    t.strictSame(obj, await body.json())
+    t.deepStrictEqual(obj, await body.json())
   })
+
+  await t.completed
 })
 
-test('request text', (t) => {
-  t.plan(1)
+test('request text', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
       method: 'GET'
     })
-    t.strictSame(JSON.stringify(obj), await body.text())
+    t.strictEqual(JSON.stringify(obj), await body.text())
   })
+
+  await t.completed
 })
 
-test('empty host header', (t) => {
-  t.plan(3)
+describe('headers', () => {
+  describe('invalid headers', () => {
+    test('invalid header value - array with string with invalid character', async (t) => {
+      t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
-    res.end(req.headers.host)
-  })
-  t.teardown(server.close.bind(server))
+      const client = new Client('http://localhost:8080')
+      after(() => client.destroy())
 
-  server.listen(0, async () => {
-    const serverAddress = `localhost:${server.address().port}`
-    const client = new Client(`http://${serverAddress}`)
-    t.teardown(client.destroy.bind(client))
-
-    const getWithHost = async (host, wanted) => {
-      const { body } = await client.request({
+      t.rejects(client.request({
         path: '/',
         method: 'GET',
-        headers: { host }
-      })
-      t.strictSame(await body.text(), wanted)
-    }
+        headers: { name: ['test\0'] }
+      }), new InvalidArgumentError('invalid name header'))
 
-    await getWithHost('test', 'test')
-    await getWithHost(undefined, serverAddress)
-    await getWithHost('', '')
+      await t.completed
+    })
+    test('invalid header value - array with POJO', async (t) => {
+      t = tspl(t, { plan: 1 })
+
+      const client = new Client('http://localhost:8080')
+      after(() => client.destroy())
+
+      t.rejects(client.request({
+        path: '/',
+        method: 'GET',
+        headers: { name: [{}] }
+      }), new InvalidArgumentError('invalid name header'))
+
+      await t.completed
+    })
+
+    test('invalid header value - string with invalid character', async (t) => {
+      t = tspl(t, { plan: 1 })
+
+      const client = new Client('http://localhost:8080')
+      after(() => client.destroy())
+
+      t.rejects(client.request({
+        path: '/',
+        method: 'GET',
+        headers: { name: 'test\0' }
+      }), new InvalidArgumentError('invalid name header'))
+
+      await t.completed
+    })
+
+    test('invalid header value - object', async (t) => {
+      t = tspl(t, { plan: 1 })
+
+      const client = new Client('http://localhost:8080')
+      after(() => client.destroy())
+
+      t.rejects(client.request({
+        path: '/',
+        method: 'GET',
+        headers: { name: new Date() }
+      }), new InvalidArgumentError('invalid name header'))
+
+      await t.completed
+    })
+  })
+
+  describe('array', () => {
+    let serverAddress
+    const server = createServer((req, res) => {
+      res.end(JSON.stringify(req.headers))
+    })
+
+    before(async () => {
+      server.listen(0)
+      await EE.once(server, 'listening')
+      serverAddress = `localhost:${server.address().port}`
+    })
+
+    after(() => server.close())
+
+    test('empty host header', async (t) => {
+      t = tspl(t, { plan: 4 })
+
+      const client = new Client(`http://${serverAddress}`)
+      after(() => client.destroy())
+
+      const testCase = async (expected, actual) => {
+        const { body } = await client.request({
+          path: '/',
+          method: 'GET',
+          headers: expected
+        })
+
+        const result = await body.json()
+        t.deepStrictEqual(result, { ...result, ...actual })
+      }
+
+      await testCase({ key: [null] }, { key: '' })
+      await testCase({ key: ['test'] }, { key: 'test' })
+      await testCase({ key: ['test', 'true'] }, { key: 'test, true' })
+      await testCase({ key: ['test', true] }, { key: 'test, true' })
+
+      await t.completed
+    })
+  })
+
+  describe('host', () => {
+    let serverAddress
+    const server = createServer((req, res) => {
+      res.end(req.headers.host)
+    })
+
+    before(async () => {
+      server.listen(0)
+      await EE.once(server, 'listening')
+      serverAddress = `localhost:${server.address().port}`
+    })
+
+    after(() => server.close())
+
+    test('invalid host header', async (t) => {
+      t = tspl(t, { plan: 1 })
+
+      const client = new Client(`http://${serverAddress}`)
+      after(() => client.destroy())
+
+      t.rejects(client.request({
+        path: '/',
+        method: 'GET',
+        headers: {
+          host: [
+            'www.example.com'
+          ]
+        }
+      }), new InvalidArgumentError('invalid host header'))
+
+      await t.completed
+    })
+
+    test('empty host header', async (t) => {
+      t = tspl(t, { plan: 3 })
+
+      const client = new Client(`http://${serverAddress}`)
+      after(() => client.destroy())
+
+      const getWithHost = async (host, wanted) => {
+        const { body } = await client.request({
+          path: '/',
+          method: 'GET',
+          headers: { host }
+        })
+        t.strictEqual(await body.text(), wanted)
+      }
+
+      await getWithHost('test', 'test')
+      await getWithHost(undefined, serverAddress)
+      await getWithHost('', '')
+
+      await t.completed
+    })
   })
 })
 
-test('request long multibyte text', (t) => {
-  t.plan(1)
+test('request long multibyte text', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const obj = { asd: 'あ'.repeat(100000) }
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
       method: 'GET'
     })
-    t.strictSame(JSON.stringify(obj), await body.text())
+    t.strictEqual(JSON.stringify(obj), await body.text())
   })
+
+  await t.completed
 })
 
-test('request blob', { skip: nodeMajor < 16 }, (t) => {
-  t.plan(2)
+test('request blob', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const obj = { asd: true }
   const server = createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify(obj))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -350,44 +595,51 @@ test('request blob', { skip: nodeMajor < 16 }, (t) => {
     })
 
     const blob = await body.blob()
-    t.strictSame(obj, JSON.parse(await blob.text()))
-    t.equal(blob.type, 'application/json')
+    t.deepStrictEqual(obj, JSON.parse(await blob.text()))
+    t.strictEqual(blob.type, 'application/json')
   })
+
+  await t.completed
 })
 
-test('request arrayBuffer', (t) => {
-  t.plan(1)
+test('request arrayBuffer', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const obj = { asd: true }
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
       method: 'GET'
     })
-    t.strictSame(Buffer.from(JSON.stringify(obj)), Buffer.from(await body.arrayBuffer()))
+    const ab = await body.arrayBuffer()
+
+    t.deepStrictEqual(Buffer.from(JSON.stringify(obj)), Buffer.from(ab))
+    t.ok(ab instanceof ArrayBuffer)
   })
+
+  await t.completed
 })
 
-test('request body', { skip: nodeMajor < 16 }, (t) => {
-  t.plan(1)
+test('request body', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -398,26 +650,28 @@ test('request body', { skip: nodeMajor < 16 }, (t) => {
     for await (const chunk of body.body) {
       x += Buffer.from(chunk)
     }
-    t.strictSame(JSON.stringify(obj), x)
+    t.strictEqual(JSON.stringify(obj), x)
   })
+
+  await t.completed
 })
 
-test('request post body no missing data', { skip: nodeMajor < 16 }, (t) => {
-  t.plan(2)
+test('request post body no missing data', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
     }
-    t.equal(ret, 'asd')
+    t.strictEqual(ret, 'asd')
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -431,26 +685,28 @@ test('request post body no missing data', { skip: nodeMajor < 16 }, (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })
 
-test('request post body no extra data handler', { skip: nodeMajor < 16 }, (t) => {
-  t.plan(3)
+test('request post body no extra data handler', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
     }
-    t.equal(ret, 'asd')
+    t.strictEqual(ret, 'asd')
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const reqBody = new Readable({
       read () {
@@ -459,7 +715,7 @@ test('request post body no extra data handler', { skip: nodeMajor < 16 }, (t) =>
       }
     })
     process.nextTick(() => {
-      t.equal(reqBody.listenerCount('data'), 0)
+      t.strictEqual(reqBody.listenerCount('data'), 0)
     })
     const { body } = await client.request({
       path: '/',
@@ -468,48 +724,52 @@ test('request post body no extra data handler', { skip: nodeMajor < 16 }, (t) =>
       maxRedirections: 0
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })
 
-test('request with onInfo callback', (t) => {
-  t.plan(3)
+test('request with onInfo callback', async (t) => {
+  t = tspl(t, { plan: 3 })
   const infos = []
   const server = createServer((req, res) => {
     res.writeProcessing()
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify({ foo: 'bar' }))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     await client.request({
       path: '/',
       method: 'GET',
       onInfo: (x) => { infos.push(x) }
     })
-    t.equal(infos.length, 1)
-    t.equal(infos[0].statusCode, 102)
-    t.pass()
+    t.strictEqual(infos.length, 1)
+    t.strictEqual(infos[0].statusCode, 102)
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })
 
-test('request with onInfo callback but socket is destroyed before end of response', (t) => {
-  t.plan(5)
+test('request with onInfo callback but socket is destroyed before end of response', async (t) => {
+  t = tspl(t, { plan: 5 })
   const infos = []
   let response
   const server = createServer((req, res) => {
     response = res
     res.writeProcessing()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
     try {
       await client.request({
         path: '/',
@@ -519,19 +779,21 @@ test('request with onInfo callback but socket is destroyed before end of respons
           response.destroy()
         }
       })
-      t.error()
+      t.fail()
     } catch (e) {
       t.ok(e)
-      t.equal(e.message, 'other side closed')
+      t.strictEqual(e.message, 'other side closed')
     }
-    t.equal(infos.length, 1)
-    t.equal(infos[0].statusCode, 102)
-    t.pass()
+    t.strictEqual(infos.length, 1)
+    t.strictEqual(infos[0].statusCode, 102)
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })
 
 test('request onInfo callback headers parsing', async (t) => {
-  t.plan(4)
+  t = tspl(t, { plan: 4 })
   const infos = []
 
   const server = net.createServer((socket) => {
@@ -547,12 +809,12 @@ test('request onInfo callback headers parsing', async (t) => {
     ]
     socket.end(lines.join('\r\n'))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   await promisify(server.listen.bind(server))(0)
 
   const client = new Client(`http://localhost:${server.address().port}`)
-  t.teardown(client.close.bind(client))
+  after(() => client.close())
 
   const { body } = await client.request({
     path: '/',
@@ -560,14 +822,14 @@ test('request onInfo callback headers parsing', async (t) => {
     onInfo: (x) => { infos.push(x) }
   })
   await body.dump()
-  t.equal(infos.length, 1)
-  t.equal(infos[0].statusCode, 103)
-  t.same(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
-  t.pass()
+  t.strictEqual(infos.length, 1)
+  t.strictEqual(infos[0].statusCode, 103)
+  t.deepStrictEqual(infos[0].headers, { link: '</style.css>; rel=preload; as=style' })
+  t.ok(true, 'pass')
 })
 
 test('request raw responseHeaders', async (t) => {
-  t.plan(4)
+  t = tspl(t, { plan: 4 })
   const infos = []
 
   const server = net.createServer((socket) => {
@@ -583,12 +845,12 @@ test('request raw responseHeaders', async (t) => {
     ]
     socket.end(lines.join('\r\n'))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   await promisify(server.listen.bind(server))(0)
 
   const client = new Client(`http://localhost:${server.address().port}`)
-  t.teardown(client.close.bind(client))
+  after(() => client.close())
 
   const { body, headers } = await client.request({
     path: '/',
@@ -597,24 +859,24 @@ test('request raw responseHeaders', async (t) => {
     onInfo: (x) => { infos.push(x) }
   })
   await body.dump()
-  t.equal(infos.length, 1)
-  t.same(infos[0].headers, ['Link', '</style.css>; rel=preload; as=style'])
-  t.same(headers, ['Date', 'Sat, 09 Oct 2010 14:28:02 GMT', 'Connection', 'close'])
-  t.pass()
+  t.strictEqual(infos.length, 1)
+  t.deepStrictEqual(infos[0].headers, ['Link', '</style.css>; rel=preload; as=style'])
+  t.deepStrictEqual(headers, ['Date', 'Sat, 09 Oct 2010 14:28:02 GMT', 'Connection', 'close'])
+  t.ok(true, 'pass')
 })
 
-test('request formData', { skip: nodeMajor < 16 }, (t) => {
-  t.plan(1)
+test('request formData', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -628,20 +890,22 @@ test('request formData', { skip: nodeMajor < 16 }, (t) => {
       t.ok(error instanceof NotSupportedError)
     }
   })
+
+  await t.completed
 })
 
-test('request text2', (t) => {
-  t.plan(2)
+test('request text2', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const obj = { asd: true }
   const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -652,15 +916,17 @@ test('request text2', (t) => {
     body.on('data', chunk => {
       ret += chunk
     }).on('end', () => {
-      t.equal(JSON.stringify(obj), ret)
+      t.strictEqual(JSON.stringify(obj), ret)
     })
-    t.strictSame(JSON.stringify(obj), await p)
+    t.strictEqual(JSON.stringify(obj), await p)
   })
+
+  await t.completed
 })
 
-test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
+test('request with FormData body', async (t) => {
   const { FormData } = require('../')
-  const { Blob } = require('buffer')
+  const { Blob } = require('node:buffer')
 
   const fd = new FormData()
   fd.set('key', 'value')
@@ -669,7 +935,7 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
   const server = createServer(async (req, res) => {
     const contentType = req.headers['content-type']
     // ensure we received a multipart/form-data header
-    t.ok(/^multipart\/form-data; boundary=-+formdata-undici-0.\d+$/.test(contentType))
+    t.ok(/^multipart\/form-data; boundary=-+formdata-undici-0\d+$/.test(contentType))
 
     const chunks = []
 
@@ -682,10 +948,10 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
       contentType
     )
 
-    t.same(fields[0], { key: 'key', value: 'value' })
+    t.deepStrictEqual(fields[0], { key: 'key', value: 'value' })
     t.ok(fileMap.has('file'))
-    t.equal(fileMap.get('file').data.toString(), 'Hello, world!')
-    t.same(fileMap.get('file').info, {
+    t.strictEqual(fileMap.get('file').data.toString(), 'Hello, world!')
+    t.deepStrictEqual(fileMap.get('file').info, {
       filename: 'hello_world.txt',
       encoding: '7bit',
       mimeType: 'application/octet-stream'
@@ -693,11 +959,11 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
 
     return res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     await client.request({
       path: '/',
@@ -707,28 +973,12 @@ test('request with FormData body', { skip: nodeMajor < 16 }, (t) => {
 
     t.end()
   })
+
+  await t.completed
 })
 
-test('request with FormData body on node < 16', { skip: nodeMajor >= 16 }, async (t) => {
-  t.plan(1)
-
-  // a FormData polyfill, for example
-  class FormData {}
-
-  const fd = new FormData()
-
-  const client = new Client('http://localhost:3000')
-  t.teardown(client.destroy.bind(client))
-
-  await t.rejects(client.request({
-    path: '/',
-    method: 'POST',
-    body: fd
-  }), errors.InvalidArgumentError)
-})
-
-test('request post body Buffer from string', (t) => {
-  t.plan(2)
+test('request post body Buffer from string', async (t) => {
+  t = tspl(t, { plan: 2 })
   const requestBody = Buffer.from('abcdefghijklmnopqrstuvwxyz')
 
   const server = createServer(async (req, res) => {
@@ -736,14 +986,14 @@ test('request post body Buffer from string', (t) => {
     for await (const chunk of req) {
       ret += chunk
     }
-    t.equal(ret, 'abcdefghijklmnopqrstuvwxyz')
+    t.strictEqual(ret, 'abcdefghijklmnopqrstuvwxyz')
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -752,12 +1002,14 @@ test('request post body Buffer from string', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })
 
-test('request post body Buffer from buffer', (t) => {
-  t.plan(2)
+test('request post body Buffer from buffer', async (t) => {
+  t = tspl(t, { plan: 2 })
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = Buffer.from(fullBuffer.buffer, 8, 16)
 
@@ -766,14 +1018,14 @@ test('request post body Buffer from buffer', (t) => {
     for await (const chunk of req) {
       ret += chunk
     }
-    t.equal(ret, 'ijklmnopqrstuvwx')
+    t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -782,12 +1034,14 @@ test('request post body Buffer from buffer', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })
 
-test('request post body Uint8Array', (t) => {
-  t.plan(2)
+test('request post body Uint8Array', async (t) => {
+  t = tspl(t, { plan: 2 })
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = new Uint8Array(fullBuffer.buffer, 8, 16)
 
@@ -796,14 +1050,14 @@ test('request post body Uint8Array', (t) => {
     for await (const chunk of req) {
       ret += chunk
     }
-    t.equal(ret, 'ijklmnopqrstuvwx')
+    t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -812,12 +1066,14 @@ test('request post body Uint8Array', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })
 
-test('request post body Uint32Array', (t) => {
-  t.plan(2)
+test('request post body Uint32Array', async (t) => {
+  t = tspl(t, { plan: 2 })
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = new Uint32Array(fullBuffer.buffer, 8, 4)
 
@@ -826,14 +1082,14 @@ test('request post body Uint32Array', (t) => {
     for await (const chunk of req) {
       ret += chunk
     }
-    t.equal(ret, 'ijklmnopqrstuvwx')
+    t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -842,12 +1098,14 @@ test('request post body Uint32Array', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })
 
-test('request post body Float64Array', (t) => {
-  t.plan(2)
+test('request post body Float64Array', async (t) => {
+  t = tspl(t, { plan: 2 })
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = new Float64Array(fullBuffer.buffer, 8, 2)
 
@@ -856,14 +1114,14 @@ test('request post body Float64Array', (t) => {
     for await (const chunk of req) {
       ret += chunk
     }
-    t.equal(ret, 'ijklmnopqrstuvwx')
+    t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -872,12 +1130,14 @@ test('request post body Float64Array', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })
 
-test('request post body BigUint64Array', (t) => {
-  t.plan(2)
+test('request post body BigUint64Array', async (t) => {
+  t = tspl(t, { plan: 2 })
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = new BigUint64Array(fullBuffer.buffer, 8, 2)
 
@@ -886,14 +1146,14 @@ test('request post body BigUint64Array', (t) => {
     for await (const chunk of req) {
       ret += chunk
     }
-    t.equal(ret, 'ijklmnopqrstuvwx')
+    t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -902,12 +1162,14 @@ test('request post body BigUint64Array', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })
 
-test('request post body DataView', (t) => {
-  t.plan(2)
+test('request post body DataView', async (t) => {
+  t = tspl(t, { plan: 2 })
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = new DataView(fullBuffer.buffer, 8, 16)
 
@@ -916,14 +1178,14 @@ test('request post body DataView', (t) => {
     for await (const chunk of req) {
       ret += chunk
     }
-    t.equal(ret, 'ijklmnopqrstuvwx')
+    t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const { body } = await client.request({
       path: '/',
@@ -932,6 +1194,8 @@ test('request post body DataView', (t) => {
       maxRedirections: 2
     })
     await body.text()
-    t.pass()
+    t.ok(true, 'pass')
   })
+
+  await t.completed
 })

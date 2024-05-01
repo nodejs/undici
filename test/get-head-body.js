@@ -1,27 +1,28 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client } = require('..')
-const { createServer } = require('http')
-const { Readable } = require('stream')
+const { createServer } = require('node:http')
+const { Readable } = require('node:stream')
 const { kConnect } = require('../lib/core/symbols')
 const { kBusy } = require('../lib/core/symbols')
 const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 
-test('GET and HEAD with body should reset connection', (t) => {
-  t.plan(8 + 2)
+test('GET and HEAD with body should reset connection', async (t) => {
+  t = tspl(t, { plan: 8 + 2 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
 
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.on('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
 
     client.request({
@@ -29,7 +30,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       body: 'asd',
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body.resume()
     })
 
@@ -42,7 +43,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       body: emptyBody,
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body.resume()
     })
 
@@ -55,7 +56,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       }),
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body.resume()
     })
 
@@ -69,7 +70,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       }),
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body.resume()
     })
 
@@ -78,7 +79,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       body: [],
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body.resume()
     })
 
@@ -91,7 +92,7 @@ test('GET and HEAD with body should reset connection', (t) => {
       })),
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body.resume()
     })
 
@@ -105,63 +106,67 @@ test('GET and HEAD with body should reset connection', (t) => {
       })),
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body.resume()
     })
   })
+
+  await t.completed
 })
 
 // TODO: Avoid external dependency.
-// test('GET with body should work when target parses body as request', (t) => {
-//   t.plan(4)
+// test('GET with body should work when target parses body as request', async (t) => {
+//   t = tspl(t, { plan: 4 })
 
 //   // This URL will send double responses when receiving a
 //   // GET request with body.
 //   const client = new Client('http://feeds.bbci.co.uk')
-//   t.teardown(client.close.bind(client))
+//   after(() => client.close())
 
 //   client.request({ method: 'GET', path: '/news/rss.xml', body: 'asd' }, (err, data) => {
-//     t.error(err)
-//     t.equal(data.statusCode, 200)
+//     t.ifError(err)
+//     t.strictEqual(data.statusCode, 200)
 //     data.body.resume()
 //   })
 //   client.request({ method: 'GET', path: '/news/rss.xml', body: 'asd' }, (err, data) => {
-//     t.error(err)
-//     t.equal(data.statusCode, 200)
+//     t.ifError(err)
+//     t.strictEqual(data.statusCode, 200)
 //     data.body.resume()
 //   })
+
+// await t.completed
 // })
 
-test('HEAD should reset connection', (t) => {
-  t.plan(8)
+test('HEAD should reset connection', async (t) => {
+  t = tspl(t, { plan: 8 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
 
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.once('disconnect', () => {
-      t.pass()
+      t.ok(true, 'pass')
     })
 
     client.request({
       path: '/',
       method: 'HEAD'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body.resume()
     })
-    t.equal(client[kBusy], true)
+    t.strictEqual(client[kBusy], true)
 
     client.request({
       path: '/',
       method: 'HEAD'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body.resume()
       client.once('disconnect', () => {
         client[kConnect](() => {
@@ -169,16 +174,18 @@ test('HEAD should reset connection', (t) => {
             path: '/',
             method: 'HEAD'
           }, (err, data) => {
-            t.error(err)
+            t.ifError(err)
             data.body.resume()
             data.body.on('end', () => {
-              t.pass()
+              t.ok(true, 'pass')
             })
           })
-          t.equal(client[kBusy], true)
+          t.strictEqual(client[kBusy], true)
         })
       })
     })
-    t.equal(client[kBusy], true)
+    t.strictEqual(client[kBusy], true)
   })
+
+  await t.completed
 })

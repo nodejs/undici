@@ -13,6 +13,75 @@ expectAssignable<Client>(new Client('', {
 }))
 expectAssignable<Client>(new Client(new URL('http://localhost'), {}))
 
+/**
+ * Tests for Client.Options:
+ */
+{
+  expectAssignable<Client>(new Client('', {
+    maxHeaderSize: 16384
+  }))
+  expectAssignable<Client>(new Client('', {
+    headersTimeout: 300e3
+  }))
+  expectAssignable<Client>(new Client('', {
+    connectTimeout: 300e3
+  }))
+  expectAssignable<Client>(new Client('', {
+    bodyTimeout: 300e3
+  }))
+  expectAssignable<Client>(new Client('', {
+    keepAliveTimeout: 4e3
+  }))
+  expectAssignable<Client>(new Client('', {
+    keepAliveMaxTimeout: 600e3
+  }))
+  expectAssignable<Client>(new Client('', {
+    keepAliveTimeoutThreshold: 1e3
+  }))
+  expectAssignable<Client>(new Client('', {
+    socketPath: '/var/run/docker.sock'
+  }))
+  expectAssignable<Client>(new Client('', {
+    pipelining: 1
+  }))
+  expectAssignable<Client>(new Client('', {
+    strictContentLength: true
+  }))
+  expectAssignable<Client>(new Client('', {
+    maxCachedSessions: 1
+  }))
+  expectAssignable<Client>(new Client('', {
+    maxRedirections: 1
+  }))
+  expectAssignable<Client>(new Client('', {
+    maxRequestsPerClient: 1
+  }))
+  expectAssignable<Client>(new Client('', {
+    localAddress: '127.0.0.1'
+  }))
+  expectAssignable<Client>(new Client('', {
+    maxResponseSize: -1
+  }))
+  expectAssignable<Client>(new Client('', {
+    autoSelectFamily: true
+  }))
+  expectAssignable<Client>(new Client('', {
+    autoSelectFamilyAttemptTimeout: 300e3
+  }))
+  expectAssignable<Client>(new Client('', {
+    interceptors: {
+      Client: [(dispatcher) => {
+        expectAssignable<Dispatcher['dispatch']>(dispatcher);
+        return (opts, handlers) => {
+          expectAssignable<Dispatcher.DispatchOptions>(opts);
+          expectAssignable<Dispatcher.DispatchHandlers>(handlers);
+          return dispatcher(opts, handlers)
+        }
+      }]
+    }
+  }))
+}
+
 {
   const client = new Client('')
 

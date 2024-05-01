@@ -1,10 +1,11 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const assert = require('node:assert')
 const { Headers, FormData } = require('../..')
 
-test('Implements " Iterator" properly', (t) => {
-  t.test('all Headers iterators implement Headers Iterator', (t) => {
+test('Implements " Iterator" properly', async (t) => {
+  await t.test('all Headers iterators implement Headers Iterator', () => {
     const headers = new Headers([['a', 'b'], ['c', 'd']])
 
     for (const iterable of ['keys', 'values', 'entries', Symbol.iterator]) {
@@ -13,24 +14,22 @@ test('Implements " Iterator" properly', (t) => {
       const IteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf([][Symbol.iterator]()))
       const iteratorProto = Object.getPrototypeOf(gen)
 
-      t.ok(gen.constructor === Object)
-      t.ok(gen.prototype === undefined)
+      assert.ok(gen.constructor === IteratorPrototype.constructor)
+      assert.ok(gen.prototype === undefined)
       // eslint-disable-next-line no-proto
-      t.equal(gen.__proto__[Symbol.toStringTag], 'Headers Iterator')
+      assert.strictEqual(gen.__proto__[Symbol.toStringTag], 'Headers Iterator')
       // https://github.com/node-fetch/node-fetch/issues/1119#issuecomment-100222049
-      t.notOk(Headers.prototype[iterable] instanceof function * () {}.constructor)
+      assert.ok(!(Headers.prototype[iterable] instanceof function * () {}.constructor))
       // eslint-disable-next-line no-proto
-      t.ok(gen.__proto__.next.__proto__ === Function.prototype)
+      assert.ok(gen.__proto__.next.__proto__ === Function.prototype)
       // https://webidl.spec.whatwg.org/#dfn-iterator-prototype-object
       // "The [[Prototype]] internal slot of an iterator prototype object must be %IteratorPrototype%."
-      t.equal(gen[Symbol.iterator], IteratorPrototype[Symbol.iterator])
-      t.equal(Object.getPrototypeOf(iteratorProto), IteratorPrototype)
+      assert.strictEqual(gen[Symbol.iterator], IteratorPrototype[Symbol.iterator])
+      assert.strictEqual(Object.getPrototypeOf(iteratorProto), IteratorPrototype)
     }
-
-    t.end()
   })
 
-  t.test('all FormData iterators implement FormData Iterator', (t) => {
+  await t.test('all FormData iterators implement FormData Iterator', () => {
     const fd = new FormData()
 
     for (const iterable of ['keys', 'values', 'entries', Symbol.iterator]) {
@@ -39,102 +38,84 @@ test('Implements " Iterator" properly', (t) => {
       const IteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf([][Symbol.iterator]()))
       const iteratorProto = Object.getPrototypeOf(gen)
 
-      t.ok(gen.constructor === Object)
-      t.ok(gen.prototype === undefined)
+      assert.ok(gen.constructor === IteratorPrototype.constructor)
+      assert.ok(gen.prototype === undefined)
       // eslint-disable-next-line no-proto
-      t.equal(gen.__proto__[Symbol.toStringTag], 'FormData Iterator')
+      assert.strictEqual(gen.__proto__[Symbol.toStringTag], 'FormData Iterator')
       // https://github.com/node-fetch/node-fetch/issues/1119#issuecomment-100222049
-      t.notOk(Headers.prototype[iterable] instanceof function * () {}.constructor)
+      assert.ok(!(Headers.prototype[iterable] instanceof function * () {}.constructor))
       // eslint-disable-next-line no-proto
-      t.ok(gen.__proto__.next.__proto__ === Function.prototype)
+      assert.ok(gen.__proto__.next.__proto__ === Function.prototype)
       // https://webidl.spec.whatwg.org/#dfn-iterator-prototype-object
       // "The [[Prototype]] internal slot of an iterator prototype object must be %IteratorPrototype%."
-      t.equal(gen[Symbol.iterator], IteratorPrototype[Symbol.iterator])
-      t.equal(Object.getPrototypeOf(iteratorProto), IteratorPrototype)
+      assert.strictEqual(gen[Symbol.iterator], IteratorPrototype[Symbol.iterator])
+      assert.strictEqual(Object.getPrototypeOf(iteratorProto), IteratorPrototype)
     }
-
-    t.end()
   })
 
-  t.test('Iterator symbols are properly set', (t) => {
-    t.test('Headers', (t) => {
+  await t.test('Iterator symbols are properly set', async (t) => {
+    await t.test('Headers', () => {
       const headers = new Headers([['a', 'b'], ['c', 'd']])
       const gen = headers.entries()
 
-      t.equal(typeof gen[Symbol.toStringTag], 'string')
-      t.equal(typeof gen[Symbol.iterator], 'function')
-      t.end()
+      assert.strictEqual(typeof gen[Symbol.toStringTag], 'string')
+      assert.strictEqual(typeof gen[Symbol.iterator], 'function')
     })
 
-    t.test('FormData', (t) => {
+    await t.test('FormData', () => {
       const fd = new FormData()
       const gen = fd.entries()
 
-      t.equal(typeof gen[Symbol.toStringTag], 'string')
-      t.equal(typeof gen[Symbol.iterator], 'function')
-      t.end()
+      assert.strictEqual(typeof gen[Symbol.toStringTag], 'string')
+      assert.strictEqual(typeof gen[Symbol.iterator], 'function')
     })
-
-    t.end()
   })
 
-  t.test('Iterator does not inherit Generator prototype methods', (t) => {
-    t.test('Headers', (t) => {
+  await t.test('Iterator does not inherit Generator prototype methods', async (t) => {
+    await t.test('Headers', () => {
       const headers = new Headers([['a', 'b'], ['c', 'd']])
       const gen = headers.entries()
 
-      t.equal(gen.return, undefined)
-      t.equal(gen.throw, undefined)
-      t.equal(typeof gen.next, 'function')
-
-      t.end()
+      assert.strictEqual(gen.return, undefined)
+      assert.strictEqual(gen.throw, undefined)
+      assert.strictEqual(typeof gen.next, 'function')
     })
 
-    t.test('FormData', (t) => {
+    await t.test('FormData', () => {
       const fd = new FormData()
       const gen = fd.entries()
 
-      t.equal(gen.return, undefined)
-      t.equal(gen.throw, undefined)
-      t.equal(typeof gen.next, 'function')
-
-      t.end()
+      assert.strictEqual(gen.return, undefined)
+      assert.strictEqual(gen.throw, undefined)
+      assert.strictEqual(typeof gen.next, 'function')
     })
-
-    t.end()
   })
 
-  t.test('Symbol.iterator', (t) => {
+  await t.test('Symbol.iterator', () => {
     // Headers
     const headerValues = new Headers([['a', 'b']]).entries()[Symbol.iterator]()
-    t.same(Array.from(headerValues), [['a', 'b']])
+    assert.deepStrictEqual(Array.from(headerValues), [['a', 'b']])
 
     // FormData
     const formdata = new FormData()
     formdata.set('a', 'b')
     const formdataValues = formdata.entries()[Symbol.iterator]()
-    t.same(Array.from(formdataValues), [['a', 'b']])
-
-    t.end()
+    assert.deepStrictEqual(Array.from(formdataValues), [['a', 'b']])
   })
 
-  t.test('brand check', (t) => {
+  await t.test('brand check', () => {
     // Headers
-    t.throws(() => {
+    assert.throws(() => {
       const gen = new Headers().entries()
       // eslint-disable-next-line no-proto
       gen.__proto__.next()
     }, TypeError)
 
     // FormData
-    t.throws(() => {
+    assert.throws(() => {
       const gen = new FormData().entries()
       // eslint-disable-next-line no-proto
       gen.__proto__.next()
     }, TypeError)
-
-    t.end()
   })
-
-  t.end()
 })

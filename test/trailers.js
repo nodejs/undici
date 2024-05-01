@@ -1,11 +1,12 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 
-test('response trailers missing is OK', (t) => {
-  t.plan(1)
+test('response trailers missing is OK', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.writeHead(200, {
@@ -13,23 +14,24 @@ test('response trailers missing is OK', (t) => {
     })
     res.end('response')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
-
+    after(() => client.destroy())
     const { body } = await client.request({
       path: '/',
       method: 'GET',
       body: 'asd'
     })
 
-    t.equal(await body.text(), 'response')
+    t.strictEqual(await body.text(), 'response')
   })
+
+  await t.completed
 })
 
-test('response trailers missing w trailers is OK', (t) => {
-  t.plan(2)
+test('response trailers missing w trailers is OK', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.writeHead(200, {
@@ -40,18 +42,19 @@ test('response trailers missing w trailers is OK', (t) => {
     })
     res.end('response')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
-
+    after(() => client.destroy())
     const { body, trailers } = await client.request({
       path: '/',
       method: 'GET',
       body: 'asd'
     })
 
-    t.equal(await body.text(), 'response')
-    t.same(trailers, { asd: 'foo' })
+    t.strictEqual(await body.text(), 'response')
+    t.deepStrictEqual(trailers, { asd: 'foo' })
   })
+
+  await t.completed
 })

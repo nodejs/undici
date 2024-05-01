@@ -1,4 +1,6 @@
-const busboy = require('busboy')
+'use strict'
+
+const Busboy = require('@fastify/busboy')
 
 function parseFormDataString (
   body,
@@ -9,15 +11,15 @@ function parseFormDataString (
     fields: []
   }
 
-  const bb = busboy({
+  const bb = new Busboy({
     headers: {
       'content-type': contentType
     }
   })
 
   return new Promise((resolve, reject) => {
-    bb.on('file', (name, file, info) => {
-      cache.fileMap.set(name, { data: [], info })
+    bb.on('file', (name, file, filename, encoding, mimeType) => {
+      cache.fileMap.set(name, { data: [], info: { filename, encoding, mimeType } })
 
       file.on('data', (data) => {
         const old = cache.fileMap.get(name)
@@ -37,7 +39,7 @@ function parseFormDataString (
     })
 
     bb.on('field', (key, value) => cache.fields.push({ key, value }))
-    bb.on('close', () => resolve(cache))
+    bb.on('finish', () => resolve(cache))
     bb.on('error', (e) => reject(e))
 
     bb.end(body)

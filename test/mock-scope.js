@@ -1,24 +1,23 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, describe } = require('node:test')
 const { MockScope } = require('../lib/mock/mock-interceptor')
 const { InvalidArgumentError } = require('../lib/core/errors')
 
-test('MockScope - delay', t => {
-  t.plan(2)
-
-  t.test('should return MockScope', t => {
-    t.plan(1)
+describe('MockScope - delay', () => {
+  test('should return MockScope', t => {
+    t = tspl(t, { plan: 1 })
     const mockScope = new MockScope({
       path: '',
       method: ''
     }, [])
     const result = mockScope.delay(200)
-    t.type(result, MockScope)
+    t.ok(result instanceof MockScope)
   })
 
-  t.test('should error if passed options invalid', t => {
-    t.plan(4)
+  test('should error if passed options invalid', t => {
+    t = tspl(t, { plan: 4 })
 
     const mockScope = new MockScope({
       path: '',
@@ -31,35 +30,31 @@ test('MockScope - delay', t => {
   })
 })
 
-test('MockScope - persist', t => {
-  t.plan(1)
-
-  t.test('should return MockScope', t => {
-    t.plan(1)
+describe('MockScope - persist', () => {
+  test('should return MockScope', t => {
+    t = tspl(t, { plan: 1 })
     const mockScope = new MockScope({
       path: '',
       method: ''
     }, [])
     const result = mockScope.persist()
-    t.type(result, MockScope)
+    t.ok(result instanceof MockScope)
   })
 })
 
-test('MockScope - times', t => {
-  t.plan(2)
-
-  t.test('should return MockScope', t => {
-    t.plan(1)
+describe('MockScope - times', t => {
+  test('should return MockScope', t => {
+    t = tspl(t, { plan: 1 })
     const mockScope = new MockScope({
       path: '',
       method: ''
     }, [])
     const result = mockScope.times(200)
-    t.type(result, MockScope)
+    t.ok(result instanceof MockScope)
   })
 
-  t.test('should error if passed options invalid', t => {
-    t.plan(4)
+  test('should error if passed options invalid', t => {
+    t = tspl(t, { plan: 4 })
 
     const mockScope = new MockScope({
       path: '',

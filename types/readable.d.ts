@@ -18,7 +18,7 @@ declare class BodyReadable extends Readable {
   /** Consumes and returns the body as a JavaScript Object
    *  https://fetch.spec.whatwg.org/#dom-body-json
    */
-  json(): Promise<any>
+  json(): Promise<unknown>
 
   /** Consumes and returns the body as a Blob
    *  https://fetch.spec.whatwg.org/#dom-body-blob
@@ -44,9 +44,8 @@ declare class BodyReadable extends Readable {
    */
   readonly bodyUsed: boolean
 
-  /** Throws on node 16.6.0
-   *
-   *  If body is null, it should return null as the body
+  /** 
+   * If body is null, it should return null as the body
    *
    *  If body is not null, should return the body as a ReadableStream
    *

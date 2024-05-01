@@ -1,68 +1,65 @@
 'use strict'
 
-const { test } = require('tap')
-const { webidl } = require('../../lib/fetch/webidl')
+const { describe, test } = require('node:test')
+const assert = require('node:assert')
+const { webidl } = require('../../lib/web/fetch/webidl')
 
-test('sequence', (t) => {
+test('sequence', () => {
   const converter = webidl.sequenceConverter(
     webidl.converters.DOMString
   )
 
-  t.same(converter([1, 2, 3]), ['1', '2', '3'])
+  assert.deepStrictEqual(converter([1, 2, 3]), ['1', '2', '3'])
 
-  t.throws(() => {
-    converter(3)
+  assert.throws(() => {
+    converter(3, 'converter', 'converter')
   }, TypeError, 'disallows non-objects')
 
-  t.throws(() => {
-    converter(null)
+  assert.throws(() => {
+    converter(null, 'converter', 'converter')
   }, TypeError)
 
-  t.throws(() => {
-    converter(undefined)
+  assert.throws(() => {
+    converter(undefined, 'converter', 'converter')
   }, TypeError)
 
-  t.throws(() => {
-    converter({})
+  assert.throws(() => {
+    converter({}, 'converter', 'converter')
   }, TypeError, 'no Symbol.iterator')
 
-  t.throws(() => {
+  assert.throws(() => {
     converter({
       [Symbol.iterator]: 42
     })
   }, TypeError, 'invalid Symbol.iterator')
 
-  t.throws(() => {
+  assert.throws(() => {
     converter(webidl.converters.sequence({
       [Symbol.iterator] () {
         return {
           next: 'never!'
         }
       }
-    }))
+    }), 'converter', 'converter')
   }, TypeError, 'invalid generator')
-
-  t.end()
 })
 
-test('webidl.dictionaryConverter', (t) => {
-  t.test('arguments', (t) => {
+describe('webidl.dictionaryConverter', () => {
+  test('arguments', () => {
     const converter = webidl.dictionaryConverter([])
 
-    t.throws(() => {
-      converter(true)
+    assert.throws(() => {
+      converter(true, 'converter', 'converter')
     }, TypeError)
 
     for (const value of [{}, undefined, null]) {
-      t.doesNotThrow(() => {
-        converter(value)
+      assert.doesNotThrow(() => {
+        converter(value, 'converter', 'converter')
       })
     }
-
-    t.end()
   })
 
-  t.test('required key', (t) => {
+  test('required key', () => {
     const converter = webidl.dictionaryConverter([
       {
         converter: () => true,
@@ -71,57 +68,51 @@ test('webidl.dictionaryConverter', (t) => {
       }
     ])
 
-    t.throws(() => {
-      converter({ wrongKey: 'key' })
+    assert.throws(() => {
+      converter({ wrongKey: 'key' }, 'converter', 'converter')
     }, TypeError)
 
-    t.doesNotThrow(() => {
-      converter({ Key: 'this key was required!' })
+    assert.doesNotThrow(() => {
+      converter({ Key: 'this key was required!' }, 'converter', 'converter')
     })
-
-    t.end()
   })
-
-  t.end()
 })
 
-test('ArrayBuffer', (t) => {
-  t.throws(() => {
-    webidl.converters.ArrayBuffer(true)
+test('ArrayBuffer', () => {
+  assert.throws(() => {
+    webidl.converters.ArrayBuffer(true, 'converter', 'converter')
   }, TypeError)
 
-  t.throws(() => {
-    webidl.converters.ArrayBuffer({})
+  assert.throws(() => {
+    webidl.converters.ArrayBuffer({}, 'converter', 'converter')
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     const sab = new SharedArrayBuffer(1024)
-    webidl.converters.ArrayBuffer(sab, { allowShared: false })
+    webidl.converters.ArrayBuffer(sab, 'converter', 'converter', { allowShared: false })
   }, TypeError)
 
-  t.doesNotThrow(() => {
+  assert.doesNotThrow(() => {
     const sab = new SharedArrayBuffer(1024)
-    webidl.converters.ArrayBuffer(sab)
+    webidl.converters.ArrayBuffer(sab, 'converter', 'converter')
   })
 
-  t.doesNotThrow(() => {
+  assert.doesNotThrow(() => {
     const ab = new ArrayBuffer(8)
-    webidl.converters.ArrayBuffer(ab)
+    webidl.converters.ArrayBuffer(ab, 'converter', 'converter')
   })
-
-  t.end()
 })
 
-test('TypedArray', (t) => {
-  t.throws(() => {
-    webidl.converters.TypedArray(3)
+test('TypedArray', () => {
+  assert.throws(() => {
+    webidl.converters.TypedArray(3, 'converter', 'converter')
   }, TypeError)
 
-  t.throws(() => {
-    webidl.converters.TypedArray({})
+  assert.throws(() => {
+    webidl.converters.TypedArray({}, 'converter', 'converter')
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     const uint8 = new Uint8Array([1, 2, 3])
     Object.defineProperty(uint8, 'buffer', {
       get () {
@@ -129,24 +120,22 @@ test('TypedArray', (t) => {
       }
     })
 
-    webidl.converters.TypedArray(uint8, Uint8Array, {
+    webidl.converters.TypedArray(uint8, Uint8Array, 'converter', 'converter', {
       allowShared: false
     })
   }, TypeError)
-
-  t.end()
 })
 
-test('DataView', (t) => {
-  t.throws(() => {
-    webidl.converters.DataView(3)
+test('DataView', () => {
+  assert.throws(() => {
+    webidl.converters.DataView(3, 'converter', 'converter')
   }, TypeError)
 
-  t.throws(() => {
-    webidl.converters.DataView({})
+  assert.throws(() => {
+    webidl.converters.DataView({}, 'converter', 'converter')
   }, TypeError)
 
-  t.throws(() => {
+  assert.throws(() => {
     const buffer = new ArrayBuffer(16)
     const view = new DataView(buffer, 0)
 
@@ -156,7 +145,7 @@ test('DataView', (t) => {
       }
     })
 
-    webidl.converters.DataView(view, {
+    webidl.converters.DataView(view, 'converter', 'converter', {
       allowShared: false
     })
   })
@@ -164,39 +153,56 @@ test('DataView', (t) => {
   const buffer = new ArrayBuffer(16)
   const view = new DataView(buffer, 0)
 
-  t.equal(webidl.converters.DataView(view), view)
-
-  t.end()
+  assert.equal(webidl.converters.DataView(view, 'converter', 'converter'), view)
 })
 
-test('BufferSource', (t) => {
-  t.doesNotThrow(() => {
+test('BufferSource', () => {
+  assert.doesNotThrow(() => {
     const buffer = new ArrayBuffer(16)
     const view = new DataView(buffer, 0)
 
-    webidl.converters.BufferSource(view)
+    webidl.converters.BufferSource(view, 'converter', 'converter')
   })
 
-  t.throws(() => {
-    webidl.converters.BufferSource(3)
+  assert.throws(() => {
+    webidl.converters.BufferSource(3, 'converter', 'converter')
   }, TypeError)
-
-  t.end()
 })
 
-test('ByteString', (t) => {
-  t.doesNotThrow(() => {
-    webidl.converters.ByteString('')
+test('ByteString', () => {
+  assert.doesNotThrow(() => {
+    webidl.converters.ByteString('', 'converter', 'converter')
   })
 
   // https://github.com/nodejs/undici/issues/1590
-  t.throws(() => {
+  assert.throws(() => {
     const char = String.fromCharCode(256)
-    webidl.converters.ByteString(`invalid${char}char`)
+    webidl.converters.ByteString(`invalid${char}char`, 'converter', 'converter')
   }, {
     message: 'Cannot convert argument to a ByteString because the character at ' +
              'index 7 has a value of 256 which is greater than 255.'
   })
+})
 
-  t.end()
+test('webidl.util.Stringify', (t) => {
+  const circular = {}
+  circular.circular = circular
+
+  const pairs = [
+    [Object.create(null), '[Object: null prototype] {}'],
+    [{ a: 'b' }, "{ a: 'b' }"],
+    [Symbol('sym'), 'Symbol(sym)'],
+    [Symbol.iterator, 'Symbol(Symbol.iterator)'], // well-known symbol
+    [true, 'true'],
+    [0, '0'],
+    ['hello', '"hello"'],
+    ['', '""'],
+    [null, 'null'],
+    [undefined, 'undefined'],
+    [circular, '<ref *1> { circular: [Circular *1] }']
+  ]
+
+  for (const [value, expected] of pairs) {
+    assert.deepStrictEqual(webidl.util.Stringify(value), expected)
+  }
 })

@@ -1,8 +1,8 @@
 'use strict'
 
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 const { Agent, request } = require('../../index')
-const DecoratorHandler = require('../../lib/handler/DecoratorHandler')
+const DecoratorHandler = require('../../lib/handler/decorator-handler')
 /* global expect */
 
 const defaultOpts = { keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }

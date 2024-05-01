@@ -1,14 +1,14 @@
 'use strict'
 
-const { once } = require('events')
-const { createServer } = require('http')
-const { test } = require('tap')
+const { once } = require('node:events')
+const { createServer } = require('node:http')
+const { test } = require('node:test')
 const { fetch } = require('../..')
 
 // https://github.com/nodejs/node/issues/46525
 test('No warning when reusing AbortController', async (t) => {
-  function onWarning (error) {
-    t.error(error, 'Got warning')
+  function onWarning () {
+    throw new Error('Got warning')
   }
 
   const server = createServer((req, res) => res.end()).listen(0)
@@ -16,7 +16,7 @@ test('No warning when reusing AbortController', async (t) => {
   await once(server, 'listening')
 
   process.on('warning', onWarning)
-  t.teardown(() => {
+  t.after(() => {
     process.off('warning', onWarning)
     return server.close()
   })

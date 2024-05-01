@@ -6,11 +6,11 @@ const acceptableCodes = [
   'ERR_INVALID_ARG_TYPE'
 ]
 
-async function fuzz (netServer, results, buf) {
+async function fuzz (address, results, buf) {
   const headers = { buf: buf.toString() }
   results.body = headers
   try {
-    const data = await request(`http://localhost:${netServer.address().port}`, { headers })
+    const data = await request(address, { headers })
     data.body.destroy().on('error', () => {})
   } catch (err) {
     results.err = err
@@ -18,7 +18,6 @@ async function fuzz (netServer, results, buf) {
     if (Object.values(errors).some(undiciError => err instanceof undiciError)) {
       // Okay error
     } else if (!acceptableCodes.includes(err.code)) {
-      console.log(`=== Headers: ${JSON.stringify(headers)} ===`)
       throw err
     }
   }

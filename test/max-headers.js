@@ -1,11 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
 
-test('handle a lot of headers', (t) => {
-  t.plan(3)
+test('handle a lot of headers', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const headers = {}
   for (let n = 0; n < 64; ++n) {
@@ -16,26 +18,28 @@ test('handle a lot of headers', (t) => {
     res.writeHead(200, headers)
     res.end()
   })
-  t.teardown(server.close.bind(server))
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+  after(() => server.close())
+  server.listen(0)
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, data) => {
-      t.error(err)
-      const headers2 = {}
-      for (let n = 0; n < 64; ++n) {
-        headers2[n] = data.headers[n]
-      }
-      t.strictSame(headers2, headers)
-      data.body
-        .resume()
-        .on('end', () => {
-          t.pass()
-        })
-    })
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, data) => {
+    t.ifError(err)
+    const headers2 = {}
+    for (let n = 0; n < 64; ++n) {
+      headers2[n] = data.headers[n]
+    }
+    t.deepStrictEqual(headers2, headers)
+    data.body
+      .resume()
+      .on('end', () => {
+        t.ok(true, 'pass')
+      })
   })
+  await t.completed
 })

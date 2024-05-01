@@ -1,0 +1,25 @@
+{
+  "cache-storage": {
+    "cache-abort.https.any.js": {
+      "skip": true
+    },
+    "cache-storage-buckets.https.any.js": {
+      "skip": true,
+      "note": "navigator is not defined"
+    },
+    "cache-put.https.any.js": {
+      "note": "probably can be fixed",
+      "fail": [
+        "Cache.put with a VARY:* opaque response should not reject",
+        "Cache.put with opaque-filtered HTTP 206 response"
+      ]
+    },
+    "cache-match.https.any.js": {
+      "note": "requires https server",
+      "fail": [
+        "cors-exposed header should be stored correctly.",
+        "Cache.match ignores vary headers on opaque response."
+      ]
+    }
+  }
+}

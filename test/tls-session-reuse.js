@@ -1,13 +1,13 @@
 'use strict'
 
-const { readFileSync } = require('fs')
-const { join } = require('path')
-const https = require('https')
-const crypto = require('crypto')
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after, describe } = require('node:test')
+const { readFileSync } = require('node:fs')
+const { join } = require('node:path')
+const https = require('node:https')
+const crypto = require('node:crypto')
 const { Client, Pool } = require('..')
 const { kSocket } = require('../lib/core/symbols')
-const { nodeMajor } = require('../lib/core/util')
 
 const options = {
   key: readFileSync(join(__dirname, 'fixtures', 'key.pem'), 'utf8'),
@@ -15,14 +15,12 @@ const options = {
 }
 const ca = readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
 
-test('A client should disable session caching', {
-  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
-}, t => {
+describe('A client should disable session caching', () => {
   const clientSessions = {}
   let serverRequests = 0
 
-  t.test('Prepare request', t => {
-    t.plan(3)
+  test('Prepare request', async t => {
+    t = tspl(t, { plan: 3 })
     const server = https.createServer(options, (req, res) => {
       if (req.url === '/drop-key') {
         server.setTicketKeys(crypto.randomBytes(48))
@@ -43,7 +41,7 @@ test('A client should disable session caching', {
         maxCachedSessions: 0
       })
 
-      t.teardown(() => {
+      after(() => {
         client.close()
         server.close()
       })
@@ -67,42 +65,41 @@ test('A client should disable session caching', {
           delete tls.ciphers
         }
         client.request(options, (err, data) => {
-          t.error(err)
+          t.ifError(err)
           clientSessions[options.name] = client[kSocket].getSession()
           data.body.resume().on('end', () => {
             if (queue.length !== 0) {
               return request()
             }
-            t.pass()
+            t.ok(true, 'pass')
           })
         })
       }
       request()
     })
+
+    await t.completed
   })
 
-  t.test('Verify cached sessions', t => {
-    t.plan(2)
-    t.equal(serverRequests, 2)
-    t.not(
+  test('Verify cached sessions', async t => {
+    t = tspl(t, { plan: 2 })
+    t.strictEqual(serverRequests, 2)
+    t.notEqual(
       clientSessions.first.toString('hex'),
       clientSessions.second.toString('hex')
     )
+    await t.completed
   })
-
-  t.end()
 })
 
-test('A pool should be able to reuse TLS sessions between clients', {
-  skip: nodeMajor < 11 // tls socket session event has been added in Node 11. Cf. https://nodejs.org/api/tls.html#tls_event_session
-}, t => {
+describe('A pool should be able to reuse TLS sessions between clients', () => {
   let serverRequests = 0
 
   const REQ_COUNT = 10
   const ASSERT_PERFORMANCE_GAIN = false
 
-  t.test('Prepare request', t => {
-    t.plan(2 + 1 + (ASSERT_PERFORMANCE_GAIN ? 1 : 0))
+  test('Prepare request', async t => {
+    t = tspl(t, { plan: 2 + 1 + (ASSERT_PERFORMANCE_GAIN ? 1 : 0) })
     const server = https.createServer(options, (req, res) => {
       serverRequests++
       res.end()
@@ -142,7 +139,7 @@ test('A pool should be able to reuse TLS sessions between clients', {
         numSessions++
       })
 
-      t.teardown(() => {
+      after(() => {
         poolWithSessionReuse.close()
         poolWithoutSessionReuse.close()
         server.close()
@@ -173,11 +170,11 @@ test('A pool should be able to reuse TLS sessions between clients', {
       await runRequests(poolWithoutSessionReuse, REQ_COUNT, false)
       await runRequests(poolWithSessionReuse, REQ_COUNT, true)
 
-      t.equal(numSessions, 2)
-      t.equal(serverRequests, 2 + REQ_COUNT * 2)
-      t.pass()
+      t.strictEqual(numSessions, 2)
+      t.strictEqual(serverRequests, 2 + REQ_COUNT * 2)
+      t.ok(true, 'pass')
     })
-  })
 
-  t.end()
+    await t.completed
+  })
 })

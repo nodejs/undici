@@ -1,17 +1,16 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after, describe } = require('node:test')
 const { Client, errors } = require('..')
-const { createServer } = require('http')
+const { createServer } = require('node:http')
 
-test('max response size', (t) => {
-  t.plan(4)
-
-  t.test('default max default size should allow all responses', (t) => {
-    t.plan(3)
+describe('max response size', async (t) => {
+  test('default max default size should allow all responses', async (t) => {
+    t = tspl(t, { plan: 3 })
 
     const server = createServer()
-    t.teardown(server.close.bind(server))
+    after(() => server.close())
 
     server.on('request', (req, res) => {
       res.end('hello')
@@ -19,27 +18,29 @@ test('max response size', (t) => {
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, { maxResponseSize: -1 })
-      t.teardown(client.close.bind(client))
+      after(() => client.close())
 
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
-        t.error(err)
-        t.equal(statusCode, 200)
+        t.ifError(err)
+        t.strictEqual(statusCode, 200)
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          t.equal('hello', Buffer.concat(bufs).toString('utf8'))
+          t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
         })
       })
     })
+
+    await t.completed
   })
 
-  t.test('max response size set to zero should allow only empty responses', (t) => {
-    t.plan(3)
+  test('max response size set to zero should allow only empty responses', async (t) => {
+    t = tspl(t, { plan: 3 })
 
     const server = createServer()
-    t.teardown(server.close.bind(server))
+    after(() => server.close())
 
     server.on('request', (req, res) => {
       res.end()
@@ -47,27 +48,29 @@ test('max response size', (t) => {
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, { maxResponseSize: 0 })
-      t.teardown(client.close.bind(client))
+      after(() => client.close())
 
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
-        t.error(err)
-        t.equal(statusCode, 200)
+        t.ifError(err)
+        t.strictEqual(statusCode, 200)
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          t.equal('', Buffer.concat(bufs).toString('utf8'))
+          t.strictEqual('', Buffer.concat(bufs).toString('utf8'))
         })
       })
     })
+
+    await t.completed
   })
 
-  t.test('should throw an error if the response is too big', (t) => {
-    t.plan(3)
+  test('should throw an error if the response is too big', async (t) => {
+    t = tspl(t, { plan: 3 })
 
     const server = createServer()
-    t.teardown(server.close.bind(server))
+    after(() => server.close())
 
     server.on('request', (req, res) => {
       res.end('hello')
@@ -78,20 +81,22 @@ test('max response size', (t) => {
         maxResponseSize: 1
       })
 
-      t.teardown(client.close.bind(client))
+      after(() => client.close())
 
       client.request({ path: '/', method: 'GET' }, (err, { body }) => {
-        t.error(err)
+        t.ifError(err)
         body.on('error', (err) => {
           t.ok(err)
-          t.type(err, errors.ResponseExceededMaxSizeError)
+          t.ok(err instanceof errors.ResponseExceededMaxSizeError)
         })
       })
     })
+
+    await t.completed
   })
 
-  t.test('invalid max response size should throw an error', (t) => {
-    t.plan(2)
+  test('invalid max response size should throw an error', async (t) => {
+    t = tspl(t, { plan: 2 })
 
     t.throws(() => {
       // eslint-disable-next-line no-new
@@ -102,4 +107,6 @@ test('max response size', (t) => {
       new Client('http://localhost:3000', { maxResponseSize: -2 })
     }, 'maxResponseSize must be greater than or equal to -1')
   })
+
+  await t.completed
 })

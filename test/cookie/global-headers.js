@@ -1,42 +1,33 @@
 'use strict'
 
-const { test, skip } = require('tap')
+const { describe, test } = require('node:test')
+const assert = require('node:assert')
 const {
   deleteCookie,
   getCookies,
   getSetCookies,
   setCookie
 } = require('../..')
-const { getHeadersList } = require('../../lib/cookies/util')
+const { getHeadersList } = require('../../lib/web/cookies/util')
 
-/* global Headers */
-
-if (!globalThis.Headers) {
-  skip('No global Headers to test')
-  process.exit(0)
-}
-
-test('Using global Headers', (t) => {
-  t.test('deleteCookies', (t) => {
+describe('Using global Headers', async () => {
+  test('deleteCookies', () => {
     const headers = new Headers()
 
-    t.equal(headers.get('set-cookie'), null)
+    assert.equal(headers.get('set-cookie'), null)
     deleteCookie(headers, 'undici')
-    t.equal(headers.get('set-cookie'), 'undici=; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
-
-    t.end()
+    assert.equal(headers.get('set-cookie'), 'undici=; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
   })
 
-  t.test('getCookies', (t) => {
+  test('getCookies', () => {
     const headers = new Headers({
       cookie: 'get=cookies; and=attributes'
     })
 
-    t.same(getCookies(headers), { get: 'cookies', and: 'attributes' })
-    t.end()
+    assert.deepEqual(getCookies(headers), { get: 'cookies', and: 'attributes' })
   })
 
-  t.test('getSetCookies', (t) => {
+  test('getSetCookies', () => {
     const headers = new Headers({
       'set-cookie': 'undici=getSetCookies; Secure'
     })
@@ -44,9 +35,9 @@ test('Using global Headers', (t) => {
     const supportsCookies = getHeadersList(headers).cookies
 
     if (!supportsCookies) {
-      t.same(getSetCookies(headers), [])
+      assert.deepEqual(getSetCookies(headers), [])
     } else {
-      t.same(getSetCookies(headers), [
+      assert.deepEqual(getSetCookies(headers), [
         {
           name: 'undici',
           value: 'getSetCookies',
@@ -54,17 +45,12 @@ test('Using global Headers', (t) => {
         }
       ])
     }
-
-    t.end()
   })
 
-  t.test('setCookie', (t) => {
+  test('setCookie', () => {
     const headers = new Headers()
 
     setCookie(headers, { name: 'undici', value: 'setCookie' })
-    t.equal(headers.get('Set-Cookie'), 'undici=setCookie')
-    t.end()
+    assert.equal(headers.get('Set-Cookie'), 'undici=setCookie')
   })
-
-  t.end()
 })
