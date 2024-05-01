@@ -39,7 +39,7 @@ jobs:
 
   llhttp-wasm:
     if: ${{ github.event_name == 'pull_request' && needs.check.outputs.run_job == 'true' }} 
-    name: Check integrity of generagted wasm-files for llhttp
+    name: Check integrity of generated wasm-files for llhttp
     needs: check
     runs-on: ubuntu-latest
     steps:
