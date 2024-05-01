@@ -1,6 +1,5 @@
 name: Ensure integrity of llhttp wasm files
 on:
-  workflow_dispatch:
   workflow_call:
 
 permissions:
@@ -9,6 +8,7 @@ permissions:
 jobs:
   check:
     name: Check files
+    if: ${{ github.event_name == 'pull_request' }}
     outputs:
       run_job: ${{ steps.check_files.outputs.run_job }}
     runs-on: ubuntu-latest
@@ -21,10 +21,10 @@ jobs:
         id: check_files
         run: |
           echo "=============== list modified files ==============="
-          git diff --name-only HEAD^ HEAD
+          git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD
           
           echo "========== check paths of modified files =========="
-          git diff --name-only HEAD^ HEAD > files.txt
+          git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD > files.txt
 
           echo "run_job=false" > "$GITHUB_OUTPUT"
 
@@ -36,7 +36,7 @@ jobs:
           done < files.txt
 
   llhttp-wasm:
-    if: needs.check.outputs.run_job == 'true'
+    if: ${{ github.event_name == 'pull_request' && needs.check.outputs.run_job == 'true' }} 
     name: Check integrity of generagted wasm-files for llhttp
     needs: check
     runs-on: ubuntu-latest
