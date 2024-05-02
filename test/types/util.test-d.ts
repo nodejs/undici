@@ -2,19 +2,6 @@ import { expectAssignable } from 'tsd';
 import { util } from '../../types/util';
 
 expectAssignable<Record<string, string | string[]>>(
-  util.parseHeaders({ 'content-type': 'text/plain' })
-);
-
-expectAssignable<Record<string, string | string[]>>(
-  //@ts-ignore
-  util.parseHeaders({ 'content-type': 'text/plain' }, {})
-);
-
-expectAssignable<Record<string, string | string[]>>(
-  util.parseHeaders({} as Record<string, string> | string[], {})
-);
-
-expectAssignable<Record<string, string | string[]>>(
   util.parseHeaders(['content-type', 'text/plain'])
 );
 

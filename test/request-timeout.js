@@ -9,7 +9,6 @@ const timers = require('../lib/util/timers')
 const { createServer } = require('node:http')
 const EventEmitter = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
-const { AbortController } = require('abort-controller')
 const {
   pipeline,
   Readable,
