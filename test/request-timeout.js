@@ -2,7 +2,6 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { createReadStream, writeFileSync, unlinkSync } = require('node:fs')
 const { Client, errors } = require('..')
 const { kConnect } = require('../lib/core/symbols')
 const timers = require('../lib/util/timers')
@@ -46,15 +45,11 @@ test('request timeout with readable body', async (t) => {
   })
   after(() => server.close())
 
-  const tempfile = `${__filename}.10mb.txt`
-  writeFileSync(tempfile, Buffer.alloc(10 * 1024 * 1024))
-  after(() => unlinkSync(tempfile))
-
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 1e3 })
     after(() => client.destroy())
 
-    const body = createReadStream(tempfile)
+    const body = Readable.from(Buffer.alloc(10 * 1024 * 1024))
     client.request({ path: '/', method: 'POST', body }, (err, response) => {
       t.ok(err instanceof errors.HeadersTimeoutError)
     })
