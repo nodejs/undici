@@ -93,6 +93,10 @@ void llhttp_free(llhttp_t* parser) {
   free(parser);
 }
 
+void llhttp_memset(llhttp_t* parser) {
+  memset(parser, 0, sizeof(llhttp_t));
+}
+
 #endif  // defined(__wasm__)
 
 /* Some getters required to get stuff from the parser */

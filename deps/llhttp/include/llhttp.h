@@ -618,6 +618,9 @@ LLHTTP_EXPORT
 void llhttp_free(llhttp_t* parser);
 
 LLHTTP_EXPORT
+void llhttp_memset(llhttp_t* parser);
+
+LLHTTP_EXPORT
 uint8_t llhttp_get_type(llhttp_t* parser);
 
 LLHTTP_EXPORT
