@@ -2495,7 +2495,7 @@ test('MockAgent - headers in mock dispatcher intercept should be case-insensitiv
 })
 
 // https://github.com/nodejs/undici/issues/1757
-test('MockAgent - reply callback can be asynchronous', { only: true }, async (t) => {
+test('MockAgent - reply callback can be asynchronous', async (t) => {
   t = tspl(t, { plan: 2 })
 
   class MiniflareDispatcher extends Dispatcher {
