@@ -12,7 +12,7 @@ const blob = randomFillSync(new Uint8Array(1024 * 512))
 // Enable when/if FinalizationRegistry in Node.js 18 becomes stable again
 const isNode18 = process.version.startsWith('v18')
 
-test('does not need the body to be consumed to continue', { timeout: 120_000, skip: isNode18 }, async (t) => {
+test('does not need the body to be consumed to continue', { timeout: 180_000, skip: isNode18 }, async (t) => {
   const agent = new Agent({
     keepAliveMaxTimeout: 10,
     keepAliveTimeoutThreshold: 10

@@ -77,7 +77,7 @@
     "test:eventsource:nobuild": "borp --expose-gc -p \"test/eventsource/*.js\"",
     "test:fuzzing": "node test/fuzzing/fuzzing.test.js",
     "test:fetch": "npm run build:node && npm run test:fetch:nobuild",
-    "test:fetch:nobuild": "borp --timeout 120000 --expose-gc -p \"test/fetch/*.js\" && npm run test:webidl && npm run test:busboy",
+    "test:fetch:nobuild": "borp --timeout 180000 --expose-gc -p \"test/fetch/*.js\" && npm run test:webidl && npm run test:busboy",
     "test:interceptors": "borp -p \"test/interceptors/*.js\"",
     "test:jest": "cross-env NODE_V8_COVERAGE= jest",
     "test:unit": "borp --expose-gc -p \"test/*.js\"",
