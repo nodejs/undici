@@ -37,13 +37,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
-          persist-credentials: false          
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: lts/*
-      
+
       - name: Install dependencies
         run: npm install
 
@@ -59,6 +59,7 @@ jobs:
           - 18
           - 20
           - 21
+          - 22
         runs-on:
           - ubuntu-latest
           - windows-latest
@@ -168,13 +169,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
-          persist-credentials: false          
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: lts/*
-      
+
       - name: Install dependencies
         run: npm install
 

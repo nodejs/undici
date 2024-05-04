@@ -10,7 +10,10 @@ const { closeServerAsPromise } = require('../utils/node-http')
 const blob = randomFillSync(new Uint8Array(1024 * 512))
 const fmt = new Intl.NumberFormat()
 
-test('does not need the body to be consumed to continue', { timeout: 120_1000 }, async (t) => {
+// Enable when/if FinalizationRegistry in Node.js 18 becomes stable again
+const isNode18 = process.version.startsWith('v18')
+
+test('does not need the body to be consumed to continue', { timeout: 120_000, skip: isNode18 }, async (t) => {
   const agent = new Agent({
     keepAliveMaxTimeout: 10,
     keepAliveTimeoutThreshold: 10
