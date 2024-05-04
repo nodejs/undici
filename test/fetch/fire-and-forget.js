@@ -8,7 +8,6 @@ const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 const blob = randomFillSync(new Uint8Array(1024 * 512))
-const fmt = new Intl.NumberFormat()
 
 // Enable when/if FinalizationRegistry in Node.js 18 becomes stable again
 const isNode18 = process.version.startsWith('v18')
@@ -48,7 +47,7 @@ test('does not need the body to be consumed to continue', { timeout: 120_000, sk
       'RSS',
       (process.memoryUsage.rss() / 1024 / 1024) | 0,
       'MB after',
-      fmt.format((total += batch)) + ' fetch() requests'
+      (total += batch) + ' fetch() requests'
     )
   }
 })
