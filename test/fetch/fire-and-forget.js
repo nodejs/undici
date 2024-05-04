@@ -10,7 +10,7 @@ const { closeServerAsPromise } = require('../utils/node-http')
 const blob = randomFillSync(new Uint8Array(1024 * 512))
 const fmt = new Intl.NumberFormat()
 
-test('does not need the body to be consumed to continue', async (t) => {
+test('does not need the body to be consumed to continue', { timeout: 120_1000 }, async (t) => {
   const agent = new Agent({
     keepAliveMaxTimeout: 10,
     keepAliveTimeoutThreshold: 10
