@@ -35,6 +35,8 @@ test('does not need the body to be consumed to continue', { timeout: 120_000, sk
   const delay = 0
   let total = 0
   while (total < 10000) {
+    // eslint-disable-next-line no-undef
+    gc(true)
     const array = new Array(batch)
     for (let i = 0; i < batch; i++) {
       array[i] = fetch(url).catch(() => {})
