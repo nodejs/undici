@@ -10,7 +10,7 @@ if (__GLOBAL_WEBSOCKET__ && typeof globalThis.WebSocket === 'function') {
   GlobalWebSocket = globalThis.WebSocket
 }
 
-const url = `http://localhost:5001`
+const url = 'http://localhost:5001'
 
 group('open connection', () => {
   bench('ws', () => {
