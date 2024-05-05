@@ -1,4 +1,4 @@
-import { WebSocket as WsWebSocket, WebSocketServer } from 'ws'
+import { WebSocket as WsWebSocket } from 'ws'
 import { WebSocket as UndiciWebSocket } from '../../index.js'
 import { randomBytes } from 'node:crypto'
 import { bench, run, group } from 'mitata'
@@ -12,24 +12,9 @@ if (__GLOBAL_WEBSOCKET__ && typeof globalThis.WebSocket === 'function') {
   GlobalWebSocket = globalThis.WebSocket
 }
 
-const server = new WebSocketServer({ port: 5001 })
 const binary = randomBytes(__BINARY_SIZE__)
 
-// Workaround for https://github.com/nodejs/undici/issues/3202
-const emptyBuffer = Buffer.allocUnsafe(1)
-
-server.on('connection', (socket) => {
-  socket.on('message', (_data, _isBinary) => {
-    socket.send(emptyBuffer)
-    // socket.close();
-  })
-})
-
-await new Promise((resolve, _reject) => {
-  server.on('listening', resolve)
-})
-
-const url = `http://localhost:${server.address().port}`
+const url = 'http://localhost:5001'
 
 const connections = []
 
@@ -92,8 +77,6 @@ for (const ws of connections) {
 }
 
 await run()
-
-server.close()
 
 for (const ws of connections) {
   ws.close()
