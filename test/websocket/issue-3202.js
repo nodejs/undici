@@ -5,7 +5,7 @@ const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 const { tspl } = require('@matteo.collina/tspl')
 
-test('Close without receiving code does not send an invalid payload', async (t) => {
+test('Receiving frame with payload length 0 works', async (t) => {
   const { ok, completed } = tspl(t, { plan: 1 })
 
   const server = new WebSocketServer({ port: 0 })
