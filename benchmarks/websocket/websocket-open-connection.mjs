@@ -1,4 +1,4 @@
-import { WebSocket as WsWebSocket, WebSocketServer } from 'ws'
+import { WebSocket as WsWebSocket } from 'ws'
 import { WebSocket as UndiciWebSocket } from '../../index.js'
 import { bench, run, group } from 'mitata'
 
@@ -10,19 +10,7 @@ if (__GLOBAL_WEBSOCKET__ && typeof globalThis.WebSocket === 'function') {
   GlobalWebSocket = globalThis.WebSocket
 }
 
-const server = new WebSocketServer({ port: 5001 })
-
-server.on('connection', (socket) => {
-  socket.on('open', () => {
-    // socket.close();
-  })
-})
-
-await new Promise((resolve, _reject) => {
-  server.on('listening', resolve)
-})
-
-const url = `http://localhost:${server.address().port}`
+const url = `http://localhost:5001`
 
 group('open connection', () => {
   bench('ws', () => {
@@ -67,5 +55,3 @@ group('open connection', () => {
 })
 
 await run()
-
-server.close()
