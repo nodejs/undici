@@ -151,4 +151,27 @@ describe('Close', () => {
 
     await t.completed
   })
+
+  test('Close with code and invalid encoded reason', () => {
+    return new Promise((resolve) => {
+      const server = new WebSocketServer({ port: 0 })
+
+      server.on('connection', (ws) => {
+        ws.close(1000, Buffer.from([0xFF, 0xFE]))
+
+        ws.on('close', (code, reason) => {
+          assert.equal(code, 1000)
+          assert.equal(reason.length, 0)
+        })
+      })
+
+      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      ws.onclose = (ev) => {
+        assert.equal(ev.code, 1000)
+        assert.equal(ev.reason, '')
+        server.close()
+        resolve()
+      }
+    })
+  })
 })
