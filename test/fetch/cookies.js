@@ -11,11 +11,16 @@ const pem = require('https-pem')
 const { createSecureServer } = require('node:http2')
 const { closeClientAndServerAsPromise } = require('../utils/node-http')
 
+let agent
 beforeEach(() => {
-  setGlobalDispatcher(new Agent({
+  if (agent) {
+    agent.destroy()
+  }
+  agent = new Agent({
     keepAliveMaxTimeout: 10,
     keepAliveTimeoutThreshold: 10
-  }))
+  })
+  setGlobalDispatcher(agent)
 })
 
 test('Can receive set-cookie headers from a server using fetch - issue #1262', async (t) => {
