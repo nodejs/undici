@@ -59,6 +59,7 @@ test('Can send cookies to a server with fetch - issue #1463', async (t) => {
   ]
 
   for (const headers of headersInit) {
+    console.log(headers)
     await fetch(`http://localhost:${server.address().port}`, { headers })
   }
 })
