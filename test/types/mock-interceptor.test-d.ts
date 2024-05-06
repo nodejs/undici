@@ -37,7 +37,12 @@ expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCall
     trailers: { foo: 'bar' }
   }})))
   mockInterceptor.reply((options) => {
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions["path"]>(options.path);
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions["method"]>(options.method);
     expectAssignable<MockInterceptor.MockResponseCallbackOptions['headers']>(options.headers);
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions['origin']>(options.origin);
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions['body']>(options.body);
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions["maxRedirections"]>(options.maxRedirections);
     return { statusCode: 200, data: { foo: 'bar' } }
   })
 
