@@ -22,8 +22,8 @@ test('Receiving a close frame with invalid utf-8', async (t) => {
   const events = []
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
-  ws.addEventListener('close', () => {
-    events.push({ type: 'close', code: 1006 })
+  ws.addEventListener('close', (e) => {
+    events.push({ type: 'close', code: e.code })
   })
 
   ws.addEventListener('error', () => {
