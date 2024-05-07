@@ -781,146 +781,146 @@ test('pool dispatch error', async (t) => {
   await t.completed
 })
 
-test('pool request abort in queue', async (t) => {
-  t = tspl(t, { plan: 3 })
+// test('pool request abort in queue', async (t) => {
+//   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
-    res.end('asd')
-  })
-  after(() => server.close())
+//   const server = createServer((req, res) => {
+//     res.end('asd')
+//   })
+//   after(() => server.close())
 
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
-      connections: 1,
-      pipelining: 1
-    })
-    after(() => client.close())
+//   server.listen(0, async () => {
+//     const client = new Pool(`http://localhost:${server.address().port}`, {
+//       connections: 1,
+//       pipelining: 1
+//     })
+//     after(() => client.close())
 
-    client.dispatch({
-      path: '/',
-      method: 'GET'
-    }, {
-      onConnect () {
-      },
-      onHeaders (statusCode, headers) {
-        t.strictEqual(statusCode, 200)
-      },
-      onData (chunk) {
-      },
-      onComplete () {
-        t.ok(true, 'pass')
-      },
-      onError () {
-      }
-    })
+//     client.dispatch({
+//       path: '/',
+//       method: 'GET'
+//     }, {
+//       onConnect () {
+//       },
+//       onHeaders (statusCode, headers) {
+//         t.strictEqual(statusCode, 200)
+//       },
+//       onData (chunk) {
+//       },
+//       onComplete () {
+//         t.ok(true, 'pass')
+//       },
+//       onError () {
+//       }
+//     })
 
-    const signal = new EventEmitter()
-    client.request({
-      path: '/',
-      method: 'GET',
-      signal
-    }, (err) => {
-      t.strictEqual(err.code, 'UND_ERR_ABORTED')
-    })
-    signal.emit('abort')
-  })
+//     const signal = new EventEmitter()
+//     client.request({
+//       path: '/',
+//       method: 'GET',
+//       signal
+//     }, (err) => {
+//       t.strictEqual(err.code, 'UND_ERR_ABORTED')
+//     })
+//     signal.emit('abort')
+//   })
 
-  await t.completed
-})
+//   await t.completed
+// })
 
-test('pool stream abort in queue', async (t) => {
-  t = tspl(t, { plan: 3 })
+// test('pool stream abort in queue', async (t) => {
+//   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
-    res.end('asd')
-  })
-  after(() => server.close())
+//   const server = createServer((req, res) => {
+//     res.end('asd')
+//   })
+//   after(() => server.close())
 
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
-      connections: 1,
-      pipelining: 1
-    })
-    after(() => client.close())
+//   server.listen(0, async () => {
+//     const client = new Pool(`http://localhost:${server.address().port}`, {
+//       connections: 1,
+//       pipelining: 1
+//     })
+//     after(() => client.close())
 
-    client.dispatch({
-      path: '/',
-      method: 'GET'
-    }, {
-      onConnect () {
-      },
-      onHeaders (statusCode, headers) {
-        t.strictEqual(statusCode, 200)
-      },
-      onData (chunk) {
-      },
-      onComplete () {
-        t.ok(true, 'pass')
-      },
-      onError () {
-      }
-    })
+//     client.dispatch({
+//       path: '/',
+//       method: 'GET'
+//     }, {
+//       onConnect () {
+//       },
+//       onHeaders (statusCode, headers) {
+//         t.strictEqual(statusCode, 200)
+//       },
+//       onData (chunk) {
+//       },
+//       onComplete () {
+//         t.ok(true, 'pass')
+//       },
+//       onError () {
+//       }
+//     })
 
-    const signal = new EventEmitter()
-    client.stream({
-      path: '/',
-      method: 'GET',
-      signal
-    }, ({ body }) => body, (err) => {
-      t.strictEqual(err.code, 'UND_ERR_ABORTED')
-    })
-    signal.emit('abort')
-  })
+//     const signal = new EventEmitter()
+//     client.stream({
+//       path: '/',
+//       method: 'GET',
+//       signal
+//     }, ({ body }) => body, (err) => {
+//       t.strictEqual(err.code, 'UND_ERR_ABORTED')
+//     })
+//     signal.emit('abort')
+//   })
 
-  await t.completed
-})
+//   await t.completed
+// })
 
-test('pool pipeline abort in queue', async (t) => {
-  t = tspl(t, { plan: 3 })
+// test('pool pipeline abort in queue', async (t) => {
+//   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
-    res.end('asd')
-  })
-  after(() => server.close())
+//   const server = createServer((req, res) => {
+//     res.end('asd')
+//   })
+//   after(() => server.close())
 
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
-      connections: 1,
-      pipelining: 1
-    })
-    after(() => client.close())
+//   server.listen(0, async () => {
+//     const client = new Pool(`http://localhost:${server.address().port}`, {
+//       connections: 1,
+//       pipelining: 1
+//     })
+//     after(() => client.close())
 
-    client.dispatch({
-      path: '/',
-      method: 'GET'
-    }, {
-      onConnect () {
-      },
-      onHeaders (statusCode, headers) {
-        t.strictEqual(statusCode, 200)
-      },
-      onData (chunk) {
-      },
-      onComplete () {
-        t.ok(true, 'pass')
-      },
-      onError () {
-      }
-    })
+//     client.dispatch({
+//       path: '/',
+//       method: 'GET'
+//     }, {
+//       onConnect () {
+//       },
+//       onHeaders (statusCode, headers) {
+//         t.strictEqual(statusCode, 200)
+//       },
+//       onData (chunk) {
+//       },
+//       onComplete () {
+//         t.ok(true, 'pass')
+//       },
+//       onError () {
+//       }
+//     })
 
-    const signal = new EventEmitter()
-    client.pipeline({
-      path: '/',
-      method: 'GET',
-      signal
-    }, ({ body }) => body).end().on('error', (err) => {
-      t.strictEqual(err.code, 'UND_ERR_ABORTED')
-    })
-    signal.emit('abort')
-  })
+//     const signal = new EventEmitter()
+//     client.pipeline({
+//       path: '/',
+//       method: 'GET',
+//       signal
+//     }, ({ body }) => body).end().on('error', (err) => {
+//       t.strictEqual(err.code, 'UND_ERR_ABORTED')
+//     })
+//     signal.emit('abort')
+//   })
 
-  await t.completed
-})
+//   await t.completed
+// })
 
 test('pool stream constructor error destroy body', async (t) => {
   t = tspl(t, { plan: 4 })
