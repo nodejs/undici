@@ -2,26 +2,14 @@
 
 const { once } = require('node:events')
 const { createServer } = require('node:http')
-const { test, beforeEach } = require('node:test')
+const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
-const { Client, fetch, Headers, Agent, setGlobalDispatcher } = require('../..')
+const { Client, fetch, Headers } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
 const pem = require('https-pem')
 const { createSecureServer } = require('node:http2')
 const { closeClientAndServerAsPromise } = require('../utils/node-http')
-
-let agent
-beforeEach(() => {
-  if (agent) {
-    agent.destroy()
-  }
-  agent = new Agent({
-    keepAliveMaxTimeout: 10,
-    keepAliveTimeoutThreshold: 10
-  })
-  setGlobalDispatcher(agent)
-})
 
 test('Can receive set-cookie headers from a server using fetch - issue #1262', async (t) => {
   const server = createServer((req, res) => {
@@ -59,7 +47,6 @@ test('Can send cookies to a server with fetch - issue #1463', async (t) => {
   ]
 
   for (const headers of headersInit) {
-    console.log(headers)
     await fetch(`http://localhost:${server.address().port}`, { headers })
   }
 })
