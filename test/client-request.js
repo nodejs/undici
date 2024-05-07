@@ -135,45 +135,45 @@ test('request hwm', async (t) => {
   await t.completed
 })
 
-// test('request abort before headers', async (t) => {
-//   t = tspl(t, { plan: 6 })
+test('request abort before headers', async (t) => {
+  t = tspl(t, { plan: 6 })
 
-//   const signal = new EE()
-//   const server = createServer((req, res) => {
-//     res.end('hello')
-//     signal.emit('abort')
-//   })
-//   after(() => server.close())
+  const signal = new EE()
+  const server = createServer((req, res) => {
+    res.end('hello')
+    signal.emit('abort')
+  })
+  after(() => server.close())
 
-//   server.listen(0, () => {
-//     const client = new Client(`http://localhost:${server.address().port}`)
-//     after(() => client.destroy())
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
 
-//     client[kConnect](() => {
-//       client.request({
-//         path: '/',
-//         method: 'GET',
-//         signal
-//       }, (err) => {
-//         t.ok(err instanceof errors.RequestAbortedError)
-//         t.strictEqual(signal.listenerCount('abort'), 0)
-//       })
-//       t.strictEqual(signal.listenerCount('abort'), 1)
+    client[kConnect](() => {
+      client.request({
+        path: '/',
+        method: 'GET',
+        signal
+      }, (err) => {
+        t.ok(err instanceof errors.RequestAbortedError)
+        t.strictEqual(signal.listenerCount('abort'), 0)
+      })
+      t.strictEqual(signal.listenerCount('abort'), 1)
 
-//       client.request({
-//         path: '/',
-//         method: 'GET',
-//         signal
-//       }, (err) => {
-//         t.ok(err instanceof errors.RequestAbortedError)
-//         t.strictEqual(signal.listenerCount('abort'), 0)
-//       })
-//       t.strictEqual(signal.listenerCount('abort'), 2)
-//     })
-//   })
+      client.request({
+        path: '/',
+        method: 'GET',
+        signal
+      }, (err) => {
+        t.ok(err instanceof errors.RequestAbortedError)
+        t.strictEqual(signal.listenerCount('abort'), 0)
+      })
+      t.strictEqual(signal.listenerCount('abort'), 2)
+    })
+  })
 
-//   await t.completed
-// })
+  await t.completed
+})
 
 test('request body destroyed on invalid callback', async (t) => {
   t = tspl(t, { plan: 1 })
