@@ -1,3 +1,7 @@
+// --------------------SERVER--------------------
+// -> /server/simple.mjs
+// ----------------------------------------------
+
 import { WebSocket as WsWebSocket } from 'ws'
 import { WebSocket as UndiciWebSocket } from '../../index.js'
 import { bench, run, group } from 'mitata'
@@ -15,7 +19,6 @@ const url = 'http://localhost:5001'
 group('open connection', () => {
   bench('ws', () => {
     const ws = new WsWebSocket(url)
-    ws.binaryType = 'fragments'
     return new Promise((resolve, reject) => {
       ws.addEventListener('open', () => {
         resolve()

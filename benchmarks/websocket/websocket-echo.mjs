@@ -1,3 +1,7 @@
+// --------------------SERVER--------------------
+// -> /server/echo.mjs
+// ----------------------------------------------
+
 import { WebSocket as WsWebSocket } from 'ws'
 import { WebSocket as UndiciWebSocket } from '../../index.js'
 import { randomBytes } from 'node:crypto'
