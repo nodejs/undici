@@ -263,7 +263,7 @@ describe('timers', () => {
     return actual - BigInt(target)
   }
 
-  // timers.setTimeout impelements a low resolution timer with a 500 ms granularity
+  // timers.setTimeout implements a low resolution timer with a 500 ms granularity
   // It is expected that in the worst case, a timer will fire about 500 ms after the
   // intended amount of time, an extra 200 ms is added to account event loop overhead
   // Timers should never fire excessively early, 1ms early is tolerated
