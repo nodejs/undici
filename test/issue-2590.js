@@ -27,12 +27,12 @@ test('aborting request with custom reason', async (t) => {
 
   await t.rejects(
     request(`http://localhost:${server.address().port}`, { signal: ac.signal }),
-    /Request aborted/
+    /Error: aborted/
   )
 
   await t.rejects(
     request(`http://localhost:${server.address().port}`, { signal: ac2.signal }),
-    { code: 'UND_ERR_ABORTED' }
+    { name: 'AbortError' }
   )
 
   await t.completed
