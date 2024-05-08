@@ -63,7 +63,7 @@ test('basic get', async (t) => {
       body.on('data', (buf) => {
         bufs.push(buf)
       })
-      body.on('end', () => {
+      body.on('close', () => {
         t.strictEqual(signal.listenerCount('abort'), 0)
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })
@@ -135,7 +135,7 @@ test('basic get with custom request.reset=true', async (t) => {
       body.on('data', (buf) => {
         bufs.push(buf)
       })
-      body.on('end', () => {
+      body.on('close', () => {
         t.strictEqual(signal.listenerCount('abort'), 0)
         t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       })

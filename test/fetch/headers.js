@@ -27,7 +27,7 @@ test('Headers initialization', async (t) => {
       throws(() => new Headers(['undici', 'fetch', 'fetch']), TypeError)
       throws(
         () => new Headers([0, 1, 2]),
-        TypeError('Sequence: Value of type Number is not an Object.')
+        TypeError('Headers contructor: init[0] (0) is not iterable.')
       )
     })
 
@@ -42,7 +42,7 @@ test('Headers initialization', async (t) => {
       const init = ['undici', 'fetch', 'fetch', 'undici']
       throws(
         () => new Headers(init),
-        TypeError('Sequence: Value of type String is not an Object.')
+        TypeError('Headers contructor: init[0] ("undici") is not iterable.')
       )
     })
   })

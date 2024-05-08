@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
         with:
           egress-policy: audit
 
@@ -28,7 +28,7 @@ jobs:
           persist-credentials: false
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@5bbc3ba658137598168acb2ab73b21c432dd411b # v4.2.5
+        uses: actions/dependency-review-action@0c155c5e8556a497adf53f2c18edabf945ed8e70 # v4.3.2
 
   lint:
     name: Lint
@@ -115,7 +115,7 @@ jobs:
         run: sudo apt-get install ninja-build
 
       - name: ccache
-        uses: hendrikmuhs/ccache-action@faf867a11c028c0b483fb2ae72b6fc8f7d842714 #v1.2.12
+        uses: hendrikmuhs/ccache-action@c92f40bee50034e84c763e33b317c77adaa81c92 #v1.2.13
         with:
           key: node${{ matrix.version }}
 
