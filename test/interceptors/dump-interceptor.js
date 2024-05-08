@@ -1,6 +1,5 @@
 'use strict'
 
-const { setTimeout: sleep } = require('node:timers/promises')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -13,7 +12,6 @@ test('Should not dump on abort', async t => {
   t = tspl(t, { plan: 4 })
   const server = createServer((req, res) => {
     const max = 1024 * 1024
-    let offset = 0
     const buffer = Buffer.alloc(max)
 
     res.writeHead(200, {
@@ -21,18 +19,7 @@ test('Should not dump on abort', async t => {
       'Content-Type': 'application/octet-stream'
     })
 
-    const interval = setInterval(() => {
-      offset += 256
-      const chunk = buffer.subarray(offset - 256, offset + 1)
-
-      if (offset === max) {
-        clearInterval(interval)
-        res.end(chunk)
-        return
-      }
-
-      res.write(chunk)
-    }, 250).unref()
+    res.write(buffer)
   })
 
   const abc = new AbortController()
@@ -61,7 +48,6 @@ test('Should not dump on abort', async t => {
   const response = await client.request(requestOptions)
   t.equal(response.statusCode, 200)
   t.equal(response.headers['content-length'], `${1024 * 1024}`)
-  await sleep(500)
   abc.abort()
 
   try {
