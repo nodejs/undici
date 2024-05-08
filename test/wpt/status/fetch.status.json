@@ -73,11 +73,6 @@
         "note": "undici doesn't filter headers",
         "skip": true
       },
-      "request-referrer.any.js": {
-        "fail": [
-          "about:client referrer"
-        ]
-      },
       "request-upload.any.js": {
         "fail": [
           "Fetch with POST with text body on 421 response should be retried once on new connection."	
