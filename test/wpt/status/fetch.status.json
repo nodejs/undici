@@ -18,7 +18,8 @@
       "conditional-get.any.js": {
         "fail": [
           "Testing conditional GET with ETags"
-        ]
+        ],
+        "note": "undici doesn't keep track of etags"
       },
       "header-value-combining.any.js": {
         "fail": [

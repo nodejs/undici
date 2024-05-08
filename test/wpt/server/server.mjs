@@ -159,6 +159,22 @@ const server = createServer(async (req, res) => {
       res.end()
       break
     }
+    case '/fetch/api/resources/cache.py': {
+      if (req.headers['if-none-match'] === '"123abc"') {
+        res.statusCode = 304
+        res.statusMessage = 'Not Modified'
+        res.setHeader('X-HTTP-STATUS', '304')
+        res.end()
+      } else {
+        // cache miss, so respond with the actual content
+        res.statusCode = 200
+        res.statusMessage = 'OK'
+        res.setHeader('Content-Type', 'text/plain')
+        res.setHeader('ETag', '"123abc"')
+        res.end('lorem ipsum dolor sit amet')
+      }
+      break
+    }
     case '/fetch/api/resources/status.py': {
       const code = parseInt(fullUrl.searchParams.get('code') ?? 200)
       const text = fullUrl.searchParams.get('text') ?? 'OMG'
