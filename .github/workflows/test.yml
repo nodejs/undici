@@ -45,7 +45,7 @@ jobs:
 
       - name: Run tests with coverage
         id: coverage
-        if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 20
+        if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 22
         run: npm run coverage:ci
         env:
           CI: true
