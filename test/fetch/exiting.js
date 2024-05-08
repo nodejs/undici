@@ -24,10 +24,7 @@ test('abort the request on the other side if the stream is canceled', async (t) 
 
   const url = new URL(`http://127.0.0.1:${server.address().port}`)
 
-  const response = await fetch(url, {
-    // if added both scripts will also exit on 21 and 22.0
-    // dispatcher: new Agent({ bodyTimeout: 1000 })
-  })
+  const response = await fetch(url)
 
   const reader = response.body.getReader()
 
