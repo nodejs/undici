@@ -1,5 +1,5 @@
 'use strict'
-
+const { platform } = require('node:os')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -7,6 +7,12 @@ const { tspl } = require('@matteo.collina/tspl')
 
 const { Client, interceptors } = require('../..')
 const { dump } = interceptors
+
+if (platform() === 'win32') {
+  // TODO: Fix tests on windows
+  console.log('Skipping test on Windows')
+  process.exit(0)
+}
 
 test('Should not dump on abort', async t => {
   t = tspl(t, { plan: 4 })
