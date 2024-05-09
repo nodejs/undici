@@ -191,6 +191,9 @@ export class WPTRunner extends EventEmitter {
           }
         })
 
+        worker.stdout.pipe(process.stdout)
+        worker.stderr.pipe(process.stderr)
+
         const fileUrl = new URL(`/${this.#folderName}${test.slice(this.#folderPath.length)}`, 'http://wpt')
         fileUrl.pathname = fileUrl.pathname.replace(/\.js$/, '.html')
         fileUrl.search = variant
