@@ -394,7 +394,8 @@
         ]
       },
       "response-consume-stream.any.js": {
-        "fail": [
+        "note": "only fail in node v18",
+        "flaky": [
           "Read blob response's body as readableStream with mode=byob",
           "Read text response's body as readableStream with mode=byob",
           "Read URLSearchParams response's body as readableStream with mode=byob",
