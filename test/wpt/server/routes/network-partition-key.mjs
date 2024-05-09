@@ -35,7 +35,7 @@ export function route (req, res, { searchParams, port }) {
     requestCount = serverState.requestCount + 1
     serverState.requestCount = requestCount
 
-    if (Object.hasOwn(serverState, addressKey)) {
+    if ('addressKey' in serverState) {
       if (serverState[addressKey] !== partitionId) {
         serverState.testFailed = true
       }
