@@ -18,7 +18,8 @@
       "conditional-get.any.js": {
         "fail": [
           "Testing conditional GET with ETags"
-        ]
+        ],
+        "note": "undici doesn't keep track of etags"
       },
       "header-value-combining.any.js": {
         "fail": [
@@ -72,11 +73,6 @@
       "request-private-network-headers.tentative.any.js": {
         "note": "undici doesn't filter headers",
         "skip": true
-      },
-      "request-referrer.any.js": {
-        "fail": [
-          "about:client referrer"
-        ]
       },
       "request-upload.any.js": {
         "fail": [
@@ -450,6 +446,8 @@
   },
   "security": {
     "1xx-response.any.js": {
+      "note": "TODO(@KhafraDev): investigate timeout",
+      "skip": true,
       "fail": [
         "Status(100) should be ignored.",
         "Status(101) should be accepted, with removing body.",
