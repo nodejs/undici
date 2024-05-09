@@ -324,9 +324,9 @@ export class WPTRunner extends EventEmitter {
     const { file } = status
     const hasExpectedFailures = !!file.fail
     const testHasFailures = !!this.#statusOutput?.[path]
+    const failed = this.#statusOutput?.[path] ?? []
 
     if (hasExpectedFailures !== testHasFailures) {
-      const failed = this.#statusOutput?.[path] ?? []
       console.log({ expected: file.fail, failed })
 
       if (failed.length === 0) {
@@ -336,6 +336,17 @@ export class WPTRunner extends EventEmitter {
       }
 
       process.exitCode = 1
+    } else if (hasExpectedFailures && testHasFailures) {
+      const diff = [
+        ...file.fail.filter(x => !failed.includes(x)),
+        ...failed.filter(x => !file.fail.includes(x))
+      ]
+
+      if (diff.length) {
+        console.log({ diff })
+        console.log(colors('Expected failures did not match actual failures', 'red'))
+        process.exitCode = 1
+      }
     }
   }
 
