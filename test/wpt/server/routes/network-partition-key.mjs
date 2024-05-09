@@ -1,4 +1,7 @@
+import { LockedResource } from '../lockedresource.mjs'
+
 const stash = new Map()
+const lockedStash = new LockedResource(stash)
 
 /**
  * @see https://github.com/web-platform-tests/wpt/blob/master/fetch/connection-pool/resources/network-partition-key.py
@@ -6,7 +9,7 @@ const stash = new Map()
  * @param {Parameters<import('http').RequestListener>[1]} response
  * @param {URL} url
  */
-export function route (request, response, { searchParams, port }) {
+export async function route (request, response, { searchParams, port }) {
   response.setHeader('Cache-Control', 'no-store')
 
   const dispatch = searchParams.get('dispatch')
@@ -22,30 +25,42 @@ export function route (request, response, { searchParams, port }) {
   let connectionCount = 0
 
   if (searchParams.get('nocheck_partition') !== 'true') {
-    const addressKey = `${request.socket.localAddress}|${port}`
-    const serverState = stash.get(uuid) ?? {
-      testFailed: false,
-      requestCount: 0,
-      connectionCount: 0
-    }
-
-    stash.delete(uuid)
-    requestCount = serverState.requestCount
-    requestCount += 1
-    serverState.requestCount = requestCount
-
-    if (addressKey in serverState) {
-      if (serverState[addressKey] !== partitionId) {
-        serverState.testFailed = true
+    const stash = await lockedStash.acquire()
+    try {
+      const addressKey = `${request.socket.localAddress}|${port}`
+      const serverState = stash.get(uuid) ?? {
+        testFailed: false,
+        requestCount: 0,
+        connectionCount: 0,
+        sockets: new Set()
       }
-    }
-    connectionCount = serverState.connectionCount
-    connectionCount += 1
-    serverState.connectionCount = connectionCount
 
-    serverState[addressKey] = partitionId
-    testFailed = serverState.testFailed
-    stash.set(uuid, serverState)
+      stash.delete(uuid)
+      requestCount = serverState.requestCount
+      requestCount += 1
+      serverState.requestCount = requestCount
+
+      if (addressKey in serverState) {
+        if (serverState[addressKey] !== partitionId) {
+          serverState.testFailed = true
+        }
+      }
+
+      // We can detect if a new connection is created by checking if the socket
+      // was already used in the test.
+      if (serverState.sockets.has(request.socket) === false) {
+        connectionCount = serverState.connectionCount
+        connectionCount += 1
+        serverState.connectionCount = connectionCount
+        serverState.sockets.add(request.socket)
+      }
+
+      serverState[addressKey] = partitionId
+      testFailed = serverState.testFailed
+      stash.set(uuid, serverState)
+    } finally {
+      lockedStash.release()
+    }
   }
 
   const origin = request.headers.origin
