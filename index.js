@@ -108,7 +108,7 @@ module.exports.fetch = async function fetch (init, options = undefined) {
     return await fetchImpl(init, options)
   } catch (err) {
     if (err && typeof err === 'object') {
-      Error.captureStackTrace(err, this)
+      Error.captureStackTrace(err)
     }
 
     throw err
