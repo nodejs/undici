@@ -191,6 +191,9 @@ export class WPTRunner extends EventEmitter {
           }
         })
 
+        worker.stdout.pipe(process.stdout)
+        worker.stderr.pipe(process.stderr)
+
         const fileUrl = new URL(`/${this.#folderName}${test.slice(this.#folderPath.length)}`, 'http://wpt')
         fileUrl.pathname = fileUrl.pathname.replace(/\.js$/, '.html')
         fileUrl.search = variant
@@ -215,7 +218,7 @@ export class WPTRunner extends EventEmitter {
           if (message.type === 'result') {
             this.handleIndividualTestCompletion(message, status, test, meta, result)
           } else if (message.type === 'completion') {
-            this.handleTestCompletion(worker)
+            this.handleTestCompletion(worker, status, test)
           } else if (message.type === 'error') {
             this.#uncaughtExceptions.push({ error: message.error, test })
             this.#stats.failedTests += 1
@@ -315,8 +318,36 @@ export class WPTRunner extends EventEmitter {
    * Called after all the tests in a worker are completed.
    * @param {Worker} worker
    */
-  handleTestCompletion (worker) {
+  handleTestCompletion (worker, status, path) {
     worker.terminate()
+
+    const { file } = status
+    const hasExpectedFailures = !!file.fail
+    const testHasFailures = !!this.#statusOutput?.[path]
+    const failed = this.#statusOutput?.[path] ?? []
+
+    if (hasExpectedFailures !== testHasFailures) {
+      console.log({ expected: file.fail, failed })
+
+      if (failed.length === 0) {
+        console.log(colors('Tests are marked as failure but did not fail, yay!', 'red'))
+      } else if (!hasExpectedFailures) {
+        console.log(colors('Test failed but there were no expected errors.', 'red'))
+      }
+
+      process.exitCode = 1
+    } else if (hasExpectedFailures && testHasFailures) {
+      const diff = [
+        ...file.fail.filter(x => !failed.includes(x)),
+        ...failed.filter(x => !file.fail.includes(x))
+      ]
+
+      if (diff.length) {
+        console.log({ diff })
+        console.log(colors('Expected failures did not match actual failures', 'red'))
+        process.exitCode = 1
+      }
+    }
   }
 
   /**

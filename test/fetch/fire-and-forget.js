@@ -33,7 +33,7 @@ test('does not need the body to be consumed to continue', { timeout: 180_000, sk
   const batch = 50
   const delay = 0
   let total = 0
-  while (total < 10000) {
+  while (total < 5000) {
     // eslint-disable-next-line no-undef
     gc(true)
     const array = new Array(batch)

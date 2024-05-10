@@ -168,5 +168,5 @@ export function resolveStatusPath (path, status) {
     }
   }
 
-  return { topLevel: status ?? {}, file: status?.[paths.at(-1)] ?? {} }
+  return { fullPath: path, topLevel: status ?? {}, file: status?.[paths.at(-1)] ?? {} }
 }
