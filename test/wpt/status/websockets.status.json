@@ -16,42 +16,6 @@
       }
     }
   },
-  "Send-binary-arraybufferview-float32.any.js": {
-    "note": "TODO(@KhafraDev): investigate failure",
-    "fail": [
-      "Send binary data on a WebSocket - ArrayBufferView - Float32Array - Connection should be closed"
-    ]
-  },
-  "Send-binary-arraybufferview-float64.any.js": {
-    "note": "TODO(@KhafraDev): investigate failure",
-    "fail": [
-      "Send binary data on a WebSocket - ArrayBufferView - Float64Array - Connection should be closed"
-    ]
-  },
-  "Send-binary-arraybufferview-int16-offset.any.js": {
-    "note": "TODO(@KhafraDev): investigate failure",
-    "fail": [
-      "Send binary data on a WebSocket - ArrayBufferView - Int16Array with offset - Connection should be closed"
-    ]
-  },
-  "Send-binary-arraybufferview-int32.any.js": {
-    "note": "TODO(@KhafraDev): investigate failure",
-    "fail": [
-      "Send binary data on a WebSocket - ArrayBufferView - Int32Array - Connection should be closed"
-    ]
-  },
-  "Send-binary-arraybufferview-uint16-offset-length.any.js": {
-    "note": "TODO(@KhafraDev): investigate failure",
-    "fail": [
-      "Send binary data on a WebSocket - ArrayBufferView - Uint16Array with offset and length - Connection should be closed"
-    ]
-  },
-  "Send-binary-arraybufferview-uint32-offset.any.js": {
-    "note": "TODO(@KhafraDev): investigate failure",
-    "fail": [
-      "Send binary data on a WebSocket - ArrayBufferView - Uint32Array with offset - Connection should be closed"
-    ]
-  },
   "Create-on-worker-shutdown.any.js": {
     "skip": true,
     "//": "Node.js workers are different from web workers & don't work with blob: urls"
