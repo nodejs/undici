@@ -16,12 +16,6 @@
       }
     }
   },
-  "Create-blocked-port.any.js": {
-    "note": "TODO(@KhafraDev): investigate failure",
-    "fail": [
-      "Basic check"
-    ]
-  },
   "Send-binary-arraybufferview-float32.any.js": {
     "note": "TODO(@KhafraDev): investigate failure",
     "fail": [
@@ -56,12 +50,6 @@
     "note": "TODO(@KhafraDev): investigate failure",
     "fail": [
       "Send binary data on a WebSocket - ArrayBufferView - Uint32Array with offset - Connection should be closed"
-    ]
-  },
-  "basic-auth.any.js": {
-    "note": "TODO(@KhafraDev): investigate failure",
-    "fail": [
-      "HTTP basic authentication should work with WebSockets"
     ]
   },
   "Create-on-worker-shutdown.any.js": {

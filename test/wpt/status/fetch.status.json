@@ -3,10 +3,7 @@
     "abort": {
       "general.any.js": {
         "fail": [
-          "Already aborted signal rejects immediately",
-          "Underlying connection is closed when aborting after receiving response - no-cors",
-          "Stream errors once aborted. Underlying connection closed.",
-          "Readable stream synchronously cancels with AbortError if aborted before reading"
+          "Already aborted signal rejects immediately"
         ]
       },
       "cache.https.any.js": {
@@ -52,9 +49,6 @@
       },
       "referrer.any.js": {
         "fail": [
-          "origin-when-cross-origin policy on a cross-origin URL",
-          "origin-when-cross-origin policy on a cross-origin URL after same-origin redirection",
-          "origin-when-cross-origin policy on a same-origin URL after cross-origin redirection",
           "origin-when-cross-origin policy on a same-origin URL"
         ]
       },
@@ -100,7 +94,7 @@
       },
       "stream-safe-creation.any.js": {
         "note": "tests are very finnicky",
-        "fail": [
+        "flaky": [
           "throwing Object.prototype.type accessor should not affect stream creation by 'fetch'",
           "Object.prototype.type accessor returning invalid value should not affect stream creation by 'fetch'",
           "throwing Object.prototype.highWaterMark accessor should not affect stream creation by 'fetch'",
@@ -344,7 +338,6 @@
           "Adding invalid request header \"Accept-Encoding: KO\"",
           "Adding invalid request header \"Access-Control-Request-Headers: KO\"",
           "Adding invalid request header \"Access-Control-Request-Method: KO\"",
-          "Adding invalid request header \"Access-Control-Request-Private-Network: KO\"",
           "Adding invalid request header \"Connection: KO\"",
           "Adding invalid request header \"Content-Length: KO\"",
           "Adding invalid request header \"Cookie: KO\"",
@@ -394,7 +387,8 @@
         ]
       },
       "response-consume-stream.any.js": {
-        "fail": [
+        "note": "only fail in node v18",
+        "flaky": [
           "Read blob response's body as readableStream with mode=byob",
           "Read text response's body as readableStream with mode=byob",
           "Read URLSearchParams response's body as readableStream with mode=byob",
