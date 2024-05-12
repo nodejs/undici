@@ -1,7 +1,7 @@
 import Dispatcher from "./dispatcher";
 import RetryHandler from "./retry-handler";
 
-export type DumpInterceptorOpts = { maxSize?: number, abortOnDumped?: boolean }
+export type DumpInterceptorOpts = { maxSize?: number }
 export type RetryInterceptorOpts = RetryHandler.RetryOptions
 export type RedirectInterceptorOpts = { maxRedirections?: number }
 

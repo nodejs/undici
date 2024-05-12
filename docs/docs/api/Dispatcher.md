@@ -958,7 +958,6 @@ The `dump` interceptor enables you to dump the response body from a request upon
 
 **Options**
 - `maxSize` - The maximum size (in bytes) of the response body to dump. If the size of the request's body exceeds this value then the connection will be closed. Default: `1048576`.
-- `abortOnDumped` - States whether or not abort the request after the response's body being dumped. Default: `true`.
 
 > The `Dispatcher#options` also gets extended with the options `dumpMaxSize`, `abortOnDumped`, and `waitForTrailers` which can be used to configure the interceptor at a request-per-request basis.
 
