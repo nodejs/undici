@@ -26,8 +26,6 @@ function nextTest () {
   })
   ws.addEventListener('error', (e) => {
     console.error(e.error)
-    currentTest++
-    process.nextTick(nextTest)
   })
 }
 
