@@ -77,7 +77,7 @@ test('Should dump on abort', async t => {
 })
 
 test('Should dump on already aborted request', async t => {
-  t = tspl(t, { plan: 2 })
+  t = tspl(t, { plan: 3 })
   let offset = 0
   const server = createServer((req, res) => {
     const max = 1024
@@ -129,8 +129,10 @@ test('Should dump on already aborted request', async t => {
   })
 
   abc.abort()
-  const response = await client.request(requestOptions)
-  t.equal(response.statusCode, undefined)
+  client.request(requestOptions).catch(err => {
+    t.equal(err.name, 'AbortError')
+    t.equal(err.message, 'This operation was aborted')
+  })
 
   await t.completed
 })
