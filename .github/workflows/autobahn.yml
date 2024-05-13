@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   autobahn:
@@ -37,11 +38,11 @@ jobs:
         uses: docker://docker
         with:
           args: docker restart --time 0 --signal=SIGKILL fuzzingserver
-      
+
       - name: Setup Node
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: lts/*
+          node-version: 22
 
       - name: Run Autobahn Test Suite
         run: npm run test:websocket:autobahn
