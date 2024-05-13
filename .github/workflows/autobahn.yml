@@ -30,6 +30,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
+          ref: "${{ github.event.pull_request.merge_commit_sha }}"
           persist-credentials: false
           clean: false
       
