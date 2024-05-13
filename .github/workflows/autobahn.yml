@@ -47,5 +47,24 @@ jobs:
         run: npm run test:websocket:autobahn
         env:
           FUZZING_SERVER_URL: ws://fuzzingserver:9001
-      - name: Report
+
+      - name: Report into CI
+        id: report-ci
         run: npm run test:websocket:autobahn:report
+
+      - name: Generate Report for PR Comment
+        if: github.event_name == 'pull_request'
+        id: report-markdown
+        run: |
+          echo "comment<<nEOFn" >> $GITHUB_OUTPUT
+          node test/autobahn/report.js >> $GITHUB_OUTPUT
+          echo "nEOFn" >> $GITHUB_OUTPUT
+        env:
+          REPORTER: markdown
+          
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: ${{ steps.report-markdown.outputs.comment }}
+          comment_tag: autobahn
