@@ -2,7 +2,7 @@ name: Autobahn
 on:
   workflow_dispatch:
 
-  pull_request:
+  pull_request_target:
     paths:
       - '.github/workflows/autobahn.yml'
       - 'lib/web/websocket/**'
@@ -54,7 +54,7 @@ jobs:
         run: npm run test:websocket:autobahn:report
 
       - name: Generate Report for PR Comment
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request_target'
         id: report-markdown
         run: |
           echo "comment<<nEOFn" >> $GITHUB_OUTPUT
@@ -64,7 +64,7 @@ jobs:
           REPORTER: markdown
           
       - name: Comment PR
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request_target'
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: ${{ steps.report-markdown.outputs.comment }}
