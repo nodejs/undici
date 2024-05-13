@@ -1,0 +1,45 @@
+name: Autobahn
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  autobahn:
+    name: Autobahn Test Suite
+    runs-on: ubuntu-latest
+    container: node:22
+    services:
+      fuzzingserver:
+        image: crossbario/autobahn-testsuite:latest
+        ports:
+          - '9001:9001'
+        options: --name fuzzingserver
+        volumes:
+          - ${{ github.workspace }}/test/autobahn/config:/config
+          - ${{ github.workspace }}/test/autobahn/reports:/reports
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          persist-credentials: false
+          clean: false
+      
+      - name: Restart Autobahn Server
+        # Restart service after volumes have been checked out
+        uses: docker://docker
+        with:
+          args: docker restart --time 0 --signal=SIGKILL fuzzingserver
+      
+      - name: Setup Node
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: lts/*
+
+      - name: Run Autobahn Test Suite
+        run: npm run test:websocket:autobahn
+        env:
+          FUZZING_SERVER_URL: ws://fuzzingserver:9001
+      - name: Report
+        run: npm run test:websocket:autobahn:report
