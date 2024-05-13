@@ -970,7 +970,6 @@ const { dump } = interceptors;
 const client = new Client("http://example.com").compose(
   dump({
     maxSize: 1024,
-    abortOnDumped: true,
   })
 );
 
@@ -980,7 +979,6 @@ client.dispatch(
     path: "/",
     method: "GET",
     dumpMaxSize: 1024,
-    abortOnDumped: true,
   },
   handler
 );
