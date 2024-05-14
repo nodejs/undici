@@ -7,6 +7,10 @@
     "commit": "93ca7d336321a45f1bf1bbd63163b1e3ec6ae01f",
     "path": "eventsource"
   },
+  "fetch": {
+    "commit": "1b9332c3c8a84d34e38271d29518c204ab2cfb6e",
+    "path": "fetch"
+  },
   "FileAPI": {
     "commit": "5aa50dd4151b5bc1d04d5505366c6e27df30af5b",
     "path": "FileAPI"
@@ -22,6 +26,10 @@
   "resources": {
     "commit": "34dfef83fccdcc0faa24efd6d5c9013bbd44f095",
     "path": "resources"
+  },
+  "service-workers": {
+    "commit": "3ebc2c5109dacb76334d9e85f5eda7a4b7afbebe",
+    "path": "service-workers"
   },
   "storage": {
     "commit": "9f1cfd6824f166bd08d46c061be9e507d6bb45a7",
