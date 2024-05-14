@@ -8,10 +8,13 @@
       "note": "navigator is not defined"
     },
     "cache-put.https.any.js": {
-      "note": "probably can be fixed",
+      "note": "probably can be fixed; flaky is on windows only TODO(@KhafraDev) investigate it",
       "fail": [
         "Cache.put with a VARY:* opaque response should not reject",
         "Cache.put with opaque-filtered HTTP 206 response"
+      ],
+      "flaky": [
+        "Cache.put called with Request and Response from fetch()"
       ]
     },
     "cache-match.https.any.js": {
