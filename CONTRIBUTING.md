@@ -113,6 +113,7 @@ git sparse-checkout add /websockets
 git sparse-checkout add /mimesniff
 git sparse-checkout add /storage
 git sparse-checkout add /service-workers
+git sparse-checkout add /eventsource
 ```
 
 </details>

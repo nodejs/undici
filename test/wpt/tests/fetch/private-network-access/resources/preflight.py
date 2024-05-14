@@ -78,9 +78,8 @@ def _get_response_headers(method, mode, origin):
     return [
         acam,
         ("Access-Control-Allow-Origin", origin),
-        _ACAPN,
         ("Access-Control-Allow-Credentials", "true"),
-        ("Access-Control-Allow-Headers", "Upgrade-Insecure-Requests")
+        _ACAPN,
     ]
 
   return []
@@ -89,7 +88,8 @@ def _get_expect_single_preflight(request):
   return request.GET.get(b"expect-single-preflight")
 
 def _is_preflight_optional(request):
-  return request.GET.get(b"is-preflight-optional")
+  return request.GET.get(b"is-preflight-optional") or \
+         request.GET.get(b"file-if-no-preflight-received")
 
 def _get_preflight_uuid(request):
   return request.GET.get(b"preflight-uuid")
@@ -129,8 +129,12 @@ def _handle_preflight_request(request, response):
 
   return (headers, "preflight")
 
-def _final_response_body(request):
-  file_name = request.GET.get(b"file")
+def _final_response_body(request, missing_preflight):
+  file_name = None
+  if missing_preflight and not request.GET.get(b"is-preflight-optional"):
+    file_name = request.GET.get(b"file-if-no-preflight-received")
+  if file_name is None:
+    file_name = request.GET.get(b"file")
   if file_name is None:
     return request.GET.get(b"body") or "success"
 
@@ -146,13 +150,14 @@ def _final_response_body(request):
   return prefix + contents
 
 def _handle_final_request(request, response):
+  missing_preflight = False
   if _should_treat_as_public_once(request):
     headers = [("Content-Security-Policy", "treat-as-public-address"),]
   else:
     uuid = _get_preflight_uuid(request)
     if uuid is not None:
-      if (request.server.stash.take(uuid) is None and
-          not _is_preflight_optional(request)):
+      missing_preflight = request.server.stash.take(uuid) is None
+      if missing_preflight and not _is_preflight_optional(request):
         return (405, [], "no preflight received")
       request.server.stash.put(uuid, "final")
 
@@ -172,7 +177,7 @@ def _handle_final_request(request, response):
   if _is_loaded_in_fenced_frame(request):
     headers.append(("Supports-Loading-Mode", "fenced-frame"))
 
-  body = _final_response_body(request)
+  body = _final_response_body(request, missing_preflight)
   return (headers, body)
 
 def main(request, response):

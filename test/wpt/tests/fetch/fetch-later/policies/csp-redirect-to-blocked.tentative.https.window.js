@@ -1,9 +1,7 @@
 // META: title=FetchLater: redirect blocked by CSP
-// META: script=/resources/testharness.js
-// META: script=/resources/testharnessreport.js
 // META: script=/common/utils.js
 // META: script=/common/get-host-info.sub.js
-// META: script=/pending-beacon/resources/pending_beacon-helper.js
+// META: script=/fetch/fetch-later/resources/fetch-later-helper.js
 // META: timeout=long
 
 'use strict';

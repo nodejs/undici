@@ -446,6 +446,10 @@ async function iframeTest(t, { source, target, expected }) {
   const targetUrl = preflightUrl(target);
   targetUrl.searchParams.set("file", "iframed.html");
   targetUrl.searchParams.set("iframe-uuid", uuid);
+  targetUrl.searchParams.set(
+    "file-if-no-preflight-received",
+    "iframed-no-preflight-received.html",
+  );
 
   const sourceUrl =
       resolveUrl("resources/iframer.html", sourceResolveOptions(source));
@@ -470,13 +474,18 @@ async function iframeTest(t, { source, target, expected }) {
   assert_equals(result, expected);
 }
 
-const WindowOpenTestResult = {
+const NavigationTestResult = {
   SUCCESS: "success",
-  FAILURE: "failure",
+  FAILURE: "timeout",
 };
 
 async function windowOpenTest(t, { source, target, expected }) {
   const targetUrl = preflightUrl(target);
+  targetUrl.searchParams.set("file", "openee.html");
+  targetUrl.searchParams.set(
+    "file-if-no-preflight-received",
+    "no-preflight-received.html",
+  );
 
   const sourceUrl =
       resolveUrl("resources/opener.html", sourceResolveOptions(source));
@@ -487,7 +496,69 @@ async function windowOpenTest(t, { source, target, expected }) {
 
   iframe.contentWindow.postMessage({ url: targetUrl.href }, "*");
 
-  assert_equals(await reply, expected);
+  const result = await Promise.race([
+      reply,
+      new Promise((resolve) => {
+        t.step_timeout(() => resolve("timeout"), 10000 /* ms */);
+      }),
+  ]);
+
+  assert_equals(result, expected);
+}
+
+async function windowOpenExistingTest(t, { source, target, expected }) {
+  const targetUrl = preflightUrl(target);
+  targetUrl.searchParams.set("file", "openee.html");
+  targetUrl.searchParams.set(
+    "file-if-no-preflight-received",
+    "no-preflight-received.html",
+  );
+
+  const sourceUrl = resolveUrl(
+      'resources/open-to-existing-window.html', sourceResolveOptions(source));
+  sourceUrl.searchParams.set("url", targetUrl);
+  sourceUrl.searchParams.set("token", token());
+
+  const iframe = await appendIframe(t, document, sourceUrl);
+  const reply = futureMessage({ source: iframe.contentWindow });
+
+  iframe.contentWindow.postMessage({ url: targetUrl.href }, "*");
+
+  const result = await Promise.race([
+      reply,
+      new Promise((resolve) => {
+        t.step_timeout(() => resolve("timeout"), 10000 /* ms */);
+      }),
+  ]);
+
+  assert_equals(result, expected);
+}
+
+async function anchorTest(t, { source, target, expected }) {
+  const targetUrl = preflightUrl(target);
+  targetUrl.searchParams.set("file", "openee.html");
+  targetUrl.searchParams.set(
+    "file-if-no-preflight-received",
+    "no-preflight-received.html",
+  );
+
+  const sourceUrl =
+      resolveUrl("resources/anchor.html", sourceResolveOptions(source));
+  sourceUrl.searchParams.set("url", targetUrl);
+
+  const iframe = await appendIframe(t, document, sourceUrl);
+  const reply = futureMessage({ source: iframe.contentWindow });
+
+  iframe.contentWindow.postMessage({ url: targetUrl.href }, "*");
+
+  const result = await Promise.race([
+      reply,
+      new Promise((resolve) => {
+        t.step_timeout(() => resolve("timeout"), 10000 /* ms */);
+      }),
+  ]);
+
+  assert_equals(result, expected);
 }
 
 // Similar to `iframeTest`, but replaced iframes with fenced frames.
@@ -783,4 +854,67 @@ async function sharedWorkerBlobFetchTest(t, { source, target, expected }) {
   assert_equals(error, expected.error, "fetch error");
   assert_equals(status, expected.status, "response status");
   assert_equals(body, expected.body, "response body");
+}
+
+async function makeServiceWorkerTest(t, { source, target, expected, fetch_document=false }) {
+  const bridgeUrl = resolveUrl(
+      "resources/service-worker-bridge.html",
+      sourceResolveOptions({ server: source.server }));
+
+  const scriptUrl = fetch_document?
+      resolveUrl("resources/service-worker-fetch-all.js", sourceResolveOptions(source)):
+      resolveUrl("resources/service-worker.js", sourceResolveOptions(source));
+
+  const realTargetUrl = preflightUrl(target);
+
+  // Fetch a URL within the service worker's scope, but tell it which URL to
+  // really fetch.
+  const targetUrl = new URL("service-worker-proxy", scriptUrl);
+  targetUrl.searchParams.append("proxied-url", realTargetUrl.href);
+
+  const iframe = await appendIframe(t, document, bridgeUrl);
+
+  const request = (message) => {
+    const reply = futureMessage();
+    iframe.contentWindow.postMessage(message, "*");
+    return reply;
+  };
+
+  {
+    const { error, loaded } = await request({
+      action: "register",
+      url: scriptUrl.href,
+    });
+
+    assert_equals(error, undefined, "register error");
+    assert_true(loaded, "response loaded");
+  }
+
+  try {
+    const { controlled, numControllerChanges } = await request({
+      action: "wait",
+      numControllerChanges: 1,
+    });
+
+    assert_equals(numControllerChanges, 1, "controller change");
+    assert_true(controlled, "bridge script is controlled");
+
+    const { error, ok, body } = await request({
+      action: "fetch",
+      url: targetUrl.href,
+    });
+
+    assert_equals(error, expected.error, "fetch error");
+    assert_equals(ok, expected.ok, "response ok");
+    assert_equals(body, expected.body, "response body");
+  } finally {
+    // Always unregister the service worker.
+    const { error, unregistered } = await request({
+      action: "unregister",
+      scope: new URL("./", scriptUrl).href,
+    });
+
+    assert_equals(error, undefined, "unregister error");
+    assert_true(unregistered, "unregistered");
+  }
 }

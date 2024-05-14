@@ -99,6 +99,9 @@ Object.defineProperties(globalThis, {
   }
 })
 
+// TODO: remove once Float16Array is added. Otherwise a test throws with an uncaught exception.
+globalThis.Float16Array ??= class Float16Array {}
+
 // TODO: remove once node 18 is dropped
 if (!globalThis.crypto) {
   Object.defineProperty(globalThis, 'crypto', {

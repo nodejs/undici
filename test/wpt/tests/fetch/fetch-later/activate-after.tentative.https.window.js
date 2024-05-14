@@ -1,11 +1,9 @@
-// META: script=/resources/testharness.js
-// META: script=/resources/testharnessreport.js
 // META: script=/common/dispatcher/dispatcher.js
 // META: script=/common/get-host-info.sub.js
 // META: script=/common/utils.js
 // META: script=/html/browsers/browsing-the-web/remote-context-helper/resources/remote-context-helper.js
 // META: script=/html/browsers/browsing-the-web/back-forward-cache/resources/rc-helper.js
-// META: script=/pending-beacon/resources/pending_beacon-helper.js
+// META: script=/fetch/fetch-later/resources/fetch-later-helper.js
 
 'use strict';
 
