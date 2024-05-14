@@ -8,7 +8,7 @@ import { colors, handlePipes, normalizeName, parseMeta, resolveStatusPath } from
 const alwaysExit0 = process.env.GITHUB_WORKFLOW === 'Daily WPT report'
 
 const basePath = fileURLToPath(join(import.meta.url, '../..'))
-const testPath = join(basePath, 'tests')
+const testPath = join(basePath, '../fixtures/wpt')
 const statusPath = join(basePath, 'status')
 
 // https://github.com/web-platform-tests/wpt/blob/b24eedd/resources/testharness.js#L3705

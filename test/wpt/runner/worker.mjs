@@ -29,7 +29,7 @@ process.on('uncaughtException', (err) => {
   })
 })
 
-const basePath = join(process.cwd(), 'test/wpt/tests')
+const basePath = join(process.cwd(), 'test/fixtures/wpt')
 const urlPath = path.slice(basePath.length)
 
 const globalPropertyDescriptors = {

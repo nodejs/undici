@@ -379,6 +379,12 @@
       }
     },
     "response": {
+      "response-blob-realm.any.js": {
+        "note": "onload is not defined (globalThis does not extend EventTarget)",
+        "fail": [
+          "realm of the Uint8Array from Response bytes()"
+        ]
+      },
       "response-clone.any.js": {
         "note": "Node streams are too buggy currently.",
         "skip": true

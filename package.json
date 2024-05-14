@@ -137,7 +137,7 @@
     "ignore": [
       "lib/llhttp/constants.js",
       "lib/llhttp/utils.js",
-      "test/wpt/tests"
+      "test/fixtures/wpt"
     ]
   },
   "tsd": {
