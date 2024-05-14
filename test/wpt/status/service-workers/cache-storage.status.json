@@ -18,10 +18,13 @@
       ]
     },
     "cache-match.https.any.js": {
-      "note": "requires https server",
+      "note": "requires https server; flaky is on windows only TODO(@KhafraDev) investigate it",
       "fail": [
         "cors-exposed header should be stored correctly.",
         "Cache.match ignores vary headers on opaque response."
+      ],
+      "flaky": [
+        "Cache.match invoked multiple times for the same Request/Response"
       ]
     }
   }
