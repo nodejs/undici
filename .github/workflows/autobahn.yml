@@ -2,7 +2,7 @@ name: Autobahn
 on:
   workflow_dispatch:
 
-  pull_request:
+  pull_request_target:
     paths:
       - '.github/workflows/autobahn.yml'
       - 'lib/web/websocket/**'
@@ -30,6 +30,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
+          ref: "${{ github.event.pull_request.merge_commit_sha }}"
           persist-credentials: false
           clean: false
       
@@ -52,9 +53,11 @@ jobs:
       - name: Report into CI
         id: report-ci
         run: npm run test:websocket:autobahn:report
+        env:
+          FAIL_ON_ERROR: true
 
       - name: Generate Report for PR Comment
-        if: github.event_name == 'pull_request'
+        if: (failure() || success()) && github.event_name == 'pull_request_target'
         id: report-markdown
         run: |
           echo "comment<<nEOFn" >> $GITHUB_OUTPUT
@@ -64,7 +67,7 @@ jobs:
           REPORTER: markdown
           
       - name: Comment PR
-        if: github.event_name == 'pull_request'
+        if: (failure() || success()) && github.event_name == 'pull_request_target'
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: ${{ steps.report-markdown.outputs.comment }}

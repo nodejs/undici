@@ -61,12 +61,19 @@
           "Fetch with Chicken",
           "Fetch with Chicken with body",
           "Fetch with TacO and mode \"same-origin\" needs an Origin header",
-          "Fetch with TacO and mode \"cors\" needs an Origin header"
+          "Fetch with TacO and mode \"cors\" needs an Origin header",
+          "Fetch with POST with Float16Array body"
         ]
       },
       "request-private-network-headers.tentative.any.js": {
         "note": "undici doesn't filter headers",
         "skip": true
+      },
+      "request-upload.any.js": {
+        "note": "no Float16Array",
+        "fail": [
+          "Fetch with POST with Float16Array body"
+        ]
       },
       "request-upload.h2.any.js": {
         "note": "undici doesn't support http/2",
@@ -372,6 +379,12 @@
       }
     },
     "response": {
+      "response-blob-realm.any.js": {
+        "note": "onload is not defined (globalThis does not extend EventTarget)",
+        "fail": [
+          "realm of the Uint8Array from Response bytes()"
+        ]
+      },
       "response-clone.any.js": {
         "note": "Node streams are too buggy currently.",
         "skip": true
@@ -401,6 +414,59 @@
       "fail": [
         "Window interface: operation fetch(RequestInfo, optional RequestInit)"
       ]
+    }
+  },
+  "content-encoding": {
+    "br": {
+      "bad-br-body.https.any.js": {
+        "note": "TODO(@KhafraDev): investigate failure",
+        "fail": [
+          "Consuming the body of a resource with bad br content with arrayBuffer() should reject"
+        ]
+      },
+      "big-br-body.https.any.js": {
+        "note": "TODO(@KhafraDev): investigate failure",
+        "fail": [
+          "large br data should be decompressed successfully",
+          "large br data should be decompressed successfully with byte stream"
+        ]
+      },
+      "br-body.https.any.js": {
+        "note": "TODO(@KhafraDev): investigate failure",
+        "fail": [
+          "fetched br data with content type text should be decompressed.",
+          "fetched br data with content type octetstream should be decompressed."
+        ]
+      }
+    },
+    "gzip": {
+      "bad-gzip-body.any.js": {
+        "note": "TODO(@KhafraDev): investigate failure",
+        "fail": [
+          "Consuming the body of a resource with bad gzip content with arrayBuffer() should reject",
+          "Consuming the body of a resource with bad gzip content with blob() should reject",
+          "Consuming the body of a resource with bad gzip content with json() should reject",
+          "Consuming the body of a resource with bad gzip content with text() should reject"
+        ]
+      },
+      "gzip-body.any.js": {
+        "note": "TODO(@KhafraDev): investigate failure",
+        "fail": [
+          "fetched gzip data with content type text should be decompressed.",
+          "fetched gzip data with content type octetstream should be decompressed."
+        ]
+      },
+      "big-gzip-body.https.any.js": {
+        "note": "TODO(@KhafraDev): investigate failure",
+        "fail": [
+          "large gzip data should be decompressed successfully",
+          "large gzip data should be decompressed successfully with byte stream"
+        ]
+      }
+    },
+    "zstd": {
+      "note": "node does not have zstd yet",
+      "skip": true
     }
   },
   "content-length": {
