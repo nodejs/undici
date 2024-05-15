@@ -29,7 +29,7 @@ process.on('uncaughtException', (err) => {
   })
 })
 
-const basePath = join(process.cwd(), 'test/wpt/tests')
+const basePath = join(process.cwd(), 'test/fixtures/wpt')
 const urlPath = path.slice(basePath.length)
 
 const globalPropertyDescriptors = {
@@ -98,6 +98,9 @@ Object.defineProperties(globalThis, {
     value: EventSource
   }
 })
+
+// TODO: remove once Float16Array is added. Otherwise a test throws with an uncaught exception.
+globalThis.Float16Array ??= class Float16Array {}
 
 // TODO: remove once node 18 is dropped
 if (!globalThis.crypto) {
