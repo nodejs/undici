@@ -3,8 +3,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
-const { Headers, fill } = require('../../lib/web/fetch/headers')
-const { kGuard } = require('../../lib/web/fetch/symbols')
+const { Headers, fill, setHeadersGuard } = require('../../lib/web/fetch/headers')
 const { once } = require('node:events')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
@@ -610,7 +609,7 @@ test('various init paths of Headers', () => {
 test('immutable guard', () => {
   const headers = new Headers()
   headers.set('key', 'val')
-  headers[kGuard] = 'immutable'
+  setHeadersGuard(headers, 'immutable')
 
   assert.throws(() => {
     headers.set('asd', 'asd')
@@ -627,7 +626,7 @@ test('immutable guard', () => {
 
 test('request-no-cors guard', () => {
   const headers = new Headers()
-  headers[kGuard] = 'request-no-cors'
+  setHeadersGuard(headers, 'request-no-cors')
   assert.doesNotThrow(() => { headers.set('key', 'val') })
   assert.doesNotThrow(() => { headers.append('key', 'val') })
 })

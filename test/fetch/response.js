@@ -12,8 +12,8 @@ const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
-const { kState, kGuard, kHeaders } = require('../../lib/web/fetch/symbols')
-const { kHeadersList } = require('../../lib/core/symbols')
+const { kState, kHeaders } = require('../../lib/web/fetch/symbols')
+const { getHeadersGuard, getHeadersList } = require('../../lib/web/fetch/headers')
 
 test('arg validation', async () => {
   // constructor
@@ -282,6 +282,6 @@ test('fromInnerResponse', () => {
 
   // check property
   assert.strictEqual(response[kState], innerResponse)
-  assert.strictEqual(response[kHeaders][kHeadersList], innerResponse.headersList)
-  assert.strictEqual(response[kHeaders][kGuard], 'immutable')
+  assert.strictEqual(getHeadersList(response[kHeaders]), innerResponse.headersList)
+  assert.strictEqual(getHeadersGuard(response[kHeaders]), 'immutable')
 })
