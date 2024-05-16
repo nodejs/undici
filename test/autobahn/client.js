@@ -6,19 +6,25 @@ let currentTest = 1
 let testCount
 
 const autobahnFuzzingserverUrl = process.env.FUZZING_SERVER_URL || 'ws://localhost:9001'
+const options = {
+  node: {
+    'client-extensions': 'permessage-deflate'
+  }
+}
 
 function nextTest () {
   let ws
 
   if (currentTest > testCount) {
-    ws = new WebSocket(`${autobahnFuzzingserverUrl}/updateReports?agent=undici`)
+    ws = new WebSocket(`${autobahnFuzzingserverUrl}/updateReports?agent=undici`, options)
     return
   }
 
   console.log(`Running test case ${currentTest}/${testCount}`)
 
   ws = new WebSocket(
-    `${autobahnFuzzingserverUrl}/runCase?case=${currentTest}&agent=undici`
+    `${autobahnFuzzingserverUrl}/runCase?case=${currentTest}&agent=undici`,
+    options
   )
   ws.addEventListener('message', (data) => {
     ws.send(data.data)
@@ -32,7 +38,7 @@ function nextTest () {
   })
 }
 
-const ws = new WebSocket(`${autobahnFuzzingserverUrl}/getCaseCount`)
+const ws = new WebSocket(`${autobahnFuzzingserverUrl}/getCaseCount`, options)
 ws.addEventListener('message', (data) => {
   testCount = parseInt(data.data)
 })
