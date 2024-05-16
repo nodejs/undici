@@ -53,11 +53,9 @@ jobs:
       - name: Report into CI
         id: report-ci
         run: npm run test:websocket:autobahn:report
-        env:
-          FAIL_ON_ERROR: true
 
       - name: Generate Report for PR Comment
-        if: (failure() || success()) && github.event_name == 'pull_request_target'
+        if: github.event_name == 'pull_request_target'
         id: report-markdown
         run: |
           echo "comment<<nEOFn" >> $GITHUB_OUTPUT
@@ -67,7 +65,7 @@ jobs:
           REPORTER: markdown
           
       - name: Comment PR
-        if: (failure() || success()) && github.event_name == 'pull_request_target'
+        if: github.event_name == 'pull_request_target'
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: ${{ steps.report-markdown.outputs.comment }}
