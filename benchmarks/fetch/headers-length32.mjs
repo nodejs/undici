@@ -1,5 +1,5 @@
 import { bench, run } from 'mitata'
-import { Headers } from '../../lib/web/fetch/headers.js'
+import { Headers, getHeadersList } from '../../lib/web/fetch/headers.js'
 
 const headers = new Headers(
   [
@@ -38,11 +38,7 @@ const headers = new Headers(
   ].map((v) => [v, ''])
 )
 
-const kHeadersList = Reflect.ownKeys(headers).find(
-  (c) => String(c) === 'Symbol(headers list)'
-)
-
-const headersList = headers[kHeadersList]
+const headersList = getHeadersList(headers)
 
 const kHeadersSortedMap = Reflect.ownKeys(headersList).find(
   (c) => String(c) === 'Symbol(headers map sorted)'

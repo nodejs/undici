@@ -15,8 +15,8 @@ const {
   Blob: ThirdPartyBlob,
   FormData: ThirdPartyFormData
 } = require('formdata-node')
-const { kState, kGuard, kSignal, kHeaders } = require('../../lib/web/fetch/symbols')
-const { kHeadersList } = require('../../lib/core/symbols')
+const { kState, kSignal, kHeaders } = require('../../lib/web/fetch/symbols')
+const { getHeadersGuard, getHeadersList } = require('../../lib/web/fetch/headers')
 
 const hasSignalReason = 'reason' in AbortSignal.prototype
 
@@ -497,6 +497,6 @@ test('fromInnerRequest', () => {
   // check property
   assert.strictEqual(request[kState], innerRequest)
   assert.strictEqual(request[kSignal], signal)
-  assert.strictEqual(request[kHeaders][kHeadersList], innerRequest.headersList)
-  assert.strictEqual(request[kHeaders][kGuard], 'immutable')
+  assert.strictEqual(getHeadersList(request[kHeaders]), innerRequest.headersList)
+  assert.strictEqual(getHeadersGuard(request[kHeaders]), 'immutable')
 })
