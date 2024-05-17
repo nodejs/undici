@@ -125,7 +125,11 @@
     "standard": "^17.0.0",
     "tsd": "^0.31.0",
     "typescript": "^5.0.2",
-    "ws": "^8.11.0"
+    "ws": "^8.11.0",
+    "ws-masking": "^0.0.1"
+  },
+  "optionalDependencies": {
+    "ws-masking": "^0.0.1"
   },
   "engines": {
     "node": ">=18.17"
