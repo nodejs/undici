@@ -3,7 +3,7 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
-const { createBrotliCompress, createGzip, createDeflate } = require('node:zlib')
+const { createBrotliCompress, createGzip, createDeflate, createDeflateRaw } = require('node:zlib')
 
 const { Client, interceptors } = require('../..')
 const { decompress } = interceptors
@@ -54,6 +54,45 @@ test('decompresses deflate encoding', async (t) => {
 
   const server = createServer((req, res) => {
     const deflate = createDeflate()
+
+    res.setHeader('Content-Encoding', contentEncodings)
+    res.setHeader('Content-Type', 'text/plain')
+
+    deflate.pipe(res)
+    deflate.write(text)
+    deflate.end()
+  }).listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(decompress())
+
+  after(async () => {
+    await client.close()
+
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(await response.body.text(), text)
+
+  await t.completed
+})
+
+test('decompresses raw deflate encoding', async (t) => {
+  t = tspl(t, { plan: 1 })
+  const contentEncodings = 'deflate'
+  const text = 'Hello, World!'
+
+  const server = createServer((req, res) => {
+    const deflate = createDeflateRaw()
 
     res.setHeader('Content-Encoding', contentEncodings)
     res.setHeader('Content-Type', 'text/plain')
