@@ -70,5 +70,6 @@ declare namespace Undici {
     dump: typeof import('./interceptors').dump;
     retry: typeof import('./interceptors').retry;
     redirect: typeof import('./interceptors').redirect;
+    decompress: typeof import('./interceptors').decompress;
   }
 }
