@@ -4,6 +4,7 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const { createBrotliCompress, createGzip, createDeflate, createDeflateRaw } = require('node:zlib')
+const { closeClientAndServerAsPromise } = require('../utils/node-http')
 
 const { Client, interceptors } = require('../..')
 const { decompress } = interceptors
@@ -30,12 +31,7 @@ test('decompresses gzip encoding', async (t) => {
     `http://localhost:${server.address().port}`
   ).compose(decompress())
 
-  after(async () => {
-    await client.close()
-
-    server.close()
-    await once(server, 'close')
-  })
+  after(closeClientAndServerAsPromise(client, server))
 
   const response = await client.request({
     method: 'GET',
@@ -69,12 +65,7 @@ test('decompresses deflate encoding', async (t) => {
     `http://localhost:${server.address().port}`
   ).compose(decompress())
 
-  after(async () => {
-    await client.close()
-
-    server.close()
-    await once(server, 'close')
-  })
+  after(closeClientAndServerAsPromise(server, client))
 
   const response = await client.request({
     method: 'GET',
@@ -108,12 +99,7 @@ test('decompresses raw deflate encoding', async (t) => {
     `http://localhost:${server.address().port}`
   ).compose(decompress())
 
-  after(async () => {
-    await client.close()
-
-    server.close()
-    await once(server, 'close')
-  })
+  after(closeClientAndServerAsPromise(server, client))
 
   const response = await client.request({
     method: 'GET',
@@ -147,12 +133,7 @@ test('decompresses brotli encoding', async (t) => {
     `http://localhost:${server.address().port}`
   ).compose(decompress())
 
-  after(async () => {
-    await client.close()
-
-    server.close()
-    await once(server, 'close')
-  })
+  after(closeClientAndServerAsPromise(server, client))
 
   const response = await client.request({
     method: 'GET',
@@ -187,12 +168,7 @@ test('decompresses multiple encodings', async (t) => {
     `http://localhost:${server.address().port}`
   ).compose(decompress())
 
-  after(async () => {
-    await client.close()
-
-    server.close()
-    await once(server, 'close')
-  })
+  after(closeClientAndServerAsPromise(server, client))
 
   const response = await client.request({
     method: 'GET',
@@ -227,12 +203,7 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
     `http://localhost:${server.address().port}`
   ).compose(decompress())
 
-  after(async () => {
-    await client.close()
-
-    server.close()
-    await once(server, 'close')
-  })
+  after(closeClientAndServerAsPromise(server, client))
 
   const response = await client.request({
     method: 'GET',
@@ -262,12 +233,7 @@ test('does not throw when an unsupported content encoding is encountered', async
     `http://localhost:${server.address().port}`
   ).compose(decompress())
 
-  after(async () => {
-    await client.close()
-
-    server.close()
-    await once(server, 'close')
-  })
+  after(closeClientAndServerAsPromise(server, client))
 
   const response = await client.request({
     method: 'GET',
@@ -303,12 +269,7 @@ test('response decompression according to content-encoding should be handled in 
     `http://localhost:${server.address().port}`
   ).compose(decompress())
 
-  after(async () => {
-    await client.close()
-
-    server.close()
-    await once(server, 'close')
-  })
+  after(closeClientAndServerAsPromise(server, client))
 
   const response = await client.request({
     method: 'GET',
