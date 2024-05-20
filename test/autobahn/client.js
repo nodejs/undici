@@ -12,6 +12,7 @@ function nextTest () {
 
   if (currentTest > testCount) {
     ws = new WebSocket(`${autobahnFuzzingserverUrl}/updateReports?agent=undici`)
+    ws.addEventListener('close', () => require('./report'))
     return
   }
 
