@@ -7,6 +7,7 @@ const { createBrotliCompress, createGzip, createDeflate, createDeflateRaw } = re
 const { closeClientAndServerAsPromise } = require('../utils/node-http')
 
 const { Client, interceptors } = require('../..')
+const { PassThrough } = require('node:stream')
 const { decompress } = interceptors
 
 test('decompresses gzip encoding', async (t) => {
@@ -215,7 +216,7 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
   await t.completed
 })
 
-test('does not throw when an unsupported content encoding is encountered', async (t) => {
+test('does not throw when an unknown content encoding is received in the response', async (t) => {
   t = tspl(t, { plan: 1 })
   const contentCodings = 'UNSUPPORTED'
   const text = 'Hello, World!'
@@ -277,6 +278,58 @@ test('response decompression according to content-encoding should be handled in 
   })
 
   t.equal(await response.body.text(), text)
+
+  await t.completed
+})
+
+test('handles backpressure', async (t) => {
+  t = tspl(t, { plan: 1 })
+  const contentCodings = 'deflate, gzip'
+
+  const text = Buffer.alloc(1e6).toString()
+
+  const server = createServer((req, res) => {
+    const gzip = createGzip()
+    const deflate = createDeflate()
+
+    res.setHeader('Content-Encoding', contentCodings)
+    res.setHeader('Content-Type', 'text/plain')
+
+    gzip.pipe(deflate).pipe(res)
+
+    gzip.write(text)
+    gzip.end()
+  }).listen(0)
+
+  await once(server, 'listening')
+
+  const dst = new PassThrough()
+
+  dst.on('data', () => {
+    dst.pause()
+    setImmediate(() => dst.resume())
+  }).on('end', () => {
+    t.ok(true, 'pass')
+  })
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(decompress())
+
+  after(closeClientAndServerAsPromise(server, client))
+
+  await client.dispatch({
+    method: 'GET',
+    path: '/'
+  },
+  {
+    onError: (err) => { throw err },
+    onConnect: () => {},
+    onBodySent: () => {},
+    onHeaders: () => {},
+    onComplete: () => dst.end(),
+    onData: (chunk) => dst.write(chunk)
+  })
 
   await t.completed
 })
