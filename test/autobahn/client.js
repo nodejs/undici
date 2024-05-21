@@ -2,6 +2,8 @@
 
 const { WebSocket } = require('../..')
 
+const logOnError = process.env.LOG_ON_ERROR === 'true'
+
 let currentTest = 1
 let testCount
 
@@ -28,9 +30,11 @@ function nextTest () {
     currentTest++
     process.nextTick(nextTest)
   })
-  ws.addEventListener('error', (e) => {
-    console.error(e.error)
-  })
+  if (logOnError) {
+    ws.addEventListener('error', (e) => {
+      console.error(e.error)
+    })
+  }
 }
 
 const ws = new WebSocket(`${autobahnFuzzingserverUrl}/getCaseCount`)

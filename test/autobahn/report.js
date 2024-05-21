@@ -3,7 +3,6 @@
 const result = require('./reports/clients/index.json').undici
 
 const failOnError = process.env.FAIL_ON_ERROR === 'true'
-const reporter = process.env.REPORTER || 'table'
 let runFailed = false
 
 let okTests = 0
@@ -86,57 +85,22 @@ for (const key of keys) {
   }
 }
 
-if (
-  reporter === 'table'
-) {
-  console.log('Autobahn Test Report\n\nSummary:')
+console.log('Autobahn Test Report\n\nSummary:')
 
-  console.table({
-    OK: okTests,
-    Failed: failedTests,
-    'Non-Strict': nonStrictTests,
-    'Wrong Code': wrongCodeTests,
-    Unclean: uncleanTests,
-    'Failed By Client': failedByClientTests,
-    Informational: informationalTests,
-    Unimplemented: unimplementedTests,
-    'Total Tests': totalTests
-  })
+console.table({
+  OK: okTests,
+  Failed: failedTests,
+  'Non-Strict': nonStrictTests,
+  'Wrong Code': wrongCodeTests,
+  Unclean: uncleanTests,
+  'Failed By Client': failedByClientTests,
+  Informational: informationalTests,
+  Unimplemented: unimplementedTests,
+  Total: totalTests
+})
 
-  console.log('Details:')
+console.log('Details:')
 
-  console.table(reorderedResult)
-}
-
-if (reporter === 'markdown') {
-  console.log(`## Autobahn Test Report
-
-### Summary
-
-| Type | Count |
-|---|---|
-| OK | ${okTests} |
-| Failed | ${failedTests} |
-| Non-Strict | ${nonStrictTests} |
-| Wrong Code | ${wrongCodeTests} |
-| Unclean | ${uncleanTests} |
-| Failed By Client | ${failedByClientTests} |
-| Informational | ${informationalTests} |
-| Unimplemented | ${unimplementedTests} |
-| Total Tests | ${totalTests} |
-
-<details>
-<summary>Details</summary>
-
-| Test Case | Behavior | Close Behavior | Duration | Remote Close Code |
-|---|---|---|---|---|
-${keys.map(key => {
-  const testCase = reorderedResult[key]
-  return `| ${key} | ${testCase.behavior} | ${testCase.behaviorClose} | ${testCase.duration} | ${testCase.remoteCloseCode} |`
-}).join('\n')}
-
-</details>
-`)
-}
+console.table(reorderedResult)
 
 process.exit(runFailed ? 1 : 0)
