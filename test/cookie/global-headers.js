@@ -7,7 +7,6 @@ const {
   getSetCookies,
   setCookie
 } = require('../..')
-const { getHeadersList } = require('../../lib/cookies/util')
 
 /* global Headers */
 
@@ -41,7 +40,7 @@ test('Using global Headers', (t) => {
       'set-cookie': 'undici=getSetCookies; Secure'
     })
 
-    const supportsCookies = getHeadersList(headers).cookies
+    const supportsCookies = headers.getSetCookie()
 
     if (!supportsCookies) {
       t.same(getSetCookies(headers), [])
