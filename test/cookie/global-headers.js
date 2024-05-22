@@ -8,7 +8,6 @@ const {
   getSetCookies,
   setCookie
 } = require('../..')
-const { getHeadersList } = require('../../lib/web/cookies/util')
 
 describe('Using global Headers', async () => {
   test('deleteCookies', () => {
@@ -32,7 +31,7 @@ describe('Using global Headers', async () => {
       'set-cookie': 'undici=getSetCookies; Secure'
     })
 
-    const supportsCookies = getHeadersList(headers).cookies
+    const supportsCookies = headers.getSetCookie()
 
     if (!supportsCookies) {
       assert.deepEqual(getSetCookies(headers), [])
