@@ -205,7 +205,7 @@ test('Should account for network and response errors', async t => {
   await t.completed
 })
 
-test('Issue #3288', { only: true }, async t => {
+test('Issue #3288', async t => {
   t = tspl(t, { plan: 6 })
   const server = createServer()
   const dispatchOptions = {
@@ -725,7 +725,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
   await t.completed
 })
 
-test('retrying a request with a body', { only: true }, async t => {
+test('retrying a request with a body', async t => {
   let counter = 0
   const server = createServer()
   const dispatchOptions = {
@@ -805,7 +805,7 @@ test('retrying a request with a body', { only: true }, async t => {
   await t.completed
 })
 
-test('retrying a request with a body (stream)', { only: true }, async t => {
+test('retrying a request with a body (stream)', async t => {
   let counter = 0
   const server = createServer()
   const dispatchOptions = {
@@ -873,7 +873,7 @@ test('retrying a request with a body (stream)', { only: true }, async t => {
   await t.completed
 })
 
-test('retrying a request with a body (buffer)', { only: true }, async t => {
+test('retrying a request with a body (buffer)', async t => {
   let counter = 0
   const server = createServer()
   const dispatchOptions = {
