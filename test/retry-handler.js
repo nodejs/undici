@@ -205,7 +205,7 @@ test('Should account for network and response errors', async t => {
   await t.completed
 })
 
-test('Issue #3288', async t => {
+test('Issue #3288 - request with body (asynciterable)', async t => {
   t = tspl(t, { plan: 6 })
   const server = createServer()
   const dispatchOptions = {
@@ -244,7 +244,6 @@ test('Issue #3288', async t => {
           return true
         },
         onData (chunk) {
-          console.log('chunk', chunk)
           return true
         },
         onComplete () {
@@ -755,7 +754,6 @@ test('retrying a request with a body', async t => {
   t = tspl(t, { plan: 1 })
 
   server.on('request', (req, res) => {
-    console.log({ counter })
     switch (counter) {
       case 0:
         req.destroy()
@@ -835,7 +833,6 @@ test('retrying a request with a body (stream)', async t => {
   t = tspl(t, { plan: 3 })
 
   server.on('request', (req, res) => {
-    console.log({ counter })
     switch (counter) {
       case 0:
         res.writeHead(500)
@@ -988,8 +985,7 @@ test('should not error if request is not meant to be retried', async t => {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'Bad request')
         },
         onError (err) {
-          console.log({ err })
-          t.fail()
+          t.fail(err)
         }
       }
     })
