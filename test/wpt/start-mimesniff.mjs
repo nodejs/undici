@@ -12,6 +12,8 @@ const child = fork(serverPath, [], {
   stdio: ['pipe', 'pipe', 'pipe', 'ipc']
 })
 
+child.stdout.pipe(process.stdout)
+child.stderr.pipe(process.stderr)
 child.on('exit', (code) => process.exit(code))
 
 for await (const [message] of on(child, 'message')) {

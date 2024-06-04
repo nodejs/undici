@@ -14,6 +14,39 @@ const { promisify } = require('node:util')
 const { NotSupportedError, InvalidArgumentError } = require('../lib/core/errors')
 const { parseFormDataString } = require('./utils/formdata')
 
+test('request dump head', async (t) => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-length', 5 * 100)
+    res.flushHeaders()
+    res.write('hello'.repeat(100))
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    let dumped = false
+    client.on('disconnect', () => {
+      t.strictEqual(dumped, true)
+    })
+    client.request({
+      path: '/',
+      method: 'HEAD'
+    }, (err, { body }) => {
+      t.ifError(err)
+      body.dump({ limit: 1 }).then(() => {
+        dumped = true
+        t.ok(true, 'pass')
+      })
+    })
+  })
+
+  await t.completed
+})
+
 test('request dump big', async (t) => {
   t = tspl(t, { plan: 3 })
 
@@ -98,13 +131,7 @@ test('request dump with abort signal', async (t) => {
       method: 'GET'
     }, (err, { body }) => {
       t.ifError(err)
-      let ac
-      if (!global.AbortController) {
-        const { AbortController } = require('abort-controller')
-        ac = new AbortController()
-      } else {
-        ac = new AbortController()
-      }
+      const ac = new AbortController()
       body.dump({ signal: ac.signal }).catch((err) => {
         t.strictEqual(err.name, 'AbortError')
         server.close()

@@ -3,8 +3,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
-const { Headers, fill } = require('../../lib/web/fetch/headers')
-const { kGuard } = require('../../lib/web/fetch/symbols')
+const { Headers, fill, setHeadersGuard } = require('../../lib/web/fetch/headers')
 const { once } = require('node:events')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
@@ -27,7 +26,7 @@ test('Headers initialization', async (t) => {
       throws(() => new Headers(['undici', 'fetch', 'fetch']), TypeError)
       throws(
         () => new Headers([0, 1, 2]),
-        TypeError('Sequence: Value of type Number is not an Object.')
+        TypeError('Headers contructor: init[0] (0) is not iterable.')
       )
     })
 
@@ -42,7 +41,7 @@ test('Headers initialization', async (t) => {
       const init = ['undici', 'fetch', 'fetch', 'undici']
       throws(
         () => new Headers(init),
-        TypeError('Sequence: Value of type String is not an Object.')
+        TypeError('Headers contructor: init[0] ("undici") is not iterable.')
       )
     })
   })
@@ -610,7 +609,7 @@ test('various init paths of Headers', () => {
 test('immutable guard', () => {
   const headers = new Headers()
   headers.set('key', 'val')
-  headers[kGuard] = 'immutable'
+  setHeadersGuard(headers, 'immutable')
 
   assert.throws(() => {
     headers.set('asd', 'asd')
@@ -627,7 +626,7 @@ test('immutable guard', () => {
 
 test('request-no-cors guard', () => {
   const headers = new Headers()
-  headers[kGuard] = 'request-no-cors'
+  setHeadersGuard(headers, 'request-no-cors')
   assert.doesNotThrow(() => { headers.set('key', 'val') })
   assert.doesNotThrow(() => { headers.append('key', 'val') })
 })
@@ -724,6 +723,12 @@ test('Headers.prototype.getSetCookie', async (t) => {
 
     assert.deepStrictEqual(res.headers.getSetCookie(), ['test=onetwo', 'test=onetwothree'])
     assert.ok('set-cookie' in entries)
+  })
+
+  await t.test('When Headers are cloned, so are the cookies (Headers constructor)', () => {
+    const headers = new Headers([['set-cookie', 'a'], ['set-cookie', 'b']])
+
+    assert.deepStrictEqual([...headers], [...new Headers(headers)])
   })
 })
 

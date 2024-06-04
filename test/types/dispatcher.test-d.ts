@@ -1,7 +1,7 @@
 import { IncomingHttpHeaders } from 'http'
 import { Duplex, Readable, Writable } from 'stream'
 import { expectAssignable, expectType } from 'tsd'
-import { Dispatcher } from '../..'
+import { Dispatcher, Headers } from '../..'
 import { URL } from 'url'
 import { Blob } from 'buffer'
 

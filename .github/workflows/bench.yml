@@ -94,7 +94,7 @@ jobs:
         working-directory: ./benchmarks
 
   benchmark_current_h2:
-    name: benchmark current
+    name: benchmark current h2
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -116,7 +116,7 @@ jobs:
         working-directory: ./benchmarks
 
   benchmark_branch_h2:
-    name: benchmark branch
+    name: benchmark branch h2
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code

@@ -11,7 +11,8 @@
       "skip": true
     },
     "Blob-stream.any.js": {
-      "fail": [
+      "note": "fails in node v18",
+      "flaky": [
         "Reading Blob.stream() with BYOB reader"
       ]
     }

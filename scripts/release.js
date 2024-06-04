@@ -8,12 +8,14 @@ const generateReleaseNotes = async ({ github, owner, repo, versionTag, defaultBr
     repo
   })
 
+  const previousRelease = releases.find((r) => r.tag_name.startsWith('v6'))
+
   const { data: { body } } = await github.rest.repos.generateReleaseNotes({
     owner,
     repo,
     tag_name: versionTag,
     target_commitish: defaultBranch,
-    previous_tag_name: releases[0]?.tag_name
+    previous_tag_name: previousRelease?.tag_name
   })
 
   const bodyWithoutReleasePr = body.split('\n')

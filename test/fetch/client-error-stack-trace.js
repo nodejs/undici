@@ -2,8 +2,13 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { fetch } = require('../..')
+const { fetch, setGlobalDispatcher, Agent } = require('../..')
 const { fetch: fetchIndex } = require('../../index-fetch')
+
+setGlobalDispatcher(new Agent({
+  headersTimeout: 500,
+  connectTimeout: 500
+}))
 
 test('FETCH: request errors and prints trimmed stack trace', async (t) => {
   try {
