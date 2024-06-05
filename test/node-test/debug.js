@@ -22,9 +22,6 @@ test('debug#websocket', { skip: !process.versions.icu }, async t => {
   const chunks = []
   const assertions = [
     /(WEBSOCKET [0-9]+:) (connecting to)/,
-    // Skip the chunk that comes with the experimental warning
-    /(\[UNDICI-WS\])/,
-    /\(Use `node --trace-warnings \.\.\.` to show where the warning was created\)/,
     /(WEBSOCKET [0-9]+:) (connected to)/,
     /(WEBSOCKET [0-9]+:) (sending request)/,
     /(WEBSOCKET [0-9]+:) (connection opened)/,
