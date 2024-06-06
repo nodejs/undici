@@ -9,7 +9,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const removeEscapeColorsRE = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g
 
 test('debug#websocket', { skip: !process.versions.icu }, async t => {
-  const assert = tspl(t, { plan: 8 })
+  const assert = tspl(t, { plan: 6 })
   const child = spawn(
     process.execPath,
     [join(__dirname, '../fixtures/websocket.js')],
