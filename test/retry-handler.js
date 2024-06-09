@@ -697,6 +697,8 @@ test('Should handle 206 partial content - bad-etag', async t => {
           onError (err) {
             t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
             t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
+            t.strictEqual(err.message, 'ETag mismatch')
+            t.strictDeepEqual(err.data, { count: 1 })
           }
         }
       }
@@ -1083,6 +1085,7 @@ test('Should be able to properly pass the minTimeout to the RetryContext when co
 
   await t.completed
 })
+
 test('Issue#2986 - Handle custom 206', async t => {
   t = tspl(t, { plan: 8 })
 
