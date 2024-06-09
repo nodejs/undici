@@ -595,7 +595,7 @@ test('Should handle 206 partial content', async t => {
         onBodySent () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onHeaders (status, _rawHeaders, _resume, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
@@ -636,7 +636,7 @@ test('Should handle 206 partial content', async t => {
 })
 
 test('Should handle 206 partial content - bad-etag', async t => {
-  t = tspl(t, { plan: 6 })
+  t = tspl(t, { plan: 8 })
 
   const chunks = []
 
@@ -683,7 +683,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
           onBodySent () {
             t.ok(true, 'pass')
           },
-          onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          onHeaders (_status, _rawHeaders, _resume, _statusMessage) {
             t.ok(true, 'pass')
             return true
           },
@@ -695,10 +695,15 @@ test('Should handle 206 partial content - bad-etag', async t => {
             t.ifError('should not complete')
           },
           onError (err) {
-            t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
-            t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
-            t.strictEqual(err.message, 'ETag mismatch')
-            t.strictDeepEqual(err.data, { count: 1 })
+            try {
+              t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
+              t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
+              t.strictEqual(err.message, 'ETag mismatch')
+              t.deepEqual(err.data, { count: 2 })
+            } catch (e) {
+              console.error('onError assertion failed', e)
+              throw e
+            }
           }
         }
       }
@@ -1492,6 +1497,113 @@ test('Weak etags are ignored on range-requests', async t => {
         headers: {
           'content-type': 'application/json',
           Range: 'bytes=0-3'
+        }
+      },
+      handler
+    )
+
+    after(async () => {
+      await client.close()
+
+      server.close()
+      await once(server, 'close')
+    })
+  })
+
+  await t.completed
+})
+
+test('Should throw RequestRetryError when Content-Range mismatch', async t => {
+  t = tspl(t, { plan: 10 })
+
+  const chunks = []
+
+  // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
+  let x = 0
+  const server = createServer((req, res) => {
+    if (x === 0) {
+      t.ok(true, 'pass')
+      res.setHeader('etag', 'asd')
+      res.write('abc')
+      setTimeout(() => {
+        res.destroy()
+      }, 1e2)
+    } else if (x === 1) {
+      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      res.setHeader('content-range', 'bytes bad') // intentionally bad to trigger error
+      res.setHeader('etag', 'asd')
+      res.statusCode = 206
+      res.end('def')
+    }
+    x++
+  })
+
+  const dispatchOptions = {
+    retryOptions: {
+      retry: function (err, _, done) {
+        if (err.code && err.code === 'UND_ERR_DESTROYED') {
+          return done(false)
+        }
+
+        if (err.statusCode === 206) return done(err)
+
+        setTimeout(done, 800)
+      }
+    },
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: (...args) => {
+        return client.dispatch(...args)
+      },
+      handler: {
+        onRequestSent () {
+          t.ok(true, 'pass')
+        },
+        onConnect () {
+          t.ok(true, 'pass')
+        },
+        onBodySent () {
+          t.ok(true, 'pass')
+        },
+        onHeaders (status, _rawHeaders, _resume, _statusMessage) {
+          t.strictEqual(status, 200)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.ifError('should not complete')
+        },
+        onError (err) {
+          try {
+            t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
+            t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
+            t.strictEqual(err.message, 'Content-Range mismatch')
+            t.deepEqual(err.data, { count: 2 })
+          } catch (e) {
+            console.error('onError assertion failed', e)
+            throw e
+          }
+        }
+      }
+    })
+
+    client.dispatch(
+      {
+        method: 'GET',
+        path: '/',
+        headers: {
+          'content-type': 'application/json'
         }
       },
       handler
