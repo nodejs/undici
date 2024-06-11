@@ -695,15 +695,10 @@ test('Should handle 206 partial content - bad-etag', async t => {
             t.ifError('should not complete')
           },
           onError (err) {
-            try {
-              t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
-              t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
-              t.strictEqual(err.message, 'ETag mismatch')
-              t.deepEqual(err.data, { count: 2 })
-            } catch (e) {
-              console.error('onError assertion failed', e)
-              throw e
-            }
+            t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
+            t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
+            t.strictEqual(err.message, 'ETag mismatch')
+            t.deepEqual(err.data, { count: 2 })
           }
         }
       }
@@ -1585,15 +1580,10 @@ test('Should throw RequestRetryError when Content-Range mismatch', async t => {
           t.ifError('should not complete')
         },
         onError (err) {
-          try {
-            t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
-            t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
-            t.strictEqual(err.message, 'Content-Range mismatch')
-            t.deepEqual(err.data, { count: 2 })
-          } catch (e) {
-            console.error('onError assertion failed', e)
-            throw e
-          }
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
+          t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
+          t.strictEqual(err.message, 'Content-Range mismatch')
+          t.deepEqual(err.data, { count: 2 })
         }
       }
     })
