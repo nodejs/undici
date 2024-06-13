@@ -1,15 +1,17 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
+const { once } = require('node:events')
 const { Client } = require('..')
-const timers = require('../lib/timers')
+const timers = require('../lib/util/timers')
 const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('node:net')
 const http = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 
-test('keep-alive header', (t) => {
-  t.plan(2)
+test('keep-alive header', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -18,41 +20,41 @@ test('keep-alive header', (t) => {
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+  server.listen(0)
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.on('end', () => {
-        const timeout = setTimeout(() => {
-          t.fail()
-        }, 4e3)
-        client.on('disconnect', () => {
-          t.pass()
-          clearTimeout(timeout)
-        })
-      }).resume()
-    })
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.on('end', () => {
+      const timeout = setTimeout(() => {
+        t.fail()
+      }, 4e3)
+      client.on('disconnect', () => {
+        t.ok(true, 'pass')
+        clearTimeout(timeout)
+      })
+    }).resume()
   })
+  await t.completed
 })
 
-test('keep-alive header 0', (t) => {
-  t.plan(2)
+test('keep-alive header 0', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
   Object.assign(timers, { setTimeout, clearTimeout })
-  t.teardown(() => {
-    Object.assign(timers, orgTimers)
-  })
+  after(() => { Object.assign(timers, orgTimers) })
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -61,31 +63,33 @@ test('keep-alive header 0', (t) => {
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeoutThreshold: 500
-    })
-    t.teardown(client.destroy.bind(client))
+  server.listen(0)
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.on('end', () => {
-        client.on('disconnect', () => {
-          t.pass()
-        })
-        clock.tick(600)
-      }).resume()
-    })
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`, {
+    keepAliveTimeoutThreshold: 500
   })
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.on('end', () => {
+      client.on('disconnect', () => {
+        t.ok(true, 'pass')
+      })
+      clock.tick(600)
+    }).resume()
+  })
+  await t.completed
 })
 
-test('keep-alive header 1', (t) => {
-  t.plan(2)
+test('keep-alive header 1', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -94,32 +98,34 @@ test('keep-alive header 1', (t) => {
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+  server.listen(0)
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.on('end', () => {
-        const timeout = setTimeout(() => {
-          t.fail()
-        }, 0)
-        client.on('disconnect', () => {
-          t.pass()
-          clearTimeout(timeout)
-        })
-      }).resume()
-    })
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.on('end', () => {
+      const timeout = setTimeout(() => {
+        t.fail()
+      }, 0)
+      client.on('disconnect', () => {
+        t.ok(true, 'pass')
+        clearTimeout(timeout)
+      })
+    }).resume()
   })
+  await t.completed
 })
 
-test('keep-alive header no postfix', (t) => {
-  t.plan(2)
+test('keep-alive header no postfix', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -128,32 +134,34 @@ test('keep-alive header no postfix', (t) => {
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+  server.listen(0)
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.on('end', () => {
-        const timeout = setTimeout(() => {
-          t.fail()
-        }, 4e3)
-        client.on('disconnect', () => {
-          t.pass()
-          clearTimeout(timeout)
-        })
-      }).resume()
-    })
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.on('end', () => {
+      const timeout = setTimeout(() => {
+        t.fail()
+      }, 4e3)
+      client.on('disconnect', () => {
+        t.ok(true, 'pass')
+        clearTimeout(timeout)
+      })
+    }).resume()
   })
+  await t.completed
 })
 
-test('keep-alive not timeout', (t) => {
-  t.plan(2)
+test('keep-alive not timeout', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -162,34 +170,36 @@ test('keep-alive not timeout', (t) => {
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 1e3
-    })
-    t.teardown(client.destroy.bind(client))
+  server.listen(0)
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.on('end', () => {
-        const timeout = setTimeout(() => {
-          t.fail()
-        }, 3e3)
-        client.on('disconnect', () => {
-          t.pass()
-          clearTimeout(timeout)
-        })
-      }).resume()
-    })
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`, {
+    keepAliveTimeout: 1e3
   })
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.on('end', () => {
+      const timeout = setTimeout(() => {
+        t.fail()
+      }, 3e3)
+      client.on('disconnect', () => {
+        t.ok(true, 'pass')
+        clearTimeout(timeout)
+      })
+    }).resume()
+  })
+  await t.completed
 })
 
-test('keep-alive threshold', (t) => {
-  t.plan(2)
+test('keep-alive threshold', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -198,35 +208,37 @@ test('keep-alive threshold', (t) => {
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 30e3,
-      keepAliveTimeoutThreshold: 29e3
-    })
-    t.teardown(client.destroy.bind(client))
+  server.listen(0)
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.on('end', () => {
-        const timeout = setTimeout(() => {
-          t.fail()
-        }, 5e3)
-        client.on('disconnect', () => {
-          t.pass()
-          clearTimeout(timeout)
-        })
-      }).resume()
-    })
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`, {
+    keepAliveTimeout: 30e3,
+    keepAliveTimeoutThreshold: 29e3
   })
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.on('end', () => {
+      const timeout = setTimeout(() => {
+        t.fail()
+      }, 5e3)
+      client.on('disconnect', () => {
+        t.ok(true, 'pass')
+        clearTimeout(timeout)
+      })
+    }).resume()
+  })
+  await t.completed
 })
 
-test('keep-alive max keepalive', (t) => {
-  t.plan(2)
+test('keep-alive max keepalive', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -235,35 +247,37 @@ test('keep-alive max keepalive', (t) => {
     socket.write('Connection: keep-alive\r\n')
     socket.write('\r\n\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 30e3,
-      keepAliveMaxTimeout: 1e3
-    })
-    t.teardown(client.destroy.bind(client))
+  server.listen(0)
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.error(err)
-      body.on('end', () => {
-        const timeout = setTimeout(() => {
-          t.fail()
-        }, 3e3)
-        client.on('disconnect', () => {
-          t.pass()
-          clearTimeout(timeout)
-        })
-      }).resume()
-    })
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`, {
+    keepAliveTimeout: 30e3,
+    keepAliveMaxTimeout: 1e3
   })
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.on('end', () => {
+      const timeout = setTimeout(() => {
+        t.fail()
+      }, 3e3)
+      client.on('disconnect', () => {
+        t.ok(true, 'pass')
+        clearTimeout(timeout)
+      })
+    }).resume()
+  })
+  await t.completed
 })
 
-test('connection close', (t) => {
-  t.plan(4)
+test('connection close', async (t) => {
+  t = tspl(t, { plan: 4 })
 
   let close = false
   const server = createServer((socket) => {
@@ -276,84 +290,88 @@ test('connection close', (t) => {
     socket.write('Connection: close\r\n')
     socket.write('\r\n\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 2
-    })
-    t.teardown(client.destroy.bind(client))
+  server.listen(0)
 
-    client[kConnect](() => {
-      client.request({
-        path: '/',
-        method: 'GET'
-      }, (err, { body }) => {
-        t.error(err)
-        body.on('end', () => {
-          const timeout = setTimeout(() => {
-            t.fail()
-          }, 3e3)
-          client.once('disconnect', () => {
-            close = false
-            t.pass()
-            clearTimeout(timeout)
-          })
-        }).resume()
-      })
-
-      client.request({
-        path: '/',
-        method: 'GET'
-      }, (err, { body }) => {
-        t.error(err)
-        body.on('end', () => {
-          const timeout = setTimeout(() => {
-            t.fail()
-          }, 3e3)
-          client.once('disconnect', () => {
-            t.pass()
-            clearTimeout(timeout)
-          })
-        }).resume()
-      })
-    })
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`, {
+    pipelining: 2
   })
-})
+  after(() => client.close())
 
-test('Disable keep alive', (t) => {
-  t.plan(7)
-
-  const ports = []
-  const server = http.createServer((req, res) => {
-    t.notOk(ports.includes(req.socket.remotePort))
-    ports.push(req.socket.remotePort)
-    t.match(req.headers, { connection: 'close' })
-    res.writeHead(200, { connection: 'close' })
-    res.end()
-  })
-  t.teardown(server.close.bind(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 0 })
-    t.teardown(client.destroy.bind(client))
+  client[kConnect](() => {
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.ifError(err)
+      body.on('end', () => {
+        const timeout = setTimeout(() => {
+          t.fail()
+        }, 3e3)
+        client.once('disconnect', () => {
+          close = false
+          t.ok(true, 'pass')
+          clearTimeout(timeout)
+        })
+      }).resume()
+    })
 
     client.request({
       path: '/',
       method: 'GET'
     }, (err, { body }) => {
-      t.error(err)
+      t.ifError(err)
       body.on('end', () => {
-        client.request({
-          path: '/',
-          method: 'GET'
-        }, (err, { body }) => {
-          t.error(err)
-          body.on('end', () => {
-            t.pass()
-          }).resume()
+        const timeout = setTimeout(() => {
+          t.fail()
+        }, 3e3)
+        client.once('disconnect', () => {
+          t.ok(true, 'pass')
+          clearTimeout(timeout)
         })
       }).resume()
     })
   })
+  await t.completed
+})
+
+test('Disable keep alive', async (t) => {
+  t = tspl(t, { plan: 7 })
+
+  const ports = []
+  const server = http.createServer((req, res) => {
+    t.strictEqual(ports.includes(req.socket.remotePort), false)
+    ports.push(req.socket.remotePort)
+    t.strictEqual(req.headers.connection, 'close')
+    res.writeHead(200, { connection: 'close' })
+    res.end()
+  })
+  after(() => server.close())
+
+  server.listen(0)
+
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 0 })
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.on('end', () => {
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err, { body }) => {
+        t.ifError(err)
+        body.on('end', () => {
+          t.ok(true, 'pass')
+        }).resume()
+      })
+    }).resume()
+  })
+  await t.completed
 })

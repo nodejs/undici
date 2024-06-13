@@ -1,6 +1,7 @@
 'use strict'
 
-const { describe, test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
+const { describe, test, after } = require('node:test')
 const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
@@ -127,5 +128,27 @@ describe('Close', () => {
       const ws = new WebSocket(`ws://localhost:${server.address().port}`)
       ws.addEventListener('open', () => ws.close(3000))
     })
+  })
+
+  test('calling close twice will only trigger the close event once', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const server = new WebSocketServer({ port: 0 })
+
+    after(() => server.close())
+
+    server.on('connection', (ws) => {
+      ws.on('close', (code) => {
+        t.strictEqual(code, 1000)
+      })
+    })
+
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    ws.addEventListener('open', () => {
+      ws.close(1000)
+      ws.close(1000)
+    })
+
+    await t.completed
   })
 })

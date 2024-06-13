@@ -1,13 +1,14 @@
 'use strict'
 
-const t = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test } = require('node:test')
 const { upgrade } = require('..')
 const { startServer } = require('./utils/redirecting-servers')
 
-t.test('should upgrade the connection when no redirects are present', async t => {
-  t.plan(2)
+test('should upgrade the connection when no redirects are present', async t => {
+  t = tspl(t, { plan: 2 })
 
-  const server = await startServer(t, (req, res) => {
+  const server = await startServer((req, res) => {
     if (req.url === '/') {
       res.statusCode = 301
       res.setHeader('Location', `http://${server}/end`)
@@ -29,6 +30,8 @@ t.test('should upgrade the connection when no redirects are present', async t =>
 
   socket.end()
 
-  t.equal(headers.connection, 'upgrade')
-  t.equal(headers.upgrade, 'foo/1')
+  t.strictEqual(headers.connection, 'upgrade')
+  t.strictEqual(headers.upgrade, 'foo/1')
+
+  await t.completed
 })

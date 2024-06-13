@@ -31,6 +31,7 @@ const requestInit2: RequestInit = {
 const requestInit3: RequestInit = {}
 // Test assignment. See https://github.com/whatwg/fetch/issues/1445
 requestInit3.credentials = 'include'
+const requestInit4: RequestInit = { body: null }
 
 declare const request: Request
 declare const headers: Headers
@@ -138,7 +139,7 @@ expectType<string>(request.integrity)
 expectType<string>(request.method)
 expectType<RequestMode>(request.mode)
 expectType<RequestRedirect>(request.redirect)
-expectType<string>(request.referrerPolicy)
+expectType<ReferrerPolicy>(request.referrerPolicy)
 expectType<string>(request.url)
 expectType<boolean>(request.keepalive)
 expectType<AbortSignal>(request.signal)
@@ -171,3 +172,5 @@ expectAssignable<RequestInit>({ duplex: 'half' })
 expectNotAssignable<RequestInit>({ duplex: 'not valid' })
 
 expectType<string[]>(headers.getSetCookie())
+
+expectType<Request>(new Request('https://example.com', request))

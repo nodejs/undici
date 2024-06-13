@@ -8,19 +8,20 @@ const { isMainThread } = require('node:worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
+const { makeParallelRequests, printResults } = require('./_util')
+
 let nodeFetch
 const axios = require('axios')
+let superagent
 let got
 
-const util = require('node:util')
-const _request = require('request')
-const request = util.promisify(_request)
+const { promisify } = require('node:util')
+const request = promisify(require('request'))
 
 const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
 const errorThreshold = parseInt(process.env.ERROR_THRESHOLD, 10) || 3
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
-const parallelRequests = parseInt(process.env.PARALLEL, 10) || 100
 const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
 const bodyTimeout = parseInt(process.env.BODY_TIMEOUT, 10) || 0
 const dest = {}
@@ -33,22 +34,16 @@ if (process.env.PORT) {
   dest.socketPath = path.join(os.tmpdir(), 'undici.sock')
 }
 
+/** @type {http.RequestOptions} */
 const httpBaseOptions = {
   protocol: 'http:',
   hostname: 'localhost',
   method: 'GET',
   path: '/',
-  query: {
-    frappucino: 'muffin',
-    goat: 'scone',
-    pond: 'moose',
-    foo: ['bar', 'baz', 'bal'],
-    bool: true,
-    numberKey: 256
-  },
   ...dest
 }
 
+/** @type {http.RequestOptions} */
 const httpNoKeepAliveOptions = {
   ...httpBaseOptions,
   agent: new http.Agent({
@@ -57,6 +52,7 @@ const httpNoKeepAliveOptions = {
   })
 }
 
+/** @type {http.RequestOptions} */
 const httpKeepAliveOptions = {
   ...httpBaseOptions,
   agent: new http.Agent({
@@ -81,6 +77,11 @@ const gotAgent = new http.Agent({
 })
 
 const requestAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: connections
+})
+
+const superagentAgent = new http.Agent({
   keepAlive: true,
   maxSockets: connections
 })
@@ -135,49 +136,6 @@ class SimpleRequest {
   }
 }
 
-function makeParallelRequests (cb) {
-  return Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise(cb)))
-}
-
-function printResults (results) {
-  // Sort results by least performant first, then compare relative performances and also printing padding
-  let last
-
-  const rows = Object.entries(results)
-    // If any failed, put on the top of the list, otherwise order by mean, ascending
-    .sort((a, b) => (!a[1].success ? -1 : b[1].mean - a[1].mean))
-    .map(([name, result]) => {
-      if (!result.success) {
-        return {
-          Tests: name,
-          Samples: result.size,
-          Result: 'Errored',
-          Tolerance: 'N/A',
-          'Difference with Slowest': 'N/A'
-        }
-      }
-
-      // Calculate throughput and relative performance
-      const { size, mean, standardError } = result
-      const relative = last !== 0 ? (last / mean - 1) * 100 : 0
-
-      // Save the slowest for relative comparison
-      if (typeof last === 'undefined') {
-        last = mean
-      }
-
-      return {
-        Tests: name,
-        Samples: size,
-        Result: `${((connections * 1e9) / mean).toFixed(2)} req/sec`,
-        Tolerance: `± ${((standardError / mean) * 100).toFixed(2)} %`,
-        'Difference with slowest': relative > 0 ? `+ ${relative.toFixed(2)} %` : '-'
-      }
-    })
-
-  return console.table(rows)
-}
-
 const experiments = {
   'http - no keepalive' () {
     return makeParallelRequests(resolve => {
@@ -212,8 +170,8 @@ const experiments = {
   'undici - pipeline' () {
     return makeParallelRequests(resolve => {
       dispatcher
-        .pipeline(undiciOptions, data => {
-          return data.body
+        .pipeline(undiciOptions, ({ body }) => {
+          return body
         })
         .end()
         .pipe(
@@ -283,9 +241,15 @@ if (process.env.PORT) {
     })
   }
 
+  const axiosOptions = {
+    url: dest.url,
+    method: 'GET',
+    responseType: 'stream',
+    httpAgent: axiosAgent
+  }
   experiments.axios = () => {
     return makeParallelRequests(resolve => {
-      axios.get(dest.url, { responseType: 'stream', httpAgent: axiosAgent }).then(res => {
+      axios.request(axiosOptions).then(res => {
         res.data.pipe(new Writable({
           write (chunk, encoding, callback) {
             callback()
@@ -295,27 +259,48 @@ if (process.env.PORT) {
     })
   }
 
+  const gotOptions = {
+    url: dest.url,
+    method: 'GET',
+    agent: {
+      http: gotAgent
+    },
+    // avoid body processing
+    isStream: true
+  }
   experiments.got = () => {
     return makeParallelRequests(resolve => {
-      got.get(dest.url, null, { http: gotAgent }).then(res => {
-        res.pipe(new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
-        })).on('finish', resolve)
+      got(gotOptions).pipe(new Writable({
+        write (chunk, encoding, callback) {
+          callback()
+        }
+      })).on('finish', resolve)
+    })
+  }
+
+  const requestOptions = {
+    url: dest.url,
+    method: 'GET',
+    agent: requestAgent,
+    // avoid body toString
+    encoding: null
+  }
+  experiments.request = () => {
+    return makeParallelRequests(resolve => {
+      request(requestOptions).then(() => {
+        // already body consumed
+        resolve()
       }).catch(console.log)
     })
   }
 
-  experiments.request = () => {
+  experiments.superagent = () => {
     return makeParallelRequests(resolve => {
-      request(dest.url, { agent: requestAgent }).then(res => {
-        res.pipe(new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
-        })).on('finish', resolve)
-      }).catch(console.log)
+      superagent.get(dest.url).pipe(new Writable({
+        write (chunk, encoding, callback) {
+          callback()
+        }
+      })).on('finish', resolve)
     })
   }
 }
@@ -326,6 +311,9 @@ async function main () {
   nodeFetch = _nodeFetch.default
   const _got = await import('got')
   got = _got.default
+  const _superagent = await import('superagent')
+  // https://github.com/ladjs/superagent/issues/1540#issue-561464561
+  superagent = _superagent.agent().use((req) => req.agent(superagentAgent))
 
   cronometro(
     experiments,

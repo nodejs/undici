@@ -1,7 +1,12 @@
+'use strict'
+
 const util = require('node:util')
 
 function closeServerAsPromise (server) {
-  return () => util.promisify(server.close.bind(server))()
+  return () => {
+    server.closeIdleConnections()
+    return util.promisify(server.close.bind(server))()
+  }
 }
 
 function closeClientAndServerAsPromise (client, server) {

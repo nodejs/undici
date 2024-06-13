@@ -12,6 +12,18 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
 
+  - package-ecosystem: "npm"
+    directory: /docs
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "npm"
+    directory: /benchmarks
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
   - package-ecosystem: docker
     directory: /build
     schedule:

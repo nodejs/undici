@@ -7,13 +7,13 @@ import { parentPort, workerData } from 'node:worker_threads'
 import {
   fetch, File, FileReader, FormData, Headers, Request, Response, setGlobalOrigin
 } from '../../../index.js'
-import { CloseEvent } from '../../../lib/websocket/events.js'
-import { WebSocket } from '../../../lib/websocket/websocket.js'
-import { Cache } from '../../../lib/cache/cache.js'
-import { CacheStorage } from '../../../lib/cache/cachestorage.js'
-import { kConstruct } from '../../../lib/cache/symbols.js'
+import { CloseEvent } from '../../../lib/web/websocket/events.js'
+import { WebSocket } from '../../../lib/web/websocket/websocket.js'
+import { Cache } from '../../../lib/web/cache/cache.js'
+import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
+import { kConstruct } from '../../../lib/web/cache/symbols.js'
 // TODO(@KhafraDev): move this import once its added to index
-import { EventSource } from '../../../lib/eventsource/eventsource.js'
+import { EventSource } from '../../../lib/web/eventsource/eventsource.js'
 import { webcrypto } from 'node:crypto'
 
 const { initScripts, meta, test, url, path } = workerData
@@ -29,7 +29,7 @@ process.on('uncaughtException', (err) => {
   })
 })
 
-const basePath = join(process.cwd(), 'test/wpt/tests')
+const basePath = join(process.cwd(), 'test/fixtures/wpt')
 const urlPath = path.slice(basePath.length)
 
 const globalPropertyDescriptors = {
@@ -98,6 +98,9 @@ Object.defineProperties(globalThis, {
     value: EventSource
   }
 })
+
+// TODO: remove once Float16Array is added. Otherwise a test throws with an uncaught exception.
+globalThis.Float16Array ??= class Float16Array {}
 
 // TODO: remove once node 18 is dropped
 if (!globalThis.crypto) {

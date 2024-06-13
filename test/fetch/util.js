@@ -1,10 +1,10 @@
 'use strict'
 
-const { test } = require('node:test')
+const { describe, test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
-const util = require('../../lib/fetch/util')
-const { HeadersList } = require('../../lib/fetch/headers')
+const util = require('../../lib/web/fetch/util')
+const { HeadersList } = require('../../lib/web/fetch/headers')
 const { createHash } = require('node:crypto')
 
 test('responseURL', (t) => {
@@ -284,9 +284,9 @@ test('parseMetadata', async (t) => {
     const result = util.parseMetadata(validMetadata)
 
     assert.deepEqual(result, [
-      { algo: 'sha256', hash: hash256 },
-      { algo: 'sha384', hash: hash384 },
-      { algo: 'sha512', hash: hash512 }
+      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
+      { algo: 'sha384', hash: hash384.replace(/=/g, '') },
+      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
     ])
   })
 
@@ -300,9 +300,9 @@ test('parseMetadata', async (t) => {
     const result = util.parseMetadata(validMetadata)
 
     assert.deepEqual(result, [
-      { algo: 'sha256', hash: hash256 },
-      { algo: 'sha384', hash: hash384 },
-      { algo: 'sha512', hash: hash512 }
+      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
+      { algo: 'sha384', hash: hash384.replace(/=/g, '') },
+      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
     ])
   })
 
@@ -316,13 +316,13 @@ test('parseMetadata', async (t) => {
     const result = util.parseMetadata(validMetadata)
 
     assert.deepEqual(result, [
-      { algo: 'sha256', hash: hash256 },
-      { algo: 'sha384', hash: hash384 },
-      { algo: 'sha512', hash: hash512 }
+      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
+      { algo: 'sha384', hash: hash384.replace(/=/g, '') },
+      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
     ])
   })
 
-  await t.test('should ignore invalid metadata with invalid base64 chars', () => {
+  await t.test('should set hash as undefined when invalid base64 chars are provided', () => {
     const body = 'Hello world!'
     const hash256 = createHash('sha256').update(body).digest('base64')
     const invalidHash384 = 'zifp5hE1Xl5LQQqQz[]Bq/iaq9Wb6jVb//T7EfTmbXD2aEP5c2ZdJr9YTDfcTE1ZH+'
@@ -332,8 +332,64 @@ test('parseMetadata', async (t) => {
     const result = util.parseMetadata(validMetadata)
 
     assert.deepEqual(result, [
-      { algo: 'sha256', hash: hash256 },
-      { algo: 'sha512', hash: hash512 }
+      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
+      { algo: 'sha384', hash: undefined },
+      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
     ])
+  })
+})
+
+describe('urlHasHttpsScheme', () => {
+  const { urlHasHttpsScheme } = util
+
+  test('should return false for http url', () => {
+    assert.strictEqual(urlHasHttpsScheme('http://example.com'), false)
+  })
+  test('should return true for https url', () => {
+    assert.strictEqual(urlHasHttpsScheme('https://example.com'), true)
+  })
+  test('should return false for http object', () => {
+    assert.strictEqual(urlHasHttpsScheme({ protocol: 'http:' }), false)
+  })
+  test('should return true for https object', () => {
+    assert.strictEqual(urlHasHttpsScheme({ protocol: 'https:' }), true)
+  })
+})
+
+describe('isValidHeaderValue', () => {
+  const { isValidHeaderValue } = util
+
+  test('should return true for valid string', () => {
+    assert.strictEqual(isValidHeaderValue('valid123'), true)
+    assert.strictEqual(isValidHeaderValue('va lid123'), true)
+    assert.strictEqual(isValidHeaderValue('va\tlid123'), true)
+  })
+  test('should return false for string containing NUL', () => {
+    assert.strictEqual(isValidHeaderValue('invalid\0'), false)
+    assert.strictEqual(isValidHeaderValue('in\0valid'), false)
+    assert.strictEqual(isValidHeaderValue('\0invalid'), false)
+  })
+  test('should return false for string containing CR', () => {
+    assert.strictEqual(isValidHeaderValue('invalid\r'), false)
+    assert.strictEqual(isValidHeaderValue('in\rvalid'), false)
+    assert.strictEqual(isValidHeaderValue('\rinvalid'), false)
+  })
+  test('should return false for string containing LF', () => {
+    assert.strictEqual(isValidHeaderValue('invalid\n'), false)
+    assert.strictEqual(isValidHeaderValue('in\nvalid'), false)
+    assert.strictEqual(isValidHeaderValue('\ninvalid'), false)
+  })
+
+  test('should return false for string with leading TAB', () => {
+    assert.strictEqual(isValidHeaderValue('\tinvalid'), false)
+  })
+  test('should return false for string with trailing TAB', () => {
+    assert.strictEqual(isValidHeaderValue('invalid\t'), false)
+  })
+  test('should return false for string with leading SPACE', () => {
+    assert.strictEqual(isValidHeaderValue(' invalid'), false)
+  })
+  test('should return false for string with trailing SPACE', () => {
+    assert.strictEqual(isValidHeaderValue('invalid '), false)
   })
 })

@@ -1,18 +1,9 @@
 'use strict'
 
-const { test, skip, after } = require('node:test')
+const { test, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const { Readable } = require('node:stream')
-
-let diagnosticsChannel
-
-try {
-  diagnosticsChannel = require('node:diagnostics_channel')
-} catch {
-  skip('missing diagnostics_channel')
-  process.exit(0)
-}
-
+const diagnosticsChannel = require('node:diagnostics_channel')
 const { Client } = require('../../..')
 const { createServer } = require('node:http')
 
@@ -42,9 +33,9 @@ test('Diagnostics channel - post stream', (t) => {
     assert.equal(request.completed, false)
     assert.equal(request.method, 'POST')
     assert.equal(request.path, '/')
-    assert.equal(request.headers, 'bar: bar\r\n')
+    assert.deepStrictEqual(request.headers, ['bar', 'bar'])
     request.addHeader('hello', 'world')
-    assert.equal(request.headers, 'bar: bar\r\nhello: world\r\n')
+    assert.deepStrictEqual(request.headers, ['bar', 'bar', 'hello', 'world'])
     assert.deepStrictEqual(request.body, body)
   })
 

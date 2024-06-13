@@ -2,7 +2,7 @@
 
 const assert = require('node:assert')
 const { test } = require('node:test')
-const { isASCIINumber, isValidLastEventId } = require('../../lib/eventsource/util')
+const { isASCIINumber, isValidLastEventId } = require('../../lib/web/eventsource/util')
 
 test('isValidLastEventId', () => {
   assert.strictEqual(isValidLastEventId('valid'), true)

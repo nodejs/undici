@@ -3,7 +3,6 @@
 const { describe, test } = require('node:test')
 const assert = require('node:assert/strict')
 const { BalancedPool, Pool, Client, errors } = require('../..')
-const { nodeMajor } = require('../../lib/core/util')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
 const { tspl } = require('@matteo.collina/tspl')
@@ -436,22 +435,6 @@ const cases = [
     iterations: 100,
     maxWeightPerServer: 100,
     errorPenalty: 15,
-    config: [{ server: 'A' }, { server: 'B' }, { server: 'C', downOnRequests: [1] }],
-    expected: ['A', 'B', 'C', 'A', 'B', 'C/connectionRefused', 'A', 'B', 'A', 'B', 'A', 'B', 'C', 'A', 'B', 'C'],
-    expectedConnectionRefusedErrors: 1,
-    expectedSocketErrors: 0,
-    expectedRatios: [0.34, 0.34, 0.32],
-
-    // Skip because the behavior of Node.js has changed
-    skip: nodeMajor >= 18
-  },
-
-  // 8
-
-  {
-    iterations: 100,
-    maxWeightPerServer: 100,
-    errorPenalty: 15,
     config: [{ server: 'A', socketHangupOnRequests: [1] }, { server: 'B' }, { server: 'C' }],
     expected: ['A', 'B', 'C', 'A/socketError', 'B', 'C', 'B', 'C', 'B', 'C', 'A'],
     expectedConnectionRefusedErrors: 0,
@@ -459,7 +442,7 @@ const cases = [
     expectedRatios: [0.32, 0.34, 0.34]
   },
 
-  // 9
+  // 8
 
   {
     iterations: 100,
@@ -472,7 +455,7 @@ const cases = [
     expectedRatios: [0.2, 0.2, 0.2, 0.2, 0.2]
   },
 
-  // 10
+  // 9
   {
     iterations: 100,
     maxWeightPerServer: 100,
@@ -508,7 +491,7 @@ describe('weighted round robin', () => {
       const urls = servers.map(server => `http://localhost:${server.port}`)
 
       // add upstreams
-      const client = new BalancedPool(urls[0], { maxWeightPerServer, errorPenalty })
+      const client = new BalancedPool(urls[0], { maxWeightPerServer, errorPenalty, keepAliveTimeoutThreshold: 100 })
       urls.slice(1).map(url => client.addUpstream(url))
 
       let connectionRefusedErrors = 0

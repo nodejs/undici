@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 const { finished, Readable } = require('node:stream')
@@ -9,9 +10,9 @@ const EE = require('node:events')
 const { kBusy, kRunning, kSize } = require('../lib/core/symbols')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
 
-test('20 times GET with pipelining 10', (t) => {
+test('20 times GET with pipelining 10', async (t) => {
   const num = 20
-  t.plan(3 * num + 1)
+  t = tspl(t, { plan: 3 * num + 1 })
 
   let count = 0
   let countGreaterThanOne = false
@@ -22,7 +23,7 @@ test('20 times GET with pipelining 10', (t) => {
       res.end(req.url)
     }, 10)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   // needed to check for a warning on the maxListeners on the socket
   function onWarning (warning) {
@@ -31,7 +32,7 @@ test('20 times GET with pipelining 10', (t) => {
     }
   }
   process.on('warning', onWarning)
-  t.teardown(() => {
+  after(() => {
     process.removeListener('warning', onWarning)
   })
 
@@ -39,7 +40,7 @@ test('20 times GET with pipelining 10', (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 10
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     for (let i = 0; i < num; i++) {
       makeRequest(i)
@@ -55,28 +56,30 @@ test('20 times GET with pipelining 10', (t) => {
       })
     }
   })
+
+  await t.completed
 })
 
 function makeRequestAndExpectUrl (client, i, t, cb) {
   return client.request({ path: '/' + i, method: 'GET' }, (err, { statusCode, headers, body }) => {
     cb()
-    t.error(err)
-    t.equal(statusCode, 200)
+    t.ifError(err)
+    t.strictEqual(statusCode, 200)
     const bufs = []
     body.on('data', (buf) => {
       bufs.push(buf)
     })
     body.on('end', () => {
-      t.equal('/' + i, Buffer.concat(bufs).toString('utf8'))
+      t.strictEqual('/' + i, Buffer.concat(bufs).toString('utf8'))
     })
   })
 }
 
-test('A client should enqueue as much as twice its pipelining factor', (t) => {
+test('A client should enqueue as much as twice its pipelining factor', async (t) => {
   const num = 10
   let sent = 0
   // x * 6 + 1 t.ok + 5 drain
-  t.plan(num * 6 + 1 + 5 + 2)
+  t = tspl(t, { plan: num * 6 + 1 + 5 + 2 })
 
   let count = 0
   let countGreaterThanOne = false
@@ -88,22 +91,22 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
       res.end(req.url)
     }, 10)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     for (; sent < 2;) {
-      t.notOk(client[kSize] > client.pipelining, 'client is not full')
+      t.ok(client[kSize] <= client.pipelining, 'client is not full')
       makeRequest()
       t.ok(client[kSize] <= client.pipelining, 'we can send more requests')
     }
 
     t.ok(client[kBusy], 'client is busy')
-    t.notOk(client[kSize] > client.pipelining, 'client is full')
+    t.ok(client[kSize] <= client.pipelining, 'client is full')
     makeRequest()
     t.ok(client[kBusy], 'we must stop now')
     t.ok(client[kBusy], 'client is busy')
@@ -117,7 +120,7 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
             t.ok(countGreaterThanOne, 'seen more than one parallel request')
             const start = sent
             for (; sent < start + 2 && sent < num;) {
-              t.notOk(client[kSize] > client.pipelining, 'client is not full')
+              t.ok(client[kSize] <= client.pipelining, 'client is not full')
               t.ok(makeRequest())
             }
           }
@@ -126,54 +129,58 @@ test('A client should enqueue as much as twice its pipelining factor', (t) => {
       return client[kSize] <= client.pipelining
     }
   })
+
+  await t.completed
 })
 
-test('pipeline 1 is 1 active request', (t) => {
-  t.plan(9)
+test('pipeline 1 is 1 active request', async (t) => {
+  t = tspl(t, { plan: 9 })
 
   let res2
   const server = createServer((req, res) => {
     res.write('asd')
     res2 = res
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 1
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
     client.request({
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      t.equal(client[kSize], 1)
-      t.error(err)
-      t.notOk(client.request({
+      t.strictEqual(client[kSize], 1)
+      t.ifError(err)
+      t.strictEqual(client.request({
         path: '/',
         method: 'GET'
       }, (err, data) => {
-        t.error(err)
+        t.ifError(err)
         finished(data.body, (err) => {
           t.ok(err)
           client.close((err) => {
-            t.error(err)
+            t.ifError(err)
           })
         })
         data.body.destroy()
         res2.end()
-      }))
+      }), undefined)
       data.body.resume()
       res2.end()
     })
     t.ok(client[kSize] <= client.pipelining)
     t.ok(client[kBusy])
-    t.equal(client[kSize], 1)
+    t.strictEqual(client[kSize], 1)
   })
+
+  await t.completed
 })
 
-test('pipelined chunked POST stream', (t) => {
-  t.plan(4 + 8 + 8)
+test('pipelined chunked POST stream', async (t) => {
+  t = tspl(t, { plan: 4 + 8 + 8 })
 
   let a = 0
   let b = 0
@@ -187,20 +194,20 @@ test('pipelined chunked POST stream', (t) => {
       res.end()
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.request({
       path: '/',
       method: 'GET'
     }, (err, { body }) => {
       body.resume()
-      t.error(err)
+      t.ifError(err)
     })
 
     client.request({
@@ -213,7 +220,7 @@ test('pipelined chunked POST stream', (t) => {
       })
     }, (err, { body }) => {
       body.resume()
-      t.error(err)
+      t.ifError(err)
     })
 
     client.request({
@@ -221,7 +228,7 @@ test('pipelined chunked POST stream', (t) => {
       method: 'GET'
     }, (err, { body }) => {
       body.resume()
-      t.error(err)
+      t.ifError(err)
     })
 
     client.request({
@@ -234,13 +241,15 @@ test('pipelined chunked POST stream', (t) => {
       })
     }, (err, { body }) => {
       body.resume()
-      t.error(err)
+      t.ifError(err)
     })
   })
+
+  await t.completed
 })
 
-test('pipelined chunked POST iterator', (t) => {
-  t.plan(4 + 8 + 8)
+test('pipelined chunked POST iterator', async (t) => {
+  t = tspl(t, { plan: 4 + 8 + 8 })
 
   let a = 0
   let b = 0
@@ -254,20 +263,20 @@ test('pipelined chunked POST iterator', (t) => {
       res.end()
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client.request({
       path: '/',
       method: 'GET'
     }, (err, { body }) => {
       body.resume()
-      t.error(err)
+      t.ifError(err)
     })
 
     client.request({
@@ -280,7 +289,7 @@ test('pipelined chunked POST iterator', (t) => {
       })()
     }, (err, { body }) => {
       body.resume()
-      t.error(err)
+      t.ifError(err)
     })
 
     client.request({
@@ -288,7 +297,7 @@ test('pipelined chunked POST iterator', (t) => {
       method: 'GET'
     }, (err, { body }) => {
       body.resume()
-      t.error(err)
+      t.ifError(err)
     })
 
     client.request({
@@ -301,14 +310,16 @@ test('pipelined chunked POST iterator', (t) => {
       })()
     }, (err, { body }) => {
       body.resume()
-      t.error(err)
+      t.ifError(err)
     })
   })
+
+  await t.completed
 })
 
 function errordInflightPost (bodyType) {
-  test(`errored POST body lets inflight complete ${bodyType}`, (t) => {
-    t.plan(6)
+  test(`errored POST body lets inflight complete ${bodyType}`, async (t) => {
+    t = tspl(t, { plan: 6 })
 
     let serverRes
     const server = createServer()
@@ -316,19 +327,19 @@ function errordInflightPost (bodyType) {
       serverRes = res
       res.write('asd')
     })
-    t.teardown(server.close.bind(server))
+    after(() => server.close())
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
         pipelining: 2
       })
-      t.teardown(client.destroy.bind(client))
+      after(() => client.destroy())
 
       client.request({
         path: '/',
         method: 'GET'
       }, (err, data) => {
-        t.error(err)
+        t.ifError(err)
         data.body
           .resume()
           .once('data', () => {
@@ -347,26 +358,27 @@ function errordInflightPost (bodyType) {
               }), bodyType)
             }, (err, data) => {
               t.ok(err)
-              t.equal(data.opaque, 'asd')
+              t.strictEqual(data.opaque, 'asd')
             })
             client.close((err) => {
-              t.error(err)
+              t.ifError(err)
             })
             serverRes.end()
           })
           .on('end', () => {
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
     })
+    await t.completed
   })
 }
 
 errordInflightPost(consts.STREAM)
 errordInflightPost(consts.ASYNC_ITERATOR)
 
-test('pipelining non-idempotent', (t) => {
-  t.plan(4)
+test('pipelining non-idempotent', async (t) => {
+  t = tspl(t, { plan: 4 })
 
   const server = createServer()
   server.on('request', (req, res) => {
@@ -374,24 +386,24 @@ test('pipelining non-idempotent', (t) => {
       res.end('asd')
     }, 10)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 2
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     let ended = false
     client.request({
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
           ended = true
         })
     })
@@ -401,16 +413,18 @@ test('pipelining non-idempotent', (t) => {
       method: 'GET',
       idempotent: false
     }, (err, data) => {
-      t.error(err)
-      t.equal(ended, true)
+      t.ifError(err)
+      t.strictEqual(ended, true)
       data.body.resume()
     })
   })
+
+  await t.completed
 })
 
 function pipeliningNonIdempotentWithBody (bodyType) {
-  test(`pipelining non-idempotent w body ${bodyType}`, (t) => {
-    t.plan(4)
+  test(`pipelining non-idempotent w body ${bodyType}`, async (t) => {
+    t = tspl(t, { plan: 4 })
 
     const server = createServer()
     server.on('request', (req, res) => {
@@ -418,13 +432,13 @@ function pipeliningNonIdempotentWithBody (bodyType) {
         res.end('asd')
       })
     })
-    t.teardown(server.close.bind(server))
+    after(() => server.close())
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
         pipelining: 2
       })
-      t.teardown(client.close.bind(client))
+      after(() => client.close())
 
       let ended = false
       let reading = false
@@ -445,11 +459,11 @@ function pipeliningNonIdempotentWithBody (bodyType) {
           }
         }), bodyType)
       }, (err, data) => {
-        t.error(err)
+        t.ifError(err)
         data.body
           .resume()
           .on('end', () => {
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
 
@@ -458,11 +472,13 @@ function pipeliningNonIdempotentWithBody (bodyType) {
         method: 'GET',
         idempotent: false
       }, (err, data) => {
-        t.error(err)
-        t.equal(ended, true)
+        t.ifError(err)
+        t.strictEqual(ended, true)
         data.body.resume()
       })
     })
+
+    await t.completed
   })
 }
 
@@ -470,25 +486,25 @@ pipeliningNonIdempotentWithBody(consts.STREAM)
 pipeliningNonIdempotentWithBody(consts.ASYNC_ITERATOR)
 
 function pipeliningHeadBusy (bodyType) {
-  test(`pipelining HEAD busy ${bodyType}`, (t) => {
-    t.plan(7)
+  test(`pipelining HEAD busy ${bodyType}`, async (t) => {
+    t = tspl(t, { plan: 7 })
 
     const server = createServer()
     server.on('request', (req, res) => {
       res.end('asd')
     })
-    t.teardown(server.close.bind(server))
+    after(() => server.close())
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
         pipelining: 10
       })
-      t.teardown(client.close.bind(client))
+      after(() => client.close())
 
       client[kConnect](() => {
         let ended = false
         client.once('disconnect', () => {
-          t.equal(ended, true)
+          t.strictEqual(ended, true)
         })
 
         {
@@ -500,15 +516,15 @@ function pipeliningHeadBusy (bodyType) {
             method: 'GET',
             body: maybeWrapStream(body, bodyType)
           }, (err, data) => {
-            t.error(err)
+            t.ifError(err)
             data.body
               .resume()
               .on('end', () => {
-                t.pass()
+                t.ok(true, 'pass')
               })
           })
           body.push(null)
-          t.equal(client[kBusy], true)
+          t.strictEqual(client[kBusy], true)
         }
 
         {
@@ -520,27 +536,29 @@ function pipeliningHeadBusy (bodyType) {
             method: 'HEAD',
             body: maybeWrapStream(body, bodyType)
           }, (err, data) => {
-            t.error(err)
+            t.ifError(err)
             data.body
               .resume()
               .on('end', () => {
                 ended = true
-                t.pass()
+                t.ok(true, 'pass')
               })
           })
           body.push(null)
-          t.equal(client[kBusy], true)
+          t.strictEqual(client[kBusy], true)
         }
       })
     })
+
+    await t.completed
   })
 }
 
 pipeliningHeadBusy(consts.STREAM)
 pipeliningHeadBusy(consts.ASYNC_ITERATOR)
 
-test('pipelining empty pipeline before reset', (t) => {
-  t.plan(8)
+test('pipelining empty pipeline before reset', async (t) => {
+  t = tspl(t, { plan: 8 })
 
   let c = 0
   const server = createServer()
@@ -553,67 +571,69 @@ test('pipelining empty pipeline before reset', (t) => {
       }, 100)
     }
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 10
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
 
     client[kConnect](() => {
       let ended = false
       client.once('disconnect', () => {
-        t.equal(ended, true)
+        t.strictEqual(ended, true)
       })
 
       client.request({
         path: '/',
         method: 'GET'
       }, (err, data) => {
-        t.error(err)
+        t.ifError(err)
         data.body
           .resume()
           .on('end', () => {
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
-      t.equal(client[kBusy], false)
+      t.strictEqual(client[kBusy], false)
 
       client.request({
         path: '/',
         method: 'HEAD',
         body: 'asd'
       }, (err, data) => {
-        t.error(err)
+        t.ifError(err)
         data.body
           .resume()
           .on('end', () => {
             ended = true
-            t.pass()
+            t.ok(true, 'pass')
           })
       })
-      t.equal(client[kBusy], true)
-      t.equal(client[kRunning], 2)
+      t.strictEqual(client[kBusy], true)
+      t.strictEqual(client[kRunning], 2)
     })
   })
+
+  await t.completed
 })
 
 function pipeliningIdempotentBusy (bodyType) {
-  test(`pipelining idempotent busy ${bodyType}`, (t) => {
-    t.plan(12)
+  test(`pipelining idempotent busy ${bodyType}`, async (t) => {
+    t = tspl(t, { plan: 12 })
 
     const server = createServer()
     server.on('request', (req, res) => {
       res.end('asd')
     })
-    t.teardown(server.close.bind(server))
+    after(() => server.close())
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
         pipelining: 10
       })
-      t.teardown(client.close.bind(client))
+      after(() => client.close())
 
       {
         const body = new Readable({
@@ -624,15 +644,15 @@ function pipeliningIdempotentBusy (bodyType) {
           method: 'GET',
           body: maybeWrapStream(body, bodyType)
         }, (err, data) => {
-          t.error(err)
+          t.ifError(err)
           data.body
             .resume()
             .on('end', () => {
-              t.pass()
+              t.ok(true, 'pass')
             })
         })
         body.push(null)
-        t.equal(client[kBusy], true)
+        t.strictEqual(client[kBusy], true)
       }
 
       client[kConnect](() => {
@@ -645,15 +665,15 @@ function pipeliningIdempotentBusy (bodyType) {
             method: 'GET',
             body: maybeWrapStream(body, bodyType)
           }, (err, data) => {
-            t.error(err)
+            t.ifError(err)
             data.body
               .resume()
               .on('end', () => {
-                t.pass()
+                t.ok(true, 'pass')
               })
           })
           body.push(null)
-          t.equal(client[kBusy], true)
+          t.strictEqual(client[kBusy], true)
         }
 
         {
@@ -669,9 +689,9 @@ function pipeliningIdempotentBusy (bodyType) {
           }, (err, data) => {
             t.ok(err)
           })
-          t.equal(client[kBusy], true)
+          t.strictEqual(client[kBusy], true)
           signal.emit('abort')
-          t.equal(client[kBusy], true)
+          t.strictEqual(client[kBusy], true)
         }
 
         {
@@ -684,26 +704,28 @@ function pipeliningIdempotentBusy (bodyType) {
             idempotent: false,
             body: maybeWrapStream(body, bodyType)
           }, (err, data) => {
-            t.error(err)
+            t.ifError(err)
             data.body
               .resume()
               .on('end', () => {
-                t.pass()
+                t.ok(true, 'pass')
               })
           })
           body.push(null)
-          t.equal(client[kBusy], true)
+          t.strictEqual(client[kBusy], true)
         }
       })
     })
+
+    await t.completed
   })
 }
 
 pipeliningIdempotentBusy(consts.STREAM)
 pipeliningIdempotentBusy(consts.ASYNC_ITERATOR)
 
-test('pipelining blocked', (t) => {
-  t.plan(6)
+test('pipelining blocked', async (t) => {
+  t = tspl(t, { plan: 6 })
 
   const server = createServer()
 
@@ -717,36 +739,38 @@ test('pipelining blocked', (t) => {
       res.end('asd')
     })
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       pipelining: 10
     })
-    t.teardown(client.close.bind(client))
+    after(() => client.close())
     client.request({
       path: '/',
       method: 'GET',
       blocking: true
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       blocking = false
       data.body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
     client.request({
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body
         .resume()
         .on('end', () => {
-          t.pass()
+          t.ok(true, 'pass')
         })
     })
   })
+
+  await t.completed
 })

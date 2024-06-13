@@ -14,8 +14,6 @@ const { Client, fetch, Headers } = require('../..')
 
 const { closeClientAndServerAsPromise } = require('../utils/node-http')
 
-const nodeVersion = Number(process.version.split('v')[1].split('.')[0])
-
 test('[Fetch] Issue#2311', async (t) => {
   const expectedBody = 'hello from client!'
 
@@ -36,7 +34,7 @@ test('[Fetch] Issue#2311', async (t) => {
     res.end(body)
   })
 
-  const { strictEqual } = tspl(t, { plan: 1 })
+  const { strictEqual } = tspl(t, { plan: 2 })
 
   server.listen()
   await once(server, 'listening')
@@ -67,6 +65,7 @@ test('[Fetch] Issue#2311', async (t) => {
   t.after(closeClientAndServerAsPromise(client, server))
 
   strictEqual(responseBody, expectedBody)
+  strictEqual(response.headers.get('x-custom-h2'), 'foo')
 })
 
 test('[Fetch] Simple GET with h2', async (t) => {
@@ -180,7 +179,6 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) 
 // Skipping for now, there is something odd in the way the body is handled
 test(
   '[Fetch] Should handle h2 request with body (stream)',
-  { skip: nodeVersion === 16 },
   async (t) => {
     const server = createSecureServer(pem)
     const expectedBody = readFileSync(__filename, 'utf-8')
@@ -463,4 +461,49 @@ test('Issue #2386', async (t) => {
 
   controller.abort()
   ok(true)
+})
+
+test('Issue #3046', async (t) => {
+  const server = createSecureServer(pem)
+
+  const { strictEqual, deepStrictEqual } = tspl(t, { plan: 6 })
+
+  server.on('stream', async (stream, headers) => {
+    strictEqual(headers[':method'], 'GET')
+    strictEqual(headers[':path'], '/')
+    strictEqual(headers[':scheme'], 'https')
+
+    stream.respond({
+      'set-cookie': ['hello=world', 'foo=bar'],
+      'content-type': 'text/html; charset=utf-8',
+      ':status': 200
+    })
+
+    stream.end('<h1>Hello World</h1>')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.after(closeClientAndServerAsPromise(client, server))
+
+  const response = await fetch(
+    `https://localhost:${server.address().port}/`,
+    // Needs to be passed to disable the reject unauthorized
+    {
+      method: 'GET',
+      dispatcher: client
+    }
+  )
+
+  strictEqual(response.status, 200)
+  strictEqual(response.headers.get('content-type'), 'text/html; charset=utf-8')
+  deepStrictEqual(response.headers.getSetCookie(), ['hello=world', 'foo=bar'])
 })

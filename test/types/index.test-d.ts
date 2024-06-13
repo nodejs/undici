@@ -13,6 +13,9 @@ expectAssignable<typeof Request>(Undici.Request)
 expectAssignable<typeof FormData>(Undici.FormData)
 expectAssignable<typeof File>(Undici.File)
 expectAssignable<typeof FileReader>(Undici.FileReader)
+expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.dump())
+expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.redirect())
+expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.retry())
 
 const client = new Undici.Client('', {})
 const handler: Dispatcher.DispatchHandlers =  {}

@@ -1,17 +1,8 @@
 'use strict'
 
-const { test, skip, after } = require('node:test')
+const { test, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
-
-let diagnosticsChannel
-
-try {
-  diagnosticsChannel = require('node:diagnostics_channel')
-} catch {
-  skip('missing diagnostics_channel')
-  process.exit(0)
-}
-
+const diagnosticsChannel = require('node:diagnostics_channel')
 const { Client } = require('../../../')
 const { createServer } = require('node:http')
 
@@ -40,9 +31,9 @@ test('Diagnostics channel - post', (t) => {
     assert.equal(request.completed, false)
     assert.equal(request.method, 'POST')
     assert.equal(request.path, '/')
-    assert.equal(request.headers, 'bar: bar\r\n')
+    assert.deepStrictEqual(request.headers, ['bar', 'bar'])
     request.addHeader('hello', 'world')
-    assert.equal(request.headers, 'bar: bar\r\nhello: world\r\n')
+    assert.deepStrictEqual(request.headers, ['bar', 'bar', 'hello', 'world'])
     assert.deepStrictEqual(request.body, Buffer.from('hello world'))
   })
 
@@ -90,7 +81,7 @@ test('Diagnostics channel - post', (t) => {
       'hello: world'
     ]
 
-    assert.equal(headers, expectedHeaders.join('\r\n') + '\r\n')
+    assert.deepStrictEqual(headers, expectedHeaders.join('\r\n') + '\r\n')
   })
 
   diagnosticsChannel.channel('undici:request:headers').subscribe(({ request, response }) => {

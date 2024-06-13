@@ -1,9 +1,8 @@
 'use strict'
 
-const { connect } = require('node:http2')
-const { createSecureContext } = require('node:tls')
 const os = require('node:os')
 const path = require('node:path')
+const http2 = require('node:http2')
 const { readFileSync } = require('node:fs')
 const { Writable } = require('node:stream')
 const { isMainThread } = require('node:worker_threads')
@@ -48,17 +47,16 @@ const httpsBaseOptions = {
   ...dest
 }
 
-const http2ClientOptions = {
-  secureContext: createSecureContext({ ca }),
-  servername
-}
-
 const undiciOptions = {
   path: '/',
   method: 'GET',
   headersTimeout,
   bodyTimeout
 }
+
+const http2NativeClient = http2.connect(httpsBaseOptions.url, {
+  rejectUnauthorized: false
+})
 
 const Class = connections > 1 ? Pool : Client
 const dispatcher = new Class(httpsBaseOptions.url, {
@@ -113,7 +111,9 @@ class SimpleRequest {
 }
 
 function makeParallelRequests (cb) {
-  return Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise(cb)))
+  const res = Promise.all(Array.from(Array(parallelRequests)).map(() => new Promise(cb)))
+  res.catch(console.error)
+  return res
 }
 
 function printResults (results) {
@@ -143,10 +143,12 @@ function printResults (results) {
         last = mean
       }
 
+      console.log(mean)
+
       return {
         Tests: name,
         Samples: size,
-        Result: `${((connections * 1e9) / mean).toFixed(2)} req/sec`,
+        Result: `${((1e9 * parallelRequests) / mean).toFixed(2)} req/sec`,
         Tolerance: `± ${((standardError / mean) * 100).toFixed(2)} %`,
         'Difference with slowest': relative > 0 ? `+ ${relative.toFixed(2)} %` : '-'
       }
@@ -156,25 +158,27 @@ function printResults (results) {
 }
 
 const experiments = {
-  'http2 - request' () {
+  'native - http2' () {
     return makeParallelRequests(resolve => {
-      connect(dest.url, http2ClientOptions, (session) => {
-        const headers = {
-          ':path': '/',
-          ':method': 'GET',
-          ':scheme': 'https',
-          ':authority': `localhost:${dest.port}`
-        }
+      const stream = http2NativeClient.request({
+        [http2.constants.HTTP2_HEADER_PATH]: httpsBaseOptions.path,
+        [http2.constants.HTTP2_HEADER_METHOD]: httpsBaseOptions.method
+      })
 
-        const request = session.request(headers)
-
-        request.pipe(
+      stream.end().on('response', () => {
+        stream.pipe(
           new Writable({
             write (chunk, encoding, callback) {
               callback()
             }
           })
-        ).on('finish', resolve)
+        )
+          .on('error', (err) => {
+            console.log('http2 - request - response - error', err)
+          })
+          .on('finish', () => {
+            resolve()
+          })
       })
     })
   },
@@ -267,6 +271,7 @@ async function main () {
 
       printResults(results)
       dispatcher.destroy()
+      http2NativeClient.close()
     }
   )
 }

@@ -101,6 +101,16 @@ expectAssignable<errors.ResponseExceededMaxSizeError>(new errors.ResponseExceede
 expectAssignable<'ResponseExceededMaxSizeError'>(new errors.ResponseExceededMaxSizeError().name)
 expectAssignable<'UND_ERR_RES_EXCEEDED_MAX_SIZE'>(new errors.ResponseExceededMaxSizeError().code)
 
+expectAssignable<errors.UndiciError>(new errors.RequestRetryError('', 0))
+expectAssignable<errors.RequestRetryError>(new errors.RequestRetryError('', 0))
+expectAssignable<'RequestRetryError'>(new errors.RequestRetryError('', 0).name)
+expectAssignable<'UND_ERR_REQ_RETRY'>(new errors.RequestRetryError('', 0).code)
+
+expectAssignable<errors.UndiciError>(new errors.SecureProxyConnectionError())
+expectAssignable<errors.SecureProxyConnectionError>(new errors.SecureProxyConnectionError())
+expectAssignable<'SecureProxyConnectionError'>(new errors.SecureProxyConnectionError().name)
+expectAssignable<'UND_ERR_PRX_TLS'>(new errors.SecureProxyConnectionError().code)
+
 {
   // @ts-ignore
   function f (): errors.HeadersTimeoutError | errors.ConnectTimeoutError { return }

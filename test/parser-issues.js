@@ -1,9 +1,12 @@
+'use strict'
+
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const net = require('node:net')
-const { test } = require('tap')
 const { Client, errors } = require('..')
 
-test('https://github.com/mcollina/undici/issues/268', (t) => {
-  t.plan(2)
+test('https://github.com/mcollina/undici/issues/268', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = net.createServer(socket => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -17,52 +20,56 @@ test('https://github.com/mcollina/undici/issues/268', (t) => {
       }, 500)
     }, 500)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({
       method: 'GET',
       path: '/nxt/_changes?feed=continuous&heartbeat=5000',
       headersTimeout: 1e3
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       data.body
         .resume()
       setTimeout(() => {
-        t.pass()
+        t.ok(true, 'pass')
         data.body.on('error', () => {})
       }, 2e3)
     })
   })
+
+  await t.completed
 })
 
-test('parser fail', (t) => {
-  t.plan(2)
+test('parser fail', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = net.createServer(socket => {
     socket.write('HTT/1.1 200 OK\r\n')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({
       method: 'GET',
       path: '/'
     }, (err, data) => {
       t.ok(err)
-      t.type(err, errors.HTTPParserError)
+      t.ok(err instanceof errors.HTTPParserError)
     })
   })
+
+  await t.completed
 })
 
-test('split header field', (t) => {
-  t.plan(2)
+test('split header field', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = net.createServer(socket => {
     socket.write('HTTP/1.1 200 OK\r\nA')
@@ -70,25 +77,27 @@ test('split header field', (t) => {
       socket.write('SD: asd,asd\r\n\r\n\r\n')
     }, 100)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({
       method: 'GET',
       path: '/'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       t.equal(data.headers.asd, 'asd,asd')
       data.body.destroy().on('error', () => {})
     })
   })
+
+  await t.completed
 })
 
-test('split header value', (t) => {
-  t.plan(2)
+test('split header value', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = net.createServer(socket => {
     socket.write('HTTP/1.1 200 OK\r\nASD: asd')
@@ -96,19 +105,21 @@ test('split header value', (t) => {
       socket.write(',asd\r\n\r\n\r\n')
     }, 100)
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.request({
       method: 'GET',
       path: '/'
     }, (err, data) => {
-      t.error(err)
+      t.ifError(err)
       t.equal(data.headers.asd, 'asd,asd')
       data.body.destroy().on('error', () => {})
     })
   })
+
+  await t.completed
 })

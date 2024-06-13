@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, skip } = require('node:test')
+const { describe, test } = require('node:test')
 const assert = require('node:assert')
 const {
   deleteCookie,
@@ -8,17 +8,9 @@ const {
   getSetCookies,
   setCookie
 } = require('../..')
-const { getHeadersList } = require('../../lib/cookies/util')
 
-/* global Headers */
-
-if (!globalThis.Headers) {
-  skip('No global Headers to test')
-  process.exit(0)
-}
-
-test('Using global Headers', async (t) => {
-  await t.test('deleteCookies', () => {
+describe('Using global Headers', async () => {
+  test('deleteCookies', () => {
     const headers = new Headers()
 
     assert.equal(headers.get('set-cookie'), null)
@@ -26,7 +18,7 @@ test('Using global Headers', async (t) => {
     assert.equal(headers.get('set-cookie'), 'undici=; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
   })
 
-  await t.test('getCookies', () => {
+  test('getCookies', () => {
     const headers = new Headers({
       cookie: 'get=cookies; and=attributes'
     })
@@ -34,12 +26,12 @@ test('Using global Headers', async (t) => {
     assert.deepEqual(getCookies(headers), { get: 'cookies', and: 'attributes' })
   })
 
-  await t.test('getSetCookies', () => {
+  test('getSetCookies', () => {
     const headers = new Headers({
       'set-cookie': 'undici=getSetCookies; Secure'
     })
 
-    const supportsCookies = getHeadersList(headers).cookies
+    const supportsCookies = headers.getSetCookie()
 
     if (!supportsCookies) {
       assert.deepEqual(getSetCookies(headers), [])
@@ -54,7 +46,7 @@ test('Using global Headers', async (t) => {
     }
   })
 
-  await t.test('setCookie', () => {
+  test('setCookie', () => {
     const headers = new Headers()
 
     setCookie(headers, { name: 'undici', value: 'setCookie' })

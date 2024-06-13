@@ -24,10 +24,21 @@ if (cluster.isPrimary) {
   }
 } else {
   const buf = Buffer.alloc(64 * 1024, '_')
-  const server = createServer((req, res) => {
-    setTimeout(function () {
+
+  const headers = {
+    'Content-Length': `${buf.byteLength}`,
+    'Content-Type': 'text/plain; charset=UTF-8'
+  }
+  let i = 0
+  const server = createServer((_req, res) => {
+    i++
+    setTimeout(() => {
+      res.writeHead(200, headers)
       res.end(buf)
     }, timeout)
   }).listen(port)
   server.keepAliveTimeout = 600e3
+  setInterval(() => {
+    console.log(`Worker ${process.pid} processed ${i} requests`)
+  }, 5000)
 }

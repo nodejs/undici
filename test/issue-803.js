@@ -1,47 +1,57 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
+const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
-const EE = require('node:events')
 
-test('https://github.com/nodejs/undici/issues/803', (t) => {
-  t.plan(2)
-
+test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, async (t) => {
+  t = tspl(t, { plan: 2 })
   const SIZE = 5900373096
 
   const server = createServer(async (req, res) => {
+    const chunkSize = res.writableHighWaterMark << 5
+    const parts = (SIZE / chunkSize) | 0
+    const lastPartSize = SIZE % chunkSize
+    const chunk = Buffer.allocUnsafe(chunkSize)
+
+    res.shouldKeepAlive = false
     res.setHeader('content-length', SIZE)
-    let pos = 0
-    while (pos < SIZE) {
-      const len = Math.min(SIZE - pos, 65536)
-      if (!res.write(Buffer.allocUnsafe(len))) {
-        await EE.once(res, 'drain')
+    let i = 0
+
+    while (i++ < parts) {
+      if (res.write(chunk) === false) {
+        await once(res, 'drain')
       }
-      pos += len
+    }
+    if (res.write(chunk.subarray(0, lastPartSize)) === false) {
+      await once(res, 'drain')
     }
 
     res.end()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.teardown(client.close.bind(client))
+  server.listen(0)
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, data) => {
-      t.error(err)
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.close())
 
-      let pos = 0
-      data.body.on('data', (buf) => {
-        pos += buf.length
-      })
-      data.body.on('end', () => {
-        t.equal(pos, SIZE)
-      })
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, data) => {
+    t.ifError(err)
+
+    let pos = 0
+    data.body.on('data', (buf) => {
+      pos += buf.length
+    })
+    data.body.on('end', () => {
+      t.strictEqual(pos, SIZE)
     })
   })
+  await t.completed
 })

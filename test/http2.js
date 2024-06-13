@@ -1,27 +1,26 @@
 'use strict'
 
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
 const { createReadStream, readFileSync } = require('node:fs')
 const { once } = require('node:events')
 const { Blob } = require('node:buffer')
 const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
-const { test, plan } = require('tap')
 const pem = require('https-pem')
 
 const { Client, Agent } = require('..')
 
 const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 
-plan(24)
-
 test('Should support H2 connection', async t => {
   const body = []
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
-    t.equal(headers['x-my-header'], 'foo')
-    t.equal(headers[':method'], 'GET')
+    t.strictEqual(headers['x-my-header'], 'foo')
+    t.strictEqual(headers[':method'], 'GET')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -40,9 +39,9 @@ test('Should support H2 connection', async t => {
     allowH2: true
   })
 
-  t.plan(6)
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t = tspl(t, { plan: 6 })
+  after(() => server.close())
+  after(() => client.close())
 
   const response = await client.request({
     path: '/',
@@ -57,23 +56,23 @@ test('Should support H2 connection', async t => {
   })
 
   await once(response.body, 'end')
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response.headers['x-custom-h2'], 'hello')
-  t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
 
 test('Should support H2 connection(multiple requests)', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', async (stream, headers, _flags, rawHeaders) => {
-    t.equal(headers['x-my-header'], 'foo')
-    t.equal(headers[':method'], 'POST')
+    t.strictEqual(headers['x-my-header'], 'foo')
+    t.strictEqual(headers[':method'], 'POST')
     const reqData = []
     stream.on('data', chunk => reqData.push(chunk.toString()))
     await once(stream, 'end')
     const reqBody = reqData.join('')
-    t.equal(reqBody.length > 0, true)
+    t.strictEqual(reqBody.length > 0, true)
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -92,9 +91,9 @@ test('Should support H2 connection(multiple requests)', async t => {
     allowH2: true
   })
 
-  t.plan(21)
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t = tspl(t, { plan: 21 })
+  after(() => server.close())
+  after(() => client.close())
 
   for (let i = 0; i < 3; i++) {
     const sendBody = `seq ${i}`
@@ -114,10 +113,10 @@ test('Should support H2 connection(multiple requests)', async t => {
     })
 
     await once(response.body, 'end')
-    t.equal(response.statusCode, 200)
-    t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-    t.equal(response.headers['x-custom-h2'], 'hello')
-    t.equal(Buffer.concat(body).toString('utf8'), `hello h2! ${sendBody}`)
+    t.strictEqual(response.statusCode, 200)
+    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+    t.strictEqual(response.headers['x-custom-h2'], 'hello')
+    t.strictEqual(Buffer.concat(body).toString('utf8'), `hello h2! ${sendBody}`)
   }
 })
 
@@ -126,9 +125,9 @@ test('Should support H2 connection (headers as array)', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers) => {
-    t.equal(headers['x-my-header'], 'foo')
-    t.equal(headers['x-my-drink'], 'coffee,tea')
-    t.equal(headers[':method'], 'GET')
+    t.strictEqual(headers['x-my-header'], 'foo')
+    t.strictEqual(headers['x-my-drink'], 'coffee,tea')
+    t.strictEqual(headers[':method'], 'GET')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -147,9 +146,9 @@ test('Should support H2 connection (headers as array)', async t => {
     allowH2: true
   })
 
-  t.plan(7)
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t = tspl(t, { plan: 7 })
+  after(() => server.close())
+  after(() => client.close())
 
   const response = await client.request({
     path: '/',
@@ -162,21 +161,21 @@ test('Should support H2 connection (headers as array)', async t => {
   })
 
   await once(response.body, 'end')
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response.headers['x-custom-h2'], 'hello')
-  t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
 
 test('Should support H2 connection(POST Buffer)', async t => {
   const server = createSecureServer({ ...pem, allowHTTP1: false })
 
   server.on('stream', async (stream, headers, _flags, rawHeaders) => {
-    t.equal(headers[':method'], 'POST')
+    t.strictEqual(headers[':method'], 'POST')
     const reqData = []
     stream.on('data', chunk => reqData.push(chunk.toString()))
     await once(stream, 'end')
-    t.equal(reqData.join(''), 'hello!')
+    t.strictEqual(reqData.join(''), 'hello!')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -195,9 +194,9 @@ test('Should support H2 connection(POST Buffer)', async t => {
     allowH2: true
   })
 
-  t.plan(6)
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t = tspl(t, { plan: 6 })
+  after(() => server.close())
+  after(() => client.close())
 
   const sendBody = 'hello!'
   const body = []
@@ -212,10 +211,10 @@ test('Should support H2 connection(POST Buffer)', async t => {
   })
 
   await once(response.body, 'end')
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response.headers['x-custom-h2'], 'hello')
-  t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
 
 test('Should support H2 GOAWAY (server-side)', async t => {
@@ -223,8 +222,8 @@ test('Should support H2 GOAWAY (server-side)', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers) => {
-    t.equal(headers['x-my-header'], 'foo')
-    t.equal(headers[':method'], 'GET')
+    t.strictEqual(headers['x-my-header'], 'foo')
+    t.strictEqual(headers[':method'], 'GET')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -235,7 +234,7 @@ test('Should support H2 GOAWAY (server-side)', async t => {
 
   server.on('session', session => {
     setTimeout(() => {
-      session.goaway(204)
+      session.goaway(0)
     }, 1000)
   })
 
@@ -249,9 +248,9 @@ test('Should support H2 GOAWAY (server-side)', async t => {
     allowH2: true
   })
 
-  t.plan(9)
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t = tspl(t, { plan: 9 })
+  after(() => server.close())
+  after(() => client.close())
 
   const response = await client.request({
     path: '/',
@@ -266,19 +265,21 @@ test('Should support H2 GOAWAY (server-side)', async t => {
   })
 
   await once(response.body, 'end')
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response.headers['x-custom-h2'], 'hello')
-  t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 
   const [url, disconnectClient, err] = await once(client, 'disconnect')
 
-  t.type(url, URL)
-  t.same(disconnectClient, [client])
-  t.equal(err.message, 'HTTP/2: "GOAWAY" frame received with code 204')
+  t.ok(url instanceof URL)
+  t.deepStrictEqual(disconnectClient, [client])
+  t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
 })
 
 test('Should throw if bad allowH2 has been passed', async t => {
+  t = tspl(t, { plan: 1 })
+
   try {
     // eslint-disable-next-line
     new Client('https://localhost:1000', {
@@ -286,11 +287,13 @@ test('Should throw if bad allowH2 has been passed', async t => {
     })
     t.fail()
   } catch (error) {
-    t.equal(error.message, 'allowH2 must be a valid boolean value')
+    t.strictEqual(error.message, 'allowH2 must be a valid boolean value')
   }
 })
 
 test('Should throw if bad maxConcurrentStreams has been passed', async t => {
+  t = tspl(t, { plan: 2 })
+
   try {
     // eslint-disable-next-line
     new Client('https://localhost:1000', {
@@ -299,7 +302,7 @@ test('Should throw if bad maxConcurrentStreams has been passed', async t => {
     })
     t.fail()
   } catch (error) {
-    t.equal(
+    t.strictEqual(
       error.message,
       'maxConcurrentStreams must be a positive integer, greater than 0'
     )
@@ -313,17 +316,21 @@ test('Should throw if bad maxConcurrentStreams has been passed', async t => {
     })
     t.fail()
   } catch (error) {
-    t.equal(
+    t.strictEqual(
       error.message,
       'maxConcurrentStreams must be a positive integer, greater than 0'
     )
   }
+
+  await t.completed
 })
 
 test(
   'Request should fail if allowH2 is false and server advertises h1 only',
   { skip: isGreaterThanv20 },
   async t => {
+    t = tspl(t, { plan: 1 })
+
     const server = createSecureServer(
       {
         ...pem,
@@ -345,8 +352,8 @@ test(
       }
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+    after(() => server.close())
+    after(() => client.close())
 
     const response = await client.request({
       path: '/',
@@ -356,7 +363,7 @@ test(
       }
     })
 
-    t.equal(response.statusCode, 403)
+    t.strictEqual(response.statusCode, 403)
   }
 )
 
@@ -385,9 +392,9 @@ test(
       }
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
-    t.plan(2)
+    after(() => server.close())
+    after(() => client.close())
+    t = tspl(t, { plan: 2 })
 
     try {
       await client.request({
@@ -398,11 +405,11 @@ test(
         }
       })
     } catch (error) {
-      t.equal(
+      t.strictEqual(
         error.message,
         'Client network socket disconnected before secure TLS connection was established'
       )
-      t.equal(error.code, 'ECONNRESET')
+      t.strictEqual(error.code, 'ECONNRESET')
     }
   }
 )
@@ -413,9 +420,9 @@ test('Should handle h2 continue', async t => {
   const responseBody = []
 
   server.on('checkContinue', (request, response) => {
-    t.equal(request.headers.expect, '100-continue')
-    t.equal(request.headers['x-my-header'], 'foo')
-    t.equal(request.headers[':method'], 'POST')
+    t.strictEqual(request.headers.expect, '100-continue')
+    t.strictEqual(request.headers['x-my-header'], 'foo')
+    t.strictEqual(request.headers[':method'], 'POST')
     response.writeContinue()
 
     request.on('data', chunk => requestBody.push(chunk))
@@ -427,7 +434,7 @@ test('Should handle h2 continue', async t => {
     response.end('hello h2!')
   })
 
-  t.plan(7)
+  t = tspl(t, { plan: 7 })
 
   server.listen(0)
   await once(server, 'listening')
@@ -440,8 +447,8 @@ test('Should handle h2 continue', async t => {
     allowH2: true
   })
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  after(() => server.close())
+  after(() => client.close())
 
   const response = await client.request({
     path: '/',
@@ -458,13 +465,13 @@ test('Should handle h2 continue', async t => {
 
   await once(response.body, 'end')
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response.headers['x-custom-h2'], 'foo')
-  t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'foo')
+  t.strictEqual(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
 })
 
-test('Dispatcher#Stream', t => {
+test('Dispatcher#Stream', async t => {
   const server = createSecureServer(pem)
   const expectedBody = 'hello from client!'
   const bufs = []
@@ -480,7 +487,7 @@ test('Dispatcher#Stream', t => {
     stream.end('hello h2!')
   })
 
-  t.plan(4)
+  t = tspl(t, { plan: 4 })
 
   server.listen(0, async () => {
     const client = new Client(`https://localhost:${server.address().port}`, {
@@ -490,14 +497,14 @@ test('Dispatcher#Stream', t => {
       allowH2: true
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+    after(() => server.close())
+    after(() => client.close())
 
     await client.stream(
       { path: '/', opaque: { bufs }, method: 'POST', body: expectedBody },
       ({ statusCode, headers, opaque: { bufs } }) => {
-        t.equal(statusCode, 200)
-        t.equal(headers['x-custom'], 'custom-header')
+        t.strictEqual(statusCode, 200)
+        t.strictEqual(headers['x-custom'], 'custom-header')
 
         return new Writable({
           write (chunk, _encoding, cb) {
@@ -508,12 +515,14 @@ test('Dispatcher#Stream', t => {
       }
     )
 
-    t.equal(Buffer.concat(bufs).toString('utf-8'), 'hello h2!')
-    t.equal(requestBody, expectedBody)
+    t.strictEqual(Buffer.concat(bufs).toString('utf-8'), 'hello h2!')
+    t.strictEqual(requestBody, expectedBody)
   })
+
+  await t.completed
 })
 
-test('Dispatcher#Pipeline', t => {
+test('Dispatcher#Pipeline', async t => {
   const server = createSecureServer(pem)
   const expectedBody = 'hello from client!'
   const bufs = []
@@ -529,7 +538,7 @@ test('Dispatcher#Pipeline', t => {
     stream.end('hello h2!')
   })
 
-  t.plan(5)
+  t = tspl(t, { plan: 5 })
 
   server.listen(0, () => {
     const client = new Client(`https://localhost:${server.address().port}`, {
@@ -539,8 +548,8 @@ test('Dispatcher#Pipeline', t => {
       allowH2: true
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+    after(() => server.close())
+    after(() => client.close())
 
     pipeline(
       new Readable({
@@ -552,8 +561,8 @@ test('Dispatcher#Pipeline', t => {
       client.pipeline(
         { path: '/', method: 'POST', body: expectedBody },
         ({ statusCode, headers, body }) => {
-          t.equal(statusCode, 200)
-          t.equal(headers['x-custom'], 'custom-header')
+          t.strictEqual(statusCode, 200)
+          t.strictEqual(headers['x-custom'], 'custom-header')
 
           return pipeline(body, new PassThrough(), () => {})
         }
@@ -565,15 +574,17 @@ test('Dispatcher#Pipeline', t => {
         }
       }),
       err => {
-        t.error(err)
-        t.equal(Buffer.concat(bufs).toString('utf-8'), 'hello h2!')
-        t.equal(requestBody, expectedBody)
+        t.ifError(err)
+        t.strictEqual(Buffer.concat(bufs).toString('utf-8'), 'hello h2!')
+        t.strictEqual(requestBody, expectedBody)
       }
     )
   })
+
+  await t.completed
 })
 
-test('Dispatcher#Connect', t => {
+test('Dispatcher#Connect', async t => {
   const server = createSecureServer(pem)
   const expectedBody = 'hello from client!'
   let requestBody = ''
@@ -588,7 +599,7 @@ test('Dispatcher#Connect', t => {
     stream.end('hello h2!')
   })
 
-  t.plan(6)
+  t = tspl(t, { plan: 6 })
 
   server.listen(0, () => {
     const client = new Client(`https://localhost:${server.address().port}`, {
@@ -598,19 +609,19 @@ test('Dispatcher#Connect', t => {
       allowH2: true
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+    after(() => server.close())
+    after(() => client.close())
 
     let result = ''
     client.connect({ path: '/' }, (err, { socket }) => {
-      t.error(err)
+      t.ifError(err)
       socket.on('data', chunk => {
         result += chunk
       })
       socket.on('response', headers => {
-        t.equal(headers[':status'], 200)
-        t.equal(headers['x-custom'], 'custom-header')
-        t.notOk(socket.closed)
+        t.strictEqual(headers[':status'], 200)
+        t.strictEqual(headers['x-custom'], 'custom-header')
+        t.strictEqual(socket.closed, false)
       })
 
       // We need to handle the error event although
@@ -620,22 +631,24 @@ test('Dispatcher#Connect', t => {
       socket.on('error', () => {})
 
       socket.once('end', () => {
-        t.equal(requestBody, expectedBody)
-        t.equal(result, 'hello h2!')
+        t.strictEqual(requestBody, expectedBody)
+        t.strictEqual(result, 'hello h2!')
       })
       socket.end(expectedBody)
     })
   })
+
+  await t.completed
 })
 
-test('Dispatcher#Upgrade', t => {
+test('Dispatcher#Upgrade', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', async (stream, headers) => {
     stream.end()
   })
 
-  t.plan(1)
+  t = tspl(t, { plan: 1 })
 
   server.listen(0, async () => {
     const client = new Client(`https://localhost:${server.address().port}`, {
@@ -645,15 +658,17 @@ test('Dispatcher#Upgrade', t => {
       allowH2: true
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+    after(() => server.close())
+    after(() => client.close())
 
     try {
       await client.upgrade({ path: '/' })
     } catch (error) {
-      t.equal(error.message, 'Upgrade not supported for H2')
+      t.strictEqual(error.message, 'Upgrade not supported for H2')
     }
   })
+
+  await t.completed
 })
 
 test('Dispatcher#destroy', async t => {
@@ -674,8 +689,8 @@ test('Dispatcher#destroy', async t => {
     allowH2: true
   })
 
-  t.plan(4)
-  t.teardown(server.close.bind(server))
+  t = tspl(t, { plan: 4 })
+  after(() => server.close())
 
   promises.push(
     client.request({
@@ -721,10 +736,10 @@ test('Dispatcher#destroy', async t => {
 
   const results = await Promise.allSettled(promises)
 
-  t.equal(results[0].status, 'rejected')
-  t.equal(results[1].status, 'rejected')
-  t.equal(results[2].status, 'rejected')
-  t.equal(results[3].status, 'rejected')
+  t.strictEqual(results[0].status, 'rejected')
+  t.strictEqual(results[1].status, 'rejected')
+  t.strictEqual(results[2].status, 'rejected')
+  t.strictEqual(results[3].status, 'rejected')
 })
 
 test('Should handle h2 request without body', async t => {
@@ -734,9 +749,9 @@ test('Should handle h2 request without body', async t => {
   const responseBody = []
 
   server.on('stream', async (stream, headers) => {
-    t.equal(headers[':method'], 'POST')
-    t.equal(headers[':path'], '/')
-    t.equal(headers[':scheme'], 'https')
+    t.strictEqual(headers[':method'], 'POST')
+    t.strictEqual(headers[':path'], '/')
+    t.strictEqual(headers[':scheme'], 'https')
 
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
@@ -751,7 +766,7 @@ test('Should handle h2 request without body', async t => {
     stream.end('hello h2!')
   })
 
-  t.plan(9)
+  t = tspl(t, { plan: 9 })
 
   server.listen(0)
   await once(server, 'listening')
@@ -763,8 +778,8 @@ test('Should handle h2 request without body', async t => {
     allowH2: true
   })
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  after(() => server.close())
+  after(() => client.close())
 
   const response = await client.request({
     path: '/',
@@ -778,15 +793,15 @@ test('Should handle h2 request without body', async t => {
     responseBody.push(chunk)
   }
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response.headers['x-custom-h2'], 'foo')
-  t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
-  t.equal(requestChunks.length, 0)
-  t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'foo')
+  t.strictEqual(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+  t.strictEqual(requestChunks.length, 0)
+  t.strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
 })
 
-test('Should handle h2 request with body (string or buffer) - dispatch', t => {
+test('Should handle h2 request with body (string or buffer) - dispatch', async t => {
   const server = createSecureServer(pem)
   const expectedBody = 'hello from client!'
   const response = []
@@ -804,7 +819,7 @@ test('Should handle h2 request with body (string or buffer) - dispatch', t => {
     stream.end('hello h2!')
   })
 
-  t.plan(7)
+  t = tspl(t, { plan: 9 })
 
   server.listen(0, () => {
     const client = new Client(`https://localhost:${server.address().port}`, {
@@ -814,8 +829,8 @@ test('Should handle h2 request with body (string or buffer) - dispatch', t => {
       allowH2: true
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+    after(() => server.close())
+    after(() => client.close())
 
     client.dispatch(
       {
@@ -829,25 +844,27 @@ test('Should handle h2 request with body (string or buffer) - dispatch', t => {
       },
       {
         onConnect () {
-          t.ok(true)
+          t.ok(true, 'pass')
         },
         onError (err) {
-          t.error(err)
+          t.ifError(err)
         },
         onHeaders (statusCode, headers) {
-          t.equal(statusCode, 200)
-          t.equal(headers['content-type'], 'text/plain; charset=utf-8')
-          t.equal(headers['x-custom-h2'], 'foo')
+          t.strictEqual(statusCode, 200)
+          t.strictEqual(headers[0].toString('utf-8'), 'content-type')
+          t.strictEqual(headers[1].toString('utf-8'), 'text/plain; charset=utf-8')
+          t.strictEqual(headers[2].toString('utf-8'), 'x-custom-h2')
+          t.strictEqual(headers[3].toString('utf-8'), 'foo')
         },
         onData (chunk) {
           response.push(chunk)
         },
         onBodySent (body) {
-          t.equal(body.toString('utf-8'), expectedBody)
+          t.strictEqual(body.toString('utf-8'), expectedBody)
         },
         onComplete () {
-          t.equal(Buffer.concat(response).toString('utf-8'), 'hello h2!')
-          t.equal(
+          t.strictEqual(Buffer.concat(response).toString('utf-8'), 'hello h2!')
+          t.strictEqual(
             Buffer.concat(requestBody).toString('utf-8'),
             'hello from client!'
           )
@@ -855,6 +872,8 @@ test('Should handle h2 request with body (string or buffer) - dispatch', t => {
       }
     )
   })
+
+  await t.completed
 })
 
 test('Should handle h2 request with body (stream)', async t => {
@@ -865,9 +884,9 @@ test('Should handle h2 request with body (stream)', async t => {
   const responseBody = []
 
   server.on('stream', async (stream, headers) => {
-    t.equal(headers[':method'], 'PUT')
-    t.equal(headers[':path'], '/')
-    t.equal(headers[':scheme'], 'https')
+    t.strictEqual(headers[':method'], 'PUT')
+    t.strictEqual(headers[':path'], '/')
+    t.strictEqual(headers[':scheme'], 'https')
 
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
@@ -882,7 +901,7 @@ test('Should handle h2 request with body (stream)', async t => {
     stream.end('hello h2!')
   })
 
-  t.plan(8)
+  t = tspl(t, { plan: 8 })
 
   server.listen(0)
   await once(server, 'listening')
@@ -894,8 +913,8 @@ test('Should handle h2 request with body (stream)', async t => {
     allowH2: true
   })
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  after(() => server.close())
+  after(() => client.close())
 
   const response = await client.request({
     path: '/',
@@ -910,11 +929,11 @@ test('Should handle h2 request with body (stream)', async t => {
     responseBody.push(chunk)
   }
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response.headers['x-custom-h2'], 'foo')
-  t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
-  t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'foo')
+  t.strictEqual(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+  t.strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
 })
 
 test('Should handle h2 request with body (iterable)', async t => {
@@ -934,9 +953,9 @@ test('Should handle h2 request with body (iterable)', async t => {
   }
 
   server.on('stream', async (stream, headers) => {
-    t.equal(headers[':method'], 'POST')
-    t.equal(headers[':path'], '/')
-    t.equal(headers[':scheme'], 'https')
+    t.strictEqual(headers[':method'], 'POST')
+    t.strictEqual(headers[':path'], '/')
+    t.strictEqual(headers[':scheme'], 'https')
 
     stream.on('data', chunk => requestChunks.push(chunk))
 
@@ -949,7 +968,7 @@ test('Should handle h2 request with body (iterable)', async t => {
     stream.end('hello h2!')
   })
 
-  t.plan(8)
+  t = tspl(t, { plan: 8 })
 
   server.listen(0)
   await once(server, 'listening')
@@ -961,8 +980,8 @@ test('Should handle h2 request with body (iterable)', async t => {
     allowH2: true
   })
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  after(() => server.close())
+  after(() => client.close())
 
   const response = await client.request({
     path: '/',
@@ -979,11 +998,11 @@ test('Should handle h2 request with body (iterable)', async t => {
 
   await once(response.body, 'end')
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response.headers['x-custom-h2'], 'foo')
-  t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
-  t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'foo')
+  t.strictEqual(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+  t.strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
 })
 
 test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
@@ -996,9 +1015,9 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
   })
 
   server.on('stream', async (stream, headers) => {
-    t.equal(headers[':method'], 'POST')
-    t.equal(headers[':path'], '/')
-    t.equal(headers[':scheme'], 'https')
+    t.strictEqual(headers[':method'], 'POST')
+    t.strictEqual(headers[':path'], '/')
+    t.strictEqual(headers[':scheme'], 'https')
 
     stream.on('data', chunk => requestChunks.push(chunk))
 
@@ -1011,7 +1030,7 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
     stream.end('hello h2!')
   })
 
-  t.plan(8)
+  t = tspl(t, { plan: 8 })
 
   server.listen(0)
   await once(server, 'listening')
@@ -1023,8 +1042,8 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
     allowH2: true
   })
 
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  after(() => server.close())
+  after(() => client.close())
 
   const response = await client.request({
     path: '/',
@@ -1041,11 +1060,11 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
 
   await once(response.body, 'end')
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response.headers['x-custom-h2'], 'foo')
-  t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
-  t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'foo')
+  t.strictEqual(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+  t.strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
 })
 
 test(
@@ -1062,9 +1081,9 @@ test(
     buf.copy(new Uint8Array(body))
 
     server.on('stream', async (stream, headers) => {
-      t.equal(headers[':method'], 'POST')
-      t.equal(headers[':path'], '/')
-      t.equal(headers[':scheme'], 'https')
+      t.strictEqual(headers[':method'], 'POST')
+      t.strictEqual(headers[':path'], '/')
+      t.strictEqual(headers[':scheme'], 'https')
 
       stream.on('data', chunk => requestChunks.push(chunk))
 
@@ -1077,7 +1096,7 @@ test(
       stream.end('hello h2!')
     })
 
-    t.plan(8)
+    t = tspl(t, { plan: 8 })
 
     server.listen(0)
     await once(server, 'listening')
@@ -1089,8 +1108,8 @@ test(
       allowH2: true
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+    after(() => server.close())
+    after(() => client.close())
 
     const response = await client.request({
       path: '/',
@@ -1107,11 +1126,11 @@ test(
 
     await once(response.body, 'end')
 
-    t.equal(response.statusCode, 200)
-    t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-    t.equal(response.headers['x-custom-h2'], 'foo')
-    t.equal(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
-    t.equal(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+    t.strictEqual(response.statusCode, 200)
+    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+    t.strictEqual(response.headers['x-custom-h2'], 'foo')
+    t.strictEqual(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
+    t.strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
   }
 )
 
@@ -1120,8 +1139,8 @@ test('Agent should support H2 connection', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers) => {
-    t.equal(headers['x-my-header'], 'foo')
-    t.equal(headers[':method'], 'GET')
+    t.strictEqual(headers['x-my-header'], 'foo')
+    t.strictEqual(headers[':method'], 'GET')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -1140,9 +1159,9 @@ test('Agent should support H2 connection', async t => {
     allowH2: true
   })
 
-  t.plan(6)
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t = tspl(t, { plan: 6 })
+  after(() => server.close())
+  after(() => client.close())
 
   const response = await client.request({
     origin: `https://localhost:${server.address().port}`,
@@ -1158,18 +1177,20 @@ test('Agent should support H2 connection', async t => {
   })
 
   await once(response.body, 'end')
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.equal(response.headers['x-custom-h2'], 'hello')
-  t.equal(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
 
 test(
   'Should provide pseudo-headers in proper order',
   async t => {
+    t = tspl(t, { plan: 2 })
+
     const server = createSecureServer(pem)
     server.on('stream', (stream, _headers, _flags, rawHeaders) => {
-      t.same(rawHeaders, [
+      t.deepStrictEqual(rawHeaders, [
         ':authority',
         `localhost:${server.address().port}`,
         ':method',
@@ -1197,15 +1218,19 @@ test(
       allowH2: true
     })
 
-    t.teardown(server.close.bind(server))
-    t.teardown(client.close.bind(client))
+    after(() => server.close())
+    after(() => client.close())
 
     const response = await client.request({
       path: '/',
       method: 'GET'
     })
 
-    t.equal(response.statusCode, 200)
+    t.strictEqual(response.statusCode, 200)
+
+    await response.body.dump()
+
+    await t.complete
   }
 )
 
@@ -1229,9 +1254,9 @@ test('The h2 pseudo-headers is not included in the headers', async t => {
     allowH2: true
   })
 
-  t.plan(2)
-  t.teardown(server.close.bind(server))
-  t.teardown(client.close.bind(client))
+  t = tspl(t, { plan: 2 })
+  after(() => server.close())
+  after(() => client.close())
 
   const response = await client.request({
     path: '/',
@@ -1240,6 +1265,184 @@ test('The h2 pseudo-headers is not included in the headers', async t => {
 
   await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers[':status'], undefined)
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers[':status'], undefined)
+})
+
+test('Should throw informational error on half-closed streams (remote)', async t => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    stream.destroy()
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 2 })
+  after(() => server.close())
+  after(() => client.close())
+
+  await client.request({
+    path: '/',
+    method: 'GET'
+  }).catch(err => {
+    t.strictEqual(err.message, 'HTTP/2: stream half-closed (remote)')
+    t.strictEqual(err.code, 'UND_ERR_INFO')
+  })
+})
+
+test('#2364 - Concurrent aborts', async t => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers, _flags, rawHeaders) => {
+    t.strictEqual(headers['x-my-header'], 'foo')
+    t.strictEqual(headers[':method'], 'GET')
+    setTimeout(() => {
+      stream.respond({
+        'content-type': 'text/plain; charset=utf-8',
+        'x-custom-h2': 'hello',
+        ':status': 200
+      })
+      stream.end('hello h2!')
+    }, 100)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 18 })
+  after(() => server.close())
+  after(() => client.close())
+  const controller = new AbortController()
+
+  client.request({
+    path: '/1',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  }, (err, response) => {
+    t.ifError(err)
+    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+    t.strictEqual(response.headers['x-custom-h2'], 'hello')
+    t.strictEqual(response.statusCode, 200)
+    response.body.dump()
+  })
+
+  client.request({
+    path: '/2',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    },
+    signal: controller.signal
+  }, (err, response) => {
+    t.strictEqual(err.name, 'AbortError')
+  })
+
+  client.request({
+    path: '/3',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  }, (err, response) => {
+    t.ifError(err)
+    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+    t.strictEqual(response.headers['x-custom-h2'], 'hello')
+    t.strictEqual(response.statusCode, 200)
+    response.body.dump()
+  })
+
+  client.request({
+    path: '/4',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    },
+    signal: controller.signal
+  }, (err, response) => {
+    t.strictEqual(err.name, 'AbortError')
+  })
+
+  controller.abort()
+
+  await t.completed
+})
+
+test('#3046 - GOAWAY Frame', async t => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    setTimeout(() => {
+      if (stream.closed) return
+      stream.end('Hello World')
+    }, 100)
+
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': 'hello',
+      ':status': 200
+    })
+  })
+
+  server.on('session', session => {
+    setTimeout(() => {
+      session.goaway()
+    }, 50)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 7 })
+  after(() => server.close())
+  after(() => client.close())
+
+  client.on('disconnect', (url, disconnectClient, err) => {
+    t.ok(url instanceof URL)
+    t.deepStrictEqual(disconnectClient, [client])
+    t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
+  })
+
+  const response = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  })
+
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.strictEqual(response.statusCode, 200)
+
+  t.rejects(response.body.text.bind(response.body), {
+    message: 'HTTP/2: "GOAWAY" frame received with code 0',
+    code: 'UND_ERR_ABORTED'
+  })
+
+  await t.completed
 })

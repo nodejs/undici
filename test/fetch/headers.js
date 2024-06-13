@@ -3,8 +3,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
-const { Headers, fill } = require('../../lib/fetch/headers')
-const { kGuard } = require('../../lib/fetch/symbols')
+const { Headers, fill, setHeadersGuard } = require('../../lib/web/fetch/headers')
 const { once } = require('node:events')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
@@ -27,7 +26,7 @@ test('Headers initialization', async (t) => {
       throws(() => new Headers(['undici', 'fetch', 'fetch']), TypeError)
       throws(
         () => new Headers([0, 1, 2]),
-        TypeError('Sequence: Value of type Number is not an Object.')
+        TypeError('Headers contructor: init[0] (0) is not iterable.')
       )
     })
 
@@ -42,7 +41,7 @@ test('Headers initialization', async (t) => {
       const init = ['undici', 'fetch', 'fetch', 'undici']
       throws(
         () => new Headers(init),
-        TypeError('Sequence: Value of type String is not an Object.')
+        TypeError('Headers contructor: init[0] ("undici") is not iterable.')
       )
     })
   })
@@ -472,6 +471,21 @@ test('Headers as Iterable', async (t) => {
 
     deepStrictEqual([...headers], expected)
   })
+
+  await t.test('always use the same prototype Iterator', (t) => {
+    const HeadersIteratorNext = Function.call.bind(new Headers()[Symbol.iterator]().next)
+
+    const init = [
+      ['a', '1'],
+      ['b', '2']
+    ]
+
+    const headers = new Headers(init)
+    const iterator = headers[Symbol.iterator]()
+    assert.deepStrictEqual(HeadersIteratorNext(iterator), { value: init[0], done: false })
+    assert.deepStrictEqual(HeadersIteratorNext(iterator), { value: init[1], done: false })
+    assert.deepStrictEqual(HeadersIteratorNext(iterator), { value: undefined, done: true })
+  })
 })
 
 test('arg validation', () => {
@@ -595,7 +609,7 @@ test('various init paths of Headers', () => {
 test('immutable guard', () => {
   const headers = new Headers()
   headers.set('key', 'val')
-  headers[kGuard] = 'immutable'
+  setHeadersGuard(headers, 'immutable')
 
   assert.throws(() => {
     headers.set('asd', 'asd')
@@ -612,7 +626,7 @@ test('immutable guard', () => {
 
 test('request-no-cors guard', () => {
   const headers = new Headers()
-  headers[kGuard] = 'request-no-cors'
+  setHeadersGuard(headers, 'request-no-cors')
   assert.doesNotThrow(() => { headers.set('key', 'val') })
   assert.doesNotThrow(() => { headers.append('key', 'val') })
 })
@@ -679,7 +693,7 @@ test('Headers.prototype.getSetCookie', async (t) => {
   })
 
   // https://github.com/nodejs/undici/issues/1935
-  await t.test('When Headers are cloned, so are the cookies', async (t) => {
+  await t.test('When Headers are cloned, so are the cookies (single entry)', async (t) => {
     const server = createServer((req, res) => {
       res.setHeader('Set-Cookie', 'test=onetwo')
       res.end('Hello World!')
@@ -694,6 +708,28 @@ test('Headers.prototype.getSetCookie', async (t) => {
     assert.deepStrictEqual(res.headers.getSetCookie(), ['test=onetwo'])
     assert.ok('set-cookie' in entries)
   })
+
+  await t.test('When Headers are cloned, so are the cookies (multiple entries)', async (t) => {
+    const server = createServer((req, res) => {
+      res.setHeader('Set-Cookie', ['test=onetwo', 'test=onetwothree'])
+      res.end('Hello World!')
+    }).listen(0)
+
+    await once(server, 'listening')
+    t.after(closeServerAsPromise(server))
+
+    const res = await fetch(`http://localhost:${server.address().port}`)
+    const entries = Object.fromEntries(res.headers.entries())
+
+    assert.deepStrictEqual(res.headers.getSetCookie(), ['test=onetwo', 'test=onetwothree'])
+    assert.ok('set-cookie' in entries)
+  })
+
+  await t.test('When Headers are cloned, so are the cookies (Headers constructor)', () => {
+    const headers = new Headers([['set-cookie', 'a'], ['set-cookie', 'b']])
+
+    assert.deepStrictEqual([...headers], [...new Headers(headers)])
+  })
 })
 
 test('When the value is updated, update the cache', (t) => {
@@ -703,4 +739,31 @@ test('When the value is updated, update the cache', (t) => {
   deepStrictEqual([...headers], expected)
   headers.append('d', 'd')
   deepStrictEqual([...headers], [...expected, ['d', 'd']])
+})
+
+test('Symbol.iterator is only accessed once', (t) => {
+  const { ok } = tspl(t, { plan: 1 })
+
+  const dict = new Proxy({}, {
+    get () {
+      ok(true)
+
+      return function * () {}
+    }
+  })
+
+  new Headers(dict) // eslint-disable-line no-new
+})
+
+test('Invalid Symbol.iterators', (t) => {
+  const { throws } = tspl(t, { plan: 3 })
+
+  throws(() => new Headers({ [Symbol.iterator]: null }), TypeError)
+  throws(() => new Headers({ [Symbol.iterator]: undefined }), TypeError)
+  throws(() => {
+    const obj = { [Symbol.iterator]: null }
+    Object.defineProperty(obj, Symbol.iterator, { enumerable: false })
+
+    new Headers(obj) // eslint-disable-line no-new
+  }, TypeError)
 })

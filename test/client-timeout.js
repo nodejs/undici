@@ -1,25 +1,26 @@
 'use strict'
 
-const { test } = require('tap')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 const FakeTimers = require('@sinonjs/fake-timers')
-const timers = require('../lib/timers')
+const timers = require('../lib/util/timers')
 
-test('refresh timeout on pause', (t) => {
-  t.plan(1)
+test('refresh timeout on pause', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.flushHeaders()
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       bodyTimeout: 500
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.dispatch({
       path: '/',
@@ -40,34 +41,36 @@ test('refresh timeout on pause', (t) => {
 
       },
       onError (err) {
-        t.type(err, errors.BodyTimeoutError)
+        t.ok(err instanceof errors.BodyTimeoutError)
       }
     })
   })
+
+  await t.completed
 })
 
-test('start headers timeout after request body', (t) => {
-  t.plan(2)
+test('start headers timeout after request body', async (t) => {
+  t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
   Object.assign(timers, { setTimeout, clearTimeout })
-  t.teardown(() => {
+  after(() => {
     Object.assign(timers, orgTimers)
   })
 
   const server = createServer((req, res) => {
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       bodyTimeout: 0,
       headersTimeout: 100
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     const body = new Readable({ read () {} })
     client.dispatch({
@@ -96,34 +99,36 @@ test('start headers timeout after request body', (t) => {
       },
       onError (err) {
         t.equal(body.readableEnded, true)
-        t.type(err, errors.HeadersTimeoutError)
+        t.ok(err instanceof errors.HeadersTimeoutError)
       }
     })
   })
+
+  await t.completed
 })
 
-test('start headers timeout after async iterator request body', (t) => {
-  t.plan(1)
+test('start headers timeout after async iterator request body', async (t) => {
+  t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install()
-  t.teardown(clock.uninstall.bind(clock))
+  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
   Object.assign(timers, { setTimeout, clearTimeout })
-  t.teardown(() => {
+  after(() => {
     Object.assign(timers, orgTimers)
   })
 
   const server = createServer((req, res) => {
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       bodyTimeout: 0,
       headersTimeout: 100
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
     let res
     const body = (async function * () {
       await new Promise((resolve) => { res = resolve })
@@ -153,25 +158,27 @@ test('start headers timeout after async iterator request body', (t) => {
 
       },
       onError (err) {
-        t.type(err, errors.HeadersTimeoutError)
+        t.ok(err instanceof errors.HeadersTimeoutError)
       }
     })
   })
+
+  await t.completed
 })
 
-test('parser resume with no body timeout', (t) => {
-  t.plan(1)
+test('parser resume with no body timeout', async (t) => {
+  t = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
     res.end('asd')
   })
-  t.teardown(server.close.bind(server))
+  after(() => server.close())
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`, {
       bodyTimeout: 0
     })
-    t.teardown(client.destroy.bind(client))
+    after(() => client.destroy())
 
     client.dispatch({
       path: '/',
@@ -187,11 +194,13 @@ test('parser resume with no body timeout', (t) => {
 
       },
       onComplete () {
-        t.pass()
+        t.ok(true, 'pass')
       },
       onError (err) {
-        t.error(err)
+        t.ifError(err)
       }
     })
   })
+
+  await t.completed
 })

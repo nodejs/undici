@@ -9,7 +9,7 @@ const { once } = require('node:events')
 jest.useRealTimers()
 
 it('isErrorLike sanity check', () => {
-  const { isErrorLike } = require('../../lib/fetch/util')
+  const { isErrorLike } = require('../../lib/web/fetch/util')
   const error = new DOMException('')
 
   // https://github.com/facebook/jest/issues/2549

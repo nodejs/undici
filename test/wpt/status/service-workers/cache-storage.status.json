@@ -8,17 +8,23 @@
       "note": "navigator is not defined"
     },
     "cache-put.https.any.js": {
-      "note": "probably can be fixed",
+      "note": "probably can be fixed; flaky is on windows only TODO(@KhafraDev) investigate it",
       "fail": [
         "Cache.put with a VARY:* opaque response should not reject",
         "Cache.put with opaque-filtered HTTP 206 response"
+      ],
+      "flaky": [
+        "Cache.put called with Request and Response from fetch()"
       ]
     },
     "cache-match.https.any.js": {
-      "note": "requires https server",
+      "note": "requires https server; flaky is on windows only TODO(@KhafraDev) investigate it",
       "fail": [
         "cors-exposed header should be stored correctly.",
         "Cache.match ignores vary headers on opaque response."
+      ],
+      "flaky": [
+        "Cache.match invoked multiple times for the same Request/Response"
       ]
     }
   }

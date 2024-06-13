@@ -7,19 +7,34 @@ const assert = require('node:assert')
 
 describe('Ternary Search Tree', () => {
   test('The empty key cannot be added.', () => {
-    assert.throws(() => new TernarySearchTree().insert(Buffer.from(''), ''))
+    assert.throws(() => new TernarySearchTree().insert('', ''))
     const tst = new TernarySearchTree()
-    tst.insert(Buffer.from('a'), 'a')
-    assert.throws(() => tst.insert(Buffer.from(''), ''))
+    tst.insert('a', 'a')
+    assert.throws(() => tst.insert('', ''))
+  })
+
+  test('looking up not inserted key returns null', () => {
+    const tst = new TernarySearchTree()
+    tst.insert('a', 'a')
+    assert.strictEqual(tst.lookup(Buffer.from('non-existant')), null)
+  })
+
+  test('not ascii string', () => {
+    assert.throws(() => new TernarySearchTree().insert('\x80', 'a'))
+    const tst = new TernarySearchTree()
+    tst.insert('a', 'a')
+    // throw on TstNode
+    assert.throws(() => tst.insert('\x80', 'a'))
   })
 
   test('duplicate key', () => {
     const tst = new TernarySearchTree()
-    const key = Buffer.from('a')
+    const key = 'a'
+    const lookupKey = Buffer.from(key)
     tst.insert(key, 'a')
-    assert.strictEqual(tst.lookup(key), 'a')
+    assert.strictEqual(tst.lookup(lookupKey), 'a')
     tst.insert(key, 'b')
-    assert.strictEqual(tst.lookup(key), 'b')
+    assert.strictEqual(tst.lookup(lookupKey), 'b')
   })
 
   test('tree', () => {
@@ -52,7 +67,7 @@ describe('Ternary Search Tree', () => {
       const key = generateAsciiString((Math.random() * 100 + 5) | 0)
       const lowerCasedKey = random[i] = key.toLowerCase()
       randomBuffer[i] = Buffer.from(key)
-      tst.insert(Buffer.from(lowerCasedKey), lowerCasedKey)
+      tst.insert(lowerCasedKey, lowerCasedKey)
     }
 
     for (let i = 0; i < LENGTH; ++i) {

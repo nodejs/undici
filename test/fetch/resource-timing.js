@@ -3,7 +3,6 @@
 const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('node:http')
-const { nodeMajor, nodeMinor } = require('../../lib/core/util')
 const { fetch } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
 
@@ -12,9 +11,7 @@ const {
   performance
 } = require('node:perf_hooks')
 
-const skip = nodeMajor === 18 && nodeMinor < 2
-
-test('should create a PerformanceResourceTiming after each fetch request', { skip }, (t, done) => {
+test('should create a PerformanceResourceTiming after each fetch request', (t, done) => {
   const { strictEqual, ok, deepStrictEqual } = tspl(t, { plan: 8 })
 
   const obs = new PerformanceObserver(list => {
@@ -50,7 +47,7 @@ test('should create a PerformanceResourceTiming after each fetch request', { ski
   t.after(closeServerAsPromise(server))
 })
 
-test('should include encodedBodySize in performance entry', { skip }, (t, done) => {
+test('should include encodedBodySize in performance entry', (t, done) => {
   const { strictEqual } = tspl(t, { plan: 4 })
   const obs = new PerformanceObserver(list => {
     const [entry] = list.getEntries()
@@ -75,7 +72,7 @@ test('should include encodedBodySize in performance entry', { skip }, (t, done) 
   t.after(closeServerAsPromise(server))
 })
 
-test('timing entries should be in order', { skip }, (t, done) => {
+test('timing entries should be in order', (t, done) => {
   const { ok, strictEqual } = tspl(t, { plan: 13 })
   const obs = new PerformanceObserver(list => {
     const [entry] = list.getEntries()
@@ -111,7 +108,7 @@ test('timing entries should be in order', { skip }, (t, done) => {
   t.after(closeServerAsPromise(server))
 })
 
-test('redirect timing entries should be included when redirecting', { skip }, (t, done) => {
+test('redirect timing entries should be included when redirecting', (t, done) => {
   const { ok, strictEqual } = tspl(t, { plan: 4 })
   const obs = new PerformanceObserver(list => {
     const [entry] = list.getEntries()

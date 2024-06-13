@@ -1,7 +1,7 @@
 import { IncomingHttpHeaders } from 'http'
 import { Duplex, Readable, Writable } from 'stream'
 import { expectAssignable, expectType } from 'tsd'
-import { Dispatcher } from '../..'
+import { Dispatcher, Headers } from '../..'
 import { URL } from 'url'
 import { Blob } from 'buffer'
 
@@ -15,6 +15,14 @@ expectAssignable<Dispatcher>(new Dispatcher())
     ['content-type']: 'application/json'
   } satisfies IncomingHttpHeaders;
 
+  const headerInstanceHeaders = new Headers({ hello: 'world' })
+  const mapHeaders = new Map([['hello', 'world']])
+  const iteratorHeaders = {
+    *[Symbol.iterator]() {
+      yield ['hello', 'world']
+    }
+  }
+
   // dispatch
   expectAssignable<boolean>(dispatcher.dispatch({ path: '', method: 'GET' }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET' }, {}))
@@ -23,6 +31,9 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: {} }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: nodeCoreHeaders }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: null, reset: true }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: headerInstanceHeaders, reset: true }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: mapHeaders, reset: true }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: iteratorHeaders, reset: true }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
 
   // connect
@@ -115,6 +126,38 @@ expectAssignable<Dispatcher>(new Dispatcher())
 }
 
 declare const { body }: Dispatcher.ResponseData;
+
+// compose
+{
+  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(
+    (dispatcher) => {
+      expectAssignable<Dispatcher['dispatch']>(dispatcher);
+      return (opts, handlers) => {
+        expectAssignable<Dispatcher.DispatchOptions>(opts);
+        expectAssignable<Dispatcher.DispatchHandlers>(handlers);
+        return dispatcher(opts, handlers)
+      }
+    }
+  ))
+  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([
+    (dispatcher) => {
+      expectAssignable<Dispatcher['dispatch']>(dispatcher);
+      return (opts, handlers) => {
+        expectAssignable<Dispatcher.DispatchOptions>(opts);
+        expectAssignable<Dispatcher.DispatchHandlers>(handlers);
+        return dispatcher(opts, handlers)
+      }
+    },
+    (dispatcher) => {
+      expectAssignable<Dispatcher['dispatch']>(dispatcher);
+      return (opts, handlers) => {
+        expectAssignable<Dispatcher.DispatchOptions>(opts);
+        expectAssignable<Dispatcher.DispatchHandlers>(handlers);
+        return dispatcher(opts, handlers)
+      }
+    }
+  ]))
+}
 
 {
   // body mixin tests
