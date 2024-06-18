@@ -41,7 +41,8 @@ module.exports.createRedirectInterceptor = createRedirectInterceptor
 module.exports.interceptors = {
   redirect: require('./lib/interceptor/redirect'),
   retry: require('./lib/interceptor/retry'),
-  dump: require('./lib/interceptor/dump')
+  dump: require('./lib/interceptor/dump'),
+  decompress: require('./lib/interceptor/decompress')
 }
 
 module.exports.buildConnector = buildConnector

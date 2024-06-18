@@ -9,3 +9,4 @@ export declare function createRedirectInterceptor (opts: RedirectInterceptorOpts
 export declare function dump(opts?: DumpInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
 export declare function retry(opts?: RetryInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
 export declare function redirect(opts?: RedirectInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
+export declare function decompress(): Dispatcher.DispatcherComposeInterceptor
