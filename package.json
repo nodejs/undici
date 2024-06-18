@@ -99,7 +99,7 @@
     "coverage:report:ci": "c8 report",
     "bench": "echo \"Error: Benchmarks have been moved to '/benchmarks'\" && exit 1",
     "serve:website": "echo \"Error: Documentation has been moved to '/docs'\" && exit 1",
-    "prepare": "husky install && node ./scripts/platform-shell.js"
+    "prepare": "husky && node ./scripts/platform-shell.js"
   },
   "devDependencies": {
     "@fastify/busboy": "2.1.1",
