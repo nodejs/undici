@@ -19,10 +19,10 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
     res.setHeader('Content-Encoding', contentCodings)
     res.setHeader('Content-Type', 'text/plain')
 
-    brotli.pipe(gzip).pipe(res)
+    gzip.pipe(brotli).pipe(res)
 
-    brotli.write(text)
-    brotli.end()
+    gzip.write(text)
+    gzip.end()
   }).listen(0)
 
   t.after(closeServerAsPromise(server))
@@ -45,10 +45,10 @@ test('response decompression according to content-encoding should be handled in 
     res.setHeader('Content-Encoding', contentCodings)
     res.setHeader('Content-Type', 'text/plain')
 
-    gzip.pipe(deflate).pipe(res)
+    deflate.pipe(gzip).pipe(res)
 
-    gzip.write(text)
-    gzip.end()
+    deflate.write(text)
+    deflate.end()
   }).listen(0)
 
   t.after(closeServerAsPromise(server))
