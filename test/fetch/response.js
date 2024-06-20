@@ -189,6 +189,21 @@ test('constructing a Response with a ReadableStream body', async (t) => {
     assert.deepStrictEqual(await response3.json(), JSON.parse(text))
   })
 
+  await t.test('.arrayBuffer() correctly clones multiple buffers', async () => {
+    const buffer = Buffer.allocUnsafeSlow(2 * 1024 - 2)
+    const readable = new ReadableStream({
+      start (controller) {
+        for (let i = 0; i < buffer.length; i += 128) {
+          controller.enqueue(buffer.slice(i, i + 128))
+        }
+        controller.close()
+      }
+    })
+
+    const response = new Response(readable)
+    assert.deepStrictEqual(await response.arrayBuffer(), buffer.buffer)
+  })
+
   await t.test('Readable stream with non-Uint8Array chunks', async () => {
     const readable = new ReadableStream({
       start (controller) {

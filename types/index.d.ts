@@ -43,7 +43,7 @@ declare namespace Undici {
   var RedirectHandler: typeof import ('./handlers').RedirectHandler
   var DecoratorHandler: typeof import ('./handlers').DecoratorHandler
   var RetryHandler: typeof import ('./retry-handler').default
-  var createRedirectInterceptor: typeof import ('./interceptors').createRedirectInterceptor
+  var createRedirectInterceptor: typeof import ('./interceptors').default.createRedirectInterceptor
   var BalancedPool: typeof import('./balanced-pool').default;
   var Client: typeof import('./client').default;
   var buildConnector: typeof import('./connector').default;
@@ -68,10 +68,6 @@ declare namespace Undici {
   var File: typeof import('./file').File;
   var FileReader: typeof import('./filereader').FileReader;
   var caches: typeof import('./cache').caches;
-  var interceptors: {
-    dump: typeof import('./interceptors').dump;
-    retry: typeof import('./interceptors').retry;
-    redirect: typeof import('./interceptors').redirect;
-  };
+  var interceptors: typeof import('./interceptors').default;
   var DNSResolver: typeof import('./dns-resolver').default;
 }
