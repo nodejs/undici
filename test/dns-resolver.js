@@ -31,14 +31,15 @@ SOFTWARE.
 const { promises: dnsPromises, V4MAPPED, ADDRCONFIG, ALL } = require('node:dns')
 const { promisify } = require('node:util')
 const http = require('node:http')
-const { test } = require('tap')
+const { test } = require('node:test')
 const originalDns = require('node:dns')
 const proxyquire = require('proxyquire')
-const { kDnsCacheSize, kDnsHostnamesToFallback } = require('../lib/core/symbols')
+const { kDnsCacheSize, kDnsHostnamesToFallback, kExpires } = require('../lib/core/symbols')
 const osStub = {}
 const dnsStub = {
   ...originalDns
 }
+const { tspl } = require('@matteo.collina/tspl')
 
 const { Resolver: AsyncResolver } = dnsPromises
 
@@ -250,12 +251,12 @@ const verify = (t, entry, value) => {
   if (Array.isArray(value)) {
     // eslint-disable-next-line guard-for-in
     for (const key in value) {
-      t.equal(
+      t.strictEqual(
         typeof entry[key].expires === 'number' &&
           entry[key].expires >= Date.now() - 1000,
         true
       )
-      t.equal(typeof entry[key].ttl === 'number' && entry[key].ttl >= 0, true)
+      t.strictEqual(typeof entry[key].ttl === 'number' && entry[key].ttl >= 0, true)
 
       if (!('ttl' in value[key]) && 'ttl' in entry[key]) {
         value[key].ttl = entry[key].ttl
@@ -266,11 +267,11 @@ const verify = (t, entry, value) => {
       }
     }
   } else {
-    t.equal(
+    t.strictEqual(
       typeof entry.expires === 'number' && entry.expires >= Date.now() - 1000,
       true
     )
-    t.equal(typeof entry.ttl === 'number' && entry.ttl >= 0, true)
+    t.strictEqual(typeof entry.ttl === 'number' && entry.ttl >= 0, true)
 
     if (!('ttl' in value)) {
       value.ttl = entry.ttl
@@ -281,10 +282,16 @@ const verify = (t, entry, value) => {
     }
   }
 
-  t.same(entry, value)
+  if (!(kExpires in value) && kExpires in entry) {
+    value[kExpires] = entry[kExpires]
+  }
+
+  t.deepStrictEqual(entry, value)
 }
 
 test('options.family', async (t) => {
+  t = tspl(t, { plan: 6 })
+
   const cacheable = new DNSResolver({ resolver })
 
   // IPv4
@@ -303,16 +310,21 @@ test('options.family', async (t) => {
 })
 
 test('options.all', async (t) => {
+  t = tspl(t, { plan: 5 })
+
   const cacheable = new DNSResolver({ resolver })
 
   const entries = await cacheable.lookupAsync('localhost', { all: true })
+
   verify(t, entries, [
-    { address: '::ffff:127.0.0.2', family: 6 },
-    { address: '127.0.0.1', family: 4 }
+    { address: '::ffff:127.0.0.2', family: 6, ttl: 60 },
+    { address: '127.0.0.1', family: 4, ttl: 60 }
   ])
 })
 
 test('options.all mixed with options.family', async (t) => {
+  t = tspl(t, { plan: 6 })
+
   const cacheable = new DNSResolver({ resolver })
 
   // IPv4
@@ -328,6 +340,8 @@ test('options.all mixed with options.family', async (t) => {
 })
 
 test('V4MAPPED hint', async (t) => {
+  t = tspl(t, { plan: 7 })
+
   const cacheable = new DNSResolver({ resolver })
 
   // Make sure default behavior is right
@@ -355,6 +369,8 @@ test('V4MAPPED hint', async (t) => {
 
 if (process.versions.node.split('.')[0] >= 14) {
   test('ALL hint', async (t) => {
+    t = tspl(t, { plan: 5 })
+
     const cacheable = new DNSResolver({ resolver })
 
     // ALL
@@ -372,6 +388,8 @@ if (process.versions.node.split('.')[0] >= 14) {
 }
 
 test('ADDRCONFIG hint', async (t) => {
+  t = tspl(t, { plan: 12 })
+
   // => has6 = false, family = 6
   {
     const DNSResolver = await mockedInterfaces({ has4: true, has6: false })
@@ -459,6 +477,8 @@ test('ADDRCONFIG hint', async (t) => {
 })
 
 test('caching works', async (t) => {
+  t = tspl(t, { plan: 6 })
+
   const cacheable = new DNSResolver({ resolver })
 
   // Make sure default behavior is right
@@ -482,6 +502,8 @@ test('caching works', async (t) => {
 })
 
 test('respects ttl', async (t) => {
+  t = tspl(t, { plan: 6 })
+
   const cacheable = new DNSResolver({ resolver })
 
   // Make sure default behavior is right
@@ -505,6 +527,8 @@ test('respects ttl', async (t) => {
 })
 
 test('throw when there are entries available but not for the requested family', async (t) => {
+  t = tspl(t, { plan: 1 })
+
   const cacheable = new DNSResolver({ resolver })
 
   await t.rejects(cacheable.lookupAsync('static4', { family: 6 }), {
@@ -513,10 +537,12 @@ test('throw when there are entries available but not for the requested family', 
 })
 
 test('custom servers', async (t) => {
+  t = tspl(t, { plan: 6 })
+
   const cacheable = new DNSResolver({ resolver: createResolver() })
 
   // .servers (get)
-  t.same(cacheable.servers, ['127.0.0.1'])
+  t.deepStrictEqual(cacheable.servers, ['127.0.0.1'])
   await t.rejects(cacheable.lookupAsync('unique'), { code: 'ENOTFOUND' })
 
   // .servers (set)
@@ -527,10 +553,12 @@ test('custom servers', async (t) => {
   })
 
   // Verify
-  t.same(cacheable.servers, ['127.0.0.1', '192.168.0.100'])
+  t.deepStrictEqual(cacheable.servers, ['127.0.0.1', '192.168.0.100'])
 })
 
 test('callback style', async (t) => {
+  t = tspl(t, { plan: 9 })
+
   const cacheable = new DNSResolver({ resolver })
 
   // Custom promise for this particular test
@@ -560,6 +588,8 @@ test('callback style', async (t) => {
 })
 
 test('works', async (t) => {
+  t = tspl(t, { plan: 3 })
+
   const cacheable = new DNSResolver({ resolver })
 
   verify(t, await cacheable.lookupAsync('localhost'), {
@@ -569,6 +599,8 @@ test('works', async (t) => {
 })
 
 test('options.maxTtl', async (t) => {
+  t = tspl(t, { plan: 12 })
+
   // => maxTtl = 1
   {
     const cacheable = new DNSResolver({ resolver, maxTtl: 1 })
@@ -625,6 +657,8 @@ test('options.maxTtl', async (t) => {
 })
 
 test('entry with 0 ttl', async (t) => {
+  t = tspl(t, { plan: 6 })
+
   const cacheable = new DNSResolver({ resolver })
 
   // Make sure default behavior is right
@@ -644,6 +678,8 @@ test('entry with 0 ttl', async (t) => {
 })
 
 test('http example', async (t) => {
+  t = tspl(t, { plan: 1 })
+
   const cacheable = new DNSResolver({ resolver })
 
   const options = {
@@ -658,10 +694,12 @@ test('http example', async (t) => {
 })
 
 test('.lookup() and .lookupAsync() are automatically bounded', async (t) => {
+  t = tspl(t, { plan: 3 })
+
   const cacheable = new DNSResolver({ resolver })
 
-  await t.resolves(cacheable.lookupAsync('localhost'))
-  await t.resolves(promisify(cacheable.lookup)('localhost'))
+  await t.doesNotReject(cacheable.lookupAsync('localhost'))
+  await t.doesNotReject(promisify(cacheable.lookup)('localhost'))
 
   t.throws(() => cacheable.lookup('localhost'), {
     message: 'Callback must be a function.'
@@ -669,6 +707,8 @@ test('.lookup() and .lookupAsync() are automatically bounded', async (t) => {
 })
 
 test('works (Internet connection)', async (t) => {
+  t = tspl(t, { plan: 2 })
+
   const cacheable = new DNSResolver()
 
   const { address, family } = await cacheable.lookupAsync(
@@ -680,6 +720,8 @@ test('works (Internet connection)', async (t) => {
 })
 
 test('async resolver (Internet connection)', async (t) => {
+  t = tspl(t, { plan: 1 })
+
   const cacheable = new DNSResolver({ resolver: new AsyncResolver() })
 
   const { address } = await cacheable.lookupAsync(
@@ -690,6 +732,8 @@ test('async resolver (Internet connection)', async (t) => {
 })
 
 test('clear() works', async (t) => {
+  t = tspl(t, { plan: 2 })
+
   const cacheable = new DNSResolver({ resolver })
 
   await cacheable.lookupAsync('localhost')
@@ -701,6 +745,8 @@ test('clear() works', async (t) => {
 })
 
 test('ttl works', async (t) => {
+  t = tspl(t, { plan: 2 })
+
   const cacheable = new DNSResolver({ resolver })
 
   await Promise.all([
@@ -715,6 +761,8 @@ test('ttl works', async (t) => {
 })
 
 test('fallback works', async (t) => {
+  t = tspl(t, { plan: 8 })
+
   const cacheable = new DNSResolver({ resolver, fallbackDuration: 0.1 })
   resolver.resetCounter()
 
@@ -731,7 +779,7 @@ test('fallback works', async (t) => {
 
   await cacheable.lookupAsync('osHostname', { all: true })
 
-  t.same(resolver.counter, {
+  t.deepStrictEqual(resolver.counter, {
     6: 1,
     4: 1,
     lookup: 3
@@ -743,6 +791,8 @@ test('fallback works', async (t) => {
 })
 
 test('fallback works if ip change', async (t) => {
+  t = tspl(t, { plan: 12 })
+
   const cacheable = new DNSResolver({ resolver, fallbackDuration: 3600 })
   resolver.resetCounter()
   resolver.lookupData.osHostnameChange = [
@@ -790,6 +840,8 @@ test('fallback works if ip change', async (t) => {
 })
 
 test('real DNS queries first', async (t) => {
+  t = tspl(t, { plan: 6 })
+
   const resolver = createResolver({ delay: 0 })
   const cacheable = new DNSResolver({
     resolver,
@@ -811,6 +863,8 @@ test('real DNS queries first', async (t) => {
 })
 
 test('fallback can be turned off', async (t) => {
+  t = tspl(t, { plan: 1 })
+
   const cacheable = new DNSResolver({ resolver, lookup: false })
 
   await t.rejects(cacheable.lookupAsync('osHostname', { all: true }), {
@@ -819,6 +873,8 @@ test('fallback can be turned off', async (t) => {
 })
 
 test('errors are cached', async (t) => {
+  t = tspl(t, { plan: 3 })
+
   const cacheable = new DNSResolver({ resolver, errorTtl: 0.1 })
 
   await t.rejects(cacheable.lookupAsync('doesNotExist'), {
@@ -833,6 +889,8 @@ test('errors are cached', async (t) => {
 })
 
 test('passing family as options', async (t) => {
+  t = tspl(t, { plan: 3 })
+
   const cacheable = new DNSResolver({ resolver })
 
   const promisified = promisify(cacheable.lookup)
@@ -846,6 +904,8 @@ test('passing family as options', async (t) => {
 })
 
 test('clear(hostname) works', async (t) => {
+  t = tspl(t, { plan: 1 })
+
   const cacheable = new DNSResolver({ resolver })
 
   await cacheable.lookupAsync('localhost')
@@ -857,6 +917,8 @@ test('clear(hostname) works', async (t) => {
 })
 
 test('prevents overloading DNS', async (t) => {
+  t = tspl(t, { plan: 1 })
+
   const resolver = createResolver()
   const { lookupAsync } = new DNSResolver({
     resolver,
@@ -865,7 +927,7 @@ test('prevents overloading DNS', async (t) => {
 
   await Promise.all([lookupAsync('localhost'), lookupAsync('localhost')])
 
-  t.same(resolver.counter, {
+  t.deepStrictEqual(resolver.counter, {
     4: 1,
     6: 1,
     lookup: 0
@@ -873,6 +935,8 @@ test('prevents overloading DNS', async (t) => {
 })
 
 test('returns IPv6 if no other entries available', async (t) => {
+  t = tspl(t, { plan: 3 })
+
   const DNSResolver = await mockedInterfaces({ has4: false, has6: true })
   const cacheable = new DNSResolver({ resolver })
 
@@ -884,16 +948,20 @@ test('returns IPv6 if no other entries available', async (t) => {
 })
 
 test('throws when no internet connection', async (t) => {
+  t = tspl(t, { plan: 3 })
+
   const cacheable = new DNSResolver({ resolver })
-  await t.rejects(cacheable.lookupAsync('econnrefused'), {
-    errors: [
-      { code: 'ECONNREFUSED' },
-      { code: 'ECONNREFUSED' }
-    ]
+  await t.rejects(cacheable.lookupAsync('econnrefused'), (err) => {
+    t.strictEqual(err.name, 'AggregateError')
+    t.strictEqual(err.message, 'All resolvers failed for hostname: econnrefused')
+
+    return true
   })
 })
 
 test('throws when the cache instance is broken', async (t) => {
+  t = tspl(t, { plan: 2 })
+
   const cacheable = new DNSResolver({
     resolver,
     cache: {
@@ -904,7 +972,7 @@ test('throws when the cache instance is broken', async (t) => {
     }
   })
 
-  await t.resolves(cacheable.lookupAsync('localhost'))
+  await t.doesNotReject(cacheable.lookupAsync('localhost'))
 
   await t.rejects(cacheable.lookupAsync('localhost'), {
     message: 'Cache Error. Please recreate the DNSResolver instance.'
@@ -915,6 +983,8 @@ test('throws when the cache instance is broken', async (t) => {
 })
 
 test('slow dns.lookup', async (t) => {
+  t = tspl(t, { plan: 7 })
+
   const cacheable = new DNSResolver({
     resolver,
     lookup: (hostname, options, callback) => {
@@ -936,13 +1006,15 @@ test('slow dns.lookup', async (t) => {
 
   const entry = await cacheable.lookupAsync('osHostname', 4)
 
-  t.same(entry, {
+  t.deepStrictEqual(entry, {
     address: '127.0.0.1',
     family: 4
   })
 })
 
 test('cache and query stats', async (t) => {
+  t = tspl(t, { plan: 12 })
+
   const cacheable = new DNSResolver({ resolver })
 
   t.equal(cacheable.stats.query, 0)
@@ -966,71 +1038,74 @@ test('cache and query stats', async (t) => {
 })
 
 test('agent: verify DNSResolver is working caching requests', t => {
-  t.plan(2)
+  const p = tspl(t, { plan: 1 })
+
   const { Agent, request } = require('../index')
   const dnsResolver = new DNSResolver({ resolver })
   dnsResolver.clear()
   const agent = new Agent({
     dnsResolver
   })
-  t.equal(dnsResolver[kDnsCacheSize], 0)
+  p.equal(dnsResolver[kDnsCacheSize], 0)
 
   const server = http.createServer((req, res) => {
     req.pipe(res)
   })
 
-  t.teardown(server.close.bind(server))
+  t.after(() => server.close())
 
   server.listen(0, async () => {
     const origin = `http://agentdns:${server.address().port}`
     await request(origin, { dispatcher: agent })
-    t.equal(dnsResolver[kDnsCacheSize], 1)
-    t.end()
+    p.equal(dnsResolver[kDnsCacheSize], 1)
+    p.end()
   })
 })
 
 test('agent verify DNSResolver is disabled by default', t => {
-  t.plan(2)
+  const p = tspl(t, { plan: 1 })
+
   const { Agent, request } = require('../index')
   const dnsResolver = new DNSResolver({ resolver })
   dnsResolver.clear()
   const agent = new Agent()
-  t.equal(dnsResolver[kDnsCacheSize], 0)
+  p.equal(dnsResolver[kDnsCacheSize], 0)
 
   const server = http.createServer((req, res) => {
     req.pipe(res)
   })
 
-  t.teardown(server.close.bind(server))
+  t.after(() => server.close())
 
   server.listen(0, async () => {
     const origin = `http://localhost:${server.address().port}`
     await request(origin, { dispatcher: agent })
-    t.equal(dnsResolver[kDnsCacheSize], 0)
-    t.end()
+    p.equal(dnsResolver[kDnsCacheSize], 0)
+    p.end()
   })
 })
 
 test('agent verify DNSResolver is disabled', t => {
-  t.plan(2)
+  const p = tspl(t, { plan: 1 })
+
   const { Agent, request } = require('../index')
   const dnsResolver = new DNSResolver({ resolver })
   dnsResolver.clear()
   const agent = new Agent({
     dnsResolver: false
   })
-  t.equal(dnsResolver[kDnsCacheSize], 0)
+  p.equal(dnsResolver[kDnsCacheSize], 0)
 
   const server = http.createServer((req, res) => {
     req.pipe(res)
   })
 
-  t.teardown(server.close.bind(server))
+  t.after(() => server.close())
 
   server.listen(0, async () => {
     const origin = `http://localhost:${server.address().port}`
     await request(origin, { dispatcher: agent })
-    t.equal(dnsResolver[kDnsCacheSize], 0)
-    t.end()
+    p.equal(dnsResolver[kDnsCacheSize], 0)
+    p.end()
   })
 })

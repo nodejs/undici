@@ -166,8 +166,6 @@ module.exports.mockErrors = mockErrors
 
 module.exports.DNSResolver = DNSResolver
 
-module.exports.DNSResolver = DNSResolver
-
 const { EventSource } = require('./lib/web/eventsource/eventsource')
 
 module.exports.EventSource = EventSource
