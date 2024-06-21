@@ -10,12 +10,6 @@ import { bench, run, group } from 'mitata'
 const __GLOBAL_WEBSOCKET__ = true
 const __BINARY_SIZE__ = 1024 * 256
 
-let GlobalWebSocket = null
-
-if (__GLOBAL_WEBSOCKET__ && typeof globalThis.WebSocket === 'function') {
-  GlobalWebSocket = globalThis.WebSocket
-}
-
 const binary = randomBytes(__BINARY_SIZE__)
 
 const url = 'http://localhost:5001'
@@ -51,8 +45,8 @@ group('echo', () => {
     })
     connections.push(ws)
   }
-  if (typeof GlobalWebSocket === 'function') {
-    const ws = new GlobalWebSocket(url)
+  if (__GLOBAL_WEBSOCKET__ && typeof globalThis.WebSocket === 'function') {
+    const ws = new globalThis.WebSocket(url)
     let _resolve
     ws.addEventListener('message', () => {
       _resolve()

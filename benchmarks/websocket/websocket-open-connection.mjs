@@ -8,12 +8,6 @@ import { bench, run, group } from 'mitata'
 
 const __GLOBAL_WEBSOCKET__ = true
 
-let GlobalWebSocket = null
-
-if (__GLOBAL_WEBSOCKET__ && typeof globalThis.WebSocket === 'function') {
-  GlobalWebSocket = globalThis.WebSocket
-}
-
 const url = 'http://localhost:5001'
 
 group('open connection', () => {
@@ -41,9 +35,9 @@ group('open connection', () => {
       })
     })
   })
-  if (typeof GlobalWebSocket === 'function') {
+  if (__GLOBAL_WEBSOCKET__ && typeof globalThis.WebSocket === 'function') {
     bench('undici - global', () => {
-      const ws = new GlobalWebSocket(url)
+      const ws = new globalThis.WebSocket(url)
       return new Promise((resolve, reject) => {
         ws.addEventListener('open', () => {
           resolve()
