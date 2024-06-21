@@ -7,7 +7,7 @@ import { WebSocket as UndiciWebSocket } from '../../index.js'
 import { randomBytes } from 'node:crypto'
 import { bench, run, group } from 'mitata'
 
-const __GLOBAL_WEBSOCKET__ = true
+const __GLOBAL_WEBSOCKET__ = false
 const __BINARY_SIZE__ = 1024 * 256
 
 const binary = randomBytes(__BINARY_SIZE__)

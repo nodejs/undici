@@ -6,8 +6,7 @@ import { WebSocket as WsWebSocket } from 'ws'
 import { WebSocket as UndiciWebSocket } from '../../index.js'
 import { bench, run, group } from 'mitata'
 
-const __GLOBAL_WEBSOCKET__ = true
-
+const __GLOBAL_WEBSOCKET__ = false
 const url = 'http://localhost:5001'
 
 group('open connection', () => {

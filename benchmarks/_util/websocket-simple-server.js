@@ -326,8 +326,8 @@ function setup ({ onConnection, parseBody }) {
       }
     })
 
-    socket.on('error', (err) => {
-      stream.destroy(err)
+    socket.on('error', () => {
+      stream.destroy()
     })
 
     socket.on('close', () => {
