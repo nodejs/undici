@@ -279,7 +279,7 @@ class ws {
 }
 
 /**
- * @param {{ onConnection: (ctrl: InstanceType<ws.controller>) => void; parseBody: boolean; }} param0
+ * @param {{ onConnection: (ctrl: InstanceType<ws.Controller>) => void; parseBody: boolean; }} param0
  */
 function setup ({ onConnection, parseBody }) {
   const server = http.createServer((_req, res) => {

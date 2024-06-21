@@ -1,5 +1,5 @@
 import cluster from 'node:cluster'
-import { WebSocketServer } from 'ws'
+import { setup, ws } from './../../_util/websocket-simple-server.js'
 import { cpus } from 'node:os'
 
 if (cluster.isPrimary) {
@@ -8,19 +8,16 @@ if (cluster.isPrimary) {
     cluster.fork()
   }
 } else {
-  const server = new WebSocketServer({
-    maxPayload: 600 * 1024 * 1024,
-    perMessageDeflate: false,
-    clientTracking: false,
-    port: 5001
+  const server = setup({
+    onConnection(ctrl) {
+      ctrl.onMessage = (data) => {
+        ctrl.write(ws.unmask(data.buffer, data.maskKey), data.isBinary)
+      }
+    },
+    parseBody: true
   })
 
-  server.on('connection', (socket) => {
-    socket.on('message', (data, isBinary) => {
-      socket.send(data, { binary: isBinary })
-      // socket.close();
-    })
-  })
+  server.listen(5001)
 
   cluster.on('exit', () => {
     server.close()
