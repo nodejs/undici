@@ -9,7 +9,7 @@ if (cluster.isPrimary) {
   }
 } else {
   const server = setup({
-    onConnection(ctrl) {
+    onConnection (ctrl) {
       ctrl.onMessage = (data) => {
         ctrl.write(ws.unmask(data.buffer, data.maskKey), data.isBinary)
       }
