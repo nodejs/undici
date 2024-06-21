@@ -48,21 +48,6 @@ class ws {
   /**
    * @param {Uint8Array} buffer
    */
-  static getHeadLength (buffer) {
-    if (buffer.length < 2) {
-      return null
-    }
-    const payloadLength = buffer[1] & 0x7f
-    return (
-      2 +
-      (payloadLength === 126 ? 2 : payloadLength === 127 ? 8 : 0) +
-      ((buffer[1] & 0x80) === 0x80 ? 4 : 0)
-    )
-  }
-
-  /**
-   * @param {Uint8Array} buffer
-   */
   static parseFrame (buffer) {
     if (buffer.length < 2) {
       return null
@@ -162,36 +147,32 @@ class ws {
           this.#receivedLength += chunk.length
         }
         const head = this.#head
-        const size = ws.getHeadLength(head)
-        if (size !== null) {
-          const parsed = ws.parseFrame(head)
-          if (parsed !== null) {
-            const length = head.length + this.#receivedLength
-            if (length >= parsed.offset + parsed.length) {
-              if (length !== parsed.offset + parsed.length) {
-                const start = length - (parsed.offset + parsed.length)
-                if (chunk.length < start) {
-                  if (merged) throw new Error('fatal error')
-                  this.#head = Buffer.concat([this.#head, chunk]).subarray(
-                    start
-                  )
-                } else {
-                  this.#head = chunk.subarray(start)
-                }
+
+        const parsed = ws.parseFrame(head)
+        if (parsed !== null) {
+          const length = head.length + this.#receivedLength
+          if (length >= parsed.offset + parsed.length) {
+            if (length !== parsed.offset + parsed.length) {
+              const start = length - (parsed.offset + parsed.length)
+              if (chunk.length < start) {
+                if (merged) throw new Error('fatal error')
+                this.#head = Buffer.concat([this.#head, chunk]).subarray(start)
               } else {
-                this.#head = null
+                this.#head = chunk.subarray(start)
               }
-              this.#receivedLength = 0
-              if (
-                parsed.opcode === ws.opcode.TEXT ||
-                parsed.opcode === ws.opcode.BINARY
-              ) {
-                this.onData({})
-              } else if (parsed.opcode === ws.opcode.CLOSE) {
-                this.onClose()
-              } else {
-                throw new Error('Unsupported frame opcode')
-              }
+            } else {
+              this.#head = null
+            }
+            this.#receivedLength = 0
+            if (
+              parsed.opcode === ws.opcode.TEXT ||
+              parsed.opcode === ws.opcode.BINARY
+            ) {
+              this.onData({})
+            } else if (parsed.opcode === ws.opcode.CLOSE) {
+              this.onClose()
+            } else {
+              throw new Error('Unsupported frame opcode')
             }
           }
         }
