@@ -36,9 +36,11 @@ test('post abort signal', async (t) => {
 
   server.listen(0, async () => {
     const ac = new AbortController()
-    const ures = await request(`http://0.0.0.0:${server.address().port}`, { signal: ac.signal })
+    const uresPromise = request(`http://0.0.0.0:${server.address().port}`, { signal: ac.signal })
     ac.abort()
+
     try {
+      const ures = await uresPromise
       /* eslint-disable-next-line no-unused-vars */
       for await (const chunk of ures.body) {
         // Do nothing...
@@ -61,9 +63,11 @@ test('post abort signal w/ reason', async (t) => {
   server.listen(0, async () => {
     const ac = new AbortController()
     const _err = new Error()
-    const ures = await request(`http://0.0.0.0:${server.address().port}`, { signal: ac.signal })
+    const uresPromise = request(`http://0.0.0.0:${server.address().port}`, { signal: ac.signal })
     ac.abort(_err)
+
     try {
+      const ures = await uresPromise
       /* eslint-disable-next-line no-unused-vars */
       for await (const chunk of ures.body) {
         // Do nothing...
@@ -71,6 +75,23 @@ test('post abort signal w/ reason', async (t) => {
     } catch (err) {
       t.equal(err, _err)
     }
+  })
+  await t.completed
+})
+
+test('post abort signal after request completed', async (t) => {
+  t = tspl(t, { plan: 1 })
+
+  const server = createServer((req, res) => {
+    res.end('asd')
+  })
+  after(() => server.close())
+
+  server.listen(0, async () => {
+    const ac = new AbortController()
+    const ures = await request(`http://0.0.0.0:${server.address().port}`, { signal: ac.signal })
+    ac.abort()
+    t.equal(await ures.body.text(), 'asd')
   })
   await t.completed
 })
