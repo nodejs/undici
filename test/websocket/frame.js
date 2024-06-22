@@ -11,11 +11,12 @@ test('Don not use pooled buffer in mask pool', () => {
   let counter = 0
   try {
     Buffer.allocUnsafe = (n) => {
-      if (counter++ === 0) return allocUnsafe(n)
-      throw new Error('do not use!!!')
+      counter++
+      return allocUnsafe(n)
     }
     // create mask pool
     new WebsocketFrameSend(Buffer.alloc(0)).createFrame(opcodes.BINARY)
+    assert.strictEqual(counter, 1)
   } finally {
     Buffer.allocUnsafe = allocUnsafe
   }
