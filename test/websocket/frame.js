@@ -5,10 +5,13 @@ const assert = require('node:assert')
 const { WebsocketFrameSend } = require('../../lib/web/websocket/frame')
 const { opcodes } = require('../../lib/web/websocket/constants')
 
+// Always be above all tests.
 test('Don not use pooled buffer in mask pool', () => {
   const allocUnsafe = Buffer.allocUnsafe
+  let counter = 0
   try {
-    Buffer.allocUnsafe = () => {
+    Buffer.allocUnsafe = (n) => {
+      if (counter++ === 0) return allocUnsafe(n)
       throw new Error('do not use!!!')
     }
     // create mask pool
