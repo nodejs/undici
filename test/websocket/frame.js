@@ -5,6 +5,19 @@ const assert = require('node:assert')
 const { WebsocketFrameSend } = require('../../lib/web/websocket/frame')
 const { opcodes } = require('../../lib/web/websocket/constants')
 
+test('Don not use pooled buffer in mask pool', () => {
+  const allocUnsafe = Buffer.allocUnsafe
+  try {
+    Buffer.allocUnsafe = () => {
+      throw new Error('do not use!!!')
+    }
+    // create mask pool
+    new WebsocketFrameSend(Buffer.alloc(0)).createFrame(opcodes.BINARY)
+  } finally {
+    Buffer.allocUnsafe = allocUnsafe
+  }
+})
+
 test('Writing 16-bit frame length value at correct offset when buffer has a non-zero byteOffset', () => {
   /*
   When writing 16-bit frame lengths, a `DataView` was being used without setting a `byteOffset` into the buffer:
