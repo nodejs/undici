@@ -125,3 +125,18 @@ async function deleteRequest (port = 3001) {
   }
 }
 ```
+
+## Cacheable DNS Lookup
+
+### Using CacheableLookup to cache DNS lookups in undici
+
+```js
+import { Agent } from 'undici'
+import CacheableLookup from 'cacheable-lookup';
+
+const cacheable = new CacheableLookup(opts)
+
+const agent = new Agent({
+  connect: { lookup: cacheable.lookup }
+})
+```
