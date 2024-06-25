@@ -22,9 +22,11 @@ const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 const DecoratorHandler = require('./lib/handler/decorator-handler')
 const RedirectHandler = require('./lib/handler/redirect-handler')
 const createRedirectInterceptor = require('./lib/interceptor/redirect-interceptor')
+const compose = require('./lib/util/compose')
 
 Object.assign(Dispatcher.prototype, api)
 
+module.exports.compose = compose
 module.exports.Dispatcher = Dispatcher
 module.exports.Client = Client
 module.exports.Pool = Pool
