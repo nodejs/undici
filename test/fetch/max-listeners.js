@@ -1,4 +1,6 @@
-const { setMaxListeners, getMaxListeners } = require('events')
+'use strict'
+
+const { setMaxListeners, getMaxListeners, defaultMaxListeners } = require('events')
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { fetch } = require('../..')
