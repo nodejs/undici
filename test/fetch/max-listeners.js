@@ -3,7 +3,7 @@
 const { setMaxListeners, getMaxListeners, defaultMaxListeners } = require('events')
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { fetch } = require('../..')
+const { Request } = require('../..')
 
 test('test max listeners', async (t) => {
     const controller = new AbortController();
