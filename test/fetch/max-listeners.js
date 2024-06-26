@@ -5,7 +5,7 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { Request } = require('../..')
 
-test('test max listeners', async (t) => {
+test('test max listeners', (t) => {
     const controller = new AbortController();
     setMaxListeners(Infinity, controller.signal)
     for(let i=0;i<=defaultMaxListeners;i++)
