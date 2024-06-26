@@ -13,7 +13,7 @@ test('Do not use pooled buffer in body mixin', async () => {
       counter++
       return allocUnsafe(...args)
     }
-    await new Response([new Uint8Array(1)]).text()
+    await new Response(new Uint8Array(1)).text()
     assert.strictEqual(counter, 0)
   } finally {
     Buffer.allocUnsafe = allocUnsafe
