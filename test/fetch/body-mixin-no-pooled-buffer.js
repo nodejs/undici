@@ -4,7 +4,7 @@ const { Response } = require('../../')
 const assert = require('node:assert')
 const { test } = require('node:test')
 
-test('Don not use pooled buffer in body mixin', async () => {
+test('Do not use pooled buffer in body mixin', async () => {
   const allocUnsafe = Buffer.allocUnsafe
 
   try {
