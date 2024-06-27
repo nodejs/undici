@@ -16,7 +16,7 @@ test('Do not use pooled buffer in body mixin', async () => {
     // Do not use Buffer.allocUnsafe as it exposes the body to the pooled buffer.
     await new Response('...any body').text()
     // Body will be printed included.
-    // console.log(new TextDecoder().decode(Buffer.allocUnsafe(1).buffer.slice(304)))
+    // console.log(new TextDecoder().decode(Buffer.allocUnsafe(1).buffer))
     assert.strictEqual(counter, 0)
   } finally {
     Buffer.allocUnsafe = allocUnsafe
