@@ -10,7 +10,7 @@ test('Do not use pooled buffer in body mixin', async () => {
   try {
     let counter = 0
     Buffer.allocUnsafe = function (...args) {
-      counter++a
+      counter++
       return allocUnsafe(...args)
     }
     // Do not use Buffer.allocUnsafe as it exposes the body to the pooled buffer.
