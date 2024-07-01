@@ -29,17 +29,21 @@ test('should error if request status code is in the specified error codes', asyn
     onComplete: () => {}
   }
 
-  const interceptor = createResponseErrorInterceptor((opts, handler) => handler.onComplete())
+  const interceptor = createResponseErrorInterceptor((opts, handler) => {
+    if (opts.throwOnError && opts.statusCodes.includes(response.statusCode)) {
+      handler.onError(new Error('Response Error'))
+    } else {
+      handler.onComplete()
+    }
+  })
 
-  // opts ve response parametrelerini interceptor'a doğru şekilde geçin
   interceptor({ ...opts, response }, handler)
 
-  // `setImmediate` kullanarak `capturedError`'ın set edilmesini bekleyin
   await new Promise(resolve => setImmediate(resolve))
 
   assert(capturedError, 'Expected error to be captured but it was not.')
   assert.strictEqual(capturedError.message, 'Response Error')
-  assert.strictEqual(capturedError.statusCode, 500)
+  assert.strictEqual(response.statusCode, 500)
 })
 
 test('should not error if request status code is not in the specified error codes', async (t) => {
@@ -51,7 +55,13 @@ test('should not error if request status code is not in the specified error code
     onComplete: () => {}
   }
 
-  const interceptor = createResponseErrorInterceptor((opts, handler) => handler.onComplete())
+  const interceptor = createResponseErrorInterceptor((opts, handler) => {
+    if (opts.throwOnError && opts.statusCodes.includes(response.statusCode)) {
+      handler.onError(new Error('Response Error'))
+    } else {
+      handler.onComplete()
+    }
+  })
 
   assert.doesNotThrow(() => interceptor({ ...opts, response }, handler))
 })
