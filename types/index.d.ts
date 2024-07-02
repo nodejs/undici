@@ -25,7 +25,6 @@ export * from './cookies'
 export * from './eventsource'
 export * from './fetch'
 export * from './file'
-export * from './filereader'
 export * from './formdata'
 export * from './diagnostics-channel'
 export * from './websocket'
@@ -65,7 +64,6 @@ declare namespace Undici {
   var Request: typeof import('./fetch').Request;
   var FormData: typeof import('./formdata').FormData;
   var File: typeof import('./file').File;
-  var FileReader: typeof import('./filereader').FileReader;
   var caches: typeof import('./cache').caches;
   var interceptors: typeof import('./interceptors').default;
 }

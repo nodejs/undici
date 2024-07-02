@@ -104,7 +104,6 @@ git node wpt resources
 git node wpt interfaces
 git node wpt common
 git node wpt fetch
-git node wpt FileAPI
 git node wpt xhr
 git node wpt websockets
 git node wpt mimesniff

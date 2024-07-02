@@ -5,7 +5,7 @@ import { setFlagsFromString } from 'node:v8'
 import { runInNewContext, runInThisContext } from 'node:vm'
 import { parentPort, workerData } from 'node:worker_threads'
 import {
-  fetch, File, FileReader, FormData, Headers, Request, Response, setGlobalOrigin
+  fetch, File, FormData, Headers, Request, Response, setGlobalOrigin
 } from '../../../index.js'
 import { CloseEvent } from '../../../lib/web/websocket/events.js'
 import { WebSocket } from '../../../lib/web/websocket/websocket.js'
@@ -63,10 +63,6 @@ Object.defineProperties(globalThis, {
   Response: {
     ...globalPropertyDescriptors,
     value: Response
-  },
-  FileReader: {
-    ...globalPropertyDescriptors,
-    value: FileReader
   },
   WebSocket: {
     ...globalPropertyDescriptors,
