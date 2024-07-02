@@ -3,9 +3,9 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
-const { FormData, File, Response, Request } = require('../../')
+const { FormData, Response, Request } = require('../../')
 const { Blob: ThirdPartyBlob } = require('formdata-node')
-const { Blob } = require('node:buffer')
+const { Blob, File } = require('node:buffer')
 const { isFormDataLike } = require('../../lib/core/util')
 const ThirdPartyFormDataInvalid = require('form-data')
 
