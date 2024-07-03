@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import Undici, {Pool, Client, errors, fetch, Interceptable, RedirectHandler, DecoratorHandler, Headers, Response, Request, FormData, File} from '../..'
+import Undici, {Pool, Client, errors, fetch, Interceptable, RedirectHandler, DecoratorHandler, Headers, Response, Request, FormData} from '../..'
 import Dispatcher from "../../types/dispatcher";
 
 expectAssignable<Pool>(new Undici.Pool('', {}))
@@ -11,7 +11,6 @@ expectAssignable<typeof Headers>(Undici.Headers)
 expectAssignable<typeof Response>(Undici.Response)
 expectAssignable<typeof Request>(Undici.Request)
 expectAssignable<typeof FormData>(Undici.FormData)
-expectAssignable<typeof File>(Undici.File)
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.dump())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.redirect())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.retry())
