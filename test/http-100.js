@@ -2,7 +2,7 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { Client } = require('..')
+const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const net = require('node:net')
 const { once } = require('node:events')
@@ -48,22 +48,23 @@ test('error 103 body', async (t) => {
     socket.write('\r\n')
     socket.write('a\r\n')
   })
-  after(() => server.close())
   server.listen(0)
 
   await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`)
+
+  after(() => server.close())
   after(() => client.close())
 
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err) => {
-    t.strictEqual(err.code, 'HPE_INVALID_CONSTANT')
-  })
   client.on('disconnect', () => {
     t.ok(true, 'pass')
   })
+
+  t.rejects(client.request({
+    path: '/',
+    method: 'GET'
+  }), errors.HTTPParserError)
+
   await t.completed
 })
 
