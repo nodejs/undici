@@ -674,7 +674,7 @@ test('request bytes', async (t) => {
     })
     const bytes = await body.bytes()
 
-    t.deepStrictEqual(Buffer.from(JSON.stringify(obj)), bytes)
+    t.deepStrictEqual(new TextEncoder().encode(JSON.stringify(obj)), bytes)
     t.ok(bytes instanceof Uint8Array)
   })
 
