@@ -1,6 +1,8 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
 const { test, after } = require('node:test')
 const undici = require('../..')
 const {
@@ -669,4 +671,54 @@ test('removes cookie header on third party origin', async t => {
   t.strictEqual(body, '')
 
   await t.completed
+})
+
+test('Cross-origin redirects clear forbidden headers', { only: true }, async (t) => {
+  const { strictEqual } = tspl(t, { plan: 6 })
+
+  const server1 = createServer((req, res) => {
+    strictEqual(req.headers.cookie, undefined)
+    strictEqual(req.headers.authorization, undefined)
+    strictEqual(req.headers['proxy-authorization'], undefined)
+    res.end('redirected')
+  }).listen(0)
+
+  const server2 = createServer((req, res) => {
+    strictEqual(req.headers.authorization, 'test')
+    strictEqual(req.headers.cookie, 'ddd=dddd')
+
+    res.writeHead(302, {
+      ...req.headers,
+      location: `http://localhost:${server1.address().port}`
+    })
+    res.end()
+  }).listen(0)
+
+  t.after(() => {
+    server1.close()
+    server2.close()
+  })
+
+  await Promise.all([
+    once(server1, 'listening'),
+    once(server2, 'listening')
+  ])
+
+  console.log(server1.address().port)
+  console.log(server2.address().port)
+
+  const client = new undici.Client(`http://localhost:${server2.address().port}`).compose(redirect({ maxRedirections: 1 }))
+  const res = await client.request({
+    maxRedirections: 1,
+    path: '/',
+    method: 'GET',
+    headers: {
+      Authorization: 'test',
+      Cookie: 'ddd=dddd',
+      'Proxy-Authorization': 'test'
+    }
+  })
+
+  const text = await res.body.text()
+  strictEqual(text, 'redirected')
 })
