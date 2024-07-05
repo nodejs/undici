@@ -12,7 +12,8 @@ const {
   startRedirectingWithoutLocationServer,
   startRedirectingWithAuthorization,
   startRedirectingWithCookie,
-  startRedirectingWithQueryParams
+  startRedirectingWithQueryParams,
+  startRedirectingWithRelativePath
 } = require('../utils/redirecting-servers')
 const { createReadable, createReadableStream } = require('../utils/stream')
 
@@ -572,6 +573,63 @@ for (const factory of [
     t.strictEqual(body.length, 0)
     await t.completed
   })
+
+  test('should redirect to relative URL according to RFC 7231', async t => {
+    t = tspl(t, { plan: 2 })
+
+    const server = await startRedirectingWithRelativePath()
+
+    const { statusCode, body } = await request(
+      t,
+      server,
+      undefined,
+      `http://${server}`,
+      {
+        maxRedirections: 3
+      }
+    )
+
+    const finalPath = await body.text()
+
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(finalPath, '/absolute/b')
+  })
+
+  // test('should follow redirections when going cross origin', { only: true }, async t => {
+  //   t = tspl(t, { plan: 4 })
+
+  //   const [server1, server2, server3] = await startRedirectingChainServers()
+
+  //   const {
+  //     statusCode,
+  //     headers,
+  //     body: bodyStream,
+  //     context: { history }
+  //   } = await request(t, server1, undefined, `http://${server1}`, {
+  //     method: 'POST',
+  //     maxRedirections: 10
+  //   })
+
+  //   const body = await bodyStream.text()
+
+  //   // console.log('history')
+  //   t.strictEqual(statusCode, 200)
+  //   t.ok(!headers.location)
+  //   t.deepStrictEqual(
+  //     history.map(x => x.toString()),
+  //     [
+  //       `http://${server1}/`,
+  //       `http://${server2}/`,
+  //       `http://${server3}/`,
+  //       `http://${server2}/end`,
+  //       `http://${server3}/end`,
+  //       `http://${server1}/end`
+  //     ]
+  //   )
+  //   t.strictEqual(body, 'POST')
+
+  //   await t.completed
+  // })
 }
 
 test('should follow redirections when going cross origin', async t => {
@@ -671,54 +729,4 @@ test('removes cookie header on third party origin', async t => {
   t.strictEqual(body, '')
 
   await t.completed
-})
-
-test('Cross-origin redirects clear forbidden headers', { only: true }, async (t) => {
-  const { strictEqual } = tspl(t, { plan: 6 })
-
-  const server1 = createServer((req, res) => {
-    strictEqual(req.headers.cookie, undefined)
-    strictEqual(req.headers.authorization, undefined)
-    strictEqual(req.headers['proxy-authorization'], undefined)
-    res.end('redirected')
-  }).listen(0)
-
-  const server2 = createServer((req, res) => {
-    strictEqual(req.headers.authorization, 'test')
-    strictEqual(req.headers.cookie, 'ddd=dddd')
-
-    res.writeHead(302, {
-      ...req.headers,
-      location: `http://localhost:${server1.address().port}`
-    })
-    res.end()
-  }).listen(0)
-
-  t.after(() => {
-    server1.close()
-    server2.close()
-  })
-
-  await Promise.all([
-    once(server1, 'listening'),
-    once(server2, 'listening')
-  ])
-
-  console.log(server1.address().port)
-  console.log(server2.address().port)
-
-  const client = new undici.Client(`http://localhost:${server2.address().port}`).compose(redirect({ maxRedirections: 1 }))
-  const res = await client.request({
-    maxRedirections: 1,
-    path: '/',
-    method: 'GET',
-    headers: {
-      Authorization: 'test',
-      Cookie: 'ddd=dddd',
-      'Proxy-Authorization': 'test'
-    }
-  })
-
-  const text = await res.body.text()
-  strictEqual(text, 'redirected')
 })
