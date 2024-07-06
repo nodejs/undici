@@ -83,6 +83,27 @@ describe('Readable', () => {
     t.deepStrictEqual(arrayBuffer, expected)
   })
 
+  test('.bytes()', async function (t) {
+    t = tspl(t, { plan: 1 })
+
+    function resume () {
+    }
+    function abort () {
+    }
+    const r = new Readable({ resume, abort })
+
+    r.push(Buffer.from('hello'))
+    r.push(Buffer.from(' world'))
+
+    process.nextTick(() => {
+      r.push(null)
+    })
+
+    const bytes = await r.bytes()
+
+    t.deepStrictEqual(bytes, new TextEncoder().encode('hello world'))
+  })
+
   test('.json()', async function (t) {
     t = tspl(t, { plan: 1 })
 
