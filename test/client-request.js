@@ -655,6 +655,32 @@ test('request arrayBuffer', async (t) => {
   await t.completed
 })
 
+test('request bytes', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const obj = { asd: true }
+  const server = createServer((req, res) => {
+    res.end(JSON.stringify(obj))
+  })
+  after(() => server.close())
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    const bytes = await body.bytes()
+
+    t.deepStrictEqual(new TextEncoder().encode(JSON.stringify(obj)), bytes)
+    t.ok(bytes instanceof Uint8Array)
+  })
+
+  await t.completed
+})
+
 test('request body', async (t) => {
   t = tspl(t, { plan: 1 })
 
