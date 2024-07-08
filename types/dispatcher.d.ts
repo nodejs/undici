@@ -139,7 +139,7 @@ declare namespace Dispatcher {
     /** Default: false */
     redirectionLimitReached?: boolean;
     /** Default: `null` */
-    responseHeader?: 'raw' | null;
+    responseHeaders?: 'raw' | null;
   }
   export interface RequestOptions extends DispatchOptions {
     /** Default: `null` */
@@ -153,7 +153,7 @@ declare namespace Dispatcher {
     /** Default: `null` */
     onInfo?: (info: { statusCode: number, headers: Record<string, string | string[]> }) => void;
     /** Default: `null` */
-    responseHeader?: 'raw' | null;
+    responseHeaders?: 'raw' | null;
     /** Default: `64 KiB` */
     highWaterMark?: number;
   }
@@ -176,7 +176,7 @@ declare namespace Dispatcher {
     /** Default: false */
     redirectionLimitReached?: boolean;
     /** Default: `null` */
-    responseHeader?: 'raw' | null;
+    responseHeaders?: 'raw' | null;
   }
   export interface ConnectData {
     statusCode: number;
@@ -244,6 +244,7 @@ declare namespace Dispatcher {
     readonly bodyUsed: boolean;
     arrayBuffer(): Promise<ArrayBuffer>;
     blob(): Promise<Blob>;
+    bytes(): Promise<Uint8Array>;
     formData(): Promise<never>;
     json(): Promise<unknown>;
     text(): Promise<string>;

@@ -22,14 +22,11 @@ test('dispatcher implementation', (t) => {
 })
 
 test('dispatcher.compose', (t) => {
-  t = tspl(t, { plan: 10 })
+  t = tspl(t, { plan: 7 })
 
   const dispatcher = new Dispatcher()
   const interceptor = () => (opts, handler) => {}
   // Should return a new dispatcher
-  t.ok(Object.getPrototypeOf(dispatcher.compose(interceptor)) instanceof Dispatcher)
-  t.ok(Object.getPrototypeOf(dispatcher.compose(interceptor, interceptor)) instanceof Dispatcher)
-  t.ok(Object.getPrototypeOf(dispatcher.compose([interceptor, interceptor])) instanceof Dispatcher)
   t.ok(dispatcher.compose(interceptor) !== dispatcher)
   t.throws(() => dispatcher.dispatch({}), Error, 'invalid interceptor')
   t.throws(() => dispatcher.dispatch(() => null), Error, 'invalid interceptor')

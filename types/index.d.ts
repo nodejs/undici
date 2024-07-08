@@ -24,8 +24,6 @@ export * from './util'
 export * from './cookies'
 export * from './eventsource'
 export * from './fetch'
-export * from './file'
-export * from './filereader'
 export * from './formdata'
 export * from './diagnostics-channel'
 export * from './websocket'
@@ -42,7 +40,7 @@ declare namespace Undici {
   var RedirectHandler: typeof import ('./handlers').RedirectHandler
   var DecoratorHandler: typeof import ('./handlers').DecoratorHandler
   var RetryHandler: typeof import ('./retry-handler').default
-  var createRedirectInterceptor: typeof import ('./interceptors').createRedirectInterceptor
+  var createRedirectInterceptor: typeof import ('./interceptors').default.createRedirectInterceptor
   var BalancedPool: typeof import('./balanced-pool').default;
   var Client: typeof import('./client').default;
   var buildConnector: typeof import('./connector').default;
@@ -64,12 +62,6 @@ declare namespace Undici {
   var Response: typeof import('./fetch').Response;
   var Request: typeof import('./fetch').Request;
   var FormData: typeof import('./formdata').FormData;
-  var File: typeof import('./file').File;
-  var FileReader: typeof import('./filereader').FileReader;
   var caches: typeof import('./cache').caches;
-  var interceptors: {
-    dump: typeof import('./interceptors').dump;
-    retry: typeof import('./interceptors').retry;
-    redirect: typeof import('./interceptors').redirect;
-  }
+  var interceptors: typeof import('./interceptors').default;
 }
