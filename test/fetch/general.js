@@ -3,7 +3,6 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const {
-  File,
   FormData,
   Headers,
   Request,
@@ -12,7 +11,6 @@ const {
 
 test('Symbol.toStringTag descriptor', () => {
   for (const cls of [
-    File,
     FormData,
     Headers,
     Request,

@@ -1,7 +1,7 @@
-import { Blob } from 'buffer'
+import { Blob, File } from 'buffer'
 import { Readable } from 'stream'
 import { expectAssignable, expectType } from 'tsd'
-import { File, FormData, SpecIterableIterator } from '../..'
+import { FormData, SpecIterableIterator } from '../..'
 import Dispatcher from '../../types/dispatcher'
 
 declare const dispatcherOptions: Dispatcher.DispatchOptions
