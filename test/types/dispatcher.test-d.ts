@@ -66,6 +66,7 @@ expectAssignable<Dispatcher>(new Dispatcher())
   }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: 'GET', responseHeaders: 'raw' }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: 'GET', responseHeaders: null }))
+  expectAssignable<Promise<Dispatcher.ResponseData<{ example: string }>>>(dispatcher.request({ origin: '', path: '', method: 'GET', opaque: { example: '' } }))
 
   // pipeline
   expectAssignable<Duplex>(dispatcher.pipeline({ origin: '', path: '', method: 'GET', maxRedirections: 0 }, data => {
@@ -84,6 +85,11 @@ expectAssignable<Dispatcher>(new Dispatcher())
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))
+  expectAssignable<Duplex>(dispatcher.pipeline({ origin: '', path: '', method: 'GET', opaque: { example: '' } }, data => {
+    expectAssignable<Dispatcher.PipelineHandlerData<{ example: string }>>(data)
+    expectType<{ example: string }>(data.opaque)
+    return new Readable()
+  }))
 
   // stream
   expectAssignable<Promise<Dispatcher.StreamData>>(dispatcher.stream({ origin: '', path: '', method: 'GET', maxRedirections: 0 }, data => {
@@ -94,6 +100,10 @@ expectAssignable<Dispatcher>(new Dispatcher())
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
+  expectAssignable<Promise<Dispatcher.StreamData<{ example: string }>>>(dispatcher.stream({ origin: '', path: '', method: 'GET', opaque: { example: '' } }, data => {
+    expectType<{ example: string }>(data.opaque);
+    return new Writable();
+  }));
   expectAssignable<void>(dispatcher.stream(
     { origin: '', path: '', method: 'GET', reset: false },
     data => {
@@ -114,6 +124,18 @@ expectAssignable<Dispatcher>(new Dispatcher())
     (err, data) => {
       expectAssignable<Error | null>(err)
       expectAssignable<Dispatcher.StreamData>(data)
+    }
+  ))
+  expectAssignable<void>(dispatcher.stream(
+    { origin: new URL('http://localhost'), path: '', method: 'GET', opaque: { example: '' } },
+    data => {
+      expectAssignable<Dispatcher.StreamFactoryData<{ example: string }>>(data)
+      return new Writable()
+    },
+    (err, data) => {
+      expectAssignable<Error | null>(err)
+      expectAssignable<Dispatcher.StreamData<{ example: string }>>(data)
+      expectType<{ example: string }>(data.opaque)
     }
   ))
   expectAssignable<Promise<Dispatcher.StreamData>>(dispatcher.stream({ origin: '', path: '', method: 'GET', responseHeaders: 'raw' }, data => {
