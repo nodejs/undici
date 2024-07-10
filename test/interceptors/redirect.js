@@ -20,14 +20,14 @@ const {
 
 for (const factory of [
   (server, opts) =>
-    new undici.Agent(opts).compose(redirect(opts?.maxRedirections)),
+    new undici.Agent(opts).compose(redirect({ maxRedirections: opts?.maxRedirections })),
   (server, opts) =>
     new undici.Pool(`http://${server}`, opts).compose(
-      redirect(opts?.maxRedirections)
+      redirect({ maxRedirections: opts?.maxRedirections })
     ),
   (server, opts) =>
     new undici.Client(`http://${server}`, opts).compose(
-      redirect(opts?.maxRedirections)
+      redirect({ maxRedirections: opts?.maxRedirections })
     )
 ]) {
   const request = (t, server, opts, ...args) => {
