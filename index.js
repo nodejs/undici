@@ -21,7 +21,6 @@ const RetryHandler = require('./lib/handler/retry-handler')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 const DecoratorHandler = require('./lib/handler/decorator-handler')
 const RedirectHandler = require('./lib/handler/redirect-handler')
-const createRedirectInterceptor = require('./lib/interceptor/redirect-interceptor')
 
 Object.assign(Dispatcher.prototype, api)
 
@@ -37,7 +36,6 @@ module.exports.RetryHandler = RetryHandler
 
 module.exports.DecoratorHandler = DecoratorHandler
 module.exports.RedirectHandler = RedirectHandler
-module.exports.createRedirectInterceptor = createRedirectInterceptor
 module.exports.interceptors = {
   redirect: require('./lib/interceptor/redirect'),
   retry: require('./lib/interceptor/retry'),

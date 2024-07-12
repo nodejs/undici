@@ -127,7 +127,6 @@ Arguments:
 * **options** [`RequestOptions`](./docs/docs/api/Dispatcher.md#parameter-requestoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
-  * **maxRedirections** `Integer` - Default: `0`
 
 Returns a promise with the result of the `Dispatcher.request` method.
 
@@ -143,7 +142,6 @@ Arguments:
 * **options** [`StreamOptions`](./docs/docs/api/Dispatcher.md#parameter-streamoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
-  * **maxRedirections** `Integer` - Default: `0`
 * **factory** `Dispatcher.stream.factory`
 
 Returns a promise with the result of the `Dispatcher.stream` method.
@@ -160,7 +158,6 @@ Arguments:
 * **options** [`PipelineOptions`](./docs/docs/api/Dispatcher.md#parameter-pipelineoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
-  * **maxRedirections** `Integer` - Default: `0`
 * **handler** `Dispatcher.pipeline.handler`
 
 Returns: `stream.Duplex`
@@ -178,7 +175,6 @@ Arguments:
 * **url** `string | URL | UrlObject`
 * **options** [`ConnectOptions`](./docs/docs/api/Dispatcher.md#parameter-connectoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
-  * **maxRedirections** `Integer` - Default: `0`
 * **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
 
 Returns a promise with the result of the `Dispatcher.connect` method.
@@ -338,7 +334,6 @@ Arguments:
 * **url** `string | URL | UrlObject`
 * **options** [`UpgradeOptions`](./docs/docs/api/Dispatcher.md#parameter-upgradeoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
-  * **maxRedirections** `Integer` - Default: `0`
 * **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
 
 Returns a promise with the result of the `Dispatcher.upgrade` method.
