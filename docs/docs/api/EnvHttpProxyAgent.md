@@ -133,7 +133,6 @@ Implements [`Dispatcher.dispatch(options, handler)`](Dispatcher.md#dispatcherdis
 Extends: [`DispatchOptions`](Dispatcher.md#parameter-dispatchoptions)
 
 * **origin** `string | URL`
-* **maxRedirections** `Integer`.
 
 Implements [`Dispatcher.destroy([error, callback])`](Dispatcher.md#dispatcherdestroyerror-callback-promise).
 

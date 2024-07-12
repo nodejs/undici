@@ -19,7 +19,6 @@ Returns: `Agent`
 Extends: [`PoolOptions`](Pool.md#parameter-pooloptions)
 
 * **factory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Pool(origin, opts)`
-* **maxRedirections** `Integer` - Default: `0`. The number of HTTP redirection to follow unless otherwise specified in `DispatchOptions`.
 
 ## Instance Properties
 
@@ -50,7 +49,6 @@ Implements [`Dispatcher.dispatch(options, handler)`](Dispatcher.md#dispatcherdis
 Extends: [`DispatchOptions`](Dispatcher.md#parameter-dispatchoptions)
 
 * **origin** `string | URL`
-* **maxRedirections** `Integer`.
 
 Implements [`Dispatcher.destroy([error, callback])`](Dispatcher.md#dispatcherdestroyerror-callback-promise).
 

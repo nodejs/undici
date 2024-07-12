@@ -13,11 +13,12 @@ const {
   startRedirectingWithQueryParams
 } = require('./utils/redirecting-servers')
 const { createReadable, createReadableStream } = require('./utils/stream')
+const redirect = undici.interceptors.redirect
 
 for (const factory of [
-  (server, opts) => new undici.Agent(opts),
-  (server, opts) => new undici.Pool(`http://${server}`, opts),
-  (server, opts) => new undici.Client(`http://${server}`, opts)
+  (server, opts) => new undici.Agent(opts).compose(redirect({ maxRedirections: opts?.maxRedirections })),
+  (server, opts) => new undici.Pool(`http://${server}`, opts).compose(redirect({ maxRedirections: opts?.maxRedirections })),
+  (server, opts) => new undici.Client(`http://${server}`, opts).compose(redirect({ maxRedirections: opts?.maxRedirections }))
 ]) {
   const request = (t, server, opts, ...args) => {
     const dispatcher = factory(server, opts)
@@ -440,7 +441,7 @@ test('should follow redirections when going cross origin', async t => {
 
   const { statusCode, headers, body: bodyStream, context: { history } } = await undici.request(`http://${server1}`, {
     method: 'POST',
-    maxRedirections: 10
+    dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 10 }))
   })
 
   const body = await bodyStream.text()
@@ -466,7 +467,7 @@ test('should handle errors (callback)', async t => {
   undici.request(
     'http://localhost:0',
     {
-      maxRedirections: 10
+      dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 10 }))
     },
     error => {
       t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
@@ -480,7 +481,7 @@ test('should handle errors (promise)', async t => {
   t = tspl(t, { plan: 1 })
 
   try {
-    await undici.request('http://localhost:0', { maxRedirections: 10 })
+    await undici.request('http://localhost:0', { dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 10 })) })
     t.fail('Did not throw')
   } catch (error) {
     t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
@@ -494,7 +495,7 @@ test('removes authorization header on third party origin', async t => {
 
   const [server1] = await startRedirectingWithAuthorization('secret')
   const { body: bodyStream } = await undici.request(`http://${server1}`, {
-    maxRedirections: 10,
+    dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 10 })),
     headers: {
       authorization: 'secret'
     }
@@ -511,7 +512,7 @@ test('removes cookie header on third party origin', async t => {
   t = tspl(t, { plan: 1 })
   const [server1] = await startRedirectingWithCookie('a=b')
   const { body: bodyStream } = await undici.request(`http://${server1}`, {
-    maxRedirections: 10,
+    dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 10 })),
     headers: {
       cookie: 'a=b'
     }

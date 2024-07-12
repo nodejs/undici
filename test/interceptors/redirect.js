@@ -1,7 +1,9 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
+const { createServer } = require('node:http')
+const { once } = require('node:events')
+const { tspl } = require('@matteo.collina/tspl')
 const undici = require('../..')
 const {
   startRedirectingServer,
@@ -10,7 +12,9 @@ const {
   startRedirectingWithoutLocationServer,
   startRedirectingWithAuthorization,
   startRedirectingWithCookie,
-  startRedirectingWithQueryParams
+  startRedirectingWithQueryParams,
+  startServer,
+  startRedirectingWithRelativePath
 } = require('../utils/redirecting-servers')
 const { createReadable, createReadableStream } = require('../utils/stream')
 
@@ -20,7 +24,9 @@ const {
 
 for (const factory of [
   (server, opts) =>
-    new undici.Agent(opts).compose(redirect({ maxRedirections: opts?.maxRedirections })),
+    new undici.Agent(opts).compose(
+      redirect({ maxRedirections: opts?.maxRedirections })
+    ),
   (server, opts) =>
     new undici.Pool(`http://${server}`, opts).compose(
       redirect({ maxRedirections: opts?.maxRedirections })
@@ -584,7 +590,7 @@ test('should follow redirections when going cross origin', async t => {
     context: { history }
   } = await undici.request(`http://${server1}`, {
     method: 'POST',
-    maxRedirections: 10
+    dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 10 }))
   })
 
   const body = await bodyStream.text()
@@ -613,7 +619,9 @@ test('should handle errors (callback)', async t => {
   undici.request(
     'http://localhost:0',
     {
-      maxRedirections: 10
+      dispatcher: new undici.Agent({}).compose(
+        redirect({ maxRedirections: 10 })
+      )
     },
     error => {
       t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
@@ -627,7 +635,11 @@ test('should handle errors (promise)', async t => {
   t = tspl(t, { plan: 1 })
 
   try {
-    await undici.request('http://localhost:0', { maxRedirections: 10 })
+    await undici.request('http://localhost:0', {
+      dispatcher: new undici.Agent({}).compose(
+        redirect({ maxRedirections: 10 })
+      )
+    })
     t.fail('Did not throw')
   } catch (error) {
     t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
@@ -641,7 +653,7 @@ test('removes authorization header on third party origin', async t => {
 
   const [server1] = await startRedirectingWithAuthorization('secret')
   const { body: bodyStream } = await undici.request(`http://${server1}`, {
-    maxRedirections: 10,
+    dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 10 })),
     headers: {
       authorization: 'secret'
     }
@@ -658,7 +670,7 @@ test('removes cookie header on third party origin', async t => {
   t = tspl(t, { plan: 1 })
   const [server1] = await startRedirectingWithCookie('a=b')
   const { body: bodyStream } = await undici.request(`http://${server1}`, {
-    maxRedirections: 10,
+    dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 10 })),
     headers: {
       cookie: 'a=b'
     }
@@ -669,4 +681,95 @@ test('removes cookie header on third party origin', async t => {
   t.strictEqual(body, '')
 
   await t.completed
+})
+
+test('should upgrade the connection when no redirects are present', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = await startServer((req, res) => {
+    if (req.url === '/') {
+      res.statusCode = 301
+      res.setHeader('Location', `http://${server}/end`)
+      res.end('REDIRECT')
+      return
+    }
+
+    res.statusCode = 101
+    res.setHeader('Connection', 'upgrade')
+    res.setHeader('Upgrade', req.headers.upgrade)
+    res.end('')
+  })
+
+  const { headers, socket } = await undici.upgrade(`http://${server}/`, {
+    method: 'GET',
+    protocol: 'foo/1',
+    dispatcher: new undici.Client(`http://${server}/`).compose(redirect({ maxRedirections: 10 }))
+  })
+
+  socket.end()
+
+  t.strictEqual(headers.connection, 'upgrade')
+  t.strictEqual(headers.upgrade, 'foo/1')
+
+  await t.completed
+})
+
+test('should redirect to relative URL according to RFC 7231', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = await startRedirectingWithRelativePath()
+
+  const { statusCode, body } = await undici.request(`http://${server}`, {
+    dispatcher: new undici.Client(`http://${server}/`).compose(redirect({ maxRedirections: 3 }))
+  })
+
+  const finalPath = await body.text()
+
+  t.strictEqual(statusCode, 200)
+  t.strictEqual(finalPath, '/absolute/b')
+})
+
+test('Cross-origin redirects clear forbidden headers', async (t) => {
+  const { strictEqual } = tspl(t, { plan: 6 })
+
+  const server1 = createServer((req, res) => {
+    strictEqual(req.headers.cookie, undefined)
+    strictEqual(req.headers.authorization, undefined)
+    strictEqual(req.headers['proxy-authorization'], undefined)
+
+    res.end('redirected')
+  }).listen(0)
+
+  const server2 = createServer((req, res) => {
+    strictEqual(req.headers.authorization, 'test')
+    strictEqual(req.headers.cookie, 'ddd=dddd')
+
+    res.writeHead(302, {
+      ...req.headers,
+      Location: `http://localhost:${server1.address().port}`
+    })
+    res.end()
+  }).listen(0)
+
+  t.after(() => {
+    server1.close()
+    server2.close()
+  })
+
+  await Promise.all([
+    once(server1, 'listening'),
+    once(server2, 'listening')
+  ])
+
+  const res = await undici.request(`http://localhost:${server2.address().port}`, {
+    dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 1 })),
+    headers: {
+      Authorization: 'test',
+      Cookie: 'ddd=dddd',
+      'Proxy-Authorization': 'test'
+    }
+  })
+
+  const text = await res.body.text()
+  strictEqual(text, 'redirected')
 })
