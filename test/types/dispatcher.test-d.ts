@@ -62,12 +62,7 @@ expectAssignable<Dispatcher>(new Dispatcher())
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
   }))
-<<<<<<< HEAD
-  expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: 'GET', responseHeaders: 'raw' }))
-  expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: 'GET', responseHeaders: null }))
   expectAssignable<Promise<Dispatcher.ResponseData<{ example: string }>>>(dispatcher.request({ origin: '', path: '', method: 'GET', opaque: { example: '' } }))
-=======
->>>>>>> b2a78875 (fix: always parse headers)
 
   // pipeline
   expectAssignable<Duplex>(dispatcher.pipeline({ origin: '', path: '', method: 'GET', maxRedirections: 0 }, data => {
@@ -78,22 +73,11 @@ expectAssignable<Dispatcher>(new Dispatcher())
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))
-<<<<<<< HEAD
-  expectAssignable<Duplex>(dispatcher.pipeline({ origin: '', path: '', method: 'GET', responseHeaders: 'raw' }, data => {
-    expectAssignable<Dispatcher.PipelineHandlerData>(data)
-    return new Readable()
-  }))
-  expectAssignable<Duplex>(dispatcher.pipeline({ origin: '', path: '', method: 'GET', responseHeaders: null }, data => {
-    expectAssignable<Dispatcher.PipelineHandlerData>(data)
-    return new Readable()
-  }))
   expectAssignable<Duplex>(dispatcher.pipeline({ origin: '', path: '', method: 'GET', opaque: { example: '' } }, data => {
     expectAssignable<Dispatcher.PipelineHandlerData<{ example: string }>>(data)
     expectType<{ example: string }>(data.opaque)
     return new Readable()
   }))
-=======
->>>>>>> b2a78875 (fix: always parse headers)
 
   // stream
   expectAssignable<Promise<Dispatcher.StreamData>>(dispatcher.stream({ origin: '', path: '', method: 'GET', maxRedirections: 0 }, data => {
