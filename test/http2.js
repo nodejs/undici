@@ -819,7 +819,7 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
     stream.end('hello h2!')
   })
 
-  t = tspl(t, { plan: 9 })
+  t = tspl(t, { plan: 7 })
 
   server.listen(0, () => {
     const client = new Client(`https://localhost:${server.address().port}`, {
