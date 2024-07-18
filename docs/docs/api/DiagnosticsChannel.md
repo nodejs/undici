@@ -202,3 +202,60 @@ diagnosticsChannel.channel('undici:websocket:pong').subscribe(({ payload }) => {
   console.log(payload)
 })
 ```
+The below channels collectively act as [`tracingChannel.tracePromise`](https://nodejs.org/api/diagnostics_channel.html#tracingchanneltracepromisefn-context-thisarg-args) on `fetch`. So all of them will publish the arguments passed to `fetch`.
+
+## `tracing:undici:fetch:start`
+
+This message is published when `fetch` is called, and will publish the arguments passed to `fetch`.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+diagnosticsChannel.channel('tracing:undici:fetch:start').subscribe(({ req, input, init, }) => {
+  console.log('input', input)
+  console.log('init', init)
+})
+```
+
+## `tracing:undici:fetch:end`
+
+This message is published at the end of `fetch`'s execution, and will publish any `error` from the synchronous part of `fetch`. Since `fetch` is asynchronous, this should be empty. This channel will publish the same values as `undici:fetch:start`, but we are including it to track when `fetch` finishes execution and to be consistent with [`TracingChannel`](https://nodejs.org/api/diagnostics_channel.html#class-tracingchannel).
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+diagnosticsChannel.channel('tracing:undici:fetch:end').subscribe(({ req, input, init, error }) => {
+  console.log('input', input)
+  console.log('init', init)
+  console.log('error', error) // should be empty
+})
+```
+## `tracing:undici:fetch:asyncStart`
+This message is published after `fetch` resolves or rejects. If `fetch` resolves, it publishes the response in `result`. If it rejects, it publishes the error in `error`.
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+diagnosticsChannel.channel('tracing:undici:fetch:asyncStart').subscribe(({ req, input, init, result, error }) => {
+  console.log('input', input)
+  console.log('init', init)
+  console.log('response', result)
+  console.log('error', error)
+})
+```
+## `tracing:undici:fetch:asyncEnd`
+This channel gets published the same values as and at the same time as `tracing:undici:fetch:asyncStart` in the case of [`tracingChannel.tracePromise`](https://nodejs.org/api/diagnostics_channel.html#tracingchanneltracepromisefn-context-thisarg-args)
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+diagnosticsChannel.channel('tracing:undici:fetch:asyncEnd').subscribe(({ req, input, init, result, error }) => {
+  console.log('input', input)
+  console.log('init', init)
+  console.log('response', result)
+  console.log('error', error)
+})
+```
+## `tracing:undici:fetch:error`
+This message is published when an error is thrown or promise rejects while calling `fetch`.
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+diagnosticsChannel.channel('tracing:undici:fetch:error').subscribe(({ req, input, init, error }) => {
+  console.log('input', input)
+  console.log('init', init)
+  console.log('error', error)
+})
+```
