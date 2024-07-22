@@ -6,8 +6,10 @@ const { Client, Pool, errors } = require('..')
 const net = require('node:net')
 const assert = require('node:assert')
 
+const skip = !!process.env.CITGM
+
 // Using describe instead of test to avoid the timeout
-describe('prioritize socket errors over timeouts', async () => {
+describe('prioritize socket errors over timeouts', { skip }, async () => {
   const t = tspl({ ...assert, after: () => {} }, { plan: 1 })
   const client = new Pool('http://foorbar.invalid:1234', { connectTimeout: 1 })
 
@@ -29,7 +31,7 @@ net.connect = function (options) {
   return new net.Socket(options)
 }
 
-test('connect-timeout', async t => {
+test('connect-timeout', { skip }, async t => {
   t = tspl(t, { plan: 1 })
 
   const client = new Client('http://localhost:9000', {
@@ -52,7 +54,7 @@ test('connect-timeout', async t => {
   await t.completed
 })
 
-test('connect-timeout', async t => {
+test('connect-timeout', { skip }, async t => {
   t = tspl(t, { plan: 1 })
 
   const client = new Pool('http://localhost:9000', {
