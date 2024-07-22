@@ -8,7 +8,9 @@ const { tspl } = require('@matteo.collina/tspl')
 // eslint-disable-next-line no-control-regex
 const removeEscapeColorsRE = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g
 
-test('debug#websocket', { skip: !process.versions.icu }, async t => {
+const isCITGM = !!process.env.CITGM
+
+test('debug#websocket', { skip: !process.versions.icu || isCITGM }, async t => {
   const assert = tspl(t, { plan: 6 })
   const child = spawn(
     process.execPath,
@@ -44,7 +46,7 @@ test('debug#websocket', { skip: !process.versions.icu }, async t => {
   await assert.completed
 })
 
-test('debug#fetch', async t => {
+test('debug#fetch', { skip: isCITGM }, async t => {
   const assert = tspl(t, { plan: 7 })
   const child = spawn(
     process.execPath,
@@ -78,7 +80,7 @@ test('debug#fetch', async t => {
   await assert.completed
 })
 
-test('debug#undici', async t => {
+test('debug#undici', { skip: isCITGM }, async t => {
   // Due to Node.js webpage redirect
   const assert = tspl(t, { plan: 7 })
   const child = spawn(
