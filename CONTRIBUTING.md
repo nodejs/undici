@@ -8,7 +8,7 @@
   * [Releases](#releases)
   * [Update `WPTs`](#update-wpts)
   * [Building for externally shared node builtins](#external-builds)
-  *  [Benchmarks](#benchmarks
+  *  [Benchmarks](#benchmarks)
   *  [Documentation](#documentation)
 * [Developer's Certificate of Origin 1.1](#developers-certificate-of-origin)
   * [Moderation Policy](#moderation-policy)
