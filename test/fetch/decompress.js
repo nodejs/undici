@@ -110,3 +110,27 @@ test('decompresses responses with "gzip, br" encoding', async () => {
   )
   assert.deepStrictEqual(await new Response(body).text(), 'hello world')
 })
+
+test('decompresses responses with "deflate" encoding', async () => {
+  const body = decompress(
+    new Request(url),
+    new Response(zlib.deflateSync('hello world'), {
+      headers: {
+        'content-encoding': 'deflate'
+      }
+    })
+  )
+  assert.deepStrictEqual(await new Response(body).text(), 'hello world')
+})
+
+test('decompresses responses with "deflate, gzip" encoding', async () => {
+  const body = decompress(
+    new Request(url),
+    new Response(zlib.gzipSync(zlib.deflateSync('hello world')), {
+      headers: {
+        'content-encoding': 'deflate, gzip'
+      }
+    })
+  )
+  assert.deepStrictEqual(await new Response(body).text(), 'hello world')
+})
