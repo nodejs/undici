@@ -7,25 +7,30 @@ const { decompress } = require('../../lib/web/fetch/decompress')
 
 const url = 'http://localhost/'
 
-test('ignores responses without the "Content-Encoding" header', () => {
+test('ignores responses with null body', () => {
   const body = decompress(new Request(url), new Response(null))
   assert.equal(body, null)
 })
 
-test('ignores responses with empty "Content-Encoding" header', () => {
+test('ignores responses without the "Content-Encoding" header', async () => {
+  const body = decompress(new Request(url), new Response('hello world'))
+  assert.equal(await new Response(body).text(), 'hello world')
+})
+
+test('ignores responses with empty "Content-Encoding" header', async () => {
   const body = decompress(
     new Request(url),
-    new Response(null, {
+    new Response('hello world', {
       headers: { 'content-encoding': '' }
     })
   )
-  assert.equal(body, null)
+  assert.equal(await new Response(body).text(), 'hello world')
 })
 
-test('ignores redirect responses', () => {
+test('ignores redirect responses', async () => {
   const body = decompress(
     new Request(url, { redirect: 'follow' }),
-    new Response(null, {
+    new Response('hello world', {
       status: 301,
       headers: {
         'content-encoding': 'gzip',
@@ -33,46 +38,46 @@ test('ignores redirect responses', () => {
       }
     })
   )
-  assert.equal(body, null)
+  assert.equal(await new Response(body).text(), 'hello world')
 })
 
-test('ignores HEAD requests', () => {
+test('ignores HEAD requests', async () => {
   const body = decompress(
     new Request(url, { method: 'HEAD' }),
-    new Response(null, {
+    new Response('hello world', {
       headers: {
         'content-encoding': 'gzip'
       }
     })
   )
-  assert.equal(body, null)
+  assert.equal(await new Response(body).text(), 'hello world')
 })
 
 /**
  * @note Undici does not support the "CONNECT" request method.
  */
-test.skip('ignores CONNECT requests', () => {
+test.skip('ignores CONNECT requests', async () => {
   const body = decompress(
     new Request(url, { method: 'CONNECT' }),
-    new Response(null, {
+    new Response('hello world', {
       headers: {
         'content-encoding': 'gzip'
       }
     })
   )
-  assert.equal(body, null)
+  assert.equal(await new Response(body).text(), 'hello world')
 })
 
-test('ignores responses with unsupported encoding', () => {
+test('ignores responses with unsupported encoding', async () => {
   const body = decompress(
     new Request(url),
-    new Response(null, {
+    new Response('hello world', {
       headers: {
         'content-encoding': 'x-custom-encoding'
       }
     })
   )
-  assert.equal(body, null)
+  assert.equal(await new Response(body).text(), 'hello world')
 })
 
 test('decompresses responses with "gzip" encoding', async () => {
