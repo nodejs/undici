@@ -138,9 +138,12 @@ module.exports.getSetCookies = getSetCookies
 module.exports.setCookie = setCookie
 
 const { parseMIMEType, serializeAMimeType } = require('./lib/web/fetch/data-url')
+const { decompress, decompressStream } = require('./lib/web/fetch/decompress')
 
 module.exports.parseMIMEType = parseMIMEType
 module.exports.serializeAMimeType = serializeAMimeType
+module.exports.decompress = decompress
+module.exports.decompressStream = decompressStream
 
 const { CloseEvent, ErrorEvent, MessageEvent } = require('./lib/web/websocket/events')
 module.exports.WebSocket = require('./lib/web/websocket/websocket').WebSocket
