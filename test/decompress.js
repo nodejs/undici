@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const zlib = require('node:zlib')
-const { decompress } = require('../../lib/web/fetch/decompress')
+const { decompress } = require('../lib/web/fetch/decompress')
 
 const url = 'http://localhost/'
 
