@@ -56,7 +56,12 @@ function makeDispatcher (fn) {
       opts = null
     }
 
-    if (!url || (typeof url !== 'string' && typeof url !== 'object' && !(url instanceof URL))) {
+    if (
+      !url ||
+      (typeof url !== 'string' &&
+        typeof url !== 'object' &&
+        !(url instanceof URL))
+    ) {
       throw new InvalidArgumentError('invalid url')
     }
 
@@ -86,15 +91,21 @@ function makeDispatcher (fn) {
     const { agent, dispatcher = getGlobalDispatcher() } = opts
 
     if (agent) {
-      throw new InvalidArgumentError('unsupported opts.agent. Did you mean opts.client?')
+      throw new InvalidArgumentError(
+        'unsupported opts.agent. Did you mean opts.client?'
+      )
     }
 
-    return fn.call(dispatcher, {
-      ...opts,
-      origin: url.origin,
-      path: url.search ? `${url.pathname}${url.search}` : url.pathname,
-      method: opts.method || (opts.body ? 'PUT' : 'GET')
-    }, handler)
+    return fn.call(
+      dispatcher,
+      {
+        ...opts,
+        origin: url.origin,
+        path: url.search ? `${url.pathname}${url.search}` : url.pathname,
+        method: opts.method || (opts.body ? 'PUT' : 'GET')
+      },
+      handler
+    )
   }
 }
 
@@ -130,22 +141,31 @@ const { kConstruct } = require('./lib/web/cache/symbols')
 // in an older version of Node, it doesn't have any use without fetch.
 module.exports.caches = new CacheStorage(kConstruct)
 
-const { deleteCookie, getCookies, getSetCookies, setCookie } = require('./lib/web/cookies')
+const {
+  deleteCookie,
+  getCookies,
+  getSetCookies,
+  setCookie
+} = require('./lib/web/cookies')
 
 module.exports.deleteCookie = deleteCookie
 module.exports.getCookies = getCookies
 module.exports.getSetCookies = getSetCookies
 module.exports.setCookie = setCookie
 
-const { parseMIMEType, serializeAMimeType } = require('./lib/web/fetch/data-url')
-const { decompress, decompressStream } = require('./lib/web/fetch/decompress')
+const {
+  parseMIMEType,
+  serializeAMimeType
+} = require('./lib/web/fetch/data-url')
 
 module.exports.parseMIMEType = parseMIMEType
 module.exports.serializeAMimeType = serializeAMimeType
-module.exports.decompress = decompress
-module.exports.decompressStream = decompressStream
 
-const { CloseEvent, ErrorEvent, MessageEvent } = require('./lib/web/websocket/events')
+const {
+  CloseEvent,
+  ErrorEvent,
+  MessageEvent
+} = require('./lib/web/websocket/events')
 module.exports.WebSocket = require('./lib/web/websocket/websocket').WebSocket
 module.exports.CloseEvent = CloseEvent
 module.exports.ErrorEvent = ErrorEvent
