@@ -1,0 +1,61 @@
+name: Ensure integrity of llhttp wasm files
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check files
+    if: ${{ github.event_name == 'pull_request' }}
+    outputs:
+      run_job: ${{ steps.check_files.outputs.run_job }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Check modified files
+        id: check_files
+        run: |
+          echo "=============== list modified files ==============="
+          git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD
+          
+          echo "========== check paths of modified files =========="
+          git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD > files.txt
+
+          echo "run_job=false" > "$GITHUB_OUTPUT"
+
+          while IFS= read -r file
+          do
+          if [[ $file == deps/llhttp/* || $file == lib/llhttp/llhttp* ]]; then
+            echo "run_job=true" > "$GITHUB_OUTPUT"
+            fi
+          done < files.txt
+
+          echo "GITHUB_OUTPUT: $(cat $GITHUB_OUTPUT)"
+
+  llhttp-wasm:
+    if: ${{ github.event_name == 'pull_request' && needs.check.outputs.run_job == 'true' }} 
+    name: Check integrity of generated wasm-files for llhttp
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build wasm of llhttp
+        run: |
+          npm run prebuild:wasm &&
+          npm run build:wasm
+      - name: Integrity Check
+        run: |
+          git diff --quiet lib/llhttp*
+          if [ $? -eq 0 ]; then
+            echo "No changes in the generated wasm files."
+          else
+            echo "Changes detected in the generated wasm files."
+            echo "Please run 'npm run prebuild:wasm' and 'npm run build:wasm' locally and commit the changes."
+            exit 1
+          fi
