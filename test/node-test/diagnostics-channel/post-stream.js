@@ -89,20 +89,14 @@ test('Diagnostics channel - post stream', (t) => {
   diagnosticsChannel.channel('undici:request:headers').subscribe(({ request, response }) => {
     assert.equal(_req, request)
     assert.equal(response.statusCode, 200)
-    const expectedHeaders = [
-      Buffer.from('Content-Type'),
-      Buffer.from('text/plain'),
-      Buffer.from('trailer'),
-      Buffer.from('foo'),
-      Buffer.from('Date'),
-      response.headers[5], // This is a date
-      Buffer.from('Connection'),
-      Buffer.from('keep-alive'),
-      Buffer.from('Keep-Alive'),
-      Buffer.from('timeout=5'),
-      Buffer.from('Transfer-Encoding'),
-      Buffer.from('chunked')
-    ]
+    const expectedHeaders = {
+      'content-type': 'text/plain',
+      trailer: 'foo',
+      date: response.headers.date, // This is a date
+      connection: 'keep-alive',
+      'keep-alive': 'timeout=5',
+      'transfer-encoding': 'chunked'
+    }
     assert.deepStrictEqual(response.headers, expectedHeaders)
     assert.equal(response.statusText, 'OK')
   })
@@ -120,7 +114,7 @@ test('Diagnostics channel - post stream', (t) => {
       // This event is emitted after the last chunk has been added to the body stream,
       // not when it was consumed by the application
       assert.equal(endEmitted, false)
-      assert.deepStrictEqual(trailers, [Buffer.from('foo'), Buffer.from('oof')])
+      assert.deepStrictEqual(trailers, { foo: 'oof' })
       resolve()
     })
 

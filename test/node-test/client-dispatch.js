@@ -126,13 +126,13 @@ test('basic dispatch get', async (t) => {
       },
       onHeaders (statusCode, headers) {
         p.strictEqual(statusCode, 200)
-        p.strictEqual(Array.isArray(headers), true)
+        p.ok(Object.keys(headers).length > 0)
       },
       onData (buf) {
         bufs.push(buf)
       },
       onComplete (trailers) {
-        p.deepStrictEqual(trailers, [])
+        p.deepStrictEqual(trailers, {})
         p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       },
       onError () {
@@ -145,7 +145,7 @@ test('basic dispatch get', async (t) => {
 })
 
 test('trailers dispatch get', async (t) => {
-  const p = tspl(t, { plan: 12 })
+  const p = tspl(t, { plan: 11 })
 
   const server = http.createServer((req, res) => {
     p.strictEqual('/', req.url)
@@ -180,21 +180,14 @@ test('trailers dispatch get', async (t) => {
       },
       onHeaders (statusCode, headers) {
         p.strictEqual(statusCode, 200)
-        p.strictEqual(Array.isArray(headers), true)
-        {
-          const contentTypeIdx = headers.findIndex(x => x.toString() === 'Content-Type')
-          p.strictEqual(headers[contentTypeIdx + 1].toString(), 'text/plain')
-        }
+        p.ok(Object.keys(headers).length > 0)
+        p.strictEqual(headers['content-type'], 'text/plain')
       },
       onData (buf) {
         bufs.push(buf)
       },
       onComplete (trailers) {
-        p.strictEqual(Array.isArray(trailers), true)
-        {
-          const contentMD5Idx = trailers.findIndex(x => x.toString() === 'Content-MD5')
-          p.strictEqual(trailers[contentMD5Idx + 1].toString(), 'test')
-        }
+        p.strictEqual(trailers['content-md5'], 'test')
         p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       },
       onError () {

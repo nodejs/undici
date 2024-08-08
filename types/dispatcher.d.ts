@@ -175,8 +175,6 @@ declare namespace Dispatcher {
     maxRedirections?: number;
     /** Default: false */
     redirectionLimitReached?: boolean;
-    /** Default: `null` */
-    responseHeaders?: 'raw' | null;
   }
   export interface ConnectData<TOpaque = null> {
     statusCode: number;
@@ -221,15 +219,15 @@ declare namespace Dispatcher {
     /** Invoked when an error has occurred. */
     onError?(err: Error): void;
     /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
-    onUpgrade?(statusCode: number, headers: Buffer[] | string[] | null, socket: Duplex): void;
+    onUpgrade?(statusCode: number, headers: Record<string, string>, socket: Duplex): void;
     /** Invoked when response is received, before headers have been read. **/
     onResponseStarted?(): void;
     /** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
-    onHeaders?(statusCode: number, headers: Buffer[], resume: () => void, statusText: string): boolean;
+    onHeaders?(statusCode: number, headers: Record<string, string>, resume: () => void, statusText: string): boolean;
     /** Invoked when response payload data is received. */
     onData?(chunk: Buffer): boolean;
     /** Invoked when response payload and trailers have been received and the request has completed. */
-    onComplete?(trailers: string[] | null): void;
+    onComplete?(trailers: Record<string, string>): void;
     /** Invoked when a body chunk is sent to the server. May be invoked multiple times for chunked requests */
     onBodySent?(chunkSize: number, totalBytesSent: number): void;
   }
