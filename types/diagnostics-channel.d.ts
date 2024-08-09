@@ -9,12 +9,12 @@ declare namespace DiagnosticsChannel {
     completed: boolean;
     method?: Dispatcher.HttpMethod;
     path: string;
-    headers: any;
+    headers: Record<string, string>;
   }
   interface Response {
     statusCode: number;
     statusText: string;
-    headers: Array<Buffer>;
+    headers: Record<string, string>;
   }
   type Error = unknown;
   interface ConnectParams {
@@ -37,7 +37,7 @@ declare namespace DiagnosticsChannel {
   }
   export interface RequestTrailersMessage {
     request: Request;
-    trailers: Array<Buffer>;
+    trailers: Record<string, string>;
   }
   export interface RequestErrorMessage {
     request: Request;

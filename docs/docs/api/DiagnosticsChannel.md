@@ -21,7 +21,7 @@ diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
   console.log('path', request.path)
   console.log('headers') // array of strings, e.g: ['foo', 'bar']
   request.addHeader('hello', 'world')
-  console.log('headers', request.headers) // e.g. ['foo', 'bar', 'hello', 'world']
+  console.log('headers', request.headers) // e.g. {'foo': 'bar', 'hello': 'world']
 })
 ```
 
@@ -49,8 +49,8 @@ diagnosticsChannel.channel('undici:request:headers').subscribe(({ request, respo
   // request is the same object undici:request:create
   console.log('statusCode', response.statusCode)
   console.log(response.statusText)
-  // response.headers are buffers.
-  console.log(response.headers.map((x) => x.toString()))
+  // response.headers are an object.
+  console.log(response.headers)
 })
 ```
 
@@ -64,8 +64,8 @@ import diagnosticsChannel from 'diagnostics_channel'
 diagnosticsChannel.channel('undici:request:trailers').subscribe(({ request, trailers }) => {
   // request is the same object undici:request:create
   console.log('completed', request.completed)
-  // trailers are buffers.
-  console.log(trailers.map((x) => x.toString()))
+  // trailers are an object.
+  console.log(trailers)
 })
 ```
 
