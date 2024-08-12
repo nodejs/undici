@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { setImmediate } = require('node:timers/promises')
-const { AsyncLocalStorage } = require('node:async_hooks');
+const { AsyncLocalStorage } = require('node:async_hooks')
 const { tspl } = require('@matteo.collina/tspl')
 const {
   Response,
@@ -304,21 +304,21 @@ test('fromInnerResponse', () => {
 })
 
 test('clone body garbage collection', async () => {
-  const asyncLocalStorage = new AsyncLocalStorage();
+  const asyncLocalStorage = new AsyncLocalStorage()
   let ref
-  
+
   await new Promise(resolve => {
     asyncLocalStorage.run(new Map(), async () => {
       const res = new Response('hello world')
       const clone = res.clone()
-      
-      asyncLocalStorage.getStore().set('key', clone);
+
+      asyncLocalStorage.getStore().set('key', clone)
       ref = new WeakRef(clone.body)
 
       await res.text()
       await clone.text() // consume body
 
-      resolve();
+      resolve()
     })
   })
 
