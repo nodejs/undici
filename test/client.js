@@ -3,7 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { readFileSync, createReadStream } = require('node:fs')
 const { createServer } = require('node:http')
-const { Readable } = require('node:stream')
+const { Readable, PassThrough } = require('node:stream')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 const { kSocket } = require('../lib/core/symbols')
@@ -314,6 +314,70 @@ test('basic get with query params partially in path', async (t) => {
       query
     }, (err, data) => {
       t.strictEqual(err.message, 'Query params cannot be passed when url already contains "?" or "#".')
+    })
+  })
+
+  await t.completed
+})
+
+test('using throwOnError should throw (request)', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer((req, res) => {
+    res.statusCode = 400
+    res.end('hello')
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    after(() => client.close())
+
+    const signal = new EE()
+    client.request({
+      signal,
+      path: '/',
+      method: 'GET',
+      throwOnError: true
+    }, (err) => {
+      t.strictEqual(err.message, 'invalid throwOnError')
+      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
+    })
+  })
+
+  await t.completed
+})
+
+test('using throwOnError should throw (stream)', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer((req, res) => {
+    res.statusCode = 400
+    res.end('hello')
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3
+    })
+    after(() => client.close())
+
+    client.stream({
+      path: '/',
+      method: 'GET',
+      throwOnError: true,
+      opaque: new PassThrough()
+    }, ({ opaque: pt }) => {
+      pt.on('data', () => {
+        t.fail()
+      })
+      return pt
+    }, err => {
+      t.strictEqual(err.message, 'invalid throwOnError')
+      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
     })
   })
 
