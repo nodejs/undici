@@ -234,7 +234,7 @@ declare namespace Dispatcher {
     onBodySent?(chunkSize: number, totalBytesSent: number): void;
   }
   export type PipelineHandler<TOpaque = null> = (data: PipelineHandlerData<TOpaque>) => Readable;
-  export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
+  export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH' | (string & Record<never, never>);
 
   /**
    * @link https://fetch.spec.whatwg.org/#body-mixin
