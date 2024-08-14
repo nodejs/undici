@@ -139,7 +139,7 @@ jobs:
           echo icu config: $(node -e "console.log(process.config)" | grep icu)
 
       - name: Run tests
-        run: npm run test:javascript:withoutintl
+        run: npm run test:javascript:without-intl
 
   test-fuzzing:
     name: Fuzzing
