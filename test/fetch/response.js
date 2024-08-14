@@ -2,6 +2,8 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
+const { setImmediate } = require('node:timers/promises')
+const { AsyncLocalStorage } = require('node:async_hooks')
 const { tspl } = require('@matteo.collina/tspl')
 const {
   Response,
@@ -299,4 +301,30 @@ test('fromInnerResponse', () => {
   assert.strictEqual(response[kState], innerResponse)
   assert.strictEqual(getHeadersList(response[kHeaders]), innerResponse.headersList)
   assert.strictEqual(getHeadersGuard(response[kHeaders]), 'immutable')
+})
+
+test('clone body garbage collection', async () => {
+  const asyncLocalStorage = new AsyncLocalStorage()
+  let ref
+
+  await new Promise(resolve => {
+    asyncLocalStorage.run(new Map(), async () => {
+      const res = new Response('hello world')
+      const clone = res.clone()
+
+      asyncLocalStorage.getStore().set('key', clone)
+      ref = new WeakRef(clone.body)
+
+      await res.text()
+      await clone.text() // consume body
+
+      resolve()
+    })
+  })
+
+  await setImmediate()
+  global.gc()
+
+  const cloneBody = ref.deref()
+  assert.equal(cloneBody, undefined, 'clone body was not garbage collected')
 })
