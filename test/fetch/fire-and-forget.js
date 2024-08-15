@@ -37,8 +37,9 @@ test('does not need the body to be consumed to continue', { timeout: 180_000, sk
     // eslint-disable-next-line no-undef
     gc(true)
     const array = new Array(batch)
-    for (let i = 0; i < batch; i++) {
+    for (let i = 0; i < batch; i += 2) {
       array[i] = fetch(url).catch(() => {})
+      array[i + 1] = fetch(url).then(r => r.clone()).catch(() => {})
     }
     await Promise.all(array)
     await sleep(delay)
