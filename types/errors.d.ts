@@ -146,7 +146,7 @@ declare namespace Errors {
     constructor (
       cause?: Error,
       message?: string,
-      options?: ErrorOptions
+      options?: Record<any, any>
     );
     name: 'SecureProxyConnectionError';
     code: 'UND_ERR_PRX_TLS';
