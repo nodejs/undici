@@ -60,6 +60,11 @@ expectType<Headers>(new Headers([]))
 expectType<Headers>(new Headers(headers))
 expectType<Headers>(new Headers(undefined))
 
+expectAssignable<HeadersInit>({ 'a': 'b' } as Record<string, string>)
+expectAssignable<HeadersInit>({ 'content-type': 'application/gzip' } satisfies HeadersInit)
+expectAssignable<HeadersInit>({ 'Content-Type': 'nonstandard/mime' } satisfies HeadersInit)
+expectNotAssignable<HeadersInit>([['1', '2', '3']])
+
 expectType<Request>(new Request(request))
 expectType<Request>(new Request('https://example.com'))
 expectType<Request>(new Request(new URL('https://example.com')))

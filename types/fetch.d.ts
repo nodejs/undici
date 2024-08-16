@@ -6,7 +6,7 @@ import { Blob } from 'buffer'
 import { URL, URLSearchParams } from 'url'
 import { ReadableStream } from 'stream/web'
 import { FormData } from './formdata'
-
+import { HeaderRecord } from './header'
 import Dispatcher from './dispatcher'
 
 export type RequestInfo = string | URL | Request
@@ -67,7 +67,7 @@ export interface SpecIterable<T> {
   [Symbol.iterator](): SpecIterator<T>;
 }
 
-export type HeadersInit = string[][] | Record<string, string | ReadonlyArray<string>> | Headers
+export type HeadersInit = [string, string][] | HeaderRecord | Headers
 
 export declare class Headers implements SpecIterable<[string, string]> {
   constructor (init?: HeadersInit)
