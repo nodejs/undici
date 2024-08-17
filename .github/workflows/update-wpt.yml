@@ -1,0 +1,19 @@
+name: Update WPT
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  update-wpt:
+    name: Update WPT
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: ./scripts/update-wpt.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
