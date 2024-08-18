@@ -3,17 +3,14 @@
 const neo = require('neostandard')
 
 module.exports = [
-  {
-    ignores: [
-      'lib/llhttp/constants.js',
-      'lib/llhttp/utils.js',
-      'test/fixtures/wpt',
-      'lib/llhttp'
-    ]
-  },
   ...neo({
     env: ['jest'],
-    ignores: ['lib/llhttp/constants.js', 'lib/llhttp/utils.js', 'test/fixtures/wpt/**', 'undici-fetch.js'],
+    ignores: [
+      'lib/llhttp',
+      'test/fixtures/wpt',
+      'node_modules',
+      'undici-fetch.js'
+    ],
     ts: true
   }),
   {
