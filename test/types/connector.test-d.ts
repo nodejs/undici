@@ -1,8 +1,7 @@
 import { expectAssignable } from 'tsd'
 import { Client, buildConnector } from '../..'
-import { ConnectionOptions, TLSSocket } from 'tls'
+import { TLSSocket } from 'tls'
 import { Socket } from 'net'
-import { IpcNetConnectOpts, NetConnectOpts, TcpNetConnectOpts } from 'net'
 
 const connector = buildConnector({ rejectUnauthorized: false, allowH2: false })
 expectAssignable<Client>(new Client('', {

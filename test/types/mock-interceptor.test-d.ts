@@ -1,4 +1,4 @@
-import { expectAssignable } from 'tsd'
+import { expectAssignable, expectType } from 'tsd'
 import { MockAgent, MockPool, BodyInit, Dispatcher } from '../..'
 import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
 
@@ -10,6 +10,8 @@ expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCall
   const mockPool: MockPool = new MockAgent().get('')
   const mockInterceptor = mockPool.intercept({ path: '', method: 'GET' })
   const mockInterceptorDefaultMethod = mockPool.intercept({ path: '' })
+
+  expectType<MockInterceptor>(mockInterceptorDefaultMethod)
 
   // reply
   expectAssignable<MockScope>(mockInterceptor.reply(200))

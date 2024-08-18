@@ -25,7 +25,8 @@ module.exports = [
         exports: 'never',
         functions: 'never'
       }],
-      '@typescript-eslint/no-redeclare': 'off'
+      '@typescript-eslint/no-redeclare': 'off',
+      'no-lone-blocks': 'off'
     }
   }
 ]

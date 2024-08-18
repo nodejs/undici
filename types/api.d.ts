@@ -2,14 +2,6 @@ import { URL, UrlObject } from 'url'
 import { Duplex } from 'stream'
 import Dispatcher from './dispatcher'
 
-export {
-  request,
-  stream,
-  pipeline,
-  connect,
-  upgrade
-}
-
 /** Performs an HTTP request. */
 declare function request<TOpaque = null> (
   url: string | URL | UrlObject,
@@ -41,3 +33,11 @@ declare function upgrade (
   url: string | URL | UrlObject,
   options?: { dispatcher?: Dispatcher } & Omit<Dispatcher.UpgradeOptions, 'origin' | 'path'>
 ): Promise<Dispatcher.UpgradeData>
+
+export {
+  request,
+  stream,
+  pipeline,
+  connect,
+  upgrade
+}

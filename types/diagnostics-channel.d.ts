@@ -1,6 +1,6 @@
 import { Socket } from 'net'
 import { URL } from 'url'
-import Connector from './connector'
+import buildConnector from './connector'
 import Dispatcher from './dispatcher'
 
 declare namespace DiagnosticsChannel {
@@ -24,7 +24,7 @@ declare namespace DiagnosticsChannel {
     port: URL['port'];
     servername: string | null;
   }
-  type Connector = Connector.connector
+  type Connector = buildConnector.connector
   export interface RequestCreateMessage {
     request: Request;
   }

@@ -1,5 +1,4 @@
 import { URL } from 'url'
-import { TlsOptions } from 'tls'
 import Dispatcher from './dispatcher'
 import buildConnector from './connector'
 

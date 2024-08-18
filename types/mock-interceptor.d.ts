@@ -2,12 +2,6 @@ import { IncomingHttpHeaders } from './header'
 import Dispatcher from './dispatcher'
 import { BodyInit, Headers } from './fetch'
 
-export {
-  Interceptable,
-  MockInterceptor,
-  MockScope
-}
-
 /** The scope associated with a mock dispatch. */
 declare class MockScope<TData extends object = object> {
   constructor (mockDispatch: MockInterceptor.MockDispatch<TData>)
@@ -90,4 +84,10 @@ declare namespace MockInterceptor {
 interface Interceptable extends Dispatcher {
   /** Intercepts any matching requests that use the same origin as this mock client. */
   intercept(options: MockInterceptor.Options): MockInterceptor;
+}
+
+export {
+  Interceptable,
+  MockInterceptor,
+  MockScope
 }

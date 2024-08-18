@@ -20,7 +20,8 @@ import {
   Response,
   ResponseInit,
   ResponseType,
-  ReferrerPolicy
+  ReferrerPolicy,
+  Dispatcher
 } from '../..'
 
 const requestInit: RequestInit = {}
@@ -49,6 +50,10 @@ expectType<RequestMode | undefined>(requestInit.mode)
 expectType<string | undefined>(requestInit.referrer)
 expectType<ReferrerPolicy | undefined>(requestInit.referrerPolicy)
 expectType<null | undefined>(requestInit.window)
+
+expectType<Dispatcher | undefined>(requestInit2.dispatcher)
+
+expectType<BodyInit | undefined>(requestInit4.body)
 
 expectType<number | undefined>(responseInit.status)
 expectType<string | undefined>(responseInit.statusText)

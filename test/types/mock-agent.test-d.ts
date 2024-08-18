@@ -12,6 +12,7 @@ expectAssignable<MockAgent>(new MockAgent({}))
 
   // get
   expectAssignable<MockPool>(mockAgent.get(''))
+  // eslint-disable-next-line prefer-regex-literals
   expectAssignable<MockPool>(mockAgent.get(new RegExp('')))
   expectAssignable<MockPool>(mockAgent.get((origin) => {
     expectAssignable<string>(origin)
@@ -31,6 +32,7 @@ expectAssignable<MockAgent>(new MockAgent({}))
   // enableNetConnect
   expectAssignable<void>(mockAgent.enableNetConnect())
   expectAssignable<void>(mockAgent.enableNetConnect(''))
+  // eslint-disable-next-line prefer-regex-literals
   expectAssignable<void>(mockAgent.enableNetConnect(new RegExp('')))
   expectAssignable<void>(mockAgent.enableNetConnect((host) => {
     expectAssignable<string>(host)

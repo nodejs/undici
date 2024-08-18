@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import Undici, { Pool, Client, errors, fetch, Interceptable, RedirectHandler, DecoratorHandler, Headers, Response, Request, FormData } from '../..'
+import Undici, { Pool, Client, errors, fetch, Interceptable, RedirectHandler, Headers, Response, Request, FormData } from '../..'
 import Dispatcher from '../../types/dispatcher'
 
 expectAssignable<Pool>(new Undici.Pool('', {}))
