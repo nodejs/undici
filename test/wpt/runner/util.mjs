@@ -101,7 +101,7 @@ export function handlePipes (code, url) {
 
     switch (sub) {
       // "The host name of the server excluding any subdomain part."
-      // eslint-disable-next-line no-fallthrough
+
       case 'host':
       // "The domain name of a particular subdomain e.g.
       //  {{domains[www]}} for the www subdomain."

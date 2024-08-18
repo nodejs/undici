@@ -1,7 +1,7 @@
 import { expectAssignable } from 'tsd'
 import { errors } from '../..'
 import Client from '../../types/client'
-import { IncomingHttpHeaders } from "../../types/header";
+import { IncomingHttpHeaders } from '../../types/header'
 
 expectAssignable<errors.UndiciError>(new errors.UndiciError())
 expectAssignable<string>(new errors.UndiciError().name)
@@ -113,7 +113,7 @@ expectAssignable<'UND_ERR_PRX_TLS'>(new errors.SecureProxyConnectionError().code
 
 {
   // @ts-ignore
-  function f (): errors.HeadersTimeoutError | errors.ConnectTimeoutError { return }
+  function f (): errors.HeadersTimeoutError | errors.ConnectTimeoutError { }
 
   const e = f()
 

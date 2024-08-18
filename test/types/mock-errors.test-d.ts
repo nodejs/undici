@@ -9,7 +9,7 @@ expectAssignable<'UND_MOCK_ERR_MOCK_NOT_MATCHED'>(new mockErrors.MockNotMatchedE
 
 {
   // @ts-ignore
-  function f (): mockErrors.MockNotMatchedError { return }
+  function f (): mockErrors.MockNotMatchedError { }
 
   const e = f()
 

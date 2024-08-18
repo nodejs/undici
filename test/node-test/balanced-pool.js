@@ -202,7 +202,7 @@ test('factory option with basic get request', async (t) => {
     }
   }
 
-  const client = new BalancedPool([], opts) // eslint-disable-line
+  const client = new BalancedPool([], opts)
 
   let serverCalled = 0
   const server = createServer((req, res) => {

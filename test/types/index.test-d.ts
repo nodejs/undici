@@ -1,6 +1,6 @@
 import { expectAssignable } from 'tsd'
-import Undici, {Pool, Client, errors, fetch, Interceptable, RedirectHandler, DecoratorHandler, Headers, Response, Request, FormData} from '../..'
-import Dispatcher from "../../types/dispatcher";
+import Undici, { Pool, Client, errors, fetch, Interceptable, RedirectHandler, DecoratorHandler, Headers, Response, Request, FormData } from '../..'
+import Dispatcher from '../../types/dispatcher'
 
 expectAssignable<Pool>(new Undici.Pool('', {}))
 expectAssignable<Client>(new Undici.Client('', {}))
@@ -16,9 +16,9 @@ expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.re
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.retry())
 
 const client = new Undici.Client('', {})
-const handler: Dispatcher.DispatchHandlers =  {}
+const handler: Dispatcher.DispatchHandlers = {}
 
 const redirectHandler = new Undici.RedirectHandler(client, 10, {
   path: '/', method: 'GET'
-}, handler, false) as RedirectHandler;
-expectAssignable<RedirectHandler>(redirectHandler);
+}, handler, false) as RedirectHandler
+expectAssignable<RedirectHandler>(redirectHandler)

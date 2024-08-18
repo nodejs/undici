@@ -158,7 +158,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     await p.completed
   })
 
-  function waitingWithBody (body, type) { // eslint-disable-line
+  function waitingWithBody (body, type) {
     test(`Abort ${controllerName} while waiting response (with body ${type})`, async (t) => {
       const p = tspl(t, { plan: 1 })
 
@@ -187,7 +187,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
   waitingWithBody(new Uint8Array([42]), 'Uint8Array')
   waitingWithBody(wrapWithAsyncIterable(createReadStream(__filename)), 'async-iterator')
 
-  function writeHeadersStartedWithBody (body, type) {  // eslint-disable-line
+  function writeHeadersStartedWithBody (body, type) {
     test(`Abort ${controllerName} while waiting response (write headers started) (with body ${type})`, async (t) => {
       const p = tspl(t, { plan: 1 })
 
@@ -217,7 +217,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
   writeHeadersStartedWithBody(new Uint8Array([42]), 'Uint8Array')
   writeHeadersStartedWithBody(wrapWithAsyncIterable(createReadStream(__filename)), 'async-iterator')
 
-  function writeBodyStartedWithBody (body, type) { // eslint-disable-line
+  function writeBodyStartedWithBody (body, type) {
     test(`Abort ${controllerName} while waiting response (write headers and write body started) (with body ${type})`, async (t) => {
       const p = tspl(t, { plan: 2 })
 

@@ -17,7 +17,7 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
 
   // request
   expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: 'GET' }))
-  expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: 'GET', onInfo: ((info) => {}) }))
+  expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: 'GET', onInfo: (info) => {} }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: new URL('http://localhost'), path: '', method: 'GET' }))
   expectAssignable<void>(agent.request({ origin: '', path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
@@ -33,7 +33,7 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
-  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: '', path: '', method: 'GET', onInfo: ((info) => {}) }, data => {
+  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: '', path: '', method: 'GET', onInfo: (info) => {} }, data => {
     expectAssignable<Dispatcher.StreamFactoryData>(data)
     return new Writable()
   }))
@@ -69,7 +69,7 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))
-  expectAssignable<Duplex>(agent.pipeline({ origin: '', path: '', method: 'GET', onInfo: ((info) => {}) }, data => {
+  expectAssignable<Duplex>(agent.pipeline({ origin: '', path: '', method: 'GET', onInfo: (info) => {} }, data => {
     expectAssignable<Dispatcher.PipelineHandlerData>(data)
     return new Readable()
   }))

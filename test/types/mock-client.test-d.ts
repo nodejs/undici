@@ -39,5 +39,5 @@ import { MockInterceptor } from '../../types/mock-interceptor'
 }
 
 {
-  expectAssignable<MockClient>(new MockClient('', {agent: new MockAgent({ connections: 1})}))
+  expectAssignable<MockClient>(new MockClient('', { agent: new MockAgent({ connections: 1 }) }))
 }

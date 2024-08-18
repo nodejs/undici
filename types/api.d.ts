@@ -7,37 +7,37 @@ export {
   stream,
   pipeline,
   connect,
-  upgrade,
+  upgrade
 }
 
 /** Performs an HTTP request. */
-declare function request<TOpaque = null>(
+declare function request<TOpaque = null> (
   url: string | URL | UrlObject,
   options?: { dispatcher?: Dispatcher } & Omit<Dispatcher.RequestOptions<TOpaque>, 'origin' | 'path' | 'method'> & Partial<Pick<Dispatcher.RequestOptions, 'method'>>,
-): Promise<Dispatcher.ResponseData<TOpaque>>;
+): Promise<Dispatcher.ResponseData<TOpaque>>
 
 /** A faster version of `request`. */
-declare function stream<TOpaque = null>(
+declare function stream<TOpaque = null> (
   url: string | URL | UrlObject,
   options: { dispatcher?: Dispatcher } & Omit<Dispatcher.RequestOptions<TOpaque>, 'origin' | 'path'>,
   factory: Dispatcher.StreamFactory<TOpaque>
-): Promise<Dispatcher.StreamData<TOpaque>>;
+): Promise<Dispatcher.StreamData<TOpaque>>
 
 /** For easy use with `stream.pipeline`. */
-declare function pipeline<TOpaque = null>(
+declare function pipeline<TOpaque = null> (
   url: string | URL | UrlObject,
   options: { dispatcher?: Dispatcher } & Omit<Dispatcher.PipelineOptions<TOpaque>, 'origin' | 'path'>,
   handler: Dispatcher.PipelineHandler<TOpaque>
-): Duplex;
+): Duplex
 
 /** Starts two-way communications with the requested resource. */
-declare function connect<TOpaque = null>(
+declare function connect<TOpaque = null> (
   url: string | URL | UrlObject,
   options?: { dispatcher?: Dispatcher } & Omit<Dispatcher.ConnectOptions<TOpaque>, 'origin' | 'path'>
-): Promise<Dispatcher.ConnectData<TOpaque>>;
+): Promise<Dispatcher.ConnectData<TOpaque>>
 
 /** Upgrade to a different protocol. */
-declare function upgrade(
+declare function upgrade (
   url: string | URL | UrlObject,
   options?: { dispatcher?: Dispatcher } & Omit<Dispatcher.UpgradeOptions, 'origin' | 'path'>
-): Promise<Dispatcher.UpgradeData>;
+): Promise<Dispatcher.UpgradeData>

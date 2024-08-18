@@ -46,7 +46,7 @@ expectType<string | undefined>(requestInit.integrity)
 expectType<AbortSignal | null | undefined>(requestInit.signal)
 expectType<RequestCredentials | undefined>(requestInit.credentials)
 expectType<RequestMode | undefined>(requestInit.mode)
-expectType<string | undefined>(requestInit.referrer);
+expectType<string | undefined>(requestInit.referrer)
 expectType<ReferrerPolicy | undefined>(requestInit.referrerPolicy)
 expectType<null | undefined>(requestInit.window)
 
@@ -60,7 +60,7 @@ expectType<Headers>(new Headers([]))
 expectType<Headers>(new Headers(headers))
 expectType<Headers>(new Headers(undefined))
 
-expectAssignable<HeadersInit>({ 'a': 'b' } as Record<string, string>)
+expectAssignable<HeadersInit>({ a: 'b' } as Record<string, string>)
 expectAssignable<HeadersInit>({ 'content-type': 'application/gzip' } satisfies HeadersInit)
 expectAssignable<HeadersInit>({ 'Content-Type': 'nonstandard/mime' } satisfies HeadersInit)
 expectNotAssignable<HeadersInit>([['1', '2', '3']])

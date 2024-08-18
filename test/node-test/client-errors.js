@@ -312,7 +312,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       keepAliveTimeout: 'asd'
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -322,7 +322,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       localAddress: 123
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -332,7 +332,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       localAddress: 'abcd123'
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -342,7 +342,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       keepAliveMaxTimeout: 'asd'
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -352,7 +352,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       keepAliveMaxTimeout: 0
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -362,7 +362,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       keepAliveTimeoutThreshold: 'asd'
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -408,7 +408,7 @@ test('invalid options throws', (t, done) => {
   }
 
   try {
-    const client = new Client(new URL('http://localhost:200')) // eslint-disable-line
+    const client = new Client(new URL('http://localhost:200'))
     client.destroy(null, null)
     assert.ok(0)
   } catch (err) {
@@ -417,7 +417,7 @@ test('invalid options throws', (t, done) => {
   }
 
   try {
-    const client = new Client(new URL('http://localhost:200')) // eslint-disable-line
+    const client = new Client(new URL('http://localhost:200'))
     client.close(null, null)
     assert.ok(0)
   } catch (err) {
