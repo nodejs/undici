@@ -1,4 +1,4 @@
-import { Autocomplete } from "./utility";
+import { Autocomplete } from './utility'
 
 /**
  * The header type declaration of `undici`.
