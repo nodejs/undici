@@ -173,44 +173,40 @@ expectAssignable<Dispatcher>(new Dispatcher())
 declare const { body }: Dispatcher.ResponseData
 
 // compose
-{
-  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(
-    (dispatcher) => {
-      expectAssignable<Dispatcher['dispatch']>(dispatcher)
-      return (opts, handlers) => {
-        expectAssignable<Dispatcher.DispatchOptions>(opts)
-        expectAssignable<Dispatcher.DispatchHandlers>(handlers)
-        return dispatcher(opts, handlers)
-      }
+expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(
+  (dispatcher) => {
+    expectAssignable<Dispatcher['dispatch']>(dispatcher)
+    return (opts, handlers) => {
+      expectAssignable<Dispatcher.DispatchOptions>(opts)
+      expectAssignable<Dispatcher.DispatchHandlers>(handlers)
+      return dispatcher(opts, handlers)
     }
-  ))
-  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([
-    (dispatcher) => {
-      expectAssignable<Dispatcher['dispatch']>(dispatcher)
-      return (opts, handlers) => {
-        expectAssignable<Dispatcher.DispatchOptions>(opts)
-        expectAssignable<Dispatcher.DispatchHandlers>(handlers)
-        return dispatcher(opts, handlers)
-      }
-    },
-    (dispatcher) => {
-      expectAssignable<Dispatcher['dispatch']>(dispatcher)
-      return (opts, handlers) => {
-        expectAssignable<Dispatcher.DispatchOptions>(opts)
-        expectAssignable<Dispatcher.DispatchHandlers>(handlers)
-        return dispatcher(opts, handlers)
-      }
+  }
+))
+expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([
+  (dispatcher) => {
+    expectAssignable<Dispatcher['dispatch']>(dispatcher)
+    return (opts, handlers) => {
+      expectAssignable<Dispatcher.DispatchOptions>(opts)
+      expectAssignable<Dispatcher.DispatchHandlers>(handlers)
+      return dispatcher(opts, handlers)
     }
-  ]))
-}
+  },
+  (dispatcher) => {
+    expectAssignable<Dispatcher['dispatch']>(dispatcher)
+    return (opts, handlers) => {
+      expectAssignable<Dispatcher.DispatchOptions>(opts)
+      expectAssignable<Dispatcher.DispatchHandlers>(handlers)
+      return dispatcher(opts, handlers)
+    }
+  }
+]))
 
-{
-  // body mixin tests
-  expectType<never | undefined>(body.body)
-  expectType<boolean>(body.bodyUsed)
-  expectType<Promise<ArrayBuffer>>(body.arrayBuffer())
-  expectType<Promise<Blob>>(body.blob())
-  expectType<Promise<never>>(body.formData())
-  expectType<Promise<string>>(body.text())
-  expectType<Promise<unknown>>(body.json())
-}
+// body mixin tests
+expectType<never | undefined>(body.body)
+expectType<boolean>(body.bodyUsed)
+expectType<Promise<ArrayBuffer>>(body.arrayBuffer())
+expectType<Promise<Blob>>(body.blob())
+expectType<Promise<never>>(body.formData())
+expectType<Promise<string>>(body.text())
+expectType<Promise<unknown>>(body.json())
