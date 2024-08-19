@@ -6,6 +6,7 @@ import { IncomingHttpHeaders } from './header'
 import BodyReadable from './readable'
 import { FormData } from './formdata'
 import Errors from './errors'
+import { Autocomplete } from './utility'
 
 type AbortSignal = unknown;
 
@@ -234,7 +235,7 @@ declare namespace Dispatcher {
     onBodySent?(chunkSize: number, totalBytesSent: number): void;
   }
   export type PipelineHandler<TOpaque = null> = (data: PipelineHandlerData<TOpaque>) => Readable;
-  export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH' | (string & Record<never, never>);
+  export type HttpMethod = Autocomplete<'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH'>;
 
   /**
    * @link https://fetch.spec.whatwg.org/#body-mixin
