@@ -4,12 +4,12 @@ const neo = require('neostandard')
 
 module.exports = [
   ...neo({
-    env: ['jest'],
     ignores: [
       'lib/llhttp',
       'test/fixtures/wpt',
       'undici-fetch.js'
     ],
+    noJsx: true,
     ts: true
   }),
   {
