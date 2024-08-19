@@ -65,12 +65,7 @@ jobs:
             if(!issue) {
               issue = (await github.rest.issues.create({
                 title: ISSUE_TITLE,
+                body: `Tests against nightly failed, see: ${actionRunUrl}`,
                 ...issueContext
               })).data
             }
-
-            await github.rest.issues.createComment({
-              issue_number: issue.number,
-              body: `Tests against nightly failed, see: ${actionRunUrl}`,
-              ...issueContext
-            });

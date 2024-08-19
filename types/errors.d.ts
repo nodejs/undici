@@ -144,6 +144,11 @@ declare namespace Errors {
   }
 
   export class SecureProxyConnectionError extends UndiciError {
+    constructor (
+      cause?: Error,
+      message?: string,
+      options?: Record<any, any>
+    )
     name: 'SecureProxyConnectionError'
     code: 'UND_ERR_PRX_TLS'
   }
