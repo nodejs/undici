@@ -14,6 +14,11 @@ jobs:
     name: Update WPT
     runs-on: ubuntu-latest
     steps:
+      - name: Git Config
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
       - name: Checkout Repository
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
       - name: Update WPT
