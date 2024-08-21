@@ -8,6 +8,7 @@ import { MockInterceptor } from '../../types/mock-interceptor'
   // intercept
   expectAssignable<MockInterceptor>(mockPool.intercept({ path: '', method: 'GET' }))
   expectAssignable<MockInterceptor>(mockPool.intercept({ path: '', method: 'GET', body: '', headers: { 'User-Agent': '' } }))
+  // eslint-disable-next-line prefer-regex-literals
   expectAssignable<MockInterceptor>(mockPool.intercept({ path: new RegExp(''), method: new RegExp(''), body: new RegExp(''), headers: { 'User-Agent': new RegExp('') } }))
   expectAssignable<MockInterceptor>(mockPool.intercept({
     path: (path) => {
@@ -37,6 +38,4 @@ import { MockInterceptor } from '../../types/mock-interceptor'
   expectAssignable<Promise<void>>(mockPool.close())
 }
 
-{
-  expectAssignable<MockPool>(new MockPool('', {agent: new MockAgent({ connections: 1})}))
-}
+expectAssignable<MockPool>(new MockPool('', { agent: new MockAgent({ connections: 1 }) }))

@@ -150,7 +150,7 @@ interface WebidlConverters {
   ): NodeJS.TypedArray | ArrayBufferLike | DataView
 
   ['sequence<ByteString>']: SequenceConverter<string>
-  
+
   ['sequence<sequence<ByteString>>']: SequenceConverter<string[]>
 
   ['record<ByteString, ByteString>']: RecordConverter<string, string>

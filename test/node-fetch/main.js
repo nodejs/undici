@@ -1438,6 +1438,8 @@ describe('node-fetch', () => {
     )
   })
 
+  /* global expect */
+
   // TODO: fix test.
   it.skip('should timeout on cloning response without consuming one of the streams when the second packet size is equal default highWaterMark', { timeout: 300 }, function () {
     const url = local.mockState(res => {

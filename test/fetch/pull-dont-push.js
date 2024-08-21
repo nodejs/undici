@@ -46,7 +46,7 @@ test('pull dont\'t push', async (t) => {
 
   // consume the  stream
   try {
-    /* eslint-disable-next-line no-empty, no-unused-vars */
+    /* eslint-disable-next-line no-unused-vars */
     for await (const chunk of res.body) {
       // process._rawDebug('chunk', chunk)
     }

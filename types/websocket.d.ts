@@ -24,7 +24,7 @@ interface WebSocketEventMap {
 
 interface WebSocket extends EventTarget {
   binaryType: BinaryType
-  
+
   readonly bufferedAmount: number
   readonly extensions: string
 

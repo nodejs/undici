@@ -1,7 +1,7 @@
 import { Dispatcher } from '../..'
-import {expectAssignable} from "tsd";
-import {URL} from "url";
-import Errors from "../../types/errors";
+import { expectAssignable } from 'tsd'
+import { URL } from 'url'
+import Errors from '../../types/errors'
 
 interface EventHandler {
   connect(origin: URL, targets: readonly Dispatcher[]): void
@@ -24,14 +24,14 @@ interface EventHandler {
   expectAssignable<EventHandler['connectionError'][]>(dispatcher.listeners('connectionError'))
   expectAssignable<EventHandler['drain'][]>(dispatcher.listeners('drain'))
 
-  const eventHandlerMethods: ['on', 'once', 'off', 'addListener', "removeListener", "prependListener", "prependOnceListener"]
-    = ['on', 'once', 'off', 'addListener', "removeListener", "prependListener", "prependOnceListener"]
+  const eventHandlerMethods: ['on', 'once', 'off', 'addListener', 'removeListener', 'prependListener', 'prependOnceListener'] =
+    ['on', 'once', 'off', 'addListener', 'removeListener', 'prependListener', 'prependOnceListener']
 
   for (const method of eventHandlerMethods) {
-    expectAssignable<Dispatcher>(dispatcher[method]('connect', eventHandler["connect"]))
-    expectAssignable<Dispatcher>(dispatcher[method]('disconnect', eventHandler["disconnect"]))
-    expectAssignable<Dispatcher>(dispatcher[method]('connectionError', eventHandler["connectionError"]))
-    expectAssignable<Dispatcher>(dispatcher[method]('drain', eventHandler["drain"]))
+    expectAssignable<Dispatcher>(dispatcher[method]('connect', eventHandler['connect']))
+    expectAssignable<Dispatcher>(dispatcher[method]('disconnect', eventHandler['disconnect']))
+    expectAssignable<Dispatcher>(dispatcher[method]('connectionError', eventHandler['connectionError']))
+    expectAssignable<Dispatcher>(dispatcher[method]('drain', eventHandler['drain']))
   }
 
   const origin = new URL('')
@@ -42,4 +42,3 @@ interface EventHandler {
   expectAssignable<boolean>(dispatcher.emit('connectionError', origin, targets, error))
   expectAssignable<boolean>(dispatcher.emit('drain', origin))
 }
-

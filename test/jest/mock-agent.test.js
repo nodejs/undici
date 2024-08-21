@@ -3,7 +3,7 @@
 const { request, setGlobalDispatcher, MockAgent } = require('../..')
 const { getResponse } = require('../../lib/mock/mock-utils')
 
-/* global describe, it, expect */
+/* global describe, it, afterEach, expect */
 
 describe('MockAgent', () => {
   let mockAgent

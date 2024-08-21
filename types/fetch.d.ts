@@ -36,17 +36,17 @@ export class BodyMixin {
   /**
    * @deprecated This method is not recommended for parsing multipart/form-data bodies in server environments.
    * It is recommended to use a library such as [@fastify/busboy](https://www.npmjs.com/package/@fastify/busboy) as follows:
-   * 
+   *
    * @example
    * ```js
    * import { Busboy } from '@fastify/busboy'
    * import { Readable } from 'node:stream'
-   * 
+   *
    * const response = await fetch('...')
    * const busboy = new Busboy({ headers: { 'content-type': response.headers.get('content-type') } })
-   * 
+   *
    * // handle events emitted from `busboy`
-   * 
+   *
    * Readable.fromWeb(response.body).pipe(busboy)
    * ```
    */
@@ -144,7 +144,7 @@ export type ReferrerPolicy =
   | 'same-origin'
   | 'strict-origin'
   | 'strict-origin-when-cross-origin'
-  | 'unsafe-url';
+  | 'unsafe-url'
 
 export type RequestMode = 'cors' | 'navigate' | 'no-cors' | 'same-origin'
 
@@ -204,6 +204,6 @@ export declare class Response extends BodyMixin {
   readonly clone: () => Response
 
   static error (): Response
-  static json(data: any, init?: ResponseInit): Response
+  static json (data: any, init?: ResponseInit): Response
   static redirect (url: string | URL, status: ResponseRedirectStatus): Response
 }
