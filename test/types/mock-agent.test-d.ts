@@ -1,6 +1,10 @@
 import { expectAssignable, expectType } from 'tsd'
 import { Agent, Dispatcher, MockAgent, MockClient, MockPool, setGlobalDispatcher } from '../..'
 import { MockInterceptor } from '../../types/mock-interceptor'
+import ProxyAgent from '../../types/proxy-agent'
+import EnvHttpProxyAgent from '../../types/env-http-proxy-agent'
+import RetryAgent from '../../types/retry-agent'
+
 import MockDispatch = MockInterceptor.MockDispatch
 
 expectAssignable<MockAgent>(new MockAgent())
@@ -75,3 +79,19 @@ expectAssignable<MockAgent>(new MockAgent({}))
     }
   }) => void>(agent.assertNoPendingInterceptors)
 }
+
+// issue #3444
+// ProxyAgent, EnvHttpProxyAgent, RetryAgent should be assignable to the agent
+// option of MockAgent
+
+expectType<MockAgent>(new MockAgent({
+  agent: new ProxyAgent({
+    uri: 'http://localhost:3000'
+  })
+}))
+expectType<MockAgent>(new MockAgent({
+  agent: new EnvHttpProxyAgent()
+}))
+expectType<MockAgent>(new MockAgent({
+  agent: new RetryAgent(new Agent())
+}))
