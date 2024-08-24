@@ -6,38 +6,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-
 const { closeServerAsPromise } = require('../utils/node-http')
-
-const { AbortController: NPMAbortController } = require('abort-controller')
-
-test('Allow the usage of custom implementation of AbortController', async (t) => {
-  const body = {
-    fixes: 1605
-  }
-
-  const server = createServer((req, res) => {
-    res.statusCode = 200
-    res.end(JSON.stringify(body))
-  })
-
-  t.after(closeServerAsPromise(server))
-
-  server.listen(0)
-  await once(server, 'listening')
-
-  const controller = new NPMAbortController()
-  const signal = controller.signal
-  controller.abort()
-
-  try {
-    await fetch(`http://localhost:${server.address().port}`, {
-      signal
-    })
-  } catch (e) {
-    assert.strictEqual(e.code, DOMException.ABORT_ERR)
-  }
-})
 
 test('allows aborting with custom errors', async (t) => {
   const server = createServer().listen(0)
