@@ -85,7 +85,7 @@
     "test:node-test": "borp -p \"test/node-test/**/*.js\"",
     "test:tdd": "borp --expose-gc -p \"test/*.js\"",
     "test:tdd:node-test": "borp -p \"test/node-test/**/*.js\" -w",
-    "test:typescript": "tsd && tsc test/imports/undici-import.ts --typeRoots ./types && tsc ./types/*.d.ts --noEmit --typeRoots ./types",
+    "test:typescript": "tsd && tsc test/imports/undici-import.ts --typeRoots ./types --noEmit && tsc ./types/*.d.ts --noEmit --typeRoots ./types",
     "test:webidl": "borp -p \"test/webidl/*.js\"",
     "test:websocket": "borp -p \"test/websocket/*.js\"",
     "test:websocket:autobahn": "node test/autobahn/client.js",
