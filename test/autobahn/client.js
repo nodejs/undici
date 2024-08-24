@@ -24,12 +24,7 @@ function nextTest () {
     `${autobahnFuzzingserverUrl}/runCase?case=${currentTest}&agent=undici`
   )
   ws.addEventListener('message', (data) => {
-    try {
-      ws.send(data.data)
-      console.log('sending', typeof data.data)
-    } catch (e) {
-      console.log('error', e)
-    }
+    ws.send(data.data)
   })
   ws.addEventListener('close', () => {
     currentTest++
