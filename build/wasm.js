@@ -33,7 +33,17 @@ const writeWasmChunk = (path, dest) => {
 
 const { Buffer } = require('node:buffer')
 
-module.exports = Buffer.from('${base64}', 'base64')
+const wasmBase64 = '${base64}'
+
+let wasmBuffer
+
+Object.defineProperty(module, 'exports', {
+  get: () => {
+    return wasmBuffer
+      ? wasmBuffer
+      : (wasmBuffer = Buffer.from(wasmBase64, 'base64'))
+  }
+})
 `)
 }
 
