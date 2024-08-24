@@ -26,7 +26,7 @@ function nextTest () {
   ws.addEventListener('message', (data) => {
     try {
       ws.send(data.data)
-      console.log('sending', data.data)
+      console.log('sending', typeof data.data)
     } catch (e) {
       console.log('error', e)
     }
