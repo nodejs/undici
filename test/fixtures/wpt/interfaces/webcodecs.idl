@@ -229,7 +229,7 @@ dictionary EncodedAudioChunkInit {
   required EncodedAudioChunkType type;
   [EnforceRange] required long long timestamp;    // microseconds
   [EnforceRange] unsigned long long duration;     // microseconds
-  required BufferSource data;
+  required AllowSharedBufferSource data;
   sequence<ArrayBuffer> transfer = [];
 };
 
@@ -488,7 +488,7 @@ interface ImageDecoder {
   static Promise<boolean> isTypeSupported(DOMString type);
 };
 
-typedef (BufferSource or ReadableStream) ImageBufferSource;
+typedef (AllowSharedBufferSource or ReadableStream) ImageBufferSource;
 dictionary ImageDecoderInit {
   required DOMString type;
   required ImageBufferSource data;
