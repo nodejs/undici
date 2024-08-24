@@ -1,13 +1,13 @@
 name: Autobahn
 on:
+  workflow_call:
   workflow_dispatch:
-
   pull_request:
     paths:
       - '.github/workflows/autobahn.yml'
       - 'lib/web/websocket/**'
       - 'test/autobahn/**'
-
+  
 permissions:
   contents: read
   pull-requests: write
