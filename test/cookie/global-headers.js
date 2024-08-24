@@ -53,3 +53,16 @@ describe('Using global Headers', async () => {
     assert.equal(headers.get('Set-Cookie'), 'undici=setCookie')
   })
 })
+
+describe('Headers check is not too lax', () => {
+  class Headers {}
+  Object.defineProperty(Headers.prototype, Symbol.toStringTag, {
+    value: 'Headers',
+    configurable: true
+  })
+
+  assert.throws(() => getCookies(new Headers()), { code: 'ERR_INVALID_THIS' })
+  assert.throws(() => getSetCookies(new Headers()), { code: 'ERR_INVALID_THIS' })
+  assert.throws(() => setCookie(new Headers(), { name: 'a', value: 'b' }), { code: 'ERR_INVALID_THIS' })
+  assert.throws(() => deleteCookie(new Headers(), 'name'), { code: 'ERR_INVALID_THIS' })
+})
