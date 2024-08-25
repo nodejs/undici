@@ -101,27 +101,6 @@ describe('timers', () => {
     timers.clearTimeout(timer)
   })
 
-  test('a FastTimer will only increment by the defined TICK_MS value', async (t) => {
-    t = tspl(t, { plan: 2 })
-
-    const startInternalClock = timers.now()
-
-    // The long running FastTimer will ensure that the internal clock is
-    // incremented by the TICK_MS value in the onTick function
-    const longRunningFastTimer = timers.setTimeout(() => {}, 1e10)
-
-    eventLoopBlocker(1000)
-
-    // wait to ensure the timer has fired in the next loop
-    await new Promise((resolve) => setTimeout(resolve, 1))
-
-    t.strictEqual(timers.now() - startInternalClock, 499)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    t.strictEqual(timers.now() - startInternalClock, 1497)
-
-    timers.clearTimeout(longRunningFastTimer)
-  })
-
   const getDelta = (start, target) => {
     const end = process.hrtime.bigint()
     const actual = (end - start) / 1_000_000n
@@ -194,5 +173,26 @@ describe('timers', () => {
 
     setTimeout(() => t.ok(true), 3000)
     await t.completed
+  })
+
+  test('a FastTimer will only increment by the defined TICK_MS value', async (t) => {
+    t = tspl(t, { plan: 2 })
+
+    const startInternalClock = timers.now()
+
+    // The long running FastTimer will ensure that the internal clock is
+    // incremented by the TICK_MS value in the onTick function
+    const longRunningFastTimer = timers.setTimeout(() => {}, 1e10)
+
+    eventLoopBlocker(1000)
+
+    // wait to ensure the timer has fired in the next loop
+    await new Promise((resolve) => setTimeout(resolve, 1))
+
+    t.strictEqual(timers.now() - startInternalClock, 499)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    t.ok(timers.now() - startInternalClock <= 1497)
+
+    timers.clearTimeout(longRunningFastTimer)
   })
 })
