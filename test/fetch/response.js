@@ -304,6 +304,9 @@ test('fromInnerResponse', () => {
 })
 
 test('clone body garbage collection', async () => {
+  if (typeof global.gc === 'undefined') {
+    throw new Error('gc is not available. Run with \'--expose-gc\'.')
+  }
   const asyncLocalStorage = new AsyncLocalStorage()
   let ref
 
