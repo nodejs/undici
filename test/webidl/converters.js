@@ -76,6 +76,19 @@ describe('webidl.dictionaryConverter', () => {
       converter({ Key: 'this key was required!' }, 'converter', 'converter')
     })
   })
+
+  test('null and undefined still populates defaultValue(s)', () => {
+    const dict = webidl.dictionaryConverter([
+      {
+        key: 'key',
+        converter: webidl.converters.any,
+        defaultValue: () => 3
+      }
+    ])
+
+    assert.deepStrictEqual(dict(null), { key: 3 })
+    assert.deepStrictEqual(dict(undefined), { key: 3 })
+  })
 })
 
 test('ArrayBuffer', () => {
