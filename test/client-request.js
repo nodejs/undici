@@ -220,7 +220,7 @@ test('request body destroyed on invalid callback', async (t) => {
     after(() => client.destroy())
 
     const body = new Readable({
-      read () {}
+      read () { }
     })
     try {
       client.request({
@@ -1248,6 +1248,91 @@ test('request post body DataView', async (t) => {
     })
     await body.text()
     t.ok(true, 'pass')
+  })
+
+  await t.completed
+})
+
+test('request multibyte json with setEncoding', async (t) => {
+  t = tspl(t, { plan: 1 })
+
+  const asd = Buffer.from('あいうえお')
+  const data = JSON.stringify({ asd })
+  const server = createServer((req, res) => {
+    res.write(data.slice(0, 1))
+    setTimeout(() => {
+      res.write(data.slice(1))
+      res.end()
+    }, 100)
+  })
+  after(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    body.setEncoding('utf8')
+    t.deepStrictEqual(JSON.parse(data), await body.json())
+  })
+
+  await t.completed
+})
+
+test('request multibyte text with setEncoding', async (t) => {
+  t = tspl(t, { plan: 1 })
+
+  const data = Buffer.from('あいうえお')
+  const server = createServer((req, res) => {
+    res.write(data.slice(0, 1))
+    setTimeout(() => {
+      res.write(data.slice(1))
+      res.end()
+    }, 100)
+  })
+  after(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    body.setEncoding('utf8')
+    t.deepStrictEqual(data.toString('utf8'), await body.text())
+  })
+
+  await t.completed
+})
+
+test('request multibyte text with setEncoding', async (t) => {
+  t = tspl(t, { plan: 1 })
+
+  const data = Buffer.from('あいうえお')
+  const server = createServer((req, res) => {
+    res.write(data.slice(0, 1))
+    setTimeout(() => {
+      res.write(data.slice(1))
+      res.end()
+    }, 100)
+  })
+  after(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    body.setEncoding('hex')
+    t.deepStrictEqual(data.toString('hex'), await body.text())
   })
 
   await t.completed

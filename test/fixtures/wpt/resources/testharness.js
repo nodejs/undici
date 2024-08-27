@@ -857,7 +857,7 @@
             promise = promiseOrConstructor;
             description = descriptionOrPromise;
             assert(maybeDescription === undefined,
-                   "Too many args pased to no-constructor version of promise_rejects_dom");
+                   "Too many args passed to no-constructor version of promise_rejects_dom, or accidentally explicitly passed undefined");
         }
         return bring_promise_to_current_realm(promise)
             .then(test.unreached_func("Should have rejected: " + description))
@@ -2174,7 +2174,7 @@
             func = funcOrConstructor;
             description = descriptionOrFunc;
             assert(maybeDescription === undefined,
-                   "Too many args pased to no-constructor version of assert_throws_dom");
+                   "Too many args passed to no-constructor version of assert_throws_dom, or accidentally explicitly passed undefined");
         }
         assert_throws_dom_impl(type, func, description, "assert_throws_dom", constructor)
     }
@@ -4408,13 +4408,20 @@
     {
         var substitution_re = /\$\{([^ }]*)\}/g;
 
-        function do_substitution(input) {
+        function do_substitution(input)
+        {
             var components = input.split(substitution_re);
             var rv = [];
-            for (var i = 0; i < components.length; i += 2) {
-                rv.push(components[i]);
-                if (components[i + 1]) {
-                    rv.push(String(substitutions[components[i + 1]]));
+            if (components.length === 1) {
+                rv = components;
+            } else if (substitutions) {
+                for (var i = 0; i < components.length; i += 2) {
+                    if (components[i]) {
+                        rv.push(components[i]);
+                    }
+                    if (substitutions[components[i + 1]]) {
+                        rv.push(String(substitutions[components[i + 1]]));
+                    }
                 }
             }
             return rv;
