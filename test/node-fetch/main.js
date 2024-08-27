@@ -919,9 +919,9 @@ describe('node-fetch', () => {
 
   it('should throw a TypeError if a signal is not of type AbortSignal or EventTarget', () => {
     return Promise.all([
-      assert.rejects(fetch(`${base}inspect`, { signal: {} }), new TypeError("Failed to construct 'Request': member signal is not of type AbortSignal.")),
-      assert.rejects(fetch(`${base}inspect`, { signal: '' }), new TypeError("Failed to construct 'Request': member signal is not of type AbortSignal.")),
-      assert.rejects(fetch(`${base}inspect`, { signal: Object.create(null) }), new TypeError("Failed to construct 'Request': member signal is not of type AbortSignal."))
+      assert.rejects(fetch(`${base}inspect`, { signal: {} }), new TypeError('RequestInit: Expected signal ("{}") to be an instance of AbortSignal.')),
+      assert.rejects(fetch(`${base}inspect`, { signal: '' }), new TypeError('RequestInit: Expected signal ("""") to be an instance of AbortSignal.')),
+      assert.rejects(fetch(`${base}inspect`, { signal: Object.create(null) }), new TypeError('RequestInit: Expected signal ("[Object: null prototype] {}") to be an instance of AbortSignal.'))
     ])
   })
 

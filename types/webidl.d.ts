@@ -167,7 +167,7 @@ export interface Webidl {
    * @description Performs a brand-check on {@param V} to ensure it is a
    * {@param cls} object.
    */
-  brandCheck <Interface extends new () => unknown>(V: unknown, cls: Interface, opts?: { strict?: boolean }): asserts V is Interface
+  brandCheck <Interface extends new () => unknown>(V: unknown, cls: Interface): asserts V is Interface
 
   brandCheckMultiple <Interfaces extends (new () => unknown)[]> (V: unknown, list: Interfaces): asserts V is Interfaces[number]
 
@@ -194,7 +194,8 @@ export interface Webidl {
    */
   interfaceConverter <Interface>(cls: Interface): (
     V: unknown,
-    opts?: { strict: boolean }
+    prefix: string,
+    argument: string
   ) => asserts V is typeof cls
 
   // TODO(@KhafraDev): a type could likely be implemented that can infer the return type

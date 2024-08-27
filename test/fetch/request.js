@@ -11,10 +11,6 @@ const {
   fetch
 } = require('../../')
 const { fromInnerRequest, makeRequest } = require('../../lib/web/fetch/request')
-const {
-  Blob: ThirdPartyBlob,
-  FormData: ThirdPartyFormData
-} = require('formdata-node')
 const { kState, kSignal, kHeaders } = require('../../lib/web/fetch/symbols')
 const { getHeadersGuard, getHeadersList } = require('../../lib/web/fetch/headers')
 
@@ -417,26 +413,6 @@ test('RequestInit.signal option', async () => {
   await assert.rejects(fetch('http://asd', {
     signal: false
   }), TypeError)
-})
-
-test('constructing Request with third party Blob body', async () => {
-  const blob = new ThirdPartyBlob(['text'])
-  const req = new Request('http://asd', {
-    method: 'POST',
-    body: blob
-  })
-  assert.strictEqual(await req.text(), 'text')
-})
-test('constructing Request with third party FormData body', async () => {
-  const form = new ThirdPartyFormData()
-  form.set('key', 'value')
-  const req = new Request('http://asd', {
-    method: 'POST',
-    body: form
-  })
-  const contentType = req.headers.get('content-type').split('=')
-  assert.strictEqual(contentType[0], 'multipart/form-data; boundary')
-  assert.ok((await req.text()).startsWith(`--${contentType[1]}`))
 })
 
 // https://github.com/nodejs/undici/issues/2050

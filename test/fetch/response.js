@@ -10,10 +10,6 @@ const {
   FormData
 } = require('../../')
 const { fromInnerResponse, makeResponse } = require('../../lib/web/fetch/response')
-const {
-  Blob: ThirdPartyBlob,
-  FormData: ThirdPartyFormData
-} = require('formdata-node')
 const { kState, kHeaders } = require('../../lib/web/fetch/symbols')
 const { getHeadersGuard, getHeadersList } = require('../../lib/web/fetch/headers')
 
@@ -237,20 +233,6 @@ test('constructing a Response with a ReadableStream body', async (t) => {
     await assert.rejects(response3.json(), TypeError)
     await assert.rejects(response4.blob(), TypeError)
   })
-})
-
-test('constructing Response with third party Blob body', async () => {
-  const blob = new ThirdPartyBlob(['text'])
-  const res = new Response(blob)
-  assert.strictEqual(await res.text(), 'text')
-})
-test('constructing Response with third party FormData body', async () => {
-  const form = new ThirdPartyFormData()
-  form.set('key', 'value')
-  const res = new Response(form)
-  const contentType = res.headers.get('content-type').split('=')
-  assert.strictEqual(contentType[0], 'multipart/form-data; boundary')
-  assert.ok((await res.text()).startsWith(`--${contentType[1]}`))
 })
 
 // https://github.com/nodejs/undici/issues/2465
