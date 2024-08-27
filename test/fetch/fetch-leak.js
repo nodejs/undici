@@ -7,7 +7,12 @@ const { fetch } = require('../..')
 const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
 
+const hasGC = typeof global.gc !== 'undefined'
+
 test('do not leak', (t, done) => {
+  if (!hasGC) {
+    throw new Error('gc is not available. Run with \'--expose-gc\'.')
+  }
   const { ok } = tspl(t, { plan: 1 })
   const server = createServer((req, res) => {
     res.end()

@@ -6,13 +6,18 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:net')
 const { Client, Pool } = require('..')
 
-const skip = typeof global.gc === 'undefined'
+const hasGC = typeof global.gc !== 'undefined'
 
-setInterval(() => {
-  global.gc()
-}, 100).unref()
+if (hasGC) {
+  setInterval(() => {
+    global.gc()
+  }, 100).unref()
+}
 
-test('gc should collect the client if, and only if, there are no active sockets', { skip }, async t => {
+test('gc should collect the client if, and only if, there are no active sockets', async t => {
+  if (!hasGC) {
+    throw new Error('gc is not available. Run with \'--expose-gc\'.')
+  }
   t = tspl(t, { plan: 4 })
 
   const server = createServer((socket) => {
@@ -56,7 +61,10 @@ test('gc should collect the client if, and only if, there are no active sockets'
   await t.completed
 })
 
-test('gc should collect the pool if, and only if, there are no active sockets', { skip }, async t => {
+test('gc should collect the pool if, and only if, there are no active sockets', async t => {
+  if (!hasGC) {
+    throw new Error('gc is not available. Run with \'--expose-gc\'.')
+  }
   t = tspl(t, { plan: 4 })
 
   const server = createServer((socket) => {
