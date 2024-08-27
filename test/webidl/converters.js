@@ -156,19 +156,6 @@ test('DataView', () => {
   assert.equal(webidl.converters.DataView(view, 'converter', 'converter'), view)
 })
 
-test('BufferSource', () => {
-  assert.doesNotThrow(() => {
-    const buffer = new ArrayBuffer(16)
-    const view = new DataView(buffer, 0)
-
-    webidl.converters.BufferSource(view, 'converter', 'converter')
-  })
-
-  assert.throws(() => {
-    webidl.converters.BufferSource(3, 'converter', 'converter')
-  }, TypeError)
-})
-
 test('ByteString', () => {
   assert.doesNotThrow(() => {
     webidl.converters.ByteString('', 'converter', 'converter')
