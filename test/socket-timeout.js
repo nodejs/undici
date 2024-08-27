@@ -3,7 +3,6 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
-const timers = require('../lib/util/timers')
 const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 
@@ -67,12 +66,6 @@ test('Disable socket timeout', async (t) => {
   const server = createServer()
   const clock = FakeTimers.install()
   after(clock.uninstall.bind(clock))
-
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
 
   server.once('request', (req, res) => {
     setTimeout(() => {
