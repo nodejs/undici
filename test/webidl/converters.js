@@ -238,3 +238,12 @@ test('webidl.util.Stringify', (t) => {
     assert.deepStrictEqual(webidl.util.Stringify(value), expected)
   }
 })
+
+test('recordConverter', () => {
+  const anyConverter = webidl.recordConverter(webidl.converters.any, webidl.converters.any)
+
+  assert.throws(
+    () => anyConverter(null, 'prefix', 'argument'),
+    new TypeError('prefix: argument ("Null") is not an Object.')
+  )
+})

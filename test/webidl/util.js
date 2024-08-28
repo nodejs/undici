@@ -6,15 +6,17 @@ const { webidl } = require('../../lib/web/fetch/webidl')
 
 test('Type(V)', () => {
   const Type = webidl.util.Type
+  const Types = webidl.util.Types
 
-  assert.equal(Type(undefined), 'Undefined')
-  assert.equal(Type(null), 'Null')
-  assert.equal(Type(true), 'Boolean')
-  assert.equal(Type('string'), 'String')
-  assert.equal(Type(Symbol('symbol')), 'Symbol')
-  assert.equal(Type(1.23), 'Number')
-  assert.equal(Type(1n), 'BigInt')
-  assert.equal(Type({ a: 'b' }), 'Object')
+  assert.equal(Type(undefined), Types.UNDEFINED)
+  assert.equal(Type(null), Types.NULL)
+  assert.equal(Type(true), Types.BOOLEAN)
+  assert.equal(Type('string'), Types.STRING)
+  assert.equal(Type(Symbol('symbol')), Types.SYMBOL)
+  assert.equal(Type(1.23), Types.NUMBER)
+  assert.equal(Type(1n), Types.BIGINT)
+  assert.equal(Type({ a: 'b' }), Types.OBJECT)
+  assert.equal(Type(function () {}), Types.OBJECT)
 })
 
 test('ConvertToInt(V)', () => {
