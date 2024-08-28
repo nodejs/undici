@@ -76,6 +76,51 @@ describe('webidl.dictionaryConverter', () => {
       converter({ Key: 'this key was required!' }, 'converter', 'converter')
     })
   })
+
+  test('null and undefined still populates defaultValue(s)', () => {
+    const dict = webidl.dictionaryConverter([
+      {
+        key: 'key',
+        converter: webidl.converters.any,
+        defaultValue: () => 3
+      }
+    ])
+
+    assert.deepStrictEqual(dict(null), { key: 3 })
+    assert.deepStrictEqual(dict(undefined), { key: 3 })
+  })
+
+  test('null and undefined throw a webidl TypeError with a required key', () => {
+    const dict = webidl.dictionaryConverter([
+      {
+        key: 'key',
+        converter: webidl.converters.any,
+        required: true
+      }
+    ])
+
+    assert.throws(() => dict(null, 'prefix'), new TypeError('prefix: Missing required key "key".'))
+    assert.throws(() => dict(undefined, 'prefix'), new TypeError('prefix: Missing required key "key".'))
+  })
+
+  test('Object type works for functions and regex (etc.)', () => {
+    const dict = webidl.dictionaryConverter([
+      {
+        key: 'key',
+        converter: webidl.converters.any,
+        required: true
+      }
+    ])
+
+    function obj () {}
+    obj.key = 1
+
+    const obj2 = / /
+    obj2.key = 1
+
+    assert.deepStrictEqual(dict(obj), { key: 1 })
+    assert.deepStrictEqual(dict(obj2), { key: 1 })
+  })
 })
 
 test('ArrayBuffer', () => {
