@@ -1,3 +1,4 @@
+import CacheHandler from './cache-interceptor'
 import Dispatcher from './dispatcher'
 import RetryHandler from './retry-handler'
 
@@ -8,10 +9,12 @@ declare namespace Interceptors {
   export type RetryInterceptorOpts = RetryHandler.RetryOptions
   export type RedirectInterceptorOpts = { maxRedirections?: number }
   export type ResponseErrorInterceptorOpts = { throwOnError: boolean }
+  export type CacheInterceptorOpts = CacheHandler.CacheOptions
 
   export function createRedirectInterceptor (opts: RedirectInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function dump (opts?: DumpInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function retry (opts?: RetryInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function redirect (opts?: RedirectInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function responseError (opts?: ResponseErrorInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
+  export function cache (opts?: CacheInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
 }
