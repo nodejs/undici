@@ -34,11 +34,24 @@ interface WebidlErrors {
   }): TypeError
 }
 
+interface WebIDLTypes {
+  UNDEFINED: 1,
+  BOOLEAN: 2,
+  STRING: 3,
+  SYMBOL: 4,
+  NUMBER: 5,
+  BIGINT: 6,
+  NULL: 7
+  OBJECT: 8
+}
+
 interface WebidlUtil {
   /**
    * @see https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values
    */
-  Type (object: unknown):
+  Type (object: unknown): WebIDLTypes
+
+  TypeValueToString (o: unknown):
     | 'Undefined'
     | 'Boolean'
     | 'String'
@@ -47,6 +60,8 @@ interface WebidlUtil {
     | 'BigInt'
     | 'Null'
     | 'Object'
+
+  Types: WebIDLTypes
 
   /**
    * @see https://webidl.spec.whatwg.org/#abstract-opdef-converttoint
