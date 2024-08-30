@@ -237,6 +237,93 @@ test('Should recover on network errors (dual stack - 6)', async t => {
   t.equal(await response2.body.text(), 'hello world!')
 })
 
+test('Should throw when on dual-stack disabled (4)', async t => {
+  t = tspl(t, { plan: 2 })
+
+  let counter = 0
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        ++counter
+        const url = new URL(opts.origin)
+
+        switch (counter) {
+          case 1:
+            t.equal(isIP(url.hostname), 4)
+            break
+
+          default:
+            t.fail('should not reach this point')
+        }
+
+        return dispatch(opts, handler)
+      }
+    },
+    dns({ dualStack: false, affinity: 4 })
+  ])
+
+  const promise = client.request({
+    ...requestOptions,
+    origin: 'http://localhost'
+  })
+
+  await t.rejects(promise, 'ECONNREFUSED')
+
+  await t.complete
+})
+
+test('Should throw when on dual-stack disabled (6)', async t => {
+  t = tspl(t, { plan: 2 })
+
+  let counter = 0
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        ++counter
+        const url = new URL(opts.origin)
+
+        switch (counter) {
+          case 1:
+            // [::1] -> ::1
+            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            break
+
+          default:
+            t.fail('should not reach this point')
+        }
+
+        return dispatch(opts, handler)
+      }
+    },
+    dns({ dualStack: false, affinity: 6 })
+  ])
+
+  const promise = client.request({
+    ...requestOptions,
+    origin: 'http://localhost'
+  })
+
+  await t.rejects(promise, 'ECONNREFUSED')
+
+  await t.complete
+})
+
 test('Should automatically resolve IPs (dual stack disabled - 4)', async t => {
   t = tspl(t, { plan: 6 })
 

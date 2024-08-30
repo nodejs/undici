@@ -1,5 +1,6 @@
 import Dispatcher from './dispatcher'
 import RetryHandler from './retry-handler'
+import { LookupOptions } from 'node:dns'
 
 export default Interceptors
 
