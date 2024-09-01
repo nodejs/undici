@@ -81,6 +81,16 @@ test('arg validation', () => {
   })
 })
 
+test('set blob', () => {
+  const form = new FormData()
+
+  form.set('key', new Blob([]), undefined)
+  assert.strictEqual(form.get('key').name, 'blob')
+
+  form.set('key1', new Blob([]), null)
+  assert.strictEqual(form.get('key1').name, 'null')
+})
+
 test('append file', () => {
   const form = new FormData()
   form.set('asd', new File([], 'asd1', { type: 'text/plain' }), 'asd2')
@@ -106,6 +116,12 @@ test('append blob', async () => {
   assert.strictEqual(await form.get('asd').text(), 'asd1')
   form.delete('asd')
   assert.strictEqual(form.get('asd'), null)
+
+  form.append('key', new Blob([]), undefined)
+  assert.strictEqual(form.get('key').name, 'blob')
+
+  form.append('key1', new Blob([]), null)
+  assert.strictEqual(form.get('key1').name, 'null')
 })
 
 test('append string', () => {
