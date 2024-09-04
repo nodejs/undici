@@ -92,7 +92,7 @@ test('parseRawHeaders', () => {
   assert.deepEqual(util.parseRawHeaders(['content-length', 'value', 'content-disposition', 'form-data; name="fieldName"']), ['content-length', 'value', 'content-disposition', 'form-data; name="fieldName"'])
 })
 
-test('buildURL', () => {
+test('serializePathWithQuery', () => {
   const tests = [
     [{ id: BigInt(123456) }, 'id=123456'],
     [{ date: new Date() }, 'date='],
@@ -111,7 +111,7 @@ test('buildURL', () => {
 
   for (const [input, output] of tests) {
     const expected = `${base}${output ? `?${output}` : output}`
-    assert.deepEqual(util.buildURL(base, input), expected)
+    assert.deepEqual(util.serializePathWithQuery(base, input), expected)
   }
 })
 
