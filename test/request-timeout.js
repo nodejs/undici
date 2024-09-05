@@ -16,7 +16,7 @@ const {
   PassThrough
 } = require('node:stream')
 const {
-  tick: fastTimerTick,
+  tick: fastTimersTick,
   clearAll: clearAllFastTimers
 } = require('../lib/util/timers')
 
@@ -92,14 +92,14 @@ test('body timeout', async (t) => {
       t.ifError(err)
       body.on('data', () => {
         clock.tick(100)
-        fastTimerTick(100)
+        fastTimersTick(100)
       }).on('error', (err) => {
         t.ok(err instanceof errors.BodyTimeoutError)
       })
     })
 
     clock.tick(50)
-    fastTimerTick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -119,7 +119,7 @@ test('overridden request timeout', async (t) => {
       res.end('hello')
     }, 100)
     clock.tick(100)
-    fastTimerTick(100)
+    fastTimersTick(100)
   })
   after(() => server.close())
 
@@ -132,7 +132,7 @@ test('overridden request timeout', async (t) => {
     })
 
     clock.tick(50)
-    fastTimerTick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -159,15 +159,15 @@ test('overridden body timeout', async (t) => {
     client.request({ path: '/', method: 'GET', bodyTimeout: 50 }, (err, { body }) => {
       t.ifError(err)
       body.on('data', () => {
-        fastTimerTick()
-        fastTimerTick()
+        fastTimersTick()
+        fastTimersTick()
       }).on('error', (err) => {
         t.ok(err instanceof errors.BodyTimeoutError)
       })
     })
 
-    fastTimerTick()
-    fastTimerTick()
+    fastTimersTick()
+    fastTimersTick()
   })
 
   await t.completed
@@ -187,7 +187,7 @@ test('With EE signal', async (t) => {
       res.end('hello')
     }, 100)
     clock.tick(100)
-    fastTimerTick(100)
+    fastTimersTick(100)
   })
   after(() => server.close())
 
@@ -203,7 +203,7 @@ test('With EE signal', async (t) => {
     })
 
     clock.tick(50)
-    fastTimerTick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -223,7 +223,7 @@ test('With abort-controller signal', async (t) => {
       res.end('hello')
     }, 100)
     clock.tick(100)
-    fastTimerTick(100)
+    fastTimersTick(100)
   })
   after(() => server.close())
 
@@ -239,7 +239,7 @@ test('With abort-controller signal', async (t) => {
     })
 
     clock.tick(50)
-    fastTimerTick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -261,7 +261,7 @@ test('Abort before timeout (EE)', async (t) => {
     }, 100)
     ee.emit('abort')
     clock.tick(50)
-    fastTimerTick(50)
+    fastTimersTick(50)
   })
   after(() => server.close())
 
@@ -274,7 +274,7 @@ test('Abort before timeout (EE)', async (t) => {
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       t.ok(err instanceof errors.RequestAbortedError)
       clock.tick(100)
-      fastTimerTick(100)
+      fastTimersTick(100)
     })
   })
 
@@ -297,7 +297,7 @@ test('Abort before timeout (abort-controller)', async (t) => {
     }, 100)
     abortController.abort()
     clock.tick(50)
-    fastTimerTick(50)
+    fastTimersTick(50)
   })
   after(() => server.close())
 
@@ -310,7 +310,7 @@ test('Abort before timeout (abort-controller)', async (t) => {
     client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
       t.ok(err instanceof errors.RequestAbortedError)
       clock.tick(100)
-      fastTimerTick(100)
+      fastTimersTick(100)
     })
   })
 
@@ -331,7 +331,7 @@ test('Timeout with pipelining', async (t) => {
       res.end('hello')
     }, 100)
     clock.tick(50)
-    fastTimerTick(50)
+    fastTimersTick(50)
   })
   after(() => server.close())
 
@@ -372,7 +372,7 @@ test('Global option', async (t) => {
       res.end('hello')
     }, 100)
     clock.tick(100)
-    fastTimerTick(100)
+    fastTimersTick(100)
   })
   after(() => server.close())
 
@@ -387,7 +387,7 @@ test('Global option', async (t) => {
     })
 
     clock.tick(50)
-    fastTimerTick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -407,7 +407,7 @@ test('Request options overrides global option', async (t) => {
       res.end('hello')
     }, 100)
     clock.tick(100)
-    fastTimerTick(100)
+    fastTimersTick(100)
   })
   after(() => server.close())
 
@@ -422,7 +422,7 @@ test('Request options overrides global option', async (t) => {
     })
 
     clock.tick(50)
-    fastTimerTick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -483,7 +483,7 @@ test('client.close should wait for the timeout', async (t) => {
     client.on('connect', () => {
       process.nextTick(() => {
         clock.tick(100)
-        fastTimerTick(100)
+        fastTimersTick(100)
       })
     })
   })
@@ -547,7 +547,7 @@ test('Disable request timeout', async (t) => {
       res.end('hello')
     }, 32e3)
     clock.tick(33e3)
-    fastTimerTick(33e3)
+    fastTimersTick(33e3)
   })
   after(() => server.close())
 
@@ -570,7 +570,7 @@ test('Disable request timeout', async (t) => {
     })
 
     clock.tick(31e3)
-    fastTimerTick(31e3)
+    fastTimersTick(31e3)
   })
 
   await t.completed
@@ -590,7 +590,7 @@ test('Disable request timeout for a single request', async (t) => {
       res.end('hello')
     }, 32e3)
     clock.tick(33e3)
-    fastTimerTick(33e3)
+    fastTimersTick(33e3)
   })
   after(() => server.close())
 
@@ -613,7 +613,7 @@ test('Disable request timeout for a single request', async (t) => {
     })
 
     clock.tick(31e3)
-    fastTimerTick(31e3)
+    fastTimersTick(31e3)
   })
 
   await t.completed
@@ -633,7 +633,7 @@ test('stream timeout', async (t) => {
       res.end('hello')
     }, 301e3)
     clock.tick(301e3)
-    fastTimerTick(301e3)
+    fastTimersTick(301e3)
   })
   after(() => server.close())
 
@@ -669,7 +669,7 @@ test('stream custom timeout', async (t) => {
       res.end('hello')
     }, 31e3)
     clock.tick(31e3)
-    fastTimerTick(31e3)
+    fastTimersTick(31e3)
   })
   after(() => server.close())
 
@@ -707,7 +707,7 @@ test('pipeline timeout', async (t) => {
       req.pipe(res)
     }, 301e3)
     clock.tick(301e3)
-    fastTimerTick(301e3)
+    fastTimersTick(301e3)
   })
   after(() => server.close())
 
@@ -762,7 +762,7 @@ test('pipeline timeout', async (t) => {
       req.pipe(res)
     }, 31e3)
     clock.tick(31e3)
-    fastTimerTick(31e3)
+    fastTimersTick(31e3)
   })
   after(() => server.close())
 
@@ -838,7 +838,7 @@ test('client.close should not deadlock', async (t) => {
       })
 
       clock.tick(100)
-      fastTimerTick(100)
+      fastTimersTick(100)
     })
   })
   await t.completed
