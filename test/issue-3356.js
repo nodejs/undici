@@ -4,7 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-
+const { tick: fastTimerTick } = require('../lib/util/timers')
 const { fetch, Agent, RetryAgent } = require('..')
 
 test('https://github.com/nodejs/undici/issues/3356', async (t) => {
@@ -42,6 +42,10 @@ test('https://github.com/nodejs/undici/issues/3356', async (t) => {
   const response = await fetch(`http://localhost:${server.address().port}`, {
     dispatcher: agent
   })
+
+  fastTimerTick()
+  fastTimerTick()
+
   setTimeout(async () => {
     try {
       t.equal(response.status, 200)
