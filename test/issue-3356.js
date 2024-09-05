@@ -44,7 +44,6 @@ test('https://github.com/nodejs/undici/issues/3356', async (t) => {
   })
 
   fastTimerTick()
-  fastTimerTick()
 
   setTimeout(async () => {
     try {
