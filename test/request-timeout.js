@@ -1,6 +1,7 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
+const { resolve: pathResolve } = require('node:path')
 const { test, after, beforeEach } = require('node:test')
 const { createReadStream, writeFileSync, unlinkSync } = require('node:fs')
 const { Client, errors } = require('..')
@@ -17,11 +18,11 @@ const {
 } = require('node:stream')
 const {
   tick: fastTimersTick,
-  clearAll: clearAllFastTimers
+  reset: resetFastTimers
 } = require('../lib/util/timers')
 
 beforeEach(() => {
-  clearAllFastTimers()
+  resetFastTimers()
 })
 
 test('request timeout', async (t) => {
@@ -53,7 +54,7 @@ test('request timeout with readable body', async (t) => {
   })
   after(() => server.close())
 
-  const tempfile = `${__filename}.10mb.txt`
+  const tempfile = pathResolve(__dirname, 'request-timeout.10mb.bin')
   writeFileSync(tempfile, Buffer.alloc(10 * 1024 * 1024))
   after(() => unlinkSync(tempfile))
 
