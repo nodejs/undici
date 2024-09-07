@@ -17,6 +17,20 @@ wss.on('connection', (ws, request) => {
     const protocol = line.split(',')[0]
     ws.send(protocol)
     return
+  } else if (request.url === '/remote-close' || request.url.startsWith('/remote-close?')) {
+    const fullUrl = new URL(request.url, `ws://localhost:${server.address().port}`)
+
+    const code = fullUrl.searchParams.has('code') ? Number(fullUrl.searchParams.get('code')) : undefined
+    const reason = fullUrl.searchParams.get('reason') ?? undefined
+    const abrupt = fullUrl.searchParams.get('abrupt') === '1'
+
+    if (abrupt) {
+      ws._socket.end()
+      return
+    }
+
+    ws.close(code, reason)
+    return
   }
 
   ws.on('message', (data, isBinary) => {
