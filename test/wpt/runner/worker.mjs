@@ -5,16 +5,17 @@ import { setFlagsFromString } from 'node:v8'
 import { runInNewContext, runInThisContext } from 'node:vm'
 import { parentPort, workerData } from 'node:worker_threads'
 import {
-  fetch, FormData, Headers, Request, Response, setGlobalOrigin
+  fetch, FormData, Headers, Request, Response, setGlobalOrigin, EventSource
 } from '../../../index.js'
 import { CloseEvent } from '../../../lib/web/websocket/events.js'
 import { WebSocket } from '../../../lib/web/websocket/websocket.js'
 import { Cache } from '../../../lib/web/cache/cache.js'
 import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
 import { kConstruct } from '../../../lib/web/cache/symbols.js'
-// TODO(@KhafraDev): move this import once its added to index
-import { EventSource } from '../../../lib/web/eventsource/eventsource.js'
 import { webcrypto } from 'node:crypto'
+// TODO(@KhafraDev): move this import once its added to index
+import { WebSocketStream } from '../../../lib/web/websocket/stream/websocketstream.js'
+import { WebSocketError } from '../../../lib/web/websocket/stream/websocketerror.js'
 
 const { initScripts, meta, test, url, path } = workerData
 
@@ -92,6 +93,14 @@ Object.defineProperties(globalThis, {
   EventSource: {
     ...globalPropertyDescriptors,
     value: EventSource
+  },
+  WebSocketStream: {
+    ...globalPropertyDescriptors,
+    value: WebSocketStream
+  },
+  WebSocketError: {
+    ...globalPropertyDescriptors,
+    value: WebSocketError
   }
 })
 
