@@ -12,6 +12,12 @@
         "fail": [
           "close with unwritten data should not be considered clean"
         ]
+      },
+      "abort.any.js": {
+        "note": "Relies on exact timing - ie. aborting *during* the handshake.",
+        "flaky": [
+          "abort during handshake should work'"
+        ]
       }
     }
   },
