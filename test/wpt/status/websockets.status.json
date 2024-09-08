@@ -1,6 +1,18 @@
 {
   "stream": {
     "tentative": {
+      "backpressure-send.any.js": {
+        "note": "Deno also fails this test",
+        "fail": [
+          "backpressure should be applied to sent messages"
+        ]
+      },
+      "remote-close.any.js": {
+        "note": "Deno also fails this test",
+        "fail": [
+          "close with unwritten data should not be considered clean"
+        ]
+      }
     }
   },
   "interfaces": {
