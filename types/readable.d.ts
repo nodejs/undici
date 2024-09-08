@@ -5,8 +5,8 @@ export default BodyReadable
 
 declare class BodyReadable extends Readable {
   constructor (opts: {
-    resume?: (this: Readable, size: number) => void | null;
-    abort?: () => void | null;
+    resume: (this: Readable, size: number) => void | null;
+    abort: () => void | null;
     contentType?: string;
     contentLength?: number;
     highWaterMark?: number;
@@ -62,6 +62,7 @@ declare class BodyReadable extends Readable {
 
   /** Dumps the response body by reading `limit` number of bytes.
    * @param opts.limit Number of bytes to read (optional) - Default: 131072
+   * @param opts.signal AbortSignal to cancel the operation (optional)
    */
-  dump (opts?: { limit: number; signal: AbortSignal }): Promise<void>
+  dump (opts?: { limit: number; signal?: AbortSignal }): Promise<void>
 }
