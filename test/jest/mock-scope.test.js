@@ -1,3 +1,5 @@
+'use strict'
+
 const { MockAgent, setGlobalDispatcher, request } = require('../../index')
 
 /* global afterAll, expect, it, AbortController */
