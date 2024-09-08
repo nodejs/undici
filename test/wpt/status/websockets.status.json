@@ -16,7 +16,7 @@
       "abort.any.js": {
         "note": "Relies on exact timing - ie. aborting *during* the handshake.",
         "flaky": [
-          "abort during handshake should work'"
+          "abort during handshake should work"
         ]
       }
     }
