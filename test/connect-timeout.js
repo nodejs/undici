@@ -10,12 +10,13 @@ const skip = !!process.env.CITGM
 
 // Using describe instead of test to avoid the timeout
 describe('prioritize socket errors over timeouts', { skip }, async () => {
-  const t = tspl({ ...assert, after: () => {} }, { plan: 1 })
+  const t = tspl({ ...assert, after: () => {} }, { plan: 2 })
   const client = new Pool('http://foorbar.invalid:1234', { connectTimeout: 1 })
 
   client.request({ method: 'GET', path: '/foobar' })
     .then(() => t.fail())
     .catch((err) => {
+      t.strictEqual(err.code, 'ENOTFOUND')
       t.strictEqual(err.code !== 'UND_ERR_CONNECT_TIMEOUT', true)
     })
 
@@ -32,7 +33,7 @@ net.connect = function (options) {
 }
 
 test('connect-timeout', { skip }, async t => {
-  t = tspl(t, { plan: 1 })
+  t = tspl(t, { plan: 3 })
 
   const client = new Client('http://localhost:9000', {
     connectTimeout: 1e3
@@ -48,6 +49,8 @@ test('connect-timeout', { skip }, async t => {
     method: 'GET'
   }, (err) => {
     t.ok(err instanceof errors.ConnectTimeoutError)
+    t.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
+    t.strictEqual(err.message, 'Connect Timeout Error (attempted address: localhost:9000, timeout: 1000ms)')
     clearTimeout(timeout)
   })
 
@@ -55,7 +58,7 @@ test('connect-timeout', { skip }, async t => {
 })
 
 test('connect-timeout', { skip }, async t => {
-  t = tspl(t, { plan: 1 })
+  t = tspl(t, { plan: 3 })
 
   const client = new Pool('http://localhost:9000', {
     connectTimeout: 1e3
@@ -71,6 +74,8 @@ test('connect-timeout', { skip }, async t => {
     method: 'GET'
   }, (err) => {
     t.ok(err instanceof errors.ConnectTimeoutError)
+    t.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
+    t.strictEqual(err.message, 'Connect Timeout Error (attempted address: localhost:9000, timeout: 1000ms)')
     clearTimeout(timeout)
   })
 
