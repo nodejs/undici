@@ -5,10 +5,10 @@ export default BodyReadable
 
 declare class BodyReadable extends Readable {
   constructor (opts: ReadableOptions & {
-    resume?: (this: Readable, size: number) => void | null,
-    abort?: () => void | null,
-    contentType?: string,
-    contentLength?: number,
+    resume?: (this: Readable, size: number) => void | null;
+    abort?: () => void | null;
+    contentType?: string;
+    contentLength?: number;
   })
 
   /** Consumes and returns the body as a string
