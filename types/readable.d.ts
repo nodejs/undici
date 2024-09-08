@@ -1,14 +1,15 @@
-import { Readable, ReadableOptions } from 'stream'
+import { Readable } from 'stream'
 import { Blob } from 'buffer'
 
 export default BodyReadable
 
 declare class BodyReadable extends Readable {
-  constructor (opts: ReadableOptions & {
+  constructor (opts: {
     resume?: (this: Readable, size: number) => void | null;
     abort?: () => void | null;
     contentType?: string;
     contentLength?: number;
+    highWaterMark?: number;
   })
 
   /** Consumes and returns the body as a string
