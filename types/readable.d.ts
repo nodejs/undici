@@ -1,14 +1,15 @@
-import { Readable } from 'stream'
+import { Readable, ReadableOptions } from 'stream'
 import { Blob } from 'buffer'
 
 export default BodyReadable
 
 declare class BodyReadable extends Readable {
-  constructor (
+  constructor (opts: ReadableOptions & {
     resume?: (this: Readable, size: number) => void | null,
     abort?: () => void | null,
-    contentType?: string
-  )
+    contentType?: string,
+    contentLength?: number,
+  })
 
   /** Consumes and returns the body as a string
    *  https://fetch.spec.whatwg.org/#dom-body-text
@@ -59,7 +60,7 @@ declare class BodyReadable extends Readable {
   readonly body: never | undefined
 
   /** Dumps the response body by reading `limit` number of bytes.
-   * @param opts.limit Number of bytes to read (optional) - Default: 262144
+   * @param opts.limit Number of bytes to read (optional) - Default: 131072
    */
-  dump (opts?: { limit: number }): Promise<void>
+  dump (opts?: { limit: number; signal: AbortSignal }): Promise<void>
 }
