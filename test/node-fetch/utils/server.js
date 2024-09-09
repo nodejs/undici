@@ -1,3 +1,5 @@
+'use strict'
+
 const http = require('node:http')
 const zlib = require('node:zlib')
 const { once } = require('node:events')
