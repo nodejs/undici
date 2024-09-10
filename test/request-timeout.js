@@ -31,7 +31,7 @@ test('request timeout', async (t) => {
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
-    }, 1000)
+    }, 2000)
   })
   after(() => server.close())
 
