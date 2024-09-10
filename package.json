@@ -62,6 +62,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
+    "build:types": "tsc --project tsconfig.types.json && dts-bundle-generator --project tsconfig.types.json --out-file ./index.d.ts ./types-generated/index.d.ts",
     "build:node": "npx esbuild@0.19.10 index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1 --keep-names && node scripts/strip-comments.js",
     "prebuild:wasm": "node build/wasm.js --prebuild",
     "build:wasm": "node build/wasm.js --docker",
@@ -111,6 +112,7 @@
     "c8": "^10.0.0",
     "cross-env": "^7.0.3",
     "dns-packet": "^5.4.0",
+    "dts-bundle-generator": "^9.5.1",
     "eslint": "^9.9.0",
     "fast-check": "^3.17.1",
     "https-pem": "^3.0.0",
