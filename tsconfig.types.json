@@ -1,0 +1,20 @@
+{
+  "include": [
+    "lib",
+    "index.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "types-generated"
+  ],
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "allowJs": true,
+    "checkJs": false,
+    "outDir": "types-generated",
+    "skipLibCheck": true,
+    "declaration": true,
+    "emitDeclarationOnly": true
+  }
+}
