@@ -13,15 +13,16 @@ const { interceptors, Agent } = require('../..')
 const { dns } = interceptors
 
 test('Should validate options', t => {
-  t = tspl(t, { plan: 9 })
+  t = tspl(t, { plan: 10 })
 
   t.throws(() => dns({ dualStack: 'true' }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ dualStack: 0 }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ affinity: '4' }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ affinity: 7 }), { code: 'UND_ERR_INVALID_ARG' })
-  t.throws(() => dns({ maxTTL: Infinity }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ maxTTL: -1 }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ maxTTL: '0' }), { code: 'UND_ERR_INVALID_ARG' })
+  t.throws(() => dns({ maxItems: '1' }), { code: 'UND_ERR_INVALID_ARG' })
+  t.throws(() => dns({ maxItems: -1 }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ lookup: {} }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ pick: [] }), { code: 'UND_ERR_INVALID_ARG' })
 })
@@ -692,4 +693,97 @@ test('Should we handle TTL (6)', async t => {
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
   t.equal(lookupCounter, 2)
+})
+
+test('Should handle max cached items', async t => {
+  t = tspl(t, { plan: 9 })
+
+  let counter = 0
+  const server1 = createServer()
+  const server2 = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server1.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server1.listen(0)
+
+  server2.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world! (x2)')
+  })
+  server2.listen(0)
+
+  await Promise.all([once(server1, 'listening'), once(server2, 'listening')])
+
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        ++counter
+        const url = new URL(opts.origin)
+
+        switch (counter) {
+          case 1:
+            t.equal(isIP(url.hostname), 4)
+            break
+
+          case 2:
+            // [::1] -> ::1
+            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            break
+
+          case 3:
+            t.equal(url.hostname, 'developer.mozilla.org')
+            // Rewrite origin to avoid reaching internet
+            opts.origin = `http://127.0.0.1:${server2.address().port}`
+            break
+          default:
+            t.fails('should not reach this point')
+        }
+
+        return dispatch(opts, handler)
+      }
+    },
+    dns({ maxItems: 1 })
+  ])
+
+  after(async () => {
+    await client.close()
+    server1.close()
+    server2.close()
+
+    await Promise.all([once(server1, 'close'), once(server2, 'close')])
+  })
+
+  const response = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server1.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server1.address().port}`
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world!')
+
+  const response3 = await client.request({
+    ...requestOptions,
+    origin: 'https://developer.mozilla.org'
+  })
+
+  t.equal(response3.statusCode, 200)
+  t.equal(await response3.body.text(), 'hello world! (x2)')
 })

@@ -15,6 +15,7 @@ declare namespace Interceptors {
   export type DNSInterceptorRecords = { 4: { ips: DNSInterceptorRecord[] } | null, 6: { ips: DNSInterceptorRecord[] } | null }
   export type DNSInterceptorOpts = {
     maxTTL?: number
+    maxItems?: number
     lookup?: (hostname: string, options: LookupOptions, callback: (err: NodeJS.ErrnoException | null, addresses: DNSInterceptorRecord[]) => void) => void
     pick?: (origin: URL, records: DNSInterceptorRecords, affinity: 4 | 6) => DNSInterceptorRecord
     dualStack?: boolean
