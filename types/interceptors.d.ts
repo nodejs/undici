@@ -12,12 +12,12 @@ declare namespace Interceptors {
   export type ResponseErrorInterceptorOpts = { throwOnError: boolean }
   // DNS interceptor
   export type DNSInterceptorRecord = { address: string, ttl: number, family: 4 | 6 }
-  export type DNSInterceptorRecords = { 4: { ips: DNSInterceptorRecord[] } | null, 6: { ips: DNSInterceptorRecord[] } | null }
+  export type DNSInterceptorOriginRecords = { 4: { ips: DNSInterceptorRecord[] } | null, 6: { ips: DNSInterceptorRecord[] } | null }
   export type DNSInterceptorOpts = {
     maxTTL?: number
     maxItems?: number
     lookup?: (hostname: string, options: LookupOptions, callback: (err: NodeJS.ErrnoException | null, addresses: DNSInterceptorRecord[]) => void) => void
-    pick?: (origin: URL, records: DNSInterceptorRecords, affinity: 4 | 6) => DNSInterceptorRecord
+    pick?: (origin: URL, records: DNSInterceptorOriginRecords, affinity: 4 | 6) => DNSInterceptorRecord
     dualStack?: boolean
     affinity?: 4 | 6
   }
