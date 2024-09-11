@@ -290,7 +290,7 @@ test('Should throw when on dual-stack disabled (4)', async t => {
 
   const promise = client.request({
     ...requestOptions,
-    origin: 'http://localhost'
+    origin: 'http://localhost:1234'
   })
 
   await t.rejects(promise, 'ECONNREFUSED')
@@ -577,7 +577,7 @@ test('Should we handle TTL (4)', async t => {
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
 
-  await sleep(200)
+  await sleep(500)
 
   const response2 = await client.request({
     ...requestOptions,
