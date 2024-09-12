@@ -71,7 +71,7 @@ describe('Default HTTPParseError Codes', () => {
 
     const error = new errors.HTTPParserError('HTTPParserError')
 
-    t.strictEqual(error.code, undefined)
+    t.strictEqual(error.code, 'UND_ERR_HTTP_PARSER')
     t.strictEqual(error.data, undefined)
   })
 })
