@@ -12,6 +12,8 @@ const { tspl } = require('@matteo.collina/tspl')
 const { interceptors, Agent } = require('../..')
 const { dns } = interceptors
 
+const isWindows = process.platform === 'win32'
+
 test('Should validate options', t => {
   t = tspl(t, { plan: 10 })
 
@@ -332,21 +334,24 @@ test('Should throw when on dual-stack disabled (6)', async t => {
     dns({ dualStack: false, affinity: 6 })
   ])
 
-  const promise = client.request({
-    ...requestOptions,
-    origin: 'http://localhost',
-    headersTimeout: 100
-  })
+  // Note: In windows the IPV6 does not results in ECONNREFUSED
+  // but rather in TIMEOUT
+  if (isWindows) {
+    const promise = client.request({
+      ...requestOptions,
+      origin: 'http://localhost',
+      headersTimeout: 500
+    })
 
-  // TODO: remove
-  await t.rejects(
-    promise.catch(err => {
-      console.log(err)
-      throw err
-    }),
-    'ECONNREFUSED'
-  )
-  // await t.rejects(promise, 'ECONNREFUSED')
+    await t.rejects(promise, 'UND_ERR_HEADERS_TIMEOUT')
+  } else {
+    const promise = client.request({
+      ...requestOptions,
+      origin: 'http://localhost'
+    })
+
+    await t.rejects(promise, 'ECONNREFUSED')
+  }
 
   await t.complete
 })
