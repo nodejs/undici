@@ -334,10 +334,19 @@ test('Should throw when on dual-stack disabled (6)', async t => {
 
   const promise = client.request({
     ...requestOptions,
-    origin: 'http://localhost'
+    origin: 'http://localhost',
+    headersTimeout: 100
   })
 
-  await t.rejects(promise, 'ECONNREFUSED')
+  // TODO: remove
+  await t.rejects(
+    promise.catch(err => {
+      console.log(err)
+      throw err
+    }),
+    'ECONNREFUSED'
+  )
+  // await t.rejects(promise, 'ECONNREFUSED')
 
   await t.complete
 })
