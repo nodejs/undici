@@ -543,7 +543,7 @@ test('Should we handle TTL (4)', async t => {
               return cb(err)
             }
 
-            const results = []
+            const results = new Map()
 
             for (const addr of addresses) {
               const record = {
@@ -552,10 +552,10 @@ test('Should we handle TTL (4)', async t => {
                 family: addr.family
               }
 
-              results.push(record)
+              results.set(`${record.address}:${record.family}`, record)
             }
 
-            cb(null, results)
+            cb(null, results.values())
           }
         )
       }
