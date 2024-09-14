@@ -84,6 +84,21 @@ test('request arrayBuffer', (t, done) => {
   })
 })
 
+test('request bytes', (t, done) => {
+  const { deepStrictEqual } = tspl(t, { plan: 1 })
+
+  const server = createServer((req, res) => {
+    res.end('hello world')
+  })
+  t.after(closeServerAsPromise(server))
+
+  server.listen(0, async () => {
+    const body = await fetch(`http://localhost:${server.address().port}`)
+    deepStrictEqual(new Uint8Array(Buffer.from('hello world')), await body.bytes())
+    done()
+  })
+})
+
 test('should set type of blob object to the value of the `Content-Type` header from response', (t, done) => {
   const { strictEqual } = tspl(t, { plan: 1 })
 
