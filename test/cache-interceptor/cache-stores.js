@@ -2,11 +2,10 @@ const { describe, test } = require('node:test')
 const { deepStrictEqual, strictEqual } = require('node:assert')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 
-const cacheStoresToTest = [
-  MemoryCacheStore
-]
-
-for (const CacheStore of cacheStoresToTest) {
+/**
+ * @param {typeof import('../../types/cache-interceptor').default.CacheStore} CacheStore 
+ */
+function cacheStoreTests(CacheStore) {
   describe(CacheStore.prototype.constructor.name, () => {
     test('basic functionality', async () => {
       // Checks that it can store & fetch different responses
@@ -165,3 +164,5 @@ for (const CacheStore of cacheStoresToTest) {
     })
   })
 }
+
+cacheStoreTests(MemoryCacheStore)

@@ -27,12 +27,12 @@ describe('Cache Interceptor', () => {
     // Send initial request. This should reach the origin
     let response = await client.request({ method: 'GET', path: '/' })
     strictEqual(requestsToOrigin, 1)
-    strictEqual(await getResponse(response.body), 'asd')
+    strictEqual(await response.body.text(), 'asd')
 
     // Send second request that should be handled by cache
     response = await client.request({ method: 'GET', path: '/' })
     strictEqual(requestsToOrigin, 2)
-    strictEqual(await getResponse(response.body), 'asd')
+    strictEqual(await response.body.text(), 'asd')
   })
 
   test('caches request successfully', async () => {
@@ -55,12 +55,12 @@ describe('Cache Interceptor', () => {
     // Send initial request. This should reach the origin
     let response = await client.request({ method: 'GET', path: '/' })
     strictEqual(requestsToOrigin, 1)
-    strictEqual(await getResponse(response.body), 'asd')
+    strictEqual(await response.body.text(), 'asd')
 
     // Send second request that should be handled by cache
     response = await client.request({ method: 'GET', path: '/' })
     strictEqual(requestsToOrigin, 1)
-    strictEqual(await getResponse(response.body), 'asd')
+    strictEqual(await response.body.text(), 'asd')
     strictEqual(response.headers.age, '0')
   })
 
@@ -97,7 +97,7 @@ describe('Cache Interceptor', () => {
       }
     })
     strictEqual(requestsToOrigin, 1)
-    strictEqual(await getResponse(response.body), 'asd')
+    strictEqual(await response.body.text(), 'asd')
 
     // Make another request with changed headers, this should miss
     const secondResponse = await client.request({
@@ -109,7 +109,7 @@ describe('Cache Interceptor', () => {
       }
     })
     strictEqual(requestsToOrigin, 2)
-    strictEqual(await getResponse(secondResponse.body), 'dsa')
+    strictEqual(await secondResponse.body.text(), 'dsa')
 
     // Resend the first request again which should still be cahced
     response = await client.request({
@@ -121,14 +121,6 @@ describe('Cache Interceptor', () => {
       }
     })
     strictEqual(requestsToOrigin, 2)
-    strictEqual(await getResponse(response.body), 'asd')
+    strictEqual(await response.body.text(), 'asd')
   })
 })
-
-async function getResponse (body) {
-  const buffers = []
-  for await (const data of body) {
-    buffers.push(data)
-  }
-  return Buffer.concat(buffers).toString('utf8')
-}
