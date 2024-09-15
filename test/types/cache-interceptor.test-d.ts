@@ -3,15 +3,15 @@ import CacheInterceptor from '../../types/cache-interceptor'
 import Dispatcher from '../../types/dispatcher'
 
 const store: CacheInterceptor.CacheStore = {
-    maxEntrySize: 0,
+  maxEntrySize: 0,
 
-    get(_: Dispatcher.RequestOptions): CacheInterceptor.CacheStoreValue | Promise<CacheInterceptor.CacheStoreValue> {
-        throw new Error('stub')
-    },
+  get (_: Dispatcher.RequestOptions): CacheInterceptor.CacheStoreValue | Promise<CacheInterceptor.CacheStoreValue> {
+    throw new Error('stub')
+  },
 
-    put(_: Dispatcher.RequestOptions, _2: CacheInterceptor.CacheStoreValue): void | Promise<void> {
-        throw new Error('stub')
-    }
+  put (_: Dispatcher.RequestOptions, _2: CacheInterceptor.CacheStoreValue): void | Promise<void> {
+    throw new Error('stub')
+  }
 }
 
 expectAssignable<CacheInterceptor.CacheOptions>({})
@@ -28,22 +28,22 @@ expectAssignable<CacheInterceptor.CacheStoreValue>({
   size: 0,
   cachedAt: 0,
   staleAt: 0,
-  deleteAt: 0,
+  deleteAt: 0
 })
 
 expectAssignable<CacheInterceptor.CacheStoreValue>({
-    complete: true,
-    statusCode: 200,
-    statusMessage: 'OK',
-    rawHeaders: [],
-    rawTrailers: [],
-    body: [],
-    vary: {},
-    size: 0,
-    cachedAt: 0,
-    staleAt: 0,
-    deleteAt: 0,
-  })
+  complete: true,
+  statusCode: 200,
+  statusMessage: 'OK',
+  rawHeaders: [],
+  rawTrailers: [],
+  body: [],
+  vary: {},
+  size: 0,
+  cachedAt: 0,
+  staleAt: 0,
+  deleteAt: 0
+})
 
 expectNotAssignable<CacheInterceptor.CacheStoreValue>({})
 expectNotAssignable<CacheInterceptor.CacheStoreValue>({
@@ -57,7 +57,7 @@ expectNotAssignable<CacheInterceptor.CacheStoreValue>({
   size: '',
   cachedAt: '',
   staleAt: '',
-  deleteAt: '',
+  deleteAt: ''
 })
 
 expectAssignable<CacheInterceptor.MemoryCacheStoreOpts>({})

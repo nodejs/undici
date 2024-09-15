@@ -3,9 +3,9 @@ const { deepStrictEqual, strictEqual } = require('node:assert')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 
 /**
- * @param {typeof import('../../types/cache-interceptor').default.CacheStore} CacheStore 
+ * @param {typeof import('../../types/cache-interceptor').default.CacheStore} CacheStore
  */
-function cacheStoreTests(CacheStore) {
+function cacheStoreTests (CacheStore) {
   describe(CacheStore.prototype.constructor.name, () => {
     test('basic functionality', async () => {
       // Checks that it can store & fetch different responses
