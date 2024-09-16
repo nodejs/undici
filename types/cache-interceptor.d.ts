@@ -17,8 +17,20 @@ declare namespace CacheHandler {
    */
   export interface CacheStore {
     /**
+     * The amount of responses that are being cached
+     */
+    get entryCount(): number
+
+    /**
+     * The max amount of entries this cache can hold. If the size is greater
+     *  than or equal to this, new responses will not be cached.
+     * @default Infinity
+     */
+    get maxEntries(): number
+
+    /**
      * The max size of each value. If the content-length header is greater than
-     *  this or the response ends up over this, the response will not be cached
+     *  this or the response ends up over this, new responses will not be cached
      * @default Infinity
      */
     get maxEntrySize(): number
@@ -66,13 +78,20 @@ declare namespace CacheHandler {
     /**
      * @default Infinity
      */
+    maxEntries?: number
+    /**
+     * @default Infinity
+     */
     maxEntrySize?: number
   }
 
   export class MemoryCacheStore implements CacheStore {
     constructor (opts?: MemoryCacheStoreOpts)
 
+    get entryCount(): number
+    get maxEntries(): number
     get maxEntrySize (): number
+
     get (key: Dispatcher.RequestOptions): CacheStoreValue | Promise<CacheStoreValue>
     put (key: Dispatcher.RequestOptions, opts: CacheStoreValue): Promise<void>
   }
