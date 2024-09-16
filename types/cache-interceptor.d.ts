@@ -88,8 +88,8 @@ declare namespace CacheHandler {
   export class MemoryCacheStore implements CacheStore {
     constructor (opts?: MemoryCacheStoreOpts)
 
-    get entryCount(): number
-    get maxEntries(): number
+    get entryCount (): number
+    get maxEntries (): number
     get maxEntrySize (): number
 
     get (key: Dispatcher.RequestOptions): CacheStoreValue | Promise<CacheStoreValue>
