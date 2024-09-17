@@ -35,7 +35,7 @@ declare namespace CacheHandler {
      */
     get maxEntrySize(): number
 
-    get(key: Dispatcher.RequestOptions): CacheStoreValue | Promise<CacheStoreValue>;
+    get(key: Dispatcher.RequestOptions): CacheStoreValue | Promise<CacheStoreValue> | undefined;
 
     put(key: Dispatcher.RequestOptions, opts: CacheStoreValue): void | Promise<void>;
   }
