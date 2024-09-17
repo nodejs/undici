@@ -9,7 +9,7 @@ declare namespace CacheHandler {
     /**
      * The methods to cache, defaults to just GET
      */
-    methods?: ('GET' | 'HEAD' | 'POST' | 'PATCH')[]
+    methods?: ('GET' | 'HEAD' | 'POST' | 'PATCH' | 'PUT' | 'DELETE')[]
   }
 
   /**
@@ -35,7 +35,7 @@ declare namespace CacheHandler {
      */
     get maxEntrySize(): number
 
-    get(key: Dispatcher.RequestOptions): CacheStoreValue | Promise<CacheStoreValue> | undefined;
+    get(key: Dispatcher.RequestOptions): CacheStoreValue | Promise<CacheStoreValue | undefined> | undefined;
 
     put(key: Dispatcher.RequestOptions, opts: CacheStoreValue): void | Promise<void>;
   }
@@ -92,7 +92,7 @@ declare namespace CacheHandler {
     get maxEntries (): number
     get maxEntrySize (): number
 
-    get (key: Dispatcher.RequestOptions): CacheStoreValue
+    get (key: Dispatcher.RequestOptions): CacheStoreValue | undefined
     put (key: Dispatcher.RequestOptions, opts: CacheStoreValue): void
   }
 }
