@@ -92,7 +92,7 @@ declare namespace CacheHandler {
     get maxEntries (): number
     get maxEntrySize (): number
 
-    get (key: Dispatcher.RequestOptions): CacheStoreValue | Promise<CacheStoreValue>
-    put (key: Dispatcher.RequestOptions, opts: CacheStoreValue): Promise<void>
+    get (key: Dispatcher.RequestOptions): CacheStoreValue
+    put (key: Dispatcher.RequestOptions, opts: CacheStoreValue): void
   }
 }
