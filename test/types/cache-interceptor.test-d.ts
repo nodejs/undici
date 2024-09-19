@@ -4,12 +4,18 @@ import Dispatcher from '../../types/dispatcher'
 
 const store: CacheInterceptor.CacheStore = {
   maxEntrySize: 0,
+  entryCount: 0,
+  maxEntries: 0,
 
   get (_: Dispatcher.RequestOptions): CacheInterceptor.CacheStoreValue | Promise<CacheInterceptor.CacheStoreValue> {
     throw new Error('stub')
   },
 
   put (_: Dispatcher.RequestOptions, _2: CacheInterceptor.CacheStoreValue): void | Promise<void> {
+    throw new Error('stub')
+  },
+
+  deleteByOrigin (_: string): void | Promise<void> {
     throw new Error('stub')
   }
 }

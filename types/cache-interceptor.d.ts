@@ -7,9 +7,13 @@ declare namespace CacheHandler {
     store?: CacheStore
 
     /**
-     * The methods to cache, defaults to just GET
+     * The methods to cache
+     * Note we can only cache safe methods. Unsafe methods (i.e. PUT, POST)
+     *  invalidate the cache for a origin.
+     * @see https://www.rfc-editor.org/rfc/rfc9111.html#name-invalidating-stored-respons
+     * @see https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1
      */
-    methods?: ('GET' | 'HEAD' | 'POST' | 'PATCH' | 'PUT' | 'DELETE')[]
+    methods?: ('GET' | 'HEAD' | 'OPTIONS' | 'TRACE')[]
   }
 
   /**
@@ -35,9 +39,23 @@ declare namespace CacheHandler {
      */
     get maxEntrySize(): number
 
+    /**
+     * Get a request's cached response if it exists.
+     * Note: it is the cache store's responsibility to enforce the vary header checks
+     */
     get(key: Dispatcher.RequestOptions): CacheStoreValue | Promise<CacheStoreValue | undefined> | undefined;
 
-    put(key: Dispatcher.RequestOptions, opts: CacheStoreValue): void | Promise<void>;
+    /**
+     * Add a new request to the cache
+     * @param key
+     * @param opts
+     */
+    put(key: Dispatcher.RequestOptions, value: CacheStoreValue): void | Promise<void>;
+
+    /**
+     * Delete all of the cached responses from a certain origin (host)
+     */
+    deleteByOrigin(origin: string): void | Promise<void>
   }
 
   export interface CacheStoreValue {
@@ -49,7 +67,7 @@ declare namespace CacheHandler {
     statusMessage: string;
     rawHeaders: Buffer[];
     rawTrailers?: Buffer[];
-    body: string[]
+    body: Buffer[]
     /**
      * Headers defined by the Vary header and their respective values for
      *  later comparison
@@ -94,5 +112,6 @@ declare namespace CacheHandler {
 
     get (key: Dispatcher.RequestOptions): CacheStoreValue | undefined
     put (key: Dispatcher.RequestOptions, opts: CacheStoreValue): void
+    deleteByOrigin (origin: string): void
   }
 }
