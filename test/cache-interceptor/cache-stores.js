@@ -1,16 +1,17 @@
 const { describe, test } = require('node:test')
-const { deepStrictEqual, strictEqual } = require('node:assert')
+const { deepStrictEqual, notEqual, equal } = require('node:assert')
+const { once } = require('node:events')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 
+cacheStoreTests(MemoryCacheStore)
+
 /**
- * @param {typeof import('../../types/cache-interceptor').default.CacheStore} CacheStore
+ * @param {import('../../types/cache-interceptor.d.ts').default.CacheStore} CacheStore
  */
 function cacheStoreTests (CacheStore) {
   describe(CacheStore.prototype.constructor.name, () => {
+    // Checks that it can store & fetch different responses
     test('basic functionality', async () => {
-      // Checks that it can store & fetch different responses
-      const store = new CacheStore()
-
       const request = {
         origin: 'localhost',
         path: '/',
@@ -18,26 +19,44 @@ function cacheStoreTests (CacheStore) {
         headers: {}
       }
       const requestValue = {
-        complete: true,
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [1, 2, 3],
-        rawTrailers: [4, 5, 6],
-        body: ['part1', 'part2'],
         size: 16,
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
       }
+      const requestBody = ['asd', '123']
+      const requestTrailers = ['a', 'b', 'c']
+
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
+       */
+      const store = new CacheStore()
 
       // Sanity check
-      strictEqual(await store.get(request), undefined)
+      equal(store.createReadStream(request), undefined)
 
-      // Add a response to the cache and try fetching it with a deep copy of
-      //  the original request
-      await store.put(request, requestValue)
-      deepStrictEqual(store.get(structuredClone(request)), requestValue)
+      // Write the response to the store
+      let writeStream = store.createWriteStream(request, {
+        ...requestValue,
+        body: []
+      })
+      notEqual(writeStream, undefined)
+      writeResponse(writeStream, requestBody, requestTrailers)
 
+      // Now try fetching it with a deep copy of the original request
+      let readStream = store.createReadStream(structuredClone(request))
+      notEqual(readStream, undefined)
+
+      deepStrictEqual(await readResponse(readStream), {
+        ...requestValue,
+        body: requestBody,
+        rawTrailers: requestTrailers
+      })
+
+      // Now let's write another request to the store
       const anotherRequest = {
         origin: 'localhost',
         path: '/asd',
@@ -45,26 +64,36 @@ function cacheStoreTests (CacheStore) {
         headers: {}
       }
       const anotherValue = {
-        complete: true,
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [1, 2, 3],
-        rawTrailers: [4, 5, 6],
-        body: ['part1', 'part2'],
         size: 16,
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
       }
+      const anotherBody = ['asd2', '1234']
+      const anotherTrailers = ['d', 'e', 'f']
 
       // We haven't cached this one yet, make sure it doesn't confuse it with
       //  another request
-      strictEqual(await store.get(anotherRequest), undefined)
+      equal(store.createReadStream(anotherRequest), undefined)
 
-      // Add a response to the cache and try fetching it with a deep copy of
-      //  the original request
-      await store.put(anotherRequest, anotherValue)
-      deepStrictEqual(store.get(structuredClone(anotherRequest)), anotherValue)
+      // Now let's cache it
+      writeStream = store.createWriteStream(anotherRequest, {
+        ...anotherValue,
+        body: []
+      })
+      notEqual(writeStream, undefined)
+      writeResponse(writeStream, anotherBody, anotherTrailers)
+
+      readStream = store.createReadStream(anotherRequest)
+      notEqual(readStream, undefined)
+      deepStrictEqual(await readResponse(readStream), {
+        ...anotherValue,
+        body: anotherBody,
+        rawTrailers: anotherTrailers
+      })
     })
 
     test('returns stale response if possible', async () => {
@@ -75,21 +104,35 @@ function cacheStoreTests (CacheStore) {
         headers: {}
       }
       const requestValue = {
-        complete: true,
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [1, 2, 3],
-        rawTrailers: [4, 5, 6],
-        body: ['part1', 'part2'],
         size: 16,
         cachedAt: Date.now() - 10000,
         staleAt: Date.now() - 1,
         deleteAt: Date.now() + 20000
       }
+      const requestBody = ['part1', 'part2']
+      const requestTrailers = [4, 5, 6]
 
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
+       */
       const store = new CacheStore()
-      await store.put(request, requestValue)
-      deepStrictEqual(await store.get(request), requestValue)
+
+      const writeStream = store.createWriteStream(request, {
+        ...requestValue,
+        body: []
+      })
+      notEqual(writeStream, undefined)
+      writeResponse(writeStream, requestBody, requestTrailers)
+
+      const readStream = store.createReadStream(request)
+      deepStrictEqual(await readResponse(readStream), {
+        ...requestValue,
+        body: requestBody,
+        rawTrailers: requestTrailers
+      })
     })
 
     test('doesn\'t return response past deletedAt', async () => {
@@ -103,23 +146,30 @@ function cacheStoreTests (CacheStore) {
         complete: true,
         statusCode: 200,
         statusMessage: '',
-        rawHeaders: [1, 2, 3],
-        rawTrailers: [4, 5, 6],
-        body: ['part1', 'part2'],
         size: 16,
         cachedAt: Date.now() - 20000,
         staleAt: Date.now() - 10000,
         deleteAt: Date.now() - 5
       }
+      const requestBody = ['part1', 'part2']
+      const rawTrailers = [4, 5, 6]
 
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
+       */
       const store = new CacheStore()
-      await store.put(request, requestValue)
-      strictEqual(await store.get(request), undefined)
+
+      const writeStream = store.createWriteStream(request, {
+        ...requestValue,
+        body: []
+      })
+      notEqual(writeStream, undefined)
+      writeResponse(writeStream, requestBody, rawTrailers)
+
+      equal(store.createReadStream(request), undefined)
     })
 
     test('respects vary directives', async () => {
-      const store = new CacheStore()
-
       const request = {
         origin: 'localhost',
         path: '/',
@@ -133,8 +183,6 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [1, 2, 3],
-        rawTrailers: [4, 5, 6],
-        body: ['part1', 'part2'],
         vary: {
           'some-header': 'hello world'
         },
@@ -143,12 +191,31 @@ function cacheStoreTests (CacheStore) {
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
       }
+      const requestBody = ['part1', 'part2']
+      const requestTrailers = [4, 5, 6]
+
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
+       */
+      const store = new CacheStore()
 
       // Sanity check
-      strictEqual(await store.get(request), undefined)
+      equal(store.createReadStream(request), undefined)
 
-      await store.put(request, requestValue)
-      deepStrictEqual(store.get(request), requestValue)
+      const writeStream = store.createWriteStream(request, {
+        ...requestValue,
+        body: []
+      })
+      notEqual(writeStream, undefined)
+      writeResponse(writeStream, requestBody, requestTrailers)
+
+      const readStream = store.createReadStream(structuredClone(request))
+      notEqual(readStream, undefined)
+      deepStrictEqual(await readResponse(readStream), {
+        ...requestValue,
+        body: requestBody,
+        rawTrailers: requestTrailers
+      })
 
       const nonMatchingRequest = {
         origin: 'localhost',
@@ -158,11 +225,39 @@ function cacheStoreTests (CacheStore) {
           'some-header': 'another-value'
         }
       }
-      deepStrictEqual(store.get(nonMatchingRequest), undefined)
-
-      deepStrictEqual(store.get(structuredClone(request)), requestValue)
+      equal(store.createReadStream(nonMatchingRequest), undefined)
     })
   })
 }
 
-cacheStoreTests(MemoryCacheStore)
+/**
+ * @param {import('../../types/cache-interceptor.d.ts').default.CacheStoreWriteable} stream
+ * @param {string[]} body
+ * @param {string[]} trailers
+ */
+function writeResponse (stream, body, trailers) {
+  for (const chunk of body) {
+    stream.write(Buffer.from(chunk))
+  }
+
+  stream.rawTrailers = trailers
+  stream.end()
+}
+
+/**
+ * @param {import('../../types/cache-interceptor.d.ts').default.CacheStoreReadable} stream
+ * @returns {Promise<import('../../types/cache-interceptor.d.ts').default.CacheStoreValue>}
+ */
+async function readResponse (stream) {
+  const body = []
+  stream.on('data', chunk => {
+    body.push(chunk.toString())
+  })
+
+  await once(stream, 'end')
+
+  return {
+    ...stream.value,
+    body
+  }
+}

@@ -45,15 +45,11 @@ declare namespace CacheHandler {
   }
 
   export interface CacheStoreValue {
-    /**
-     * True if the response is complete, otherwise the request is still in-flight
-     */
-    // complete: boolean;
     statusCode: number;
     statusMessage: string;
     rawHeaders: Buffer[];
     rawTrailers?: string[];
-    body: Buffer[]
+    body: Buffer[] // TODO should delete?
     /**
      * Headers defined by the Vary header and their respective values for
      *  later comparison
