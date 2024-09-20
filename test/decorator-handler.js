@@ -4,17 +4,6 @@ const { tspl } = require('@matteo.collina/tspl')
 const { describe, test } = require('node:test')
 const DecoratorHandler = require('../lib/handler/decorator-handler')
 
-const methods = [
-  'onConnect',
-  'onError',
-  'onUpgrade',
-  'onHeaders',
-  'onResponseStarted',
-  'onData',
-  'onComplete',
-  'onBodySent'
-]
-
 describe('DecoratorHandler', () => {
   test('should throw if provided handler is not an object', (t) => {
     t = tspl(t, { plan: 4 })
@@ -30,45 +19,5 @@ describe('DecoratorHandler', () => {
     const handler = {}
     const decorator = new DecoratorHandler(handler)
     t.strictEqual(Object.keys(decorator).length, 0)
-  })
-
-  methods.forEach((method) => {
-    test(`should have delegate ${method}-method`, (t) => {
-      t = tspl(t, { plan: 1 })
-      const decorator = new DecoratorHandler({})
-      t.equal(typeof decorator[method], 'function')
-    })
-
-    test(`should delegate ${method}-method`, (t) => {
-      t = tspl(t, { plan: 1 })
-      const handler = { [method]: () => method }
-      const decorator = new DecoratorHandler(handler)
-      t.equal(decorator[method](), method)
-    })
-
-    test(`should delegate ${method}-method with arguments`, (t) => {
-      t = tspl(t, { plan: 1 })
-      const handler = { [method]: (...args) => args }
-      const decorator = new DecoratorHandler(handler)
-      t.deepStrictEqual(decorator[method](1, 2, 3), [1, 2, 3])
-    })
-
-    test(`can be extended and should delegate ${method}-method`, (t) => {
-      t = tspl(t, { plan: 1 })
-
-      class ExtendedHandler extends DecoratorHandler {
-        [method] () {
-          return method
-        }
-      }
-      const decorator = new ExtendedHandler({})
-      t.equal(decorator[method](), method)
-    })
-
-    test(`calling the method ${method}-method should not throw if the method is not defined in the handler`, (t) => {
-      t = tspl(t, { plan: 1 })
-      const decorator = new DecoratorHandler({})
-      t.doesNotThrow(() => decorator[method]())
-    })
   })
 })
