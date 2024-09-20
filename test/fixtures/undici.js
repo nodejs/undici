@@ -1,3 +1,5 @@
+'use strict'
+
 const { createServer } = require('node:http')
 const { request } = require('../..')
 

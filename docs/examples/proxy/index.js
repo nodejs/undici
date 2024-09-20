@@ -1,3 +1,5 @@
+'use strict'
+
 const { Pool, Client } = require('../../../')
 const http = require('node:http')
 const proxy = require('./proxy')
