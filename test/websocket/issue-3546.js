@@ -5,7 +5,7 @@ const { WebSocket } = require('../..')
 const { tspl } = require('@matteo.collina/tspl')
 
 test('first error than close event is fired on failed connection', async (t) => {
-  const { completed, strictEqual } = tspl(t, { plan: 4 })
+  const { completed, strictEqual } = tspl(t, { plan: 2 })
   const ws = new WebSocket('ws://localhost:1')
 
   let orderOfEvents = 0
