@@ -39,7 +39,7 @@ test('stream body without destroy', async (t) => {
 })
 
 test('IncomingMessage', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
     res.end()
@@ -72,6 +72,7 @@ test('IncomingMessage', async (t) => {
         body: 'hello world'
       }, (err, data) => {
         t.ifError(err)
+        data.body.dump().then(() => t.ok(true))
       })
     })
   })
