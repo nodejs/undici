@@ -10,6 +10,14 @@ cacheStoreTests(MemoryCacheStore)
  */
 function cacheStoreTests (CacheStore) {
   describe(CacheStore.prototype.constructor.name, () => {
+    test('matches interface', async () => {
+      const store = new CacheStore()
+      equal(typeof store.isFull, 'boolean')
+      equal(typeof store.createReadStream, 'function')
+      equal(typeof store.createWriteStream, 'function')
+      equal(typeof store.deleteByOrigin, 'function')
+    })
+
     // Checks that it can store & fetch different responses
     test('basic functionality', async () => {
       const request = {

@@ -1,10 +1,10 @@
 'use strict'
 
 const { describe, test, after } = require('node:test')
-const { strictEqual, notEqual } = require('node:assert')
+const { strictEqual, notEqual, fail } = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { Client, interceptors } = require('../../index')
+const { Client, interceptors, cacheStores } = require('../../index')
 
 describe('Cache Interceptor', () => {
   test('doesn\'t cache request w/ no cache-control header', async () => {
@@ -205,5 +205,40 @@ describe('Cache Interceptor', () => {
       }, 1500)
     })
     await completed
+  })
+
+  test('respects cache store\'s isFull property', async () => {
+    const server = createServer((_, res) => {
+      res.end('asd')
+    }).listen(0)
+
+    after(() => server.close())
+    await once(server, 'listening')
+
+    const store = new cacheStores.MemoryCacheStore()
+    Object.defineProperty(store, 'isFull', {
+      value: true
+    })
+
+    store.createWriteStream = (...args) => {
+      fail('shouln\'t have reached this')
+    }
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({ store }))
+
+    await client.request({
+      origin: 'localhost',
+      method: 'GET',
+      path: '/',
+      headers: {
+        'some-header': 'abc123',
+        'another-header': '123abc'
+      }
+    })
+  })
+
+  test('shares responses still in-flight to the same request', async () => {
+    // TODO
   })
 })
