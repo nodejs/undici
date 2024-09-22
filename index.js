@@ -149,10 +149,6 @@ module.exports.ErrorEvent = ErrorEvent
 module.exports.MessageEvent = MessageEvent
 
 module.exports.request = makeDispatcher(api.request)
-module.exports.stream = makeDispatcher(api.stream)
-module.exports.pipeline = makeDispatcher(api.pipeline)
-module.exports.connect = makeDispatcher(api.connect)
-module.exports.upgrade = makeDispatcher(api.upgrade)
 
 module.exports.MockClient = MockClient
 module.exports.MockPool = MockPool

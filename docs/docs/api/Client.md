@@ -48,7 +48,7 @@ Furthermore, the following options can be passed:
 
 ### Example - Basic Client instantiation
 
-This will instantiate the undici Client, but it will not connect to the origin until something is queued. Consider using `client.connect` to prematurely connect to the origin, or just call `client.request`.
+This will instantiate the undici Client, but it will not connect to the origin until something is queued.
 
 ```js
 'use strict'
@@ -94,29 +94,13 @@ Implements [`Dispatcher.destroy([error, callback])`](Dispatcher.md#dispatcherdes
 
 Waits until socket is closed before invoking the callback (or returning a promise if no callback is provided).
 
-### `Client.connect(options[, callback])`
-
-See [`Dispatcher.connect(options[, callback])`](Dispatcher.md#dispatcherconnectoptions-callback).
-
 ### `Client.dispatch(options, handlers)`
 
 Implements [`Dispatcher.dispatch(options, handlers)`](Dispatcher.md#dispatcherdispatchoptions-handler).
 
-### `Client.pipeline(options, handler)`
-
-See [`Dispatcher.pipeline(options, handler)`](Dispatcher.md#dispatcherpipelineoptions-handler).
-
 ### `Client.request(options[, callback])`
 
 See [`Dispatcher.request(options [, callback])`](Dispatcher.md#dispatcherrequestoptions-callback).
-
-### `Client.stream(options, factory[, callback])`
-
-See [`Dispatcher.stream(options, factory[, callback])`](Dispatcher.md#dispatcherstreamoptions-factory-callback).
-
-### `Client.upgrade(options[, callback])`
-
-See [`Dispatcher.upgrade(options[, callback])`](Dispatcher.md#dispatcherupgradeoptions-callback).
 
 ## Instance Properties
 

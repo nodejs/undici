@@ -28,7 +28,7 @@ stateDiagram-v2
   [*] --> idle
   idle --> pending : connect
   idle --> destroyed : destroy/close
-  
+
   pending --> idle : timeout
   pending --> destroyed : destroy
 
@@ -58,7 +58,7 @@ stateDiagram-v2
 
 ### idle
 
-The **idle** state is the initial state of a `Client` instance. While an `origin` is required for instantiating a `Client` instance, the underlying socket connection will not be established until a request is queued using [`Client.dispatch()`](Client.md#clientdispatchoptions-handlers). By calling `Client.dispatch()` directly or using one of the multiple implementations ([`Client.connect()`](Client.md#clientconnectoptions-callback), [`Client.pipeline()`](Client.md#clientpipelineoptions-handler), [`Client.request()`](Client.md#clientrequestoptions-callback), [`Client.stream()`](Client.md#clientstreamoptions-factory-callback), and [`Client.upgrade()`](Client.md#clientupgradeoptions-callback)), the `Client` instance will transition from **idle** to [**pending**](#pending) and then most likely directly to [**processing**](#processing).
+The **idle** state is the initial state of a `Client` instance. While an `origin` is required for instantiating a `Client` instance, the underlying socket connection will not be established until a request is queued using [`Client.dispatch()`](Client.md#clientdispatchoptions-handlers). By calling `Client.dispatch()` directly or using [`Client.request()`](Client.md#clientrequestoptions-callback), the `Client` instance will transition from **idle** to [**pending**](#pending) and then most likely directly to [**processing**](#processing).
 
 Calling [`Client.close()`](Client.md#clientclosecallback) or [`Client.destroy()`](Client.md#clientdestroyerror-callback) transitions directly to the [**destroyed**](#destroyed) state since the `Client` instance will have no queued requests in this state.
 

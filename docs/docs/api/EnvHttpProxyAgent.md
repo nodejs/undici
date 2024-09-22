@@ -136,26 +136,10 @@ Extends: [`DispatchOptions`](Dispatcher.md#parameter-dispatchoptions)
 
 Implements [`Dispatcher.destroy([error, callback])`](Dispatcher.md#dispatcherdestroyerror-callback-promise).
 
-### `EnvHttpProxyAgent.connect(options[, callback])`
-
-See [`Dispatcher.connect(options[, callback])`](Dispatcher.md#dispatcherconnectoptions-callback).
-
 ### `EnvHttpProxyAgent.dispatch(options, handler)`
 
 Implements [`Dispatcher.dispatch(options, handler)`](Dispatcher.md#dispatcherdispatchoptions-handler).
 
-### `EnvHttpProxyAgent.pipeline(options, handler)`
-
-See [`Dispatcher.pipeline(options, handler)`](Dispatcher.md#dispatcherpipelineoptions-handler).
-
 ### `EnvHttpProxyAgent.request(options[, callback])`
 
 See [`Dispatcher.request(options [, callback])`](Dispatcher.md#dispatcherrequestoptions-callback).
-
-### `EnvHttpProxyAgent.stream(options, factory[, callback])`
-
-See [`Dispatcher.stream(options, factory[, callback])`](Dispatcher.md#dispatcherstreamoptions-factory-callback).
-
-### `EnvHttpProxyAgent.upgrade(options[, callback])`
-
-See [`Dispatcher.upgrade(options[, callback])`](Dispatcher.md#dispatcherupgradeoptions-callback).
