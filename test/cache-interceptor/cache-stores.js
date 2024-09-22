@@ -30,7 +30,6 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [1, 2, 3],
-        size: 16,
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
@@ -75,7 +74,6 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [1, 2, 3],
-        size: 16,
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
@@ -115,7 +113,6 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [1, 2, 3],
-        size: 16,
         cachedAt: Date.now() - 10000,
         staleAt: Date.now() - 1,
         deleteAt: Date.now() + 20000
@@ -151,10 +148,8 @@ function cacheStoreTests (CacheStore) {
         headers: {}
       }
       const requestValue = {
-        complete: true,
         statusCode: 200,
         statusMessage: '',
-        size: 16,
         cachedAt: Date.now() - 20000,
         staleAt: Date.now() - 10000,
         deleteAt: Date.now() - 5
@@ -187,14 +182,12 @@ function cacheStoreTests (CacheStore) {
         }
       }
       const requestValue = {
-        complete: true,
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [1, 2, 3],
         vary: {
           'some-header': 'hello world'
         },
-        size: 16,
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000

@@ -49,16 +49,11 @@ declare namespace CacheHandler {
     statusMessage: string;
     rawHeaders: Buffer[];
     rawTrailers?: string[];
-    body: Buffer[] // TODO should delete?
     /**
      * Headers defined by the Vary header and their respective values for
      *  later comparison
      */
     vary?: Record<string, string>;
-    /**
-     * Actual size of the response (i.e. size of headers + body + trailers)
-     */
-    size: number;
     /**
      * Time in millis that this value was cached
      */
