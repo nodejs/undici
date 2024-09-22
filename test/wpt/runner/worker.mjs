@@ -11,7 +11,7 @@ import { CloseEvent } from '../../../lib/web/websocket/events.js'
 import { WebSocket } from '../../../lib/web/websocket/websocket.js'
 import { Cache } from '../../../lib/web/cache/cache.js'
 import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
-import { kConstruct } from '../../../lib/web/cache/symbols.js'
+import symbols from '../../../lib/core/symbols.js'
 // TODO(@KhafraDev): move this import once its added to index
 import { EventSource } from '../../../lib/web/eventsource/eventsource.js'
 import { webcrypto } from 'node:crypto'
@@ -79,7 +79,7 @@ Object.defineProperties(globalThis, {
   },
   caches: {
     ...globalPropertyDescriptors,
-    value: new CacheStorage(kConstruct)
+    value: new CacheStorage(symbols.kConstruct)
   },
   Cache: {
     ...globalPropertyDescriptors,
