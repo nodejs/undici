@@ -214,12 +214,12 @@ declare namespace Dispatcher {
   }
   export type StreamFactory<TOpaque = null> = (data: StreamFactoryData<TOpaque>) => Writable
   export interface DispatchHandlers {
-    onRequestStart(reserved: null, abort: (err?: Error) => void): void;
-    onResponseStart(resume: () => void): boolean;
-    onResponseHeaders(headers: Record<string, string>, statusCode: number): boolean;
-    onResponseData(chunk: Buffer): boolean;
-    onResponseEnd(trailers: Record<string, string>): void;
-    onResponseError(err: Error) : void;
+    onRequestStart?(reserved: null, abort: (err?: Error) => void): void;
+    onResponseStart?(resume: () => void): boolean;
+    onResponseHeaders?(headers: Record<string, string>, statusCode: number): boolean;
+    onResponseData?(chunk: Buffer): boolean;
+    onResponseEnd?(trailers: Record<string, string>): void;
+    onResponseError?(err: Error) : void;
     /** @deprecated Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
     onConnect?(abort: (err?: Error) => void): void;
     /** @deprecated Invoked when an error has occurred. */
