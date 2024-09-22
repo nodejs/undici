@@ -72,6 +72,7 @@ test('IncomingMessage', async (t) => {
         body: 'hello world'
       }, (err, data) => {
         t.ifError(err)
+        data.body.resume()
       })
     })
   })

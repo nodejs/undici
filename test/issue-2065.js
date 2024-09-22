@@ -21,8 +21,9 @@ test('undici.request with a FormData body should set content-length header', asy
   const body = new FormData()
   body.set('file', new File(['abc'], 'abc.txt'))
 
-  await request(`http://localhost:${server.address().port}`, {
+  const res = await request(`http://localhost:${server.address().port}`, {
     method: 'POST',
     body
   })
+  await res.body.dump()
 })
