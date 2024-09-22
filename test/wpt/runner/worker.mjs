@@ -5,15 +5,20 @@ import { setFlagsFromString } from 'node:v8'
 import { runInNewContext, runInThisContext } from 'node:vm'
 import { parentPort, workerData } from 'node:worker_threads'
 import {
-  fetch, FormData, Headers, Request, Response, setGlobalOrigin
+  fetch,
+  FormData,
+  Headers,
+  Request,
+  Response,
+  setGlobalOrigin,
+  CloseEvent,
+  WebSocket,
+  caches,
+  EventSource
 } from '../../../index.js'
-import { CloseEvent } from '../../../lib/web/websocket/events.js'
-import { WebSocket } from '../../../lib/web/websocket/websocket.js'
+// TODO(@KhafraDev): export these in index.js
 import { Cache } from '../../../lib/web/cache/cache.js'
 import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
-import symbols from '../../../lib/core/symbols.js'
-// TODO(@KhafraDev): move this import once its added to index
-import { EventSource } from '../../../lib/web/eventsource/eventsource.js'
 import { webcrypto } from 'node:crypto'
 
 const { initScripts, meta, test, url, path } = workerData
@@ -79,7 +84,7 @@ Object.defineProperties(globalThis, {
   },
   caches: {
     ...globalPropertyDescriptors,
-    value: new CacheStorage(symbols.kConstruct)
+    value: caches
   },
   Cache: {
     ...globalPropertyDescriptors,
