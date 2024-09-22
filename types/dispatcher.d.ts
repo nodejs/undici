@@ -214,7 +214,7 @@ declare namespace Dispatcher {
   }
   export type StreamFactory<TOpaque = null> = (data: StreamFactoryData<TOpaque>) => Writable
   export interface DispatchHandlers {
-    onRequestStart?(reserved: null, abort: (err?: Error) => void): void;
+    onRequestStart?(abort: (err?: Error) => void): void;
     onResponseStart?(resume: () => void): boolean;
     onResponseHeaders?(headers: Record<string, string>, statusCode: number): boolean;
     onResponseData?(chunk: Buffer): boolean;
