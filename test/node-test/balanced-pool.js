@@ -501,7 +501,7 @@ describe('weighted round robin', () => {
 
         await Promise.all(servers.map(server => server.prepareForIteration(i)))
 
-        // send a request using undinci
+        // send a request using undici
         try {
           await client.request({ path: '/', method: 'GET' })
         } catch (e) {
