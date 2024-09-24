@@ -3,15 +3,13 @@ import CacheInterceptor from '../../types/cache-interceptor'
 import Dispatcher from '../../types/dispatcher'
 
 const store: CacheInterceptor.CacheStore = {
-  maxEntrySize: 0,
-  entryCount: 0,
-  maxEntries: 0,
+  isFull: false,
 
-  get (_: Dispatcher.RequestOptions): CacheInterceptor.CacheStoreValue | Promise<CacheInterceptor.CacheStoreValue> {
+  createReadStream (_: Dispatcher.RequestOptions): CacheInterceptor.CacheStoreReadable | undefined {
     throw new Error('stub')
   },
 
-  put (_: Dispatcher.RequestOptions, _2: CacheInterceptor.CacheStoreValue): void | Promise<void> {
+  createWriteStream (_: Dispatcher.RequestOptions, _2: CacheInterceptor.CacheStoreValue): CacheInterceptor.CacheStoreWriteable | undefined {
     throw new Error('stub')
   },
 
@@ -26,26 +24,20 @@ expectAssignable<CacheInterceptor.CacheOptions>({ methods: [] })
 expectAssignable<CacheInterceptor.CacheOptions>({ store, methods: ['GET'] })
 
 expectAssignable<CacheInterceptor.CacheStoreValue>({
-  complete: true,
   statusCode: 200,
   statusMessage: 'OK',
   rawHeaders: [],
-  body: [],
-  size: 0,
   cachedAt: 0,
   staleAt: 0,
   deleteAt: 0
 })
 
 expectAssignable<CacheInterceptor.CacheStoreValue>({
-  complete: true,
   statusCode: 200,
   statusMessage: 'OK',
   rawHeaders: [],
   rawTrailers: [],
-  body: [],
   vary: {},
-  size: 0,
   cachedAt: 0,
   staleAt: 0,
   deleteAt: 0
@@ -53,7 +45,6 @@ expectAssignable<CacheInterceptor.CacheStoreValue>({
 
 expectNotAssignable<CacheInterceptor.CacheStoreValue>({})
 expectNotAssignable<CacheInterceptor.CacheStoreValue>({
-  complete: '',
   statusCode: '123',
   statusMessage: 123,
   rawHeaders: '',
