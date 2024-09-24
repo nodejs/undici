@@ -10,9 +10,6 @@ const {
   Headers,
   fetch
 } = require('../../')
-const { fromInnerRequest, makeRequest } = require('../../lib/web/fetch/request')
-const { kState, kSignal, kHeaders } = require('../../lib/web/fetch/symbols')
-const { getHeadersGuard, getHeadersList } = require('../../lib/web/fetch/headers')
 
 const hasSignalReason = 'reason' in AbortSignal.prototype
 
@@ -461,18 +458,4 @@ test('Issue#2465', async (t) => {
   const { strictEqual } = tspl(t, { plan: 1 })
   const request = new Request('http://localhost', { body: new SharedArrayBuffer(0), method: 'POST' })
   strictEqual(await request.text(), '[object SharedArrayBuffer]')
-})
-
-test('fromInnerRequest', () => {
-  const innerRequest = makeRequest({
-    urlList: [new URL('http://asd')]
-  })
-  const signal = new AbortController().signal
-  const request = fromInnerRequest(innerRequest, signal, 'immutable')
-
-  // check property
-  assert.strictEqual(request[kState], innerRequest)
-  assert.strictEqual(request[kSignal], signal)
-  assert.strictEqual(getHeadersList(request[kHeaders]), innerRequest.headersList)
-  assert.strictEqual(getHeadersGuard(request[kHeaders]), 'immutable')
 })
