@@ -46,10 +46,7 @@ function cacheStoreTests (CacheStore) {
       equal(store.createReadStream(request), undefined)
 
       // Write the response to the store
-      let writeStream = store.createWriteStream(request, {
-        ...requestValue,
-        body: []
-      })
+      let writeStream = store.createWriteStream(request, requestValue)
       notEqual(writeStream, undefined)
       writeResponse(writeStream, requestBody, requestTrailers)
 
@@ -125,10 +122,7 @@ function cacheStoreTests (CacheStore) {
        */
       const store = new CacheStore()
 
-      const writeStream = store.createWriteStream(request, {
-        ...requestValue,
-        body: []
-      })
+      const writeStream = store.createWriteStream(request, requestValue)
       notEqual(writeStream, undefined)
       writeResponse(writeStream, requestBody, requestTrailers)
 
@@ -162,10 +156,7 @@ function cacheStoreTests (CacheStore) {
        */
       const store = new CacheStore()
 
-      const writeStream = store.createWriteStream(request, {
-        ...requestValue,
-        body: []
-      })
+      const writeStream = store.createWriteStream(request, requestValue)
       notEqual(writeStream, undefined)
       writeResponse(writeStream, requestBody, rawTrailers)
 
@@ -203,10 +194,7 @@ function cacheStoreTests (CacheStore) {
       // Sanity check
       equal(store.createReadStream(request), undefined)
 
-      const writeStream = store.createWriteStream(request, {
-        ...requestValue,
-        body: []
-      })
+      const writeStream = store.createWriteStream(request, requestValue)
       notEqual(writeStream, undefined)
       writeResponse(writeStream, requestBody, requestTrailers)
 
@@ -230,6 +218,47 @@ function cacheStoreTests (CacheStore) {
     })
   })
 }
+
+test('MemoryCacheStore locks values properly', async () => {
+  const store = new MemoryCacheStore()
+
+  const request = {
+    origin: 'localhost',
+    path: '/',
+    method: 'GET',
+    headers: {}
+  }
+
+  const requestValue = {
+    statusCode: 200,
+    statusMessage: '',
+    rawHeaders: [1, 2, 3],
+    cachedAt: Date.now(),
+    staleAt: Date.now() + 10000,
+    deleteAt: Date.now() + 20000
+  }
+
+  const writable = store.createWriteStream(request, requestValue)
+  notEqual(writable, undefined)
+
+  // Value should now be locked, we shouldn't be able to create a readable or
+  //  another writable to it until the first one finishes
+  equal(store.createReadStream(request), undefined)
+  equal(store.createWriteStream(request, requestValue), undefined)
+
+  // Close the writable, this should unlock it
+  writeResponse(writable, ['asd'], [])
+
+  // Stream is now closed, let's lock any new write streams
+  const readable = store.createReadStream(request)
+  notEqual(readable, undefined)
+  equal(store.createWriteStream(request, requestValue), undefined)
+
+  // Consume & close the readable, this should lift the write lock
+  await readResponse(readable)
+
+  notEqual(store.createWriteStream(request, requestValue), undefined)
+})
 
 /**
  * @param {import('../../types/cache-interceptor.d.ts').default.CacheStoreWriteable} stream

@@ -237,8 +237,4 @@ describe('Cache Interceptor', () => {
       }
     })
   })
-
-  test('shares responses still in-flight to the same request', async () => {
-    // TODO
-  })
 })
