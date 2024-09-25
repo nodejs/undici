@@ -1,3 +1,5 @@
+'use strict'
+
 const { describe, test } = require('node:test')
 const { deepStrictEqual, notEqual, equal } = require('node:assert')
 const { once } = require('node:events')
