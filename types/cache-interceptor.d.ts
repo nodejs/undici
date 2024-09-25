@@ -85,9 +85,9 @@ declare namespace CacheHandler {
 
     get isFull (): boolean
 
-    createReadStream (req: Dispatcher.RequestOptions): Readable | undefined
+    createReadStream (req: Dispatcher.RequestOptions): CacheStoreReadable | undefined
 
-    createWriteStream (req: Dispatcher.RequestOptions, value: CacheStoreValue): Writable
+    createWriteStream (req: Dispatcher.RequestOptions, value: CacheStoreValue): CacheStoreWriteable
 
     deleteByOrigin (origin: string): void
   }
