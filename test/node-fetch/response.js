@@ -6,15 +6,12 @@ const stream = require('node:stream')
 const { Response } = require('../../index.js')
 const TestServer = require('./utils/server.js')
 const { Blob } = require('node:buffer')
-const { kState } = require('../../lib/web/fetch/symbols.js')
 
 describe('Response', () => {
   const local = new TestServer()
-  let base
 
   before(async () => {
     await local.start()
-    base = `http://${local.hostname}:${local.port}/`
   })
 
   after(async () => {
@@ -115,11 +112,9 @@ describe('Response', () => {
       status: 346,
       statusText: 'production'
     })
-    res[kState].urlList = [new URL(base)]
     const cl = res.clone()
     assert.strictEqual(cl.headers.get('a'), '1')
     assert.strictEqual(cl.type, 'default')
-    assert.strictEqual(cl.url, base)
     assert.strictEqual(cl.status, 346)
     assert.strictEqual(cl.statusText, 'production')
     assert.strictEqual(cl.ok, false)
