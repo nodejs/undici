@@ -14,15 +14,14 @@ import {
   CloseEvent,
   WebSocket,
   caches,
-  EventSource
+  EventSource,
+  WebSocketStream,
+  WebSocketError
 } from '../../../index.js'
 // TODO(@KhafraDev): export these in index.js
 import { Cache } from '../../../lib/web/cache/cache.js'
 import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
 import { webcrypto } from 'node:crypto'
-// TODO(@KhafraDev): move this import once its added to index
-import { WebSocketStream } from '../../../lib/web/websocket/stream/websocketstream.js'
-import { WebSocketError } from '../../../lib/web/websocket/stream/websocketerror.js'
 
 const { initScripts, meta, test, url, path } = workerData
 

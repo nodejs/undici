@@ -148,6 +148,9 @@ module.exports.CloseEvent = CloseEvent
 module.exports.ErrorEvent = ErrorEvent
 module.exports.MessageEvent = MessageEvent
 
+module.exports.WebSocketStream = require('./lib/web/websocket/stream/websocketstream').WebSocketStream
+module.exports.WebSocketError = require('./lib/web/websocket/stream/websocketerror').WebSocketError
+
 module.exports.request = makeDispatcher(api.request)
 module.exports.stream = makeDispatcher(api.stream)
 module.exports.pipeline = makeDispatcher(api.pipeline)
