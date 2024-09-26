@@ -20,6 +20,9 @@ import {
 import { Cache } from '../../../lib/web/cache/cache.js'
 import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
 import { webcrypto } from 'node:crypto'
+// TODO(@KhafraDev): move this import once its added to index
+import { WebSocketStream } from '../../../lib/web/websocket/stream/websocketstream.js'
+import { WebSocketError } from '../../../lib/web/websocket/stream/websocketerror.js'
 
 const { initScripts, meta, test, url, path } = workerData
 
@@ -97,6 +100,14 @@ Object.defineProperties(globalThis, {
   EventSource: {
     ...globalPropertyDescriptors,
     value: EventSource
+  },
+  WebSocketStream: {
+    ...globalPropertyDescriptors,
+    value: WebSocketStream
+  },
+  WebSocketError: {
+    ...globalPropertyDescriptors,
+    value: WebSocketError
   }
 })
 
