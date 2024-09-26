@@ -135,30 +135,28 @@ describe('parseCacheControlHeader', () => {
 
 describe('parseVaryHeader', () => {
   test('basic usage', () => {
-    const output = parseVaryHeader({
-      vary: 'some-header, another-one',
+    const output = parseVaryHeader('some-header, another-one', {
       'some-header': 'asd',
       'another-one': '123',
       'third-header': 'cool'
     })
-    deepStrictEqual(output, new Map([
-      ['some-header', 'asd'],
-      ['another-one', '123']
-    ]))
+    deepStrictEqual(output, {
+      'some-header': 'asd',
+      'another-one': '123'
+    })
   })
 
   test('handles weird spacings', () => {
-    const output = parseVaryHeader({
-      vary: 'some-header,    another-one,something-else',
+    const output = parseVaryHeader('some-header,    another-one,something-else', {
       'some-header': 'asd',
       'another-one': '123',
       'something-else': 'asd123',
       'third-header': 'cool'
     })
-    deepStrictEqual(output, new Map([
-      ['some-header', 'asd'],
-      ['another-one', '123'],
-      ['something-else', 'asd123']
-    ]))
+    deepStrictEqual(output, {
+      'some-header': 'asd',
+      'another-one': '123',
+      'something-else': 'asd123'
+    })
   })
 })
