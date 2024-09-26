@@ -148,3 +148,36 @@ interface WebSocketInit {
   dispatcher?: Dispatcher,
   headers?: HeadersInit
 }
+
+interface WebSocketStreamOptions {
+  protocols?: string | string[]
+  signal?: AbortSignal
+}
+
+interface WebSocketCloseInfo {
+  closeCode: number
+  reason: string
+}
+
+interface WebSocketStream {
+  closed: Promise<WebSocketCloseInfo>
+  opened: Promise<{
+    extensions: string
+    protocol: string
+    readable: ReadableStream
+    writable: WritableStream
+  }>
+  url: string
+}
+
+export declare const WebSocketStream: {
+  prototype: WebSocketStream
+  new (url: string | URL, options?: WebSocketStreamOptions): WebSocketStream
+}
+
+interface WebSocketError extends Event, WebSocketCloseInfo {}
+
+export declare const WebSocketError: {
+  prototype: WebSocketError
+  new (type: string, init?: WebSocketCloseInfo): WebSocketError
+}
