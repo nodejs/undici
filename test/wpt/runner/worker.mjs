@@ -14,7 +14,9 @@ import {
   CloseEvent,
   WebSocket,
   caches,
-  EventSource
+  EventSource,
+  WebSocketStream,
+  WebSocketError
 } from '../../../index.js'
 // TODO(@KhafraDev): export these in index.js
 import { Cache } from '../../../lib/web/cache/cache.js'
@@ -97,6 +99,14 @@ Object.defineProperties(globalThis, {
   EventSource: {
     ...globalPropertyDescriptors,
     value: EventSource
+  },
+  WebSocketStream: {
+    ...globalPropertyDescriptors,
+    value: WebSocketStream
+  },
+  WebSocketError: {
+    ...globalPropertyDescriptors,
+    value: WebSocketError
   }
 })
 
