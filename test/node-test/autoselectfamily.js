@@ -36,7 +36,7 @@ function _lookup (resolver, hostname, options, cb) {
 }
 
 function createDnsServer (ipv6Addr, ipv4Addr, cb) {
-  // Create a DNS server which replies with a AAAA and a A record for the same host
+  // Create a DNS server which replies with an AAAA and an A record for the same host
   const socket = dgram.createSocket('udp4')
 
   socket.on('message', (msg, { address, port }) => {
