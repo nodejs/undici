@@ -400,6 +400,46 @@ test('invalid options throws', (t, done) => {
   }
 
   try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: 0
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: 0
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: -10
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: 1.5
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
     new Client(1) // eslint-disable-line
     assert.ok(0)
   } catch (err) {
