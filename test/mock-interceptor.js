@@ -6,6 +6,7 @@ const { MockInterceptor, MockScope } = require('../lib/mock/mock-interceptor')
 const MockAgent = require('../lib/mock/mock-agent')
 const { kDispatchKey } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
+const { fetch } = require('../lib/web/fetch/index')
 
 describe('MockInterceptor - path', () => {
   test('should remove hash fragment from paths', t => {
@@ -14,7 +15,7 @@ describe('MockInterceptor - path', () => {
       path: '#foobar',
       method: ''
     }, [])
-    t.strictEqual(mockInterceptor[kDispatchKey].path, '')
+    t.strictEqual(mockInterceptor[kDispatchKey].path, '/')
   })
 })
 
@@ -255,5 +256,105 @@ describe('MockInterceptor - replyContentLength', () => {
     }, [])
     const result = mockInterceptor.defaultReplyTrailers({})
     t.ok(result instanceof MockInterceptor)
+  })
+})
+
+describe('https://github.com/nodejs/undici/issues/3649', () => {
+  test('MockAgent should match with or without trailing slash /1', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    mockAgent
+      .get('https://localhost')
+      .intercept({ path: '/api/some-path' }).reply(200, { ok: true })
+
+    const res = await fetch(new URL('/api/some-path', 'https://localhost'), { dispatcher: mockAgent })
+
+    t.deepStrictEqual(await res.json(), { ok: true })
+  })
+
+  test('MockAgent should match with or without trailing slash /2', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    mockAgent
+      .get('https://localhost')
+      .intercept({ path: '/api/some-path' }).reply(200, { ok: true })
+
+    const res = await fetch(new URL('/api/some-path/', 'https://localhost'), { dispatcher: mockAgent })
+
+    t.deepStrictEqual(await res.json(), { ok: true })
+  })
+
+  test('MockAgent should match with or without trailing slash /3', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    mockAgent
+      .get('https://localhost')
+      .intercept({ path: '/api/some-path/' }).reply(200, { ok: true })
+
+    const res = await fetch(new URL('/api/some-path', 'https://localhost'), { dispatcher: mockAgent })
+
+    t.deepStrictEqual(await res.json(), { ok: true })
+  })
+
+  test('MockAgent should match with or without trailing slash /4', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    mockAgent
+      .get('https://localhost')
+      .intercept({ path: '/api/some-path/' }).reply(200, { ok: true })
+
+    const res = await fetch(new URL('/api/some-path/', 'https://localhost'), { dispatcher: mockAgent })
+
+    t.deepStrictEqual(await res.json(), { ok: true })
+  })
+
+  test('MockAgent should match with or without trailing slash /5', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    mockAgent
+      .get('https://localhost')
+      .intercept({ path: '/api/some-path////' }).reply(200, { ok: true })
+
+    const res = await fetch(new URL('/api/some-path//', 'https://localhost'), { dispatcher: mockAgent })
+
+    t.deepStrictEqual(await res.json(), { ok: true })
+  })
+
+  test('MockAgent should match with or without trailing slash /6', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    mockAgent
+      .get('https://localhost')
+      .intercept({ path: '/' }).reply(200, { ok: true })
+
+    const res = await fetch(new URL('', 'https://localhost'), { dispatcher: mockAgent })
+
+    t.deepStrictEqual(await res.json(), { ok: true })
+  })
+
+  test('MockAgent should match with or without trailing slash /7', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    mockAgent
+      .get('https://localhost')
+      .intercept({ path: '' }).reply(200, { ok: true })
+
+    const res = await fetch(new URL('/', 'https://localhost'), { dispatcher: mockAgent })
+
+    t.deepStrictEqual(await res.json(), { ok: true })
   })
 })
