@@ -81,7 +81,7 @@ By default, `reply` and `replyWithError` define the behaviour for the first matc
 
 ### Return: `MockScope`
 
-A `MockScope` is associated with a single `MockInterceptor`. With this, we can configure the default behaviour of a intercepted reply.
+A `MockScope` is associated with a single `MockInterceptor`. With this, we can configure the default behaviour of an intercepted reply.
 
 * **delay** `(waitInMs: number) => MockScope` - delay the associated reply by a set amount in ms.
 * **persist** `() => MockScope` - any matching request will always reply with the defined response indefinitely.
