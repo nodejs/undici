@@ -31,7 +31,7 @@ function cacheStoreTests (CacheStore) {
       const requestValue = {
         statusCode: 200,
         statusMessage: '',
-        rawHeaders: [1, 2, 3],
+        rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
@@ -72,7 +72,7 @@ function cacheStoreTests (CacheStore) {
       const anotherValue = {
         statusCode: 200,
         statusMessage: '',
-        rawHeaders: [1, 2, 3],
+        rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
@@ -111,7 +111,7 @@ function cacheStoreTests (CacheStore) {
       const requestValue = {
         statusCode: 200,
         statusMessage: '',
-        rawHeaders: [1, 2, 3],
+        rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
         cachedAt: Date.now() - 10000,
         staleAt: Date.now() - 1,
         deleteAt: Date.now() + 20000
@@ -151,7 +151,7 @@ function cacheStoreTests (CacheStore) {
         deleteAt: Date.now() - 5
       }
       const requestBody = ['part1', 'part2']
-      const rawTrailers = [4, 5, 6]
+      const rawTrailers = ['4', '5', '6']
 
       /**
        * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
@@ -177,7 +177,7 @@ function cacheStoreTests (CacheStore) {
       const requestValue = {
         statusCode: 200,
         statusMessage: '',
-        rawHeaders: [1, 2, 3],
+        rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
         vary: {
           'some-header': 'hello world'
         },
@@ -186,7 +186,7 @@ function cacheStoreTests (CacheStore) {
         deleteAt: Date.now() + 20000
       }
       const requestBody = ['part1', 'part2']
-      const requestTrailers = [4, 5, 6]
+      const requestTrailers = ['4', '5', '6']
 
       /**
        * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
@@ -234,7 +234,7 @@ test('MemoryCacheStore locks values properly', async () => {
   const requestValue = {
     statusCode: 200,
     statusMessage: '',
-    rawHeaders: [1, 2, 3],
+    rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
     cachedAt: Date.now(),
     staleAt: Date.now() + 10000,
     deleteAt: Date.now() + 20000
