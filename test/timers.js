@@ -112,8 +112,7 @@ describe('timers', () => {
     t.strictEqual(timer[timers.kFastTimer], true)
     timers.clearTimeout(timer)
     timer.refresh()
-    tick(500)
-    tick(1000)
+    tick(2000)
     timers.clearTimeout(timer)
   })
 
