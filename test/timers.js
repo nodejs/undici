@@ -53,7 +53,7 @@ describe('timers', () => {
 
     const nativeTimeoutId = setTimeout(() => { t.fail() }, 1)
     t.ok(timers.clearTimeout(nativeTimeoutId) === undefined)
-    tick(1)
+    tick(10)
   })
 
   test('a FastTimer will get a _idleStart value after short time', async (t) => {
