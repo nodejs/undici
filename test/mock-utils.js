@@ -162,6 +162,13 @@ describe('getResponseData', () => {
     const responseData = getResponseData(Buffer.from('test'))
     t.ok(Buffer.isBuffer(responseData))
   })
+
+  test('it should return Uint8Arrays untouched', (t) => {
+    t = tspl(t, { plan: 1 })
+    const testData = new TextEncoder().encode('test')
+    const responseData = getResponseData(testData)
+    t.strictEqual(responseData, testData)
+  })
 })
 
 test('getStatusText', (t) => {
