@@ -735,7 +735,7 @@ describe('node-fetch', () => {
       })
       .catch(() => { })
       .then(new Promise((resolve) => {
-        // Wait a few ms to see if a uncaught error occurs
+        // Wait a few ms to see if an uncaught error occurs
         setTimeout(() => {
           resolve()
         }, 20)
@@ -1231,7 +1231,7 @@ describe('node-fetch', () => {
     })
   })
 
-  // Body should been cloned...
+  // Body should be cloned...
   it('constructing a Request/Response with URLSearchParams and mutating it should not affected body', () => {
     const parameters = new URLSearchParams()
     const request = new Request(`${base}inspect`, { method: 'POST', body: parameters })
