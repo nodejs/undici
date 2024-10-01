@@ -91,4 +91,32 @@ declare namespace CacheHandler {
 
     deleteByOrigin (origin: string): void
   }
+
+  export interface SqliteCacheStoreOpts {
+    /**
+     * Sqlite database location
+     * @default ':memory:'
+     */
+    location?: string
+    /**
+     * @default Infinity
+     */
+    maxEntries?: number
+    /**
+     * @default Infinity
+     */
+    maxEntrySize?: number
+  }
+
+  export class SqliteCacheStore implements CacheStore {
+    constructor (opts?: SqliteCacheStoreOpts)
+
+    get isFull (): boolean
+
+    createReadStream (req: Dispatcher.RequestOptions): CacheStoreReadable | undefined
+
+    createWriteStream (req: Dispatcher.RequestOptions, value: CacheStoreValue): CacheStoreWriteable
+
+    deleteByOrigin (origin: string): void
+  }
 }

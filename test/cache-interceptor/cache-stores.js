@@ -4,8 +4,10 @@ const { describe, test } = require('node:test')
 const { deepStrictEqual, notEqual, equal } = require('node:assert')
 const { once } = require('node:events')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
+const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store')
 
 cacheStoreTests(MemoryCacheStore)
+cacheStoreTests(SqliteCacheStore)
 
 /**
  * @param {import('../../types/cache-interceptor.d.ts').default.CacheStore} CacheStore
