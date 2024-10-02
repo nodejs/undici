@@ -48,6 +48,6 @@ declare namespace MockAgent {
     agent?: Dispatcher;
 
     /** Ignore trailing slashes in the path */
-    ignoreTrailingSlashes?: boolean;
+    ignoreTrailingSlash?: boolean;
   }
 }

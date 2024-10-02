@@ -271,10 +271,10 @@ describe('https://github.com/nodejs/undici/issues/3649', () => {
     ['', '/'],
     ['/', '/']
   ].forEach(([interceptPath, fetchedPath], index) => {
-    test(`MockAgent should match with or without trailing slash by setting ignoreTrailingSlashes as MockAgent option /${index}`, async (t) => {
+    test(`MockAgent should match with or without trailing slash by setting ignoreTrailingSlash as MockAgent option /${index}`, async (t) => {
       t = tspl(t, { plan: 1 })
 
-      const mockAgent = new MockAgent({ ignoreTrailingSlashes: true })
+      const mockAgent = new MockAgent({ ignoreTrailingSlash: true })
       mockAgent.disableNetConnect()
       mockAgent
         .get('https://localhost')
