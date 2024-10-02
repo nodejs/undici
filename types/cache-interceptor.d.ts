@@ -26,7 +26,7 @@ declare namespace CacheHandler {
      */
     get isFull(): boolean
 
-    createReadStream(req: Dispatcher.RequestOptions): CacheStoreReadable | undefined
+    createReadStream(req: Dispatcher.RequestOptions): CacheStoreReadable | Promise<CacheStoreReadable | undefined> | undefined
 
     createWriteStream(req: Dispatcher.RequestOptions, value: CacheStoreValue): CacheStoreWriteable | undefined
 
@@ -37,7 +37,7 @@ declare namespace CacheHandler {
   }
 
   export interface CacheStoreReadable extends Readable {
-    get value(): Omit<CacheStoreValue, 'body'>
+    get value(): CacheStoreValue
   }
 
   export interface CacheStoreWriteable extends Writable {
