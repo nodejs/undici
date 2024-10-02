@@ -177,7 +177,9 @@ async function init () {
 }
 
 init()
-  .then((round) => bench(round, {}))
+  .then((round) => bench(round, {
+    minSamples: 512
+  }))
   .then((results) => {
     print(results)
 
@@ -198,7 +200,7 @@ function print (results) {
     const { bytes } = experimentsInfo[name]
 
     console.log(
-      `${name}: transferred ${formatBytes((bytes / average) * 1e9)}/s`
+      `${name}: transferred ${formatBytes((bytes / average) * 1e9)} Bytes/s`
     )
   }
 }

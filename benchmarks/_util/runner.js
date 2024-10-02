@@ -55,7 +55,7 @@ class Info {
 
 /**
  * @param {Record<string, BenchMarkHandler>} experiments
- * @param {{}} [options]
+ * @param {{ minSamples?: number }} [options]
  * @returns {Promise<{ name: string; average: number; samples: number; fn: BenchMarkHandler; min: number; max: number }[]>}
  */
 async function bench (experiments, options = {}) {
@@ -95,8 +95,9 @@ async function bench (experiments, options = {}) {
     }
 
     let timing = 0
+    const minSamples = options.minSamples ?? 128
 
-    for (let j = 0; j < 128 || timing < 800_000_000; ++j) {
+    for (let j = 0; j < minSamples || timing < 800_000_000; ++j) {
       let resolve = (value) => {}
       let reject = (reason) => {}
       const promise = new Promise(
