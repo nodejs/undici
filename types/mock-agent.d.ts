@@ -46,5 +46,8 @@ declare namespace MockAgent {
   export interface Options extends Agent.Options {
     /** A custom agent to be encapsulated by the MockAgent. */
     agent?: Dispatcher;
+
+    /** Ignore trailing slashes in the path */
+    ignoreTrailingSlashes?: boolean;
   }
 }
