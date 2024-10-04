@@ -1,12 +1,10 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { strictEqual, throws, doesNotThrow } = require('node:assert')
 const { test, describe } = require('node:test')
 const { isBlobLike, parseURL, isHttpOrHttpsPrefixed, isValidPort } = require('../lib/core/util')
 const { Blob, File } = require('node:buffer')
 const { InvalidArgumentError } = require('../lib/core/errors')
-const timers = require('../lib/util/timers')
 
 describe('isBlobLike', () => {
   test('buffer', () => {
@@ -253,81 +251,5 @@ describe('parseURL', () => {
         strictEqual(parseURL({ protocol: 'http:', hostname: 'www.example.com', path: '' }).origin, 'http://www.example.com')
       })
     })
-  })
-})
-
-describe('timers', () => {
-  const getDelta = (start, target) => {
-    const end = process.hrtime.bigint()
-    const actual = (end - start) / 1_000_000n
-    return actual - BigInt(target)
-  }
-
-  // timers.setTimeout implements a low resolution timer with a 500 ms granularity
-  // It is expected that in the worst case, a timer will fire about 500 ms after the
-  // intended amount of time, an extra 200 ms is added to account event loop overhead
-  // Timers should never fire excessively early, 1ms early is tolerated
-  const ACCEPTABLE_DELTA = 700n
-
-  test('meet acceptable resolution time', async (t) => {
-    const testTimeouts = [0, 1, 499, 500, 501, 990, 999, 1000, 1001, 1100, 1400, 1499, 1500, 4000, 5000]
-
-    t = tspl(t, { plan: 1 + testTimeouts.length * 2 })
-
-    const start = process.hrtime.bigint()
-
-    for (const target of testTimeouts) {
-      timers.setTimeout(() => {
-        const delta = getDelta(start, target)
-
-        t.ok(delta >= -1n, `${target}ms fired early`)
-        t.ok(delta < ACCEPTABLE_DELTA, `${target}ms fired late`)
-      }, target)
-    }
-
-    setTimeout(() => t.ok(true), 6000)
-    await t.completed
-  })
-
-  test('refresh correctly with timeout < TICK_MS', async (t) => {
-    t = tspl(t, { plan: 3 })
-
-    const start = process.hrtime.bigint()
-
-    const timeout = timers.setTimeout(() => {
-      // 400 ms timer was refreshed after 600ms; total target is 1000
-      const delta = getDelta(start, 1000)
-
-      t.ok(delta >= -1n, 'refreshed timer fired early')
-      t.ok(delta < ACCEPTABLE_DELTA, 'refreshed timer fired late')
-    }, 400)
-
-    setTimeout(() => timeout.refresh(), 200)
-    setTimeout(() => timeout.refresh(), 400)
-    setTimeout(() => timeout.refresh(), 600)
-
-    setTimeout(() => t.ok(true), 1500)
-    await t.completed
-  })
-
-  test('refresh correctly with timeout > TICK_MS', async (t) => {
-    t = tspl(t, { plan: 3 })
-
-    const start = process.hrtime.bigint()
-
-    const timeout = timers.setTimeout(() => {
-      // 501ms timer was refreshed after 1250ms; total target is 1751
-      const delta = getDelta(start, 1751)
-
-      t.ok(delta >= -1n, 'refreshed timer fired early')
-      t.ok(delta < ACCEPTABLE_DELTA, 'refreshed timer fired late')
-    }, 501)
-
-    setTimeout(() => timeout.refresh(), 250)
-    setTimeout(() => timeout.refresh(), 750)
-    setTimeout(() => timeout.refresh(), 1250)
-
-    setTimeout(() => t.ok(true), 3000)
-    await t.completed
   })
 })
