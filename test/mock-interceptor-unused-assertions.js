@@ -224,7 +224,7 @@ test('defaults to rendering output with terminal color when process.env.CI is un
 
   try {
     mockAgentWithOneInterceptor().assertNoPendingInterceptors()
-    t.fail('Shoudl have thrown')
+    t.fail('Should have thrown')
   } catch (err) {
     t.deepStrictEqual(err.message, tableRowsAlignedToLeft
       ? `

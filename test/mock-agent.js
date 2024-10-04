@@ -2357,7 +2357,7 @@ test('MockAgent - clients are not garbage collected', async (t) => {
 
   const baseUrl = `http://localhost:${server.address().port}`
 
-  // Create the dispatcher and isable net connect so we can make sure it matches properly
+  // Create the dispatcher and disable net connect so we can make sure it matches properly
   const dispatcher = new MockAgent()
   dispatcher.disableNetConnect()
 
