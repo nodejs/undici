@@ -18,6 +18,8 @@ Extends: [`AgentOptions`](Agent.md#parameter-agentoptions)
 
 * **agent** `Agent` (optional) - Default: `new Agent([options])` - a custom agent encapsulated by the MockAgent.
 
+* **ignoreTrailingSlash** `boolean` (optional) - Default: `false` - set the default value for `ignoreTrailingSlash` for interceptors.
+
 ### Example - Basic MockAgent instantiation
 
 This will instantiate the MockAgent. It will not do anything until registered as the agent to use with requests and mock interceptions are added.
