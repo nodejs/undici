@@ -10,18 +10,12 @@ const removeEscapeColorsRE = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4}
 
 const isCITGM = !!process.env.CITGM
 
-const noExperimentalFlags = [
-  '--no-experimental-fetch',
-  '--no-experimental-websocket',
-  '--no-experimental-eventsource'
-]
-
 test('debug#websocket', { skip: !process.versions.icu || isCITGM }, async t => {
   const assert = tspl(t, { plan: 6 })
   const child = spawn(
     process.execPath,
     [
-      ...noExperimentalFlags,
+      '--no-experimental-fetch',
       join(__dirname, '../fixtures/websocket.js')],
     {
       env: {
@@ -59,7 +53,7 @@ test('debug#fetch', { skip: isCITGM }, async t => {
   const child = spawn(
     process.execPath,
     [
-      ...noExperimentalFlags,
+      '--no-experimental-fetch',
       join(__dirname, '../fixtures/fetch.js')
     ],
     {
@@ -97,7 +91,7 @@ test('debug#undici', { skip: isCITGM }, async t => {
   const child = spawn(
     process.execPath,
     [
-      ...noExperimentalFlags,
+      '--no-experimental-fetch',
       join(__dirname, '../fixtures/undici.js')
     ],
     {
