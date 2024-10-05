@@ -630,7 +630,7 @@ test('Cookie setCookie does not throw if headers is an instance of undici owns H
   })
 })
 
-test('Cookie setCookie does not throw if headers is an instance of the global Headers class', () => {
+test('Cookie setCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, () => {
   const headers = new globalThis.Headers()
   setCookie(headers, {
     name: 'key',
@@ -659,7 +659,7 @@ test('Cookie getCookies does not throw if headers is an instance of undici owns 
   getCookies(headers)
 })
 
-test('Cookie getCookie does not throw if headers is an instance of the global Headers class', () => {
+test('Cookie getCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, () => {
   const headers = new globalThis.Headers()
   getCookies(headers)
 })
@@ -682,7 +682,7 @@ test('Cookie getSetCookies does not throw if headers is an instance of undici ow
   getSetCookies(headers)
 })
 
-test('Cookie setCookie does not throw if headers is an instance of the global Headers class', () => {
+test('Cookie setCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, () => {
   const headers = new globalThis.Headers({ 'set-cookie': 'Space=Cat' })
   getSetCookies(headers)
 })
@@ -705,7 +705,7 @@ test('Cookie deleteCookie does not throw if headers is an instance of undici own
   deleteCookie(headers, 'deno')
 })
 
-test('Cookie getCookie does not throw if headers is an instance of the global Headers class', () => {
+test('Cookie getCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, () => {
   const headers = new globalThis.Headers()
   deleteCookie(headers, 'deno')
 })
