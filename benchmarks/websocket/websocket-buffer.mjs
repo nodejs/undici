@@ -1,8 +1,8 @@
 import { WebSocket as WsWebSocket } from 'ws'
 import { WebSocket as UndiciWebSocket } from '../../index.js'
-import { bench, run, group } from 'mitata'
+import { bench, run, lineplot } from 'mitata'
 
-const __BINARY_SIZE__ = 1024 * 256
+const __BINARY_SIZE__ = 1024 * 512
 
 const binary = Buffer.alloc(__BINARY_SIZE__, '_')
 
@@ -10,19 +10,26 @@ const url = 'http://localhost:5001'
 
 const connections = []
 
-group('send', () => {
+lineplot(() => {
   {
     const ws = new WsWebSocket(url)
     let _resolve
     ws.on('message', () => {
       _resolve()
     })
-    bench('ws', () => {
-      return new Promise((resolve, reject) => {
-        ws.send(binary)
-        _resolve = resolve
+    bench('ws ($messages)', function * (state) {
+      const messages = state.get('messages')
+      const chunk = binary.subarray(0, __BINARY_SIZE__ / messages)
+      yield () => new Promise((resolve, reject) => {
+        for (let i = 0; i < messages; ++i) ws.send(chunk)
+        let id = 0
+        _resolve = () => {
+          if (++id === messages) {
+            resolve()
+          }
+        }
       })
-    })
+    }).range('messages', 1, 256)
     connections.push(ws)
   }
   {
@@ -31,12 +38,19 @@ group('send', () => {
     ws.addEventListener('message', () => {
       _resolve()
     })
-    bench('undici', () => {
-      return new Promise((resolve, reject) => {
-        ws.send(binary)
-        _resolve = resolve
+    bench('undici ($messages)', function * (state) {
+      const messages = state.get('messages')
+      const chunk = binary.subarray(0, __BINARY_SIZE__ / messages)
+      yield () => new Promise((resolve, reject) => {
+        for (let i = 0; i < messages; ++i) ws.send(chunk)
+        let id = 0
+        _resolve = () => {
+          if (++id === messages) {
+            resolve()
+          }
+        }
       })
-    })
+    }).range('messages', 1, 256)
     connections.push(ws)
   }
 })
