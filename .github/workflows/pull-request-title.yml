@@ -1,0 +1,17 @@
+name: check pull-request title
+on:
+  pull_request:
+    types: 
+      - edited
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  check-pull-request-title:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: fastify/action-pr-title@v0
+      with:
+        regex: '/^(build|chore|ci|docs|feat|types|fix|perf|refactor|style|test)(?:\([^\):]*\))?!?:\s/'
+        github-token: ${{ github.token }}
