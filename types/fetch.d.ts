@@ -55,37 +55,58 @@ export class BodyMixin {
   readonly text: () => Promise<string>
 }
 
-export interface SpecIterator<T, TReturn = any, TNext = undefined> {
-  next(...args: [] | [TNext]): IteratorResult<T, TReturn>;
+/**
+ * Describes a user-defined {@link Iterator} that is also iterable.
+ */
+interface IterableIterator<T, TReturn = any, TNext = any> extends Iterator<T, TReturn, TNext> {
+  [Symbol.iterator](): IterableIterator<T, TReturn, TNext>;
 }
 
-export interface SpecIterableIterator<T> extends SpecIterator<T> {
-  [Symbol.iterator](): SpecIterableIterator<T>;
+/**
+* Describes an {@link Iterator} produced by the runtime that inherits from the intrinsic `Iterator.prototype`.
+*/
+interface IteratorObject<T, TReturn = unknown, TNext = unknown> extends Iterator<T, TReturn, TNext> {
+  [Symbol.iterator](): IteratorObject<T, TReturn, TNext>;
 }
 
-export interface SpecIterable<T> {
-  [Symbol.iterator](): SpecIterator<T>;
+/**
+* Defines the `TReturn` type used for built-in iterators produced by `Array`, `Map`, `Set`, and others.
+* This is `undefined` when `strictBuiltInIteratorReturn` is `true`; otherwise, this is `any`.
+*/
+type BuiltinIteratorReturn = undefined
+
+interface HeadersIterator<T> extends IteratorObject<T, BuiltinIteratorReturn, unknown> {
+  [Symbol.iterator](): HeadersIterator<T>;
 }
 
 export type HeadersInit = [string, string][] | HeaderRecord | Headers
 
-export declare class Headers implements SpecIterable<[string, string]> {
+export declare class Headers {
   constructor (init?: HeadersInit)
-  readonly append: (name: string, value: string) => void
-  readonly delete: (name: string) => void
-  readonly get: (name: string) => string | null
-  readonly has: (name: string) => boolean
-  readonly set: (name: string, value: string) => void
-  readonly getSetCookie: () => string[]
-  readonly forEach: (
-    callbackfn: (value: string, key: string, iterable: Headers) => void,
-    thisArg?: unknown
-  ) => void
+  /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Headers/append) */
+  append (name: string, value: string): void
+  /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Headers/delete) */
+  delete (name: string): void
+  /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Headers/get) */
+  get (name: string): string | null
+  /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Headers/getSetCookie) */
+  getSetCookie (): string[]
+  /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Headers/has) */
+  has (name: string): boolean
+  /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Headers/set) */
+  set (name: string, value: string): void
+  forEach (
+    callbackfn: (value: string, key: string, parent: Headers) => void,
+    thisArg?: any
+  ): void
 
-  readonly keys: () => SpecIterableIterator<string>
-  readonly values: () => SpecIterableIterator<string>
-  readonly entries: () => SpecIterableIterator<[string, string]>
-  readonly [Symbol.iterator]: () => SpecIterableIterator<[string, string]>
+  [Symbol.iterator] (): HeadersIterator<[string, string]>
+  /** Returns an iterator allowing to go through all key/value pairs contained in this object. */
+  entries (): HeadersIterator<[string, string]>
+  /** Returns an iterator allowing to go through all keys of the key/value pairs contained in this object. */
+  keys (): HeadersIterator<string>
+  /** Returns an iterator allowing to go through all values of the key/value pairs contained in this object. */
+  values (): HeadersIterator<string>
 }
 
 export type RequestCache =

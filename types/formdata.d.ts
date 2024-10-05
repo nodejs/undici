@@ -2,7 +2,7 @@
 /// <reference types="node" />
 
 import { File } from 'buffer'
-import { SpecIterableIterator } from './fetch'
+import { HeadersIterator } from './fetch'
 
 /**
  * A `string` or `File` that represents a single value from a set of `FormData` key-value pairs.
@@ -85,24 +85,24 @@ export declare class FormData {
    * Returns an [`iterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols) allowing to go through all keys contained in this `FormData` object.
    * Each key is a `string`.
    */
-  keys: () => SpecIterableIterator<string>
+  keys: () => HeadersIterator<string>
 
   /**
    * Returns an [`iterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols) allowing to go through all values contained in this object `FormData` object.
    * Each value is a [`FormDataValue`](https://developer.mozilla.org/en-US/docs/Web/API/FormDataEntryValue).
    */
-  values: () => SpecIterableIterator<FormDataEntryValue>
+  values: () => HeadersIterator<FormDataEntryValue>
 
   /**
    * Returns an [`iterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols) allowing to go through the `FormData` key/value pairs.
    * The key of each pair is a string; the value is a [`FormDataValue`](https://developer.mozilla.org/en-US/docs/Web/API/FormDataEntryValue).
    */
-  entries: () => SpecIterableIterator<[string, FormDataEntryValue]>
+  entries: () => HeadersIterator<[string, FormDataEntryValue]>
 
   /**
    * An alias for FormData#entries()
    */
-  [Symbol.iterator]: () => SpecIterableIterator<[string, FormDataEntryValue]>
+  [Symbol.iterator]: () => HeadersIterator<[string, FormDataEntryValue]>
 
   readonly [Symbol.toStringTag]: string
 }
