@@ -49,7 +49,7 @@ interface WebidlUtil {
   /**
    * @see https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values
    */
-  Type (object: unknown): WebIDLTypes
+  Type (object: unknown): WebIDLTypes[keyof WebIDLTypes]
 
   TypeValueToString (o: unknown):
     | 'Undefined'
