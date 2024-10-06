@@ -62,7 +62,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "build:node": "npx esbuild@0.19.10 index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1 --keep-names && node scripts/strip-comments.js",
+    "build:node": "esbuild index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1 --keep-names && node scripts/strip-comments.js",
     "prebuild:wasm": "node build/wasm.js --prebuild",
     "build:wasm": "node build/wasm.js --docker",
     "generate-pem": "node scripts/generate-pem.js",
@@ -111,6 +111,7 @@
     "c8": "^10.0.0",
     "cross-env": "^7.0.3",
     "dns-packet": "^5.4.0",
+    "esbuild": "^0.19.10",
     "eslint": "^9.9.0",
     "fast-check": "^3.17.1",
     "https-pem": "^3.0.0",
