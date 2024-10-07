@@ -52,10 +52,6 @@
           "origin-when-cross-origin policy on a same-origin URL"
         ]
       },
-      "request-forbidden-headers.any.js": {
-        "note": "undici doesn't filter headers",
-        "skip": true
-      },
       "request-headers.any.js": {
         "fail": [
           "Fetch with Chicken",
