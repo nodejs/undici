@@ -118,6 +118,15 @@ type RequestDestination =
   | 'worker'
   | 'xslt'
 
+type RequestInitiator =
+  | ''
+  | 'download'
+  | 'imageset'
+  | 'manifest'
+  | 'prefetch'
+  | 'prerender'
+  | 'xslt'
+
 export interface RequestInit {
   method?: string
   keepalive?: boolean
@@ -125,6 +134,7 @@ export interface RequestInit {
   body?: BodyInit | null
   redirect?: RequestRedirect
   integrity?: string
+  initiator?: RequestInitiator
   signal?: AbortSignal | null
   credentials?: RequestCredentials
   mode?: RequestMode
@@ -160,6 +170,7 @@ export declare class Request extends BodyMixin {
   readonly destination: RequestDestination
   readonly headers: Headers
   readonly integrity: string
+  readonly initiator: RequestInitiator
   readonly method: string
   readonly mode: RequestMode
   readonly redirect: RequestRedirect
