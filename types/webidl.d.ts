@@ -84,7 +84,7 @@ interface WebidlUtil {
    */
   Stringify (V: any): string
 
-  MakeTypeAssertion <T extends new () => any>(Prototype: T['prototype']): (arg: any) => arg is T
+  MakeTypeAssertion <T extends { prototype: T }>(Prototype: T['prototype']): (arg: any) => arg is T
 }
 
 interface WebidlConverters {
@@ -231,7 +231,7 @@ export interface Webidl {
     V: unknown,
     prefix: string,
     argument: string
-  ) => asserts V is typeof cls
+  ) => asserts V is Interface
 
   // TODO(@KhafraDev): a type could likely be implemented that can infer the return type
   // from the converters given?
