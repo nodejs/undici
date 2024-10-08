@@ -266,6 +266,7 @@ test('returns unused interceptors', t => {
       persist: false,
       consumed: false,
       pending: true,
+      ignoreTrailingSlash: false,
       path: '/',
       method: 'GET',
       body: undefined,

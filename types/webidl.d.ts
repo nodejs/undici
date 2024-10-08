@@ -1,4 +1,5 @@
 // These types are not exported, and are only used internally
+import * as undici from './index'
 
 /**
  * Take in an unknown value and return one that is of type T
@@ -82,6 +83,8 @@ interface WebidlUtil {
    * Stringifies {@param V}
    */
   Stringify (V: any): string
+
+  MakeTypeAssertion <T extends { prototype: T }>(Prototype: T['prototype']): (arg: any) => arg is T
 }
 
 interface WebidlConverters {
@@ -173,10 +176,27 @@ interface WebidlConverters {
   [Key: string]: (...args: any[]) => unknown
 }
 
+type IsAssertion<T> = (arg: any) => arg is T
+
+interface WebidlIs {
+  Request: IsAssertion<undici.Request>
+  Response: IsAssertion<undici.Response>
+  ReadableStream: IsAssertion<ReadableStream>
+  Blob: IsAssertion<Blob>
+  URLSearchParams: IsAssertion<URLSearchParams>
+  File: IsAssertion<File>
+  FormData: IsAssertion<undici.FormData>
+  URL: IsAssertion<URL>
+  WebSocketError: IsAssertion<undici.WebSocketError>
+  AbortSignal: IsAssertion<AbortSignal>
+  MessagePort: IsAssertion<MessagePort>
+}
+
 export interface Webidl {
   errors: WebidlErrors
   util: WebidlUtil
   converters: WebidlConverters
+  is: WebidlIs
 
   /**
    * @description Performs a brand-check on {@param V} to ensure it is a
@@ -184,7 +204,7 @@ export interface Webidl {
    */
   brandCheck <Interface extends new () => unknown>(V: unknown, cls: Interface): asserts V is Interface
 
-  brandCheckMultiple <Interfaces extends (new () => unknown)[]> (V: unknown, list: Interfaces): asserts V is Interfaces[number]
+  brandCheckMultiple <Interfaces extends (new () => unknown)[]> (list: Interfaces): (V: any) => asserts V is Interfaces[number]
 
   /**
    * @see https://webidl.spec.whatwg.org/#es-sequence
@@ -207,11 +227,11 @@ export interface Webidl {
    * Similar to {@link Webidl.brandCheck} but allows skipping the check if third party
    * interfaces are allowed.
    */
-  interfaceConverter <Interface>(cls: Interface): (
+  interfaceConverter <Interface>(typeCheck: IsAssertion<Interface>, name: string): (
     V: unknown,
     prefix: string,
     argument: string
-  ) => asserts V is typeof cls
+  ) => asserts V is Interface
 
   // TODO(@KhafraDev): a type could likely be implemented that can infer the return type
   // from the converters given?

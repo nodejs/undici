@@ -4,11 +4,13 @@ const { describe, test } = require('node:test')
 const assert = require('node:assert')
 const { webidl } = require('../../lib/web/fetch/webidl')
 
-test('webidl.interfaceConverter', () => {
+test('webidl.interfaceConverter', (t) => {
   class A {}
   class B {}
 
-  const converter = webidl.interfaceConverter(A)
+  const converter = webidl.interfaceConverter(
+    webidl.util.MakeTypeAssertion(A.prototype)
+  )
 
   assert.throws(() => {
     converter(new B(), 'converter', 'converter')
@@ -16,6 +18,19 @@ test('webidl.interfaceConverter', () => {
 
   assert.doesNotThrow(() => {
     converter(new A(), 'converter', 'converter')
+  })
+
+  t.test('interfaceConverters ignore Symbol.hasInstance', () => {
+    class V {}
+
+    Object.defineProperty(Blob.prototype, Symbol.hasInstance, {
+      value: () => true
+    })
+
+    const blobConverter = webidl.interfaceConverter(webidl.is.Blob, 'Blob')
+
+    assert.throws(() => blobConverter(new V()))
+    assert.equal(webidl.is.Blob(new V()), false)
   })
 })
 

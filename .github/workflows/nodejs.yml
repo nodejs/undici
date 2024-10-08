@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
 
@@ -198,6 +198,6 @@ jobs:
       pull-requests: write
     steps:
       - name: Merge Dependabot PR
-        uses: fastify/github-action-merge-dependabot@9e7bfb249c69139d7bdcd8d984f9665edd49020b # v3.10.1
+        uses: fastify/github-action-merge-dependabot@3892334d1c649bb8119af3d22a3f3766bd5e593f # v3.10.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
