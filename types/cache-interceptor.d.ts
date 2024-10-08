@@ -28,7 +28,7 @@ declare namespace CacheHandler {
 
     createReadStream(req: Dispatcher.RequestOptions): CacheStoreReadable | Promise<CacheStoreReadable | undefined> | undefined
 
-    createWriteStream(req: Dispatcher.RequestOptions, value: CacheStoreValue): CacheStoreWriteable | undefined
+    createWriteStream(req: Dispatcher.RequestOptions, value: Omit<CacheStoreValue, 'rawTrailers'>): CacheStoreWriteable | undefined
 
     /**
      * Delete all of the cached responses from a certain origin (host)
@@ -41,13 +41,13 @@ declare namespace CacheHandler {
   }
 
   export interface CacheStoreWriteable extends Writable {
-    set rawTrailers(rawTrailers: Buffer[] | undefined)
+    set rawTrailers(rawTrailers: string[] | undefined)
   }
 
   export interface CacheStoreValue {
     statusCode: number;
     statusMessage: string;
-    rawHeaders: Buffer[];
+    rawHeaders: (Buffer | Buffer[])[];
     rawTrailers?: string[];
     /**
      * Headers defined by the Vary header and their respective values for
