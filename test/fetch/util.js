@@ -119,10 +119,24 @@ test('sameOrigin', async (t) => {
 })
 
 test('isURLPotentiallyTrustworthy', (t) => {
-  const valid = ['http://127.0.0.1', 'http://localhost.localhost',
-    'http://[::1]', 'http://adb.localhost', 'https://something.com', 'wss://hello.com',
-    'file:///link/to/file.txt', 'data:text/plain;base64,randomstring', 'about:blank', 'about:srcdoc']
-  const invalid = ['http://121.3.4.5:55', 'null:8080', 'something:8080']
+  const valid = [
+    'http://127.0.0.1',
+    'http://[::1]',
+    'https://something.com',
+    'wss://hello.com',
+    'data:text/plain;base64,randomstring',
+    'about:blank',
+    'about:srcdoc',
+    'blob:http://example.com/550e8400-e29b-41d4-a716-446655440000'
+  ]
+  const invalid = [
+    'file:///link/to/file.txt',
+    'http://121.3.4.5:55',
+    'null:8080',
+    'http://adb.localhost',
+    'http://localhost.localhost',
+    'something:8080'
+  ]
 
   // t.plan(valid.length + invalid.length + 1)
   const { ok } = tspl(t, { plan: valid.length + invalid.length + 1 })
@@ -130,7 +144,7 @@ test('isURLPotentiallyTrustworthy', (t) => {
 
   for (const url of valid) {
     const instance = new URL(url)
-    ok(util.isURLPotentiallyTrustworthy(instance))
+    ok(util.isURLPotentiallyTrustworthy(instance), instance)
   }
 
   for (const url of invalid) {
