@@ -192,6 +192,25 @@ test('setRequestReferrerPolicyOnRedirect', async (t) => {
     strictEqual(request.referrerPolicy, 'origin')
   })
 
+  await t.test('should ignore empty string as policy', (t) => {
+    const request = {
+      referrerPolicy: 'no-referrer, strict-origin-when-cross-origin'
+    }
+
+    const actualResponse = {
+      headersList: new HeadersList()
+    }
+
+    const { strictEqual } = tspl(t, { plan: 1 })
+
+    actualResponse.headersList.append('Connection', 'close')
+    actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
+    actualResponse.headersList.append('Referrer-Policy', 'origin, asdas, asdaw34, no-referrer,,')
+    util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
+
+    strictEqual(request.referrerPolicy, 'no-referrer')
+  })
+
   await t.test('should select the first valid policy from a response#2', (t) => {
     const request = {
       referrerPolicy: 'no-referrer, strict-origin-when-cross-origin'
