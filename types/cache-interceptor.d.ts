@@ -78,6 +78,7 @@ declare namespace CacheHandler {
      * @default Infinity
      */
     maxEntrySize?: number
+    errorCallback?: (err: unknown) => void
   }
 
   export class MemoryCacheStore implements CacheStore {
