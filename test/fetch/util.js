@@ -119,7 +119,10 @@ test('sameOrigin', async (t) => {
 })
 
 test('isURLPotentiallyTrustworthy', (t) => {
+  // https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-let-localhost-be-localhost#section-5.2
   const valid = [
+    'http://localhost',
+    'http://localhost.',
     'http://127.0.0.1',
     'http://[::1]',
     'https://something.com',
@@ -127,14 +130,18 @@ test('isURLPotentiallyTrustworthy', (t) => {
     'data:text/plain;base64,randomstring',
     'about:blank',
     'about:srcdoc',
+    'http://subdomain.localhost',
+    'http://subdomain.localhost.',
+    'http://adb.localhost',
+    'http://localhost.localhost',
     'blob:http://example.com/550e8400-e29b-41d4-a716-446655440000'
   ]
   const invalid = [
+    'http://localhost.example.com',
+    'http://subdomain.localhost.example.com',
     'file:///link/to/file.txt',
     'http://121.3.4.5:55',
     'null:8080',
-    'http://adb.localhost',
-    'http://localhost.localhost',
     'something:8080'
   ]
 
