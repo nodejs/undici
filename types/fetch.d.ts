@@ -119,20 +119,21 @@ type RequestDestination =
   | 'xslt'
 
 export interface RequestInit {
-  method?: string
-  keepalive?: boolean
-  headers?: HeadersInit
   body?: BodyInit | null
-  redirect?: RequestRedirect
-  integrity?: string
-  signal?: AbortSignal | null
+  cache?: RequestCache
   credentials?: RequestCredentials
-  mode?: RequestMode
-  referrer?: string
-  referrerPolicy?: ReferrerPolicy
-  window?: null
   dispatcher?: Dispatcher
   duplex?: RequestDuplex
+  headers?: HeadersInit
+  integrity?: string
+  keepalive?: boolean
+  method?: string
+  mode?: RequestMode
+  redirect?: RequestRedirect
+  referrer?: string
+  referrerPolicy?: ReferrerPolicy
+  signal?: AbortSignal | null
+  window?: null
 }
 
 export type ReferrerPolicy =

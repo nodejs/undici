@@ -38,17 +38,18 @@ declare const request: Request
 declare const headers: Headers
 declare const response: Response
 
-expectType<string | undefined>(requestInit.method)
-expectType<boolean | undefined>(requestInit.keepalive)
-expectType<HeadersInit | undefined>(requestInit.headers)
 expectType<BodyInit | undefined>(requestInit.body)
-expectType<RequestRedirect | undefined>(requestInit.redirect)
-expectType<string | undefined>(requestInit.integrity)
-expectType<AbortSignal | null | undefined>(requestInit.signal)
+expectType<RequestCache | undefined>(requestInit.cache)
 expectType<RequestCredentials | undefined>(requestInit.credentials)
+expectType<HeadersInit | undefined>(requestInit.headers)
+expectType<string | undefined>(requestInit.integrity)
+expectType<boolean | undefined>(requestInit.keepalive)
+expectType<string | undefined>(requestInit.method)
 expectType<RequestMode | undefined>(requestInit.mode)
+expectType<RequestRedirect | undefined>(requestInit.redirect)
 expectType<string | undefined>(requestInit.referrer)
 expectType<ReferrerPolicy | undefined>(requestInit.referrerPolicy)
+expectType<AbortSignal | null | undefined>(requestInit.signal)
 expectType<null | undefined>(requestInit.window)
 
 expectType<Dispatcher | undefined>(requestInit2.dispatcher)
