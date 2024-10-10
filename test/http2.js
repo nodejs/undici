@@ -1283,7 +1283,6 @@ test('#2364 - Concurrent aborts', async t => {
       }
     },
     (err, response) => {
-      console.log('with response')
       t.ifError(err)
       t.strictEqual(
         response.headers['content-type'],
@@ -1304,7 +1303,6 @@ test('#2364 - Concurrent aborts', async t => {
       signal
     },
     (err, response) => {
-      console.log('without response')
       t.strictEqual(err.name, 'TimeoutError')
     }
   )
@@ -1318,7 +1316,6 @@ test('#2364 - Concurrent aborts', async t => {
       }
     },
     (err, response) => {
-      console.log('with response')
       t.ifError(err)
       t.strictEqual(
         response.headers['content-type'],
@@ -1339,7 +1336,6 @@ test('#2364 - Concurrent aborts', async t => {
       signal
     },
     (err, response) => {
-      console.log('without response')
       t.strictEqual(err.name, 'TimeoutError')
     }
   )
