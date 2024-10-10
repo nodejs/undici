@@ -4,6 +4,7 @@ const { describe, test, after } = require('node:test')
 const { strictEqual, notEqual, fail } = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
+const FakeTimers = require('@sinonjs/fake-timers')
 const { Client, interceptors, cacheStores } = require('../../index')
 
 describe('Cache Interceptor', () => {
@@ -15,11 +16,15 @@ describe('Cache Interceptor', () => {
       res.end('asd')
     }).listen(0)
 
-    after(() => server.close())
-    await once(server, 'listening')
-
     const client = new Client(`http://localhost:${server.address().port}`)
       .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
 
     strictEqual(requestsToOrigin, 0)
 
@@ -51,11 +56,15 @@ describe('Cache Interceptor', () => {
       res.end('asd')
     }).listen(0)
 
-    after(() => server.close())
-    await once(server, 'listening')
-
     const client = new Client(`http://localhost:${server.address().port}`)
       .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
 
     strictEqual(requestsToOrigin, 0)
 
@@ -94,11 +103,15 @@ describe('Cache Interceptor', () => {
       }
     }).listen(0)
 
-    after(() => server.close())
-    await once(server, 'listening')
-
     const client = new Client(`http://localhost:${server.address().port}`)
       .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
 
     strictEqual(requestsToOrigin, 0)
 
@@ -144,6 +157,10 @@ describe('Cache Interceptor', () => {
   test('revalidates request when needed', async () => {
     let requestsToOrigin = 0
 
+    const clock = FakeTimers.install({
+      shouldClearNativeTimers: true
+    })
+
     const server = createServer((req, res) => {
       res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
 
@@ -163,11 +180,16 @@ describe('Cache Interceptor', () => {
       }
     }).listen(0)
 
-    after(() => server.close())
-    await once(server, 'listening')
-
     const client = new Client(`http://localhost:${server.address().port}`)
       .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+      clock.uninstall()
+    })
+
+    await once(server, 'listening')
 
     strictEqual(requestsToOrigin, 0)
 
@@ -182,29 +204,20 @@ describe('Cache Interceptor', () => {
     strictEqual(requestsToOrigin, 1)
     strictEqual(await response.body.text(), 'asd')
 
+    clock.tick(1500)
+
     // Now we send two more requests. Both of these should reach the origin,
     //  but now with a conditional header asking if the resource has been
     //  updated. These need to be ran after the response is stale.
-    const completed = new Promise((resolve, reject) => {
-      setTimeout(async () => {
-        try {
-          // No update for the second request
-          response = await client.request(request)
-          strictEqual(requestsToOrigin, 2)
-          strictEqual(await response.body.text(), 'asd')
+    // No update for the second request
+    response = await client.request(request)
+    strictEqual(requestsToOrigin, 2)
+    strictEqual(await response.body.text(), 'asd')
 
-          // This should be updated, even though the value isn't expired.
-          response = await client.request(request)
-          strictEqual(requestsToOrigin, 3)
-          strictEqual(await response.body.text(), 'asd123')
-
-          resolve()
-        } catch (e) {
-          reject(e)
-        }
-      }, 1500)
-    })
-    await completed
+    // This should be updated, even though the value isn't expired.
+    response = await client.request(request)
+    strictEqual(requestsToOrigin, 3)
+    strictEqual(await response.body.text(), 'asd123')
   })
 
   test('respects cache store\'s isFull property', async () => {
