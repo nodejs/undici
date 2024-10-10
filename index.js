@@ -1,5 +1,6 @@
 'use strict'
 
+const { env, execArgv } = require('node:process')
 const Client = require('./lib/dispatcher/client')
 const Dispatcher = require('./lib/dispatcher/dispatcher')
 const Pool = require('./lib/dispatcher/pool')
@@ -40,7 +41,19 @@ module.exports.interceptors = {
   redirect: require('./lib/interceptor/redirect'),
   retry: require('./lib/interceptor/retry'),
   dump: require('./lib/interceptor/dump'),
-  dns: require('./lib/interceptor/dns')
+  dns: require('./lib/interceptor/dns'),
+  cache: require('./lib/interceptor/cache')
+}
+
+module.exports.cacheStores = {
+  MemoryCacheStore: require('./lib/cache/memory-cache-store')
+}
+
+if (
+  (env.NODE_OPTIONS && env.NODE_OPTIONS.match(/experimental(-|_)sqlite/)) ||
+  execArgv.some(argv => argv.match(/experimental(-|_)sqlite/))
+) {
+  module.exports.cacheStores.SqliteCacheStore = require('./lib/cache/sqlite-cache-store')
 }
 
 module.exports.buildConnector = buildConnector
