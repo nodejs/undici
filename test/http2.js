@@ -1291,7 +1291,6 @@ test('#2364 - Concurrent aborts', async t => {
       )
       t.strictEqual(response.headers['x-custom-h2'], 'hello')
       t.strictEqual(response.statusCode, 200)
-      // response.body.dump()
     }
   )
 
@@ -1327,7 +1326,6 @@ test('#2364 - Concurrent aborts', async t => {
       )
       t.strictEqual(response.headers['x-custom-h2'], 'hello')
       t.strictEqual(response.statusCode, 200)
-      // response.body.dump()
     }
   )
 
@@ -1411,7 +1409,7 @@ test('#3046 - GOAWAY Frame', async t => {
   await t.completed
 })
 
-test('#3671 - Graceful close', { only: true }, async (t) => {
+test('#3671 - Graceful close', async (t) => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers) => {
