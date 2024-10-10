@@ -20,6 +20,9 @@ expectAssignable<BodyReadable>(new BodyReadable())
   // blob
   expectAssignable<Promise<Blob>>(readable.blob())
 
+  // bytes
+  expectAssignable<Promise<Uint8Array>>(readable.bytes())
+
   // arrayBuffer
   expectAssignable<Promise<ArrayBuffer>>(readable.arrayBuffer())
 
