@@ -2,7 +2,7 @@
 
 const { once } = require('node:events')
 const { createServer } = require('node:http')
-const { describe, test, before, after } = require('node:test')
+const { describe, test } = require('node:test')
 const { fetch } = require('../..')
 const tspl = require('@matteo.collina/tspl')
 
@@ -73,53 +73,50 @@ describe('referrer-policy', () => {
     test(title, async (t) => {
       t = tspl(t, { plan: 1 })
 
-      let server
-
-      before(async () => {
-        server = createServer((req, res) => {
-          switch (res.req.url) {
-            case '/redirect':
-              res.writeHead(302, undefined, {
-                Location: '/target',
-                'referrer-policy': responseReferrerPolicy
-              })
-              res.end()
-              break
-            case '/target':
-              switch (expectedReferrerPolicy) {
-                case 'no-referrer':
-                  t.strictEqual(req.headers['referer'], undefined)
-                  break
-                case 'origin':
-                  t.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/`)
-                  break
-                case 'strict-origin-when-cross-origin':
-                  t.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/index.html?test=1`)
-                  break
-                case 'unsafe-url':
-                  t.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/index.html?test=1`)
-                  break
-              }
-              res.writeHead(200, 'dummy', { 'Content-Type': 'text/plain' })
-              res.end()
-              break
-          }
-        })
-
-        server.listen(0)
-        await once(server, 'listening')
+      const server = createServer((req, res) => {
+        switch (res.req.url) {
+          case '/redirect':
+            res.writeHead(302, undefined, {
+              Location: '/target',
+              'referrer-policy': responseReferrerPolicy
+            })
+            res.end()
+            break
+          case '/target':
+            switch (expectedReferrerPolicy) {
+              case 'no-referrer':
+                t.strictEqual(req.headers['referer'], undefined)
+                break
+              case 'origin':
+                t.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/`)
+                break
+              case 'strict-origin-when-cross-origin':
+                t.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/index.html?test=1`)
+                break
+              case 'unsafe-url':
+                t.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/index.html?test=1`)
+                break
+            }
+            res.writeHead(200, 'dummy', { 'Content-Type': 'text/plain' })
+            res.end()
+            break
+        }
       })
 
-      after(async () => {
-        server.close()
-        await once(server, 'close')
-      })
+      server.listen(0)
+      await once(server, 'listening')
+
       const { port } = server.address()
       await fetch(`http://127.0.0.1:${port}/redirect`, {
         referrer: referrer || `http://127.0.0.1:${port}/index.html?test=1`
       })
 
       await t.completed
+
+      server.closeAllConnections()
+      server.closeIdleConnections()
+      server.close()
+      await once(server, 'close')
     })
   })
 })
