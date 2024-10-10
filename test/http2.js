@@ -217,66 +217,6 @@ test('Should support H2 connection(POST Buffer)', async t => {
   t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
 
-test('Should support H2 GOAWAY (server-side)', async t => {
-  const body = []
-  const server = createSecureServer(pem)
-
-  server.on('stream', (stream, headers) => {
-    t.strictEqual(headers['x-my-header'], 'foo')
-    t.strictEqual(headers[':method'], 'GET')
-    stream.respond({
-      'content-type': 'text/plain; charset=utf-8',
-      'x-custom-h2': 'hello',
-      ':status': 200
-    })
-    stream.end('hello h2!')
-  })
-
-  server.on('session', session => {
-    setTimeout(() => {
-      session.goaway(0)
-    }, 1000)
-  })
-
-  server.listen(0)
-  await once(server, 'listening')
-
-  const client = new Client(`https://localhost:${server.address().port}`, {
-    connect: {
-      rejectUnauthorized: false
-    },
-    allowH2: true
-  })
-
-  t = tspl(t, { plan: 9 })
-  after(() => server.close())
-  after(() => client.close())
-
-  const response = await client.request({
-    path: '/',
-    method: 'GET',
-    headers: {
-      'x-my-header': 'foo'
-    }
-  })
-
-  response.body.on('data', chunk => {
-    body.push(chunk)
-  })
-
-  await once(response.body, 'end')
-  t.strictEqual(response.statusCode, 200)
-  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.strictEqual(response.headers['x-custom-h2'], 'hello')
-  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
-
-  const [url, disconnectClient, err] = await once(client, 'disconnect')
-
-  t.ok(url instanceof URL)
-  t.deepStrictEqual(disconnectClient, [client])
-  t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
-})
-
 test('Should throw if bad allowH2 has been passed', async t => {
   t = tspl(t, { plan: 1 })
 
@@ -852,7 +792,10 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
         onHeaders (statusCode, headers) {
           t.strictEqual(statusCode, 200)
           t.strictEqual(headers[0].toString('utf-8'), 'content-type')
-          t.strictEqual(headers[1].toString('utf-8'), 'text/plain; charset=utf-8')
+          t.strictEqual(
+            headers[1].toString('utf-8'),
+            'text/plain; charset=utf-8'
+          )
           t.strictEqual(headers[2].toString('utf-8'), 'x-custom-h2')
           t.strictEqual(headers[3].toString('utf-8'), 'foo')
         },
@@ -1183,56 +1126,53 @@ test('Agent should support H2 connection', async t => {
   t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
 
-test(
-  'Should provide pseudo-headers in proper order',
-  async t => {
-    t = tspl(t, { plan: 2 })
+test('Should provide pseudo-headers in proper order', async t => {
+  t = tspl(t, { plan: 2 })
 
-    const server = createSecureServer(pem)
-    server.on('stream', (stream, _headers, _flags, rawHeaders) => {
-      t.deepStrictEqual(rawHeaders, [
-        ':authority',
-        `localhost:${server.address().port}`,
-        ':method',
-        'GET',
-        ':path',
-        '/',
-        ':scheme',
-        'https'
-      ])
+  const server = createSecureServer(pem)
+  server.on('stream', (stream, _headers, _flags, rawHeaders) => {
+    t.deepStrictEqual(rawHeaders, [
+      ':authority',
+      `localhost:${server.address().port}`,
+      ':method',
+      'GET',
+      ':path',
+      '/',
+      ':scheme',
+      'https'
+    ])
 
-      stream.respond({
-        'content-type': 'text/plain; charset=utf-8',
-        ':status': 200
-      })
-      stream.end()
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      ':status': 200
     })
+    stream.end()
+  })
 
-    server.listen(0)
-    await once(server, 'listening')
+  server.listen(0)
+  await once(server, 'listening')
 
-    const client = new Client(`https://localhost:${server.address().port}`, {
-      connect: {
-        rejectUnauthorized: false
-      },
-      allowH2: true
-    })
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
 
-    after(() => server.close())
-    after(() => client.close())
+  after(() => server.close())
+  after(() => client.close())
 
-    const response = await client.request({
-      path: '/',
-      method: 'GET'
-    })
+  const response = await client.request({
+    path: '/',
+    method: 'GET'
+  })
 
-    t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.statusCode, 200)
 
-    await response.body.dump()
+  await response.body.dump()
 
-    await t.complete
-  }
-)
+  await t.complete
+})
 
 test('The h2 pseudo-headers is not included in the headers', async t => {
   const server = createSecureServer(pem)
@@ -1287,16 +1227,20 @@ test('Should throw informational error on half-closed streams (remote)', async t
   })
 
   t = tspl(t, { plan: 2 })
-  after(() => server.close())
-  after(() => client.close())
-
-  await client.request({
-    path: '/',
-    method: 'GET'
-  }).catch(err => {
-    t.strictEqual(err.message, 'HTTP/2: stream half-closed (remote)')
-    t.strictEqual(err.code, 'UND_ERR_INFO')
+  after(async () => {
+    server.close()
+    await client.close()
   })
+
+  await client
+    .request({
+      path: '/',
+      method: 'GET'
+    })
+    .catch(err => {
+      t.strictEqual(err.message, 'HTTP/2: stream half-closed (remote)')
+      t.strictEqual(err.code, 'UND_ERR_INFO')
+    })
 })
 
 test('#2364 - Concurrent aborts', async t => {
@@ -1325,62 +1269,76 @@ test('#2364 - Concurrent aborts', async t => {
     allowH2: true
   })
 
-  t = tspl(t, { plan: 18 })
+  t = tspl(t, { plan: 14 })
   after(() => server.close())
   after(() => client.close())
-  const controller = new AbortController()
+  const signal = AbortSignal.timeout(50)
 
-  client.request({
-    path: '/1',
-    method: 'GET',
-    headers: {
-      'x-my-header': 'foo'
-    }
-  }, (err, response) => {
-    t.ifError(err)
-    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-    t.strictEqual(response.headers['x-custom-h2'], 'hello')
-    t.strictEqual(response.statusCode, 200)
-    response.body.dump()
-  })
-
-  client.request({
-    path: '/2',
-    method: 'GET',
-    headers: {
-      'x-my-header': 'foo'
+  client.request(
+    {
+      path: '/1',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
     },
-    signal: controller.signal
-  }, (err, response) => {
-    t.strictEqual(err.name, 'AbortError')
-  })
-
-  client.request({
-    path: '/3',
-    method: 'GET',
-    headers: {
-      'x-my-header': 'foo'
+    (err, response) => {
+      t.ifError(err)
+      t.strictEqual(
+        response.headers['content-type'],
+        'text/plain; charset=utf-8'
+      )
+      t.strictEqual(response.headers['x-custom-h2'], 'hello')
+      t.strictEqual(response.statusCode, 200)
     }
-  }, (err, response) => {
-    t.ifError(err)
-    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-    t.strictEqual(response.headers['x-custom-h2'], 'hello')
-    t.strictEqual(response.statusCode, 200)
-    response.body.dump()
-  })
+  )
 
-  client.request({
-    path: '/4',
-    method: 'GET',
-    headers: {
-      'x-my-header': 'foo'
+  client.request(
+    {
+      path: '/2',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      },
+      signal
     },
-    signal: controller.signal
-  }, (err, response) => {
-    t.strictEqual(err.name, 'AbortError')
-  })
+    (err, response) => {
+      t.strictEqual(err.name, 'TimeoutError')
+    }
+  )
 
-  controller.abort()
+  client.request(
+    {
+      path: '/3',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    },
+    (err, response) => {
+      t.ifError(err)
+      t.strictEqual(
+        response.headers['content-type'],
+        'text/plain; charset=utf-8'
+      )
+      t.strictEqual(response.headers['x-custom-h2'], 'hello')
+      t.strictEqual(response.statusCode, 200)
+    }
+  )
+
+  client.request(
+    {
+      path: '/4',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      },
+      signal
+    },
+    (err, response) => {
+      t.strictEqual(err.name, 'TimeoutError')
+    }
+  )
 
   await t.completed
 })
@@ -1418,8 +1376,8 @@ test('#3046 - GOAWAY Frame', async t => {
   })
 
   t = tspl(t, { plan: 7 })
-  after(() => server.close())
   after(() => client.close())
+  after(() => server.close())
 
   client.on('disconnect', (url, disconnectClient, err) => {
     t.ok(url instanceof URL)
@@ -1439,10 +1397,56 @@ test('#3046 - GOAWAY Frame', async t => {
   t.strictEqual(response.headers['x-custom-h2'], 'hello')
   t.strictEqual(response.statusCode, 200)
 
-  t.rejects(response.body.text.bind(response.body), {
+  t.rejects(response.body.text(), {
     message: 'HTTP/2: "GOAWAY" frame received with code 0',
-    code: 'UND_ERR_ABORTED'
+    code: 'UND_ERR_SOCKET'
   })
+
+  await t.completed
+})
+
+test('#3671 - Graceful close', async (t) => {
+  const server = createSecureServer(pem)
+
+  server.on('stream', (stream, headers) => {
+    setTimeout(() => {
+      stream.respond({
+        'content-type': 'text/plain; charset=utf-8',
+        'x-custom-h2': 'hello',
+        ':status': 200
+      })
+      stream.end('Hello World')
+    }, 200)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 5 })
+  after(() => server.close())
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    }
+  }, async (err, response) => {
+    t.ifError(err)
+    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+    t.strictEqual(response.headers['x-custom-h2'], 'hello')
+    t.strictEqual(response.statusCode, 200)
+    t.equal(await response.body.text(), 'Hello World')
+  })
+
+  await client.close()
 
   await t.completed
 })
