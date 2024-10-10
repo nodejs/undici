@@ -6,14 +6,10 @@ import {
   Agent,
   Client,
   errors,
-  pipeline,
   Pool,
   request,
-  connect,
-  upgrade,
   setGlobalDispatcher,
-  getGlobalDispatcher,
-  stream
+  getGlobalDispatcher
 } from '../../index.js'
 
 test('imported Client works with basic GET', async (t) => {
@@ -91,15 +87,11 @@ test('imported errors work with request args validation promise', (t) => {
 })
 
 test('named exports', (t) => {
-  t = tspl(t, { plan: 10 })
+  t = tspl(t, { plan: 6 })
   t.strictEqual(typeof Client, 'function')
   t.strictEqual(typeof Pool, 'function')
   t.strictEqual(typeof Agent, 'function')
   t.strictEqual(typeof request, 'function')
-  t.strictEqual(typeof stream, 'function')
-  t.strictEqual(typeof pipeline, 'function')
-  t.strictEqual(typeof connect, 'function')
-  t.strictEqual(typeof upgrade, 'function')
   t.strictEqual(typeof setGlobalDispatcher, 'function')
   t.strictEqual(typeof getGlobalDispatcher, 'function')
 })

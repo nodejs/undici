@@ -44,29 +44,13 @@ Implements [`Dispatcher.close([callback])`](Dispatcher.md#dispatcherclosecallbac
 
 Implements [`Dispatcher.destroy([error, callback])`](Dispatcher.md#dispatcherdestroyerror-callback-promise).
 
-### `Pool.connect(options[, callback])`
-
-See [`Dispatcher.connect(options[, callback])`](Dispatcher.md#dispatcherconnectoptions-callback).
-
 ### `Pool.dispatch(options, handler)`
 
 Implements [`Dispatcher.dispatch(options, handler)`](Dispatcher.md#dispatcherdispatchoptions-handler).
 
-### `Pool.pipeline(options, handler)`
-
-See [`Dispatcher.pipeline(options, handler)`](Dispatcher.md#dispatcherpipelineoptions-handler).
-
 ### `Pool.request(options[, callback])`
 
 See [`Dispatcher.request(options [, callback])`](Dispatcher.md#dispatcherrequestoptions-callback).
-
-### `Pool.stream(options, factory[, callback])`
-
-See [`Dispatcher.stream(options, factory[, callback])`](Dispatcher.md#dispatcherstreamoptions-factory-callback).
-
-### `Pool.upgrade(options[, callback])`
-
-See [`Dispatcher.upgrade(options[, callback])`](Dispatcher.md#dispatcherupgradeoptions-callback).
 
 ## Instance Events
 

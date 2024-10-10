@@ -34,9 +34,7 @@ The benchmark is a simple getting data [example](https://github.com/nodejs/undic
 |         got         |    10     | 5969.67 req/sec  |  ± 2.64 %   |         + 61.15 %         |
 |     superagent      |    10     | 9471.48 req/sec  |  ± 1.50 %   |        + 155.68 %         |
 |  http - keepalive   |    25     | 10327.49 req/sec |  ± 2.95 %   |        + 178.79 %         |
-|  undici - pipeline  |    10     | 15053.41 req/sec |  ± 1.63 %   |        + 306.36 %         |
 |  undici - request   |    10     | 19264.24 req/sec |  ± 1.74 %   |        + 420.03 %         |
-|   undici - stream   |    15     | 20317.29 req/sec |  ± 2.13 %   |        + 448.46 %         |
 |  undici - dispatch  |    10     | 24883.28 req/sec |  ± 1.54 %   |        + 571.72 %         |
 
 The benchmark is a simple sending data [example](https://github.com/nodejs/undici/blob/main/benchmarks/post-benchmark.js) using a
@@ -52,9 +50,7 @@ The benchmark is a simple sending data [example](https://github.com/nodejs/undic
 |        axios        |    10     | 3040.45 req/sec |  ± 1.72 %   |         + 54.46 %         |
 |     superagent      |    20     | 3358.29 req/sec |  ± 2.51 %   |         + 70.61 %         |
 |  http - keepalive   |    20     | 3477.94 req/sec |  ± 2.51 %   |         + 76.69 %         |
-|  undici - pipeline  |    25     | 3812.61 req/sec |  ± 2.80 %   |         + 93.69 %         |
 |  undici - request   |    10     | 6067.00 req/sec |  ± 0.94 %   |        + 208.22 %         |
-|   undici - stream   |    10     | 6391.61 req/sec |  ± 1.98 %   |        + 224.71 %         |
 |  undici - dispatch  |    10     | 6397.00 req/sec |  ± 1.48 %   |        + 224.98 %         |
 
 
@@ -133,55 +129,6 @@ Returns a promise with the result of the `Dispatcher.request` method.
 Calls `options.dispatcher.request(options)`.
 
 See [Dispatcher.request](./docs/docs/api/Dispatcher.md#dispatcherrequestoptions-callback) for more details, and [request examples](./examples/README.md) for examples.
-
-### `undici.stream([url, options, ]factory): Promise`
-
-Arguments:
-
-* **url** `string | URL | UrlObject`
-* **options** [`StreamOptions`](./docs/docs/api/Dispatcher.md#parameter-streamoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
-  * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
-* **factory** `Dispatcher.stream.factory`
-
-Returns a promise with the result of the `Dispatcher.stream` method.
-
-Calls `options.dispatcher.stream(options, factory)`.
-
-See [Dispatcher.stream](./docs/docs/api/Dispatcher.md#dispatcherstreamoptions-factory-callback) for more details.
-
-### `undici.pipeline([url, options, ]handler): Duplex`
-
-Arguments:
-
-* **url** `string | URL | UrlObject`
-* **options** [`PipelineOptions`](./docs/docs/api/Dispatcher.md#parameter-pipelineoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
-  * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
-* **handler** `Dispatcher.pipeline.handler`
-
-Returns: `stream.Duplex`
-
-Calls `options.dispatch.pipeline(options, handler)`.
-
-See [Dispatcher.pipeline](./docs/docs/api/Dispatcher.md#dispatcherpipelineoptions-handler) for more details.
-
-### `undici.connect([url, options]): Promise`
-
-Starts two-way communications with the requested resource using [HTTP CONNECT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT).
-
-Arguments:
-
-* **url** `string | URL | UrlObject`
-* **options** [`ConnectOptions`](./docs/docs/api/Dispatcher.md#parameter-connectoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
-* **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
-
-Returns a promise with the result of the `Dispatcher.connect` method.
-
-Calls `options.dispatch.connect(options)`.
-
-See [Dispatcher.connect](./docs/docs/api/Dispatcher.md#dispatcherconnectoptions-callback) for more details.
 
 ### `undici.fetch(input[, init]): Promise`
 
@@ -324,23 +271,6 @@ const headers = await fetch(url, { method: 'HEAD' })
 * https://github.com/wintercg/fetch/issues/6
 
 The [Fetch Standard](https://fetch.spec.whatwg.org) requires implementations to exclude certain headers from requests and responses. In browser environments, some headers are forbidden so the user agent remains in full control over them. In Undici, these constraints are removed to give more control to the user.
-
-### `undici.upgrade([url, options]): Promise`
-
-Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) for more details.
-
-Arguments:
-
-* **url** `string | URL | UrlObject`
-* **options** [`UpgradeOptions`](./docs/docs/api/Dispatcher.md#parameter-upgradeoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
-* **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
-
-Returns a promise with the result of the `Dispatcher.upgrade` method.
-
-Calls `options.dispatcher.upgrade(options)`.
-
-See [Dispatcher.upgrade](./docs/docs/api/Dispatcher.md#dispatcherupgradeoptions-callback) for more details.
 
 ### `undici.setGlobalDispatcher(dispatcher)`
 
