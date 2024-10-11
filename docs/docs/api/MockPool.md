@@ -58,6 +58,7 @@ Returns: `MockInterceptor` corresponding to the input options.
 * **body** `string | RegExp | (body: string) => boolean` - (optional) - a matcher for the HTTP request body.
 * **headers** `Record<string, string | RegExp | (body: string) => boolean`> - (optional) - a matcher for the HTTP request headers. To be intercepted, a request must match all defined headers. Extra headers not defined here may (or may not) be included in the request and do not affect the interception in any way.
 * **query** `Record<string, any> | null` - (optional) - a matcher for the HTTP request query string params. Only applies when a `string` was provided for `MockPoolInterceptOptions.path`.
+* **ignoreTrailingSlash** `boolean` - (optional) - set to `true` if the matcher should also match by ignoring potential trailing slashes in `MockPoolInterceptOptions.path`.
 
 ### Return: `MockInterceptor`
 
