@@ -8,9 +8,7 @@ test('webidl.interfaceConverter', (t) => {
   class A {}
   class B {}
 
-  const converter = webidl.interfaceConverter(
-    webidl.util.MakeTypeAssertion(A.prototype)
-  )
+  const converter = webidl.interfaceConverter(webidl.util.MakeTypeAssertion(A))
 
   assert.throws(() => {
     converter(new B(), 'converter', 'converter')

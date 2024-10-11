@@ -84,7 +84,7 @@ interface WebidlUtil {
    */
   Stringify (V: any): string
 
-  MakeTypeAssertion <T extends { prototype: T }>(Prototype: T['prototype']): (arg: any) => arg is T
+  MakeTypeAssertion <I extends abstract new (...args: any[]) => any>(I: I): (arg: any) => arg is InstanceType<I>
 }
 
 interface WebidlConverters {
@@ -176,7 +176,7 @@ interface WebidlConverters {
   [Key: string]: (...args: any[]) => unknown
 }
 
-type IsAssertion<T> = (arg: any) => arg is T
+type IsAssertion<T extends abstract new (...args: any[]) => any> = (arg: any) => arg is InstanceType<T>
 
 interface WebidlIs {
   Request: IsAssertion<undici.Request>
