@@ -1051,7 +1051,7 @@ test('Issue#3065 - fix bad destroy handling', async (t) => {
 
 test('Issue#3065 - fix bad destroy handling (h2)', async (t) => {
   // Due to we handle the session, the request for h2 will fail on servername change
-  const p = tspl(t, { plan: 5 })
+  const p = tspl(t, { plan: 4 })
   const server = createSecureServer(pem)
   server.on('stream', (stream) => {
     stream.respond({
@@ -1105,8 +1105,7 @@ test('Issue#3065 - fix bad destroy handling (h2)', async (t) => {
         p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders1', 'onData', 'onComplete'])
       },
       onError (err) {
-        p.strictEqual(err.code, 'UND_ERR_INFO')
-        p.strictEqual(err.message, 'servername changed')
+        p.ifError(err)
       }
     })
 
