@@ -50,7 +50,7 @@ interface WebidlUtil {
   /**
    * @see https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values
    */
-  Type (object: unknown): WebIDLTypes
+  Type (object: unknown): WebIDLTypes[keyof WebIDLTypes]
 
   TypeValueToString (o: unknown):
     | 'Undefined'
@@ -84,7 +84,13 @@ interface WebidlUtil {
    */
   Stringify (V: any): string
 
-  MakeTypeAssertion <T extends { prototype: T }>(Prototype: T['prototype']): (arg: any) => arg is T
+  MakeTypeAssertion <I>(I: I): (arg: any) => arg is I
+
+  /**
+   * Mark a value as uncloneable for Node.js.
+   * This is only effective in some newer Node.js versions.
+   */
+  markAsUncloneable (V: any): void
 }
 
 interface WebidlConverters {
