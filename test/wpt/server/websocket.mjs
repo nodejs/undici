@@ -7,11 +7,32 @@ import { server } from './server.mjs'
 // event, so I'm unsure if we can stop relying on server.
 
 const wss = new WebSocketServer({
-  server,
+  noServer: true,
   handleProtocols: (protocols) => protocols.values().next().value
 })
 
 wss.on('connection', (ws, request) => {
+  if (request.url === '/protocol_array') {
+    const line = request.headers['sec-websocket-protocol']
+    const protocol = line.split(',')[0]
+    ws.send(protocol)
+    return
+  } else if (request.url === '/remote-close' || request.url.startsWith('/remote-close?')) {
+    const fullUrl = new URL(request.url, `ws://localhost:${server.address().port}`)
+
+    const code = fullUrl.searchParams.has('code') ? Number(fullUrl.searchParams.get('code')) : undefined
+    const reason = fullUrl.searchParams.get('reason') ?? undefined
+    const abrupt = fullUrl.searchParams.get('abrupt') === '1'
+
+    if (abrupt) {
+      ws._socket.end()
+      return
+    }
+
+    ws.close(code, reason)
+    return
+  }
+
   ws.on('message', (data, isBinary) => {
     const str = data.toString('utf-8')
 
@@ -42,5 +63,17 @@ wss.on('connection', (ws, request) => {
 
   ws.on('close', () => {
     clearTimeout(timeout)
+  })
+})
+
+server.on('upgrade', (request, socket, head) => {
+  if (request.url === '/404') {
+    socket.write('HTTP/1.1 404 Not Found\r\n\r\n')
+    socket.destroy()
+    return
+  }
+
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request)
   })
 })

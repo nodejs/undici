@@ -1,12 +1,13 @@
 'use strict'
 
-const { test } = require('node:test')
 const assert = require('node:assert')
+const https = require('node:https')
+const net = require('node:net')
+const { Readable } = require('node:stream')
+const { test, after } = require('node:test')
 const { Client, Pool, errors } = require('../..')
 const { createServer } = require('node:http')
-const https = require('node:https')
 const pem = require('https-pem')
-const { Readable } = require('node:stream')
 const { tspl } = require('@matteo.collina/tspl')
 
 const { kSocket } = require('../../lib/core/symbols')
@@ -312,7 +313,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       keepAliveTimeout: 'asd'
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -322,7 +323,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       localAddress: 123
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -332,7 +333,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       localAddress: 'abcd123'
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -342,7 +343,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       keepAliveMaxTimeout: 'asd'
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -352,7 +353,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       keepAliveMaxTimeout: 0
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -362,7 +363,7 @@ test('invalid options throws', (t, done) => {
   try {
     new Client(new URL('http://localhost:200'), { // eslint-disable-line
       keepAliveTimeoutThreshold: 'asd'
-    }) // eslint-disable-line
+    })
     assert.ok(0)
   } catch (err) {
     assert.ok(err instanceof errors.InvalidArgumentError)
@@ -400,6 +401,46 @@ test('invalid options throws', (t, done) => {
   }
 
   try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: 0
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: 0
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: -10
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: 1.5
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
     new Client(1) // eslint-disable-line
     assert.ok(0)
   } catch (err) {
@@ -408,7 +449,7 @@ test('invalid options throws', (t, done) => {
   }
 
   try {
-    const client = new Client(new URL('http://localhost:200')) // eslint-disable-line
+    const client = new Client(new URL('http://localhost:200'))
     client.destroy(null, null)
     assert.ok(0)
   } catch (err) {
@@ -417,7 +458,7 @@ test('invalid options throws', (t, done) => {
   }
 
   try {
-    const client = new Client(new URL('http://localhost:200')) // eslint-disable-line
+    const client = new Client(new URL('http://localhost:200'))
     client.close(null, null)
     assert.ok(0)
   } catch (err) {
@@ -1323,4 +1364,28 @@ test('SocketError should expose socket details (tls)', async (t) => {
   })
 
   await p.completed
+})
+
+test('parser error', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const server = net.createServer()
+  server.once('connection', (socket) => {
+    socket.write('asd\n\r213123')
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    client.request({ path: '/', method: 'GET' }, (err) => {
+      t.ok(err)
+      client.close((err) => {
+        t.ifError(err)
+      })
+    })
+  })
+
+  await t.completed
 })

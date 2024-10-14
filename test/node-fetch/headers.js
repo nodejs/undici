@@ -303,7 +303,6 @@ describe('Headers', () => {
       ['a', '3']
     ])
 
-    // eslint-disable-next-line quotes
     assert.strictEqual(format(headers), "{ a: [ '1', '3' ], b: '2', host: 'thehost' }")
   })
 })

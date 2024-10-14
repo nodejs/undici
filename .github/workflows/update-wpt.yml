@@ -1,0 +1,51 @@
+name: Update WPT
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-wpt:
+    name: Update WPT
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git Config
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Update WPT
+        run: |
+          rm -rf test/fixtures/wpt && mkdir test/fixtures/wpt &&
+
+          git clone https://github.com/web-platform-tests/wpt.git --depth=1 test/fixtures/tmp-wpt &&
+
+          mv test/fixtures/tmp-wpt/LICENSE.md test/fixtures/wpt/LICENSE.md &&
+
+          mv test/fixtures/tmp-wpt/common test/fixtures/wpt/common &&
+          mv test/fixtures/tmp-wpt/eventsource test/fixtures/wpt/eventsource &&
+          mv test/fixtures/tmp-wpt/fetch test/fixtures/wpt/fetch &&
+          mv test/fixtures/tmp-wpt/interfaces test/fixtures/wpt/interfaces &&
+          mv test/fixtures/tmp-wpt/mimesniff test/fixtures/wpt/mimesniff &&
+          mv test/fixtures/tmp-wpt/resources test/fixtures/wpt/resources &&
+          mv test/fixtures/tmp-wpt/service-workers test/fixtures/wpt/service-workers &&
+          mv test/fixtures/tmp-wpt/storage test/fixtures/wpt/storage &&
+          mv test/fixtures/tmp-wpt/websockets test/fixtures/wpt/websockets &&
+          mv test/fixtures/tmp-wpt/xhr test/fixtures/wpt/xhr &&
+
+          rm -rf test/fixtures/tmp-wpt
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
+        with:
+          base: main
+          branch: wpt-update
+          title: Update WPT
+          body: Automated update of the WPT
+          commit-message: "chore: update WPT"

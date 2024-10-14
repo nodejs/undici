@@ -7,6 +7,4 @@ import { setGlobalDispatcher, Dispatcher, getGlobalDispatcher } from '../..'
   expectAssignable<void>(setGlobalDispatcher(new CustomDispatcher()))
 }
 
-{
-  expectAssignable<Dispatcher>(getGlobalDispatcher())
-}
+expectAssignable<Dispatcher>(getGlobalDispatcher())

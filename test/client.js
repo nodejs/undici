@@ -3,7 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { readFileSync, createReadStream } = require('node:fs')
 const { createServer } = require('node:http')
-const { Readable } = require('node:stream')
+const { Readable, PassThrough } = require('node:stream')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 const { kSocket } = require('../lib/core/symbols')
@@ -320,8 +320,8 @@ test('basic get with query params partially in path', async (t) => {
   await t.completed
 })
 
-test('basic get returns 400 when configured to throw on errors (callback)', async (t) => {
-  t = tspl(t, { plan: 7 })
+test('using throwOnError should throw (request)', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
     res.statusCode = 400
@@ -342,25 +342,20 @@ test('basic get returns 400 when configured to throw on errors (callback)', asyn
       method: 'GET',
       throwOnError: true
     }, (err) => {
-      t.strictEqual(err.message, 'Response status code 400: Bad Request')
-      t.strictEqual(err.status, 400)
-      t.strictEqual(err.statusCode, 400)
-      t.strictEqual(err.headers.connection, 'keep-alive')
-      t.strictEqual(err.headers['content-length'], '5')
-      t.strictEqual(err.body, undefined)
+      t.strictEqual(err.message, 'invalid throwOnError')
+      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
     })
-    t.strictEqual(signal.listenerCount('abort'), 1)
   })
 
   await t.completed
 })
 
-test('basic get returns 400 when configured to throw on errors and correctly handles malformed json (callback)', async (t) => {
-  t = tspl(t, { plan: 6 })
+test('using throwOnError should throw (stream)', async (t) => {
+  t = tspl(t, { plan: 2 })
 
   const server = createServer((req, res) => {
-    res.writeHead(400, 'Invalid params', { 'content-type': 'application/json' })
-    res.end('Invalid params')
+    res.statusCode = 400
+    res.end('hello')
   })
   after(() => server.close())
 
@@ -370,98 +365,20 @@ test('basic get returns 400 when configured to throw on errors and correctly han
     })
     after(() => client.close())
 
-    const signal = new EE()
-    client.request({
-      signal,
+    client.stream({
       path: '/',
       method: 'GET',
-      throwOnError: true
-    }, (err) => {
-      t.strictEqual(err.message, 'Response status code 400: Invalid params')
-      t.strictEqual(err.status, 400)
-      t.strictEqual(err.statusCode, 400)
-      t.strictEqual(err.headers.connection, 'keep-alive')
-      t.strictEqual(err.body, undefined)
-    })
-    t.strictEqual(signal.listenerCount('abort'), 1)
-  })
-
-  await t.completed
-})
-
-test('basic get returns 400 when configured to throw on errors (promise)', async (t) => {
-  t = tspl(t, { plan: 6 })
-
-  const server = createServer((req, res) => {
-    res.writeHead(400, 'Invalid params', { 'content-type': 'text/plain' })
-    res.end('Invalid params')
-  })
-  after(() => server.close())
-
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 300e3
-    })
-    after(() => client.close())
-
-    const signal = new EE()
-    try {
-      await client.request({
-        signal,
-        path: '/',
-        method: 'GET',
-        throwOnError: true
+      throwOnError: true,
+      opaque: new PassThrough()
+    }, ({ opaque: pt }) => {
+      pt.on('data', () => {
+        t.fail()
       })
-      t.fail('Should throw an error')
-    } catch (err) {
-      t.strictEqual(err.message, 'Response status code 400: Invalid params')
-      t.strictEqual(err.status, 400)
-      t.strictEqual(err.statusCode, 400)
-      t.strictEqual(err.body, 'Invalid params')
-      t.strictEqual(err.headers.connection, 'keep-alive')
-      t.strictEqual(err.headers['content-type'], 'text/plain')
-    }
-  })
-
-  await t.completed
-})
-
-test('basic get returns error body when configured to throw on errors', async (t) => {
-  t = tspl(t, { plan: 6 })
-
-  const server = createServer((req, res) => {
-    const body = { msg: 'Error', details: { code: 94 } }
-    const bodyAsString = JSON.stringify(body)
-    res.writeHead(400, 'Invalid params', {
-      'Content-Type': 'application/json'
+      return pt
+    }, err => {
+      t.strictEqual(err.message, 'invalid throwOnError')
+      t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
     })
-    res.end(bodyAsString)
-  })
-  after(() => server.close())
-
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      keepAliveTimeout: 300e3
-    })
-    after(() => client.close())
-
-    const signal = new EE()
-    try {
-      await client.request({
-        signal,
-        path: '/',
-        method: 'GET',
-        throwOnError: true
-      })
-      t.fail('Should throw an error')
-    } catch (err) {
-      t.strictEqual(err.message, 'Response status code 400: Invalid params')
-      t.strictEqual(err.status, 400)
-      t.strictEqual(err.statusCode, 400)
-      t.strictEqual(err.headers.connection, 'keep-alive')
-      t.strictEqual(err.headers['content-type'], 'application/json')
-      t.deepStrictEqual(err.body, { msg: 'Error', details: { code: 94 } })
-    }
   })
 
   await t.completed

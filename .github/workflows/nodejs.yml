@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
 
@@ -28,7 +28,7 @@ jobs:
           persist-credentials: false
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@72eb03d02c7872a771aacd928f3123ac62ad6d3a # v4.3.3
+        uses: actions/dependency-review-action@5a2ce3f5b92ee19cbb1541a4984c76d921601d7c # v4.3.4
 
   lint:
     name: Lint
@@ -116,7 +116,7 @@ jobs:
         run: sudo apt-get install ninja-build
 
       - name: ccache
-        uses: hendrikmuhs/ccache-action@c92f40bee50034e84c763e33b317c77adaa81c92 #v1.2.13
+        uses: hendrikmuhs/ccache-action@ed74d11c0b343532753ecead8a951bb09bb34bc9 #v1.2.14
         with:
           key: node${{ matrix.version }}
 
@@ -139,7 +139,7 @@ jobs:
           echo icu config: $(node -e "console.log(process.config)" | grep icu)
 
       - name: Run tests
-        run: npm run test:javascript:withoutintl
+        run: npm run test:javascript:without-intl
 
   test-fuzzing:
     name: Fuzzing
@@ -198,6 +198,6 @@ jobs:
       pull-requests: write
     steps:
       - name: Merge Dependabot PR
-        uses: fastify/github-action-merge-dependabot@9e7bfb249c69139d7bdcd8d984f9665edd49020b # v3.10.1
+        uses: fastify/github-action-merge-dependabot@3892334d1c649bb8119af3d22a3f3766bd5e593f # v3.10.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

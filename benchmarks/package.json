@@ -14,13 +14,13 @@
   },
   "dependencies": {
     "axios": "^1.6.7",
-    "concurrently": "^8.2.2",
+    "concurrently": "^9.0.0",
     "cronometro": "^3.0.1",
     "got": "^14.2.0",
-    "mitata": "^0.1.11",
+    "mitata": "^1.0.4",
     "node-fetch": "^3.3.2",
     "request": "^2.88.2",
-    "superagent": "^9.0.2",
-    "wait-on": "^7.2.0"
+    "superagent": "^10.0.0",
+    "wait-on": "^8.0.0"
   }
 }

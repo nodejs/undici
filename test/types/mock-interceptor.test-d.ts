@@ -1,8 +1,8 @@
-import { expectAssignable } from 'tsd'
+import { expectAssignable, expectType } from 'tsd'
 import { MockAgent, MockPool, BodyInit, Dispatcher } from '../..'
 import { MockInterceptor, MockScope } from '../../types/mock-interceptor'
 
-declare const mockResponseCallbackOptions: MockInterceptor.MockResponseCallbackOptions;
+declare const mockResponseCallbackOptions: MockInterceptor.MockResponseCallbackOptions
 
 expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCallbackOptions.body)
 
@@ -10,6 +10,8 @@ expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCall
   const mockPool: MockPool = new MockAgent().get('')
   const mockInterceptor = mockPool.intercept({ path: '', method: 'GET' })
   const mockInterceptorDefaultMethod = mockPool.intercept({ path: '' })
+
+  expectType<MockInterceptor>(mockInterceptorDefaultMethod)
 
   // reply
   expectAssignable<MockScope>(mockInterceptor.reply(200))
@@ -19,36 +21,44 @@ expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCall
   expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({})))
   expectAssignable<MockScope>(mockInterceptor.reply(200, {}, {}))
   expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), {}))
-  expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { headers: { foo: 'bar' }}))
-  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), { headers: { foo: 'bar' }}))
-  expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { trailers: { foo: 'bar' }}))
-  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), { trailers: { foo: 'bar' }}))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { headers: { foo: 'bar' } }))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), { headers: { foo: 'bar' } }))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, {}, { trailers: { foo: 'bar' } }))
+  expectAssignable<MockScope>(mockInterceptor.reply(200, () => ({}), { trailers: { foo: 'bar' } }))
   expectAssignable<MockScope<{ foo: string }>>(mockInterceptor.reply<{ foo: string }>(200, { foo: 'bar' }))
   expectAssignable<MockScope<{ foo: string }>>(mockInterceptor.reply<{ foo: string }>(200, () => ({ foo: 'bar' })))
-  expectAssignable<MockScope>(mockInterceptor.reply(() => ({ statusCode: 200, data: { foo: 'bar' }})))
-  expectAssignable<MockScope>(mockInterceptor.reply(() => ({ statusCode: 200, data: { foo: 'bar' }, responseOptions: {
-    headers: { foo: 'bar' }
-  }})))
+  expectAssignable<MockScope>(mockInterceptor.reply(() => ({ statusCode: 200, data: { foo: 'bar' } })))
+  expectAssignable<MockScope>(mockInterceptor.reply(() => ({
+    statusCode: 200,
+    data: { foo: 'bar' },
+    responseOptions: {
+      headers: { foo: 'bar' }
+    }
+  })))
   expectAssignable<MockScope>(mockInterceptor.reply((options) => {
-    expectAssignable<MockInterceptor.MockResponseCallbackOptions>(options);
-    return { statusCode: 200, data: { foo: 'bar'}
-  }}))
-  expectAssignable<MockScope>(mockInterceptor.reply(() => ({ statusCode: 200, data: { foo: 'bar' }, responseOptions: {
-    trailers: { foo: 'bar' }
-  }})))
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions>(options)
+    return { statusCode: 200, data: { foo: 'bar' } }
+  }))
+  expectAssignable<MockScope>(mockInterceptor.reply(() => ({
+    statusCode: 200,
+    data: { foo: 'bar' },
+    responseOptions: {
+      trailers: { foo: 'bar' }
+    }
+  })))
   mockInterceptor.reply((options) => {
-    expectAssignable<MockInterceptor.MockResponseCallbackOptions["path"]>(options.path);
-    expectAssignable<MockInterceptor.MockResponseCallbackOptions["method"]>(options.method);
-    expectAssignable<MockInterceptor.MockResponseCallbackOptions['headers']>(options.headers);
-    expectAssignable<MockInterceptor.MockResponseCallbackOptions['origin']>(options.origin);
-    expectAssignable<MockInterceptor.MockResponseCallbackOptions['body']>(options.body);
-    expectAssignable<MockInterceptor.MockResponseCallbackOptions["maxRedirections"]>(options.maxRedirections);
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions['path']>(options.path)
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions['method']>(options.method)
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions['headers']>(options.headers)
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions['origin']>(options.origin)
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions['body']>(options.body)
+    expectAssignable<MockInterceptor.MockResponseCallbackOptions['maxRedirections']>(options.maxRedirections)
     return { statusCode: 200, data: { foo: 'bar' } }
   })
 
   // replyWithError
   class CustomError extends Error {
-    hello(): void {}
+    hello (): void {}
   }
   expectAssignable<MockScope>(mockInterceptor.replyWithError(new Error('')))
   expectAssignable<MockScope>(mockInterceptor.replyWithError<CustomError>(new CustomError('')))

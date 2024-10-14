@@ -2,18 +2,13 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
+const { setImmediate } = require('node:timers/promises')
+const { AsyncLocalStorage } = require('node:async_hooks')
 const { tspl } = require('@matteo.collina/tspl')
 const {
   Response,
   FormData
 } = require('../../')
-const { fromInnerResponse, makeResponse } = require('../../lib/web/fetch/response')
-const {
-  Blob: ThirdPartyBlob,
-  FormData: ThirdPartyFormData
-} = require('formdata-node')
-const { kState, kHeaders } = require('../../lib/web/fetch/symbols')
-const { getHeadersGuard, getHeadersList } = require('../../lib/web/fetch/headers')
 
 test('arg validation', async () => {
   // constructor
@@ -237,20 +232,6 @@ test('constructing a Response with a ReadableStream body', async (t) => {
   })
 })
 
-test('constructing Response with third party Blob body', async () => {
-  const blob = new ThirdPartyBlob(['text'])
-  const res = new Response(blob)
-  assert.strictEqual(await res.text(), 'text')
-})
-test('constructing Response with third party FormData body', async () => {
-  const form = new ThirdPartyFormData()
-  form.set('key', 'value')
-  const res = new Response(form)
-  const contentType = res.headers.get('content-type').split('=')
-  assert.strictEqual(contentType[0], 'multipart/form-data; boundary')
-  assert.ok((await res.text()).startsWith(`--${contentType[1]}`))
-})
-
 // https://github.com/nodejs/undici/issues/2465
 test('Issue#2465', async (t) => {
   const { strictEqual } = tspl(t, { plan: 1 })
@@ -288,15 +269,31 @@ test('Check the Content-Type of invalid formData', async (t) => {
   })
 })
 
-test('fromInnerResponse', () => {
-  const innerResponse = makeResponse({
-    urlList: [new URL('http://asd')]
+test('clone body garbage collection', async () => {
+  if (typeof global.gc === 'undefined') {
+    throw new Error('gc is not available. Run with \'--expose-gc\'.')
+  }
+  const asyncLocalStorage = new AsyncLocalStorage()
+  let ref
+
+  await new Promise(resolve => {
+    asyncLocalStorage.run(new Map(), async () => {
+      const res = new Response('hello world')
+      const clone = res.clone()
+
+      asyncLocalStorage.getStore().set('key', clone)
+      ref = new WeakRef(clone.body)
+
+      await res.text()
+      await clone.text() // consume body
+
+      resolve()
+    })
   })
 
-  const response = fromInnerResponse(innerResponse, 'immutable')
+  await setImmediate()
+  global.gc()
 
-  // check property
-  assert.strictEqual(response[kState], innerResponse)
-  assert.strictEqual(getHeadersList(response[kHeaders]), innerResponse.headersList)
-  assert.strictEqual(getHeadersGuard(response[kHeaders]), 'immutable')
+  const cloneBody = ref.deref()
+  assert.equal(cloneBody, undefined, 'clone body was not garbage collected')
 })

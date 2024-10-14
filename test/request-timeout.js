@@ -1,11 +1,11 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
+const { resolve: pathResolve } = require('node:path')
+const { test, after, beforeEach } = require('node:test')
 const { createReadStream, writeFileSync, unlinkSync } = require('node:fs')
 const { Client, errors } = require('..')
 const { kConnect } = require('../lib/core/symbols')
-const timers = require('../lib/util/timers')
 const { createServer } = require('node:http')
 const EventEmitter = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
@@ -16,6 +16,14 @@ const {
   Writable,
   PassThrough
 } = require('node:stream')
+const {
+  tick: fastTimersTick,
+  reset: resetFastTimers
+} = require('../lib/util/timers')
+
+beforeEach(() => {
+  resetFastTimers()
+})
 
 test('request timeout', async (t) => {
   t = tspl(t, { plan: 1 })
@@ -23,7 +31,7 @@ test('request timeout', async (t) => {
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
-    }, 1000)
+    }, 2000)
   })
   after(() => server.close())
 
@@ -46,7 +54,7 @@ test('request timeout with readable body', async (t) => {
   })
   after(() => server.close())
 
-  const tempfile = `${__filename}.10mb.txt`
+  const tempfile = pathResolve(__dirname, 'request-timeout.10mb.bin')
   writeFileSync(tempfile, Buffer.alloc(10 * 1024 * 1024))
   after(() => unlinkSync(tempfile))
 
@@ -72,12 +80,6 @@ test('body timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     res.write('hello')
   })
@@ -91,12 +93,14 @@ test('body timeout', async (t) => {
       t.ifError(err)
       body.on('data', () => {
         clock.tick(100)
+        fastTimersTick(100)
       }).on('error', (err) => {
         t.ok(err instanceof errors.BodyTimeoutError)
       })
     })
 
     clock.tick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -111,17 +115,12 @@ test('overridden request timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
     clock.tick(100)
+    fastTimersTick(100)
   })
   after(() => server.close())
 
@@ -134,6 +133,7 @@ test('overridden request timeout', async (t) => {
     })
 
     clock.tick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -148,12 +148,6 @@ test('overridden body timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     res.write('hello')
   })
@@ -166,13 +160,15 @@ test('overridden body timeout', async (t) => {
     client.request({ path: '/', method: 'GET', bodyTimeout: 50 }, (err, { body }) => {
       t.ifError(err)
       body.on('data', () => {
-        clock.tick(100)
+        fastTimersTick()
+        fastTimersTick()
       }).on('error', (err) => {
         t.ok(err instanceof errors.BodyTimeoutError)
       })
     })
 
-    clock.tick(50)
+    fastTimersTick()
+    fastTimersTick()
   })
 
   await t.completed
@@ -187,17 +183,12 @@ test('With EE signal', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
     clock.tick(100)
+    fastTimersTick(100)
   })
   after(() => server.close())
 
@@ -213,6 +204,7 @@ test('With EE signal', async (t) => {
     })
 
     clock.tick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -227,17 +219,12 @@ test('With abort-controller signal', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
     clock.tick(100)
+    fastTimersTick(100)
   })
   after(() => server.close())
 
@@ -253,6 +240,7 @@ test('With abort-controller signal', async (t) => {
     })
 
     clock.tick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -267,12 +255,6 @@ test('Abort before timeout (EE)', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const ee = new EventEmitter()
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -280,6 +262,7 @@ test('Abort before timeout (EE)', async (t) => {
     }, 100)
     ee.emit('abort')
     clock.tick(50)
+    fastTimersTick(50)
   })
   after(() => server.close())
 
@@ -292,6 +275,7 @@ test('Abort before timeout (EE)', async (t) => {
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       t.ok(err instanceof errors.RequestAbortedError)
       clock.tick(100)
+      fastTimersTick(100)
     })
   })
 
@@ -307,12 +291,6 @@ test('Abort before timeout (abort-controller)', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const abortController = new AbortController()
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -320,6 +298,7 @@ test('Abort before timeout (abort-controller)', async (t) => {
     }, 100)
     abortController.abort()
     clock.tick(50)
+    fastTimersTick(50)
   })
   after(() => server.close())
 
@@ -332,6 +311,7 @@ test('Abort before timeout (abort-controller)', async (t) => {
     client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
       t.ok(err instanceof errors.RequestAbortedError)
       clock.tick(100)
+      fastTimersTick(100)
     })
   })
 
@@ -347,17 +327,12 @@ test('Timeout with pipelining', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
     clock.tick(50)
+    fastTimersTick(50)
   })
   after(() => server.close())
 
@@ -393,17 +368,12 @@ test('Global option', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
     clock.tick(100)
+    fastTimersTick(100)
   })
   after(() => server.close())
 
@@ -418,6 +388,7 @@ test('Global option', async (t) => {
     })
 
     clock.tick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -432,17 +403,12 @@ test('Request options overrides global option', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
     clock.tick(100)
+    fastTimersTick(100)
   })
   after(() => server.close())
 
@@ -457,6 +423,7 @@ test('Request options overrides global option', async (t) => {
     })
 
     clock.tick(50)
+    fastTimersTick(50)
   })
 
   await t.completed
@@ -496,12 +463,6 @@ test('client.close should wait for the timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
   })
   after(() => server.close())
@@ -523,6 +484,7 @@ test('client.close should wait for the timeout', async (t) => {
     client.on('connect', () => {
       process.nextTick(() => {
         clock.tick(100)
+        fastTimersTick(100)
       })
     })
   })
@@ -581,17 +543,12 @@ test('Disable request timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 32e3)
     clock.tick(33e3)
+    fastTimersTick(33e3)
   })
   after(() => server.close())
 
@@ -614,6 +571,7 @@ test('Disable request timeout', async (t) => {
     })
 
     clock.tick(31e3)
+    fastTimersTick(31e3)
   })
 
   await t.completed
@@ -628,17 +586,12 @@ test('Disable request timeout for a single request', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 32e3)
     clock.tick(33e3)
+    fastTimersTick(33e3)
   })
   after(() => server.close())
 
@@ -661,6 +614,7 @@ test('Disable request timeout for a single request', async (t) => {
     })
 
     clock.tick(31e3)
+    fastTimersTick(31e3)
   })
 
   await t.completed
@@ -675,17 +629,12 @@ test('stream timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 301e3)
     clock.tick(301e3)
+    fastTimersTick(301e3)
   })
   after(() => server.close())
 
@@ -716,17 +665,12 @@ test('stream custom timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 31e3)
     clock.tick(31e3)
+    fastTimersTick(31e3)
   })
   after(() => server.close())
 
@@ -759,17 +703,12 @@ test('pipeline timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       req.pipe(res)
     }, 301e3)
     clock.tick(301e3)
+    fastTimersTick(301e3)
   })
   after(() => server.close())
 
@@ -819,17 +758,12 @@ test('pipeline timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
     setTimeout(() => {
       req.pipe(res)
     }, 31e3)
     clock.tick(31e3)
+    fastTimersTick(31e3)
   })
   after(() => server.close())
 
@@ -881,12 +815,6 @@ test('client.close should not deadlock', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
-  })
-
   const server = createServer((req, res) => {
   })
   after(() => server.close())
@@ -911,6 +839,7 @@ test('client.close should not deadlock', async (t) => {
       })
 
       clock.tick(100)
+      fastTimersTick(100)
     })
   })
   await t.completed

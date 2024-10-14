@@ -76,6 +76,51 @@ describe('webidl.dictionaryConverter', () => {
       converter({ Key: 'this key was required!' }, 'converter', 'converter')
     })
   })
+
+  test('null and undefined still populates defaultValue(s)', () => {
+    const dict = webidl.dictionaryConverter([
+      {
+        key: 'key',
+        converter: webidl.converters.any,
+        defaultValue: () => 3
+      }
+    ])
+
+    assert.deepStrictEqual(dict(null), { key: 3 })
+    assert.deepStrictEqual(dict(undefined), { key: 3 })
+  })
+
+  test('null and undefined throw a webidl TypeError with a required key', () => {
+    const dict = webidl.dictionaryConverter([
+      {
+        key: 'key',
+        converter: webidl.converters.any,
+        required: true
+      }
+    ])
+
+    assert.throws(() => dict(null, 'prefix'), new TypeError('prefix: Missing required key "key".'))
+    assert.throws(() => dict(undefined, 'prefix'), new TypeError('prefix: Missing required key "key".'))
+  })
+
+  test('Object type works for functions and regex (etc.)', () => {
+    const dict = webidl.dictionaryConverter([
+      {
+        key: 'key',
+        converter: webidl.converters.any,
+        required: true
+      }
+    ])
+
+    function obj () {}
+    obj.key = 1
+
+    const obj2 = / /
+    obj2.key = 1
+
+    assert.deepStrictEqual(dict(obj), { key: 1 })
+    assert.deepStrictEqual(dict(obj2), { key: 1 })
+  })
 })
 
 test('ArrayBuffer', () => {
@@ -156,19 +201,6 @@ test('DataView', () => {
   assert.equal(webidl.converters.DataView(view, 'converter', 'converter'), view)
 })
 
-test('BufferSource', () => {
-  assert.doesNotThrow(() => {
-    const buffer = new ArrayBuffer(16)
-    const view = new DataView(buffer, 0)
-
-    webidl.converters.BufferSource(view, 'converter', 'converter')
-  })
-
-  assert.throws(() => {
-    webidl.converters.BufferSource(3, 'converter', 'converter')
-  }, TypeError)
-})
-
 test('ByteString', () => {
   assert.doesNotThrow(() => {
     webidl.converters.ByteString('', 'converter', 'converter')
@@ -205,4 +237,13 @@ test('webidl.util.Stringify', (t) => {
   for (const [value, expected] of pairs) {
     assert.deepStrictEqual(webidl.util.Stringify(value), expected)
   }
+})
+
+test('recordConverter', () => {
+  const anyConverter = webidl.recordConverter(webidl.converters.any, webidl.converters.any)
+
+  assert.throws(
+    () => anyConverter(null, 'prefix', 'argument'),
+    new TypeError('prefix: argument ("Null") is not an Object.')
+  )
 })

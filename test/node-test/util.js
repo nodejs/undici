@@ -29,34 +29,34 @@ test('getServerName', () => {
   assert.equal(util.getServerName('[2606:4700:4700::1111]:443'), '')
 })
 
-test('validateHandler', () => {
-  assert.throws(() => util.validateHandler(null), InvalidArgumentError, 'handler must be an object')
-  assert.throws(() => util.validateHandler({
+test('assertRequestHandler', () => {
+  assert.throws(() => util.assertRequestHandler(null), InvalidArgumentError, 'handler must be an object')
+  assert.throws(() => util.assertRequestHandler({
     onConnect: null
   }), InvalidArgumentError, 'invalid onConnect method')
-  assert.throws(() => util.validateHandler({
+  assert.throws(() => util.assertRequestHandler({
     onConnect: () => {},
     onError: null
   }), InvalidArgumentError, 'invalid onError method')
-  assert.throws(() => util.validateHandler({
+  assert.throws(() => util.assertRequestHandler({
     onConnect: () => {},
     onError: () => {},
     onBodySent: null
   }), InvalidArgumentError, 'invalid onBodySent method')
-  assert.throws(() => util.validateHandler({
+  assert.throws(() => util.assertRequestHandler({
     onConnect: () => {},
     onError: () => {},
     onBodySent: () => {},
     onHeaders: null
   }), InvalidArgumentError, 'invalid onHeaders method')
-  assert.throws(() => util.validateHandler({
+  assert.throws(() => util.assertRequestHandler({
     onConnect: () => {},
     onError: () => {},
     onBodySent: () => {},
     onHeaders: () => {},
     onData: null
   }), InvalidArgumentError, 'invalid onData method')
-  assert.throws(() => util.validateHandler({
+  assert.throws(() => util.assertRequestHandler({
     onConnect: () => {},
     onError: () => {},
     onBodySent: () => {},
@@ -64,13 +64,13 @@ test('validateHandler', () => {
     onData: () => {},
     onComplete: null
   }), InvalidArgumentError, 'invalid onComplete method')
-  assert.throws(() => util.validateHandler({
+  assert.throws(() => util.assertRequestHandler({
     onConnect: () => {},
     onError: () => {},
     onBodySent: () => {},
     onUpgrade: 'null'
   }, 'CONNECT'), InvalidArgumentError, 'invalid onUpgrade method')
-  assert.throws(() => util.validateHandler({
+  assert.throws(() => util.assertRequestHandler({
     onConnect: () => {},
     onError: () => {},
     onBodySent: () => {},
@@ -92,7 +92,7 @@ test('parseRawHeaders', () => {
   assert.deepEqual(util.parseRawHeaders(['content-length', 'value', 'content-disposition', 'form-data; name="fieldName"']), ['content-length', 'value', 'content-disposition', 'form-data; name="fieldName"'])
 })
 
-test('buildURL', () => {
+test('serializePathWithQuery', () => {
   const tests = [
     [{ id: BigInt(123456) }, 'id=123456'],
     [{ date: new Date() }, 'date='],
@@ -111,7 +111,7 @@ test('buildURL', () => {
 
   for (const [input, output] of tests) {
     const expected = `${base}${output ? `?${output}` : output}`
-    assert.deepEqual(util.buildURL(base, input), expected)
+    assert.deepEqual(util.serializePathWithQuery(base, input), expected)
   }
 })
 

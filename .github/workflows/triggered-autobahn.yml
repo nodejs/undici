@@ -1,0 +1,16 @@
+name: Autobahn
+
+on:
+  pull_request:
+    types:
+      - labeled
+  
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  autobahn:
+    if: ${{ github.event.label.name == 'autobahn' }}
+    name: Autobahn Test Suite
+    uses: ./.github/workflows/autobahn.yml

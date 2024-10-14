@@ -1,0 +1,102 @@
+name: Node.js compiled --shared-builtin-undici/undici-path CI
+
+on:
+  push:
+    branches:
+     - main
+     - current
+     - next
+     - 'v*'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-shared-builtin:
+    name: Test with Node.js ${{ matrix.version }} compiled --shared-builtin-undici/undici-path
+    strategy:
+      fail-fast: false
+      max-parallel: 0
+      matrix:
+        version: [20, 22]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      # Checkout into a subdirectory otherwise Node.js tests will break due to finding Undici's package.json in a parent directory.
+      - name: Checkout
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          path: ./undici
+          persist-credentials: false
+
+      # Setup node, install deps, and build undici prior to building node with `--shared-builtin-undici/undici-path` and testing
+      - name: Setup Node.js@${{ inputs.version }}
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: ${{ inputs.version }}
+
+      - name: Install dependencies
+        working-directory: ./undici
+        run: npm install
+
+      - name: Install wasi-libc
+        run: sudo apt-get install -y wasi-libc
+
+      - name: Build WASM
+        working-directory: ./undici
+        run: |
+          export EXTERNAL_PATH=${{ github.workspace }}/undici
+          export WASM_CC=clang
+          export WASM_CFLAGS='--target=wasm32-wasi --sysroot=/usr'
+          export WASM_LDFLAGS='-nodefaultlibs'
+          export WASM_LDLIBS='-lc'
+          node build/wasm.js
+
+      - name: Determine latest release
+        id: release
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          result-encoding: string
+          script: |
+            const req = await fetch('https://nodejs.org/download/release/index.json')
+            const releases = await req.json()
+
+            const latest = releases.find((r) => r.version.startsWith('v${{ matrix.version }}'))
+            return latest.version
+
+      - name: Download and extract source
+        run: curl https://nodejs.org/download/release/${{ steps.release.outputs.result }}/node-${{ steps.release.outputs.result }}.tar.xz | tar xfJ -
+
+      - name: Install ninja
+        run: sudo apt-get install ninja-build
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@ed74d11c0b343532753ecead8a951bb09bb34bc9 #v1.2.14
+        with:
+          key: node(external_undici)${{ matrix.version }}
+
+      - name: Build node
+        working-directory: ./node-${{ steps.release.outputs.result }}
+        run: |
+          export CC="ccache gcc"
+          export CXX="ccache g++"
+          rm -rf deps/undici
+          ./configure --shared-builtin-undici/undici-path ${{ github.workspace }}/undici/loader.js --ninja --prefix=./final
+          make
+          make install
+          echo "$(pwd)/final/bin" >> $GITHUB_PATH
+
+      - name: Print version information
+        run: |
+          echo OS: $(node -p "os.version()")
+          echo Node.js: $(node --version)
+          echo npm: $(npm --version)
+          echo git: $(git --version)
+          echo external config: $(node -e "console.log(process.config)" | grep NODE_SHARED_BUILTIN_UNDICI_UNDICI_PATH)
+          echo Node.js built-in undici version: $(node -p "process.versions.undici") # undefined for external Undici
+
+      - name: Run tests
+        working-directory: ./node-${{ steps.release.outputs.result }}
+        run: tools/test.py -p dots --flaky-tests=dontcare
+

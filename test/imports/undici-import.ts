@@ -1,10 +1,17 @@
-import { request } from '../../'
+import { expectType } from 'tsd'
+import { Dispatcher, request } from '../../'
 import { interceptors } from '../../'
 
-async function exampleCode() {
+async function exampleCode () {
   const retry = interceptors.retry()
   const rd = interceptors.redirect()
   const dump = interceptors.dump()
 
+  expectType<Dispatcher.DispatcherComposeInterceptor>(retry)
+  expectType<Dispatcher.DispatcherComposeInterceptor>(rd)
+  expectType<Dispatcher.DispatcherComposeInterceptor>(dump)
+
   await request('http://localhost:3000/foo')
 }
+
+exampleCode()

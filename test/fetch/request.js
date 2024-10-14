@@ -10,13 +10,6 @@ const {
   Headers,
   fetch
 } = require('../../')
-const { fromInnerRequest, makeRequest } = require('../../lib/web/fetch/request')
-const {
-  Blob: ThirdPartyBlob,
-  FormData: ThirdPartyFormData
-} = require('formdata-node')
-const { kState, kSignal, kHeaders } = require('../../lib/web/fetch/symbols')
-const { getHeadersGuard, getHeadersList } = require('../../lib/web/fetch/headers')
 
 const hasSignalReason = 'reason' in AbortSignal.prototype
 
@@ -419,26 +412,6 @@ test('RequestInit.signal option', async () => {
   }), TypeError)
 })
 
-test('constructing Request with third party Blob body', async () => {
-  const blob = new ThirdPartyBlob(['text'])
-  const req = new Request('http://asd', {
-    method: 'POST',
-    body: blob
-  })
-  assert.strictEqual(await req.text(), 'text')
-})
-test('constructing Request with third party FormData body', async () => {
-  const form = new ThirdPartyFormData()
-  form.set('key', 'value')
-  const req = new Request('http://asd', {
-    method: 'POST',
-    body: form
-  })
-  const contentType = req.headers.get('content-type').split('=')
-  assert.strictEqual(contentType[0], 'multipart/form-data; boundary')
-  assert.ok((await req.text()).startsWith(`--${contentType[1]}`))
-})
-
 // https://github.com/nodejs/undici/issues/2050
 test('set-cookie headers get cleared when passing a Request as first param', () => {
   const req1 = new Request('http://localhost', {
@@ -485,18 +458,4 @@ test('Issue#2465', async (t) => {
   const { strictEqual } = tspl(t, { plan: 1 })
   const request = new Request('http://localhost', { body: new SharedArrayBuffer(0), method: 'POST' })
   strictEqual(await request.text(), '[object SharedArrayBuffer]')
-})
-
-test('fromInnerRequest', () => {
-  const innerRequest = makeRequest({
-    urlList: [new URL('http://asd')]
-  })
-  const signal = new AbortController().signal
-  const request = fromInnerRequest(innerRequest, signal, 'immutable')
-
-  // check property
-  assert.strictEqual(request[kState], innerRequest)
-  assert.strictEqual(request[kSignal], signal)
-  assert.strictEqual(getHeadersList(request[kHeaders]), innerRequest.headersList)
-  assert.strictEqual(getHeadersGuard(request[kHeaders]), 'immutable')
 })

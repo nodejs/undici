@@ -275,7 +275,7 @@ describe('DispatchOptions#reset', () => {
 })
 
 describe('Should include headers from iterable objects', scope => {
-  test('Should include headers built with Headers global object', async t => {
+  test('Should include headers built with Headers global object', { skip: !globalThis.Headers }, async t => {
     t = tspl(t, { plan: 3 })
 
     const server = createServer((req, res) => {
@@ -286,7 +286,7 @@ describe('Should include headers from iterable objects', scope => {
       res.end('hello')
     })
 
-    const headers = new Headers()
+    const headers = new globalThis.Headers()
     headers.set('hello', 'world')
 
     after(() => server.close())

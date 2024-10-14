@@ -12,13 +12,13 @@ expectAssignable<Dispatcher>(new Dispatcher())
 
   const nodeCoreHeaders = {
     authorization: undefined,
-    ['content-type']: 'application/json'
-  } satisfies IncomingHttpHeaders;
+    'content-type': 'application/json'
+  } satisfies IncomingHttpHeaders
 
   const headerInstanceHeaders = new Headers({ hello: 'world' })
   const mapHeaders = new Map([['hello', 'world']])
   const iteratorHeaders = {
-    *[Symbol.iterator]() {
+    * [Symbol.iterator] () {
       yield ['hello', 'world']
     }
   }
@@ -35,6 +35,7 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: mapHeaders, reset: true }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: iteratorHeaders, reset: true }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ path: '', method: 'CUSTOM' }, {}))
 
   // connect
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', maxRedirections: 0 }))
@@ -101,9 +102,9 @@ expectAssignable<Dispatcher>(new Dispatcher())
     return new Writable()
   }))
   expectAssignable<Promise<Dispatcher.StreamData<{ example: string }>>>(dispatcher.stream({ origin: '', path: '', method: 'GET', opaque: { example: '' } }, data => {
-    expectType<{ example: string }>(data.opaque);
-    return new Writable();
-  }));
+    expectType<{ example: string }>(data.opaque)
+    return new Writable()
+  }))
   expectAssignable<void>(dispatcher.stream(
     { origin: '', path: '', method: 'GET', reset: false },
     data => {
@@ -169,47 +170,43 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<void>(dispatcher.destroy(null, () => {}))
 }
 
-declare const { body }: Dispatcher.ResponseData;
+declare const { body }: Dispatcher.ResponseData
 
 // compose
-{
-  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(
-    (dispatcher) => {
-      expectAssignable<Dispatcher['dispatch']>(dispatcher);
-      return (opts, handlers) => {
-        expectAssignable<Dispatcher.DispatchOptions>(opts);
-        expectAssignable<Dispatcher.DispatchHandlers>(handlers);
-        return dispatcher(opts, handlers)
-      }
+expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(
+  (dispatcher) => {
+    expectAssignable<Dispatcher['dispatch']>(dispatcher)
+    return (opts, handlers) => {
+      expectAssignable<Dispatcher.DispatchOptions>(opts)
+      expectAssignable<Dispatcher.DispatchHandlers>(handlers)
+      return dispatcher(opts, handlers)
     }
-  ))
-  expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([
-    (dispatcher) => {
-      expectAssignable<Dispatcher['dispatch']>(dispatcher);
-      return (opts, handlers) => {
-        expectAssignable<Dispatcher.DispatchOptions>(opts);
-        expectAssignable<Dispatcher.DispatchHandlers>(handlers);
-        return dispatcher(opts, handlers)
-      }
-    },
-    (dispatcher) => {
-      expectAssignable<Dispatcher['dispatch']>(dispatcher);
-      return (opts, handlers) => {
-        expectAssignable<Dispatcher.DispatchOptions>(opts);
-        expectAssignable<Dispatcher.DispatchHandlers>(handlers);
-        return dispatcher(opts, handlers)
-      }
+  }
+))
+expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([
+  (dispatcher) => {
+    expectAssignable<Dispatcher['dispatch']>(dispatcher)
+    return (opts, handlers) => {
+      expectAssignable<Dispatcher.DispatchOptions>(opts)
+      expectAssignable<Dispatcher.DispatchHandlers>(handlers)
+      return dispatcher(opts, handlers)
     }
-  ]))
-}
+  },
+  (dispatcher) => {
+    expectAssignable<Dispatcher['dispatch']>(dispatcher)
+    return (opts, handlers) => {
+      expectAssignable<Dispatcher.DispatchOptions>(opts)
+      expectAssignable<Dispatcher.DispatchHandlers>(handlers)
+      return dispatcher(opts, handlers)
+    }
+  }
+]))
 
-{
-  // body mixin tests
-  expectType<never | undefined>(body.body)
-  expectType<boolean>(body.bodyUsed)
-  expectType<Promise<ArrayBuffer>>(body.arrayBuffer())
-  expectType<Promise<Blob>>(body.blob())
-  expectType<Promise<never>>(body.formData())
-  expectType<Promise<string>>(body.text())
-  expectType<Promise<unknown>>(body.json())
-}
+// body mixin tests
+expectType<never | undefined>(body.body)
+expectType<boolean>(body.bodyUsed)
+expectType<Promise<ArrayBuffer>>(body.arrayBuffer())
+expectType<Promise<Blob>>(body.blob())
+expectType<Promise<never>>(body.formData())
+expectType<Promise<string>>(body.text())
+expectType<Promise<unknown>>(body.json())

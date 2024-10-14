@@ -20,7 +20,8 @@ import {
   Response,
   ResponseInit,
   ResponseType,
-  ReferrerPolicy
+  ReferrerPolicy,
+  Dispatcher
 } from '../..'
 
 const requestInit: RequestInit = {}
@@ -46,9 +47,13 @@ expectType<string | undefined>(requestInit.integrity)
 expectType<AbortSignal | null | undefined>(requestInit.signal)
 expectType<RequestCredentials | undefined>(requestInit.credentials)
 expectType<RequestMode | undefined>(requestInit.mode)
-expectType<string | undefined>(requestInit.referrer);
+expectType<string | undefined>(requestInit.referrer)
 expectType<ReferrerPolicy | undefined>(requestInit.referrerPolicy)
 expectType<null | undefined>(requestInit.window)
+
+expectType<Dispatcher | undefined>(requestInit2.dispatcher)
+
+expectType<BodyInit | undefined>(requestInit4.body)
 
 expectType<number | undefined>(responseInit.status)
 expectType<string | undefined>(responseInit.statusText)
@@ -59,6 +64,11 @@ expectType<Headers>(new Headers({}))
 expectType<Headers>(new Headers([]))
 expectType<Headers>(new Headers(headers))
 expectType<Headers>(new Headers(undefined))
+
+expectAssignable<HeadersInit>({ a: 'b' } as Record<string, string>)
+expectAssignable<HeadersInit>({ 'content-type': 'application/gzip' } satisfies HeadersInit)
+expectAssignable<HeadersInit>({ 'Content-Type': 'nonstandard/mime' } satisfies HeadersInit)
+expectNotAssignable<HeadersInit>([['1', '2', '3']])
 
 expectType<Request>(new Request(request))
 expectType<Request>(new Request('https://example.com'))

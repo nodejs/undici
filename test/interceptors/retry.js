@@ -136,7 +136,7 @@ test('Should use retry-after header for retries (date)', async t => {
   let counter = 0
   const server = createServer()
   let checkpoint
-  const reuestOptions = {
+  const requestOptions = {
     method: 'PUT',
     path: '/',
     headers: {
@@ -182,7 +182,7 @@ test('Should use retry-after header for retries (date)', async t => {
     await once(server, 'close')
   })
 
-  const response = await client.request(reuestOptions)
+  const response = await client.request(requestOptions)
 
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')

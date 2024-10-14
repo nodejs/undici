@@ -15,7 +15,7 @@ expectType<EventSource>(new EventSource('https://example.com'))
 expectType<EventSource>(new EventSource(new URL('https://example.com')))
 expectType<EventSource>(new EventSource('https://example.com', {}))
 expectType<EventSource>(new EventSource('https://example.com', {
-	withCredentials: true,
+  withCredentials: true
 }))
 
 expectAssignable<EventSourceInit>({ dispatcher: agent })

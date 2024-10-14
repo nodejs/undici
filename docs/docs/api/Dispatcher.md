@@ -201,7 +201,6 @@ Returns: `Boolean` - `false` if dispatcher is busy and further dispatch calls wo
 * **upgrade** `string | null` (optional) - Default: `null` - Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`.
 * **bodyTimeout** `number | null` (optional) - The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Defaults to 300 seconds.
 * **headersTimeout** `number | null` (optional) - The amount of time, in milliseconds, the parser will wait to receive the complete HTTP headers while not sending the request. Defaults to 300 seconds.
-* **throwOnError** `boolean` (optional) - Default: `false` - Whether Undici should throw an error upon receiving a 4xx or 5xx response from the server.
 * **expectContinue** `boolean` (optional) - Default: `false` - For H2, it appends the expect: 100-continue header, and halts the request body until a 100-continue is received from the remote server
 
 #### Parameter: `DispatchHandler`
@@ -479,7 +478,7 @@ The `RequestOptions.method` property should not be value `'CONNECT'`.
 #### Parameter: `ResponseData`
 
 * **statusCode** `number`
-* **headers** `Record<string, string | string[]>` - Note that all header keys are lower-cased, e. g. `content-type`.
+* **headers** `Record<string, string | string[]>` - Note that all header keys are lower-cased, e.g. `content-type`.
 * **body** `stream.Readable` which also implements [the body mixin from the Fetch Standard](https://fetch.spec.whatwg.org/#body-mixin).
 * **trailers** `Record<string, string>` - This object starts out
   as empty and will be mutated to contain trailers after `body` has emitted `'end'`.
@@ -975,7 +974,7 @@ const client = new Client("http://example.com").compose(
   })
 );
 
-// or 
+// or
 client.dispatch(
   {
     path: "/",
@@ -984,6 +983,57 @@ client.dispatch(
   },
   handler
 );
+```
+
+##### `dns`
+
+The `dns` interceptor enables you to cache DNS lookups for a given duration, per origin.
+
+>It is well suited for scenarios where you want to cache DNS lookups to avoid the overhead of resolving the same domain multiple times
+
+**Options**
+- `maxTTL` - The maximum time-to-live (in milliseconds) of the DNS cache. It should be a positive integer. Default: `10000`.
+  - Set `0` to disable TTL.
+- `maxItems` - The maximum number of items to cache. It should be a positive integer. Default: `Infinity`.
+- `dualStack` - Whether to resolve both IPv4 and IPv6 addresses. Default: `true`.
+  - It will also attempt a happy-eyeballs-like approach to connect to the available addresses in case of a connection failure.
+- `affinity` - Whether to use IPv4 or IPv6 addresses. Default: `4`.
+  - It can be either `'4` or `6`.
+  - It will only take effect if `dualStack` is `false`.
+- `lookup: (hostname: string, options: LookupOptions, callback: (err: NodeJS.ErrnoException | null, addresses: DNSInterceptorRecord[]) => void) => void` - Custom lookup function. Default: `dns.lookup`.
+  - For more info see [dns.lookup](https://nodejs.org/api/dns.html#dns_dns_lookup_hostname_options_callback). 
+- `pick: (origin: URL, records: DNSInterceptorRecords, affinity: 4 | 6) => DNSInterceptorRecord` - Custom pick function. Default: `RoundRobin`.
+  - The function should return a single record from the records array.
+  - By default a simplified version of Round Robin is used.
+  - The `records` property can be mutated to store the state of the balancing algorithm.
+
+> The `Dispatcher#options` also gets extended with the options `dns.affinity`, `dns.dualStack`, `dns.lookup` and `dns.pick` which can be used to configure the interceptor at a request-per-request basis.
+
+
+**DNSInterceptorRecord**
+It represents a DNS record.
+- `family` - (`number`) The IP family of the address. It can be either `4` or `6`.
+- `address` - (`string`) The IP address.
+
+**DNSInterceptorOriginRecords**
+It represents a map of DNS IP addresses records for a single origin.
+- `4.ips` - (`DNSInterceptorRecord[] | null`) The IPv4 addresses.
+- `6.ips` - (`DNSInterceptorRecord[] | null`) The IPv6 addresses.
+
+**Example - Basic DNS Interceptor**
+
+```js
+const { Client, interceptors } = require("undici");
+const { dns } = interceptors;
+
+const client = new Agent().compose([
+  dns({ ...opts })
+])
+
+const response = await client.request({
+  origin: `http://localhost:3030`,
+  ...requestOpts
+})
 ```
 
 ##### `Response Error Interceptor`

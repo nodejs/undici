@@ -17,6 +17,13 @@ jobs:
       runs-on: ubuntu-latest
     secrets: inherit
 
+  test-autobahn:
+    if: github.repository == 'nodejs/undici'
+    uses: ./.github/workflows/autobahn.yml
+    with:
+      node-version: 23-nightly
+    secrets: inherit
+
   test-windows:
     if: github.repository == 'nodejs/undici'
     uses: ./.github/workflows/test.yml
@@ -39,6 +46,7 @@ jobs:
       - test-linux
       - test-windows
       - test-macos
+      - test-autobahn
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -65,12 +73,7 @@ jobs:
             if(!issue) {
               issue = (await github.rest.issues.create({
                 title: ISSUE_TITLE,
+                body: `Tests against nightly failed, see: ${actionRunUrl}`,
                 ...issueContext
               })).data
             }
-
-            await github.rest.issues.createComment({
-              issue_number: issue.number,
-              body: `Tests against nightly failed, see: ${actionRunUrl}`,
-              ...issueContext
-            });

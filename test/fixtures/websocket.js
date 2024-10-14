@@ -1,3 +1,5 @@
+'use strict'
+
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 

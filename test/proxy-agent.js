@@ -794,7 +794,7 @@ test('Proxy via HTTP to HTTP endpoint', async (t) => {
 })
 
 test('Proxy via HTTPS to HTTP fails on wrong SNI', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t = tspl(t, { plan: 3 })
   const server = await buildServer()
   const proxy = await buildSSLProxy()
 
@@ -832,8 +832,10 @@ test('Proxy via HTTPS to HTTP fails on wrong SNI', async (t) => {
 
   try {
     await request(serverUrl, { dispatcher: proxyAgent })
+    throw new Error('should fail')
   } catch (e) {
     t.ok(e instanceof SecureProxyConnectionError)
+    t.ok(e.cause instanceof Error)
     t.ok(e.cause.code === 'ERR_TLS_CERT_ALTNAME_INVALID')
   }
 

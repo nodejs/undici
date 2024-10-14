@@ -156,7 +156,9 @@ If you are packaging `undici` for a distro, this might help if you would like to
 an unbundled version instead of bundling one in `libnode.so`.
 
 To enable this, pass `EXTERNAL_PATH=/path/to/global/node_modules/undici` to `build/wasm.js`.
-You shall also pass this path to `--shared-builtin-undici/undici-path` in Node.js's `configure.py`.
+Pass this path with `loader.js` appended to `--shared-builtin-undici/undici-path` in Node.js's `configure.py`.
+If building on a non-Alpine Linux distribution, you may need to also set the `WASM_CC`, `WASM_CFLAGS`, `WASM_LDFLAGS` and `WASM_LDLIBS` environment variables before running `build/wasm.js`.
+Similarly, you can set the `WASM_OPT` environment variable to utilize your own `wasm-opt` optimizer.
 
 <a id="benchmarks"></a>
 ### Benchmarks

@@ -39,7 +39,8 @@ module.exports.RedirectHandler = RedirectHandler
 module.exports.interceptors = {
   redirect: require('./lib/interceptor/redirect'),
   retry: require('./lib/interceptor/retry'),
-  dump: require('./lib/interceptor/dump')
+  dump: require('./lib/interceptor/dump'),
+  dns: require('./lib/interceptor/dns')
 }
 
 module.exports.buildConnector = buildConnector
@@ -135,7 +136,7 @@ module.exports.setGlobalOrigin = setGlobalOrigin
 module.exports.getGlobalOrigin = getGlobalOrigin
 
 const { CacheStorage } = require('./lib/web/cache/cachestorage')
-const { kConstruct } = require('./lib/web/cache/symbols')
+const { kConstruct } = require('./lib/core/symbols')
 
 // Cache & CacheStorage are tightly coupled with fetch. Even if it may run
 // in an older version of Node, it doesn't have any use without fetch.
@@ -170,6 +171,9 @@ module.exports.WebSocket = require('./lib/web/websocket/websocket').WebSocket
 module.exports.CloseEvent = CloseEvent
 module.exports.ErrorEvent = ErrorEvent
 module.exports.MessageEvent = MessageEvent
+
+module.exports.WebSocketStream = require('./lib/web/websocket/stream/websocketstream').WebSocketStream
+module.exports.WebSocketError = require('./lib/web/websocket/stream/websocketerror').WebSocketError
 
 module.exports.request = makeDispatcher(api.request)
 module.exports.stream = makeDispatcher(api.stream)

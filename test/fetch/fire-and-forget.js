@@ -11,8 +11,12 @@ const blob = randomFillSync(new Uint8Array(1024 * 512))
 
 // Enable when/if FinalizationRegistry in Node.js 18 becomes stable again
 const isNode18 = process.version.startsWith('v18')
+const hasGC = typeof global.gc !== 'undefined'
 
 test('does not need the body to be consumed to continue', { timeout: 180_000, skip: isNode18 }, async (t) => {
+  if (!hasGC) {
+    throw new Error('gc is not available. Run with \'--expose-gc\'.')
+  }
   const agent = new Agent({
     keepAliveMaxTimeout: 10,
     keepAliveTimeoutThreshold: 10
@@ -37,8 +41,9 @@ test('does not need the body to be consumed to continue', { timeout: 180_000, sk
     // eslint-disable-next-line no-undef
     gc(true)
     const array = new Array(batch)
-    for (let i = 0; i < batch; i++) {
+    for (let i = 0; i < batch; i += 2) {
       array[i] = fetch(url).catch(() => {})
+      array[i + 1] = fetch(url).then(r => r.clone()).catch(() => {})
     }
     await Promise.all(array)
     await sleep(delay)
