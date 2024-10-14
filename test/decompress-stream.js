@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const zlib = require('node:zlib')
-const { decompressStream } = require('../lib/web/fetch/decompress')
+const { decompressStream } = require('../lib/core/util')
 
 test('returns the stream as-is given no content encoding', async () => {
   const input = new Response('hello world')
