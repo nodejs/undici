@@ -64,4 +64,7 @@ declare namespace Undici {
   const FormData: typeof import('./formdata').FormData
   const caches: typeof import('./cache').caches
   const interceptors: typeof import('./interceptors').default
+  const cacheStores: {
+    MemoryCacheStore: typeof import('./cache-interceptor').default.MemoryCacheStore
+  }
 }

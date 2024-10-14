@@ -40,7 +40,12 @@ module.exports.interceptors = {
   redirect: require('./lib/interceptor/redirect'),
   retry: require('./lib/interceptor/retry'),
   dump: require('./lib/interceptor/dump'),
-  dns: require('./lib/interceptor/dns')
+  dns: require('./lib/interceptor/dns'),
+  cache: require('./lib/interceptor/cache')
+}
+
+module.exports.cacheStores = {
+  MemoryCacheStore: require('./lib/cache/memory-cache-store')
 }
 
 module.exports.buildConnector = buildConnector
