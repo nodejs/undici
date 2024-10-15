@@ -3,6 +3,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const zlib = require('node:zlib')
+const { Response } = require('../index-fetch')
 const { decompressStream } = require('../lib/core/util')
 
 test('returns the stream as-is given no content encoding', async () => {
