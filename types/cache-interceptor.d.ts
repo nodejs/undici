@@ -36,6 +36,11 @@ declare namespace CacheHandler {
      * Delete all of the cached responses from a certain origin (host)
      */
     deleteByOrigin(origin: string): void | Promise<void>
+
+    /**
+     * Delete all of the cached responses from a certain origin (host)
+     */
+    deleteByOriginAndPath(origin: string, path: string): void | Promise<void>
   }
 
   export interface CacheStoreReadable extends Readable {
