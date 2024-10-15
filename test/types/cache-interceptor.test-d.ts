@@ -61,3 +61,11 @@ expectAssignable<CacheInterceptor.MemoryCacheStoreOpts>({})
 expectAssignable<CacheInterceptor.MemoryCacheStoreOpts>({
   maxEntrySize: 0
 })
+
+expectAssignable<CacheInterceptor.SqliteCacheStoreOpts>({})
+expectAssignable<CacheInterceptor.SqliteCacheStoreOpts>({
+  location: '',
+  maxEntries: 0,
+  maxEntrySize: 0,
+  errorCallback: (_: Error) => {}
+})

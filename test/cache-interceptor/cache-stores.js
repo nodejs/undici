@@ -1,11 +1,19 @@
 'use strict'
 
+const { env, execArgv } = require('node:process')
 const { describe, test } = require('node:test')
 const { deepStrictEqual, notEqual, equal } = require('node:assert')
 const { once } = require('node:events')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 
 cacheStoreTests(MemoryCacheStore)
+
+if (
+  (env.NODE_OPTIONS && env.NODE_OPTIONS.match(/experimental(-|_)sqlite/)) ||
+  execArgv.some(argv => argv.match(/experimental(-|_)sqlite/))
+) {
+  cacheStoreTests(require('../../lib/cache/sqlite-cache-store.js'))
+}
 
 /**
  * @param {import('../../types/cache-interceptor.d.ts').default.CacheStore} CacheStore
