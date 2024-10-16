@@ -60,7 +60,8 @@ jobs:
           - version: 20
           - version: 21
           - version: 22
-            env: NODE_OPTIONS=--experimental-sqlite
+            env:
+              NODE_OPTIONS: --experimental-sqlite
         runs-on:
           - ubuntu-latest
           - windows-latest
