@@ -527,6 +527,7 @@ try {
   console.log('headers', headers)
   body.setEncoding('utf8')
   body.on('data', console.log)
+  body.on('error', console.error)
   body.on('end', () => {
     console.log('trailers', trailers)
   })
@@ -628,6 +629,29 @@ try {
   client.close()
   server.close()
 }
+```
+
+#### Example 3 - Conditionally reading the body
+
+Remember to fully consume the body even in the case when it is not read.
+
+```js
+const { body, statusCode } = await client.request({
+  path: '/',
+  method: 'GET'
+})
+
+body.on('error', console.error) // prevent process from crashing on error
+
+if (statusCode === 200) {
+  const buffer = await body.arrayBuffer()
+  return buffer
+}
+
+for await (const _chunk of body) {
+  // force consumption of body to avoid memory leak
+}
+return null
 ```
 
 ### `Dispatcher.stream(options, factory[, callback])`
