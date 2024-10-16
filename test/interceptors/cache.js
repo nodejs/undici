@@ -250,4 +250,41 @@ describe('Cache Interceptor', () => {
       }
     })
   })
+
+  test('unsafe methods call the store\'s deleteByOrigin function', async () => {
+    const server = createServer((_, res) => {
+      res.end('asd')
+    }).listen(0)
+
+    after(() => server.close())
+    await once(server, 'listening')
+
+    let deleteByOriginCalled = false
+    const store = new cacheStores.MemoryCacheStore()
+
+    const originalDeleteByOrigin = store.deleteByOrigin.bind(store)
+    store.deleteByOrigin = (origin) => {
+      deleteByOriginCalled = true
+      originalDeleteByOrigin(origin)
+    }
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({ store }))
+
+    await client.request({
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    })
+
+    strictEqual(deleteByOriginCalled, false)
+
+    await client.request({
+      origin: 'localhost',
+      method: 'DELETE',
+      path: '/'
+    })
+
+    strictEqual(deleteByOriginCalled, true)
+  })
 })
