@@ -1233,6 +1233,16 @@ test('should not error if request status code is not in the specified error code
 
 The Response Error Interceptor provides a robust mechanism for handling HTTP response errors by capturing detailed error information and propagating it through a structured `ResponseError` class. This enhancement improves error handling and debugging capabilities in applications using the interceptor.
 
+##### `Cache Interceptor`
+
+The `cache` interceptor implements client-side response caching as described in
+[RFC9111](https://www.rfc-editor.org/rfc/rfc9111.html).
+
+**Options**
+
+- `store` - The [`CacheStore`](./CacheStore.md) to store and retrieve responses from. Default is [`MemoryCacheStore`](./CacheStore.md#memorycachestore).
+- `methods` - The [**safe** HTTP methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1) to cache the response of.
+
 ## Instance Events
 
 ### Event: `'connect'`
