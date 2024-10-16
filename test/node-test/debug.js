@@ -14,7 +14,9 @@ test('debug#websocket', { skip: !process.versions.icu || isCITGM }, async t => {
   const assert = tspl(t, { plan: 6 })
   const child = spawn(
     process.execPath,
-    [join(__dirname, '../fixtures/websocket.js')],
+    [
+      '--no-experimental-fetch',
+      join(__dirname, '../fixtures/websocket.js')],
     {
       env: {
         NODE_DEBUG: 'websocket'
@@ -50,7 +52,10 @@ test('debug#fetch', { skip: isCITGM }, async t => {
   const assert = tspl(t, { plan: 7 })
   const child = spawn(
     process.execPath,
-    [join(__dirname, '../fixtures/fetch.js')],
+    [
+      '--no-experimental-fetch',
+      join(__dirname, '../fixtures/fetch.js')
+    ],
     {
       env: Object.assign({}, process.env, { NODE_DEBUG: 'fetch' })
     }
@@ -85,7 +90,10 @@ test('debug#undici', { skip: isCITGM }, async t => {
   const assert = tspl(t, { plan: 7 })
   const child = spawn(
     process.execPath,
-    [join(__dirname, '../fixtures/undici.js')],
+    [
+      '--no-experimental-fetch',
+      join(__dirname, '../fixtures/undici.js')
+    ],
     {
       env: {
         NODE_DEBUG: 'undici'
