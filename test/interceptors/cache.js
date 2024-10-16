@@ -1,7 +1,7 @@
 'use strict'
 
 const { describe, test, after } = require('node:test')
-const { strictEqual, notEqual, fail } = require('node:assert')
+const { strictEqual, notEqual, fail, equal } = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
@@ -249,5 +249,56 @@ describe('Cache Interceptor', () => {
         'another-header': '123abc'
       }
     })
+  })
+
+  test('unsafe methods call the store\'s deleteByOrigin function', async () => {
+    const server = createServer((_, res) => {
+      res.end('asd')
+    }).listen(0)
+
+    after(() => server.close())
+    await once(server, 'listening')
+
+    let deleteByOriginCalled = false
+    const store = new cacheStores.MemoryCacheStore()
+
+    const originalDeleteByOrigin = store.deleteByOrigin.bind(store)
+    store.deleteByOrigin = (origin) => {
+      deleteByOriginCalled = true
+      originalDeleteByOrigin(origin)
+    }
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({
+        store,
+        methods: ['GET'] // explicitly only cache GET methods
+      }))
+
+    // Make sure safe methods that we want to cache don't cause a cache purge
+    await client.request({
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    })
+
+    equal(deleteByOriginCalled, false)
+
+    // Make sure other safe methods that we don't want to cache don't cause a cache purge
+    await client.request({
+      origin: 'localhost',
+      method: 'HEAD',
+      path: '/'
+    })
+
+    strictEqual(deleteByOriginCalled, false)
+
+    // Make sure unsafe methods cause a cache purge
+    await client.request({
+      origin: 'localhost',
+      method: 'DELETE',
+      path: '/'
+    })
+
+    equal(deleteByOriginCalled, true)
   })
 })
