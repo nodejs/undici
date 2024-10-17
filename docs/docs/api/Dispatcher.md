@@ -641,18 +641,13 @@ const { body, statusCode } = await client.request({
   method: 'GET'
 })
 
-body.on('error', console.error) // prevent process from crashing on error
-
 if (statusCode === 200) {
-  const buffer = await body.arrayBuffer()
-  return buffer
+  return await body.arrayBuffer()
 }
 
-for await (const _chunk of body) {
-  // force consumption of body to avoid memory leak
-}
+await body.dump()
+
 return null
-```
 
 ### `Dispatcher.stream(options, factory[, callback])`
 
