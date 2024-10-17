@@ -269,8 +269,12 @@ describe('Cache Interceptor', () => {
     }
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache({ store }))
+      .compose(interceptors.cache({
+        store,
+        methods: ['GET'] // explicitly only cache GET method
+      }))
 
+    // Make sure safe methods that we want to cache don't cause a cache purge
     await client.request({
       origin: 'localhost',
       method: 'GET',
@@ -279,6 +283,18 @@ describe('Cache Interceptor', () => {
 
     strictEqual(deleteByOriginCalled, false)
 
+    // Make sure safe methods also cause a cache purge
+    await client.request({
+      origin: 'localhost',
+      method: 'HEAD',
+      path: '/'
+    })
+
+    strictEqual(deleteByOriginCalled, true)
+
+    deleteByOriginCalled = false
+
+    // Make sure unsafe methods cause a cache purge
     await client.request({
       origin: 'localhost',
       method: 'DELETE',
