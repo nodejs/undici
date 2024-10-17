@@ -25,7 +25,6 @@ The `SqliteCacheStore` stores the response in a
 **Options**
 
 - `location` - The location of the database. This can be a file path or `:memory:`. Default `:memory:`.
-- `maxEntries` - The maximum amount of responses to store. Default `Infinity`.
 - `maxEntrySize` - The maximum size in bytes that a response's body can be. If a response's body is greater than or equal to this, the response will not be cached. Default `Infinity`.
 
 ## Defining a Custom Cache Store
