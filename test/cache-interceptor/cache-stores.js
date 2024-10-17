@@ -1,11 +1,87 @@
 'use strict'
 
+const { env, execArgv } = require('node:process')
 const { describe, test } = require('node:test')
 const { deepStrictEqual, notEqual, equal } = require('node:assert')
 const { once } = require('node:events')
+const { rm } = require('node:fs/promises')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 
 cacheStoreTests(MemoryCacheStore)
+
+if (
+  (env.NODE_OPTIONS && env.NODE_OPTIONS.match(/experimental(-|_)sqlite/)) ||
+  execArgv.some(argv => argv.match(/experimental(-|_)sqlite/))
+) {
+  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+
+  cacheStoreTests(SqliteCacheStore)
+
+  test('SqliteCacheStore works nicely with multiple stores', async (t) => {
+    const sqliteLocation = 'cache-interceptor.sqlite'
+
+    const storeA = new SqliteCacheStore({
+      location: sqliteLocation
+    })
+
+    const storeB = new SqliteCacheStore({
+      location: sqliteLocation
+    })
+
+    t.after(async () => {
+      await rm(sqliteLocation)
+    })
+
+    const request = {
+      origin: 'localhost',
+      path: '/',
+      method: 'GET',
+      headers: {}
+    }
+
+    const requestValue = {
+      statusCode: 200,
+      statusMessage: '',
+      rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
+      cachedAt: Date.now(),
+      staleAt: Date.now() + 10000,
+      deleteAt: Date.now() + 20000
+    }
+    const requestBody = ['asd', '123']
+    const requestTrailers = ['a', 'b', 'c']
+
+    const writable = storeA.createWriteStream(request, requestValue)
+    notEqual(writable, undefined)
+
+    // Value should now be locked, we shouldn't be able to create a writable
+    //  until the first one finishes
+    equal(storeA.createReadStream(request), undefined)
+    equal(storeB.createReadStream(request), undefined)
+    equal(storeA.createWriteStream(request, requestValue), undefined)
+    equal(storeB.createWriteStream(request, requestValue), undefined)
+
+    // Close the writable, this should unlock it
+    writeResponse(writable, requestBody, requestTrailers)
+
+    // Make sure we got the expected response from store a
+    let readable = storeA.createReadStream(request)
+    notEqual(readable, undefined)
+    deepStrictEqual(await readResponse(readable), {
+      ...requestValue,
+      body: requestBody,
+      rawTrailers: requestTrailers
+    })
+
+    // Make sure we got the expected response from store b
+    readable = storeB.createReadStream(request)
+    notEqual(readable, undefined)
+    deepStrictEqual(await readResponse(readable), {
+      ...requestValue,
+      body: requestBody,
+      rawTrailers: requestTrailers
+    })
+  })
+}
 
 /**
  * @param {import('../../types/cache-interceptor.d.ts').default.CacheStore} CacheStore

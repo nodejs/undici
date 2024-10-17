@@ -56,17 +56,19 @@ jobs:
       max-parallel: 0
       matrix:
         node-version:
-          - 18
-          - 20
-          - 21
-          - 22
+          - version: 18
+          - version: 20
+          - version: 21
+          - version: 22
+            env: NODE_OPTIONS=--experimental-sqlite
         runs-on:
           - ubuntu-latest
           - windows-latest
           - macos-latest
     uses: ./.github/workflows/test.yml
+    env: ${{ matrix.node-version.version == 22 && matrix.node-version.env || '' }}
     with:
-      node-version: ${{ matrix.node-version }}
+      node-version: ${{ matrix.node-version.version }}
       runs-on: ${{ matrix.runs-on }}
     secrets: inherit
 
