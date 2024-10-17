@@ -527,6 +527,7 @@ try {
   console.log('headers', headers)
   body.setEncoding('utf8')
   body.on('data', console.log)
+  body.on('error', console.error)
   body.on('end', () => {
     console.log('trailers', trailers)
   })
@@ -629,6 +630,24 @@ try {
   server.close()
 }
 ```
+
+#### Example 3 - Conditionally reading the body
+
+Remember to fully consume the body even in the case when it is not read.
+
+```js
+const { body, statusCode } = await client.request({
+  path: '/',
+  method: 'GET'
+})
+
+if (statusCode === 200) {
+  return await body.arrayBuffer()
+}
+
+await body.dump()
+
+return null
 
 ### `Dispatcher.stream(options, factory[, callback])`
 
