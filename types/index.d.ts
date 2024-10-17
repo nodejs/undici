@@ -17,7 +17,7 @@ import ProxyAgent from './proxy-agent'
 import EnvHttpProxyAgent from './env-http-proxy-agent'
 import RetryHandler from './retry-handler'
 import RetryAgent from './retry-agent'
-import { request, pipeline, stream, connect, upgrade } from './api'
+import { request } from './api'
 import interceptors from './interceptors'
 
 export * from './util'
@@ -31,7 +31,7 @@ export * from './content-type'
 export * from './cache'
 export { Interceptable } from './mock-interceptor'
 
-export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, interceptors, MockClient, MockPool, MockAgent, mockErrors, ProxyAgent, EnvHttpProxyAgent, RedirectHandler, DecoratorHandler, RetryHandler, RetryAgent }
+export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, interceptors, MockClient, MockPool, MockAgent, mockErrors, ProxyAgent, EnvHttpProxyAgent, RedirectHandler, DecoratorHandler, RetryHandler, RetryAgent }
 export default Undici
 
 declare namespace Undici {
@@ -49,10 +49,6 @@ declare namespace Undici {
   const setGlobalDispatcher: typeof import('./global-dispatcher').setGlobalDispatcher
   const getGlobalDispatcher: typeof import('./global-dispatcher').getGlobalDispatcher
   const request: typeof import('./api').request
-  const stream: typeof import('./api').stream
-  const pipeline: typeof import('./api').pipeline
-  const connect: typeof import('./api').connect
-  const upgrade: typeof import('./api').upgrade
   const MockClient: typeof import('./mock-client').default
   const MockPool: typeof import('./mock-pool').default
   const MockAgent: typeof import('./mock-agent').default

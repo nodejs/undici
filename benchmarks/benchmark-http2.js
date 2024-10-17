@@ -182,23 +182,6 @@ const experiments = {
       })
     })
   },
-  'undici - pipeline' () {
-    return makeParallelRequests(resolve => {
-      dispatcher
-        .pipeline(undiciOptions, data => {
-          return data.body
-        })
-        .end()
-        .pipe(
-          new Writable({
-            write (chunk, encoding, callback) {
-              callback()
-            }
-          })
-        )
-        .on('finish', resolve)
-    })
-  },
   'undici - request' () {
     return makeParallelRequests(resolve => {
       try {
@@ -221,19 +204,6 @@ const experiments = {
       } catch (err) {
         console.error('undici - request - dispatcher.request - requestCount', err)
       }
-    })
-  },
-  'undici - stream' () {
-    return makeParallelRequests(resolve => {
-      return dispatcher
-        .stream(undiciOptions, () => {
-          return new Writable({
-            write (chunk, encoding, callback) {
-              callback()
-            }
-          })
-        })
-        .then(resolve)
     })
   },
   'undici - dispatch' () {

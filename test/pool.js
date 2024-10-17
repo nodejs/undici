@@ -5,11 +5,7 @@ const { test, after } = require('node:test')
 const { EventEmitter } = require('node:events')
 const { createServer } = require('node:http')
 const net = require('node:net')
-const {
-  finished,
-  PassThrough,
-  Readable
-} = require('node:stream')
+const { finished, Readable } = require('node:stream')
 const { promisify } = require('node:util')
 const {
   kBusy,
@@ -264,86 +260,6 @@ test('basic get with async/await', async (t) => {
   await client.destroy()
 })
 
-test('stream get async/await', async (t) => {
-  t = tspl(t, { plan: 4 })
-
-  const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  after(() => server.close())
-
-  await promisify(server.listen.bind(server))(0)
-  const client = new Pool(`http://localhost:${server.address().port}`)
-  after(() => client.destroy())
-
-  await client.stream({ path: '/', method: 'GET' }, ({ statusCode, headers }) => {
-    t.strictEqual(statusCode, 200)
-    t.strictEqual(headers['content-type'], 'text/plain')
-    return new PassThrough()
-  })
-
-  await t.completed
-})
-
-test('stream get error async/await', async (t) => {
-  t = tspl(t, { plan: 1 })
-
-  const server = createServer((req, res) => {
-    res.destroy()
-  })
-  after(() => server.close())
-
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
-
-    await client.stream({ path: '/', method: 'GET' }, () => {
-
-    })
-      .catch((err) => {
-        t.ok(err)
-      })
-  })
-
-  await t.completed
-})
-
-test('pipeline get', async (t) => {
-  t = tspl(t, { plan: 5 })
-
-  const server = createServer((req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    res.setHeader('content-type', 'text/plain')
-    res.end('hello')
-  })
-  after(() => server.close())
-
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
-
-    const bufs = []
-    client.pipeline({ path: '/', method: 'GET' }, ({ statusCode, headers, body }) => {
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
-      return body
-    })
-      .end()
-      .on('data', (buf) => {
-        bufs.push(buf)
-      })
-      .on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
-      })
-  })
-
-  await t.completed
-})
-
 test('backpressure algorithm', async (t) => {
   t = tspl(t, { plan: 12 })
 
@@ -485,99 +401,6 @@ test('invalid pool dispatch options', async (t) => {
   t.throws(() => pool.dispatch({}, {}), errors.InvalidArgumentError, 'throws on invalid handler')
 })
 
-test('pool upgrade promise', async (t) => {
-  t = tspl(t, { plan: 2 })
-
-  const server = net.createServer((c) => {
-    c.on('data', (d) => {
-      c.write('HTTP/1.1 101\r\n')
-      c.write('hello: world\r\n')
-      c.write('connection: upgrade\r\n')
-      c.write('upgrade: websocket\r\n')
-      c.write('\r\n')
-      c.write('Body')
-    })
-
-    c.on('end', () => {
-      c.end()
-    })
-  })
-  after(() => server.close())
-
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
-    after(() => client.close())
-
-    const { headers, socket } = await client.upgrade({
-      path: '/',
-      method: 'GET',
-      protocol: 'Websocket'
-    })
-
-    let recvData = ''
-    socket.on('data', (d) => {
-      recvData += d
-    })
-
-    socket.on('close', () => {
-      t.strictEqual(recvData.toString(), 'Body')
-    })
-
-    t.deepStrictEqual(headers, {
-      hello: 'world',
-      connection: 'upgrade',
-      upgrade: 'websocket'
-    })
-    socket.end()
-  })
-
-  await t.completed
-})
-
-test('pool connect', async (t) => {
-  t = tspl(t, { plan: 1 })
-
-  const server = createServer((c) => {
-    t.fail()
-  })
-  server.on('connect', (req, socket, firstBodyChunk) => {
-    socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
-
-    let data = firstBodyChunk.toString()
-    socket.on('data', (buf) => {
-      data += buf.toString()
-    })
-
-    socket.on('end', () => {
-      socket.end(data)
-    })
-  })
-  after(() => server.close())
-
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
-    after(() => client.close())
-
-    const { socket } = await client.connect({
-      path: '/'
-    })
-
-    let recvData = ''
-    socket.on('data', (d) => {
-      recvData += d
-    })
-
-    socket.on('end', () => {
-      t.strictEqual(recvData.toString(), 'Body')
-    })
-
-    socket.write('Body')
-    socket.end()
-  })
-
-  await t.completed
-})
-
 test('pool dispatch', async (t) => {
   t = tspl(t, { plan: 2 })
 
@@ -609,20 +432,6 @@ test('pool dispatch', async (t) => {
       onError () {
       }
     })
-  })
-
-  await t.completed
-})
-
-test('pool pipeline args validation', async (t) => {
-  t = tspl(t, { plan: 2 })
-
-  const client = new Pool('http://localhost:5000')
-
-  const ret = client.pipeline(null, () => {})
-  ret.on('error', (err) => {
-    t.ok(/opts/.test(err.message))
-    t.ok(err instanceof errors.InvalidArgumentError)
   })
 
   await t.completed
@@ -678,42 +487,6 @@ test('pool connect error', async (t) => {
     try {
       await client.connect({
         path: '/'
-      })
-    } catch (err) {
-      t.ok(err)
-    }
-  })
-
-  await t.completed
-})
-
-test('pool upgrade error', async (t) => {
-  t = tspl(t, { plan: 1 })
-
-  const server = net.createServer((c) => {
-    c.on('data', (d) => {
-      c.write('HTTP/1.1 101\r\n')
-      c.write('hello: world\r\n')
-      c.write('connection: upgrade\r\n')
-      c.write('\r\n')
-      c.write('Body')
-    })
-    c.on('error', () => {
-      // Whether we get an error, end or close is undefined.
-      // Ignore error.
-    })
-  })
-  after(() => server.close())
-
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
-    after(() => client.close())
-
-    try {
-      await client.upgrade({
-        path: '/',
-        method: 'GET',
-        protocol: 'Websocket'
       })
     } catch (err) {
       t.ok(err)
@@ -823,156 +596,6 @@ test('pool request abort in queue', async (t) => {
       t.strictEqual(err.code, 'UND_ERR_ABORTED')
     })
     signal.emit('abort')
-  })
-
-  await t.completed
-})
-
-test('pool stream abort in queue', async (t) => {
-  t = tspl(t, { plan: 3 })
-
-  const server = createServer((req, res) => {
-    res.end('asd')
-  })
-  after(() => server.close())
-
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
-      connections: 1,
-      pipelining: 1
-    })
-    after(() => client.close())
-
-    client.dispatch({
-      path: '/',
-      method: 'GET'
-    }, {
-      onConnect () {
-      },
-      onHeaders (statusCode, headers) {
-        t.strictEqual(statusCode, 200)
-      },
-      onData (chunk) {
-      },
-      onComplete () {
-        t.ok(true, 'pass')
-      },
-      onError () {
-      }
-    })
-
-    const signal = new EventEmitter()
-    client.stream({
-      path: '/',
-      method: 'GET',
-      signal
-    }, ({ body }) => body, (err) => {
-      t.strictEqual(err.code, 'UND_ERR_ABORTED')
-    })
-    signal.emit('abort')
-  })
-
-  await t.completed
-})
-
-test('pool pipeline abort in queue', async (t) => {
-  t = tspl(t, { plan: 3 })
-
-  const server = createServer((req, res) => {
-    res.end('asd')
-  })
-  after(() => server.close())
-
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
-      connections: 1,
-      pipelining: 1
-    })
-    after(() => client.close())
-
-    client.dispatch({
-      path: '/',
-      method: 'GET'
-    }, {
-      onConnect () {
-      },
-      onHeaders (statusCode, headers) {
-        t.strictEqual(statusCode, 200)
-      },
-      onData (chunk) {
-      },
-      onComplete () {
-        t.ok(true, 'pass')
-      },
-      onError () {
-      }
-    })
-
-    const signal = new EventEmitter()
-    client.pipeline({
-      path: '/',
-      method: 'GET',
-      signal
-    }, ({ body }) => body).end().on('error', (err) => {
-      t.strictEqual(err.code, 'UND_ERR_ABORTED')
-    })
-    signal.emit('abort')
-  })
-
-  await t.completed
-})
-
-test('pool stream constructor error destroy body', async (t) => {
-  t = tspl(t, { plan: 4 })
-
-  const server = createServer((req, res) => {
-    res.end('asd')
-  })
-  after(() => server.close())
-
-  server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
-      connections: 1,
-      pipelining: 1
-    })
-    after(() => client.close())
-
-    {
-      const body = new Readable({
-        read () {
-        }
-      })
-      client.stream({
-        path: '/',
-        method: 'GET',
-        body,
-        headers: {
-          'transfer-encoding': 'fail'
-        }
-      }, () => {
-        t.fail()
-      }, (err) => {
-        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-        t.strictEqual(body.destroyed, true)
-      })
-    }
-
-    {
-      const body = new Readable({
-        read () {
-        }
-      })
-      client.stream({
-        path: '/',
-        method: 'CONNECT',
-        body
-      }, () => {
-        t.fail()
-      }, (err) => {
-        t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-        t.strictEqual(body.destroyed, true)
-      })
-    }
   })
 
   await t.completed
