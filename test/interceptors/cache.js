@@ -292,13 +292,17 @@ describe('Cache Interceptor', () => {
 
     strictEqual(deleteByOriginCalled, false)
 
-    // Make sure unsafe methods cause a cache purge
-    await client.request({
-      origin: 'localhost',
-      method: 'DELETE',
-      path: '/'
-    })
+    // Make sure the common unsafe methods cause cache purges
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+      deleteByOriginCalled = false
 
-    equal(deleteByOriginCalled, true)
+      await client.request({
+        origin: 'localhost',
+        method,
+        path: '/'
+      })
+
+      equal(deleteByOriginCalled, true, method)
+    }
   })
 })
