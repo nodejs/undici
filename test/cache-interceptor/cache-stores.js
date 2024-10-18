@@ -219,6 +219,67 @@ function cacheStoreTests (CacheStore) {
       equal(store.createReadStream(nonMatchingRequest), undefined)
     })
   })
+
+  test('returns cached values', async () => {
+    const request = {
+      origin: 'test-origin-1',
+      path: '/foo?bar=baz',
+      method: 'GET',
+      headers: {}
+    }
+    const requestValue = {
+      statusCode: 200,
+      statusMessage: '',
+      rawHeaders: [],
+      cachedAt: Date.now(),
+      staleAt: Date.now() + 10000,
+      deleteAt: Date.now() + 20000
+    }
+
+    /**
+     * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
+     */
+    const store = new CacheStore()
+
+    // Write the response to the store
+    let writeStream = store.createWriteStream(request, requestValue)
+    writeResponse(writeStream, [], [])
+
+    let cachedOrigins = store.getOrigins()
+    deepStrictEqual(cachedOrigins, ['test-origin-1'])
+
+    // Now let's write another request to the store
+    const anotherRequest = {
+      origin: 'test-origin-2',
+      path: '/asd',
+      method: 'GET',
+      headers: {}
+    }
+    const anotherValue = {
+      statusCode: 200,
+      statusMessage: '',
+      rawHeaders: [],
+      cachedAt: Date.now(),
+      staleAt: Date.now() + 10000,
+      deleteAt: Date.now() + 20000
+    }
+
+    // Now let's cache it
+    writeStream = store.createWriteStream(anotherRequest, {
+      ...anotherValue,
+      body: []
+    })
+    writeResponse(writeStream, [], [])
+
+    cachedOrigins = store.getOrigins()
+    deepStrictEqual(cachedOrigins, ['test-origin-1', 'test-origin-2'])
+
+    let cachedPaths = store.getRoutesByOrigin('test-origin-1')
+    deepStrictEqual(cachedPaths, [{ method: 'GET', path: '/foo?bar=baz' }])
+
+    cachedPaths = store.getRoutesByOrigin('test-origin-2')
+    deepStrictEqual(cachedPaths, [{ method: 'GET', path: '/asd' }])
+  })
 }
 
 test('MemoryCacheStore locks values properly', async () => {
