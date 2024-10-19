@@ -9,8 +9,6 @@ const {
   Agent,
   errors,
   request,
-  stream,
-  pipeline,
   Pool,
   setGlobalDispatcher,
   getGlobalDispatcher
@@ -532,14 +530,6 @@ test('with a local agent', async t => {
   await p.completed
 })
 
-test('stream: fails with invalid URL', t => {
-  const p = tspl(t, { plan: 4 })
-  p.throws(() => stream(), errors.InvalidArgumentError, 'throws on missing url argument')
-  p.throws(() => stream(''), errors.InvalidArgumentError, 'throws on invalid url')
-  p.throws(() => stream({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
-  p.throws(() => stream({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
-})
-
 test('with globalAgent', async t => {
   const p = tspl(t, { plan: 6 })
   const wanted = 'payload'
@@ -622,43 +612,6 @@ test('with a local agent', async t => {
   })
 
   await p.completed
-})
-
-test('pipeline: fails with invalid URL', t => {
-  const p = tspl(t, { plan: 4 })
-  p.throws(() => pipeline(), errors.InvalidArgumentError, 'throws on missing url argument')
-  p.throws(() => pipeline(''), errors.InvalidArgumentError, 'throws on invalid url')
-  p.throws(() => pipeline({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
-  p.throws(() => pipeline({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
-})
-
-test('pipeline: fails with invalid onInfo', async (t) => {
-  const p = tspl(t, { plan: 2 })
-  pipeline({ origin: 'http://localhost', path: '/', onInfo: 'foo' }, () => {}).on('error', (err) => {
-    p.ok(err instanceof errors.InvalidArgumentError)
-    p.equal(err.message, 'invalid onInfo callback')
-  })
-  await p.completed
-})
-
-test('request: fails with invalid onInfo', async (t) => {
-  try {
-    await request({ origin: 'http://localhost', path: '/', onInfo: 'foo' })
-    assert.fail('should throw')
-  } catch (e) {
-    assert.ok(e)
-    assert.strictEqual(e.message, 'invalid onInfo callback')
-  }
-})
-
-test('stream: fails with invalid onInfo', async (t) => {
-  try {
-    await stream({ origin: 'http://localhost', path: '/', onInfo: 'foo' }, () => new PassThrough())
-    assert.fail('should throw')
-  } catch (e) {
-    assert.ok(e)
-    assert.strictEqual(e.message, 'invalid onInfo callback')
-  }
 })
 
 test('constructor validations', t => {

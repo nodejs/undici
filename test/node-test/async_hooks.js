@@ -183,32 +183,3 @@ test('async hooks client is destroyed', async (t) => {
 
   await p.completed
 })
-
-test('async hooks pipeline handler', async (t) => {
-  const p = tspl(t, { plan: 2 })
-
-  const server = createServer((req, res) => {
-    res.end('hello')
-  })
-  t.after(closeServerAsPromise(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { return client.close() })
-
-    setCurrentTransaction({ hello: 'world2' })
-
-    client
-      .pipeline({ path: '/', method: 'GET' }, ({ body }) => {
-        p.deepStrictEqual(getCurrentTransaction(), { hello: 'world2' })
-        return body
-      })
-      .on('close', () => {
-        p.ok(1)
-      })
-      .resume()
-      .end()
-  })
-
-  await p.completed
-})

@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { Duplex, Readable, Writable } from 'stream'
+import { Duplex, Readable } from 'stream'
 import { EventEmitter } from 'events'
 import { Blob } from 'buffer'
 import { IncomingHttpHeaders } from './header'
@@ -16,23 +16,12 @@ export default Dispatcher
 declare class Dispatcher extends EventEmitter {
   /** Dispatches a request. This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this. */
   dispatch (options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandlers): boolean
-  /** Starts two-way communications with the requested resource. */
-  connect<TOpaque = null>(options: Dispatcher.ConnectOptions<TOpaque>): Promise<Dispatcher.ConnectData<TOpaque>>
-  connect<TOpaque = null>(options: Dispatcher.ConnectOptions<TOpaque>, callback: (err: Error | null, data: Dispatcher.ConnectData<TOpaque>) => void): void
   /** Compose a chain of dispatchers */
   compose (dispatchers: Dispatcher.DispatcherComposeInterceptor[]): Dispatcher.ComposedDispatcher
   compose (...dispatchers: Dispatcher.DispatcherComposeInterceptor[]): Dispatcher.ComposedDispatcher
   /** Performs an HTTP request. */
   request<TOpaque = null>(options: Dispatcher.RequestOptions<TOpaque>): Promise<Dispatcher.ResponseData<TOpaque>>
   request<TOpaque = null>(options: Dispatcher.RequestOptions<TOpaque>, callback: (err: Error | null, data: Dispatcher.ResponseData<TOpaque>) => void): void
-  /** For easy use with `stream.pipeline`. */
-  pipeline<TOpaque = null>(options: Dispatcher.PipelineOptions<TOpaque>, handler: Dispatcher.PipelineHandler<TOpaque>): Duplex
-  /** A faster version of `Dispatcher.request`. */
-  stream<TOpaque = null>(options: Dispatcher.RequestOptions<TOpaque>, factory: Dispatcher.StreamFactory<TOpaque>): Promise<Dispatcher.StreamData<TOpaque>>
-  stream<TOpaque = null>(options: Dispatcher.RequestOptions<TOpaque>, factory: Dispatcher.StreamFactory<TOpaque>, callback: (err: Error | null, data: Dispatcher.StreamData<TOpaque>) => void): void
-  /** Upgrade to a different protocol. */
-  upgrade (options: Dispatcher.UpgradeOptions): Promise<Dispatcher.UpgradeData>
-  upgrade (options: Dispatcher.UpgradeOptions, callback: (err: Error | null, data: Dispatcher.UpgradeData) => void): void
   /** Closes the client and gracefully waits for enqueued requests to complete before invoking the callback (or returning a promise if no callback is provided). */
   close (): Promise<void>
   close (callback: () => void): void
@@ -123,22 +112,6 @@ declare namespace Dispatcher {
     /** For H2, it appends the expect: 100-continue header, and halts the request body until a 100-continue is received from the remote server */
     expectContinue?: boolean;
   }
-  export interface ConnectOptions<TOpaque = null> {
-    origin: string | URL;
-    path: string;
-    /** Default: `null` */
-    headers?: IncomingHttpHeaders | string[] | null;
-    /** Default: `null` */
-    signal?: AbortSignal | EventEmitter | null;
-    /** This argument parameter is passed through to `ConnectData` */
-    opaque?: TOpaque;
-    /** Default: 0 */
-    maxRedirections?: number;
-    /** Default: false */
-    redirectionLimitReached?: boolean;
-    /** Default: `null` */
-    responseHeaders?: 'raw' | null;
-  }
   export interface RequestOptions<TOpaque = null> extends DispatchOptions {
     /** Default: `null` */
     opaque?: TOpaque;
@@ -148,39 +121,8 @@ declare namespace Dispatcher {
     maxRedirections?: number;
     /** Default: false */
     redirectionLimitReached?: boolean;
-    /** Default: `null` */
-    onInfo?: (info: { statusCode: number, headers: Record<string, string | string[]> }) => void;
-    /** Default: `null` */
-    responseHeaders?: 'raw' | null;
     /** Default: `64 KiB` */
     highWaterMark?: number;
-  }
-  export interface PipelineOptions<TOpaque = null> extends RequestOptions<TOpaque> {
-    /** `true` if the `handler` will return an object stream. Default: `false` */
-    objectMode?: boolean;
-  }
-  export interface UpgradeOptions {
-    path: string;
-    /** Default: `'GET'` */
-    method?: string;
-    /** Default: `null` */
-    headers?: IncomingHttpHeaders | string[] | null;
-    /** A string of comma separated protocols, in descending preference order. Default: `'Websocket'` */
-    protocol?: string;
-    /** Default: `null` */
-    signal?: AbortSignal | EventEmitter | null;
-    /** Default: 0 */
-    maxRedirections?: number;
-    /** Default: false */
-    redirectionLimitReached?: boolean;
-    /** Default: `null` */
-    responseHeaders?: 'raw' | null;
-  }
-  export interface ConnectData<TOpaque = null> {
-    statusCode: number;
-    headers: IncomingHttpHeaders;
-    socket: Duplex;
-    opaque: TOpaque;
   }
   export interface ResponseData<TOpaque = null> {
     statusCode: number;
@@ -190,29 +132,6 @@ declare namespace Dispatcher {
     opaque: TOpaque;
     context: object;
   }
-  export interface PipelineHandlerData<TOpaque = null> {
-    statusCode: number;
-    headers: IncomingHttpHeaders;
-    opaque: TOpaque;
-    body: BodyReadable;
-    context: object;
-  }
-  export interface StreamData<TOpaque = null> {
-    opaque: TOpaque;
-    trailers: Record<string, string>;
-  }
-  export interface UpgradeData<TOpaque = null> {
-    headers: IncomingHttpHeaders;
-    socket: Duplex;
-    opaque: TOpaque;
-  }
-  export interface StreamFactoryData<TOpaque = null> {
-    statusCode: number;
-    headers: IncomingHttpHeaders;
-    opaque: TOpaque;
-    context: object;
-  }
-  export type StreamFactory<TOpaque = null> = (data: StreamFactoryData<TOpaque>) => Writable
   export interface DispatchHandlers {
     /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
     onConnect?(abort: (err?: Error) => void): void;
@@ -231,7 +150,6 @@ declare namespace Dispatcher {
     /** Invoked when a body chunk is sent to the server. May be invoked multiple times for chunked requests */
     onBodySent?(chunkSize: number, totalBytesSent: number): void;
   }
-  export type PipelineHandler<TOpaque = null> = (data: PipelineHandlerData<TOpaque>) => Readable
   export type HttpMethod = Autocomplete<'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH'>
 
   /**

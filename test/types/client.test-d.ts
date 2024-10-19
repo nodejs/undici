@@ -1,4 +1,3 @@
-import { Duplex, Readable, Writable } from 'stream'
 import { expectAssignable } from 'tsd'
 import { Client, Dispatcher } from '../..'
 import { URL } from 'url'
@@ -98,68 +97,6 @@ expectAssignable<Client>(new Client('', {
   expectAssignable<void>(client.request({ origin: new URL('http://localhost:3000'), path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
-  }))
-
-  // stream
-  expectAssignable<Promise<Dispatcher.StreamData>>(client.stream({ origin: '', path: '', method: 'GET' }, data => {
-    expectAssignable<Dispatcher.StreamFactoryData>(data)
-    return new Writable()
-  }))
-  expectAssignable<Promise<Dispatcher.StreamData>>(client.stream({ origin: new URL('http://localhost'), path: '', method: 'GET' }, data => {
-    expectAssignable<Dispatcher.StreamFactoryData>(data)
-    return new Writable()
-  }))
-  expectAssignable<void>(client.stream(
-    { origin: '', path: '', method: 'GET' },
-    data => {
-      expectAssignable<Dispatcher.StreamFactoryData>(data)
-      return new Writable()
-    },
-    (err, data) => {
-      expectAssignable<Error | null>(err)
-      expectAssignable<Dispatcher.StreamData>(data)
-    }
-  ))
-  expectAssignable<void>(client.stream(
-    { origin: new URL('http://localhost'), path: '', method: 'GET' },
-    data => {
-      expectAssignable<Dispatcher.StreamFactoryData>(data)
-      return new Writable()
-    },
-    (err, data) => {
-      expectAssignable<Error | null>(err)
-      expectAssignable<Dispatcher.StreamData>(data)
-    }
-  ))
-
-  // pipeline
-  expectAssignable<Duplex>(client.pipeline({ origin: '', path: '', method: 'GET' }, data => {
-    expectAssignable<Dispatcher.PipelineHandlerData>(data)
-    return new Readable()
-  }))
-  expectAssignable<Duplex>(client.pipeline({ origin: new URL('http://localhost'), path: '', method: 'GET' }, data => {
-    expectAssignable<Dispatcher.PipelineHandlerData>(data)
-    return new Readable()
-  }))
-
-  // upgrade
-  expectAssignable<Promise<Dispatcher.UpgradeData>>(client.upgrade({ path: '' }))
-  expectAssignable<Promise<Dispatcher.UpgradeData>>(client.upgrade({ path: '', headers: [] }))
-  expectAssignable<Promise<Dispatcher.UpgradeData>>(client.upgrade({ path: '', headers: {} }))
-  expectAssignable<Promise<Dispatcher.UpgradeData>>(client.upgrade({ path: '', headers: null }))
-  expectAssignable<void>(client.upgrade({ path: '' }, (err, data) => {
-    expectAssignable<Error | null>(err)
-    expectAssignable<Dispatcher.UpgradeData>(data)
-  }))
-
-  // connect
-  expectAssignable<Promise<Dispatcher.ConnectData>>(client.connect({ path: '' }))
-  expectAssignable<Promise<Dispatcher.ConnectData>>(client.connect({ path: '', headers: [] }))
-  expectAssignable<Promise<Dispatcher.ConnectData>>(client.connect({ path: '', headers: {} }))
-  expectAssignable<Promise<Dispatcher.ConnectData>>(client.connect({ path: '', headers: null }))
-  expectAssignable<void>(client.connect({ path: '' }, (err, data) => {
-    expectAssignable<Error | null>(err)
-    expectAssignable<Dispatcher.ConnectData>(data)
   }))
 
   // dispatch
