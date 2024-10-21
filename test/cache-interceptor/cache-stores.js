@@ -31,6 +31,7 @@ function cacheStoreTests (CacheStore) {
       const requestValue = {
         statusCode: 200,
         statusMessage: '',
+        etag: '',
         rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
@@ -72,6 +73,7 @@ function cacheStoreTests (CacheStore) {
       const anotherValue = {
         statusCode: 200,
         statusMessage: '',
+        etag: '',
         rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
@@ -111,6 +113,7 @@ function cacheStoreTests (CacheStore) {
       const requestValue = {
         statusCode: 200,
         statusMessage: '',
+        etag: '',
         rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
         cachedAt: Date.now() - 10000,
         staleAt: Date.now() - 1,
@@ -146,6 +149,7 @@ function cacheStoreTests (CacheStore) {
       const requestValue = {
         statusCode: 200,
         statusMessage: '',
+        etag: '',
         cachedAt: Date.now() - 20000,
         staleAt: Date.now() - 10000,
         deleteAt: Date.now() - 5
@@ -177,6 +181,7 @@ function cacheStoreTests (CacheStore) {
       const requestValue = {
         statusCode: 200,
         statusMessage: '',
+        etag: '',
         rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
         vary: {
           'some-header': 'hello world'
@@ -234,6 +239,7 @@ test('MemoryCacheStore locks values properly', async () => {
   const requestValue = {
     statusCode: 200,
     statusMessage: '',
+    etag: '',
     rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
     cachedAt: Date.now(),
     staleAt: Date.now() + 10000,

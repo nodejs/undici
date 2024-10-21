@@ -168,6 +168,7 @@ describe('Cache Interceptor', () => {
 
       if (requestsToOrigin > 1) {
         notEqual(req.headers['if-modified-since'], undefined)
+        equal(req.headers['if-none-match'], 'asd123')
 
         if (requestsToOrigin === 3) {
           res.end('asd123')
@@ -176,6 +177,7 @@ describe('Cache Interceptor', () => {
           res.end()
         }
       } else {
+        res.setHeader('etag', 'asd123')
         res.end('asd')
       }
     }).listen(0)
