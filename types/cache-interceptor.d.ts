@@ -4,6 +4,8 @@ import Dispatcher from './dispatcher'
 export default CacheHandler
 
 declare namespace CacheHandler {
+  export type CacheMethods = 'GET' | 'HEAD' | 'OPTIONS' | 'TRACE'
+
   export interface CacheOptions {
     store?: CacheStore
 
@@ -14,7 +16,7 @@ declare namespace CacheHandler {
      * @see https://www.rfc-editor.org/rfc/rfc9111.html#name-invalidating-stored-respons
      * @see https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1
      */
-    methods?: ('GET' | 'HEAD' | 'OPTIONS' | 'TRACE')[]
+    methods?: CacheMethods[]
   }
 
   /**
