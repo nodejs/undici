@@ -15,6 +15,10 @@ const store: CacheInterceptor.CacheStore = {
 
   deleteByOrigin (_: string): void | Promise<void> {
     throw new Error('stub')
+  },
+
+  deleteByCacheTags (origin: string, cacheTags: string[]): Promise<void> {
+    throw new Error('stub')
   }
 }
 

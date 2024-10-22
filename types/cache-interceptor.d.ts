@@ -36,6 +36,7 @@ declare namespace CacheHandler {
      * Delete all of the cached responses from a certain origin (host)
      */
     deleteByOrigin(origin: string): void | Promise<void>
+    deleteByCacheTags?(origin: string, cacheTags: string[]): void | Promise<void>
   }
 
   export interface CacheStoreReadable extends Readable {
@@ -56,6 +57,10 @@ declare namespace CacheHandler {
      *  later comparison
      */
     vary?: Record<string, string>;
+    /**
+     * Tags to be used for cache invalidation
+     */
+    cacheTags?: string[];
     /**
      * Time in millis that this value was cached
      */
@@ -93,5 +98,7 @@ declare namespace CacheHandler {
     createWriteStream (req: Dispatcher.RequestOptions, value: CacheStoreValue): CacheStoreWriteable
 
     deleteByOrigin (origin: string): void
+
+    deleteByCacheTags (origin: string, cacheTags: string[]): void
   }
 }

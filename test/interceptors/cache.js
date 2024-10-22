@@ -88,6 +88,63 @@ describe('Cache Interceptor', () => {
     strictEqual(response.headers.age, '0')
   })
 
+  test('invalidates response by cache tag', async () => {
+    let requestsToOrigin = 0
+
+    const cacheTag = 'test-cache-tag-value-42'
+    const server = createServer((_, res) => {
+      requestsToOrigin++
+      res.setHeader('cache-control', 'public, s-maxage=10')
+      res.setHeader('cache-tag', cacheTag)
+      res.end('asd')
+    }).listen(0)
+
+    after(() => server.close())
+    await once(server, 'listening')
+
+    const cacheStore = new cacheStores.MemoryCacheStore()
+
+    const tmp = interceptors.cache({
+      cacheTagHeader: 'cache-tag',
+      store: cacheStore
+    })
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(tmp)
+
+    strictEqual(requestsToOrigin, 0)
+
+    // Send initial request. This should reach the origin
+    let response = await client.request({
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    })
+    strictEqual(requestsToOrigin, 1)
+    strictEqual(await response.body.text(), 'asd')
+
+    // Send second request that should be handled by cache
+    response = await client.request({
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    })
+    strictEqual(requestsToOrigin, 1)
+    strictEqual(await response.body.text(), 'asd')
+    strictEqual(response.headers.age, '0')
+
+    await cacheStore.deleteByCacheTags('localhost', [cacheTag])
+
+    // Send third request that should reach the origin again
+    response = await client.request({
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    })
+    strictEqual(requestsToOrigin, 2)
+    strictEqual(await response.body.text(), 'asd')
+  })
+
   test('respects vary header', async () => {
     let requestsToOrigin = 0
 
