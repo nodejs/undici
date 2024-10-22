@@ -245,7 +245,7 @@ function cacheStoreTests (CacheStore) {
     let writeStream = store.createWriteStream(request, requestValue)
     writeResponse(writeStream, [], [])
 
-    let cachedOrigins = store.getOrigins()
+    let cachedOrigins = await store.getOrigins()
     deepStrictEqual(cachedOrigins, ['test-origin-1'])
 
     // Now let's write another request to the store
@@ -271,13 +271,13 @@ function cacheStoreTests (CacheStore) {
     })
     writeResponse(writeStream, [], [])
 
-    cachedOrigins = store.getOrigins()
+    cachedOrigins = await store.getOrigins()
     deepStrictEqual(cachedOrigins, ['test-origin-1', 'test-origin-2'])
 
-    let cachedPaths = store.getRoutesByOrigin('test-origin-1')
+    let cachedPaths = await store.getRoutesByOrigin('test-origin-1')
     deepStrictEqual(cachedPaths, [{ method: 'GET', path: '/foo?bar=baz' }])
 
-    cachedPaths = store.getRoutesByOrigin('test-origin-2')
+    cachedPaths = await store.getRoutesByOrigin('test-origin-2')
     deepStrictEqual(cachedPaths, [{ method: 'GET', path: '/asd' }])
   })
 }
