@@ -28,6 +28,10 @@ declare namespace CacheHandler {
      */
     get isFull(): boolean
 
+    getOrigins?(): Promise<string[]>
+
+    getRoutesByOrigin?(origin: string): Promise<{ method: string, path: string }[]>
+
     createReadStream(req: Dispatcher.RequestOptions): CacheStoreReadable | Promise<CacheStoreReadable | undefined> | undefined
 
     createWriteStream(req: Dispatcher.RequestOptions, value: Omit<CacheStoreValue, 'rawTrailers'>): CacheStoreWriteable | undefined
@@ -87,6 +91,10 @@ declare namespace CacheHandler {
     constructor (opts?: MemoryCacheStoreOpts)
 
     get isFull (): boolean
+
+    getOrigins (): Promise<string[]>
+
+    getRoutesByOrigin (origin: string): Promise<{ method: string, path: string }[]>
 
     createReadStream (req: Dispatcher.RequestOptions): CacheStoreReadable | undefined
 

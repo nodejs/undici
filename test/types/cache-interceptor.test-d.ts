@@ -5,6 +5,14 @@ import Dispatcher from '../../types/dispatcher'
 const store: CacheInterceptor.CacheStore = {
   isFull: false,
 
+  getOrigins (): Promise<string[]> {
+    throw new Error('stub')
+  },
+
+  getRoutesByOrigin (origin: string): Promise<{ method: string, path: string }[]> {
+    throw new Error('stub')
+  },
+
   createReadStream (_: Dispatcher.RequestOptions): CacheInterceptor.CacheStoreReadable | undefined {
     throw new Error('stub')
   },
