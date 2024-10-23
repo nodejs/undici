@@ -264,6 +264,7 @@ describe('timers', () => {
     const lowerBound = actualNow - timers.RESOLUTION_MS
     const upperBound = actualNow + timers.RESOLUTION_MS
 
-    t.equal(actualNow >= lowerBound && actualNow <= upperBound, true)
+    const fastNowAbsolute = timers.nowAbsolute()
+    t.equal(fastNowAbsolute >= lowerBound && fastNowAbsolute <= upperBound, true)
   })
 })
