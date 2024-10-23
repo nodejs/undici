@@ -19,6 +19,11 @@ declare namespace CacheHandler {
     methods?: CacheMethods[]
   }
 
+  export interface RouteByOrigin {
+    method: string
+    path: string
+  }
+
   /**
    * Underlying storage provider for cached responses
    */
@@ -28,9 +33,9 @@ declare namespace CacheHandler {
      */
     get isFull(): boolean
 
-    getOrigins?(): Promise<string[]>
+    getOrigins?(): string[] | Promise<string[]>
 
-    getRoutesByOrigin?(origin: string): Promise<{ method: string, path: string }[]>
+    getRoutesByOrigin?(origin: string): RouteByOrigin[] | Promise<RouteByOrigin[]>
 
     createReadStream(req: Dispatcher.RequestOptions): CacheStoreReadable | Promise<CacheStoreReadable | undefined> | undefined
 
@@ -75,6 +80,11 @@ declare namespace CacheHandler {
     deleteAt: number;
   }
 
+  export interface RouteByOrigin {
+    method: string
+    path: string
+  }
+
   export interface MemoryCacheStoreOpts {
     /**
      * @default Infinity
@@ -92,9 +102,9 @@ declare namespace CacheHandler {
 
     get isFull (): boolean
 
-    getOrigins (): Promise<string[]>
+    getOrigins (): string[]
 
-    getRoutesByOrigin (origin: string): Promise<{ method: string, path: string }[]>
+    getRoutesByOrigin (origin: string): RouteByOrigin[]
 
     createReadStream (req: Dispatcher.RequestOptions): CacheStoreReadable | undefined
 

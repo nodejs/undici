@@ -5,11 +5,11 @@ import Dispatcher from '../../types/dispatcher'
 const store: CacheInterceptor.CacheStore = {
   isFull: false,
 
-  getOrigins (): Promise<string[]> {
+  getOrigins (): string[] | Promise<string[]> {
     throw new Error('stub')
   },
 
-  getRoutesByOrigin (origin: string): Promise<{ method: string, path: string }[]> {
+  getRoutesByOrigin (origin: string): CacheInterceptor.RouteByOrigin[] | Promise<CacheInterceptor.RouteByOrigin[]> {
     throw new Error('stub')
   },
 
