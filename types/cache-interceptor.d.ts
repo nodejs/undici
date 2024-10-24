@@ -49,6 +49,7 @@ declare namespace CacheHandler {
   export interface CacheStoreValue {
     statusCode: number;
     statusMessage: string;
+    etag?: string;
     rawHeaders: (Buffer | Buffer[])[];
     rawTrailers?: string[];
     /**
