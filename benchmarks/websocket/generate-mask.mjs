@@ -1,7 +1,7 @@
 import { randomFillSync, randomBytes } from 'node:crypto'
 import { bench, group, run } from 'mitata'
 
-const BUFFER_SIZE = 16384
+const BUFFER_SIZE = 8 * 1024
 
 const buf = Buffer.allocUnsafe(BUFFER_SIZE)
 let bufIdx = BUFFER_SIZE
