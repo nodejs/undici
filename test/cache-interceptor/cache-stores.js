@@ -3,6 +3,7 @@
 const { describe, test } = require('node:test')
 const { deepStrictEqual, notEqual, equal } = require('node:assert')
 const { once } = require('node:events')
+const { nowAbsolute } = require('../../lib/util/timers')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 
 cacheStoreTests(MemoryCacheStore)
@@ -32,9 +33,9 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
-        cachedAt: Date.now(),
-        staleAt: Date.now() + 10000,
-        deleteAt: Date.now() + 20000
+        cachedAt: nowAbsolute(),
+        staleAt: nowAbsolute() + 10000,
+        deleteAt: nowAbsolute() + 20000
       }
       const requestBody = ['asd', '123']
       const requestTrailers = ['a', 'b', 'c']
@@ -73,9 +74,9 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
-        cachedAt: Date.now(),
-        staleAt: Date.now() + 10000,
-        deleteAt: Date.now() + 20000
+        cachedAt: nowAbsolute(),
+        staleAt: nowAbsolute() + 10000,
+        deleteAt: nowAbsolute() + 20000
       }
       const anotherBody = ['asd2', '1234']
       const anotherTrailers = ['d', 'e', 'f']
@@ -112,9 +113,9 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
-        cachedAt: Date.now() - 10000,
-        staleAt: Date.now() - 1,
-        deleteAt: Date.now() + 20000
+        cachedAt: nowAbsolute() - 10000,
+        staleAt: nowAbsolute() - 1,
+        deleteAt: nowAbsolute() + 20000
       }
       const requestBody = ['part1', 'part2']
       const requestTrailers = [4, 5, 6]
@@ -146,9 +147,9 @@ function cacheStoreTests (CacheStore) {
       const requestValue = {
         statusCode: 200,
         statusMessage: '',
-        cachedAt: Date.now() - 20000,
-        staleAt: Date.now() - 10000,
-        deleteAt: Date.now() - 5
+        cachedAt: nowAbsolute() - 20000,
+        staleAt: nowAbsolute() - 10000,
+        deleteAt: nowAbsolute() - 5
       }
       const requestBody = ['part1', 'part2']
       const rawTrailers = ['4', '5', '6']
@@ -181,9 +182,9 @@ function cacheStoreTests (CacheStore) {
         vary: {
           'some-header': 'hello world'
         },
-        cachedAt: Date.now(),
-        staleAt: Date.now() + 10000,
-        deleteAt: Date.now() + 20000
+        cachedAt: nowAbsolute(),
+        staleAt: nowAbsolute() + 10000,
+        deleteAt: nowAbsolute() + 20000
       }
       const requestBody = ['part1', 'part2']
       const requestTrailers = ['4', '5', '6']
@@ -235,9 +236,9 @@ test('MemoryCacheStore locks values properly', async () => {
     statusCode: 200,
     statusMessage: '',
     rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
-    cachedAt: Date.now(),
-    staleAt: Date.now() + 10000,
-    deleteAt: Date.now() + 20000
+    cachedAt: nowAbsolute(),
+    staleAt: nowAbsolute() + 10000,
+    deleteAt: nowAbsolute() + 20000
   }
 
   const writable = store.createWriteStream(request, requestValue)
