@@ -1241,6 +1241,15 @@ test('Should throw informational error on half-closed streams (remote)', async t
       t.strictEqual(err.message, 'HTTP/2: stream half-closed (remote)')
       t.strictEqual(err.code, 'UND_ERR_INFO')
     })
+  await client
+    .request({
+      path: '/',
+      method: 'GET'
+    })
+    .catch(err => {
+      t.strictEqual(err.message, 'HTTP/2: stream half-closed (remote)')
+      t.strictEqual(err.code, 'UND_ERR_INFO')
+    })
 })
 
 test('#2364 - Concurrent aborts', async t => {
