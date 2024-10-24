@@ -15,7 +15,7 @@
   "dependencies": {
     "axios": "^1.6.7",
     "concurrently": "^9.0.0",
-    "cronometro": "^3.0.1",
+    "cronometro": "^4.0.0",
     "got": "^14.2.0",
     "mitata": "^1.0.4",
     "node-fetch": "^3.3.2",
