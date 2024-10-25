@@ -158,10 +158,6 @@ module.exports.WebSocketStream = require('./lib/web/websocket/stream/websocketst
 module.exports.WebSocketError = require('./lib/web/websocket/stream/websocketerror').WebSocketError
 
 module.exports.request = makeDispatcher(api.request)
-module.exports.stream = makeDispatcher(api.stream)
-module.exports.pipeline = makeDispatcher(api.pipeline)
-module.exports.connect = makeDispatcher(api.connect)
-module.exports.upgrade = makeDispatcher(api.upgrade)
 
 module.exports.MockClient = MockClient
 module.exports.MockPool = MockPool

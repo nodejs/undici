@@ -1,4 +1,3 @@
-import { Duplex, Readable, Writable } from 'stream'
 import { expectAssignable } from 'tsd'
 import { Agent, Dispatcher } from '../..'
 import { URL } from 'url'
@@ -17,7 +16,6 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
 
   // request
   expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: 'GET' }))
-  expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: '', path: '', method: 'GET', onInfo: (info) => {} }))
   expectAssignable<Promise<Dispatcher.ResponseData>>(agent.request({ origin: new URL('http://localhost'), path: '', method: 'GET' }))
   expectAssignable<void>(agent.request({ origin: '', path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
@@ -26,75 +24,6 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   expectAssignable<void>(agent.request({ origin: new URL('http://localhost'), path: '', method: 'GET' }, (err, data) => {
     expectAssignable<Error | null>(err)
     expectAssignable<Dispatcher.ResponseData>(data)
-  }))
-
-  // stream
-  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: '', path: '', method: 'GET' }, data => {
-    expectAssignable<Dispatcher.StreamFactoryData>(data)
-    return new Writable()
-  }))
-  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: '', path: '', method: 'GET', onInfo: (info) => {} }, data => {
-    expectAssignable<Dispatcher.StreamFactoryData>(data)
-    return new Writable()
-  }))
-  expectAssignable<Promise<Dispatcher.StreamData>>(agent.stream({ origin: new URL('http://localhost'), path: '', method: 'GET' }, data => {
-    expectAssignable<Dispatcher.StreamFactoryData>(data)
-    return new Writable()
-  }))
-  expectAssignable<void>(agent.stream(
-    { origin: '', path: '', method: 'GET' },
-    data => {
-      expectAssignable<Dispatcher.StreamFactoryData>(data)
-      return new Writable()
-    },
-    (err, data) => {
-      expectAssignable<Error | null>(err)
-      expectAssignable<Dispatcher.StreamData>(data)
-    }
-  ))
-  expectAssignable<void>(agent.stream(
-    { origin: new URL('http://localhost'), path: '', method: 'GET' },
-    data => {
-      expectAssignable<Dispatcher.StreamFactoryData>(data)
-      return new Writable()
-    },
-    (err, data) => {
-      expectAssignable<Error | null>(err)
-      expectAssignable<Dispatcher.StreamData>(data)
-    }
-  ))
-
-  // pipeline
-  expectAssignable<Duplex>(agent.pipeline({ origin: '', path: '', method: 'GET' }, data => {
-    expectAssignable<Dispatcher.PipelineHandlerData>(data)
-    return new Readable()
-  }))
-  expectAssignable<Duplex>(agent.pipeline({ origin: '', path: '', method: 'GET', onInfo: (info) => {} }, data => {
-    expectAssignable<Dispatcher.PipelineHandlerData>(data)
-    return new Readable()
-  }))
-  expectAssignable<Duplex>(agent.pipeline({ origin: new URL('http://localhost'), path: '', method: 'GET' }, data => {
-    expectAssignable<Dispatcher.PipelineHandlerData>(data)
-    return new Readable()
-  }))
-
-  // upgrade
-  expectAssignable<Promise<Dispatcher.UpgradeData>>(agent.upgrade({ path: '' }))
-  expectAssignable<void>(agent.upgrade({ path: '' }, (err, data) => {
-    expectAssignable<Error | null>(err)
-    expectAssignable<Dispatcher.UpgradeData>(data)
-  }))
-
-  // connect
-  expectAssignable<Promise<Dispatcher.ConnectData>>(agent.connect({ origin: '', path: '' }))
-  expectAssignable<Promise<Dispatcher.ConnectData>>(agent.connect({ origin: new URL('http://localhost'), path: '' }))
-  expectAssignable<void>(agent.connect({ origin: '', path: '' }, (err, data) => {
-    expectAssignable<Error | null>(err)
-    expectAssignable<Dispatcher.ConnectData>(data)
-  }))
-  expectAssignable<void>(agent.connect({ origin: new URL('http://localhost'), path: '' }, (err, data) => {
-    expectAssignable<Error | null>(err)
-    expectAssignable<Dispatcher.ConnectData>(data)
   }))
 
   // dispatch

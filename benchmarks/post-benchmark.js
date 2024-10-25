@@ -3,7 +3,7 @@
 const http = require('node:http')
 const os = require('node:os')
 const path = require('node:path')
-const { Writable, Readable, pipeline } = require('node:stream')
+const { Writable } = require('node:stream')
 const { isMainThread } = require('node:worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
@@ -181,32 +181,6 @@ const experiments = {
       request.end(data)
     })
   },
-  'undici - pipeline' () {
-    return makeParallelRequests(resolve => {
-      pipeline(
-        new Readable({
-          read () {
-            this.push(data)
-            this.push(null)
-          }
-        }),
-        dispatcher.pipeline(undiciOptions, ({ body }) => {
-          return body
-        }),
-        new Writable({
-          write (chunk, encoding, callback) {
-            callback()
-          }
-        }),
-        (err) => {
-          if (err != null) {
-            console.log(err)
-          }
-          resolve()
-        }
-      )
-    })
-  },
   'undici - request' () {
     return makeParallelRequests(resolve => {
       dispatcher.request(undiciOptions).then(({ body }) => {
@@ -220,19 +194,6 @@ const experiments = {
           )
           .on('finish', resolve)
       })
-    })
-  },
-  'undici - stream' () {
-    return makeParallelRequests(resolve => {
-      return dispatcher
-        .stream(undiciOptions, () => {
-          return new Writable({
-            write (chunk, encoding, callback) {
-              callback()
-            }
-          })
-        })
-        .then(resolve)
     })
   },
   'undici - dispatch' () {
