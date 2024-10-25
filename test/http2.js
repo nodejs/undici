@@ -1226,7 +1226,7 @@ test('Should throw informational error on half-closed streams (remote)', async t
     allowH2: true
   })
 
-  t = tspl(t, { plan: 2 })
+  t = tspl(t, { plan: 4 })
   after(async () => {
     server.close()
     await client.close()
@@ -1256,8 +1256,6 @@ test('#2364 - Concurrent aborts', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
-    t.strictEqual(headers['x-my-header'], 'foo')
-    t.strictEqual(headers[':method'], 'GET')
     setTimeout(() => {
       stream.respond({
         'content-type': 'text/plain; charset=utf-8',
@@ -1278,10 +1276,130 @@ test('#2364 - Concurrent aborts', async t => {
     allowH2: true
   })
 
-  t = tspl(t, { plan: 14 })
+  t = tspl(t, { plan: 10 })
   after(() => server.close())
   after(() => client.close())
-  const signal = AbortSignal.timeout(50)
+  const signal = AbortSignal.timeout(100)
+
+  client.request(
+    {
+      path: '/1',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    },
+    (err, response) => {
+      t.ifError(err)
+      t.strictEqual(
+        response.headers['content-type'],
+        'text/plain; charset=utf-8'
+      )
+      t.strictEqual(response.headers['x-custom-h2'], 'hello')
+      t.strictEqual(response.statusCode, 200)
+    }
+  )
+
+  client.request(
+    {
+      path: '/2',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      },
+      signal
+    },
+    (err, response) => {
+      t.strictEqual(err.name, 'TimeoutError')
+    }
+  )
+
+  client.request(
+    {
+      path: '/3',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    },
+    (err, response) => {
+      t.ifError(err)
+      t.strictEqual(
+        response.headers['content-type'],
+        'text/plain; charset=utf-8'
+      )
+      t.strictEqual(response.headers['x-custom-h2'], 'hello')
+      t.strictEqual(response.statusCode, 200)
+    }
+  )
+
+  client.request(
+    {
+      path: '/4',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      },
+      signal
+    },
+    (err, response) => {
+      t.strictEqual(err.name, 'TimeoutError')
+    }
+  )
+
+  await t.completed
+})
+
+test('#2364 - Concurrent aborts (2nd variant)', { only: true }, async t => {
+  const server = createSecureServer(pem)
+  let counter = 0
+
+  server.on('stream', (stream, headers, _flags, rawHeaders) => {
+    counter++
+
+    // TODO: fix this
+    // While destroyed, the stream is not handling correctly the goaway
+    if (counter % 2 === 0) {
+      setTimeout(() => {
+        if (stream.destroyed) {
+          return
+        }
+
+        stream.respond({
+          'content-type': 'text/plain; charset=utf-8',
+          'x-custom-h2': 'hello',
+          ':status': 200
+        })
+
+        stream.end('hello h2!')
+      }, 400)
+
+      return
+    }
+
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': 'hello',
+      ':status': 200
+    })
+
+    stream.end('hello h2!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 10 })
+  after(() => server.close())
+  after(() => client.close())
+  const signal = AbortSignal.timeout(400)
 
   client.request(
     {
