@@ -500,7 +500,7 @@ test('Should automatically resolve IPs (dual stack disabled - 6)', async t => {
 })
 
 test('Should we handle TTL (4)', async t => {
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 10 })
 
   let counter = 0
   let lookupCounter = 0
@@ -536,6 +536,10 @@ test('Should we handle TTL (4)', async t => {
           case 2:
             t.equal(isIP(url.hostname), 4)
             break
+
+          case 3:
+            t.equal(isIP(url.hostname), 4)
+            break
           default:
             t.fail('should not reach this point')
         }
@@ -546,31 +550,13 @@ test('Should we handle TTL (4)', async t => {
     dns({
       dualStack: false,
       affinity: 4,
-      maxTTL: 100,
+      maxTTL: 400,
       lookup: (origin, opts, cb) => {
         ++lookupCounter
         lookup(
           origin.hostname,
           { all: true, family: opts.affinity },
-          (err, addresses) => {
-            if (err) {
-              return cb(err)
-            }
-
-            const results = new Map()
-
-            for (const addr of addresses) {
-              const record = {
-                address: addr.address,
-                ttl: opts.maxTTL,
-                family: addr.family
-              }
-
-              results.set(`${record.address}:${record.family}`, record)
-            }
-
-            cb(null, results.values())
-          }
+          cb
         )
       }
     })
@@ -591,7 +577,7 @@ test('Should we handle TTL (4)', async t => {
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
 
-  await sleep(500)
+  await sleep(200)
 
   const response2 = await client.request({
     ...requestOptions,
@@ -600,11 +586,22 @@ test('Should we handle TTL (4)', async t => {
 
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
+
+  await sleep(300)
+
+  const response3 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response3.statusCode, 200)
+  t.equal(await response3.body.text(), 'hello world!')
+
   t.equal(lookupCounter, 2)
 })
 
 test('Should we handle TTL (6)', async t => {
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 10 })
 
   let counter = 0
   let lookupCounter = 0
@@ -642,6 +639,11 @@ test('Should we handle TTL (6)', async t => {
             // [::1] -> ::1
             t.equal(isIP(url.hostname.slice(1, 4)), 6)
             break
+
+          case 3:
+            // [::1] -> ::1
+            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            break
           default:
             t.fail('should not reach this point')
         }
@@ -652,31 +654,13 @@ test('Should we handle TTL (6)', async t => {
     dns({
       dualStack: false,
       affinity: 6,
-      maxTTL: 100,
+      maxTTL: 400,
       lookup: (origin, opts, cb) => {
         ++lookupCounter
         lookup(
           origin.hostname,
           { all: true, family: opts.affinity },
-          (err, addresses) => {
-            if (err) {
-              return cb(err)
-            }
-
-            const results = []
-
-            for (const addr of addresses) {
-              const record = {
-                address: addr.address,
-                ttl: opts.maxTTL,
-                family: addr.family
-              }
-
-              results.push(record)
-            }
-
-            cb(null, results)
-          }
+          cb
         )
       }
     })
@@ -706,6 +690,16 @@ test('Should we handle TTL (6)', async t => {
 
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
+
+  await sleep(300)
+
+  const response3 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response3.statusCode, 200)
+  t.equal(await response3.body.text(), 'hello world!')
   t.equal(lookupCounter, 2)
 })
 
