@@ -703,6 +703,97 @@ test('Should we handle TTL (6)', async t => {
   t.equal(lookupCounter, 2)
 })
 
+test('Should set lowest TTL between resolved and option maxTTL', async t => {
+  t = tspl(t, { plan: 9 })
+
+  let lookupCounter = 0
+  const server = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0, '127.0.0.1')
+
+  await once(server, 'listening')
+
+  const client = new Agent().compose(
+    dns({
+      dualStack: false,
+      affinity: 4,
+      maxTTL: 200,
+      lookup: (origin, opts, cb) => {
+        ++lookupCounter
+        cb(null, [
+          {
+            address: '127.0.0.1',
+            family: 4,
+            ttl: lookupCounter === 1 ? 50 : 500
+          }
+        ])
+      }
+    })
+  )
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  await sleep(100)
+
+  // 100ms: lookup since ttl = Math.min(50, maxTTL: 200)
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world!')
+
+  await sleep(100)
+
+  // 100ms: cached since ttl = Math.min(500, maxTTL: 200)
+  const response3 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response3.statusCode, 200)
+  t.equal(await response3.body.text(), 'hello world!')
+
+  await sleep(150)
+
+  // 250ms: lookup since ttl = Math.min(500, maxTTL: 200)
+  const response4 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response4.statusCode, 200)
+  t.equal(await response4.body.text(), 'hello world!')
+
+  t.equal(lookupCounter, 3)
+})
+
 test('Should handle max cached items', async t => {
   t = tspl(t, { plan: 9 })
 
