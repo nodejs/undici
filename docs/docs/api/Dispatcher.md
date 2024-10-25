@@ -648,6 +648,7 @@ if (statusCode === 200) {
 await body.dump()
 
 return null
+```
 
 ### `Dispatcher.stream(options, factory[, callback])`
 
