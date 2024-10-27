@@ -1399,7 +1399,7 @@ test('#2364 - Concurrent aborts (2nd variant)', { only: true }, async t => {
   t = tspl(t, { plan: 10 })
   after(() => server.close())
   after(() => client.close())
-  const signal = AbortSignal.timeout(400)
+  const signal = AbortSignal.timeout(300)
 
   client.request(
     {
