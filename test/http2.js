@@ -1342,7 +1342,7 @@ test('#2364 - Concurrent aborts', async t => {
   await t.completed
 })
 
-test('#2364 - Concurrent aborts (2nd variant)', { only: true }, async t => {
+test('#2364 - Concurrent aborts (2nd variant)', async t => {
   const server = createSecureServer(pem)
   let counter = 0
 
@@ -1566,6 +1566,72 @@ test('#3671 - Graceful close', async (t) => {
   })
 
   await client.close()
+
+  await t.completed
+})
+
+test('#3753 - Handle GOAWAY Gracefully', async (t) => {
+  const server = createSecureServer(pem)
+  let counter = 0
+  let session = null
+
+  server.on('session', s => {
+    session = s
+  })
+
+  server.on('stream', (stream) => {
+    counter++
+
+    // Due to the nature of the test, we need to ignore the error
+    // that is thrown when the session is destroyed and stream
+    // is in-flight
+    stream.on('error', () => {})
+    if (counter === 9 && session != null) {
+      session.goaway()
+      stream.end()
+    } else {
+      stream.respond({
+        'content-type': 'text/plain',
+        ':status': 200
+      })
+      setTimeout(() => {
+        stream.end('hello world')
+      }, 150)
+    }
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    pipelining: 2,
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 30 })
+  after(() => client.close())
+  after(() => server.close())
+
+  for (let i = 0; i < 15; i++) {
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    }, (err, response) => {
+      if (i === 9 || i === 8) {
+        t.strictEqual(err?.message, 'HTTP/2: "GOAWAY" frame received with code 0')
+        t.strictEqual(err?.code, 'UND_ERR_SOCKET')
+      } else {
+        t.ifError(err)
+        t.strictEqual(response.statusCode, 200)
+      }
+    })
+  }
 
   await t.completed
 })
