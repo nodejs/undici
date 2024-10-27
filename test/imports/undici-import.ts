@@ -1,6 +1,5 @@
 import { expectType } from 'tsd'
-import { Dispatcher, request } from '../../'
-import { interceptors } from '../../'
+import { Dispatcher, interceptors, request } from '../../'
 
 async function exampleCode () {
   const retry = interceptors.retry()
