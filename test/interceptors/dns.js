@@ -794,6 +794,578 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
   t.equal(lookupCounter, 3)
 })
 
+test('Should use all dns entries (dual stack)', async t => {
+  t = tspl(t, { plan: 16 })
+
+  let counter = 0
+  let lookupCounter = 0
+  const server = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        ++counter
+        const url = new URL(opts.origin)
+        switch (counter) {
+          case 1:
+            t.equal(url.hostname, '1.1.1.1')
+            break
+
+          case 2:
+            t.equal(url.hostname, '[::1]')
+            break
+
+          case 3:
+            t.equal(url.hostname, '2.2.2.2')
+            break
+
+          case 4:
+            t.equal(url.hostname, '[::2]')
+            break
+
+          case 5:
+            t.equal(url.hostname, '1.1.1.1')
+            break
+          default:
+            t.fail('should not reach this point')
+        }
+
+        url.hostname = '127.0.0.1'
+        opts.origin = url.toString()
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      lookup (origin, opts, cb) {
+        lookupCounter++
+        cb(null, [
+          { address: '::1', family: 6 },
+          { address: '::2', family: 6 },
+          { address: '1.1.1.1', family: 4 },
+          { address: '2.2.2.2', family: 4 }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  for (let i = 0; i < 5; i++) {
+    const response = await client.request({
+      ...requestOptions,
+      origin: `http://localhost:${server.address().port}`
+    })
+
+    t.equal(response.statusCode, 200)
+    t.equal(await response.body.text(), 'hello world!')
+  }
+
+  t.equal(lookupCounter, 1)
+})
+
+test('Should use all dns entries (dual stack disabled - 4)', async t => {
+  t = tspl(t, { plan: 10 })
+
+  let counter = 0
+  let lookupCounter = 0
+  const server = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        ++counter
+        const url = new URL(opts.origin)
+
+        switch (counter) {
+          case 1:
+            t.equal(url.hostname, '1.1.1.1')
+            break
+
+          case 2:
+            t.equal(url.hostname, '2.2.2.2')
+            break
+
+          case 3:
+            t.equal(url.hostname, '1.1.1.1')
+            break
+          default:
+            t.fail('should not reach this point')
+        }
+
+        url.hostname = '127.0.0.1'
+        opts.origin = url.toString()
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      dualStack: false,
+      lookup (origin, opts, cb) {
+        lookupCounter++
+        cb(null, [
+          { address: '1.1.1.1', family: 4 },
+          { address: '2.2.2.2', family: 4 }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response1 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response1.statusCode, 200)
+  t.equal(await response1.body.text(), 'hello world!')
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world!')
+
+  const response3 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response3.statusCode, 200)
+  t.equal(await response3.body.text(), 'hello world!')
+
+  t.equal(lookupCounter, 1)
+})
+
+test('Should use all dns entries (dual stack disabled - 6)', async t => {
+  t = tspl(t, { plan: 10 })
+
+  let counter = 0
+  let lookupCounter = 0
+  const server = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        ++counter
+        const url = new URL(opts.origin)
+
+        switch (counter) {
+          case 1:
+            t.equal(url.hostname, '[::1]')
+            break
+
+          case 2:
+            t.equal(url.hostname, '[::2]')
+            break
+
+          case 3:
+            t.equal(url.hostname, '[::1]')
+            break
+          default:
+            t.fail('should not reach this point')
+        }
+
+        url.hostname = '127.0.0.1'
+        opts.origin = url.toString()
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      dualStack: false,
+      affinity: 6,
+      lookup (origin, opts, cb) {
+        lookupCounter++
+        cb(null, [
+          { address: '::1', family: 6 },
+          { address: '::2', family: 6 }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response1 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response1.statusCode, 200)
+  t.equal(await response1.body.text(), 'hello world!')
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world!')
+
+  const response3 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response3.statusCode, 200)
+  t.equal(await response3.body.text(), 'hello world!')
+
+  t.equal(lookupCounter, 1)
+})
+
+test('Should handle single family resolved (dual stack)', async t => {
+  t = tspl(t, { plan: 7 })
+
+  let counter = 0
+  let lookupCounter = 0
+  const server = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        ++counter
+        const url = new URL(opts.origin)
+
+        switch (counter) {
+          case 1:
+            t.equal(isIP(url.hostname), 4)
+            break
+
+          case 2:
+            // [::1] -> ::1
+            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            break
+          default:
+            t.fail('should not reach this point')
+        }
+
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      lookup (origin, opts, cb) {
+        lookupCounter++
+        if (lookupCounter === 1) {
+          cb(null, [
+            { address: '127.0.0.1', family: 4, ttl: 50 }
+          ])
+        } else {
+          cb(null, [
+            { address: '::1', family: 6, ttl: 50 }
+          ])
+        }
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  await sleep(100)
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world!')
+
+  t.equal(lookupCounter, 2)
+})
+
+test('Should prefer affinity (dual stack - 4)', async t => {
+  t = tspl(t, { plan: 10 })
+
+  let counter = 0
+  let lookupCounter = 0
+  const server = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        ++counter
+        const url = new URL(opts.origin)
+
+        switch (counter) {
+          case 1:
+            t.equal(url.hostname, '1.1.1.1')
+            break
+
+          case 2:
+            t.equal(url.hostname, '2.2.2.2')
+            break
+
+          case 3:
+            t.equal(url.hostname, '1.1.1.1')
+            break
+          default:
+            t.fail('should not reach this point')
+        }
+
+        url.hostname = '127.0.0.1'
+        opts.origin = url.toString()
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      affinity: 4,
+      lookup (origin, opts, cb) {
+        lookupCounter++
+        cb(null, [
+          { address: '1.1.1.1', family: 4 },
+          { address: '2.2.2.2', family: 4 },
+          { address: '::1', family: 6 },
+          { address: '::2', family: 6 }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  await sleep(100)
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world!')
+
+  const response3 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response3.statusCode, 200)
+  t.equal(await response3.body.text(), 'hello world!')
+
+  t.equal(lookupCounter, 1)
+})
+
+test('Should prefer affinity (dual stack - 6)', async t => {
+  t = tspl(t, { plan: 10 })
+
+  let counter = 0
+  let lookupCounter = 0
+  const server = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        ++counter
+        const url = new URL(opts.origin)
+
+        switch (counter) {
+          case 1:
+            t.equal(url.hostname, '[::1]')
+            break
+
+          case 2:
+            t.equal(url.hostname, '[::2]')
+            break
+
+          case 3:
+            t.equal(url.hostname, '[::1]')
+            break
+          default:
+            t.fail('should not reach this point')
+        }
+
+        url.hostname = '127.0.0.1'
+        opts.origin = url.toString()
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      affinity: 6,
+      lookup (origin, opts, cb) {
+        lookupCounter++
+        cb(null, [
+          { address: '1.1.1.1', family: 4 },
+          { address: '2.2.2.2', family: 4 },
+          { address: '::1', family: 6 },
+          { address: '::2', family: 6 }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  await sleep(100)
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world!')
+
+  const response3 = await client.request({
+    ...requestOptions,
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response3.statusCode, 200)
+  t.equal(await response3.body.text(), 'hello world!')
+
+  t.equal(lookupCounter, 1)
+})
+
 test('Should handle max cached items', async t => {
   t = tspl(t, { plan: 9 })
 
