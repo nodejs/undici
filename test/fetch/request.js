@@ -11,8 +11,6 @@ const {
   fetch
 } = require('../../')
 
-const hasSignalReason = 'reason' in AbortSignal.prototype
-
 test('arg validation', async (t) => {
   // constructor
   assert.throws(() => {
@@ -261,25 +259,21 @@ test('pre aborted signal', () => {
   ac.abort('gwak')
   const req = new Request('http://asd', { signal: ac.signal })
   assert.strictEqual(req.signal.aborted, true)
-  if (hasSignalReason) {
-    assert.strictEqual(req.signal.reason, 'gwak')
-  }
+  assert.strictEqual(req.signal.reason, 'gwak')
 })
 
-test('post aborted signal', (t) => {
-  const { strictEqual, ok } = tspl(t, { plan: 2 })
+test('post aborted signal', async (t) => {
+  const { strictEqual, completed } = tspl(t, { plan: 2 })
 
   const ac = new AbortController()
   const req = new Request('http://asd', { signal: ac.signal })
   strictEqual(req.signal.aborted, false)
   ac.signal.addEventListener('abort', () => {
-    if (hasSignalReason) {
-      strictEqual(req.signal.reason, 'gwak')
-    } else {
-      ok(true)
-    }
+    strictEqual(req.signal.reason, 'gwak')
   }, { once: true })
   ac.abort('gwak')
+
+  await completed
 })
 
 test('pre aborted signal cloned', () => {
@@ -287,9 +281,7 @@ test('pre aborted signal cloned', () => {
   ac.abort('gwak')
   const req = new Request('http://asd', { signal: ac.signal }).clone()
   assert.strictEqual(req.signal.aborted, true)
-  if (hasSignalReason) {
-    assert.strictEqual(req.signal.reason, 'gwak')
-  }
+  assert.strictEqual(req.signal.reason, 'gwak')
 })
 
 test('URLSearchParams body with Headers object - issue #1407', async () => {
@@ -313,20 +305,18 @@ test('URLSearchParams body with Headers object - issue #1407', async () => {
   assert.strictEqual(await request.text(), 'abc=123')
 })
 
-test('post aborted signal cloned', (t) => {
-  const { strictEqual, ok } = tspl(t, { plan: 2 })
+test('post aborted signal cloned', async (t) => {
+  const { strictEqual, completed } = tspl(t, { plan: 2 })
 
   const ac = new AbortController()
   const req = new Request('http://asd', { signal: ac.signal }).clone()
   strictEqual(req.signal.aborted, false)
   ac.signal.addEventListener('abort', () => {
-    if (hasSignalReason) {
-      strictEqual(req.signal.reason, 'gwak')
-    } else {
-      ok(true)
-    }
+    strictEqual(req.signal.reason, 'gwak')
   }, { once: true })
   ac.abort('gwak')
+
+  await completed
 })
 
 test('Passing headers in init', async (t) => {

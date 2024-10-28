@@ -6,10 +6,15 @@ const { once } = require('events')
 const { test } = require('node:test')
 const { closeServerAsPromise } = require('../utils/node-http')
 const { strictEqual } = require('node:assert')
+const util = require('../../lib/core/util')
+
+// https://github.com/nodejs/node/commit/d4736060404726a24d4e52647b8c9b88914b8ddf
+const isFixedOrderAbortSignalAny = typeof AbortSignal.any === 'function' && util.nodeMajor >= 23
 
 const isNode18 = process.version.startsWith('v18')
 
-test('long-lived-abort-controller', { skip: isNode18 }, async (t) => {
+// TODO: Drop support below node v23, then delete this.
+test('long-lived-abort-controller', { skip: isNode18 || isFixedOrderAbortSignalAny }, async (t) => {
   const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.write('Hello World!')
