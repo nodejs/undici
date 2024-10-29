@@ -12,8 +12,7 @@ const isNode18 = process.version.startsWith('v18')
 test('long-lived-abort-controller', { skip: isNode18 }, async (t) => {
   const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
-    res.write('Hello World!')
-    res.end()
+    res.end('Hello World!')
   }).listen(0)
 
   await once(server, 'listening')
@@ -41,7 +40,10 @@ test('long-lived-abort-controller', { skip: isNode18 }, async (t) => {
     })
 
     // drain body
-    await res.text()
+    await res.arrayBuffer()
+
+    // wait 1 microtask
+    await null
   }
 
   strictEqual(warningEmitted, false)
