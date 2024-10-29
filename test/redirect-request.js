@@ -227,6 +227,34 @@ for (const factory of [
     await t.completed
   })
 
+  test('should remove Host and request body related headers when following HTTP 303 (Headers)', async t => {
+    t = tspl(t, { plan: 3 })
+
+    const server = await startRedirectingServer()
+
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/303`, {
+      method: 'PATCH',
+      headers: new Headers({
+        'Content-Encoding': 'gzip',
+        'X-Foo1': '1',
+        'X-Foo2': '2',
+        'Content-Type': 'application/json',
+        'X-Foo3': '3',
+        Host: 'localhost',
+        'X-Bar': '4'
+      }),
+      maxRedirections: 10
+    })
+
+    const body = await bodyStream.text()
+
+    t.strictEqual(statusCode, 200)
+    t.ok(!headers.location)
+    t.strictEqual(body, `GET /5 :: host@${server} connection@keep-alive x-bar@4 x-foo1@1 x-foo2@2 x-foo3@3`)
+
+    await t.completed
+  })
+
   test('should follow redirection after a HTTP 307', async t => {
     t = tspl(t, { plan: 3 })
 
