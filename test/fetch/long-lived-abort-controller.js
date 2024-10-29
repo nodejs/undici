@@ -24,9 +24,6 @@ test('long-lived-abort-controller', { skip: isNode18 }, async (t) => {
     warningEmitted = true
   }
   process.on('warning', onWarning)
-  t.after(() => {
-    process.off('warning', onWarning)
-  })
 
   const controller = new AbortController()
 
@@ -45,6 +42,8 @@ test('long-lived-abort-controller', { skip: isNode18 }, async (t) => {
     // wait 1 microtask
     await null
   }
+
+  process.off('warning', onWarning)
 
   strictEqual(warningEmitted, false)
 })
