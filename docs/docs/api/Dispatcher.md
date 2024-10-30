@@ -978,7 +978,7 @@ const client = new Client("http://example.com").compose(
 The `dump` interceptor enables you to dump the response body from a request upon a given limit.
 
 **Options**
-- `maxSize` - The maximum size (in bytes) of the response body to dump. If the size of the request's body exceeds this value then the connection will be closed. Default: `1048576`.
+- `maxSize` - The maximum size (in bytes) of the response body to dump. If the size of the response's body exceeds this value then the connection will be closed. Default: `null`.
 
 > The `Dispatcher#options` also gets extended with the options `dumpMaxSize`, `abortOnDumped`, and `waitForTrailers` which can be used to configure the interceptor at a request-per-request basis.
 
@@ -1021,7 +1021,7 @@ The `dns` interceptor enables you to cache DNS lookups for a given duration, per
   - It can be either `'4` or `6`.
   - It will only take effect if `dualStack` is `false`.
 - `lookup: (hostname: string, options: LookupOptions, callback: (err: NodeJS.ErrnoException | null, addresses: DNSInterceptorRecord[]) => void) => void` - Custom lookup function. Default: `dns.lookup`.
-  - For more info see [dns.lookup](https://nodejs.org/api/dns.html#dns_dns_lookup_hostname_options_callback). 
+  - For more info see [dns.lookup](https://nodejs.org/api/dns.html#dns_dns_lookup_hostname_options_callback).
 - `pick: (origin: URL, records: DNSInterceptorRecords, affinity: 4 | 6) => DNSInterceptorRecord` - Custom pick function. Default: `RoundRobin`.
   - The function should return a single record from the records array.
   - By default a simplified version of Round Robin is used.
