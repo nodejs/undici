@@ -1349,8 +1349,6 @@ test('#2364 - Concurrent aborts (2nd variant)', async t => {
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
     counter++
 
-    // TODO: fix this
-    // While destroyed, the stream is not handling correctly the goaway
     if (counter % 2 === 0) {
       setTimeout(() => {
         if (stream.destroyed) {
