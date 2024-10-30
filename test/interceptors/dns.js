@@ -1396,11 +1396,6 @@ test('Should use resolved ports', async t => {
   await Promise.all([once(server1, 'listening'), once(server2, 'listening')])
 
   const client = new Agent().compose([
-    dispatch => {
-      return (opts, handler) => {
-        return dispatch(opts, handler)
-      }
-    },
     dns({
       lookup (origin, opts, cb) {
         lookupCounter++
