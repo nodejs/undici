@@ -1366,7 +1366,7 @@ test('Should prefer affinity (dual stack - 6)', async t => {
   t.equal(lookupCounter, 1)
 })
 
-test('Should use resolved ports', async t => {
+test('Should use resolved ports (4)', async t => {
   t = tspl(t, { plan: 5 })
 
   let lookupCounter = 0
@@ -1402,6 +1402,74 @@ test('Should use resolved ports', async t => {
         cb(null, [
           { address: '127.0.0.1', family: 4, port: server1.address().port },
           { address: '127.0.0.1', family: 4, port: server2.address().port }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server1.close()
+    server2.close()
+
+    await Promise.all([once(server1, 'close'), once(server2, 'close')])
+  })
+
+  const response = await client.request({
+    ...requestOptions,
+    origin: 'http://localhost'
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: 'http://localhost'
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world! (x2)')
+
+  t.equal(lookupCounter, 1)
+})
+
+test('Should use resolved ports (6)', async t => {
+  t = tspl(t, { plan: 5 })
+
+  let lookupCounter = 0
+  const server1 = createServer()
+  const server2 = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server1.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server1.listen(0, '::1')
+
+  server2.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world! (x2)')
+  })
+  server2.listen(0, '::1')
+
+  await Promise.all([once(server1, 'listening'), once(server2, 'listening')])
+
+  const client = new Agent().compose([
+    dns({
+      lookup (origin, opts, cb) {
+        lookupCounter++
+        cb(null, [
+          { address: '::1', family: 6, port: server1.address().port },
+          { address: '::1', family: 6, port: server2.address().port }
         ])
       }
     })
