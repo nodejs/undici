@@ -61,7 +61,7 @@ declare class BodyReadable extends Readable {
   readonly body: never | undefined
 
   /** Dumps the response body by reading `limit` number of bytes.
-   * @param opts.limit Number of bytes to read (optional) - Default: 131072
+   * @param opts.limit Number of bytes to read (optional)
    * @param opts.signal AbortSignal to cancel the operation (optional)
    */
   dump (opts?: { limit: number; signal?: AbortSignal }): Promise<void>
