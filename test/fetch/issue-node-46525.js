@@ -4,9 +4,14 @@ const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
+const util = require('../../lib/core/util')
 
+// https://github.com/nodejs/node/commit/d4736060404726a24d4e52647b8c9b88914b8ddf
+const isFixedOrderAbortSignalAny = typeof AbortSignal.any === 'function' && util.nodeMajor >= 23
+
+// TODO: Drop support below node v23, then delete this.
 // https://github.com/nodejs/node/issues/46525
-test('No warning when reusing AbortController', async (t) => {
+test('No warning when reusing AbortController', { skip: isFixedOrderAbortSignalAny }, async (t) => {
   function onWarning () {
     throw new Error('Got warning')
   }
