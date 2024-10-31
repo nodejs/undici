@@ -136,12 +136,13 @@ const { kConstruct } = require('./lib/core/symbols')
 // in an older version of Node, it doesn't have any use without fetch.
 module.exports.caches = new CacheStorage(kConstruct)
 
-const { deleteCookie, getCookies, getSetCookies, setCookie } = require('./lib/web/cookies')
+const { deleteCookie, getCookies, getSetCookies, setCookie, parseCookie } = require('./lib/web/cookies')
 
 module.exports.deleteCookie = deleteCookie
 module.exports.getCookies = getCookies
 module.exports.getSetCookies = getSetCookies
 module.exports.setCookie = setCookie
+module.exports.parseCookie = parseCookie
 
 const { parseMIMEType, serializeAMimeType } = require('./lib/web/fetch/data-url')
 
