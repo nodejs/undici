@@ -339,7 +339,7 @@ test('Should throw when on dual-stack disabled (6)', { only: true }, async t => 
   if (isWindows) {
     const promise = client.request({
       ...requestOptions,
-      origin: 'http://localhost',
+      origin: 'http://localhost:9999',
       headersTimeout: 500
     })
 
@@ -352,7 +352,7 @@ test('Should throw when on dual-stack disabled (6)', { only: true }, async t => 
   } else {
     const promise = client.request({
       ...requestOptions,
-      origin: 'http://localhost'
+      origin: 'http://localhost:9999'
     })
 
     await t.rejects(promise, 'ECONNREFUSED')
