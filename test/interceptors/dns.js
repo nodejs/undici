@@ -343,7 +343,12 @@ test('Should throw when on dual-stack disabled (6)', { only: true }, async t => 
       headersTimeout: 500
     })
 
-    await t.rejects(promise, 'UND_ERR_HEADERS_TIMEOUT')
+    await t.rejects(promise.then(res => {
+      console.log(res)
+    }, err => {
+      console.log(err)
+      throw err
+    }), 'UND_ERR_HEADERS_TIMEOUT')
   } else {
     const promise = client.request({
       ...requestOptions,
