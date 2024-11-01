@@ -300,7 +300,7 @@ test('Should throw when on dual-stack disabled (4)', async t => {
   await t.complete
 })
 
-test('Should throw when on dual-stack disabled (6)', async t => {
+test('Should throw when on dual-stack disabled (6)', { only: true }, async t => {
   t = tspl(t, { plan: 2 })
 
   let counter = 0

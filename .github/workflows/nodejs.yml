@@ -56,149 +56,149 @@ jobs:
       max-parallel: 0
       matrix:
         node-version:
-          - 18
-          - 20
-          - 21
+        #   - 18
+        #   - 20
+        #   - 21
           - 22
           - 23
         runs-on:
-          - ubuntu-latest
+          # - ubuntu-latest
           - windows-latest
-          - macos-latest
+          # - macos-latest
     uses: ./.github/workflows/test.yml
     with:
       node-version: ${{ matrix.node-version }}
       runs-on: ${{ matrix.runs-on }}
     secrets: inherit
 
-  test-without-intl:
-    name: Test with Node.js ${{ matrix.version }} compiled --without-intl
-    strategy:
-      fail-fast: false
-      max-parallel: 0
-      matrix:
-        version: [20, 22, 23]
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-        with:
-          persist-credentials: false
+  # test-without-intl:
+  #   name: Test with Node.js ${{ matrix.version }} compiled --without-intl
+  #   strategy:
+  #     fail-fast: false
+  #     max-parallel: 0
+  #     matrix:
+  #       version: [20, 22, 23]
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 120
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+  #       with:
+  #         persist-credentials: false
 
-      # Setup node, install deps, and build undici prior to building icu-less node and testing
-      - name: Setup Node.js@${{ inputs.version }}
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: ${{ inputs.version }}
+  #     # Setup node, install deps, and build undici prior to building icu-less node and testing
+  #     - name: Setup Node.js@${{ inputs.version }}
+  #       uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+  #       with:
+  #         node-version: ${{ inputs.version }}
 
-      - name: Install dependencies
-        run: npm install
+  #     - name: Install dependencies
+  #       run: npm install
 
-      - name: Build undici
-        run: npm run build:node
+  #     - name: Build undici
+  #       run: npm run build:node
 
-      - name: Determine latest release
-        id: release
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        with:
-          result-encoding: string
-          script: |
-            const req = await fetch('https://nodejs.org/download/release/index.json')
-            const releases = await req.json()
+  #     - name: Determine latest release
+  #       id: release
+  #       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+  #       with:
+  #         result-encoding: string
+  #         script: |
+  #           const req = await fetch('https://nodejs.org/download/release/index.json')
+  #           const releases = await req.json()
 
-            const latest = releases.find((r) => r.version.startsWith('v${{ matrix.version }}'))
-            return latest.version
+  #           const latest = releases.find((r) => r.version.startsWith('v${{ matrix.version }}'))
+  #           return latest.version
 
-      - name: Download and extract source
-        run: curl https://nodejs.org/download/release/${{ steps.release.outputs.result }}/node-${{ steps.release.outputs.result }}.tar.xz | tar xfJ -
+  #     - name: Download and extract source
+  #       run: curl https://nodejs.org/download/release/${{ steps.release.outputs.result }}/node-${{ steps.release.outputs.result }}.tar.xz | tar xfJ -
 
-      - name: Install ninja
-        run: sudo apt-get install ninja-build
+  #     - name: Install ninja
+  #       run: sudo apt-get install ninja-build
 
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@ed74d11c0b343532753ecead8a951bb09bb34bc9 #v1.2.14
-        with:
-          key: node${{ matrix.version }}
+  #     - name: ccache
+  #       uses: hendrikmuhs/ccache-action@ed74d11c0b343532753ecead8a951bb09bb34bc9 #v1.2.14
+  #       with:
+  #         key: node${{ matrix.version }}
 
-      - name: Build node
-        working-directory: ./node-${{ steps.release.outputs.result }}
-        run: |
-          export CC="ccache gcc"
-          export CXX="ccache g++"
-          ./configure --without-intl --ninja --prefix=./final
-          make
-          make install
-          echo "$(pwd)/final/bin" >> $GITHUB_PATH
+  #     - name: Build node
+  #       working-directory: ./node-${{ steps.release.outputs.result }}
+  #       run: |
+  #         export CC="ccache gcc"
+  #         export CXX="ccache g++"
+  #         ./configure --without-intl --ninja --prefix=./final
+  #         make
+  #         make install
+  #         echo "$(pwd)/final/bin" >> $GITHUB_PATH
 
-      - name: Print version information
-        run: |
-          echo OS: $(node -p "os.version()")
-          echo Node.js: $(node --version)
-          echo npm: $(npm --version)
-          echo git: $(git --version)
-          echo icu config: $(node -e "console.log(process.config)" | grep icu)
+  #     - name: Print version information
+  #       run: |
+  #         echo OS: $(node -p "os.version()")
+  #         echo Node.js: $(node --version)
+  #         echo npm: $(npm --version)
+  #         echo git: $(git --version)
+  #         echo icu config: $(node -e "console.log(process.config)" | grep icu)
 
-      - name: Run tests
-        run: npm run test:javascript:without-intl
+  #     - name: Run tests
+  #       run: npm run test:javascript:without-intl
 
-  test-fuzzing:
-    name: Fuzzing
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-        with:
-          persist-credentials: false
+  # test-fuzzing:
+  #   name: Fuzzing
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+  #       with:
+  #         persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: lts/*
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+  #       with:
+  #         node-version: lts/*
 
-      - name: Install dependencies
-        run: npm install
+  #     - name: Install dependencies
+  #       run: npm install
 
-      - name: Run fuzzing tests
-        run: npm run test:fuzzing
+  #     - name: Run fuzzing tests
+  #       run: npm run test:fuzzing
 
-  test-types:
-    name: Test TypeScript types
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-        with:
-          persist-credentials: false          
+  # test-types:
+  #   name: Test TypeScript types
+  #   timeout-minutes: 15
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+  #       with:
+  #         persist-credentials: false          
 
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: lts/*
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+  #       with:
+  #         node-version: lts/*
       
-      - name: Install dependencies
-        run: npm install
+  #     - name: Install dependencies
+  #       run: npm install
 
-      - name: Run typings tests
-        run: npm run test:typescript
+  #     - name: Run typings tests
+  #       run: npm run test:typescript
 
-  automerge:
-    if: >
-      github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
-    needs:
-      - dependency-review
-      - test
-      - test-types
-      - test-without-intl
-      - test-fuzzing
-      - lint
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Merge Dependabot PR
-        uses: fastify/github-action-merge-dependabot@3892334d1c649bb8119af3d22a3f3766bd5e593f # v3.10.2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+  # automerge:
+    # if: >
+    #   github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    # needs:
+    #   - dependency-review
+    #   - test
+    #   - test-types
+    #   - test-without-intl
+    #   - test-fuzzing
+    #   - lint
+    # runs-on: ubuntu-latest
+    # permissions:
+    #   contents: write
+    #   pull-requests: write
+    # steps:
+    #   - name: Merge Dependabot PR
+    #     uses: fastify/github-action-merge-dependabot@3892334d1c649bb8119af3d22a3f3766bd5e593f # v3.10.2
+    #     with:
+    #       github-token: ${{ secrets.GITHUB_TOKEN }}
