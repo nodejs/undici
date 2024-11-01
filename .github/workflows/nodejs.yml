@@ -56,15 +56,15 @@ jobs:
       max-parallel: 0
       matrix:
         node-version:
-        #   - 18
-        #   - 20
-        #   - 21
+          - 18
+          - 20
+          - 21
           - 22
           - 23
         runs-on:
-          # - ubuntu-latest
+          - ubuntu-latest
           - windows-latest
-          # - macos-latest
+          - macos-latest
     uses: ./.github/workflows/test.yml
     with:
       node-version: ${{ matrix.node-version }}

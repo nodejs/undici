@@ -53,7 +53,7 @@ jobs:
 
       - name: Run tests
         if: steps.coverage.outcome == 'skipped'
-        run: npm run test
+        run: npm run test:javascript
         env:
           CI: true
 
