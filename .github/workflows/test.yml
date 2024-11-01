@@ -52,7 +52,7 @@ jobs:
           NODE_V8_COVERAGE: ./coverage/tmp
 
       - name: Run tests
-        # if: steps.coverage.outcome == 'skipped'
+        if: steps.coverage.outcome == 'skipped'
         run: npm run test
         env:
           CI: true

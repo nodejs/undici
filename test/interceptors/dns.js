@@ -348,7 +348,7 @@ test('Should throw when on dual-stack disabled (6)', { only: true }, async t => 
     }, err => {
       console.log(err)
       throw err
-    }), 'UND_ERR_HEADERS_TIMEOUT')
+    }), 'ECONNREFUSED')
   } else {
     const promise = client.request({
       ...requestOptions,
