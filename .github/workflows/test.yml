@@ -53,7 +53,7 @@ jobs:
 
       - name: Run tests
         # if: steps.coverage.outcome == 'skipped'
-        run: npm run test:h2
+        run: npm run test:interceptors
         env:
           CI: true
 
