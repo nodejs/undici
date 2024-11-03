@@ -68,7 +68,20 @@ test('Should automatically resolve IPs (dual stack)', { only: true }, async t =>
         return dispatch(opts, handler)
       }
     },
-    dns()
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
   ])
 
   after(async () => {
