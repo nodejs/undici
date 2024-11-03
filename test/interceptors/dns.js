@@ -27,7 +27,7 @@ test('Should validate options', t => {
   t.throws(() => dns({ pick: [] }), { code: 'UND_ERR_INVALID_ARG' })
 })
 
-test('Should automatically resolve IPs (dual stack)', { only: true }, async t => {
+test('Should automatically resolve IPs (dual stack)', async t => {
   t = tspl(t, { plan: 8 })
 
   const hostsnames = []
@@ -334,7 +334,7 @@ test('Should throw when on dual-stack disabled (4)', async t => {
   await t.complete
 })
 
-test('Should throw when on dual-stack disabled (6)', { only: true }, async t => {
+test('Should throw when on dual-stack disabled (6)', async t => {
   t = tspl(t, { plan: 2 })
 
   let counter = 0
