@@ -13,27 +13,23 @@ proxyServer.on('request', (req, res) => {
   console.log(`Incoming request to ${req.url}`)
 })
 
-const main = async () => {
-  await once(proxyServer.listen(0), 'listening')
-  await once(server.listen(0), 'listening')
+await once(proxyServer.listen(0), 'listening')
+await once(server.listen(0), 'listening')
 
-  const { port: proxyPort } = proxyServer.address()
-  const { port } = server.address()
+const { port: proxyPort } = proxyServer.address()
+const { port } = server.address()
 
-  console.log(`Proxy listening on port ${proxyPort}`)
-  console.log(`Server listening on port ${port}`)
-  try {
-    // undici does a tunneling to the proxy server using CONNECT.
-    const agent = new ProxyAgent(`http://localhost:${proxyPort}`)
-    const response = await fetch(`http://localhost:${port}`, {
-      dispatcher: agent,
-      method: 'GET'
-    })
-    const data = await response.text()
-    console.log('Response data:', data)
-  } catch (e) {
-    console.log(e)
-  }
+console.log(`Proxy listening on port ${proxyPort}`)
+console.log(`Server listening on port ${port}`)
+try {
+  // undici does a tunneling to the proxy server using CONNECT.
+  const agent = new ProxyAgent(`http://localhost:${proxyPort}`)
+  const response = await fetch(`http://localhost:${port}`, {
+    dispatcher: agent,
+    method: 'GET'
+  })
+  const data = await response.text()
+  console.log('Response data:', data)
+} catch (e) {
+  console.log(e)
 }
-
-main()
