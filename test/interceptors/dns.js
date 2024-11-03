@@ -27,10 +27,10 @@ test('Should validate options', t => {
   t.throws(() => dns({ pick: [] }), { code: 'UND_ERR_INVALID_ARG' })
 })
 
-test('Should automatically resolve IPs (dual stack)', async t => {
-  t = tspl(t, { plan: 6 })
+test('Should automatically resolve IPs (dual stack)', { only: true }, async t => {
+  t = tspl(t, { plan: 8 })
 
-  let counter = 0
+  const hostsnames = []
   const server = createServer()
   const requestOptions = {
     method: 'GET',
@@ -52,23 +52,18 @@ test('Should automatically resolve IPs (dual stack)', async t => {
   const client = new Agent().compose([
     dispatch => {
       return (opts, handler) => {
-        ++counter
         const url = new URL(opts.origin)
 
-        console.log('url.hostname', url.hostname)
+        t.equal(hostsnames.includes(url.hostname), false)
 
-        switch (counter) {
-          case 1:
-            t.equal(isIP(url.hostname), 4)
-            break
-
-          case 2:
-            // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
-            break
-          default:
-            t.fail('should not reach this point')
+        if (url.hostname[0] === '[') {
+          // [::1] -> ::1
+          t.equal(isIP(url.hostname.slice(1, 4)), 6)
+        } else {
+          t.equal(isIP(url.hostname), 4)
         }
+
+        hostsnames.push(url.hostname)
 
         return dispatch(opts, handler)
       }
