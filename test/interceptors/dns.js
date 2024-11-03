@@ -55,6 +55,8 @@ test('Should automatically resolve IPs (dual stack)', async t => {
         ++counter
         const url = new URL(opts.origin)
 
+        console.log('url.hostname', url.hostname)
+
         switch (counter) {
           case 1:
             t.equal(isIP(url.hostname), 4)
