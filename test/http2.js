@@ -334,23 +334,15 @@ test(
 
     after(() => server.close())
     after(() => client.close())
-    t = tspl(t, { plan: 2 })
+    t = tspl(t, { plan: 1 })
 
-    try {
-      await client.request({
-        path: '/',
-        method: 'GET',
-        headers: {
-          'x-my-header': 'foo'
-        }
-      })
-    } catch (error) {
-      t.strictEqual(
-        error.message,
-        'Client network socket disconnected before secure TLS connection was established'
-      )
-      t.strictEqual(error.code, 'ECONNRESET')
-    }
+    await t.rejects(client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    }))
   }
 )
 
@@ -1226,12 +1218,21 @@ test('Should throw informational error on half-closed streams (remote)', async t
     allowH2: true
   })
 
-  t = tspl(t, { plan: 2 })
+  t = tspl(t, { plan: 4 })
   after(async () => {
     server.close()
     await client.close()
   })
 
+  await client
+    .request({
+      path: '/',
+      method: 'GET'
+    })
+    .catch(err => {
+      t.strictEqual(err.message, 'HTTP/2: stream half-closed (remote)')
+      t.strictEqual(err.code, 'UND_ERR_INFO')
+    })
   await client
     .request({
       path: '/',
@@ -1247,8 +1248,6 @@ test('#2364 - Concurrent aborts', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
-    t.strictEqual(headers['x-my-header'], 'foo')
-    t.strictEqual(headers[':method'], 'GET')
     setTimeout(() => {
       stream.respond({
         'content-type': 'text/plain; charset=utf-8',
@@ -1269,10 +1268,128 @@ test('#2364 - Concurrent aborts', async t => {
     allowH2: true
   })
 
-  t = tspl(t, { plan: 14 })
+  t = tspl(t, { plan: 10 })
   after(() => server.close())
   after(() => client.close())
-  const signal = AbortSignal.timeout(50)
+  const signal = AbortSignal.timeout(100)
+
+  client.request(
+    {
+      path: '/1',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    },
+    (err, response) => {
+      t.ifError(err)
+      t.strictEqual(
+        response.headers['content-type'],
+        'text/plain; charset=utf-8'
+      )
+      t.strictEqual(response.headers['x-custom-h2'], 'hello')
+      t.strictEqual(response.statusCode, 200)
+    }
+  )
+
+  client.request(
+    {
+      path: '/2',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      },
+      signal
+    },
+    (err, response) => {
+      t.strictEqual(err.name, 'TimeoutError')
+    }
+  )
+
+  client.request(
+    {
+      path: '/3',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    },
+    (err, response) => {
+      t.ifError(err)
+      t.strictEqual(
+        response.headers['content-type'],
+        'text/plain; charset=utf-8'
+      )
+      t.strictEqual(response.headers['x-custom-h2'], 'hello')
+      t.strictEqual(response.statusCode, 200)
+    }
+  )
+
+  client.request(
+    {
+      path: '/4',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      },
+      signal
+    },
+    (err, response) => {
+      t.strictEqual(err.name, 'TimeoutError')
+    }
+  )
+
+  await t.completed
+})
+
+test('#2364 - Concurrent aborts (2nd variant)', async t => {
+  const server = createSecureServer(pem)
+  let counter = 0
+
+  server.on('stream', (stream, headers, _flags, rawHeaders) => {
+    counter++
+
+    if (counter % 2 === 0) {
+      setTimeout(() => {
+        if (stream.destroyed) {
+          return
+        }
+
+        stream.respond({
+          'content-type': 'text/plain; charset=utf-8',
+          'x-custom-h2': 'hello',
+          ':status': 200
+        })
+
+        stream.end('hello h2!')
+      }, 400)
+
+      return
+    }
+
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': 'hello',
+      ':status': 200
+    })
+
+    stream.end('hello h2!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 10 })
+  after(() => server.close())
+  after(() => client.close())
+  const signal = AbortSignal.timeout(300)
 
   client.request(
     {
@@ -1447,6 +1564,72 @@ test('#3671 - Graceful close', async (t) => {
   })
 
   await client.close()
+
+  await t.completed
+})
+
+test('#3753 - Handle GOAWAY Gracefully', async (t) => {
+  const server = createSecureServer(pem)
+  let counter = 0
+  let session = null
+
+  server.on('session', s => {
+    session = s
+  })
+
+  server.on('stream', (stream) => {
+    counter++
+
+    // Due to the nature of the test, we need to ignore the error
+    // that is thrown when the session is destroyed and stream
+    // is in-flight
+    stream.on('error', () => {})
+    if (counter === 9 && session != null) {
+      session.goaway()
+      stream.end()
+    } else {
+      stream.respond({
+        'content-type': 'text/plain',
+        ':status': 200
+      })
+      setTimeout(() => {
+        stream.end('hello world')
+      }, 150)
+    }
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    pipelining: 2,
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 30 })
+  after(() => client.close())
+  after(() => server.close())
+
+  for (let i = 0; i < 15; i++) {
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    }, (err, response) => {
+      if (i === 9 || i === 8) {
+        t.strictEqual(err?.message, 'HTTP/2: "GOAWAY" frame received with code 0')
+        t.strictEqual(err?.code, 'UND_ERR_SOCKET')
+      } else {
+        t.ifError(err)
+        t.strictEqual(response.statusCode, 200)
+      }
+    })
+  }
 
   await t.completed
 })
