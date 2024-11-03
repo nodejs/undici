@@ -52,7 +52,7 @@ jobs:
 
   test:
     strategy:
-      fail-fast: true
+      fail-fast: false
       max-parallel: 0
       matrix:
         node-version:
