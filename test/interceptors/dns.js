@@ -162,7 +162,20 @@ test('Should recover on network errors (dual stack - 4)', async t => {
         return dispatch(opts, handler)
       }
     },
-    dns()
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
   ])
 
   after(async () => {
@@ -238,7 +251,20 @@ test('Should recover on network errors (dual stack - 6)', async t => {
         return dispatch(opts, handler)
       }
     },
-    dns()
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
   ])
 
   after(async () => {
@@ -1419,7 +1445,21 @@ test('Should handle max cached items', async t => {
         return dispatch(opts, handler)
       }
     },
-    dns({ maxItems: 1 })
+    dns({
+      maxItems: 1,
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
   ])
 
   after(async () => {
