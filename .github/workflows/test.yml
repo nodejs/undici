@@ -43,13 +43,13 @@ jobs:
         run: npm ls --all
         continue-on-error: true
 
-      # - name: Run tests with coverage
-      #   id: coverage
-      #   if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 22
-      #   run: npm run coverage:ci
-      #   env:
-      #     CI: true
-      #     NODE_V8_COVERAGE: ./coverage/tmp
+      - name: Run tests with coverage
+        id: coverage
+        if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 22
+        run: npm run coverage:ci
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ./coverage/tmp
 
       - name: Run tests
         # if: steps.coverage.outcome == 'skipped'
@@ -57,8 +57,8 @@ jobs:
         env:
           CI: true
 
-      # - name: Coverage Report
-      #   if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 20
-      #   uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Coverage Report
+        if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 20
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
