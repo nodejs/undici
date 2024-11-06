@@ -33,7 +33,6 @@ test('should throw error for error response', async () => {
   let error
   try {
     await client.request({
-      throwOnResponseError: true,
       method: 'GET',
       path: '/',
       headers: {
@@ -73,7 +72,6 @@ test('should not throw error for ok response', async () => {
   })
 
   const response = await client.request({
-    throwOnResponseError: true,
     method: 'GET',
     path: '/',
     headers: {
