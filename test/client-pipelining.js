@@ -61,7 +61,7 @@ test('20 times GET with pipelining 10', async (t) => {
 })
 
 function makeRequestAndExpectUrl (client, i, t, cb) {
-  return client.request({ path: '/' + i, method: 'GET' }, (err, { statusCode, headers, body }) => {
+  return client.request({ path: '/' + i, method: 'GET', blocking: false }, (err, { statusCode, headers, body }) => {
     cb()
     t.ifError(err)
     t.strictEqual(statusCode, 200)
@@ -587,7 +587,8 @@ test('pipelining empty pipeline before reset', async (t) => {
 
       client.request({
         path: '/',
-        method: 'GET'
+        method: 'GET',
+        blocking: false
       }, (err, data) => {
         t.ifError(err)
         data.body

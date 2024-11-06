@@ -33,6 +33,7 @@ test('idempotent retry', async (t) => {
         path: '/',
         method: 'PUT',
         idempotent: true,
+        blocking: false,
         body
       }, () => {
         throw _err

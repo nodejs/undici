@@ -256,7 +256,8 @@ test('upgrade wait for empty pipeline', async (t) => {
 
     client.request({
       path: '/',
-      method: 'GET'
+      method: 'GET',
+      blocking: false
     }, (err) => {
       t.ifError(err)
     })

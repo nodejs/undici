@@ -89,6 +89,8 @@ const superagentAgent = new http.Agent({
 const undiciOptions = {
   path: '/',
   method: 'GET',
+  blocking: false,
+  reset: false,
   headersTimeout,
   bodyTimeout
 }

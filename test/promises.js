@@ -245,7 +245,7 @@ test('20 times GET with pipelining 10, async await support', async (t) => {
 
 async function makeRequestAndExpectUrl (client, i, t) {
   try {
-    const { statusCode, body } = await client.request({ path: '/' + i, method: 'GET' })
+    const { statusCode, body } = await client.request({ path: '/' + i, method: 'GET', blocking: false })
     t.strictEqual(statusCode, 200)
     const bufs = []
     body.on('data', (buf) => {
