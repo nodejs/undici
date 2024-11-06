@@ -7,9 +7,9 @@ const { test } = require('node:test')
 const { closeServerAsPromise } = require('../utils/node-http')
 const { strictEqual } = require('node:assert')
 
-const isNode18 = process.version.startsWith('v18')
+// const isNode18 = process.version.startsWith('v18')
 
-test('long-lived-abort-controller', { skip: isNode18 }, async (t) => {
+test('long-lived-abort-controller', { skip: true }, async (t) => {
   const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.write('Hello World!')

@@ -12,8 +12,6 @@ const { tspl } = require('@matteo.collina/tspl')
 const { interceptors, Agent } = require('../..')
 const { dns } = interceptors
 
-const isWindows = process.platform === 'win32'
-
 test('Should validate options', t => {
   t = tspl(t, { plan: 10 })
 
@@ -30,9 +28,9 @@ test('Should validate options', t => {
 })
 
 test('Should automatically resolve IPs (dual stack)', async t => {
-  t = tspl(t, { plan: 6 })
+  t = tspl(t, { plan: 8 })
 
-  let counter = 0
+  const hostsnames = []
   const server = createServer()
   const requestOptions = {
     method: 'GET',
@@ -54,26 +52,36 @@ test('Should automatically resolve IPs (dual stack)', async t => {
   const client = new Agent().compose([
     dispatch => {
       return (opts, handler) => {
-        ++counter
         const url = new URL(opts.origin)
 
-        switch (counter) {
-          case 1:
-            t.equal(isIP(url.hostname), 4)
-            break
+        t.equal(hostsnames.includes(url.hostname), false)
 
-          case 2:
-            // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
-            break
-          default:
-            t.fail('should not reach this point')
+        if (url.hostname[0] === '[') {
+          // [::1] -> ::1
+          t.equal(isIP(url.hostname.slice(1, 4)), 6)
+        } else {
+          t.equal(isIP(url.hostname), 4)
         }
+
+        hostsnames.push(url.hostname)
 
         return dispatch(opts, handler)
       }
     },
-    dns()
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
   ])
 
   after(async () => {
@@ -154,7 +162,20 @@ test('Should recover on network errors (dual stack - 4)', async t => {
         return dispatch(opts, handler)
       }
     },
-    dns()
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
   ])
 
   after(async () => {
@@ -230,7 +251,20 @@ test('Should recover on network errors (dual stack - 6)', async t => {
         return dispatch(opts, handler)
       }
     },
-    dns()
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
   ])
 
   after(async () => {
@@ -334,24 +368,12 @@ test('Should throw when on dual-stack disabled (6)', async t => {
     dns({ dualStack: false, affinity: 6 })
   ])
 
-  // Note: In windows the IPV6 does not results in ECONNREFUSED
-  // but rather in TIMEOUT
-  if (isWindows) {
-    const promise = client.request({
-      ...requestOptions,
-      origin: 'http://localhost',
-      headersTimeout: 500
-    })
+  const promise = client.request({
+    ...requestOptions,
+    origin: 'http://localhost:9999'
+  })
 
-    await t.rejects(promise, 'UND_ERR_HEADERS_TIMEOUT')
-  } else {
-    const promise = client.request({
-      ...requestOptions,
-      origin: 'http://localhost'
-    })
-
-    await t.rejects(promise, 'ECONNREFUSED')
-  }
+  await t.rejects(promise, 'ECONNREFUSED')
 
   await t.complete
 })
@@ -1559,7 +1581,21 @@ test('Should handle max cached items', async t => {
         return dispatch(opts, handler)
       }
     },
-    dns({ maxItems: 1 })
+    dns({
+      maxItems: 1,
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
   ])
 
   after(async () => {
