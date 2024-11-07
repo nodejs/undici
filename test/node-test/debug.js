@@ -40,7 +40,6 @@ test('debug#websocket', { skip: !process.versions.icu || isCITGM || isNode23Plus
   })
   child.stderr.on('end', () => {
     const lines = extractLines(chunks)
-    console.log(lines)
     assert.strictEqual(lines.length, assertions.length)
     for (let i = 1; i < lines.length; i++) {
       assert.match(lines[i], assertions[i])
