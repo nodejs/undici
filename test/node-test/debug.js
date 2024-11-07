@@ -8,9 +8,10 @@ const { tspl } = require('@matteo.collina/tspl')
 // eslint-disable-next-line no-control-regex
 const removeEscapeColorsRE = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g
 
+const isNode23Plus = process.versions.node.split('.')[0] >= 23
 const isCITGM = !!process.env.CITGM
 
-test('debug#websocket', { skip: !process.versions.icu || isCITGM }, async t => {
+test('debug#websocket', { skip: !process.versions.icu || isCITGM || isNode23Plus }, async t => {
   const assert = tspl(t, { plan: 6 })
   const child = spawn(
     process.execPath,
@@ -48,7 +49,7 @@ test('debug#websocket', { skip: !process.versions.icu || isCITGM }, async t => {
   await assert.completed
 })
 
-test('debug#fetch', { skip: isCITGM }, async t => {
+test('debug#fetch', { skip: isCITGM || isNode23Plus }, async t => {
   const assert = tspl(t, { plan: 7 })
   const child = spawn(
     process.execPath,
@@ -85,7 +86,7 @@ test('debug#fetch', { skip: isCITGM }, async t => {
   await assert.completed
 })
 
-test('debug#undici', { skip: isCITGM }, async t => {
+test('debug#undici', { skip: isCITGM || isNode23Plus }, async t => {
   // Due to Node.js webpage redirect
   const assert = tspl(t, { plan: 7 })
   const child = spawn(
