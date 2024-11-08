@@ -205,11 +205,11 @@ test(
     server.listen(0)
     await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
-    connect: {
-      rejectUnauthorized: false
-    }
-  })
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      }
+    })
 
     t.after(closeClientAndServerAsPromise(client, server))
 
