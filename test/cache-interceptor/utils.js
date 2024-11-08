@@ -131,6 +131,49 @@ describe('parseCacheControlHeader', () => {
       'only-if-cached': true
     })
   })
+
+  test('handles multiple headers correctly', () => {
+    // For requests like
+    //  cache-control: max-stale=1
+    //  cache-control: min-fresh-1
+    //  ...
+    const directives = parseCacheControlHeader([
+      'max-stale=1',
+      'min-fresh=1',
+      'max-age=1',
+      's-maxage=1',
+      'stale-while-revalidate=1',
+      'stale-if-error=1',
+      'public',
+      'private',
+      'no-store',
+      'no-cache',
+      'must-revalidate',
+      'proxy-revalidate',
+      'immutable',
+      'no-transform',
+      'must-understand',
+      'only-if-cached'
+    ])
+    deepStrictEqual(directives, {
+      'max-stale': 1,
+      'min-fresh': 1,
+      'max-age': 1,
+      's-maxage': 1,
+      'stale-while-revalidate': 1,
+      'stale-if-error': 1,
+      public: true,
+      private: true,
+      'no-store': true,
+      'no-cache': true,
+      'must-revalidate': true,
+      'proxy-revalidate': true,
+      immutable: true,
+      'no-transform': true,
+      'must-understand': true,
+      'only-if-cached': true
+    })
+  })
 })
 
 describe('parseVaryHeader', () => {

@@ -251,7 +251,7 @@ describe('Cache Interceptor', () => {
     })
   })
 
-  test('unsafe methods call the store\'s deleteByOrigin function', async () => {
+  test('unsafe methods call the store\'s deleteByKey function', async () => {
     const server = createServer((_, res) => {
       res.end('asd')
     }).listen(0)
@@ -259,13 +259,13 @@ describe('Cache Interceptor', () => {
     after(() => server.close())
     await once(server, 'listening')
 
-    let deleteByOriginCalled = false
+    let deleteByKeyCalled = false
     const store = new cacheStores.MemoryCacheStore()
 
-    const originalDeleteByOrigin = store.deleteByOrigin.bind(store)
-    store.deleteByOrigin = (origin) => {
-      deleteByOriginCalled = true
-      originalDeleteByOrigin(origin)
+    const originalDeleteByKey = store.deleteByKey.bind(store)
+    store.deleteByKey = (key) => {
+      deleteByKeyCalled = true
+      originalDeleteByKey(key)
     }
 
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -281,7 +281,7 @@ describe('Cache Interceptor', () => {
       path: '/'
     })
 
-    equal(deleteByOriginCalled, false)
+    equal(deleteByKeyCalled, false)
 
     // Make sure other safe methods that we don't want to cache don't cause a cache purge
     await client.request({
@@ -290,11 +290,11 @@ describe('Cache Interceptor', () => {
       path: '/'
     })
 
-    strictEqual(deleteByOriginCalled, false)
+    strictEqual(deleteByKeyCalled, false)
 
     // Make sure the common unsafe methods cause cache purges
     for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
-      deleteByOriginCalled = false
+      deleteByKeyCalled = false
 
       await client.request({
         origin: 'localhost',
@@ -302,7 +302,37 @@ describe('Cache Interceptor', () => {
         path: '/'
       })
 
-      equal(deleteByOriginCalled, true, method)
+      equal(deleteByKeyCalled, true, method)
     }
+  })
+
+  test('necessary headers are stripped', async () => {
+    const server = createServer((req, res) => {
+      res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10, no-cache=should-be-stripped')
+      res.setHeader('should-be-stripped', 'hello world')
+      res.setHeader('should-not-be-stripped', 'dsa321')
+
+      res.end('asd')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    const response = await client.request(request)
+    strictEqual(await response.body.text(), 'asd')
   })
 })

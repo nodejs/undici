@@ -1,19 +1,19 @@
+import { Writable } from 'node:stream'
 import { expectAssignable, expectNotAssignable } from 'tsd'
 import CacheInterceptor from '../../types/cache-interceptor'
-import Dispatcher from '../../types/dispatcher'
 
 const store: CacheInterceptor.CacheStore = {
   isFull: false,
 
-  createReadStream (_: Dispatcher.RequestOptions): CacheInterceptor.CacheStoreReadable | undefined {
+  getValue (_: CacheInterceptor.CacheKey): CacheInterceptor.GetValueByKeyResult | Promise<CacheInterceptor.GetValueByKeyResult | undefined> | undefined {
     throw new Error('stub')
   },
 
-  createWriteStream (_: Dispatcher.RequestOptions, _2: CacheInterceptor.CacheStoreValue): CacheInterceptor.CacheStoreWriteable | undefined {
+  createWriteStream (_: CacheInterceptor.CacheKey, _2: CacheInterceptor.CachedResponse): Writable | undefined {
     throw new Error('stub')
   },
 
-  deleteByOrigin (_: string): void | Promise<void> {
+  deleteByKey (_: CacheInterceptor.CacheKey): void | Promise<void> {
     throw new Error('stub')
   }
 }
@@ -23,7 +23,7 @@ expectAssignable<CacheInterceptor.CacheOptions>({ store })
 expectAssignable<CacheInterceptor.CacheOptions>({ methods: [] })
 expectAssignable<CacheInterceptor.CacheOptions>({ store, methods: ['GET'] })
 
-expectAssignable<CacheInterceptor.CacheStoreValue>({
+expectAssignable<CacheInterceptor.CachedResponse>({
   statusCode: 200,
   statusMessage: 'OK',
   rawHeaders: [],
@@ -32,24 +32,21 @@ expectAssignable<CacheInterceptor.CacheStoreValue>({
   deleteAt: 0
 })
 
-expectAssignable<CacheInterceptor.CacheStoreValue>({
+expectAssignable<CacheInterceptor.CachedResponse>({
   statusCode: 200,
   statusMessage: 'OK',
   rawHeaders: [],
-  rawTrailers: [],
   vary: {},
   cachedAt: 0,
   staleAt: 0,
   deleteAt: 0
 })
 
-expectNotAssignable<CacheInterceptor.CacheStoreValue>({})
-expectNotAssignable<CacheInterceptor.CacheStoreValue>({
+expectNotAssignable<CacheInterceptor.CachedResponse>({})
+expectNotAssignable<CacheInterceptor.CachedResponse>({
   statusCode: '123',
   statusMessage: 123,
   rawHeaders: '',
-  rawTrailers: '',
-  body: 0,
   vary: '',
   size: '',
   cachedAt: '',
