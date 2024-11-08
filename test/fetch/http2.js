@@ -42,8 +42,7 @@ test('[Fetch] Issue#2311', async (t) => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   const response = await fetch(
@@ -91,8 +90,7 @@ test('[Fetch] Simple GET with h2', async (t) => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   const response = await fetch(
@@ -150,8 +148,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) 
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   const response = await fetch(
@@ -208,12 +205,11 @@ test(
     server.listen(0)
     await once(server, 'listening')
 
-    const client = new Client(`https://localhost:${server.address().port}`, {
-      connect: {
-        rejectUnauthorized: false
-      },
-      allowH2: true
-    })
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
 
     t.after(closeClientAndServerAsPromise(client, server))
 
@@ -273,8 +269,7 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async (t) => 
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t.after(closeClientAndServerAsPromise(client, server))
@@ -305,7 +300,7 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async (t) => 
 test(
   'Should handle h2 request with body (Blob:ArrayBuffer)',
   { skip: !Blob },
-  async (t) => {
+  async t => {
     const server = createSecureServer(pem)
     const expectedBody = 'hello'
     const requestChunks = []
@@ -339,8 +334,7 @@ test(
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
-      },
-      allowH2: true
+      }
     })
 
     t.after(closeClientAndServerAsPromise(client, server))
@@ -386,8 +380,7 @@ test('Issue#2415', async (t) => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   const response = await fetch(
@@ -438,8 +431,7 @@ test('Issue #2386', async (t) => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t.after(closeClientAndServerAsPromise(client, server))
@@ -488,8 +480,7 @@ test('Issue #3046', async (t) => {
   const client = new Client(`https://localhost:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
-    },
-    allowH2: true
+    }
   })
 
   t.after(closeClientAndServerAsPromise(client, server))
