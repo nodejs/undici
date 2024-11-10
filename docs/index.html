@@ -32,7 +32,42 @@
       noCompileLinks: [
         'benchmarks/.*'
       ],
-      relativePath: true
+      relativePath: true,
+      markdown: {
+        renderer: {
+          // Mimic markedjs/marked behavior just modify href - https://github.com/markedjs/marked/blob/master/src/Renderer.ts#L178-L191
+          link(href, title, text) {
+            const originalHref = href;
+
+            if (href.startsWith('./')) {
+              // Use absolute path (e.g. ./docs/api.md => /docs/api.md) if href starts with ./ (e.g. ./api.md)
+              href = href.slice(1);
+            }
+
+            // Check for /docs/docs/ in the href and remove duplication it if present
+            href = href.startsWith('/docs/docs/') ? href.replace('/docs/', '/') : href;
+
+            // Check for /docs/ in the href and remove it if present
+            if (href.startsWith('/docs/')) {
+              // ignore paths /docs/api/ and /docs/best-practices/ in /docs/docs directory
+              if (!/^(\/docs\/(?:api|best-practices))(?:\/|$)/.test(href)) {
+                href = href.includes('/docs/') ? href.replace('/docs/', '/') : href;
+              }
+            }
+
+            let target = '';
+            if (originalHref.startsWith('http')) {
+              // External link - default behavior is to open in a new window
+              return `<a href="${originalHref}" ${title}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+            }
+
+            title = title ? `title="${title}"` : '';
+            let out = `<a href="#${href}" ${title}">${text}</a>`;
+
+            return out;
+          },
+        },
+      },
     }
   </script>
   <!-- Docsify v4 -->
