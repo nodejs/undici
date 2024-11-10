@@ -4,10 +4,12 @@ const { test, after } = require('node:test')
 const { isIP } = require('node:net')
 const { lookup } = require('node:dns')
 const { createServer } = require('node:http')
+const { createServer: createSecureServer } = require('node:https')
 const { once } = require('node:events')
 const { setTimeout: sleep } = require('node:timers/promises')
 
 const { tspl } = require('@matteo.collina/tspl')
+const pem = require('https-pem')
 
 const { interceptors, Agent } = require('../..')
 const { dns } = interceptors
@@ -102,6 +104,92 @@ test('Should automatically resolve IPs (dual stack)', async t => {
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world!')
+})
+
+test('Should respect DNS origin hostname for SNI on TLS', async t => {
+  t = tspl(t, { plan: 10 })
+
+  const hostsnames = []
+  const server = createSecureServer(pem)
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Agent({
+    connect: {
+      rejectUnauthorized: false
+    }
+  }).compose([
+    dispatch => {
+      return (opts, handler) => {
+        const url = new URL(opts.origin)
+
+        t.equal(hostsnames.includes(url.hostname), false)
+        t.equal(opts.servername, 'localhost')
+
+        if (url.hostname[0] === '[') {
+          // [::1] -> ::1
+          t.equal(isIP(url.hostname.slice(1, 4)), 6)
+        } else {
+          t.equal(isIP(url.hostname), 4)
+        }
+
+        hostsnames.push(url.hostname)
+
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    ...requestOptions,
+    origin: `https://localhost:${server.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: `https://localhost:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
