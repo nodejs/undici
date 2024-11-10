@@ -27,6 +27,9 @@
   * [Util](/docs/api/Util.md "Undici API - Util")
   * [RedirectHandler](/docs/api/RedirectHandler.md "Undici API - RedirectHandler")
   * [RetryHandler](/docs/api/RetryHandler.md "Undici API - RetryHandler")
+  * [DiagnosticsChannel](/docs/api/DiagnosticsChannel.md "Undici API - DiagnosticsChannel")
+  * [EnvHttpProxyAgent](/docs/api/EnvHttpProxyAgent.md "Undici API - EnvHttpProxyAgent")
+  * [PoolStats](/docs/api/PoolStats.md "Undici API - PoolStats")
 * Examples
   * [Undici Examples](/examples/ "Undici Examples")
 * Best Practices
