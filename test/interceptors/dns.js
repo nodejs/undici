@@ -111,7 +111,7 @@ test('Should automatically resolve IPs (dual stack)', async t => {
 })
 
 test('Should respect DNS origin hostname for SNI on TLS', async t => {
-  t = tspl(t, { plan: 10 })
+  t = tspl(t, { plan: 12 })
 
   const hostsnames = []
   const server = createSecureServer(pem)
@@ -124,6 +124,7 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
   }
 
   server.on('request', (req, res) => {
+    t.equal(req.headers.host, 'localhost')
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.end('hello world!')
   })
