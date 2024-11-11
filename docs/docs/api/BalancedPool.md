@@ -2,7 +2,7 @@
 
 Extends: `undici.Dispatcher`
 
-A pool of [Pool](Pool.md) instances connected to multiple upstreams.
+A pool of [Pool](/docs/docs/api/Pool.md) instances connected to multiple upstreams.
 
 Requests are not guaranteed to be dispatched in order of invocation.
 

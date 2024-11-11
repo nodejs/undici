@@ -126,7 +126,8 @@ test('abort pipelined', async (t) => {
     let counter = 0
     client.dispatch({
       method: 'GET',
-      path: '/'
+      path: '/',
+      blocking: false
     }, {
       onConnect (abort) {
         // This request will be retried
@@ -151,7 +152,8 @@ test('abort pipelined', async (t) => {
 
     client.dispatch({
       method: 'GET',
-      path: '/'
+      path: '/',
+      blocking: false
     }, {
       onConnect (abort) {
         abort()

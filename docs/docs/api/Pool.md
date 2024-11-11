@@ -2,7 +2,7 @@
 
 Extends: `undici.Dispatcher`
 
-A pool of [Client](Client.md) instances connected to the same upstream target.
+A pool of [Client](/docs/docs/api/Client.md) instances connected to the same upstream target.
 
 Requests are not guaranteed to be dispatched in order of invocation.
 

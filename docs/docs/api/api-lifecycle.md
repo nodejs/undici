@@ -1,6 +1,6 @@
 # Client Lifecycle
 
-An Undici [Client](Client.md) can be best described as a state machine. The following list is a summary of the various state transitions the `Client` will go through in its lifecycle. This document also contains detailed breakdowns of each state.
+An Undici [Client](/docs/docs/api/Client.md) can be best described as a state machine. The following list is a summary of the various state transitions the `Client` will go through in its lifecycle. This document also contains detailed breakdowns of each state.
 
 > This diagram is not a perfect representation of the undici Client. Since the Client class is not actually implemented as a state-machine, actual execution may deviate slightly from what is described below. Consider this as a general resource for understanding the inner workings of the Undici client rather than some kind of formal specification.
 
@@ -28,7 +28,7 @@ stateDiagram-v2
   [*] --> idle
   idle --> pending : connect
   idle --> destroyed : destroy/close
-  
+
   pending --> idle : timeout
   pending --> destroyed : destroy
 
