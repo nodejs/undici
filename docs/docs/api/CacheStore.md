@@ -25,13 +25,14 @@ The store must implement the following functions:
 Optional. This tells the cache interceptor if the store is full or not. If this is true,
 the cache interceptor will not attempt to cache the response.
 
-### Function: `getValueByKey`
+### Function: `get`
 
 Parameters:
 
 * **req** `Dispatcher.RequestOptions` - Incoming request
 
-Returns: `GetValueByKeyResult | Promise<GetValueByKeyResult | undefined> | undefined` - If the request is cached, a readable for the body is returned. Otherwise, `undefined` is returned.
+Returns: `GetResult | Promise<GetResult | undefined> | undefined` - If the request is cached, the cached response is returned. If the request's method is anything other than HEAD, the response is also returned.
+If the request isn't cached, `undefined` is returned.
 
 Response properties:
 

@@ -15,7 +15,7 @@ function cacheStoreTests (CacheStore) {
     test('matches interface', async () => {
       const store = new CacheStore()
       equal(typeof store.isFull, 'boolean')
-      equal(typeof store.getValueByKey, 'function')
+      equal(typeof store.get, 'function')
       equal(typeof store.createWriteStream, 'function')
       equal(typeof store.deleteByKey, 'function')
     })
@@ -44,7 +44,7 @@ function cacheStoreTests (CacheStore) {
       const store = new CacheStore()
 
       // Sanity check
-      equal(store.getValueByKey(request), undefined)
+      equal(store.get(request), undefined)
 
       // Write the response to the store
       let writeStream = store.createWriteStream(request, requestValue)
@@ -52,7 +52,7 @@ function cacheStoreTests (CacheStore) {
       writeResponse(writeStream, requestBody)
 
       // Now try fetching it with a deep copy of the original request
-      let readResult = store.getValueByKey(structuredClone(request))
+      let readResult = store.get(structuredClone(request))
       notEqual(readResult, undefined)
 
       deepStrictEqual(await readResponse(readResult), {
@@ -79,7 +79,7 @@ function cacheStoreTests (CacheStore) {
 
       // We haven't cached this one yet, make sure it doesn't confuse it with
       //  another request
-      equal(store.getValueByKey(anotherRequest), undefined)
+      equal(store.get(anotherRequest), undefined)
 
       // Now let's cache it
       writeStream = store.createWriteStream(anotherRequest, {
@@ -89,7 +89,7 @@ function cacheStoreTests (CacheStore) {
       notEqual(writeStream, undefined)
       writeResponse(writeStream, anotherBody)
 
-      readResult = store.getValueByKey(anotherRequest)
+      readResult = store.get(anotherRequest)
       notEqual(readResult, undefined)
       deepStrictEqual(await readResponse(readResult), {
         ...anotherValue,
@@ -123,7 +123,7 @@ function cacheStoreTests (CacheStore) {
       notEqual(writeStream, undefined)
       writeResponse(writeStream, requestBody)
 
-      const readResult = store.getValueByKey(request)
+      const readResult = store.get(request)
       deepStrictEqual(await readResponse(readResult), {
         ...requestValue,
         body: requestBody
@@ -155,7 +155,7 @@ function cacheStoreTests (CacheStore) {
       notEqual(writeStream, undefined)
       writeResponse(writeStream, requestBody)
 
-      equal(store.getValueByKey(request), undefined)
+      equal(store.get(request), undefined)
     })
 
     test('respects vary directives', async () => {
@@ -186,13 +186,13 @@ function cacheStoreTests (CacheStore) {
       const store = new CacheStore()
 
       // Sanity check
-      equal(store.getValueByKey(request), undefined)
+      equal(store.get(request), undefined)
 
       const writeStream = store.createWriteStream(request, requestValue)
       notEqual(writeStream, undefined)
       writeResponse(writeStream, requestBody)
 
-      const readStream = store.getValueByKey(structuredClone(request))
+      const readStream = store.get(structuredClone(request))
       notEqual(readStream, undefined)
       deepStrictEqual(await readResponse(readStream), {
         ...requestValue,
@@ -207,7 +207,7 @@ function cacheStoreTests (CacheStore) {
           'some-header': 'another-value'
         }
       }
-      equal(store.getValueByKey(nonMatchingRequest), undefined)
+      equal(store.get(nonMatchingRequest), undefined)
     })
   })
 }
@@ -236,14 +236,14 @@ test('MemoryCacheStore locks values properly', async () => {
 
   // Value should now be locked, we shouldn't be able to create a readable or
   //  another writable to it until the first one finishes
-  equal(store.getValueByKey(request), undefined)
+  equal(store.get(request), undefined)
   equal(store.createWriteStream(request, requestValue), undefined)
 
   // Close the writable, this should unlock it
   writeResponse(writable, ['asd'])
 
   // Stream is now closed, let's lock any new write streams
-  const result = store.getValueByKey(request)
+  const result = store.get(request)
   notEqual(result, undefined)
 
   // Consume & close the result, this should lift the write lock
@@ -265,10 +265,13 @@ function writeResponse (stream, body) {
 }
 
 /**
- * @param {import('../../types/cache-interceptor.d.ts').default.GetValueByKeyResult} result
- * @returns {Promise<import('../../types/cache-interceptor.d.ts').default.GetValueByKeyResult | { body: Buffer[] }>}
+ * @param {import('../../types/cache-interceptor.d.ts').default.GetResult} result
+ * @returns {Promise<import('../../types/cache-interceptor.d.ts').default.GetResult | { body: Buffer[] }>}
  */
 async function readResponse ({ response, body: stream }) {
+  notEqual(response, undefined)
+  notEqual(stream, undefined)
+
   /**
    * @type {Buffer[]}
    */

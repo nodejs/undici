@@ -31,7 +31,7 @@ declare namespace CacheHandler {
     path: string
   }
 
-  export interface GetValueByKeyResult {
+  export interface GetResult {
     response: CachedResponse
     body?: Readable
   }
@@ -45,7 +45,7 @@ declare namespace CacheHandler {
      */
     get isFull(): boolean | undefined
 
-    getValueByKey(key: CacheKey): GetValueByKeyResult | Promise<GetValueByKeyResult | undefined> | undefined
+    get(key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
 
     createWriteStream(key: CacheKey, value: CachedResponse): Writable | undefined
 
@@ -93,7 +93,7 @@ declare namespace CacheHandler {
 
     get isFull (): boolean
 
-    getValueByKey (key: CacheKey): GetValueByKeyResult | Promise<GetValueByKeyResult | undefined> | undefined
+    get (key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
 
     createWriteStream (key: CacheKey, value: CachedResponse): Writable | undefined
 
