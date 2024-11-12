@@ -202,4 +202,16 @@ describe('parseVaryHeader', () => {
       'something-else': 'asd123'
     })
   })
+
+  test('handles multiple headers correctly', () => {
+    const output = parseVaryHeader(['some-header', 'another-one'], {
+      'some-header': 'asd',
+      'another-one': '123',
+      'third-header': 'cool'
+    })
+    deepStrictEqual(output, {
+      'some-header': 'asd',
+      'another-one': '123'
+    })
+  })
 })
