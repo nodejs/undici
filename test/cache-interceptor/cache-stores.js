@@ -2,6 +2,7 @@
 
 const { describe, test } = require('node:test')
 const { deepStrictEqual, notEqual, equal } = require('node:assert')
+const { Readable } = require('node:stream')
 const { once } = require('node:events')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 
@@ -17,7 +18,7 @@ function cacheStoreTests (CacheStore) {
       equal(typeof store.isFull, 'boolean')
       equal(typeof store.get, 'function')
       equal(typeof store.createWriteStream, 'function')
-      equal(typeof store.deleteByKey, 'function')
+      equal(typeof store.delete, 'function')
     })
 
     // Checks that it can store & fetch different responses
@@ -268,9 +269,11 @@ function writeResponse (stream, body) {
  * @param {import('../../types/cache-interceptor.d.ts').default.GetResult} result
  * @returns {Promise<import('../../types/cache-interceptor.d.ts').default.GetResult | { body: Buffer[] }>}
  */
-async function readResponse ({ response, body: stream }) {
+async function readResponse ({ response, body: src }) {
   notEqual(response, undefined)
-  notEqual(stream, undefined)
+  notEqual(src, undefined)
+
+  const stream = Readable.from(src)
 
   /**
    * @type {Buffer[]}

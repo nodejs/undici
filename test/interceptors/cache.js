@@ -251,7 +251,7 @@ describe('Cache Interceptor', () => {
     })
   })
 
-  test('unsafe methods call the store\'s deleteByKey function', async () => {
+  test('unsafe methods call the store\'s delete function', async () => {
     const server = createServer((_, res) => {
       res.end('asd')
     }).listen(0)
@@ -259,13 +259,13 @@ describe('Cache Interceptor', () => {
     after(() => server.close())
     await once(server, 'listening')
 
-    let deleteByKeyCalled = false
+    let deleteCalled = false
     const store = new cacheStores.MemoryCacheStore()
 
-    const originalDeleteByKey = store.deleteByKey.bind(store)
-    store.deleteByKey = (key) => {
-      deleteByKeyCalled = true
-      originalDeleteByKey(key)
+    const originaldelete = store.delete.bind(store)
+    store.delete = (key) => {
+      deleteCalled = true
+      originaldelete(key)
     }
 
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -281,7 +281,7 @@ describe('Cache Interceptor', () => {
       path: '/'
     })
 
-    equal(deleteByKeyCalled, false)
+    equal(deleteCalled, false)
 
     // Make sure other safe methods that we don't want to cache don't cause a cache purge
     await client.request({
@@ -290,11 +290,11 @@ describe('Cache Interceptor', () => {
       path: '/'
     })
 
-    strictEqual(deleteByKeyCalled, false)
+    strictEqual(deleteCalled, false)
 
     // Make sure the common unsafe methods cause cache purges
     for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
-      deleteByKeyCalled = false
+      deleteCalled = false
 
       await client.request({
         origin: 'localhost',
@@ -302,7 +302,7 @@ describe('Cache Interceptor', () => {
         path: '/'
       })
 
-      equal(deleteByKeyCalled, true, method)
+      equal(deleteCalled, true, method)
     }
   })
 
