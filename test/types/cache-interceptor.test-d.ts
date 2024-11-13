@@ -5,7 +5,7 @@ import CacheInterceptor from '../../types/cache-interceptor'
 const store: CacheInterceptor.CacheStore = {
   isFull: false,
 
-  getValue (_: CacheInterceptor.CacheKey): CacheInterceptor.GetResult | Promise<CacheInterceptor.GetResult | undefined> | undefined {
+  get (_: CacheInterceptor.CacheKey): CacheInterceptor.GetResult | Promise<CacheInterceptor.GetResult | undefined> | undefined {
     throw new Error('stub')
   },
 
