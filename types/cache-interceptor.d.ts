@@ -31,10 +31,7 @@ declare namespace CacheHandler {
     path: string
   }
 
-  export interface GetResult {
-    response: CachedResponse
-    body?: Readable | Iterable<Buffer> | Buffer | Iterable<string> | string
-  }
+  type GetResult = CachedResponse & { body: null | Readable | Iterable<Buffer> | Buffer | Iterable<string> | string }
 
   /**
    * Underlying storage provider for cached responses

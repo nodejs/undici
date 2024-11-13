@@ -269,11 +269,11 @@ function writeResponse (stream, body) {
  * @param {import('../../types/cache-interceptor.d.ts').default.GetResult} result
  * @returns {Promise<import('../../types/cache-interceptor.d.ts').default.GetResult | { body: Buffer[] }>}
  */
-async function readResponse ({ response, body: src }) {
+async function readResponse ({ body: src, ...response }) {
   notEqual(response, undefined)
   notEqual(src, undefined)
 
-  const stream = Readable.from(src)
+  const stream = Readable.from(src ?? [])
 
   /**
    * @type {Buffer[]}
