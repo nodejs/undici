@@ -772,11 +772,11 @@ test('Invalid Symbol.iterators', (t) => {
 test('Invalid key/value records passed to constructor (issue #3829)', (t) => {
   assert.throws(
     () => new Headers({ [Symbol('x-fake-header')]: '??' }),
-    new TypeError('Headers constructor: Key Symbol(x-fake-header) in init is a symbol, which cannot be converted to a DOMString.')
+    new TypeError('Headers constructor: Key Symbol(x-fake-header) in init is a symbol, which cannot be converted to a ByteString.')
   )
 
   assert.throws(
     () => new Headers({ 'x-fake-header': Symbol('why is this here?') }),
-    new TypeError('Headers constructor: init["x-fake-header"] is a symbol, which cannot be converted to a DOMString.')
+    new TypeError('Headers constructor: init["x-fake-header"] is a symbol, which cannot be converted to a ByteString.')
   )
 })
