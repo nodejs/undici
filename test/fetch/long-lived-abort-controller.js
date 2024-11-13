@@ -5,11 +5,11 @@ const { fetch } = require('../../')
 const { once } = require('events')
 const { test } = require('node:test')
 const { closeServerAsPromise } = require('../utils/node-http')
-const { strictEqual } = require('node:assert')
+const { strictEqual, fail } = require('node:assert')
 
-// const isNode18 = process.version.startsWith('v18')
+const isNode18 = process.version.startsWith('v18')
 
-test('long-lived-abort-controller', { skip: true }, async (t) => {
+test('long-lived-abort-controller', { skip: isNode18 }, async (t) => {
   const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.write('Hello World!')
@@ -20,9 +20,9 @@ test('long-lived-abort-controller', { skip: true }, async (t) => {
 
   t.after(closeServerAsPromise(server))
 
-  let warningEmitted = false
-  function onWarning () {
-    warningEmitted = true
+  let emittedWarning = null
+  function onWarning (value) {
+    emittedWarning = value
   }
   process.on('warning', onWarning)
   t.after(() => {
@@ -44,5 +44,9 @@ test('long-lived-abort-controller', { skip: true }, async (t) => {
     await res.text()
   }
 
-  strictEqual(warningEmitted, false)
+  if (emittedWarning !== null) {
+    fail(emittedWarning)
+  } else {
+    strictEqual(emittedWarning, null)
+  }
 })
