@@ -767,3 +767,16 @@ test('Invalid Symbol.iterators', (t) => {
     new Headers(obj) // eslint-disable-line no-new
   }, TypeError)
 })
+
+// https://github.com/nodejs/undici/issues/3829
+test('Invalid key/value records passed to constructor (issue #3829)', (t) => {
+  assert.throws(
+    () => new Headers({ [Symbol('x-fake-header')]: '??' }),
+    new TypeError('Headers constructor: Key Symbol(x-fake-header) in init is a symbol, which cannot be converted to a DOMString.')
+  )
+
+  assert.throws(
+    () => new Headers({ 'x-fake-header': Symbol('why is this here?') }),
+    new TypeError('Headers constructor: init["x-fake-header"] is a symbol, which cannot be converted to a DOMString.')
+  )
+})
