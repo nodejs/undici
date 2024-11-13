@@ -1,24 +1,39 @@
 'use strict'
 
-const http = require('node:http')
-const { fetch } = require('../../')
-const { once } = require('events')
+const { fork } = require('node:child_process')
+const { resolve: pathResolve } = require('node:path')
 const { test } = require('node:test')
-const { closeServerAsPromise } = require('../utils/node-http')
+const { fetch } = require('../../')
 const { strictEqual, fail } = require('node:assert')
 
 const isNode18 = process.version.startsWith('v18')
 
 test('long-lived-abort-controller', { skip: isNode18 }, async (t) => {
-  const server = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' })
-    res.write('Hello World!')
-    res.end()
-  }).listen(0)
+  // Spawn a server in a new process to avoid effects from the blocking event loop
+  const {
+    serverProcess,
+    address
+  } = await new Promise((resolve, reject) => {
+    const childProcess = fork(
+      pathResolve(__dirname, '../utils/hello-world-server.js'),
+      [],
+      { windowsHide: true }
+    )
 
-  await once(server, 'listening')
+    childProcess.on('message', (address) => {
+      resolve({
+        serverProcess: childProcess,
+        address
+      })
+    })
+    childProcess.on('error', err => {
+      reject(err)
+    })
+  })
 
-  t.after(closeServerAsPromise(server))
+  t.after(() => {
+    serverProcess.kill('SIGKILL')
+  })
 
   let emittedWarning = null
   function onWarning (value) {
@@ -36,7 +51,7 @@ test('long-lived-abort-controller', { skip: isNode18 }, async (t) => {
   // Unfortunately we are relying on GC and implementation details here.
   for (let i = 0; i < 2000; i++) {
     // make request
-    const res = await fetch(`http://localhost:${server.address().port}`, {
+    const res = await fetch(address, {
       signal: controller.signal
     })
 
