@@ -2,7 +2,8 @@
 
 A Cache Store is responsible for storing and retrieving cached responses.
 It is also responsible for deciding which specific response to use based off of
-a response's `Vary` header (if present).
+a response's `Vary` header (if present). It is expected to be compliant with
+[RFC-9111](https://www.rfc-editor.org/rfc/rfc9111.html).
 
 ## Pre-built Cache Stores
 
@@ -21,27 +22,33 @@ The store must implement the following functions:
 
 ### Getter: `isFull`
 
-This tells the cache interceptor if the store is full or not. If this is true,
+Optional. This tells the cache interceptor if the store is full or not. If this is true,
 the cache interceptor will not attempt to cache the response.
 
-### Function: `createReadStream`
+### Function: `get`
 
 Parameters:
 
 * **req** `Dispatcher.RequestOptions` - Incoming request
 
-Returns: `CacheStoreReadable | Promise<CacheStoreReadable | undefined> | undefined` - If the request is cached, a readable for the body is returned. Otherwise, `undefined` is returned.
+Returns: `GetResult | Promise<GetResult | undefined> | undefined` - If the request is cached, the cached response is returned. If the request's method is anything other than HEAD, the response is also returned.
+If the request isn't cached, `undefined` is returned.
+
+Response properties:
+
+* **response** `CachedResponse` - The cached response data.
+* **body** `Readable | undefined` - The response's body.
 
 ### Function: `createWriteStream`
 
 Parameters:
 
 * **req** `Dispatcher.RequestOptions` - Incoming request
-* **value** `CacheStoreValue` - Response to store
+* **value** `CachedResponse` - Response to store
 
-Returns: `CacheStoreWriteable | undefined` - If the store is full, return `undefined`. Otherwise, return a writable so that the cache interceptor can stream the body and trailers to the store.
+Returns: `Writable | undefined` - If the store is full, return `undefined`. Otherwise, return a writable so that the cache interceptor can stream the body and trailers to the store.
 
-## `CacheStoreValue`
+## `CachedResponse`
 
 This is an interface containing the majority of a response's data (minus the body).
 
@@ -55,15 +62,11 @@ This is an interface containing the majority of a response's data (minus the bod
 
 ### Property `rawHeaders`
 
-`(Buffer | Buffer[])[]` - The response's headers.
-
-### Property `rawTrailers`
-
-`string[] | undefined` - The response's trailers.
+`Buffer[]` - The response's headers.
 
 ### Property `vary`
 
-`Record<string, string> | undefined` - The headers defined by the response's `Vary` header
+`Record<string, string | string[]> | undefined` - The headers defined by the response's `Vary` header
 and their respective values for later comparison
 
 For example, for a response like
@@ -95,22 +98,3 @@ This would be
 is either the same sa staleAt or the `max-stale` caching directive.
 
 The store must not return a response after the time defined in this property.
-
-## `CacheStoreReadable`
-
-This extends Node's [`Readable`](https://nodejs.org/api/stream.html#class-streamreadable)
-and defines extra properties relevant to the cache interceptor.
-
-### Getter: `value`
-
-The response's [`CacheStoreValue`](#cachestorevalue)
-
-## `CacheStoreWriteable`
-
-This extends Node's [`Writable`](https://nodejs.org/api/stream.html#class-streamwritable)
-and defines extra properties relevant to the cache interceptor.
-
-### Setter: `rawTrailers`
-
-If the response has trailers, the cache interceptor will pass them to the cache
-interceptor through this method.
