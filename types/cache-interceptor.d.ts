@@ -31,10 +31,7 @@ declare namespace CacheHandler {
     path: string
   }
 
-  export interface GetResult {
-    response: CachedResponse
-    body?: Readable
-  }
+  type GetResult = CachedResponse & { body: null | Readable | Iterable<Buffer> | Buffer | Iterable<string> | string }
 
   /**
    * Underlying storage provider for cached responses
@@ -49,7 +46,7 @@ declare namespace CacheHandler {
 
     createWriteStream(key: CacheKey, value: CachedResponse): Writable | undefined
 
-    deleteByKey(key: CacheKey): void | Promise<void>;
+    delete(key: CacheKey): void | Promise<void>
   }
 
   export interface CachedResponse {
@@ -60,20 +57,20 @@ declare namespace CacheHandler {
      * Headers defined by the Vary header and their respective values for
      *  later comparison
      */
-    vary?: Record<string, string | string[]>;
+    vary?: Record<string, string | string[]>
     /**
      * Time in millis that this value was cached
      */
-    cachedAt: number;
+    cachedAt: number
     /**
      * Time in millis that this value is considered stale
      */
-    staleAt: number;
+    staleAt: number
     /**
      * Time in millis that this value is to be deleted from the cache. This is
      *  either the same as staleAt or the `max-stale` caching directive.
      */
-    deleteAt: number;
+    deleteAt: number
   }
 
   export interface MemoryCacheStoreOpts {
@@ -91,12 +88,12 @@ declare namespace CacheHandler {
   export class MemoryCacheStore implements CacheStore {
     constructor (opts?: MemoryCacheStoreOpts)
 
-    get isFull (): boolean
+    get isFull (): boolean | undefined
 
     get (key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
 
     createWriteStream (key: CacheKey, value: CachedResponse): Writable | undefined
 
-    deleteByKey (uri: DeleteByUri): void
+    delete (key: CacheKey): void | Promise<void>
   }
 }

@@ -13,7 +13,7 @@ const store: CacheInterceptor.CacheStore = {
     throw new Error('stub')
   },
 
-  deleteByKey (_: CacheInterceptor.CacheKey): void | Promise<void> {
+  delete (_: CacheInterceptor.CacheKey): void | Promise<void> {
     throw new Error('stub')
   }
 }
