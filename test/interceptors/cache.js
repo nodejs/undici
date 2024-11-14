@@ -6,6 +6,7 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { Client, interceptors, cacheStores } = require('../../index')
+const { tick } = require('../../lib/util/timers')
 
 describe('Cache Interceptor', () => {
   test('doesn\'t cache request w/ no cache-control header', async () => {
@@ -160,6 +161,7 @@ describe('Cache Interceptor', () => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
+    tick(0)
 
     const server = createServer((req, res) => {
       res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
@@ -205,6 +207,7 @@ describe('Cache Interceptor', () => {
     strictEqual(await response.body.text(), 'asd')
 
     clock.tick(1500)
+    tick(1500)
 
     // Now we send two more requests. Both of these should reach the origin,
     //  but now with a conditional header asking if the resource has been
