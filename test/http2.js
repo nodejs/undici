@@ -1400,7 +1400,6 @@ test('#2364 - Concurrent aborts (2nd variant)', async t => {
       }
     },
     (err, response) => {
-      process._rawDebug('response 1')
       t.ifError(err)
       t.strictEqual(
         response.headers['content-type'],
@@ -1421,7 +1420,6 @@ test('#2364 - Concurrent aborts (2nd variant)', async t => {
       signal
     },
     (err, response) => {
-      process._rawDebug('response 2')
       t.strictEqual(err.name, 'TimeoutError')
     }
   )
@@ -1435,7 +1433,6 @@ test('#2364 - Concurrent aborts (2nd variant)', async t => {
       }
     },
     (err, response) => {
-      process._rawDebug('response 3')
       t.ifError(err)
       t.strictEqual(
         response.headers['content-type'],
@@ -1456,7 +1453,6 @@ test('#2364 - Concurrent aborts (2nd variant)', async t => {
       signal
     },
     (err, response) => {
-      process._rawDebug('response 4')
       t.strictEqual(err.name, 'TimeoutError')
     }
   )
