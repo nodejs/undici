@@ -14,11 +14,6 @@ const { Client, Agent } = require('..')
 
 const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 
-process.once('uncaughtException', function (err) {
-  console.log(new Error().stack)
-  throw err
-})
-
 test('Should support H2 connection', async t => {
   const body = []
   const server = createSecureServer(pem)
@@ -1347,7 +1342,7 @@ test('#2364 - Concurrent aborts', async t => {
   await t.completed
 })
 
-test('#2364 - Concurrent aborts (2nd variant)', { only: true }, async t => {
+test('#2364 - Concurrent aborts (2nd variant)', async t => {
   const server = createSecureServer(pem)
   let counter = 0
 
@@ -1405,6 +1400,7 @@ test('#2364 - Concurrent aborts (2nd variant)', { only: true }, async t => {
       }
     },
     (err, response) => {
+      process._rawDebug('response 1')
       t.ifError(err)
       t.strictEqual(
         response.headers['content-type'],
@@ -1425,6 +1421,7 @@ test('#2364 - Concurrent aborts (2nd variant)', { only: true }, async t => {
       signal
     },
     (err, response) => {
+      process._rawDebug('response 2')
       t.strictEqual(err.name, 'TimeoutError')
     }
   )
@@ -1438,6 +1435,7 @@ test('#2364 - Concurrent aborts (2nd variant)', { only: true }, async t => {
       }
     },
     (err, response) => {
+      process._rawDebug('response 3')
       t.ifError(err)
       t.strictEqual(
         response.headers['content-type'],
@@ -1458,6 +1456,7 @@ test('#2364 - Concurrent aborts (2nd variant)', { only: true }, async t => {
       signal
     },
     (err, response) => {
+      process._rawDebug('response 4')
       t.strictEqual(err.name, 'TimeoutError')
     }
   )
