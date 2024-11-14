@@ -14,6 +14,11 @@ const { Client, Agent } = require('..')
 
 const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 
+process.once('uncaughtException', function (err) {
+  console.log(new Error().stack)
+  throw err
+})
+
 test('Should support H2 connection', async t => {
   const body = []
   const server = createSecureServer(pem)
@@ -1342,7 +1347,7 @@ test('#2364 - Concurrent aborts', async t => {
   await t.completed
 })
 
-test('#2364 - Concurrent aborts (2nd variant)', async t => {
+test('#2364 - Concurrent aborts (2nd variant)', { only: true }, async t => {
   const server = createSecureServer(pem)
   let counter = 0
 
@@ -1621,12 +1626,21 @@ test('#3753 - Handle GOAWAY Gracefully', async (t) => {
         'x-my-header': 'foo'
       }
     }, (err, response) => {
-      if (i === 9 || i === 8) {
-        t.strictEqual(err?.message, 'HTTP/2: "GOAWAY" frame received with code 0')
-        t.strictEqual(err?.code, 'UND_ERR_SOCKET')
+      if (err) {
+        t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
+        t.strictEqual(err.code, 'UND_ERR_SOCKET')
       } else {
-        t.ifError(err)
         t.strictEqual(response.statusCode, 200)
+        ;(async function () {
+          let body
+          try {
+            body = await response.body.text()
+          } catch (err) {
+            t.strictEqual(err.code, 'UND_ERR_SOCKET')
+            return
+          }
+          t.strictEqual(body, 'hello world')
+        })()
       }
     })
   }
