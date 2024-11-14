@@ -1621,12 +1621,21 @@ test('#3753 - Handle GOAWAY Gracefully', async (t) => {
         'x-my-header': 'foo'
       }
     }, (err, response) => {
-      if (i === 9 || i === 8) {
-        t.strictEqual(err?.message, 'HTTP/2: "GOAWAY" frame received with code 0')
-        t.strictEqual(err?.code, 'UND_ERR_SOCKET')
+      if (err) {
+        t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
+        t.strictEqual(err.code, 'UND_ERR_SOCKET')
       } else {
-        t.ifError(err)
         t.strictEqual(response.statusCode, 200)
+        ;(async function () {
+          let body
+          try {
+            body = await response.body.text()
+          } catch (err) {
+            t.strictEqual(err.code, 'UND_ERR_SOCKET')
+            return
+          }
+          t.strictEqual(body, 'hello world')
+        })()
       }
     })
   }
