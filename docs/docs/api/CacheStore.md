@@ -14,7 +14,17 @@ The `MemoryCacheStore` stores the responses in-memory.
 **Options**
 
 - `maxEntries` - The maximum amount of responses to store. Default `Infinity`.
-- `maxEntrySize` - The maximum size in bytes that a response's body can be. If a response's body is greater than or equal to this, the response will not be cached.
+- `maxSize` - The maximum size in bytes that a response's body can be. If a response's body is greater than or equal to this, the response will not be cached.
+
+### `SqliteCacheStore`
+
+The `SqliteCacheStore` stores the responses in a SQLite database.
+Under the hood, it uses Node.js' [`node:sqlite`](https://nodejs.org/api/sqlite.html) api.
+The `SqliteCacheStore` is only exposed if the `node:sqlite` api is present.
+
+**Options**
+
+- `maxSize` - The maximum size in bytes that a resposne's body can be. If a response's body is greater than or equal to this, the response will not be cached.
 
 ## Defining a Custom Cache Store
 
