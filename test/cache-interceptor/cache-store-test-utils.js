@@ -1,20 +1,20 @@
 'use strict'
 
 const { describe, test } = require('node:test')
-const { deepStrictEqual, notEqual, equal } = require('node:assert')
+const { deepStrictEqual, notEqual, equal, ok } = require('node:assert')
 const { Readable } = require('node:stream')
 const { once } = require('node:events')
-const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
-
-cacheStoreTests(MemoryCacheStore)
 
 /**
- * @param {import('../../types/cache-interceptor.d.ts').default.CacheStore} CacheStore
+ * @typedef {import('../../types/cache-interceptor.d.ts').default.CacheStore} CacheStore
+ *
+ * @param {{ new(...any): CacheStore }} CacheStore
  */
 function cacheStoreTests (CacheStore) {
   describe(CacheStore.prototype.constructor.name, () => {
     test('matches interface', async () => {
       const store = new CacheStore()
+      ok(['boolean', 'undefined'].includes(typeof store.isFull))
       equal(typeof store.get, 'function')
       equal(typeof store.createWriteStream, 'function')
       equal(typeof store.delete, 'function')
@@ -144,6 +144,7 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         cachedAt: Date.now() - 20000,
+        rawHeaders: [],
         staleAt: Date.now() - 10000,
         deleteAt: Date.now() - 5
       }
@@ -227,6 +228,7 @@ function writeResponse (stream, body) {
   }
 
   stream.end()
+  return stream
 }
 
 /**
@@ -253,4 +255,10 @@ async function readResponse ({ body: src, ...response }) {
     ...response,
     body
   }
+}
+
+module.exports = {
+  cacheStoreTests,
+  writeResponse,
+  readResponse
 }
