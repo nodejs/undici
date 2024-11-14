@@ -17,7 +17,7 @@ test('ByteString', (t) => {
   ]) {
     assert.throws(
       () => new Headers()[method](name, value),
-      new TypeError(`Headers.${method}: name is a symbol, which cannot be converted to a DOMString.`)
+      new TypeError(`Headers.${method}: name is a symbol, which cannot be converted to a ByteString.`)
     )
   }
 })
