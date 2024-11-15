@@ -45,7 +45,7 @@ declare namespace CacheHandler {
     statusCode: number
     statusMessage: string
     rawHeaders: Buffer[]
-    body: null | Readable | Iterable<Buffer> | Buffer | Iterable<string> | string
+    body: null | Readable | Iterable<Buffer> | AsyncIterable<Buffer> | Buffer | Iterable<string> | AsyncIterable<string> | string
     cachedAt: number
     staleAt: number
   }
@@ -54,11 +54,6 @@ declare namespace CacheHandler {
    * Underlying storage provider for cached responses
    */
   export interface CacheStore {
-    /**
-     * Whether or not the cache is full and can not store any more responses
-     */
-    get isFull(): boolean | undefined
-
     get(key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
 
     createWriteStream(key: CacheKey, val: CacheValue): Writable | undefined
@@ -87,8 +82,6 @@ declare namespace CacheHandler {
 
   export class MemoryCacheStore implements CacheStore {
     constructor (opts?: MemoryCacheStoreOpts)
-
-    get isFull (): boolean | undefined
 
     get (key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
 
