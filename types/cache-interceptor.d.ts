@@ -25,13 +25,30 @@ declare namespace CacheHandler {
     headers?: Record<string, string | string[]>
   }
 
+  export interface CacheValue {
+    statusCode: number
+    statusMessage: string
+    rawHeaders: Buffer[]
+    vary: Record<string, string | string[]>
+    cachedAt: number
+    staleAt: number
+    deleteAt: number
+  }
+
   export interface DeleteByUri {
     origin: string
     method: string
     path: string
   }
 
-  type GetResult = CachedResponse & { body: null | Readable | Iterable<Buffer> | Buffer | Iterable<string> | string }
+  type GetResult = {
+    statusCode: number
+    statusMessage: string
+    rawHeaders: Buffer[]
+    body: null | Readable | Iterable<Buffer> | Buffer | Iterable<string> | string
+    cachedAt: number
+    staleAt: number
+  }
 
   /**
    * Underlying storage provider for cached responses
@@ -44,33 +61,9 @@ declare namespace CacheHandler {
 
     get(key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
 
-    createWriteStream(key: CacheKey, value: CachedResponse): Writable | undefined
+    createWriteStream(key: CacheKey, val: CacheValue): Writable | undefined
 
     delete(key: CacheKey): void | Promise<void>
-  }
-
-  export interface CachedResponse {
-    statusCode: number;
-    statusMessage: string;
-    rawHeaders: Buffer[];
-    /**
-     * Headers defined by the Vary header and their respective values for
-     *  later comparison
-     */
-    vary?: Record<string, string | string[]>
-    /**
-     * Time in millis that this value was cached
-     */
-    cachedAt: number
-    /**
-     * Time in millis that this value is considered stale
-     */
-    staleAt: number
-    /**
-     * Time in millis that this value is to be deleted from the cache. This is
-     *  either the same as staleAt or the `max-stale` caching directive.
-     */
-    deleteAt: number
   }
 
   export interface MemoryCacheStoreOpts {
