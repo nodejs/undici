@@ -82,6 +82,11 @@ declare namespace CacheHandler {
     /**
        * @default Infinity
        */
+    maxSize?: number
+
+    /**
+       * @default Infinity
+       */
     maxEntrySize?: number
 
     errorCallback?: (err: Error) => void
