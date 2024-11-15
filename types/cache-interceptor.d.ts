@@ -48,6 +48,7 @@ declare namespace CacheHandler {
     body: null | Readable | Iterable<Buffer> | AsyncIterable<Buffer> | Buffer | Iterable<string> | AsyncIterable<string> | string
     cachedAt: number
     staleAt: number
+    deleteAt: number
   }
 
   /**

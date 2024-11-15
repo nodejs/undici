@@ -15,7 +15,6 @@ function cacheStoreTests (CacheStore) {
   describe(CacheStore.prototype.constructor.name, () => {
     test('matches interface', async () => {
       const store = new CacheStore()
-      equal(typeof store.isFull, 'boolean')
       equal(typeof store.get, 'function')
       equal(typeof store.createWriteStream, 'function')
       equal(typeof store.delete, 'function')
@@ -195,8 +194,9 @@ function cacheStoreTests (CacheStore) {
 
       const readStream = store.get(structuredClone(request))
       notEqual(readStream, undefined)
+      const { vary, ...responseValue } = requestValue
       deepStrictEqual(await readResponse(readStream), {
-        ...requestValue,
+        ...responseValue,
         body: requestBody
       })
 
