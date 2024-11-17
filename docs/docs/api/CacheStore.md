@@ -98,3 +98,22 @@ This would be
 is either the same sa staleAt or the `max-stale` caching directive.
 
 The store must not return a response after the time defined in this property.
+
+## `CacheStoreReadable`
+
+This extends Node's [`Readable`](https://nodejs.org/api/stream.html#class-streamreadable)
+and defines extra properties relevant to the cache interceptor.
+
+### Getter: `value`
+
+The response's [`CacheStoreValue`](/docs/docs/api/CacheStore.md#cachestorevalue)
+
+## `CacheStoreWriteable`
+
+This extends Node's [`Writable`](https://nodejs.org/api/stream.html#class-streamwritable)
+and defines extra properties relevant to the cache interceptor.
+
+### Setter: `rawTrailers`
+
+If the response has trailers, the cache interceptor will pass them to the cache
+interceptor through this method.
