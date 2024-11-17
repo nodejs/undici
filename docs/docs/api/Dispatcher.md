@@ -377,7 +377,7 @@ Returns: `stream.Duplex`
 
 #### Parameter: PipelineOptions
 
-Extends: [`RequestOptions`](/docs/docs/api/Dispatch.md#parameter-requestoptions)
+Extends: [`RequestOptions`](/docs/docs/api/Dispatcher.md#parameter-requestoptions)
 
 * **objectMode** `boolean` (optional) - Default: `false` - Set to `true` if the `handler` will return an object stream.
 
@@ -467,7 +467,7 @@ Returns: `void | Promise<ResponseData>` - Only returns a `Promise` if no `callba
 
 #### Parameter: `RequestOptions`
 
-Extends: [`DispatchOptions`](/docs/docs/api/Dispatch.md#parameter-dispatchoptions)
+Extends: [`DispatchOptions`](/docs/docs/api/Dispatcher.md#parameter-dispatchoptions)
 
 * **opaque** `unknown` (optional) - Default: `null` - Used for passing through context to `ResponseData`.
 * **signal** `AbortSignal | events.EventEmitter | null` (optional) - Default: `null`.
@@ -654,7 +654,7 @@ return null
 
 A faster version of `Dispatcher.request`. This method expects the second argument `factory` to return a [`stream.Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream which the response will be written to. This improves performance by avoiding creating an intermediate [`stream.Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) stream when the user expects to directly pipe the response body to a [`stream.Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream.
 
-As demonstrated in [Example 1 - Basic GET stream request](/docs/docs/api/Dispatch.md#example-1---basic-get-stream-request), it is recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](/docs/docs/api/Dispatch.md#example-2---stream-to-fastify-response) for more details.
+As demonstrated in [Example 1 - Basic GET stream request](/docs/docs/api/Dispatcher.md#example-1---basic-get-stream-request), it is recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](/docs/docs/api/Dispatch.md#example-2---stream-to-fastify-response) for more details.
 
 Arguments:
 
