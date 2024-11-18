@@ -36,7 +36,7 @@ If the request isn't cached, `undefined` is returned.
 
 Response properties:
 
-* **response** `CachedResponse` - The cached response data.
+* **response** `CacheValue` - The cached response data.
 * **body** `Readable | undefined` - The response's body.
 
 ### Function: `createWriteStream`
@@ -44,11 +44,11 @@ Response properties:
 Parameters:
 
 * **req** `Dispatcher.RequestOptions` - Incoming request
-* **value** `CachedResponse` - Response to store
+* **value** `CacheValue` - Response to store
 
 Returns: `Writable | undefined` - If the store is full, return `undefined`. Otherwise, return a writable so that the cache interceptor can stream the body and trailers to the store.
 
-## `CachedResponse`
+## `CacheValue`
 
 This is an interface containing the majority of a response's data (minus the body).
 

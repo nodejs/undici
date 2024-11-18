@@ -1,8 +1,8 @@
 'use strict'
 
 const { describe, test } = require('node:test')
-const { deepStrictEqual } = require('node:assert')
-const { parseCacheControlHeader, parseVaryHeader } = require('../../lib/util/cache')
+const { deepStrictEqual, equal } = require('node:assert')
+const { parseCacheControlHeader, parseVaryHeader, isEtagUsable } = require('../../lib/util/cache')
 
 describe('parseCacheControlHeader', () => {
   test('all directives are parsed properly when in their correct format', () => {
@@ -214,4 +214,29 @@ describe('parseVaryHeader', () => {
       'another-one': '123'
     })
   })
+})
+
+describe('isEtagUsable', () => {
+  const valuesToTest = {
+    // Invalid etags
+    '': false,
+    asd: false,
+    '"W/"asd""': false,
+    '""asd""': false,
+
+    // Valid etags
+    '"asd"': true,
+    'W/"ads"': true,
+
+    // Spec deviations
+    '""': false,
+    'W/""': false
+  }
+
+  for (const key in valuesToTest) {
+    const expectedValue = valuesToTest[key]
+    test(`\`${key}\` = ${expectedValue}`, () => {
+      equal(isEtagUsable(key), expectedValue)
+    })
+  }
 })

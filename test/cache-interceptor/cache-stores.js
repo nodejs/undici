@@ -58,6 +58,7 @@ function cacheStoreTests (CacheStore) {
 
       deepStrictEqual(await readResponse(readResult), {
         ...requestValue,
+        etag: undefined,
         body: requestBody
       })
 
@@ -94,6 +95,7 @@ function cacheStoreTests (CacheStore) {
       notEqual(readResult, undefined)
       deepStrictEqual(await readResponse(readResult), {
         ...anotherValue,
+        etag: undefined,
         body: anotherBody
       })
     })
@@ -127,6 +129,7 @@ function cacheStoreTests (CacheStore) {
       const readResult = store.get(request)
       deepStrictEqual(await readResponse(readResult), {
         ...requestValue,
+        etag: undefined,
         body: requestBody
       })
     })
@@ -198,6 +201,7 @@ function cacheStoreTests (CacheStore) {
       const { vary, ...responseValue } = requestValue
       deepStrictEqual(await readResponse(readStream), {
         ...responseValue,
+        etag: undefined,
         body: requestBody
       })
 

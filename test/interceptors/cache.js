@@ -223,6 +223,74 @@ describe('Cache Interceptor', () => {
     strictEqual(await response.body.text(), 'asd123')
   })
 
+  test('revalidates request w/ etag when provided', async (t) => {
+    let requestsToOrigin = 0
+
+    const clock = FakeTimers.install({
+      shouldClearNativeTimers: true
+    })
+    tick(0)
+
+    const server = createServer((req, res) => {
+      res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
+      requestsToOrigin++
+
+      if (requestsToOrigin > 1) {
+        equal(req.headers['etag'], '"asd123"')
+
+        if (requestsToOrigin === 3) {
+          res.end('asd123')
+        } else {
+          res.statusCode = 304
+          res.end()
+        }
+      } else {
+        res.setHeader('etag', '"asd123"')
+        res.end('asd')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+      clock.uninstall()
+    })
+
+    await once(server, 'listening')
+
+    strictEqual(requestsToOrigin, 0)
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    let response = await client.request(request)
+    strictEqual(requestsToOrigin, 1)
+    strictEqual(await response.body.text(), 'asd')
+
+    clock.tick(1500)
+    tick(1500)
+
+    // Now we send two more requests. Both of these should reach the origin,
+    //  but now with a conditional header asking if the resource has been
+    //  updated. These need to be ran after the response is stale.
+    // No update for the second request
+    response = await client.request(request)
+    strictEqual(requestsToOrigin, 2)
+    strictEqual(await response.body.text(), 'asd')
+
+    // This should be updated, even though the value isn't expired.
+    response = await client.request(request)
+    strictEqual(requestsToOrigin, 3)
+    strictEqual(await response.body.text(), 'asd123')
+  })
+
   test('respects cache store\'s isFull property', async () => {
     const server = createServer((_, res) => {
       res.end('asd')
