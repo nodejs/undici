@@ -29,7 +29,7 @@ declare namespace CacheHandler {
     statusCode: number
     statusMessage: string
     rawHeaders: Buffer[]
-    vary: Record<string, string | string[]>
+    vary?: Record<string, string | string[]>
     cachedAt: number
     staleAt: number
     deleteAt: number
@@ -86,7 +86,7 @@ declare namespace CacheHandler {
 
     get (key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
 
-    createWriteStream (key: CacheKey, value: CachedResponse): Writable | undefined
+    createWriteStream (key: CacheKey, value: CacheValue): Writable | undefined
 
     delete (key: CacheKey): void | Promise<void>
   }

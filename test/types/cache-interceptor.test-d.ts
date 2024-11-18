@@ -3,13 +3,11 @@ import { expectAssignable, expectNotAssignable } from 'tsd'
 import CacheInterceptor from '../../types/cache-interceptor'
 
 const store: CacheInterceptor.CacheStore = {
-  isFull: false,
-
   get (_: CacheInterceptor.CacheKey): CacheInterceptor.GetResult | Promise<CacheInterceptor.GetResult | undefined> | undefined {
     throw new Error('stub')
   },
 
-  createWriteStream (_: CacheInterceptor.CacheKey, _2: CacheInterceptor.CachedResponse): Writable | undefined {
+  createWriteStream (_: CacheInterceptor.CacheKey, _2: CacheInterceptor.CacheValue): Writable | undefined {
     throw new Error('stub')
   },
 
@@ -23,7 +21,7 @@ expectAssignable<CacheInterceptor.CacheOptions>({ store })
 expectAssignable<CacheInterceptor.CacheOptions>({ methods: [] })
 expectAssignable<CacheInterceptor.CacheOptions>({ store, methods: ['GET'] })
 
-expectAssignable<CacheInterceptor.CachedResponse>({
+expectAssignable<CacheInterceptor.CacheValue>({
   statusCode: 200,
   statusMessage: 'OK',
   rawHeaders: [],
@@ -32,7 +30,7 @@ expectAssignable<CacheInterceptor.CachedResponse>({
   deleteAt: 0
 })
 
-expectAssignable<CacheInterceptor.CachedResponse>({
+expectAssignable<CacheInterceptor.CacheValue>({
   statusCode: 200,
   statusMessage: 'OK',
   rawHeaders: [],
@@ -42,8 +40,8 @@ expectAssignable<CacheInterceptor.CachedResponse>({
   deleteAt: 0
 })
 
-expectNotAssignable<CacheInterceptor.CachedResponse>({})
-expectNotAssignable<CacheInterceptor.CachedResponse>({
+expectNotAssignable<CacheInterceptor.CacheValue>({})
+expectNotAssignable<CacheInterceptor.CacheValue>({
   statusCode: '123',
   statusMessage: 123,
   rawHeaders: '',
