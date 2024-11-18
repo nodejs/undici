@@ -1,0 +1,2954 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='lib/myxml2rfc.xslt'?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no" ?>
+<?rfc linkmailto="no" ?>
+<?rfc editing="no" ?>
+<?rfc comments="yes"?>
+<?rfc inline="yes"?>
+<?rfc rfcedstyle="yes"?>
+<?rfc-ext allow-markup-in-artwork="yes" ?>
+<?rfc-ext map-dfn="none" ?>
+<?rfc-ext html-pretty-print="prettyprint https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"?>
+<?rfc-ext include-references-in-index="yes" ?>
+<?rfc-ext xml2rfc-backend="202007"?>
+<rfc xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:x="http://purl.org/net/xml2rfc/ext" obsoletes="7230" category="std" x:maturity-level="internet" ipr="pre5378Trust200902"  number="9112" seriesNo="99" version="3" tocDepth="4" sortRefs="true">
+<front>
+
+  <title>HTTP/1.1</title>
+
+  <author fullname="Roy T. Fielding" initials="R." surname="Fielding" role="editor">
+    <organization>Adobe</organization>
+    <address>
+      <postal>
+        <postalLine>345 Park Ave</postalLine>
+        <postalLine>San Jose, CA 95110</postalLine>
+        <country>United States of America</country>
+      </postal>
+      <email>fielding@gbiv.com</email>
+      <uri>https://roy.gbiv.com/</uri>
+    </address>
+  </author>
+
+  <author fullname="Mark Nottingham" initials="M." surname="Nottingham" role="editor">
+    <organization>Fastly</organization>
+    <address>
+       <postal>
+         <postalLine>Prahran</postalLine>
+         <country>Australia</country>
+       </postal>
+      <email>mnot@mnot.net</email>
+      <uri>https://www.mnot.net/</uri>
+    </address>
+  </author>
+
+  <author fullname="Julian Reschke" initials="J." surname="Reschke" role="editor">
+    <organization abbrev="greenbytes">greenbytes GmbH</organization>
+    <address>
+      <postal>
+        <postalLine>Hafenweg 16</postalLine>
+        <postalLine>48155 Münster</postalLine>
+        <country>Germany</country>
+      </postal>
+      <email>julian.reschke@greenbytes.de</email>
+      <uri>https://greenbytes.de/tech/webdav/</uri>
+    </address>
+  </author>
+
+  <date year="2022" month="June"/>
+
+  <area>Applications and Real-Time</area>
+  <workgroup>HTTP</workgroup>
+
+  <keyword>Hypertext Transfer Protocol</keyword>
+  <keyword>HTTP</keyword>
+  <keyword>HTTP message format</keyword>
+
+<abstract>
+<t>
+   The Hypertext Transfer Protocol (HTTP) is a stateless application-level
+   protocol for distributed, collaborative, hypertext information systems.
+   This document specifies the HTTP/1.1 message syntax, message parsing,
+   connection management, and related security concerns.
+</t>
+<t>
+   This document obsoletes portions of RFC 7230.
+</t>
+</abstract>
+</front>
+<middle>
+<section title="Introduction" anchor="introduction">
+<t>
+   The Hypertext Transfer Protocol (HTTP) is a stateless application-level
+   request/response protocol that uses extensible semantics and
+   self-descriptive messages for flexible interaction with network-based
+   hypertext information systems. HTTP/1.1 is defined by:
+</t>
+<ul>
+   <li>This document</li>
+   <li>"HTTP Semantics" <xref target="HTTP"/></li>
+   <li>"HTTP Caching" <xref target="CACHING"/></li>
+</ul>
+<t>
+   This document specifies how HTTP semantics are conveyed using the
+   HTTP/1.1 message syntax, framing, and connection management mechanisms.
+   Its goal is to define the complete set of requirements for HTTP/1.1
+   message parsers and message-forwarding intermediaries.
+</t>
+<t>
+   This document obsoletes the portions of
+   <xref target="RFC7230" format="none">RFC 7230</xref> related to HTTP/1.1
+   messaging and connection management, with the changes being summarized in
+   <xref target="changes.from.rfc.7230"/>. The other parts of
+   <xref target="RFC7230" format="none">RFC 7230</xref> are obsoleted by
+   "HTTP Semantics" <xref target="HTTP"/>.
+</t>
+
+<section title="Requirements Notation" anchor="requirements.notation">
+<t>
+   The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+   "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+   "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+   described in BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and only when, they
+   appear in all capitals, as shown here.
+</t>
+<t>
+   Conformance criteria and considerations regarding error handling
+   are defined in <xref target="HTTP" x:rel="#conformance"/>.
+</t>
+</section>
+
+<section title="Syntax Notation" anchor="notation">
+<iref primary="true" item="Grammar" subitem="ALPHA"/>
+<iref primary="true" item="Grammar" subitem="CR"/>
+<iref primary="true" item="Grammar" subitem="CRLF"/>
+<iref primary="true" item="Grammar" subitem="CTL"/>
+<iref primary="true" item="Grammar" subitem="DIGIT"/>
+<iref primary="true" item="Grammar" subitem="DQUOTE"/>
+<iref primary="true" item="Grammar" subitem="HEXDIG"/>
+<iref primary="true" item="Grammar" subitem="HTAB"/>
+<iref primary="true" item="Grammar" subitem="LF"/>
+<iref primary="true" item="Grammar" subitem="OCTET"/>
+<iref primary="true" item="Grammar" subitem="SP"/>
+<iref primary="true" item="Grammar" subitem="VCHAR"/>
+<t>
+   This specification uses the Augmented Backus-Naur Form (ABNF) notation of
+   <xref target="RFC5234"/>, extended with the notation for case-sensitivity
+   in strings defined in <xref target="RFC7405"/>.
+</t>
+<t>
+   It also uses a list extension, defined in <xref target="HTTP" x:rel="#abnf.extension"/>,
+   that allows for compact definition of comma-separated lists using a "#"
+   operator (similar to how the "*" operator indicates repetition). <xref target="collected.abnf"/> shows the collected grammar with all list
+   operators expanded to standard ABNF notation.
+</t>
+<t>
+   As a convention, ABNF rule names prefixed with "obs-" denote
+   obsolete grammar rules that appear for historical reasons.
+</t>
+<t anchor="core.rules">
+  <x:anchor-alias value="ALPHA"/>
+  <x:anchor-alias value="CR"/>
+  <x:anchor-alias value="CRLF"/>
+  <x:anchor-alias value="CTL"/>
+  <x:anchor-alias value="DIGIT"/>
+  <x:anchor-alias value="DQUOTE"/>
+  <x:anchor-alias value="HEXDIG"/>
+  <x:anchor-alias value="HTAB"/>
+  <x:anchor-alias value="LF"/>
+  <x:anchor-alias value="OCTET"/>
+  <x:anchor-alias value="SP"/>
+  <x:anchor-alias value="VCHAR"/>
+   The following core rules are included by
+   reference, as defined in <xref target="RFC5234" x:fmt="," x:sec="B.1"/>:
+   ALPHA (letters), CR (carriage return), CRLF (CR LF), CTL (controls),
+   DIGIT (decimal 0-9), DQUOTE (double quote),
+   HEXDIG (hexadecimal 0-9/A-F/a-f), HTAB (horizontal tab), LF (line feed),
+   OCTET (any 8-bit sequence of data), SP (space), and
+   VCHAR (any visible <xref target="USASCII"/> character).
+</t>
+<t anchor="imported.rules">
+  <x:anchor-alias value="absolute-path"/>
+  <x:anchor-alias value="comment"/>
+  <x:anchor-alias value="field-name"/>
+  <x:anchor-alias value="field-value"/>
+  <x:anchor-alias value="obs-text"/>
+  <x:anchor-alias value="quoted-string"/>
+  <x:anchor-alias value="token"/>
+  The rules below are defined in <xref target="HTTP"/>:
+</t>
+<sourcecode type="abnf7230">
+  <x:ref>BWS</x:ref>           = &lt;BWS, see <xref target="HTTP" x:rel="#whitespace"/>&gt;
+  <x:ref>OWS</x:ref>           = &lt;OWS, see <xref target="HTTP" x:rel="#whitespace"/>&gt;
+  <x:ref>RWS</x:ref>           = &lt;RWS, see <xref target="HTTP" x:rel="#whitespace"/>&gt;
+  <x:ref>absolute-path</x:ref> = &lt;absolute-path, see <xref target="HTTP" x:rel="#uri.references"/>&gt;
+  <x:ref>field-name</x:ref>    = &lt;field-name, see <xref target="HTTP" x:rel="#fields.names"/>&gt;
+  <x:ref>field-value</x:ref>   = &lt;field-value, see <xref target="HTTP" x:rel="#fields.values"/>&gt;
+  <x:ref>obs-text</x:ref>      = &lt;obs-text, see <xref target="HTTP" x:rel="#quoted.strings"/>&gt;
+  <x:ref>quoted-string</x:ref> = &lt;quoted-string, see <xref target="HTTP" x:rel="#quoted.strings"/>&gt;
+  <x:ref>token</x:ref>         = &lt;token, see <xref target="HTTP" x:rel="#tokens"/>&gt;
+  <x:ref>transfer-coding</x:ref> =
+                  &lt;transfer-coding, see <xref target="HTTP" x:rel="#field.te"/>&gt;
+</sourcecode>
+<t anchor="imported.uri.rules">
+  <x:anchor-alias value="absolute-URI"/>
+  <x:anchor-alias value="authority"/>
+  <x:anchor-alias value="query"/>
+  The rules below are defined in <xref target="URI"/>:
+</t>
+<sourcecode type="abnf7230">
+  <x:ref>absolute-URI</x:ref>  = &lt;absolute-URI, see <xref target="URI" x:fmt="," x:sec="4.3"/>&gt;
+  <x:ref>authority</x:ref>     = &lt;authority, see <xref target="URI" x:fmt="," x:sec="3.2"/>&gt;
+  <x:ref>uri-host</x:ref>      = &lt;host, see <xref target="URI" x:fmt="," x:sec="3.2.2"/>&gt;
+  <x:ref>port</x:ref>          = &lt;port, see <xref target="URI" x:fmt="," x:sec="3.2.3"/>&gt;
+  <x:ref>query</x:ref>         = &lt;query, see <xref target="URI" x:fmt="," x:sec="3.4"/>&gt;
+</sourcecode>
+</section>
+</section>
+
+<section title="Message" anchor="http.message">
+<t>
+   HTTP/1.1 clients and servers communicate by sending messages.
+   See <xref target="HTTP" x:fmt="of" x:rel="#terminology"/> for
+   the general terminology and core concepts of HTTP.
+</t>
+<section title="Message Format" anchor="message.format">
+<x:anchor-alias value="generic-message"/>
+<x:anchor-alias value="message.types"/>
+<x:anchor-alias value="HTTP-message"/>
+<x:anchor-alias value="start-line"/>
+<iref item="header section"/>
+<iref item="headers"/>
+<iref item="header line"/>
+<t>
+   An HTTP/1.1 message consists of a start-line followed by a CRLF and a
+   sequence of
+   octets in a format similar to the Internet Message Format
+   <xref target="RFC5322"/>: zero or more header field lines (collectively
+   referred to as the "headers" or the "header section"), an empty line
+   indicating the end of the header section, and an optional message body.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="HTTP-message"><!--terminal production--></iref>
+  <x:ref>HTTP-message</x:ref>   = <x:ref>start-line</x:ref> <x:ref>CRLF</x:ref>
+                   *( <x:ref>field-line</x:ref> <x:ref>CRLF</x:ref> )
+                   <x:ref>CRLF</x:ref>
+                   [ <x:ref>message-body</x:ref> ]
+</sourcecode>
+<t>
+   A message can be either a request from client to server or a
+   response from server to client.  Syntactically, the two types of messages
+   differ only in the start-line, which is either a request-line (for requests)
+   or a status-line (for responses), and in the algorithm for determining
+   the length of the message body (<xref target="message.body"/>).
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="start-line"/>
+  <x:ref>start-line</x:ref>     = <x:ref>request-line</x:ref> / <x:ref>status-line</x:ref>
+</sourcecode>
+<t>
+   In theory, a client could receive requests and a server could receive
+   responses, distinguishing them by their different start-line formats.
+   In practice, servers are implemented to only expect a request
+   (a response is interpreted as an unknown or invalid request method),
+   and clients are implemented to only expect a response.
+</t>
+<t>
+   HTTP makes use of some protocol elements similar to the
+   Multipurpose Internet Mail Extensions (MIME) <xref target="RFC2045"/>.
+   See <xref target="differences.between.http.and.mime"/> for the
+   differences between HTTP and MIME messages.
+</t>
+</section>
+
+<section title="Message Parsing" anchor="message.parsing">
+<t>
+   The normal procedure for parsing an HTTP message is to read the
+   start-line into a structure, read each header field line into a hash
+   table by field name until the empty line, and then use the parsed
+   data to determine if a message body is expected.  If a message body
+   has been indicated, then it is read as a stream until an amount
+   of octets equal to the message body length is read or the connection
+   is closed.
+</t>
+<t>
+   A recipient <bcp14>MUST</bcp14> parse an HTTP message as a sequence of octets in an
+   encoding that is a superset of US-ASCII <xref target="USASCII"/>.
+   Parsing an HTTP message as a stream of Unicode characters, without regard
+   for the specific encoding, creates security vulnerabilities due to the
+   varying ways that string processing libraries handle invalid multibyte
+   character sequences that contain the octet LF (%x0A).  String-based
+   parsers can only be safely used within protocol elements after the element
+   has been extracted from the message, such as within a header field line value
+   after message parsing has delineated the individual field lines.
+</t>
+<t>
+   Although the line terminator for the start-line and
+   fields is the sequence CRLF, a recipient <bcp14>MAY</bcp14> recognize a
+   single LF as a line terminator and ignore any preceding CR.
+</t>
+<t>
+   A sender <bcp14>MUST NOT</bcp14> generate a bare CR (a CR character not immediately
+   followed by LF) within any protocol elements other than the content.
+   A recipient of such a bare CR <bcp14>MUST</bcp14> consider that element to be invalid or
+   replace each bare CR with SP before processing the element or forwarding
+   the message.
+</t>
+<t>
+   Older HTTP/1.0 user agent implementations might send an extra CRLF
+   after a POST request as a workaround for some early server
+   applications that failed to read message body content that was
+   not terminated by a line-ending. An HTTP/1.1 user agent <bcp14>MUST NOT</bcp14>
+   preface or follow a request with an extra CRLF.  If terminating
+   the request message body with a line-ending is desired, then the
+   user agent <bcp14>MUST</bcp14> count the terminating CRLF octets as part of the
+   message body length.
+</t>
+<t>
+   In the interest of robustness, a server that is expecting to receive and
+   parse a request-line <bcp14>SHOULD</bcp14> ignore at least one empty line (CRLF)
+   received prior to the request-line.
+</t>
+<t>
+   A sender <bcp14>MUST NOT</bcp14> send whitespace between the start-line and
+   the first header field.
+</t>
+<t>
+   A recipient that receives whitespace between the start-line and
+   the first header field <bcp14>MUST</bcp14> either reject the message as invalid or
+   consume each whitespace-preceded line without further processing of it
+   (i.e., ignore the entire line, along with any subsequent lines preceded
+   by whitespace, until a properly formed header field is received or the
+   header section is terminated).
+   Rejection or removal of invalid whitespace-preceded lines is necessary
+   to prevent their misinterpretation by downstream recipients that might
+   be vulnerable to request smuggling (<xref target="request.smuggling"/>)
+   or response splitting (<xref target="response.splitting"/>) attacks.
+</t>
+<t>
+   When a server listening only for HTTP request messages, or processing
+   what appears from the start-line to be an HTTP request message,
+   receives a sequence of octets that does not match the HTTP-message
+   grammar aside from the robustness exceptions listed above, the
+   server <bcp14>SHOULD</bcp14> respond with a <x:ref>400 (Bad Request)</x:ref> response
+   and close the connection.
+</t>
+</section>
+
+<section title="HTTP Version" anchor="http.version">
+  <x:anchor-alias value="HTTP-version"/>
+  <x:anchor-alias value="HTTP-name"/>
+<t>
+   HTTP uses a "&lt;major&gt;.&lt;minor&gt;" numbering scheme to indicate
+   versions of the protocol. This specification defines version "1.1".
+   <xref target="HTTP" x:rel="#protocol.version"/> specifies the semantics of HTTP version
+   numbers.
+</t>
+<t>
+   The version of an HTTP/1.x message is indicated by an HTTP-version field
+   in the <x:ref>start-line</x:ref>. HTTP-version is case-sensitive.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="HTTP-version"/><iref primary="true" item="Grammar" subitem="HTTP-name"/>
+  <x:ref>HTTP-version</x:ref>  = <x:ref>HTTP-name</x:ref> "/" <x:ref>DIGIT</x:ref> "." <x:ref>DIGIT</x:ref>
+  <x:ref>HTTP-name</x:ref>     = %s"HTTP"
+</sourcecode>
+<t>
+   When an HTTP/1.1 message is sent to an HTTP/1.0 recipient
+   <xref target="HTTP10"/> or a recipient whose version is unknown,
+   the HTTP/1.1 message is constructed such that it can be interpreted
+   as a valid HTTP/1.0 message if all of the newer features are ignored.
+   This specification places recipient-version requirements on some
+   new features so that a conformant sender will only use compatible
+   features until it has determined, through configuration or the
+   receipt of a message, that the recipient supports HTTP/1.1.
+</t>
+<t>
+   Intermediaries that process HTTP messages (i.e., all intermediaries
+   other than those acting as tunnels) <bcp14>MUST</bcp14> send their own HTTP-version
+   in forwarded messages, unless it is purposefully downgraded as a workaround
+   for an upstream issue. In other words, an intermediary is not allowed to blindly
+   forward the <x:ref>start-line</x:ref> without ensuring that the
+   protocol version in that message matches a version to which that
+   intermediary is conformant for both the receiving and
+   sending of messages.  Forwarding an HTTP message without rewriting
+   the HTTP-version might result in communication errors when downstream
+   recipients use the message sender's version to determine what features
+   are safe to use for later communication with that sender.
+</t>
+<t>
+   A server <bcp14>MAY</bcp14> send an HTTP/1.0 response to an HTTP/1.1 request
+   if it is known or suspected that the client incorrectly implements the
+   HTTP specification and is incapable of correctly processing later
+   version responses, such as when a client fails to parse the version
+   number correctly or when an intermediary is known to blindly forward
+   the HTTP-version even when it doesn't conform to the given minor
+   version of the protocol. Such protocol downgrades <bcp14>SHOULD NOT</bcp14> be
+   performed unless triggered by specific client attributes, such as when
+   one or more of the request header fields (e.g., <x:ref>User-Agent</x:ref>)
+   uniquely match the values sent by a client known to be in error.
+</t>
+</section>
+</section>
+
+<section title="Request Line" anchor="request.line">
+  <x:anchor-alias value="Request"/>
+  <x:anchor-alias value="request-line"/>
+<t>
+   A request-line begins with a method token, followed by a single
+   space (SP), the request-target, and another single space (SP), and ends
+   with the protocol version.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="request-line"/>
+  <x:ref>request-line</x:ref>   = <x:ref>method</x:ref> <x:ref>SP</x:ref> <x:ref>request-target</x:ref> <x:ref>SP</x:ref> <x:ref>HTTP-version</x:ref>
+</sourcecode>
+<t>
+   Although the request-line grammar rule requires that each of the component
+   elements be separated by a single SP octet, recipients <bcp14>MAY</bcp14> instead parse
+   on whitespace-delimited word boundaries and, aside from the CRLF
+   terminator, treat any form of whitespace as the SP separator while
+   ignoring preceding or trailing whitespace; such whitespace includes one or
+   more of the following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.
+   However, lenient parsing can result in request smuggling security
+   vulnerabilities if there are multiple recipients of the message and each
+   has its own unique interpretation of robustness
+   (see <xref target="request.smuggling"/>).
+</t>
+<t>
+   HTTP does not place a predefined limit on the length of a request-line,
+   as described in <xref target="HTTP" x:rel="#length.requirements"/>.
+   A server that receives a method longer than any that it implements
+   <bcp14>SHOULD</bcp14> respond with a <x:ref>501 (Not Implemented)</x:ref> status code.
+   A server that receives a request-target longer than any URI it wishes to
+   parse <bcp14>MUST</bcp14> respond with a
+   <x:ref>414 (URI Too Long)</x:ref> status code (see <xref target="HTTP" x:rel="#status.414"/>).
+</t>
+<t>
+   Various ad hoc limitations on request-line length are found in practice.
+   It is <bcp14>RECOMMENDED</bcp14> that all HTTP senders and recipients support, at a
+   minimum, request-line lengths of 8000 octets.
+</t>
+
+<section title="Method" anchor="request.method">
+  <iref primary="true" item="method"/>
+  <x:anchor-alias value="method"/>
+<t>
+   The method token indicates the request method to be performed on the
+   target resource. The request method is case-sensitive.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="method"/>
+  <x:ref>method</x:ref>         = <x:ref>token</x:ref>
+</sourcecode>
+<t>
+   The request methods defined by this specification can be found in
+   <xref target="HTTP" x:rel="#methods"/>, along with information regarding the HTTP method
+   registry and considerations for defining new methods.
+</t>
+</section>
+
+<section title="Request Target" anchor="request.target">
+  <iref primary="true" item="request-target"/>
+  <x:anchor-alias value="request-target"/>
+<t>
+   The request-target identifies the target resource upon which to apply the
+   request. The client derives a request-target from its desired target URI.
+   There are four distinct formats for the request-target, depending on both
+   the method being requested and whether the request is to a proxy.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="request-target"/><iref primary="false" item="Grammar" subitem="origin-form"/><iref primary="false" item="Grammar" subitem="absolute-form"/><iref primary="false" item="Grammar" subitem="authority-form"/><iref primary="false" item="Grammar" subitem="asterisk-form"/>
+  <x:ref>request-target</x:ref> = <x:ref>origin-form</x:ref>
+                 / <x:ref>absolute-form</x:ref>
+                 / <x:ref>authority-form</x:ref>
+                 / <x:ref>asterisk-form</x:ref>
+</sourcecode>
+<t>
+   No whitespace is allowed in the request-target.
+   Unfortunately, some user agents fail to properly encode or exclude
+   whitespace found in hypertext references, resulting in those disallowed
+   characters being sent as the request-target in a malformed request-line.
+</t>
+<t>
+   Recipients of an invalid request-line <bcp14>SHOULD</bcp14> respond with either a
+   <x:ref>400 (Bad Request)</x:ref> error or a <x:ref>301 (Moved Permanently)</x:ref>
+   redirect with the request-target properly encoded.  A recipient <bcp14>SHOULD NOT</bcp14>
+   attempt to autocorrect and then process the request without a redirect,
+   since the invalid request-line might be deliberately crafted to bypass
+   security filters along the request chain.
+</t>
+<t>
+   A client <bcp14>MUST</bcp14> send a <x:ref>Host</x:ref> header field (<xref target="HTTP" x:rel="#field.host"/>)
+   in all HTTP/1.1 request messages.
+   If the target URI includes an authority component, then a client <bcp14>MUST</bcp14>
+   send a field value for Host that is identical to that authority
+   component, excluding any userinfo subcomponent and its "@" delimiter
+   (<xref target="HTTP" x:rel="#uri.schemes"/>).
+   If the authority component is missing or undefined for the target URI,
+   then a client <bcp14>MUST</bcp14> send a Host header field with an empty field value.
+</t>
+<t>
+   A server <bcp14>MUST</bcp14> respond with a <x:ref>400 (Bad Request)</x:ref> status code
+   to any HTTP/1.1 request message that lacks a Host header field and
+   to any request message that contains more than one Host header field line
+   or a Host header field with an invalid field value.
+</t>
+
+<section title="origin-form" anchor="origin-form">
+   <iref item="origin-form (of request-target)"/>
+<t>
+   The most common form of request-target is the <x:dfn>origin-form</x:dfn>.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="origin-form"/>
+  <x:ref>origin-form</x:ref>    = <x:ref>absolute-path</x:ref> [ "?" <x:ref>query</x:ref> ]
+</sourcecode>
+<t>
+   When making a request directly to an origin server, other than a CONNECT
+   or server-wide OPTIONS request (as detailed below),
+   a client <bcp14>MUST</bcp14> send only the absolute path and query components of
+   the target URI as the request-target.
+   If the target URI's path component is empty, the client <bcp14>MUST</bcp14> send
+   "/" as the path within the origin-form of request-target.
+   A <x:ref>Host</x:ref> header field is also sent, as defined in
+   <xref target="HTTP" x:rel="#field.host"/>.
+</t>
+<t>
+   For example, a client wishing to retrieve a representation of the resource
+   identified as
+</t>
+<artwork x:indent-with="  " type="example">
+http://www.example.org/where?q=now
+</artwork>
+<t>
+   directly from the origin server would open (or reuse) a TCP connection
+   to port 80 of the host "www.example.org" and send the lines:
+</t>
+<sourcecode type="http-message">
+GET /where?q=now HTTP/1.1
+Host: www.example.org
+</sourcecode>
+<t>
+   followed by the remainder of the request message.
+</t>
+</section>
+
+<section title="absolute-form" anchor="absolute-form">
+   <iref item="absolute-form (of request-target)"/>
+<t>
+   When making a request to a proxy, other than a CONNECT or server-wide
+   OPTIONS request (as detailed below), a client <bcp14>MUST</bcp14> send the target URI
+   in <x:dfn>absolute-form</x:dfn> as the request-target.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="absolute-form"/>
+  <x:ref>absolute-form</x:ref>  = <x:ref>absolute-URI</x:ref>
+</sourcecode>
+<t>
+   The proxy is requested to either service that request from a valid cache,
+   if possible, or make the same request on the client's behalf either to
+   the next inbound proxy server or directly to the origin server indicated
+   by the request-target.  Requirements on such "forwarding" of messages are
+   defined in <xref target="HTTP" x:rel="#message.forwarding"/>.
+</t>
+<t>
+   An example absolute-form of request-line would be:
+</t>
+<sourcecode type="http-message">
+GET http://www.example.org/pub/WWW/TheProject.html HTTP/1.1
+</sourcecode>
+<t>
+   A client <bcp14>MUST</bcp14> send a Host header field in an HTTP/1.1 request even
+   if the request-target is in the absolute-form, since this
+   allows the Host information to be forwarded through ancient HTTP/1.0
+   proxies that might not have implemented Host.
+</t>
+<t>
+   When a proxy receives a request with an absolute-form of
+   request-target, the proxy <bcp14>MUST</bcp14> ignore the received
+   Host header field (if any) and instead replace it with the host
+   information of the request-target.  A proxy that forwards such a request
+   <bcp14>MUST</bcp14> generate a new Host field value based on the received
+   request-target rather than forward the received Host field value.
+</t>
+<t>
+   When an origin server receives a request with an absolute-form of
+   request-target, the origin server <bcp14>MUST</bcp14> ignore the received Host header
+   field (if any) and instead use the host information of the request-target.
+   Note that if the request-target does not have an authority component, an
+   empty Host header field will be sent in this case.
+</t>
+<t>
+   A server <bcp14>MUST</bcp14> accept the absolute-form in requests even though most
+   HTTP/1.1 clients will only send the absolute-form to a proxy.
+</t>
+</section>
+
+<section title="authority-form" anchor="authority-form">
+   <iref item="authority-form (of request-target)"/>
+<t>
+   The <x:dfn>authority-form</x:dfn> of request-target is only used for
+   CONNECT requests (<xref target="HTTP" x:rel="#CONNECT"/>). It consists of only the
+   <x:ref>uri-host</x:ref> and <x:ref>port</x:ref> number of the tunnel
+   destination, separated by a colon (":").
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="authority-form"/>
+  <x:ref>authority-form</x:ref> = <x:ref>uri-host</x:ref> ":" <x:ref>port</x:ref>
+</sourcecode>
+<t>
+   When making a CONNECT request to establish a tunnel through one or more
+   proxies, a client <bcp14>MUST</bcp14> send only the host and port of the tunnel
+   destination as the request-target. The client obtains the host and port
+   from the target URI's <x:ref>authority</x:ref> component, except that it
+   sends the scheme's default port if the target URI elides the port.
+   For example, a CONNECT request to "http://www.example.com" looks like the
+   following:
+</t>
+<sourcecode type="http-message">
+CONNECT www.example.com:80 HTTP/1.1
+Host: www.example.com
+
+</sourcecode>
+</section>
+
+<section title="asterisk-form" anchor="asterisk-form">
+   <iref item="asterisk-form (of request-target)"/>
+<t>
+   The <x:dfn>asterisk-form</x:dfn> of request-target is only used for a server-wide
+   OPTIONS request (<xref target="HTTP" x:rel="#OPTIONS"/>).
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="asterisk-form"/>
+  <x:ref>asterisk-form</x:ref>  = "*"
+</sourcecode>
+<t>
+   When a client wishes to request OPTIONS
+   for the server as a whole, as opposed to a specific named resource of
+   that server, the client <bcp14>MUST</bcp14> send only "*" (%x2A) as the request-target.
+   For example,
+</t>
+<sourcecode type="http-message">
+OPTIONS * HTTP/1.1
+</sourcecode>
+<t>
+   If a proxy receives an OPTIONS request with an absolute-form of
+   request-target in which the URI has an empty path and no query component,
+   then the last proxy on the request chain <bcp14>MUST</bcp14> send a request-target
+   of "*" when it forwards the request to the indicated origin server.
+</t>
+<t>
+   For example, the request
+</t>
+<sourcecode type="http-message">
+OPTIONS http://www.example.org:8001 HTTP/1.1
+</sourcecode>
+<t>
+  would be forwarded by the final proxy as
+</t>
+<sourcecode type="http-message">
+OPTIONS * HTTP/1.1
+Host: www.example.org:8001
+</sourcecode>
+<t>
+   after connecting to port 8001 of host "www.example.org".
+</t>
+</section>
+</section>
+
+<section title="Reconstructing the Target URI" anchor="reconstructing.target.uri">
+  <x:anchor-alias value="h1.effective.request.uri"/>
+<t>
+   The target URI is the <x:ref>request-target</x:ref> when the
+   request-target is in <x:ref>absolute-form</x:ref>. In that case,
+   a server will parse the URI into its generic components for further
+   evaluation.
+</t>
+<t>
+   Otherwise, the server reconstructs the target URI from the connection
+   context and various parts of the request message in order to identify the
+   target resource (<xref target="HTTP" x:rel="#target.resource"/>):
+</t>
+<ul>
+<li>
+   If the server's configuration provides for a fixed URI scheme, or a scheme
+   is provided by a trusted outbound gateway, that scheme is used for the
+   target URI. This is common in large-scale deployments because a gateway
+   server will receive the client's connection context and replace that with
+   their own connection to the inbound server.
+   Otherwise, if the request is received over a secured connection,
+   the target URI's scheme is "https"; if not, the scheme is "http".
+</li>
+<li>
+   If the request-target is in <x:ref>authority-form</x:ref>,
+   the target URI's authority component is the request-target.
+   Otherwise, the target URI's authority component is the field value of the
+   <x:ref>Host</x:ref> header field. If there is no <x:ref>Host</x:ref>
+   header field or if its field value is empty or invalid,
+   the target URI's authority component is empty.
+</li>
+<li>
+   If the request-target is in <x:ref>authority-form</x:ref> or
+   <x:ref>asterisk-form</x:ref>, the target URI's combined
+   <x:ref>path</x:ref> and <x:ref>query</x:ref> component is empty.
+   Otherwise, the target URI's combined <x:ref>path</x:ref> and
+   <x:ref>query</x:ref> component is the request-target.
+</li>
+<li>
+   The components of a reconstructed target URI, once determined as above,
+   can be recombined into <x:ref>absolute-URI</x:ref> form by concatenating
+   the scheme, "://", authority, and combined path and query component.
+</li>
+</ul>
+<t>
+   Example 1: The following message received over a secure connection
+</t>
+<sourcecode type="http-message">
+GET /pub/WWW/TheProject.html HTTP/1.1
+Host: www.example.org
+</sourcecode>
+<t>
+  has a target URI of
+</t>
+<artwork type="example" x:indent-with="  ">
+https://www.example.org/pub/WWW/TheProject.html
+</artwork>
+<t>
+   Example 2: The following message received over an insecure connection
+</t>
+<sourcecode type="http-message">
+OPTIONS * HTTP/1.1
+Host: www.example.org:8080
+</sourcecode>
+<t>
+  has a target URI of
+</t>
+<artwork type="example" x:indent-with="  ">
+http://www.example.org:8080
+</artwork>
+<t>
+   If the target URI's authority component is empty and its URI scheme
+   requires a non-empty authority (as is the case for "http" and "https"),
+   the server can reject the request or determine whether a configured
+   default applies that is consistent with the incoming connection's context.
+   Context might include connection details like address and port, what
+   security has been applied, and locally defined information specific to
+   that server's configuration. An empty authority is replaced with the
+   configured default before further processing of the request.
+</t>
+<t>
+   Supplying a default name for authority within the context of a secured
+   connection is inherently unsafe if there is any chance that the user
+   agent's intended authority might differ from the default.
+   A server that can uniquely identify an authority from the request
+   context <bcp14>MAY</bcp14> use that identity as a default without this risk.
+   Alternatively, it might be better to redirect the request to a safe
+   resource that explains how to obtain a new client.
+</t>
+<t>
+   Note that reconstructing the client's target URI is only half of the
+   process for identifying a target resource. The other half is determining
+   whether that target URI identifies a resource for which the server is
+   willing and able to send a response, as defined in
+   <xref target="HTTP" x:rel="#routing.reject"/>.
+</t>
+</section>
+</section>
+
+<section title="Status Line" anchor="status.line">
+  <x:anchor-alias value="response"/>
+  <x:anchor-alias value="status-line"/>
+  <x:anchor-alias value="status-code"/>
+  <x:anchor-alias value="status code"/>
+  <x:anchor-alias value="reason-phrase"/>
+<t>
+   The first line of a response message is the status-line, consisting
+   of the protocol version, a space (SP), the status code, and another space
+   and ending with an <bcp14>OPTIONAL</bcp14> textual phrase describing the status code.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="status-line"/>
+  <x:ref>status-line</x:ref> = <x:ref>HTTP-version</x:ref> <x:ref>SP</x:ref> <x:ref>status-code</x:ref> <x:ref>SP</x:ref> [ <x:ref>reason-phrase</x:ref> ]
+</sourcecode>
+<t>
+   Although the status-line grammar rule requires that each of the component
+   elements be separated by a single SP octet, recipients <bcp14>MAY</bcp14> instead parse
+   on whitespace-delimited word boundaries and, aside from the line
+   terminator, treat any form of whitespace as the SP separator while
+   ignoring preceding or trailing whitespace; such whitespace includes one or
+   more of the following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.
+   However, lenient parsing can result in response splitting security
+   vulnerabilities if there are multiple recipients of the message and each
+   has its own unique interpretation of robustness
+   (see <xref target="response.splitting"/>).
+</t>
+<t>
+   The status-code element is a 3-digit integer code describing the
+   result of the server's attempt to understand and satisfy the client's
+   corresponding request. A recipient parses and interprets the remainder
+   of the response message in light of the semantics defined for that
+   status code, if the status code is recognized by that recipient,
+   or in accordance with the class of that status code when the specific
+   code is unrecognized.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="status-code"/>
+  <x:ref>status-code</x:ref>    = 3<x:ref>DIGIT</x:ref>
+</sourcecode>
+<t>
+   HTTP's core status codes are defined in <xref target="HTTP" x:rel="#status.codes"/>,
+   along with the classes of status codes, considerations for the
+   definition of new status codes, and the IANA registry for collecting
+   such definitions.
+</t>
+<t>
+   The reason-phrase element exists for the sole purpose of providing a
+   textual description associated with the numeric status code, mostly out of
+   deference to earlier Internet application protocols that were more
+   frequently used with interactive text clients.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="reason-phrase"/>
+  <x:ref>reason-phrase</x:ref>  = 1*( <x:ref>HTAB</x:ref> / <x:ref>SP</x:ref> / <x:ref>VCHAR</x:ref> / <x:ref>obs-text</x:ref> )
+</sourcecode>
+<t>
+   A client <bcp14>SHOULD</bcp14> ignore the reason-phrase content because it is not a
+   reliable channel for information (it might be translated for a given locale,
+   overwritten by intermediaries, or discarded when the message is forwarded
+   via other versions of HTTP).
+   A server <bcp14>MUST</bcp14> send the space that separates the status-code from the
+   reason-phrase even when the reason-phrase is absent (i.e., the status-line
+   would end with the space).
+</t>
+</section>
+
+<section title="Field Syntax" anchor="header.field.syntax">
+  <x:anchor-alias value="field-line"/>
+<t>
+   Each field line consists of a case-insensitive field name
+   followed by a colon (":"), optional leading whitespace, the field line value,
+   and optional trailing whitespace.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="field-line"/><iref primary="false" item="Grammar" subitem="field-name"/><iref primary="false" item="Grammar" subitem="field-value"/>
+  <x:ref>field-line</x:ref>   = <x:ref>field-name</x:ref> ":" <x:ref>OWS</x:ref> <x:ref>field-value</x:ref> <x:ref>OWS</x:ref>
+</sourcecode>
+<t>
+   Rules for parsing within field values are
+   defined in <xref target="HTTP" x:rel="#fields.values"/>. This section covers the
+   generic syntax for header field inclusion within, and extraction from,
+   HTTP/1.1 messages.
+</t>
+
+<section title="Field Line Parsing" anchor="field.parsing">
+  <x:anchor-alias value="header.parsing"/>
+<t>
+   Messages are parsed using a generic algorithm, independent of the
+   individual field names. The contents within a given field line value are
+   not parsed until a later stage of message interpretation (usually after the
+   message's entire field section has been processed).
+</t>
+<t>
+   No whitespace is allowed between the field name and colon.
+   In the past, differences in the handling of such whitespace have led to
+   security vulnerabilities in request routing and response handling.
+   A server <bcp14>MUST</bcp14> reject, with a response status code of
+   <x:ref>400 (Bad Request)</x:ref>, any received request message that contains
+   whitespace between a header field name and colon.
+   A proxy <bcp14>MUST</bcp14> remove any such whitespace
+   from a response message before forwarding the message downstream.
+</t>
+<t>
+   A field line value might be preceded and/or followed by optional whitespace
+   (OWS); a single SP preceding the field line value is preferred for consistent
+   readability by humans.
+   The field line value does not include that leading or trailing whitespace: OWS
+   occurring before the first non-whitespace octet of the field line value,
+   or after the last non-whitespace octet of the field line value, is excluded by
+   parsers when extracting the field line value from a field line.
+</t>
+</section>
+
+<section title="Obsolete Line Folding" anchor="line.folding">
+  <x:anchor-alias value="obs-fold"/>
+<t>
+   Historically, HTTP/1.x field values could be extended over multiple
+   lines by preceding each extra line with at least one space or horizontal
+   tab (obs-fold). This specification deprecates such line folding except
+   within the "message/http" media type
+   (<xref target="media.type.message.http"/>).
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="obs-fold"/>
+  <x:ref>obs-fold</x:ref>     = <x:ref>OWS</x:ref> <x:ref>CRLF</x:ref> <x:ref>RWS</x:ref>
+               ; obsolete line folding
+</sourcecode>
+<t>
+   A sender <bcp14>MUST NOT</bcp14> generate a message that includes line folding
+   (i.e., that has any field line value that contains a match to the
+   <x:ref>obs-fold</x:ref> rule) unless the message is intended for packaging
+   within the "message/http" media type.
+</t>
+<t>
+   A server that receives an <x:ref>obs-fold</x:ref> in a request message that
+   is not within a "message/http" container <bcp14>MUST</bcp14> either reject the message by
+   sending a <x:ref>400 (Bad Request)</x:ref>, preferably with a
+   representation explaining that obsolete line folding is unacceptable, or
+   replace each received <x:ref>obs-fold</x:ref> with one or more
+   <x:ref>SP</x:ref> octets prior to interpreting the field value or
+   forwarding the message downstream.
+</t>
+<t>
+   A proxy or gateway that receives an <x:ref>obs-fold</x:ref> in a response
+   message that is not within a "message/http" container <bcp14>MUST</bcp14> either discard
+   the message and replace it with a <x:ref>502 (Bad Gateway)</x:ref>
+   response, preferably with a representation explaining that unacceptable
+   line folding was received, or replace each received <x:ref>obs-fold</x:ref>
+   with one or more <x:ref>SP</x:ref> octets prior to interpreting the field
+   value or forwarding the message downstream.
+</t>
+<t>
+   A user agent that receives an <x:ref>obs-fold</x:ref> in a response message
+   that is not within a "message/http" container <bcp14>MUST</bcp14> replace each received
+   <x:ref>obs-fold</x:ref> with one or more <x:ref>SP</x:ref> octets prior to
+   interpreting the field value.
+</t>
+</section>
+</section>
+
+<section title="Message Body" anchor="message.body">
+  <x:anchor-alias value="message-body"/>
+<t>
+   The message body (if any) of an HTTP/1.1 message is used to carry content
+   (<xref target="HTTP" x:rel="#content"/>) for the request or response. The
+   message body is identical to the content unless a transfer coding has
+   been applied, as described in <xref target="field.transfer-encoding"/>.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="message-body"/>
+  <x:ref>message-body</x:ref> = *OCTET
+</sourcecode>
+<t>
+   The rules for determining when a message body is present in an HTTP/1.1
+   message differ for requests and responses.
+</t>
+<t>
+   The presence of a message body in a request is signaled by a
+   <x:ref>Content-Length</x:ref> or <x:ref>Transfer-Encoding</x:ref> header
+   field. Request message framing is independent of method semantics.
+</t>
+<t>
+   The presence of a message body in a response, as detailed in
+   <xref target="message.body.length"/>, depends on both the request
+   method to which it is responding and the response status code. This
+   corresponds to when response content is allowed by HTTP semantics
+   (<xref target="HTTP" x:rel="#content.semantics"/>).
+</t>
+
+<section title="Transfer-Encoding" anchor="field.transfer-encoding">
+  <x:anchor-alias value="header.transfer-encoding"/>
+  <iref primary="true" item="Fields" subitem="Transfer-Encoding" x:for-anchor=""/><iref primary="true" item="Header Fields" subitem="Transfer-Encoding" x:for-anchor=""/><iref primary="true" item="Transfer-Encoding header field" x:for-anchor=""/>
+  <iref item="chunked (Coding Format)"/>
+  <x:anchor-alias value="Transfer-Encoding"/>
+<t>
+   The Transfer-Encoding header field lists the transfer coding names
+   corresponding to the sequence of transfer codings that have been
+   (or will be) applied to the content in order to form the message body.
+   Transfer codings are defined in <xref target="transfer.codings"/>.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="Transfer-Encoding"/>
+  <x:ref>Transfer-Encoding</x:ref> = #<x:ref>transfer-coding</x:ref>
+                       ; defined in <xref target="HTTP" x:rel="#field.te"/>
+</sourcecode>
+<t>
+   Transfer-Encoding is analogous to the Content-Transfer-Encoding field of
+   MIME, which was designed to enable safe transport of binary data over a
+   7-bit transport service (<xref target="RFC2045" x:fmt="," x:sec="6"/>).
+   However, safe transport has a different focus for an 8bit-clean transfer
+   protocol. In HTTP's case, Transfer-Encoding is primarily intended to
+   accurately delimit dynamically generated content. It also serves to
+   distinguish encodings that are only applied in transit from the encodings
+   that are a characteristic of the selected representation.
+</t>
+<t>
+   A recipient <bcp14>MUST</bcp14> be able to parse the chunked transfer coding
+   (<xref target="chunked.encoding"/>) because it plays a crucial role in
+   framing messages when the content size is not known in advance.
+   A sender <bcp14>MUST NOT</bcp14> apply the chunked transfer coding more than once to a
+   message body (i.e., chunking an already chunked message is not allowed).
+   If any transfer coding other than chunked is applied to a request's content,
+   the sender <bcp14>MUST</bcp14> apply chunked as the final transfer coding to
+   ensure that the message is properly framed.
+   If any transfer coding other than chunked is applied to a response's content,
+   the sender <bcp14>MUST</bcp14> either apply chunked as the final transfer coding
+   or terminate the message by closing the connection.
+</t>
+<t>
+   For example,
+</t>
+<sourcecode type="http-message">
+Transfer-Encoding: gzip, chunked
+</sourcecode>
+<t>
+   indicates that the content has been compressed using the gzip
+   coding and then chunked using the chunked coding while forming the
+   message body.
+</t>
+<t>
+   Unlike <x:ref>Content-Encoding</x:ref> (<xref target="HTTP" x:rel="#content.codings"/>),
+   Transfer-Encoding is a property of the message, not of the representation.
+   Any recipient along the request/response chain <bcp14>MAY</bcp14> decode the received
+   transfer coding(s) or apply additional transfer coding(s) to the message
+   body, assuming that corresponding changes are made to the Transfer-Encoding
+   field value. Additional information about the encoding parameters can be
+   provided by other header fields not defined by this specification.
+</t>
+<t>
+   Transfer-Encoding <bcp14>MAY</bcp14> be sent in a response to a HEAD request or in a
+   <x:ref>304 (Not Modified)</x:ref> response (<xref target="HTTP" x:rel="#status.304"/>) to a GET request,
+   neither of which includes a message body,
+   to indicate that the origin server would have applied a transfer coding
+   to the message body if the request had been an unconditional GET.
+   This indication is not required, however, because any recipient on
+   the response chain (including the origin server) can remove transfer
+   codings when they are not needed.
+</t>
+<t>
+   A server <bcp14>MUST NOT</bcp14> send a Transfer-Encoding header field in any response
+   with a status code of
+   <x:ref>1xx (Informational)</x:ref> or <x:ref>204 (No Content)</x:ref>.
+   A server <bcp14>MUST NOT</bcp14> send a Transfer-Encoding header field in any
+   <x:ref>2xx (Successful)</x:ref> response to a CONNECT request (<xref target="HTTP" x:rel="#CONNECT"/>).
+</t>
+<t>
+   A server that receives a request message with a transfer coding it does
+   not understand <bcp14>SHOULD</bcp14> respond with <x:ref>501 (Not Implemented)</x:ref>.
+</t>
+<t>
+   Transfer-Encoding was added in HTTP/1.1. It is generally assumed that
+   implementations advertising only HTTP/1.0 support will not understand
+   how to process transfer-encoded content, and that an HTTP/1.0 message
+   received with a Transfer-Encoding is likely to have been forwarded
+   without proper handling of the chunked transfer coding in transit.
+</t>
+<t>
+   A client <bcp14>MUST NOT</bcp14> send a request containing Transfer-Encoding unless it
+   knows the server will handle HTTP/1.1 requests (or later minor revisions);
+   such knowledge might be in the form of specific user configuration or by
+   remembering the version of a prior received response.
+   A server <bcp14>MUST NOT</bcp14> send a response containing Transfer-Encoding unless
+   the corresponding request indicates HTTP/1.1 (or later minor revisions).
+</t>
+<t>
+   Early implementations of Transfer-Encoding would occasionally send both
+   a chunked transfer coding for message framing and an estimated Content-Length
+   header field for use by progress bars. This is why Transfer-Encoding is
+   defined as overriding Content-Length, as opposed to them being mutually
+   incompatible. Unfortunately, forwarding such a message can lead to
+   vulnerabilities regarding
+   request smuggling (<xref target="request.smuggling"/>) or
+   response splitting (<xref target="response.splitting"/>) attacks
+   if any downstream recipient fails to parse the message according to this
+   specification, particularly when a downstream recipient only implements
+   HTTP/1.0.
+</t>
+<t>
+   A server <bcp14>MAY</bcp14> reject a request that contains both Content-Length and
+   Transfer-Encoding or process such a request in accordance with the
+   Transfer-Encoding alone. Regardless, the server <bcp14>MUST</bcp14> close the connection
+   after responding to such a request to avoid the potential attacks.
+</t>
+<t>
+   A server or client that receives an HTTP/1.0 message containing a
+   Transfer-Encoding header field <bcp14>MUST</bcp14> treat the message as if the framing
+   is faulty, even if a Content-Length is present, and close the connection
+   after processing the message. The message sender might have retained a
+   portion of the message, in buffer, that could be misinterpreted by further
+   use of the connection.
+</t>
+</section>
+
+<section title="Content-Length" anchor="body.content-length">
+  <iref primary="false" item="Content-Length header field" x:for-anchor=""/>
+  <x:anchor-alias value="Content-Length"/>
+<t>
+   When a message does not have a <x:ref>Transfer-Encoding</x:ref> header
+   field, a Content-Length header field (<xref target="HTTP" x:rel="#field.content-length"/>) can provide the anticipated size,
+   as a decimal number of octets, for potential content.
+   For messages that do include content, the Content-Length field value
+   provides the framing information necessary for determining where the data
+   (and message) ends.  For messages that do not include content, the
+   Content-Length indicates the size of the selected representation
+   (<xref target="HTTP" x:rel="#field.content-length"/>).
+</t>
+<t>
+   A sender <bcp14>MUST NOT</bcp14> send a Content-Length header field in any message that
+   contains a <x:ref>Transfer-Encoding</x:ref> header field.
+</t>
+<aside>
+  <t>
+   <x:h>Note:</x:h> HTTP's use of Content-Length for message framing differs
+   significantly from the same field's use in MIME, where it is an optional
+   field used only within the "message/external-body" media-type.
+  </t>
+</aside>
+</section>
+
+<section title="Message Body Length" anchor="message.body.length">
+  <iref item="chunked (Coding Format)"/>
+<t>
+   The length of a message body is determined by one of the following
+   (in order of precedence):
+</t>
+<ol>
+  <li><t>
+   Any response to a HEAD request and any response with a
+   <x:ref>1xx (Informational)</x:ref>, <x:ref>204 (No Content)</x:ref>, or
+   <x:ref>304 (Not Modified)</x:ref> status code is always
+   terminated by the first empty line after the header fields, regardless of
+   the header fields present in the message, and thus cannot contain a
+   message body or trailer section.
+  </t></li>
+  <li><t>
+   Any <x:ref>2xx (Successful)</x:ref> response to a CONNECT request implies that the
+   connection will become a tunnel immediately after the empty line that
+   concludes the header fields.  A client <bcp14>MUST</bcp14> ignore any
+   <x:ref>Content-Length</x:ref> or <x:ref>Transfer-Encoding</x:ref> header
+   fields received in such a message.
+  </t></li>
+  <li><t>
+   If a message is received with both a <x:ref>Transfer-Encoding</x:ref>
+   and a <x:ref>Content-Length</x:ref> header field, the Transfer-Encoding
+   overrides the Content-Length. Such a message might indicate an attempt to
+   perform request smuggling (<xref target="request.smuggling"/>) or
+   response splitting (<xref target="response.splitting"/>) and ought to be
+   handled as an error.
+   An intermediary that chooses to forward the message <bcp14>MUST</bcp14> first remove the
+   received Content-Length field and process the Transfer-Encoding
+   (as described below) prior to forwarding the message downstream.
+  </t></li>
+  <li><t>
+   If a <x:ref>Transfer-Encoding</x:ref> header field is present
+   and the chunked transfer coding (<xref target="chunked.encoding"/>)
+   is the final encoding, the message body length is determined by reading
+   and decoding the chunked data until the transfer coding indicates the
+   data is complete.
+  </t>
+  <t>
+   If a <x:ref>Transfer-Encoding</x:ref> header field is present in a
+   response and the chunked transfer coding is not the final encoding, the
+   message body length is determined by reading the connection until it is
+   closed by the server.
+  </t>
+  <t>
+   If a <x:ref>Transfer-Encoding</x:ref> header field is present in a request
+   and the chunked transfer coding is not the final encoding, the message body
+   length cannot be determined reliably; the server <bcp14>MUST</bcp14> respond with
+   the <x:ref>400 (Bad Request)</x:ref> status code and then close the
+   connection.
+  </t></li>
+  <li><t>
+   If a message is received without <x:ref>Transfer-Encoding</x:ref> and with
+   an invalid <x:ref>Content-Length</x:ref> header field, then the message
+   framing is invalid and the recipient <bcp14>MUST</bcp14> treat it as an unrecoverable
+   error, unless the field value can be successfully parsed as a
+   comma-separated list (<xref target="HTTP" x:rel="#abnf.extension"/>), all values in the
+   list are valid, and all values in the list are the same (in which case, the
+   message is processed with that single value used as the Content-Length field
+   value).
+   If the unrecoverable error is in a request message,
+   the server <bcp14>MUST</bcp14> respond with
+   a <x:ref>400 (Bad Request)</x:ref> status code and then close the connection.
+   If it is in a response message received by a proxy,
+   the proxy <bcp14>MUST</bcp14> close the connection to the server, discard the received
+   response, and send a <x:ref>502 (Bad Gateway)</x:ref> response to the
+   client.
+   If it is in a response message received by a user agent,
+   the user agent <bcp14>MUST</bcp14> close the connection to the server and discard the
+   received response.
+  </t></li>
+  <li><t>
+   If a valid <x:ref>Content-Length</x:ref> header field is present without
+   <x:ref>Transfer-Encoding</x:ref>, its decimal value defines the
+   expected message body length in octets.
+   If the sender closes the connection or the recipient times out before the
+   indicated number of octets are received, the recipient <bcp14>MUST</bcp14> consider
+   the message to be incomplete and close the connection.
+  </t></li>
+  <li><t>
+   If this is a request message and none of the above are true, then the
+   message body length is zero (no message body is present).
+  </t></li>
+  <li><t>
+   Otherwise, this is a response message without a declared message body
+   length, so the message body length is determined by the number of octets
+   received prior to the server closing the connection.
+  </t></li>
+</ol>
+<t>
+   Since there is no way to distinguish a successfully completed,
+   close-delimited response message from a partially received message interrupted
+   by network failure, a server <bcp14>SHOULD</bcp14> generate encoding or
+   length-delimited messages whenever possible.  The close-delimiting
+   feature exists primarily for backwards compatibility with HTTP/1.0.
+</t>
+<aside>
+  <t>
+     <x:h>Note:</x:h> Request messages are never close-delimited because they are always
+     explicitly framed by length or transfer coding, with the absence of both implying
+     the request ends immediately after the header section.
+  </t>
+</aside>
+<t>
+   A server <bcp14>MAY</bcp14> reject a request that contains a message body but
+   not a <x:ref>Content-Length</x:ref> by responding with
+   <x:ref>411 (Length Required)</x:ref>.
+</t>
+<t>
+   Unless a transfer coding other than chunked has been applied,
+   a client that sends a request containing a message body <bcp14>SHOULD</bcp14>
+   use a valid <x:ref>Content-Length</x:ref> header field if the message body
+   length is known in advance, rather than the chunked transfer coding, since some
+   existing services respond to chunked with a <x:ref>411 (Length Required)</x:ref>
+   status code even though they understand the chunked transfer coding.  This
+   is typically because such services are implemented via a gateway that
+   requires a content length in advance of being called, and the server
+   is unable or unwilling to buffer the entire request before processing.
+</t>
+<t>
+   A user agent that sends a request that contains a message body <bcp14>MUST</bcp14> send
+   either a valid <x:ref>Content-Length</x:ref> header field or use the
+   chunked transfer coding. A client <bcp14>MUST NOT</bcp14> use the chunked transfer
+   coding unless it knows the server will handle HTTP/1.1 (or later)
+   requests; such knowledge can be in the form of specific user configuration
+   or by remembering the version of a prior received response.
+</t>
+<t>
+   If the final response to the last request on a connection has been
+   completely received and there remains additional data to read, a user agent
+   <bcp14>MAY</bcp14> discard the remaining data or attempt to determine if that data
+   belongs as part of the prior message body, which might be the case if the
+   prior message's Content-Length value is incorrect. A client <bcp14>MUST NOT</bcp14>
+   process, cache, or forward such extra data as a separate response, since
+   such behavior would be vulnerable to cache poisoning.
+</t>
+</section>
+</section>
+
+<section title="Transfer Codings" anchor="transfer.codings">
+<t>
+   Transfer coding names are used to indicate an encoding
+   transformation that has been, can be, or might need to be applied to a
+   message's content in order to ensure "safe transport" through the network.
+   This differs from a content coding in that the transfer coding is a
+   property of the message rather than a property of the representation
+   that is being transferred.
+</t>
+<t>
+   All transfer-coding names are case-insensitive and ought to be registered
+   within the HTTP Transfer Coding registry, as defined in
+   <xref target="transfer.coding.registry"/>.
+   They are used in the <x:ref>Transfer-Encoding</x:ref>
+   (<xref target="field.transfer-encoding"/>) and <x:ref>TE</x:ref>
+   (<xref target="HTTP" x:rel="#field.te"/>) header fields (the latter also
+   defining the "transfer-coding" grammar).
+</t>
+
+<section title="Chunked Transfer Coding" anchor="chunked.encoding">
+  <iref primary="true" item="chunked (transfer coding)"/>
+  <x:anchor-alias value="chunk"/>
+  <x:anchor-alias value="chunked-body"/>
+  <x:anchor-alias value="chunk-data"/>
+  <x:anchor-alias value="chunk-size"/>
+  <x:anchor-alias value="last-chunk"/>
+<t>
+   The chunked transfer coding wraps content in order to transfer it
+   as a series of chunks, each with its own size indicator, followed by an
+   <bcp14>OPTIONAL</bcp14> trailer section containing trailer fields. Chunked enables content
+   streams of unknown size to be transferred as a sequence of length-delimited
+   buffers, which enables the sender to retain connection persistence and the
+   recipient to know when it has received the entire message.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="chunked-body"><!--terminal production--></iref><iref primary="true" item="Grammar" subitem="chunk"/><iref primary="true" item="Grammar" subitem="chunk-size"/><iref primary="true" item="Grammar" subitem="last-chunk"/><iref primary="false" item="Grammar" subitem="trailer-section"/><iref primary="false" item="Grammar" subitem="chunk-ext"/><iref primary="true" item="Grammar" subitem="chunk-data"/>
+  <x:ref>chunked-body</x:ref>   = *<x:ref>chunk</x:ref>
+                   <x:ref>last-chunk</x:ref>
+                   <x:ref>trailer-section</x:ref>
+                   <x:ref>CRLF</x:ref>
+
+  <x:ref>chunk</x:ref>          = <x:ref>chunk-size</x:ref> [ <x:ref>chunk-ext</x:ref> ] <x:ref>CRLF</x:ref>
+                   <x:ref>chunk-data</x:ref> <x:ref>CRLF</x:ref>
+  <x:ref>chunk-size</x:ref>     = 1*<x:ref>HEXDIG</x:ref>
+  <x:ref>last-chunk</x:ref>     = 1*("0") [ <x:ref>chunk-ext</x:ref> ] <x:ref>CRLF</x:ref>
+
+  <x:ref>chunk-data</x:ref>     = 1*<x:ref>OCTET</x:ref> ; a sequence of chunk-size octets
+</sourcecode>
+<t>
+   The chunk-size field is a string of hex digits indicating the size of
+   the chunk-data in octets. The chunked transfer coding is complete when a
+   chunk with a chunk-size of zero is received, possibly followed by a
+   trailer section, and finally terminated by an empty line.
+</t>
+<t>
+   A recipient <bcp14>MUST</bcp14> be able to parse and decode the chunked transfer coding.
+</t>
+<t>
+   HTTP/1.1 does not define any means to limit the size of a
+   chunked response such that an intermediary can be assured of buffering the
+   entire response. Additionally, very large chunk sizes may cause overflows
+   or loss of precision if their values are not represented accurately in a
+   receiving implementation. Therefore, recipients <bcp14>MUST</bcp14> anticipate
+   potentially large hexadecimal numerals and prevent parsing errors due to
+   integer conversion overflows or precision loss due to integer
+   representation.
+</t>
+<t>
+   The chunked coding does not define any parameters. Their presence
+   <bcp14>SHOULD</bcp14> be treated as an error.
+</t>
+
+<section title="Chunk Extensions" anchor="chunked.extension">
+  <x:anchor-alias value="chunk-ext"/>
+  <x:anchor-alias value="chunk-ext-name"/>
+  <x:anchor-alias value="chunk-ext-val"/>
+<t>
+   The chunked coding allows each chunk to include zero or more chunk
+   extensions, immediately following the <x:ref>chunk-size</x:ref>, for the
+   sake of supplying per-chunk metadata (such as a signature or hash),
+   mid-message control information, or randomization of message body size.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="chunk-ext"/><iref primary="true" item="Grammar" subitem="chunk-ext-name"/><iref primary="true" item="Grammar" subitem="chunk-ext-val"/>
+  <x:ref>chunk-ext</x:ref>      = *( <x:ref>BWS</x:ref> ";" <x:ref>BWS</x:ref> <x:ref>chunk-ext-name</x:ref>
+                      [ <x:ref>BWS</x:ref> "=" <x:ref>BWS</x:ref> <x:ref>chunk-ext-val</x:ref> ] )
+
+  <x:ref>chunk-ext-name</x:ref> = <x:ref>token</x:ref>
+  <x:ref>chunk-ext-val</x:ref>  = <x:ref>token</x:ref> / <x:ref>quoted-string</x:ref>
+</sourcecode>
+<t>
+   The chunked coding is specific to each connection and is likely to be
+   removed or recoded by each recipient (including intermediaries) before any
+   higher-level application would have a chance to inspect the extensions.
+   Hence, the use of chunk extensions is generally limited to specialized HTTP
+   services such as "long polling" (where client and server can have shared
+   expectations regarding the use of chunk extensions) or for padding within
+   an end-to-end secured connection.
+</t>
+<t>
+   A recipient <bcp14>MUST</bcp14> ignore unrecognized chunk extensions.
+   A server ought to limit the total length of chunk extensions received in a
+   request to an amount reasonable for the services provided, in the same way
+   that it applies length limitations and timeouts for other parts of a
+   message, and generate an appropriate <x:ref>4xx (Client Error)</x:ref>
+   response if that amount is exceeded.
+</t>
+</section>
+
+<section title="Chunked Trailer Section" anchor="chunked.trailer.section">
+  <x:anchor-alias value="trailer-section"/>
+<t>
+   A trailer section allows the sender to include additional fields at the end
+   of a chunked message in order to supply metadata that might be dynamically
+   generated while the content is sent, such as a message integrity
+   check, digital signature, or post-processing status. The proper use and
+   limitations of trailer fields are defined in <xref target="HTTP" x:rel="#trailer.fields"/>.
+</t>
+<sourcecode type="abnf7230"><iref primary="true" item="Grammar" subitem="trailer-section"/><iref primary="false" item="Grammar" subitem="field-line"/>
+  <x:ref>trailer-section</x:ref>   = *( <x:ref>field-line</x:ref> <x:ref>CRLF</x:ref> )
+</sourcecode>
+<t>
+   A recipient that removes the chunked coding from a message <bcp14>MAY</bcp14>
+   selectively retain or discard the received trailer fields. A recipient
+   that retains a received trailer field <bcp14>MUST</bcp14> either store/forward the
+   trailer field separately from the received header fields or merge the
+   received trailer field into the header section.
+   A recipient <bcp14>MUST NOT</bcp14> merge a received trailer field into the
+   header section unless its corresponding header field definition
+   explicitly permits and instructs how the trailer field value can be
+   safely merged.
+</t>
+</section>
+
+<section title="Decoding Chunked" anchor="decoding.chunked">
+<t>
+   A process for decoding the chunked transfer coding
+   can be represented in pseudo-code as:
+</t>
+<sourcecode type="pseudocode">
+  length := 0
+  read chunk-size, chunk-ext (if any), and CRLF
+  while (chunk-size &gt; 0) {
+     read chunk-data and CRLF
+     append chunk-data to content
+     length := length + chunk-size
+     read chunk-size, chunk-ext (if any), and CRLF
+  }
+  read trailer field
+  while (trailer field is not empty) {
+     if (trailer fields are stored/forwarded separately) {
+         append trailer field to existing trailer fields
+     }
+     else if (trailer field is understood and defined as mergeable) {
+         merge trailer field with existing header fields
+     }
+     else {
+         discard trailer field
+     }
+     read trailer field
+  }
+  Content-Length := length
+  Remove "chunked" from Transfer-Encoding
+</sourcecode>
+</section>
+</section>
+
+<section title="Transfer Codings for Compression" anchor="compression.codings">
+  <iref primary="true" item="compress (transfer coding)"/>
+  <iref primary="true" item="x-compress (transfer coding)"/>
+  <iref primary="true" item="deflate (transfer coding)"/>
+  <iref primary="true" item="gzip (transfer coding)"/>
+  <iref primary="true" item="x-gzip (transfer coding)"/>
+<t>
+   The following transfer coding names for compression are defined by
+   the same algorithm as their corresponding content coding:
+</t>
+<dl newline="true">
+  <dt>compress (and x-compress)</dt>
+  <dd>See <xref target="HTTP" x:rel="#compress.coding"/>.</dd>
+  <dt>deflate</dt>
+  <dd>See <xref target="HTTP" x:rel="#deflate.coding"/>.</dd>
+  <dt>gzip (and x-gzip)</dt>
+  <dd>See <xref target="HTTP" x:rel="#gzip.coding"/>.</dd>
+</dl>
+<t>
+   The compression codings do not define any parameters. The presence
+   of parameters with any of these compression codings <bcp14>SHOULD</bcp14> be treated
+   as an error.
+</t>
+</section>
+
+<section title="Transfer Coding Registry" anchor="transfer.coding.registry">
+<t>
+   The "HTTP Transfer Coding Registry" defines the namespace for transfer
+   coding names. It is maintained at <eref target="https://www.iana.org/assignments/http-parameters"/>.
+</t>
+<t>
+   Registrations <bcp14>MUST</bcp14> include the following fields:
+</t>
+<ul>
+  <li>Name</li>
+  <li>Description</li>
+  <li>Pointer to specification text</li>
+</ul>
+<t>
+   Names of transfer codings <bcp14>MUST NOT</bcp14> overlap with names of content codings
+   (<xref target="HTTP" x:rel="#content.codings"/>) unless the encoding transformation is identical, as
+   is the case for the compression codings defined in
+   <xref target="compression.codings"/>.
+</t>
+<t>
+   The <x:ref>TE</x:ref> header field (<xref target="HTTP" x:rel="#field.te"/>) uses a
+   pseudo-parameter named "q" as the rank value when multiple transfer codings
+   are acceptable. Future registrations of transfer codings <bcp14>SHOULD NOT</bcp14>
+   define parameters called "q" (case-insensitively) in order to avoid
+   ambiguities.
+</t>
+<t>
+   Values to be added to this namespace require IETF Review (see
+   <xref target="RFC8126" x:fmt="of" x:sec="4.8"/>) and <bcp14>MUST</bcp14>
+   conform to the purpose of transfer coding defined in this specification.
+</t>
+<t>
+   Use of program names for the identification of encoding formats
+   is not desirable and is discouraged for future encodings.
+</t>
+</section>
+
+<section title="Negotiating Transfer Codings" anchor="transfer.coding.negotiation">
+<t>
+  The TE field (<xref target="HTTP" x:rel="#field.te"/>) is used in HTTP/1.1 to indicate
+  what transfer codings, besides chunked, the client is willing to accept
+  in the response and whether the client is willing to preserve
+  trailer fields in a chunked transfer coding.
+</t>
+<t>
+   A client <bcp14>MUST NOT</bcp14> send the chunked transfer coding name in TE;
+   chunked is always acceptable for HTTP/1.1 recipients.
+</t>
+<t>
+   Three examples of TE use are below.
+</t>
+<sourcecode type="http-message">
+TE: deflate
+TE:
+TE: trailers, deflate;q=0.5
+</sourcecode>
+<t>
+   When multiple transfer codings are acceptable, the client <bcp14>MAY</bcp14> rank the
+   codings by preference using a case-insensitive "q" parameter (similar to
+   the qvalues used in content negotiation fields; see <xref target="HTTP" x:rel="#quality.values"/>). The rank value
+   is a real number in the range 0 through 1, where 0.001 is the least
+   preferred and 1 is the most preferred; a value of 0 means "not acceptable".
+</t>
+<t>
+   If the TE field value is empty or if no TE field is present, the only
+   acceptable transfer coding is chunked. A message with no transfer coding
+   is always acceptable.
+</t>
+<t>
+   The keyword "trailers" indicates that the sender will not discard trailer
+   fields, as described in <xref target="HTTP" x:rel="#trailer.fields"/>.
+</t>
+<t>
+   Since the TE header field only applies to the immediate connection,
+   a sender of TE <bcp14>MUST</bcp14> also send a "TE" connection option within the
+   <x:ref>Connection</x:ref> header field (<xref target="HTTP" x:rel="#field.connection"/>)
+   in order to prevent the TE header field from being forwarded by intermediaries
+   that do not support its semantics.
+</t>
+</section>
+</section>
+
+<section title="Handling Incomplete Messages" anchor="incomplete.messages">
+<t>
+   A server that receives an incomplete request message, usually due to a
+   canceled request or a triggered timeout exception, <bcp14>MAY</bcp14> send an error
+   response prior to closing the connection.
+</t>
+<t>
+   A client that receives an incomplete response message, which can occur
+   when a connection is closed prematurely or when decoding a supposedly
+   chunked transfer coding fails, <bcp14>MUST</bcp14> record the message as incomplete.
+   Cache requirements for incomplete responses are defined in
+   <xref target="CACHING" x:rel="#incomplete.responses"/>.
+</t>
+<t>
+   If a response terminates in the middle of the header section (before the
+   empty line is received) and the status code might rely on header fields to
+   convey the full meaning of the response, then the client cannot assume
+   that meaning has been conveyed; the client might need to repeat the
+   request in order to determine what action to take next.
+</t>
+<t>
+   A message body that uses the chunked transfer coding is
+   incomplete if the zero-sized chunk that terminates the encoding has not
+   been received.  A message that uses a valid <x:ref>Content-Length</x:ref> is
+   incomplete if the size of the message body received (in octets) is less than
+   the value given by Content-Length.  A response that has neither chunked
+   transfer coding nor Content-Length is terminated by closure of the
+   connection and, if the header section was received intact, is considered
+   complete unless an error was indicated by the underlying connection
+   (e.g., an "incomplete close" in TLS would leave the response incomplete,
+   as described in <xref target="tls.connection.closure"/>).
+</t>
+</section>
+
+<section title="Connection Management" anchor="connection.management">
+<t>
+   HTTP messaging is independent of the underlying transport- or
+   session-layer connection protocol(s).  HTTP only presumes a reliable
+   transport with in-order delivery of requests and the corresponding
+   in-order delivery of responses.  The mapping of HTTP request and
+   response structures onto the data units of an underlying transport
+   protocol is outside the scope of this specification.
+</t>
+<t>
+   As described in <xref target="HTTP" x:rel="#routing.inbound"/>, the specific
+   connection protocols to be used for an HTTP interaction are determined by
+   client configuration and the <x:ref>target URI</x:ref>.
+   For example, the "http" URI scheme
+   (<xref target="HTTP" x:rel="#http.uri"/>) indicates a default connection of TCP
+   over IP, with a default TCP port of 80, but the client might be
+   configured to use a proxy via some other connection, port, or protocol.
+</t>
+<t>
+   HTTP implementations are expected to engage in connection management,
+   which includes maintaining the state of current connections,
+   establishing a new connection or reusing an existing connection,
+   processing messages received on a connection, detecting connection
+   failures, and closing each connection.
+   Most clients maintain multiple connections in parallel, including
+   more than one connection per server endpoint.
+   Most servers are designed to maintain thousands of concurrent connections,
+   while controlling request queues to enable fair use and detect
+   denial-of-service attacks.
+</t>
+
+<section title="Establishment" anchor="persistent.establishment">
+<t>
+   It is beyond the scope of this specification to describe how connections
+   are established via various transport- or session-layer protocols.
+   Each HTTP connection maps to one underlying transport connection.
+</t>
+</section>
+
+<section title="Associating a Response to a Request" anchor="associating.response.to.request">
+<t>
+   HTTP/1.1 does not include a request identifier for associating a given
+   request message with its corresponding one or more response messages.
+   Hence, it relies on the order of response arrival to correspond exactly
+   to the order in which requests are made on the same connection.
+   More than one response message per request only occurs when one or more
+   informational responses (<x:ref>1xx</x:ref>; see <xref target="HTTP" x:rel="#status.1xx"/>) precede a
+   final response to the same request.
+</t>
+<t>
+   A client that has more than one outstanding request on a connection <bcp14>MUST</bcp14>
+   maintain a list of outstanding requests in the order sent and <bcp14>MUST</bcp14>
+   associate each received response message on that connection to the
+   first outstanding request that has not yet received a final
+   (non-<x:ref>1xx</x:ref>) response.
+</t>
+<t>
+   If a client receives data on a connection that doesn't have
+   outstanding requests, the client <bcp14>MUST NOT</bcp14> consider that data to be a
+   valid response; the client <bcp14>SHOULD</bcp14> close the connection, since message
+   delimitation is now ambiguous, unless the data consists only of one or
+   more CRLF (which can be discarded per <xref target="message.parsing"/>).
+</t>
+</section>
+
+<section title="Persistence" anchor="persistent.connections">
+   <x:anchor-alias value="persistent connections"/>
+   <iref primary="false" item="close" x:for-anchor=""/>
+<t>
+   HTTP/1.1 defaults to the use of <x:dfn>persistent connections</x:dfn>,
+   allowing multiple requests and responses to be carried over a single
+   connection. HTTP implementations <bcp14>SHOULD</bcp14> support persistent connections.
+</t>
+<t>
+   A recipient determines whether a connection is persistent or not based on
+   the protocol version and <x:ref>Connection</x:ref> header field
+   (<xref target="HTTP" x:rel="#field.connection"/>) in the
+   most recently received message, if any:
+</t>
+<ul>
+   <li>If the "<x:ref>close</x:ref>" connection option is present
+       (<xref target="persistent.tear-down"/>), the
+       connection will not persist after the current response; else,</li>
+   <li>If the received protocol is HTTP/1.1 (or later), the connection will
+       persist after the current response; else,</li>
+   <li>If the received protocol is HTTP/1.0, the "keep-alive" connection
+       option is present, either the recipient is not a proxy or the
+       message is a response, and the recipient wishes to honor the
+       HTTP/1.0 "keep-alive" mechanism, the connection will persist after
+       the current response; otherwise,</li>
+   <li>The connection will close after the current response.</li>
+</ul>
+<t>
+   A client that does not support <x:ref>persistent connections</x:ref> <bcp14>MUST</bcp14>
+   send the "<x:ref>close</x:ref>" connection option in every request message.
+</t>
+<t>
+   A server that does not support <x:ref>persistent connections</x:ref> <bcp14>MUST</bcp14>
+   send the "<x:ref>close</x:ref>" connection option in every response message
+   that does not have a <x:ref>1xx (Informational)</x:ref> status code.
+</t>
+<t>
+   A client <bcp14>MAY</bcp14> send additional requests on a persistent connection until it
+   sends or receives a "<x:ref>close</x:ref>" connection option or receives an
+   HTTP/1.0 response without a "keep-alive" connection option.
+</t>
+<t>
+   In order to remain persistent, all messages on a connection need to
+   have a self-defined message length (i.e., one not defined by closure
+   of the connection), as described in <xref target="message.body"/>.
+   A server <bcp14>MUST</bcp14> read the entire request message body or close
+   the connection after sending its response; otherwise, the
+   remaining data on a persistent connection would be misinterpreted
+   as the next request.  Likewise,
+   a client <bcp14>MUST</bcp14> read the entire response message body if it intends
+   to reuse the same connection for a subsequent request.
+</t>
+<t>
+   A proxy server <bcp14>MUST NOT</bcp14> maintain a persistent connection with an
+   HTTP/1.0 client (see <xref target="compatibility.with.http.1.0.persistent.connections"/> for
+   information and discussion of the problems with the Keep-Alive header field
+   implemented by many HTTP/1.0 clients).
+</t>
+<t>
+   See <xref target="compatibility.with.http.1.0.persistent.connections"/>
+   for more information on backwards compatibility with HTTP/1.0 clients.
+</t>
+
+<section title="Retrying Requests" anchor="persistent.retrying.requests">
+<t>
+   Connections can be closed at any time, with or without intention.
+   Implementations ought to anticipate the need to recover
+   from asynchronous close events. The conditions under which a client can
+   automatically retry a sequence of outstanding requests are defined in
+   <xref target="HTTP" x:rel="#idempotent.methods"/>.
+ </t>
+</section>
+
+<section title="Pipelining" anchor="pipelining">
+   <x:anchor-alias value="pipeline"/>
+<t>
+   A client that supports persistent connections <bcp14>MAY</bcp14> <x:dfn>pipeline</x:dfn>
+   its requests (i.e., send multiple requests without waiting for each
+   response). A server <bcp14>MAY</bcp14> process a sequence of pipelined requests in
+   parallel if they all have safe methods (<xref target="HTTP" x:rel="#safe.methods"/>), but it <bcp14>MUST</bcp14> send
+   the corresponding responses in the same order that the requests were
+   received.
+</t>
+<t>
+   A client that pipelines requests <bcp14>SHOULD</bcp14> retry unanswered requests if the
+   connection closes before it receives all of the corresponding responses.
+   When retrying pipelined requests after a failed connection (a connection
+   not explicitly closed by the server in its last complete response), a
+   client <bcp14>MUST NOT</bcp14> pipeline immediately after connection establishment,
+   since the first remaining request in the prior pipeline might have caused
+   an error response that can be lost again if multiple requests are sent on a
+   prematurely closed connection (see the TCP reset problem described in
+   <xref target="persistent.tear-down"/>).
+</t>
+<t>
+   Idempotent methods (<xref target="HTTP" x:rel="#idempotent.methods"/>) are significant to pipelining
+   because they can be automatically retried after a connection failure.
+   A user agent <bcp14>SHOULD NOT</bcp14> pipeline requests after a non-idempotent method,
+   until the final response status code for that method has been received,
+   unless the user agent has a means to detect and recover from partial
+   failure conditions involving the pipelined sequence.
+</t>
+<t>
+   An intermediary that receives pipelined requests <bcp14>MAY</bcp14> pipeline those
+   requests when forwarding them inbound, since it can rely on the outbound
+   user agent(s) to determine what requests can be safely pipelined. If the
+   inbound connection fails before receiving a response, the pipelining
+   intermediary <bcp14>MAY</bcp14> attempt to retry a sequence of requests that have yet
+   to receive a response if the requests all have idempotent methods;
+   otherwise, the pipelining intermediary <bcp14>SHOULD</bcp14> forward any received
+   responses and then close the corresponding outbound connection(s) so that
+   the outbound user agent(s) can recover accordingly.
+</t>
+</section>
+</section>
+
+<section title="Concurrency" anchor="persistent.concurrency">
+<t>
+   A client ought to limit the number of simultaneous open
+   connections that it maintains to a given server.
+</t>
+<t>
+   Previous revisions of HTTP gave a specific number of connections as a
+   ceiling, but this was found to be impractical for many applications. As a
+   result, this specification does not mandate a particular maximum number of
+   connections but, instead, encourages clients to be conservative when opening
+   multiple connections.
+</t>
+<t>
+   Multiple connections are typically used to avoid the "head-of-line
+   blocking" problem, wherein a request that takes significant server-side
+   processing and/or transfers very large content would block subsequent
+   requests on the
+   same connection. However, each connection consumes server resources.
+</t>
+<t>
+   Furthermore, using multiple connections can cause undesirable side effects
+   in congested networks.
+   Using larger numbers of connections can also cause side effects in
+   otherwise uncongested networks, because their aggregate and initially
+   synchronized sending behavior can cause congestion that would not have
+   been present if fewer parallel connections had been used.
+</t>
+<t>
+   Note that a server might reject traffic that it deems abusive or
+   characteristic of a denial-of-service attack, such as an excessive number
+   of open connections from a single client.
+</t>
+</section>
+
+<section title="Failures and Timeouts" anchor="persistent.failures">
+<t>
+   Servers will usually have some timeout value beyond which they will
+   no longer maintain an inactive connection. Proxy servers might make
+   this a higher value since it is likely that the client will be making
+   more connections through the same proxy server. The use of persistent
+   connections places no requirements on the length (or existence) of
+   this timeout for either the client or the server.
+</t>
+<t>
+   A client or server that wishes to time out <bcp14>SHOULD</bcp14> issue a graceful close
+   on the connection. Implementations <bcp14>SHOULD</bcp14> constantly monitor open
+   connections for a received closure signal and respond to it as appropriate,
+   since prompt closure of both sides of a connection enables allocated system
+   resources to be reclaimed.
+</t>
+<t>
+   A client, server, or proxy <bcp14>MAY</bcp14> close the transport connection at any
+   time. For example, a client might have started to send a new request
+   at the same time that the server has decided to close the "idle"
+   connection. From the server's point of view, the connection is being
+   closed while it was idle, but from the client's point of view, a
+   request is in progress.
+</t>
+<t>
+   A server <bcp14>SHOULD</bcp14> sustain persistent connections, when possible, and allow
+   the underlying transport's flow-control mechanisms to resolve temporary overloads rather
+   than terminate connections with the expectation that clients will retry.
+   The latter technique can exacerbate network congestion or server load.
+</t>
+<t>
+   A client sending a message body <bcp14>SHOULD</bcp14> monitor
+   the network connection for an error response while it is transmitting
+   the request. If the client sees a response that indicates the server does
+   not wish to receive the message body and is closing the connection, the
+   client <bcp14>SHOULD</bcp14> immediately cease transmitting the body and close its side
+   of the connection.
+</t>
+</section>
+
+<section title="Tear-down" anchor="persistent.tear-down">
+  <iref primary="false" item="Connection header field" x:for-anchor=""/>
+  <iref primary="true" item="close" x:for-anchor=""/>
+  <x:anchor-alias value="close"/>
+<t>
+   The "close" connection option is defined as a signal that the sender
+   will close this connection after completion of the response.
+   A sender <bcp14>SHOULD</bcp14> send a <x:ref>Connection</x:ref> header field
+   (<xref target="HTTP" x:rel="#field.connection"/>) containing the "close" connection option
+   when it intends to close a connection. For example,
+</t>
+<sourcecode type="http-message">
+Connection: close
+</sourcecode>
+<t>
+   as a request header field indicates that this is the last request that
+   the client will send on this connection, while in a response, the same
+   field indicates that the server is going to close this connection after
+   the response message is complete.
+</t>
+<t anchor="field.close">
+   <iref primary="true" item="Fields" subitem="Close" x:for-anchor=""/>
+   <rdf:Description>
+     <comments xmlns="urn:ietf:id:draft-ietf-httpbis-p2-semantics#">(reserved)</comments>
+   </rdf:Description>
+   Note that the field name "Close" is reserved, since using that name as a
+   header field might conflict with the "close" connection option.
+</t>
+<t>
+   A client that sends a "close" connection option <bcp14>MUST NOT</bcp14>
+   send further requests on that connection (after the one containing the
+   "close") and <bcp14>MUST</bcp14> close the connection after reading the
+   final response message corresponding to this request.
+</t>
+<t>
+   A server that receives a "close" connection option <bcp14>MUST</bcp14>
+   initiate closure of the connection (see below) after it sends the
+   final response to the request that contained the "close" connection option.
+   The server <bcp14>SHOULD</bcp14> send a "close" connection option in its final response
+   on that connection. The server <bcp14>MUST NOT</bcp14> process any further requests
+   received on that connection.
+</t>
+<t>
+   A server that sends a "close" connection option <bcp14>MUST</bcp14>
+   initiate closure of the connection (see below) after it sends the
+   response containing the "close" connection option. The server <bcp14>MUST NOT</bcp14> process
+   any further requests received on that connection.
+</t>
+<t>
+   A client that receives a "close" connection option <bcp14>MUST</bcp14>
+   cease sending requests on that connection and close the connection
+   after reading the response message containing the "close" connection option;
+   if additional pipelined requests had been sent on the connection,
+   the client <bcp14>SHOULD NOT</bcp14> assume that they will be processed by the server.
+</t>
+<t>
+   If a server performs an immediate close of a TCP connection, there is a
+   significant risk that the client will not be able to read the last HTTP
+   response.  If the server receives additional data from the client on a
+   fully closed connection, such as another request sent by the
+   client before receiving the server's response, the server's TCP stack will
+   send a reset packet to the client; unfortunately, the reset packet might
+   erase the client's unacknowledged input buffers before they can be read
+   and interpreted by the client's HTTP parser.
+</t>
+<t>
+   To avoid the TCP reset problem, servers typically close a connection in
+   stages. First, the server performs a half-close by closing only the write
+   side of the read/write connection. The server then continues to read from
+   the connection until it receives a corresponding close by the client, or
+   until the server is reasonably certain that its own TCP stack has received
+   the client's acknowledgement of the packet(s) containing the server's last
+   response. Finally, the server fully closes the connection.
+</t>
+<t>
+   It is unknown whether the reset problem is exclusive to TCP or might also
+   be found in other transport connection protocols.
+</t>
+<t>
+   Note that a TCP connection that is half-closed by the client does not
+   delimit a request message, nor does it imply that the client is no longer
+   interested in a response. In general, transport signals cannot be relied
+   upon to signal edge cases, since HTTP/1.1 is independent of transport.
+</t>
+</section>
+
+<section title="TLS Connection Initiation" anchor="tls.connection.initiation">
+<t>
+   Conceptually, HTTP/TLS is simply sending HTTP messages over a connection
+   secured via TLS <xref target="TLS13"/>.
+</t>
+<t>
+   The HTTP client also acts as the TLS client. It initiates a connection to
+   the server on the appropriate port and sends the TLS ClientHello to begin
+   the TLS handshake. When the TLS handshake has finished, the client may then
+   initiate the first HTTP request. All HTTP data <bcp14>MUST</bcp14> be sent as TLS
+   "application data" but is otherwise treated like a normal connection for
+   HTTP (including potential reuse as a persistent connection).
+</t>
+</section>
+
+<section title="TLS Connection Closure" anchor="tls.connection.closure">
+<t>
+   TLS uses an exchange of closure alerts prior to (non-error) connection
+   closure to provide secure connection closure; see <xref section="6.1" target="TLS13"/>.  When a
+   valid closure alert is received, an implementation can be assured that no
+   further data will be received on that connection.
+</t>
+<t>
+   When an implementation knows that it has sent or received all the
+   message data that it cares about, typically by detecting HTTP message
+   boundaries, it might generate an "incomplete close" by sending a
+   closure alert and then closing the connection without waiting to
+   receive the corresponding closure alert from its peer.
+</t>
+<t>
+   An incomplete close does not call into question the security of the data
+   already received, but it could indicate that subsequent data might have been
+   truncated. As TLS is not directly aware of HTTP message framing, it is
+   necessary to examine the HTTP data itself to determine whether messages are
+   complete. Handling of incomplete messages is defined in
+   <xref target="incomplete.messages"/>.
+</t>
+<t>
+   When encountering an incomplete close, a client <bcp14>SHOULD</bcp14> treat as completed
+   all requests for which it has received either
+</t>
+<ol>
+  <li>
+    as much data as specified in the <x:ref>Content-Length</x:ref> header
+    field or
+  </li>
+  <li>
+    the terminal zero-length chunk (when <x:ref>Transfer-Encoding</x:ref> of chunked is used).
+  </li>
+</ol>   
+<t>
+   A response that has neither chunked
+   transfer coding nor Content-Length is complete only if a valid closure alert
+   has been received. Treating an incomplete message as complete could expose
+   implementations to attack.
+</t>
+<t>
+   A client detecting an incomplete close <bcp14>SHOULD</bcp14> recover gracefully.
+</t>
+<t>
+   Clients <bcp14>MUST</bcp14> send a closure alert before closing the connection.
+   Clients that do not expect to receive any more data <bcp14>MAY</bcp14> choose not
+   to wait for the server's closure alert and simply close the
+   connection, thus generating an incomplete close on the server side.
+</t>
+<t>
+   Servers <bcp14>SHOULD</bcp14> be prepared to receive an incomplete close from the client,
+   since the client can often locate the end of server data.
+</t>
+<t>
+   Servers <bcp14>MUST</bcp14> attempt to initiate an exchange of closure alerts with
+   the client before closing the connection. Servers <bcp14>MAY</bcp14> close the
+   connection after sending the closure alert, thus generating an
+   incomplete close on the client side.
+</t>
+</section>
+</section>
+
+<section title="Enclosing Messages as Data" anchor="enclosing.messages">
+
+<section title="Media Type message/http" anchor="media.type.message.http">
+<iref item="Media Type" subitem="message/http" primary="true"/>
+<iref item="message/http Media Type" primary="true"/>
+<t>
+   The "message/http" media type can be used to enclose a single HTTP request or
+   response message, provided that it obeys the MIME restrictions for all
+   "message" types regarding line length and encodings. Because of the line
+   length limitations, field values within "message/http" are allowed to use
+   line folding (<x:ref>obs-fold</x:ref>), as described in
+   <xref target="line.folding"/>, to convey the field value over multiple
+   lines. A recipient of "message/http" data <bcp14>MUST</bcp14> replace any obsolete line
+   folding with one or more SP characters when the message is consumed.
+</t>
+<dl>
+  <dt>Type name:</dt>
+  <dd>message</dd>
+  <dt>Subtype name:</dt>
+  <dd>http</dd>
+  <dt>Required parameters:</dt>
+  <dd>N/A</dd>
+  <dt>Optional parameters:</dt>
+  <dd>
+    <t>version, msgtype</t>
+    <dl>
+      <dt>version:</dt>
+      <dd>
+        The HTTP-version number of the enclosed message
+        (e.g., "1.1"). If not present, the version can be
+        determined from the first line of the body.
+      </dd>
+      <dt>msgtype:</dt>
+      <dd>
+        The message type — "request" or "response". If not
+        present, the type can be determined from the first
+        line of the body.
+      </dd>
+    </dl>
+  </dd>
+  <dt>Encoding considerations:</dt>
+  <dd>only "7bit", "8bit", or "binary" are permitted</dd>
+  <dt>Security considerations:</dt>
+  <dd>see <xref target="security.considerations"/></dd>
+  <dt>Interoperability considerations:</dt>
+  <dd>N/A</dd>
+  <dt>Published specification:</dt>
+  <dd>RFC 9112 (see <xref target="media.type.message.http"/>).</dd>
+  <dt>Applications that use this media type:</dt>
+  <dd>N/A</dd>
+  <dt>Fragment identifier considerations:</dt>
+  <dd>N/A</dd>
+  <dt>Additional information:</dt>
+  <dd>
+    <dl>
+      <dt>Magic number(s):</dt>
+      <dd>N/A</dd>
+      <dt>Deprecated alias names for this type:</dt>
+      <dd>N/A</dd>
+      <dt>File extension(s):</dt>
+      <dd>N/A</dd>
+      <dt>Macintosh file type code(s):</dt>
+      <dd>N/A</dd>
+    </dl>
+  </dd>
+  <dt>Person and email address to contact for further information:</dt>
+  <dd>See Authors' Addresses section.</dd>
+  <dt>Intended usage:</dt>
+  <dd>COMMON</dd>
+  <dt>Restrictions on usage:</dt>
+  <dd>N/A</dd>
+  <dt>Author:</dt>
+  <dd>See Authors' Addresses section.</dd>
+  <dt>Change controller:</dt>
+  <dd>IESG</dd>
+</dl>
+</section>
+
+<section title="Media Type application/http" anchor="media.type.application.http">
+<iref item="Media Type" subitem="application/http" primary="true"/>
+<iref item="application/http Media Type" primary="true"/>
+<t>
+   The "application/http" media type can be used to enclose a pipeline of one or more
+   HTTP request or response messages (not intermixed).
+</t>
+<dl>
+  <dt>Type name:</dt>
+  <dd>application</dd>
+  <dt>Subtype name:</dt>
+  <dd>http</dd>
+  <dt>Required parameters:</dt>
+  <dd>N/A</dd>
+  <dt>Optional parameters:</dt>
+  <dd>
+    <t>
+      version, msgtype
+    </t>
+    <dl>
+      <dt>version:</dt>
+      <dd>
+        The HTTP-version number of the enclosed messages
+        (e.g., "1.1"). If not present, the version can be
+        determined from the first line of the body.
+      </dd>
+      <dt>msgtype:</dt>
+      <dd>
+        The message type — "request" or "response". If not
+        present, the type can be determined from the first
+        line of the body.
+      </dd>
+    </dl>
+  </dd>
+  <dt>Encoding considerations:</dt>
+  <dd>
+    HTTP messages enclosed by this type
+    are in "binary" format; use of an appropriate
+    Content-Transfer-Encoding is required when
+    transmitted via email.
+  </dd>
+  <dt>Security considerations:</dt>
+  <dd>
+    see <xref target="security.considerations"/>
+  </dd>
+  <dt>Interoperability considerations:</dt>
+  <dd>N/A</dd>
+  <dt>Published specification:</dt>
+  <dd>
+    RFC 9112 (see <xref target="media.type.application.http"/>).
+  </dd>
+  <dt>Applications that use this media type:</dt>
+  <dd>N/A</dd>
+  <dt>Fragment identifier considerations:</dt>
+  <dd>N/A</dd>
+  <dt>Additional information:</dt>
+  <dd>
+    <dl>
+      <dt>Deprecated alias names for this type:</dt>
+      <dd>N/A</dd>
+      <dt>Magic number(s):</dt>
+      <dd>N/A</dd>
+      <dt>File extension(s):</dt>
+      <dd>N/A</dd>
+      <dt>Macintosh file type code(s):</dt>
+      <dd>N/A</dd>
+    </dl>
+  </dd>
+  <dt>Person and email address to contact for further information:</dt>
+  <dd>See Authors' Addresses section.</dd>
+  <dt>Intended usage:</dt>
+  <dd>COMMON</dd>
+  <dt>Restrictions on usage:</dt>
+  <dd>N/A</dd>
+  <dt>Author:</dt>
+  <dd>See Authors' Addresses section.</dd>
+  <dt>Change controller:</dt>
+  <dd>IESG</dd>
+</dl>
+</section>
+</section>
+
+<section title="Security Considerations" anchor="security.considerations">
+<t>
+   This section is meant to inform developers, information providers, and
+   users about known security considerations relevant to HTTP message syntax
+   and parsing. Security considerations about HTTP semantics,
+   content, and routing are addressed in <xref target="HTTP"/>.
+</t>
+
+<section title="Response Splitting" anchor="response.splitting">
+<t>
+   Response splitting (a.k.a. CRLF injection) is a common technique, used in
+   various attacks on Web usage, that exploits the line-based nature of HTTP
+   message framing and the ordered association of requests to responses on
+   persistent connections <xref target="Klein"/>. This technique can be
+   particularly damaging when the requests pass through a shared cache.
+</t>
+<t>
+   Response splitting exploits a vulnerability in servers (usually within an
+   application server) where an attacker can send encoded data within some
+   parameter of the request that is later decoded and echoed within any of the
+   response header fields of the response. If the decoded data is crafted to
+   look like the response has ended and a subsequent response has begun, the
+   response has been split, and the content within the apparent second response
+   is controlled by the attacker. The attacker can then make any other request
+   on the same persistent connection and trick the recipients (including
+   intermediaries) into believing that the second half of the split is an
+   authoritative answer to the second request.
+</t>
+<t>
+   For example, a parameter within the request-target might be read by an
+   application server and reused within a redirect, resulting in the same
+   parameter being echoed in the <x:ref>Location</x:ref> header field of the
+   response. If the parameter is decoded by the application and not properly
+   encoded when placed in the response field, the attacker can send encoded
+   CRLF octets and other content that will make the application's single
+   response look like two or more responses.
+</t>
+<t>
+   A common defense against response splitting is to filter requests for data
+   that looks like encoded CR and LF (e.g., "%0D" and "%0A"). However, that
+   assumes the application server is only performing URI decoding rather
+   than more obscure data transformations like charset transcoding, XML entity
+   translation, base64 decoding, sprintf reformatting, etc.  A more effective
+   mitigation is to prevent anything other than the server's core protocol
+   libraries from sending a CR or LF within the header section, which means
+   restricting the output of header fields to APIs that filter for bad octets
+   and not allowing application servers to write directly to the protocol
+   stream.
+</t>
+</section>
+
+<section title="Request Smuggling" anchor="request.smuggling">
+<t>
+   Request smuggling (<xref target="Linhart"/>) is a technique that exploits
+   differences in protocol parsing among various recipients to hide additional
+   requests (which might otherwise be blocked or disabled by policy) within an
+   apparently harmless request.  Like response splitting, request smuggling
+   can lead to a variety of attacks on HTTP usage.
+</t>
+<t>
+   This specification has introduced new requirements on request parsing,
+   particularly with regard to message framing in
+   <xref target="message.body.length"/>, to reduce the effectiveness of
+   request smuggling.
+</t>
+</section>
+
+<section title="Message Integrity" anchor="message.integrity">
+<t>
+   HTTP does not define a specific mechanism for ensuring message integrity,
+   instead relying on the error-detection ability of underlying transport
+   protocols and the use of length or chunk-delimited framing to detect
+   completeness. Historically, the lack of
+   a single integrity mechanism has been justified by the informal nature of
+   most HTTP communication.  However, the prevalence of HTTP as an information
+   access mechanism has resulted in its increasing use within environments
+   where verification of message integrity is crucial.
+</t>
+<t>
+   The mechanisms provided with the "https" scheme, such as authenticated
+   encryption, provide protection against modification of messages. Care
+   is needed, however, to ensure that connection closure cannot be used to
+   truncate messages (see <xref target="tls.connection.closure"/>). User agents
+   might refuse to accept incomplete messages or treat them specially. For
+   example, a browser being used to view medical history or drug interaction
+   information needs to indicate to the user when such information is detected
+   by the protocol to be incomplete, expired, or corrupted during transfer.
+   Such mechanisms might be selectively enabled via user agent extensions or
+   the presence of message integrity metadata in a response.
+</t>
+<t>
+   The "http" scheme provides no protection against accidental or malicious
+   modification of messages.
+</t>
+<t>
+   Extensions to the protocol might be used to mitigate the risk of unwanted
+   modification of messages by intermediaries, even when the "https" scheme is
+   used. Integrity might be assured by using message authentication codes
+   or digital
+   signatures that are selectively added to messages via extensible metadata
+   fields.
+</t>
+</section>
+
+<section title="Message Confidentiality" anchor="message.confidentiality">
+<t>
+   HTTP relies on underlying transport protocols to provide message
+   confidentiality when that is desired. HTTP has been specifically designed
+   to be independent of the transport protocol, such that it can be used
+   over many forms of encrypted connection, with the selection of
+   such transports being identified by the choice of URI scheme or within
+   user agent configuration.
+</t>
+<t>
+   The "https" scheme can be used to identify resources that require a
+   confidential connection, as described in <xref target="HTTP" x:rel="#https.uri"/>.
+</t>
+</section>
+</section>
+
+<section title="IANA Considerations" anchor="IANA.considerations">
+<t>
+   The change controller for the following registrations is:
+   "IETF (iesg@ietf.org) - Internet Engineering Task Force".
+</t>
+
+<section title="Field Name Registration" anchor="field.name.registration">
+<t>
+   IANA has added the following field names to the "Hypertext Transfer Protocol (HTTP) Field
+   Name Registry" at <eref target="https://www.iana.org/assignments/http-fields"/>,
+   as described in <xref target="HTTP" x:rel="#field.name.registration"/>.
+</t>
+<?BEGININC build/draft-ietf-httpbis-messaging-latest.iana-headers ?>
+<!--AUTOGENERATED FROM extract-header-defs.xslt, do not edit manually-->
+<table align="left" anchor="iana.header.registration.table">
+   <thead>
+      <tr>
+         <th>Field Name</th>
+         <th>Status</th>
+         <th>Section</th>
+         <th>Comments</th>
+      </tr>
+   </thead>
+   <tbody>
+      <tr>
+         <td>Close</td>
+         <td>permanent</td>
+         <td>
+            <xref target="persistent.tear-down" format="counter"/>
+         </td>
+         <td>(reserved)</td>
+      </tr>
+      <tr>
+         <td>MIME-Version</td>
+         <td>permanent</td>
+         <td>
+            <xref target="mime-version" format="counter"/>
+         </td>
+         <td/>
+      </tr>
+      <tr>
+         <td>Transfer-Encoding</td>
+         <td>permanent</td>
+         <td>
+            <xref target="field.transfer-encoding" format="counter"/>
+         </td>
+         <td/>
+      </tr>
+   </tbody>
+</table>
+<!--(END)-->
+<?ENDINC build/draft-ietf-httpbis-messaging-latest.iana-headers ?>
+</section>
+
+<section title="Media Type Registration" anchor="media.type.http">
+<t>
+   IANA has updated the "Media Types" registry at
+   <eref target="https://www.iana.org/assignments/media-types"/>
+   with the registration information in Sections
+   <xref target="media.type.message.http" format="counter"/> and
+   <xref target="media.type.application.http" format="counter"/> for the media types
+   "message/http" and "application/http", respectively.
+</t>
+</section>
+
+<section title="Transfer Coding Registration" anchor="transfer.coding.registration">
+<t>
+   IANA has updated the "HTTP Transfer Coding Registry" at
+   <eref target="https://www.iana.org/assignments/http-parameters/"/>
+   with the registration procedure of <xref target="transfer.coding.registry"/>
+   and the content coding names summarized in the table below.
+</t>
+<table align="left" anchor="iana.transfer.coding.registration.table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Section</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>chunked</td>
+      <td>Transfer in a series of chunks</td>
+      <td><xref target="chunked.encoding" format="counter"/></td>
+    </tr>
+    <tr>
+      <td>compress</td>
+      <td>UNIX "compress" data format <xref target="Welch"/></td>
+      <td><xref target="compression.codings" format="counter"/></td>
+    </tr>
+    <tr>
+      <td>deflate</td>
+      <td>"deflate" compressed data (<xref target="RFC1951"/>) inside
+      the "zlib" data format (<xref target="RFC1950"/>)</td>
+      <td><xref target="compression.codings" format="counter"/></td>
+    </tr>
+    <tr>
+      <td>gzip</td>
+      <td>GZIP file format <xref target="RFC1952"/></td>
+      <td><xref target="compression.codings" format="counter"/></td>
+    </tr>
+    <tr>
+      <td>trailers</td>
+      <td>(reserved)</td>
+      <td><xref target="transfer.coding.registration" format="counter"/></td>
+    </tr>
+    <tr>
+      <td>x-compress</td>
+      <td>Deprecated (alias for compress)</td>
+      <td><xref target="compression.codings" format="counter"/></td>
+    </tr>
+    <tr>
+      <td>x-gzip</td>
+      <td>Deprecated (alias for gzip)</td>
+      <td><xref target="compression.codings" format="counter"/></td>
+    </tr>
+  </tbody>
+</table>
+<aside>
+  <t>
+    <x:h>Note:</x:h> the coding name "trailers" is reserved because its use would
+    conflict with the keyword "trailers" in the <x:ref>TE</x:ref>
+    header field (<xref target="HTTP" x:rel="#field.te"/>).
+  </t>
+</aside>
+</section>
+
+<section title="ALPN Protocol ID Registration" anchor="alpn.registration">
+<t>
+   IANA has updated the
+   "TLS Application-Layer Protocol Negotiation (ALPN) Protocol IDs" registry at
+   <eref target="https://www.iana.org/assignments/tls-extensiontype-values/"/>
+   with the registration below:
+</t>
+<table>
+  <thead>
+    <tr>
+      <th>Protocol</th>
+      <th>Identification Sequence</th>
+      <th>Reference</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>HTTP/1.1</td>
+      <td>0x68 0x74 0x74 0x70 0x2f 0x31 0x2e 0x31 ("http/1.1")</td>
+      <td>RFC 9112</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+</section>
+
+</middle>
+<back>
+<displayreference target="HTTP10" to="HTTP/1.0"/>
+
+<references title="Normative References">
+
+<reference anchor="HTTP">
+  <x:source href="rfc9110.xml" basename="rfc9110">
+    <x:defines>OWS</x:defines>
+    <x:defines>RWS</x:defines>
+    <x:defines>BWS</x:defines>
+    <x:defines>port</x:defines>
+    <x:defines>transfer-coding</x:defines>
+    <x:defines>uri-host</x:defines>
+  </x:source>
+</reference>
+
+<reference anchor="CACHING">
+  <x:source href="rfc9111.xml" basename="rfc9111"/>
+</reference>
+
+<reference anchor="URI">
+ <front>
+  <title abbrev="URI Generic Syntax">Uniform Resource Identifier (URI): Generic Syntax</title>
+  <author initials="T." surname="Berners-Lee" fullname="Tim Berners-Lee"/>
+  <author initials="R." surname="Fielding" fullname="Roy T. Fielding"/>
+  <author initials="L." surname="Masinter" fullname="Larry Masinter"/>
+  <date month="January" year="2005"/>
+ </front>
+ <seriesInfo name="STD" value="66"/>
+ <seriesInfo name="RFC" value="3986"/>
+</reference>
+
+<reference anchor="RFC5234">
+  <front>
+    <title abbrev="ABNF for Syntax Specifications">Augmented BNF for Syntax Specifications: ABNF</title>
+    <author initials="D." surname="Crocker" fullname="Dave Crocker" role="editor"/>
+    <author initials="P." surname="Overell" fullname="Paul Overell"/>
+    <date month="January" year="2008"/>
+  </front>
+  <seriesInfo name="STD" value="68"/>
+  <seriesInfo name="RFC" value="5234"/>
+</reference>
+
+<reference anchor="RFC7405">
+  <front>
+    <title>Case-Sensitive String Support in ABNF</title>
+    <author initials="P." surname="Kyzivat" fullname="Dave Kyzivat"/>
+    <date month="December" year="2014"/>
+  </front>
+  <seriesInfo name="RFC" value="7405"/>
+</reference>
+
+<reference anchor="RFC2119">
+  <front>
+    <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+    <author initials="S." surname="Bradner" fullname="Scott Bradner"/>
+    <date month="March" year="1997"/>
+  </front>
+  <seriesInfo name="BCP" value="14"/>
+  <seriesInfo name="RFC" value="2119"/>
+</reference>
+
+<reference anchor="RFC8174">
+  <front>
+    <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+    <author initials="B." surname="Leiba" fullname="Barry Leiba"/>
+    <date year="2017" month="May"/>
+  </front>
+  <seriesInfo name="BCP" value="14"/>
+  <seriesInfo name="RFC" value="8174"/>
+</reference>
+
+<reference anchor="USASCII">
+  <front>
+    <title>Coded Character Set -- 7-bit American Standard Code for Information Interchange</title>
+    <author>
+      <organization>American National Standards Institute</organization>
+    </author>
+    <date year="1986"/>
+  </front>
+  <seriesInfo name="ANSI" value="X3.4"/>
+</reference>
+
+<reference anchor="RFC1950">
+  <front>
+    <title>ZLIB Compressed Data Format Specification version 3.3</title>
+    <author initials="P." surname="Deutsch" fullname="L. Peter Deutsch"/>
+    <author initials="J-L." surname="Gailly" fullname="Jean-Loup Gailly"/>
+    <date month="May" year="1996"/>
+  </front>
+  <seriesInfo name="RFC" value="1950"/>
+</reference>
+
+<reference anchor="RFC1951">
+  <front>
+    <title>DEFLATE Compressed Data Format Specification version 1.3</title>
+    <author initials="P." surname="Deutsch" fullname="L. Peter Deutsch"/>
+    <date month="May" year="1996"/>
+  </front>
+  <seriesInfo name="RFC" value="1951"/>
+</reference>
+
+<reference anchor="RFC1952">
+  <front>
+    <title>GZIP file format specification version 4.3</title>
+    <author initials="P." surname="Deutsch" fullname="L. Peter Deutsch"/>
+    <date month="May" year="1996"/>
+  </front>
+  <seriesInfo name="RFC" value="1952"/>
+</reference>
+
+<reference anchor="TLS13">
+   <front>
+      <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+      <author initials="E." surname="Rescorla" fullname="E. Rescorla"/>
+      <date year="2018" month="August"/>
+   </front>
+   <seriesInfo name="RFC" value="8446"/>
+</reference>
+
+<reference anchor="Welch" target="https://ieeexplore.ieee.org/document/1659158/">
+  <front>
+    <title>A Technique for High-Performance Data Compression</title>
+    <author initials="T." surname="Welch" fullname="Terry A. Welch"/>
+    <date month="June" year="1984"/>
+  </front>
+  <seriesInfo name="IEEE Computer" value="17(6)"/>
+  <seriesInfo name="DOI" value="10.1109/MC.1984.1659158"/>
+</reference>
+
+</references>
+
+<references title="Informative References" anchor="informative.references">
+
+<reference anchor="HTTP10">
+  <front>
+    <title abbrev="HTTP/1.0">Hypertext Transfer Protocol -- HTTP/1.0</title>
+    <author initials="T." surname="Berners-Lee" fullname="Tim Berners-Lee"/>
+    <author initials="R." surname="Fielding" fullname="Roy T. Fielding"/>
+    <author initials="H." surname="Frystyk" fullname="Henrik Frystyk Nielsen"/>
+    <date month="May" year="1996"/>
+  </front>
+  <seriesInfo name="RFC" value="1945"/>
+</reference>
+
+<reference anchor="RFC2045">
+  <front>
+    <title abbrev="Internet Message Bodies">Multipurpose Internet Mail Extensions (MIME) Part One: Format of Internet Message Bodies</title>
+    <author initials="N." surname="Freed" fullname="Ned Freed"/>
+    <author initials="N." surname="Borenstein" fullname="Nathaniel S. Borenstein"/>
+    <date month="November" year="1996"/>
+  </front>
+  <seriesInfo name="RFC" value="2045"/>
+</reference>
+
+<reference anchor="RFC2046">
+  <front>
+    <title abbrev="Media Types">Multipurpose Internet Mail Extensions (MIME) Part Two: Media Types</title>
+    <author initials="N." surname="Freed" fullname="Ned Freed"/>
+    <author initials="N." surname="Borenstein" fullname="Nathaniel S. Borenstein"/>
+    <date month="November" year="1996"/>
+  </front>
+  <seriesInfo name="RFC" value="2046"/>
+</reference>
+
+<reference anchor="RFC2049">
+  <front>
+    <title abbrev="MIME Conformance">Multipurpose Internet Mail Extensions (MIME) Part Five: Conformance Criteria and Examples</title>
+    <author initials="N." surname="Freed" fullname="Ned Freed"/>
+    <author initials="N." surname="Borenstein" fullname="Nathaniel S. Borenstein"/>
+    <date month="November" year="1996"/>
+  </front>
+  <seriesInfo name="RFC" value="2049"/>
+</reference>
+
+<reference anchor="RFC2068">
+  <front>
+    <title>Hypertext Transfer Protocol -- HTTP/1.1</title>
+    <author initials="R." surname="Fielding" fullname="Roy T. Fielding"/>
+    <author initials="J." surname="Gettys" fullname="Jim Gettys"/>
+    <author initials="J." surname="Mogul" fullname="Jeffrey C. Mogul"/>
+    <author initials="H." surname="Frystyk" fullname="Henrik Frystyk Nielsen"/>
+    <author initials="T." surname="Berners-Lee" fullname="Tim Berners-Lee"/>
+    <date month="January" year="1997"/>
+  </front>
+  <seriesInfo name="RFC" value="2068"/>
+</reference>
+
+<reference anchor="RFC2557">
+  <front>
+    <title abbrev="MIME Encapsulation of Aggregate Documents">MIME Encapsulation of Aggregate Documents, such as HTML (MHTML)</title>
+    <author initials="J." surname="Palme" fullname="Jacob Palme"/>
+    <author initials="A." surname="Hopmann" fullname="Alex Hopmann"/>
+    <author initials="N." surname="Shelness" fullname="Nick Shelness"/>
+    <date year="1999" month="March"/>
+  </front>
+  <seriesInfo name="RFC" value="2557"/>
+</reference>
+
+<reference anchor="RFC5322">
+  <front>
+    <title>Internet Message Format</title>
+    <author initials="P." surname="Resnick" fullname="P. Resnick" role="editor"/>
+    <date year="2008" month="October"/>
+  </front>
+  <seriesInfo name="RFC" value="5322"/>
+</reference>
+
+<reference anchor="RFC7230">
+  <front>
+    <title>Hypertext Transfer Protocol (HTTP/1.1): Message Syntax and Routing</title>
+    <author initials="R." surname="Fielding" fullname="Roy T. Fielding" role="editor"/>
+    <author initials="J." surname="Reschke" fullname="Julian F. Reschke" role="editor"/>
+    <date month="June" year="2014"/>
+  </front>
+  <seriesInfo name="RFC" value="7230"/>
+</reference>
+
+<reference anchor="RFC8126">
+  <front>
+    <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+    <author initials="M." surname="Cotton" fullname="M. Cotton"/>
+    <author initials="B." surname="Leiba" fullname="B. Leiba"/>
+    <author initials="T." surname="Narten" fullname="T. Narten"/>
+    <date year="2017" month="June"/>
+  </front>
+  <seriesInfo name="BCP" value="26"/>
+  <seriesInfo name="RFC" value="8126"/>
+</reference>
+
+<reference anchor="Klein" target="https://packetstormsecurity.com/papers/general/whitepaper_httpresponse.pdf">
+  <front>
+    <title>Divide and Conquer - HTTP Response Splitting, Web Cache Poisoning Attacks, and Related Topics</title>
+    <author initials="A." surname="Klein" fullname="Amit Klein"/>
+    <date year="2004" month="March"/>
+  </front>
+</reference>
+
+<reference anchor="Linhart" target="https://www.cgisecurity.com/lib/HTTP-Request-Smuggling.pdf">
+  <front>
+    <title>HTTP Request Smuggling</title>
+    <author initials="C." surname="Linhart" fullname="Chaim Linhart"/>
+    <author initials="A." surname="Klein" fullname="Amit Klein"/>
+    <author initials="R." surname="Heled" fullname="Ronen Heled"/>
+    <author initials="S." surname="Orrin" fullname="Steve Orrin"/>
+    <date year="2005" month="June"/>
+  </front>
+</reference>
+
+</references>
+
+<?BEGININC build/draft-ietf-httpbis-messaging-latest.abnf-appendix ?>
+<section title="Collected ABNF" anchor="collected.abnf"><t>In the collected ABNF below, list rules are expanded per <xref target="HTTP" x:rel="#abnf.extension"/>.</t><sourcecode type="abnf" name="rfc9112.parsed-abnf">
+<x:ref>BWS</x:ref> = &lt;BWS, see <xref target="HTTP" x:fmt="," x:sec="5.6.3"/>&gt;
+
+<x:ref>HTTP-message</x:ref> = start-line CRLF *( field-line CRLF ) CRLF [
+ message-body ]
+<x:ref>HTTP-name</x:ref> = %x48.54.54.50 ; HTTP
+<x:ref>HTTP-version</x:ref> = HTTP-name "/" DIGIT "." DIGIT
+
+<x:ref>OWS</x:ref> = &lt;OWS, see <xref target="HTTP" x:fmt="," x:sec="5.6.3"/>&gt;
+
+<x:ref>RWS</x:ref> = &lt;RWS, see <xref target="HTTP" x:fmt="," x:sec="5.6.3"/>&gt;
+
+<x:ref>Transfer-Encoding</x:ref> = [ transfer-coding *( OWS "," OWS transfer-coding
+ ) ]
+
+<x:ref>absolute-URI</x:ref> = &lt;absolute-URI, see <xref target="URI" x:fmt="," x:sec="4.3"/>&gt;
+<x:ref>absolute-form</x:ref> = absolute-URI
+<x:ref>absolute-path</x:ref> = &lt;absolute-path, see <xref target="HTTP" x:fmt="," x:sec="4.1"/>&gt;
+<x:ref>asterisk-form</x:ref> = "*"
+<x:ref>authority</x:ref> = &lt;authority, see <xref target="URI" x:fmt="," x:sec="3.2"/>&gt;
+<x:ref>authority-form</x:ref> = uri-host ":" port
+
+<x:ref>chunk</x:ref> = chunk-size [ chunk-ext ] CRLF chunk-data CRLF
+<x:ref>chunk-data</x:ref> = 1*OCTET
+<x:ref>chunk-ext</x:ref> = *( BWS ";" BWS chunk-ext-name [ BWS "=" BWS chunk-ext-val
+ ] )
+<x:ref>chunk-ext-name</x:ref> = token
+<x:ref>chunk-ext-val</x:ref> = token / quoted-string
+<x:ref>chunk-size</x:ref> = 1*HEXDIG
+<x:ref>chunked-body</x:ref> = *chunk last-chunk trailer-section CRLF
+
+<x:ref>field-line</x:ref> = field-name ":" OWS field-value OWS
+<x:ref>field-name</x:ref> = &lt;field-name, see <xref target="HTTP" x:fmt="," x:sec="5.1"/>&gt;
+<x:ref>field-value</x:ref> = &lt;field-value, see <xref target="HTTP" x:fmt="," x:sec="5.5"/>&gt;
+
+<x:ref>last-chunk</x:ref> = 1*"0" [ chunk-ext ] CRLF
+
+<x:ref>message-body</x:ref> = *OCTET
+<x:ref>method</x:ref> = token
+
+<x:ref>obs-fold</x:ref> = OWS CRLF RWS
+<x:ref>obs-text</x:ref> = &lt;obs-text, see <xref target="HTTP" x:fmt="," x:sec="5.6.4"/>&gt;
+<x:ref>origin-form</x:ref> = absolute-path [ "?" query ]
+
+<x:ref>port</x:ref> = &lt;port, see <xref target="URI" x:fmt="," x:sec="3.2.3"/>&gt;
+
+<x:ref>query</x:ref> = &lt;query, see <xref target="URI" x:fmt="," x:sec="3.4"/>&gt;
+<x:ref>quoted-string</x:ref> = &lt;quoted-string, see <xref target="HTTP" x:fmt="," x:sec="5.6.4"/>&gt;
+
+<x:ref>reason-phrase</x:ref> = 1*( HTAB / SP / VCHAR / obs-text )
+<x:ref>request-line</x:ref> = method SP request-target SP HTTP-version
+<x:ref>request-target</x:ref> = origin-form / absolute-form / authority-form /
+ asterisk-form
+
+<x:ref>start-line</x:ref> = request-line / status-line
+<x:ref>status-code</x:ref> = 3DIGIT
+<x:ref>status-line</x:ref> = HTTP-version SP status-code SP [ reason-phrase ]
+
+<x:ref>token</x:ref> = &lt;token, see <xref target="HTTP" x:fmt="," x:sec="5.6.2"/>&gt;
+<x:ref>trailer-section</x:ref> = *( field-line CRLF )
+<x:ref>transfer-coding</x:ref> = &lt;transfer-coding, see <xref target="HTTP" x:fmt="," x:sec="10.1.4"/>&gt;
+
+<x:ref>uri-host</x:ref> = &lt;host, see <xref target="URI" x:fmt="," x:sec="3.2.2"/>&gt;
+</sourcecode>
+</section>
+<?ENDINC build/draft-ietf-httpbis-messaging-latest.abnf-appendix ?>
+
+<section title="Differences between HTTP and MIME" anchor="differences.between.http.and.mime">
+<t>
+   HTTP/1.1 uses many of the constructs defined for the Internet Message
+   Format <xref target="RFC5322"/> and Multipurpose Internet Mail Extensions (MIME)
+   <xref target="RFC2045"/> to allow a message body to be transmitted in an open
+   variety of representations and with extensible fields.  However, some
+   of these constructs have been reinterpreted to better fit the needs
+   of interactive communication, leading to some differences in how MIME
+   constructs are used within HTTP. These differences were carefully
+   chosen to optimize performance over binary connections, allow
+   greater freedom in the use of new media types, ease date comparisons,
+   and accommodate common implementations.
+</t>
+<t>
+   This appendix describes specific areas where HTTP differs from MIME.
+   Proxies and gateways to and from strict MIME environments need to be
+   aware of these differences and provide the appropriate conversions
+   where necessary.
+</t>
+
+<section title="MIME-Version" anchor="mime-version">
+  <iref primary="true" item="Fields" subitem="MIME-Version" x:for-anchor=""/><iref primary="true" item="Header Fields" subitem="MIME-Version" x:for-anchor=""/><iref primary="true" item="MIME-Version header field" x:for-anchor=""/>
+  <x:anchor-alias value="MIME-Version"/>
+<t>
+   HTTP is not a MIME-compliant protocol. However, messages can
+   include a single MIME-Version header field to indicate what
+   version of the MIME protocol was used to construct the message. Use
+   of the MIME-Version header field indicates that the message is in
+   full conformance with the MIME protocol (as defined in <xref target="RFC2045"/>).
+   Senders are responsible for ensuring full conformance (where
+   possible) when exporting HTTP messages to strict MIME environments.
+</t>
+</section>
+
+<section title="Conversion to Canonical Form" anchor="conversion.to.canonical.form">
+<t>
+   MIME requires that an Internet mail body part be converted to canonical
+   form prior to being transferred, as described in <xref target="RFC2049" x:fmt="of" x:sec="4"/>, and that content with a type of "text" represents
+   line breaks as CRLF, forbidding the use of CR or LF outside of line break
+   sequences <xref target="RFC2046"/>. In contrast, HTTP does not care whether
+   CRLF, bare CR, or bare LF are used to indicate a line break within content.
+</t>
+<t>
+   A proxy or gateway from HTTP to a strict MIME
+   environment ought to translate all line breaks within text media
+   types to the RFC 2049 canonical form of CRLF. Note, however,
+   this might be complicated by the presence of a <x:ref>Content-Encoding</x:ref>
+   and by the fact that HTTP allows the use of some charsets
+   that do not use octets 13 and 10 to represent CR and LF, respectively.
+</t>
+<t>
+   Conversion will break any cryptographic
+   checksums applied to the original content unless the original content
+   is already in canonical form. Therefore, the canonical form is
+   recommended for any content that uses such checksums in HTTP.
+</t>
+</section>
+
+<section title="Conversion of Date Formats" anchor="conversion.of.date.formats">
+<t>
+   HTTP/1.1 uses a restricted set of date formats (<xref target="HTTP" x:rel="#http.date"/>) to
+   simplify the process of date comparison. Proxies and gateways from
+   other protocols ought to ensure that any <x:ref>Date</x:ref> header field
+   present in a message conforms to one of the HTTP/1.1 formats and rewrite
+   the date if necessary.
+</t>
+</section>
+
+<section title="Conversion of Content-Encoding" anchor="conversion.of.content-encoding">
+<t>
+   MIME does not include any concept equivalent to HTTP's
+   <x:ref>Content-Encoding</x:ref> header field. Since this acts as a modifier
+   on the media type, proxies and gateways from HTTP to MIME-compliant
+   protocols ought to either change the value of the <x:ref>Content-Type</x:ref>
+   header field or decode the representation before forwarding the message.
+   (Some experimental applications of Content-Type for Internet mail have used
+   a media-type parameter of ";conversions=&lt;content-coding&gt;" to perform
+   a function equivalent to Content-Encoding. However, this parameter is
+   not part of the MIME standards.)
+</t>
+</section>
+
+<section title="Conversion of Content-Transfer-Encoding" anchor="conversion.of.content-transfer-encoding">
+  <iref item="Content-Transfer-Encoding header field" x:for-anchor=""/>
+<t>
+   HTTP does not use the Content-Transfer-Encoding field of MIME.
+   Proxies and gateways from MIME-compliant protocols to HTTP need to remove
+   any Content-Transfer-Encoding prior to delivering the response message to
+   an HTTP client.
+</t>
+<t>
+   Proxies and gateways from HTTP to MIME-compliant protocols are
+   responsible for ensuring that the message is in the correct format
+   and encoding for safe transport on that protocol, where "safe
+   transport" is defined by the limitations of the protocol being used.
+   Such a proxy or gateway ought to transform and label the data with an
+   appropriate Content-Transfer-Encoding if doing so will improve the
+   likelihood of safe transport over the destination protocol.
+</t>
+</section>
+
+<section title="MHTML and Line Length Limitations" anchor="mhtml.line.length">
+<t>
+   HTTP implementations that share code with MHTML <xref target="RFC2557"/>
+   implementations need to be aware of MIME line length limitations.
+   Since HTTP does not have this limitation, HTTP does not fold long lines.
+   MHTML messages being transported by HTTP follow all conventions of MHTML,
+   including line length limitations and folding, canonicalization, etc.,
+   since HTTP transfers message-bodies without modification and, aside from the
+   "multipart/byteranges" type (<xref target="HTTP" x:rel="#multipart.byteranges"/>),
+   does not interpret
+   the content or any MIME header lines that might be contained therein.
+</t>
+</section>
+</section>
+
+<section title="Changes from Previous RFCs" anchor="changes">
+<section title="Changes from HTTP/0.9" anchor="changes.from.0.9">
+<t>
+   Since HTTP/0.9 did not support header fields in a request, there is no
+   mechanism for it to support name-based virtual hosts (selection of resource
+   by inspection of the <x:ref>Host</x:ref> header field).
+   Any server that implements name-based virtual hosts ought to disable
+   support for HTTP/0.9. Most requests that appear to be HTTP/0.9 are, in
+   fact, badly constructed HTTP/1.x requests caused by a client failing to
+   properly encode the request-target.
+</t>
+</section>
+
+<section title="Changes from HTTP/1.0" anchor="changes.from.1.0">
+<section title="Multihomed Web Servers" anchor="changes.to.simplify.multihomed.web.servers.and.conserve.ip.addresses">
+<t>
+   The requirements that clients and servers support the <x:ref>Host</x:ref>
+   header field (<xref target="HTTP" x:rel="#field.host"/>), report an error if it is
+   missing from an HTTP/1.1 request, and accept absolute URIs
+   (<xref target="request.target"/>)
+   are among the most important changes defined by HTTP/1.1.
+</t>
+<t>
+   Older HTTP/1.0 clients assumed a one-to-one relationship of IP
+   addresses and servers; there was no established mechanism for
+   distinguishing the intended server of a request other than the IP address
+   to which that request was directed. The <x:ref>Host</x:ref> header field was
+   introduced during the development of HTTP/1.1 and, though it was
+   quickly implemented by most HTTP/1.0 browsers, additional requirements
+   were placed on all HTTP/1.1 requests in order to ensure complete
+   adoption.  At the time of this writing, most HTTP-based services
+   are dependent upon the Host header field for targeting requests.
+</t>
+</section>
+
+<section title="Keep-Alive Connections" anchor="compatibility.with.http.1.0.persistent.connections">
+<t>
+   In HTTP/1.0, each connection is established by the client prior to the
+   request and closed by the server after sending the response. However, some
+   implementations implement the explicitly negotiated ("Keep-Alive") version
+   of persistent connections described in <xref x:sec="19.7.1" x:fmt="of" target="RFC2068"/>.
+</t>
+<t>
+   Some clients and servers might wish to be compatible with these previous
+   approaches to persistent connections, by explicitly negotiating for them
+   with a "Connection: keep-alive" request header field. However, some
+   experimental implementations of HTTP/1.0 persistent connections are faulty;
+   for example, if an HTTP/1.0 proxy server doesn't understand
+   <x:ref>Connection</x:ref>, it will erroneously forward that header field
+   to the next inbound server, which would result in a hung connection.
+</t>
+<t>
+   One attempted solution was the introduction of a Proxy-Connection header
+   field, targeted specifically at proxies. In practice, this was also
+   unworkable, because proxies are often deployed in multiple layers, bringing
+   about the same problem discussed above.
+</t>
+<t>
+   As a result, clients are encouraged not to send the Proxy-Connection header
+   field in any requests.
+</t>
+<t>
+   Clients are also encouraged to consider the use of "Connection: keep-alive"
+   in requests carefully; while they can enable persistent connections with
+   HTTP/1.0 servers, clients using them will need to monitor the
+   connection for "hung" requests (which indicate that the client ought to stop
+   sending the header field), and this mechanism ought not be used by clients
+   at all when a proxy is being used.
+</t>
+</section>
+
+<section title="Introduction of Transfer-Encoding" anchor="introduction.of.transfer-encoding">
+<t>
+   HTTP/1.1 introduces the <x:ref>Transfer-Encoding</x:ref> header field
+   (<xref target="field.transfer-encoding"/>).
+   Transfer codings need to be decoded prior to forwarding an HTTP message
+   over a MIME-compliant protocol.
+</t>
+</section>
+</section>
+
+<section title="Changes from RFC 7230" anchor="changes.from.rfc.7230">
+<t>
+   Most of the sections introducing HTTP's design goals, history, architecture,
+   conformance criteria, protocol versioning, URIs, message routing, and
+   header fields have been moved to <xref target="HTTP"/>.
+   This document has been reduced to just the messaging syntax and
+   connection management requirements specific to HTTP/1.1.
+</t>
+<t>
+   Bare CRs have been prohibited outside of content.
+   (<xref target="message.parsing"/>)
+</t>
+<t>
+   The ABNF definition of <x:ref>authority-form</x:ref> has changed from the
+   more general authority component of a URI (in which port is optional) to
+   the specific host:port format that is required by CONNECT.
+   (<xref target="authority-form"/>)
+</t>
+<t>
+   Recipients are required to avoid smuggling/splitting attacks when processing an
+   ambiguous message framing.
+   (<xref target="field.transfer-encoding"/>)
+</t>
+<t>
+   In the ABNF for chunked extensions, (bad) whitespace around ";" and "="
+   has been reintroduced. Whitespace was removed
+   in <xref target="RFC7230"/>, but that change was found to break existing
+   implementations.
+   (<xref target="chunked.extension"/>)
+</t>
+<t>
+   Trailer field semantics now transcend the specifics of chunked transfer coding.
+   The decoding algorithm for chunked (<xref target="decoding.chunked"/>) has
+   been updated to encourage storage/forwarding of trailer fields separately
+   from the header section, to only allow merging into the header section if
+   the recipient knows the corresponding field definition permits and defines
+   how to merge, and otherwise to discard the trailer fields instead of
+   merging. The trailer part is now called the trailer section to be more
+   consistent with the header section and more distinct from a body part.
+   (<xref target="chunked.trailer.section"/>)
+</t>
+<t>
+   Transfer coding parameters called "q" are disallowed in order to avoid
+   conflicts with the use of ranks in the <x:ref>TE</x:ref> header field.
+   (<xref target="transfer.coding.registry"/>)
+</t>
+</section>
+</section>
+
+<section title="Acknowledgements" anchor="acks" numbered="false">
+<t>
+  See <xref target="HTTP" x:rel="#acks"/>, which applies to this document as well.
+</t>
+</section>
+</back>
+</rfc>

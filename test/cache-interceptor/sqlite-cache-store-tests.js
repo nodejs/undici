@@ -69,6 +69,7 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
   deepStrictEqual(await readResponse(readable), {
     ...requestValue,
     etag: undefined,
+    vary: undefined,
     cacheControlDirectives: undefined,
     body: requestBody
   })
@@ -79,6 +80,7 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
   deepStrictEqual(await readResponse(readable), {
     ...requestValue,
     etag: undefined,
+    vary: undefined,
     cacheControlDirectives: undefined,
     body: requestBody
   })

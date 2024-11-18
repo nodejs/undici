@@ -1,0 +1,20 @@
+name: Cache Tests
+on: workflow_dispatch
+
+jobs:
+  test:
+
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '14'
+    - name: Run browser tests
+      run: ./test-browser.sh
+    - name: Push update
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        ./update.sh

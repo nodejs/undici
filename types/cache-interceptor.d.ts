@@ -7,6 +7,10 @@ declare namespace CacheHandler {
 
   export interface CacheHandlerOptions {
     store: CacheStore
+
+    cacheByDefault?: number
+
+    type?: CacheOptions['type']
   }
 
   export interface CacheOptions {
@@ -20,6 +24,20 @@ declare namespace CacheHandler {
      * @see https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1
      */
     methods?: CacheMethods[]
+
+    /**
+     * RFC9111 allows for caching responses that we aren't explicitly told to
+     *  cache or to not cache.
+     * @see https://www.rfc-editor.org/rfc/rfc9111.html#section-3-5
+     * @default undefined
+     */
+    cacheByDefault?: number
+
+    /**
+     * TODO docs
+     * @default 'public'
+     */
+    type?: 'public' | 'private'
   }
 
   export interface CacheControlDirectives {
@@ -70,6 +88,7 @@ declare namespace CacheHandler {
     statusCode: number
     statusMessage: string
     headers: Record<string, string | string[]>
+    vary?: Record<string, string | string[]>
     etag?: string
     body: null | Readable | Iterable<Buffer> | AsyncIterable<Buffer> | Buffer | Iterable<string> | AsyncIterable<string> | string
     cacheControlDirectives: CacheControlDirectives,

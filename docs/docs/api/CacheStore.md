@@ -15,7 +15,7 @@ The `MemoryCacheStore` stores the responses in-memory.
 
 - `maxCount` - The maximum amount of responses to store. Default `Infinity`.
 - `maxEntrySize` - The maximum size in bytes that a response's body can be. If a response's body is greater than or equal to this, the response will not be cached.
-
+todo DOCS
 ### `SqliteCacheStore`
 
 The `SqliteCacheStore` stores the responses in a SQLite database.
