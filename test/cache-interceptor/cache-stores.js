@@ -15,7 +15,6 @@ function cacheStoreTests (CacheStore) {
   describe(CacheStore.prototype.constructor.name, () => {
     test('matches interface', async () => {
       const store = new CacheStore()
-      equal(typeof store.isFull, 'boolean')
       equal(typeof store.get, 'function')
       equal(typeof store.createWriteStream, 'function')
       equal(typeof store.delete, 'function')
@@ -195,8 +194,9 @@ function cacheStoreTests (CacheStore) {
 
       const readStream = store.get(structuredClone(request))
       notEqual(readStream, undefined)
+      const { vary, ...responseValue } = requestValue
       deepStrictEqual(await readResponse(readStream), {
-        ...requestValue,
+        ...responseValue,
         body: requestBody
       })
 
@@ -212,46 +212,6 @@ function cacheStoreTests (CacheStore) {
     })
   })
 }
-
-test('MemoryCacheStore locks values properly', async () => {
-  const store = new MemoryCacheStore()
-
-  const request = {
-    origin: 'localhost',
-    path: '/',
-    method: 'GET',
-    headers: {}
-  }
-
-  const requestValue = {
-    statusCode: 200,
-    statusMessage: '',
-    rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
-    cachedAt: Date.now(),
-    staleAt: Date.now() + 10000,
-    deleteAt: Date.now() + 20000
-  }
-
-  const writable = store.createWriteStream(request, requestValue)
-  notEqual(writable, undefined)
-
-  // Value should now be locked, we shouldn't be able to create a readable or
-  //  another writable to it until the first one finishes
-  equal(store.get(request), undefined)
-  equal(store.createWriteStream(request, requestValue), undefined)
-
-  // Close the writable, this should unlock it
-  writeResponse(writable, ['asd'])
-
-  // Stream is now closed, let's lock any new write streams
-  const result = store.get(request)
-  notEqual(result, undefined)
-
-  // Consume & close the result, this should lift the write lock
-  await readResponse(result)
-
-  notEqual(store.createWriteStream(request, requestValue), undefined)
-})
 
 /**
  * @param {import('node:stream').Writable} stream
