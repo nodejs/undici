@@ -18,6 +18,7 @@ test('does not need the body to be consumed to continue', { timeout: 180_000, sk
     throw new Error('gc is not available. Run with \'--expose-gc\'.')
   }
   const agent = new Agent({
+    pipelining: 1,
     keepAliveMaxTimeout: 10,
     keepAliveTimeoutThreshold: 10
   })
