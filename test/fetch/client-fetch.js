@@ -709,3 +709,25 @@ test('Receiving non-Latin1 headers', async (t) => {
   assert.deepStrictEqual(cdHeaders, ContentDisposition)
   assert.deepStrictEqual(lengths, [30, 34, 94, 104, 90])
 })
+
+test('post globalThis.FormData with Blob', (t, done) => {
+  const { ok } = tspl(t, { plan: 1 })
+
+  // We use the FormData that is shipped in Node.js
+  const body = new globalThis.FormData()
+  body.append('field1', new Blob(['asd1']))
+
+  const server = createServer((req, res) => {
+    req.pipe(res)
+  })
+  t.after(closeServerAsPromise(server))
+
+  server.listen(0, async () => {
+    const res = await fetch(`http://localhost:${server.address().port}`, {
+      method: 'PUT',
+      body
+    })
+    ok(/asd1/.test(await res.text()))
+    done()
+  })
+})
