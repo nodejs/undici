@@ -1,5 +1,4 @@
 import { Readable, Writable } from 'node:stream'
-import Dispatcher from './dispatcher'
 
 export default CacheHandler
 
@@ -19,79 +18,77 @@ declare namespace CacheHandler {
     methods?: CacheMethods[]
   }
 
+  export interface CacheKey {
+    origin: string
+    method: string
+    path: string
+    headers?: Record<string, string | string[]>
+  }
+
+  export interface CacheValue {
+    statusCode: number
+    statusMessage: string
+    rawHeaders: Buffer[]
+    vary?: Record<string, string | string[]>
+    etag?: string
+    cachedAt: number
+    staleAt: number
+    deleteAt: number
+  }
+
+  export interface DeleteByUri {
+    origin: string
+    method: string
+    path: string
+  }
+
+  type GetResult = {
+    statusCode: number
+    statusMessage: string
+    rawHeaders: Buffer[]
+    body: null | Readable | Iterable<Buffer> | AsyncIterable<Buffer> | Buffer | Iterable<string> | AsyncIterable<string> | string
+    cachedAt: number
+    staleAt: number
+    deleteAt: number
+  }
+
   /**
    * Underlying storage provider for cached responses
    */
   export interface CacheStore {
-    /**
-     * Whether or not the cache is full and can not store any more responses
-     */
-    get isFull(): boolean
+    get(key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
 
-    createReadStream(req: Dispatcher.RequestOptions): CacheStoreReadable | Promise<CacheStoreReadable | undefined> | undefined
+    createWriteStream(key: CacheKey, val: CacheValue): Writable | undefined
 
-    createWriteStream(req: Dispatcher.RequestOptions, value: Omit<CacheStoreValue, 'rawTrailers'>): CacheStoreWriteable | undefined
-
-    /**
-     * Delete all of the cached responses from a certain origin (host)
-     */
-    deleteByOrigin(origin: string): void | Promise<void>
-  }
-
-  export interface CacheStoreReadable extends Readable {
-    get value(): CacheStoreValue
-  }
-
-  export interface CacheStoreWriteable extends Writable {
-    set rawTrailers(rawTrailers: string[] | undefined)
-  }
-
-  export interface CacheStoreValue {
-    statusCode: number;
-    statusMessage: string;
-    rawHeaders: (Buffer | Buffer[])[];
-    rawTrailers?: string[];
-    /**
-     * Headers defined by the Vary header and their respective values for
-     *  later comparison
-     */
-    vary?: Record<string, string>;
-    /**
-     * Time in millis that this value was cached
-     */
-    cachedAt: number;
-    /**
-     * Time in millis that this value is considered stale
-     */
-    staleAt: number;
-    /**
-     * Time in millis that this value is to be deleted from the cache. This is
-     *  either the same as staleAt or the `max-stale` caching directive.
-     */
-    deleteAt: number;
+    delete(key: CacheKey): void | Promise<void>
   }
 
   export interface MemoryCacheStoreOpts {
     /**
-     * @default Infinity
-     */
-    maxEntries?: number
+       * @default Infinity
+       */
+    maxCount?: number
+
     /**
-     * @default Infinity
-     */
+       * @default Infinity
+       */
+    maxSize?: number
+
+    /**
+       * @default Infinity
+       */
     maxEntrySize?: number
+
     errorCallback?: (err: Error) => void
   }
 
   export class MemoryCacheStore implements CacheStore {
     constructor (opts?: MemoryCacheStoreOpts)
 
-    get isFull (): boolean
+    get (key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
 
-    createReadStream (req: Dispatcher.RequestOptions): CacheStoreReadable | undefined
+    createWriteStream (key: CacheKey, value: CacheValue): Writable | undefined
 
-    createWriteStream (req: Dispatcher.RequestOptions, value: CacheStoreValue): CacheStoreWriteable
-
-    deleteByOrigin (origin: string): void
+    delete (key: CacheKey): void | Promise<void>
   }
 }
