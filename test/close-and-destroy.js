@@ -163,7 +163,7 @@ test('close should still reconnect', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 1 })
     after(() => client.destroy())
 
     t.ok(makeRequest())
@@ -200,7 +200,7 @@ test('close should call callback once finished', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 1 })
     after(() => client.destroy())
 
     t.ok(makeRequest())

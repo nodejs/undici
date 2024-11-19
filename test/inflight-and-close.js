@@ -2,7 +2,7 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
-const { request } = require('..')
+const { request, Agent } = require('..')
 const http = require('node:http')
 
 test('inflight and close', async (t) => {
@@ -14,7 +14,8 @@ test('inflight and close', async (t) => {
     res.socket.end() // Close the connection immediately with every response
   }).listen(0, '127.0.0.1', function () {
     const url = `http://127.0.0.1:${this.address().port}`
-    request(url)
+    const dispatcher = new Agent({ pipelining: 1 })
+    request(url, { dispatcher })
       .then(({ statusCode, headers, body }) => {
         t.ok(true, 'first response')
         body.resume()

@@ -100,7 +100,7 @@ test('stream GET destroy res', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 1 })
     after(() => client.close())
 
     client.stream({
