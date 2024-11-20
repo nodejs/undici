@@ -5,6 +5,7 @@ const { deepStrictEqual, notEqual, equal } = require('node:assert')
 const { Readable } = require('node:stream')
 const { once } = require('node:events')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
+const { nowAbsolute } = require('../../lib/util/timers.js')
 
 cacheStoreTests(MemoryCacheStore)
 
@@ -32,9 +33,9 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
-        cachedAt: Date.now(),
-        staleAt: Date.now() + 10000,
-        deleteAt: Date.now() + 20000
+        cachedAt: nowAbsolute(),
+        staleAt: nowAbsolute() + 10000,
+        deleteAt: nowAbsolute() + 20000
       }
       const requestBody = ['asd', '123']
 
@@ -57,6 +58,7 @@ function cacheStoreTests (CacheStore) {
 
       deepStrictEqual(await readResponse(readResult), {
         ...requestValue,
+        etag: undefined,
         body: requestBody
       })
 
@@ -71,9 +73,9 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
-        cachedAt: Date.now(),
-        staleAt: Date.now() + 10000,
-        deleteAt: Date.now() + 20000
+        cachedAt: nowAbsolute(),
+        staleAt: nowAbsolute() + 10000,
+        deleteAt: nowAbsolute() + 20000
       }
       const anotherBody = ['asd2', '1234']
 
@@ -93,6 +95,7 @@ function cacheStoreTests (CacheStore) {
       notEqual(readResult, undefined)
       deepStrictEqual(await readResponse(readResult), {
         ...anotherValue,
+        etag: undefined,
         body: anotherBody
       })
     })
@@ -108,9 +111,9 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
-        cachedAt: Date.now() - 10000,
-        staleAt: Date.now() - 1,
-        deleteAt: Date.now() + 20000
+        cachedAt: nowAbsolute() - 10000,
+        staleAt: nowAbsolute() - 1,
+        deleteAt: nowAbsolute() + 20000
       }
       const requestBody = ['part1', 'part2']
 
@@ -126,6 +129,7 @@ function cacheStoreTests (CacheStore) {
       const readResult = store.get(request)
       deepStrictEqual(await readResponse(readResult), {
         ...requestValue,
+        etag: undefined,
         body: requestBody
       })
     })
@@ -140,9 +144,9 @@ function cacheStoreTests (CacheStore) {
       const requestValue = {
         statusCode: 200,
         statusMessage: '',
-        cachedAt: Date.now() - 20000,
-        staleAt: Date.now() - 10000,
-        deleteAt: Date.now() - 5
+        cachedAt: nowAbsolute() - 20000,
+        staleAt: nowAbsolute() - 10000,
+        deleteAt: nowAbsolute() - 5
       }
       const requestBody = ['part1', 'part2']
 
@@ -174,9 +178,9 @@ function cacheStoreTests (CacheStore) {
         vary: {
           'some-header': 'hello world'
         },
-        cachedAt: Date.now(),
-        staleAt: Date.now() + 10000,
-        deleteAt: Date.now() + 20000
+        cachedAt: nowAbsolute(),
+        staleAt: nowAbsolute() + 10000,
+        deleteAt: nowAbsolute() + 20000
       }
       const requestBody = ['part1', 'part2']
 
@@ -197,6 +201,7 @@ function cacheStoreTests (CacheStore) {
       const { vary, ...responseValue } = requestValue
       deepStrictEqual(await readResponse(readStream), {
         ...responseValue,
+        etag: undefined,
         body: requestBody
       })
 

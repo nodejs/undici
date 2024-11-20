@@ -30,6 +30,7 @@ declare namespace CacheHandler {
     statusMessage: string
     rawHeaders: Buffer[]
     vary?: Record<string, string | string[]>
+    etag?: string
     cachedAt: number
     staleAt: number
     deleteAt: number
