@@ -255,4 +255,16 @@ describe('timers', () => {
 
     await t.completed
   })
+
+  test('nowAbsolute', (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const actualNow = Date.now()
+
+    const lowerBound = actualNow - timers.RESOLUTION_MS
+    const upperBound = actualNow + timers.RESOLUTION_MS
+    const fastNowAbsolute = timers.nowAbsolute()
+
+    t.equal(fastNowAbsolute >= lowerBound && fastNowAbsolute <= upperBound, true)
+  })
 })

@@ -377,7 +377,7 @@ Returns: `stream.Duplex`
 
 #### Parameter: PipelineOptions
 
-Extends: [`RequestOptions`](#parameter-requestoptions)
+Extends: [`RequestOptions`](/docs/docs/api/Dispatcher.md#parameter-requestoptions)
 
 * **objectMode** `boolean` (optional) - Default: `false` - Set to `true` if the `handler` will return an object stream.
 
@@ -467,7 +467,7 @@ Returns: `void | Promise<ResponseData>` - Only returns a `Promise` if no `callba
 
 #### Parameter: `RequestOptions`
 
-Extends: [`DispatchOptions`](#parameter-dispatchoptions)
+Extends: [`DispatchOptions`](/docs/docs/api/Dispatcher.md#parameter-dispatchoptions)
 
 * **opaque** `unknown` (optional) - Default: `null` - Used for passing through context to `ResponseData`.
 * **signal** `AbortSignal | events.EventEmitter | null` (optional) - Default: `null`.
@@ -654,7 +654,7 @@ return null
 
 A faster version of `Dispatcher.request`. This method expects the second argument `factory` to return a [`stream.Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream which the response will be written to. This improves performance by avoiding creating an intermediate [`stream.Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) stream when the user expects to directly pipe the response body to a [`stream.Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream.
 
-As demonstrated in [Example 1 - Basic GET stream request](#example-1---basic-get-stream-request), it is recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](#example-2---stream-to-fastify-response) for more details.
+As demonstrated in [Example 1 - Basic GET stream request](/docs/docs/api/Dispatcher.md#example-1---basic-get-stream-request), it is recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](/docs/docs/api/Dispatch.md#example-2---stream-to-fastify-response) for more details.
 
 Arguments:
 
@@ -936,7 +936,7 @@ await client.request({ path: '/', method: 'GET' })
 
 The `redirect` interceptor allows you to customize the way your dispatcher handles redirects.
 
-It accepts the same arguments as the [`RedirectHandler` constructor](./RedirectHandler.md).
+It accepts the same arguments as the [`RedirectHandler` constructor](/docs/docs/api/RedirectHandler.md).
 
 **Example - Basic Redirect Interceptor**
 
@@ -954,7 +954,7 @@ client.request({ path: "/" })
 
 The `retry` interceptor allows you to customize the way your dispatcher handles retries.
 
-It accepts the same arguments as the [`RetryHandler` constructor](./RetryHandler.md).
+It accepts the same arguments as the [`RetryHandler` constructor](/docs/docs/api/RetryHandler.md).
 
 **Example - Basic Redirect Interceptor**
 
@@ -1260,7 +1260,7 @@ The `cache` interceptor implements client-side response caching as described in
 
 **Options**
 
-- `store` - The [`CacheStore`](./CacheStore.md) to store and retrieve responses from. Default is [`MemoryCacheStore`](./CacheStore.md#memorycachestore).
+- `store` - The [`CacheStore`](/docs/docs/api/CacheStore.md) to store and retrieve responses from. Default is [`MemoryCacheStore`](/docs/docs/api/CacheStore.md#memorycachestore).
 - `methods` - The [**safe** HTTP methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1) to cache the response of.
 
 ## Instance Events
@@ -1309,13 +1309,13 @@ Emitted when dispatcher is no longer busy.
 
 * `Record<string, string | string[] | undefined> | string[] | Iterable<[string, string | string[] | undefined]> | null`
 
-Header arguments such as `options.headers` in [`Client.dispatch`](Client.md#clientdispatchoptions-handlers) can be specified in three forms:
+Header arguments such as `options.headers` in [`Client.dispatch`](/docs/docs/api/Client.md#clientdispatchoptions-handlers) can be specified in three forms:
 * As an object specified by the `Record<string, string | string[] | undefined>` (`IncomingHttpHeaders`) type.
 * As an array of strings. An array representation of a header list must have an even length, or an `InvalidArgumentError` will be thrown.
 * As an iterable that can encompass `Headers`, `Map`, or a custom iterator returning key-value pairs.
 Keys are lowercase and values are not modified.
 
-Response headers will derive a `host` from the `url` of the [Client](Client.md#class-client) instance if no `host` header was previously specified.
+Response headers will derive a `host` from the `url` of the [Client](/docs/docs/api/Client.md#class-client) instance if no `host` header was previously specified.
 
 ### Example 1 - Object
 
