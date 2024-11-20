@@ -161,7 +161,6 @@ describe('Cache Interceptor', () => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
-    tick(0)
 
     const server = createServer((req, res) => {
       res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
@@ -207,7 +206,6 @@ describe('Cache Interceptor', () => {
     strictEqual(await response.body.text(), 'asd')
 
     clock.tick(1500)
-    tick(1500)
 
     // Now we send two more requests. Both of these should reach the origin,
     //  but now with a conditional header asking if the resource has been
