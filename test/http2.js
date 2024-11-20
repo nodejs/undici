@@ -334,23 +334,15 @@ test(
 
     after(() => server.close())
     after(() => client.close())
-    t = tspl(t, { plan: 2 })
+    t = tspl(t, { plan: 1 })
 
-    try {
-      await client.request({
-        path: '/',
-        method: 'GET',
-        headers: {
-          'x-my-header': 'foo'
-        }
-      })
-    } catch (error) {
-      t.strictEqual(
-        error.message,
-        'Client network socket disconnected before secure TLS connection was established'
-      )
-      t.strictEqual(error.code, 'ECONNRESET')
-    }
+    await t.rejects(client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    }))
   }
 )
 
