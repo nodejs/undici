@@ -1252,3 +1252,39 @@ test('request post body DataView', async (t) => {
 
   await t.completed
 })
+
+test('#3736 - Aborted Response (without consuming body)', async (t) => {
+  const plan = tspl(t, { plan: 1 })
+
+  const controller = new AbortController()
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      res.writeHead(200, 'ok', {
+        'content-type': 'text/plain'
+      })
+      res.write('hello from server')
+      res.end()
+    }, 100)
+  })
+
+  server.listen(0)
+
+  await EE.once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  after(server.close.bind(server))
+  after(client.destroy.bind(client))
+
+  const { signal } = controller
+  const promise = client.request({
+    path: '/',
+    method: 'GET',
+    signal
+  })
+
+  controller.abort()
+
+  await plan.rejects(promise, { message: 'This operation was aborted' })
+
+  await plan.completed
+})
