@@ -1714,10 +1714,10 @@ test('Should handle http2 trailers', async t => {
 
   t = tspl(t, { plan: 1 })
 
-  server.listen(0)
+  server.listen(0, '127.0.0.1')
   await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${server.address().address}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
