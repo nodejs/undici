@@ -1642,3 +1642,113 @@ test('#3753 - Handle GOAWAY Gracefully', async (t) => {
 
   await t.completed
 })
+
+test('Should handle http2 stream timeout', async t => {
+  const server = createSecureServer(pem)
+  const stream = createReadStream(__filename)
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    })
+
+    setTimeout(() => {
+      stream.end('hello h2!')
+    }, 500)
+  })
+
+  t = tspl(t, { plan: 1 })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true,
+    bodyTimeout: 50
+  })
+
+  after(() => server.close())
+  after(() => client.close())
+
+  const res = await client.request({
+    path: '/',
+    method: 'PUT',
+    headers: {
+      'x-my-header': 'foo'
+    },
+    body: stream
+  })
+
+  t.rejects(res.body.text(), {
+    message: 'HTTP/2: "stream timeout after 50"'
+  })
+})
+
+test('Should handle http2 trailers', async t => {
+  const server = createSecureServer(pem)
+  const stream = createReadStream(__filename)
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    },
+    {
+      waitForTrailers: true
+    })
+
+    stream.on('wantTrailers', () => {
+      stream.sendTrailers({
+        'x-trailer': 'hello'
+      })
+    })
+
+    stream.end('hello h2!')
+  })
+
+  t = tspl(t, { plan: 1 })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true,
+    waitForTrailers: true
+  })
+
+  after(() => server.close())
+  after(() => client.close())
+
+  client.dispatch({
+    path: '/',
+    method: 'PUT',
+    body: stream
+  }, {
+    onConnect () {
+
+    },
+    onHeaders () {
+      return true
+    },
+    onData () {
+      return true
+    },
+    onComplete (trailers) {
+      t.strictEqual(trailers['x-trailer'], 'hello')
+    },
+    onError (err) {
+      t.ifError(err)
+    }
+  })
+
+  await t.completed
+})
