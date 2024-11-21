@@ -125,7 +125,7 @@ for (const factory of [
 
     t.strictEqual(statusCode, 200)
     t.ok(!headers.location)
-    t.strictEqual(body, `POST /5 :: host@${server} connection@keep-alive content-length@7 :: REQUEST`)
+    t.strictEqual(body, `GET /5 :: host@${server} connection@keep-alive`)
   })
 
   test('should follow redirection after a HTTP 302', async t => {
@@ -485,7 +485,7 @@ for (const factory of [
     const server = await startRedirectingServer()
 
     const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/301`, {
-      method: 'POST',
+      method: 'PUT',
       body: createReadableStream('REQUEST'),
       maxRedirections: 10
     })
@@ -541,7 +541,7 @@ test('should follow redirections when going cross origin', async t => {
     `http://${server3}/end`,
     `http://${server1}/end`
   ])
-  t.strictEqual(body, 'POST')
+  t.strictEqual(body, 'GET')
 
   await t.completed
 })
