@@ -881,43 +881,6 @@ test('request onInfo callback headers parsing', async (t) => {
   t.ok(true, 'pass')
 })
 
-test('request raw responseHeaders', async (t) => {
-  t = tspl(t, { plan: 4 })
-  const infos = []
-
-  const server = net.createServer((socket) => {
-    const lines = [
-      'HTTP/1.1 103 Early Hints',
-      'Link: </style.css>; rel=preload; as=style',
-      '',
-      'HTTP/1.1 200 OK',
-      'Date: Sat, 09 Oct 2010 14:28:02 GMT',
-      'Connection: close',
-      '',
-      'the body'
-    ]
-    socket.end(lines.join('\r\n'))
-  })
-  after(() => server.close())
-
-  await promisify(server.listen.bind(server))(0)
-
-  const client = new Client(`http://localhost:${server.address().port}`)
-  after(() => client.close())
-
-  const { body, headers } = await client.request({
-    path: '/',
-    method: 'GET',
-    responseHeaders: 'raw',
-    onInfo: (x) => { infos.push(x) }
-  })
-  await body.dump()
-  t.strictEqual(infos.length, 1)
-  t.deepStrictEqual(infos[0].headers, ['Link', '</style.css>; rel=preload; as=style'])
-  t.deepStrictEqual(headers, ['Date', 'Sat, 09 Oct 2010 14:28:02 GMT', 'Connection', 'close'])
-  t.ok(true, 'pass')
-})
-
 test('request formData', async (t) => {
   t = tspl(t, { plan: 1 })
 

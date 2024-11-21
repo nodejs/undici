@@ -214,19 +214,25 @@ declare namespace Dispatcher {
   }
   export type StreamFactory<TOpaque = null> = (data: StreamFactoryData<TOpaque>) => Writable
   export interface DispatchHandlers {
-    /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
+    onRequestStart?(abort: (err?: Error) => void): void;
+    onResponseStart?(resume: () => void): boolean;
+    onResponseHeaders?(headers: Record<string, string>, statusCode: number): boolean;
+    onResponseData?(chunk: Buffer): boolean;
+    onResponseEnd?(trailers: Record<string, string>): void;
+    onResponseError?(err: Error) : void;
+    /** @deprecated Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
     onConnect?(abort: (err?: Error) => void): void;
-    /** Invoked when an error has occurred. */
+    /** @deprecated Invoked when an error has occurred. */
     onError?(err: Error): void;
     /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
     onUpgrade?(statusCode: number, headers: Buffer[] | string[] | null, socket: Duplex): void;
-    /** Invoked when response is received, before headers have been read. **/
+    /** @deprecated Invoked when response is received, before headers have been read. **/
     onResponseStarted?(): void;
-    /** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
+    /** @deprecated Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
     onHeaders?(statusCode: number, headers: Buffer[], resume: () => void, statusText: string): boolean;
-    /** Invoked when response payload data is received. */
+    /** @deprecated Invoked when response payload data is received. */
     onData?(chunk: Buffer): boolean;
-    /** Invoked when response payload and trailers have been received and the request has completed. */
+    /** @deprecated Invoked when response payload and trailers have been received and the request has completed. */
     onComplete?(trailers: string[] | null): void;
     /** Invoked when a body chunk is sent to the server. May be invoked multiple times for chunked requests */
     onBodySent?(chunkSize: number, totalBytesSent: number): void;
