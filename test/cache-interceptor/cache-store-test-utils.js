@@ -31,6 +31,7 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         headers: { foo: 'bar' },
+        cacheControlDirectives: {},
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
@@ -57,6 +58,7 @@ function cacheStoreTests (CacheStore) {
       deepStrictEqual(await readResponse(readResult), {
         ...requestValue,
         etag: undefined,
+        cacheControlDirectives: {},
         body: requestBody
       })
 
@@ -71,6 +73,7 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         headers: { foo: 'bar' },
+        cacheControlDirectives: {},
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
@@ -94,6 +97,7 @@ function cacheStoreTests (CacheStore) {
       deepStrictEqual(await readResponse(readResult), {
         ...anotherValue,
         etag: undefined,
+        cacheControlDirectives: {},
         body: anotherBody
       })
     })
@@ -109,6 +113,7 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         headers: { foo: 'bar' },
+        cacheControlDirectives: {},
         cachedAt: Date.now() - 10000,
         staleAt: Date.now() - 1,
         deleteAt: Date.now() + 20000
@@ -128,6 +133,7 @@ function cacheStoreTests (CacheStore) {
       deepStrictEqual(await readResponse(readResult), {
         ...requestValue,
         etag: undefined,
+        cacheControlDirectives: {},
         body: requestBody
       })
     })
@@ -177,6 +183,7 @@ function cacheStoreTests (CacheStore) {
         vary: {
           'some-header': 'hello world'
         },
+        cacheControlDirectives: {},
         cachedAt: Date.now(),
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
@@ -201,6 +208,7 @@ function cacheStoreTests (CacheStore) {
       deepStrictEqual(await readResponse(readStream), {
         ...responseValue,
         etag: undefined,
+        cacheControlDirectives: {},
         body: requestBody
       })
 

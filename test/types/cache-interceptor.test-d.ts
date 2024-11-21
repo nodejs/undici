@@ -25,6 +25,7 @@ expectAssignable<CacheInterceptor.CacheValue>({
   statusCode: 200,
   statusMessage: 'OK',
   headers: {},
+  cacheControlDirectives: {},
   cachedAt: 0,
   staleAt: 0,
   deleteAt: 0
@@ -35,6 +36,7 @@ expectAssignable<CacheInterceptor.CacheValue>({
   statusMessage: 'OK',
   headers: {},
   vary: {},
+  cacheControlDirectives: {},
   cachedAt: 0,
   staleAt: 0,
   deleteAt: 0
