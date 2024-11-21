@@ -144,6 +144,7 @@ function cacheStoreTests (CacheStore) {
         statusCode: 200,
         statusMessage: '',
         cachedAt: Date.now() - 20000,
+        rawHeaders: [],
         staleAt: Date.now() - 10000,
         deleteAt: Date.now() - 5
       }
