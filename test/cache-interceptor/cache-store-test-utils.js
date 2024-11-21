@@ -228,6 +228,7 @@ function writeResponse (stream, body) {
   }
 
   stream.end()
+  return stream
 }
 
 /**

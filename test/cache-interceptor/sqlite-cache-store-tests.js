@@ -1,9 +1,10 @@
 'use strict'
 
 const { test, skip } = require('node:test')
-const { deepStrictEqual, notEqual } = require('node:assert')
+const { deepStrictEqual, notEqual, strictEqual } = require('node:assert')
 const { rm } = require('node:fs/promises')
 const { cacheStoreTests, writeResponse, readResponse } = require('./cache-store-test-utils.js')
+const { once } = require('node:events')
 
 let hasSqlite = false
 try {
@@ -13,6 +14,7 @@ try {
   cacheStoreTests(SqliteCacheStore)
   hasSqlite = true
 } catch (_) {
+  console.log(_)
   skip('`node:sqlite` not present')
 }
 
@@ -75,4 +77,48 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
     etag: undefined,
     body: requestBody
   })
+})
+
+test('SqliteCacheStore maxDbEntries', async (t) => {
+  if (!hasSqlite) {
+    t.skip()
+    return
+  }
+
+  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+  const sqliteLocation = 'cache-interceptor.sqlite'
+
+  const store = new SqliteCacheStore({
+    location: sqliteLocation,
+    maxDbEntries: 10
+  })
+
+  t.after(async () => {
+    await rm(sqliteLocation)
+  })
+
+  for (let i = 0; i < 20; i++) {
+    const request = {
+      origin: 'localhost',
+      path: '/' + i,
+      method: 'GET',
+      headers: {}
+    }
+
+    const requestValue = {
+      statusCode: 200,
+      statusMessage: '',
+      rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
+      cachedAt: Date.now(),
+      staleAt: Date.now() + 10000,
+      deleteAt: Date.now() + 20000
+    }
+    const requestBody = ['asd', '123']
+
+    const writable = store.createWriteStream(request, requestValue)
+    notEqual(writable, undefined)
+    await once(writeResponse(writable, requestBody), 'close')
+  }
+
+  strictEqual(store.size() < 10, true)
 })
