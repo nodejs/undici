@@ -253,14 +253,15 @@ test('Should handle 206 partial content', async t => {
   const server = createServer((req, res) => {
     if (x === 0) {
       t.ok(true, 'pass')
+      res.setHeader('content-length', '6')
       res.setHeader('etag', 'asd')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
-      res.setHeader('content-range', 'bytes 3-6/6')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
       res.end('def')
