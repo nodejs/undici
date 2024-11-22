@@ -6,7 +6,7 @@ declare namespace CacheHandler {
   export type CacheMethods = 'GET' | 'HEAD' | 'OPTIONS' | 'TRACE'
 
   export interface CacheOptions {
-    store: CacheStore
+    store?: CacheStore
 
     /**
      * The methods to cache
