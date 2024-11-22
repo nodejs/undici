@@ -167,7 +167,7 @@ for (const factory of [
     await t.completed
   })
 
-  test('should follow redirection after a HTTP 301', async t => {
+  test('should follow redirection after a HTTP 301 changing method to GET', async t => {
     t = tspl(t, { plan: 3 })
 
     const server = await startRedirectingServer()
@@ -188,7 +188,7 @@ for (const factory of [
     t.ok(!headers.location)
     t.strictEqual(
       body,
-      `POST /5 :: host@${server} connection@keep-alive content-length@7 :: REQUEST`
+      `GET /5 :: host@${server} connection@keep-alive`
     )
   })
 
@@ -540,7 +540,7 @@ for (const factory of [
       headers,
       body: bodyStream
     } = await request(t, server, undefined, `http://${server}/301`, {
-      method: 'POST',
+      method: 'PUT',
       body: createReadableStream('REQUEST'),
       maxRedirections: 10
     })
@@ -608,7 +608,7 @@ test('should follow redirections when going cross origin', async t => {
       `http://${server1}/end`
     ]
   )
-  t.strictEqual(body, 'POST')
+  t.strictEqual(body, 'GET')
 
   await t.completed
 })

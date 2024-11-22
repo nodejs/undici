@@ -46,6 +46,7 @@ declare namespace CacheHandler {
     statusCode: number
     statusMessage: string
     rawHeaders: Buffer[]
+    etag?: string
     body: null | Readable | Iterable<Buffer> | AsyncIterable<Buffer> | Buffer | Iterable<string> | AsyncIterable<string> | string
     cachedAt: number
     staleAt: number
@@ -70,20 +71,48 @@ declare namespace CacheHandler {
     maxCount?: number
 
     /**
-       * @default Infinity
-       */
+     * @default Infinity
+     */
     maxSize?: number
-
-    /**
-       * @default Infinity
-       */
-    maxEntrySize?: number
 
     errorCallback?: (err: Error) => void
   }
 
   export class MemoryCacheStore implements CacheStore {
     constructor (opts?: MemoryCacheStoreOpts)
+
+    get (key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
+
+    createWriteStream (key: CacheKey, value: CacheValue): Writable | undefined
+
+    delete (key: CacheKey): void | Promise<void>
+  }
+
+  export interface SqliteCacheStoreOpts {
+    /**
+     * Location of the database
+     * @default ':memory:'
+     */
+    location?: string
+
+    /**
+     * @default Infinity
+     */
+    maxCount?: number
+
+    /**
+     * @default Infinity
+     */
+    maxEntrySize?: number
+  }
+
+  export class SqliteCacheStore implements CacheStore {
+    constructor (opts?: SqliteCacheStoreOpts)
+
+    /**
+     * Closes the connection to the database
+     */
+    close (): void
 
     get (key: CacheKey): GetResult | Promise<GetResult | undefined> | undefined
 
