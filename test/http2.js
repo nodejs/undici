@@ -1772,8 +1772,7 @@ test('Should handle http2 trailers', async t => {
     connect: {
       rejectUnauthorized: false
     },
-    allowH2: true,
-    waitForTrailers: true
+    allowH2: true
   })
 
   after(() => server.close())
