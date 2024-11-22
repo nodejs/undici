@@ -6,7 +6,7 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 
 const { Client, interceptors } = require('../..')
-const { retry } = interceptors
+const { retry, redirect } = interceptors
 
 test('Should retry status code', async t => {
   t = tspl(t, { plan: 4 })
@@ -241,6 +241,41 @@ test('Should retry with defaults', async t => {
 
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
+})
+
+test('Should pass context from other interceptors', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/'
+  }
+
+  server.on('request', (req, res) => {
+    res.writeHead(200)
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(redirect({ maxRedirections: 1 }), retry())
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request(requestOptions)
+
+  t.equal(response.statusCode, 200)
+  t.deepStrictEqual(response.context, { history: [] })
 })
 
 test('Should handle 206 partial content', async t => {
