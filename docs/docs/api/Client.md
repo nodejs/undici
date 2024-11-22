@@ -29,8 +29,19 @@ Returns: `Client`
 * **strictContentLength** `Boolean` (optional) - Default: `true` - Whether to treat request content length mismatches as errors. If true, an error is thrown when the request content-length header doesn't match the length of the request body.
 * **autoSelectFamily**: `boolean` (optional) - Default: depends on local Node version, on Node 18.13.0 and above is `false`. Enables a family autodetection algorithm that loosely implements section 5 of [RFC 8305](https://tools.ietf.org/html/rfc8305#section-5). See [here](https://nodejs.org/api/net.html#socketconnectoptions-connectlistener) for more details. This option is ignored if not supported by the current Node version.
 * **autoSelectFamilyAttemptTimeout**: `number` - Default: depends on local Node version, on Node 18.13.0 and above is `250`. The amount of time in milliseconds to wait for a connection attempt to finish before trying the next address when using the `autoSelectFamily` option. See [here](https://nodejs.org/api/net.html#socketconnectoptions-connectlistener) for more details.
-* **allowH2**: `boolean` - Default: `false`. Enables support for H2 if the server has assigned bigger priority to it through ALPN negotiation.
+* **allowH2**: `boolean` - Default: `true`. Enables support for H2 if the server has assigned bigger priority to it through ALPN negotiation.
 * **maxConcurrentStreams**: `number` - Default: `100`. Dictates the maximum number of concurrent streams for a single H2 session. It can be overridden by a SETTINGS remote frame.
+
+> **Notes about HTTP/2**
+> - It only works under TLS connections. h2c is not supported.
+> - The server must support HTTP/2 and choose it as the protocol during the ALPN negotiation.
+>   - The server must not have a bigger priority for HTTP/1.1 than HTTP/2.
+> - Pseudo headers are automatically attached to the request. If you try to set them, they will be overwritten.
+>   - The `:path` header is automatically set to the request path.
+>   - The `:method` header is automatically set to the request method.
+>   - The `:scheme` header is automatically set to the request scheme.
+>   - The `:authority` header is automatically set to the request `host[:port]`.
+> - `PUSH` frames are yet not supported.
 
 #### Parameter: `ConnectOptions`
 
