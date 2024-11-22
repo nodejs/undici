@@ -6,7 +6,7 @@ declare namespace CacheHandler {
   export type CacheMethods = 'GET' | 'HEAD' | 'OPTIONS' | 'TRACE'
 
   export interface CacheOptions {
-    store?: CacheStore
+    store: CacheStore
 
     /**
      * The methods to cache
@@ -74,6 +74,11 @@ declare namespace CacheHandler {
      * @default Infinity
      */
     maxSize?: number
+
+    /**
+     * @default Infinity
+     */
+    maxEntrySize?: number
 
     errorCallback?: (err: Error) => void
   }
