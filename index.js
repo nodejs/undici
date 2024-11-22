@@ -42,7 +42,7 @@ module.exports.interceptors = {
   redirect: require('./lib/interceptor/redirect'),
   retry: require('./lib/interceptor/retry'),
   dump: require('./lib/interceptor/dump'),
-  dns: require('./lib/interceptor/dns'),
+  dns: require('./lib/interceptor/dns')
 }
 
 module.exports.buildConnector = buildConnector
