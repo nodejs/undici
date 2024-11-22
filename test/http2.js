@@ -10,7 +10,7 @@ const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
 const pem = require('https-pem')
 
-const { Client, Agent } = require('..')
+const { Client, Agent, FormData } = require('..')
 
 const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 
@@ -1441,4 +1441,55 @@ test('#3671 - Graceful close', async (t) => {
   await client.close()
 
   await t.completed
+})
+
+test('#3803 - sending FormData bodies works', async (t) => {
+  const assert = tspl(t, { plan: 4 })
+
+  const server = createSecureServer(pem).listen(0)
+  server.on('stream', async (stream, headers) => {
+    const contentLength = Number(headers['content-length'])
+
+    assert.ok(!Number.isNaN(contentLength))
+    assert.ok(headers['content-type']?.startsWith('multipart/form-data; boundary='))
+
+    stream.respond({ ':status': 200 })
+
+    const fd = await new Response(stream, {
+      headers: {
+        'content-type': headers['content-type']
+      }
+    }).formData()
+
+    assert.deepEqual(fd.get('a'), 'b')
+    assert.deepEqual(fd.get('c').name, 'e.fgh')
+
+    stream.end()
+  })
+
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.after(async () => {
+    server.close()
+    await client.close()
+  })
+
+  const fd = new FormData()
+  fd.set('a', 'b')
+  fd.set('c', new Blob(['d']), 'e.fgh')
+
+  await client.request({
+    path: '/',
+    method: 'POST',
+    body: fd
+  })
+
+  await assert.completed
 })
