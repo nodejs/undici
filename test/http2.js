@@ -10,7 +10,7 @@ const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
 const pem = require('https-pem')
 
-const { Client, Agent } = require('..')
+const { Client, Agent, FormData } = require('..')
 
 const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 
@@ -1449,4 +1449,130 @@ test('#3671 - Graceful close', async (t) => {
   await client.close()
 
   await t.completed
+})
+
+test('#3753 - Handle GOAWAY Gracefully', async (t) => {
+  const server = createSecureServer(pem)
+  let counter = 0
+  let session = null
+
+  server.on('session', s => {
+    session = s
+  })
+
+  server.on('stream', (stream) => {
+    counter++
+
+    // Due to the nature of the test, we need to ignore the error
+    // that is thrown when the session is destroyed and stream
+    // is in-flight
+    stream.on('error', () => {})
+    if (counter === 9 && session != null) {
+      session.goaway()
+      stream.end()
+    } else {
+      stream.respond({
+        'content-type': 'text/plain',
+        ':status': 200
+      })
+      setTimeout(() => {
+        stream.end('hello world')
+      }, 150)
+    }
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    pipelining: 2,
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 30 })
+  after(() => client.close())
+  after(() => server.close())
+
+  for (let i = 0; i < 15; i++) {
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: {
+        'x-my-header': 'foo'
+      }
+    }, (err, response) => {
+      if (err) {
+        t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
+        t.strictEqual(err.code, 'UND_ERR_SOCKET')
+      } else {
+        t.strictEqual(response.statusCode, 200)
+        ;(async function () {
+          let body
+          try {
+            body = await response.body.text()
+          } catch (err) {
+            t.strictEqual(err.code, 'UND_ERR_SOCKET')
+            return
+          }
+          t.strictEqual(body, 'hello world')
+        })()
+      }
+    })
+  }
+
+  await t.completed
+})
+
+test('#3803 - sending FormData bodies works', async (t) => {
+  const assert = tspl(t, { plan: 4 })
+
+  const server = createSecureServer(pem).listen(0)
+  server.on('stream', async (stream, headers) => {
+    const contentLength = Number(headers['content-length'])
+
+    assert.ok(!Number.isNaN(contentLength))
+    assert.ok(headers['content-type']?.startsWith('multipart/form-data; boundary='))
+
+    stream.respond({ ':status': 200 })
+
+    const fd = await new Response(stream, {
+      headers: {
+        'content-type': headers['content-type']
+      }
+    }).formData()
+
+    assert.deepEqual(fd.get('a'), 'b')
+    assert.deepEqual(fd.get('c').name, 'e.fgh')
+
+    stream.end()
+  })
+
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.after(async () => {
+    server.close()
+    await client.close()
+  })
+
+  const fd = new FormData()
+  fd.set('a', 'b')
+  fd.set('c', new Blob(['d']), 'e.fgh')
+
+  await client.request({
+    path: '/',
+    method: 'POST',
+    body: fd
+  })
+
+  await assert.completed
 })
