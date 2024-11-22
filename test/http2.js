@@ -1775,8 +1775,7 @@ test('Should handle http2 trailers', async t => {
     allowH2: true
   })
 
-  after(() => server.close())
-  after(() => client.close())
+  after(() => client.close().then(() => server.close()))
 
   client.dispatch({
     path: '/',
