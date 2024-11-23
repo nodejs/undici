@@ -505,7 +505,7 @@ for (const factory of [
     const server = await startRedirectingServer()
 
     const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/301`, {
-      method: 'POST',
+      method: 'PUT',
       body: createReadable('REQUEST'),
       maxRedirections: 10
     })
@@ -515,6 +515,23 @@ for (const factory of [
     t.strictEqual(statusCode, 301)
     t.strictEqual(headers.location, `http://${server}/301/1`)
     t.strictEqual(body.length, 0)
+    await t.completed
+  })
+
+  test('should follow redirects when using Readable request bodies for POST 301', async t => {
+    t = tspl(t, { plan: 1 })
+
+    const server = await startRedirectingServer()
+
+    const { statusCode, body: bodyStream } = await request(t, server, undefined, `http://${server}/301`, {
+      method: 'POST',
+      body: createReadable('REQUEST'),
+      maxRedirections: 10
+    })
+
+    await bodyStream.text()
+
+    t.strictEqual(statusCode, 200)
     await t.completed
   })
 }
