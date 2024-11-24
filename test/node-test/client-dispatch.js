@@ -419,40 +419,6 @@ test('connect call onUpgrade once', async (t) => {
   await p.completed
 })
 
-test('dispatch onConnect missing', async (t) => {
-  const p = tspl(t, { plan: 1 })
-
-  const server = http.createServer((req, res) => {
-    res.end('ad')
-  })
-  t.after(closeServerAsPromise(server))
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => { return client.close() })
-
-    client.dispatch({
-      path: '/',
-      method: 'GET'
-    }, {
-      onHeaders (statusCode, headers) {
-        t.ok(true, 'should not throw')
-      },
-      onData (buf) {
-        t.ok(true, 'should not throw')
-      },
-      onComplete (trailers) {
-        t.ok(true, 'should not throw')
-      },
-      onError (err) {
-        p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-      }
-    })
-  })
-
-  await p.completed
-})
-
 test('dispatch onHeaders missing', async (t) => {
   const p = tspl(t, { plan: 1 })
 
@@ -667,7 +633,7 @@ test('dispatch pool onError missing', async (t) => {
       client.dispatch({
         path: '/',
         method: 'GET',
-        upgrade: 'Websocket'
+        upgrade: 1
       }, {
       })
     } catch (err) {
