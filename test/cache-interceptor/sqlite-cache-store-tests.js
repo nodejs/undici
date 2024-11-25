@@ -154,7 +154,7 @@ test('two writes', async (t) => {
   const requestValue = {
     statusCode: 200,
     statusMessage: '',
-    headers: { foo: 'bar' }
+    headers: { foo: 'bar' },
     cachedAt: Date.now(),
     staleAt: Date.now() + 10000,
     deleteAt: Date.now() + 20000
