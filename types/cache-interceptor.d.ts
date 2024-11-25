@@ -32,7 +32,7 @@ declare namespace CacheHandler {
   export interface CacheValue {
     statusCode: number
     statusMessage: string
-    rawHeaders: Buffer[]
+    headers: Record<string, string | string[]>
     vary?: Record<string, string | string[]>
     etag?: string
     cachedAt: number
@@ -49,7 +49,7 @@ declare namespace CacheHandler {
   type GetResult = {
     statusCode: number
     statusMessage: string
-    rawHeaders: Buffer[]
+    headers: Record<string, string | string[]>
     etag?: string
     body: null | Readable | Iterable<Buffer> | AsyncIterable<Buffer> | Buffer | Iterable<string> | AsyncIterable<string> | string
     cachedAt: number
