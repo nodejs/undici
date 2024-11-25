@@ -15,7 +15,7 @@ export default Dispatcher
 /** Dispatcher is the core API used to dispatch requests. */
 declare class Dispatcher extends EventEmitter {
   /** Dispatches a request. This API is expected to evolve through semver-major versions and is less stable than the preceding higher level APIs. It is primarily intended for library developers who implement higher level APIs on top of this. */
-  dispatch (options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandlers): boolean
+  dispatch (options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandler): boolean
   /** Starts two-way communications with the requested resource. */
   connect<TOpaque = null>(options: Dispatcher.ConnectOptions<TOpaque>): Promise<Dispatcher.ConnectData<TOpaque>>
   connect<TOpaque = null>(options: Dispatcher.ConnectOptions<TOpaque>, callback: (err: Error | null, data: Dispatcher.ConnectData<TOpaque>) => void): void
@@ -213,22 +213,47 @@ declare namespace Dispatcher {
     context: object;
   }
   export type StreamFactory<TOpaque = null> = (data: StreamFactoryData<TOpaque>) => Writable
-  export interface DispatchHandlers {
+
+  export interface DispatchController {
+    get aborted () : boolean
+    get paused () : boolean
+    get reason () : Error | null
+    abort (reason: Error): void
+    pause(): void
+    resume(): void
+  }
+
+  export interface DispatchHandler {
+    onRequestStart?(controller: DispatchController, context: any): void;
+    onRequestUpgrade?(controller: DispatchController, statusCode: number, headers: IncomingHttpHeaders, socket: Duplex): void;
+    onResponseStart?(controller: DispatchController, statusCode: number, statusMessage: string | null, headers: IncomingHttpHeaders): void;
+    onResponseData?(controller: DispatchController, chunk: Buffer): void;
+    onResponseEnd?(controller: DispatchController, trailers: IncomingHttpHeaders): void;
+    onResponseError?(controller: DispatchController, error: Error): void;
+
     /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
+    /** @deprecated */
     onConnect?(abort: (err?: Error) => void): void;
     /** Invoked when an error has occurred. */
+    /** @deprecated */
     onError?(err: Error): void;
     /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
+    /** @deprecated */
     onUpgrade?(statusCode: number, headers: Buffer[] | string[] | null, socket: Duplex): void;
     /** Invoked when response is received, before headers have been read. **/
+    /** @deprecated */
     onResponseStarted?(): void;
     /** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
+    /** @deprecated */
     onHeaders?(statusCode: number, headers: Buffer[], resume: () => void, statusText: string): boolean;
     /** Invoked when response payload data is received. */
+    /** @deprecated */
     onData?(chunk: Buffer): boolean;
     /** Invoked when response payload and trailers have been received and the request has completed. */
+    /** @deprecated */
     onComplete?(trailers: string[] | null): void;
     /** Invoked when a body chunk is sent to the server. May be invoked multiple times for chunked requests */
+    /** @deprecated */
     onBodySent?(chunkSize: number, totalBytesSent: number): void;
   }
   export type PipelineHandler<TOpaque = null> = (data: PipelineHandlerData<TOpaque>) => Readable

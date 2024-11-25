@@ -24,7 +24,7 @@ expectAssignable<CacheInterceptor.CacheOptions>({ store, methods: ['GET'] })
 expectAssignable<CacheInterceptor.CacheValue>({
   statusCode: 200,
   statusMessage: 'OK',
-  rawHeaders: [],
+  headers: {},
   cachedAt: 0,
   staleAt: 0,
   deleteAt: 0
@@ -33,7 +33,7 @@ expectAssignable<CacheInterceptor.CacheValue>({
 expectAssignable<CacheInterceptor.CacheValue>({
   statusCode: 200,
   statusMessage: 'OK',
-  rawHeaders: [],
+  headers: {},
   vary: {},
   cachedAt: 0,
   staleAt: 0,
