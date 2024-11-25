@@ -54,7 +54,7 @@ declare namespace CacheHandler {
     headers: Record<string, string | string[]>
     vary?: Record<string, string | string[]>
     etag?: string
-    cacheControlDirectives: CacheControlDirectives
+    cacheControlDirectives?: CacheControlDirectives
     cachedAt: number
     staleAt: number
     deleteAt: number
