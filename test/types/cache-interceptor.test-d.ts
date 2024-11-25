@@ -25,6 +25,7 @@ expectAssignable<CacheInterceptor.CacheValue>({
   statusCode: 200,
   statusMessage: 'OK',
   headers: {},
+  cacheControlDirectives: {},
   cachedAt: 0,
   staleAt: 0,
   deleteAt: 0
@@ -34,10 +35,35 @@ expectAssignable<CacheInterceptor.CacheValue>({
   statusCode: 200,
   statusMessage: 'OK',
   headers: {},
-  vary: {},
+  vary: {
+    foo: 'bar'
+  },
+  cacheControlDirectives: {
+    'max-stale': 0,
+    'min-fresh': 0,
+    'max-age': 0,
+    's-maxage': 0,
+    'stale-while-revalidate': 0,
+    'stale-if-error': 0,
+    public: true,
+    private: true,
+    'no-store': true,
+    'no-cache': true,
+    'must-revalidate': true,
+    'proxy-revalidate': true,
+    immutable: true,
+    'no-transform': true,
+    'must-understand': true,
+    'only-if-cached': true
+  },
   cachedAt: 0,
   staleAt: 0,
   deleteAt: 0
+})
+
+expectAssignable<CacheInterceptor.CacheControlDirectives>({
+  private: [''],
+  'no-cache': ['']
 })
 
 expectNotAssignable<CacheInterceptor.CacheValue>({})

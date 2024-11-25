@@ -22,6 +22,25 @@ declare namespace CacheHandler {
     methods?: CacheMethods[]
   }
 
+  export interface CacheControlDirectives {
+    'max-stale'?: number;
+    'min-fresh'?: number;
+    'max-age'?: number;
+    's-maxage'?: number;
+    'stale-while-revalidate'?: number;
+    'stale-if-error'?: number;
+    public?: true;
+    private?: true | string[];
+    'no-store'?: true;
+    'no-cache'?: true | string[];
+    'must-revalidate'?: true;
+    'proxy-revalidate'?: true;
+    immutable?: true;
+    'no-transform'?: true;
+    'must-understand'?: true;
+    'only-if-cached'?: true;
+  }
+
   export interface CacheKey {
     origin: string
     method: string
@@ -35,6 +54,7 @@ declare namespace CacheHandler {
     headers: Record<string, string | string[]>
     vary?: Record<string, string | string[]>
     etag?: string
+    cacheControlDirectives?: CacheControlDirectives
     cachedAt: number
     staleAt: number
     deleteAt: number
@@ -52,6 +72,7 @@ declare namespace CacheHandler {
     headers: Record<string, string | string[]>
     etag?: string
     body: null | Readable | Iterable<Buffer> | AsyncIterable<Buffer> | Buffer | Iterable<string> | AsyncIterable<string> | string
+    cacheControlDirectives: CacheControlDirectives,
     cachedAt: number
     staleAt: number
     deleteAt: number
