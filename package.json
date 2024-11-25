@@ -73,6 +73,7 @@
     "test:javascript:without-intl": "npm run test:javascript:no-jest",
     "test:busboy": "borp -p \"test/busboy/*.js\"",
     "test:cache": "borp -p \"test/cache/*.js\"",
+    "test:sqlite": "NODE_OPTIONS=--experimental-sqlite borp -p \"test/cache-interceptor/*.js\"",
     "test:cache-interceptor": "borp -p \"test/cache-interceptor/*.js\"",
     "test:cookies": "borp -p \"test/cookie/*.js\"",
     "test:eventsource": "npm run build:node && borp --expose-gc -p \"test/eventsource/*.js\"",
