@@ -969,16 +969,16 @@ describe('Cache Interceptor', () => {
       })
       equal(response.statusCode, 504)
 
-      // // Send fourth request to an uncached resource w/ a , this should return a 504
-      // response = await client.request({
-      //   origin: 'localhost',
-      //   method: 'DELETE',
-      //   path: '/asd123',
-      //   headers: {
-      //     'cache-control': 'only-if-cached'
-      //   }
-      // })
-      // equal(response.statusCode, 504)
+      // Send fourth request to an uncached resource w/ a , this should return a 504
+      response = await client.request({
+        origin: 'localhost',
+        method: 'DELETE',
+        path: '/asd123',
+        headers: {
+          'cache-control': 'only-if-cached'
+        }
+      })
+      equal(response.statusCode, 504)
     })
 
     test('stale-if-error', async () => {
