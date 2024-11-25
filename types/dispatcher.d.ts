@@ -226,7 +226,7 @@ declare namespace Dispatcher {
   export interface DispatchHandler {
     onRequestStart?(controller: DispatchController, context: any): void;
     onRequestUpgrade?(controller: DispatchController, statusCode: number, headers: IncomingHttpHeaders, socket: Duplex): void;
-    onResponseStart?(controller: DispatchController, statusCode: number, statusMessage?: string, headers: IncomingHttpHeaders): void;
+    onResponseStart?(controller: DispatchController, statusCode: number, statusMessage: string | null, headers: IncomingHttpHeaders): void;
     onResponseData?(controller: DispatchController, chunk: Buffer): void;
     onResponseEnd?(controller: DispatchController, trailers: IncomingHttpHeaders): void;
     onResponseError?(controller: DispatchController, error: Error): void;

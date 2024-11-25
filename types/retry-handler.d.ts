@@ -2,7 +2,7 @@ import Dispatcher from './dispatcher'
 
 export default RetryHandler
 
-declare class RetryHandler implements Dispatcher.DispatchHandlers {
+declare class RetryHandler implements Dispatcher.DispatchHandler {
   constructor (
     options: Dispatcher.DispatchOptions & {
       retryOptions?: RetryHandler.RetryOptions;
@@ -111,6 +111,6 @@ declare namespace RetryHandler {
 
   export interface RetryHandlers {
     dispatch: Dispatcher['dispatch'];
-    handler: Dispatcher.DispatchHandlers;
+    handler: Dispatcher.DispatchHandler;
   }
 }

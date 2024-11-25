@@ -17,7 +17,7 @@ expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.re
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.cache())
 
 const client = new Undici.Client('', {})
-const handler: Dispatcher.DispatchHandlers = {}
+const handler: Dispatcher.DispatchHandler = {}
 
 const redirectHandler = new Undici.RedirectHandler(client, 10, {
   path: '/', method: 'GET'
