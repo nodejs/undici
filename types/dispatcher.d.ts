@@ -224,11 +224,12 @@ declare namespace Dispatcher {
   }
 
   export interface DispatchHandler {
-    onRequestStart?(controller: DispatchController, context: any)
-    onResponseStart?(controller: DispatchController, statusCode: number, statusMessage?: string, headers: IncomingHttpHeaders)
-    onResponseData?(controller: DispatchController, chunk: Buffer)
-    onResponseEnd?(controller: DispatchController, trailers: IncomingHttpHeaders)
-    onResponseError?(controller: DispatchController, error: Error)
+    onRequestStart?(controller: DispatchController, context: any): void;
+    onRequestUpgrade?(controller: DispatchController, statusCode: number, headers: IncomingHttpHeaders, socket: Duplex): void;
+    onResponseStart?(controller: DispatchController, statusCode: number, statusMessage?: string, headers: IncomingHttpHeaders): void;
+    onResponseData?(controller: DispatchController, chunk: Buffer): void;
+    onResponseEnd?(controller: DispatchController, trailers: IncomingHttpHeaders): void;
+    onResponseError?(controller: DispatchController, error: Error): void;
 
     /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
     /** @deprecated */
