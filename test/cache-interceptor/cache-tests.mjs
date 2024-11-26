@@ -198,14 +198,7 @@ async function runTests (environment) {
   })
 
   try {
-    await Promise.race([
-      once(worker, 'message'),
-      new Promise((_resolve, reject) => {
-        setTimeout(() => {
-          reject(new Error('worker thread startup timed out'))
-        }, 5000)
-      })
-    ])
+    await once(worker, 'message', { signal: AbortSignal.timeout(5000) })
 
     const client = new Agent().compose(interceptors.cache(environment.opts))
     setGlobalDispatcher(client)
