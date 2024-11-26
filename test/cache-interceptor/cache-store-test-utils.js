@@ -60,7 +60,7 @@ function cacheStoreTests (CacheStore) {
         etag: undefined,
         vary: undefined,
         cacheControlDirectives: {},
-        body: requestBody
+        body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
       })
 
       // Now let's write another request to the store
@@ -100,7 +100,7 @@ function cacheStoreTests (CacheStore) {
         etag: undefined,
         vary: undefined,
         cacheControlDirectives: {},
-        body: anotherBody
+        body: Buffer.concat(anotherBody.map(x => Buffer.from(x)))
       })
     })
 
@@ -137,7 +137,7 @@ function cacheStoreTests (CacheStore) {
         etag: undefined,
         vary: undefined,
         cacheControlDirectives: {},
-        body: requestBody
+        body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
       })
     })
 
@@ -213,7 +213,7 @@ function cacheStoreTests (CacheStore) {
         etag: undefined,
         vary: { 'some-header': 'hello world' },
         cacheControlDirectives: {},
-        body: requestBody
+        body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
       })
 
       const nonMatchingRequest = {
@@ -257,14 +257,14 @@ async function readResponse ({ body: src, ...response }) {
    */
   const body = []
   stream.on('data', chunk => {
-    body.push(chunk.toString())
+    body.push(Buffer.from(chunk))
   })
 
   await once(stream, 'end')
 
   return {
     ...response,
-    body
+    body: Buffer.concat(body)
   }
 }
 

@@ -71,7 +71,7 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
     etag: undefined,
     vary: undefined,
     cacheControlDirectives: undefined,
-    body: requestBody
+    body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
   })
 
   // Make sure we got the expected response from store b
@@ -82,7 +82,7 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
     etag: undefined,
     vary: undefined,
     cacheControlDirectives: undefined,
-    body: requestBody
+    body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
   })
 })
 
