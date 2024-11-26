@@ -5,7 +5,7 @@ import { parseArgs, styleText } from 'node:util'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { once } from 'node:events'
-import { Agent, interceptors, setGlobalDispatcher } from '../../index.js'
+import { Agent, interceptors, setGlobalDispatcher, fetch } from '../../index.js'
 import MemoryCacheStore from '../../lib/cache/memory-cache-store.js'
 import {
   getResults,
@@ -51,7 +51,7 @@ const CLI_OPTIONS = parseArgs({
  */
 const CACHE_TYPES = [
   {
-    opts: { type: 'public', methods: ['GET', 'HEAD'] },
+    opts: { type: 'shared', methods: ['GET', 'HEAD'] },
     ignoredTests: [
       'freshness-max-age-s-maxage-private',
       'freshness-max-age-s-maxage-private-multiple'
