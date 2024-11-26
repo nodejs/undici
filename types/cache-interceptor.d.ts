@@ -35,9 +35,9 @@ declare namespace CacheHandler {
 
     /**
      * TODO docs
-     * @default 'public'
+     * @default 'shared'
      */
-    type?: 'public' | 'private'
+    type?: 'shared' | 'private'
   }
 
   export interface CacheControlDirectives {
