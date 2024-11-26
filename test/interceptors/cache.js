@@ -154,6 +154,73 @@ describe('Cache Interceptor', () => {
     strictEqual(await response.body.text(), 'asd')
   })
 
+  test('vary headers are present in revalidation request', async () => {
+    const clock = FakeTimers.install({
+      shouldClearNativeTimers: true
+    })
+
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer((req, res) => {
+      res.setHeader('date', 0)
+      res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
+
+      if (requestsToOrigin === 0) {
+        requestsToOrigin++
+        res.setHeader('vary', 'a, b')
+        res.setHeader('etag', '"asd"')
+        res.end('asd')
+      } else {
+        revalidationRequests++
+        notEqual(req.headers['if-none-match'], undefined)
+        notEqual(req.headers['a'], undefined)
+        notEqual(req.headers['b'], undefined)
+
+        res.statusCode = 304
+        res.end()
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+      clock.uninstall()
+    })
+
+    await once(server, 'listening')
+
+    strictEqual(requestsToOrigin, 0)
+    strictEqual(revalidationRequests, 0)
+
+    const request = {
+      origin: 'localhost',
+      path: '/',
+      method: 'GET',
+      headers: {
+        a: 'asd',
+        b: 'asd'
+      }
+    }
+
+    {
+      const response = await client.request(request)
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(await response.body.text(), 'asd')
+    }
+
+    clock.tick(1500)
+
+    {
+      const response = await client.request(request)
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+      strictEqual(await response.body.text(), 'asd')
+    }
+  })
+
   test('revalidates request when needed', async () => {
     let requestsToOrigin = 0
 
@@ -162,6 +229,7 @@ describe('Cache Interceptor', () => {
     })
 
     const server = createServer((req, res) => {
+      res.setHeader('date', 0)
       res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
 
       requestsToOrigin++
@@ -228,6 +296,7 @@ describe('Cache Interceptor', () => {
     })
 
     const server = createServer((req, res) => {
+      res.setHeader('date', 0)
       res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
       requestsToOrigin++
 
@@ -373,8 +442,10 @@ describe('Cache Interceptor', () => {
   })
 
   test('necessary headers are stripped', async () => {
+    let requestsToOrigin = 0
     const server = createServer((req, res) => {
-      res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10, no-cache=should-be-stripped')
+      requestsToOrigin++
+      res.setHeader('cache-control', 'public, s-maxage=10, no-cache=should-be-stripped')
       res.setHeader('should-be-stripped', 'hello world')
       res.setHeader('should-not-be-stripped', 'dsa321')
 
@@ -398,8 +469,77 @@ describe('Cache Interceptor', () => {
     }
 
     // Send initial request. This should reach the origin
-    const response = await client.request(request)
-    strictEqual(await response.body.text(), 'asd')
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await response.body.text(), 'asd')
+      equal(response.headers['should-be-stripped'], 'hello world')
+      equal(response.headers['should-not-be-stripped'], 'dsa321')
+    }
+
+    // Send second request, this should hit the cache
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await response.body.text(), 'asd')
+      equal(response.headers['should-be-stripped'], undefined)
+      equal(response.headers['should-not-be-stripped'], 'dsa321')
+    }
+  })
+
+  test('necessary headers are stripped (quotes)', async () => {
+    let requestsToOrigin = 0
+    const server = createServer((_, res) => {
+      requestsToOrigin++
+      res.setHeader('connection', 'a, b')
+      res.setHeader('a', '123')
+      res.setHeader('b', '123')
+      res.setHeader('cache-control', 's-maxage=3600, no-cache="should-be-stripped, should-be-stripped2"')
+      res.setHeader('should-be-stripped', 'hello world')
+      res.setHeader('should-be-stripped2', 'hello world')
+      res.setHeader('should-not-be-stripped', 'dsa321')
+
+      res.end('asd')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await response.body.text(), 'asd')
+      equal(response.headers['a'], '123')
+      equal(response.headers['b'], '123')
+      equal(response.headers['should-be-stripped'], 'hello world')
+      equal(response.headers['should-be-stripped2'], 'hello world')
+      equal(response.headers['should-not-be-stripped'], 'dsa321')
+    }
+
+    // Send second request, this should hit the cache
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await response.body.text(), 'asd')
+      equal(response.headers['a'], undefined)
+      equal(response.headers['b'], undefined)
+      equal(response.headers['should-be-stripped'], undefined)
+      equal(response.headers['should-be-stripped2'], undefined)
+    }
   })
 
   test('requests w/ unsafe methods never get cached', async () => {
@@ -441,6 +581,8 @@ describe('Cache Interceptor', () => {
       let requestsToOrigin = 0
       let revalidationRequests = 0
       const server = createServer((req, res) => {
+        res.setHeader('date', 0)
+
         if (req.headers['if-none-match']) {
           revalidationRequests++
           if (req.headers['if-none-match'] !== '"asd"') {
@@ -536,6 +678,8 @@ describe('Cache Interceptor', () => {
 
     let requestsToOrigin = 0
     const server = createServer((_, res) => {
+      res.setHeader('date', 0)
+
       requestsToOrigin++
       if (requestsToOrigin === 1) {
         // First request
@@ -612,6 +756,45 @@ describe('Cache Interceptor', () => {
       })
       equal(requestsToOrigin, 3)
       equal(response.statusCode, 500)
+    }
+  })
+
+  test('cacheByDefault', async () => {
+    let requestsToOrigin = 0
+    const server = createServer((_, res) => {
+      requestsToOrigin++
+      res.end('asd')
+    }).listen(0)
+
+    after(() => server.close())
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({
+        cacheByDefault: 3600
+      }))
+
+    equal(requestsToOrigin, 0)
+
+    // Should hit the origin
+    {
+      const res = await client.request({
+        origin: 'localhost',
+        path: '/',
+        method: 'GET'
+      })
+      equal(requestsToOrigin, 1)
+      equal(await res.body.text(), 'asd')
+    }
+
+    // Should hit the cache
+    {
+      const res = await client.request({
+        origin: 'localhost',
+        path: '/',
+        method: 'GET'
+      })
+      equal(requestsToOrigin, 1)
+      equal(await res.body.text(), 'asd')
     }
   })
 
@@ -696,6 +879,7 @@ describe('Cache Interceptor', () => {
       })
 
       const server = createServer((req, res) => {
+        res.setHeader('date', 0)
         res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
 
         if (requestsToOrigin === 1) {
@@ -768,6 +952,7 @@ describe('Cache Interceptor', () => {
 
       const server = createServer((req, res) => {
         requestsToOrigin++
+        res.setHeader('date', 0)
         res.setHeader('cache-control', 'public, s-maxage=10')
         res.end('asd')
       }).listen(0)
@@ -988,6 +1173,8 @@ describe('Cache Interceptor', () => {
 
       let requestsToOrigin = 0
       const server = createServer((_, res) => {
+        res.setHeader('date', 0)
+
         requestsToOrigin++
         if (requestsToOrigin === 1) {
           // First request, send stale-while-revalidate to keep the value in the cache

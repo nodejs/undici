@@ -1,0 +1,23 @@
+
+.adornment {
+  padding-left: 1em;
+}
+
+#resultsFrame {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  height: 100vh;
+  width: 50vw;
+  z-index: 500;
+  background-color: white;
+  border: 0px;
+  border-left: 2px solid #666;
+  overflow-y: auto;
+}
+
+.half {
+  position: absolute;
+  width: 48vw;
+  left: 0;
+}

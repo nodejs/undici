@@ -1,0 +1,201 @@
+html {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+body {
+  margin: 2em 4em 10em 4em;
+}
+
+h1 {
+  line-height: 1.2em;
+}
+
+table {
+  border-spacing: 0;
+}
+
+th {
+  font-weight: normal;
+  padding: 0.2em 0.4em;
+}
+
+ul {
+  list-style-type: none;
+}
+
+ul#ToC {
+  column-count: 4;
+}
+
+th.category a {
+  color: white;
+}
+
+.category {
+  background-color: black;
+  color: white;
+  font-weight: bold;
+}
+
+.name {
+  margin: 0;
+  text-align: right;
+}
+
+.clickhint {
+  cursor: pointer;
+}
+
+.uuid {
+  color: #999;
+  margin-left: 0.5em;
+}
+
+.hint {
+  color: #999;
+  font-style: normal;
+}
+
+.shade {
+  background-color: #fafafa;
+}
+
+.description {
+  background-color: #eee;
+  padding: 3px 6px;
+}
+
+.warning {
+  padding: 0.5em;
+  margin: 0.5em auto;
+  background-color: #fde2e3;
+  border-left: solid 4px #f47477;
+}
+
+.key-item {
+  white-space: nowrap;
+}
+
+#download {
+  display: none;
+}
+
+#key {
+  background-color: white;
+  margin-bottom: 0;
+  padding: 10px;
+  border: 1px solid #999;
+}
+
+input.select {
+  margin-left: 6px;
+}
+
+code {
+  white-space: nowrap;
+}
+
+pre code {
+  white-space: pre;
+}
+
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('/asset/fonts/fontawesome-webfont.eot?v=4.7.0');
+  src: url('/asset/fonts/fontawesome-webfont.eot?#iefix&v=4.7.0') format('embedded-opentype'), url('/asset/fonts/fontawesome-webfont.woff2?v=4.7.0') format('woff2'), url('/asset/fonts/fontawesome-webfont.woff?v=4.7.0') format('woff'), url('/asset/fonts/fontawesome-webfont.ttf?v=4.7.0') format('truetype'), url('/asset/fonts/fontawesome-webfont.svg?v=4.7.0#fontawesomeregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+.fa {
+  display: inline-block;
+  font: normal normal normal 18px/22px FontAwesome;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0 10px;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 50vw;
+  height: 70vh;
+  transform: translate(-50%, -50%);
+  background-color: #fafafa;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  align-items: center;
+  justify-content: center;
+  padding: 2em;
+  border: 2px solid #aaa;
+  border-radius: 0.5em;
+  overflow-y: auto;
+}
+.modal-open {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.modal-exit {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  outline: none;
+  appearance: none;
+  color: red;
+  background: none;
+  border: 0px;
+  font-weight: bold;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+.modal ul {
+  list-style-type: disc;
+}
+
+.modal pre {
+  background-color: #ddd;
+  padding: 0.5em 1em;
+  width: auto;
+}
+
+.noFrame {
+  display: none;
+}
+
+
+@page {
+  size: A4;
+  margin: 11mm 17mm 17mm 17mm;
+}
+
+@media screen {
+  #key {
+    position: fixed;
+    bottom: 0;
+    width: 80vw;
+    left: 10vw;
+    border-bottom: none;
+  }
+}
+
+@media print {
+  html, body {
+    width: 210mm;
+    height: 297mm;
+  }
+
+  #key {
+    width: 100%;
+  }
+
+  .noPrint * {
+    display: none;
+  }
+}

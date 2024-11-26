@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>HTTP Caching Tests</title>
+    <link rel="stylesheet" href="/asset/style.css" type="text/css">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="HTTP Caching Tests">
+    <meta property="og:description" content="Finding out how browser and proxy caches behave (and misbehave)">
+    <meta property="og:url" content="https://cache-tests.fyi/">
+    <meta property="og:site_name" content="HTTP Caching Tests">
+    <meta property="og:image" content="https://cache-tests.fyi/asset/badge.png">
+    <link rel="preload" as="fetch" crossorigin href="/test-engine/lib/tpl/explain-test.liquid">
+    <link rel="preload" as="fetch" crossorigin href="/test-engine/lib/tpl/checks.liquid">
+    <link rel="preload" as="fetch" crossorigin href="/test-engine/lib/tpl/header-list.liquid">
+    <link rel="preload" as="fetch" crossorigin href="/test-engine/lib/tpl/header-magic.liquid">
+    <script type="module">
+      import index from './results/index.mjs'
+      import * as summary from './test-engine/lib/summary.mjs'
+      import * as display from './test-engine/lib/display.mjs'
+      import baseTests from './tests/index.mjs'
+
+      const loc = new URL(window.location)
+      const suiteIds = loc.searchParams.getAll('suite')
+      const testIds = loc.searchParams.getAll('id')
+      const isFrame = loc.searchParams.get('frame') && true || false
+      const isDefault = testIds.length === 0 && suiteIds.length === 0
+
+      if (! isFrame) {
+        document.querySelectorAll('.noFrame').forEach(e => {e.style.display = 'block'})
+      }
+
+      const ToC = document.getElementById('ToC')
+      const target = document.getElementById('target')
+      const key = document.getElementById('key')
+
+      display.showKey(key)
+      summary.loadResults(index)
+      .then(results => {
+        if (isDefault) {
+          summary.showToC(ToC, baseTests)
+        }
+        summary.showResults(target, baseTests, results, testIds, suiteIds)
+      })
+      .then(() => {
+        if (window.location.hash !== "") {
+          const fragId = window.location.hash.substring(1)
+          document.getElementById(fragId).scrollIntoView()
+        }
+        if (! isFrame) {
+          summary.selectClickListen()
+        }
+      })
+    </script>
+  </head>
+  <body>
+    <h1 class='noFrame'>HTTP Caching Tests</h1>
+
+    <p class="warning noFrame">These tests are a work in progress. The reported results may be
+    faulty, and do not necessarily reflect the true capabilities of each cache. They should not be
+    used evaluate or compare feature support.
+    <strong>This is an open source project</strong>; to make contributions, add your
+    implementation's results, file issues or learn more, see <a
+    href="https://github.com/http-tests/cache-tests">the repository</a>.</p>
+
+    <p class='noFrame noPrint'><span>See also </span><a href="/spec/rfc9111.html">test results interspersed with the current specification text</a>.</p>
+
+    <p id="key">
+      <span class="key-item"><span class="fa" data-kind="pass"></span>passed &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="optional_fail"></span>optional test failed &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="fail"></span>conformance test failed &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="yes"></span> / <span class="fa" data-kind="no"></span>behaviour check results &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="harness_fail"></span>test harness failure &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="setup_fail"></span>test failed during setup &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="retry"></span>cache retries a request &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="dependency_fail"></span>test dependency failed &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="untested"></span>not tested</span>
+    </p>
+
+    <ul id="ToC" class="noFrame noPrint">
+    </ul>
+
+    <form method="GET" id="selectForm">
+
+      <p class="noFrame noPrint"><i>
+        Click on test names for details of what is sent and checked. Hover over failed tests for the reason why they failed.
+      </i></p>
+
+      <p class="noFrame noPrint">
+        <a href="#" id="select">Select test results to display</a>
+      </p>
+
+      <table id="target">
+      </table>
+    </form>
+  </body>
+</html>

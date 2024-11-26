@@ -58,6 +58,7 @@ function cacheStoreTests (CacheStore) {
       deepStrictEqual(await readResponse(readResult), {
         ...requestValue,
         etag: undefined,
+        vary: undefined,
         cacheControlDirectives: {},
         body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
       })
@@ -97,6 +98,7 @@ function cacheStoreTests (CacheStore) {
       deepStrictEqual(await readResponse(readResult), {
         ...anotherValue,
         etag: undefined,
+        vary: undefined,
         cacheControlDirectives: {},
         body: Buffer.concat(anotherBody.map(x => Buffer.from(x)))
       })
@@ -133,6 +135,7 @@ function cacheStoreTests (CacheStore) {
       deepStrictEqual(await readResponse(readResult), {
         ...requestValue,
         etag: undefined,
+        vary: undefined,
         cacheControlDirectives: {},
         body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
       })
@@ -208,6 +211,7 @@ function cacheStoreTests (CacheStore) {
       deepStrictEqual(await readResponse(readStream), {
         ...responseValue,
         etag: undefined,
+        vary: { 'some-header': 'hello world' },
         cacheControlDirectives: {},
         body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
       })
