@@ -1,4 +1,3 @@
-// @ts-check
 'use strict'
 
 import { Worker } from 'node:worker_threads'
