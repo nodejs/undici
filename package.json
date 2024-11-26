@@ -129,7 +129,7 @@
     "ws": "^8.11.0"
   },
   "engines": {
-    "node": ">=18.17"
+    "node": ">=20.18.1"
   },
   "tsd": {
     "directory": "test/types",
