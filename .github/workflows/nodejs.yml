@@ -28,7 +28,7 @@ jobs:
           persist-credentials: false
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@5a2ce3f5b92ee19cbb1541a4984c76d921601d7c # v4.3.4
+        uses: actions/dependency-review-action@4081bf99e2866ebe428fc0477b69eb4fcda7220a # v4.4.0
 
   lint:
     name: Lint
@@ -37,13 +37,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
-          persist-credentials: false          
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: lts/*
-      
+
       - name: Install dependencies
         run: npm install
 
@@ -56,9 +56,7 @@ jobs:
       max-parallel: 0
       matrix:
         node-version:
-          - 18
           - 20
-          - 21
           - 22
           - 23
         runs-on:
@@ -170,18 +168,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
-          persist-credentials: false          
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: lts/*
-      
+
       - name: Install dependencies
         run: npm install
 
       - name: Run typings tests
         run: npm run test:typescript
+
+  test-sqlite:
+    name: Test with SQLite enabled
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run typings tests
+        run: npm run test:sqlite
 
   automerge:
     if: >
@@ -199,6 +218,6 @@ jobs:
       pull-requests: write
     steps:
       - name: Merge Dependabot PR
-        uses: fastify/github-action-merge-dependabot@3892334d1c649bb8119af3d22a3f3766bd5e593f # v3.10.2
+        uses: fastify/github-action-merge-dependabot@c3bde0759d4f24db16f7b250b2122bc2df57e817 # v3.11.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

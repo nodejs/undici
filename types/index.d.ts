@@ -40,7 +40,6 @@ declare namespace Undici {
   const RedirectHandler: typeof import ('./handlers').RedirectHandler
   const DecoratorHandler: typeof import ('./handlers').DecoratorHandler
   const RetryHandler: typeof import ('./retry-handler').default
-  const createRedirectInterceptor: typeof import ('./interceptors').default.createRedirectInterceptor
   const BalancedPool: typeof import('./balanced-pool').default
   const Client: typeof import('./client').default
   const buildConnector: typeof import('./connector').default

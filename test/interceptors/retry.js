@@ -6,7 +6,7 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 
 const { Client, interceptors } = require('../..')
-const { retry } = interceptors
+const { retry, redirect } = interceptors
 
 test('Should retry status code', async t => {
   t = tspl(t, { plan: 4 })
@@ -243,6 +243,41 @@ test('Should retry with defaults', async t => {
   t.equal(await response.body.text(), 'hello world!')
 })
 
+test('Should pass context from other interceptors', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/'
+  }
+
+  server.on('request', (req, res) => {
+    res.writeHead(200)
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(redirect({ maxRedirections: 1 }), retry())
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request(requestOptions)
+
+  t.equal(response.statusCode, 200)
+  t.deepStrictEqual(response.context, { history: [] })
+})
+
 test('Should handle 206 partial content', async t => {
   t = tspl(t, { plan: 5 })
 
@@ -253,14 +288,15 @@ test('Should handle 206 partial content', async t => {
   const server = createServer((req, res) => {
     if (x === 0) {
       t.ok(true, 'pass')
+      res.setHeader('content-length', '6')
       res.setHeader('etag', 'asd')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
-      res.setHeader('content-range', 'bytes 3-6/6')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
       res.end('def')

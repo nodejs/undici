@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC7838' target='http://www.rfc-editor.org/info/rfc7838'>
+<front>
+<title>HTTP Alternative Services</title>
+<author initials='M.' surname='Nottingham' fullname='M. Nottingham'><organization /></author>
+<author initials='P.' surname='McManus' fullname='P. McManus'><organization /></author>
+<author initials='J.' surname='Reschke' fullname='J. Reschke'><organization /></author>
+<date year='2016' month='April' />
+<abstract><t>This document specifies &quot;Alternative Services&quot; for HTTP, which allow an origin's resources to be authoritatively available at a separate network location, possibly accessed with a different protocol configuration.</t></abstract>
+</front>
+<seriesInfo name='RFC' value='7838'/>
+<seriesInfo name='DOI' value='10.17487/RFC7838'/>
+</reference>

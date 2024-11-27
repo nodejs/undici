@@ -1,0 +1,18 @@
+name: Lint
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '14'
+    - run: npm install -g standard
+    - run: npm install ajv
+    - run: npm run lint
+    - run: npm run validate

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC5246' target='http://www.rfc-editor.org/info/rfc5246'>
+<front>
+<title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+<author initials='T.' surname='Dierks' fullname='T. Dierks'><organization /></author>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'><organization /></author>
+<date year='2008' month='August' />
+<abstract><t>This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  [STANDARDS-TRACK]</t></abstract>
+</front>
+<seriesInfo name='RFC' value='5246'/>
+<seriesInfo name='DOI' value='10.17487/RFC5246'/>
+</reference>

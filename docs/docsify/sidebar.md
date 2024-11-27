@@ -20,13 +20,16 @@
   * [MockErrors](/docs/api/MockErrors.md "Undici API - MockErrors")
   * [API Lifecycle](/docs/api/api-lifecycle.md "Undici API - Lifecycle")
   * [Diagnostics Channel Support](/docs/api/DiagnosticsChannel.md "Diagnostics Channel Support")
-  * [Debug](/docs/api/Debug.md.md "Undici API - Debugging Undici")
+  * [Debug](/docs/api/Debug.md "Undici API - Debugging Undici")
   * [WebSocket](/docs/api/WebSocket.md "Undici API - WebSocket")
   * [MIME Type Parsing](/docs/api/ContentType.md "Undici API - MIME Type Parsing")
   * [CacheStorage](/docs/api/CacheStorage.md "Undici API - CacheStorage")
   * [Util](/docs/api/Util.md "Undici API - Util")
   * [RedirectHandler](/docs/api/RedirectHandler.md "Undici API - RedirectHandler")
   * [RetryHandler](/docs/api/RetryHandler.md "Undici API - RetryHandler")
+  * [DiagnosticsChannel](/docs/api/DiagnosticsChannel.md "Undici API - DiagnosticsChannel")
+  * [EnvHttpProxyAgent](/docs/api/EnvHttpProxyAgent.md "Undici API - EnvHttpProxyAgent")
+  * [PoolStats](/docs/api/PoolStats.md "Undici API - PoolStats")
 * Examples
   * [Undici Examples](/examples/ "Undici Examples")
 * Best Practices

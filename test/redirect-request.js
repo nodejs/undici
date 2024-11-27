@@ -13,6 +13,7 @@ const {
   startRedirectingWithQueryParams
 } = require('./utils/redirecting-servers')
 const { createReadable, createReadableStream } = require('./utils/stream')
+const { Headers: UndiciHeaders } = require('..')
 const redirect = undici.interceptors.redirect
 
 for (const factory of [
@@ -124,7 +125,7 @@ for (const factory of [
 
     t.strictEqual(statusCode, 200)
     t.ok(!headers.location)
-    t.strictEqual(body, `POST /5 :: host@${server} connection@keep-alive content-length@7 :: REQUEST`)
+    t.strictEqual(body, `GET /5 :: host@${server} connection@keep-alive`)
   })
 
   test('should follow redirection after a HTTP 302', async t => {
@@ -215,6 +216,90 @@ for (const factory of [
         Host: 'localhost',
         'X-Bar': '4'
       },
+      maxRedirections: 10
+    })
+
+    const body = await bodyStream.text()
+
+    t.strictEqual(statusCode, 200)
+    t.ok(!headers.location)
+    t.strictEqual(body, `GET /5 :: host@${server} connection@keep-alive x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`)
+
+    await t.completed
+  })
+
+  test('should remove Host and request body related headers when following HTTP 303 (Global Headers)', async t => {
+    t = tspl(t, { plan: 3 })
+
+    const server = await startRedirectingServer()
+
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/303`, {
+      method: 'PATCH',
+      headers: new Headers({
+        'Content-Encoding': 'gzip',
+        'X-Foo1': '1',
+        'X-Foo2': '2',
+        'Content-Type': 'application/json',
+        'X-Foo3': '3',
+        Host: 'localhost',
+        'X-Bar': '4'
+      }),
+      maxRedirections: 10
+    })
+
+    const body = await bodyStream.text()
+
+    t.strictEqual(statusCode, 200)
+    t.ok(!headers.location)
+    t.strictEqual(body, `GET /5 :: host@${server} connection@keep-alive x-bar@4 x-foo1@1 x-foo2@2 x-foo3@3`)
+
+    await t.completed
+  })
+
+  test('should remove Host and request body related headers when following HTTP 303 (Undici Headers)', async t => {
+    t = tspl(t, { plan: 3 })
+
+    const server = await startRedirectingServer()
+
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/303`, {
+      method: 'PATCH',
+      headers: new UndiciHeaders({
+        'Content-Encoding': 'gzip',
+        'X-Foo1': '1',
+        'X-Foo2': '2',
+        'Content-Type': 'application/json',
+        'X-Foo3': '3',
+        Host: 'localhost',
+        'X-Bar': '4'
+      }),
+      maxRedirections: 10
+    })
+
+    const body = await bodyStream.text()
+
+    t.strictEqual(statusCode, 200)
+    t.ok(!headers.location)
+    t.strictEqual(body, `GET /5 :: host@${server} connection@keep-alive x-bar@4 x-foo1@1 x-foo2@2 x-foo3@3`)
+
+    await t.completed
+  })
+
+  test('should remove Host and request body related headers when following HTTP 303 (Maps)', async t => {
+    t = tspl(t, { plan: 3 })
+
+    const server = await startRedirectingServer()
+
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/303`, {
+      method: 'PATCH',
+      headers: new Map([
+        ['Content-Encoding', 'gzip'],
+        ['X-Foo1', '1'],
+        ['X-Foo2', '2'],
+        ['Content-Type', 'application/json'],
+        ['X-Foo3', '3'],
+        ['Host', 'localhost'],
+        ['X-Bar', '4']
+      ]),
       maxRedirections: 10
     })
 
@@ -400,7 +485,7 @@ for (const factory of [
     const server = await startRedirectingServer()
 
     const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/301`, {
-      method: 'POST',
+      method: 'PUT',
       body: createReadableStream('REQUEST'),
       maxRedirections: 10
     })
@@ -420,7 +505,7 @@ for (const factory of [
     const server = await startRedirectingServer()
 
     const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/301`, {
-      method: 'POST',
+      method: 'PUT',
       body: createReadable('REQUEST'),
       maxRedirections: 10
     })
@@ -430,6 +515,23 @@ for (const factory of [
     t.strictEqual(statusCode, 301)
     t.strictEqual(headers.location, `http://${server}/301/1`)
     t.strictEqual(body.length, 0)
+    await t.completed
+  })
+
+  test('should follow redirects when using Readable request bodies for POST 301', async t => {
+    t = tspl(t, { plan: 1 })
+
+    const server = await startRedirectingServer()
+
+    const { statusCode, body: bodyStream } = await request(t, server, undefined, `http://${server}/301`, {
+      method: 'POST',
+      body: createReadable('REQUEST'),
+      maxRedirections: 10
+    })
+
+    await bodyStream.text()
+
+    t.strictEqual(statusCode, 200)
     await t.completed
   })
 }
@@ -456,7 +558,7 @@ test('should follow redirections when going cross origin', async t => {
     `http://${server3}/end`,
     `http://${server1}/end`
   ])
-  t.strictEqual(body, 'POST')
+  t.strictEqual(body, 'GET')
 
   await t.completed
 })

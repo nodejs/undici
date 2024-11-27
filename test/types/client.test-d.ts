@@ -73,7 +73,7 @@ expectAssignable<Client>(new Client('', {
       expectAssignable<Dispatcher['dispatch']>(dispatcher)
       return (opts, handlers) => {
         expectAssignable<Dispatcher.DispatchOptions>(opts)
-        expectAssignable<Dispatcher.DispatchHandlers>(handlers)
+        expectAssignable<Dispatcher.DispatchHandler>(handlers)
         return dispatcher(opts, handlers)
       }
     }]

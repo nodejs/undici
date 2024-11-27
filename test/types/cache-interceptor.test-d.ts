@@ -1,19 +1,17 @@
+import { Writable } from 'node:stream'
 import { expectAssignable, expectNotAssignable } from 'tsd'
 import CacheInterceptor from '../../types/cache-interceptor'
-import Dispatcher from '../../types/dispatcher'
 
 const store: CacheInterceptor.CacheStore = {
-  isFull: false,
-
-  createReadStream (_: Dispatcher.RequestOptions): CacheInterceptor.CacheStoreReadable | undefined {
+  get (_: CacheInterceptor.CacheKey): CacheInterceptor.GetResult | Promise<CacheInterceptor.GetResult | undefined> | undefined {
     throw new Error('stub')
   },
 
-  createWriteStream (_: Dispatcher.RequestOptions, _2: CacheInterceptor.CacheStoreValue): CacheInterceptor.CacheStoreWriteable | undefined {
+  createWriteStream (_: CacheInterceptor.CacheKey, _2: CacheInterceptor.CacheValue): Writable | undefined {
     throw new Error('stub')
   },
 
-  deleteByOrigin (_: string): void | Promise<void> {
+  delete (_: CacheInterceptor.CacheKey): void | Promise<void> {
     throw new Error('stub')
   }
 }
@@ -23,33 +21,56 @@ expectAssignable<CacheInterceptor.CacheOptions>({ store })
 expectAssignable<CacheInterceptor.CacheOptions>({ methods: [] })
 expectAssignable<CacheInterceptor.CacheOptions>({ store, methods: ['GET'] })
 
-expectAssignable<CacheInterceptor.CacheStoreValue>({
+expectAssignable<CacheInterceptor.CacheValue>({
   statusCode: 200,
   statusMessage: 'OK',
-  rawHeaders: [],
+  headers: {},
+  cacheControlDirectives: {},
   cachedAt: 0,
   staleAt: 0,
   deleteAt: 0
 })
 
-expectAssignable<CacheInterceptor.CacheStoreValue>({
+expectAssignable<CacheInterceptor.CacheValue>({
   statusCode: 200,
   statusMessage: 'OK',
-  rawHeaders: [],
-  rawTrailers: [],
-  vary: {},
+  headers: {},
+  vary: {
+    foo: 'bar'
+  },
+  cacheControlDirectives: {
+    'max-stale': 0,
+    'min-fresh': 0,
+    'max-age': 0,
+    's-maxage': 0,
+    'stale-while-revalidate': 0,
+    'stale-if-error': 0,
+    public: true,
+    private: true,
+    'no-store': true,
+    'no-cache': true,
+    'must-revalidate': true,
+    'proxy-revalidate': true,
+    immutable: true,
+    'no-transform': true,
+    'must-understand': true,
+    'only-if-cached': true
+  },
   cachedAt: 0,
   staleAt: 0,
   deleteAt: 0
 })
 
-expectNotAssignable<CacheInterceptor.CacheStoreValue>({})
-expectNotAssignable<CacheInterceptor.CacheStoreValue>({
+expectAssignable<CacheInterceptor.CacheControlDirectives>({
+  private: [''],
+  'no-cache': ['']
+})
+
+expectNotAssignable<CacheInterceptor.CacheValue>({})
+expectNotAssignable<CacheInterceptor.CacheValue>({
   statusCode: '123',
   statusMessage: 123,
   rawHeaders: '',
-  rawTrailers: '',
-  body: 0,
   vary: '',
   size: '',
   cachedAt: '',
@@ -59,5 +80,11 @@ expectNotAssignable<CacheInterceptor.CacheStoreValue>({
 
 expectAssignable<CacheInterceptor.MemoryCacheStoreOpts>({})
 expectAssignable<CacheInterceptor.MemoryCacheStoreOpts>({
+  maxSize: 0
+})
+
+expectAssignable<CacheInterceptor.SqliteCacheStoreOpts>({})
+expectAssignable<CacheInterceptor.SqliteCacheStoreOpts>({
+  location: '',
   maxEntrySize: 0
 })

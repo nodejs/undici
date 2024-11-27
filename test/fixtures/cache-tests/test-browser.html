@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Browser HTTP Caching Tests</title>
+    <link rel="stylesheet" href="/asset/style.css" type="text/css">
+    <script type="module">
+      import { runTests, getResults } from './test-engine/client/runner.mjs'
+      import { testUUIDs } from './test-engine/client/test.mjs'
+      import * as display from './test-engine/lib/display.mjs'
+      import baseTests from './tests/index.mjs'
+
+      runTests(baseTests, fetch, true)
+        .then(function() {
+          let resultsTarget = document.getElementById('results')
+          display.renderTestResults(baseTests, getResults(), testUUIDs, resultsTarget, true)
+        })
+        .then(function() {
+          let params = (new URL(location)).searchParams
+          let filename = 'results.json'
+          if (params.get('download')) {
+            filename = `${params.get('download')}.json`
+          }
+          let auto = false
+          if (params.get('auto')) {
+            auto = true
+          }
+          let downloadTarget = document.getElementById('download')
+          display.downloadTestResults(downloadTarget, filename, getResults(), auto)
+        })
+    </script>
+  </head>
+  <body>
+    <h1>Browser HTTP Caching Tests</h1>
+
+    <p class="warning">These tests are a work in progress. The reported results may be faulty, and
+    do not necessarily reflect the true capabilities of each cache. Furthermore, their primary
+    purpose is to inform revision of the <a
+    href="https://httpwg.org/http-core/draft-ietf-httpbis-cache-latest.html">HTTP caching
+    specification</a>; so, they should not be used evaluate or compare feature support, since the
+    specification itself might change. <strong>This is an open source project</strong>; to make
+    contributions, add your implementation's results, file issues or learn more, see <a
+    href="https://github.com/http-tests/cache-tests">the repository</a>.</p>
+
+    <p><i>Hover over failed tests for details. Click on <span class="hint">⚙︎</span> to copy the
+    test UUID (for finding it in the browser networking tab or proxy logs).</i></p>
+
+    <p><a id="download">Download results (JSON)</a></p>
+
+    <div id="results"></div>
+  </body>
+</html>

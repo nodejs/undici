@@ -7,6 +7,7 @@ module.exports = [
     ignores: [
       'lib/llhttp',
       'test/fixtures/wpt',
+      'test/fixtures/cache-tests',
       'undici-fetch.js'
     ],
     noJsx: true,

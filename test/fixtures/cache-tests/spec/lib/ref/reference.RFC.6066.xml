@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC6066' target='https://www.rfc-editor.org/info/rfc6066'>
+<front>
+<title>Transport Layer Security (TLS) Extensions: Extension Definitions</title>
+<author initials='D.' surname='Eastlake 3rd' fullname='D. Eastlake 3rd'><organization /></author>
+<date year='2011' month='January' />
+<abstract><t>This document provides specifications for existing TLS extensions.  It is a companion document for RFC 5246, &quot;The Transport Layer Security (TLS) Protocol Version 1.2&quot;.  The extensions specified are server_name, max_fragment_length, client_certificate_url, trusted_ca_keys, truncated_hmac, and status_request.  [STANDARDS-TRACK]</t></abstract>
+</front>
+<seriesInfo name='RFC' value='6066'/>
+<seriesInfo name='DOI' value='10.17487/RFC6066'/>
+</reference>

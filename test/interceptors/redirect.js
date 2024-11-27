@@ -167,7 +167,7 @@ for (const factory of [
     await t.completed
   })
 
-  test('should follow redirection after a HTTP 301', async t => {
+  test('should follow redirection after a HTTP 301 changing method to GET', async t => {
     t = tspl(t, { plan: 3 })
 
     const server = await startRedirectingServer()
@@ -188,7 +188,7 @@ for (const factory of [
     t.ok(!headers.location)
     t.strictEqual(
       body,
-      `POST /5 :: host@${server} connection@keep-alive content-length@7 :: REQUEST`
+      `GET /5 :: host@${server} connection@keep-alive`
     )
   })
 
@@ -540,7 +540,7 @@ for (const factory of [
       headers,
       body: bodyStream
     } = await request(t, server, undefined, `http://${server}/301`, {
-      method: 'POST',
+      method: 'PUT',
       body: createReadableStream('REQUEST'),
       maxRedirections: 10
     })
@@ -564,7 +564,7 @@ for (const factory of [
       headers,
       body: bodyStream
     } = await request(t, server, undefined, `http://${server}/301`, {
-      method: 'POST',
+      method: 'PUT',
       body: createReadable('REQUEST'),
       maxRedirections: 10
     })
@@ -574,6 +574,26 @@ for (const factory of [
     t.strictEqual(statusCode, 301)
     t.strictEqual(headers.location, `http://${server}/301/1`)
     t.strictEqual(body.length, 0)
+    await t.completed
+  })
+
+  test('should follow redirects when using Readable request bodies w/ POST 101', async t => {
+    t = tspl(t, { plan: 1 })
+
+    const server = await startRedirectingServer()
+
+    const {
+      statusCode,
+      body: bodyStream
+    } = await request(t, server, undefined, `http://${server}/301`, {
+      method: 'POST',
+      body: createReadable('REQUEST'),
+      maxRedirections: 10
+    })
+
+    await bodyStream.text()
+
+    t.strictEqual(statusCode, 200)
     await t.completed
   })
 }
@@ -608,7 +628,7 @@ test('should follow redirections when going cross origin', async t => {
       `http://${server1}/end`
     ]
   )
-  t.strictEqual(body, 'POST')
+  t.strictEqual(body, 'GET')
 
   await t.completed
 })

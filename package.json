@@ -1,6 +1,6 @@
 {
   "name": "undici",
-  "version": "7.0.0-alpha.3",
+  "version": "7.0.0-alpha.8",
   "description": "An HTTP/1.1 client, written from scratch for Node.js",
   "homepage": "https://undici.nodejs.org",
   "bugs": {
@@ -63,7 +63,6 @@
   "types": "index.d.ts",
   "scripts": {
     "build:node": "esbuild index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1 --keep-names && node scripts/strip-comments.js",
-    "prebuild:wasm": "node build/wasm.js --prebuild",
     "build:wasm": "node build/wasm.js --docker",
     "generate-pem": "node scripts/generate-pem.js",
     "lint": "eslint --cache",
@@ -74,6 +73,7 @@
     "test:javascript:without-intl": "npm run test:javascript:no-jest",
     "test:busboy": "borp -p \"test/busboy/*.js\"",
     "test:cache": "borp -p \"test/cache/*.js\"",
+    "test:sqlite": "NODE_OPTIONS=--experimental-sqlite borp -p \"test/cache-interceptor/*.js\"",
     "test:cache-interceptor": "borp -p \"test/cache-interceptor/*.js\"",
     "test:cookies": "borp -p \"test/cookie/*.js\"",
     "test:eventsource": "npm run build:node && borp --expose-gc -p \"test/eventsource/*.js\"",
@@ -108,10 +108,10 @@
   "devDependencies": {
     "@fastify/busboy": "3.0.0",
     "@matteo.collina/tspl": "^0.1.1",
-    "@sinonjs/fake-timers": "^11.1.0",
+    "@sinonjs/fake-timers": "^12.0.0",
     "@types/node": "^18.19.50",
     "abort-controller": "^3.0.0",
-    "borp": "^0.18.0",
+    "borp": "^0.19.0",
     "c8": "^10.0.0",
     "cross-env": "^7.0.3",
     "dns-packet": "^5.4.0",
@@ -129,7 +129,7 @@
     "ws": "^8.11.0"
   },
   "engines": {
-    "node": ">=18.17"
+    "node": ">=20.18.1"
   },
   "tsd": {
     "directory": "test/types",

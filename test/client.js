@@ -1442,7 +1442,8 @@ test('increase pipelining', async (t) => {
 
     client.request({
       path: '/',
-      method: 'GET'
+      method: 'GET',
+      blocking: false
     }, () => {
       if (!client.destroyed) {
         t.fail()
@@ -1451,7 +1452,8 @@ test('increase pipelining', async (t) => {
 
     client.request({
       path: '/',
-      method: 'GET'
+      method: 'GET',
+      blocking: false
     }, () => {
       if (!client.destroyed) {
         t.fail()

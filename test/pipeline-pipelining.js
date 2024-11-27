@@ -26,7 +26,8 @@ test('pipeline pipelining', async (t) => {
       t.equal(client[kRunning], 0)
       client.pipeline({
         method: 'GET',
-        path: '/'
+        path: '/',
+        blocking: false
       }, ({ body }) => body).end().resume()
       t.equal(client[kBusy], true)
       t.deepStrictEqual(client[kRunning], 0)
@@ -34,7 +35,8 @@ test('pipeline pipelining', async (t) => {
 
       client.pipeline({
         method: 'GET',
-        path: '/'
+        path: '/',
+        blocking: false
       }, ({ body }) => body).end().resume()
       t.equal(client[kBusy], true)
       t.deepStrictEqual(client[kRunning], 0)
@@ -74,7 +76,8 @@ test('pipeline pipelining retry', async (t) => {
     client[kConnect](() => {
       client.pipeline({
         method: 'GET',
-        path: '/'
+        path: '/',
+        blocking: false
       }, ({ body }) => body).end().resume()
         .on('error', (err) => {
           t.ok(err)
@@ -85,7 +88,8 @@ test('pipeline pipelining retry', async (t) => {
 
       client.pipeline({
         method: 'GET',
-        path: '/'
+        path: '/',
+        blocking: false
       }, ({ body }) => body).end().resume()
       t.equal(client[kBusy], true)
       t.deepStrictEqual(client[kRunning], 0)
@@ -93,7 +97,8 @@ test('pipeline pipelining retry', async (t) => {
 
       client.pipeline({
         method: 'GET',
-        path: '/'
+        path: '/',
+        blocking: false
       }, ({ body }) => body).end().resume()
       t.equal(client[kBusy], true)
       t.deepStrictEqual(client[kRunning], 0)

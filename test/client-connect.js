@@ -33,7 +33,8 @@ test('connect aborted after connect', async (t) => {
   client.connect({
     path: '/',
     signal,
-    opaque: 'asd'
+    opaque: 'asd',
+    blocking: false
   }, (err, { opaque }) => {
     t.strictEqual(opaque, 'asd')
     t.ok(err instanceof errors.RequestAbortedError)

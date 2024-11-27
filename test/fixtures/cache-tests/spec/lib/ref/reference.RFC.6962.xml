@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC6962' target='https://www.rfc-editor.org/info/rfc6962'>
+<front>
+<title>Certificate Transparency</title>
+<author initials='B.' surname='Laurie' fullname='B. Laurie'><organization /></author>
+<author initials='A.' surname='Langley' fullname='A. Langley'><organization /></author>
+<author initials='E.' surname='Kasper' fullname='E. Kasper'><organization /></author>
+<date year='2013' month='June' />
+<abstract><t>This document describes an experimental protocol for publicly logging the existence of Transport Layer Security (TLS) certificates as they are issued or observed, in a manner that allows anyone to audit certificate authority (CA) activity and notice the issuance of suspect certificates as well as to audit the certificate logs themselves.  The intent is that eventually clients would refuse to honor certificates that do not appear in a log, effectively forcing CAs to add all issued certificates to the logs.</t><t>Logs are network services that implement the protocol operations for submissions and queries that are defined in this document.</t></abstract>
+</front>
+<seriesInfo name='RFC' value='6962'/>
+<seriesInfo name='DOI' value='10.17487/RFC6962'/>
+</reference>

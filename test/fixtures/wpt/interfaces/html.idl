@@ -133,10 +133,18 @@ interface HTMLElement : Element {
   ElementInternals attachInternals();
 
   // The popover API
-  undefined showPopover();
+  undefined showPopover(optional ShowPopoverOptions options = {});
   undefined hidePopover();
-  boolean togglePopover(optional boolean force);
+  boolean togglePopover(optional (TogglePopoverOptions or boolean) options = {});
   [CEReactions] attribute DOMString? popover;
+};
+
+dictionary ShowPopoverOptions {
+  HTMLElement source;
+};
+
+dictionary TogglePopoverOptions : ShowPopoverOptions {
+  boolean force;
 };
 
 HTMLElement includes GlobalEventHandlers;
@@ -881,10 +889,12 @@ interface HTMLInputElement : HTMLElement {
   [HTMLConstructor] constructor();
 
   [CEReactions] attribute DOMString accept;
+  [CEReactions] attribute boolean alpha;
   [CEReactions] attribute DOMString alt;
   [CEReactions] attribute DOMString autocomplete;
   [CEReactions] attribute boolean defaultChecked;
   attribute boolean checked;
+  [CEReactions] attribute DOMString colorSpace;
   [CEReactions] attribute DOMString dirName;
   [CEReactions] attribute boolean disabled;
   readonly attribute HTMLFormElement? form;

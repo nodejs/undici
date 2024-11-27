@@ -1,0 +1,445 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://cache-tests.fyi/testsuite-schema.json",
+  "title": "Cache Tests",
+  "description": "A list of test suites",
+  "type": "array",
+  "items": {
+    "description": "A test suite",
+    "type": "object",
+    "required": [ "name", "id", "tests"],
+    "additionalProperties": false,
+    "properties": {
+      "name": {
+        "description": "The name of the suite",
+        "type": "string"
+      },
+      "id": {
+        "description": "A unique identifier for the suite",
+        "type": "string"
+      },
+      "description": {
+        "description": "A Markdown description of the suite",
+        "type": "string"
+      },
+      "spec_anchors": {
+        "description": "Anchors in the HTTP caching spec that this suite applies to",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "tests": {
+        "description": "An array of tests in the suite",
+        "type": "array",
+        "items": {
+          "description": "A test",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "id", "requests"],
+          "properties": {
+            "name": {
+              "description": "The test name; can contain Markdown.",
+              "type": "string"
+            },
+            "id": {
+              "$ref": "#/definitions/test-id"
+            },
+            "description": {
+              "description": "A longer, Markdown description of the test",
+              "type": "string"
+            },
+            "kind": {
+              "description": "The kind of test",
+              "type": "string",
+              "enum": ["required", "optimal", "check"]
+            },
+            "spec_anchors": {
+              "description": "Anchors in the HTTP caching spec that this test applies to",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "requests": {
+              "description": "An array of requests",
+              "type": "array",
+              "items": {
+                "description": "A request to send in the test",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "request_method": {
+                    "description": "the HTTP method to be used",
+                    "type": "string"
+                  },
+                  "request_headers": {
+                    "description": "headers to emit in the request",
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "additionalItems": false,
+                      "items": [
+                        {
+                          "$ref": "#/definitions/field-name"
+                        },
+                        {
+                          "$ref": "#/definitions/magic-field-value"
+                        }
+                      ]
+                    }
+                  },
+                  "request_body": {
+                    "description": "the HTTP request body to be used",
+                    "type": "string"
+                  },
+                  "query_arg": {
+                    "description": "query arguments to add to the URL",
+                    "type": "string"
+                  },
+                  "filename": {
+                    "description": "filename to add to the URL",
+                    "type": "string"
+                  },
+                  "mode": {
+                    "description": "the mode value to pass to fetch()",
+                    "type": "string",
+                    "enum": ["same-origin", "no-cors", "navigate", "websocket"]
+                  },
+                  "credentials": {
+                    "description": "the credentials value to pass to fetch()",
+                    "type": "string",
+                    "enum": ["omit", "same-origin", "include"]
+                  },
+                  "cache": {
+                    "description": "the cache value to pass to fetch()",
+                    "type": "string",
+                    "enum": ["default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached"]
+                  },
+                  "redirect": {
+                    "description": "the redirect value to pass to fetch()",
+                    "type": "string",
+                    "enum": ["follow", "error", "manual"]
+                  },
+                  "pause_after": {
+                    "description": "Whether to pause for three seconds after the request completes",
+                    "type": "boolean"
+                  },
+                  "disconnect": {
+                    "description": "Whether to disconnect the client when receiving thsi request",
+                    "type": "boolean"
+                  },
+                  "magic_locations": {
+                    "description": "Whether to rewrite Location and Content-Location to full URLs",
+                    "type": "boolean"
+                  },
+                  "magic_ims": {
+                    "description": "Whether to rewrite If-Modified-Since to a delta from the previous Last-Modified",
+                    "type": "boolean"
+                  },
+                  "rfc850date": {
+                    "description": "Header names to use RFC850 format on when converting dates",
+                    "type": "array",
+                    "items": [
+                      {
+                        "$ref": "#/definitions/date-headers"
+                      }
+                    ]
+                  },
+                  "response_status": {
+                    "description": "HTTP status code and phrase to return from origin",
+                    "type": "array",
+                    "items": [
+                      {
+                        "$ref": "#/definitions/status-code"
+                      },
+                      {
+                        "description": "status phrase",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "response_headers": {
+                    "description": "Response header fields to be returned from origin",
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "description": "name and value",
+                          "type": "array",
+                          "additionalItems": false,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/field-name"
+                            },
+                            {
+                              "oneOf": [
+                                { "type": "string" },
+                                { "type": "integer" }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "description": "name and value with control over checking",
+                          "type": "array",
+                          "additionalItems": false,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/field-name"
+                            },
+                            {
+                              "$ref": "#/definitions/magic-field-value"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "response_body": {
+                    "description": "Response body to be returned from origin; defaults to the test identifier",
+                    "$ref": "#/definitions/response-or-null"
+                  },
+                  "check_body": {
+                    "description": "Whether to check the response body on the client",
+                    "type": "boolean"
+                  },
+                  "expected_type": {
+                    "description": "What the test result is expected to be",
+                    "type": "string",
+                    "enum": ["cached", "not_cached", "lm_validated", "etag_validated"]
+                  },
+                  "expected_method": {
+                    "description": "Expected request method received by the server",
+                    "type": "string"
+                  },
+                  "expected_status": {
+                    "description": "Expected response status received by the client",
+                    "$ref": "#/definitions/status-code"
+                  },
+                  "expected_request_headers": {
+                    "description": "Request headers to check for on the server",
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/field-name"
+                        },
+                        {
+                          "description": "name and value",
+                          "type": "array",
+                          "additionalItems": false,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/field-name"
+                            },
+                            {
+                              "description": "field value",
+                              "type": "string"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "response_pause": {
+                    "description": "Pause the response body by the server",
+                    "type": "integer"
+                  },
+                  "expected_request_headers_missing": {
+                    "description": "Request headers to check for absence on the server",
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/field-name"
+                        },
+                        {
+                          "description": "name and value",
+                          "type": "array",
+                          "additionalItems": false,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/field-name"
+                            },
+                            {
+                              "description": "field value",
+                              "type": "string"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "expected_response_headers": {
+                    "description": "Response headers to check for on the client",
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/field-name"
+                        },
+                        {
+                          "description": "name and value",
+                          "type": "array",
+                          "additionalItems": false,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/field-name"
+                            },
+                            {
+                              "$ref": "#/definitions/magic-field-value"
+                            }
+                          ]
+                        },
+                        {
+                          "description": "check two headers have the same value",
+                          "type": "array",
+                          "additionalItems": false,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/field-name"
+                            },
+                            {
+                              "const": "="
+                            },
+                            {
+                              "description": "field name to check against",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        {
+                          "description": "header value is greater than an integer",
+                          "type": "array",
+                          "additionalItems": false,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/field-name"
+                            },
+                            {
+                              "const": ">"
+                            },
+                            {
+                              "description": "integer to check against",
+                              "type": "integer"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "expected_response_headers_missing": {
+                    "description": "Response headers to check are missing on the client",
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/definitions/field-name"
+                        },
+                        {
+                          "description": "name and value",
+                          "type": "array",
+                          "items": [
+                            {
+                              "$ref": "#/definitions/field-name"
+                            },
+                            {
+                              "description": "field value substring",
+                              "type": "string"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "expected_response_text": {
+                    "description": "Expected response body received by the client",
+                    "$ref": "#/definitions/response-or-null"
+                  },
+                  "setup": {
+                    "description": "Whether this is a setup request; failures don't mean the actual test failed",
+                    "type": "boolean"
+                  },
+                  "setup_tests": {
+                    "description": "List of checks that are considered setup",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["expected_type", "expected_method", "expected_status", "expected_response_headers", "expected_response_text", "expected_request_headers"]
+                    }
+                  }
+                }
+              }
+            },
+            "browser_only": {
+              "description": "Whether the test will only run on browsers",
+              "type": "boolean"
+            },
+            "cdn_only": {
+              "description": "Whether the test will only run on CDN caches",
+              "type": "boolean"
+            },
+            "browser_skip": {
+              "description": "Whether the test will skip browsers",
+              "type": "boolean"
+            },
+            "depends_on": {
+              "description": "List of Test IDs that this test depends on",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/test-id"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "field-name": {
+      "description": "HTTP header field name",
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9-_]+$"
+    },
+    "magic-field-value": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        }
+      ]
+    },
+    "test-id": {
+      "description": "A short identifer for a test",
+      "type": "string"
+    },
+    "response-or-null": {
+      "oneOf": [
+        {
+          "description": "The text of the response",
+          "type": "string"
+        },
+        {
+          "description": "Do not check the response",
+          "type": "null"
+        }
+      ]
+    },
+    "status-code": {
+      "description": "HTTP response status code",
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 599
+    },
+    "date-headers": {
+      "type": "string",
+      "enum": ["date", "if-modified-since", "last-modified", "expires"]
+    }
+  }
+}

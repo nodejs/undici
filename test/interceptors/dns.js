@@ -4,10 +4,12 @@ const { test, after } = require('node:test')
 const { isIP } = require('node:net')
 const { lookup } = require('node:dns')
 const { createServer } = require('node:http')
+const { createServer: createSecureServer } = require('node:https')
 const { once } = require('node:events')
 const { setTimeout: sleep } = require('node:timers/promises')
 
 const { tspl } = require('@matteo.collina/tspl')
+const pem = require('https-pem')
 
 const { interceptors, Agent } = require('../..')
 const { dns } = interceptors
@@ -102,6 +104,93 @@ test('Should automatically resolve IPs (dual stack)', async t => {
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world!')
+})
+
+test('Should respect DNS origin hostname for SNI on TLS', async t => {
+  t = tspl(t, { plan: 12 })
+
+  const hostsnames = []
+  const server = createSecureServer(pem)
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    t.equal(req.headers.host, 'localhost')
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Agent({
+    connect: {
+      rejectUnauthorized: false
+    }
+  }).compose([
+    dispatch => {
+      return (opts, handler) => {
+        const url = new URL(opts.origin)
+
+        t.equal(hostsnames.includes(url.hostname), false)
+        t.equal(opts.servername, 'localhost')
+
+        if (url.hostname[0] === '[') {
+          // [::1] -> ::1
+          t.equal(isIP(url.hostname.slice(1, 4)), 6)
+        } else {
+          t.equal(isIP(url.hostname), 4)
+        }
+
+        hostsnames.push(url.hostname)
+
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    ...requestOptions,
+    origin: `https://localhost:${server.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: `https://localhost:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -1384,6 +1473,142 @@ test('Should prefer affinity (dual stack - 6)', async t => {
 
   t.equal(response3.statusCode, 200)
   t.equal(await response3.body.text(), 'hello world!')
+
+  t.equal(lookupCounter, 1)
+})
+
+test('Should use resolved ports (4)', async t => {
+  t = tspl(t, { plan: 5 })
+
+  let lookupCounter = 0
+  const server1 = createServer()
+  const server2 = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server1.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server1.listen(0)
+
+  server2.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world! (x2)')
+  })
+  server2.listen(0)
+
+  await Promise.all([once(server1, 'listening'), once(server2, 'listening')])
+
+  const client = new Agent().compose([
+    dns({
+      lookup (origin, opts, cb) {
+        lookupCounter++
+        cb(null, [
+          { address: '127.0.0.1', family: 4, port: server1.address().port },
+          { address: '127.0.0.1', family: 4, port: server2.address().port }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server1.close()
+    server2.close()
+
+    await Promise.all([once(server1, 'close'), once(server2, 'close')])
+  })
+
+  const response = await client.request({
+    ...requestOptions,
+    origin: 'http://localhost'
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: 'http://localhost'
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world! (x2)')
+
+  t.equal(lookupCounter, 1)
+})
+
+test('Should use resolved ports (6)', async t => {
+  t = tspl(t, { plan: 5 })
+
+  let lookupCounter = 0
+  const server1 = createServer()
+  const server2 = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server1.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server1.listen(0, '::1')
+
+  server2.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world! (x2)')
+  })
+  server2.listen(0, '::1')
+
+  await Promise.all([once(server1, 'listening'), once(server2, 'listening')])
+
+  const client = new Agent().compose([
+    dns({
+      lookup (origin, opts, cb) {
+        lookupCounter++
+        cb(null, [
+          { address: '::1', family: 6, port: server1.address().port },
+          { address: '::1', family: 6, port: server2.address().port }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server1.close()
+    server2.close()
+
+    await Promise.all([once(server1, 'close'), once(server2, 'close')])
+  })
+
+  const response = await client.request({
+    ...requestOptions,
+    origin: 'http://localhost'
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  const response2 = await client.request({
+    ...requestOptions,
+    origin: 'http://localhost'
+  })
+
+  t.equal(response2.statusCode, 200)
+  t.equal(await response2.body.text(), 'hello world! (x2)')
 
   t.equal(lookupCounter, 1)
 })

@@ -142,7 +142,8 @@ test('connect wait for empty pipeline', async (t) => {
 
     client.request({
       path: '/',
-      method: 'GET'
+      method: 'GET',
+      blocking: false
     }, (err) => {
       p.ifError(err)
     })
