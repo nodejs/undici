@@ -1742,7 +1742,6 @@ test('Should handle http2 stream timeout', async t => {
 
 test('Should handle http2 trailers', { only: true }, async t => {
   const server = createSecureServer(pem)
-  const stream = createReadStream(__filename)
 
   server.on('stream', async (stream, headers) => {
     stream.respond({
@@ -1759,6 +1758,8 @@ test('Should handle http2 trailers', { only: true }, async t => {
         'x-trailer': 'hello'
       })
     })
+
+    stream.on('data', () => {})
 
     stream.on('error', (err) => console.log('stream err', err))
 
@@ -1785,7 +1786,7 @@ test('Should handle http2 trailers', { only: true }, async t => {
   client.dispatch({
     path: '/',
     method: 'PUT',
-    body: stream
+    body: 'hello'
   }, {
     onConnect () {
 
