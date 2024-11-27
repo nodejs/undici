@@ -1777,7 +1777,11 @@ test('Should handle http2 trailers', { only: true }, async t => {
     allowH2: true
   })
 
-  after(() => server.close())
+  after(async () => {
+    server.close()
+    await once(server, 'close')
+    return client.close()
+  })
   after(() => client.close())
 
   client.dispatch({
