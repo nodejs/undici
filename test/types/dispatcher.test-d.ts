@@ -178,7 +178,7 @@ expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(
     expectAssignable<Dispatcher['dispatch']>(dispatcher)
     return (opts, handlers) => {
       expectAssignable<Dispatcher.DispatchOptions>(opts)
-      expectAssignable<Dispatcher.DispatchHandlers>(handlers)
+      expectAssignable<Dispatcher.DispatchHandler>(handlers)
       return dispatcher(opts, handlers)
     }
   }
@@ -188,7 +188,7 @@ expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([
     expectAssignable<Dispatcher['dispatch']>(dispatcher)
     return (opts, handlers) => {
       expectAssignable<Dispatcher.DispatchOptions>(opts)
-      expectAssignable<Dispatcher.DispatchHandlers>(handlers)
+      expectAssignable<Dispatcher.DispatchHandler>(handlers)
       return dispatcher(opts, handlers)
     }
   },
@@ -196,7 +196,7 @@ expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([
     expectAssignable<Dispatcher['dispatch']>(dispatcher)
     return (opts, handlers) => {
       expectAssignable<Dispatcher.DispatchOptions>(opts)
-      expectAssignable<Dispatcher.DispatchHandlers>(handlers)
+      expectAssignable<Dispatcher.DispatchHandler>(handlers)
       return dispatcher(opts, handlers)
     }
   }

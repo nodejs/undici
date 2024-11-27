@@ -205,14 +205,12 @@ Returns: `Boolean` - `false` if dispatcher is busy and further dispatch calls wo
 
 #### Parameter: `DispatchHandler`
 
-* **onConnect** `(abort: () => void, context: object) => void` - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
-* **onError** `(error: Error) => void` - Invoked when an error has occurred. May not throw.
-* **onUpgrade** `(statusCode: number, headers: Buffer[], socket: Duplex) => void` (optional) - Invoked when request is upgraded. Required if `DispatchOptions.upgrade` is defined or `DispatchOptions.method === 'CONNECT'`.
-* **onResponseStarted** `() => void` (optional) - Invoked when response is received, before headers have been read.
-* **onHeaders** `(statusCode: number, headers: Buffer[], resume: () => void, statusText: string) => boolean` - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. Not required for `upgrade` requests.
-* **onData** `(chunk: Buffer) => boolean` - Invoked when response payload data is received. Not required for `upgrade` requests.
-* **onComplete** `(trailers: Buffer[]) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
-* **onBodySent** `(chunk: string | Buffer | Uint8Array) => void` - Invoked when a body chunk is sent to the server. Not required. For a stream or iterable body this will be invoked for every chunk. For other body types, it will be invoked once after the body is sent.
+* **onRequestStart** `(controller: DispatchController, context: object) => void` - Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails.
+* **onRequestUpgrade** `(controller: DispatchController, statusCode: number, headers: Record<string, string | string[]>, socket: Duplex) => void` (optional) - Invoked when request is upgraded. Required if `DispatchOptions.upgrade` is defined or `DispatchOptions.method === 'CONNECT'`.
+* **onResponseStart** `(controller: DispatchController, statusCode: number, headers: Record<string, string | string []>, statusMessage?: string) => void` - Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. Not required for `upgrade` requests.
+* **onResponseData** `(controller: DispatchController, chunk: Buffer) => void` - Invoked when response payload data is received. Not required for `upgrade` requests.
+* **onResponseEnd** `(controller: DispatchController, trailers: Record<string, string | string[]>) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
+* **onResponseError** `(error: Error) => void` - Invoked when an error has occurred. May not throw.
 
 #### Example 1 - Dispatch GET request
 
@@ -1056,202 +1054,26 @@ const response = await client.request({
 })
 ```
 
-##### `Response Error Interceptor`
+##### `responseError`
 
-**Introduction**
+The `responseError` interceptor throws an error for responses with status code errors (>= 400).
 
-The Response Error Interceptor is designed to handle HTTP response errors efficiently. It intercepts responses and throws detailed errors for responses with status codes indicating failure (4xx, 5xx). This interceptor enhances error handling by providing structured error information, including response headers, data, and status codes.
-
-**ResponseError Class**
-
-The `ResponseError` class extends the `UndiciError` class and encapsulates detailed error information. It captures the response status code, headers, and data, providing a structured way to handle errors.
-
-**Definition**
+**Example**
 
 ```js
-class ResponseError extends UndiciError {
-  constructor (message, code, { headers, data }) {
-    super(message);
-    this.name = 'ResponseError';
-    this.message = message || 'Response error';
-    this.code = 'UND_ERR_RESPONSE';
-    this.statusCode = code;
-    this.data = data;
-    this.headers = headers;
-  }
-}
-```
+const { Client, interceptors } = require("undici");
+const { responseError } = interceptors;
 
-**Interceptor Handler**
+const client = new Client("http://example.com").compose(
+  responseError()
+);
 
-The interceptor's handler class extends `DecoratorHandler` and overrides methods to capture response details and handle errors based on the response status code.
-
-**Methods**
-
-- **onConnect**: Initializes response properties.
-- **onHeaders**: Captures headers and status code. Decodes body if content type is `application/json` or `text/plain`.
-- **onData**: Appends chunks to the body if status code indicates an error.
-- **onComplete**: Finalizes error handling, constructs a `ResponseError`, and invokes the `onError` method.
-- **onError**: Propagates errors to the handler.
-
-**Definition**
-
-```js
-class Handler extends DecoratorHandler {
-  // Private properties
-  #handler;
-  #statusCode;
-  #contentType;
-  #decoder;
-  #headers;
-  #body;
-
-  constructor (opts, { handler }) {
-    super(handler);
-    this.#handler = handler;
-  }
-
-  onConnect (abort) {
-    this.#statusCode = 0;
-    this.#contentType = null;
-    this.#decoder = null;
-    this.#headers = null;
-    this.#body = '';
-    return this.#handler.onConnect(abort);
-  }
-
-  onHeaders (statusCode, rawHeaders, resume, statusMessage, headers = parseHeaders(rawHeaders)) {
-    this.#statusCode = statusCode;
-    this.#headers = headers;
-    this.#contentType = headers['content-type'];
-
-    if (this.#statusCode < 400) {
-      return this.#handler.onHeaders(statusCode, rawHeaders, resume, statusMessage, headers);
-    }
-
-    if (this.#contentType === 'application/json' || this.#contentType === 'text/plain') {
-      this.#decoder = new TextDecoder('utf-8');
-    }
-  }
-
-  onData (chunk) {
-    if (this.#statusCode < 400) {
-      return this.#handler.onData(chunk);
-    }
-    this.#body += this.#decoder?.decode(chunk, { stream: true }) ?? '';
-  }
-
-  onComplete (rawTrailers) {
-    if (this.#statusCode >= 400) {
-      this.#body += this.#decoder?.decode(undefined, { stream: false }) ?? '';
-      if (this.#contentType === 'application/json') {
-        try {
-          this.#body = JSON.parse(this.#body);
-        } catch {
-          // Do nothing...
-        }
-      }
-
-      let err;
-      const stackTraceLimit = Error.stackTraceLimit;
-      Error.stackTraceLimit = 0;
-      try {
-        err = new ResponseError('Response Error', this.#statusCode, this.#headers, this.#body);
-      } finally {
-        Error.stackTraceLimit = stackTraceLimit;
-      }
-
-      this.#handler.onError(err);
-    } else {
-      this.#handler.onComplete(rawTrailers);
-    }
-  }
-
-  onError (err) {
-    this.#handler.onError(err);
-  }
-}
-
-module.exports = (dispatch) => (opts, handler) => opts.throwOnError
-  ? dispatch(opts, new Handler(opts, { handler }))
-  : dispatch(opts, handler);
-```
-
-**Tests**
-
-Unit tests ensure the interceptor functions correctly, handling both error and non-error responses appropriately.
-
-**Example Tests**
-
-- **No Error if `throwOnError` is False**:
-
-```js
-test('should not error if request is not meant to throw error', async (t) => {
-  const opts = { throwOnError: false };
-  const handler = { onError: () => {}, onData: () => {}, onComplete: () => {} };
-  const interceptor = createResponseErrorInterceptor((opts, handler) => handler.onComplete());
-  assert.doesNotThrow(() => interceptor(opts, handler));
+// Will throw a ResponseError for status codes >= 400
+await client.request({
+  method: "GET",
+  path: "/"
 });
 ```
-
-- **Error if Status Code is in Specified Error Codes**:
-
-```js
-test('should error if request status code is in the specified error codes', async (t) => {
-  const opts = { throwOnError: true, statusCodes: [500] };
-  const response = { statusCode: 500 };
-  let capturedError;
-  const handler = {
-    onError: (err) => { capturedError = err; },
-    onData: () => {},
-    onComplete: () => {}
-  };
-
-  const interceptor = createResponseErrorInterceptor((opts, handler) => {
-    if (opts.throwOnError && opts.statusCodes.includes(response.statusCode)) {
-      handler.onError(new Error('Response Error'));
-    } else {
-      handler.onComplete();
-    }
-  });
-
-  interceptor({ ...opts, response }, handler);
-
-  await new Promise(resolve => setImmediate(resolve));
-
-  assert(capturedError, 'Expected error to be captured but it was not.');
-  assert.strictEqual(capturedError.message, 'Response Error');
-  assert.strictEqual(response.statusCode, 500);
-});
-```
-
-- **No Error if Status Code is Not in Specified Error Codes**:
-
-```js
-test('should not error if request status code is not in the specified error codes', async (t) => {
-  const opts = { throwOnError: true, statusCodes: [500] };
-  const response = { statusCode: 404 };
-  const handler = {
-    onError: () => {},
-    onData: () => {},
-    onComplete: () => {}
-  };
-
-  const interceptor = createResponseErrorInterceptor((opts, handler) => {
-    if (opts.throwOnError && opts.statusCodes.includes(response.statusCode)) {
-      handler.onError(new Error('Response Error'));
-    } else {
-      handler.onComplete();
-    }
-  });
-
-  assert.doesNotThrow(() => interceptor({ ...opts, response }, handler));
-});
-```
-
-**Conclusion**
-
-The Response Error Interceptor provides a robust mechanism for handling HTTP response errors by capturing detailed error information and propagating it through a structured `ResponseError` class. This enhancement improves error handling and debugging capabilities in applications using the interceptor.
 
 ##### `Cache Interceptor`
 
@@ -1262,6 +1084,8 @@ The `cache` interceptor implements client-side response caching as described in
 
 - `store` - The [`CacheStore`](/docs/docs/api/CacheStore.md) to store and retrieve responses from. Default is [`MemoryCacheStore`](/docs/docs/api/CacheStore.md#memorycachestore).
 - `methods` - The [**safe** HTTP methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1) to cache the response of.
+- `cacheByDefault` - The default expiration time to cache responses by if they don't have an explicit expiration. If this isn't present, responses without explicit expiration will not be cached. Default `undefined`.
+- `type` - The type of cache for Undici to act as. Can be `shared` or `private`. Default `shared`.
 
 ## Instance Events
 

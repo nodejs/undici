@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC7540' target='http://www.rfc-editor.org/info/rfc7540'>
+<front>
+<title>Hypertext Transfer Protocol Version 2 (HTTP/2)</title>
+<author initials='M.' surname='Belshe' fullname='M. Belshe'><organization /></author>
+<author initials='R.' surname='Peon' fullname='R. Peon'><organization /></author>
+<author initials='M.' surname='Thomson' fullname='M. Thomson' role='editor'><organization /></author>
+<date year='2015' month='May' />
+<abstract><t>This specification describes an optimized expression of the semantics of the Hypertext Transfer Protocol (HTTP), referred to as HTTP version 2 (HTTP/2).  HTTP/2 enables a more efficient use of network resources and a reduced perception of latency by introducing header field compression and allowing multiple concurrent exchanges on the same connection.  It also introduces unsolicited push of representations from servers to clients.</t><t>This specification is an alternative to, but does not obsolete, the HTTP/1.1 message syntax.  HTTP's existing semantics remain unchanged.</t></abstract>
+</front>
+<seriesInfo name='RFC' value='7540'/>
+<seriesInfo name='DOI' value='10.17487/RFC7540'/>
+</reference>

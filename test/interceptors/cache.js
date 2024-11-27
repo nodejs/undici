@@ -6,7 +6,6 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { Client, interceptors, cacheStores } = require('../../index')
-const { tick } = require('../../lib/util/timers')
 
 describe('Cache Interceptor', () => {
   test('doesn\'t cache request w/ no cache-control header', async () => {
@@ -155,6 +154,73 @@ describe('Cache Interceptor', () => {
     strictEqual(await response.body.text(), 'asd')
   })
 
+  test('vary headers are present in revalidation request', async () => {
+    const clock = FakeTimers.install({
+      shouldClearNativeTimers: true
+    })
+
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer((req, res) => {
+      res.setHeader('date', 0)
+      res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
+
+      if (requestsToOrigin === 0) {
+        requestsToOrigin++
+        res.setHeader('vary', 'a, b')
+        res.setHeader('etag', '"asd"')
+        res.end('asd')
+      } else {
+        revalidationRequests++
+        notEqual(req.headers['if-none-match'], undefined)
+        notEqual(req.headers['a'], undefined)
+        notEqual(req.headers['b'], undefined)
+
+        res.statusCode = 304
+        res.end()
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+      clock.uninstall()
+    })
+
+    await once(server, 'listening')
+
+    strictEqual(requestsToOrigin, 0)
+    strictEqual(revalidationRequests, 0)
+
+    const request = {
+      origin: 'localhost',
+      path: '/',
+      method: 'GET',
+      headers: {
+        a: 'asd',
+        b: 'asd'
+      }
+    }
+
+    {
+      const response = await client.request(request)
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(await response.body.text(), 'asd')
+    }
+
+    clock.tick(1500)
+
+    {
+      const response = await client.request(request)
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+      strictEqual(await response.body.text(), 'asd')
+    }
+  })
+
   test('revalidates request when needed', async () => {
     let requestsToOrigin = 0
 
@@ -163,6 +229,7 @@ describe('Cache Interceptor', () => {
     })
 
     const server = createServer((req, res) => {
+      res.setHeader('date', 0)
       res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
 
       requestsToOrigin++
@@ -227,14 +294,14 @@ describe('Cache Interceptor', () => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
-    tick(0)
 
     const server = createServer((req, res) => {
+      res.setHeader('date', 0)
       res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
       requestsToOrigin++
 
       if (requestsToOrigin > 1) {
-        equal(req.headers['etag'], '"asd123"')
+        equal(req.headers['if-none-match'], '"asd123"')
 
         if (requestsToOrigin === 3) {
           res.end('asd123')
@@ -273,7 +340,6 @@ describe('Cache Interceptor', () => {
     strictEqual(await response.body.text(), 'asd')
 
     clock.tick(1500)
-    tick(1500)
 
     // Now we send two more requests. Both of these should reach the origin,
     //  but now with a conditional header asking if the resource has been
@@ -376,8 +442,10 @@ describe('Cache Interceptor', () => {
   })
 
   test('necessary headers are stripped', async () => {
+    let requestsToOrigin = 0
     const server = createServer((req, res) => {
-      res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10, no-cache=should-be-stripped')
+      requestsToOrigin++
+      res.setHeader('cache-control', 'public, s-maxage=10, no-cache=should-be-stripped')
       res.setHeader('should-be-stripped', 'hello world')
       res.setHeader('should-not-be-stripped', 'dsa321')
 
@@ -401,8 +469,77 @@ describe('Cache Interceptor', () => {
     }
 
     // Send initial request. This should reach the origin
-    const response = await client.request(request)
-    strictEqual(await response.body.text(), 'asd')
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await response.body.text(), 'asd')
+      equal(response.headers['should-be-stripped'], 'hello world')
+      equal(response.headers['should-not-be-stripped'], 'dsa321')
+    }
+
+    // Send second request, this should hit the cache
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await response.body.text(), 'asd')
+      equal(response.headers['should-be-stripped'], undefined)
+      equal(response.headers['should-not-be-stripped'], 'dsa321')
+    }
+  })
+
+  test('necessary headers are stripped (quotes)', async () => {
+    let requestsToOrigin = 0
+    const server = createServer((_, res) => {
+      requestsToOrigin++
+      res.setHeader('connection', 'a, b')
+      res.setHeader('a', '123')
+      res.setHeader('b', '123')
+      res.setHeader('cache-control', 's-maxage=3600, no-cache="should-be-stripped, should-be-stripped2"')
+      res.setHeader('should-be-stripped', 'hello world')
+      res.setHeader('should-be-stripped2', 'hello world')
+      res.setHeader('should-not-be-stripped', 'dsa321')
+
+      res.end('asd')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await response.body.text(), 'asd')
+      equal(response.headers['a'], '123')
+      equal(response.headers['b'], '123')
+      equal(response.headers['should-be-stripped'], 'hello world')
+      equal(response.headers['should-be-stripped2'], 'hello world')
+      equal(response.headers['should-not-be-stripped'], 'dsa321')
+    }
+
+    // Send second request, this should hit the cache
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await response.body.text(), 'asd')
+      equal(response.headers['a'], undefined)
+      equal(response.headers['b'], undefined)
+      equal(response.headers['should-be-stripped'], undefined)
+      equal(response.headers['should-be-stripped2'], undefined)
+    }
   })
 
   test('requests w/ unsafe methods never get cached', async () => {
@@ -435,12 +572,237 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  for (const maxAgeHeader of ['s-maxage', 'max-age']) {
+    test(`stale-while-revalidate w/ ${maxAgeHeader}`, async () => {
+      const clock = FakeTimers.install({
+        shouldClearNativeTimers: true
+      })
+
+      let requestsToOrigin = 0
+      let revalidationRequests = 0
+      const server = createServer((req, res) => {
+        res.setHeader('date', 0)
+
+        if (req.headers['if-none-match']) {
+          revalidationRequests++
+          if (req.headers['if-none-match'] !== '"asd"') {
+            fail(`etag mismatch: ${req.headers['if-none-match']}`)
+          }
+
+          res.statusCode = 304
+          res.end()
+        } else {
+          requestsToOrigin++
+          res.setHeader('cache-control', 'public, max-age=1, stale-while-revalidate=4')
+          res.setHeader('etag', '"asd"')
+          res.end('asd')
+        }
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        clock.uninstall()
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      strictEqual(requestsToOrigin, 0)
+      strictEqual(revalidationRequests, 0)
+
+      // Send first request, this will hit the origin
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET'
+        })
+        equal(requestsToOrigin, 1)
+        strictEqual(revalidationRequests, 0)
+        equal(response.statusCode, 200)
+        equal(await response.body.text(), 'asd')
+      }
+
+      // Send second request, this will be cached.
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET'
+        })
+        equal(requestsToOrigin, 1)
+        strictEqual(revalidationRequests, 0)
+        equal(response.statusCode, 200)
+        equal(await response.body.text(), 'asd')
+      }
+
+      clock.tick(1500)
+
+      // Send third request, this should be revalidated
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET'
+        })
+        equal(requestsToOrigin, 1)
+        strictEqual(revalidationRequests, 1)
+        equal(response.statusCode, 200)
+        equal(await response.body.text(), 'asd')
+      }
+
+      clock.tick(5000)
+
+      // Send fourth request, this should be a new request entirely
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET'
+        })
+        equal(requestsToOrigin, 2)
+        strictEqual(revalidationRequests, 1)
+        equal(response.statusCode, 200)
+        equal(await response.body.text(), 'asd')
+      }
+    })
+  }
+
+  test('stale-if-error from response works as expected', async () => {
+    const clock = FakeTimers.install({
+      shouldClearNativeTimers: true
+    })
+
+    let requestsToOrigin = 0
+    const server = createServer((_, res) => {
+      res.setHeader('date', 0)
+
+      requestsToOrigin++
+      if (requestsToOrigin === 1) {
+        // First request
+        res.setHeader('cache-control', 'public, s-maxage=10, stale-if-error=20')
+        res.end('asd')
+      } else {
+        res.statusCode = 500
+        res.end('')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      clock.uninstall()
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    strictEqual(requestsToOrigin, 0)
+
+    // Send first request. This will hit the origin and succeed
+    {
+      const response = await client.request({
+        origin: 'localhost',
+        path: '/',
+        method: 'GET'
+      })
+      equal(requestsToOrigin, 1)
+      equal(response.statusCode, 200)
+      equal(await response.body.text(), 'asd')
+    }
+
+    // Send second request. It isn't stale yet, so this should be from the
+    //  cache and succeed
+    {
+      const response = await client.request({
+        origin: 'localhost',
+        path: '/',
+        method: 'GET'
+      })
+      equal(requestsToOrigin, 1)
+      equal(response.statusCode, 200)
+      equal(await response.body.text(), 'asd')
+    }
+
+    clock.tick(15000)
+
+    // Send third request. This is now stale, the revalidation request should
+    //  fail but the response should still be served from cache.
+    {
+      const response = await client.request({
+        origin: 'localhost',
+        path: '/',
+        method: 'GET'
+      })
+      equal(requestsToOrigin, 2)
+      equal(response.statusCode, 200)
+      equal(await response.body.text(), 'asd')
+    }
+
+    clock.tick(25000)
+
+    // Send fourth request. We're now outside the stale-if-error threshold and
+    //  should see the error.
+    {
+      const response = await client.request({
+        origin: 'localhost',
+        path: '/',
+        method: 'GET'
+      })
+      equal(requestsToOrigin, 3)
+      equal(response.statusCode, 500)
+    }
+  })
+
+  test('cacheByDefault', async () => {
+    let requestsToOrigin = 0
+    const server = createServer((_, res) => {
+      requestsToOrigin++
+      res.end('asd')
+    }).listen(0)
+
+    after(() => server.close())
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({
+        cacheByDefault: 3600
+      }))
+
+    equal(requestsToOrigin, 0)
+
+    // Should hit the origin
+    {
+      const res = await client.request({
+        origin: 'localhost',
+        path: '/',
+        method: 'GET'
+      })
+      equal(requestsToOrigin, 1)
+      equal(await res.body.text(), 'asd')
+    }
+
+    // Should hit the cache
+    {
+      const res = await client.request({
+        origin: 'localhost',
+        path: '/',
+        method: 'GET'
+      })
+      equal(requestsToOrigin, 1)
+      equal(await res.body.text(), 'asd')
+    }
+  })
+
   describe('Client-side directives', () => {
     test('max-age', async () => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
-      tick(0)
 
       let requestsToOrigin = 0
       const server = createServer((_, res) => {
@@ -494,7 +856,6 @@ describe('Cache Interceptor', () => {
       strictEqual(await response.body.text(), 'asd')
 
       clock.tick(6000)
-      tick(6000)
 
       // Send fourth request w/ the directive, age should be 6 now so this
       //  should hit the origin
@@ -516,9 +877,9 @@ describe('Cache Interceptor', () => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
-      tick(0)
 
       const server = createServer((req, res) => {
+        res.setHeader('date', 0)
         res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
 
         if (requestsToOrigin === 1) {
@@ -558,7 +919,6 @@ describe('Cache Interceptor', () => {
       strictEqual(await response.body.text(), 'asd')
 
       clock.tick(1500)
-      tick(1500)
 
       // Now we send a second request. This should be within the max stale
       //  threshold, so a request shouldn't be made to the origin
@@ -589,10 +949,10 @@ describe('Cache Interceptor', () => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
-      tick(0)
 
       const server = createServer((req, res) => {
         requestsToOrigin++
+        res.setHeader('date', 0)
         res.setHeader('cache-control', 'public, s-maxage=10')
         res.end('asd')
       }).listen(0)
@@ -623,7 +983,6 @@ describe('Cache Interceptor', () => {
 
       // Fast forward more. Response has 8sec TTL left after
       clock.tick(2000)
-      tick(2000)
 
       // Now we send a second request. This should be within the threshold, so
       //  a request shouldn't be made to the origin
@@ -638,7 +997,6 @@ describe('Cache Interceptor', () => {
 
       // Fast forward more. Response has 2sec TTL left after
       clock.tick(6000)
-      tick(6000)
 
       // Send the second request again, this time it shouldn't be within the
       //  threshold and a request should be made to the origin.
@@ -806,6 +1164,112 @@ describe('Cache Interceptor', () => {
         }
       })
       equal(response.statusCode, 504)
+    })
+
+    test('stale-if-error', async () => {
+      const clock = FakeTimers.install({
+        shouldClearNativeTimers: true
+      })
+
+      let requestsToOrigin = 0
+      const server = createServer((_, res) => {
+        res.setHeader('date', 0)
+
+        requestsToOrigin++
+        if (requestsToOrigin === 1) {
+          // First request, send stale-while-revalidate to keep the value in the cache
+          res.setHeader('cache-control', 'public, s-maxage=10, stale-while-revalidate=20')
+          res.end('asd')
+        } else {
+          res.statusCode = 500
+          res.end('')
+        }
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        clock.uninstall()
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      strictEqual(requestsToOrigin, 0)
+
+      // Send first request. This will hit the origin and succeed
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET'
+        })
+        equal(requestsToOrigin, 1)
+        equal(response.statusCode, 200)
+        equal(await response.body.text(), 'asd')
+      }
+
+      // Send second request. It isn't stale yet, so this should be from the
+      //  cache and succeed
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET'
+        })
+        equal(requestsToOrigin, 1)
+        equal(response.statusCode, 200)
+        equal(await response.body.text(), 'asd')
+      }
+
+      clock.tick(15000)
+
+      // Send third request. This is now stale, the revalidation request should
+      //  fail but the response should still be served from cache.
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET',
+          headers: {
+            'cache-control': 'stale-if-error=20'
+          }
+        })
+        equal(requestsToOrigin, 2)
+        equal(response.statusCode, 200)
+        equal(await response.body.text(), 'asd')
+      }
+
+      // Send a fourth request. This is stale and w/o stale-if-error, so we
+      //  should get the error here.
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET'
+        })
+        equal(requestsToOrigin, 3)
+        equal(response.statusCode, 500)
+      }
+
+      clock.tick(25000)
+
+      // Send fifth request. We're now outside the stale-if-error threshold and
+      //  should see the error.
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET',
+          headers: {
+            'cache-control': 'stale-if-error=20'
+          }
+        })
+        equal(requestsToOrigin, 4)
+        equal(response.statusCode, 500)
+      }
     })
   })
 })

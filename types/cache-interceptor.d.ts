@@ -5,6 +5,14 @@ export default CacheHandler
 declare namespace CacheHandler {
   export type CacheMethods = 'GET' | 'HEAD' | 'OPTIONS' | 'TRACE'
 
+  export interface CacheHandlerOptions {
+    store: CacheStore
+
+    cacheByDefault?: number
+
+    type?: CacheOptions['type']
+  }
+
   export interface CacheOptions {
     store?: CacheStore
 
@@ -16,6 +24,39 @@ declare namespace CacheHandler {
      * @see https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1
      */
     methods?: CacheMethods[]
+
+    /**
+     * RFC9111 allows for caching responses that we aren't explicitly told to
+     *  cache or to not cache.
+     * @see https://www.rfc-editor.org/rfc/rfc9111.html#section-3-5
+     * @default undefined
+     */
+    cacheByDefault?: number
+
+    /**
+     * TODO docs
+     * @default 'shared'
+     */
+    type?: 'shared' | 'private'
+  }
+
+  export interface CacheControlDirectives {
+    'max-stale'?: number;
+    'min-fresh'?: number;
+    'max-age'?: number;
+    's-maxage'?: number;
+    'stale-while-revalidate'?: number;
+    'stale-if-error'?: number;
+    public?: true;
+    private?: true | string[];
+    'no-store'?: true;
+    'no-cache'?: true | string[];
+    'must-revalidate'?: true;
+    'proxy-revalidate'?: true;
+    immutable?: true;
+    'no-transform'?: true;
+    'must-understand'?: true;
+    'only-if-cached'?: true;
   }
 
   export interface CacheKey {
@@ -28,9 +69,10 @@ declare namespace CacheHandler {
   export interface CacheValue {
     statusCode: number
     statusMessage: string
-    rawHeaders: Buffer[]
+    headers: Record<string, string | string[]>
     vary?: Record<string, string | string[]>
     etag?: string
+    cacheControlDirectives?: CacheControlDirectives
     cachedAt: number
     staleAt: number
     deleteAt: number
@@ -45,9 +87,11 @@ declare namespace CacheHandler {
   type GetResult = {
     statusCode: number
     statusMessage: string
-    rawHeaders: Buffer[]
+    headers: Record<string, string | string[]>
+    vary?: Record<string, string | string[]>
     etag?: string
     body: null | Readable | Iterable<Buffer> | AsyncIterable<Buffer> | Buffer | Iterable<string> | AsyncIterable<string> | string
+    cacheControlDirectives: CacheControlDirectives,
     cachedAt: number
     staleAt: number
     deleteAt: number
@@ -74,6 +118,11 @@ declare namespace CacheHandler {
      * @default Infinity
      */
     maxSize?: number
+
+    /**
+     * @default Infinity
+     */
+    maxEntrySize?: number
 
     errorCallback?: (err: Error) => void
   }

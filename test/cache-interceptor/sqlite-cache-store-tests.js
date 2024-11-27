@@ -52,7 +52,7 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
   const requestValue = {
     statusCode: 200,
     statusMessage: '',
-    rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
+    headers: { foo: 'bar' },
     cachedAt: Date.now(),
     staleAt: Date.now() + 10000,
     deleteAt: Date.now() + 20000
@@ -69,7 +69,9 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
   deepStrictEqual(await readResponse(readable), {
     ...requestValue,
     etag: undefined,
-    body: requestBody
+    vary: undefined,
+    cacheControlDirectives: undefined,
+    body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
   })
 
   // Make sure we got the expected response from store b
@@ -78,7 +80,9 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
   deepStrictEqual(await readResponse(readable), {
     ...requestValue,
     etag: undefined,
-    body: requestBody
+    vary: undefined,
+    cacheControlDirectives: undefined,
+    body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
   })
 })
 
@@ -111,7 +115,7 @@ test('SqliteCacheStore maxEntries', async (t) => {
     const requestValue = {
       statusCode: 200,
       statusMessage: '',
-      rawHeaders: [Buffer.from('1'), Buffer.from('2'), Buffer.from('3')],
+      headers: { foo: 'bar' },
       cachedAt: Date.now(),
       staleAt: Date.now() + 10000,
       deleteAt: Date.now() + 20000
@@ -124,4 +128,50 @@ test('SqliteCacheStore maxEntries', async (t) => {
   }
 
   strictEqual(store.size <= 11, true)
+})
+
+test('two writes', async (t) => {
+  if (!hasSqlite) {
+    t.skip()
+    return
+  }
+
+  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+  const sqliteLocation = 'cache-interceptor.sqlite'
+
+  const store = new SqliteCacheStore({
+    location: sqliteLocation,
+    maxCount: 10
+  })
+
+  t.after(async () => {
+    await rm(sqliteLocation)
+  })
+
+  const request = {
+    origin: 'localhost',
+    path: '/',
+    method: 'GET',
+    headers: {}
+  }
+
+  const requestValue = {
+    statusCode: 200,
+    statusMessage: '',
+    headers: { foo: 'bar' },
+    cachedAt: Date.now(),
+    staleAt: Date.now() + 10000,
+    deleteAt: Date.now() + 20000
+  }
+  const requestBody = ['asd', '123']
+
+  {
+    const writable = store.createWriteStream(request, requestValue)
+    await once(writeResponse(writable, requestBody), 'close')
+  }
+
+  {
+    const writable = store.createWriteStream(request, requestValue)
+    await once(writeResponse(writable, requestBody), 'close')
+  }
 })

@@ -11,7 +11,7 @@ declare class Agent extends Dispatcher {
   /** `true` after `dispatcher.destroyed()` has been called or `dispatcher.close()` has been called and the dispatcher shutdown has completed. */
   destroyed: boolean
   /** Dispatches a request. */
-  dispatch (options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandlers): boolean
+  dispatch (options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandler): boolean
 }
 
 declare namespace Agent {

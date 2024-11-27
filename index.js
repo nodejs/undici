@@ -38,6 +38,7 @@ module.exports.DecoratorHandler = DecoratorHandler
 module.exports.RedirectHandler = RedirectHandler
 module.exports.interceptors = {
   redirect: require('./lib/interceptor/redirect'),
+  responseError: require('./lib/interceptor/response-error'),
   retry: require('./lib/interceptor/retry'),
   dump: require('./lib/interceptor/dump'),
   dns: require('./lib/interceptor/dns'),

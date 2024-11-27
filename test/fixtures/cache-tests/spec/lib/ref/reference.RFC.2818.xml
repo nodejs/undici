@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC2818' target='http://www.rfc-editor.org/info/rfc2818'>
+<front>
+<title>HTTP Over TLS</title>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'><organization /></author>
+<date year='2000' month='May' />
+<abstract><t>This memo describes how to use Transport Layer Security (TLS) to secure Hypertext Transfer Protocol (HTTP) connections over the Internet.  This memo provides information for the Internet community.</t></abstract>
+</front>
+<seriesInfo name='RFC' value='2818'/>
+<seriesInfo name='DOI' value='10.17487/RFC2818'/>
+</reference>

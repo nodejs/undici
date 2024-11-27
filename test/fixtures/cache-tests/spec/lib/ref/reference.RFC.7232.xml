@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC7232' target='http://www.rfc-editor.org/info/rfc7232'>
+<front>
+<title>Hypertext Transfer Protocol (HTTP/1.1): Conditional Requests</title>
+<author initials='R.' surname='Fielding' fullname='R. Fielding' role='editor'><organization /></author>
+<author initials='J.' surname='Reschke' fullname='J. Reschke' role='editor'><organization /></author>
+<date year='2014' month='June' />
+<abstract><t>The Hypertext Transfer Protocol (HTTP) is a stateless application- level protocol for distributed, collaborative, hypertext information systems.  This document defines HTTP/1.1 conditional requests, including metadata header fields for indicating state changes, request header fields for making preconditions on such state, and rules for constructing the responses to a conditional request when one or more preconditions evaluate to false.</t></abstract>
+</front>
+<seriesInfo name='RFC' value='7232'/>
+<seriesInfo name='DOI' value='10.17487/RFC7232'/>
+</reference>

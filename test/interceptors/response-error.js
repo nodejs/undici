@@ -1,67 +1,84 @@
 'use strict'
 
-const assert = require('assert')
-const { test } = require('node:test')
-const createResponseErrorInterceptor = require('../../lib/interceptor/response-error')
+const assert = require('node:assert')
+const { once } = require('node:events')
+const { createServer } = require('node:http')
+const { test, after } = require('node:test')
+const { interceptors, Client } = require('../..')
+const { responseError } = interceptors
 
-test('should not error if request is not meant to throw error', async (t) => {
-  const opts = { throwOnError: false }
-  const handler = {
-    onError: () => {},
-    onData: () => {},
-    onComplete: () => {}
+test('should throw error for error response', async () => {
+  const server = createServer()
+
+  server.on('request', (req, res) => {
+    res.writeHead(400, { 'content-type': 'text/plain' })
+    res.end('Bad Request')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(responseError())
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  let error
+  try {
+    await client.request({
+      method: 'GET',
+      path: '/',
+      headers: {
+        'content-type': 'text/plain'
+      }
+    })
+  } catch (err) {
+    error = err
   }
 
-  const interceptor = createResponseErrorInterceptor((opts, handler) => handler.onComplete())
-
-  assert.doesNotThrow(() => interceptor(opts, handler))
+  assert.equal(error.statusCode, 400)
+  assert.equal(error.message, 'Response Error')
+  assert.equal(error.body, 'Bad Request')
 })
 
-test('should error if request status code is in the specified error codes', async (t) => {
-  const opts = { throwOnError: true, statusCodes: [500] }
-  const response = { statusCode: 500 }
-  let capturedError
-  const handler = {
-    onError: (err) => {
-      capturedError = err
-    },
-    onData: () => {},
-    onComplete: () => {}
-  }
+test('should not throw error for ok response', async () => {
+  const server = createServer()
 
-  const interceptor = createResponseErrorInterceptor((opts, handler) => {
-    if (opts.throwOnError && opts.statusCodes.includes(response.statusCode)) {
-      handler.onError(new Error('Response Error'))
-    } else {
-      handler.onComplete()
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(responseError())
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'text/plain'
     }
   })
 
-  interceptor({ ...opts, response }, handler)
-
-  await new Promise(resolve => setImmediate(resolve))
-
-  assert(capturedError, 'Expected error to be captured but it was not.')
-  assert.strictEqual(capturedError.message, 'Response Error')
-  assert.strictEqual(response.statusCode, 500)
-})
-
-test('should not error if request status code is not in the specified error codes', async (t) => {
-  const opts = { throwOnError: true, statusCodes: [500] }
-  const response = { statusCode: 404 }
-  const handler = {
-    onError: () => {},
-    onData: () => {},
-    onComplete: () => {}
-  }
-
-  const interceptor = createResponseErrorInterceptor((opts, handler) => {
-    if (opts.throwOnError && opts.statusCodes.includes(response.statusCode)) {
-      handler.onError(new Error('Response Error'))
-    } else {
-      handler.onComplete()
-    }
-  })
-
-  assert.doesNotThrow(() => interceptor({ ...opts, response }, handler))
+  assert.equal(response.statusCode, 200)
+  assert.equal(await response.body.text(), 'hello')
 })
