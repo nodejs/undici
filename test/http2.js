@@ -1740,7 +1740,7 @@ test('Should handle http2 stream timeout', async t => {
   })
 })
 
-test('Should handle http2 trailers', async t => {
+test('Should handle http2 trailers', { only: true }, async t => {
   const server = createSecureServer(pem)
   const stream = createReadStream(__filename)
 
