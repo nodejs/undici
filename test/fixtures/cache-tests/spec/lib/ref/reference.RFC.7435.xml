@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC7435' target='http://www.rfc-editor.org/info/rfc7435'>
+<front>
+<title>Opportunistic Security: Some Protection Most of the Time</title>
+<author initials='V.' surname='Dukhovni' fullname='V. Dukhovni'><organization /></author>
+<date year='2014' month='December' />
+<abstract><t>This document defines the concept &quot;Opportunistic Security&quot; in the context of communications protocols.  Protocol designs based on Opportunistic Security use encryption even when authentication is not available, and use authentication when possible, thereby removing barriers to the widespread use of encryption on the Internet.</t></abstract>
+</front>
+<seriesInfo name='RFC' value='7435'/>
+<seriesInfo name='DOI' value='10.17487/RFC7435'/>
+</reference>

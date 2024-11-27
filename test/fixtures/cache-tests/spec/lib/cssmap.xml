@@ -1,0 +1,15 @@
+<css>
+  <map from="error" css="bg-danger"/>
+  <map from="fbbutton" css="btn btn-primary fbbutton"/>
+  <map from="feedback" css="btn btn-primary feedback"/>
+  <map from="header" css="table table-condensed header"/>
+  <map from="docstatus" css="alert alert-info"/>
+  <map from="noprint" css="hidden-print"/>
+  <map from="note" css="alert alert-warning"/>
+  <map from="tcenter" css="text-center"/>
+  <map from="left" css="text-left"/>
+  <map from="right" css="text-right"/>
+  <map from="reference" css="dl-horizontal"/>
+  <map from="tt" css="table table-condensed table-striped"/>
+  <map from="publishedasrfc" css="alert alert-danger"/>
+</css>

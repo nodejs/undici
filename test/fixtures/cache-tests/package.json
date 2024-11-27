@@ -1,0 +1,42 @@
+{
+  "name": "http-cache-tests",
+  "version": "0.4.5",
+  "description": "Tests for HTTP caches",
+  "homepage": "https://cache-tests.fyi/",
+  "author": "Mark Nottingham",
+  "license": "BSD-3-Clause",
+  "engines": {
+    "node": ">=14.8.0"
+  },
+  "dependencies": {
+    "liquidjs": "^10.9.2",
+    "marked": "^15.0.0",
+    "node-fetch": "3.1.1",
+    "node-fetch-with-proxy": "^0.1.6",
+    "npm": "^10.1.0"
+  },
+  "scripts": {
+    "server": "node test-engine/server/server.mjs",
+    "cli": "node --no-warnings test-engine/cli.mjs",
+    "export": "node --no-warnings test-engine/export.mjs",
+    "validate": "node --no-warnings test-engine/export.mjs validate",
+    "lint": "standard test-engine tests spec",
+    "fix": "standard --fix test-engine tests spec"
+  },
+  "config": {
+    "protocol": "http",
+    "port": "8000",
+    "base": "",
+    "id": "",
+    "pidfile": "/tmp/http-cache-test-server.pid"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/http-tests/cache-tests.git"
+  },
+  "devDependencies": {
+    "ajv": "^8.12.0",
+    "font-awesome": "^4.7.0",
+    "standard": "^17.1.0"
+  }
+}

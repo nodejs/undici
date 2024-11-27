@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC7258' target='http://www.rfc-editor.org/info/rfc7258'>
+<front>
+<title>Pervasive Monitoring Is an Attack</title>
+<author initials='S.' surname='Farrell' fullname='S. Farrell'><organization /></author>
+<author initials='H.' surname='Tschofenig' fullname='H. Tschofenig'><organization /></author>
+<date year='2014' month='May' />
+<abstract><t>Pervasive monitoring is a technical attack that should be mitigated in the design of IETF protocols, where possible.</t></abstract>
+</front>
+<seriesInfo name='BCP' value='188'/>
+<seriesInfo name='RFC' value='7258'/>
+<seriesInfo name='DOI' value='10.17487/RFC7258'/>
+</reference>

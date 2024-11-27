@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC3864' target='https://www.rfc-editor.org/info/rfc3864'>
+<front>
+<title>Registration Procedures for Message Header Fields</title>
+<author initials='G.' surname='Klyne' fullname='G. Klyne'><organization /></author>
+<author initials='M.' surname='Nottingham' fullname='M. Nottingham'><organization /></author>
+<author initials='J.' surname='Mogul' fullname='J. Mogul'><organization /></author>
+<date year='2004' month='September' />
+<abstract><t>This specification defines registration procedures for the message header fields used by Internet mail, HTTP, Netnews and other applications.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t></abstract>
+</front>
+<seriesInfo name='BCP' value='90'/>
+<seriesInfo name='RFC' value='3864'/>
+<seriesInfo name='DOI' value='10.17487/RFC3864'/>
+</reference>
