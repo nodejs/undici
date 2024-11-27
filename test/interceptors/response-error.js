@@ -45,7 +45,7 @@ test('should throw error for error response', async () => {
 
   assert.equal(error.statusCode, 400)
   assert.equal(error.message, 'Response Error')
-  assert.equal(error.data, 'Bad Request')
+  assert.equal(error.body, 'Bad Request')
 })
 
 test('should not throw error for ok response', async () => {
