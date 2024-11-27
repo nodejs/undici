@@ -638,7 +638,7 @@ test('dispatch pool onError missing', async (t) => {
       })
     } catch (err) {
       p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-      p.strictEqual(err.message, 'invalid onError method')
+      p.strictEqual(err.message, 'upgrade must be a string')
     }
   })
 
