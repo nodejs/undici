@@ -432,7 +432,7 @@ test('Should use retry-after header for retries (date)', async t => {
 })
 
 test('Should retry with defaults', async t => {
-  t = tspl(t, { plan: 2 })
+  t = tspl(t, { plan: 3 })
 
   let counter = 0
   const chunks = []
