@@ -1760,6 +1760,9 @@ test('Should handle http2 trailers', { only: true }, async t => {
       })
     })
 
+    stream.on('error', console.log)
+    stream.on('frameError', console.log)
+
     stream.end('hello h2!')
   })
 
