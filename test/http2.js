@@ -1761,8 +1761,6 @@ test('Should handle http2 trailers', { only: true }, async t => {
 
     stream.on('data', () => {})
 
-    stream.on('error', (err) => console.log('stream err', err))
-
     stream.end('hello h2!')
   })
 
