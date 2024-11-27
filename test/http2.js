@@ -1760,8 +1760,7 @@ test('Should handle http2 trailers', { only: true }, async t => {
       })
     })
 
-    stream.on('error', console.log)
-    stream.on('frameError', console.log)
+    stream.on('error', (err) => console.log('stream err', err))
 
     stream.end('hello h2!')
   })
@@ -1778,7 +1777,8 @@ test('Should handle http2 trailers', { only: true }, async t => {
     allowH2: true
   })
 
-  after(() => client.close().then(() => server.close()))
+  after(() => server.close())
+  after(() => client.close())
 
   client.dispatch({
     path: '/',
