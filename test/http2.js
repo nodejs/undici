@@ -1740,7 +1740,7 @@ test('Should handle http2 stream timeout', async t => {
   })
 })
 
-test('Should handle http2 trailers', { only: true }, async t => {
+test('Should handle http2 trailers', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', async (stream, headers) => {
@@ -1758,8 +1758,6 @@ test('Should handle http2 trailers', { only: true }, async t => {
         'x-trailer': 'hello'
       })
     })
-
-    // stream.on('data', () => {})
 
     stream.end('hello h2!')
   })
