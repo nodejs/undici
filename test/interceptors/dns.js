@@ -1,12 +1,12 @@
 'use strict'
 
+const FakeTimers = require('@sinonjs/fake-timers')
 const { test, after } = require('node:test')
 const { isIP } = require('node:net')
 const { lookup } = require('node:dns')
 const { createServer } = require('node:http')
 const { createServer: createSecureServer } = require('node:https')
 const { once } = require('node:events')
-const { setTimeout: sleep } = require('node:timers/promises')
 
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('https-pem')
@@ -613,6 +613,7 @@ test('Should automatically resolve IPs (dual stack disabled - 6)', async t => {
 test('Should we handle TTL (4)', async t => {
   t = tspl(t, { plan: 10 })
 
+  const clock = FakeTimers.install()
   let counter = 0
   let lookupCounter = 0
   const server = createServer()
@@ -674,6 +675,7 @@ test('Should we handle TTL (4)', async t => {
   ])
 
   after(async () => {
+    clock.uninstall()
     await client.close()
     server.close()
 
@@ -688,7 +690,7 @@ test('Should we handle TTL (4)', async t => {
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
 
-  await sleep(200)
+  clock.tick(200)
 
   const response2 = await client.request({
     ...requestOptions,
@@ -698,7 +700,7 @@ test('Should we handle TTL (4)', async t => {
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
 
-  await sleep(300)
+  clock.tick(300)
 
   const response3 = await client.request({
     ...requestOptions,
@@ -714,6 +716,7 @@ test('Should we handle TTL (4)', async t => {
 test('Should we handle TTL (6)', async t => {
   t = tspl(t, { plan: 10 })
 
+  const clock = FakeTimers.install()
   let counter = 0
   let lookupCounter = 0
   const server = createServer()
@@ -778,6 +781,7 @@ test('Should we handle TTL (6)', async t => {
   ])
 
   after(async () => {
+    clock.uninstall()
     await client.close()
     server.close()
 
@@ -792,7 +796,7 @@ test('Should we handle TTL (6)', async t => {
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
 
-  await sleep(200)
+  clock.tick(200)
 
   const response2 = await client.request({
     ...requestOptions,
@@ -802,7 +806,7 @@ test('Should we handle TTL (6)', async t => {
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
 
-  await sleep(300)
+  clock.tick(300)
 
   const response3 = await client.request({
     ...requestOptions,
@@ -817,6 +821,7 @@ test('Should we handle TTL (6)', async t => {
 test('Should set lowest TTL between resolved and option maxTTL', async t => {
   t = tspl(t, { plan: 9 })
 
+  const clock = FakeTimers.install()
   let lookupCounter = 0
   const server = createServer()
   const requestOptions = {
@@ -855,6 +860,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
   )
 
   after(async () => {
+    clock.uninstall()
     await client.close()
     server.close()
 
@@ -869,7 +875,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
 
-  await sleep(100)
+  clock.tick(100)
 
   // 100ms: lookup since ttl = Math.min(50, maxTTL: 200)
   const response2 = await client.request({
@@ -880,7 +886,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
 
-  await sleep(100)
+  clock.tick(100)
 
   // 100ms: cached since ttl = Math.min(500, maxTTL: 200)
   const response3 = await client.request({
@@ -891,7 +897,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
   t.equal(response3.statusCode, 200)
   t.equal(await response3.body.text(), 'hello world!')
 
-  await sleep(150)
+  clock.tick(150)
 
   // 250ms: lookup since ttl = Math.min(500, maxTTL: 200)
   const response4 = await client.request({
@@ -1191,6 +1197,7 @@ test('Should use all dns entries (dual stack disabled - 6)', async t => {
 test('Should handle single family resolved (dual stack)', async t => {
   t = tspl(t, { plan: 7 })
 
+  const clock = FakeTimers.install()
   let counter = 0
   let lookupCounter = 0
   const server = createServer()
@@ -1250,6 +1257,7 @@ test('Should handle single family resolved (dual stack)', async t => {
   ])
 
   after(async () => {
+    clock.uninstall()
     await client.close()
     server.close()
 
@@ -1264,7 +1272,7 @@ test('Should handle single family resolved (dual stack)', async t => {
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
 
-  await sleep(100)
+  clock.tick(100)
 
   const response2 = await client.request({
     ...requestOptions,
@@ -1280,6 +1288,7 @@ test('Should handle single family resolved (dual stack)', async t => {
 test('Should prefer affinity (dual stack - 4)', async t => {
   t = tspl(t, { plan: 10 })
 
+  const clock = FakeTimers.install()
   let counter = 0
   let lookupCounter = 0
   const server = createServer()
@@ -1342,6 +1351,7 @@ test('Should prefer affinity (dual stack - 4)', async t => {
   ])
 
   after(async () => {
+    clock.uninstall()
     await client.close()
     server.close()
 
@@ -1356,7 +1366,7 @@ test('Should prefer affinity (dual stack - 4)', async t => {
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
 
-  await sleep(100)
+  clock.tick(100)
 
   const response2 = await client.request({
     ...requestOptions,
@@ -1380,6 +1390,7 @@ test('Should prefer affinity (dual stack - 4)', async t => {
 test('Should prefer affinity (dual stack - 6)', async t => {
   t = tspl(t, { plan: 10 })
 
+  const clock = FakeTimers.install()
   let counter = 0
   let lookupCounter = 0
   const server = createServer()
@@ -1442,6 +1453,7 @@ test('Should prefer affinity (dual stack - 6)', async t => {
   ])
 
   after(async () => {
+    clock.uninstall()
     await client.close()
     server.close()
 
@@ -1456,7 +1468,7 @@ test('Should prefer affinity (dual stack - 6)', async t => {
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
 
-  await sleep(100)
+  clock.tick(100)
 
   const response2 = await client.request({
     ...requestOptions,
