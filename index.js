@@ -53,7 +53,7 @@ try {
   const SqliteCacheStore = require('./lib/cache/sqlite-cache-store')
   module.exports.cacheStores.SqliteCacheStore = SqliteCacheStore
 } catch (err) {
-  if (err.code !== 'ERR_UNKNOWN_BUILTIN_MODULE') {
+  if (err.code !== 'ERR_UNKNOWN_BUILTIN_MODULE' && err.code !== 'MODULE_NOT_FOUND') {
     throw err
   }
 }

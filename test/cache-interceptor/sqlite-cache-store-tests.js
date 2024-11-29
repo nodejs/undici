@@ -14,7 +14,7 @@ try {
   cacheStoreTests(SqliteCacheStore)
   hasSqlite = true
 } catch (err) {
-  if (err.code === 'ERR_UNKNOWN_BUILTIN_MODULE') {
+  if (err.code === 'ERR_UNKNOWN_BUILTIN_MODULE' && err.code !== 'MODULE_NOT_FOUND') {
     skip('`node:sqlite` not present')
   } else {
     throw err
