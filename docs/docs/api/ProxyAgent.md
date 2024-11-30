@@ -200,3 +200,19 @@ const response = await fetch('https://secure.endpoint.com/api/data', {
 console.log('Response status:', response.status);
 console.log('Response data:', await response.json());
 ```
+
+#### Example - ProxyAgent as a Global Dispatcher
+
+`ProxyAgent` can be configured as a global dispatcher, making it available for all requests without explicitly passing it. This simplifies code and is useful when a single proxy configuration applies to all requests.
+
+```javascript
+import { ProxyAgent, setGlobalDispatcher, fetch } from 'undici';
+
+// Define and configure the ProxyAgent
+const proxyAgent = new ProxyAgent('http://localhost:8000');
+setGlobalDispatcher(proxyAgent);
+
+// Make requests without specifying the dispatcher
+const response = await fetch('http://example.com');
+console.log('Response status:', response.status);
+console.log('Response data:', await response.text());
