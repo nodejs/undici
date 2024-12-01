@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stripe Payment</title>
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+  <form id="payment-form">
+    <label for="card-element">Credit or debit card</label>
+    <div id="card-element"></div>
+    <button type="submit">Pay</button>
+  </form>
+
+  <script>
+    var stripe = Stripe('your-publishable-key'); // Replace with your Stripe publishable key
+    var elements = stripe.elements();
+    var card = elements.create('card');
+    card.mount('#card-element');
+
+    var form = document.getElementById('payment-form');
+
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const { token, error } = await stripe.createToken(card);
+
+      if (error) {
+        console.error(error);
+        alert('Payment failed');
+      } else {
+        // Send token to the server for payment processing
+        fetch('/pay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: 1000, token: token }) // Amount in cents
+        })
+        .then(response => response.json())
+        .then(data => {
+          alert(data.message);
+        })
+        .catch(error => console.error('Error:', error));
+      }
+    });
+  </script>
+</body>
+</html>
