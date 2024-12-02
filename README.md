@@ -294,6 +294,22 @@ const headers = await fetch(url)
   .then(res => res.headers)
 ```
 
+The same applies for `request` too:
+```js
+// Do
+const response = await request(url)
+  .then(res => {
+    response.body.dump().catch(err => {
+      console.error('Error while dumping the body');
+    });
+    return res.headers;
+  });
+
+// Do not
+const response = await request(url)
+  .then(res => res.headers);
+```
+
 However, if you want to get only headers, it might be better to use `HEAD` request method. Usage of this method will obviate the need for consumption or cancelling of the response body. See [MDN - HTTP - HTTP request methods - HEAD](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD) for more details.
 
 ```js
