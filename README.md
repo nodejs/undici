@@ -299,9 +299,7 @@ The same applies for `request` too:
 // Do
 const response = await request(url)
   .then(res => {
-    response.body.dump().catch(err => {
-      console.error('Error while dumping the body');
-    });
+    response.body.dump();
     return res.headers;
   });
 
