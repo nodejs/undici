@@ -299,7 +299,7 @@ The same applies for `request` too:
 // Do
 const response = await request(url)
   .then(res => {
-    response.body.dump();
+    res.body.dump();
     return res.headers;
   });
 
