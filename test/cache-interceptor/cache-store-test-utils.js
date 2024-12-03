@@ -1,9 +1,10 @@
 'use strict'
 
-const { describe, test } = require('node:test')
-const { deepStrictEqual, notEqual, equal } = require('node:assert')
+const { equal, notEqual, deepStrictEqual } = require('node:assert')
+const { describe, test, after } = require('node:test')
 const { Readable } = require('node:stream')
 const { once } = require('node:events')
+const FakeTimers = require('@sinonjs/fake-timers')
 
 /**
  * @typedef {import('../../types/cache-interceptor.d.ts').default.CacheStore} CacheStore
@@ -12,22 +13,27 @@ const { once } = require('node:events')
  */
 function cacheStoreTests (CacheStore) {
   describe(CacheStore.prototype.constructor.name, () => {
-    test('matches interface', async () => {
-      const store = new CacheStore()
-      equal(typeof store.get, 'function')
-      equal(typeof store.createWriteStream, 'function')
-      equal(typeof store.delete, 'function')
+    test('matches interface', () => {
+      equal(typeof CacheStore.prototype.get, 'function')
+      equal(typeof CacheStore.prototype.createWriteStream, 'function')
+      equal(typeof CacheStore.prototype.delete, 'function')
     })
 
-    // Checks that it can store & fetch different responses
-    test('basic functionality', async () => {
-      const request = {
+    test('caches request', async () => {
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+       */
+      const key = {
         origin: 'localhost',
         path: '/',
         method: 'GET',
         headers: {}
       }
-      const requestValue = {
+
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+       */
+      const value = {
         statusCode: 200,
         statusMessage: '',
         headers: { foo: 'bar' },
@@ -36,40 +42,43 @@ function cacheStoreTests (CacheStore) {
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
       }
-      const requestBody = ['asd', '123']
 
-      /**
-       * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
-       */
+      const body = [Buffer.from('asd'), Buffer.from('123')]
+
       const store = new CacheStore()
 
       // Sanity check
-      equal(store.get(request), undefined)
+      equal(await store.get(key), undefined)
 
-      // Write the response to the store
-      let writeStream = store.createWriteStream(request, requestValue)
-      notEqual(writeStream, undefined)
-      writeResponse(writeStream, requestBody)
+      // Write response to store
+      {
+        const writable = store.createWriteStream(key, value)
+        notEqual(writable, undefined)
+        writeBody(writable, body)
+      }
 
-      // Now try fetching it with a deep copy of the original request
-      let readResult = store.get(structuredClone(request))
-      notEqual(readResult, undefined)
+      // Now let's try fetching the response from the store
+      {
+        const result = await store.get(structuredClone(key))
+        notEqual(result, undefined)
+        await compareGetResults(result, value, body)
+      }
 
-      deepStrictEqual(await readResponse(readResult), {
-        ...requestValue,
-        etag: undefined,
-        vary: undefined,
-        cacheControlDirectives: {},
-        body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
-      })
-
-      // Now let's write another request to the store
-      const anotherRequest = {
+      /**
+       * Let's try out a request to a different resource to make sure it can
+       *  differentiate between the two
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+       */
+      const anotherKey = {
         origin: 'localhost',
         path: '/asd',
         method: 'GET',
         headers: {}
       }
+
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+       */
       const anotherValue = {
         statusCode: 200,
         statusMessage: '',
@@ -79,99 +88,87 @@ function cacheStoreTests (CacheStore) {
         staleAt: Date.now() + 10000,
         deleteAt: Date.now() + 20000
       }
-      const anotherBody = ['asd2', '1234']
 
-      // We haven't cached this one yet, make sure it doesn't confuse it with
-      //  another request
-      equal(store.get(anotherRequest), undefined)
+      const anotherBody = [Buffer.from('asd'), Buffer.from('123')]
 
-      // Now let's cache it
-      writeStream = store.createWriteStream(anotherRequest, {
-        ...anotherValue,
-        body: []
-      })
-      notEqual(writeStream, undefined)
-      writeResponse(writeStream, anotherBody)
+      equal(store.get(anotherKey), undefined)
 
-      readResult = store.get(anotherRequest)
-      notEqual(readResult, undefined)
-      deepStrictEqual(await readResponse(readResult), {
-        ...anotherValue,
-        etag: undefined,
-        vary: undefined,
-        cacheControlDirectives: {},
-        body: Buffer.concat(anotherBody.map(x => Buffer.from(x)))
-      })
+      {
+        const writable = store.createWriteStream(anotherKey, anotherValue)
+        notEqual(writable, undefined)
+        writeBody(writable, anotherBody)
+      }
+
+      {
+        const result = await store.get(structuredClone(anotherKey))
+        notEqual(result, undefined)
+        await compareGetResults(result, anotherValue, anotherBody)
+      }
     })
 
-    test('returns stale response if possible', async () => {
-      const request = {
+    test('returns stale response before deleteAt', async () => {
+      const clock = FakeTimers.install({
+        shouldClearNativeTimers: true
+      })
+
+      after(() => clock.uninstall())
+
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+       */
+      const key = {
         origin: 'localhost',
         path: '/',
         method: 'GET',
         headers: {}
       }
-      const requestValue = {
+
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+       */
+      const value = {
         statusCode: 200,
         statusMessage: '',
         headers: { foo: 'bar' },
         cacheControlDirectives: {},
-        cachedAt: Date.now() - 10000,
-        staleAt: Date.now() - 1,
-        deleteAt: Date.now() + 20000
+        cachedAt: Date.now(),
+        staleAt: Date.now() + 1000,
+        // deleteAt is different because stale-while-revalidate, stale-if-error, ...
+        deleteAt: Date.now() + 5000
       }
-      const requestBody = ['part1', 'part2']
 
-      /**
-       * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
-       */
+      const body = [Buffer.from('asd'), Buffer.from('123')]
+
       const store = new CacheStore()
 
-      const writeStream = store.createWriteStream(request, requestValue)
-      notEqual(writeStream, undefined)
-      writeResponse(writeStream, requestBody)
+      // Sanity check
+      equal(store.get(key), undefined)
 
-      const readResult = store.get(request)
-      deepStrictEqual(await readResponse(readResult), {
-        ...requestValue,
-        etag: undefined,
-        vary: undefined,
-        cacheControlDirectives: {},
-        body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
-      })
+      {
+        const writable = store.createWriteStream(key, value)
+        notEqual(writable, undefined)
+        writeBody(writable, body)
+      }
+
+      clock.tick(1500)
+
+      {
+        const result = await store.get(structuredClone(key))
+        notEqual(result, undefined)
+        await compareGetResults(result, value, body)
+      }
+
+      clock.tick(6000)
+
+      // Past deleteAt, shouldn't be returned
+      equal(await store.get(key), undefined)
     })
 
-    test('doesn\'t return response past deletedAt', async () => {
-      const request = {
-        origin: 'localhost',
-        path: '/',
-        method: 'GET',
-        headers: {}
-      }
-      const requestValue = {
-        statusCode: 200,
-        statusMessage: '',
-        cachedAt: Date.now() - 20000,
-        headers: {},
-        staleAt: Date.now() - 10000,
-        deleteAt: Date.now() - 5
-      }
-      const requestBody = ['part1', 'part2']
-
+    test('vary directives used to decide which response to use', async () => {
       /**
-       * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
        */
-      const store = new CacheStore()
-
-      const writeStream = store.createWriteStream(request, requestValue)
-      notEqual(writeStream, undefined)
-      writeResponse(writeStream, requestBody)
-
-      equal(store.get(request), undefined)
-    })
-
-    test('respects vary directives', async () => {
-      const request = {
+      const key = {
         origin: 'localhost',
         path: '/',
         method: 'GET',
@@ -179,7 +176,11 @@ function cacheStoreTests (CacheStore) {
           'some-header': 'hello world'
         }
       }
-      const requestValue = {
+
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+       */
+      const value = {
         statusCode: 200,
         statusMessage: '',
         headers: { foo: 'bar' },
@@ -188,54 +189,91 @@ function cacheStoreTests (CacheStore) {
         },
         cacheControlDirectives: {},
         cachedAt: Date.now(),
-        staleAt: Date.now() + 10000,
-        deleteAt: Date.now() + 20000
+        staleAt: Date.now() + 1000,
+        deleteAt: Date.now() + 1000
       }
-      const requestBody = ['part1', 'part2']
 
-      /**
-       * @type {import('../../types/cache-interceptor.d.ts').default.CacheStore}
-       */
+      const body = [Buffer.from('asd'), Buffer.from('123')]
+
       const store = new CacheStore()
 
       // Sanity check
-      equal(store.get(request), undefined)
+      equal(store.get(key), undefined)
 
-      const writeStream = store.createWriteStream(request, requestValue)
-      notEqual(writeStream, undefined)
-      writeResponse(writeStream, requestBody)
+      {
+        const writable = store.createWriteStream(key, value)
+        notEqual(writable, undefined)
+        writeBody(writable, body)
+      }
 
-      const readStream = store.get(structuredClone(request))
-      notEqual(readStream, undefined)
-      const { vary, ...responseValue } = requestValue
-      deepStrictEqual(await readResponse(readStream), {
-        ...responseValue,
-        etag: undefined,
-        vary: { 'some-header': 'hello world' },
-        cacheControlDirectives: {},
-        body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
-      })
+      {
+        const result = await store.get(structuredClone(key))
+        notEqual(result, undefined)
+        await compareGetResults(result, value, body)
+      }
 
-      const nonMatchingRequest = {
+      /**
+       * Let's make another key to the same resource but with a different vary
+       *  header
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+       */
+      const anotherKey = {
         origin: 'localhost',
         path: '/',
         method: 'GET',
         headers: {
-          'some-header': 'another-value'
+          'some-header': 'hello world2'
         }
       }
-      equal(store.get(nonMatchingRequest), undefined)
+
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+       */
+      const anotherValue = {
+        statusCode: 200,
+        statusMessage: '',
+        headers: { foo: 'bar' },
+        vary: {
+          'some-header': 'hello world2'
+        },
+        cacheControlDirectives: {},
+        cachedAt: Date.now(),
+        staleAt: Date.now() + 1000,
+        deleteAt: Date.now() + 1000
+      }
+
+      const anotherBody = [Buffer.from('asd'), Buffer.from('123')]
+
+      equal(await store.get(anotherKey), undefined)
+
+      {
+        const writable = store.createWriteStream(anotherKey, anotherValue)
+        notEqual(writable, undefined)
+        writeBody(writable, anotherBody)
+      }
+
+      {
+        const result = await store.get(structuredClone(key))
+        notEqual(result, undefined)
+        await compareGetResults(result, value, body)
+      }
+
+      {
+        const result = await store.get(structuredClone(anotherKey))
+        notEqual(result, undefined)
+        await compareGetResults(result, anotherValue, anotherBody)
+      }
     })
   })
 }
 
 /**
  * @param {import('node:stream').Writable} stream
- * @param {string[]} body
+ * @param {Buffer[]} body
  */
-function writeResponse (stream, body) {
+function writeBody (stream, body) {
   for (const chunk of body) {
-    stream.write(Buffer.from(chunk))
+    stream.write(chunk)
   }
 
   stream.end()
@@ -243,33 +281,74 @@ function writeResponse (stream, body) {
 }
 
 /**
- * @param {import('../../types/cache-interceptor.d.ts').default.GetResult} result
- * @returns {Promise<import('../../types/cache-interceptor.d.ts').default.GetResult | { body: Buffer[] }>}
+ * @param {import('../../types/cache-interceptor.d.ts').default.GetResult} param0
+ * @returns {Promise<Buffer[] | undefined>}
  */
-async function readResponse ({ body: src, ...response }) {
-  notEqual(response, undefined)
-  notEqual(src, undefined)
+async function readBody ({ body }) {
+  if (!body) {
+    return undefined
+  }
 
-  const stream = Readable.from(src ?? [])
+  if (typeof body === 'string') {
+    return [Buffer.from(body)]
+  }
+
+  if (body.constructor.name === 'Buffer') {
+    return [body]
+  }
+
+  const stream = Readable.from(body)
 
   /**
    * @type {Buffer[]}
    */
-  const body = []
+  const streamedBody = []
+
   stream.on('data', chunk => {
-    body.push(Buffer.from(chunk))
+    streamedBody.push(Buffer.from(chunk))
   })
 
   await once(stream, 'end')
 
-  return {
-    ...response,
-    body: Buffer.concat(body)
+  return streamedBody
+}
+
+/**
+ * @param {Buffer[]} buffers
+ * @returns {Buffer}
+ */
+function joinBufferArray (buffers) {
+  const data = []
+
+  for (const buffer of buffers) {
+    buffer.forEach((chunk) => {
+      data.push(chunk)
+    })
+  }
+
+  return Buffer.from(data)
+}
+
+/**
+ * @param {import('../../types/cache-interceptor.d.ts').default.GetResult} actual
+ * @param {import('../../types/cache-interceptor.d.ts').default.CacheValue} expected
+ * @param {Buffer[]} expectedBody
+*/
+async function compareGetResults (actual, expected, expectedBody) {
+  const actualBody = await readBody(actual)
+  deepStrictEqual(
+    actualBody ? joinBufferArray(actualBody) : undefined,
+    joinBufferArray(expectedBody)
+  )
+
+  for (const key of Object.keys(expected)) {
+    deepStrictEqual(actual[key], expected[key])
   }
 }
 
 module.exports = {
   cacheStoreTests,
-  writeResponse,
-  readResponse
+  writeBody,
+  readBody,
+  compareGetResults
 }
