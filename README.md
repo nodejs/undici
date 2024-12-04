@@ -445,6 +445,16 @@ and `undici.Agent`) which will enable the family autoselection algorithm when es
 * [__Robert Nagy__](https://github.com/ronag), <https://www.npmjs.com/~ronag>
 * [__Matthew Aitken__](https://github.com/KhafraDev), <https://www.npmjs.com/~khaf>
 
+## Long Term Support
+
+Undici aligns with the Node.js LTS schedule. The following table shows the supported versions:
+
+| Version | Node.js     | End of Life |
+|---------|-------------|-------------|
+| 5.x     | v18.x       | 2024-04-30  |
+| 6.x     | v20.x v22.x | 2026-04-30  |
+| 7.x     | v24.x       | 2027-04-30  |
+
 ## License
 
 MIT
