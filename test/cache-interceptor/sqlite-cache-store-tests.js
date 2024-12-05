@@ -1,10 +1,9 @@
 'use strict'
 
 const { test, skip } = require('node:test')
-const { deepStrictEqual, notEqual, strictEqual } = require('node:assert')
+const { notEqual, strictEqual } = require('node:assert')
 const { rm } = require('node:fs/promises')
-const { cacheStoreTests, writeResponse, readResponse } = require('./cache-store-test-utils.js')
-const { once } = require('node:events')
+const { cacheStoreTests, writeBody, compareGetResults } = require('./cache-store-test-utils.js')
 
 let hasSqlite = false
 try {
@@ -42,14 +41,20 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
     await rm(sqliteLocation)
   })
 
-  const request = {
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+   */
+  const key = {
     origin: 'localhost',
     path: '/',
     method: 'GET',
     headers: {}
   }
 
-  const requestValue = {
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+   */
+  const value = {
     statusCode: 200,
     statusMessage: '',
     headers: { foo: 'bar' },
@@ -57,33 +62,28 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
     staleAt: Date.now() + 10000,
     deleteAt: Date.now() + 20000
   }
-  const requestBody = ['asd', '123']
 
-  const writable = storeA.createWriteStream(request, requestValue)
-  notEqual(writable, undefined)
-  writeResponse(writable, requestBody)
+  const body = [Buffer.from('asd'), Buffer.from('123')]
+
+  {
+    const writable = storeA.createWriteStream(key, value)
+    notEqual(writable, undefined)
+    writeBody(writable, body)
+  }
 
   // Make sure we got the expected response from store a
-  let readable = storeA.get(request)
-  notEqual(readable, undefined)
-  deepStrictEqual(await readResponse(readable), {
-    ...requestValue,
-    etag: undefined,
-    vary: undefined,
-    cacheControlDirectives: undefined,
-    body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
-  })
+  {
+    const result = storeA.get(structuredClone(key))
+    notEqual(result, undefined)
+    await compareGetResults(result, value, body)
+  }
 
   // Make sure we got the expected response from store b
-  readable = storeB.get(request)
-  notEqual(readable, undefined)
-  deepStrictEqual(await readResponse(readable), {
-    ...requestValue,
-    etag: undefined,
-    vary: undefined,
-    cacheControlDirectives: undefined,
-    body: Buffer.concat(requestBody.map(x => Buffer.from(x)))
-  })
+  {
+    const result = storeB.get(structuredClone(key))
+    notEqual(result, undefined)
+    await compareGetResults(result, value, body)
+  }
 })
 
 test('SqliteCacheStore maxEntries', async (t) => {
@@ -93,26 +93,26 @@ test('SqliteCacheStore maxEntries', async (t) => {
   }
 
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
-  const sqliteLocation = 'cache-interceptor.sqlite'
 
   const store = new SqliteCacheStore({
-    location: sqliteLocation,
     maxCount: 10
   })
 
-  t.after(async () => {
-    await rm(sqliteLocation)
-  })
-
   for (let i = 0; i < 20; i++) {
-    const request = {
+    /**
+     * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+     */
+    const key = {
       origin: 'localhost',
       path: '/' + i,
       method: 'GET',
       headers: {}
     }
 
-    const requestValue = {
+    /**
+     * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+     */
+    const value = {
       statusCode: 200,
       statusMessage: '',
       headers: { foo: 'bar' },
@@ -120,42 +120,43 @@ test('SqliteCacheStore maxEntries', async (t) => {
       staleAt: Date.now() + 10000,
       deleteAt: Date.now() + 20000
     }
-    const requestBody = ['asd', '123']
 
-    const writable = store.createWriteStream(request, requestValue)
+    const body = ['asd', '123']
+
+    const writable = store.createWriteStream(key, value)
     notEqual(writable, undefined)
-    await once(writeResponse(writable, requestBody), 'close')
+    writeBody(writable, body)
   }
 
   strictEqual(store.size <= 11, true)
 })
 
-test('two writes', async (t) => {
+test('SqliteCacheStore two writes', async (t) => {
   if (!hasSqlite) {
     t.skip()
     return
   }
 
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
-  const sqliteLocation = 'cache-interceptor.sqlite'
 
   const store = new SqliteCacheStore({
-    location: sqliteLocation,
     maxCount: 10
   })
 
-  t.after(async () => {
-    await rm(sqliteLocation)
-  })
-
-  const request = {
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+   */
+  const key = {
     origin: 'localhost',
     path: '/',
     method: 'GET',
     headers: {}
   }
 
-  const requestValue = {
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+   */
+  const value = {
     statusCode: 200,
     statusMessage: '',
     headers: { foo: 'bar' },
@@ -163,15 +164,18 @@ test('two writes', async (t) => {
     staleAt: Date.now() + 10000,
     deleteAt: Date.now() + 20000
   }
-  const requestBody = ['asd', '123']
+
+  const body = ['asd', '123']
 
   {
-    const writable = store.createWriteStream(request, requestValue)
-    await once(writeResponse(writable, requestBody), 'close')
+    const writable = store.createWriteStream(key, value)
+    notEqual(writable, undefined)
+    writeBody(writable, body)
   }
 
   {
-    const writable = store.createWriteStream(request, requestValue)
-    await once(writeResponse(writable, requestBody), 'close')
+    const writable = store.createWriteStream(key, value)
+    notEqual(writable, undefined)
+    writeBody(writable, body)
   }
 })
