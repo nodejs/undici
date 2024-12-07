@@ -293,8 +293,8 @@ const { headers } = await fetch(url);
 The same applies for `request` too:
 ```js
 // Do
-const { body, headers } = await request(url)
-await res.body.dump();
+const { body, headers } = await request(url);
+await res.body.dump(); // force consumption of body
 
 // Do not
 const { headers } = await request(url);
