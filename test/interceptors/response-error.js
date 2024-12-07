@@ -168,3 +168,28 @@ test('should throw error for error response, parsing JSON without charset', asyn
     message: 'Bad Request'
   })
 })
+
+test('should throw error for networking errors response', async () => {
+  const client = new Client(
+    'http://localhost:12345'
+  ).compose(responseError())
+
+  after(async () => {
+    await client.close()
+  })
+
+  let error
+  try {
+    await client.request({
+      method: 'GET',
+      path: '/',
+      headers: {
+        'content-type': 'text/plain'
+      }
+    })
+  } catch (err) {
+    error = err
+  }
+
+  assert.equal(error.code, 'ECONNREFUSED')
+})
