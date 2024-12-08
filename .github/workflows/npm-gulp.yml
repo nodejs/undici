@@ -1,0 +1,58 @@
+setGlobalOrigin('http://localhost:3000')
+
+const response = await fetch('/api/ping')
+
+console.log(response.url) // http://localhost:3000/api/pinghttp://localhost:3000const headers = await fetch(url, { method: 'HEAD' })
+  .then(res => res.headers)http://localhost:3000/api/ping// Do
+const headers = await fetch(url)
+  .then(async res => {
+    for await (const chunk of res.body) {
+      // force consumption of body
+    }
+    return res.headers
+  })
+
+// Do not
+const headers = await fetch(url)
+  .then(res => res.headers)HEAD' }https://example.comres.headersresponse.bodyimport { fetch } from 'undici'
+import { Readable } from 'node:stream'
+
+const response = await fetch('https://example.com')
+const readableWebStream = response.body
+const readableNodeStream = Readable.fromWeb(readableWebStream)import { fetch } from 'undici'
+
+const data = {
+  async *[Symbol.asyncIterator]() {
+    yield 'hello'
+    yield 'world'
+  },
+}
+
+await fetch('https://example.com', { body: data, method: 'POST', duplex: 'half' })name: NodeJS with Gulp
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Build
+      run: |
+        npm install
+        gulp
