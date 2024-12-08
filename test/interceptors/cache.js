@@ -213,6 +213,7 @@ describe('Cache Interceptor', () => {
     let revalidationRequests = 0
     let serverError
     const server = createServer((req, res) => {
+      console.log(req.headers)
       res.setHeader('date', 0)
       res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
 
