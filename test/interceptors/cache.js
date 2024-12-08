@@ -155,6 +155,14 @@ describe('Cache Interceptor', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
+      .compose((dispatch) => {
+        return (opts, handler) => {
+          if (opts.headers) {
+            strictEqual(Object.prototype.hasOwnProperty.call(opts.headers, 'if-none-match'), false)
+          }
+          return dispatch(opts, handler)
+        }
+      })
       .compose(interceptors.cache())
 
     after(async () => {
