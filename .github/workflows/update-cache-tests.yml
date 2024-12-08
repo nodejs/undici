@@ -1,0 +1,45 @@
+name: Update Cache Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-cache-tests:
+    name: Update Cache Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git Config
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      - name: Update WPT
+        run: |
+          rm -rf test/fixtures/cache-tests && mkdir test/fixtures/cache-tests &&
+
+          git clone https://github.com/http-tests/cache-tests --depth=1 test/fixtures/tmp-cache-tests/ &&
+
+          mv test/fixtures/tmp-cache-tests/LICENSE test/fixtures/cache-tests/LICENSE &&
+          mv test/fixtures/tmp-cache-tests/tests test/fixtures/cache-tests/tests && 
+          mv test/fixtures/tmp-cache-tests/test-engine test/fixtures/cache-tests/test-engine &&
+          mv test/fixtures/tmp-cache-tests/results test/fixtures/cache-tests/results &&
+
+          rm -rf tests/fixtures/tmp-cache-tests/
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
+        with:
+          base: main
+          branch: cache-tests-update
+          title: Update Cache Tests
+          body: Automated update of the Cache Test Suite
+          commit-message: "chore: update cache tests"

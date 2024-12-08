@@ -1,12 +1,12 @@
 import * as config from './config.mjs'
 import { makeTest, testResults } from './test.mjs'
 
-
 export async function runTests (tests, myFetch, browserCache, base, chunkSize = 50) {
-  const testArray = []
   config.setFetch(myFetch)
   config.setBaseUrl(base)
   config.setUseBrowserCache(browserCache)
+
+  const testArray = []
   tests.forEach(testSet => {
     testSet.tests.forEach(test => {
       if (test.id === undefined) throw new Error('Missing test id')

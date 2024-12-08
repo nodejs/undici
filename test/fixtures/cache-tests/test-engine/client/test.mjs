@@ -295,6 +295,5 @@ function checkServerRequests (requests, responses, serverState) {
 }
 
 function handleError (err) {
-  console.log(new Error().stack)
   console.error(`ERROR: ${err}`)
 }
