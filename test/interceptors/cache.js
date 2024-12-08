@@ -155,6 +155,14 @@ describe('Cache Interceptor', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
+      .compose((dispatch) => {
+        return (opts, handler) => {
+          if (opts.headers) {
+            strictEqual(Object.prototype.hasOwnProperty.call(opts.headers, 'if-none-match'), false)
+          }
+          return dispatch(opts, handler)
+        }
+      })
       .compose(interceptors.cache())
 
     after(async () => {
@@ -213,7 +221,6 @@ describe('Cache Interceptor', () => {
     let revalidationRequests = 0
     let serverError
     const server = createServer((req, res) => {
-      console.log(req.headers)
       res.setHeader('date', 0)
       res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
 
