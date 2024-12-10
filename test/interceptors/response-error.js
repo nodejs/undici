@@ -193,3 +193,44 @@ test('should throw error for networking errors response', async () => {
 
   assert.equal(error.code, 'ECONNREFUSED')
 })
+
+test('should throw error for error response without content type', async () => {
+  const server = createServer()
+
+  server.on('request', (req, res) => {
+    res.writeHead(400, {})
+    res.end()
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(responseError())
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  let error
+  try {
+    await client.request({
+      method: 'GET',
+      path: '/',
+      headers: {
+        'content-type': 'text/plain'
+      }
+    })
+  } catch (err) {
+    error = err
+  }
+
+  assert.equal(error.statusCode, 400)
+  assert.equal(error.message, 'Response Error')
+  assert.deepStrictEqual(error.body, '')
+})
