@@ -1732,7 +1732,7 @@ test('Should handle max cached items', async t => {
   t.equal(await response3.body.text(), 'hello world! (x2)')
 })
 
-test('#3937 - Handle host correctly', { only: true }, async t => {
+test('#3937 - Handle host correctly', async t => {
   t = tspl(t, { plan: 10 })
 
   const hostsnames = []
