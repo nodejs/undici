@@ -25,7 +25,7 @@ describe("Node.js' --max-http-header-size cli option", () => {
 
   test("respect Node.js' --max-http-header-size", async (t) => {
     t = tspl(t, { plan: 6 })
-    const command = 'node -e "require(\'.\').request(\'http://localhost:' + server.address().port + '\')"'
+    const command = 'node --disable-warning=ExperimentalWarning -e "require(\'.\').request(\'http://localhost:' + server.address().port + '\')"'
 
     exec(`${command} --max-http-header-size=1`, { stdio: 'pipe' }, (err, stdout, stderr) => {
       t.strictEqual(err.code, 1)
@@ -44,7 +44,7 @@ describe("Node.js' --max-http-header-size cli option", () => {
 
   test('--max-http-header-size with Client API', async (t) => {
     t = tspl(t, { plan: 6 })
-    const command = 'node -e "new (require(\'.\').Client)(new URL(\'http://localhost:200\'))"'
+    const command = 'node --disable-warning=ExperimentalWarning -e "new (require(\'.\').Client)(new URL(\'http://localhost:200\'))"'
 
     exec(`${command} --max-http-header-size=0`, { stdio: 'pipe' }, (err, stdout, stderr) => {
       t.strictEqual(err.code, 1)
