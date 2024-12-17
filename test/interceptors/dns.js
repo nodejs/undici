@@ -1815,7 +1815,7 @@ test('#3937 - Handle host correctly', async t => {
   t.equal(await response2.body.text(), 'hello world!')
 })
 
-test('Pool', async t => {
+test('Should work with Pool', async t => {
   t = tspl(t, { plan: 4 })
 
   const server = createServer()
