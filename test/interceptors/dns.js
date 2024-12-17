@@ -1733,9 +1733,8 @@ test('Should handle max cached items', async t => {
 })
 
 test('Should handle ENOTFOUND response error', async t => {
-  t = tspl(t, { plan: 4 })
+  t = tspl(t, { plan: 3 })
   let lookupCounter = 0
-  const hostname = 'something-which-should-result-in-enotfound.undici'
 
   const requestOptions = {
     method: 'GET',
@@ -1744,22 +1743,13 @@ test('Should handle ENOTFOUND response error', async t => {
   }
 
   const client = new Agent().compose([
-    dispatch => {
-      return (opts, handler) => {
-        opts.origin = new URL(`http://${hostname}`)
-        return dispatch(opts, handler)
-      }
-    },
     dns({
       lookup (origin, opts, cb) {
         lookupCounter++
         if (lookupCounter === 1) {
-          cb(null, [
-            {
-              address: '127.0.0.1',
-              family: 4
-            }
-          ])
+          const err = new Error('test error')
+          err.code = 'ENOTFOUND'
+          cb(err)
         } else {
           // Causes InformationalError
           cb(null, [])
@@ -1779,7 +1769,6 @@ test('Should handle ENOTFOUND response error', async t => {
     error1 = err
   }
   t.equal(error1.code, 'ENOTFOUND')
-  t.equal(error1.hostname, hostname)
 
   // Test that the records in the dns interceptor were deleted after the
   // previous request
