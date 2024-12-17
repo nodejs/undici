@@ -22,7 +22,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
-      - name: Update WPT
+      - name: Update Cache Tests
         run: |
           rm -rf test/fixtures/cache-tests && mkdir test/fixtures/cache-tests &&
 
