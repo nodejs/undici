@@ -11,7 +11,7 @@ const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('https-pem')
 
-const { interceptors, Agent } = require('../..')
+const { interceptors, Agent, Pool } = require('../..')
 const { dns } = interceptors
 
 test('Should validate options', t => {
@@ -1813,4 +1813,55 @@ test('#3937 - Handle host correctly', async t => {
 
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
+})
+
+test('Pool', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer()
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.on('request', (req, res) => {
+    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Pool(`http://localhost:${server.address().port}`).compose([
+    dns({
+      lookup: (origin, _opts, cb) => {
+        t.equal(origin.origin, `http://localhost:${server.address().port}`)
+        cb(null, [
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    ...requestOptions
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
 })
