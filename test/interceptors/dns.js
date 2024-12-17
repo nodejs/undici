@@ -1732,6 +1732,68 @@ test('Should handle max cached items', async t => {
   t.equal(await response3.body.text(), 'hello world! (x2)')
 })
 
+test('Should handle ENOTFOUND response error', async t => {
+  t = tspl(t, { plan: 4 })
+  let lookupCounter = 0
+  const hostname = 'something-which-should-result-in-enotfound.undici'
+
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    origin: 'http://localhost'
+  }
+
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        opts.origin = new URL(`http://${hostname}`)
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      lookup (origin, opts, cb) {
+        lookupCounter++
+        if (lookupCounter === 1) {
+          cb(null, [
+            {
+              address: '127.0.0.1',
+              family: 4
+            }
+          ])
+        } else {
+          // Causes InformationalError
+          cb(null, [])
+        }
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+  })
+
+  let error1
+  try {
+    await client.request(requestOptions)
+  } catch (err) {
+    error1 = err
+  }
+  t.equal(error1.code, 'ENOTFOUND')
+  t.equal(error1.hostname, hostname)
+
+  // Test that the records in the dns interceptor were deleted after the
+  // previous request
+  let error2
+  try {
+    await client.request(requestOptions)
+  } catch (err) {
+    error2 = err
+  }
+  t.equal(error2.name, 'InformationalError')
+
+  t.equal(lookupCounter, 2)
+})
+
 test('#3937 - Handle host correctly', async t => {
   t = tspl(t, { plan: 10 })
 
