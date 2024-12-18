@@ -17,7 +17,7 @@ describe('https://github.com/nodejs/undici/issues/3410', () => {
       address
     } = await new Promise((resolve, reject) => {
       const childProcess = fork(
-        pathResolve(__dirname, './utils/hello-world-server.js'),
+        pathResolve(__dirname, './utils/hello-world-server-delayed.js'),
         [],
         { windowsHide: true }
       )
@@ -56,7 +56,7 @@ describe('https://github.com/nodejs/undici/issues/3410', () => {
       address
     } = await new Promise((resolve, reject) => {
       const childProcess = fork(
-        pathResolve(__dirname, './utils/hello-world-server.js'),
+        pathResolve(__dirname, './utils/hello-world-server-delayed.js'),
         [],
         { windowsHide: true }
       )
