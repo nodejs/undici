@@ -1,19 +1,10 @@
 'use strict'
 
-import { Worker } from 'node:worker_threads'
 import { parseArgs, styleText } from 'node:util'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { once } from 'node:events'
-import { Agent, interceptors, setGlobalDispatcher, fetch } from '../../index.js'
-import MemoryCacheStore from '../../lib/cache/memory-cache-store.js'
-import {
-  getResults,
-  runTests as runTestSuite
-} from '../fixtures/cache-tests/test-engine/client/runner.mjs'
-import tests from '../fixtures/cache-tests/tests/index.mjs'
-import { testResults, testUUIDs } from '../fixtures/cache-tests/test-engine/client/test.mjs'
-import { determineTestResult, testLookup } from '../fixtures/cache-tests/test-engine/lib/results.mjs'
+import { exit } from 'node:process'
+import { fork } from 'node:child_process'
 
 /**
  * @typedef {import('../../types/cache-interceptor.d.ts').default.CacheOptions} CacheOptions
@@ -21,6 +12,7 @@ import { determineTestResult, testLookup } from '../fixtures/cache-tests/test-en
  * @typedef {{
  *  opts: CacheOptions,
  *  ignoredTests?: string[],
+ *  cacheStore?: 'MemoryCacheStore' | 'SqliteCacheStore'
  * }} TestEnvironment
  *
  * @typedef {{
@@ -38,27 +30,72 @@ import { determineTestResult, testLookup } from '../fixtures/cache-tests/test-en
 
 const CLI_OPTIONS = parseArgs({
   options: {
+    // Cache type(s) to test
     type: {
       type: 'string',
       multiple: true,
       short: 't'
+    },
+    // Cache store(s) to test
+    store: {
+      type: 'string',
+      multiple: true,
+      short: 's'
+    },
+    // Only shows errors
+    ci: {
+      type: 'boolean'
     }
   }
 })
+
+/**
+ * @type {TestEnvironment}
+ */
+const BASE_TEST_ENVIRONMENT = {
+  opts: { methods: ['GET', 'HEAD'] },
+  ignoredTests: [
+    // Tests for invalid etags, goes against the spec
+    'conditional-etag-forward-unquoted',
+    'conditional-etag-strong-generate-unquoted',
+
+    // Responses with no-cache can be reused if they're revalidated (which is
+    //  what we're doing)
+    'cc-resp-no-cache',
+    'cc-resp-no-cache-case-insensitive',
+
+    // We're not caching 304s currently
+    '304-etag-update-response-Cache-Control',
+    '304-etag-update-response-Content-Foo',
+    '304-etag-update-response-Test-Header',
+    '304-etag-update-response-X-Content-Foo',
+    '304-etag-update-response-X-Test-Header',
+
+    // We just trim whatever's in the decimal place off (i.e. 7200.0 -> 7200)
+    'age-parse-float',
+
+    // Broken?
+    'head-200-update',
+    'head-200-retain',
+    'head-410-update',
+    'stale-close-must-revalidate',
+    'stale-close-no-cache'
+  ]
+}
 
 /**
  * @type {TestEnvironment[]}
  */
 const CACHE_TYPES = [
   {
-    opts: { type: 'shared', methods: ['GET', 'HEAD'] },
+    opts: { type: 'shared' },
     ignoredTests: [
       'freshness-max-age-s-maxage-private',
       'freshness-max-age-s-maxage-private-multiple'
     ]
   },
   {
-    opts: { type: 'private', methods: ['GET', 'HEAD'] }
+    opts: { type: 'private' }
   }
 ]
 
@@ -66,63 +103,82 @@ const CACHE_TYPES = [
  * @type {TestEnvironment[]}
  */
 const CACHE_STORES = [
-  { opts: { store: new MemoryCacheStore() } }
+  { opts: {}, cacheStore: 'MemoryCacheStore' }
 ]
+
+try {
+  await import('node:sqlite')
+  CACHE_STORES.push({ opts: {}, cacheStore: 'SqliteCacheStore' })
+} catch (err) {
+  console.warn('Skipping SqliteCacheStore, node:sqlite not present')
+}
 
 const PROTOCOL = 'http'
 const PORT = 8000
-const BASE_URL = `${PROTOCOL}://localhost:${PORT}`
-const PIDFILE = join(tmpdir(), 'http-cache-test-server.pid')
-
-console.log(`PROTOCOL: ${styleText('gray', PROTOCOL)}`)
-console.log(`    PORT: ${styleText('gray', `${PORT}`)}`)
-console.log(`BASE_URL: ${styleText('gray', BASE_URL)}`)
-console.log(` PIDFILE: ${styleText('gray', PIDFILE)}`)
-console.log('')
 
 const testEnvironments = filterEnvironments(
   buildTestEnvironments(0, [CACHE_TYPES, CACHE_STORES])
 )
 
-console.log(`Testing ${testEnvironments.length} environments`)
+console.log(`Testing ${testEnvironments.length} environments\n`)
+console.log(`PROTOCOL: ${styleText('gray', PROTOCOL)}`)
+console.log('')
 
-for (const environment of testEnvironments) {
-  console.log('TEST ENVIRONMENT')
-  if (environment.opts.store) {
-    console.log(`          store: ${styleText('gray', environment.opts.store?.constructor.name ?? 'undefined')}`)
-  }
-  if (environment.opts.methods) {
-    console.log(`        methods: ${styleText('gray', JSON.stringify(environment.opts.methods) ?? 'undefined')}`)
-  }
-  if (environment.opts.cacheByDefault) {
-    console.log(` cacheByDefault: ${styleText('gray', `${environment.opts.cacheByDefault}`)}`)
-  }
-  if (environment.opts.type) {
-    console.log(`           type: ${styleText('gray', environment.opts.type)}`)
-  }
-  if (environment.ignoredTests) {
-    console.log(`  ignored tests: ${styleText('gray', JSON.stringify(environment.ignoredTests))}`)
-  }
+/**
+ * @type {Array<Promise<[number, Array<Buffer>]>>}
+ */
+const results = []
 
-  try {
-    await runTests(environment)
-  } catch (err) {
-    console.error(err)
-  }
+// Run all the tests in child processes because the test runner is a bit finicky
+for (let i = 0; i < testEnvironments.length; i++) {
+  const environment = testEnvironments[i]
+  const port = PORT + i
 
-  const stats = printResults(environment, getResults())
-  printStats(stats)
+  const promise = new Promise((resolve) => {
+    const process = fork(join(import.meta.dirname, 'cache-tests-worker.mjs'), {
+      stdio: 'pipe',
+      env: {
+        TEST_ENVIRONMENT: JSON.stringify(environment),
+        BASE_URL: `${PROTOCOL}://localhost:${port}`,
+        CI: CLI_OPTIONS.values.ci ? 'true' : undefined,
+        npm_config_protocol: PROTOCOL,
+        npm_config_port: `${port}`,
+        npm_config_pidfile: join(tmpdir(), `http-cache-test-server-${i}.pid`)
+      }
+    })
 
-  // Cleanup state
-  for (const key of Object.keys(testUUIDs)) {
-    delete testUUIDs[key]
-  }
-  for (const key of Object.keys(testResults)) {
-    delete testResults[key]
+    const stdout = []
+    process.stdout.on('data', chunk => {
+      stdout.push(chunk)
+    })
+
+    process.stderr.on('error', chunk => {
+      stdout.push(chunk)
+    })
+
+    process.on('close', code => {
+      resolve([code, stdout])
+    })
+  })
+
+  results.push(promise)
+}
+
+// Status code so we can fail CI jobs if we need
+let exitCode = 0
+
+// Print the results of all the results in the order that they exist
+for (const [code, stdout] of await Promise.all(results)) {
+  exitCode = code
+
+  for (const line of stdout) {
+    process.stdout.write(line)
   }
 
   console.log('')
 }
+
+exit(exitCode)
 
 /**
  * @param {number} idx
@@ -130,7 +186,13 @@ for (const environment of testEnvironments) {
  * @returns {TestEnvironment[]}
  */
 function buildTestEnvironments (idx, testOptions) {
-  const baseEnvironments = testOptions[idx]
+  let baseEnvironments = testOptions[idx]
+
+  if (idx === 0) {
+    // We're at the beginning
+    baseEnvironments = baseEnvironments.map(
+      environment => joinEnvironments(BASE_TEST_ENVIRONMENT, environment))
+  }
 
   if (idx + 1 >= testOptions.length) {
     // We're at the end, nothing more to make a matrix out of
@@ -146,25 +208,34 @@ function buildTestEnvironments (idx, testOptions) {
   const subEnvironments = buildTestEnvironments(idx + 1, testOptions)
 
   for (const baseEnvironment of baseEnvironments) {
-    const combinedEnvironments = subEnvironments.map(subEnvironment => {
-      const ignoredTests = baseEnvironment.ignoredTests ?? []
-      if (subEnvironment.ignoredTests) {
-        ignoredTests.push(...subEnvironment.ignoredTests)
-      }
-
-      return {
-        opts: {
-          ...baseEnvironment.opts,
-          ...subEnvironment.opts
-        },
-        ignoredTests: ignoredTests.length > 0 ? ignoredTests : undefined
-      }
-    })
+    const combinedEnvironments = subEnvironments.map(
+      subEnvironment => joinEnvironments(baseEnvironment, subEnvironment))
 
     environments.push(...combinedEnvironments)
   }
 
   return environments
+}
+
+/**
+ * @param {TestEnvironment} base
+ * @param {TestEnvironment} sub
+ * @returns {TestEnvironment}
+ */
+function joinEnvironments (base, sub) {
+  const ignoredTests = base.ignoredTests ?? []
+  if (sub.ignoredTests) {
+    ignoredTests.push(...sub.ignoredTests)
+  }
+
+  return {
+    opts: {
+      ...base.opts,
+      ...sub.opts
+    },
+    ignoredTests: ignoredTests.length > 0 ? ignoredTests : undefined,
+    cacheStore: sub.cacheStore
+  }
 }
 
 /**
@@ -181,159 +252,22 @@ function filterEnvironments (environments) {
     )
   }
 
+  if (values.store) {
+    environments = environments.filter(({ cacheStore }) => {
+      if (cacheStore === undefined) {
+        return false
+      }
+
+      const storeName = cacheStore
+      for (const allowedStore of values.store) {
+        if (storeName.match(allowedStore)) {
+          return true
+        }
+      }
+
+      return false
+    })
+  }
+
   return environments
-}
-
-/**
- * @param {TestEnvironment} environment
- */
-async function runTests (environment) {
-  // Start the test server. We use a worker here since the suite doesn't expose it
-  const worker = new Worker(join(import.meta.dirname, 'cache-tests-worker.mjs'), {
-    env: {
-      npm_config_protocol: PROTOCOL,
-      npm_config_port: `${PORT}`,
-      npm_config_pidfile: PIDFILE
-    }
-  })
-
-  try {
-    await once(worker, 'message', { signal: AbortSignal.timeout(5000) })
-
-    const client = new Agent().compose(interceptors.cache(environment.opts))
-    setGlobalDispatcher(client)
-
-    // Run the tests
-    await runTestSuite(tests, fetch, true, BASE_URL)
-  } finally {
-    await worker.terminate()
-  }
-}
-
-/**
- * @param {TestEnvironment} environment
- * @param {any} results
- * @returns {TestStats}
- */
-function printResults (environment, results) {
-  /**
-   * @type {TestStats}
-   */
-  const stats = {
-    // TODO this won't always be this
-    total: Object.keys(results).length - (environment.ignoredTests?.length || 0),
-    skipped: 0,
-    passed: 0,
-    failed: 0,
-    optionalFailed: 0,
-    setupFailed: 0,
-    testHarnessFailed: 0,
-    dependencyFailed: 0,
-    retried: 0
-  }
-
-  for (const testId in results) {
-    if (environment.ignoredTests?.includes(testId)) {
-      continue
-    }
-
-    const test = testLookup(tests, testId)
-    // eslint-disable-next-line no-unused-vars
-    const [code, _, icon] = determineTestResult(tests, testId, results, false)
-
-    let status
-    let color
-    switch (code) {
-      case '-':
-        status = 'skipped'
-        color = 'gray'
-        stats.skipped++
-        break
-      case '\uf058':
-        status = 'pass'
-        color = 'green'
-        stats.passed++
-        break
-      case '\uf057':
-        status = 'failed'
-        color = 'red'
-        stats.failed++
-        break
-      case '\uf05a':
-        status = 'failed (optional)'
-        color = 'yellow'
-        stats.optionalFailed++
-        break
-      case '\uf055':
-        status = 'yes'
-        color = 'green'
-        stats.passed++
-        break
-      case '\uf056':
-        status = 'no'
-        color = 'red'
-        stats.failed++
-        break
-      case '\uf059':
-        status = 'setup failure'
-        color = 'red'
-        stats.setupFailed++
-        break
-      case '\uf06a':
-        status = 'test harness failure'
-        color = 'red'
-        stats.testHarnessFailed++
-        break
-      case '\uf192':
-        status = 'dependency failure'
-        color = 'red'
-        stats.dependencyFailed++
-        break
-      case '\uf01e':
-        status = 'retry'
-        color = 'yellow'
-        stats.retried++
-        break
-      default:
-        status = 'unknown'
-        color = ['strikethrough', 'white']
-        break
-    }
-
-    console.log(`${icon} ${styleText(color, `${status} - ${test.name}`)} (${styleText('gray', testId)})`)
-
-    if (results[testId] !== true) {
-      const [type, message] = results[testId]
-      console.log(`    ${styleText(color, `${type}: ${message}`)}`)
-    }
-  }
-
-  return stats
-}
-
-/**
- * @param {TestStats} stats
- */
-function printStats (stats) {
-  const {
-    total,
-    skipped,
-    passed,
-    failed,
-    optionalFailed,
-    setupFailed,
-    testHarnessFailed,
-    dependencyFailed,
-    retried
-  } = stats
-
-  console.log(`\n        Total tests: ${total}`)
-  console.log(`            ${styleText('gray', 'Skipped')}: ${skipped} (${((skipped / total) * 100).toFixed(1)}%)`)
-  console.log(`             ${styleText('green', 'Passed')}: ${passed} (${((passed / total) * 100).toFixed(1)}%)`)
-  console.log(`             ${styleText('red', 'Failed')}: ${failed} (${((failed / total) * 100).toFixed(1)}%)`)
-  console.log(`  ${styleText('yellow', 'Failed (optional)')}: ${optionalFailed} (${((optionalFailed / total) * 100).toFixed(1)}%)`)
-  console.log(`       ${styleText('red', 'Setup failed')}: ${setupFailed} (${((setupFailed / total) * 100).toFixed(1)}%)`)
-  console.log(`${styleText('red', 'Test Harness Failed')}: ${testHarnessFailed} (${((testHarnessFailed / total) * 100).toFixed(1)}%)`)
-  console.log(`  ${styleText('red', 'Dependency Failed')}: ${dependencyFailed} (${((dependencyFailed / total) * 100).toFixed(1)}%)`)
-  console.log(`            ${styleText('yellow', 'Retried')}: ${retried} (${((retried / total) * 100).toFixed(1)}%)`)
 }
