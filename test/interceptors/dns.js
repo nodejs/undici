@@ -1814,3 +1814,28 @@ test('#3937 - Handle host correctly', async t => {
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
 })
+
+test('#3951 - Should handle lookup errors correctly', async t => {
+  const suite = tspl(t, { plan: 1 })
+
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  const client = new Agent().compose([
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(new Error('lookup error'))
+      }
+    })
+  ])
+
+  suite.rejects(client.request({
+    ...requestOptions,
+    origin: 'http://localhost'
+  }), new Error('lookup error'))
+})
