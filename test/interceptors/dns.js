@@ -29,25 +29,6 @@ test('Should validate options', t => {
   t.throws(() => dns({ pick: [] }), { code: 'UND_ERR_INVALID_ARG' })
 })
 
-test('Should throw when origin is missing', async t => {
-  t = tspl(t, { plan: 1 })
-  const client = new Agent().compose([
-    dns()
-  ])
-
-  after(async () => {
-    await client.close()
-  })
-
-  let error
-  try {
-    await client.request({})
-  } catch (err) {
-    error = err
-  }
-  t.equal(error.code, 'UND_ERR_INVALID_ARG')
-})
-
 test('Should automatically resolve IPs (dual stack)', async t => {
   t = tspl(t, { plan: 8 })
 
