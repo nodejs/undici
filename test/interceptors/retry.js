@@ -6,7 +6,7 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 
 const { Client, interceptors } = require('../..')
-const { retry, redirect } = interceptors
+const { retry, redirect, dns } = interceptors
 
 test('Should retry status code', async t => {
   t = tspl(t, { plan: 4 })
@@ -72,6 +72,49 @@ test('Should retry status code', async t => {
 
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
+})
+
+test('Should retry on error code', async t => {
+  t = tspl(t, { plan: 2 })
+
+  let counter = 0
+  const retryOptions = {
+    retry: (err, _state, done) => {
+      if (counter < 5) {
+        counter++
+        setTimeout(done, 500)
+      } else {
+        done(err)
+      }
+    },
+    maxRetries: 5
+  }
+  const requestOptions = {
+    origin: 'http://localhost:123',
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  const client = new Client(
+    'http://localhost:123'
+  ).compose(dns({
+    lookup: (_h, _o, cb) => {
+      const error = new Error('ENOTFOUND')
+      error.code = 'ENOTFOUND'
+
+      cb(error)
+    }
+  }), retry(retryOptions))
+
+  after(async () => {
+    await client.close()
+  })
+
+  await t.rejects(client.request(requestOptions), { code: 'ENOTFOUND' })
+  t.equal(counter, 5)
 })
 
 test('Should use retry-after header for retries', async t => {
