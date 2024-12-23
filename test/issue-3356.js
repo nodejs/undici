@@ -3,7 +3,6 @@
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { setTimeout: setTimeoutPromise } = require('node:timers/promises')
 const { tick: fastTimersTick } = require('../lib/util/timers')
 const { fetch, Agent, RetryAgent } = require('..')
 
@@ -45,7 +44,6 @@ test('https://github.com/nodejs/undici/issues/3356', async (t) => {
 
   fastTimersTick()
 
-  await setTimeoutPromise(2000)
   try {
     t.assert.equal(response.status, 200)
     // consume response
