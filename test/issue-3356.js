@@ -19,7 +19,7 @@ test('https://github.com/nodejs/undici/issues/3356', async (t) => {
 
       res.flushHeaders()
       res.write('h')
-      setTimeout(() => { res.end('ello world!') }, 100)
+      setTimeout(() => { res.end('ello world!') }, 1100)
     } else {
       res.end('hello world!')
     }
@@ -54,7 +54,7 @@ test('https://github.com/nodejs/undici/issues/3356', async (t) => {
       t.equal(err.name, 'TypeError')
       t.equal(err.cause.code, 'UND_ERR_REQ_RETRY')
     }
-  }, 200)
+  }, 2000)
 
   await t.completed
 })
