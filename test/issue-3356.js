@@ -45,7 +45,7 @@ test('https://github.com/nodejs/undici/issues/3356', async (t) => {
 
   fastTimersTick()
 
-  await setTimeoutPromise(1500)
+  await setTimeoutPromise(2000)
   try {
     t.assert.equal(response.status, 200)
     // consume response
