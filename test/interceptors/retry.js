@@ -318,7 +318,9 @@ test('Should pass context from other interceptors', async t => {
   const response = await client.request(requestOptions)
 
   t.equal(response.statusCode, 200)
-  t.deepStrictEqual(response.context, { history: [] })
+  t.deepStrictEqual(response.context, {
+    history: [new URL(`http://localhost:${server.address().port}`)]
+  })
 })
 
 test('Should handle 206 partial content', async t => {
