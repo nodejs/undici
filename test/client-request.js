@@ -579,6 +579,61 @@ describe('headers', () => {
   })
 })
 
+describe('origin', () => {
+  let serverAddress
+  const server = createServer((req, res) => {
+    res.end('hello')
+  })
+
+  before(async () => {
+    server.listen(0)
+    await EE.once(server, 'listening')
+    serverAddress = `localhost:${server.address().port}`
+  })
+
+  after(() => server.close())
+
+  test('same origin in request options', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const client = new Client(`http://${serverAddress}`)
+    after(() => client.destroy())
+
+    const response = await client.request({
+      origin: `http://${serverAddress}`,
+      path: '/',
+      method: 'GET'
+    })
+    t.strictEqual(await response.body.text(), 'hello')
+  })
+
+  test('invalid origin in request options', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const client = new Client(`http://${serverAddress}`)
+    after(() => client.destroy())
+
+    t.rejects(client.request({
+      origin: 'localhost',
+      path: '/',
+      method: 'GET'
+    }), new TypeError('Invalid URL'))
+  })
+
+  test('different origin in request options', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const client = new Client(`http://${serverAddress}`)
+    after(() => client.destroy())
+
+    t.rejects(client.request({
+      origin: 'http://localhost',
+      path: '/',
+      method: 'GET'
+    }), new InvalidArgumentError('origin must equal constructor origin'))
+  })
+})
+
 test('request long multibyte text', async (t) => {
   t = tspl(t, { plan: 1 })
 
