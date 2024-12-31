@@ -4,6 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
+const { spawnSync } = require('node:child_process')
 
 const { Client, interceptors } = require('../..')
 const { retry, redirect, dns } = interceptors
@@ -558,4 +559,17 @@ test('should not error if request is not meant to be retried', async t => {
 
   t.equal(response.statusCode, 400)
   t.equal(await response.body.text(), 'Bad request')
+})
+
+test('#3975 - keep event loop ticking', async t => {
+  const suite = tspl(t, { plan: 3 })
+
+  const res = spawnSync('node', ['./test/fixtures/interceptors/retry-event-loop.js'], {
+    stdio: 'pipe'
+  })
+
+  const output = res.stderr.toString()
+  suite.ok(output.includes("code: 'UND_ERR_REQ_RETRY'"))
+  suite.ok(output.includes('RequestRetryError: Request failed'))
+  suite.ok(output.includes('statusCode: 418'))
 })
