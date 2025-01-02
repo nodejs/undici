@@ -31,7 +31,7 @@ jobs:
               repo
             })
 
-            const previousRelease = releases.find((r) => r.tag_name.startsWith('v6'))
+            const previousRelease = releases.find((r) => r.tag_name.startsWith('v7'))
 
             if (versionTag !== previousRelease?.tag_name) {
               return versionTag
