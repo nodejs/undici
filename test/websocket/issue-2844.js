@@ -40,7 +40,7 @@ test('The server must reply with at least one subprotocol the client sends', asy
   await completed
 })
 
-test('The connection fails when the client sends subprotocols that the server does not responc with', async (t) => {
+test('The connection fails when the client sends subprotocols that the server does not response with', async (t) => {
   const { completed, fail, ok } = tspl(t, { plan: 1 })
 
   const wss = new WebSocketServer({
