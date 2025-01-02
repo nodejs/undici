@@ -104,7 +104,7 @@ This section documents our most commonly used API methods. Additional APIs are d
 
 Arguments:
 
-* **url** `string │ URL │ UrlObject`
+* **url** `string | URL | UrlObject`
 * **options** [`RequestOptions`](./docs/docs/api/Dispatcher.md#parameter-requestoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
@@ -119,7 +119,7 @@ See [Dispatcher.request](./docs/docs/api/Dispatcher.md#dispatcherrequestoptions-
 
 Arguments:
 
-* **url** `string │ URL │ UrlObject`
+* **url** `string | URL | UrlObject`
 * **options** [`StreamOptions`](./docs/docs/api/Dispatcher.md#parameter-streamoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
@@ -135,7 +135,7 @@ See [Dispatcher.stream](./docs/docs/api/Dispatcher.md#dispatcherstreamoptions-fa
 
 Arguments:
 
-* **url** `string │ URL │ UrlObject`
+* **url** `string | URL | UrlObject`
 * **options** [`PipelineOptions`](./docs/docs/api/Dispatcher.md#parameter-pipelineoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
@@ -153,10 +153,10 @@ Starts two-way communications with the requested resource using [HTTP CONNECT](h
 
 Arguments:
 
-* **url** `string │ URL │ UrlObject`
+* **url** `string | URL | UrlObject`
 * **options** [`ConnectOptions`](./docs/docs/api/Dispatcher.md#parameter-connectoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
-* **callback** `(err: Error │ null, data: ConnectData │ null) => void` (optional)
+* **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
 
 Returns a promise with the result of the `Dispatcher.connect` method.
 
@@ -318,10 +318,10 @@ Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](h
 
 Arguments:
 
-* **url** `string │ URL │ UrlObject`
+* **url** `string | URL | UrlObject`
 * **options** [`UpgradeOptions`](./docs/docs/api/Dispatcher.md#parameter-upgradeoptions)
   * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
-* **callback** `(error: Error │ null, data: UpgradeData) => void` (optional)
+* **callback** `(error: Error | null, data: UpgradeData) => void` (optional)
 
 Returns a promise with the result of the `Dispatcher.upgrade` method.
 
@@ -343,7 +343,7 @@ Returns: `Dispatcher`
 
 ### `undici.setGlobalOrigin(origin)`
 
-* origin `string │ URL │ undefined`
+* origin `string | URL | undefined`
 
 Sets the global origin used in `fetch`.
 
@@ -365,7 +365,7 @@ Returns: `URL`
 
 ### `UrlObject`
 
-* **port** `string │ number` (optional)
+* **port** `string | number` (optional)
 * **path** `string` (optional)
 * **pathname** `string` (optional)
 * **hostname** `string` (optional)
@@ -451,11 +451,11 @@ and `undici.Agent`) which will enable the family autoselection algorithm when es
 
 Undici aligns with the Node.js LTS schedule. The following table shows the supported versions:
 
-│ Version │ Node.js     │ End of Life │
-│---------│-------------│-------------│
-│ 5.x     │ v18.x       │ 2024-04-30  │
-│ 6.x     │ v20.x v22.x │ 2026-04-30  │
-│ 7.x     │ v24.x       │ 2027-04-30  │
+| Version | Node.js     | End of Life |
+|---------|-------------|-------------|
+| 5.x     | v18.x       | 2024-04-30  |
+| 6.x     | v20.x v22.x | 2026-04-30  |
+| 7.x     | v24.x       | 2027-04-30  |
 
 ## License
 
