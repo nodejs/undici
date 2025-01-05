@@ -128,6 +128,51 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('vary directives are case-insensitive', async () => {
+    let requestsToOrigin = 0
+    const server = createServer((_, res) => {
+      requestsToOrigin++
+
+      res.setHeader('date', 0)
+      res.setHeader('cache-control', 'max-age=5000')
+      res.setHeader('vary', 'FoO, bar, bAZ')
+
+      res.end('asd')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    strictEqual(requestsToOrigin, 0)
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/',
+      headers: {
+        Foo: '1',
+        BAr: 'abc',
+        BAZ: '789'
+      }
+    }
+
+    await client.request(request)
+    equal(requestsToOrigin, 1)
+
+    await client.request(request)
+    equal(requestsToOrigin, 1)
+  })
+
   test('stale responses are revalidated before deleteAt (if-modified-since)', async () => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
