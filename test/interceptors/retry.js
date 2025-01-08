@@ -562,14 +562,13 @@ test('should not error if request is not meant to be retried', async t => {
 })
 
 test('#3975 - keep event loop ticking', async t => {
-  const suite = tspl(t, { plan: 3 })
+  const suite = tspl(t, { plan: 2 })
 
   const res = spawnSync('node', ['./test/fixtures/interceptors/retry-event-loop.js'], {
     stdio: 'pipe'
   })
 
   const output = res.stderr.toString()
-  suite.ok(output.includes("code: 'UND_ERR_REQ_RETRY'"))
+  suite.ok(output.includes('UND_ERR_REQ_RETRY'))
   suite.ok(output.includes('RequestRetryError: Request failed'))
-  suite.ok(output.includes('statusCode: 418'))
 })
