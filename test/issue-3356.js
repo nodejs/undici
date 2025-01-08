@@ -2,12 +2,13 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { tick: fastTimersTick } = require('../lib/util/timers')
 const { fetch, Agent, RetryAgent } = require('..')
 
-test('https://github.com/nodejs/undici/issues/3356', async (t) => {
+test('https://github.com/nodejs/undici/issues/3356', { skip: process.env.CITGM }, async (t) => {
   t = tspl(t, { plan: 3 })
 
   let shouldRetry = true
@@ -45,16 +46,16 @@ test('https://github.com/nodejs/undici/issues/3356', async (t) => {
 
   fastTimersTick()
 
-  setTimeout(async () => {
-    try {
-      t.equal(response.status, 200)
-      // consume response
-      await response.text()
-    } catch (err) {
-      t.equal(err.name, 'TypeError')
-      t.equal(err.cause.code, 'UND_ERR_REQ_RETRY')
-    }
-  }, 200)
+  await sleep(500)
+
+  try {
+    t.equal(response.status, 200)
+    // consume response
+    await response.text()
+  } catch (err) {
+    t.equal(err.name, 'TypeError')
+    t.equal(err.cause.code, 'UND_ERR_REQ_RETRY')
+  }
 
   await t.completed
 })
