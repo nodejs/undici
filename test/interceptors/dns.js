@@ -198,7 +198,7 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
 })
 
 test('Should recover on network errors (dual stack - 4)', async t => {
-  t = tspl(t, { plan: 8 })
+  t = tspl(t, { plan: 7 })
 
   let counter = 0
   const server = createServer()
@@ -236,11 +236,6 @@ test('Should recover on network errors (dual stack - 4)', async t => {
             break
 
           case 3:
-            // [::1] -> ::1
-            t.equal(isIP(url.hostname), 4)
-            break
-
-          case 4:
             // [::1] -> ::1
             t.equal(isIP(url.hostname.slice(1, 4)), 6)
             break
@@ -1730,6 +1725,57 @@ test('Should handle max cached items', async t => {
 
   t.equal(response3.statusCode, 200)
   t.equal(await response3.body.text(), 'hello world! (x2)')
+})
+
+test('retry once with dual-stack', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  let counter = 0
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        counter++
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '127.0.0.1',
+            port: 3669,
+            family: 4,
+            ttl: 1000
+          },
+          {
+            address: '::1',
+            port: 3669,
+            family: 6,
+            ttl: 1000
+          }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+  })
+
+  await t.rejects(client.request({
+    ...requestOptions,
+    origin: 'http://localhost'
+  }), 'ECONNREFUSED')
+
+  t.equal(counter, 2)
 })
 
 test('Should handle ENOTFOUND response error', async t => {
