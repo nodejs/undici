@@ -1,6 +1,6 @@
 # ETIMEDOUT - network family autoselection timeout errors
 
-If you are experiencing `TypeError: fetch failed` and you are able to investigate the `cause: AggregateError` and see `code: 'ETIMEDOUT'` it can be very likely due to timeout network family autoaselection. This tends to happen with DNS resolving domain to multiple ipv4 and ipv6 addresses.
+If you are experiencing `TypeError: fetch failed` and you are able to investigate the `cause: AggregateError` and see `code: 'ETIMEDOUT'` it can be very likely due to timeout network family autoselection. This tends to happen with DNS resolving domain to multiple ipv4 and ipv6 addresses.
 
 The default timeout depends on local Node version, on Node 18.13.0 and above is 250 milliseconds.
 
