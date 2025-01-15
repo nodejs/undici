@@ -33,7 +33,7 @@ jobs:
           mv test/fixtures/tmp-cache-tests/test-engine test/fixtures/cache-tests/test-engine &&
           mv test/fixtures/tmp-cache-tests/results test/fixtures/cache-tests/results &&
 
-          rm -rf tests/fixtures/tmp-cache-tests/
+          rm -rf test/fixtures/tmp-cache-tests/
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # v7.0.6
