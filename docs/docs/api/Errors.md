@@ -28,6 +28,9 @@ import { errors } from 'undici'
 | `ResponseExceededMaxSizeError`       | `UND_ERR_RES_EXCEEDED_MAX_SIZE`       | response body exceed the max size allowed                                 |
 | `SecureProxyConnectionError`         | `UND_ERR_PRX_TLS`                     | tls connection to a proxy failed                                          |
 
+Be aware that some errors are created by dispatcher. If you plan to check `instanceof errors.UndiciError` then don't use the default global dispatcher,
+as it may come from another `undici` module and have its own errors classes.
+
 ### `SocketError`
 
 The `SocketError` has a `.socket` property which holds socket metadata:
