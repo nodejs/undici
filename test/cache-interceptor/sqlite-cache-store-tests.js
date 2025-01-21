@@ -1,7 +1,7 @@
 'use strict'
 
 const { test, skip } = require('node:test')
-const { notEqual, strictEqual } = require('node:assert')
+const { notEqual, strictEqual, deepStrictEqual } = require('node:assert')
 const { rm } = require('node:fs/promises')
 const { cacheStoreTests, writeBody, compareGetResults } = require('./cache-store-test-utils.js')
 
@@ -178,4 +178,47 @@ test('SqliteCacheStore two writes', async (t) => {
     notEqual(writable, undefined)
     writeBody(writable, body)
   }
+})
+
+test('SqliteCacheStore write & read', async (t) => {
+  if (!hasSqlite) {
+    t.skip()
+    return
+  }
+
+  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+
+  const store = new SqliteCacheStore({
+    maxCount: 10
+  })
+
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+   */
+  const key = {
+    origin: 'localhost',
+    path: '/',
+    method: 'GET',
+    headers: {}
+  }
+
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue & { body: Buffer }}
+   */
+  const value = {
+    statusCode: 200,
+    statusMessage: '',
+    headers: { foo: 'bar' },
+    cacheControlDirectives: { 'max-stale': 0 },
+    cachedAt: Date.now(),
+    staleAt: Date.now() + 10000,
+    deleteAt: Date.now() + 20000,
+    body: Buffer.from('asd'),
+    etag: undefined,
+    vary: undefined
+  }
+
+  store.set(key, value)
+
+  deepStrictEqual(store.get(key), value)
 })
