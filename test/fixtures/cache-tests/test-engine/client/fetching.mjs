@@ -11,7 +11,7 @@ export function init (idx, reqConfig, prevResp) {
     init.headers.push(['Cache-Control', 'nothing-to-see-here']) // ditto
   }
   if ('request_method' in reqConfig) init.method = reqConfig.request_method
-  if ('request_headers' in reqConfig) init.headers = reqConfig.request_headers
+  if ('request_headers' in reqConfig) init.headers = init.headers.concat(reqConfig.request_headers)
   if ('magic_ims' in reqConfig && reqConfig.magic_ims === true) {
     for (let i = 0; i < init.headers.length; i++) {
       const header = init.headers[i]

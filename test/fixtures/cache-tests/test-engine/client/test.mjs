@@ -33,7 +33,7 @@ export async function makeTest (test) {
         }, config.requestTimeout * 1000)
         init.signal = controller.signal
         if (test.dump === true) clientUtils.logRequest(url, init, reqNum)
-        return config.fetch(url, init)
+        return fetch(url, init)
           .then(response => {
             responses.push(response)
             return checkResponse(test, requests, idx, response)
@@ -59,6 +59,10 @@ export async function makeTest (test) {
           .then(runNextStep)
       }
     }
+  }
+
+  function handleError (err) {
+    console.error(`ERROR: ${uuid} ${err.name} ${err.message}`)
   }
 
   return clientUtils.putTestConfig(uuid, requests)
@@ -292,8 +296,4 @@ function checkServerRequests (requests, responses, serverState) {
       )
     }
   }
-}
-
-function handleError (err) {
-  console.error(`ERROR: ${err}`)
 }

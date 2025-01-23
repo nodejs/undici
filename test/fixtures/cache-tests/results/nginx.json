@@ -12,8 +12,8 @@
     "Response 2 header Content-Encoding is \"arizqhypgxofwne\", not \"askcumewogyqias\""
   ],
   "304-etag-update-response-Content-Foo": [
-    "AbortError",
-    "The user aborted a request."
+    "Assertion",
+    "Response 2 header Content-Foo is \"awsokgcyuqmieaw\", not \"axurolifczwtqnk\""
   ],
   "304-etag-update-response-Content-Length": true,
   "304-etag-update-response-Content-Location": [
@@ -33,12 +33,12 @@
     "Response 2 header Content-Security-Policy is \"default-src 'self'\", not \"default-src 'self' cdn.example.com\""
   ],
   "304-etag-update-response-Content-Type": [
-    "AbortError",
-    "The user aborted a request."
+    "Assertion",
+    "Response 2 header Content-Type is \"text/plain\", not \"text/plain;charset=utf-8\""
   ],
   "304-etag-update-response-ETag": [
-    "AbortError",
-    "The user aborted a request."
+    "Assertion",
+    "Response 2 header ETag is \"\"abcdef\"\", not \"\"ghijkl\"\""
   ],
   "304-etag-update-response-Expires": [
     "Assertion",
@@ -136,8 +136,8 @@
     "Response 2 comes from cache"
   ],
   "ccreq-ma1": [
-    "Assertion",
-    "Response 2 comes from cache"
+    "AbortError",
+    "This operation was aborted"
   ],
   "ccreq-magreaterage": [
     "Assertion",
@@ -147,10 +147,13 @@
     "Assertion",
     "Response 2 does not come from cache"
   ],
-  "ccreq-max-stale-age": true,
+  "ccreq-max-stale-age": [
+    "AbortError",
+    "This operation was aborted"
+  ],
   "ccreq-min-fresh": [
-    "Assertion",
-    "Response 2 comes from cache"
+    "AbortError",
+    "This operation was aborted"
   ],
   "ccreq-min-fresh-age": [
     "Assertion",
@@ -181,7 +184,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Tue, 09 Jul 2024 01:06:50 GMT\""
+    "Response 2 header Expires is \"null\", not \"Tue, 21 Jan 2025 00:19:03 GMT\""
   ],
   "cdn-fresh-cc-nostore": [
     "Assertion",
@@ -270,7 +273,10 @@
     "Assertion",
     "Request 2 header If-None-Match is \"abcdef\", not \"\"abcdef\"\""
   ],
-  "conditional-etag-strong-respond": true,
+  "conditional-etag-strong-respond": [
+    "AbortError",
+    "This operation was aborted"
+  ],
   "conditional-etag-strong-respond-multiple-first": true,
   "conditional-etag-strong-respond-multiple-last": true,
   "conditional-etag-strong-respond-multiple-second": true,
@@ -588,8 +594,8 @@
     "Response 3 comes from cache"
   ],
   "invalidate-POST": [
-    "AbortError",
-    "The user aborted a request."
+    "Assertion",
+    "Response 3 comes from cache"
   ],
   "invalidate-POST-cl": [
     "Assertion",
@@ -643,11 +649,11 @@
   "other-cookie": true,
   "other-date-update": [
     "Assertion",
-    "Response 2 header Date is \"Tue, 09 Jul 2024 01:06:44 GMT\", not \"Tue, 09 Jul 2024 01:06:41 GMT\""
+    "Response 2 header Date is \"Tue, 21 Jan 2025 00:18:57 GMT\", not \"Tue, 21 Jan 2025 00:18:54 GMT\""
   ],
   "other-date-update-expires": [
     "Assertion",
-    "Response 2 header Date is \"Tue, 09 Jul 2024 01:06:44 GMT\", not \"Tue, 09 Jul 2024 01:06:41 GMT\""
+    "Response 2 header Date is \"Tue, 21 Jan 2025 00:18:57 GMT\", not \"Tue, 21 Jan 2025 00:18:54 GMT\""
   ],
   "other-date-update-expires-update": true,
   "other-fresh-content-disposition-attachment": true,
@@ -803,10 +809,7 @@
   "vary-invalidate": true,
   "vary-match": true,
   "vary-no-match": true,
-  "vary-normalise-combine": [
-    "Assertion",
-    "Response 2 does not come from cache"
-  ],
+  "vary-normalise-combine": true,
   "vary-normalise-lang-case": [
     "Assertion",
     "Response 2 does not come from cache"
@@ -838,12 +841,12 @@
   ],
   "vary-syntax-star": true,
   "vary-syntax-star-foo": [
-    "Assertion",
-    "Response 2 comes from cache"
+    "AbortError",
+    "This operation was aborted"
   ],
   "vary-syntax-star-star": [
-    "Assertion",
-    "Response 2 comes from cache"
+    "AbortError",
+    "This operation was aborted"
   ],
   "vary-syntax-star-star-lines": true
 }

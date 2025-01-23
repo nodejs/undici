@@ -1,7 +1,6 @@
 import { runTests, getResults } from './client/runner.mjs'
 import { determineTestResult } from './lib/results.mjs'
 import { GREEN, NC } from './lib/defines.mjs'
-import fetch from 'node-fetch-with-proxy'
 import tests from '../tests/index.mjs'
 
 const baseUrl = process.env.npm_config_base || process.env.npm_package_config_base
@@ -27,7 +26,7 @@ if (testId !== '') {
   testsToRun = tests
 }
 
-await runTests(testsToRun, fetch, false, baseUrl).catch(err => {
+await runTests(testsToRun, false, baseUrl).catch(err => {
   console.error(err)
   process.exit(1)
 })

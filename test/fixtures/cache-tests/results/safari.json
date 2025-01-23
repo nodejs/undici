@@ -342,54 +342,54 @@
   "heuristic-delta-60": true,
   "heuristic-delta-600": true,
   "heuristic-delta-86400": true,
-  "invalidate-DELETE": [
-    "Assertion",
-    "Response 3 comes from cache"
-  ],
+  "invalidate-DELETE": true,
   "invalidate-DELETE-cl": [
     "Assertion",
     "Response 3 comes from cache"
   ],
-  "invalidate-DELETE-failed": true,
+  "invalidate-DELETE-failed": [
+    "Assertion",
+    "Response 3 does not come from cache"
+  ],
   "invalidate-DELETE-location": [
     "Assertion",
     "Response 3 comes from cache"
   ],
-  "invalidate-M-SEARCH": [
-    "Assertion",
-    "Response 3 comes from cache"
-  ],
+  "invalidate-M-SEARCH": true,
   "invalidate-M-SEARCH-cl": [
     "Assertion",
     "Response 3 comes from cache"
   ],
-  "invalidate-M-SEARCH-failed": true,
+  "invalidate-M-SEARCH-failed": [
+    "Assertion",
+    "Response 3 does not come from cache"
+  ],
   "invalidate-M-SEARCH-location": [
     "Assertion",
     "Response 3 comes from cache"
   ],
-  "invalidate-POST": [
-    "Assertion",
-    "Response 3 comes from cache"
-  ],
+  "invalidate-POST": true,
   "invalidate-POST-cl": [
     "Assertion",
     "Response 3 comes from cache"
   ],
-  "invalidate-POST-failed": true,
+  "invalidate-POST-failed": [
+    "Assertion",
+    "Response 3 does not come from cache"
+  ],
   "invalidate-POST-location": [
     "Assertion",
     "Response 3 comes from cache"
   ],
-  "invalidate-PUT": [
-    "Assertion",
-    "Response 3 comes from cache"
-  ],
+  "invalidate-PUT": true,
   "invalidate-PUT-cl": [
     "Assertion",
     "Response 3 comes from cache"
   ],
-  "invalidate-PUT-failed": true,
+  "invalidate-PUT-failed": [
+    "Assertion",
+    "Response 3 does not come from cache"
+  ],
   "invalidate-PUT-location": [
     "Assertion",
     "Response 3 comes from cache"

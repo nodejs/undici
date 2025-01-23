@@ -124,7 +124,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Tue, 09 Jul 2024 01:02:40 GMT\""
+    "Response 2 header Expires is \"null\", not \"Tue, 21 Jan 2025 00:22:31 GMT\""
   ],
   "cdn-fresh-cc-nostore": [
     "Assertion",
@@ -749,10 +749,7 @@
   "vary-invalidate": true,
   "vary-match": true,
   "vary-no-match": true,
-  "vary-normalise-combine": [
-    "Assertion",
-    "Response 2 does not come from cache"
-  ],
+  "vary-normalise-combine": true,
   "vary-normalise-lang-case": [
     "Assertion",
     "Response 2 does not come from cache"

@@ -29,7 +29,7 @@ export async function putTestConfig (uuid, requests) {
     headers: [['content-type', 'application/json']],
     body: JSON.stringify(requests)
   }
-  return config.fetch(`${config.baseUrl}/config/${uuid}`, init)
+  return fetch(`${config.baseUrl}/config/${uuid}`, init)
     .then(response => {
       if (response.status !== 201) {
         let headers = ''
@@ -44,7 +44,7 @@ export async function putTestConfig (uuid, requests) {
 }
 
 export async function getServerState (uuid) {
-  return config.fetch(`${config.baseUrl}/state/${uuid}`)
+  return fetch(`${config.baseUrl}/state/${uuid}`)
     .then(response => {
       if (response.status === 200) {
         return response.text()

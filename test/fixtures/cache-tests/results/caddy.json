@@ -178,7 +178,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Tue, 09 Jul 2024 01:03:11 GMT\""
+    "Response 2 header Expires is \"null\", not \"Tue, 21 Jan 2025 00:23:23 GMT\""
   ],
   "cdn-fresh-cc-nostore": true,
   "cdn-max-age": true,
@@ -205,7 +205,10 @@
     "Assertion",
     "Response 2 comes from cache"
   ],
-  "cdn-no-store-cc-fresh": true,
+  "cdn-no-store-cc-fresh": [
+    "Assertion",
+    "Response 2 comes from cache"
+  ],
   "cdn-private": true,
   "cdn-remove-age-exceed": [
     "Assertion",
@@ -287,8 +290,14 @@
     "Assertion",
     "Response 2 does not come from cache"
   ],
-  "freshness-expires-age-fast-date": true,
-  "freshness-expires-age-slow-date": true,
+  "freshness-expires-age-fast-date": [
+    "Assertion",
+    "Response 2 comes from cache"
+  ],
+  "freshness-expires-age-slow-date": [
+    "Assertion",
+    "Response 2 comes from cache"
+  ],
   "freshness-expires-ansi-c": [
     "Assertion",
     "Response 2 does not come from cache"
@@ -297,18 +306,12 @@
     "Assertion",
     "Response 2 does not come from cache"
   ],
-  "freshness-expires-future": [
-    "Assertion",
-    "Response 2 does not come from cache"
-  ],
+  "freshness-expires-future": true,
   "freshness-expires-invalid": true,
   "freshness-expires-invalid-1-digit-hour": true,
   "freshness-expires-invalid-2-digit-year": true,
   "freshness-expires-invalid-aest": true,
-  "freshness-expires-invalid-date": [
-    "Assertion",
-    "Response 2 does not come from cache"
-  ],
+  "freshness-expires-invalid-date": true,
   "freshness-expires-invalid-date-dashes": true,
   "freshness-expires-invalid-multiple-lines": true,
   "freshness-expires-invalid-multiple-spaces": true,
@@ -390,25 +393,22 @@
   "freshness-none": true,
   "freshness-s-maxage-shared": true,
   "head-200-freshness-update": [
-    "FetchError",
-    "request to http://localhost:8006/test/3a29d44d-d103-492b-9046-be67546d71d7 failed, reason: Parse Error: Empty Content-Length"
+    "Assertion",
+    "Response 3 does not come from cache"
   ],
   "head-200-retain": [
-    "FetchError",
-    "request to http://localhost:8006/test/d07b2651-4270-4ea6-ae9f-041b1b82aae8 failed, reason: Parse Error: Empty Content-Length"
+    "Assertion",
+    "Response 2 header Template-A is \"null\", not \"1\""
   ],
   "head-200-update": [
-    "FetchError",
-    "request to http://localhost:8006/test/eb317c8b-cea4-4b4c-b72b-71df1aa6e863 failed, reason: Parse Error: Empty Content-Length"
+    "Setup",
+    "Response 3 does not come from cache"
   ],
   "head-410-update": [
-    "FetchError",
-    "request to http://localhost:8006/test/7f947275-bffe-4c72-a493-c64352423d8e failed, reason: Parse Error: Empty Content-Length"
+    "Setup",
+    "Response 3 does not come from cache"
   ],
-  "head-writethrough": [
-    "FetchError",
-    "request to http://localhost:8006/test/f9b80f6e-7980-4a44-ae58-d58ac539223c failed, reason: Parse Error: Empty Content-Length"
-  ],
+  "head-writethrough": true,
   "headers-omit-headers-listed-in-Cache-Control-no-cache": [
     "Setup",
     "Response 2 does not come from cache"
@@ -586,10 +586,7 @@
     "Response 1 age header not present."
   ],
   "other-age-gen": true,
-  "other-age-update-expires": [
-    "Assertion",
-    "Response 2 does not come from cache"
-  ],
+  "other-age-update-expires": true,
   "other-age-update-max-age": true,
   "other-authorization": true,
   "other-authorization-must-revalidate": [
@@ -606,14 +603,8 @@
   ],
   "other-cookie": true,
   "other-date-update": true,
-  "other-date-update-expires": [
-    "Assertion",
-    "Response 2 does not come from cache"
-  ],
-  "other-date-update-expires-update": [
-    "Assertion",
-    "Response 2 does not come from cache"
-  ],
+  "other-date-update-expires": true,
+  "other-date-update-expires-update": true,
   "other-fresh-content-disposition-attachment": true,
   "other-heuristic-content-disposition-attachment": [
     "Assertion",
@@ -658,10 +649,7 @@
     "Response 2 status is 200, not 206"
   ],
   "pragma-request-extension": true,
-  "pragma-request-no-cache": [
-    "Assertion",
-    "Response 2 does not come from cache"
-  ],
+  "pragma-request-no-cache": true,
   "pragma-response-extension": true,
   "pragma-response-no-cache": true,
   "pragma-response-no-cache-heuristic": [
@@ -806,10 +794,7 @@
   "vary-invalidate": true,
   "vary-match": true,
   "vary-no-match": true,
-  "vary-normalise-combine": [
-    "Assertion",
-    "Response 2 does not come from cache"
-  ],
+  "vary-normalise-combine": true,
   "vary-normalise-lang-case": [
     "Assertion",
     "Response 2 does not come from cache"
