@@ -1,8 +1,7 @@
 import * as config from './config.mjs'
 import { makeTest, testResults } from './test.mjs'
 
-export async function runTests (tests, myFetch, browserCache, base, chunkSize = 50) {
-  config.setFetch(myFetch)
+export async function runTests (tests, browserCache, base, chunkSize = 25) {
   config.setBaseUrl(base)
   config.setUseBrowserCache(browserCache)
 

@@ -172,7 +172,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Tue, 09 Jul 2024 01:17:30 GMT\""
+    "Response 2 header Expires is \"null\", not \"Tue, 21 Jan 2025 00:41:28 GMT\""
   ],
   "cdn-fresh-cc-nostore": [
     "Assertion",
@@ -637,11 +637,11 @@
   "other-cookie": true,
   "other-date-update": [
     "Assertion",
-    "Response 2 header Date is \"Tue, 09 Jul 2024 01:17:25 GMT\", not \"Tue, 09 Jul 2024 01:17:22 GMT\""
+    "Response 2 header Date is \"Tue, 21 Jan 2025 00:41:23 GMT\", not \"Tue, 21 Jan 2025 00:41:20 GMT\""
   ],
   "other-date-update-expires": [
     "Assertion",
-    "Response 2 header Date is \"Tue, 09 Jul 2024 01:17:25 GMT\", not \"Tue, 09 Jul 2024 01:17:22 GMT\""
+    "Response 2 header Date is \"Tue, 21 Jan 2025 00:41:23 GMT\", not \"Tue, 21 Jan 2025 00:41:20 GMT\""
   ],
   "other-date-update-expires-update": true,
   "other-fresh-content-disposition-attachment": true,
@@ -821,10 +821,7 @@
   "vary-invalidate": true,
   "vary-match": true,
   "vary-no-match": true,
-  "vary-normalise-combine": [
-    "Assertion",
-    "Response 2 does not come from cache"
-  ],
+  "vary-normalise-combine": true,
   "vary-normalise-lang-case": [
     "Assertion",
     "Response 2 does not come from cache"

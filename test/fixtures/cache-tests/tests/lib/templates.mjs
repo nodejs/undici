@@ -5,7 +5,7 @@ templates take an optional request object; the template
 will be updated with the request object in the following manner:
 
 - Object members will be assigned from the request
-- Array members will be concatonated from the request
+- Array members will be concatenated from the request
 - Other members will be updated from the request
 */
 export function makeTemplate (template) {
