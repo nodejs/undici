@@ -1031,7 +1031,7 @@ test('MockAgent - getCallHistory with request with a minimal configuration shoul
 })
 
 test('MockAgent - getCallHistory should register logs on non intercepted call', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t = tspl(t, { plan: 4 })
 
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
@@ -1057,7 +1057,9 @@ test('MockAgent - getCallHistory should register logs on non intercepted call', 
   await request(secondeBaseUrl)
 
   t.ok(mockAgent.getCallHistory().calls().length === 2)
-  t.ok(mockAgent.getCallHistory('second-history').calls().length === 1)
+  t.ok(mockAgent.getCallHistory().firstCall()?.origin === baseUrl)
+  t.ok(mockAgent.getCallHistory('second-history')?.calls().length === 1)
+  t.ok(mockAgent.getCallHistory('second-history')?.firstCall()?.origin === secondeBaseUrl)
 })
 
 test('MockAgent - clearAllCallHistory should clear all call histories', async (t) => {
