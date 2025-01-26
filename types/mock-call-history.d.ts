@@ -28,6 +28,8 @@ declare class MockCallHistory {
   constructor (name: string)
   /** returns an array of MockCallHistoryLog. */
   calls (): Array<MockCallHistoryLog>
+  /** returns the first MockCallHistoryLog */
+  firstCall (): MockCallHistoryLog | undefined
   /** returns the last MockCallHistoryLog. */
   lastCall (): MockCallHistoryLog | undefined
   /** returns the nth MockCallHistoryLog. */
