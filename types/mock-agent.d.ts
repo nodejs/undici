@@ -30,10 +30,11 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   enableNetConnect (host: string): void
   enableNetConnect (host: RegExp): void
   enableNetConnect (host: ((host: string) => boolean)): void
+  /** get call history. If a name is provided, it returns the history registered previously with registerCallHistory on a MockScope instance. If not, it returns the global call history of the MockAgent. */
   getCallHistory (): MockCallHistory
   getCallHistory (name: string): MockCallHistory | undefined
+  /** clear every call history. Any MockCallHistoryLog will be deleted on every MockCallHistory */
   clearAllCallHistory (): void
-  /** Causes all requests to throw when requests are not matched in a MockAgent intercept. */
   disableNetConnect (): void
   pendingInterceptors (): PendingInterceptor[]
   assertNoPendingInterceptors (options?: {
