@@ -179,7 +179,9 @@ for await (const data of result2.body) {
   console.log('data', data.toString('utf8')) // data hello
 }
 ```
+
 #### Example - Mock different requests within the same file
+
 ```js
 const { MockAgent, setGlobalDispatcher } = require('undici');
 const agent = new MockAgent();
@@ -539,4 +541,126 @@ agent.assertNoPendingInterceptors()
 // ├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
 // │    0    │ 'GET'  │ 'https://example.com' │ '/'  │     200     │    '❌'    │      0      │     1     │
 // └─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
+```
+
+#### Example - access call history on MockAgent
+
+By default, every call made within a MockAgent have their request configuration historied
+
+```js
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+
+await request('http://example.com', { query: { item: 1 }})
+
+mockAgent.getCallHistory().firstCall()
+// Returns
+// MockCallHistoryLog {
+//   body: undefined,
+//   headers: undefined,
+//   method: 'GET',
+//   origin: 'http://example.com',
+//   fullUrl: 'http://example.com/?item=1',
+//   path: '/',
+//   searchParams: { item: '1' },
+//   protocol: 'http:',
+//   host: 'example.com',
+//   port: ''
+// }
+```
+
+#### Example - access call history on intercepted client
+
+You can use `registerCallHistory` to register a specific MockCallHistory instance while you are intercepting request. This is useful to have an history already filtered. Note that `getCallHistory()` will still register every request configuration.
+
+```js
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+
+const client = mockAgent.get('http://example.com')
+
+client.intercept({ path: '/', method: 'GET' }).reply(200, 'hi !').registerCallHistory('my-specific-history-name')
+
+await request('http://example.com') // intercepted
+await request('http://example.com', { method: 'POST', body: JSON.stringify({ data: 'hello' }), headers: { 'content-type': 'application/json' }})
+
+mockAgent.getCallHistory('my-specific-history-name').calls()
+// Returns [
+// MockCallHistoryLog {
+//   body: undefined,
+//   headers: undefined,
+//   method: 'GET',
+//   origin: 'http://example.com',
+//   fullUrl: 'http://example.com/',
+//   path: '/',
+//   searchParams: {},
+//   protocol: 'http:',
+//   host: 'example.com',
+//   port: ''
+// }
+// ]
+
+mockAgent.getCallHistory().calls()
+// Returns [
+// MockCallHistoryLog {
+//   body: undefined,
+//   headers: undefined,
+//   method: 'GET',
+//   origin: 'http://example.com',
+//   fullUrl: 'http://example.com/',
+//   path: '/',
+//   searchParams: {},
+//   protocol: 'http:',
+//   host: 'example.com',
+//   port: ''
+// },
+// MockCallHistoryLog {
+//   body: "{ "data": "hello" }",
+//   headers: { 'content-type': 'application/json' },
+//   method: 'POST',
+//   origin: 'http://example.com',
+//   fullUrl: 'http://example.com/',
+//   path: '/',
+//   searchParams: {},
+//   protocol: 'http:',
+//   host: 'example.com',
+//   port: ''
+// }
+// ]
+```
+
+#### Example - clear call history
+
+Clear all call history registered :
+
+```js
+const mockAgent = new MockAgent()
+
+mockAgent.clearAllCallHistory()
+```
+
+Clear only one call history :
+
+```js
+const mockAgent = new MockAgent()
+
+mockAgent.getCallHistory().clear()
+mockAgent.getCallHistory('my-history')?.clear()
+```
+
+#### Example - call history instance class method
+
+```js
+const mockAgent = new MockAgent()
+
+const mockAgentHistory = mockAgent.getCallHistory()
+
+mockAgentHistory.calls() // returns an array of MockCallHistoryLogs
+mockAgentHistory.firstCall() // returns the first MockCallHistoryLogs or undefined
+mockAgentHistory.lastCall() // returns the last MockCallHistoryLogs or undefined
+mockAgentHistory.nthCall(3) // returns the third MockCallHistoryLogs or undefined
 ```

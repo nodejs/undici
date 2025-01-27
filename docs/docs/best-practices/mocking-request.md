@@ -75,6 +75,73 @@ assert.deepEqual(badRequest, { message: 'bank account not found' })
 
 Explore other MockAgent functionality [here](/docs/docs/api/MockAgent.md)
 
+## Access agent history
+
+Using a MockAgent also allows you to make assertions on the configuration used to make your http calls in your application.
+
+Here is an example :
+
+```js
+// index.test.mjs
+import { strict as assert } from 'assert'
+import { MockAgent, setGlobalDispatcher, fetch } from 'undici'
+import { app } from './app.mjs'
+
+// given an application server running on http://localhost:3000
+await app.start()
+
+const mockAgent = new MockAgent()
+
+setGlobalDispatcher(mockAgent)
+
+// this call is made (not intercepted)
+await fetch(`http://localhost:3000/endpoint?query='hello'`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' }
+  body: JSON.stringify({ data: '' })
+})
+
+// access to the call history of the MockAgent (which register every call made intercepted or not)
+assert.ok(mockAgent.getCallHistory().calls().length === 1)
+assert.strictEqual(mockAgent.getCallHistory().firstCall()?.fullUrl, `http://localhost:3000/endpoint?query='hello'`)
+assert.strictEqual(mockAgent.getCallHistory().firstCall()?.body, JSON.stringify({ data: '' }))
+assert.deepStrictEqual(mockAgent.getCallHistory().firstCall()?.searchParams, { query: 'hello' })
+assert.strictEqual(mockAgent.getCallHistory().firstCall()?.port, '3000')
+assert.strictEqual(mockAgent.getCallHistory().firstCall()?.host, 'localhost:3000')
+assert.strictEqual(mockAgent.getCallHistory().firstCall()?.method, 'POST')
+assert.strictEqual(mockAgent.getCallHistory().firstCall()?.path, '/endpoint')
+assert.deepStrictEqual(mockAgent.getCallHistory().firstCall()?.headers, { 'content-type': 'application/json' })
+
+// register a specific call history for a given interceptor (useful to filter call within a particular interceptor)
+const mockPool = mockAgent.get('http://localhost:3000');
+
+// we intercept a call and we register a specific MockCallHistory
+mockPool.intercept({
+  path: '/second-endpoint',
+}).reply(200, 'hello').registerCallHistory('second-endpoint-history')
+
+assert.ok(mockAgent.getCallHistory().calls().length === 2) // MockAgent call history has registered the call too
+assert.ok(mockAgent.getCallHistory('second-endpoint-history')?.calls().length === 1)
+assert.strictEqual(mockAgent.getCallHistory('second-endpoint-history')?.firstCall()?.path, '/second-endpoint')
+assert.strictEqual(mockAgent.getCallHistory('second-endpoint-history')?.firstCall()?.method, 'GET')
+
+// clearing all call history
+
+mockAgent.clearAllCallHistory()
+
+assert.ok(mockAgent.getCallHistory().calls().length === 0)
+assert.ok(mockAgent.getCallHistory('second-endpoint-history')?.calls().length === 0)
+
+// clearing a particular history
+
+mockAgent.getCallHistory().clear() // second-endpoint-history will not be cleared
+mockAgent.getCallHistory('second-endpoint-history').clear() // it is not cleared
+```
+
+Calling `mockAgent.close()` will automatically clear and delete every call history for you.
+
+Explore other MockAgent functionality [here](/docs/docs/api/MockAgent.md)
+
 ## Debug Mock Value
 
 When the interceptor and the request options are not the same, undici will automatically make a real HTTP request. To prevent real requests from being made, use `mockAgent.disableNetConnect()`:
