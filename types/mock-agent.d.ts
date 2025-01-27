@@ -35,6 +35,7 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   getCallHistory (name: string): MockCallHistory | undefined
   /** clear every call history. Any MockCallHistoryLog will be deleted on every MockCallHistory */
   clearAllCallHistory (): void
+  /** Causes all requests to throw when requests are not matched in a MockAgent intercept. */
   disableNetConnect (): void
   pendingInterceptors (): PendingInterceptor[]
   assertNoPendingInterceptors (options?: {
