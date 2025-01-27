@@ -55,6 +55,7 @@ declare namespace Undici {
   const MockClient: typeof import('./mock-client').default
   const MockPool: typeof import('./mock-pool').default
   const MockAgent: typeof import('./mock-agent').default
+  const MockCallHistory: typeof import('./mock-call-history')
   const mockErrors: typeof import('./mock-errors').default
   const fetch: typeof import('./fetch').fetch
   const Headers: typeof import('./fetch').Headers
