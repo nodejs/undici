@@ -145,6 +145,10 @@ Calling `mockAgent.close()` will automatically clear and delete every call histo
 
 Explore other MockAgent functionality [here](/docs/docs/api/MockAgent.md)
 
+Explore other MockCallHistory functionality [here](/docs/docs/api/MockCallHistory.md)
+
+Explore other MockCallHistoryLog functionality [here](/docs/docs/api/MockCallHistoryLog.md)
+
 ## Debug Mock Value
 
 When the interceptor and the request options are not the same, undici will automatically make a real HTTP request. To prevent real requests from being made, use `mockAgent.disableNetConnect()`:

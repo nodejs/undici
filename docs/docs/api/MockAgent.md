@@ -592,7 +592,7 @@ client.intercept({ path: '/', method: 'GET' }).reply(200, 'hi !').registerCallHi
 await request('http://example.com') // intercepted
 await request('http://example.com', { method: 'POST', body: JSON.stringify({ data: 'hello' }), headers: { 'content-type': 'application/json' }})
 
-mockAgent.getCallHistory('my-specific-history-name').calls()
+mockAgent.getCallHistory('my-specific-history-name')?.calls()
 // Returns [
 // MockCallHistoryLog {
 //   body: undefined,
@@ -663,13 +663,14 @@ const mockAgent = new MockAgent()
 
 const mockAgentHistory = mockAgent.getCallHistory()
 
-mockAgentHistory.calls() // returns an array of MockCallHistoryLogs
-mockAgentHistory.firstCall() // returns the first MockCallHistoryLogs or undefined
-mockAgentHistory.lastCall() // returns the last MockCallHistoryLogs or undefined
-mockAgentHistory.nthCall(3) // returns the third MockCallHistoryLogs or undefined
-mockAgentHistory.filterCalls({ path: '/endpoint', hash: '#hash-value' }) // returns an Array of MockCallHistoryLogs WHERE path === /endpoint OR hash === #hash-value
-mockAgentHistory.filterCalls(/"data": "{}"/) // returns an Array of MockCallHistoryLogs where any value match regexp
-mockAgentHistory.filterCalls('application/json') // returns an Array of MockCallHistoryLogs where any value === 'application/json'
-mockAgentHistory.filterCalls((log) => log.path === '/endpoint') // returns an Array of MockCallHistoryLogs when given function returns true
-mockAgentHistory.clear() // clear the history
+mockAgentHistory?.calls() // returns an array of MockCallHistoryLogs
+mockAgentHistory?.firstCall() // returns the first MockCallHistoryLogs or undefined
+mockAgentHistory?.lastCall() // returns the last MockCallHistoryLogs or undefined
+mockAgentHistory?.nthCall(3) // returns the third MockCallHistoryLogs or undefined
+mockAgentHistory?.filterCalls({ path: '/endpoint', hash: '#hash-value' }) // returns an Array of MockCallHistoryLogs WHERE path === /endpoint OR hash === #hash-value
+mockAgentHistory?.filterCalls({ path: '/endpoint', hash: '#hash-value' }, { operator: 'AND' }) // returns an Array of MockCallHistoryLogs WHERE path === /endpoint AND hash === #hash-value
+mockAgentHistory?.filterCalls(/"data": "{}"/) // returns an Array of MockCallHistoryLogs where any value match regexp
+mockAgentHistory?.filterCalls('application/json') // returns an Array of MockCallHistoryLogs where any value === 'application/json'
+mockAgentHistory?.filterCalls((log) => log.path === '/endpoint') // returns an Array of MockCallHistoryLogs when given function returns true
+mockAgentHistory?.clear() // clear the history
 ```
