@@ -31,6 +31,8 @@ mockAgent.getCallHistory()?.clear() // clear only mockAgent history
 mockAgent.getCallHistory('my-custom-history')?.clear() // clear only 'my-custom-history' history
 ```
 
+> to clear all registered MockCallHistory, use `mockAgent.clearAllCallHistory()`. This is automatically done when calling `mockAgent.close()`
+
 ### calls
 
 Get all MockCallHistoryLog registered as an array
@@ -154,11 +156,11 @@ mockAgent.getCallHistory()?.filterCallsByMethod('POST')
 
 ### filterCalls
 
-This class method is a meta function / alias to apply complex filtering in one way.
+This class method is a meta function / alias to apply complex filtering in a single way.
 
 Parameters :
 
-- criteria : this first parameter. a function, regexp or object.
+- criteria : the first parameter. a function, regexp or object.
   - function : filter MockCallHistoryLog when the function returns false
   - regexp : filter MockCallHistoryLog when the regexp does not match on MockCallHistoryLog.toString() ([see](./MockCallHistoryLog.md#to-string))
   - object : an object with MockCallHistoryLog properties as keys to apply multiple filters. each values are a [filter parameter](#filter-parameter)
@@ -186,7 +188,7 @@ mockAgent.getCallHistory()?.filterCalls({ hash: /my-hash/, path: '/endpoint' }, 
 
 Can be :
 
-- string. filtered if `value !== parameterValue`
-- null. filtered if `value !== parameterValue`
-- undefined. filtered if `value !== parameterValue`
-- regexp. filtered if `!parameterValue.test(value)`
+- string. MockCallHistoryLog filtered if `value !== parameterValue`
+- null. MockCallHistoryLog filtered if `value !== parameterValue`
+- undefined. MockCallHistoryLog filtered if `value !== parameterValue`
+- regexp. MockCallHistoryLog filtered if `!parameterValue.test(value)`
