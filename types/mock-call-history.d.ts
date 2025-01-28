@@ -27,10 +27,10 @@ declare class MockCallHistoryLog {
   /** request's headers */
   headers: Dispatcher.DispatchOptions['headers']
 
-  /** return an Map of property / value pair */
+  /** returns an Map of property / value pair */
   toMap (): Map<MockCallHistoryLogProperties, string | Dispatcher.DispatchOptions['headers'] | Dispatcher.DispatchOptions['body'] | Dispatcher.DispatchOptions['method']>
 
-  /** return a string computed with all properties value */
+  /** returns a string computed with all key value pair */
   toString (): string
 }
 
