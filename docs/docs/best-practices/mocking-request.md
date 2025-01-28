@@ -29,7 +29,7 @@ And this is what the test file looks like:
 
 ```js
 // index.test.mjs
-import { strict as assert } from 'assert'
+import { strict as assert } from 'node:assert'
 import { MockAgent, setGlobalDispatcher, } from 'undici'
 import { bankTransfer } from './bank.mjs'
 
@@ -83,7 +83,7 @@ Here is an example :
 
 ```js
 // index.test.mjs
-import { strict as assert } from 'assert'
+import { strict as assert } from 'node:assert'
 import { MockAgent, setGlobalDispatcher, fetch } from 'undici'
 import { app } from './app.mjs'
 
