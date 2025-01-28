@@ -944,7 +944,7 @@ test('MockAgent - getCallHistory with no name parameter with request should retu
   const method = 'POST'
   const body = { data: 'value' }
   const query = { a: 1 }
-  const headers = { authorization: 'Bearer token' }
+  const headers = { 'content-type': 'application/json' }
 
   await request(url, { method, query, body: JSON.stringify(body), headers })
 
@@ -1027,7 +1027,7 @@ test('MockAgent - getCallHistory with name parameter should return the intercept
   const method = 'POST'
   const body = { data: 'value' }
   const query = { a: 1 }
-  const headers = { authorization: 'Bearer token' }
+  const headers = { 'content-type': 'application/json' }
 
   await request(url, { method, query, body: JSON.stringify(body), headers })
 
@@ -1164,7 +1164,7 @@ test('MockAgent - clearAllCallHistory should clear all call histories', async (t
   const method = 'POST'
   const body = { data: 'value' }
   const query = { a: 1 }
-  const headers = { authorization: 'Bearer token' }
+  const headers = { 'content-type': 'application/json' }
 
   await request(url, { method, query, body: JSON.stringify(body), headers })
   await request(url, { method, query, body: JSON.stringify(body), headers })
