@@ -38,9 +38,9 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   /** clear every call history. Any MockCallHistoryLog will be deleted on every MockCallHistory */
   clearAllCallHistory (): void
   /** Enable call history. Any subsequence calls will then be registered. Note that this has no effect on MockCallHistory registered with MockScope.registerCallHistory */
-  enableCallHistory (): void
+  enableCallHistory (): this
   /** Disable call history. Any subsequence calls will then not be registered. Note that this has no effect on MockCallHistory registered with MockScope.registerCallHistory */
-  disableCallHistory (): void
+  disableCallHistory (): this
   pendingInterceptors (): PendingInterceptor[]
   assertNoPendingInterceptors (options?: {
     pendingInterceptorsFormatter?: PendingInterceptorsFormatter;
