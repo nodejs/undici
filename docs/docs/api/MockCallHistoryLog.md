@@ -29,13 +29,13 @@ mockAgent.getCallHistory()?.firstCall()
 Returns a Map instance
 
 ```js
-mockAgent.getCallHistory()?.firstCall()?.toMap().get('hash')
+mockAgent.getCallHistory()?.firstCall()?.toMap()?.get('hash')
 // #hash
 ```
 
 ### toString
 
-Returns a a string computed with any class property name and value pair
+Returns a string computed with any class property name and value pair
 
 ```js
 mockAgent.getCallHistory()?.firstCall()?.toString()
