@@ -220,7 +220,7 @@ describe('MockCallHistory - nthCall', () => {
   })
 })
 
-describe('MockCallHistory - filterCalls', () => {
+describe('MockCallHistory - filterCalls without options', () => {
   test('should filter logs with a function', t => {
     t = tspl(t, { plan: 2 })
     after(MockCallHistory[kMockCallHistoryDeleteAll])
@@ -357,7 +357,7 @@ describe('MockCallHistory - filterCalls', () => {
     t.strictEqual(filtered.length, 2)
   })
 
-  test('should filter multiple time logs with an object', t => {
+  test('should use "OR" operator', t => {
     t = tspl(t, { plan: 1 })
     after(MockCallHistory[kMockCallHistoryDeleteAll])
 
@@ -407,5 +407,87 @@ describe('MockCallHistory - filterCalls', () => {
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
 
     t.throws(() => mockCallHistoryHello.filterCalls(3), new InvalidArgumentError('criteria parameter should be one of string, function, regexp, or object'))
+  })
+})
+
+describe('MockCallHistory - filterCalls with options', () => {
+  test('should throw if options.operator is not a valid string', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
+
+    t.throws(() => mockCallHistoryHello.filterCalls({ path: '/' }, { operator: 'wrong' }), new InvalidArgumentError('options.operator must to be a case insensitive string equal to \'OR\' or \'AND\''))
+  })
+
+  test('should not throw if options.operator is "or"', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
+
+    t.doesNotThrow(() => mockCallHistoryHello.filterCalls({ path: '/' }, { operator: 'or' }))
+  })
+
+  test('should not throw if options.operator is "and"', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
+
+    t.doesNotThrow(() => mockCallHistoryHello.filterCalls({ path: '/' }, { operator: 'and' }))
+  })
+
+  test('should use "OR" operator if options is an empty object', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/foo', origin: 'http://localhost:4000' })
+
+    const filtered = mockCallHistoryHello.filterCalls({ path: '/' }, {})
+
+    t.strictEqual(filtered.length, 1)
+  })
+
+  test('should use "AND" operator correctly', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:5000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/foo', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/foo', origin: 'http://localhost:5000' })
+
+    const filtered = mockCallHistoryHello.filterCalls({ path: '/', port: '4000' }, { operator: 'AND' })
+
+    t.strictEqual(filtered.length, 2)
+  })
+
+  test('should use "AND" operator with a lot of filters', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/#hello', origin: 'http://localhost:1000', method: 'GET' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/#hello', origin: 'http://localhost:1000', method: 'GET' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/#hello', origin: 'http://localhost:1000', method: 'DELETE' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/#hello', origin: 'http://localhost:1000', method: 'POST' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/#hello', origin: 'http://localhost:1000', method: 'PUT' })
+
+    const filtered = mockCallHistoryHello.filterCalls({ path: '/', port: '1000', host: /localhost/, method: /(POST|PUT)/ }, { operator: 'AND' })
+
+    t.strictEqual(filtered.length, 2)
   })
 })
