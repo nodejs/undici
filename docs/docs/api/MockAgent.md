@@ -545,17 +545,19 @@ agent.assertNoPendingInterceptors()
 
 #### Example - access call history on MockAgent
 
-By default, every call made within a MockAgent have their request configuration historied
+You can register every call made within a MockAgent to be able to retrieve the body, headers and so on.
+
+This is not enabled by default.
 
 ```js
 import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
-const mockAgent = new MockAgent()
+const mockAgent = new MockAgent({ enableCallHistory: true })
 setGlobalDispatcher(mockAgent)
 
 await request('http://example.com', { query: { item: 1 }})
 
-mockAgent.getCallHistory().firstCall()
+mockAgent.getCallHistory()?.firstCall()
 // Returns
 // MockCallHistoryLog {
 //   body: undefined,
@@ -573,12 +575,14 @@ mockAgent.getCallHistory().firstCall()
 
 #### Example - access call history on intercepted client
 
-You can use `registerCallHistory` to register a specific MockCallHistory instance while you are intercepting request. This is useful to have an history already filtered. Note that `getCallHistory()` will still register every request configuration.
+You can use `registerCallHistory` to register a specific MockCallHistory instance while you are intercepting request. This is useful to have an history already filtered. Note that `getCallHistory()` will still register every request configuration if you previously enable call history.
+
+> using registerCallHistory with a disabled MockAgent will still register an history on the intercepted request.
 
 ```js
 import { MockAgent, setGlobalDispatcher, request } from 'undici'
 
-const mockAgent = new MockAgent()
+const mockAgent = new MockAgent({ enableCallHistory: true })
 setGlobalDispatcher(mockAgent)
 
 const client = mockAgent.get('http://example.com')
@@ -604,7 +608,7 @@ mockAgent.getCallHistory('my-specific-history-name').calls()
 // }
 // ]
 
-mockAgent.getCallHistory().calls()
+mockAgent.getCallHistory()?.calls()
 // Returns [
 // MockCallHistoryLog {
 //   body: undefined,
@@ -648,7 +652,7 @@ Clear only one call history :
 ```js
 const mockAgent = new MockAgent()
 
-mockAgent.getCallHistory().clear()
+mockAgent.getCallHistory()?.clear()
 mockAgent.getCallHistory('my-history')?.clear()
 ```
 
@@ -663,4 +667,9 @@ mockAgentHistory.calls() // returns an array of MockCallHistoryLogs
 mockAgentHistory.firstCall() // returns the first MockCallHistoryLogs or undefined
 mockAgentHistory.lastCall() // returns the last MockCallHistoryLogs or undefined
 mockAgentHistory.nthCall(3) // returns the third MockCallHistoryLogs or undefined
+mockAgentHistory.filterCalls({ path: '/endpoint', hash: '#hash-value' }) // returns an Array of MockCallHistoryLogs WHERE path === /endpoint OR hash === #hash-value
+mockAgentHistory.filterCalls(/"data": "{}"/) // returns an Array of MockCallHistoryLogs where any value match regexp
+mockAgentHistory.filterCalls('application/json') // returns an Array of MockCallHistoryLogs where any value === 'application/json'
+mockAgentHistory.filterCalls((log) => log.path === '/endpoint') // returns an Array of MockCallHistoryLogs when given function returns true
+mockAgentHistory.clear() // clear the history
 ```

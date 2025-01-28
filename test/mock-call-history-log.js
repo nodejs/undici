@@ -3,6 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, describe } = require('node:test')
 const { MockCallHistoryLog } = require('../lib/mock/mock-call-history')
+const { InvalidArgumentError } = require('../lib/core/errors')
 
 describe('MockCallHistoryLog - constructor', () => {
   function assertConsistent (t, mockCallHistoryLog) {
@@ -17,11 +18,6 @@ describe('MockCallHistoryLog - constructor', () => {
     t.strictEqual(mockCallHistoryLog.host, 'localhost:4000')
     t.strictEqual(mockCallHistoryLog.port, '4000')
   }
-
-  test('should not throw when requestInit is not set', t => {
-    t = tspl(t, { plan: 1 })
-    t.doesNotThrow(() => new MockCallHistoryLog())
-  })
 
   test('should populate class properties with query in path', t => {
     t = tspl(t, { plan: 10 })
@@ -50,6 +46,12 @@ describe('MockCallHistoryLog - constructor', () => {
     })
 
     assertConsistent(t, mockCallHistoryLog)
+  })
+
+  test('should throw when url computing failed', t => {
+    t = tspl(t, { plan: 1 })
+
+    t.throws(() => new MockCallHistoryLog({}), new InvalidArgumentError('An error occurred when computing MockCallHistoryLog.url'))
   })
 })
 

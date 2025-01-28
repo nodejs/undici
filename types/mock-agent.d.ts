@@ -30,13 +30,17 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   enableNetConnect (host: string): void
   enableNetConnect (host: RegExp): void
   enableNetConnect (host: ((host: string) => boolean)): void
-  /** get call history. If a name is provided, it returns the history registered previously with registerCallHistory on a MockScope instance. If not, it returns the global call history of the MockAgent. */
-  getCallHistory (): MockCallHistory
+  /** Causes all requests to throw when requests are not matched in a MockAgent intercept. */
+  disableNetConnect (): void
+  /** get call history. If a name is provided, it returns the history registered previously with MockScope.registerCallHistory. If not, it returns the MockAgent call history. */
+  getCallHistory (): MockCallHistory | undefined
   getCallHistory (name: string): MockCallHistory | undefined
   /** clear every call history. Any MockCallHistoryLog will be deleted on every MockCallHistory */
   clearAllCallHistory (): void
-  /** Causes all requests to throw when requests are not matched in a MockAgent intercept. */
-  disableNetConnect (): void
+  /** Enable call history. Any subsequence calls will then be registered. Note that this has no effect on MockCallHistory registered with MockScope.registerCallHistory */
+  enableCallHistory (): void
+  /** Disable call history. Any subsequence calls will then not be registered. Note that this has no effect on MockCallHistory registered with MockScope.registerCallHistory */
+  disableCallHistory (): void
   pendingInterceptors (): PendingInterceptor[]
   assertNoPendingInterceptors (options?: {
     pendingInterceptorsFormatter?: PendingInterceptorsFormatter;
@@ -55,5 +59,8 @@ declare namespace MockAgent {
 
     /** Ignore trailing slashes in the path */
     ignoreTrailingSlash?: boolean;
+
+    /** Enable call history. you can either call MockAgent.enableCallHistory(). default false */
+    enableCallHistory?: boolean
   }
 }

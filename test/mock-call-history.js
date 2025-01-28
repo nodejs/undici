@@ -3,7 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, describe, after } = require('node:test')
 const { MockCallHistory } = require('../lib/mock/mock-call-history')
-const { kMockCallHistoryDeleteAll, kMockCallHistoryAddLog, kMockCallHistoryClearAll } = require('../lib/mock/mock-symbols')
+const { kMockCallHistoryDeleteAll, kMockCallHistoryCreate, kMockCallHistoryAddLog, kMockCallHistoryClearAll, kMockCallHistoryAllMockCallHistoryInstances } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
 
 describe('MockCallHistory - constructor', () => {
@@ -20,12 +20,50 @@ describe('MockCallHistory - constructor', () => {
     t = tspl(t, { plan: 3 })
     after(MockCallHistory[kMockCallHistoryDeleteAll])
 
-    t.strictEqual(MockCallHistory.AllMockCallHistory.size, 0)
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 0)
 
     const mockCallHistory = new MockCallHistory('hello')
 
-    t.strictEqual(MockCallHistory.AllMockCallHistory.size, 1)
-    t.strictEqual(MockCallHistory.AllMockCallHistory.get('hello'), mockCallHistory)
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 1)
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].get('hello'), mockCallHistory)
+  })
+})
+
+describe('MockCallHistory - Create', () => {
+  test('should returns a MockCallHistory if named history is not present', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistory = MockCallHistory[kMockCallHistoryCreate]('hello')
+
+    t.ok(mockCallHistory instanceof MockCallHistory)
+  })
+
+  test('should populate static class property', t => {
+    t = tspl(t, { plan: 3 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 0)
+
+    const mockCallHistory = new MockCallHistory('hello')
+
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 1)
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].get('hello'), mockCallHistory)
+  })
+})
+
+describe('MockCallHistory - add log', () => {
+  test('should add a log', t => {
+    t = tspl(t, { plan: 2 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    t.strictEqual(mockCallHistoryHello.calls().length, 0)
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'https://localhost:4000' })
+
+    t.strictEqual(mockCallHistoryHello.calls().length, 1)
   })
 })
 
@@ -37,17 +75,17 @@ describe('MockCallHistory - ClearAll', () => {
     const mockCallHistoryHello = new MockCallHistory('hello')
     const mockCallHistoryWorld = new MockCallHistory('world')
 
-    mockCallHistoryWorld[kMockCallHistoryAddLog]({})
-    mockCallHistoryHello[kMockCallHistoryAddLog]({})
-    mockCallHistoryHello[kMockCallHistoryAddLog]({})
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'https://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'https://localhost:4000' })
+    mockCallHistoryWorld[kMockCallHistoryAddLog]({ path: '/', origin: 'https://localhost:4000' })
 
-    t.strictEqual(MockCallHistory.AllMockCallHistory.size, 2)
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 2)
     t.strictEqual(mockCallHistoryWorld.calls().length, 1)
     t.strictEqual(mockCallHistoryHello.calls().length, 2)
 
     MockCallHistory[kMockCallHistoryClearAll]()
 
-    t.strictEqual(MockCallHistory.AllMockCallHistory.size, 2)
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 2)
     t.strictEqual(mockCallHistoryWorld.calls().length, 0)
     t.strictEqual(mockCallHistoryHello.calls().length, 0)
   })
@@ -60,22 +98,8 @@ describe('MockCallHistory - calls', () => {
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
-    mockCallHistoryHello[kMockCallHistoryAddLog]({})
-    mockCallHistoryHello[kMockCallHistoryAddLog]({})
-
-    t.strictEqual(mockCallHistoryHello.calls().length, 2)
-  })
-})
-
-describe('MockCallHistory - calls', () => {
-  test('should returns every logs', t => {
-    t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
-
-    const mockCallHistoryHello = new MockCallHistory('hello')
-
-    mockCallHistoryHello[kMockCallHistoryAddLog]({})
-    mockCallHistoryHello[kMockCallHistoryAddLog]({})
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'https://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'https://localhost:4000' })
 
     t.strictEqual(mockCallHistoryHello.calls().length, 2)
   })
@@ -241,6 +265,96 @@ describe('MockCallHistory - filterCalls', () => {
 
     t.strictEqual(filtered?.[0]?.path, '/noop')
     t.strictEqual(filtered.length, 1)
+  })
+
+  test('should returns every logs with an empty object', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://localhost:4000' })
+
+    const filtered = mockCallHistoryHello.filterCalls({})
+
+    t.strictEqual(filtered.length, 3)
+  })
+
+  test('should filter logs with an object with host property', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://127.0.0.1:4000' })
+
+    const filtered = mockCallHistoryHello.filterCalls({ host: /localhost/ })
+
+    t.strictEqual(filtered.length, 2)
+  })
+
+  test('should filter logs with an object with port property', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:1000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://127.0.0.1:4000' })
+
+    const filtered = mockCallHistoryHello.filterCalls({ port: '1000' })
+
+    t.strictEqual(filtered.length, 1)
+  })
+
+  test('should filter logs with an object with hash property', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/#hello', origin: 'http://localhost:1000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://127.0.0.1:4000' })
+
+    const filtered = mockCallHistoryHello.filterCalls({ hash: '#hello' })
+
+    t.strictEqual(filtered.length, 1)
+  })
+
+  test('should filter logs with an object with fullUrl property', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '#hello', origin: 'http://localhost:1000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://127.0.0.1:4000' })
+
+    const filtered = mockCallHistoryHello.filterCalls({ fullUrl: 'http://localhost:1000/#hello' })
+
+    t.strictEqual(filtered.length, 1)
+  })
+
+  test('should filter logs with an object with method property', t => {
+    t = tspl(t, { plan: 1 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:1000', method: 'POST' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000', method: 'GET' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://127.0.0.1:4000', method: 'PUT' })
+
+    const filtered = mockCallHistoryHello.filterCalls({ method: /(PUT|GET)/ })
+
+    t.strictEqual(filtered.length, 2)
   })
 
   test('should filter multiple time logs with an object', t => {
