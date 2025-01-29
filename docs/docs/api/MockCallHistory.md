@@ -21,6 +21,17 @@ mockClient
 mockAgent.getCallHistory('my-custom-history')
 ```
 
+a MockCallHistory instance implements a **Symbol.iterator** letting you iterate on registered logs :
+
+```ts
+for (const log of mockAgent.getCallHistory('my-custom-history')) {
+  //...
+}
+
+const array: Array<MockCallHistoryLog> = [...mockAgent.getCallHistory('my-custom-history')]
+const set: Set<MockCallHistoryLog> = new Set(mockAgent.getCallHistory('my-custom-history'))
+```
+
 ## class methods
 
 ### clear

@@ -2,7 +2,7 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, describe, after } = require('node:test')
-const { MockCallHistory } = require('../lib/mock/mock-call-history')
+const { MockCallHistory, MockCallHistoryLog } = require('../lib/mock/mock-call-history')
 const { kMockCallHistoryDeleteAll, kMockCallHistoryCreate, kMockCallHistoryAddLog, kMockCallHistoryClearAll, kMockCallHistoryAllMockCallHistoryInstances } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
 
@@ -220,6 +220,38 @@ describe('MockCallHistory - nthCall', () => {
   })
 })
 
+describe('MockCallHistory - iterator', () => {
+  test('should permit to iterate over logs with for..of', t => {
+    t = tspl(t, { plan: 4 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'http://localhost:4000' })
+
+    for (const log of mockCallHistoryHello) {
+      t.ok(log instanceof MockCallHistoryLog)
+      t.ok(typeof log.path === 'string')
+    }
+  })
+
+  test('should permit to iterate over logs with spread operator', t => {
+    t = tspl(t, { plan: 2 })
+    after(MockCallHistory[kMockCallHistoryDeleteAll])
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'http://localhost:4000' })
+
+    const logs = [...mockCallHistoryHello]
+
+    t.ok(logs.every((log) => log instanceof MockCallHistoryLog))
+    t.strictEqual(logs.length, 2)
+  })
+})
+
 describe('MockCallHistory - filterCalls without options', () => {
   test('should filter logs with a function', t => {
     t = tspl(t, { plan: 2 })
@@ -406,7 +438,7 @@ describe('MockCallHistory - filterCalls without options', () => {
 
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
 
-    t.throws(() => mockCallHistoryHello.filterCalls(3), new InvalidArgumentError('criteria parameter should be one of string, function, regexp, or object'))
+    t.throws(() => mockCallHistoryHello.filterCalls(3), new InvalidArgumentError('criteria parameter should be one of function, regexp, or object'))
   })
 })
 
