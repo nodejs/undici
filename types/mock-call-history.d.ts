@@ -89,6 +89,8 @@ declare class MockCallHistory {
   filterCallsByMethod (method: MockCallHistory.FilterCallsParameter): Array<MockCallHistoryLog>
   /** clear all MockCallHistoryLog on this MockCallHistory. */
   clear (): void
+  /** use it with for..of loop or spread operator */
+  [Symbol.iterator]: () => Generator<MockCallHistoryLog>
 }
 
 export { MockCallHistoryLog, MockCallHistory }
