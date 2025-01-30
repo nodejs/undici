@@ -51,9 +51,8 @@ describe('MockAgent - constructor', () => {
 
   test('should disable call history by default', t => {
     t = tspl(t, { plan: 2 })
-    const agent = new Agent()
-    after(() => agent.close())
     const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
 
     t.strictEqual(mockAgent[kMockAgentIsCallHistoryEnabled], false)
     t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 0)
@@ -61,12 +60,26 @@ describe('MockAgent - constructor', () => {
 
   test('should enable call history if option is true', t => {
     t = tspl(t, { plan: 2 })
-    const agent = new Agent()
-    after(() => agent.close())
     const mockAgent = new MockAgent({ enableCallHistory: true })
+    after(() => mockAgent.close())
 
     t.strictEqual(mockAgent[kMockAgentIsCallHistoryEnabled], true)
     t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 1)
+  })
+
+  test('should disable call history if option is false', t => {
+    t = tspl(t, { plan: 2 })
+    after(() => mockAgent.close())
+    const mockAgent = new MockAgent({ enableCallHistory: false })
+
+    t.strictEqual(mockAgent[kMockAgentIsCallHistoryEnabled], false)
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 0)
+  })
+
+  test('should throw if enableCallHistory option is not a boolean', t => {
+    t = tspl(t, { plan: 1 })
+
+    t.throws(() => new MockAgent({ enableCallHistory: 'hello' }), new InvalidArgumentError('options.enableCallHistory must to be a boolean'))
   })
 })
 
@@ -86,7 +99,7 @@ describe('MockAgent - enableCallHistory', t => {
 
     await fetch('http://localhost:9999/foo')
 
-    t.strictEqual(mockAgent.getCallHistory()?.calls()?.length, 0)
+    t.strictEqual(mockAgent.getCallHistory()?.calls()?.length, undefined)
 
     mockAgent.enableCallHistory()
 
