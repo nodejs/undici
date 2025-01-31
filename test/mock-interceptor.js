@@ -107,6 +107,46 @@ describe('MockInterceptor - reply options callback', () => {
     })
   })
 
+  test('should handle undefined data', t => {
+    t = tspl(t, { plan: 2 })
+
+    const mockInterceptor = new MockInterceptor({
+      path: '',
+      method: ''
+    }, [])
+    const result = mockInterceptor.reply((options) => ({
+      statusCode: 200,
+      data: undefined
+    }))
+    t.ok(result instanceof MockScope)
+
+    // Test parameters
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply((options) => {
+      t.deepStrictEqual(options, { path: '/test', method: 'GET', headers: { foo: 'bar' } })
+      return { statusCode: 200, data: 'hello' }
+    })
+
+    mockPool.dispatch({
+      path: '/test',
+      method: 'GET',
+      headers: { foo: 'bar' }
+    }, {
+      onHeaders: () => { },
+      onData: () => { },
+      onComplete: () => { }
+    })
+  })
+
   test('should error if passed options invalid', async (t) => {
     t = tspl(t, { plan: 4 })
 
