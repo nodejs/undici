@@ -8,9 +8,9 @@ declare namespace MockCallHistoryLog {
 /** a log reflecting request configuration  */
 declare class MockCallHistoryLog {
   constructor (requestInit: Dispatcher.DispatchOptions)
-  /** protocol used. */
+  /** protocol used. ie. 'https:' or 'http:' etc... */
   protocol: string
-  /** request's host. ie. 'https:' or 'http:' etc... */
+  /** request's host. */
   host: string
   /** request's port. */
   port: string
@@ -23,22 +23,29 @@ declare class MockCallHistoryLog {
   /** the full url requested. */
   fullUrl: string
   /** request's method. */
-  method: Dispatcher.DispatchOptions['method']
+  method: string
   /** search params. */
   searchParams: Record<string, string>
   /** request's body */
-  body: Dispatcher.DispatchOptions['body']
+  body: string | null | undefined
   /** request's headers */
-  headers: Dispatcher.DispatchOptions['headers']
+  headers: Record<string, string | string[]> | null | undefined
 
   /** returns an Map of property / value pair */
-  toMap (): Map<MockCallHistoryLog.MockCallHistoryLogProperties, string | Dispatcher.DispatchOptions['headers'] | Dispatcher.DispatchOptions['body'] | Dispatcher.DispatchOptions['method']>
+  toMap (): Map<MockCallHistoryLog.MockCallHistoryLogProperties, string | Record<string, string | string[]> | null | undefined>
 
   /** returns a string computed with all key value pair */
   toString (): string
 }
 
 declare namespace MockCallHistory {
+  export type FilterCallsOperator = 'AND' | 'OR'
+
+  /** modify the filtering behavior */
+  export interface FilterCallsOptions {
+    /** the operator to apply when filtering. 'OR' will adds any MockCallHistoryLog matching any criteria given. 'AND' will adds only MockCallHistoryLog matching every criteria given. (default 'OR')  */
+    operator?: FilterCallsOperator | Lowercase<FilterCallsOperator>
+  }
   /** a function to be executed for filtering MockCallHistoryLog */
   export type FilterCallsFunctionCriteria = (log: MockCallHistoryLog) => boolean
 
@@ -47,13 +54,21 @@ declare namespace MockCallHistory {
 
   /** an object to execute multiple filtering at once */
   export interface FilterCallsObjectCriteria extends Record<string, FilterCallsParameter> {
+    /** filter by request protocol. ie https: */
     protocol?: FilterCallsParameter;
+    /** filter by request host. */
     host?: FilterCallsParameter;
+    /** filter by request port. */
     port?: FilterCallsParameter;
+    /** filter by request origin. */
     origin?: FilterCallsParameter;
+    /** filter by request path. */
     path?: FilterCallsParameter;
+    /** filter by request hash. */
     hash?: FilterCallsParameter;
+    /** filter by request fullUrl. */
     fullUrl?: FilterCallsParameter;
+    /** filter by request method. */
     method?: FilterCallsParameter;
   }
 }
@@ -69,8 +84,8 @@ declare class MockCallHistory {
   lastCall (): MockCallHistoryLog | undefined
   /** returns the nth MockCallHistoryLog. */
   nthCall (position: number): MockCallHistoryLog | undefined
-  /** return all MockCallHistoryLog matching any of criteria given. */
-  filterCalls (criteria: MockCallHistory.FilterCallsObjectCriteria | MockCallHistory.FilterCallsFunctionCriteria | RegExp): Array<MockCallHistoryLog>
+  /** return all MockCallHistoryLog matching any of criteria given. if an object is used with multiple properties, you can change the operator to apply during filtering on options */
+  filterCalls (criteria: MockCallHistory.FilterCallsFunctionCriteria | MockCallHistory.FilterCallsObjectCriteria | RegExp, options?: MockCallHistory.FilterCallsOptions): Array<MockCallHistoryLog>
   /** return all MockCallHistoryLog matching the given protocol. if a string is given, it is matched with includes */
   filterCallsByProtocol (protocol: MockCallHistory.FilterCallsParameter): Array<MockCallHistoryLog>
   /** return all MockCallHistoryLog matching the given host. if a string is given, it is matched with includes */

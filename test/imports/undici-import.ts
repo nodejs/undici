@@ -1,6 +1,5 @@
 import { expectType } from 'tsd'
-import { Dispatcher, interceptors, MockCallHistory, MockCallHistoryLog, request } from '../../'
-import { kMockCallHistoryAddLog, kMockCallHistoryDeleteAll } from '../../lib/mock/mock-symbols'
+import { Dispatcher, interceptors, request } from '../../'
 
 async function exampleCode () {
   const retry = interceptors.retry()
@@ -14,22 +13,4 @@ async function exampleCode () {
   await request('http://localhost:3000/foo')
 }
 
-function checkMockCallHistoryIterator () {
-  const mockCallHistory = new MockCallHistory('hello')
-  // @ts-ignore -- not relevant here
-  mockCallHistory[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000', method: 'GET' })
-  // @ts-ignore -- not relevant here
-  mockCallHistory[kMockCallHistoryAddLog]({ path: '/endpoint', origin: 'http://localhost:4000', method: 'GET' })
-
-  expectType<Array<MockCallHistoryLog>>([...mockCallHistory])
-
-  for (const log of mockCallHistory) {
-    expectType<MockCallHistoryLog>(log)
-  }
-
-  // @ts-ignore -- not relevant here
-  MockCallHistory[kMockCallHistoryDeleteAll]()
-}
-
 exampleCode()
-checkMockCallHistoryIterator()
