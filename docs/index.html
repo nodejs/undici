@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Node.js Undici</title>
@@ -9,6 +10,7 @@
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
   <link rel="icon" type="image/png" href="https://nodejs.org/static/images/favicons/favicon.png" />
 </head>
+
 <body>
   <div id="app"></div>
   <script>
@@ -32,6 +34,11 @@
       noCompileLinks: [
         'benchmarks/.*'
       ],
+      copyCode: {
+        buttonText: 'Copy Code',
+        errorText: 'Error',
+        successText: 'Copied',
+      },
       relativePath: true,
       markdown: {
         renderer: {
@@ -73,6 +80,7 @@
   <!-- Docsify v4 -->
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  <script src="https://unpkg.com/docsify-copy-code@3"></script>
   <script type="module">
     import mermaid from "//cdn.jsdelivr.net/npm/mermaid@10.8.0/+esm";
     mermaid.initialize({ startOnLoad: true });
@@ -81,18 +89,18 @@
   <script>
     const plugin = (config) => (hook) => {
       hook.afterEach((html, next) => {
-          const container = document.createElement('div');
-          container.innerHTML = html;
+        const container = document.createElement('div');
+        container.innerHTML = html;
 
-          const elements = container.querySelectorAll('pre[data-lang=mermaid]')
-          for (const element of elements) {
-              const replacement = document.createElement('div');
-              replacement.textContent = element.textContent;
-              replacement.classList.add('mermaid');
-              element.parentNode.replaceChild(replacement, element);
-          }
+        const elements = container.querySelectorAll('pre[data-lang=mermaid]')
+        for (const element of elements) {
+          const replacement = document.createElement('div');
+          replacement.textContent = element.textContent;
+          replacement.classList.add('mermaid');
+          element.parentNode.replaceChild(replacement, element);
+        }
 
-          next(container.innerHTML);
+        next(container.innerHTML);
       });
 
       hook.doneEach(() => mermaid.run(config));
@@ -104,4 +112,5 @@
     window.$docsify.plugins.push(plugin(window.$docsify.mermaidConfig || { querySelector: ".mermaid" }));
   </script>
 </body>
+
 </html>
