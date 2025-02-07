@@ -54,5 +54,5 @@ import { MockScope } from '../../types/mock-interceptor'
       expectType<string>(log.toString())
     }
   }
-  expectType<void>(mockAgent.getCallHistory()?.clear())
+  expectType<void | undefined>(mockAgent.getCallHistory()?.clear())
 }
