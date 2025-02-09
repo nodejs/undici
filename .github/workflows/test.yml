@@ -46,7 +46,7 @@ jobs:
       - name: Run tests with coverage
         id: coverage
         if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 22
-        run: npm run coverage:ci
+        run: npm run test:wpt
         env:
           CI: true
           NODE_V8_COVERAGE: ./coverage/tmp
