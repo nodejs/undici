@@ -10,7 +10,7 @@ import { route as redirectRoute } from './routes/redirect.mjs'
 import { Pipeline } from './util.mjs'
 import { symbols } from './constants.mjs'
 
-const tests = fileURLToPath(join(import.meta.url, '../../../fixtures/wpt'))
+const tests = join(fileURLToPath(import.meta.url), '../../../fixtures/wpt')
 
 // https://web-platform-tests.org/tools/wptserve/docs/stash.html
 class Stash extends Map {
