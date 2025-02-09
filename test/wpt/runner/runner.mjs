@@ -7,7 +7,7 @@ import { colors, handlePipes, normalizeName, parseMeta, resolveStatusPath } from
 
 const alwaysExit0 = process.env.GITHUB_WORKFLOW === 'Daily WPT report'
 
-const basePath = fileURLToPath(join(import.meta.url, '../..'))
+const basePath = join(fileURLToPath(import.meta.url), '../..')
 const testPath = join(basePath, '../fixtures/wpt')
 const statusPath = join(basePath, 'status')
 
@@ -135,7 +135,7 @@ export class WPTRunner extends EventEmitter {
   }
 
   async run () {
-    const workerPath = fileURLToPath(join(import.meta.url, '../worker.mjs'))
+    const workerPath = join(fileURLToPath(import.meta.url), '../worker.mjs')
     /** @type {Set<Worker>} */
     const activeWorkers = new Set()
     let finishedFiles = 1
