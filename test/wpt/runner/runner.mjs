@@ -135,7 +135,7 @@ export class WPTRunner extends EventEmitter {
   }
 
   async run () {
-    const workerPath = fileURLToPath(join(import.meta.url, '../worker.mjs'))
+    const workerPath = join(fileURLToPath(import.meta.url), '../worker.mjs')
     /** @type {Set<Worker>} */
     const activeWorkers = new Set()
     let finishedFiles = 1
