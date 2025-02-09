@@ -7,7 +7,7 @@ import { colors, handlePipes, normalizeName, parseMeta, resolveStatusPath } from
 
 const alwaysExit0 = process.env.GITHUB_WORKFLOW === 'Daily WPT report'
 
-const basePath = fileURLToPath(join(import.meta.url, '../..'))
+const basePath = join(fileURLToPath(import.meta.url), '../..')
 const testPath = join(basePath, '../fixtures/wpt')
 const statusPath = join(basePath, 'status')
 
