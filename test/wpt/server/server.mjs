@@ -8,7 +8,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { route as networkPartitionRoute } from './routes/network-partition-key.mjs'
 import { route as redirectRoute } from './routes/redirect.mjs'
 
-const tests = fileURLToPath(join(import.meta.url, '../../tests'))
+const tests = join(fileURLToPath(import.meta.url), '../../tests')
 
 // https://web-platform-tests.org/tools/wptserve/docs/stash.html
 class Stash extends Map {
