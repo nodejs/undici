@@ -218,7 +218,14 @@
                   },
                   "expected_status": {
                     "description": "Expected response status received by the client",
-                    "$ref": "#/definitions/status-code"
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/status-code"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "expected_request_headers": {
                     "description": "Request headers to check for on the server",
