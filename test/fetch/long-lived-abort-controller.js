@@ -2,7 +2,7 @@
 
 const http = require('node:http')
 const { fetch } = require('../../')
-const { once } = require('events')
+const { once, setMaxListeners } = require('node:events')
 const { test } = require('node:test')
 const { closeServerAsPromise } = require('../utils/node-http')
 const { strictEqual } = require('node:assert')
@@ -30,6 +30,7 @@ test('long-lived-abort-controller', { skip: true }, async (t) => {
   })
 
   const controller = new AbortController()
+  setMaxListeners(1500, controller.signal)
 
   // The maxListener is set to 1500 in request.js.
   // we set it to 2000 to make sure that we are not leaking event listeners.
