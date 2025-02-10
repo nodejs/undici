@@ -2,6 +2,7 @@ import Agent from './agent'
 import Dispatcher from './dispatcher'
 import { Interceptable, MockInterceptor } from './mock-interceptor'
 import MockDispatch = MockInterceptor.MockDispatch
+import { MockCallHistory } from './mock-call-history'
 
 export default MockAgent
 
@@ -31,6 +32,15 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   enableNetConnect (host: ((host: string) => boolean)): void
   /** Causes all requests to throw when requests are not matched in a MockAgent intercept. */
   disableNetConnect (): void
+  /** get call history. If a name is provided, it returns the history registered previously with MockScope.registerCallHistory. If not, it returns the MockAgent call history. */
+  getCallHistory (): MockCallHistory | undefined
+  getCallHistory (name: string): MockCallHistory | undefined
+  /** clear every call history. Any MockCallHistoryLog will be deleted on every MockCallHistory */
+  clearAllCallHistory (): void
+  /** Enable call history. Any subsequence calls will then be registered. Note that this has no effect on MockCallHistory registered with MockScope.registerCallHistory */
+  enableCallHistory (): this
+  /** Disable call history. Any subsequence calls will then not be registered. Note that this has no effect on MockCallHistory registered with MockScope.registerCallHistory */
+  disableCallHistory (): this
   pendingInterceptors (): PendingInterceptor[]
   assertNoPendingInterceptors (options?: {
     pendingInterceptorsFormatter?: PendingInterceptorsFormatter;
@@ -49,5 +59,8 @@ declare namespace MockAgent {
 
     /** Ignore trailing slashes in the path */
     ignoreTrailingSlash?: boolean;
+
+    /** Enable call history. you can either call MockAgent.enableCallHistory(). default false */
+    enableCallHistory?: boolean
   }
 }

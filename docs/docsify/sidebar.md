@@ -17,6 +17,8 @@
   * [MockClient](/docs/api/MockClient.md "Undici API - MockClient")
   * [MockPool](/docs/api/MockPool.md "Undici API - MockPool")
   * [MockAgent](/docs/api/MockAgent.md "Undici API - MockAgent")
+  * [MockCallHistory](/docs/api/MockCallHistory.md "Undici API - MockCallHistory")
+  * [MockCallHistoryLog](/docs/api/MockCallHistoryLog.md "Undici API - MockCallHistoryLog")
   * [MockErrors](/docs/api/MockErrors.md "Undici API - MockErrors")
   * [API Lifecycle](/docs/api/api-lifecycle.md "Undici API - Lifecycle")
   * [Diagnostics Channel Support](/docs/api/DiagnosticsChannel.md "Diagnostics Channel Support")

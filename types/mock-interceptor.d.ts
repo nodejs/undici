@@ -11,6 +11,8 @@ declare class MockScope<TData extends object = object> {
   persist (): MockScope<TData>
   /** Define a reply for a set amount of matching requests. */
   times (repeatTimes: number): MockScope<TData>
+  /** Register a specific MockCallHistory within this scope. */
+  registerCallHistory (name: string | Symbol): MockScope<TData>
 }
 
 /** The interceptor for a Mock. */

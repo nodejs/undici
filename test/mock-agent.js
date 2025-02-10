@@ -10,10 +10,11 @@ const { kClients, kConnected } = require('../lib/core/symbols')
 const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/errors')
 const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
-const { kAgent } = require('../lib/mock/mock-symbols')
+const { kAgent, kMockAgentIsCallHistoryEnabled, kMockCallHistoryAllMockCallHistoryInstances } = require('../lib/mock/mock-symbols')
 const Dispatcher = require('../lib/dispatcher/dispatcher')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 const { fetch } = require('..')
+const { MockCallHistory } = require('../lib/mock/mock-call-history')
 
 describe('MockAgent - constructor', () => {
   test('sets up mock agent', t => {
@@ -46,6 +47,91 @@ describe('MockAgent - constructor', () => {
     const mockAgent = new MockAgent({ agent })
 
     t.strictEqual(mockAgent[kAgent], agent)
+  })
+
+  test('should disable call history by default', t => {
+    t = tspl(t, { plan: 2 })
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    t.strictEqual(mockAgent[kMockAgentIsCallHistoryEnabled], false)
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 0)
+  })
+
+  test('should enable call history if option is true', t => {
+    t = tspl(t, { plan: 2 })
+    const mockAgent = new MockAgent({ enableCallHistory: true })
+    after(() => mockAgent.close())
+
+    t.strictEqual(mockAgent[kMockAgentIsCallHistoryEnabled], true)
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 1)
+  })
+
+  test('should disable call history if option is false', t => {
+    t = tspl(t, { plan: 2 })
+    after(() => mockAgent.close())
+    const mockAgent = new MockAgent({ enableCallHistory: false })
+
+    t.strictEqual(mockAgent[kMockAgentIsCallHistoryEnabled], false)
+    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 0)
+  })
+
+  test('should throw if enableCallHistory option is not a boolean', t => {
+    t = tspl(t, { plan: 1 })
+
+    t.throws(() => new MockAgent({ enableCallHistory: 'hello' }), new InvalidArgumentError('options.enableCallHistory must to be a boolean'))
+  })
+})
+
+describe('MockAgent - enableCallHistory', t => {
+  test('should enable call history and add call history log', async (t) => {
+    t = tspl(t, { plan: 2 })
+
+    const mockAgent = new MockAgent()
+    setGlobalDispatcher(mockAgent)
+    after(() => mockAgent.close())
+
+    const mockClient = mockAgent.get('http://localhost:9999')
+    mockClient.intercept({
+      path: '/foo',
+      method: 'GET'
+    }).reply(200, 'foo').persist()
+
+    await fetch('http://localhost:9999/foo')
+
+    t.strictEqual(mockAgent.getCallHistory()?.calls()?.length, undefined)
+
+    mockAgent.enableCallHistory()
+
+    await request('http://localhost:9999/foo')
+
+    t.strictEqual(mockAgent.getCallHistory()?.calls()?.length, 1)
+  })
+})
+
+describe('MockAgent - disableCallHistory', t => {
+  test('should disable call history and not add call history log', async (t) => {
+    t = tspl(t, { plan: 2 })
+
+    const mockAgent = new MockAgent({ enableCallHistory: true })
+    setGlobalDispatcher(mockAgent)
+    after(() => mockAgent.close())
+
+    const mockClient = mockAgent.get('http://localhost:9999')
+    mockClient.intercept({
+      path: '/foo',
+      method: 'GET'
+    }).reply(200, 'foo').persist()
+
+    await request('http://localhost:9999/foo')
+
+    t.strictEqual(mockAgent.getCallHistory()?.calls()?.length, 1)
+
+    mockAgent.disableCallHistory()
+
+    await request('http://localhost:9999/foo')
+
+    t.strictEqual(mockAgent.getCallHistory()?.calls()?.length, 1)
   })
 })
 
@@ -772,6 +858,341 @@ test('MockAgent - should persist requests', async (t) => {
   }
 })
 
+test('MockAgent - getCallHistory with no name parameter should return the agent call history', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const mockClient = mockAgent.get('http://localhost:9999')
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 1)
+  t.ok(mockAgent.getCallHistory() instanceof MockCallHistory)
+})
+
+test('MockAgent - getCallHistory with name parameter should return the named call history', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const mockClient = mockAgent.get('http://localhost:9999')
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo').registerCallHistory('my-history')
+
+  t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 2)
+  t.ok(mockAgent.getCallHistory('my-history') instanceof MockCallHistory)
+})
+
+test('MockAgent - getCallHistory with name parameter should return undefined when unknown name history', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const mockClient = mockAgent.get('http://localhost:9999')
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo').registerCallHistory('my-history')
+
+  t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 2)
+  t.strictEqual(mockAgent.getCallHistory('no-exist'), undefined)
+})
+
+test('MockAgent - getCallHistory with name parameter when history already exist should return the same history', async (t) => {
+  t = tspl(t, { plan: 1 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const mockClient = mockAgent.get('http://localhost:9999')
+  const historyName = 'my-history'
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo').registerCallHistory(historyName)
+
+  await request('http://localhost:9999/foo')
+
+  mockClient.intercept({
+    path: '/bar',
+    method: 'POST'
+  }).reply(200, 'bar').registerCallHistory(historyName)
+
+  await request('http://localhost:9999/bar', { method: 'POST' })
+
+  t.strictEqual(mockAgent.getCallHistory(historyName)?.calls().length, 2)
+})
+
+test('MockAgent - getCallHistory with no name parameter with request should return the global call history with history log', async (t) => {
+  t = tspl(t, { plan: 10 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const baseUrl = 'http://localhost:9999'
+  const mockClient = mockAgent.get(baseUrl)
+  mockClient.intercept({
+    path: /^\/foo/,
+    method: 'POST'
+  }).reply(200, 'foo')
+
+  t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 1)
+  t.ok(mockAgent.getCallHistory()?.calls().length === 0)
+
+  const path = '/foo'
+  const url = new URL(path, baseUrl)
+  const method = 'POST'
+  const body = { data: 'value' }
+  const query = { a: 1 }
+  const headers = { 'content-type': 'application/json' }
+
+  await request(url, { method, query, body: JSON.stringify(body), headers })
+
+  t.ok(mockAgent.getCallHistory()?.calls().length === 1)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.body, JSON.stringify(body))
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.headers, headers)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.method, method)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.origin, baseUrl)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.path, path)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.fullUrl, `${url.toString()}?${new URLSearchParams(query).toString()}`)
+  t.deepStrictEqual(mockAgent.getCallHistory()?.lastCall()?.searchParams, { a: '1' })
+})
+
+test('MockAgent - getCallHistory with no name parameter with fetch should return the global call history with history log', async (t) => {
+  t = tspl(t, { plan: 10 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const baseUrl = 'http://localhost:9999'
+  const mockClient = mockAgent.get(baseUrl)
+  mockClient.intercept({
+    path: /^\/foo/,
+    method: 'POST'
+  }).reply(200, 'foo')
+
+  t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 1)
+  t.ok(mockAgent.getCallHistory()?.calls().length === 0)
+
+  const path = '/foo'
+  const url = new URL(path, baseUrl)
+  const method = 'POST'
+  const body = { data: 'value' }
+  const query = { a: 1 }
+  url.search = new URLSearchParams(query)
+  const headers = { authorization: 'Bearer token', 'content-type': 'application/json' }
+
+  await fetch(url, { method, query, body: JSON.stringify(body), headers })
+
+  t.ok(mockAgent.getCallHistory()?.calls().length === 1)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.body, JSON.stringify(body))
+  t.deepStrictEqual(mockAgent.getCallHistory()?.lastCall()?.headers, {
+    ...headers,
+    'accept-encoding': 'gzip, deflate',
+    'content-length': '16',
+    'content-type': 'application/json',
+    'accept-language': '*',
+    'sec-fetch-mode': 'cors',
+    'user-agent': 'undici',
+    accept: '*/*'
+  })
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.method, method)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.origin, baseUrl)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.path, url.pathname)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.fullUrl, url.toString())
+  t.deepStrictEqual(mockAgent.getCallHistory()?.lastCall()?.searchParams, { a: '1' })
+})
+
+test('MockAgent - getCallHistory with name parameter should return the intercepted call history with history log', async (t) => {
+  t = tspl(t, { plan: 10 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const baseUrl = 'http://localhost:9999'
+  const historyName = 'my-history'
+  const mockClient = mockAgent.get(baseUrl)
+  mockClient.intercept({
+    path: /^\/foo/,
+    method: 'POST'
+  }).reply(200, 'foo').registerCallHistory(historyName)
+
+  t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 2)
+  t.ok(mockAgent.getCallHistory()?.calls().length === 0)
+
+  const path = '/foo'
+  const url = new URL(path, baseUrl)
+  const method = 'POST'
+  const body = { data: 'value' }
+  const query = { a: 1 }
+  const headers = { 'content-type': 'application/json' }
+
+  await request(url, { method, query, body: JSON.stringify(body), headers })
+
+  t.ok(mockAgent.getCallHistory()?.calls().length === 1)
+  t.strictEqual(mockAgent.getCallHistory(historyName)?.lastCall()?.body, JSON.stringify(body))
+  t.strictEqual(mockAgent.getCallHistory(historyName)?.lastCall()?.headers, headers)
+  t.strictEqual(mockAgent.getCallHistory(historyName)?.lastCall()?.method, method)
+  t.strictEqual(mockAgent.getCallHistory(historyName)?.lastCall()?.origin, baseUrl)
+  t.strictEqual(mockAgent.getCallHistory(historyName)?.lastCall()?.path, path)
+  t.strictEqual(mockAgent.getCallHistory(historyName)?.lastCall()?.fullUrl, `${url.toString()}?${new URLSearchParams(query).toString()}`)
+  t.deepStrictEqual(mockAgent.getCallHistory(historyName)?.lastCall()?.searchParams, { a: '1' })
+})
+
+test('MockAgent - getCallHistory with fetch with a minimal configuration should register call history log', async (t) => {
+  t = tspl(t, { plan: 11 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const baseUrl = 'http://localhost:9999'
+  const mockClient = mockAgent.get(baseUrl)
+  mockClient.intercept({
+    path: '/'
+  }).reply(200, 'foo')
+
+  const path = '/'
+  const url = new URL(path, baseUrl)
+
+  await fetch(url)
+
+  t.ok(mockAgent.getCallHistory()?.calls().length === 1)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.body, null)
+  t.deepStrictEqual(mockAgent.getCallHistory()?.lastCall()?.headers, {
+    'accept-encoding': 'gzip, deflate',
+    'accept-language': '*',
+    'sec-fetch-mode': 'cors',
+    'user-agent': 'undici',
+    accept: '*/*'
+  })
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.method, 'GET')
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.origin, baseUrl)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.path, path)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.fullUrl, baseUrl + path)
+  t.deepStrictEqual(mockAgent.getCallHistory()?.lastCall()?.searchParams, {})
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.host, 'localhost:9999')
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.port, '9999')
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.protocol, 'http:')
+})
+
+test('MockAgent - getCallHistory with request with a minimal configuration should register call history log', async (t) => {
+  t = tspl(t, { plan: 11 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const baseUrl = 'http://localhost:9999'
+  const mockClient = mockAgent.get(baseUrl)
+  mockClient.intercept({
+    path: '/'
+  }).reply(200, 'foo')
+
+  const path = '/'
+  const url = new URL(path, baseUrl)
+
+  await request(url)
+
+  t.ok(mockAgent.getCallHistory()?.calls().length === 1)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.body, undefined)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.headers, undefined)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.method, 'GET')
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.origin, baseUrl)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.path, path)
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.fullUrl, baseUrl + path)
+  t.deepStrictEqual(mockAgent.getCallHistory()?.lastCall()?.searchParams, {})
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.host, 'localhost:9999')
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.port, '9999')
+  t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.protocol, 'http:')
+})
+
+test('MockAgent - getCallHistory should register logs on non intercepted call', async (t) => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  after(() => server.close())
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+  const secondeBaseUrl = 'http://localhost:8'
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const mockClient = mockAgent.get(secondeBaseUrl)
+  mockClient.intercept({
+    path: '/'
+  }).reply(200, 'foo').registerCallHistory('second-history')
+
+  await request(baseUrl)
+  await request(secondeBaseUrl)
+
+  t.ok(mockAgent.getCallHistory()?.calls().length === 2)
+  t.ok(mockAgent.getCallHistory()?.firstCall()?.origin === baseUrl)
+  t.ok(mockAgent.getCallHistory('second-history')?.calls().length === 1)
+  t.ok(mockAgent.getCallHistory('second-history')?.firstCall()?.origin === secondeBaseUrl)
+})
+
+test('MockAgent - clearAllCallHistory should clear all call histories', async (t) => {
+  t = tspl(t, { plan: 6 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const baseUrl = 'http://localhost:9999'
+  const historyName = 'my-history'
+  const mockClient = mockAgent.get(baseUrl)
+  mockClient.intercept({
+    path: /^\/foo/,
+    method: 'POST'
+  }).reply(200, 'foo').registerCallHistory(historyName).persist()
+
+  t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 2)
+  t.ok(mockAgent.getCallHistory()?.calls().length === 0)
+
+  const path = '/foo'
+  const url = new URL(path, baseUrl)
+  const method = 'POST'
+  const body = { data: 'value' }
+  const query = { a: 1 }
+  const headers = { 'content-type': 'application/json' }
+
+  await request(url, { method, query, body: JSON.stringify(body), headers })
+  await request(url, { method, query, body: JSON.stringify(body), headers })
+  await request(url, { method, query, body: JSON.stringify(body), headers })
+  await request(url, { method, query, body: JSON.stringify(body), headers })
+
+  t.ok(mockAgent.getCallHistory()?.calls().length === 4)
+  t.ok(mockAgent.getCallHistory(historyName)?.calls().length === 4)
+
+  mockAgent.clearAllCallHistory()
+
+  t.ok(mockAgent.getCallHistory()?.calls().length === 0)
+  t.ok(mockAgent.getCallHistory(historyName)?.calls().length === 0)
+})
+
 test('MockAgent - handle persists with delayed requests', async (t) => {
   t = tspl(t, { plan: 4 })
 
@@ -908,6 +1329,30 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
   } catch (err) {
     t.ok(err instanceof ClientDestroyedError)
   }
+})
+
+test('MockAgent - close removes all registered mock call history', async (t) => {
+  t = tspl(t, { plan: 6 })
+
+  const mockAgent = new MockAgent({ enableCallHistory: true })
+  setGlobalDispatcher(mockAgent)
+
+  const mockClient = mockAgent.get('http://localhost:9999')
+
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'foo').registerCallHistory('my-history')
+
+  t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 2)
+  t.ok(mockAgent.getCallHistory() instanceof MockCallHistory)
+  t.ok(mockAgent.getCallHistory('my-history') instanceof MockCallHistory)
+
+  await mockAgent.close()
+
+  t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 0)
+  t.strictEqual(mockAgent.getCallHistory(), undefined)
+  t.strictEqual(mockAgent.getCallHistory('my-history'), undefined)
 })
 
 test('MockAgent - close removes all registered mock pools', async (t) => {
