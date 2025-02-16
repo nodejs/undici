@@ -78,6 +78,45 @@ expectNotAssignable<CacheInterceptor.CacheValue>({
   deleteAt: ''
 })
 
+expectAssignable<CacheInterceptor.CacheValue>({
+  statusCode: 200,
+  statusMessage: 'OK',
+  headers: {},
+  vary: {
+    'accept-encoding': null,
+    authorization: 'example-value'
+  },
+  cachedAt: 0,
+  staleAt: 0,
+  deleteAt: 0
+})
+
+expectAssignable<CacheInterceptor.CacheValue>({
+  statusCode: 200,
+  statusMessage: 'OK',
+  headers: {},
+  vary: {
+    'accept-encoding': null,
+    authorization: null
+  },
+  cachedAt: 0,
+  staleAt: 0,
+  deleteAt: 0
+})
+
+expectNotAssignable<CacheInterceptor.CacheValue>({
+  statusCode: 200,
+  statusMessage: 'OK',
+  headers: {},
+  vary: {
+    'accept-encoding': undefined,
+    authorization: 'example-value'
+  },
+  cachedAt: 0,
+  staleAt: 0,
+  deleteAt: 0
+})
+
 expectAssignable<CacheInterceptor.MemoryCacheStoreOpts>({})
 expectAssignable<CacheInterceptor.MemoryCacheStoreOpts>({
   maxSize: 0
