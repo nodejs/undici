@@ -1305,12 +1305,15 @@ typedef (HTMLOrSVGImageElement or
 
 enum PredefinedColorSpace { "srgb", "display-p3" };
 
+enum CanvasColorType { "unorm8", "float16" };
+
 enum CanvasFillRule { "nonzero", "evenodd" };
 
 dictionary CanvasRenderingContext2DSettings {
   boolean alpha = true;
   boolean desynchronized = false;
   PredefinedColorSpace colorSpace = "srgb";
+  CanvasColorType colorType = "unorm8";
   boolean willReadFrequently = false;
 };
 
@@ -1320,9 +1323,8 @@ enum ImageSmoothingQuality { "low", "medium", "high" };
 interface CanvasRenderingContext2D {
   // back-reference to the canvas
   readonly attribute HTMLCanvasElement canvas;
-
-  CanvasRenderingContext2DSettings getContextAttributes();
 };
+CanvasRenderingContext2D includes CanvasSettings;
 CanvasRenderingContext2D includes CanvasState;
 CanvasRenderingContext2D includes CanvasTransform;
 CanvasRenderingContext2D includes CanvasCompositing;
@@ -1339,6 +1341,11 @@ CanvasRenderingContext2D includes CanvasImageData;
 CanvasRenderingContext2D includes CanvasPathDrawingStyles;
 CanvasRenderingContext2D includes CanvasTextDrawingStyles;
 CanvasRenderingContext2D includes CanvasPath;
+
+interface mixin CanvasSettings {
+  // settings
+  CanvasRenderingContext2DSettings getContextAttributes();
+};
 
 interface mixin CanvasState {
   // state
@@ -1594,6 +1601,7 @@ interface OffscreenCanvasRenderingContext2D {
   readonly attribute OffscreenCanvas canvas;
 };
 
+OffscreenCanvasRenderingContext2D includes CanvasSettings;
 OffscreenCanvasRenderingContext2D includes CanvasState;
 OffscreenCanvasRenderingContext2D includes CanvasTransform;
 OffscreenCanvasRenderingContext2D includes CanvasCompositing;
@@ -1987,6 +1995,7 @@ interface NavigateEvent : Event {
   readonly attribute DOMString? downloadRequest;
   readonly attribute any info;
   readonly attribute boolean hasUAVisualTransition;
+  readonly attribute Element? sourceElement;
 
   undefined intercept(optional NavigationInterceptOptions options = {});
   undefined scroll();
@@ -2003,6 +2012,7 @@ dictionary NavigateEventInit : EventInit {
   DOMString? downloadRequest = null;
   any info;
   boolean hasUAVisualTransition = false;
+  Element? sourceElement = null;
 };
 
 dictionary NavigationInterceptOptions {
@@ -2119,10 +2129,10 @@ interface NotRestoredReasonDetails {
 
 [Exposed=Window]
 interface NotRestoredReasons {
-  readonly attribute DOMString? src;
+  readonly attribute USVString? src;
   readonly attribute DOMString? id;
   readonly attribute DOMString? name;
-  readonly attribute DOMString? url;
+  readonly attribute USVString? url;
   readonly attribute FrozenArray<NotRestoredReasonDetails>? reasons;
   readonly attribute FrozenArray<NotRestoredReasons>? children;
   [Default] object toJSON();
