@@ -1,63 +1,26 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
-const { test, describe, after } = require('node:test')
+const { test, describe } = require('node:test')
 const { MockCallHistory, MockCallHistoryLog } = require('../lib/mock/mock-call-history')
-const { kMockCallHistoryDeleteAll, kMockCallHistoryCreate, kMockCallHistoryAddLog, kMockCallHistoryClearAll, kMockCallHistoryAllMockCallHistoryInstances } = require('../lib/mock/mock-symbols')
+const { kMockCallHistoryAddLog } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
 
 describe('MockCallHistory - constructor', () => {
   test('should returns a MockCallHistory', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
-    const mockCallHistory = new MockCallHistory('hello')
-
-    t.ok(mockCallHistory instanceof MockCallHistory)
-  })
-
-  test('should populate static class property', t => {
-    t = tspl(t, { plan: 3 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
-
-    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 0)
-
-    const mockCallHistory = new MockCallHistory('hello')
-
-    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 1)
-    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].get('hello'), mockCallHistory)
-  })
-})
-
-describe('MockCallHistory - Create', () => {
-  test('should returns a MockCallHistory if named history is not present', t => {
-    t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
-
-    const mockCallHistory = MockCallHistory[kMockCallHistoryCreate]('hello')
+    const mockCallHistory = new MockCallHistory()
 
     t.ok(mockCallHistory instanceof MockCallHistory)
-  })
-
-  test('should populate static class property', t => {
-    t = tspl(t, { plan: 3 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
-
-    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 0)
-
-    const mockCallHistory = new MockCallHistory('hello')
-
-    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 1)
-    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].get('hello'), mockCallHistory)
   })
 })
 
 describe('MockCallHistory - add log', () => {
   test('should add a log', t => {
     t = tspl(t, { plan: 2 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
-    const mockCallHistoryHello = new MockCallHistory('hello')
+    const mockCallHistoryHello = new MockCallHistory()
 
     t.strictEqual(mockCallHistoryHello.calls().length, 0)
 
@@ -67,34 +30,9 @@ describe('MockCallHistory - add log', () => {
   })
 })
 
-describe('MockCallHistory - ClearAll', () => {
-  test('should clear all call history', t => {
-    t = tspl(t, { plan: 6 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
-
-    const mockCallHistoryHello = new MockCallHistory('hello')
-    const mockCallHistoryWorld = new MockCallHistory('world')
-
-    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'https://localhost:4000' })
-    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'https://localhost:4000' })
-    mockCallHistoryWorld[kMockCallHistoryAddLog]({ path: '/', origin: 'https://localhost:4000' })
-
-    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 2)
-    t.strictEqual(mockCallHistoryWorld.calls().length, 1)
-    t.strictEqual(mockCallHistoryHello.calls().length, 2)
-
-    MockCallHistory[kMockCallHistoryClearAll]()
-
-    t.strictEqual(MockCallHistory[kMockCallHistoryAllMockCallHistoryInstances].size, 2)
-    t.strictEqual(mockCallHistoryWorld.calls().length, 0)
-    t.strictEqual(mockCallHistoryHello.calls().length, 0)
-  })
-})
-
 describe('MockCallHistory - calls', () => {
   test('should returns every logs', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -106,7 +44,6 @@ describe('MockCallHistory - calls', () => {
 
   test('should returns empty array when no logs', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -117,7 +54,6 @@ describe('MockCallHistory - calls', () => {
 describe('MockCallHistory - firstCall', () => {
   test('should returns the first log registered', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -129,7 +65,6 @@ describe('MockCallHistory - firstCall', () => {
 
   test('should returns undefined when no logs', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -140,7 +75,6 @@ describe('MockCallHistory - firstCall', () => {
 describe('MockCallHistory - lastCall', () => {
   test('should returns the first log registered', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -152,7 +86,6 @@ describe('MockCallHistory - lastCall', () => {
 
   test('should returns undefined when no logs', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -163,7 +96,6 @@ describe('MockCallHistory - lastCall', () => {
 describe('MockCallHistory - nthCall', () => {
   test('should returns the nth log registered', t => {
     t = tspl(t, { plan: 2 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -176,7 +108,6 @@ describe('MockCallHistory - nthCall', () => {
 
   test('should returns undefined when no logs', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -185,7 +116,6 @@ describe('MockCallHistory - nthCall', () => {
 
   test('should throw if index is not a number', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -194,7 +124,6 @@ describe('MockCallHistory - nthCall', () => {
 
   test('should throw if index is not an integer', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -203,7 +132,6 @@ describe('MockCallHistory - nthCall', () => {
 
   test('should throw if index is equal to zero', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -212,7 +140,6 @@ describe('MockCallHistory - nthCall', () => {
 
   test('should throw if index is negative', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -223,7 +150,6 @@ describe('MockCallHistory - nthCall', () => {
 describe('MockCallHistory - iterator', () => {
   test('should permit to iterate over logs with for..of', t => {
     t = tspl(t, { plan: 4 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -238,7 +164,6 @@ describe('MockCallHistory - iterator', () => {
 
   test('should permit to iterate over logs with spread operator', t => {
     t = tspl(t, { plan: 2 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -255,7 +180,6 @@ describe('MockCallHistory - iterator', () => {
 describe('MockCallHistory - filterCalls without options', () => {
   test('should filter logs with a function', t => {
     t = tspl(t, { plan: 2 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -270,7 +194,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should filter logs with a regexp', t => {
     t = tspl(t, { plan: 2 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -285,7 +208,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should filter logs with an object', t => {
     t = tspl(t, { plan: 2 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -301,7 +223,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should returns every logs with an empty object', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -316,7 +237,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should filter logs with an object with host property', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -331,7 +251,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should filter logs with an object with port property', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -346,7 +265,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should filter logs with an object with hash property', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -361,7 +279,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should filter logs with an object with fullUrl property', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -376,7 +293,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should filter logs with an object with method property', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -391,7 +307,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should use "OR" operator', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -406,7 +321,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should returns no duplicated logs', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -421,7 +335,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should throw if criteria is typeof number', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -432,7 +345,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 
   test('should throw if criteria is not a function, regexp, nor object', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -445,7 +357,6 @@ describe('MockCallHistory - filterCalls without options', () => {
 describe('MockCallHistory - filterCalls with options', () => {
   test('should throw if options.operator is not a valid string', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -456,7 +367,6 @@ describe('MockCallHistory - filterCalls with options', () => {
 
   test('should not throw if options.operator is "or"', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -467,7 +377,6 @@ describe('MockCallHistory - filterCalls with options', () => {
 
   test('should not throw if options.operator is "and"', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -478,7 +387,6 @@ describe('MockCallHistory - filterCalls with options', () => {
 
   test('should use "OR" operator if options is an empty object', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -492,7 +400,6 @@ describe('MockCallHistory - filterCalls with options', () => {
 
   test('should use "AND" operator correctly', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 
@@ -508,7 +415,6 @@ describe('MockCallHistory - filterCalls with options', () => {
 
   test('should use "AND" operator with a lot of filters', t => {
     t = tspl(t, { plan: 1 })
-    after(MockCallHistory[kMockCallHistoryDeleteAll])
 
     const mockCallHistoryHello = new MockCallHistory('hello')
 

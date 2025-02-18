@@ -11,39 +11,30 @@ const mockAgent = new MockAgent()
 mockAgent.enableMockHistory()
 mockAgent.getCallHistory()
 
-// or
-const mockAgent = new MockAgent()
-const mockClient = mockAgent.get('http://localhost:3000')
-mockClient
-  .intercept({ path: '/' })
-  .reply(200, 'hello')
-  .registerCallHistory('my-custom-history')
-mockAgent.getCallHistory('my-custom-history')
 ```
 
 a MockCallHistory instance implements a **Symbol.iterator** letting you iterate on registered logs :
 
 ```ts
-for (const log of mockAgent.getCallHistory('my-custom-history')) {
+for (const log of mockAgent.getCallHistory()) {
   //...
 }
 
-const array: Array<MockCallHistoryLog> = [...mockAgent.getCallHistory('my-custom-history')]
-const set: Set<MockCallHistoryLog> = new Set(mockAgent.getCallHistory('my-custom-history'))
+const array: Array<MockCallHistoryLog> = [...mockAgent.getCallHistory()]
+const set: Set<MockCallHistoryLog> = new Set(mockAgent.getCallHistory())
 ```
 
 ## class methods
 
 ### clear
 
-Clear all MockCallHistoryLog registered
+Clear all MockCallHistoryLog registered. This is automatically done when calling `mockAgent.close()`
 
 ```js
-mockAgent.getCallHistory()?.clear() // clear only mockAgent history
-mockAgent.getCallHistory('my-custom-history')?.clear() // clear only 'my-custom-history' history
+mockAgent.clearCallHistory()
+// same as
+mockAgent.getCallHistory()?.clear()
 ```
-
-> to clear all registered MockCallHistory, use `mockAgent.clearAllCallHistory()`. This is automatically done when calling `mockAgent.close()`
 
 ### calls
 

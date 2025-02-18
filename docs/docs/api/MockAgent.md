@@ -573,87 +573,12 @@ mockAgent.getCallHistory()?.firstCall()
 // }
 ```
 
-#### Example - access call history on intercepted client
-
-You can use `registerCallHistory` to register a specific MockCallHistory instance while you are intercepting request. This is useful to have an history already filtered. Note that `getCallHistory()` will still register every request configuration if you previously enable call history.
-
-> using registerCallHistory with a disabled MockAgent will still register an history on the intercepted request.
-
-```js
-import { MockAgent, setGlobalDispatcher, request } from 'undici'
-
-const mockAgent = new MockAgent({ enableCallHistory: true })
-setGlobalDispatcher(mockAgent)
-
-const client = mockAgent.get('http://example.com')
-
-client.intercept({ path: '/', method: 'GET' }).reply(200, 'hi !').registerCallHistory('my-specific-history-name')
-
-await request('http://example.com') // intercepted
-await request('http://example.com', { method: 'POST', body: JSON.stringify({ data: 'hello' }), headers: { 'content-type': 'application/json' }})
-
-mockAgent.getCallHistory('my-specific-history-name')?.calls()
-// Returns [
-// MockCallHistoryLog {
-//   body: undefined,
-//   headers: undefined,
-//   method: 'GET',
-//   origin: 'http://example.com',
-//   fullUrl: 'http://example.com/',
-//   path: '/',
-//   searchParams: {},
-//   protocol: 'http:',
-//   host: 'example.com',
-//   port: ''
-// }
-// ]
-
-mockAgent.getCallHistory()?.calls()
-// Returns [
-// MockCallHistoryLog {
-//   body: undefined,
-//   headers: undefined,
-//   method: 'GET',
-//   origin: 'http://example.com',
-//   fullUrl: 'http://example.com/',
-//   path: '/',
-//   searchParams: {},
-//   protocol: 'http:',
-//   host: 'example.com',
-//   port: ''
-// },
-// MockCallHistoryLog {
-//   body: "{ "data": "hello" }",
-//   headers: { 'content-type': 'application/json' },
-//   method: 'POST',
-//   origin: 'http://example.com',
-//   fullUrl: 'http://example.com/',
-//   path: '/',
-//   searchParams: {},
-//   protocol: 'http:',
-//   host: 'example.com',
-//   port: ''
-// }
-// ]
-```
-
 #### Example - clear call history
-
-Clear all call history registered :
 
 ```js
 const mockAgent = new MockAgent()
 
 mockAgent.clearAllCallHistory()
-```
-
-Clear only one call history :
-
-```js
-const mockAgent = new MockAgent()
-
-mockAgent.getCallHistory()?.clear()
-mockAgent.getCallHistory('my-history')?.clear()
 ```
 
 #### Example - call history instance class method

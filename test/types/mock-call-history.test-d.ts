@@ -1,19 +1,16 @@
 import { expectType } from 'tsd'
 import { MockAgent, MockCallHistory, MockCallHistoryLog } from '../..'
-import { MockScope } from '../../types/mock-interceptor'
 
 {
   const mockAgent = new MockAgent()
   expectType<MockCallHistory | undefined>(mockAgent.getCallHistory())
-  expectType<MockCallHistory | undefined>(mockAgent.getCallHistory('hello'))
-  expectType<void>(mockAgent.clearAllCallHistory())
+  expectType<void>(mockAgent.clearCallHistory())
   expectType<MockAgent>(mockAgent.enableCallHistory())
   expectType<MockAgent>(mockAgent.disableCallHistory())
-  expectType<MockScope<object>>(mockAgent.get('http://localhost:3000').intercept({ path: '/' }).reply(200, 'hello').registerCallHistory('local-history'))
 }
 
 {
-  const mockAgent = new MockAgent()
+  const mockAgent = new MockAgent({ enableCallHistory: true })
   expectType<MockCallHistoryLog | undefined>(mockAgent.getCallHistory()?.firstCall())
   expectType<MockCallHistoryLog | undefined>(mockAgent.getCallHistory()?.lastCall())
   expectType<MockCallHistoryLog | undefined>(mockAgent.getCallHistory()?.nthCall(1))
