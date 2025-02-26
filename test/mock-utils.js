@@ -174,6 +174,12 @@ describe('getResponseData', () => {
     const responseData = getResponseData(new TextEncoder().encode('{"test":true}').buffer)
     t.ok(responseData instanceof ArrayBuffer)
   })
+
+  test('it should handle undefined', (t) => {
+    t = tspl(t, { plan: 1 })
+    const responseData = getResponseData(undefined)
+    t.strictEqual(responseData, '')
+  })
 })
 
 test('getStatusText', (t) => {
