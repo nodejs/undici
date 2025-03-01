@@ -69,7 +69,10 @@
   "ccreq-ma1": true,
   "ccreq-magreaterage": true,
   "ccreq-max-stale": true,
-  "ccreq-max-stale-age": true,
+  "ccreq-max-stale-age": [
+    "Setup",
+    "Response 1 status is 409, not 200"
+  ],
   "ccreq-min-fresh": true,
   "ccreq-min-fresh-age": true,
   "ccreq-no-cache": true,
@@ -91,7 +94,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Tue, 21 Jan 2025 00:17:30 GMT\""
+    "Response 2 header Expires is \"null\", not \"Mon, 03 Feb 2025 05:33:42 GMT\""
   ],
   "cdn-fresh-cc-nostore": [
     "Assertion",
@@ -440,7 +443,10 @@
   "invalidate-DELETE-failed": true,
   "invalidate-DELETE-location": true,
   "invalidate-M-SEARCH": true,
-  "invalidate-M-SEARCH-cl": true,
+  "invalidate-M-SEARCH-cl": [
+    "TypeError",
+    "fetch failed"
+  ],
   "invalidate-M-SEARCH-failed": [
     "Assertion",
     "Response 3 does not come from cache"
@@ -528,22 +534,10 @@
   "query-args-same": true,
   "stale-503": true,
   "stale-close": true,
-  "stale-close-must-revalidate": [
-    "Assertion",
-    "Response 2 comes from cache"
-  ],
-  "stale-close-no-cache": [
-    "Assertion",
-    "Response 2 comes from cache"
-  ],
-  "stale-close-proxy-revalidate": [
-    "Assertion",
-    "Response 2 comes from cache"
-  ],
-  "stale-close-s-maxage=2": [
-    "Assertion",
-    "Response 2 comes from cache"
-  ],
+  "stale-close-must-revalidate": true,
+  "stale-close-no-cache": true,
+  "stale-close-proxy-revalidate": true,
+  "stale-close-s-maxage=2": true,
   "stale-sie-503": true,
   "stale-sie-close": true,
   "stale-warning-become": [
