@@ -1661,3 +1661,108 @@ test('Should not throw error if status code is present in noThrowStatusCodes and
 
   await t.completed
 })
+
+test('Should not pass the last RequestRetryError to the retryFn callback when the status code is in noThrowStatusCodes and statusCodes', async t => {
+  // This test verifies that retries occur correctly for:
+  // - Retries are triggered for codes listed in statusCodes.
+  // - No error is thrown on the final attempt for codes in noThrowStatusCodes.
+  // - The last RequestRetryError is not passed to retryFn if the status is in noThrowStatusCodes.
+  // - The request proceeds normally after the last retry attempt.
+
+  t = tspl(t, { plan: 9 })
+
+  const chunks = []
+  let x = 0
+
+  const server = createServer()
+
+  server.on('request', (req, res) => {
+    t.ok(true, 'Request received by server')
+
+    if (x > 1) {
+      t.fail('The request should not have been retried more than 2 times')
+      return
+    }
+
+    res.writeHead(503)
+    res.end('def')
+
+    x += 1
+  })
+
+  const dispatchOptions = {
+    retryOptions: {
+      // works before invoking the retry callback
+      noThrowStatusCodes: [503],
+      statusCodes: [503],
+      maxRetries: 1,
+      retry: (err, ctx, done) => {
+        t.ok(true, `Retry attempt: ${ctx.state.counter}`)
+
+        // Only for doc:
+        if (ctx.state.counter > 1) {
+          t.fail('Should never be here')
+          return
+        }
+
+        if (err.code === 'UND_ERR_REQ_RETRY') {
+          t.strictEqual(err.statusCode, 503, 'The status code should be 503 in the RequestRetryError')
+        }
+
+        // Propositally without condition
+        setTimeout(done, 800)
+      }
+    },
+    method: 'GET',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: {
+        onConnect () {
+          t.ok(true, `The connection was successful: ${x}`)
+        },
+        onHeaders (status, _rawHeaders) {
+          t.strictEqual(status, 503, 'Final response status should be 503')
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'def', 'The response body should be "def"')
+          t.strictEqual(x, 2, 'The request should have been retried 2 times')
+        },
+        onError (err) {
+          t.fail(err)
+        }
+      }
+    })
+
+    after(async () => {
+      await client.close()
+      server.close()
+      await once(server, 'close')
+    })
+
+    client.dispatch(
+      {
+        method: 'GET',
+        path: '/',
+        headers: {
+          'content-type': 'application/json'
+        }
+      },
+      handler
+    )
+  })
+
+  await t.completed
+})
