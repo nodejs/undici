@@ -14,7 +14,7 @@ The `MemoryCacheStore` stores the responses in-memory.
 **Options**
 
 - `maxCount` - The maximum amount of responses to store. Default `Infinity`.
-- `maxEntrySize` - The maximum size in bytes that a response's body can be. If a response's body is greater than or equal to this, the response will not be cached.
+- `maxEntrySize` - The maximum size in bytes that a response body can be. If a response body is greater than or equal to this, the response will not be cached.
 
 ### `SqliteCacheStore`
 
@@ -26,7 +26,7 @@ The `SqliteCacheStore` is only exposed if the `node:sqlite` api is present.
 
 - `location` - The location of the SQLite database to use. Default `:memory:`.
 - `maxCount` - The maximum number of entries to store in the database. Default `Infinity`.
-- `maxEntrySize` - The maximum size in bytes that a resposne's body can be. If a response's body is greater than or equal to this, the response will not be cached. Default `Infinity`.
+- `maxEntrySize` - The maximum size in bytes that a response body can be. If a response body is greater than or equal to this, the response will not be cached. Default `Infinity`.
 
 ## Defining a Custom Cache Store
 
@@ -49,7 +49,7 @@ If the request isn't cached, `undefined` is returned.
 Response properties:
 
 * **response** `CacheValue` - The cached response data.
-* **body** `Readable | undefined` - The response's body.
+* **body** `Readable | undefined` - The response body.
 
 ### Function: `createWriteStream`
 
@@ -62,7 +62,7 @@ Returns: `Writable | undefined` - If the store is full, return `undefined`. Othe
 
 ## `CacheValue`
 
-This is an interface containing the majority of a response's data (minus the body).
+This is an interface containing the majority of a response data (minus the body).
 
 ### Property `statusCode`
 
