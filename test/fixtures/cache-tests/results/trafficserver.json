@@ -97,7 +97,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Tue, 21 Jan 2025 00:21:39 GMT\""
+    "Response 2 header Expires is \"null\", not \"Mon, 03 Feb 2025 05:35:20 GMT\""
   ],
   "cdn-fresh-cc-nostore": [
     "Assertion",
@@ -469,8 +469,8 @@
     "Response 2 status is 403, not 500"
   ],
   "invalidate-DELETE-location": [
-    "Assertion",
-    "Response 3 comes from cache"
+    "Setup",
+    "Response 2 status is 403, not 200"
   ],
   "invalidate-M-SEARCH": [
     "Assertion",
@@ -570,22 +570,10 @@
   "query-args-same": true,
   "stale-503": true,
   "stale-close": true,
-  "stale-close-must-revalidate": [
-    "Assertion",
-    "Response 2 comes from cache"
-  ],
-  "stale-close-no-cache": [
-    "Assertion",
-    "Response 2 comes from cache"
-  ],
-  "stale-close-proxy-revalidate": [
-    "Assertion",
-    "Response 2 comes from cache"
-  ],
-  "stale-close-s-maxage=2": [
-    "Assertion",
-    "Response 2 comes from cache"
-  ],
+  "stale-close-must-revalidate": true,
+  "stale-close-no-cache": true,
+  "stale-close-proxy-revalidate": true,
+  "stale-close-s-maxage=2": true,
   "stale-sie-503": true,
   "stale-sie-close": true,
   "stale-warning-become": true,

@@ -115,9 +115,11 @@ function checkResponse (test, requests, idx, response) {
 
   // check response status
   if ('expected_status' in reqConfig) {
-    assert(setupCheck(reqConfig, 'expected_status'),
-      response.status === reqConfig.expected_status,
-      `Response ${reqNum} status is ${response.status}, not ${reqConfig.expected_status}`)
+    if (reqConfig.expected_status !== null) {
+      assert(setupCheck(reqConfig, 'expected_status'),
+        response.status === reqConfig.expected_status,
+        `Response ${reqNum} status is ${response.status}, not ${reqConfig.expected_status}`)
+    }
   } else if ('response_status' in reqConfig) {
     assert(true, // response status is always setup
       response.status === reqConfig.response_status[0],
