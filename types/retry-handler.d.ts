@@ -12,7 +12,7 @@ declare class RetryHandler implements Dispatcher.DispatchHandler {
 }
 
 declare namespace RetryHandler {
-  export type RetryState = { counter: number; }
+  export type RetryState = { counter: number }
 
   export type RetryContext = {
     state: RetryState;
@@ -107,6 +107,21 @@ declare namespace RetryHandler {
      * @default [500, 502, 503, 504, 429],
      */
     statusCodes?: number[];
+
+    /**
+     * List of HTTP status codes that will not trigger a `RequestRetryError` directly in the handler.
+     *
+     * The error will only be thrown if the response status is in `statusCodes` and **not** in `noThrowStatusCodes`,
+     * considering only status codes ≥ 300 and if it is the last attempt.
+     *
+     * On the last attempt (`maxRetries + 1`), if the status is in both lists (`statusCodes` and `noThrowStatusCodes`),
+     * the error **will not** be thrown, allowing the request to proceed normally.
+     *
+     * @type {number[]}
+     * @memberof RetryOptions
+     * @default []
+     */
+    noThrowStatusCodes?: number[];
   }
 
   export interface RetryHandlers {
