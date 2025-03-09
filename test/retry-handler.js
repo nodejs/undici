@@ -364,19 +364,19 @@ test('Should use retry-after header for retries (date)', async t => {
   server.on('request', (req, res) => {
     switch (counter) {
       case 0:
+        checkpoint = Date.now()
         res.writeHead(429, {
           'retry-after': new Date(
-            new Date().setSeconds(new Date().getSeconds() + 1)
+            new Date(checkpoint).setSeconds(new Date(checkpoint).getSeconds() + 2)
           ).toUTCString()
         })
         res.end('rate limit')
-        checkpoint = Date.now()
         counter++
         return
       case 1:
         res.writeHead(200)
         res.end('hello world!')
-        t.ok(Date.now() - checkpoint >= 1)
+        t.ok(Date.now() - checkpoint >= 1000)
         counter++
         return
       default:
