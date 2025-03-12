@@ -1,5 +1,4 @@
 import { WPTRunner } from './runner/runner.mjs'
-import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { fork } from 'child_process'
 import { on } from 'events'
@@ -22,7 +21,7 @@ if (process.env.CI) {
   // process.exit(0)
 }
 
-const serverPath = join(fileURLToPath(import.meta.url), '../server/websocket.mjs')
+const serverPath = fileURLToPath(new URL('../server/websocket.mjs', import.meta.url))
 
 const child = fork(serverPath, [], {
   stdio: ['pipe', 'pipe', 'pipe', 'ipc']

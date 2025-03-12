@@ -1,10 +1,9 @@
 import { WPTRunner } from './runner/runner.mjs'
-import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { fork } from 'child_process'
 import { on } from 'events'
 
-const serverPath = fileURLToPath(join(import.meta.url, '../server/server.mjs'))
+const serverPath = fileURLToPath(new URL('../server/server.mjs', import.meta.url))
 
 const child = fork(serverPath, [], {
   stdio: ['pipe', 'pipe', 'pipe', 'ipc']
