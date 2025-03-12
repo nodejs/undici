@@ -4,12 +4,15 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('..')
+const https = require('node:https')
+const fs = require('node:fs')
+const path = require('node:path')
+const { closeServerAsPromise } = require('./utils/node-http')
 
 const hasGC = typeof global.gc !== 'undefined'
 
-// This test verifies that there is no memory leak when making requests to a server
-// with an invalid TLS certificate. This specifically tests the fix for issue #3895
-// related to memory leaks with TLS certificate errors.
+// This test verifies that there is no memory leak when handling TLS certificate errors.
+// It simulates the error by using a server with a self-signed certificate.
 test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t) => {
   if (!hasGC) {
     throw new Error('gc is not available. Run with \'--expose-gc\'.')
@@ -17,31 +20,49 @@ test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t)
 
   const { ok } = tspl(t, { plan: 1 })
 
-  // The response we'll return for errors
-  const badResponse = { status: 524, buffer: Buffer.from('Invalid TLS Certificate') }
+  // Create HTTPS server with self-signed certificate
+  const serverOptions = {
+    key: fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem')),
+    cert: fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'))
+  }
 
-  // Function to get photo with TLS error handling
-  async function getPhoto(i) {
+  // Create a server that always responds with a simple message
+  const server = https.createServer(serverOptions, (req, res) => {
+    res.writeHead(200)
+    res.end('test response')
+  })
+
+  // Start server on a random port
+  await new Promise(resolve => server.listen(0, resolve))
+  const serverUrl = `https://localhost:${server.address().port}`
+  
+  t.after(closeServerAsPromise(server))
+
+  // Function to make a request that will trigger a certificate error
+  async function makeRequest(i) {
     try {
-      // Use wrong.host.badssl.com which has an invalid TLS certificate
-      const res = await fetch(`https://wrong.host.badssl.com/${i}.jpg`, { 
-        signal: AbortSignal.timeout(5000) // Add timeout to prevent hanging requests
+      // The request will fail with CERT_SIGNATURE_FAILURE or similar
+      // because we're using a self-signed certificate and not telling
+      // Node.js to accept it
+      const res = await fetch(`${serverUrl}/request-${i}`, {
+        signal: AbortSignal.timeout(2000) // Short timeout to prevent hanging
       })
-      const status = res.status
-      const buffer = await res.arrayBuffer()
-      return { status, buffer }
+      const text = await res.text()
+      return { status: res.status, text }
     } catch (e) {
-      if (e?.cause?.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
-        return badResponse
+      // In real code, without the fix, this would leak memory
+      if (e?.cause?.code === 'CERT_SIGNATURE_FAILURE' || 
+          e?.cause?.code === 'DEPTH_ZERO_SELF_SIGNED_CERT' ||
+          e?.cause?.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
+        return { status: 524, text: 'Certificate Error' }
       }
-      // Return the bad response for any error to avoid test interruption
-      return badResponse
+      // Return for any other error to avoid test interruption
+      return { status: 500, text: e.message }
     }
   }
 
   // Counter for completed requests
   let complete = 0
-  // Number of requests to make - increased to better see the trend
   const requestCount = 400
   
   // Track memory usage
@@ -54,7 +75,7 @@ test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t)
     const end = Math.min(start + batchSize, requestCount)
     
     for (let i = start; i < end; i++) {
-      promises.push(getPhoto(i))
+      promises.push(makeRequest(i))
     }
     
     await Promise.all(promises)
@@ -64,6 +85,7 @@ test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t)
     if (complete % 50 === 0 || complete === end) {
       // Run GC multiple times to get more stable readings
       global.gc()
+      await new Promise(resolve => setTimeout(resolve, 50))
       global.gc()
       
       const memUsage = process.memoryUsage()
