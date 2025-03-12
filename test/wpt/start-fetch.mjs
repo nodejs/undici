@@ -5,7 +5,7 @@ import { on } from 'events'
 
 const { WPT_REPORT } = process.env
 
-const serverPath = fileURLToPath(new URL('../server/server.mjs', import.meta.url))
+const serverPath = fileURLToPath(new URL('./server/server.mjs', import.meta.url))
 
 const child = fork(serverPath, [], {
   stdio: ['pipe', 'pipe', 'pipe', 'ipc']

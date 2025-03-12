@@ -21,7 +21,7 @@ if (process.env.CI) {
   // process.exit(0)
 }
 
-const serverPath = fileURLToPath(new URL('../server/websocket.mjs', import.meta.url))
+const serverPath = fileURLToPath(new URL('./server/websocket.mjs', import.meta.url))
 
 const child = fork(serverPath, [], {
   stdio: ['pipe', 'pipe', 'pipe', 'ipc']
