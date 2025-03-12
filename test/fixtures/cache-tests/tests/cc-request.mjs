@@ -194,7 +194,7 @@ export default {
         {
           response_headers: [
             ['Cache-Control', 'max-age=3600'],
-            ['ETag', utils.httpContent('abc')]
+            ['ETag', `"${utils.httpContent('abc')}"`]
           ],
           setup: true
         },
