@@ -62,6 +62,13 @@ export default [
     link: 'https://github.com/http-tests/cache-tests/wiki/Caddy'
   },
   {
+    file: 'haproxy.json',
+    name: 'HAProxy',
+    type: 'rev-proxy',
+    version: '3.0.8-1ubuntu1',
+    link: 'https://github.com/http-tests/cache-tests/wiki/HAProxy'
+  },
+  {
     file: 'fastly.json',
     name: 'Fastly',
     type: 'cdn',
