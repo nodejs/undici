@@ -13,6 +13,7 @@ const {
   startRedirectingWithQueryParams
 } = require('./utils/redirecting-servers')
 const { createReadable, createReadableStream } = require('./utils/stream')
+const Agent = undici.Agent
 
 for (const factory of [
   (server, opts) => new undici.Agent(opts),
@@ -20,7 +21,12 @@ for (const factory of [
   (server, opts) => new undici.Client(`http://${server}`, opts)
 ]) {
   const request = (t, server, opts, ...args) => {
-    const dispatcher = factory(server, opts)
+    opts = opts || {}
+    const dispatcher = factory(server, {
+      keepAliveMaxTimeout: 1000,
+      keepAliveTimeout: 1000,
+      ...opts
+    })
     t.teardown(() => dispatcher.close())
     return undici.request(args[0], { ...args[1], dispatcher }, args[2])
   }
@@ -371,10 +377,16 @@ t.test('should follow redirections when going cross origin', async t => {
 t.test('should handle errors (callback)', t => {
   t.plan(1)
 
+  const agent = new Agent({
+    keepAliveTimeout: 1000,
+    keepAliveMaxTimeout: 1000
+  })
+
   undici.request(
     'http://localhost:0',
     {
-      maxRedirections: 10
+      maxRedirections: 10,
+      dispatcher: agent
     },
     error => {
       t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
@@ -383,8 +395,12 @@ t.test('should handle errors (callback)', t => {
 })
 
 t.test('should handle errors (promise)', async t => {
+  const agent = new Agent({
+    keepAliveTimeout: 1000,
+    keepAliveMaxTimeout: 1000
+  })
   try {
-    await undici.request('http://localhost:0', { maxRedirections: 10 })
+    await undici.request('http://localhost:0', { maxRedirections: 10, dispatcher: agent })
     t.fail('Did not throw')
   } catch (error) {
     t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
@@ -392,9 +408,14 @@ t.test('should handle errors (promise)', async t => {
 })
 
 t.test('removes authorization header on third party origin', async t => {
+  const agent = new Agent({
+    keepAliveTimeout: 1000,
+    keepAliveMaxTimeout: 1000
+  })
   const [server1] = await startRedirectingWithAuthorization(t, 'secret')
   const { body: bodyStream } = await undici.request(`http://${server1}`, {
     maxRedirections: 10,
+    dispatcher: agent,
     headers: {
       authorization: 'secret'
     }
@@ -406,9 +427,14 @@ t.test('removes authorization header on third party origin', async t => {
 })
 
 t.test('removes cookie header on third party origin', async t => {
+  const agent = new Agent({
+    keepAliveTimeout: 1000,
+    keepAliveMaxTimeout: 1000
+  })
   const [server1] = await startRedirectingWithCookie(t, 'a=b')
   const { body: bodyStream } = await undici.request(`http://${server1}`, {
     maxRedirections: 10,
+    dispatcher: agent,
     headers: {
       cookie: 'a=b'
     }

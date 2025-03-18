@@ -10,7 +10,9 @@ function close (server) {
       if (isNode20) {
         server.closeAllConnections()
       }
-      server.close(resolve)
+      server.close(function () {
+        resolve()
+      })
     })
   }
 }
