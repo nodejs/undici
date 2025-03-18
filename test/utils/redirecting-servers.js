@@ -9,10 +9,13 @@ function close (server) {
     return new Promise(resolve => {
       if (isNode20) {
         server.closeAllConnections()
+        server.close(function () {
+          resolve()
+        })
       }
-      server.close(function () {
-        resolve()
-      })
+      server.close()
+      server.unref()
+      resolve()
     })
   }
 }
