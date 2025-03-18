@@ -18,6 +18,8 @@ const hasIPv6 = (() => {
   )
 })()
 
+const isNode20OrHigher = Number(process.versions.node.split('.')[0]) >= 20
+
 test('basic get', (t) => {
   t.plan(24)
 
@@ -1896,7 +1898,7 @@ test('async iterator early return closes early', (t) => {
   })
 })
 
-test('async iterator yield unsupported TypedArray', (t) => {
+test('async iterator yield unsupported TypedArray', { skip: isNode20OrHigher }, (t) => {
   t.plan(3)
   const server = createServer((req, res) => {
     req.on('end', () => {
