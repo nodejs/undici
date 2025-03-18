@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { colors, handlePipes, normalizeName, parseMeta, resolveStatusPath } from './util.mjs'
 
-const basePath = fileURLToPath(join(import.meta.url, '../..'))
+const basePath = fileURLToPath(new URL('..', import.meta.url))
 const testPath = join(basePath, 'tests')
 const statusPath = join(basePath, 'status')
 
@@ -131,7 +131,7 @@ export class WPTRunner extends EventEmitter {
   }
 
   async run () {
-    const workerPath = join(fileURLToPath(import.meta.url), '../worker.mjs')
+    const workerPath = fileURLToPath(new URL('../worker.mjs', import.meta.url))
     /** @type {Set<Worker>} */
     const activeWorkers = new Set()
     let finishedFiles = 1
