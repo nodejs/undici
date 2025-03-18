@@ -354,9 +354,16 @@ for (const factory of [
 t.test('should follow redirections when going cross origin', async t => {
   const [server1, server2, server3] = await startRedirectingChainServers(t)
 
+  const agent = new Agent({
+    keepAliveTimeout: 1000,
+    keepAliveMaxTimeout: 1000
+  })
+  t.teardown(agent.close.bind(agent))
+
   const { statusCode, headers, body: bodyStream, context: { history } } = await undici.request(`http://${server1}`, {
     method: 'POST',
-    maxRedirections: 10
+    maxRedirections: 10,
+    dispatcher: agent
   })
 
   const body = await bodyStream.text()
@@ -381,6 +388,7 @@ t.test('should handle errors (callback)', t => {
     keepAliveTimeout: 1000,
     keepAliveMaxTimeout: 1000
   })
+  t.teardown(agent.close.bind(agent))
 
   undici.request(
     'http://localhost:0',
@@ -399,6 +407,7 @@ t.test('should handle errors (promise)', async t => {
     keepAliveTimeout: 1000,
     keepAliveMaxTimeout: 1000
   })
+  t.teardown(agent.close.bind(agent))
   try {
     await undici.request('http://localhost:0', { maxRedirections: 10, dispatcher: agent })
     t.fail('Did not throw')
@@ -412,6 +421,7 @@ t.test('removes authorization header on third party origin', async t => {
     keepAliveTimeout: 1000,
     keepAliveMaxTimeout: 1000
   })
+  t.teardown(agent.close.bind(agent))
   const [server1] = await startRedirectingWithAuthorization(t, 'secret')
   const { body: bodyStream } = await undici.request(`http://${server1}`, {
     maxRedirections: 10,
@@ -431,6 +441,7 @@ t.test('removes cookie header on third party origin', async t => {
     keepAliveTimeout: 1000,
     keepAliveMaxTimeout: 1000
   })
+  t.teardown(agent.close.bind(agent))
   const [server1] = await startRedirectingWithCookie(t, 'a=b')
   const { body: bodyStream } = await undici.request(`http://${server1}`, {
     maxRedirections: 10,
