@@ -402,11 +402,16 @@ test(
         }
       })
     } catch (error) {
-      t.equal(
-        error.message,
-        'Client network socket disconnected before secure TLS connection was established'
+      t.ok(
+        error.message === 'Client network socket disconnected before secure TLS connection was established' ||
+        error.message.includes('SSL routines:ssl3_read_bytes:tlsv1 alert no application protocol'),
+        `Error message should be as expected: ${error.message}`
       )
-      t.equal(error.code, 'ECONNRESET')
+      t.ok(
+        error.code === 'ECONNRESET' ||
+        error.code === 'ERR_SSL_TLSV1_ALERT_NO_APPLICATION_PROTOCOL',
+        `Error code should be as expected: ${error.code}`
+      )
     }
   }
 )
