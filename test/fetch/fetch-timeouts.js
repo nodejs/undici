@@ -24,7 +24,7 @@ test('Fetch very long request, timeout overridden so no error', (t, done) => {
     Object.assign(timers, orgTimers)
   })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, msToDelay)

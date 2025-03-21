@@ -19,7 +19,7 @@ import {
 test('imported Client works with basic GET', async (t) => {
   t = tspl(t, { plan: 10 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual(`localhost:${server.address().port}`, req.headers.host)

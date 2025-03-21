@@ -52,7 +52,7 @@ test('basic get', async (t) => {
   const p = tspl(t, { plan: 16 })
 
   let server1Called = 0
-  const server1 = createServer((req, res) => {
+  const server1 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     server1Called++
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
@@ -64,7 +64,7 @@ test('basic get', async (t) => {
   await promisify(server1.listen).call(server1, 0)
 
   let server2Called = 0
-  const server2 = createServer((req, res) => {
+  const server2 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     server2Called++
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
@@ -109,7 +109,7 @@ test('connect/disconnect event(s)', async (t) => {
 
   const p = tspl(t, { plan: clients * 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
       Connection: 'keep-alive',
       'Keep-Alive': 'timeout=1s'
@@ -151,7 +151,7 @@ test('connect/disconnect event(s)', async (t) => {
 test('busy', async (t) => {
   const p = tspl(t, { plan: 8 * 6 + 2 + 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
@@ -205,7 +205,7 @@ test('factory option with basic get request', async (t) => {
   const client = new BalancedPool([], opts)
 
   let serverCalled = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     serverCalled++
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
@@ -298,7 +298,7 @@ class TestServer {
   }
 
   start () {
-    this.server = createServer((req, res) => {
+    this.server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       if (this._shouldHangupOnClient()) {
         req.destroy(new Error('(ツ)'))
         return

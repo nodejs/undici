@@ -102,7 +102,7 @@ test('Pool client count does not grow on repeated connection errors', async (t) 
 // This test specifically verifies the fix in pool-base.js for connectionError event
 test('Pool clients are removed on connectionError event', async (t) => {
   // Create a server we'll use to track connection events
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.end('ok')
   })

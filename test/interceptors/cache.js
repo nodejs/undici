@@ -10,7 +10,7 @@ const { Client, interceptors, cacheStores: { MemoryCacheStore } } = require('../
 describe('Cache Interceptor', () => {
   test('caches request', async () => {
     let requestsToOrigin = 0
-    const server = createServer((_, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       requestsToOrigin++
       res.setHeader('cache-control', 's-maxage=10')
       res.end('asd')
@@ -53,7 +53,7 @@ describe('Cache Interceptor', () => {
 
   test('vary directives used to decide which response to use', async () => {
     let requestsToOrigin = 0
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       requestsToOrigin++
       res.setHeader('cache-control', 's-maxage=10')
       res.setHeader('vary', 'a')
@@ -135,7 +135,7 @@ describe('Cache Interceptor', () => {
 
     let requestsToOrigin = 0
     let revalidationRequests = 0
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('date', 0)
       res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
 
@@ -220,7 +220,7 @@ describe('Cache Interceptor', () => {
     let requestsToOrigin = 0
     let revalidationRequests = 0
     let serverError
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('date', 0)
       res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
 
@@ -317,7 +317,7 @@ describe('Cache Interceptor', () => {
     let requestsToOrigin = 0
     let revalidationRequests = 0
     let serverError
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('date', 0)
       res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
 
@@ -392,7 +392,7 @@ describe('Cache Interceptor', () => {
   })
 
   test('unsafe methods cause resource to be purged from cache', async () => {
-    const server = createServer((_, res) => res.end('asd')).listen(0)
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => res.end('asd')).listen(0)
 
     after(() => server.close())
     await once(server, 'listening')
@@ -441,7 +441,7 @@ describe('Cache Interceptor', () => {
   })
 
   test('unsafe methods aren\'t cached', async () => {
-    const server = createServer((_, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       res.setHeader('cache-control', 'public, s-maxage=1')
       res.end('')
     }).listen(0)
@@ -485,7 +485,7 @@ describe('Cache Interceptor', () => {
     ]
 
     let requestToOrigin = 0
-    const server = createServer((_, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       requestToOrigin++
       res.setHeader('cache-control', 's-maxage=10, no-cache=should-be-stripped')
       res.setHeader('should-not-be-stripped', 'asd')
@@ -540,7 +540,7 @@ describe('Cache Interceptor', () => {
 
   test('cacheByDefault', async () => {
     let requestsToOrigin = 0
-    const server = createServer((_, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       requestsToOrigin++
       res.end('asd')
     }).listen(0)
@@ -583,7 +583,7 @@ describe('Cache Interceptor', () => {
     })
 
     let requestsToOrigin = 0
-    const server = createServer((_, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       res.setHeader('date', 0)
 
       requestsToOrigin++
@@ -665,7 +665,7 @@ describe('Cache Interceptor', () => {
       })
 
       let requestsToOrigin = 0
-      const server = createServer((_, res) => {
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         requestsToOrigin++
         res.setHeader('date', 0)
         res.setHeader('cache-control', 'public, s-maxage=100')
@@ -727,7 +727,7 @@ describe('Cache Interceptor', () => {
 
       let requestsToOrigin = 0
       let revalidationRequests = 0
-      const server = createServer((req, res) => {
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
         res.setHeader('date', 0)
         res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
 
@@ -796,7 +796,7 @@ describe('Cache Interceptor', () => {
       })
 
       let requestsToOrigin = 0
-      const server = createServer((_, res) => {
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         requestsToOrigin++
         res.setHeader('date', 0)
         res.setHeader('cache-control', 'public, s-maxage=10')
@@ -855,7 +855,7 @@ describe('Cache Interceptor', () => {
     test('no-cache', async () => {
       let requestsToOrigin = 0
       let revalidationRequests = 0
-      const server = createServer((req, res) => {
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
         if (req.headers['if-modified-since']) {
           revalidationRequests++
           res.statusCode = 304
@@ -914,7 +914,7 @@ describe('Cache Interceptor', () => {
     })
 
     test('no-store', async () => {
-      const server = createServer((_, res) => {
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         res.setHeader('cache-control', 'public, s-maxage=100')
         res.end('asd')
       }).listen(0)
@@ -946,7 +946,7 @@ describe('Cache Interceptor', () => {
 
     test('only-if-cached', async () => {
       let requestsToOrigin = 0
-      const server = createServer((_, res) => {
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         res.setHeader('cache-control', 'public, s-maxage=100')
         res.end('asd')
         requestsToOrigin++
@@ -1014,7 +1014,7 @@ describe('Cache Interceptor', () => {
       })
 
       let requestsToOrigin = 0
-      const server = createServer((_, res) => {
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         res.setHeader('date', 0)
 
         requestsToOrigin++

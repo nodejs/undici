@@ -875,7 +875,7 @@ test('ProxyAgent keeps customized host in request headers - #3019', async (t) =>
 
 function buildServer () {
   return new Promise((resolve) => {
-    const server = createServer()
+    const server = createServer({ joinDuplicateHeaders: true })
     server.listen(0, () => resolve(server))
   })
 }
@@ -886,7 +886,8 @@ function buildSSLServer () {
       certs.root.crt
     ],
     key: certs.server.key,
-    cert: certs.server.crt
+    cert: certs.server.crt,
+    joinDuplicateHeaders: true
   }
   return new Promise((resolve) => {
     const server = https.createServer(serverOptions)
@@ -898,7 +899,7 @@ function buildProxy (listener) {
   return new Promise((resolve) => {
     const server = listener
       ? createProxy(createServer(listener))
-      : createProxy(createServer())
+      : createProxy(createServer({ joinDuplicateHeaders: true }))
     server.listen(0, () => resolve(server))
   })
 }
@@ -909,7 +910,8 @@ function buildSSLProxy () {
       certs.root.crt
     ],
     key: certs.proxy.key,
-    cert: certs.proxy.crt
+    cert: certs.proxy.crt,
+    joinDuplicateHeaders: true
   }
 
   return new Promise((resolve) => {
