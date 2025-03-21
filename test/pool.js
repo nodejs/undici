@@ -79,7 +79,7 @@ test('connect/disconnect event(s)', async (t) => {
 
   t = tspl(t, { plan: clients * 6 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
       Connection: 'keep-alive',
       'Keep-Alive': 'timeout=1s'
@@ -122,7 +122,7 @@ test('connect/disconnect event(s)', async (t) => {
 test('basic get', async (t) => {
   t = tspl(t, { plan: 14 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
@@ -170,7 +170,7 @@ test('basic get', async (t) => {
 test('URL as arg', async (t) => {
   t = tspl(t, { plan: 9 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
@@ -214,7 +214,7 @@ test('URL as arg', async (t) => {
 test('basic get error async/await', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.destroy()
   })
   after(() => server.close())
@@ -241,7 +241,7 @@ test('basic get error async/await', async (t) => {
 test('basic get with async/await', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
@@ -267,7 +267,7 @@ test('basic get with async/await', async (t) => {
 test('stream get async/await', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
@@ -291,7 +291,7 @@ test('stream get async/await', async (t) => {
 test('stream get error async/await', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.destroy()
   })
   after(() => server.close())
@@ -314,7 +314,7 @@ test('stream get error async/await', async (t) => {
 test('pipeline get', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
@@ -425,7 +425,7 @@ test('backpressure algorithm', async (t) => {
 test('busy', async (t) => {
   t = tspl(t, { plan: 8 * 16 + 2 + 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
@@ -488,7 +488,7 @@ test('invalid pool dispatch options', async (t) => {
 test('pool upgrade promise', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = net.createServer((c) => {
+  const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
       c.write('HTTP/1.1 101\r\n')
       c.write('hello: world\r\n')
@@ -537,7 +537,7 @@ test('pool upgrade promise', async (t) => {
 test('pool connect', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((c) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (c) => {
     t.fail()
   })
   server.on('connect', (req, socket, firstBodyChunk) => {
@@ -581,7 +581,7 @@ test('pool connect', async (t) => {
 test('pool dispatch', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -631,7 +631,7 @@ test('pool pipeline args validation', async (t) => {
 test('300 requests succeed', async (t) => {
   t = tspl(t, { plan: 300 * 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -663,7 +663,7 @@ test('300 requests succeed', async (t) => {
 test('pool connect error', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((c) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (c) => {
     t.fail()
   })
   server.on('connect', (req, socket, firstBodyChunk) => {
@@ -690,7 +690,7 @@ test('pool connect error', async (t) => {
 test('pool upgrade error', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = net.createServer((c) => {
+  const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
       c.write('HTTP/1.1 101\r\n')
       c.write('hello: world\r\n')
@@ -726,7 +726,7 @@ test('pool upgrade error', async (t) => {
 test('pool dispatch error', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -784,7 +784,7 @@ test('pool dispatch error', async (t) => {
 test('pool request abort in queue', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -831,7 +831,7 @@ test('pool request abort in queue', async (t) => {
 test('pool stream abort in queue', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -878,7 +878,7 @@ test('pool stream abort in queue', async (t) => {
 test('pool pipeline abort in queue', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -925,7 +925,7 @@ test('pool pipeline abort in queue', async (t) => {
 test('pool stream constructor error destroy body', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -981,7 +981,7 @@ test('pool stream constructor error destroy body', async (t) => {
 test('pool request constructor error destroy body', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -1033,7 +1033,7 @@ test('pool request constructor error destroy body', async (t) => {
 test('pool close waits for all requests', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -1081,7 +1081,7 @@ test('pool close waits for all requests', async (t) => {
 test('pool destroyed', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -1108,7 +1108,7 @@ test('pool destroyed', async (t) => {
 test('pool destroy fails queued requests', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())

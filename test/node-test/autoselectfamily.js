@@ -67,7 +67,7 @@ test('with autoSelectFamily enable the request succeeds when using request', { s
   const p = tspl(t, { plan: 3 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 
@@ -107,7 +107,7 @@ test('with autoSelectFamily enable the request succeeds when using a client', { 
   const p = tspl(t, { plan: 3 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 
@@ -148,7 +148,7 @@ test('with autoSelectFamily disabled the request fails when using request', { sk
   const p = tspl(t, { plan: 1 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 
@@ -176,7 +176,7 @@ test('with autoSelectFamily disabled via Agent.Options["autoSelectFamily"] the r
   const p = tspl(t, { plan: 1 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 
@@ -204,7 +204,7 @@ test('with autoSelectFamily disabled the request fails when using a client', { s
   const p = tspl(t, { plan: 1 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 
@@ -233,7 +233,7 @@ test('with autoSelectFamily disabled via Client.Options["autoSelectFamily"] the 
   const p = tspl(t, { plan: 1 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 
