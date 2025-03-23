@@ -7,8 +7,10 @@ const { fetch } = require('../..')
 const { tspl } = require('@matteo.collina/tspl')
 const { PerformanceObserver } = require('node:perf_hooks')
 
+const isAtLeastv22 = process.versions.node.split('.').map(Number)[0] >= 22
+
 // https://github.com/nodejs/undici/issues/4105
-test('markResourceTiming responseStatus is set', async (t) => {
+test('markResourceTiming responseStatus is set', { skip: !isAtLeastv22 }, async (t) => {
   const { completed, deepEqual } = tspl(t, { plan: 1 })
 
   const server = createServer((req, res) => {
