@@ -12,7 +12,7 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
   const contentCodings = 'GZiP, bR'
   const text = 'Hello, World!'
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const gzip = createGzip()
     const brotli = createBrotliCompress()
 
@@ -38,7 +38,7 @@ test('response decompression according to content-encoding should be handled in 
   const contentCodings = 'deflate, gzip'
   const text = 'Hello, World!'
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const gzip = createGzip()
     const deflate = createDeflate()
 

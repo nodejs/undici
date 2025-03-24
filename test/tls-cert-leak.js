@@ -23,7 +23,8 @@ test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t)
   // Create HTTPS server with self-signed certificate
   const serverOptions = {
     key: fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'))
+    cert: fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem')),
+    joinDuplicateHeaders: true
   }
 
   // Create a server that always responds with a simple message

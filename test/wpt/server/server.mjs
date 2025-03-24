@@ -30,7 +30,7 @@ class Stash extends Map {
 
 const stash = new Stash()
 
-const server = createServer(async (req, res) => {
+const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   if (fullUrl.searchParams.has('pipe')) {
