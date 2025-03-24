@@ -1,0 +1,52 @@
+
+{%- if request.setup -%}
+  {%- assign setup_prop = '' -%}
+{%- else -%}
+  {%- assign setup_prop = ' _(Failure will be considered a test setup issue)_' -%}
+{%- endif %}
+
+### The following checks will be performed:
+
+{%- if request.expected_type %}
+- The client will check that this response {% case request.expected_type %}{% when "cached" %}is cached{% when "not_cached" %}is not cached{% when "lm_validated" %}is validated using `Last-Modified`{% when "etag_validated" %}is validated using `ETag`{% endcase %} {% if test.setup_tests contains "expected_type" %}{{ setup_prop }}{% endif %}{% endif -%}
+
+{%- if request.expected_method %}
+- The server will check that the request method is `{{ request.expected_method }}`.{% endif -%}
+
+{%- if request.expected_request_headers.size > 0 %}
+- The server will check that the following request headers (and values, when specified) are present{% if test.setup_tests contains "expected_request_headers" %}{{ setup_prop }}{% endif %}:
+{%- render 'header-list' with request.expected_request_headers as headers %}{% endif -%}
+
+{%- if request.expected_request_headers_missing.size > 0 %}
+- The server will check that the following request headers (and values, when specified) are absent{% if test.setup_tests contains "expected_request_headers_missing" %}{{ setup_prop }}{% endif %}:
+{%- render 'header-list' with request.expected_request_headers_missing as headers %}{% endif -%}
+
+{%- if request.expected_status %}
+- The client will check that the status code is `{{ request.expected_status }}` {% if test.setup_tests contains "expected_status" %}{{ setup_prop }}{% endif %}
+{%- elsif request.response_status %}
+- The client will check that the status code is `{{ request.response_status | join: " " }}`{{ setup_prop }}
+{%- else %}
+- The client will check that the status code is `200 OK`{{ setup_prop }}
+{%- endif -%}
+
+{%- assign response_headers = request.response_headers | skipHeaders -%}
+{%- if request.expected_response_headers.size > 0 or response_headers.size > 0 %}
+- The client will check that the following response headers (and values, when specified) are present{% if test.setup_tests contains "expected_response_headers" %}{{ setup_prop }}{% endif -%}:
+{%- render 'header-list' with request.expected_response_headers as headers -%}
+{%- render 'header-list' with response_headers as headers %}{% endif -%}
+
+{%- if request.expected_response_headers_missing.size > 0 %}
+- The client will check that the following response headers (and values, when specified) are missing:
+{%- render 'header-list' with request.expected_response_headers_missing as headers %}{% endif -%}
+
+{%- if request.check_body != false %}
+- The client will check the body
+{%- if request.expected_response text -%}
+, expecting: `{{ request.expected_response_text }}` {% if test.setup_tests contains "expected_response_text" %}{{ setup_prop }}{% endif %}
+{%- else -%}
+, expecting the generated response body.
+{%- endif -%}
+{%- endif -%}
+
+
+

@@ -80,7 +80,7 @@ test('should follow redirection after a HTTP 300', async t => {
   t.strictEqual(body.join(''), `GET /5 key=value :: host@${server} connection@keep-alive`)
 })
 
-test('should follow redirection after a HTTP 301', async t => {
+test('should follow redirection after a HTTP 301 changing method to GET', async t => {
   t = tspl(t, { plan: 3 })
 
   const body = []
@@ -97,7 +97,7 @@ test('should follow redirection after a HTTP 301', async t => {
     }
   )
 
-  t.strictEqual(body.join(''), `POST /5 :: host@${server} connection@keep-alive content-length@7 :: REQUEST`)
+  t.strictEqual(body.join(''), `GET /5 :: host@${server} connection@keep-alive`)
 })
 
 test('should follow redirection after a HTTP 302', async t => {
@@ -316,7 +316,7 @@ test('should follow redirections when going cross origin', async t => {
     }
   )
 
-  t.strictEqual(body.join(''), 'POST')
+  t.strictEqual(body.join(''), 'GET')
 })
 
 describe('when a Location response header is NOT present', async () => {

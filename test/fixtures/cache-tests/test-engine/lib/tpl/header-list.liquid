@@ -1,0 +1,16 @@
+{%- for header in headers %}
+  - {% if header.first -%}
+      {%- if header.size == 3 -%}
+        {%- case header[1] -%}
+          {%- when ">" -%}
+            `{{ header[0] }}` is greater than `{{ header[2] }}`
+          {%- when "=" -%}
+            `{{ header[0] }}` has the same value as `{{ header[2] }}`
+        {%- endcase -%}
+      {%- else -%}
+        `{% render 'header-magic' with header as header %}`
+      {%- endif -%}
+    {%- else -%}
+      `{{ header }}`
+    {%- endif -%}
+{% endfor -%}

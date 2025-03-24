@@ -22,7 +22,7 @@ test('does not need the body to be consumed to continue', { timeout: 180_000, sk
     keepAliveTimeoutThreshold: 10
   })
   setGlobalDispatcher(agent)
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200)
     res.end(blob)
   })

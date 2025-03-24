@@ -14,6 +14,7 @@ const { InvalidArgumentError } = errors
 const api = require('./lib/api')
 const buildConnector = require('./lib/core/connect')
 const MockClient = require('./lib/mock/mock-client')
+const { MockCallHistory, MockCallHistoryLog } = require('./lib/mock/mock-call-history')
 const MockAgent = require('./lib/mock/mock-agent')
 const MockPool = require('./lib/mock/mock-pool')
 const mockErrors = require('./lib/mock/mock-errors')
@@ -38,6 +39,7 @@ module.exports.DecoratorHandler = DecoratorHandler
 module.exports.RedirectHandler = RedirectHandler
 module.exports.interceptors = {
   redirect: require('./lib/interceptor/redirect'),
+  responseError: require('./lib/interceptor/response-error'),
   retry: require('./lib/interceptor/retry'),
   dump: require('./lib/interceptor/dump'),
   dns: require('./lib/interceptor/dns'),
@@ -47,6 +49,9 @@ module.exports.interceptors = {
 module.exports.cacheStores = {
   MemoryCacheStore: require('./lib/cache/memory-cache-store')
 }
+
+const SqliteCacheStore = require('./lib/cache/sqlite-cache-store')
+module.exports.cacheStores.SqliteCacheStore = SqliteCacheStore
 
 module.exports.buildConnector = buildConnector
 module.exports.errors = errors
@@ -136,12 +141,13 @@ const { kConstruct } = require('./lib/core/symbols')
 // in an older version of Node, it doesn't have any use without fetch.
 module.exports.caches = new CacheStorage(kConstruct)
 
-const { deleteCookie, getCookies, getSetCookies, setCookie } = require('./lib/web/cookies')
+const { deleteCookie, getCookies, getSetCookies, setCookie, parseCookie } = require('./lib/web/cookies')
 
 module.exports.deleteCookie = deleteCookie
 module.exports.getCookies = getCookies
 module.exports.getSetCookies = getSetCookies
 module.exports.setCookie = setCookie
+module.exports.parseCookie = parseCookie
 
 const { parseMIMEType, serializeAMimeType } = require('./lib/web/fetch/data-url')
 
@@ -164,6 +170,8 @@ module.exports.connect = makeDispatcher(api.connect)
 module.exports.upgrade = makeDispatcher(api.upgrade)
 
 module.exports.MockClient = MockClient
+module.exports.MockCallHistory = MockCallHistory
+module.exports.MockCallHistoryLog = MockCallHistoryLog
 module.exports.MockPool = MockPool
 module.exports.MockAgent = MockAgent
 module.exports.mockErrors = mockErrors

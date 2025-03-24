@@ -11,7 +11,7 @@ declare class MockPool extends Pool implements Interceptable {
   /** Intercepts any matching requests that use the same origin as this mock pool. */
   intercept (options: MockInterceptor.Options): MockInterceptor
   /** Dispatches a mocked request. */
-  dispatch (options: Dispatcher.DispatchOptions, handlers: Dispatcher.DispatchHandlers): boolean
+  dispatch (options: Dispatcher.DispatchOptions, handlers: Dispatcher.DispatchHandler): boolean
   /** Closes the mock pool and gracefully waits for enqueued requests to complete. */
   close (): Promise<void>
 }

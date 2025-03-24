@@ -9,7 +9,7 @@ const assert = require('node:assert')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 test('Receiving a 407 status code w/ a window option present should reject', async (t) => {
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.statusCode = 407
     res.end()
   }).listen(0)

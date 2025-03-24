@@ -9,7 +9,7 @@ The WebSocket object provides a way to manage a WebSocket connection to a server
 Arguments:
 
 * **url** `URL | string`
-* **protocol** `string | string[] | WebSocketInit` (optional) - Subprotocol(s) to request the server use, or a [`Dispatcher`](./Dispatcher.md).
+* **protocol** `string | string[] | WebSocketInit` (optional) - Subprotocol(s) to request the server use, or a [`Dispatcher`](/docs/docs/api/Dispatcher.md).
 
 ### Example:
 
