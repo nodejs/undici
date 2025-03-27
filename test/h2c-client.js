@@ -1,3 +1,5 @@
+'use strict'
+
 const { createServer, createSecureServer } = require('node:http2')
 const { once } = require('node:events')
 const { test } = require('node:test')
