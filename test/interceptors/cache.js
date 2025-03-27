@@ -135,22 +135,30 @@ describe('Cache Interceptor', () => {
 
     let requestsToOrigin = 0
     let revalidationRequests = 0
+    let serverError
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('date', 0)
       res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
 
-      if (req.headers['if-modified-since']) {
-        revalidationRequests++
+      try {
+        if (req.headers['if-modified-since']) {
+          equal(req.headers['if-modified-since'].length, 29)
 
-        if (revalidationRequests === 2) {
-          res.end('updated')
+          revalidationRequests++
+
+          if (revalidationRequests === 3) {
+            res.end('updated')
+          } else {
+            res.statusCode = 304
+            res.end()
+          }
         } else {
-          res.statusCode = 304
-          res.end()
+          requestsToOrigin++
+          res.end('asd')
         }
-      } else {
-        requestsToOrigin++
-        res.end('asd')
+      } catch (err) {
+        serverError = err
+        res.end()
       }
     }).listen(0)
 
@@ -188,6 +196,10 @@ describe('Cache Interceptor', () => {
     // Send initial request. This should reach the origin
     {
       const res = await client.request(request)
+      if (serverError) {
+        throw serverError
+      }
+
       equal(requestsToOrigin, 1)
       equal(revalidationRequests, 0)
       strictEqual(await res.body.text(), 'asd')
@@ -198,16 +210,42 @@ describe('Cache Interceptor', () => {
     // Response is now stale, the origin should get a revalidation request
     {
       const res = await client.request(request)
+      if (serverError) {
+        throw serverError
+      }
+
       equal(requestsToOrigin, 1)
       equal(revalidationRequests, 1)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
+    // Response is still stale, extra header should be overwritten, and the
+    // origin should get a revalidation request
+    {
+      const res = await client.request({
+        ...request,
+        headers: {
+          'if-modified-SINCE': 'Thu, 01 Jan 1970 00:00:00 GMT'
+        }
+      })
+      if (serverError) {
+        throw serverError
+      }
+
+      equal(requestsToOrigin, 1)
+      equal(revalidationRequests, 2)
       strictEqual(await res.body.text(), 'asd')
     }
 
     // Response is still stale, but revalidation should fail now.
     {
       const res = await client.request(request)
+      if (serverError) {
+        throw serverError
+      }
+
       equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 2)
+      equal(revalidationRequests, 3)
       strictEqual(await res.body.text(), 'updated')
     }
   })
@@ -230,7 +268,7 @@ describe('Cache Interceptor', () => {
 
           equal(req.headers['if-none-match'], '"asd123"')
 
-          if (revalidationRequests === 2) {
+          if (revalidationRequests === 3) {
             res.end('updated')
           } else {
             res.statusCode = 304
@@ -296,6 +334,24 @@ describe('Cache Interceptor', () => {
       strictEqual(await res.body.text(), 'asd')
     }
 
+    // Response is still stale, extra headers should be overwritten, and the
+    // origin should get a revalidation request
+    {
+      const res = await client.request({
+        ...request,
+        headers: {
+          'if-NONE-match': '"nonsense-etag"'
+        }
+      })
+      if (serverError) {
+        throw serverError
+      }
+
+      equal(requestsToOrigin, 1)
+      equal(revalidationRequests, 2)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
     // Response is still stale, but revalidation should fail now.
     {
       const res = await client.request(request)
@@ -304,7 +360,7 @@ describe('Cache Interceptor', () => {
       }
 
       equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 2)
+      equal(revalidationRequests, 3)
       strictEqual(await res.body.text(), 'updated')
     }
   })
@@ -327,13 +383,13 @@ describe('Cache Interceptor', () => {
         if (ifNoneMatch) {
           revalidationRequests++
           notEqual(req.headers.a, undefined)
-          notEqual(req.headers.b, undefined)
+          notEqual(req.headers['b-mixed-case'], undefined)
 
           res.statusCode = 304
           res.end()
         } else {
           requestsToOrigin++
-          res.setHeader('vary', 'a, b')
+          res.setHeader('vary', 'a, B-MIXED-CASe')
           res.setHeader('etag', '"asd"')
           res.end('asd')
         }
@@ -360,15 +416,17 @@ describe('Cache Interceptor', () => {
     const request = {
       origin: 'localhost',
       path: '/',
-      method: 'GET',
-      headers: {
-        a: 'asd',
-        b: 'asd'
-      }
+      method: 'GET'
     }
 
     {
-      const response = await client.request(request)
+      const response = await client.request({
+        ...request,
+        headers: {
+          a: 'asd',
+          'b-Mixed-case': 'asd'
+        }
+      })
       if (serverError) {
         throw serverError
       }
@@ -380,7 +438,13 @@ describe('Cache Interceptor', () => {
     clock.tick(1500)
 
     {
-      const response = await client.request(request)
+      const response = await client.request({
+        ...request,
+        headers: {
+          a: 'asd',
+          'B-mixed-CASE': 'asd'
+        }
+      })
       if (serverError) {
         throw serverError
       }
