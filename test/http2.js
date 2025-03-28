@@ -1492,11 +1492,17 @@ test('#3046 - GOAWAY Frame', async t => {
     allowH2: true
   })
 
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 10 })
   after(() => client.close())
   after(() => server.close())
 
   client.on('disconnect', (url, disconnectClient, err) => {
+    t.ok(url instanceof URL)
+    t.deepStrictEqual(disconnectClient, [client])
+    t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
+  })
+
+  client.on('connectionError', (url, disconnectClient, err) => {
     t.ok(url instanceof URL)
     t.deepStrictEqual(disconnectClient, [client])
     t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
