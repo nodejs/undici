@@ -2,9 +2,31 @@
 
 Extends: `undici.Dispatcher`
 
-A basic H2C client, mapped on top a single TCP connection. Pipelining is disabled by default.
+A basic H2C client.
 
-Requests are not guaranteed to be dispatched in order of invocation.
+**Example**
+
+```js
+const { createServer } = require('node:http2')
+const { once } = require('node:events')
+const { H2CClient } = require('undici')
+
+const server = createServer((req, res) => {
+  res.writeHead(200)
+  res.end('Hello, world!')
+})
+
+server.listen()
+once(server, 'listening').then(() => {
+  const client = new H2CClient(`http://localhost:${server.address().port}/`)
+
+  const response = await client.request({ path: '/', method: 'GET' })
+  console.log(response.statusCode) // 200
+  response.body.text.then((text) => {
+    console.log(text) // Hello, world!
+  })
+})
+```
 
 ## `new H2CClient(url[, options])`
 
