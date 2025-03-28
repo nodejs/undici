@@ -4,6 +4,7 @@
 * API
   * [Dispatcher](/docs/api/Dispatcher.md "Undici API - Dispatcher")
   * [Client](/docs/api/Client.md "Undici API - Client")
+  * [H2CClient](/docs/api/H2CClient.md "Undici H2C API - Client")
   * [Pool](/docs/api/Pool.md "Undici API - Pool")
   * [BalancedPool](/docs/api/BalancedPool.md "Undici API - BalancedPool")
   * [Agent](/docs/api/Agent.md "Undici API - Agent")
