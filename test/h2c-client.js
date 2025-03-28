@@ -17,6 +17,14 @@ test('Should throw if no h2c origin', async t => {
   await planner.completed
 })
 
+test('Should throw if pipelining greather than concurrent streams', async t => {
+  const planner = tspl(t, { plan: 1 })
+
+  planner.throws(() => new H2CClient('http://localhost/', { pipelining: 10, maxConcurrentStreams: 5 }))
+
+  await planner.completed
+})
+
 test('Should support h2c connection', async t => {
   const planner = tspl(t, { plan: 2 })
 
