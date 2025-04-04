@@ -2888,3 +2888,55 @@ test('MockAgent - headers should be array of strings (fetch)', async (t) => {
 
   t.deepStrictEqual(response.headers.getSetCookie(), ['foo=bar', 'bar=baz', 'baz=qux'])
 })
+
+// https://github.com/nodejs/undici/issues/4146
+;[
+  '/foo?array=item1&array=item2',
+  '/foo?array[]=item1&array[]=item2',
+  '/foo?array=item1,item2'
+].forEach(path => {
+  test(`MockAgent - multi value query parameter "${path}"`, async (t) => {
+    t = tspl(t, { plan: 4 })
+
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.setHeader('content-type', 'text/plain')
+      res.end('should not be called')
+      t.fail('should not be called')
+      t.end()
+    })
+    after(() => server.close())
+
+    await promisify(server.listen.bind(server))(0)
+
+    const baseUrl = `http://localhost:${server.address().port}`
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/foo',
+      method: 'GET',
+      query: {
+        array: ['item1', 'item2']
+      }
+    }).reply(200, { foo: 'bar' }, {
+      headers: { 'content-type': 'application/json' },
+      trailers: { 'Content-MD5': 'test' }
+    })
+
+    const { statusCode, headers, trailers, body } = await mockAgent.request({
+      origin: baseUrl,
+      path,
+      method: 'GET'
+    })
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'application/json')
+    t.deepStrictEqual(trailers, { 'content-md5': 'test' })
+
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.deepStrictEqual(jsonResponse, {
+      foo: 'bar'
+    })
+  })
+})
