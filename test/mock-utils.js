@@ -9,7 +9,8 @@ const {
   getResponseData,
   getStatusText,
   getHeaderByName,
-  buildHeadersFromArray
+  buildHeadersFromArray,
+  normalizeQueryParams
 } = require('../lib/mock/mock-utils')
 
 test('deleteMockDispatch - should do nothing if not able to find mock dispatch', (t) => {
@@ -240,5 +241,35 @@ describe('buildHeadersFromArray', () => {
 
     t.deepStrictEqual(Object.keys(headers).length, 1)
     t.strictEqual(headers.key, 'value')
+  })
+})
+
+describe.only('normalizeQueryParams', () => {
+  test('it should handle basic cases', (t) => {
+    t = tspl(t, { plan: 4 })
+
+    t.deepStrictEqual(normalizeQueryParams('').toString(), '')
+    t.deepStrictEqual(normalizeQueryParams('a').toString(), 'a=')
+    t.deepStrictEqual(normalizeQueryParams('b=2&c=3&a=1').toString(), 'a=1&b=2&c=3')
+    t.deepStrictEqual(normalizeQueryParams('lang=en_EN&id=123').toString(), 'id=123&lang=en_EN')
+  })
+
+  // https://github.com/nodejs/undici/issues/4146
+  test('it should handle multiple values set using different syntaxes', (t) => {
+    t = tspl(t, { plan: 3 })
+
+    t.deepStrictEqual(normalizeQueryParams('a=1&a=2&a=3').toString(), 'a=1&a=2&a=3')
+    t.deepStrictEqual(normalizeQueryParams('a[]=1&a[]=2&a[]=3').toString(), 'a=1&a=2&a=3')
+    t.deepStrictEqual(normalizeQueryParams('a=1,2,3').toString(), 'a=1&a=2&a=3')
+  })
+
+  test('should handle edge case scenarios', (t) => {
+    t = tspl(t, { plan: 4 })
+
+    t.deepStrictEqual(normalizeQueryParams('a="b[]"').toString(), `a=${encodeURIComponent('"b[]"')}`)
+    t.deepStrictEqual(normalizeQueryParams('a="1,2,3"').toString(), `a=${encodeURIComponent('"1,2,3"')}`)
+    const encodedSingleQuote = '%27'
+    t.deepStrictEqual(normalizeQueryParams("a='b[]'").toString(), `a=${encodedSingleQuote}${encodeURIComponent('b[]')}${encodedSingleQuote}`)
+    t.deepStrictEqual(normalizeQueryParams("a='1,2,3'").toString(), `a=${encodedSingleQuote}${encodeURIComponent('1,2,3')}${encodedSingleQuote}`)
   })
 })
