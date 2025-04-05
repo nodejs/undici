@@ -423,6 +423,10 @@
   "heuristic-delta-60": true,
   "heuristic-delta-600": true,
   "heuristic-delta-86400": true,
+  "interim-102": true,
+  "interim-103": true,
+  "interim-no-header-reuse": true,
+  "interim-not-cached": true,
   "invalidate-DELETE": true,
   "invalidate-DELETE-cl": [
     "Assertion",

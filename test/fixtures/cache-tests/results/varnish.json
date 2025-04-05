@@ -498,6 +498,22 @@
     "Assertion",
     "Response 2 does not come from cache"
   ],
+  "interim-102": [
+    "Setup",
+    "Response 1 status is 503, not 200"
+  ],
+  "interim-103": [
+    "Setup",
+    "Response 1 status is 503, not 200"
+  ],
+  "interim-no-header-reuse": [
+    "Setup",
+    "Response 1 status is 503, not 200"
+  ],
+  "interim-not-cached": [
+    "Setup",
+    "Response 1 status is 503, not 200"
+  ],
   "invalidate-DELETE": [
     "Assertion",
     "Response 3 comes from cache"
