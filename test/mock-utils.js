@@ -244,7 +244,7 @@ describe('buildHeadersFromArray', () => {
   })
 })
 
-describe.only('normalizeQueryParams', () => {
+describe('normalizeQueryParams', () => {
   test('it should handle basic cases', (t) => {
     t = tspl(t, { plan: 4 })
 
