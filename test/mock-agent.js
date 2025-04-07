@@ -269,7 +269,7 @@ test('MockAgent - .close should clean up registered clients', async (t) => {
 test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -299,7 +299,7 @@ test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
 test('MockAgent - basic intercept with MockAgent.request', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -343,7 +343,7 @@ test('MockAgent - basic intercept with MockAgent.request', async (t) => {
 test('MockAgent - basic intercept with request', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -386,7 +386,7 @@ test('MockAgent - basic intercept with request', async (t) => {
 test('MockAgent - should support local agents', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -432,7 +432,7 @@ test('MockAgent - should support local agents', async (t) => {
 test('MockAgent - should support specifying custom agents to mock', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -479,7 +479,7 @@ test('MockAgent - should support specifying custom agents to mock', async (t) =>
 test('MockAgent - basic Client intercept with request', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -524,7 +524,7 @@ test('MockAgent - basic Client intercept with request', async (t) => {
 test('MockAgent - basic intercept with multiple pools', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -576,7 +576,7 @@ test('MockAgent - basic intercept with multiple pools', async (t) => {
 test('MockAgent - should handle multiple responses for an interceptor', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -639,7 +639,7 @@ test('MockAgent - should handle multiple responses for an interceptor', async (t
 test('MockAgent - should call original Pool dispatch if request not found', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.setHeader('content-type', 'text/plain')
@@ -668,7 +668,7 @@ test('MockAgent - should call original Pool dispatch if request not found', asyn
 test('MockAgent - should call original Client dispatch if request not found', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.setHeader('content-type', 'text/plain')
@@ -697,7 +697,7 @@ test('MockAgent - should call original Client dispatch if request not found', as
 test('MockAgent - should handle string responses', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -761,7 +761,7 @@ test('MockAgent - should handle basic concurrency for requests', { jobs: 5 }, as
 test('MockAgent - handle delays to simulate work', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -799,7 +799,7 @@ test('MockAgent - handle delays to simulate work', async (t) => {
 test('MockAgent - should persist requests', async (t) => {
   t = tspl(t, { plan: 8 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1060,7 +1060,7 @@ test('MockAgent - clearCallHistory should clear call history logs', async (t) =>
 test('MockAgent - handle persists with delayed requests', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1106,7 +1106,7 @@ test('MockAgent - handle persists with delayed requests', async (t) => {
 test('MockAgent - calling close on a mock pool should not affect other mock pools', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1164,7 +1164,7 @@ test('MockAgent - calling close on a mock pool should not affect other mock pool
 test('MockAgent - close removes all registered mock clients', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1220,7 +1220,7 @@ test('MockAgent - close clear all registered mock call history logs', async (t) 
 test('MockAgent - close removes all registered mock pools', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1254,7 +1254,7 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
 test('MockAgent - should handle replyWithError', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1282,7 +1282,7 @@ test('MockAgent - should handle replyWithError', async (t) => {
 test('MockAgent - should support setting a reply to respond a set amount of times', async (t) => {
   t = tspl(t, { plan: 9 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.setHeader('content-type', 'text/plain')
@@ -1333,7 +1333,7 @@ test('MockAgent - should support setting a reply to respond a set amount of time
 test('MockAgent - persist overrides times', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1389,7 +1389,7 @@ test('MockAgent - persist overrides times', async (t) => {
 test('MockAgent - matcher should not find mock dispatch if path is of unsupported type', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.end('hello')
@@ -1422,7 +1422,7 @@ test('MockAgent - matcher should not find mock dispatch if path is of unsupporte
 test('MockAgent - should match path with regex', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1468,7 +1468,7 @@ test('MockAgent - should match path with regex', async (t) => {
 test('MockAgent - should match path with function', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1502,7 +1502,7 @@ test('MockAgent - should match path with function', async (t) => {
 test('MockAgent - should match method with regex', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1536,7 +1536,7 @@ test('MockAgent - should match method with regex', async (t) => {
 test('MockAgent - should match method with function', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1570,7 +1570,7 @@ test('MockAgent - should match method with function', async (t) => {
 test('MockAgent - should match body with regex', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1606,7 +1606,7 @@ test('MockAgent - should match body with regex', async (t) => {
 test('MockAgent - should match body with function', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1642,7 +1642,7 @@ test('MockAgent - should match body with function', async (t) => {
 test('MockAgent - should match headers with string', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('should not be called')
     t.fail('should not be called')
     t.end()
@@ -1715,7 +1715,7 @@ test('MockAgent - should match headers with string', async (t) => {
 test('MockAgent - should match headers with regex', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('should not be called')
     t.fail('should not be called')
     t.end()
@@ -1788,7 +1788,7 @@ test('MockAgent - should match headers with regex', async (t) => {
 test('MockAgent - should match headers with function', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('should not be called')
     t.fail('should not be called')
     t.end()
@@ -1861,7 +1861,7 @@ test('MockAgent - should match headers with function', async (t) => {
 test('MockAgent - should match url with regex', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1895,7 +1895,7 @@ test('MockAgent - should match url with regex', async (t) => {
 test('MockAgent - should match url with function', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1929,7 +1929,7 @@ test('MockAgent - should match url with function', async (t) => {
 test('MockAgent - handle default reply headers', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -1967,7 +1967,7 @@ test('MockAgent - handle default reply headers', async (t) => {
 test('MockAgent - handle default reply trailers', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -2005,7 +2005,7 @@ test('MockAgent - handle default reply trailers', async (t) => {
 test('MockAgent - return calculated content-length if specified', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -2043,7 +2043,7 @@ test('MockAgent - return calculated content-length if specified', async (t) => {
 test('MockAgent - return calculated content-length for object response if specified', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -2081,7 +2081,7 @@ test('MockAgent - return calculated content-length for object response if specif
 test('MockAgent - should activate and deactivate mock clients', async (t) => {
   t = tspl(t, { plan: 9 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.setHeader('content-type', 'text/plain')
@@ -2142,7 +2142,7 @@ test('MockAgent - should activate and deactivate mock clients', async (t) => {
 test('MockAgent - enableNetConnect should allow all original dispatches to be called if dispatch not found', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.setHeader('content-type', 'text/plain')
@@ -2179,7 +2179,7 @@ test('MockAgent - enableNetConnect should allow all original dispatches to be ca
 test('MockAgent - enableNetConnect with a host string should allow all original dispatches to be called if mockDispatch not found', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.setHeader('content-type', 'text/plain')
@@ -2216,7 +2216,7 @@ test('MockAgent - enableNetConnect with a host string should allow all original 
 test('MockAgent - enableNetConnect when called with host string multiple times should allow all original dispatches to be called if mockDispatch not found', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.setHeader('content-type', 'text/plain')
@@ -2254,7 +2254,7 @@ test('MockAgent - enableNetConnect when called with host string multiple times s
 test('MockAgent - enableNetConnect with a host regex should allow all original dispatches to be called if mockDispatch not found', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.setHeader('content-type', 'text/plain')
@@ -2291,7 +2291,7 @@ test('MockAgent - enableNetConnect with a host regex should allow all original d
 test('MockAgent - enableNetConnect with a function should allow all original dispatches to be called if mockDispatch not found', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.setHeader('content-type', 'text/plain')
@@ -2344,7 +2344,7 @@ test('MockAgent - enableNetConnect with an unknown input should throw', async (t
 test('MockAgent - enableNetConnect should throw if dispatch not matched for path and the origin was not allowed by net connect', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
     t.end()
     res.end('should not be called')
@@ -2375,7 +2375,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for path
 test('MockAgent - enableNetConnect should throw if dispatch not matched for method and the origin was not allowed by net connect', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
     t.end()
     res.end('should not be called')
@@ -2406,7 +2406,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for meth
 test('MockAgent - enableNetConnect should throw if dispatch not matched for body and the origin was not allowed by net connect', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
     t.end()
     res.end('should not be called')
@@ -2439,7 +2439,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for body
 test('MockAgent - enableNetConnect should throw if dispatch not matched for headers and the origin was not allowed by net connect', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
     t.end()
     res.end('should not be called')
@@ -2476,7 +2476,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for head
 test('MockAgent - disableNetConnect should throw if dispatch not found by net connect', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(req.url, '/foo')
     t.strictEqual(req.method, 'GET')
     res.setHeader('content-type', 'text/plain')
@@ -2508,7 +2508,7 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
 test('MockAgent - headers function interceptor', async (t) => {
   t = tspl(t, { plan: 8 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
     t.end()
     res.end('should not be called')
@@ -2570,7 +2570,7 @@ test('MockAgent - clients are not garbage collected', async (t) => {
   const samples = 250
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
     t.end()
     res.end('should not be called')
@@ -2833,7 +2833,7 @@ test('MockAgent - Sending ReadableStream body', async (t) => {
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     req.pipe(res)
   })

@@ -13,7 +13,7 @@ test('connect aborted after connect', async (t) => {
   t = tspl(t, { plan: 3 })
 
   const signal = new EE()
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail()
   })
   server.on('connect', (req, c, firstBodyChunk) => {

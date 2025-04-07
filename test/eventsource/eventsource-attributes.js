@@ -7,7 +7,7 @@ const { test, describe } = require('node:test')
 const { EventSource } = require('../../lib/web/eventsource/eventsource')
 
 describe('EventSource - eventhandler idl', async () => {
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, 'dummy')
   })
 

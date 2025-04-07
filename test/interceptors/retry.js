@@ -13,7 +13,7 @@ test('Should retry status code', async t => {
   t = tspl(t, { plan: 4 })
 
   let counter = 0
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const retryOptions = {
     retry: (err, { state, opts }, done) => {
       counter++
@@ -122,7 +122,7 @@ test('Should use retry-after header for retries', async t => {
   t = tspl(t, { plan: 3 })
 
   let counter = 0
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   let checkpoint
   const dispatchOptions = {
     method: 'PUT',
@@ -178,7 +178,7 @@ test('Should use retry-after header for retries (date)', async t => {
   t = tspl(t, { plan: 3 })
 
   let counter = 0
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   let checkpoint
   const requestOptions = {
     method: 'PUT',
@@ -236,7 +236,7 @@ test('Should retry with defaults', async t => {
   t = tspl(t, { plan: 2 })
 
   let counter = 0
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -290,7 +290,7 @@ test('Should retry with defaults', async t => {
 test('Should pass context from other interceptors', async t => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const requestOptions = {
     method: 'GET',
     path: '/'
@@ -329,7 +329,7 @@ test('Should handle 206 partial content', async t => {
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
       t.ok(true, 'pass')
       res.setHeader('content-length', '6')
@@ -397,7 +397,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
       t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
@@ -463,7 +463,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
 test('retrying a request with a body', async t => {
   t = tspl(t, { plan: 2 })
   let counter = 0
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const requestOptions = {
     method: 'POST',
     path: '/',
@@ -528,7 +528,7 @@ test('retrying a request with a body', async t => {
 test('should not error if request is not meant to be retried', async t => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     res.writeHead(400)
     res.end('Bad request')

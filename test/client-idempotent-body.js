@@ -9,7 +9,7 @@ test('idempotent retry', async (t) => {
   t = tspl(t, { plan: 11 })
 
   const body = 'world'
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     let buf = ''
     req.on('data', data => {
       buf += data

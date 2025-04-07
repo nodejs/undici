@@ -154,14 +154,14 @@ test('connect through proxy (with pool)', async (t) => {
 
 function buildServer () {
   return new Promise((resolve, reject) => {
-    const server = createServer()
+    const server = createServer({ joinDuplicateHeaders: true })
     server.listen(0, () => resolve(server))
   })
 }
 
 function buildProxy () {
   return new Promise((resolve, reject) => {
-    const server = createProxy(createServer())
+    const server = createProxy(createServer({ joinDuplicateHeaders: true }))
     server.listen(0, () => resolve(server))
   })
 }

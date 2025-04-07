@@ -8,7 +8,7 @@ const { strictEqual } = require('node:assert')
 test('socket should not be reused unless body is consumed', async (t) => {
   const LARGE_BODY = 'x'.repeat(10000000)
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.url === '/foo') {
       res.end(LARGE_BODY)
       return
