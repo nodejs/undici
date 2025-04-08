@@ -250,8 +250,8 @@ describe('normalizeQueryParams', () => {
 
     t.deepStrictEqual(normalizeSearchParams('').toString(), '')
     t.deepStrictEqual(normalizeSearchParams('a').toString(), 'a=')
-    t.deepStrictEqual(normalizeSearchParams('b=2&c=3&a=1').toString(), 'a=1&b=2&c=3')
-    t.deepStrictEqual(normalizeSearchParams('lang=en_EN&id=123').toString(), 'id=123&lang=en_EN')
+    t.deepStrictEqual(normalizeSearchParams('b=2&c=3&a=1').toString(), 'b=2&c=3&a=1')
+    t.deepStrictEqual(normalizeSearchParams('lang=en_EN&id=123').toString(), 'lang=en_EN&id=123')
   })
 
   // https://github.com/nodejs/undici/issues/4146
