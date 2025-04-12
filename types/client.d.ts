@@ -96,14 +96,14 @@ export declare namespace Client {
     maxConcurrentStreams?: number;
   }
   export interface SocketInfo {
-    localAddress?: string;
-    localPort?: number;
-    remoteAddress?: string;
-    remotePort?: number;
-    remoteFamily?: string;
-    timeout?: number;
-    bytesWritten?: number;
-    bytesRead?: number;
+    localAddress?: string
+    localPort?: number
+    remoteAddress?: string
+    remotePort?: number
+    remoteFamily?: string
+    timeout?: number
+    bytesWritten?: number
+    bytesRead?: number
   }
 }
 
