@@ -15,7 +15,7 @@ declare class Agent extends Dispatcher {
   /** Dispatches a request. */
   dispatch (options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandler): boolean
   /** Aggregate stats for a Agent by origin. */
-  readonly stats: [string, [TClientStats, TPoolStats]][]
+  readonly stats: [string, [TClientStats | TPoolStats]][]
 }
 
 declare namespace Agent {
