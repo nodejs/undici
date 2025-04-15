@@ -1150,3 +1150,35 @@ test('pool destroy fails queued requests', async (t) => {
   })
   await t.completed
 })
+
+test('stats', async (t) => {
+  t = tspl(t, { plan: 11 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  after(() => server.close())
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    t.strictEqual(client[kUrl].origin, `http://localhost:${server.address().port}`)
+
+    client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
+      t.ifError(err)
+      t.strictEqual(statusCode, 200)
+      t.strictEqual(client.stats.connected, 1)
+      t.strictEqual(client.stats.free, 0)
+      t.strictEqual(client.stats.pending, 0)
+      t.strictEqual(client.stats.queued, 0)
+      t.strictEqual(client.stats.running, 1)
+      t.strictEqual(client.stats.size, 1)
+    })
+  })
+
+  await t.completed
+})
