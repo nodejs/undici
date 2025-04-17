@@ -140,6 +140,8 @@ declare namespace Dispatcher {
     redirectionLimitReached?: boolean;
     /** Default: `null` */
     responseHeaders?: 'raw' | null;
+    /** Default: false */
+    rawSocket?: boolean;
   }
   export interface RequestOptions<TOpaque = null> extends DispatchOptions {
     /** Default: `null` */
