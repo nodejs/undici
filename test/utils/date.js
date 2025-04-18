@@ -10,7 +10,7 @@ describe('parseHttpDate', () => {
       'Sun, 06 Nov 1994 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
       'Thu, 18 Aug 1950 02:01:18 GMT': new Date(Date.UTC(1950, 7, 18, 2, 1, 18)),
       'Wed, 11 Dec 2024 23:20:57 GMT': new Date(Date.UTC(2024, 11, 11, 23, 20, 57)),
-      'Wed, aa Dec 2024 23:20:57 GMT': undefined, // NaN daty
+      'Wed, aa Dec 2024 23:20:57 GMT': undefined, // NaN day
       'aaa, 06 Dec 2024 23:20:57 GMT': undefined, // Invalid day name
       'Wed, 01 aaa 2024 23:20:57 GMT': undefined, // Invalid month
       'Wed, 6 Dec 2024 23:20:07 GMT': undefined, // No leading zero
@@ -33,7 +33,7 @@ describe('parseHttpDate', () => {
       'Sunday, 06-Nov-94 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
       'Thursday, 18-Aug-50 02:01:18 GMT': new Date(Date.UTC(2050, 7, 18, 2, 1, 18)),
       'Wednesday, 11-Dec-24 23:20:57 GMT': new Date(Date.UTC(2024, 11, 11, 23, 20, 57)),
-      'Wednesday, aa Dec 2024 23:20:57 GMT': undefined, // NaN daty
+      'Wednesday, aa Dec 2024 23:20:57 GMT': undefined, // NaN day
       'aaa, 06 Dec 2024 23:20:57 GMT': undefined, // Invalid day name
       'Wednesday, 01-aaa-24 23:20:57 GMT': undefined, // Invalid month
       'Wednesday, 6-Dec-24 23:20:07 GMT': undefined, // No leading zero
@@ -56,7 +56,7 @@ describe('parseHttpDate', () => {
       'Sun Nov  6 08:49:37 1994': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
       'Thu Aug 18 02:01:18 1950': new Date(Date.UTC(1950, 7, 18, 2, 1, 18)),
       'Wed Dec 11 23:20:57 2024': new Date(Date.UTC(2024, 11, 11, 23, 20, 57)),
-      'Wed Dec aa 23:20:57 2024': undefined, // NaN daty
+      'Wed Dec aa 23:20:57 2024': undefined, // NaN day
       'aaa Dec 06 23:20:57 2024': undefined, // Invalid day name
       'Wed aaa 01 23:20:57 2024': undefined, // Invalid month
       'Wed Dec 6 23:20:07 2024': undefined, // No leading zero
