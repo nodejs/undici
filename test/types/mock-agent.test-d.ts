@@ -95,3 +95,12 @@ expectType<MockAgent>(new MockAgent({
 expectType<MockAgent>(new MockAgent({
   agent: new RetryAgent(new Agent())
 }))
+expectType<MockAgent>(new MockAgent({
+  acceptNonStandardSearchParameters: true
+}))
+expectType<MockAgent>(new MockAgent({
+  acceptNonStandardSearchParameters: false
+}))
+expectType<MockAgent>(new MockAgent({
+  acceptNonStandardSearchParameters: undefined
+}))

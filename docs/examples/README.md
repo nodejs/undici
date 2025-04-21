@@ -126,17 +126,21 @@ async function deleteRequest (port = 3001) {
 }
 ```
 
-## Cacheable DNS Lookup
+## Production configuration 
 
-### Using CacheableLookup to cache DNS lookups in undici
+### Using interceptors to add response caching, DNS lookup caching and connection retries
 
 ```js
-import { Agent } from 'undici'
-import CacheableLookup from 'cacheable-lookup';
+import { Agent, interceptors, setGlobalDispatcher } from 'undici'
 
-const cacheable = new CacheableLookup(opts)
+// Interceptors to add response caching, DNS caching and retrying to the dispatcher
+const { cache, dns, retry } = interceptors
 
-const agent = new Agent({
-  connect: { lookup: cacheable.lookup }
-})
+const defaultDispatcher = new Agent({
+  connections: 100, // Limit concurrent kept-alive connections to not run out of resources
+  headersTimeout: 10_000, // 10 seconds; set as appropriate for the remote servers you plan to connect to
+  bodyTimeout: 10_000,
+}).compose(cache(), dns(), retry())
+
+setGlobalDispatcher(defaultDispatcher) // Add these interceptors to all `fetch` and Undici `request` calls
 ```
