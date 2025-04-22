@@ -290,7 +290,7 @@ expectAssignable<Client>(
   expectAssignable<void>(client.destroy(null, () => {}))
 
   // stats
-  expectType<number>(client.stats.connected)
+  expectType<boolean>(client.stats.connected)
   expectType<number>(client.stats.pending)
   expectType<number>(client.stats.running)
   expectType<number>(client.stats.size)
