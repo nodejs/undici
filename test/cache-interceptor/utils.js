@@ -66,7 +66,7 @@ describe('parseCacheControlHeader', () => {
   })
 
   test('no-cache with headers', () => {
-    let directives = parseCacheControlHeader('max-age=10, no-cache="some-header, only-if-cached"')
+    let directives = parseCacheControlHeader('max-age=10, no-cache=some-header, only-if-cached')
     deepStrictEqual(directives, {
       'max-age': 10,
       'no-cache': [
