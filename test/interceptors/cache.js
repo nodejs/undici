@@ -147,7 +147,7 @@ describe('Cache Interceptor', () => {
 
     const client = new Client(`http://localhost:${server.address().port}`)
       .compose(interceptors.cache({
-        cacheByDefault: 1000,
+        cacheByDefault: 1000
       }))
 
     const request = {
