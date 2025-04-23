@@ -551,7 +551,7 @@ describe('Cache Interceptor', () => {
     let requestToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       requestToOrigin++
-      res.setHeader('cache-control', 's-maxage=10, no-cache=should-be-stripped')
+      res.setHeader('cache-control', 's-maxage=10, no-cache="should-be-stripped"')
       res.setHeader('should-not-be-stripped', 'asd')
 
       for (const header of headers) {
