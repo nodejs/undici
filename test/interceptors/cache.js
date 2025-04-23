@@ -128,6 +128,45 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('revalidates reponses with no-cache directive, regardless of cacheByDefault', async () => {
+    let requestCount = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      ++requestCount
+      res.setHeader('Vary', 'Accept-Encoding')
+      res.setHeader('cache-control', 'no-cache')
+      res.end(`Request count: ${requestCount}`)
+    }).listen(0)
+
+    after(async () => {
+      server.close()
+
+      await once(server, 'close')
+    })
+
+    await once(server, 'listening')
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({
+        cacheByDefault: 1000
+      }))
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    const res1 = await client.request(request)
+    const body1 = await res1.body.text()
+    strictEqual(body1, 'Request count: 1')
+    strictEqual(requestCount, 1)
+
+    const res2 = await client.request(request)
+    const body2 = await res2.body.text()
+    strictEqual(body2, 'Request count: 2')
+    strictEqual(requestCount, 2)
+  })
+
   test('stale responses are revalidated before deleteAt (if-modified-since)', async () => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
