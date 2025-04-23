@@ -165,8 +165,6 @@ describe('Cache Interceptor', () => {
     const body2 = await res2.body.text()
     strictEqual(body2, 'Request count: 2')
     strictEqual(requestCount, 2)
-
-    await new Promise(resolve => server.close(resolve))
   })
 
   test('stale responses are revalidated before deleteAt (if-modified-since)', async () => {
