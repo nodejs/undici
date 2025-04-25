@@ -82,7 +82,7 @@ jobs:
           export CC="ccache gcc"
           export CXX="ccache g++"
           rm -rf deps/undici
-          ./configure --shared-builtin-undici/undici-path ${{ github.workspace }}/undici/loader.js --ninja --prefix=./final
+          ./configure --shared-builtin-undici/undici-path ${{ github.workspace }}/loader.js --ninja --prefix=./final
           make
           make install
           echo "$(pwd)/final/bin" >> $GITHUB_PATH
