@@ -78,6 +78,6 @@ See [`Dispatcher.upgrade(options[, callback])`](/docs/docs/api/Dispatcher.md#dis
 
 ### `Agent.stats()`
 
-Returns stats of all clients for each origin in format of `[string, [TClientStats | TPoolStats]][]`
+Returns an object of stats by origin in the format of `Record<string, TClientStats | TPoolStats>`
 
 See [`PoolStats`](/docs/docs/api/PoolStats.md) and [`ClientStats`](/docs/docs/api/ClientStats.md).
