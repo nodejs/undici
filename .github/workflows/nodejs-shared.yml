@@ -46,12 +46,13 @@ jobs:
       - name: Build WASM
         working-directory: ./undici
         run: |
-          export EXTERNAL_PATH=${{ github.workspace }}/undici
+          export EXTERNAL_PATH=${{ github.workspace }}
           export WASM_CC=clang
           export WASM_CFLAGS='--target=wasm32-wasi --sysroot=/usr'
           export WASM_LDFLAGS='-nodefaultlibs'
           export WASM_LDLIBS='-lc'
           node build/wasm.js
+          ls -l
 
       - name: Determine latest release
         id: release
