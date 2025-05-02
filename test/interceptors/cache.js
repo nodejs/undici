@@ -583,7 +583,7 @@ describe('Cache Interceptor', () => {
       'proxy-connection',
       'te',
       'upgrade',
-      // Headers we need to specifiy to be stripped
+      // Headers we need to specify to be stripped
       'should-be-stripped'
     ]
 
