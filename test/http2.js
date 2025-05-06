@@ -125,8 +125,8 @@ test('Should support H2 connection (headers as array)', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers) => {
-    t.strictEqual(headers['x-my-header'], 'foo')
-    t.strictEqual(headers['x-my-drink'], 'coffee,tea,water')
+    t.strictEqual(headers['x-my-header'], 'foo, bar')
+    t.strictEqual(headers['x-my-drink'], 'coffee, tea, water')
     t.strictEqual(headers['x-other'], 'value')
     t.strictEqual(headers[':method'], 'GET')
     stream.respond({
@@ -158,6 +158,7 @@ test('Should support H2 connection (headers as array)', async t => {
       'x-my-header', 'foo',
       'x-my-drink', ['coffee', 'tea'],
       'x-my-drink', 'water',
+      'X-My-Header', 'bar',
       'x-other', 'value'
     ]
   })
