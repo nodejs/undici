@@ -266,6 +266,17 @@ const readableNodeStream = Readable.fromWeb(readableWebStream)
 This section documents parts of the [Fetch Standard](https://fetch.spec.whatwg.org) that Undici does
 not support or does not fully implement.
 
+##### CORS
+
+Undici does not implement CORS (Cross-Origin Resource Sharing) checks that are typically enforced in browsers. This means:
+
+- No preflight requests are sent for cross-origin requests
+- No origin matching is performed
+- No restrictions based on request mode or credentials
+- No CORS-related errors are thrown for cross-origin requests
+
+This behavior is intentional and appropriate for server-side environments where CORS restrictions are unnecessary. Applications requiring CORS protection should implement their own checks.
+
 ##### Garbage Collection
 
 * https://fetch.spec.whatwg.org/#garbage-collection
@@ -382,6 +393,17 @@ Returns: `URL`
 
 This section documents parts of the HTTP/1.1 specification that Undici does
 not support or does not fully implement.
+
+### CORS
+
+Undici does not implement CORS (Cross-Origin Resource Sharing) checks that are typically enforced in browsers. This means:
+
+- No preflight requests are sent for cross-origin requests
+- No origin matching is performed
+- No restrictions based on request mode or credentials
+- No CORS-related errors are thrown for cross-origin requests
+
+This behavior is intentional and appropriate for server-side environments where CORS restrictions are unnecessary. Applications requiring CORS protection should implement their own checks.
 
 ### Expect
 
