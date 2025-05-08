@@ -11,7 +11,7 @@ It is also a Stranger Things reference.
 
 Have a question about using Undici? Open a [Q&A Discussion](https://github.com/nodejs/undici/discussions/new) or join our official OpenJS [Slack](https://openjs-foundation.slack.com/archives/C01QF9Q31QD) channel.
 
-Looking to contribute? Start by reading the [contributing guide](./CONTRIBUTING.md)
+Looking to contribute? Start by reading the [contributing guide](../../../CONTRIBUTING.md)
 
 ## Install
 
@@ -102,30 +102,30 @@ For more information about their behavior, please reference the body mixin from 
 
 ## Common API Methods
 
-This section documents our most commonly used API methods. Additional APIs are documented in their own files within the [docs](./docs/) folder and are accessible via the navigation list on the left side of the docs site.
+This section documents our most commonly used API methods. Additional APIs are documented in their own files within the [docs]() folder and are accessible via the navigation list on the left side of the docs site.
 
 ### `undici.request([url, options]): Promise`
 
 Arguments:
 
 * **url** `string | URL | UrlObject`
-* **options** [`RequestOptions`](./docs/docs/api/Dispatcher.md#parameter-requestoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
+* **options** [`RequestOptions`](docs/api/Dispatcher.md#parameter-requestoptions)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](../README.md#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
 
 Returns a promise with the result of the `Dispatcher.request` method.
 
 Calls `options.dispatcher.request(options)`.
 
-See [Dispatcher.request](./docs/docs/api/Dispatcher.md#dispatcherrequestoptions-callback) for more details, and [request examples](./docs/examples/README.md) for examples.
+See [Dispatcher.request](docs/api/Dispatcher.md#dispatcherrequestoptions-callback) for more details, and [request examples](examples/README.md) for examples.
 
 ### `undici.stream([url, options, ]factory): Promise`
 
 Arguments:
 
 * **url** `string | URL | UrlObject`
-* **options** [`StreamOptions`](./docs/docs/api/Dispatcher.md#parameter-streamoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
+* **options** [`StreamOptions`](docs/api/Dispatcher.md#parameter-streamoptions)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](../README.md#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
 * **factory** `Dispatcher.stream.factory`
 
@@ -133,15 +133,15 @@ Returns a promise with the result of the `Dispatcher.stream` method.
 
 Calls `options.dispatcher.stream(options, factory)`.
 
-See [Dispatcher.stream](./docs/docs/api/Dispatcher.md#dispatcherstreamoptions-factory-callback) for more details.
+See [Dispatcher.stream](docs/api/Dispatcher.md#dispatcherstreamoptions-factory-callback) for more details.
 
 ### `undici.pipeline([url, options, ]handler): Duplex`
 
 Arguments:
 
 * **url** `string | URL | UrlObject`
-* **options** [`PipelineOptions`](./docs/docs/api/Dispatcher.md#parameter-pipelineoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
+* **options** [`PipelineOptions`](docs/api/Dispatcher.md#parameter-pipelineoptions)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](../README.md#undicigetglobaldispatcher)
   * **method** `String` - Default: `PUT` if `options.body`, otherwise `GET`
 * **handler** `Dispatcher.pipeline.handler`
 
@@ -149,7 +149,7 @@ Returns: `stream.Duplex`
 
 Calls `options.dispatch.pipeline(options, handler)`.
 
-See [Dispatcher.pipeline](./docs/docs/api/Dispatcher.md#dispatcherpipelineoptions-handler) for more details.
+See [Dispatcher.pipeline](docs/api/Dispatcher.md#dispatcherpipelineoptions-handler) for more details.
 
 ### `undici.connect([url, options]): Promise`
 
@@ -158,15 +158,15 @@ Starts two-way communications with the requested resource using [HTTP CONNECT](h
 Arguments:
 
 * **url** `string | URL | UrlObject`
-* **options** [`ConnectOptions`](./docs/docs/api/Dispatcher.md#parameter-connectoptions)
-  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](#undicigetglobaldispatcher)
+* **options** [`ConnectOptions`](docs/api/Dispatcher.md#parameter-connectoptions)
+  * **dispatcher** `Dispatcher` - Default: [getGlobalDispatcher](../README.md#undicigetglobaldispatcher)
 * **callback** `(err: Error | null, data: ConnectData | null) => void` (optional)
 
 Returns a promise with the result of the `Dispatcher.connect` method.
 
 Calls `options.dispatch.connect(options)`.
 
-See [Dispatcher.connect](./docs/docs/api/Dispatcher.md#dispatcherconnectoptions-callback) for more details.
+See [Dispatcher.connect](docs/api/Dispatcher.md#dispatcherconnectoptions-callback) for more details.
 
 ### `undici.fetch(input[, init]): Promise`
 
@@ -261,23 +261,32 @@ const readableWebStream = response.body
 const readableNodeStream = Readable.fromWeb(readableWebStream)
 ```
 
-#### Specification Compliance
+## Specification Compliance
 
-This section documents parts of the [Fetch Standard](https://fetch.spec.whatwg.org) that Undici does
+This section documents parts of the HTTP/1.1 and [Fetch Standard](https://fetch.spec.whatwg.org) that Undici does
 not support or does not fully implement.
 
-##### CORS
+#### CORS
 
-Undici does not implement CORS (Cross-Origin Resource Sharing) checks that are typically enforced in browsers. This means:
+Unlike browsers, Undici does not implement CORS (Cross-Origin Resource Sharing) checks by default. This means:
 
-- No preflight requests are sent for cross-origin requests
-- No origin matching is performed
-- No restrictions based on request mode or credentials
-- No CORS-related errors are thrown for cross-origin requests
+- No preflight requests are automatically sent for cross-origin requests
+- No validation of `Access-Control-Allow-Origin` headers is performed
+- Requests to any origin are allowed regardless of the source
 
-This behavior is intentional and appropriate for server-side environments where CORS restrictions are unnecessary. Applications requiring CORS protection should implement their own checks.
+This behavior is intentional for server-side environments where CORS restrictions are typically unnecessary. If your application requires CORS-like protections, you will need to implement these checks manually.
 
-##### Garbage Collection
+#### Fetch API Compliance
+
+The `undici.fetch` implementation aims to be compliant with the [Fetch Standard](https://fetch.spec.whatwg.org/). However, there are some notable differences:
+
+- CORS is not implemented (see above)
+- `Request.destination` is always `""`
+- `Request.referrer` is always `"about:client"`
+- `Request.referrerPolicy` is always `""`
+- `Response.type` is always `"basic"`
+
+#### Garbage Collection
 
 * https://fetch.spec.whatwg.org/#garbage-collection
 
@@ -318,7 +327,7 @@ const headers = await fetch(url, { method: 'HEAD' })
   .then(res => res.headers)
 ```
 
-##### Forbidden and Safelisted Header Names
+#### Forbidden and Safelisted Header Names
 
 * https://fetch.spec.whatwg.org/#cors-safelisted-response-header-name
 * https://fetch.spec.whatwg.org/#forbidden-header-name
@@ -327,7 +336,57 @@ const headers = await fetch(url, { method: 'HEAD' })
 
 The [Fetch Standard](https://fetch.spec.whatwg.org) requires implementations to exclude certain headers from requests and responses. In browser environments, some headers are forbidden so the user agent remains in full control over them. In Undici, these constraints are removed to give more control to the user.
 
-### `undici.upgrade([url, options]): Promise`
+#### Expect
+
+Undici does not support the `Expect` request header field. The request
+body is  always immediately sent and the `100 Continue` response will be
+ignored.
+
+Refs: https://tools.ietf.org/html/rfc7231#section-5.1.1
+
+#### Pipelining
+
+Undici will only use pipelining if configured with a `pipelining` factor
+greater than `1`. Also it is important to pass `blocking: false` to the
+request options to properly pipeline requests.
+
+Undici always assumes that connections are persistent and will immediately
+pipeline requests, without checking whether the connection is persistent.
+Hence, automatic fallback to HTTP/1.0 or HTTP/1.1 without pipelining is
+not supported.
+
+Undici will immediately pipeline when retrying requests after a failed
+connection. However, Undici will not retry the first remaining requests in
+the prior pipeline and instead error the corresponding callback/promise/stream.
+
+Undici will abort all running requests in the pipeline when any of them are
+aborted.
+
+* Refs: https://tools.ietf.org/html/rfc2616#section-8.1.2.2
+* Refs: https://tools.ietf.org/html/rfc7230#section-6.3.2
+
+#### Manual Redirect
+
+Since it is not possible to manually follow an HTTP redirect on the server-side,
+Undici returns the actual response instead of an `opaqueredirect` filtered one
+when invoked with a `manual` redirect. This aligns `fetch()` with the other
+implementations in Deno and Cloudflare Workers.
+
+Refs: https://fetch.spec.whatwg.org/#atomic-http-redirect-handling
+
+### Workarounds
+
+#### Network address family autoselection.
+
+If you experience problem when connecting to a remote server that is resolved by your DNS servers to a IPv6 (AAAA record)
+first, there are chances that your local router or ISP might have problem connecting to IPv6 networks. In that case
+undici will throw an error with code `UND_ERR_CONNECT_TIMEOUT`.
+
+If the target server resolves to both a IPv6 and IPv4 (A records) address and you are using a compatible Node version
+(18.3.0 and above), you can fix the problem by providing the `autoSelectFamily` option (support by both `undici.request`
+and `undici.Agent`) which will enable the family autoselection algorithm when establishing the connection.
+
+#### `undici.upgrade([url, options]): Promise`
 
 Upgrade to a different protocol. See [MDN - HTTP - Protocol upgrade mechanism](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) for more details.
 
@@ -388,72 +447,6 @@ Returns: `URL`
 * **origin** `string` (optional)
 * **protocol** `string` (optional)
 * **search** `string` (optional)
-
-## Specification Compliance
-
-This section documents parts of the HTTP/1.1 specification that Undici does
-not support or does not fully implement.
-
-### CORS
-
-Undici does not implement CORS (Cross-Origin Resource Sharing) checks that are typically enforced in browsers. This means:
-
-- No preflight requests are sent for cross-origin requests
-- No origin matching is performed
-- No restrictions based on request mode or credentials
-- No CORS-related errors are thrown for cross-origin requests
-
-This behavior is intentional and appropriate for server-side environments where CORS restrictions are unnecessary. Applications requiring CORS protection should implement their own checks.
-
-### Expect
-
-Undici does not support the `Expect` request header field. The request
-body is  always immediately sent and the `100 Continue` response will be
-ignored.
-
-Refs: https://tools.ietf.org/html/rfc7231#section-5.1.1
-
-### Pipelining
-
-Undici will only use pipelining if configured with a `pipelining` factor
-greater than `1`. Also it is important to pass `blocking: false` to the
-request options to properly pipeline requests.
-
-Undici always assumes that connections are persistent and will immediately
-pipeline requests, without checking whether the connection is persistent.
-Hence, automatic fallback to HTTP/1.0 or HTTP/1.1 without pipelining is
-not supported.
-
-Undici will immediately pipeline when retrying requests after a failed
-connection. However, Undici will not retry the first remaining requests in
-the prior pipeline and instead error the corresponding callback/promise/stream.
-
-Undici will abort all running requests in the pipeline when any of them are
-aborted.
-
-* Refs: https://tools.ietf.org/html/rfc2616#section-8.1.2.2
-* Refs: https://tools.ietf.org/html/rfc7230#section-6.3.2
-
-### Manual Redirect
-
-Since it is not possible to manually follow an HTTP redirect on the server-side,
-Undici returns the actual response instead of an `opaqueredirect` filtered one
-when invoked with a `manual` redirect. This aligns `fetch()` with the other
-implementations in Deno and Cloudflare Workers.
-
-Refs: https://fetch.spec.whatwg.org/#atomic-http-redirect-handling
-
-## Workarounds
-
-### Network address family autoselection.
-
-If you experience problem when connecting to a remote server that is resolved by your DNS servers to a IPv6 (AAAA record)
-first, there are chances that your local router or ISP might have problem connecting to IPv6 networks. In that case
-undici will throw an error with code `UND_ERR_CONNECT_TIMEOUT`.
-
-If the target server resolves to both a IPv6 and IPv4 (A records) address and you are using a compatible Node version
-(18.3.0 and above), you can fix the problem by providing the `autoSelectFamily` option (support by both `undici.request`
-and `undici.Agent`) which will enable the family autoselection algorithm when establishing the connection.
 
 ## Collaborators
 

@@ -144,6 +144,13 @@
   "jest": {
     "testMatch": [
       "<rootDir>/test/jest/**"
-    ]
+    ],
+    "testEnvironment": "node",
+    "transform": {},
+    "verbose": true,
+    "detectOpenHandles": true,
+    "forceExit": true,
+    "preserveStackTrace": true,
+    "moduleDirectories": ["node_modules", "<rootDir>"]
   }
 }
