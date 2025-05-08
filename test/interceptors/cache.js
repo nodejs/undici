@@ -167,6 +167,225 @@ describe('Cache Interceptor', () => {
     strictEqual(requestCount, 2)
   })
 
+  test('expires caching', async () => {
+    const clock = FakeTimers.install({
+      shouldClearNativeTimers: true
+    })
+
+    let requestsToOrigin = 0
+    let serverError
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const now = new Date()
+      now.setSeconds(now.getSeconds() + 1)
+      res.setHeader('date', 0)
+      res.setHeader('expires', now.toGMTString())
+      requestsToOrigin++
+      res.end('asd')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+      clock.uninstall()
+    })
+
+    await once(server, 'listening')
+
+    strictEqual(requestsToOrigin, 0)
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const res = await client.request(request)
+      if (serverError) {
+        throw serverError
+      }
+
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
+    // This is cached
+    {
+      const res = await client.request(request)
+      if (serverError) {
+        throw serverError
+      }
+
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
+    clock.tick(1500)
+
+    // Response is now stale, the origin should get a request
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
+    // Response is now cached, the origin should not get a request
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'asd')
+    }
+  })
+
+  test('expires caching with Etag', async () => {
+    const clock = FakeTimers.install({
+      shouldClearNativeTimers: true
+    })
+
+    let requestsToOrigin = 0
+    let serverError
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const now = new Date()
+      now.setSeconds(now.getSeconds() + 1)
+      res.setHeader('date', 0)
+      res.setHeader('expires', now.toGMTString())
+      res.setHeader('etag', 'asd123')
+      requestsToOrigin++
+      res.end('asd')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+      clock.uninstall()
+    })
+
+    await once(server, 'listening')
+
+    strictEqual(requestsToOrigin, 0)
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const res = await client.request(request)
+      if (serverError) {
+        throw serverError
+      }
+
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
+    // This is cached
+    {
+      const res = await client.request(request)
+      if (serverError) {
+        throw serverError
+      }
+
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
+    clock.tick(1500)
+
+    // Response is now stale, the origin should get a request
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
+    // Response is now cached, the origin should not get a request
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'asd')
+    }
+  })
+
+  test.only('max-age caching', async () => {
+    const clock = FakeTimers.install({
+      shouldClearNativeTimers: true
+    })
+
+    let requestsToOrigin = 0
+    let serverError
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.setHeader('date', 0)
+      res.setHeader('cache-control', 's-maxage=1')
+      requestsToOrigin++
+      res.end('asd')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+      clock.uninstall()
+    })
+
+    await once(server, 'listening')
+
+    strictEqual(requestsToOrigin, 0)
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const res = await client.request(request)
+      if (serverError) {
+        throw serverError
+      }
+
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
+    clock.tick(1500)
+
+    // Response is now stale, the origin should get a request
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
+    // Response is now cached, the origin should not get a request
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'asd')
+    }
+  })
+
   test('stale responses are revalidated before deleteAt (if-modified-since)', async () => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true

@@ -57,8 +57,6 @@ await runTestSuite(tests, true, process.env.BASE_URL)
 
 let exitCode = 0
 
-const results = getResults()
-
 // Print the results
 const stats = printResults(environment, getResults())
 printStats(stats)
