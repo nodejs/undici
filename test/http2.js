@@ -125,8 +125,9 @@ test('Should support H2 connection (headers as array)', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers) => {
-    t.strictEqual(headers['x-my-header'], 'foo')
-    t.strictEqual(headers['x-my-drink'], 'coffee,tea')
+    t.strictEqual(headers['x-my-header'], 'foo, bar')
+    t.strictEqual(headers['x-my-drink'], 'coffee, tea, water')
+    t.strictEqual(headers['x-other'], 'value')
     t.strictEqual(headers[':method'], 'GET')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
@@ -146,14 +147,20 @@ test('Should support H2 connection (headers as array)', async t => {
     allowH2: true
   })
 
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 8 })
   after(() => server.close())
   after(() => client.close())
 
   const response = await client.request({
     path: '/',
     method: 'GET',
-    headers: ['x-my-header', 'foo', 'x-my-drink', ['coffee', 'tea']]
+    headers: [
+      'x-my-header', 'foo',
+      'x-my-drink', ['coffee', 'tea'],
+      'x-my-drink', 'water',
+      'X-My-Header', 'bar',
+      'x-other', 'value'
+    ]
   })
 
   response.body.on('data', chunk => {
