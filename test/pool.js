@@ -578,6 +578,56 @@ test('pool connect', async (t) => {
   await t.completed
 })
 
+test('pool connect with clientTtl specified', async (t) => {
+  t = tspl(t, { plan: 1 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (c) => {
+    t.fail()
+  })
+  server.on('connect', (req, socket, firstBodyChunk) => {
+    socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
+
+    let data = firstBodyChunk.toString()
+    socket.on('data', (buf) => {
+      data += buf.toString()
+    })
+
+    socket.on('end', () => {
+      socket.end(data)
+    })
+  })
+  after(() => server.close())
+
+  server.listen(0, async () => {
+    const client = new Pool(`http://localhost:${server.address().port}`, {
+      clientTtl: 10
+    })
+
+    const { socket } = await client.connect({
+      path: '/'
+    })
+
+    t.strictEqual(socket.closed, false)
+
+    let recvData = ''
+    socket.on('data', (d) => {
+      recvData += d
+    })
+
+    socket.on('end', () => {
+      t.strictEqual(recvData.toString(), 'Body')
+    })
+
+    socket.write('Body')
+    socket.end()
+
+    await new Promise(resolve => setTimeout(resolve, 10))
+    t.strictEqual(socket.closed, true)
+  })
+
+  await t.completed
+})
+
 test('pool dispatch', async (t) => {
   t = tspl(t, { plan: 2 })
 
