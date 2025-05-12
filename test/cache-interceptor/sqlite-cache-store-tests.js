@@ -38,6 +38,8 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
   })
 
   t.after(async () => {
+    storeA.close()
+    storeB.close()
     await rm(sqliteLocation)
   })
 

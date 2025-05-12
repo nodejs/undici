@@ -808,3 +808,40 @@ test('the dispatcher is truly global', t => {
   assert.ok(require.resolve('../../index.js') in require.cache)
   assert.strictEqual(agent, undiciFresh.getGlobalDispatcher())
 })
+
+test('stats', async t => {
+  const p = tspl(t, { plan: 7 })
+  const wanted = 'payload'
+
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    p.strictEqual('/', req.url)
+    p.strictEqual('GET', req.method)
+    res.end(wanted)
+  })
+
+  t.after(closeServerAsPromise(server))
+
+  const dispatcher = new Agent({
+    connect: {
+      servername: 'agent1'
+    }
+  })
+
+  server.listen(0, () => {
+    request(`http://localhost:${server.address().port}`, { dispatcher })
+      .then(({ statusCode, headers, body }) => {
+        p.strictEqual(statusCode, 200)
+        const originForStats = `http://localhost:${server.address().port}`
+        const agentStats = dispatcher.stats[originForStats]
+        p.strictEqual(agentStats.connected, 1)
+        p.strictEqual(agentStats.pending, 0)
+        p.strictEqual(agentStats.running, 0)
+        p.strictEqual(agentStats.size, 0)
+      })
+      .catch(err => {
+        p.fail(err)
+      })
+  })
+
+  await p.completed
+})

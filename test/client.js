@@ -2166,3 +2166,33 @@ test('\\n in Method', async (t) => {
     t.strictEqual(err.message, 'invalid request method')
   })
 })
+
+test('stats', async (t) => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    t.strictEqual('/', req.url)
+    t.strictEqual('GET', req.method)
+    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    res.setHeader('Content-Type', 'text/plain')
+    res.end('hello')
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.close())
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.ifError(err)
+      t.strictEqual(client.stats.connected, true)
+      t.strictEqual(client.stats.pending, 1)
+      t.strictEqual(client.stats.running, 1)
+    })
+  })
+
+  await t.completed
+})
