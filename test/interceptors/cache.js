@@ -322,7 +322,7 @@ describe('Cache Interceptor', () => {
     }
   })
 
-  test.only('max-age caching', async () => {
+  test('max-age caching', async () => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
