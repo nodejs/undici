@@ -40,7 +40,7 @@ Implements: [`MockPool.intercept(options)`](/docs/docs/api/MockPool.md#mockpooli
 
 ### `MockClient.cleanMocks()`
 
-Implements: [`MockPool.cleanMocks(options)`](/docs/docs/api/MockPool.md#mockpoolcleanmocks)
+Implements: [`MockPool.cleanMocks()`](/docs/docs/api/MockPool.md#mockpoolcleanmocks)
 
 ### `MockClient.close()`
 
