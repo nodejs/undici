@@ -57,11 +57,14 @@
         "skip": true
       },
       "request-headers.any.js": {
+        "note": "Float16Array is valid from node v24.",
         "fail": [
           "Fetch with Chicken",
           "Fetch with Chicken with body",
           "Fetch with TacO and mode \"same-origin\" needs an Origin header",
-          "Fetch with TacO and mode \"cors\" needs an Origin header",
+          "Fetch with TacO and mode \"cors\" needs an Origin header"
+        ],
+        "flaky": [
           "Fetch with POST with Float16Array body"
         ]
       },
@@ -70,8 +73,8 @@
         "skip": true
       },
       "request-upload.any.js": {
-        "note": "no Float16Array",
-        "fail": [
+        "note": "Float16Array is valid from node v24.",
+        "flaky": [
           "Fetch with POST with Float16Array body"
         ]
       },

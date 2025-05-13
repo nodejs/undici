@@ -1527,7 +1527,7 @@ test('#3046 - GOAWAY Frame', async t => {
   t.strictEqual(response.headers['x-custom-h2'], 'hello')
   t.strictEqual(response.statusCode, 200)
 
-  t.rejects(response.body.text(), {
+  await t.rejects(response.body.text(), {
     message: 'HTTP/2: "GOAWAY" frame received with code 0',
     code: 'UND_ERR_SOCKET'
   })
@@ -1748,9 +1748,11 @@ test('Should handle http2 stream timeout', async t => {
     body: stream
   })
 
-  t.rejects(res.body.text(), {
+  await t.rejects(res.body.text(), {
     message: 'HTTP/2: "stream timeout after 50"'
   })
+
+  await t.completed
 })
 
 test('Should handle http2 trailers', async t => {
