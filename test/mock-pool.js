@@ -361,3 +361,44 @@ test('MockPool - allows matching headers in fetch', async (t) => {
     }
   }), new TypeError('fetch failed'))
 })
+
+test('MockPool - cleans mocks', async (t) => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  after(() => server.close())
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  after(() => mockAgent.close())
+
+  const mockPool = mockAgent.get(baseUrl)
+  t.ok(mockPool instanceof MockPool)
+  setGlobalDispatcher(mockPool)
+
+  mockPool.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(500, () => {
+    t.fail('should not be called')
+    t.end()
+  })
+
+  mockPool.cleanMocks()
+
+  t.strictEqual(mockPool[kDispatches].length, 0)
+
+  const { statusCode, body } = await request(`${baseUrl}/foo`, {
+    method: 'GET'
+  })
+  t.strictEqual(statusCode, 200)
+
+  const response = await getResponse(body)
+  t.deepStrictEqual(response, 'hello')
+})

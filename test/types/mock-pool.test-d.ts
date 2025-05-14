@@ -36,6 +36,9 @@ import { MockInterceptor } from '../../types/mock-interceptor'
 
   // close
   expectAssignable<Promise<void>>(mockPool.close())
+
+  // cleanMocks
+  expectAssignable<void>(mockPool.cleanMocks())
 }
 
 expectAssignable<MockPool>(new MockPool('', { agent: new MockAgent({ connections: 1 }) }))
