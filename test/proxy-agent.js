@@ -800,7 +800,7 @@ test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent({ uri: proxyUrl, tunnelProxy: false })
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
 
   server.on('request', function (req, res) {
     t.ok(!req.connection.encrypted)
@@ -817,7 +817,7 @@ test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
   })
 
   proxy.on('connect', () => {
-    t.fail(true, 'connect to proxy should unreachable if tunnelProxy is false')
+    t.fail(true, 'connect to proxy should unreachable if proxyTunnel is false')
   })
 
   proxy.on('request', function (req) {

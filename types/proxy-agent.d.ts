@@ -24,6 +24,6 @@ declare namespace ProxyAgent {
     requestTls?: buildConnector.BuildOptions;
     proxyTls?: buildConnector.BuildOptions;
     clientFactory?(origin: URL, opts: object): Dispatcher;
-    tunnelProxy?: boolean;
+    proxyTunnel?: boolean;
   }
 }
