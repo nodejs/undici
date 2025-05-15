@@ -537,6 +537,22 @@
     "Assertion",
     "Response 2 does not come from cache"
   ],
+  "interim-102": [
+    "Assertion",
+    "Interim response 1 not received"
+  ],
+  "interim-103": [
+    "Assertion",
+    "Interim response 1 not received"
+  ],
+  "interim-no-header-reuse": [
+    "Assertion",
+    "Interim response 1 not received"
+  ],
+  "interim-not-cached": [
+    "Assertion",
+    "Interim response 1 not received"
+  ],
   "invalidate-DELETE": true,
   "invalidate-DELETE-cl": [
     "Assertion",
