@@ -19,7 +19,7 @@
         assert_equals(create_formdata(['key', null], ['key', 'value1']).get('key'), "null");
     }, 'testFormDataAppendNull2');
     test(function() {
-        var before = Date.now() - 2000; // Two seconds ago, using timestamp number
+        var before = Date.now() - 2000; // Two seconds ago,(in case there's clock drift) using timestamp number
         var fd = create_formdata(['key', new Blob(), 'blank.txt']).get('key');
         assert_equals(fd.name, "blank.txt");
         assert_equals(fd.type, "");
