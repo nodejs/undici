@@ -84,11 +84,14 @@ async function formDataBlobRequest () {
   formData.append('field', 42)
   formData.set('file', await openAsBlob('./index.mjs'))
 
-  const response = await request('http://127.0.0.1:3000', {
+  const {
+    statusCode,
+    headers,
+    body
+  } = await request('http://127.0.0.1:3000', {
     method: 'POST',
     body: formData
   })
-  console.log(await response.body.text())
 
   const data = await body.text()
   console.log('response received', statusCode)
@@ -126,7 +129,7 @@ async function deleteRequest (port = 3001) {
 }
 ```
 
-## Production configuration 
+## Production configuration
 
 ### Using interceptors to add response caching, DNS lookup caching and connection retries
 
