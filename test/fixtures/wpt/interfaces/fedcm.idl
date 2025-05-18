@@ -84,10 +84,8 @@ dictionary IdentityProviderAPIConfig {
 
 dictionary IdentityProviderAccount {
   required USVString id;
-  USVString name;
-  USVString email;
-  USVString tel;
-  USVString username;
+  required USVString name;
+  required USVString email;
   USVString given_name;
   USVString picture;
   sequence<USVString> approved_clients;
