@@ -793,6 +793,53 @@ test('Proxy via HTTP to HTTP endpoint', async (t) => {
   proxyAgent.close()
 })
 
+test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
+  t = tspl(t, { plan: 3 })
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+
+  server.on('request', function (req, res) {
+    t.ok(!req.connection.encrypted)
+    const headers = { host: req.headers.host, connection: req.headers.connection }
+    res.end(JSON.stringify(headers))
+  })
+
+  server.on('secureConnection', () => {
+    t.fail('server is http')
+  })
+
+  proxy.on('secureConnection', () => {
+    t.fail('proxy is http')
+  })
+
+  proxy.on('connect', () => {
+    t.fail(true, 'connect to proxy should unreachable if proxyTunnel is false')
+  })
+
+  proxy.on('request', function (req) {
+    const bits = { method: req.method, url: req.url }
+    t.deepStrictEqual(bits, {
+      method: 'GET',
+      url: `${serverUrl}/`
+    })
+  })
+
+  const data = await request(serverUrl, { dispatcher: proxyAgent })
+  const json = await data.body.json()
+  t.deepStrictEqual(json, {
+    host: `localhost:${server.address().port}`,
+    connection: 'keep-alive'
+  })
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 test('Proxy via HTTPS to HTTP fails on wrong SNI', async (t) => {
   t = tspl(t, { plan: 2 })
   const server = await buildServer()
