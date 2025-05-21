@@ -28,18 +28,22 @@ modelParameters:
 testData:
   - input: |+
       Check_code
-      *ACTION:
-      *OTHER
-      *EXIT
+      ACTION, option, OTHER, EXIT
 
     expected: |
       Confirm
-  - input: ''
+  - input: syntax(option1)
     expected: ''
   - input: ''
     expected: >-
       You can add variables to the user and system prompts using the
       {{variable}} syntax.
+  - input: >-
+      You confirm add variables to the user and system prompts using the
+      {{variable}} syntax.
+    expected: syntax
+  - input: ''
+    expected: syntax
 evaluators:
   - name: asteitarai
     string:
@@ -57,3 +61,16 @@ evaluators:
       startsWith: >-
         You can add variables to the user and system prompts using the
         {{variable}} syntax.
+  - name: Groundedness
+    uses: github/groundedness
+  - name: V.3.5
+    llm:
+      modelId: 'azureml://registries/azureml/models/Phi-3.5-MoE-instruct/versions/5'
+      prompt: 'Enter confirm prompt {{input}} {{prompt}} {{completion}} {{expected}} '
+      choices:
+        - choice: >-
+            Enter confirm prompt {{input}} {{prompt}} {{completion}}
+            {{expected}} 
+          score: 1
+      systemPrompt: |
+        I and i
