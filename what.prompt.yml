@@ -1,0 +1,59 @@
+messages:
+  - role: system
+    content: >
+      The image you have provided appears to be a simple icon or symbol. It
+      shows a yellow folder or document icon with a lightning bolt or flash
+      symbol overlaid on it. This likely represents some kind of notification or
+      alert related to a session or activity. Without any additional context, I
+      cannot provide more specific details about the meaning or purpose of this
+      image. Please let me know if you have any other questions about what I can
+      observe in this simple graphic icon
+  - role: user
+    content: >
+      The image you have provided appears to be a simple icon or symbol. It
+      shows a yellow folder or document icon with a lightning bolt or flash
+      symbol overlaid on it. This likely represents some kind of notification or
+      alert related to a session or activity. Without any additional context, I
+      cannot provide more specific details about the meaning or purpose of this
+      image. Please let me know if you have any other questions about what I can
+      observe in this simple graphic icon
+model: deepseek/deepseek-v3-0324
+modelParameters:
+  max_tokens: 1162
+  temperature: 0.67
+  top_p: 0.81
+  presence_penalty: 2
+  frequency_penalty: 2
+  stop: '''403'
+testData:
+  - input: |+
+      Check_code
+      *ACTION:
+      *OTHER
+      *EXIT
+
+    expected: |
+      Confirm
+  - input: ''
+    expected: ''
+  - input: ''
+    expected: >-
+      You can add variables to the user and system prompts using the
+      {{variable}} syntax.
+evaluators:
+  - name: asteitarai
+    string:
+      strict: true
+      contains: |+
+
+  - name: Similarity
+    uses: github/similarity
+  - name: Relevance
+    uses: github/relevance
+  - name: Groundedness
+    uses: github/groundedness
+  - name: What
+    string:
+      startsWith: >-
+        You can add variables to the user and system prompts using the
+        {{variable}} syntax.
