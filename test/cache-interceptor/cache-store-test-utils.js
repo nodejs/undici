@@ -5,6 +5,9 @@ const { describe, test, after } = require('node:test')
 const { Readable } = require('node:stream')
 const { once } = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
+const { interceptors } = require('../../')
+const { request, Agent, setGlobalDispatcher } = require('../../')
+const http = require('node:http')
 
 /**
  * @typedef {import('../../types/cache-interceptor.d.ts').default.CacheStore} CacheStore
@@ -344,6 +347,211 @@ function cacheStoreTests (CacheStore) {
         notEqual(result, undefined)
         await compareGetResults(result, anotherValue, anotherBody)
       }
+    })
+
+    // test('different query parameters create separate cache entries', async () => {
+    //   /**
+    //    * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+    //    */
+    //   const baseKey = {
+    //     origin: 'localhost',
+    //     path: '/api/users',
+    //     method: 'GET',
+    //     headers: {}
+    //   }
+
+    //   /**
+    //    * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+    //    */
+    //   const value1 = {
+    //     statusCode: 200,
+    //     statusMessage: '',
+    //     headers: { 'content-type': 'application/json' },
+    //     cacheControlDirectives: {},
+    //     cachedAt: Date.now(),
+    //     staleAt: Date.now() + 10000,
+    //     deleteAt: Date.now() + 20000
+    //   }
+
+    //   /**
+    //    * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+    //    */
+    //   const value2 = {
+    //     statusCode: 200,
+    //     statusMessage: '',
+    //     headers: { 'content-type': 'application/json' },
+    //     cacheControlDirectives: {},
+    //     cachedAt: Date.now(),
+    //     staleAt: Date.now() + 10000,
+    //     deleteAt: Date.now() + 20000
+    //   }
+
+    //   const body1 = [Buffer.from('page1data')]
+    //   const body2 = [Buffer.from('page2data')]
+
+    //   const store = new CacheStore()
+
+    //   // Cache response for page=1
+    //   const key1 = { ...baseKey, query: { page: 1 } }
+    //   {
+    //     const writable = store.createWriteStream(key1, value1)
+    //     notEqual(writable, undefined)
+    //     writeBody(writable, body1)
+    //   }
+
+    //   // Cache response for page=2
+    //   const key2 = { ...baseKey, query: { page: 2 } }
+    //   {
+    //     const writable = store.createWriteStream(key2, value2)
+    //     notEqual(writable, undefined)
+    //     writeBody(writable, body2)
+    //   }
+
+    //   // Verify we get different responses for different query parameters
+    //   {
+    //     const result1 = await store.get(structuredClone(key1))
+    //     notEqual(result1, undefined)
+    //     await compareGetResults(result1, value1, body1)
+    //   }
+
+    //   {
+    //     const result2 = await store.get(structuredClone(key2))
+    //     notEqual(result2, undefined)
+    //     await compareGetResults(result2, value2, body2)
+    //   }
+
+    //   // Verify the responses are actually different
+    //   const result1Body = await readBody(await store.get(key1))
+    //   const result2Body = await readBody(await store.get(key2))
+
+    //   notEqual(
+    //     joinBufferArray(result1Body).toString(),
+    //     joinBufferArray(result2Body).toString(),
+    //     'Different query parameters should return different cached responses'
+    //   )
+    // })
+
+    // test('complex query parameters are handled correctly', async () => {
+    //   /**
+    //    * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+    //    */
+    //   const baseKey = {
+    //     origin: 'localhost',
+    //     path: '/api/search',
+    //     method: 'GET',
+    //     headers: {}
+    //   }
+
+    //   /**
+    //    * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+    //    */
+    //   const value = {
+    //     statusCode: 200,
+    //     statusMessage: '',
+    //     headers: { 'content-type': 'application/json' },
+    //     cacheControlDirectives: {},
+    //     cachedAt: Date.now(),
+    //     staleAt: Date.now() + 10000,
+    //     deleteAt: Date.now() + 20000
+    //   }
+
+    //   const body = [Buffer.from('search results')]
+    //   const store = new CacheStore()
+
+    //   // Test with complex query parameters including arrays and special characters
+    //   const complexKey = {
+    //     ...baseKey,
+    //     query: {
+    //       q: 'hello world',
+    //       tags: ['javascript', 'nodejs'],
+    //       limit: 10,
+    //       include_meta: true,
+    //       'special-chars': 'test@example.com'
+    //     }
+    //   }
+
+    //   // Cache the response
+    //   {
+    //     const writable = store.createWriteStream(complexKey, value)
+    //     notEqual(writable, undefined)
+    //     writeBody(writable, body)
+    //   }
+
+    //   // Verify we can retrieve it with the same complex query
+    //   {
+    //     const result = await store.get(structuredClone(complexKey))
+    //     notEqual(result, undefined)
+    //     await compareGetResults(result, value, body)
+    //   }
+
+    //   // Verify that a slightly different query doesn't match
+    //   const differentKey = {
+    //     ...baseKey,
+    //     query: {
+    //       q: 'hello world',
+    //       tags: ['javascript', 'nodejs'],
+    //       limit: 20, // Different limit
+    //       include_meta: true,
+    //       'special-chars': 'test@example.com'
+    //     }
+    //   }
+
+    //   equal(await store.get(differentKey), undefined, 'Different query parameters should not match existing cache entry')
+    // })
+
+    test('playground', async () => {
+      // Interceptors to add response caching, DNS caching and retrying to the dispatcher
+      const { cache, dns, retry } = interceptors
+
+      const defaultDispatcher = new Agent({
+        connections: 100, // Limit concurrent kept-alive connections to not run out of resources
+        headersTimeout: 10_000, // 10 seconds; set as appropriate for the remote servers you plan to connect to
+        bodyTimeout: 10_000
+      }).compose(cache(), dns(), retry())
+
+      setGlobalDispatcher(defaultDispatcher) // Add these interceptors to all `fetch` and Undici `request` calls
+
+      const server = new http.Server((req, res) => {
+        sleep(100).then(() => {
+          res
+            .writeHead(200, {
+              'Content-Type': 'application/json',
+              'Cache-Control': '"public, max-age=100, stale-while-revalidate=100"'
+            })
+            .end(new Date().toISOString())
+        })
+      })
+      server.listen('8080')
+
+      const sleep = (t) => new Promise((resolve) => setTimeout(resolve, t))
+
+      const responses = new Set()
+      for (let i = 0; i <= 10; i++) {
+        const startedAt = performance.now()
+        const query = { i }
+        const res = await request({
+          origin: 'http://localhost:8080',
+
+          // path works fine
+          // path: `?i=${i}`,
+
+          // while same via `query` fails?
+          query,
+          headers: {
+            'Content-Tupe': 'application/json',
+            UserAgent: 'UndiciExample/1.0.0'
+          }
+        })
+        const text = await res.body.text()
+        responses.add(text)
+        console.log({
+          url: `/?i=${i}`,
+          duration: (performance.now() - startedAt) / 1000,
+          response: text
+        })
+      }
+
+      console.log('Unique responses', responses.size, responses)
     })
   })
 }
