@@ -114,6 +114,7 @@
     "c8": "^10.0.0",
     "cross-env": "^7.0.3",
     "dns-packet": "^5.4.0",
+    "express": "^5.1.0",
     "fast-check": "^3.17.1",
     "form-data": "^4.0.0",
     "formdata-node": "^6.0.3",
