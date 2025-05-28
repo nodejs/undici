@@ -9,7 +9,7 @@ const { EventSource } = require('../../lib/web/eventsource/eventsource')
 describe('EventSource - redirecting', () => {
   [301, 302, 307, 308].forEach((statusCode) => {
     test(`Should redirect on ${statusCode} status code`, async () => {
-      const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const server = http.createServer((req, res) => {
         if (res.req.url === '/redirect') {
           res.writeHead(statusCode, undefined, { Location: '/target' })
           res.end()
@@ -37,7 +37,7 @@ describe('EventSource - redirecting', () => {
   })
 
   test('Stop trying to connect when getting a 204 response', async () => {
-    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = http.createServer((req, res) => {
       if (res.req.url === '/redirect') {
         res.writeHead(301, undefined, { Location: '/target' })
         res.end()
@@ -63,7 +63,7 @@ describe('EventSource - redirecting', () => {
   })
 
   test('Throw when missing a Location header', async () => {
-    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = http.createServer((req, res) => {
       if (res.req.url === '/redirect') {
         res.writeHead(301, undefined)
         res.end()
@@ -86,7 +86,7 @@ describe('EventSource - redirecting', () => {
   })
 
   test('Should set origin attribute of messages after redirecting', async () => {
-    const targetServer = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const targetServer = http.createServer((req, res) => {
       if (res.req.url === '/target') {
         res.writeHead(200, undefined, { 'Content-Type': 'text/event-stream' })
         res.write('event: message\ndata: test\n\n')
@@ -96,7 +96,7 @@ describe('EventSource - redirecting', () => {
     await events.once(targetServer, 'listening')
     const targetPort = targetServer.address().port
 
-    const sourceServer = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const sourceServer = http.createServer((req, res) => {
       res.writeHead(301, undefined, { Location: `http://127.0.0.1:${targetPort}/target` })
       res.end()
     })

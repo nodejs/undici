@@ -50,4 +50,4 @@ deprecations (removed features) here -->
 - [ ] In review
 - [ ] Merge ready
 
-[cert]: https://github.com/nodejs/undici/blob/main/CONTRIBUTING.md#developers-certificate-of-origin
+[cert]: https://github.com/nodejs/undici/blob/main/CONTRIBUTING.md

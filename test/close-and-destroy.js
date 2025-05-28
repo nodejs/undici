@@ -9,7 +9,7 @@ const { kSocket, kSize } = require('../lib/core/symbols')
 test('close waits for queued requests to finish', async (t) => {
   t = tspl(t, { plan: 16 })
 
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
 
   server.on('request', (req, res) => {
     t.ok(true, 'request received')
@@ -54,7 +54,7 @@ test('close waits for queued requests to finish', async (t) => {
 test('destroy invoked all pending callbacks', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
 
   server.on('request', (req, res) => {
     res.write('hello')
@@ -88,7 +88,7 @@ test('destroy invoked all pending callbacks', async (t) => {
 test('destroy invoked all pending callbacks ticked', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
 
   server.on('request', (req, res) => {
     res.write('hello')
@@ -120,7 +120,7 @@ test('destroy invoked all pending callbacks ticked', async (t) => {
 test('close waits until socket is destroyed', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(req.url)
   })
   after(() => server.close())
@@ -157,7 +157,7 @@ test('close waits until socket is destroyed', async (t) => {
 test('close should still reconnect', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(req.url)
   })
   after(() => server.close())
@@ -192,7 +192,7 @@ test('close should still reconnect', async (t) => {
 test('close should call callback once finished', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     setImmediate(function () {
       res.end(req.url)
     })
@@ -266,7 +266,7 @@ test('close after and destroy should error', async (t) => {
 test('close socket and reconnect after maxRequestsPerClient reached', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(req.url)
   })
 
@@ -300,7 +300,7 @@ test('close socket and reconnect after maxRequestsPerClient reached', async (t) 
 test('close socket and reconnect after maxRequestsPerClient reached (async)', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(req.url)
   })
 
@@ -336,7 +336,7 @@ test('close socket and reconnect after maxRequestsPerClient reached (async)', as
 test('should not close socket when no maxRequestsPerClient is provided', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(req.url)
   })
 

@@ -3,11 +3,6 @@
 // (https://github.com/w3c/webref)
 // Source: WebXR Depth Sensing Module (https://immersive-web.github.io/depth-sensing/)
 
-enum XRDepthType {
-  "raw",
-  "smooth",
-};
-
 enum XRDepthUsage {
   "cpu-optimized",
   "gpu-optimized",
@@ -22,8 +17,6 @@ enum XRDepthDataFormat {
 dictionary XRDepthStateInit {
   required sequence<XRDepthUsage> usagePreference;
   required sequence<XRDepthDataFormat> dataFormatPreference;
-  sequence<XRDepthType> depthTypeRequest;
-  boolean matchDepthView = true;
 };
 
 partial dictionary XRSessionInit {
@@ -33,11 +26,6 @@ partial dictionary XRSessionInit {
 partial interface XRSession {
   readonly attribute XRDepthUsage depthUsage;
   readonly attribute XRDepthDataFormat depthDataFormat;
-  readonly attribute XRDepthType? depthType;
-  readonly attribute boolean? depthActive;
-
-  undefined pauseDepthSensing();
-  undefined resumeDepthSensing();
 };
 
 [SecureContext, Exposed=Window]
@@ -48,8 +36,6 @@ interface XRDepthInformation {
   [SameObject] readonly attribute XRRigidTransform normDepthBufferFromNormView;
   readonly attribute float rawValueToMeters;
 };
-
-XRDepthInformation includes XRViewGeometry;
 
 [Exposed=Window]
 interface XRCPUDepthInformation : XRDepthInformation {

@@ -10,7 +10,7 @@ const { closeServerAsPromise } = require('../utils/node-http')
 const nodeBuild = require('../../undici-fetch.js')
 
 test('user-agent defaults correctly', async (t) => {
-  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ userAgentHeader: req.headers['user-agent'] }))
   })
   t.after(closeServerAsPromise(server))

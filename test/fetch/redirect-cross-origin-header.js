@@ -9,7 +9,7 @@ const { fetch } = require('../..')
 test('Cross-origin redirects clear forbidden headers', async (t) => {
   const { strictEqual } = tspl(t, { plan: 6 })
 
-  const server1 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server1 = createServer((req, res) => {
     strictEqual(req.headers.cookie, undefined)
     strictEqual(req.headers.authorization, undefined)
     strictEqual(req.headers['proxy-authorization'], undefined)
@@ -17,7 +17,7 @@ test('Cross-origin redirects clear forbidden headers', async (t) => {
     res.end('redirected')
   }).listen(0)
 
-  const server2 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server2 = createServer((req, res) => {
     strictEqual(req.headers.authorization, 'test')
     strictEqual(req.headers.cookie, 'ddd=dddd')
 

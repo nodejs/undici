@@ -9,7 +9,7 @@ const { tspl } = require('@matteo.collina/tspl')
 test('redirecting works with a FormData body', async (t) => {
   const plan = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     if (req.url === '/1') {
       res.writeHead(302, undefined, { location: '/2' })
       res.end()

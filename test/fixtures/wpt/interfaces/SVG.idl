@@ -419,6 +419,10 @@ interface SVGAnimatedPreserveAspectRatio {
 };
 
 [Exposed=Window]
+interface SVGPathElement : SVGGeometryElement {
+};
+
+[Exposed=Window]
 interface SVGRectElement : SVGGeometryElement {
   [SameObject] readonly attribute SVGAnimatedLength x;
   [SameObject] readonly attribute SVGAnimatedLength y;

@@ -12,7 +12,7 @@ test('https://github.com/nodejs/undici/issues/3356', { skip: process.env.CITGM }
   t = tspl(t, { plan: 3 })
 
   let shouldRetry = true
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   server.on('request', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
     if (shouldRetry) {

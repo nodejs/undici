@@ -84,14 +84,11 @@ async function formDataBlobRequest () {
   formData.append('field', 42)
   formData.set('file', await openAsBlob('./index.mjs'))
 
-  const {
-    statusCode,
-    headers,
-    body
-  } = await request('http://127.0.0.1:3000', {
+  const response = await request('http://127.0.0.1:3000', {
     method: 'POST',
     body: formData
   })
+  console.log(await response.body.text())
 
   const data = await body.text()
   console.log('response received', statusCode)
@@ -129,21 +126,17 @@ async function deleteRequest (port = 3001) {
 }
 ```
 
-## Production configuration
+## Cacheable DNS Lookup
 
-### Using interceptors to add response caching, DNS lookup caching and connection retries
+### Using CacheableLookup to cache DNS lookups in undici
 
 ```js
-import { Agent, interceptors, setGlobalDispatcher } from 'undici'
+import { Agent } from 'undici'
+import CacheableLookup from 'cacheable-lookup';
 
-// Interceptors to add response caching, DNS caching and retrying to the dispatcher
-const { cache, dns, retry } = interceptors
+const cacheable = new CacheableLookup(opts)
 
-const defaultDispatcher = new Agent({
-  connections: 100, // Limit concurrent kept-alive connections to not run out of resources
-  headersTimeout: 10_000, // 10 seconds; set as appropriate for the remote servers you plan to connect to
-  bodyTimeout: 10_000,
-}).compose(cache(), dns(), retry())
-
-setGlobalDispatcher(defaultDispatcher) // Add these interceptors to all `fetch` and Undici `request` calls
+const agent = new Agent({
+  connect: { lookup: cacheable.lookup }
+})
 ```

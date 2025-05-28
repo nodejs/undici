@@ -10,7 +10,7 @@ const { fetch } = require('../..')
 test('421 requests with a body work as expected', async (t) => {
   const expected = 'This is a 421 Misdirected Request response.'
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.statusCode = 421
     res.end(expected)
   }).listen(0)

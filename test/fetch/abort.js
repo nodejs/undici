@@ -9,7 +9,7 @@ const { once } = require('node:events')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 test('allows aborting with custom errors', async (t) => {
-  const server = createServer({ joinDuplicateHeaders: true }).listen(0)
+  const server = createServer().listen(0)
 
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')

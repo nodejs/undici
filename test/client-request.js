@@ -17,7 +17,7 @@ const { parseFormDataString } = require('./utils/formdata')
 test('request dump head', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.setHeader('content-length', 5 * 100)
     res.flushHeaders()
     res.write('hello'.repeat(100))
@@ -50,7 +50,7 @@ test('request dump head', async (t) => {
 test('request dump big', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.setHeader('content-length', 999999999)
     while (res.write('asd')) {
       // Do nothing...
@@ -85,7 +85,7 @@ test('request dump big', async (t) => {
 test('request dump', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.shouldKeepAlive = false
     res.setHeader('content-length', 5)
     res.end('hello')
@@ -117,7 +117,7 @@ test('request dump', async (t) => {
 
 test('request dump with abort signal', async (t) => {
   t = tspl(t, { plan: 2 })
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.write('hello')
   })
   after(() => server.close())
@@ -145,7 +145,7 @@ test('request dump with abort signal', async (t) => {
 
 test('request hwm', async (t) => {
   t = tspl(t, { plan: 2 })
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.write('hello')
   })
   after(() => server.close())
@@ -172,7 +172,7 @@ test('request abort before headers', async (t) => {
   t = tspl(t, { plan: 6 })
 
   const signal = new EE()
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('hello')
     signal.emit('abort')
   })
@@ -211,7 +211,7 @@ test('request abort before headers', async (t) => {
 test('request body destroyed on invalid callback', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
   })
   after(() => server.close())
 
@@ -239,7 +239,7 @@ test('request body destroyed on invalid callback', async (t) => {
 test('trailers', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200, { Trailer: 'Content-MD5' })
     res.addTrailers({ 'Content-MD5': 'test' })
     res.end()
@@ -268,7 +268,7 @@ test('trailers', async (t) => {
 test('destroy socket abruptly', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = net.createServer({ joinDuplicateHeaders: true }, (socket) => {
+  const server = net.createServer((socket) => {
     const lines = [
       'HTTP/1.1 200 OK',
       'Date: Sat, 09 Oct 2010 14:28:02 GMT',
@@ -309,7 +309,7 @@ test('destroy socket abruptly', async (t) => {
 test('destroy socket abruptly with keep-alive', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = net.createServer({ joinDuplicateHeaders: true }, (socket) => {
+  const server = net.createServer((socket) => {
     const lines = [
       'HTTP/1.1 200 OK',
       'Date: Sat, 09 Oct 2010 14:28:02 GMT',
@@ -355,7 +355,7 @@ test('request json', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
@@ -378,7 +378,7 @@ test('request long multibyte json', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const obj = { asd: 'あ'.repeat(100000) }
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
@@ -401,7 +401,7 @@ test('request text', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
@@ -484,7 +484,7 @@ describe('headers', () => {
 
   describe('array', () => {
     let serverAddress
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end(JSON.stringify(req.headers))
     })
 
@@ -524,7 +524,7 @@ describe('headers', () => {
 
   describe('host', () => {
     let serverAddress
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end(req.headers.host)
     })
 
@@ -583,7 +583,7 @@ test('request long multibyte text', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const obj = { asd: 'あ'.repeat(100000) }
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
@@ -606,7 +606,7 @@ test('request blob', async (t) => {
   t = tspl(t, { plan: 2 })
 
   const obj = { asd: true }
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify(obj))
   })
@@ -633,7 +633,7 @@ test('request arrayBuffer', async (t) => {
   t = tspl(t, { plan: 2 })
 
   const obj = { asd: true }
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
@@ -659,7 +659,7 @@ test('request bytes', async (t) => {
   t = tspl(t, { plan: 2 })
 
   const obj = { asd: true }
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
@@ -685,7 +685,7 @@ test('request body', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
@@ -712,7 +712,7 @@ test('request body', async (t) => {
 test('request post body no missing data', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
@@ -747,7 +747,7 @@ test('request post body no missing data', async (t) => {
 test('request post body no extra data handler', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
@@ -786,7 +786,7 @@ test('request post body no extra data handler', async (t) => {
 test('request with onInfo callback', async (t) => {
   t = tspl(t, { plan: 3 })
   const infos = []
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeProcessing()
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify({ foo: 'bar' }))
@@ -814,7 +814,7 @@ test('request with onInfo callback but socket is destroyed before end of respons
   t = tspl(t, { plan: 5 })
   const infos = []
   let response
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     response = res
     res.writeProcessing()
   })
@@ -849,7 +849,7 @@ test('request onInfo callback headers parsing', async (t) => {
   t = tspl(t, { plan: 4 })
   const infos = []
 
-  const server = net.createServer({ joinDuplicateHeaders: true }, (socket) => {
+  const server = net.createServer((socket) => {
     const lines = [
       'HTTP/1.1 103 Early Hints',
       'Link: </style.css>; rel=preload; as=style',
@@ -885,7 +885,7 @@ test('request raw responseHeaders', async (t) => {
   t = tspl(t, { plan: 4 })
   const infos = []
 
-  const server = net.createServer({ joinDuplicateHeaders: true }, (socket) => {
+  const server = net.createServer((socket) => {
     const lines = [
       'HTTP/1.1 103 Early Hints',
       'Link: </style.css>; rel=preload; as=style',
@@ -922,7 +922,7 @@ test('request formData', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
@@ -951,7 +951,7 @@ test('request text2', async (t) => {
   t = tspl(t, { plan: 2 })
 
   const obj = { asd: true }
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
@@ -985,7 +985,7 @@ test('request with FormData body', async (t) => {
   fd.set('key', 'value')
   fd.set('file', new Blob(['Hello, world!']), 'hello_world.txt')
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     const contentType = req.headers['content-type']
     // ensure we received a multipart/form-data header
     t.ok(/^multipart\/form-data; boundary=-+formdata-undici-0\d+$/.test(contentType))
@@ -1034,7 +1034,7 @@ test('request post body Buffer from string', async (t) => {
   t = tspl(t, { plan: 2 })
   const requestBody = Buffer.from('abcdefghijklmnopqrstuvwxyz')
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
@@ -1066,7 +1066,7 @@ test('request post body Buffer from buffer', async (t) => {
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = Buffer.from(fullBuffer.buffer, 8, 16)
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
@@ -1098,7 +1098,7 @@ test('request post body Uint8Array', async (t) => {
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = new Uint8Array(fullBuffer.buffer, 8, 16)
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
@@ -1130,7 +1130,7 @@ test('request post body Uint32Array', async (t) => {
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = new Uint32Array(fullBuffer.buffer, 8, 4)
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
@@ -1162,7 +1162,7 @@ test('request post body Float64Array', async (t) => {
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = new Float64Array(fullBuffer.buffer, 8, 2)
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
@@ -1194,7 +1194,7 @@ test('request post body BigUint64Array', async (t) => {
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = new BigUint64Array(fullBuffer.buffer, 8, 2)
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
@@ -1226,7 +1226,7 @@ test('request post body DataView', async (t) => {
   const fullBuffer = new TextEncoder().encode('abcdefghijklmnopqrstuvwxyz')
   const requestBody = new DataView(fullBuffer.buffer, 8, 16)
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let ret = ''
     for await (const chunk of req) {
       ret += chunk
@@ -1258,7 +1258,7 @@ test('request multibyte json with setEncoding', async (t) => {
 
   const asd = Buffer.from('あいうえお')
   const data = JSON.stringify({ asd })
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.write(data.slice(0, 1))
     setTimeout(() => {
       res.write(data.slice(1))
@@ -1286,7 +1286,7 @@ test('request multibyte text with setEncoding', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const data = Buffer.from('あいうえお')
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.write(data.slice(0, 1))
     setTimeout(() => {
       res.write(data.slice(1))
@@ -1314,7 +1314,7 @@ test('request multibyte text with setEncoding', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const data = Buffer.from('あいうえお')
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.write(data.slice(0, 1))
     setTimeout(() => {
       res.write(data.slice(1))
@@ -1342,7 +1342,7 @@ test('#3736 - Aborted Response (without consuming body)', async (t) => {
   const plan = tspl(t, { plan: 1 })
 
   const controller = new AbortController()
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     setTimeout(() => {
       res.writeHead(200, 'ok', {
         'content-type': 'text/plain'

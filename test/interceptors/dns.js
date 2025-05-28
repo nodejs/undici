@@ -33,7 +33,7 @@ test('Should automatically resolve IPs (dual stack)', async t => {
   t = tspl(t, { plan: 8 })
 
   const hostsnames = []
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -201,7 +201,7 @@ test('Should recover on network errors (dual stack - 4)', async t => {
   t = tspl(t, { plan: 7 })
 
   let counter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -290,7 +290,7 @@ test('Should recover on network errors (dual stack - 6)', async t => {
   t = tspl(t, { plan: 7 })
 
   let counter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -466,7 +466,7 @@ test('Should automatically resolve IPs (dual stack disabled - 4)', async t => {
   t = tspl(t, { plan: 6 })
 
   let counter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -537,7 +537,7 @@ test('Should automatically resolve IPs (dual stack disabled - 6)', async t => {
   t = tspl(t, { plan: 6 })
 
   let counter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -611,7 +611,7 @@ test('Should we handle TTL (4)', async t => {
   const clock = FakeTimers.install()
   let counter = 0
   let lookupCounter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -714,7 +714,7 @@ test('Should we handle TTL (6)', async t => {
   const clock = FakeTimers.install()
   let counter = 0
   let lookupCounter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -818,7 +818,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
 
   const clock = FakeTimers.install()
   let lookupCounter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -911,7 +911,7 @@ test('Should use all dns entries (dual stack)', async t => {
 
   let counter = 0
   let lookupCounter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -1001,7 +1001,7 @@ test('Should use all dns entries (dual stack disabled - 4)', async t => {
 
   let counter = 0
   let lookupCounter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -1097,7 +1097,7 @@ test('Should use all dns entries (dual stack disabled - 6)', async t => {
 
   let counter = 0
   let lookupCounter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -1195,7 +1195,7 @@ test('Should handle single family resolved (dual stack)', async t => {
   const clock = FakeTimers.install()
   let counter = 0
   let lookupCounter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -1286,7 +1286,7 @@ test('Should prefer affinity (dual stack - 4)', async t => {
   const clock = FakeTimers.install()
   let counter = 0
   let lookupCounter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -1388,7 +1388,7 @@ test('Should prefer affinity (dual stack - 6)', async t => {
   const clock = FakeTimers.install()
   let counter = 0
   let lookupCounter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -1488,8 +1488,8 @@ test('Should use resolved ports (4)', async t => {
   t = tspl(t, { plan: 5 })
 
   let lookupCounter = 0
-  const server1 = createServer({ joinDuplicateHeaders: true })
-  const server2 = createServer({ joinDuplicateHeaders: true })
+  const server1 = createServer()
+  const server2 = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -1556,8 +1556,8 @@ test('Should use resolved ports (6)', async t => {
   t = tspl(t, { plan: 5 })
 
   let lookupCounter = 0
-  const server1 = createServer({ joinDuplicateHeaders: true })
-  const server2 = createServer({ joinDuplicateHeaders: true })
+  const server1 = createServer()
+  const server2 = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -1624,8 +1624,8 @@ test('Should handle max cached items', async t => {
   t = tspl(t, { plan: 9 })
 
   let counter = 0
-  const server1 = createServer({ joinDuplicateHeaders: true })
-  const server2 = createServer({ joinDuplicateHeaders: true })
+  const server1 = createServer()
+  const server2 = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',
@@ -1833,7 +1833,7 @@ test('#3937 - Handle host correctly', async t => {
   t = tspl(t, { plan: 10 })
 
   const hostsnames = []
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const requestOptions = {
     method: 'GET',
     path: '/',

@@ -9,7 +9,7 @@ const { fetch, FormData } = require('../..')
 
 // https://github.com/nodejs/undici/issues/3624
 test('crlf is appended to formdata body (issue #3624)', async (t) => {
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     req.pipe(res)
   }).listen(0)
 

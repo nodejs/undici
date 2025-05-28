@@ -56,7 +56,7 @@ interface BlobEvent : Event {
   readonly attribute DOMHighResTimeStamp timecode;
 };
 
-dictionary BlobEventInit : EventInit {
+dictionary BlobEventInit {
   required Blob data;
   DOMHighResTimeStamp timecode;
 };

@@ -9,7 +9,7 @@ const { closeServerAsPromise } = require('../utils/node-http')
 
 // https://github.com/nodejs/undici/issues/1776
 test('Redirecting with a body does not cancel the current request - #1776', async (t) => {
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     if (req.url === '/redirect') {
       res.statusCode = 301
       res.setHeader('location', '/redirect/')
@@ -31,7 +31,7 @@ test('Redirecting with a body does not cancel the current request - #1776', asyn
 })
 
 test('Redirecting with an empty body does not throw an error - #2027', async (t) => {
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     if (req.url === '/redirect') {
       res.statusCode = 307
       res.setHeader('location', '/redirect/')
@@ -52,7 +52,7 @@ test('Redirecting with an empty body does not throw an error - #2027', async (t)
 })
 
 test('Redirecting with a body does not fail to write body - #2543', async (t) => {
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     if (req.url === '/redirect') {
       res.writeHead(307, { location: '/target' })
       res.write('<a href="/redirect/">Moved Permanently</a>')

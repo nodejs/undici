@@ -132,13 +132,7 @@
     {
         assert_less_than(10, 11, "10 is less than 11")
     }
-    test(basicAssertLessThan, "basic assert_less_than test");
-
-    function bigintAssertLessThan()
-    {
-        assert_less_than(10n, 11n, "10n is less than 11n")
-    }
-    test(bigintAssertLessThan, "bigint assert_less_than test");
+    test(basicAssertApproxEquals, "basic assert_less_than test");
 
     function basicAssertGreaterThan()
     {
@@ -146,23 +140,11 @@
     }
     test(basicAssertGreaterThan, "assert_greater_than expected to fail");
 
-    function bigintAssertGreaterThan()
-    {
-        assert_greater_than(10n, 11n, "10n is not greater than 11n");
-    }
-    test(bigintAssertGreaterThan, "bigint assert_greater_than expected to fail");
-
     function basicAssertGreaterThanEqual()
     {
         assert_greater_than_equal(10, 10, "10 is greater than or equal to 10")
     }
     test(basicAssertGreaterThanEqual, "basic assert_greater_than_equal test");
-
-    function bigintAssertGreaterThanEqual()
-    {
-        assert_greater_than_equal(10n, 10n, "10n is greater than or equal to 10n")
-    }
-    test(bigintAssertGreaterThanEqual, "bigint assert_greater_than_equal test");
 
     function basicAssertLessThanEqual()
     {
@@ -482,12 +464,6 @@
     },
     {
       "status_string": "FAIL",
-      "name": "bigint assert_greater_than expected to fail",
-      "message": "assert_greater_than: 10n is not greater than 11n expected a number greater than 11n but got 10n",
-      "properties": {}
-    },
-    {
-      "status_string": "FAIL",
       "name": "assert_less_than_equal expected to fail",
       "message": "assert_greater_than_equal: '10' is not a number expected a number but got a \"string\"",
       "properties": {}
@@ -542,19 +518,7 @@
     },
     {
       "status_string": "PASS",
-      "name": "bigint assert_greater_than_equal test",
-      "message": null,
-      "properties": {}
-    },
-    {
-      "status_string": "PASS",
       "name": "basic assert_less_than test",
-      "message": null,
-      "properties": {}
-    },
-    {
-      "status_string": "PASS",
-      "name": "bigint assert_less_than test",
       "message": null,
       "properties": {}
     },
@@ -781,22 +745,13 @@
       "status": 0
     },
     {
-      "assert_name": "assert_less_than",
+      "assert_name": "assert_approx_equals",
       "test": "basic assert_less_than test",
       "args": [
         "10",
         "11",
-        "\"10 is less than 11\""
-      ],
-      "status": 0
-    },
-    {
-      "assert_name": "assert_less_than",
-      "test": "bigint assert_less_than test",
-      "args": [
-        "10n",
-        "11n",
-        "\"10n is less than 11n\""
+        "1",
+        "\"10 is approximately (+/- 1) 11\""
       ],
       "status": 0
     },
@@ -811,32 +766,12 @@
       "status": 1
     },
     {
-      "assert_name": "assert_greater_than",
-      "test": "bigint assert_greater_than expected to fail",
-      "args": [
-        "10n",
-        "11n",
-        "\"10n is not greater than 11n\""
-      ],
-      "status": 1
-    },
-    {
       "assert_name": "assert_greater_than_equal",
       "test": "basic assert_greater_than_equal test",
       "args": [
         "10",
         "10",
         "\"10 is greater than or equal to 10\""
-      ],
-      "status": 0
-    },
-    {
-      "assert_name": "assert_greater_than_equal",
-      "test": "bigint assert_greater_than_equal test",
-      "args": [
-        "10n",
-        "10n",
-        "\"10n is greater than or equal to 10n\""
       ],
       "status": 0
     },

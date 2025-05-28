@@ -14,7 +14,7 @@ test('Abort before sending request (no body)', async (t) => {
   const p = tspl(t, { plan: 4 })
 
   let count = 0
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     if (count === 1) {
       p.fail('The second request should never be executed')
     }
@@ -63,7 +63,7 @@ test('Abort before sending request (no body) async iterator', async (t) => {
   const p = tspl(t, { plan: 3 })
 
   let count = 0
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     if (count === 1) {
       t.fail('The second request should never be executed')
     }
@@ -109,7 +109,7 @@ test('Abort while waiting response (no body)', async (t) => {
   const p = tspl(t, { plan: 1 })
 
   const ee = new EventEmitter()
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     ee.emit('abort')
     res.setHeader('content-type', 'text/plain')
     res.end('hello world')
@@ -132,7 +132,7 @@ test('Abort while waiting response (write headers started) (no body)', async (t)
   const p = tspl(t, { plan: 1 })
 
   const ee = new EventEmitter()
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.flushHeaders()
     ee.emit('abort')
@@ -156,7 +156,7 @@ test('Abort while waiting response (write headers and write body started) (no bo
   const p = tspl(t, { plan: 2 })
 
   const ee = new EventEmitter()
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.write('hello')
   })
@@ -184,7 +184,7 @@ function waitingWithBody (body, type) {
     const p = tspl(t, { plan: 1 })
 
     const ee = new EventEmitter()
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       ee.emit('abort')
       res.setHeader('content-type', 'text/plain')
       res.end('hello world')
@@ -213,7 +213,7 @@ function writeHeadersStartedWithBody (body, type) {
     const p = tspl(t, { plan: 1 })
 
     const ee = new EventEmitter()
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.flushHeaders()
       ee.emit('abort')
@@ -243,7 +243,7 @@ function writeBodyStartedWithBody (body, type) {
     const p = tspl(t, { plan: 2 })
 
     const ee = new EventEmitter()
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.write('hello')
     })

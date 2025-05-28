@@ -70,7 +70,6 @@ enum XRVisibilityState {
 dictionary XRRenderStateInit {
   double depthNear;
   double depthFar;
-  boolean passthroughFullyObscured;
   double inlineVerticalFieldOfView;
   XRWebGLLayer? baseLayer;
   sequence<XRLayer>? layers;
@@ -79,7 +78,6 @@ dictionary XRRenderStateInit {
 [SecureContext, Exposed=Window] interface XRRenderState {
   readonly attribute double depthNear;
   readonly attribute double depthFar;
-  readonly attribute boolean? passthroughFullyObscured;
   readonly attribute double? inlineVerticalFieldOfView;
   readonly attribute XRWebGLLayer? baseLayer;
 };
@@ -118,11 +116,6 @@ interface XRBoundedReferenceSpace : XRReferenceSpace {
   readonly attribute FrozenArray<DOMPointReadOnly> boundsGeometry;
 };
 
-[SecureContext, Exposed=Window] interface mixin XRViewGeometry {
-  readonly attribute Float32Array projectionMatrix;
-  [SameObject] readonly attribute XRRigidTransform transform;
-};
-
 enum XREye {
   "none",
   "left",
@@ -131,12 +124,12 @@ enum XREye {
 
 [SecureContext, Exposed=Window] interface XRView {
   readonly attribute XREye eye;
+  readonly attribute Float32Array projectionMatrix;
+  [SameObject] readonly attribute XRRigidTransform transform;
   readonly attribute double? recommendedViewportScale;
 
   undefined requestViewportScale(double? scale);
 };
-
-XRView includes XRViewGeometry;
 
 [SecureContext, Exposed=Window] interface XRViewport {
   readonly attribute long x;

@@ -10,7 +10,7 @@ const { closeServerAsPromise } = require('../utils/node-http')
 test('Undici overrides user-provided `Host` header', async (t) => {
   const { strictEqual } = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     strictEqual(req.headers.host, `localhost:${server.address().port}`)
 
     res.end()

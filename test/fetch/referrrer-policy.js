@@ -73,7 +73,7 @@ describe('referrer-policy', () => {
     test(title, async (t) => {
       t = tspl(t, { plan: 1 })
 
-      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const server = createServer((req, res) => {
         switch (res.req.url) {
           case '/redirect':
             res.writeHead(302, undefined, {

@@ -9,7 +9,7 @@ const { EventSource } = require('../../lib/web/eventsource/eventsource')
 describe('EventSource - status error', () => {
   [204, 205, 210, 299, 404, 410, 503].forEach((statusCode) => {
     test(`Should error on ${statusCode} status code`, async () => {
-      const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const server = http.createServer((req, res) => {
         res.writeHead(statusCode, 'dummy', { 'Content-Type': 'text/event-stream' })
         res.end()
       })

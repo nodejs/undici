@@ -10,7 +10,7 @@ test('a non-empty origin is not appended (issue #3334)', async (t) => {
   const { strictEqual } = tspl(t, { plan: 1 })
   const origin = 'https://origin.example.com'
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     strictEqual(req.headers.origin, origin)
     res.end()
   }).listen(0)

@@ -341,7 +341,7 @@ test('Disable keep alive', async (t) => {
   t = tspl(t, { plan: 7 })
 
   const ports = []
-  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = http.createServer((req, res) => {
     t.strictEqual(ports.includes(req.socket.remotePort), false)
     ports.push(req.socket.remotePort)
     t.strictEqual(req.headers.connection, 'close')

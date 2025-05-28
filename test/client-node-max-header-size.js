@@ -10,7 +10,7 @@ describe("Node.js' --max-http-header-size cli option", () => {
   let server
 
   before(async () => {
-    server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    server = createServer((req, res) => {
       res.writeHead(200, 'OK', {
         'Content-Length': 2
       })

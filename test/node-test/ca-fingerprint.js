@@ -17,7 +17,7 @@ const caFingerprint = getFingerprint(pem.cert.toString()
 test('Validate CA fingerprint with a custom connector', async t => {
   const p = tspl(t, { plan: 2 })
 
-  const server = https.createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
+  const server = https.createServer(pem, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
@@ -64,7 +64,7 @@ test('Validate CA fingerprint with a custom connector', async t => {
 test('Bad CA fingerprint with a custom connector', async t => {
   const p = tspl(t, { plan: 2 })
 
-  const server = https.createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
+  const server = https.createServer(pem, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })

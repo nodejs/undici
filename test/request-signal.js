@@ -8,7 +8,7 @@ const { request } = require('..')
 test('pre abort signal w/ reason', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -29,7 +29,7 @@ test('pre abort signal w/ reason', async (t) => {
 test('post abort signal', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -53,7 +53,7 @@ test('post abort signal', async (t) => {
 test('post abort signal w/ reason', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
   after(() => server.close())

@@ -10,7 +10,7 @@ const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 test('basic get, async await support', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
@@ -63,7 +63,7 @@ test('basic POST with string, async await support', async (t) => {
 
   const expected = readFileSync(__filename, 'utf8')
 
-  const server = createServer({ joinDuplicateHeaders: true }, postServer(t, expected))
+  const server = createServer(postServer(t, expected))
   after(() => server.close())
 
   server.listen(0, async () => {
@@ -93,7 +93,7 @@ test('basic POST with Buffer, async await support', async (t) => {
 
   const expected = readFileSync(__filename)
 
-  const server = createServer({ joinDuplicateHeaders: true }, postServer(t, expected.toString()))
+  const server = createServer(postServer(t, expected.toString()))
   after(() => server.close())
 
   server.listen(0, async () => {
@@ -123,7 +123,7 @@ test('basic POST with stream, async await support', async (t) => {
 
   const expected = readFileSync(__filename, 'utf8')
 
-  const server = createServer({ joinDuplicateHeaders: true }, postServer(t, expected))
+  const server = createServer(postServer(t, expected))
   after(() => server.close())
 
   server.listen(0, async () => {
@@ -160,7 +160,7 @@ test('basic POST with async-iterator, async await support', async (t) => {
 
   const expected = readFileSync(__filename, 'utf8')
 
-  const server = createServer({ joinDuplicateHeaders: true }, postServer(t, expected))
+  const server = createServer(postServer(t, expected))
   after(() => server.close())
 
   server.listen(0, async () => {
@@ -202,7 +202,7 @@ test('20 times GET with pipelining 10, async await support', async (t) => {
 
   let count = 0
   let countGreaterThanOne = false
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     count++
     await sleep(10)
     countGreaterThanOne = countGreaterThanOne || count > 1
@@ -263,7 +263,7 @@ async function makeRequestAndExpectUrl (client, i, t) {
 test('pool, async await support', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')

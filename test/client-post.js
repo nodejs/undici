@@ -10,7 +10,7 @@ const { Blob } = require('node:buffer')
 test('request post blob', { skip: !Blob }, async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     t.strictEqual(req.headers['content-type'], 'application/json')
     let str = ''
     for await (const chunk of req) {
@@ -46,7 +46,7 @@ test('request post blob', { skip: !Blob }, async (t) => {
 test('request post arrayBuffer', { skip: !Blob }, async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let str = ''
     for await (const chunk of req) {
       str += chunk

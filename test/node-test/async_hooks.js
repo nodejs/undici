@@ -37,7 +37,7 @@ hook.enable()
 test('async hooks', async (t) => {
   const p = tspl(t, { plan: 31 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
     readFile(__filename, (err, buf) => {
       p.ifError(err)
@@ -148,7 +148,7 @@ test('async hooks', async (t) => {
 test('async hooks client is destroyed', async (t) => {
   const p = tspl(t, { plan: 7 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
     readFile(__filename, (err, buf) => {
       p.ifError(err)
@@ -187,7 +187,7 @@ test('async hooks client is destroyed', async (t) => {
 test('async hooks pipeline handler', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('hello')
   })
   t.after(closeServerAsPromise(server))

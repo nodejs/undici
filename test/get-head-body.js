@@ -12,7 +12,7 @@ const { wrapWithAsyncIterable } = require('./utils/async-iterators')
 test('GET and HEAD with body should reset connection', async (t) => {
   t = tspl(t, { plan: 8 + 2 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
 
@@ -140,7 +140,7 @@ test('GET and HEAD with body should reset connection', async (t) => {
 test('HEAD should reset connection', async (t) => {
   t = tspl(t, { plan: 8 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
 

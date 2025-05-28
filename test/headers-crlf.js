@@ -9,7 +9,7 @@ const { createServer } = require('node:http')
 test('CRLF Injection in Nodejs ‘undici’ via host', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     res.end()
   })
   after(() => server.close())

@@ -14,7 +14,7 @@ test('do not leak', (t, done) => {
     throw new Error('gc is not available. Run with \'--expose-gc\'.')
   }
   const { ok } = tspl(t, { plan: 1 })
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end()
   })
   t.after(closeServerAsPromise(server))

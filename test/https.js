@@ -9,7 +9,7 @@ const pem = require('https-pem')
 test('https get with tls opts', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer(pem, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
@@ -45,7 +45,7 @@ test('https get with tls opts', async (t) => {
 test('https get with tls opts ip', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer(pem, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
