@@ -67,7 +67,7 @@ test('with autoSelectFamily enable the request succeeds when using request', { s
   const p = tspl(t, { plan: 3 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 
@@ -107,7 +107,7 @@ test('with autoSelectFamily enable the request succeeds when using a client', { 
   const p = tspl(t, { plan: 3 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 
@@ -148,7 +148,7 @@ test('with autoSelectFamily disabled the request fails when using request', { sk
   const p = tspl(t, { plan: 1 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 
@@ -172,11 +172,39 @@ test('with autoSelectFamily disabled the request fails when using request', { sk
   await p.completed
 })
 
+test('with autoSelectFamily disabled via Agent.Options["autoSelectFamily"] the request fails when using request', { skip }, async (t) => {
+  const p = tspl(t, { plan: 1 })
+
+  createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.end('hello')
+    })
+
+    t.after(() => {
+      server.close()
+      dnsServer.close()
+    })
+
+    server.listen(0, '127.0.0.1', () => {
+      const agent = new Agent({ autoSelectFamily: false, connect: { lookup } })
+
+      request(`http://example.org:${server.address().port}`, {
+        method: 'GET',
+        dispatcher: agent
+      }, (err, { statusCode, body }) => {
+        p.ok(['ECONNREFUSED', 'EAFNOSUPPORT'].includes(err.code))
+      })
+    })
+  })
+
+  await p.completed
+})
+
 test('with autoSelectFamily disabled the request fails when using a client', { skip }, async (t) => {
   const p = tspl(t, { plan: 1 })
 
   createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 
@@ -187,6 +215,35 @@ test('with autoSelectFamily disabled the request fails when using a client', { s
 
     server.listen(0, '127.0.0.1', () => {
       const client = new Client(`http://example.org:${server.address().port}`, { connect: { lookup, autoSelectFamily: false } })
+      t.after(client.destroy.bind(client))
+
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err, { statusCode, body }) => {
+        p.ok(['ECONNREFUSED', 'EAFNOSUPPORT'].includes(err.code))
+      })
+    })
+  })
+
+  await p.completed
+})
+
+test('with autoSelectFamily disabled via Client.Options["autoSelectFamily"] the request fails when using a client', { skip }, async (t) => {
+  const p = tspl(t, { plan: 1 })
+
+  createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.end('hello')
+    })
+
+    t.after(() => {
+      server.close()
+      dnsServer.close()
+    })
+
+    server.listen(0, '127.0.0.1', () => {
+      const client = new Client(`http://example.org:${server.address().port}`, { autoSelectFamily: false, connect: { lookup } })
       t.after(client.destroy.bind(client))
 
       client.request({

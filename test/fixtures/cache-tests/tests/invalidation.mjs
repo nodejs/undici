@@ -71,7 +71,7 @@ function checkLocationInvalidation (method) {
       location({
         setup: true
       }), lclResponse({
-        request_method: 'POST',
+        request_method: method,
         request_body: 'abc',
         setup: true
       }), location({
