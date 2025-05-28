@@ -9,7 +9,7 @@ describe('max response size', async (t) => {
   test('default max default size should allow all responses', async (t) => {
     t = tspl(t, { plan: 3 })
 
-    const server = createServer({ joinDuplicateHeaders: true })
+    const server = createServer()
     after(() => server.close())
 
     server.on('request', (req, res) => {
@@ -39,7 +39,7 @@ describe('max response size', async (t) => {
   test('max response size set to zero should allow only empty responses', async (t) => {
     t = tspl(t, { plan: 3 })
 
-    const server = createServer({ joinDuplicateHeaders: true })
+    const server = createServer()
     after(() => server.close())
 
     server.on('request', (req, res) => {
@@ -69,7 +69,7 @@ describe('max response size', async (t) => {
   test('should throw an error if the response is too big', async (t) => {
     t = tspl(t, { plan: 3 })
 
-    const server = createServer({ joinDuplicateHeaders: true })
+    const server = createServer()
     after(() => server.close())
 
     server.on('request', (req, res) => {

@@ -8,7 +8,7 @@ const { createServer } = require('node:http')
 test('response trailers missing is OK', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200, {
       Trailer: 'content-length'
     })
@@ -33,7 +33,7 @@ test('response trailers missing is OK', async (t) => {
 test('response trailers missing w trailers is OK', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200, {
       Trailer: 'content-length'
     })

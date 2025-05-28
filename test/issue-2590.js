@@ -8,7 +8,7 @@ const { once } = require('node:events')
 
 test('aborting request with custom reason', async (t) => {
   t = tspl(t, { plan: 3 })
-  const server = createServer({ joinDuplicateHeaders: true }, () => {}).listen(0)
+  const server = createServer(() => {}).listen(0)
 
   after(() => server.close())
   await once(server, 'listening')

@@ -71,7 +71,6 @@ partial dictionary MediaTrackSettings {
   DOMString cursor;
   boolean restrictOwnAudio;
   boolean suppressLocalAudioPlayback;
-  double screenPixelRatio;
 };
 
 partial dictionary MediaTrackCapabilities {

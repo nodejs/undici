@@ -14,7 +14,7 @@ test('handle a lot of headers', async (t) => {
     headers[n] = String(n)
   }
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200, headers)
     res.end()
   })

@@ -9,7 +9,7 @@ test('handle headers as array', async (t) => {
   t = tspl(t, { plan: 3 })
   const headers = ['a', '1', 'b', '2', 'c', '3']
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     t.strictEqual(req.headers.a, '1')
     t.strictEqual(req.headers.b, '2')
     t.strictEqual(req.headers.c, '3')
@@ -34,7 +34,7 @@ test('handle multi-valued headers as array', async (t) => {
   t = tspl(t, { plan: 4 })
   const headers = ['a', '1', 'b', '2', 'c', '3', 'd', '4', 'd', '5']
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     t.strictEqual(req.headers.a, '1')
     t.strictEqual(req.headers.b, '2')
     t.strictEqual(req.headers.c, '3')
@@ -60,7 +60,7 @@ test('handle headers with array', async (t) => {
   t = tspl(t, { plan: 4 })
   const headers = { a: '1', b: '2', c: '3', d: ['4'] }
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     t.strictEqual(req.headers.a, '1')
     t.strictEqual(req.headers.b, '2')
     t.strictEqual(req.headers.c, '3')
@@ -86,7 +86,7 @@ test('handle multi-valued headers', async (t) => {
   t = tspl(t, { plan: 4 })
   const headers = { a: '1', b: '2', c: '3', d: ['4', '5'] }
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     t.strictEqual(req.headers.a, '1')
     t.strictEqual(req.headers.b, '2')
     t.strictEqual(req.headers.c, '3')
@@ -112,7 +112,7 @@ test('fail if headers array is odd', async (t) => {
   t = tspl(t, { plan: 2 })
   const headers = ['a', '1', 'b', '2', 'c', '3', 'd']
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => { res.end() })
+  const server = createServer((req, res) => { res.end() })
   after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -135,7 +135,7 @@ test('fail if headers is not an object or an array', async (t) => {
   t = tspl(t, { plan: 2 })
   const headers = 'not an object or an array'
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => { res.end() })
+  const server = createServer((req, res) => { res.end() })
   after(() => server.close())
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)

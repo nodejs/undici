@@ -10,7 +10,7 @@ const EE = require('node:events')
 test('stream get', async (t) => {
   t = tspl(t, { plan: 9 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -53,7 +53,7 @@ test('stream get', async (t) => {
 test('stream promise get', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -90,7 +90,7 @@ test('stream promise get', async (t) => {
 test('stream GET destroy res', async (t) => {
   t = tspl(t, { plan: 14 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -150,7 +150,7 @@ test('stream GET destroy res', async (t) => {
 test('stream GET remote destroy', async (t) => {
   t = tspl(t, { plan: 4 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.write('asd')
     setImmediate(() => {
       res.destroy()
@@ -195,7 +195,7 @@ test('stream GET remote destroy', async (t) => {
 test('stream response resume back pressure and non standard error', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.write(Buffer.alloc(1e3))
     setImmediate(() => {
       res.write(Buffer.alloc(1e7))
@@ -246,7 +246,7 @@ test('stream response resume back pressure and non standard error', async (t) =>
 test('stream waits only for writable side', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(Buffer.alloc(1e3))
   })
   after(() => server.close())
@@ -311,7 +311,7 @@ test('stream args validation promise', async (t) => {
 test('stream destroy if not readable', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end()
   })
   after(() => server.close())
@@ -339,7 +339,7 @@ test('stream destroy if not readable', async (t) => {
 test('stream server side destroy', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.destroy()
   })
   after(() => server.close())
@@ -364,7 +364,7 @@ test('stream server side destroy', async (t) => {
 test('stream invalid return', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.write('asd')
   })
   after(() => server.close())
@@ -389,7 +389,7 @@ test('stream invalid return', async (t) => {
 test('stream body without destroy', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -417,7 +417,7 @@ test('stream body without destroy', async (t) => {
 test('stream factory abort', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -447,7 +447,7 @@ test('stream factory abort', async (t) => {
 test('stream factory throw', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -488,7 +488,7 @@ test('stream factory throw', async (t) => {
 test('stream CONNECT throw', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -512,7 +512,7 @@ test('stream CONNECT throw', async (t) => {
 test('stream abort after complete', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -541,7 +541,7 @@ test('stream abort after complete', async (t) => {
 test('stream abort before dispatch', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -570,7 +570,7 @@ test('stream abort before dispatch', async (t) => {
 test('trailers', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200, { Trailer: 'Content-MD5' })
     res.addTrailers({ 'Content-MD5': 'test' })
     res.end()
@@ -596,7 +596,7 @@ test('trailers', async (t) => {
 test('stream ignore 1xx', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeProcessing()
     res.end('hello')
   })
@@ -628,7 +628,7 @@ test('stream ignore 1xx and use onInfo', async (t) => {
   t = tspl(t, { plan: 4 })
 
   const infos = []
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeProcessing()
     res.end('hello')
   })
@@ -666,7 +666,7 @@ test('stream backpressure', async (t) => {
 
   const expected = Buffer.alloc(1e6).toString()
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeProcessing()
     res.end(expected)
   })
@@ -698,7 +698,7 @@ test('stream backpressure', async (t) => {
 test('stream body destroyed on invalid callback', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
   })
   after(() => server.close())
 
@@ -726,7 +726,7 @@ test('stream body destroyed on invalid callback', async (t) => {
 test('stream needDrain', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(Buffer.alloc(4096))
   })
   after(() => server.close())
@@ -782,7 +782,7 @@ test('stream needDrain', async (t) => {
 test('stream legacy needDrain', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end(Buffer.alloc(4096))
   })
   after(() => server.close())

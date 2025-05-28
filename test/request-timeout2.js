@@ -10,7 +10,7 @@ const { Readable } = require('node:stream')
 test('request timeout with slow readable body', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+  const server = createServer(async (req, res) => {
     let str = ''
     for await (const x of req) {
       str += x

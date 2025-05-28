@@ -23,7 +23,7 @@ test('issue #2828, RequestInit dispatcher options overrides Request input dispat
     }
   }
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     strictEqual(req.headers['x-my-header-a'], undefined)
     strictEqual(req.headers['x-my-header-b'], 'world')
     res.end()

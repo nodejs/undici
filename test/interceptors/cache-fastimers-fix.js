@@ -9,7 +9,7 @@ const { setTimeout: sleep } = require('timers/promises')
 
 test('revalidates the request when the response is stale', async () => {
   let count = 0
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.setHeader('Cache-Control', 'public, max-age=1')
     res.end('hello world ' + count++)
   })

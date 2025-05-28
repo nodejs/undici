@@ -184,7 +184,7 @@ test('MockPool - close should run without error', async (t) => {
 test('MockPool - should be able to set as globalDispatcher', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -220,7 +220,7 @@ test('MockPool - should be able to set as globalDispatcher', async (t) => {
 test('MockPool - should be able to use as a local dispatcher', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -256,7 +256,7 @@ test('MockPool - should be able to use as a local dispatcher', async (t) => {
 test('MockPool - basic intercept with MockPool.request', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')

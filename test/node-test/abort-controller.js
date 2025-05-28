@@ -24,7 +24,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
   test(`Abort ${controllerName} before creating request`, async (t) => {
     const p = tspl(t, { plan: 1 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       p.fail()
     })
     t.after(closeServerAsPromise(server))
@@ -48,7 +48,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     const p = tspl(t, { plan: 3 })
 
     let count = 0
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       if (count === 1) {
         p.fail('The second request should never be executed')
       }
@@ -87,7 +87,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     const p = tspl(t, { plan: 1 })
 
     const abortController = new AbortControllerImpl()
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       abortController.abort()
       res.setHeader('content-type', 'text/plain')
       res.end('hello world')
@@ -110,7 +110,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     const p = tspl(t, { plan: 1 })
 
     const abortController = new AbortControllerImpl()
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.flushHeaders()
       abortController.abort()
@@ -134,7 +134,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     const p = tspl(t, { plan: 2 })
 
     const abortController = new AbortControllerImpl()
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.write('hello')
     })
@@ -163,7 +163,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       const p = tspl(t, { plan: 1 })
 
       const abortController = new AbortControllerImpl()
-      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const server = createServer((req, res) => {
         abortController.abort()
         res.setHeader('content-type', 'text/plain')
         res.end('hello world')
@@ -192,7 +192,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       const p = tspl(t, { plan: 1 })
 
       const abortController = new AbortControllerImpl()
-      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const server = createServer((req, res) => {
         res.writeHead(200, { 'content-type': 'text/plain' })
         res.flushHeaders()
         abortController.abort()
@@ -222,7 +222,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       const p = tspl(t, { plan: 2 })
 
       const abortController = new AbortControllerImpl()
-      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const server = createServer((req, res) => {
         res.writeHead(200, { 'content-type': 'text/plain' })
         res.write('hello')
       })

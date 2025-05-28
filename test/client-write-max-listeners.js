@@ -10,7 +10,7 @@ const { Readable } = require('node:stream')
 test('socket close listener does not leak', async (t) => {
   t = tspl(t, { plan: 32 })
 
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
 
   server.on('request', (req, res) => {
     res.end('hello')

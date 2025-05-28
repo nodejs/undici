@@ -10,7 +10,7 @@ const { maybeWrapStream, consts } = require('./utils/async-iterators')
 test('request invalid content-length', async (t) => {
   t = tspl(t, { plan: 7 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end()
   })
   after(() => server.close())
@@ -103,7 +103,7 @@ function invalidContentLength (bodyType) {
   test(`request streaming ${bodyType} invalid content-length`, async (t) => {
     t = tspl(t, { plan: 4 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end()
     })
     after(() => server.close())
@@ -165,7 +165,7 @@ function zeroContentLength (bodyType) {
   test(`request ${bodyType} streaming data when content-length=0`, async (t) => {
     t = tspl(t, { plan: 1 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end()
     })
     after(() => server.close())
@@ -201,7 +201,7 @@ zeroContentLength(consts.ASYNC_ITERATOR)
 test('request streaming no body data when content-length=0', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     req.pipe(res)
   })
   after(() => server.close())
@@ -233,7 +233,7 @@ test('request streaming no body data when content-length=0', async (t) => {
 test('response invalid content length with close', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200, {
       'content-length': 10
     })
@@ -270,7 +270,7 @@ test('response invalid content length with close', async (t) => {
 })
 
 test('request streaming with Readable.from(buf)', async (t) => {
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     req.pipe(res)
   })
   after(() => server.close())
@@ -302,7 +302,7 @@ test('request streaming with Readable.from(buf)', async (t) => {
 
 test('request DELETE, content-length=0, with body', async (t) => {
   t = tspl(t, { plan: 5 })
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.shouldKeepAlive = false
     res.end()
   })
@@ -352,7 +352,7 @@ test('request DELETE, content-length=0, with body', async (t) => {
 test('content-length shouldSendContentLength=false', async (t) => {
   t = tspl(t, { plan: 15 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.end()
   })
   server.on('request', (req, res) => {

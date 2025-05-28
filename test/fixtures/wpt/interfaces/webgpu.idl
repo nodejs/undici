@@ -64,7 +64,6 @@ interface GPUAdapterInfo {
     readonly attribute DOMString description;
     readonly attribute unsigned long subgroupMinSize;
     readonly attribute unsigned long subgroupMaxSize;
-    readonly attribute boolean isFallbackAdapter;
 };
 
 interface mixin NavigatorGPU {
@@ -97,6 +96,7 @@ interface GPUAdapter {
     [SameObject] readonly attribute GPUSupportedFeatures features;
     [SameObject] readonly attribute GPUSupportedLimits limits;
     [SameObject] readonly attribute GPUAdapterInfo info;
+    readonly attribute boolean isFallbackAdapter;
 
     Promise<GPUDevice> requestDevice(optional GPUDeviceDescriptor descriptor = {});
 };
@@ -109,7 +109,6 @@ dictionary GPUDeviceDescriptor
 };
 
 enum GPUFeatureName {
-    "core-features-and-limits",
     "depth-clip-control",
     "depth32float-stencil8",
     "texture-compression-bc",
@@ -939,14 +938,10 @@ interface GPUCommandEncoder {
 
     undefined copyBufferToBuffer(
         GPUBuffer source,
-        GPUBuffer destination,
-        optional GPUSize64 size);
-    undefined copyBufferToBuffer(
-        GPUBuffer source,
         GPUSize64 sourceOffset,
         GPUBuffer destination,
         GPUSize64 destinationOffset,
-        optional GPUSize64 size);
+        GPUSize64 size);
 
     undefined copyBufferToTexture(
         GPUTexelCopyBufferInfo source,

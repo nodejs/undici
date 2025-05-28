@@ -8,7 +8,7 @@ const { interceptors, Client } = require('../..')
 const { responseError } = interceptors
 
 test('should throw error for error response', async () => {
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
 
   server.on('request', (req, res) => {
     res.writeHead(400, { 'content-type': 'text/plain' })
@@ -49,7 +49,7 @@ test('should throw error for error response', async () => {
 })
 
 test('should not throw error for ok response', async () => {
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
 
   server.on('request', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
@@ -84,7 +84,7 @@ test('should not throw error for ok response', async () => {
 })
 
 test('should throw error for error response, parsing JSON', async () => {
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
 
   server.on('request', (req, res) => {
     res.writeHead(400, { 'content-type': 'application/json; charset=utf-8' })
@@ -127,7 +127,7 @@ test('should throw error for error response, parsing JSON', async () => {
 })
 
 test('should throw error for error response, parsing JSON without charset', async () => {
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
 
   server.on('request', (req, res) => {
     res.writeHead(400, { 'content-type': 'application/json' })
@@ -195,7 +195,7 @@ test('should throw error for networking errors response', async () => {
 })
 
 test('should throw error for error response without content type', async () => {
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
 
   server.on('request', (req, res) => {
     res.writeHead(400, {})

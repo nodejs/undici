@@ -9,7 +9,7 @@ const { once } = require('node:events')
 test('should validate content-type CRLF Injection', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     t.fail('should not receive any request')
     res.statusCode = 200
     res.end('hello')

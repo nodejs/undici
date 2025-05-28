@@ -21,7 +21,7 @@ test('multiple reconnect', async (t) => {
     Object.assign(timers, orgTimers)
   })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     n === 0 ? res.destroy() : res.end('ok')
   })
   after(() => server.close())

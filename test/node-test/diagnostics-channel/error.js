@@ -8,7 +8,7 @@ const { createServer } = require('node:http')
 
 test('Diagnostics channel - error', (t) => {
   const assert = tspl(t, { plan: 3 })
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.destroy()
   })
   after(server.close.bind(server))

@@ -57,14 +57,11 @@
         "skip": true
       },
       "request-headers.any.js": {
-        "note": "Float16Array is valid from node v24.",
         "fail": [
           "Fetch with Chicken",
           "Fetch with Chicken with body",
           "Fetch with TacO and mode \"same-origin\" needs an Origin header",
-          "Fetch with TacO and mode \"cors\" needs an Origin header"
-        ],
-        "flaky": [
+          "Fetch with TacO and mode \"cors\" needs an Origin header",
           "Fetch with POST with Float16Array body"
         ]
       },
@@ -73,8 +70,8 @@
         "skip": true
       },
       "request-upload.any.js": {
-        "note": "Float16Array is valid from node v24.",
-        "flaky": [
+        "note": "no Float16Array",
+        "fail": [
           "Fetch with POST with Float16Array body"
         ]
       },
@@ -104,6 +101,14 @@
           "Object.prototype.type accessor returning invalid value should not affect stream creation by 'fetch'",
           "throwing Object.prototype.highWaterMark accessor should not affect stream creation by 'fetch'",
           "Object.prototype.highWaterMark accessor returning invalid value should not affect stream creation by 'fetch'"
+        ]
+      }
+    },
+    "body": {
+      "mime-type.any.js": {
+        "note": "fails on all platforms, https://wpt.fyi/results/fetch/api/body/mime-type.any.html?label=master&label=experimental&product=chrome&product=firefox&product=safari&product=node.js&product=deno&aligned",
+        "fail": [
+          "Response: Extract a MIME type with clone"
         ]
       }
     },

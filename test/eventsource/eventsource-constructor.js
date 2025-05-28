@@ -8,7 +8,7 @@ const { EventSource } = require('../../lib/web/eventsource/eventsource')
 
 describe('EventSource - withCredentials', () => {
   test('withCredentials should be false by default', async () => {
-    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = http.createServer((req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.end()
     })
@@ -30,7 +30,7 @@ describe('EventSource - withCredentials', () => {
   })
 
   test('withCredentials can be set to true', async () => {
-    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = http.createServer((req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.end()
     })

@@ -9,7 +9,7 @@ const { fetch } = require('../..')
 test('Redirecting a bunch does not cause a MaxListenersExceededWarning', async (t) => {
   let redirects = 0
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     if (redirects === 15) {
       res.end('Okay goodbye')
       return
@@ -36,7 +36,7 @@ test(
   'aborting a Stream throws',
   () => {
     return new Promise((resolve, reject) => {
-      const httpServer = createServer({ joinDuplicateHeaders: true }, (request, response) => {
+      const httpServer = createServer((request, response) => {
         response.end(new Uint8Array(20000))
       }).listen(async () => {
         const serverAddress = httpServer.address()

@@ -8,7 +8,7 @@ const tspl = require('@matteo.collina/tspl')
 
 test('abort the request on the other side if the stream is canceled', async (t) => {
   const p = tspl(t, { plan: 1 })
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200)
     res.write('hello')
     req.on('aborted', () => {

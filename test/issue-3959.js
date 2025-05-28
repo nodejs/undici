@@ -8,7 +8,7 @@ const { interceptors } = require('..')
 describe('Cache with Vary headers', () => {
   async function runCacheTest (store) {
     let requestCount = 0
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       requestCount++
       res.setHeader('Vary', 'Accept-Encoding')
       res.setHeader('Cache-Control', 'max-age=60')

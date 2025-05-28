@@ -8,7 +8,7 @@ const { WebSocket } = require('../..')
 
 test('WebSocket connecting to server that isn\'t a Websocket server', () => {
   return new Promise((resolve, reject) => {
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       assert.equal(req.headers.connection, 'upgrade')
       assert.equal(req.headers.upgrade, 'websocket')
       assert.ok(req.headers['sec-websocket-key'])
@@ -68,7 +68,7 @@ test('Multiple protocols are joined by a comma', () => {
 
 test('Server doesn\'t send Sec-WebSocket-Protocol header when protocols are used', () => {
   return new Promise((resolve, reject) => {
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.statusCode = 101
 
       req.socket.destroy()
@@ -88,7 +88,7 @@ test('Server doesn\'t send Sec-WebSocket-Protocol header when protocols are used
 
 test('Server sends invalid Upgrade header', () => {
   return new Promise((resolve, reject) => {
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.setHeader('Upgrade', 'NotWebSocket')
       res.statusCode = 101
 
@@ -109,7 +109,7 @@ test('Server sends invalid Upgrade header', () => {
 
 test('Server sends invalid Connection header', () => {
   return new Promise((resolve, reject) => {
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.setHeader('Upgrade', 'websocket')
       res.setHeader('Connection', 'downgrade')
       res.statusCode = 101
@@ -131,7 +131,7 @@ test('Server sends invalid Connection header', () => {
 
 test('Server sends invalid Sec-WebSocket-Accept header', () => {
   return new Promise((resolve, reject) => {
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.setHeader('Upgrade', 'websocket')
       res.setHeader('Connection', 'upgrade')
       res.setHeader('Sec-WebSocket-Accept', 'abc')
@@ -157,7 +157,7 @@ test('Server sends invalid Sec-WebSocket-Extensions header', () => {
     const uid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
     const { createHash } = require('node:crypto')
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       const key = req.headers['sec-websocket-key']
       assert.ok(key)
 
@@ -189,7 +189,7 @@ test('Server sends invalid Sec-WebSocket-Extensions header', () => {
   const { createHash } = require('node:crypto')
 
   return new Promise((resolve, reject) => {
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       const key = req.headers['sec-websocket-key']
       assert.ok(key)
 

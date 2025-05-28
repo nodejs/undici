@@ -3,7 +3,7 @@
 const { createServer } = require('node:http')
 const { request } = require('../..')
 
-const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+const server = createServer((_req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' })
   res.end('hello world')
 })

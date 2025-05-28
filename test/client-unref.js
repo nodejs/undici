@@ -11,7 +11,7 @@ if (isMainThread) {
   test('client automatically closes itself when idle', async t => {
     t = tspl(t, { plan: 1 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end()
     })
     after(server.close.bind(server))

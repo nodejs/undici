@@ -8,7 +8,7 @@ const http = require('node:http')
 test('inflight and close', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = http.createServer((req, res) => {
     res.writeHead(200)
     res.end('Response body')
     res.socket.end() // Close the connection immediately with every response

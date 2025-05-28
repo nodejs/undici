@@ -26,13 +26,13 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     // Instead of using mocks, start a real server and a minimal proxy server
     // in order to exercise the actual paths in EnvHttpProxyAgent from the
     // Node.js bundle.
-    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => { res.end('Hello world') })
+    const server = http.createServer((req, res) => { res.end('Hello world') })
     server.on('error', err => { console.log('Server error', err) })
     server.listen(0)
     await once(server, 'listening')
     t.after(() => { server.close() })
 
-    const proxy = http.createServer({ joinDuplicateHeaders: true })
+    const proxy = http.createServer()
     proxy.on('connect', (req, clientSocket, head) => {
       // Check that the proxy is actually used to tunnel the request sent below.
       const [hostname, port] = req.url.split(':')

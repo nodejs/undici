@@ -12,7 +12,6 @@ interface IdentityCredential : Credential {
   static Promise<undefined> disconnect(IdentityCredentialDisconnectOptions options);
   readonly attribute USVString? token;
   readonly attribute boolean isAutoSelected;
-  readonly attribute USVString configURL;
 };
 
 dictionary DisconnectedAccount {
@@ -74,26 +73,22 @@ dictionary IdentityProviderBranding {
 
 dictionary IdentityProviderAPIConfig {
   required USVString accounts_endpoint;
-  USVString client_metadata_endpoint;
+  required USVString client_metadata_endpoint;
   required USVString id_assertion_endpoint;
   required USVString login_url;
   USVString disconnect_endpoint;
   IdentityProviderBranding branding;
-  USVString account_label;
 };
 
 dictionary IdentityProviderAccount {
   required USVString id;
-  USVString name;
-  USVString email;
-  USVString tel;
-  USVString username;
+  required USVString name;
+  required USVString email;
   USVString given_name;
   USVString picture;
   sequence<USVString> approved_clients;
   sequence<DOMString> login_hints;
   sequence<DOMString> domain_hints;
-  sequence<DOMString> label_hints;
 };
 dictionary IdentityProviderAccountList {
   sequence<IdentityProviderAccount> accounts;

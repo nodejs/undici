@@ -10,7 +10,7 @@ test('Should retry status code', async t => {
   t = tspl(t, { plan: 2 })
 
   let counter = 0
-  const server = createServer({ joinDuplicateHeaders: true })
+  const server = createServer()
   const opts = {
     maxRetries: 5,
     timeout: 1,

@@ -28,7 +28,7 @@ describe('strictContentLength: false', () => {
   test('request invalid content-length', async (t) => {
     t = tspl(t, { plan: 8 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end()
     })
     after(() => server.close())
@@ -146,7 +146,7 @@ describe('strictContentLength: false', () => {
   test('request streaming content-length less than body size', async (t) => {
     t = tspl(t, { plan: 1 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end()
     })
     after(() => server.close())
@@ -183,7 +183,7 @@ describe('strictContentLength: false', () => {
   test('request streaming content-length greater than body size', async (t) => {
     t = tspl(t, { plan: 1 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end()
     })
     after(() => server.close())
@@ -220,7 +220,7 @@ describe('strictContentLength: false', () => {
   test('request streaming data when content-length=0', async (t) => {
     t = tspl(t, { plan: 1 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end()
     })
     after(() => server.close())
@@ -257,7 +257,7 @@ describe('strictContentLength: false', () => {
   test('request async iterating content-length less than body size', async (t) => {
     t = tspl(t, { plan: 1 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end()
     })
     after(() => server.close())
@@ -294,7 +294,7 @@ describe('strictContentLength: false', () => {
   test('request async iterator content-length greater than body size', async (t) => {
     t = tspl(t, { plan: 1 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end()
     })
     after(() => server.close())
@@ -330,7 +330,7 @@ describe('strictContentLength: false', () => {
   test('request async iterator data when content-length=0', async (t) => {
     t = tspl(t, { plan: 1 })
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.end()
     })
     after(() => server.close())

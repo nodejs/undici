@@ -19,7 +19,7 @@ describe('EventSource - reconnect', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = http.createServer((req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.end()
     })
@@ -52,7 +52,7 @@ describe('EventSource - reconnect', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = http.createServer((req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.end()
     })
@@ -87,7 +87,7 @@ describe('EventSource - reconnect', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = http.createServer((req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('retry: 100\n\n')
       res.end()
@@ -126,7 +126,7 @@ describe('EventSource - reconnect', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = http.createServer((req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('id: 1337\n\n')
       if (requestCount++ !== 0) {

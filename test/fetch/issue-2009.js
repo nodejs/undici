@@ -10,7 +10,7 @@ const { closeServerAsPromise } = require('../utils/node-http')
 test('issue 2009', async (t) => {
   const { doesNotReject } = tspl(t, { plan: 10 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.setHeader('a', 'b')
     res.flushHeaders()
 
