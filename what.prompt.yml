@@ -1,0 +1,67 @@
+messages:
+  - role: system
+    content: >
+      The image you have provided appears to be a simple icon or symbol. It
+      shows a yellow folder or document icon with a lightning bolt or flash
+      symbol overlaid on it. This likely represents some kind of notification or
+      alert related to a session or activity. Without any additional context, I
+      cannot provide more specific details about the meaning or purpose of this
+      image. Please let me know if you have any other questions about what I can
+      observe in this simple graphic icon
+  - role: user
+    content: Force cutting the output when this string occurs.
+model: core42/jais-30b-chat
+modelParameters:
+  max_tokens: 1162
+  temperature: 0.67
+  top_p: 0.81
+  stop: '''403'
+testData:
+  - input: |+
+      Check_code
+      ACTION, option, OTHER, EXIT
+
+    expected: |
+      Confirm
+  - input: syntax(option1)
+    expected: ''
+  - input: ''
+    expected: >-
+      You can add variables to the user and system prompts using the
+      {{variable}} syntax.
+  - input: >-
+      You confirm add variables to the user and system prompts using the
+      {{variable}} syntax.
+    expected: syntax
+  - input: ''
+    expected: syntax
+evaluators:
+  - name: asteitarai
+    string:
+      strict: true
+      contains: |+
+
+  - name: Similarity
+    uses: github/similarity
+  - name: Relevance
+    uses: github/relevance
+  - name: Groundedness
+    uses: github/groundedness
+  - name: What
+    string:
+      startsWith: >-
+        You can add variables to the user and system prompts using the
+        {{variable}} syntax.
+  - name: Groundedness
+    uses: github/groundedness
+  - name: V.3.5
+    llm:
+      modelId: 'azureml://registries/azureml/models/Phi-3.5-MoE-instruct/versions/5'
+      prompt: 'Enter confirm prompt {{input}} {{prompt}} {{completion}} {{expected}} '
+      choices:
+        - choice: >-
+            Enter confirm prompt {{input}} {{prompt}} {{completion}}
+            {{expected}} 
+          score: 1
+      systemPrompt: |
+        I and i
