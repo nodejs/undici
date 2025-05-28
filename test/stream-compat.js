@@ -10,7 +10,7 @@ const EE = require('node:events')
 test('stream body without destroy', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   })
   after(() => server.close())
@@ -41,7 +41,7 @@ test('stream body without destroy', async (t) => {
 test('IncomingMessage', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   })
   after(() => server.close())
@@ -50,7 +50,7 @@ test('IncomingMessage', async (t) => {
     const proxyClient = new Client(`http://localhost:${server.address().port}`)
     after(() => proxyClient.destroy())
 
-    const proxy = createServer((req, res) => {
+    const proxy = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       proxyClient.request({
         path: '/',
         method: 'PUT',

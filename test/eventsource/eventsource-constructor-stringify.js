@@ -8,7 +8,7 @@ const { EventSource } = require('../../lib/web/eventsource/eventsource')
 
 describe('EventSource - constructor stringify', () => {
   test('should stringify argument', async () => {
-    const server = http.createServer((req, res) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       assert.strictEqual(req.headers.connection, 'keep-alive')
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.end()

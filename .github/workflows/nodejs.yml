@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
         with:
           egress-policy: audit
 
@@ -58,7 +58,7 @@ jobs:
         node-version:
           - 20
           - 22
-          - 23
+          - 24
         runs-on:
           - ubuntu-latest
           - windows-latest
@@ -75,7 +75,7 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        version: [20, 22, 23]
+        version: [20, 22, 24]
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:

@@ -17,7 +17,7 @@ if (platform() === 'win32') {
 test('Should dump on abort', async t => {
   t = tspl(t, { plan: 2 })
   let offset = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const max = 1024 * 1024
     const buffer = Buffer.alloc(max)
 
@@ -79,7 +79,7 @@ test('Should dump on abort', async t => {
 test('Should dump on already aborted request', async t => {
   t = tspl(t, { plan: 3 })
   let offset = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const max = 1024
     const buffer = Buffer.alloc(max)
 
@@ -139,7 +139,7 @@ test('Should dump on already aborted request', async t => {
 
 test('Should dump response body up to limit (default)', async t => {
   t = tspl(t, { plan: 3 })
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const buffer = Buffer.alloc(1024 * 1024)
     res.writeHead(200, {
       'Content-Length': buffer.length,
@@ -181,7 +181,7 @@ test('Should dump response body up to limit (default)', async t => {
 
 test('Should dump response body up to limit and ignore trailers', async t => {
   t = tspl(t, { plan: 3 })
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/plain',
       'Transfer-Encoding': 'chunked',
@@ -225,7 +225,7 @@ test('Should dump response body up to limit and ignore trailers', async t => {
 
 test('Should forward common error', async t => {
   t = tspl(t, { plan: 1 })
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.destroy()
   })
 
@@ -358,7 +358,7 @@ test('Should throw on bad opts', async t => {
 
 test('Should dump response body up to limit (opts)', async t => {
   t = tspl(t, { plan: 3 })
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const buffer = Buffer.alloc(1 * 1024)
     res.writeHead(200, {
       'Content-Length': buffer.length,
@@ -399,7 +399,7 @@ test('Should dump response body up to limit (opts)', async t => {
 
 test('Should abort if content length grater than max size', async t => {
   t = tspl(t, { plan: 1 })
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const buffer = Buffer.alloc(2 * 1024)
     res.writeHead(200, {
       'Content-Length': buffer.length,
@@ -438,7 +438,7 @@ test('Should abort if content length grater than max size', async t => {
 
 test('Should dump response body up to limit (dispatch opts)', async t => {
   t = tspl(t, { plan: 3 })
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const buffer = Buffer.alloc(1 * 1024)
     res.writeHead(200, {
       'Content-Length': buffer.length,
@@ -481,7 +481,7 @@ test('Should dump response body up to limit (dispatch opts)', async t => {
 
 test('Should abort if content length grater than max size (dispatch opts)', async t => {
   t = tspl(t, { plan: 1 })
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const buffer = Buffer.alloc(2 * 1024)
     res.writeHead(200, {
       'Content-Length': buffer.length,
