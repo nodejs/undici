@@ -107,14 +107,13 @@ const response = await fetch('https://api.example.com/data');
 
 **Cons:**
 - Additional dependency to manage
-- Larger bundle size if used in client-side code
+- Larger bundle size
 
 ### When to Use Each
 
 #### Use Built-in Fetch When:
 - You want zero dependencies
 - Building isomorphic code that runs in browsers and Node.js
-- You need standard Web API compatibility
 - Simple HTTP requests without advanced configuration
 - You're okay with the undici version bundled in your Node.js version
 
@@ -132,9 +131,8 @@ const response = await fetch('https://api.example.com/data');
 Based on benchmarks, here's the typical performance hierarchy:
 
 1. **`undici.request()`** - Fastest, most efficient
-2. **`undici.fetch()`** - Fast, with Web API compatibility
-3. **Built-in `fetch()`** - Good performance, standard compliance
-4. **Node.js `http`/`https`** - Baseline performance
+2. **`undici.fetch()`** - Good performance, standard compliance
+3. **Node.js `http`/`https`** - Baseline performance
 
 ### Migration Guide
 
