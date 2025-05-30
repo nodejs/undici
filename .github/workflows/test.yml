@@ -59,6 +59,6 @@ jobs:
 
       - name: Coverage Report
         if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 20
-        uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303 # v5.1.2
+        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
