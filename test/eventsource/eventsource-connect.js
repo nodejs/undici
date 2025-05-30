@@ -5,6 +5,7 @@ const events = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
 const { EventSource } = require('../../lib/web/eventsource/eventsource')
+const { randomInt } = require('node:crypto')
 
 describe('EventSource - sending correct request headers', () => {
   test('should send request with connection keep-alive', async () => {
@@ -180,5 +181,22 @@ describe('EventSource - received response must have content-type to be text/even
       eventSourceInstance.close()
       server.close()
     }
+  })
+
+  test('should try to connect again if server is unreachable', async () => {
+    const domain = 'bad.n' + randomInt(1e10).toString(36) + '.proxy'
+
+    const eventSourceInstance = new EventSource(`http://${domain}`)
+
+    const onerrorCalls = []
+    eventSourceInstance.onerror = (error) => {
+      onerrorCalls.push(error)
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 8000))
+
+    eventSourceInstance.close()
+
+    assert.strictEqual(onerrorCalls.length, 3)
   })
 })
