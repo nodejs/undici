@@ -62,8 +62,16 @@ The server will pause for {{ request.response_pause }} seconds before responding
 
 {%- if request.response_status or request.response_headers or request.response_body %}
 
-### The server sends a response containing:
+### The server sends {% if request.interim_responses %}responses{% else %}a response{% endif %} containing:
+
 ~~~
+{% if request.interim_responses -%}
+{% for interim_response in request.interim_responses -%}
+HTTP/1.1 {{ interim_response[0] }}
+{% for header in interim_response[1] %}{% render 'header-magic' with header as header %}
+{% endfor %}
+{% endfor -%}
+{%- endif -%}
 {% if request.expected_type == "lm_validated" or request.expected_type = "etag_validated" -%}
 HTTP/1.1 304 Not Modified
 {%- else -%}
