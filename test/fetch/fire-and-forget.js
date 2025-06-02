@@ -1,7 +1,7 @@
 'use strict'
 
 const { randomFillSync } = require('node:crypto')
-const { setTimeout: sleep } = require('timers/promises')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { test } = require('node:test')
 const { fetch, Agent, setGlobalDispatcher } = require('../..')
 const { createServer } = require('node:http')
