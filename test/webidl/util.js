@@ -2,7 +2,7 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
-const { webidl } = require('../../lib/web/fetch/webidl')
+const { webidl } = require('../../lib/web/webidl')
 
 test('Type(V)', () => {
   const Type = webidl.util.Type
