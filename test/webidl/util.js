@@ -4,7 +4,7 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { webidl } = require('../../lib/web/webidl')
 
-test('Type(V)', () => {
+test('webidl.util.Type(V)', () => {
   const Type = webidl.util.Type
   const Types = webidl.util.Types
 
@@ -17,9 +17,50 @@ test('Type(V)', () => {
   assert.equal(Type(1n), Types.BIGINT)
   assert.equal(Type({ a: 'b' }), Types.OBJECT)
   assert.equal(Type(function () {}), Types.OBJECT)
+  assert.equal(Type([1, 2, 3]), Types.OBJECT)
 })
 
-test('ConvertToInt(V)', () => {
+test('webidl.util.Stringify(V)', (t) => {
+  const circular = {}
+  circular.circular = circular
+
+  const pairs = [
+    [Object.create(null), '[Object: null prototype] {}'],
+    [{ a: 'b' }, "{ a: 'b' }"],
+    [[1, 2, 3], '[ 1, 2, 3 ]'],
+    [Symbol('sym'), 'Symbol(sym)'],
+    [Symbol.iterator, 'Symbol(Symbol.iterator)'], // well-known symbol
+    [true, 'true'],
+    [false, 'false'],
+    [1.23, '1.23'],
+    [Infinity, 'Infinity'],
+    [-Infinity, '-Infinity'],
+    [NaN, 'NaN'],
+    [0, '0'],
+    [1, '1'],
+    [1.5, '1.5'],
+    [1e10, '10000000000'],
+    [1e-10, '1e-10'],
+    [1e+10, '10000000000'],
+    [1e-10, '1e-10'],
+    [0, '0'],
+    [-0, '0'],
+    [1n, '1n'],
+    ['hello', '"hello"'],
+    ['', '""'],
+    [function () {}, '[Function (anonymous)]'],
+    [function named () {}, '[Function: named]'],
+    [null, 'null'],
+    [undefined, 'undefined'],
+    [circular, '<ref *1> { circular: [Circular *1] }']
+  ]
+
+  for (const [value, expected] of pairs) {
+    assert.deepStrictEqual(webidl.util.Stringify(value), expected)
+  }
+})
+
+test('webidl.util.ConvertToInt(V)', () => {
   const ConvertToInt = webidl.util.ConvertToInt
 
   assert.equal(ConvertToInt(63, 64, 'signed'), 63, 'odd int')

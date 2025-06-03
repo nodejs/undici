@@ -78,7 +78,7 @@ interface WebidlUtil {
   ): number
 
   /**
-   * @see https://webidl.spec.whatwg.org/#abstract-opdef-converttoint
+   * @see https://webidl.spec.whatwg.org/#abstract-opdef-integerpart
    */
   IntegerPart (N: number): number
 
