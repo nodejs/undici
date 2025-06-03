@@ -185,20 +185,21 @@ interface WebidlConverters {
   [Key: string]: (...args: any[]) => unknown
 }
 
-type IsAssertion<T> = (arg: any) => arg is T
+type WebidlIsFunction<T> = (arg: any) => arg is T
 
 interface WebidlIs {
-  Request: IsAssertion<undici.Request>
-  Response: IsAssertion<undici.Response>
-  ReadableStream: IsAssertion<ReadableStream>
-  Blob: IsAssertion<Blob>
-  URLSearchParams: IsAssertion<URLSearchParams>
-  File: IsAssertion<File>
-  FormData: IsAssertion<undici.FormData>
-  URL: IsAssertion<URL>
-  WebSocketError: IsAssertion<undici.WebSocketError>
-  AbortSignal: IsAssertion<AbortSignal>
-  MessagePort: IsAssertion<MessagePort>
+  Request: WebidlIsFunction<undici.Request>
+  Response: WebidlIsFunction<undici.Response>
+  ReadableStream: WebidlIsFunction<ReadableStream>
+  Blob: WebidlIsFunction<Blob>
+  URLSearchParams: WebidlIsFunction<URLSearchParams>
+  File: WebidlIsFunction<File>
+  FormData: WebidlIsFunction<undici.FormData>
+  URL: WebidlIsFunction<URL>
+  WebSocketError: WebidlIsFunction<undici.WebSocketError>
+  AbortSignal: WebidlIsFunction<AbortSignal>
+  MessagePort: WebidlIsFunction<MessagePort>
+  USVString: WebidlIsFunction<string>
 }
 
 export interface Webidl {
@@ -236,7 +237,7 @@ export interface Webidl {
    * Similar to {@link Webidl.brandCheck} but allows skipping the check if third party
    * interfaces are allowed.
    */
-  interfaceConverter <Interface>(typeCheck: IsAssertion<Interface>, name: string): (
+  interfaceConverter <Interface>(typeCheck: WebidlIsFunction<Interface>, name: string): (
     V: unknown,
     prefix: string,
     argument: string
