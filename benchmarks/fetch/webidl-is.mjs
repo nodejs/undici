@@ -1,6 +1,6 @@
 import { bench, run, barplot } from 'mitata'
 import { Headers, FormData } from '../../index.js'
-import { webidl } from '../../lib/web/fetch/webidl.js'
+import { webidl } from '../../lib/web/webidl.js'
 
 const headers = new Headers()
 const fd = new FormData()
