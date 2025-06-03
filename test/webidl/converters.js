@@ -224,3 +224,34 @@ test('recordConverter', () => {
     new TypeError('prefix: argument ("Null") is not an Object.')
   )
 })
+
+test('webidl.converters.boolean', () => {
+  assert.strictEqual(webidl.converters.boolean(null), false)
+  assert.strictEqual(webidl.converters.boolean(undefined), false)
+
+  assert.strictEqual(webidl.converters.boolean(true), true)
+  assert.strictEqual(webidl.converters.boolean(false), false)
+
+  assert.strictEqual(webidl.converters.boolean(''), false)
+  assert.strictEqual(webidl.converters.boolean('true'), true)
+  assert.strictEqual(webidl.converters.boolean('false'), true)
+
+  assert.strictEqual(webidl.converters.boolean(1), true)
+  assert.strictEqual(webidl.converters.boolean(0), false)
+  assert.strictEqual(webidl.converters.boolean(-0), false)
+  assert.strictEqual(webidl.converters.boolean(NaN), false)
+  assert.strictEqual(webidl.converters.boolean(Infinity), true)
+  assert.strictEqual(webidl.converters.boolean(-Infinity), true)
+
+  assert.strictEqual(webidl.converters.boolean(0n), false)
+  assert.strictEqual(webidl.converters.boolean(1n), true)
+
+  assert.strictEqual(webidl.converters.boolean({}), true)
+  assert.strictEqual(webidl.converters.boolean([]), true)
+  assert.strictEqual(webidl.converters.boolean(() => {}), true)
+  assert.strictEqual(webidl.converters.boolean(/a/), true)
+  assert.strictEqual(webidl.converters.boolean(new Date()), true)
+  assert.strictEqual(webidl.converters.boolean(new Map()), true)
+  assert.strictEqual(webidl.converters.boolean(new Set()), true)
+  assert.strictEqual(webidl.converters.boolean(new Date()), true)
+})
