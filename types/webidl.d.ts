@@ -16,9 +16,12 @@ interface ConvertToIntOpts {
 }
 
 interface WebidlErrors {
+  /**
+   * @description Instantiate an error
+   */
   exception (opts: { header: string, message: string }): TypeError
   /**
-   * @description Throw an error when conversion from one type to another has failed
+   * @description Instantiate an error when conversion from one type to another has failed
    */
   conversionFailed (opts: {
     prefix: string
