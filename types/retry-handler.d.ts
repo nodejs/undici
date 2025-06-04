@@ -89,14 +89,14 @@ declare namespace RetryHandler {
      *
      * @type {Dispatcher.HttpMethod[]}
      * @memberof RetryOptions
-     * @default ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE'],
+     * @default ['GET','HEAD','OPTIONS','PUT','DELETE','TRACE'],
      */
     methods?: Dispatcher.HttpMethod[];
     /**
      * Error codes to be retried. e.g. `ECONNRESET`, `ENOTFOUND`, `ETIMEDOUT`, `ECONNREFUSED`, etc.
      *
      * @type {string[]}
-     * @default ['ECONNRESET','ECONNREFUSED','ENOTFOUND','ENETDOWN','ENETUNREACH','EHOSTDOWN','EHOSTUNREACH','EPIPE']
+     * @default ['ECONNRESET','ECONNREFUSED','ENOTFOUND','ENETDOWN','ENETUNREACH','EHOSTDOWN','EHOSTUNREACH','EPIPE','UND_ERR_SOCKET']
      */
     errorCodes?: string[];
     /**
@@ -104,7 +104,7 @@ declare namespace RetryHandler {
      *
      * @type {number[]}
      * @memberof RetryOptions
-     * @default [500, 502, 503, 504, 429],
+     * @default [429,500,502,503,504],
      */
     statusCodes?: number[];
   }
