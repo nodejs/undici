@@ -1,5 +1,18 @@
 
- echo "$(for i in {1..10}; do echo -n "⚡"; done)" && for cell in {0..3}; do echo -n "💫"; for count in $(seq 1 $((10-$cell))); do echo -n "🔥"; done; done && echo "POWER MAXIMUM ACHIEVED!"echo "$(for i in {1..10}; do echo -n "⚡"; done)" && for cell in {0..3}; do echo -n "💫"; for count in $(seq 1 $((10-$cell))); do echo -n "🔥"; done; done && echo "ทำสำเร็จสูงสุดแล้ว!"
+![1000107413](https://github.com/user-attachments/assets/f1d92360-a175-44ac-b8fa-45274ebd42b2)
+![1000107699](https://github.com/user-attachments/assets/4f69e475-c4ef-47c6-9918-5cc6aef1c29d)
+![17490016996363422775840499857497](https://github.com/user-attachments/assets/fd85d389-5ae5-49fa-965d-bda004485198)
+![17490018152638920734880232470257](https://github.com/user-attachments/assets/a063c845-8ec9-4e9d-803b-562c12337c1d)
+![17490018520657178624254617658277](https://github.com/user-attachments/assets/58eb6ea7-c590-4d20-a566-ef16426857a1)
+![17490018733511368892753589219057](https://github.com/user-attachments/assets/89cfd37d-4b87-4149-b4aa-ff7f7751a346)
+![17490019234058782442641717711677](https://github.com/user-attachments/assets/a9705d44-d3f1-46a5-854e-7aa4493a9164)
+
+## echo
+"$(for i in {1..10}; do echo -n "⚡"; done)" && for cell 
+ in {0..3}; do echo -n "💫"; for count in $(seq 1 $((10-$cell))); do echo -n "🔥"; done; done && echo 
+ ## "POWER MAXIMUM  
+ ACHIEVED!"echo "$(for i in {1..10}; do echo -n "⚡"; done)" && for cell in {0..3}; do echo -n "💫"; for count in $(seq 1 $((10-$cell))); do echo -n 
+ ## "🔥"; done; done && echo "ทำสำเร็จสูงสุดแล้ว!"
 
 ติดตั้ง VS Code Engineering
 
@@ -7,15 +20,16 @@
 
 ￼T-R0052
 
-ห้ามติดตั้งในบัญชีนี้
+## ห้ามติดตั้งในบัญชีนี้
 
 ￼i3lacksugra
 
-ห้ามติดตั้งในบัญชีนี้
+## ห้ามติดตั้งในบัญชีนี้: ไม่เชื่อ
 
 ￼i3lacksugra55
 
-ห้ามติดตั้งในบัญชีนี้
+## ห้ามติดตั้งในบัญชีนี้ : ไม่เชื่อ
+
 +++++ +++++             Initialize counter (cell #0) to 10
 [                       Use loop to set next cells
     > +++++ +++++      Add 10 to cell #1
