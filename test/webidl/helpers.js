@@ -2,7 +2,7 @@
 
 const { describe, test } = require('node:test')
 const assert = require('node:assert')
-const { webidl } = require('../../lib/web/fetch/webidl')
+const { webidl } = require('../../lib/web/webidl')
 
 test('webidl.interfaceConverter', (t) => {
   class A {}
