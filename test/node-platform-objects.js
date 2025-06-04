@@ -18,16 +18,19 @@ test('unserializable web instances should be uncloneable if node exposes the api
       { Uncloneable: MessageEvent, value: 'dummy event', brand: 'MessageEvent' },
       { Uncloneable: CloseEvent, value: 'dummy event', brand: 'CloseEvent' },
       { Uncloneable: ErrorEvent, value: 'dummy event', brand: 'ErrorEvent' },
-      { Uncloneable: EventSource, value: 'http://localhost', brand: 'EventSource' },
+      { Uncloneable: EventSource, value: 'http://localhost', brand: 'EventSource', doneCb: (entity) => entity.close() },
       { Uncloneable: Headers, brand: 'Headers' },
       { Uncloneable: WebSocket, value: 'http://localhost', brand: 'WebSocket' },
       { Uncloneable: Cache, value: kConstruct, brand: 'Cache' },
       { Uncloneable: CacheStorage, value: kConstruct, brand: 'CacheStorage' }
     ]
     uncloneables.forEach((platformEntity) => {
-      t.throws(() => structuredClone(new platformEntity.Uncloneable(platformEntity.value)),
+      const entity = new platformEntity.Uncloneable(platformEntity.value)
+      t.throws(() => structuredClone(entity),
         DOMException,
         `Cloning ${platformEntity.brand} should throw DOMException`)
+
+      platformEntity.doneCb?.(entity)
     })
   }
 })

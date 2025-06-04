@@ -16,7 +16,7 @@ test('parallel fetch with the same AbortController works as expected', async (t)
     bug: 'Ensure request is not aborted before enqueueing bytes into stream.'
   }
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.statusCode = 200
     res.end(JSON.stringify(body))
   })

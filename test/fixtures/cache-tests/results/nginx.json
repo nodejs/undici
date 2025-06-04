@@ -136,8 +136,8 @@
     "Response 2 comes from cache"
   ],
   "ccreq-ma1": [
-    "AbortError",
-    "This operation was aborted"
+    "Assertion",
+    "Response 2 comes from cache"
   ],
   "ccreq-magreaterage": [
     "Assertion",
@@ -147,13 +147,10 @@
     "Assertion",
     "Response 2 does not come from cache"
   ],
-  "ccreq-max-stale-age": [
-    "AbortError",
-    "This operation was aborted"
-  ],
+  "ccreq-max-stale-age": true,
   "ccreq-min-fresh": [
-    "AbortError",
-    "This operation was aborted"
+    "Assertion",
+    "Response 2 comes from cache"
   ],
   "ccreq-min-fresh-age": [
     "Assertion",
@@ -184,7 +181,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Tue, 21 Jan 2025 00:19:03 GMT\""
+    "Response 2 header Expires is \"null\", not \"Wed, 29 Jan 2025 03:36:49 GMT\""
   ],
   "cdn-fresh-cc-nostore": [
     "Assertion",
@@ -251,7 +248,10 @@
     "Response 2 Age header not present."
   ],
   "cdn-remove-header": true,
-  "conditional-304-etag": true,
+  "conditional-304-etag": [
+    "AbortError",
+    "This operation was aborted"
+  ],
   "conditional-etag-forward": [
     "Assertion",
     "Request 1 header If-None-Match is \"undefined\", not \"\"abcdef\"\""
@@ -273,10 +273,7 @@
     "Assertion",
     "Request 2 header If-None-Match is \"abcdef\", not \"\"abcdef\"\""
   ],
-  "conditional-etag-strong-respond": [
-    "AbortError",
-    "This operation was aborted"
-  ],
+  "conditional-etag-strong-respond": true,
   "conditional-etag-strong-respond-multiple-first": true,
   "conditional-etag-strong-respond-multiple-last": true,
   "conditional-etag-strong-respond-multiple-second": true,
@@ -649,11 +646,11 @@
   "other-cookie": true,
   "other-date-update": [
     "Assertion",
-    "Response 2 header Date is \"Tue, 21 Jan 2025 00:18:57 GMT\", not \"Tue, 21 Jan 2025 00:18:54 GMT\""
+    "Response 2 header Date is \"Wed, 29 Jan 2025 03:36:43 GMT\", not \"Wed, 29 Jan 2025 03:36:40 GMT\""
   ],
   "other-date-update-expires": [
     "Assertion",
-    "Response 2 header Date is \"Tue, 21 Jan 2025 00:18:57 GMT\", not \"Tue, 21 Jan 2025 00:18:54 GMT\""
+    "Response 2 header Date is \"Wed, 29 Jan 2025 03:36:43 GMT\", not \"Wed, 29 Jan 2025 03:36:40 GMT\""
   ],
   "other-date-update-expires-update": true,
   "other-fresh-content-disposition-attachment": true,
@@ -811,8 +808,8 @@
   "vary-no-match": true,
   "vary-normalise-combine": true,
   "vary-normalise-lang-case": [
-    "Assertion",
-    "Response 2 does not come from cache"
+    "AbortError",
+    "This operation was aborted"
   ],
   "vary-normalise-lang-order": [
     "Assertion",
@@ -841,12 +838,12 @@
   ],
   "vary-syntax-star": true,
   "vary-syntax-star-foo": [
-    "AbortError",
-    "This operation was aborted"
+    "Assertion",
+    "Response 2 comes from cache"
   ],
   "vary-syntax-star-star": [
-    "AbortError",
-    "This operation was aborted"
+    "Assertion",
+    "Response 2 comes from cache"
   ],
   "vary-syntax-star-star-lines": true
 }

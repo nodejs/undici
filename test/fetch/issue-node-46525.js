@@ -11,7 +11,7 @@ test('No warning when reusing AbortController', async (t) => {
     throw new Error('Got warning')
   }
 
-  const server = createServer((req, res) => res.end()).listen(0)
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => res.end()).listen(0)
 
   await once(server, 'listening')
 
