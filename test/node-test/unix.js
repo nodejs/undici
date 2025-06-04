@@ -14,7 +14,7 @@ test('http unix get', { skip }, async (t) => {
   let client
   const p = tspl(t, { plan: 7 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.equal('/', req.url)
     p.equal('GET', req.method)
     p.equal('localhost', req.headers.host)
@@ -63,7 +63,7 @@ test('http unix get pool', { skip }, async (t) => {
   let client
   const p = tspl(t, { plan: 7 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.equal('/', req.url)
     p.equal('GET', req.method)
     p.equal('localhost', req.headers.host)
@@ -112,7 +112,7 @@ test('https get with tls opts', { skip }, async (t) => {
   let client
   const p = tspl(t, { plan: 6 })
 
-  const server = https.createServer(pem, (req, res) => {
+  const server = https.createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
     p.equal('/', req.url)
     p.equal('GET', req.method)
     res.setHeader('content-type', 'text/plain')

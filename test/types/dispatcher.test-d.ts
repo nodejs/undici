@@ -22,15 +22,23 @@ expectAssignable<Dispatcher>(new Dispatcher())
       yield ['hello', 'world']
     }
   }
+  const recordHeadersString: Record<string, string> = { hello: 'world' }
+  const recordHeadersStringArray: Record<string, string[]> = { foo: ['hello', 'world'] }
+  const recordHeadersUndefined: Record<string, undefined> = { bar: undefined }
 
   // dispatch
   expectAssignable<boolean>(dispatcher.dispatch({ path: '', method: 'GET' }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET' }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: { authorization: undefined } }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: [] }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: ['hello', 'world'] }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: {} }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: nodeCoreHeaders }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: null, reset: true }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: undefined, reset: true }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: recordHeadersString, reset: true }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: recordHeadersStringArray, reset: true }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: recordHeadersUndefined, reset: true }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: headerInstanceHeaders, reset: true }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: mapHeaders, reset: true }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: iteratorHeaders, reset: true }, {}))
@@ -50,6 +58,19 @@ expectAssignable<Dispatcher>(new Dispatcher())
   }))
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', responseHeaders: 'raw' }))
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', responseHeaders: null }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: { authorization: undefined } }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: [] }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: ['hello', 'world'] }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: {} }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: nodeCoreHeaders }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: null }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: undefined }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: recordHeadersString }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: recordHeadersStringArray }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: recordHeadersUndefined }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: headerInstanceHeaders }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: mapHeaders }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: iteratorHeaders }))
 
   // request
   expectAssignable<Promise<Dispatcher.ResponseData>>(dispatcher.request({ origin: '', path: '', method: 'GET', maxRedirections: 0 }))
@@ -156,6 +177,19 @@ expectAssignable<Dispatcher>(new Dispatcher())
   }))
   expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', responseHeaders: 'raw' }))
   expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', responseHeaders: null }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: { authorization: undefined } }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: [] }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: ['hello', 'world'] }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: {} }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: nodeCoreHeaders }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: null }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: undefined }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: recordHeadersString }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: recordHeadersStringArray }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: recordHeadersUndefined }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: headerInstanceHeaders }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: mapHeaders }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: iteratorHeaders }))
 
   // close
   expectAssignable<Promise<void>>(dispatcher.close())

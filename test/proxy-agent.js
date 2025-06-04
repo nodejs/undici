@@ -793,6 +793,53 @@ test('Proxy via HTTP to HTTP endpoint', async (t) => {
   proxyAgent.close()
 })
 
+test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
+  t = tspl(t, { plan: 3 })
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+
+  server.on('request', function (req, res) {
+    t.ok(!req.connection.encrypted)
+    const headers = { host: req.headers.host, connection: req.headers.connection }
+    res.end(JSON.stringify(headers))
+  })
+
+  server.on('secureConnection', () => {
+    t.fail('server is http')
+  })
+
+  proxy.on('secureConnection', () => {
+    t.fail('proxy is http')
+  })
+
+  proxy.on('connect', () => {
+    t.fail(true, 'connect to proxy should unreachable if proxyTunnel is false')
+  })
+
+  proxy.on('request', function (req) {
+    const bits = { method: req.method, url: req.url }
+    t.deepStrictEqual(bits, {
+      method: 'GET',
+      url: `${serverUrl}/`
+    })
+  })
+
+  const data = await request(serverUrl, { dispatcher: proxyAgent })
+  const json = await data.body.json()
+  t.deepStrictEqual(json, {
+    host: `localhost:${server.address().port}`,
+    connection: 'keep-alive'
+  })
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 test('Proxy via HTTPS to HTTP fails on wrong SNI', async (t) => {
   t = tspl(t, { plan: 3 })
   const server = await buildServer()
@@ -875,7 +922,7 @@ test('ProxyAgent keeps customized host in request headers - #3019', async (t) =>
 
 function buildServer () {
   return new Promise((resolve) => {
-    const server = createServer()
+    const server = createServer({ joinDuplicateHeaders: true })
     server.listen(0, () => resolve(server))
   })
 }
@@ -886,7 +933,8 @@ function buildSSLServer () {
       certs.root.crt
     ],
     key: certs.server.key,
-    cert: certs.server.crt
+    cert: certs.server.crt,
+    joinDuplicateHeaders: true
   }
   return new Promise((resolve) => {
     const server = https.createServer(serverOptions)
@@ -898,7 +946,7 @@ function buildProxy (listener) {
   return new Promise((resolve) => {
     const server = listener
       ? createProxy(createServer(listener))
-      : createProxy(createServer())
+      : createProxy(createServer({ joinDuplicateHeaders: true }))
     server.listen(0, () => resolve(server))
   })
 }
@@ -909,7 +957,8 @@ function buildSSLProxy () {
       certs.root.crt
     ],
     key: certs.proxy.key,
-    cert: certs.proxy.crt
+    cert: certs.proxy.crt,
+    joinDuplicateHeaders: true
   }
 
   return new Promise((resolve) => {
