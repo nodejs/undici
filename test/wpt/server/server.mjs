@@ -345,8 +345,8 @@ const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => 
       break
     }
     case '/fetch/content-encoding/zstd/resources/bad-zstd-body.py': {
-      res.setHeader('Content-Encoding', 'br')
-      res.end('not actually br')
+      res.setHeader('Content-Encoding', 'zstd')
+      res.end('not actually zstd')
       break
     }
     case '/fetch/api/resources/dump-authorization-header.py': {
