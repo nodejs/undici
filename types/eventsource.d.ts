@@ -56,6 +56,7 @@ export declare const EventSource: {
 }
 
 interface EventSourceInit {
-  withCredentials?: boolean,
+  withCredentials?: boolean
   dispatcher?: Dispatcher
+  reconnectionTime?: number
 }
