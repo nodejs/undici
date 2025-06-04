@@ -218,6 +218,6 @@ jobs:
       pull-requests: write
     steps:
       - name: Merge Dependabot PR
-        uses: fastify/github-action-merge-dependabot@c3bde0759d4f24db16f7b250b2122bc2df57e817 # v3.11.0
+        uses: fastify/github-action-merge-dependabot@e820d631adb1d8ab16c3b93e5afe713450884a4a # v3.11.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
