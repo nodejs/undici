@@ -72,7 +72,7 @@ jobs:
         run: sudo apt-get install ninja-build
 
       - name: ccache
-        uses: hendrikmuhs/ccache-action@ed74d11c0b343532753ecead8a951bb09bb34bc9 #v1.2.14
+        uses: hendrikmuhs/ccache-action@63069e3931dedbf3b63792097479563182fe70d1 #v1.2.18
         with:
           key: node(external_undici)${{ matrix.version }}
 
