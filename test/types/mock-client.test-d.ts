@@ -37,6 +37,9 @@ import { MockInterceptor } from '../../types/mock-interceptor'
 
   // close
   expectAssignable<Promise<void>>(mockClient.close())
+
+  // cleanMocks
+  expectAssignable<void>(mockClient.cleanMocks())
 }
 
 expectAssignable<MockClient>(new MockClient('', { agent: new MockAgent({ connections: 1 }) }))
