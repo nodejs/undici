@@ -100,7 +100,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Wed, 29 Jan 2025 03:37:47 GMT\""
+    "Response 2 header Expires is \"null\", not \"Sat, 24 May 2025 02:02:37 GMT\""
   ],
   "cdn-fresh-cc-nostore": [
     "Assertion",
@@ -423,6 +423,10 @@
   "heuristic-delta-60": true,
   "heuristic-delta-600": true,
   "heuristic-delta-86400": true,
+  "interim-102": true,
+  "interim-103": true,
+  "interim-no-header-reuse": true,
+  "interim-not-cached": true,
   "invalidate-DELETE": true,
   "invalidate-DELETE-cl": [
     "Assertion",
@@ -493,11 +497,11 @@
   "other-cookie": true,
   "other-date-update": [
     "Assertion",
-    "Response 2 header Date is \"Wed, 29 Jan 2025 03:37:41 GMT\", not \"Wed, 29 Jan 2025 03:37:38 GMT\""
+    "Response 2 header Date is \"Sat, 24 May 2025 02:02:31 GMT\", not \"Sat, 24 May 2025 02:02:28 GMT\""
   ],
   "other-date-update-expires": [
     "Assertion",
-    "Response 2 header Date is \"Wed, 29 Jan 2025 03:37:41 GMT\", not \"Wed, 29 Jan 2025 03:37:38 GMT\""
+    "Response 2 header Date is \"Sat, 24 May 2025 02:02:31 GMT\", not \"Sat, 24 May 2025 02:02:28 GMT\""
   ],
   "other-date-update-expires-update": true,
   "other-fresh-content-disposition-attachment": true,
@@ -557,10 +561,7 @@
     "TypeError",
     "fetch failed"
   ],
-  "stale-close-proxy-revalidate": [
-    "TypeError",
-    "fetch failed"
-  ],
+  "stale-close-proxy-revalidate": true,
   "stale-close-s-maxage=2": [
     "TypeError",
     "fetch failed"
@@ -569,7 +570,10 @@
     "TypeError",
     "fetch failed"
   ],
-  "stale-sie-close": true,
+  "stale-sie-close": [
+    "TypeError",
+    "fetch failed"
+  ],
   "stale-warning-become": [
     "TypeError",
     "fetch failed"

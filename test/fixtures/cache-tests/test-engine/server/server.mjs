@@ -39,12 +39,11 @@ let server
 if (protocol.toLowerCase() === 'https') {
   const options = {
     key: fs.readFileSync(process.env.npm_config_keyfile),
-    cert: fs.readFileSync(process.env.npm_config_certfile),
-    joinDuplicateHeaders: true
+    cert: fs.readFileSync(process.env.npm_config_certfile)
   }
   server = https.createServer(options, handleMain)
 } else {
-  server = http.createServer({ joinDuplicateHeaders: true }, handleMain)
+  server = http.createServer(handleMain)
 }
 server.on('listening', () => {
   const host = (server.address().family === 'IPv6')
