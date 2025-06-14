@@ -21,9 +21,12 @@ import {
 // TODO(@KhafraDev): export these in index.js
 import { Cache } from '../../../lib/web/cache/cache.js'
 import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
+import { Agent, setGlobalDispatcher } from '../../../index.js'
 import { webcrypto } from 'node:crypto'
 
 const { initScripts, meta, test, url, path } = workerData
+
+setGlobalDispatcher(new Agent({ pipelining: 1 }))
 
 process.on('uncaughtException', (err) => {
   parentPort.postMessage({
