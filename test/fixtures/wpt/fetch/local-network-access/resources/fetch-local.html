@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>Fetch Private resource</title>
+<title>Fetch Local resource</title>
 
 <script src="/resources/testdriver.js"></script>
 <script src="/resources/testdriver-vendor.js"></script>
@@ -9,7 +9,7 @@
 "use strict";
 
 // Set the 'local-network-access' permission then attempt to fetch a resource
-// in the private address space.
+// in the local address space.
 //
 // By default, 'local-network-access' permission is set to 'granted'. This can
 // be changed by passing in a different value via the 'permission' URL parameter.
@@ -30,7 +30,7 @@ Promise.resolve().then(async () => {
   await test_driver.set_permission({ name: 'local-network-access' }, permission_value);
 
   const target = {
-    server: Server.HTTPS_PRIVATE,
+    server: Server.HTTPS_LOCAL,
     behavior: { response: ResponseBehavior.allowCrossOrigin() },
   };
   const targetUrl = resolveTargetUrl(target);
