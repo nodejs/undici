@@ -1,20 +1,8 @@
-import { randomFillSync, randomBytes } from 'node:crypto'
-import { bench, group, run } from 'mitata'
+import { randomBytes } from 'node:crypto'
+import { bench, summary, run } from 'mitata'
+import { generateMask } from '../../lib/web/websocket/frame.js'
 
-const BUFFER_SIZE = 16384
-
-const buf = Buffer.allocUnsafe(BUFFER_SIZE)
-let bufIdx = BUFFER_SIZE
-
-function generateMask () {
-  if (bufIdx === BUFFER_SIZE) {
-    bufIdx = 0
-    randomFillSync(buf, 0, BUFFER_SIZE)
-  }
-  return [buf[bufIdx++], buf[bufIdx++], buf[bufIdx++], buf[bufIdx++]]
-}
-
-group('generate', () => {
+summary(() => {
   bench('generateMask', () => generateMask())
   bench('crypto.randomBytes(4)', () => randomBytes(4))
 })

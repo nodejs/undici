@@ -50,4 +50,20 @@ function printResults (results) {
   return console.table(rows)
 }
 
-module.exports = { makeParallelRequests, printResults }
+/**
+ * @param {number} num
+ * @returns {string}
+ */
+function formatBytes (num) {
+  if (!Number.isFinite(num)) {
+    throw new Error('invalid number')
+  }
+
+  const prefixes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']
+
+  const idx = Math.min(Math.floor(Math.log(num) / Math.log(1024)), prefixes.length - 1)
+
+  return `${(num / Math.pow(1024, idx)).toFixed(2)}${prefixes[idx]}`
+}
+
+module.exports = { makeParallelRequests, printResults, formatBytes }
