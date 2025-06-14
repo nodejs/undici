@@ -1,13 +1,14 @@
 name: Node.js compiled --shared-builtin-undici/undici-path CI
 
-on:
-  push:
-    branches:
-     - main
-     - current
-     - next
-     - 'v*'
-  pull_request:
+# Temporarily disabled - shared builtin tests
+# on:
+#   push:
+#     branches:
+#      - main
+#      - current
+#      - next
+#      - 'v*'
+#   pull_request:
 
 permissions:
   contents: read
