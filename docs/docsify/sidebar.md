@@ -18,6 +18,7 @@
   * [MockClient](/docs/api/MockClient.md "Undici API - MockClient")
   * [MockPool](/docs/api/MockPool.md "Undici API - MockPool")
   * [MockAgent](/docs/api/MockAgent.md "Undici API - MockAgent")
+  * [SnapshotAgent](/docs/api/SnapshotAgent.md "Undici API - SnapshotAgent")
   * [MockCallHistory](/docs/api/MockCallHistory.md "Undici API - MockCallHistory")
   * [MockCallHistoryLog](/docs/api/MockCallHistoryLog.md "Undici API - MockCallHistoryLog")
   * [MockErrors](/docs/api/MockErrors.md "Undici API - MockErrors")
