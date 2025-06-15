@@ -43,6 +43,17 @@ function continueHandleTest (uuid, request, response, requests, serverState) {
   const previousConfig = requests[reqNum - 2]
   const now = Date.now()
 
+  const interimResponses = reqConfig.interim_responses || []
+  for (const [status, headers = []] of interimResponses) {
+    if (status === 102) {
+      response.writeProcessing()
+    } else if (status === 103) {
+      response.writeEarlyHints(Object.fromEntries(headers))
+    } else {
+      console.log(`ERROR: Sending ${status} is not yet supported`)
+    }
+  }
+
   // Determine what the response status should be
   let httpStatus = reqConfig.response_status || [200, 'OK']
   if ('expected_type' in reqConfig && reqConfig.expected_type.endsWith('validated')) {
@@ -114,5 +125,5 @@ function continueHandleTest (uuid, request, response, requests, serverState) {
   }
 
   // logging
-  if (reqConfig.dump) logResponse(response, srvReqNum)
+  if (reqConfig.dump) logResponse(response, interimResponses, srvReqNum)
 }
