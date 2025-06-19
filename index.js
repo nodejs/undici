@@ -182,7 +182,7 @@ const { EventSource } = require('./lib/web/eventsource/eventsource')
 
 module.exports.EventSource = EventSource
 
-module.exports.install = function install () {
+function install () {
   globalThis.fetch = module.exports.fetch
   globalThis.Headers = module.exports.Headers
   globalThis.Response = module.exports.Response
@@ -194,3 +194,5 @@ module.exports.install = function install () {
   globalThis.MessageEvent = module.exports.MessageEvent
   globalThis.EventSource = module.exports.EventSource
 }
+
+module.exports.install = install
