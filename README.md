@@ -182,6 +182,44 @@ for await (const data of body) { console.log('data', data) }
 console.log('trailers', trailers)
 ```
 
+## Global Installation
+
+Undici provides an `install()` function to add all WHATWG fetch classes to `globalThis`, making them available globally:
+
+```js
+import { install } from 'undici'
+
+// Install all WHATWG fetch classes globally
+install()
+
+// Now you can use fetch classes globally without importing
+const response = await fetch('https://api.example.com/data')
+const data = await response.json()
+
+// All classes are available globally:
+const headers = new Headers([['content-type', 'application/json']])
+const request = new Request('https://example.com')
+const formData = new FormData()
+const ws = new WebSocket('wss://example.com')
+const eventSource = new EventSource('https://example.com/events')
+```
+
+The `install()` function adds the following classes to `globalThis`:
+
+- `fetch` - The fetch function
+- `Headers` - HTTP headers management
+- `Response` - HTTP response representation
+- `Request` - HTTP request representation  
+- `FormData` - Form data handling
+- `WebSocket` - WebSocket client
+- `CloseEvent`, `ErrorEvent`, `MessageEvent` - WebSocket events
+- `EventSource` - Server-sent events client
+
+This is useful for:
+- Polyfilling environments that don't have fetch
+- Ensuring consistent fetch behavior across different Node.js versions
+- Making undici's implementations available globally for libraries that expect them
+
 ## Body Mixins
 
 The `body` mixins are the most common way to format the request/response body. Mixins include:
