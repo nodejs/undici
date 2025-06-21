@@ -72,11 +72,61 @@ export function logRequest (url, init, reqNum) {
   console.log('')
 }
 
-export function logResponse (response, reqNum) {
+export function logResponse (response, interimResponses, reqNum) {
   console.log(`${defines.GREEN}=== Client response ${reqNum}${defines.NC}`)
+  for (const [statusCode, headers] of interimResponses) {
+    console.log(`    HTTP ${statusCode}`)
+    for (const [key, value] of Object.entries(headers)) {
+      console.log(`    ${key}: ${value}`)
+    }
+    console.log('')
+  }
   console.log(`    HTTP ${response.status} ${response.statusText}`)
   response.headers.forEach((hvalue, hname) => { // for some reason, node-fetch reverses these
     console.log(`    ${hname}: ${hvalue}`)
   })
   console.log('')
+}
+
+class InterimResponsesCollectingHandler {
+  #handler
+  #interimResponses
+
+  constructor (handler, interimResponses) {
+    this.#handler = handler
+    this.#interimResponses = interimResponses
+  }
+
+  onRequestStart (controller, context) {
+    this.#handler.onRequestStart?.(controller, context)
+  }
+
+  onRequestUpgrade (controller, statusCode, headers, socket) {
+    this.#handler.onRequestUpgrade?.(controller, statusCode, headers, socket)
+  }
+
+  onResponseStart (controller, statusCode, headers, statusMessage) {
+    if (statusCode < 200) this.#interimResponses.push([statusCode, headers])
+    this.#handler.onResponseStart?.(controller, statusCode, headers, statusMessage)
+  }
+
+  onResponseData (controller, data) {
+    this.#handler.onResponseData?.(controller, data)
+  }
+
+  onResponseEnd (controller, trailers) {
+    this.#handler.onResponseEnd?.(controller, trailers)
+  }
+
+  onResponseError (controller, err) {
+    this.#handler.onResponseError?.(controller, err)
+  }
+}
+
+export function interimResponsesCollectingInterceptor (collectInto) {
+  return (dispatch) => {
+    return (opts, handler) => {
+      return dispatch(opts, new InterimResponsesCollectingHandler(handler, collectInto))
+    }
+  }
 }
