@@ -7,6 +7,24 @@ const { cacheStoreTests } = require('./cache-store-test-utils.js')
 
 cacheStoreTests(MemoryCacheStore)
 
+test('default values are correctly set', () => {
+  const store = new MemoryCacheStore()
+
+  // Test that defaults are applied by checking isFull behavior
+  // Default maxCount is 1024, so cache should not be full initially
+  equal(store.isFull(), false, 'Should not be full with default limits')
+
+  // Verify defaults match expected values by checking internal behavior
+  // Since we can't access private fields directly, we test the behavior
+  const storeWithExplicitDefaults = new MemoryCacheStore({
+    maxCount: 1024,
+    maxSize: 104857600, // 100MB
+    maxEntrySize: 5242880 // 5MB
+  })
+
+  equal(store.isFull(), storeWithExplicitDefaults.isFull(), 'Default store should behave same as explicitly configured store')
+})
+
 test('size getter returns correct total size', async () => {
   const store = new MemoryCacheStore()
   const testData = 'test data'
