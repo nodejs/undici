@@ -1104,7 +1104,7 @@ The `cache` interceptor implements client-side response caching as described in
 - `store` - The [`CacheStore`](/docs/docs/api/CacheStore.md) to store and retrieve responses from. Default is [`MemoryCacheStore`](/docs/docs/api/CacheStore.md#memorycachestore).
 - `methods` - The [**safe** HTTP methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1) to cache the response of.
 - `cacheByDefault` - The default expiration time to cache responses by if they don't have an explicit expiration. If this isn't present, responses without explicit expiration will not be cached. Default `undefined`.
-- `type` - The type of cache for Undici to act as. Can be `shared` or `private`. Default `shared`.
+- `type` - The type of cache for Undici to act as. Can be `shared` or `private`. Default `shared`. `private` means privately cacheable responses will be cached and potentially shared with other users of your application.
 
 ## Instance Events
 
