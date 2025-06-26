@@ -440,3 +440,43 @@ test('MockClient - basic intercept with MockClient.request', async (t) => {
     foo: 'bar'
   })
 })
+
+test('MockClient - cleans mocks', async (t) => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  after(() => server.close())
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent({ connections: 1 })
+  after(() => mockAgent.close())
+
+  const mockClient = mockAgent.get(baseUrl)
+  t.ok(mockClient instanceof MockClient)
+  setGlobalDispatcher(mockClient)
+
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(500, () => {
+    t.fail('should not be called')
+  })
+
+  mockClient.cleanMocks()
+
+  t.strictEqual(mockClient[kDispatches].length, 0)
+
+  const { statusCode, body } = await request(`${baseUrl}/foo`, {
+    method: 'GET'
+  })
+  t.strictEqual(statusCode, 200)
+
+  const response = await getResponse(body)
+  t.deepStrictEqual(response, 'hello')
+})
