@@ -1921,7 +1921,7 @@ test('async iterator early return closes early', async (t) => {
 })
 
 test('async iterator yield unsupported TypedArray', {
-  skip: !!require('stream')._isArrayBufferView
+  skip: !!require('node:stream')._isArrayBufferView
 }, async (t) => {
   t = tspl(t, { plan: 3 })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {

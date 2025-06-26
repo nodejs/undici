@@ -2,7 +2,7 @@
 
 const { describe, test } = require('node:test')
 const assert = require('node:assert')
-const { webidl } = require('../../lib/web/fetch/webidl')
+const { webidl } = require('../../lib/web/webidl')
 
 test('sequence', () => {
   const converter = webidl.sequenceConverter(
@@ -216,29 +216,6 @@ test('ByteString', () => {
   })
 })
 
-test('webidl.util.Stringify', (t) => {
-  const circular = {}
-  circular.circular = circular
-
-  const pairs = [
-    [Object.create(null), '[Object: null prototype] {}'],
-    [{ a: 'b' }, "{ a: 'b' }"],
-    [Symbol('sym'), 'Symbol(sym)'],
-    [Symbol.iterator, 'Symbol(Symbol.iterator)'], // well-known symbol
-    [true, 'true'],
-    [0, '0'],
-    ['hello', '"hello"'],
-    ['', '""'],
-    [null, 'null'],
-    [undefined, 'undefined'],
-    [circular, '<ref *1> { circular: [Circular *1] }']
-  ]
-
-  for (const [value, expected] of pairs) {
-    assert.deepStrictEqual(webidl.util.Stringify(value), expected)
-  }
-})
-
 test('recordConverter', () => {
   const anyConverter = webidl.recordConverter(webidl.converters.any, webidl.converters.any)
 
@@ -246,4 +223,35 @@ test('recordConverter', () => {
     () => anyConverter(null, 'prefix', 'argument'),
     new TypeError('prefix: argument ("Null") is not an Object.')
   )
+})
+
+test('webidl.converters.boolean', () => {
+  assert.strictEqual(webidl.converters.boolean(null), false)
+  assert.strictEqual(webidl.converters.boolean(undefined), false)
+
+  assert.strictEqual(webidl.converters.boolean(true), true)
+  assert.strictEqual(webidl.converters.boolean(false), false)
+
+  assert.strictEqual(webidl.converters.boolean(''), false)
+  assert.strictEqual(webidl.converters.boolean('true'), true)
+  assert.strictEqual(webidl.converters.boolean('false'), true)
+
+  assert.strictEqual(webidl.converters.boolean(1), true)
+  assert.strictEqual(webidl.converters.boolean(0), false)
+  assert.strictEqual(webidl.converters.boolean(-0), false)
+  assert.strictEqual(webidl.converters.boolean(NaN), false)
+  assert.strictEqual(webidl.converters.boolean(Infinity), true)
+  assert.strictEqual(webidl.converters.boolean(-Infinity), true)
+
+  assert.strictEqual(webidl.converters.boolean(0n), false)
+  assert.strictEqual(webidl.converters.boolean(1n), true)
+
+  assert.strictEqual(webidl.converters.boolean({}), true)
+  assert.strictEqual(webidl.converters.boolean([]), true)
+  assert.strictEqual(webidl.converters.boolean(() => {}), true)
+  assert.strictEqual(webidl.converters.boolean(/a/), true)
+  assert.strictEqual(webidl.converters.boolean(new Date()), true)
+  assert.strictEqual(webidl.converters.boolean(new Map()), true)
+  assert.strictEqual(webidl.converters.boolean(new Set()), true)
+  assert.strictEqual(webidl.converters.boolean(new Date()), true)
 })
