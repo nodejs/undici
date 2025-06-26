@@ -1,4 +1,5 @@
-/* eslint-env jest */
+'use strict'
+/* global jest, describe, it, beforeEach, afterEach, expect */
 
 // test/jest/parser-timeout.test.js
 const EventEmitter = require('events')

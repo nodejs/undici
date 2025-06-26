@@ -1,4 +1,5 @@
-/* eslint-env jest */
+'use strict'
+/* global jest, describe, it, beforeEach, afterEach, expect */
 
 // test/jest/util-timers.test.js
 const timers = require('../../lib/util/timers')
@@ -10,7 +11,6 @@ describe('util/timers under fake timers', () => {
     try {
       timers.reset()
     } catch {}
-
   })
 
   it('setFastTimeout + clearFastTimeout does not throw', () => {
