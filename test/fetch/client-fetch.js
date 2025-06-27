@@ -320,8 +320,8 @@ test('urlencoded formData', (t, done) => {
   })
 })
 
-test('text with BOM', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+test('text with BOM', async (t) => {
+  const { strictEqual } = tspl(t, { plan: 2 })
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
@@ -329,18 +329,17 @@ test('text with BOM', (t, done) => {
   })
   t.after(closeServerAsPromise(server))
 
-  server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`)
-      .then(res => res.text())
-      .then(text => {
-        strictEqual(text, 'test=\uFEFF')
-      })
-      .finally(done)
-  })
+  server.listen(0)
+
+  await once(server, 'listening')
+  const response = await fetch(`http://localhost:${server.address().port}`)
+
+  strictEqual(response.headers.get('content-type'), 'application/x-www-form-urlencoded')
+  strictEqual(await response.text(), 'test=\uFEFF')
 })
 
-test('formData with BOM', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+test('formData with BOM', async (t) => {
+  const { strictEqual } = tspl(t, { plan: 2 })
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
@@ -348,14 +347,15 @@ test('formData with BOM', (t, done) => {
   })
   t.after(closeServerAsPromise(server))
 
-  server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`)
-      .then(res => res.formData())
-      .then(formData => {
-        strictEqual(formData.get('\uFEFFtest'), '\uFEFF')
-      })
-      .finally(done)
-  })
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const response = await fetch(`http://localhost:${server.address().port}`)
+
+  strictEqual(response.headers.get('content-type'), 'application/x-www-form-urlencoded')
+  const formData = await response.formData()
+  strictEqual(formData.get('\uFEFFtest'), '\uFEFF')
 })
 
 test('locked blob body', (t, done) => {
