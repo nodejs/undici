@@ -11,4 +11,4 @@ const response = await client('https://httpbin.org/gzip', {
   }
 })
 
-console.log(await response.body.text()) // Automatically decompressed 
+console.log(await response.body.text()) // Automatically decompressed
