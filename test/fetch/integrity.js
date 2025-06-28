@@ -10,7 +10,7 @@ const { fetch, setGlobalDispatcher, Agent } = require('../..')
 const { once } = require('node:events')
 const { closeServerAsPromise } = require('../utils/node-http')
 
-const supportedHashes = getHashes()
+const supportedHashAlgorithms = getHashes()
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 1,
@@ -105,7 +105,7 @@ test('request with mixed in/valid integrities', async (t) => {
   }))
 })
 
-test('request with sha384 hash', { skip: !supportedHashes.includes('sha384') }, async (t) => {
+test('request with sha384 hash', { skip: !supportedHashAlgorithms.includes('sha384') }, async (t) => {
   const body = 'Hello world!'
   const hash = createHash('sha384').update(body).digest('base64')
 
@@ -127,7 +127,7 @@ test('request with sha384 hash', { skip: !supportedHashes.includes('sha384') }, 
   }))
 })
 
-test('request with sha512 hash', { skip: !supportedHashes.includes('sha512') }, async (t) => {
+test('request with sha512 hash', { skip: !supportedHashAlgorithms.includes('sha512') }, async (t) => {
   const body = 'Hello world!'
   const hash = createHash('sha512').update(body).digest('base64')
 
@@ -146,6 +146,23 @@ test('request with sha512 hash', { skip: !supportedHashes.includes('sha512') }, 
   // request should fail
   await assert.rejects(fetch(`http://localhost:${server.address().port}`, {
     integrity: 'sha512-ypeBEsobvcr6wjGzmiPcTaeG7/gUfE5yuYB3ha/uSLs='
+  }))
+})
+
+test('request with sha512 hash', { skip: !supportedHashAlgorithms.includes('sha512') }, async (t) => {
+  const body = 'Hello world!'
+  const hash384 = createHash('sha384').update(body).digest('base64')
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.end(body)
+  }).listen(0)
+
+  t.after(closeServerAsPromise(server))
+  await once(server, 'listening')
+
+  // request should fail
+  await assert.rejects(fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha512-${hash384} sha384-${hash384}`
   }))
 })
 
