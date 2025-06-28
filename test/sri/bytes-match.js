@@ -1,13 +1,15 @@
 'use strict'
 
-const { test, describe } = require('node:test')
 const assert = require('node:assert')
+const { test, describe } = require('node:test')
 
 const { bytesMatch } = require('../../lib/web/sri/sri')
 
+let crypto = null
+
 let skip
 try {
-  require('node:crypto')
+  crypto = require('node:crypto')
   skip = false
 } catch {
   skip = 'crypto not available'
@@ -15,9 +17,9 @@ try {
 
 describe('bytesMatch', () => {
   test('valid sha256 and base64', { skip }, () => {
-    const body = Buffer.from('Hello world!')
+    const data = Buffer.from('Hello world!')
 
-    const validSha256Base64 = `sha256-${body.toString('base64')}`
-    assert.ok(bytesMatch(body, validSha256Base64))
+    const validSha256Base64 = `sha256-${crypto.hash('sha256', data, 'base64')}`
+    assert.ok(bytesMatch(data, validSha256Base64))
   })
 })
