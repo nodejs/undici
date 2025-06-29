@@ -177,6 +177,20 @@ describe('DispatchOptions#expectContinue', () => {
   })
 })
 
+describe('DispatchOptions#maxRedirections', () => {
+  test('Should throw if maxRedirections option is used', async t => {
+    t = tspl(t, { plan: 1 })
+
+    await t.rejects(request({
+      method: 'GET',
+      origin: 'http://somehost.xyz',
+      maxRedirections: 5
+    }), /maxRedirections is not supported, use the redirect interceptor/)
+
+    await t.completed
+  })
+})
+
 describe('DispatchOptions#reset', () => {
   test('Should throw if invalid reset option', async t => {
     t = tspl(t, { plan: 1 })
