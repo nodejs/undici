@@ -1,6 +1,7 @@
 'use strict'
 
 const { describe, test } = require('node:test')
+const assert = require('node:assert')
 const { FormData, Response } = require('..')
 
 describe('https://github.com/nodejs/undici/issues/2283', () => {
@@ -13,11 +14,11 @@ describe('https://github.com/nodejs/undici/issues/2283', () => {
     const body = await res.clone().text()
 
     // Just making sure that it contains ;charset=utf-8
-    t.assert.ok(body.includes('text/plain;charset=utf-8'))
+    assert.ok(body.includes('text/plain;charset=utf-8'))
 
     const formData = await new Response(fd).formData()
 
     // returns just 'text/plain'
-    t.assert.ok(formData.get('x').type === 'text/plain;charset=utf-8')
+    assert.ok(formData.get('x').type === 'text/plain;charset=utf-8')
   })
 })
