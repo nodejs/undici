@@ -8,7 +8,7 @@ const { Client } = require('../../..')
 const { createServer } = require('node:http')
 
 test('Diagnostics channel - post stream', (t) => {
-  const assert = tspl(t, { plan: 33 })
+  const assert = tspl(t, { plan: 43 })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.resume()
     res.setHeader('Content-Type', 'text/plain')
@@ -107,20 +107,43 @@ test('Diagnostics channel - post stream', (t) => {
     assert.equal(response.statusText, 'OK')
   })
 
+  let bodySent = false
+  const bodyChunks = []
+  diagnosticsChannel.channel('undici:request:bodyChunkSent').subscribe(({ request, chunk }) => {
+    assert.equal(_req, request)
+    // Chunk can be a string or a Buffer, depending on the stream writer.
+    assert.equal(typeof chunk, 'string')
+    bodyChunks.push(Buffer.from(chunk))
+  })
   diagnosticsChannel.channel('undici:request:bodySent').subscribe(({ request }) => {
     assert.equal(_req, request)
+    bodySent = true
+
+    const requestBody = Buffer.concat(bodyChunks)
+    assert.deepStrictEqual(requestBody, Buffer.from('hello world'))
   })
 
   let endEmitted = false
 
   return new Promise((resolve) => {
+    const respChunks = []
+    diagnosticsChannel.channel('undici:request:bodyChunkReceived').subscribe(({ request, chunk }) => {
+      assert.equal(_req, request)
+      respChunks.push(chunk)
+    })
+
     diagnosticsChannel.channel('undici:request:trailers').subscribe(({ request, trailers }) => {
+      assert.equal(bodySent, true)
       assert.equal(request.completed, true)
       assert.equal(_req, request)
       // This event is emitted after the last chunk has been added to the body stream,
       // not when it was consumed by the application
       assert.equal(endEmitted, false)
       assert.deepStrictEqual(trailers, [Buffer.from('foo'), Buffer.from('oof')])
+
+      const respData = Buffer.concat(respChunks)
+      assert.deepStrictEqual(respData, Buffer.from('hello'))
+
       resolve()
     })
 
