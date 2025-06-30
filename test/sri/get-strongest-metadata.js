@@ -38,7 +38,7 @@ describe('getStrongestMetadata', () => {
     ])
   })
 
-  test('should return strongest sha256', () => {
+  test('should return both strongest sha384', () => {
     const result = getStrongestMetadata([
       { alg: 'sha384', val: 'sha384-abc' },
       { alg: 'sha256', val: 'sha256-def' },
