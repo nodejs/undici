@@ -179,13 +179,31 @@ describe('DispatchOptions#expectContinue', () => {
 
 describe('DispatchOptions#maxRedirections', () => {
   test('Should throw if maxRedirections option is used', async t => {
-    t = tspl(t, { plan: 1 })
+    t = tspl(t, { plan: 2 })
 
     await t.rejects(request({
       method: 'GET',
       origin: 'http://somehost.xyz',
       maxRedirections: 5
     }), /maxRedirections is not supported, use the redirect interceptor/)
+
+    await t.rejects(request({
+      method: 'GET',
+      origin: 'http://somehost.xyz',
+      maxRedirections: 1
+    }), /maxRedirections is not supported, use the redirect interceptor/)
+
+    await t.completed
+  })
+
+  test('Should allow maxRedirections: 0 for internal use', async t => {
+    t = tspl(t, { plan: 1 })
+
+    await t.rejects(request({
+      method: 'GET',
+      origin: 'http://somehost.xyz',
+      maxRedirections: 0
+    }), /ENOTFOUND|ECONNREFUSED/)
 
     await t.completed
   })
