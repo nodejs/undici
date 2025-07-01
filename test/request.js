@@ -197,15 +197,23 @@ describe('DispatchOptions#maxRedirections', () => {
   })
 
   test('Should allow maxRedirections: 0 for internal use', async t => {
-    t = tspl(t, { plan: 1 })
+    t = tspl(t, { plan: 2 })
+    const server = createServer((req, res) => {
+      t.ok('request received')
+      res.end('hello world')
+    })
+    after(() => server.close())
+    await new Promise((resolve) => server.listen(0, resolve))
 
-    await t.rejects(request({
+    const res = await request({
       method: 'GET',
-      origin: 'http://somehost.xyz',
+      origin: `http://localhost:${server.address().port}`,
       maxRedirections: 0
-    }), /ENOTFOUND|ECONNREFUSED/)
+    })
 
-    await t.completed
+    const body = await res.body.text()
+
+    t.strictEqual(body, 'hello world')
   })
 })
 
