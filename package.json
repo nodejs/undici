@@ -108,7 +108,6 @@
   },
   "devDependencies": {
     "@fastify/busboy": "3.1.1",
-    "@jsumners/line-reporter": "^1.0.1",
     "@matteo.collina/tspl": "^0.2.0",
     "@sinonjs/fake-timers": "^12.0.0",
     "@types/node": "^18.19.50",
