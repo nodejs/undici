@@ -1,7 +1,7 @@
 'use strict'
 
 const { randomFillSync } = require('node:crypto')
-const { setTimeout: sleep } = require('timers/promises')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { test } = require('node:test')
 const { fetch, Agent, setGlobalDispatcher } = require('../..')
 const { createServer } = require('node:http')
@@ -9,11 +9,9 @@ const { closeServerAsPromise } = require('../utils/node-http')
 
 const blob = randomFillSync(new Uint8Array(1024 * 512))
 
-// Enable when/if FinalizationRegistry in Node.js 18 becomes stable again
-const isNode18 = process.version.startsWith('v18')
 const hasGC = typeof global.gc !== 'undefined'
 
-test('does not need the body to be consumed to continue', { timeout: 180_000, skip: isNode18 }, async (t) => {
+test('does not need the body to be consumed to continue', { timeout: 180_000 }, async (t) => {
   if (!hasGC) {
     throw new Error('gc is not available. Run with \'--expose-gc\'.')
   }

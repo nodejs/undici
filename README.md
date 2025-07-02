@@ -107,14 +107,13 @@ const response = await fetch('https://api.example.com/data');
 
 **Cons:**
 - Additional dependency to manage
-- Larger bundle size if used in client-side code
+- Larger bundle size
 
 ### When to Use Each
 
 #### Use Built-in Fetch When:
 - You want zero dependencies
 - Building isomorphic code that runs in browsers and Node.js
-- You need standard Web API compatibility
 - Simple HTTP requests without advanced configuration
 - You're okay with the undici version bundled in your Node.js version
 
@@ -132,9 +131,8 @@ const response = await fetch('https://api.example.com/data');
 Based on benchmarks, here's the typical performance hierarchy:
 
 1. **`undici.request()`** - Fastest, most efficient
-2. **`undici.fetch()`** - Fast, with Web API compatibility
-3. **Built-in `fetch()`** - Good performance, standard compliance
-4. **Node.js `http`/`https`** - Baseline performance
+2. **`undici.fetch()`** - Good performance, standard compliance
+3. **Node.js `http`/`https`** - Baseline performance
 
 ### Migration Guide
 
@@ -183,6 +181,44 @@ for await (const data of body) { console.log('data', data) }
 
 console.log('trailers', trailers)
 ```
+
+## Global Installation
+
+Undici provides an `install()` function to add all WHATWG fetch classes to `globalThis`, making them available globally:
+
+```js
+import { install } from 'undici'
+
+// Install all WHATWG fetch classes globally
+install()
+
+// Now you can use fetch classes globally without importing
+const response = await fetch('https://api.example.com/data')
+const data = await response.json()
+
+// All classes are available globally:
+const headers = new Headers([['content-type', 'application/json']])
+const request = new Request('https://example.com')
+const formData = new FormData()
+const ws = new WebSocket('wss://example.com')
+const eventSource = new EventSource('https://example.com/events')
+```
+
+The `install()` function adds the following classes to `globalThis`:
+
+- `fetch` - The fetch function
+- `Headers` - HTTP headers management
+- `Response` - HTTP response representation
+- `Request` - HTTP request representation  
+- `FormData` - Form data handling
+- `WebSocket` - WebSocket client
+- `CloseEvent`, `ErrorEvent`, `MessageEvent` - WebSocket events
+- `EventSource` - Server-sent events client
+
+This is useful for:
+- Polyfilling environments that don't have fetch
+- Ensuring consistent fetch behavior across different Node.js versions
+- Making undici's implementations available globally for libraries that expect them
 
 ## Body Mixins
 

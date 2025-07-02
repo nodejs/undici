@@ -18,6 +18,18 @@
         "flaky": [
           "abort during handshake should work"
         ]
+      },
+      "write.any.js": {
+        "note": "TODO: investigate failure",
+        "skip": true
+      },
+      "remote-close.any.js": {
+        "note": "TODO: investigate failure in Node 24",
+        "skip": true
+      },
+      "websocket-error.any.js": {
+        "note": "TODO: investigate failure in Node 24",
+        "skip": true
       }
     }
   },

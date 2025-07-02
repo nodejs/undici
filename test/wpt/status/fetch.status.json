@@ -389,16 +389,6 @@
           "Consume empty FormData response body as text"
         ]
       },
-      "response-consume-stream.any.js": {
-        "note": "only fail in node v18",
-        "flaky": [
-          "Read blob response's body as readableStream with mode=byob",
-          "Read text response's body as readableStream with mode=byob",
-          "Read URLSearchParams response's body as readableStream with mode=byob",
-          "Read array buffer response's body as readableStream with mode=byob",
-          "Read form data response's body as readableStream with mode=byob"
-        ]
-      },
       "response-stream-with-broken-then.any.js": {
         "note": "this is a bug in webstreams, see https://github.com/nodejs/node/issues/46786",
         "skip": true
@@ -412,55 +402,8 @@
     }
   },
   "content-encoding": {
-    "br": {
-      "bad-br-body.https.any.js": {
-        "note": "TODO(@KhafraDev): investigate failure",
-        "fail": [
-          "Consuming the body of a resource with bad br content with arrayBuffer() should reject"
-        ]
-      },
-      "big-br-body.https.any.js": {
-        "note": "TODO(@KhafraDev): investigate failure",
-        "fail": [
-          "large br data should be decompressed successfully",
-          "large br data should be decompressed successfully with byte stream"
-        ]
-      },
-      "br-body.https.any.js": {
-        "note": "TODO(@KhafraDev): investigate failure",
-        "fail": [
-          "fetched br data with content type text should be decompressed.",
-          "fetched br data with content type octetstream should be decompressed."
-        ]
-      }
-    },
-    "gzip": {
-      "bad-gzip-body.any.js": {
-        "note": "TODO(@KhafraDev): investigate failure",
-        "fail": [
-          "Consuming the body of a resource with bad gzip content with arrayBuffer() should reject",
-          "Consuming the body of a resource with bad gzip content with blob() should reject",
-          "Consuming the body of a resource with bad gzip content with json() should reject",
-          "Consuming the body of a resource with bad gzip content with text() should reject"
-        ]
-      },
-      "gzip-body.any.js": {
-        "note": "TODO(@KhafraDev): investigate failure",
-        "fail": [
-          "fetched gzip data with content type text should be decompressed.",
-          "fetched gzip data with content type octetstream should be decompressed."
-        ]
-      },
-      "big-gzip-body.https.any.js": {
-        "note": "TODO(@KhafraDev): investigate failure",
-        "fail": [
-          "large gzip data should be decompressed successfully",
-          "large gzip data should be decompressed successfully with byte stream"
-        ]
-      }
-    },
     "zstd": {
-      "note": "node does not have zstd yet",
+      "note": "Node.js v23.8.0+ and v22.15.0+ (but older version 'Segmentation fault')",
       "skip": true
     }
   },

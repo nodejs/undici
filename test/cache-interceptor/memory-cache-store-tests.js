@@ -7,6 +7,56 @@ const { cacheStoreTests } = require('./cache-store-test-utils.js')
 
 cacheStoreTests(MemoryCacheStore)
 
+test('default limits prevent memory leaks', async () => {
+  const store = new MemoryCacheStore() // Uses new defaults
+
+  // Test that maxCount default (1024) is enforced
+  for (let i = 0; i < 1025; i++) {
+    const writeStream = store.createWriteStream(
+      { origin: 'test', path: `/test-${i}`, method: 'GET' },
+      {
+        statusCode: 200,
+        statusMessage: 'OK',
+        headers: {},
+        cachedAt: Date.now(),
+        staleAt: Date.now() + 60000,
+        deleteAt: Date.now() + 120000
+      }
+    )
+    writeStream.write('test data')
+    writeStream.end()
+  }
+
+  // Should be full after exceeding maxCount default of 1024
+  equal(store.isFull(), true, 'Store should be full after exceeding maxCount default')
+})
+
+test('default maxEntrySize prevents large entries', async () => {
+  const store = new MemoryCacheStore() // Uses new defaults
+
+  // Create entry larger than default maxEntrySize (5MB)
+  const largeData = Buffer.allocUnsafe(5242881) // 5MB + 1 byte
+
+  const writeStream = store.createWriteStream(
+    { origin: 'test', path: '/large', method: 'GET' },
+    {
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: {},
+      cachedAt: Date.now(),
+      staleAt: Date.now() + 60000,
+      deleteAt: Date.now() + 120000
+    }
+  )
+
+  writeStream.write(largeData)
+  writeStream.end()
+
+  // Entry should not be cached due to maxEntrySize limit
+  const result = store.get({ origin: 'test', path: '/large', method: 'GET', headers: {} })
+  equal(result, undefined, 'Large entry should not be cached due to maxEntrySize limit')
+})
+
 test('size getter returns correct total size', async () => {
   const store = new MemoryCacheStore()
   const testData = 'test data'
