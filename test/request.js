@@ -177,6 +177,46 @@ describe('DispatchOptions#expectContinue', () => {
   })
 })
 
+describe('DispatchOptions#maxRedirections', () => {
+  test('Should throw if maxRedirections option is used', async t => {
+    t = tspl(t, { plan: 2 })
+
+    await t.rejects(request({
+      method: 'GET',
+      origin: 'http://somehost.xyz',
+      maxRedirections: 5
+    }), /maxRedirections is not supported, use the redirect interceptor/)
+
+    await t.rejects(request({
+      method: 'GET',
+      origin: 'http://somehost.xyz',
+      maxRedirections: 1
+    }), /maxRedirections is not supported, use the redirect interceptor/)
+
+    await t.completed
+  })
+
+  test('Should allow maxRedirections: 0 for internal use', async t => {
+    t = tspl(t, { plan: 2 })
+    const server = createServer((req, res) => {
+      t.ok('request received')
+      res.end('hello world')
+    })
+    after(() => server.close())
+    await new Promise((resolve) => server.listen(0, resolve))
+
+    const res = await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      maxRedirections: 0
+    })
+
+    const body = await res.body.text()
+
+    t.strictEqual(body, 'hello world')
+  })
+})
+
 describe('DispatchOptions#reset', () => {
   test('Should throw if invalid reset option', async t => {
     t = tspl(t, { plan: 1 })
