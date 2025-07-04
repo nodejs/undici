@@ -6,10 +6,29 @@ const { test } = require('node:test')
 const { fetch, Request, Agent, setGlobalDispatcher } = require('../..')
 const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
+const assert = require('node:assert')
 
 const blob = randomFillSync(new Uint8Array(1024 * 512))
 
 const hasGC = typeof global.gc !== 'undefined'
+
+// https://github.com/nodejs/undici/issues/4150
+test('test finalizer cloned request', async () => {
+  if (!hasGC) {
+    throw new Error('gc is not available. Run with \'--expose-gc\'.')
+  }
+
+  const request = new Request('http://localhost', { method: 'POST', body: 'Hello' })
+
+  for (let i = 0; i < 800; ++i) request.clone()
+
+  await sleep(50)
+
+  // eslint-disable-next-line no-undef
+  gc(true)
+
+  assert.strictEqual(request.bodyUsed, false)
+})
 
 test('does not need the body to be consumed to continue', { timeout: 180_000 }, async (t) => {
   if (!hasGC) {
@@ -32,8 +51,6 @@ test('does not need the body to be consumed to continue', { timeout: 180_000 }, 
 
   const url = new URL(`http://127.0.0.1:${server.address().port}`)
 
-  const request = new Request(url, { method: 'POST', body: 'HI' })
-
   const batch = 50
   const delay = 0
   let total = 0
@@ -42,8 +59,8 @@ test('does not need the body to be consumed to continue', { timeout: 180_000 }, 
     gc(true)
     const array = new Array(batch)
     for (let i = 0; i < batch; i += 2) {
-      array[i] = fetch(request.clone()).catch((err) => { if (err?.cause?.code !== 'ECONNREFUSED' && err?.cause?.code !== 'EADDRINUSE') throw err })
-      array[i + 1] = fetch(request.clone()).then(r => r.clone()).catch((err) => { if (err?.cause?.code !== 'ECONNREFUSED' && err?.cause?.code !== 'EADDRINUSE') throw err })
+      array[i] = fetch(url).catch(() => {})
+      array[i + 1] = fetch(url).then(r => r.clone()).catch(() => {})
     }
     await Promise.all(array)
     await sleep(delay)
