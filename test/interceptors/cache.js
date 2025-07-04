@@ -1437,137 +1437,57 @@ describe('Cache Interceptor', () => {
     })
   })
 
-  test('caches 404 response with cache headers', async () => {
-    let requestsToOrigin = 0
-    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
-      requestsToOrigin++
-      res.statusCode = 404
-      res.setHeader('cache-control', 'public, max-age=60')
-      res.end('Not Found')
-    }).listen(0)
+  const cacheableStatusCodes = [
+    { code: 204, body: '' },
+    { code: 404, body: 'Not Found' },
+    { code: 410, body: 'Gone' }
+  ]
 
-    const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+  for (const { code, body } of cacheableStatusCodes) {
+    test(`caches ${code} response with cache headers`, async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.statusCode = code
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.end(body)
+      }).listen(0)
 
-    after(async () => {
-      server.close()
-      await client.close()
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      equal(requestsToOrigin, 0)
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit the origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        equal(res.statusCode, code)
+        strictEqual(await res.body.text(), body)
+      }
+
+      // Second request should be served from cache
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1) // Should still be 1 (cached)
+        equal(res.statusCode, code)
+        strictEqual(await res.body.text(), body)
+      }
     })
-
-    await once(server, 'listening')
-
-    equal(requestsToOrigin, 0)
-
-    const request = {
-      origin: 'localhost',
-      method: 'GET',
-      path: '/'
-    }
-
-    // First request should hit the origin
-    {
-      const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      equal(res.statusCode, 404)
-      strictEqual(await res.body.text(), 'Not Found')
-    }
-
-    // Second request should be served from cache
-    {
-      const res = await client.request(request)
-      equal(requestsToOrigin, 1) // Should still be 1 (cached)
-      equal(res.statusCode, 404)
-      strictEqual(await res.body.text(), 'Not Found')
-    }
-  })
-
-  test('caches 204 response with cache headers', async () => {
-    let requestsToOrigin = 0
-    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
-      requestsToOrigin++
-      res.statusCode = 204
-      res.setHeader('cache-control', 'public, max-age=60')
-      res.end()
-    }).listen(0)
-
-    const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
-
-    after(async () => {
-      server.close()
-      await client.close()
-    })
-
-    await once(server, 'listening')
-
-    equal(requestsToOrigin, 0)
-
-    const request = {
-      origin: 'localhost',
-      method: 'GET',
-      path: '/'
-    }
-
-    // First request should hit the origin
-    {
-      const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      equal(res.statusCode, 204)
-      strictEqual(await res.body.text(), '')
-    }
-
-    // Second request should be served from cache
-    {
-      const res = await client.request(request)
-      equal(requestsToOrigin, 1) // Should still be 1 (cached)
-      equal(res.statusCode, 204)
-      strictEqual(await res.body.text(), '')
-    }
-  })
-
-  test('caches 410 response with cache headers', async () => {
-    let requestsToOrigin = 0
-    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
-      requestsToOrigin++
-      res.statusCode = 410
-      res.setHeader('cache-control', 'public, max-age=60')
-      res.end('Gone')
-    }).listen(0)
-
-    const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
-
-    after(async () => {
-      server.close()
-      await client.close()
-    })
-
-    await once(server, 'listening')
-
-    equal(requestsToOrigin, 0)
-
-    const request = {
-      origin: 'localhost',
-      method: 'GET',
-      path: '/'
-    }
-
-    // First request should hit the origin
-    {
-      const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      equal(res.statusCode, 410)
-      strictEqual(await res.body.text(), 'Gone')
-    }
-
-    // Second request should be served from cache
-    {
-      const res = await client.request(request)
-      equal(requestsToOrigin, 1) // Should still be 1 (cached)
-      equal(res.statusCode, 410)
-      strictEqual(await res.body.text(), 'Gone')
-    }
-  })
+  }
 
   test('does not cache non-heuristically cacheable error status codes', async () => {
     let requestsToOrigin = 0
