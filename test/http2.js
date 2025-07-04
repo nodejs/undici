@@ -7,6 +7,7 @@ const { createReadStream, readFileSync } = require('node:fs')
 const { once } = require('node:events')
 const { Blob } = require('node:buffer')
 const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
+const { setTimeout: sleep } = require('node:timers/promises')
 
 const pem = require('https-pem')
 
@@ -1227,8 +1228,8 @@ test('Should throw informational error on half-closed streams (remote)', async t
 
   t = tspl(t, { plan: 4 })
   after(async () => {
-    server.close()
     await client.close()
+    server.close()
   })
 
   await client
@@ -1690,8 +1691,8 @@ test('#3803 - sending FormData bodies works', async (t) => {
   })
 
   t.after(async () => {
-    server.close()
     await client.close()
+    server.close()
   })
 
   const fd = new FormData()
@@ -1815,6 +1816,268 @@ test('Should handle http2 trailers', async t => {
       t.ifError(err)
     }
   })
+
+  await t.completed
+})
+
+test('Should only accept valid ping interval values', async t => {
+  const planner = tspl(t, { plan: 3 })
+
+  planner.throws(() => new Client('https://localhost', {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true,
+    pingInterval: -1
+  }))
+
+  planner.throws(() => new Client('https://localhost', {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true,
+    pingInterval: 'foo'
+  }))
+
+  planner.throws(() => new Client('https://localhost', {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true,
+    pingInterval: 1.1
+  }))
+
+  await planner.completed
+})
+
+test('Should send http2 PING frames', async t => {
+  const server = createSecureServer(pem)
+  let session = null
+  let pingCounter = 0
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    },
+    {
+      waitForTrailers: true
+    })
+
+    stream.on('wantTrailers', () => {
+      stream.sendTrailers({
+        'x-trailer': 'hello'
+      })
+    })
+
+    stream.end('hello h2!')
+  })
+
+  server.on('session', (s) => {
+    session = s
+    session.on('ping', (payload) => {
+      pingCounter++
+    })
+  })
+
+  t = tspl(t, { plan: 2 })
+
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const client = new Client(`https://${server.address().address}:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true,
+    pingInterval: 100
+  })
+
+  after(async () => {
+    server.close()
+  })
+
+  client.dispatch({
+    path: '/',
+    method: 'PUT',
+    body: 'hello'
+  }, {
+    onConnect () {
+
+    },
+    onHeaders () {
+      return true
+    },
+    onData () {
+      return true
+    },
+    onComplete (trailers) {
+      t.strictEqual(trailers['x-trailer'], 'hello')
+    },
+    onError (err) {
+      t.ifError(err)
+    }
+  })
+
+  await sleep(600)
+  await client.close()
+  t.equal(pingCounter, 5, 'Expected 5 PING frames to be sent')
+
+  await t.completed
+})
+
+test('Should not send http2 PING frames if interval === 0', async t => {
+  const server = createSecureServer(pem)
+  let session = null
+  let pingCounter = 0
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    },
+    {
+      waitForTrailers: true
+    })
+
+    stream.on('wantTrailers', () => {
+      stream.sendTrailers({
+        'x-trailer': 'hello'
+      })
+    })
+
+    stream.end('hello h2!')
+  })
+
+  server.on('session', (s) => {
+    session = s
+    session.on('ping', (payload) => {
+      pingCounter++
+    })
+  })
+
+  t = tspl(t, { plan: 2 })
+
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const client = new Client(`https://${server.address().address}:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true,
+    pingInterval: 0
+  })
+
+  after(async () => {
+    server.close()
+  })
+
+  client.dispatch({
+    path: '/',
+    method: 'PUT',
+    body: 'hello'
+  }, {
+    onConnect () {
+
+    },
+    onHeaders () {
+      return true
+    },
+    onData () {
+      return true
+    },
+    onComplete (trailers) {
+      t.strictEqual(trailers['x-trailer'], 'hello')
+    },
+    onError (err) {
+      t.ifError(err)
+    }
+  })
+
+  await sleep(500)
+  await client.close()
+  t.equal(pingCounter, 0, 'Expected 0 PING frames to be sent')
+
+  await t.completed
+})
+
+test('Should not send http2 PING frames after connection is closed', async t => {
+  const server = createSecureServer(pem)
+  let session = null
+  let pingCounter = 0
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    },
+    {
+      waitForTrailers: true
+    })
+
+    stream.on('wantTrailers', () => {
+      stream.sendTrailers({
+        'x-trailer': 'hello'
+      })
+    })
+
+    stream.end('hello h2!')
+  })
+
+  server.on('session', (s) => {
+    session = s
+    session.on('ping', (payload) => {
+      pingCounter++
+    })
+  })
+
+  t = tspl(t, { plan: 2 })
+
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const client = new Client(`https://${server.address().address}:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true,
+    pingInterval: 0
+  })
+
+  after(async () => {
+    session.close()
+    server.close()
+  })
+
+  client.dispatch({
+    path: '/',
+    method: 'PUT',
+    body: 'hello'
+  }, {
+    onConnect () {
+
+    },
+    onHeaders () {
+      return true
+    },
+    onData () {
+      return true
+    },
+    onComplete (trailers) {
+      t.strictEqual(trailers['x-trailer'], 'hello')
+    },
+    onError (err) {
+      t.ifError(err)
+    }
+  })
+
+  await client.close()
+  await sleep(500)
+  t.equal(pingCounter, 0, 'Expected 0 PING frames to be sent')
 
   await t.completed
 })
