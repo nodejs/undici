@@ -3,7 +3,7 @@
 const { randomFillSync } = require('node:crypto')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { test } = require('node:test')
-const { fetch, Agent, setGlobalDispatcher } = require('../..')
+const { fetch, Request, Agent, setGlobalDispatcher } = require('../..')
 const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
 
@@ -32,6 +32,8 @@ test('does not need the body to be consumed to continue', { timeout: 180_000 }, 
 
   const url = new URL(`http://127.0.0.1:${server.address().port}`)
 
+  const request = new Request(url, { method: 'POST', body: 'HI' })
+
   const batch = 50
   const delay = 0
   let total = 0
@@ -40,8 +42,8 @@ test('does not need the body to be consumed to continue', { timeout: 180_000 }, 
     gc(true)
     const array = new Array(batch)
     for (let i = 0; i < batch; i += 2) {
-      array[i] = fetch(url).catch(() => {})
-      array[i + 1] = fetch(url).then(r => r.clone()).catch(() => {})
+      array[i] = fetch(request.clone()).catch((err) => { if (err?.cause?.code !== 'ECONNREFUSED' && err?.cause?.code !== 'EADDRINUSE') throw err })
+      array[i + 1] = fetch(request.clone()).then(r => r.clone()).catch((err) => { if (err?.cause?.code !== 'ECONNREFUSED' && err?.cause?.code !== 'EADDRINUSE') throw err })
     }
     await Promise.all(array)
     await sleep(delay)
