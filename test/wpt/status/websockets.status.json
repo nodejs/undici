@@ -7,10 +7,9 @@
           "backpressure should be applied to sent messages"
         ]
       },
-      "remote-close.any.js": {
-        "note": "Deno also fails this test",
+      "backpressure-receive.any.js": {
         "fail": [
-          "close with unwritten data should not be considered clean"
+          "backpressure should be applied to received messages"
         ]
       },
       "abort.any.js": {
