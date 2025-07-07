@@ -23,43 +23,42 @@ const RetryHandler = require('./lib/handler/retry-handler')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 const DecoratorHandler = require('./lib/handler/decorator-handler')
 const RedirectHandler = require('./lib/handler/redirect-handler')
+const redirect = require('./lib/interceptor/redirect')
+const responseError = require('./lib/interceptor/response-error')
+const retry = require('./lib/interceptor/retry')
+const dump = require('./lib/interceptor/dump')
+const dns = require('./lib/interceptor/dns')
+const cache = require('./lib/interceptor/cache')
+const memoryCacheStore = require('./lib/cache/memory-cache-store')
+const sqliteCacheStore = require('./lib/cache/sqlite-cache-store')
+const { Headers } = require('./lib/web/fetch/headers')
+const { Response } = require('./lib/web/fetch/response')
+const { Request } = require('./lib/web/fetch/request')
+const { FormData } = require('./lib/web/fetch/formdata')
+const { fetch: fetchImpl } = require('./lib/web/fetch')
+const { deleteCookie, getCookies, getSetCookies, setCookie, parseCookie } = require('./lib/web/cookies')
+const { setGlobalOrigin, getGlobalOrigin } = require('./lib/web/fetch/global')
+const { CacheStorage } = require('./lib/web/cache/cachestorage')
+const { kConstruct } = require('./lib/core/symbols')
+const { parseMIMEType, serializeAMimeType } = require('./lib/web/fetch/data-url')
+const { CloseEvent, ErrorEvent, MessageEvent } = require('./lib/web/websocket/events')
+const { WebSocket, ping } = require('./lib/web/websocket/websocket')
+const { WebSocketStream } = require('./lib/web/websocket/stream/websocketstream')
+const { WebSocketError } = require('./lib/web/websocket/stream/websocketerror')
+const { EventSource } = require('./lib/web/eventsource/eventsource')
 
 Object.assign(Dispatcher.prototype, api)
 
-module.exports.Dispatcher = Dispatcher
-module.exports.Client = Client
-module.exports.Pool = Pool
-module.exports.BalancedPool = BalancedPool
-module.exports.Agent = Agent
-module.exports.ProxyAgent = ProxyAgent
-module.exports.EnvHttpProxyAgent = EnvHttpProxyAgent
-module.exports.RetryAgent = RetryAgent
-module.exports.H2CClient = H2CClient
-module.exports.RetryHandler = RetryHandler
+const fetch = async function fetch (init, options = undefined) {
+  try {
+    return await fetchImpl(init, options)
+  } catch (err) {
+    if (err && typeof err === 'object') {
+      Error.captureStackTrace(err)
+    }
 
-module.exports.DecoratorHandler = DecoratorHandler
-module.exports.RedirectHandler = RedirectHandler
-module.exports.interceptors = {
-  redirect: require('./lib/interceptor/redirect'),
-  responseError: require('./lib/interceptor/response-error'),
-  retry: require('./lib/interceptor/retry'),
-  dump: require('./lib/interceptor/dump'),
-  dns: require('./lib/interceptor/dns'),
-  cache: require('./lib/interceptor/cache')
-}
-
-module.exports.cacheStores = {
-  MemoryCacheStore: require('./lib/cache/memory-cache-store')
-}
-
-const SqliteCacheStore = require('./lib/cache/sqlite-cache-store')
-module.exports.cacheStores.SqliteCacheStore = SqliteCacheStore
-
-module.exports.buildConnector = buildConnector
-module.exports.errors = errors
-module.exports.util = {
-  parseHeaders: util.parseHeaders,
-  headerNameToString: util.headerNameToString
+    throw err
+  }
 }
 
 function makeDispatcher (fn) {
@@ -111,39 +110,60 @@ function makeDispatcher (fn) {
   }
 }
 
+// Keep all imports at the top and exports at the bottom.
+// Do not use or modify module.exports except for the direct property assignment like below: it confuses bundlers and static analysis tools.
+
+module.exports.Dispatcher = Dispatcher
+module.exports.Client = Client
+module.exports.Pool = Pool
+module.exports.BalancedPool = BalancedPool
+module.exports.Agent = Agent
+module.exports.ProxyAgent = ProxyAgent
+module.exports.EnvHttpProxyAgent = EnvHttpProxyAgent
+module.exports.RetryAgent = RetryAgent
+module.exports.H2CClient = H2CClient
+module.exports.RetryHandler = RetryHandler
+
+module.exports.DecoratorHandler = DecoratorHandler
+module.exports.RedirectHandler = RedirectHandler
+
+module.exports.interceptors = {
+  redirect,
+  responseError,
+  retry,
+  dump,
+  dns,
+  cache
+}
+
+module.exports.cacheStores = {
+  MemoryCacheStore: memoryCacheStore,
+  SqliteCacheStore: sqliteCacheStore
+}
+
+module.exports.buildConnector = buildConnector
+module.exports.errors = errors
+module.exports.util = {
+  parseHeaders: util.parseHeaders,
+  headerNameToString: util.headerNameToString
+}
+
 module.exports.setGlobalDispatcher = setGlobalDispatcher
 module.exports.getGlobalDispatcher = getGlobalDispatcher
 
-const fetchImpl = require('./lib/web/fetch').fetch
-module.exports.fetch = async function fetch (init, options = undefined) {
-  try {
-    return await fetchImpl(init, options)
-  } catch (err) {
-    if (err && typeof err === 'object') {
-      Error.captureStackTrace(err)
-    }
+module.exports.fetch = fetch
 
-    throw err
-  }
-}
-module.exports.Headers = require('./lib/web/fetch/headers').Headers
-module.exports.Response = require('./lib/web/fetch/response').Response
-module.exports.Request = require('./lib/web/fetch/request').Request
-module.exports.FormData = require('./lib/web/fetch/formdata').FormData
-
-const { setGlobalOrigin, getGlobalOrigin } = require('./lib/web/fetch/global')
+module.exports.Headers = Headers
+module.exports.Response = Response
+module.exports.Request = Request
+module.exports.FormData = FormData
 
 module.exports.setGlobalOrigin = setGlobalOrigin
 module.exports.getGlobalOrigin = getGlobalOrigin
 
-const { CacheStorage } = require('./lib/web/cache/cachestorage')
-const { kConstruct } = require('./lib/core/symbols')
-
 // Cache & CacheStorage are tightly coupled with fetch. Even if it may run
 // in an older version of Node, it doesn't have any use without fetch.
 module.exports.caches = new CacheStorage(kConstruct)
-
-const { deleteCookie, getCookies, getSetCookies, setCookie, parseCookie } = require('./lib/web/cookies')
 
 module.exports.deleteCookie = deleteCookie
 module.exports.getCookies = getCookies
@@ -151,21 +171,17 @@ module.exports.getSetCookies = getSetCookies
 module.exports.setCookie = setCookie
 module.exports.parseCookie = parseCookie
 
-const { parseMIMEType, serializeAMimeType } = require('./lib/web/fetch/data-url')
-
 module.exports.parseMIMEType = parseMIMEType
 module.exports.serializeAMimeType = serializeAMimeType
 
-const { CloseEvent, ErrorEvent, MessageEvent } = require('./lib/web/websocket/events')
-const { WebSocket, ping } = require('./lib/web/websocket/websocket')
 module.exports.WebSocket = WebSocket
 module.exports.CloseEvent = CloseEvent
 module.exports.ErrorEvent = ErrorEvent
 module.exports.MessageEvent = MessageEvent
 module.exports.ping = ping
 
-module.exports.WebSocketStream = require('./lib/web/websocket/stream/websocketstream').WebSocketStream
-module.exports.WebSocketError = require('./lib/web/websocket/stream/websocketerror').WebSocketError
+module.exports.WebSocketStream = WebSocketStream
+module.exports.WebSocketError = WebSocketError
 
 module.exports.request = makeDispatcher(api.request)
 module.exports.stream = makeDispatcher(api.stream)
@@ -180,21 +196,17 @@ module.exports.MockPool = MockPool
 module.exports.MockAgent = MockAgent
 module.exports.mockErrors = mockErrors
 
-const { EventSource } = require('./lib/web/eventsource/eventsource')
-
 module.exports.EventSource = EventSource
 
-function install () {
-  globalThis.fetch = module.exports.fetch
-  globalThis.Headers = module.exports.Headers
-  globalThis.Response = module.exports.Response
-  globalThis.Request = module.exports.Request
-  globalThis.FormData = module.exports.FormData
-  globalThis.WebSocket = module.exports.WebSocket
-  globalThis.CloseEvent = module.exports.CloseEvent
-  globalThis.ErrorEvent = module.exports.ErrorEvent
-  globalThis.MessageEvent = module.exports.MessageEvent
-  globalThis.EventSource = module.exports.EventSource
+module.exports.install = function install () {
+  globalThis.fetch = fetch
+  globalThis.Headers = Headers
+  globalThis.Response = Response
+  globalThis.Request = Request
+  globalThis.FormData = FormData
+  globalThis.WebSocket = WebSocket
+  globalThis.CloseEvent = CloseEvent
+  globalThis.ErrorEvent = ErrorEvent
+  globalThis.MessageEvent = MessageEvent
+  globalThis.EventSource = EventSource
 }
-
-module.exports.install = install
