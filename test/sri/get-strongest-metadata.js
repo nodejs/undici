@@ -69,7 +69,7 @@ describe('getStrongestMetadata', () => {
       { alg: 'sha1024', val: 'sha1024-xyz' }
     ]), {
       name: 'AssertionError',
-      message: 'Invalid SRI hash algorithm: sha1024'
+      message: 'Invalid SRI hash algorithm token'
     })
   })
 })
