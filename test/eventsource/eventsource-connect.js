@@ -199,4 +199,25 @@ describe('EventSource - received response must have content-type to be text/even
 
     assert.strictEqual(onerrorCalls.length, 3)
   })
+
+  test('should try to connect again if server is unreachable', async () => {
+    const domain = 'bad.n' + randomInt(1e10).toString(36) + '.proxy'
+
+    const eventSourceInstance = new EventSource(`http://${domain}`, {
+      node: {
+        reconnectionTime: 1000
+      }
+    })
+
+    const onerrorCalls = []
+    eventSourceInstance.onerror = (error) => {
+      onerrorCalls.push(error)
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 5000))
+
+    eventSourceInstance.close()
+
+    assert.strictEqual(onerrorCalls.length, 5)
+  })
 })
