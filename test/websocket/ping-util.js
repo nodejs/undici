@@ -18,10 +18,7 @@ test('ping', async (t) => {
   })
 
   const ws = new WebSocket(`ws://localhost:${wss.address().port}`)
-
-  ws.addEventListener('open', () => {
-    ping(ws, pingBody)
-  })
+  ws.onopen = () => ping(ws, pingBody)
 
   t.after(() => {
     ws.close()
@@ -46,6 +43,28 @@ test('attempting to send invalid ping body', async (t) => {
 
   throws(() => ping(ws, Buffer.from('a'.repeat(126))))
   throws(() => ping(ws, 'a'.repeat(125)))
+
+  t.after(() => {
+    ws.close()
+    wss.close()
+  })
+
+  await completed
+})
+
+test('ping with no payload', async (t) => {
+  const { completed, deepStrictEqual } = tspl(t, { plan: 1 })
+
+  const wss = new WebSocketServer({ port: 0 })
+
+  wss.on('connection', (ws) => {
+    ws.on('ping', (b) => {
+      deepStrictEqual(b, Buffer.alloc(0))
+    })
+  })
+
+  const ws = new WebSocket(`ws://localhost:${wss.address().port}`)
+  ws.onopen = () => ping(ws)
 
   t.after(() => {
     ws.close()
