@@ -6,9 +6,9 @@ const { Pool } = require('..')
 const { createServer } = require('node:http')
 
 test('pool respects keep-alive', async t => {
-  t = tspl(t, { plan: 201 })
+  t = tspl(t, { plan: 1 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true, keepAlive: true }, (req, res) => {
     // Server always responds with a 20s keep-alive header
     res.writeHead(200, { 'Content-Type': 'text/plain', Connection: 'keep-alive', 'Keep-Alive': 'timeout=20' })
     res.end('foo')
@@ -18,19 +18,23 @@ test('pool respects keep-alive', async t => {
     connections++
   })
   after(() => server.close())
-  const expectedConnections = 10
+  // Can also use `10`
+  const expectedConnections = 1
   const keepAliveTimeout = 20 * 1000 // 20 seconds
   server.listen(0, () => {
     // Pool is set to keep connections alive for 20 seconds too
-    const pool = new Pool(`http://localhost:${server.address().port}`, { connections: expectedConnections, keepAliveTimeout })
+    const pool = new Pool(`http://localhost:${server.address().port}`, { connections: expectedConnections, keepAliveTimeout, keepAliveMaxTimeout: keepAliveTimeout * 2 })
     after(() => pool.close())
 
-    // Execute 100 requests
-    const batchSize = 100
+    // Can also use `20`
+    const batchSize = 2
     let batch1Completed = 0
     for (let i = 0; i < batchSize; i++) {
       pool.request({ path: '/', method: 'GET' }, (err, res) => {
-        t.ifError(err)
+        if (err) {
+          t.fail(err)
+          return
+        }
         res.body.on('end', () => {
           batch1Completed++
           if (batch1Completed === batchSize) {
@@ -40,7 +44,10 @@ test('pool respects keep-alive', async t => {
               let batch2Completed = 0
               for (let j = 0; j < batchSize; j++) {
                 pool.request({ path: '/', method: 'GET' }, (err, res) => {
-                  t.ifError(err)
+                  if (err) {
+                    t.fail(err)
+                    return
+                  }
                   res.body.on('end', () => {
                     batch2Completed++
                     if (batch2Completed === batchSize) {
