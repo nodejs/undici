@@ -44,7 +44,7 @@ test('pool respects keep-alive', async t => {
                   res.body.on('end', () => {
                     batch2Completed++
                     if (batch2Completed === batchSize) {
-                      t.strictEqual(connections, 10, 'Pool connections should have been reused between batches')
+                      t.strictEqual(connections, expectedConnections, 'Pool connections should have been reused between batches')
                     }
                   }).resume()
                 })
