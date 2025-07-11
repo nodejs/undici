@@ -7,6 +7,13 @@
 
 ### The following checks will be performed:
 
+{%- if request.interim_responses -%}
+{%- for interim_response in request.interim_responses %}
+- The client will check that an interim response with the `{{ interim_response[0] }}` status code{% if interim_response[1] %} and the following headers{% endif %} is received.
+{%- render 'header-list' with interim_response[1] as headers %}
+{%- endfor -%}
+{%- endif -%}
+
 {%- if request.expected_type %}
 - The client will check that this response {% case request.expected_type %}{% when "cached" %}is cached{% when "not_cached" %}is not cached{% when "lm_validated" %}is validated using `Last-Modified`{% when "etag_validated" %}is validated using `ETag`{% endcase %} {% if test.setup_tests contains "expected_type" %}{{ setup_prop }}{% endif %}{% endif -%}
 
