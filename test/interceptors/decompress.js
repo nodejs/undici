@@ -445,3 +445,258 @@ test('should remove content-length header when decompressing', async t => {
 
   await t.completed
 })
+
+test('should allow decompressing 5xx responses when skipErrorResponses is false', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    const gzip = createGzip()
+    res.writeHead(500, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'gzip'
+    })
+
+    const data = 'Internal server error message'
+    gzip.pipe(res)
+    gzip.end(data)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor({ skipErrorResponses: false }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  const body = await response.body.text()
+
+  t.equal(response.statusCode, 500)
+  t.equal(response.headers['content-encoding'], undefined) // Should be removed when decompressing
+  t.equal(body, 'Internal server error message') // Should be decompressed
+
+  await t.completed
+})
+
+test('should allow custom skipStatusCodes', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    const gzip = createGzip()
+    res.writeHead(201, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'gzip'
+    })
+
+    const data = 'Created response'
+    gzip.pipe(res)
+    gzip.end(data)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  // Skip decompression for 201 status codes
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor({ skipStatusCodes: [201, 204, 304] }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  const body = await response.body.text()
+
+  t.equal(response.statusCode, 201)
+  t.equal(response.headers['content-encoding'], 'gzip') // Should be preserved when skipping
+  t.notEqual(body, 'Created response') // Should still be compressed
+
+  await t.completed
+})
+
+test('should decompress multiple encodings in correct order', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    // First compress with gzip, then with deflate (gzip, deflate)
+    const gzip = createGzip()
+    const deflate = createDeflate()
+
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'gzip, deflate' // Applied in this order
+    })
+
+    const data = 'Multiple encoding test message'
+
+    // Pipe: data → gzip → deflate → response
+    gzip.pipe(deflate)
+    deflate.pipe(res)
+    gzip.end(data)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  const body = await response.body.text()
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-encoding'], undefined) // Should be removed
+  t.equal(body, 'Multiple encoding test message') // Should be fully decompressed
+
+  await t.completed
+})
+
+test('should handle legacy encoding names (x-gzip)', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    const gzip = createGzip()
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'x-gzip' // Legacy name
+    })
+
+    const data = 'Legacy encoding test'
+    gzip.pipe(res)
+    gzip.end(data)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  const body = await response.body.text()
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-encoding'], undefined) // Should be removed
+  t.equal(body, 'Legacy encoding test')
+
+  await t.completed
+})
+
+test('should pass through responses with unsupported encoding in chain', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'gzip, unsupported, deflate' // Contains unsupported encoding
+    })
+    res.end('This should pass through unchanged')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  const body = await response.body.text()
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-encoding'], 'gzip, unsupported, deflate') // Should be preserved
+  t.equal(body, 'This should pass through unchanged')
+
+  await t.completed
+})
+
+test('should handle empty encoding values', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    const gzip = createGzip()
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'gzip, ' // Contains empty value at end
+    })
+
+    const data = 'Empty encoding value test'
+    gzip.pipe(res)
+    gzip.end(data)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  const body = await response.body.text()
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-encoding'], undefined)
+  t.equal(body, 'Empty encoding value test')
+
+  await t.completed
+})
