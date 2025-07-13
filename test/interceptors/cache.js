@@ -1437,8 +1437,11 @@ describe('Cache Interceptor', () => {
     })
   })
 
+  // Partial list.
   const cacheableStatusCodes = [
     { code: 204, body: '' },
+    { code: 302, body: 'Found' },
+    { code: 307, body: 'Temporary Redirect' },
     { code: 404, body: 'Not Found' },
     { code: 410, body: 'Gone' }
   ]
@@ -1453,7 +1456,7 @@ describe('Cache Interceptor', () => {
         res.end(body)
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://localhost:${server.address().port}`, { maxRedirections: 0 })
         .compose(interceptors.cache())
 
       after(async () => {
@@ -1489,47 +1492,55 @@ describe('Cache Interceptor', () => {
     })
   }
 
-  test('does not cache non-heuristically cacheable error status codes', async () => {
-    let requestsToOrigin = 0
-    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
-      requestsToOrigin++
-      res.statusCode = 418 // I'm a teapot - not in heuristically cacheable list
-      res.setHeader('cache-control', 'public, max-age=60')
-      res.end('I am a teapot')
-    }).listen(0)
+  // Partial list.
+  const nonHeuristicallyCacheableStatusCodes = [
+    { code: 201, body: 'Created' },
+    { code: 307, body: 'Temporary Redirect' },
+    { code: 418, body: 'I am a teapot' }
+  ]
 
-    const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+  for (const { code, body } of nonHeuristicallyCacheableStatusCodes) {
+    test(`does not cache non-heuristically cacheable status ${code} without explicit directive`, async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.statusCode = code
+        res.end(body)
+      }).listen(0)
 
-    after(async () => {
-      server.close()
-      await client.close()
+      const client = new Client(`http://localhost:${server.address().port}`, { maxRedirections: 0 })
+        .compose(interceptors.cache({ cacheByDefault: 60 }))
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      equal(requestsToOrigin, 0)
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit the origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        equal(res.statusCode, code)
+        strictEqual(await res.body.text(), body)
+      }
+
+      // Second request should also hit the origin (not cached)
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 2) // Should be 2 (not cached)
+        equal(res.statusCode, code)
+        strictEqual(await res.body.text(), body)
+      }
     })
-
-    await once(server, 'listening')
-
-    equal(requestsToOrigin, 0)
-
-    const request = {
-      origin: 'localhost',
-      method: 'GET',
-      path: '/'
-    }
-
-    // First request should hit the origin
-    {
-      const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      equal(res.statusCode, 418)
-      strictEqual(await res.body.text(), 'I am a teapot')
-    }
-
-    // Second request should also hit the origin (not cached)
-    {
-      const res = await client.request(request)
-      equal(requestsToOrigin, 2) // Should be 2 (not cached)
-      equal(res.statusCode, 418)
-      strictEqual(await res.body.text(), 'I am a teapot')
-    }
-  })
+  }
 })
