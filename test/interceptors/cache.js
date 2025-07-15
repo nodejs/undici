@@ -1594,7 +1594,7 @@ describe('Cache Interceptor', () => {
     }
   })
 
-  test('discriminates caching of conditionnal requests, or does not cache them', async () => {
+  test('discriminates caching of conditionnal requests (if-none-match), or does not cache them', async () => {
     let requestsToOrigin = 0
     const body = ''
     const code = 304
@@ -1622,7 +1622,6 @@ describe('Cache Interceptor', () => {
       method: 'GET',
       path: '/',
       headers: {
-        'if-modified-since': new Date().toUTCString(),
         'if-none-match': 'some-etag'
       }
     }
@@ -1643,12 +1642,53 @@ describe('Cache Interceptor', () => {
       equal(res.statusCode, code)
       strictEqual(await res.body.text(), body)
     }
+  })
 
-    // Third request with different since should hit the origin too
+  test('discriminates caching of conditionnal requests (if-modified-since), or does not cache them', async () => {
+    let requestsToOrigin = 0
+    const body = ''
+    const code = 304
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      requestsToOrigin++
+      res.statusCode = code
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.end(body)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    equal(requestsToOrigin, 0)
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/',
+      headers: {
+        'if-modified-since': new Date().toUTCString()
+      }
+    }
+
+    // First request should hit the origin
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 1)
+      equal(res.statusCode, code)
+      strictEqual(await res.body.text(), body)
+    }
+
+    // Second request with different since should hit the origin too
     request.headers['if-modified-since'] = new Date(0).toUTCString()
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 3)
+      equal(requestsToOrigin, 2)
       equal(res.statusCode, code)
       strictEqual(await res.body.text(), body)
     }
