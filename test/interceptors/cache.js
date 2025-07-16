@@ -1505,6 +1505,10 @@ describe('Cache Interceptor', () => {
       const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         requestsToOrigin++
         res.statusCode = code
+        // By default the response may have a date and last-modified header set to 'now',
+        // causing the cache to compute a 0 heuristic expiry, causing the test to not ascertain
+        // it is really not cached.
+        res.setHeader('date', '')
         res.end(body)
       }).listen(0)
 
