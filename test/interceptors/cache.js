@@ -1505,6 +1505,7 @@ describe('Cache Interceptor', () => {
       const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         requestsToOrigin++
         res.statusCode = code
+        res.setHeader('date', '')
         res.end(body)
       }).listen(0)
 
