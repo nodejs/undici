@@ -3,7 +3,7 @@
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { createGzip, createDeflate, createBrotliCompress } = require('node:zlib')
+const { createGzip, createDeflate, createBrotliCompress, createZstdCompress } = require('node:zlib')
 const { tspl } = require('@matteo.collina/tspl')
 
 const { Client } = require('../..')
@@ -131,6 +131,48 @@ test('should decompress brotli response', async t => {
   t.equal(response.statusCode, 200)
   t.equal(response.headers['content-encoding'], undefined)
   t.equal(body, 'This message is compressed with brotli compression!')
+
+  await t.completed
+})
+
+test('should decompress zstd response', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    const zstd = createZstdCompress()
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'zstd'
+    })
+
+    const data = 'This message is compressed with zstd compression!'
+    zstd.pipe(res)
+    zstd.end(data)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  const body = await response.body.text()
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-encoding'], undefined)
+  t.equal(body, 'This message is compressed with zstd compression!')
 
   await t.completed
 })
