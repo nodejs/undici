@@ -1096,7 +1096,7 @@ await client.request({
 
 ##### `decompress`
 
-The `decompress` interceptor automatically decompresses response bodies that are compressed with gzip, deflate, or brotli compression. It removes the `content-encoding` and `content-length` headers from decompressed responses and supports RFC-9110 compliant multiple encodings.
+The `decompress` interceptor automatically decompresses response bodies that are compressed with gzip, deflate, brotli, or zstd compression. It removes the `content-encoding` and `content-length` headers from decompressed responses and supports RFC-9110 compliant multiple encodings.
 
 **Options**
 
@@ -1113,7 +1113,7 @@ const client = new Client("http://example.com").compose(
   decompress()
 );
 
-// Automatically decompresses gzip/deflate/brotli responses
+// Automatically decompresses gzip/deflate/brotli/zstd responses
 const response = await client.request({
   method: "GET",
   path: "/"
@@ -1139,6 +1139,7 @@ const client = new Client("http://example.com").compose(
 - `gzip` / `x-gzip` - GZIP compression
 - `deflate` / `x-compress` - DEFLATE compression  
 - `br` - Brotli compression
+- `zstd` - Zstandard compression
 - Multiple encodings (e.g., `gzip, deflate`) are supported per RFC-9110
 
 **Behavior**
