@@ -1456,7 +1456,7 @@ describe('Cache Interceptor', () => {
         res.end(body)
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`, { maxRedirections: 0 })
+      const client = new Client(`http://localhost:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(async () => {
@@ -1512,7 +1512,7 @@ describe('Cache Interceptor', () => {
         res.end(body)
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`, { maxRedirections: 0 })
+      const client = new Client(`http://localhost:${server.address().port}`)
         .compose(interceptors.cache({ cacheByDefault: 60 }))
 
       after(async () => {
