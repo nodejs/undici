@@ -8,7 +8,7 @@ const { tspl } = require('@matteo.collina/tspl')
 test('closing before a connection is established changes readyState', async (t) => {
   const { completed, strictEqual } = tspl(t, { plan: 1 })
 
-  const ws = new WebSocket('wss://example.com/non-existing-url')
+  const ws = new WebSocket('wss://localhost')
   ws.onclose = () => strictEqual(ws.readyState, WebSocket.CLOSED)
 
   await completed
