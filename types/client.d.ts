@@ -94,6 +94,11 @@ export declare namespace Client {
      * @default 100
      */
     maxConcurrentStreams?: number;
+    /**
+     * @description Time interval between PING frames dispatch
+     * @default 60000
+     */
+    pingInterval?: number;
   }
   export interface SocketInfo {
     localAddress?: string
