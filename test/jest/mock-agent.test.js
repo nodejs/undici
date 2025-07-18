@@ -44,3 +44,26 @@ describe('MockAgent', () => {
     expect(jsonResponse).toEqual({ foo: 'bar' })
   })
 })
+
+describe('MockAgent with ignoreTrailingSlash option', () => {
+  const trailingSlashUrl = 'http://localhost:9999/'
+  const noTrailingSlashUrl = 'http://localhost:9999'
+
+  it('should not remove trailing slash from origin if the option is not enable', async () => {
+    const mockClient = new MockAgent()
+
+    const dispatcherOne = mockClient.get(trailingSlashUrl)
+    const dispatcherTwo = mockClient.get(noTrailingSlashUrl)
+
+    expect(dispatcherOne).not.toBe(dispatcherTwo)
+  })
+
+  it('should remove trailing slash from origin if enabled the option', async () => {
+    const mockClient = new MockAgent({ ignoreTrailingSlash: true })
+
+    const dispatcherOne = mockClient.get(trailingSlashUrl)
+    const dispatcherTwo = mockClient.get(noTrailingSlashUrl)
+
+    expect(dispatcherOne).toBe(dispatcherTwo)
+  })
+})
