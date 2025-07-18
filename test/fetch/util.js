@@ -6,6 +6,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const util = require('../../lib/web/fetch/util')
 const { HeadersList } = require('../../lib/web/fetch/headers')
 const { createHash } = require('node:crypto')
+const { createDeferredPromise } = require('../../lib/util/promise')
 
 test('responseURL', (t) => {
   const { ok } = tspl(t, { plan: 2 })
@@ -373,5 +374,37 @@ describe('isOriginIPPotentiallyTrustworthy()', () => {
     test(`${ip} is ${expected ? '' : 'not '}potentially trustworthy`, () => {
       assert.strictEqual(util.isOriginIPPotentiallyTrustworthy(ip), expected)
     })
+  })
+})
+
+describe('readAllBytes', () => {
+  const iterations = 100000
+
+  test(`should not break on potential stack overflow, when simulating ${iterations} enqueued chunks`, async (t) => {
+    const { strictEqual, fail } = tspl(t, { plan: 1 })
+
+    const deferredPromise = createDeferredPromise()
+
+    let i = 0
+    const value = Buffer.alloc(1).fill('a')
+    const reader = {
+      read: () => {
+        return Promise.resolve({ done: i++ === iterations, value })
+      }
+    }
+
+    const successSteps = (bytes) => {
+      strictEqual(bytes.length, iterations)
+      deferredPromise.resolve()
+    }
+
+    const errorSteps = (err) => {
+      fail(`Unexpected error: ${err}`)
+      deferredPromise.reject(err)
+    }
+
+    util.readAllBytes(reader, successSteps, errorSteps)
+
+    await deferredPromise.promise
   })
 })
