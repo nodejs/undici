@@ -378,7 +378,7 @@ describe('isOriginIPPotentiallyTrustworthy()', () => {
 })
 
 describe('readAllBytes', () => {
-  const iterations = 100000
+  const iterations = 1000000
 
   test(`should not break on potential stack overflow, when simulating ${iterations} enqueued chunks`, async (t) => {
     const { strictEqual, fail } = tspl(t, { plan: 1 })
