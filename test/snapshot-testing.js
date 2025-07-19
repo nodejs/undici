@@ -4,7 +4,7 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
-const { unlink, mkdir } = require('node:fs/promises')
+const { unlink } = require('node:fs/promises')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { SnapshotAgent, setGlobalDispatcher, getGlobalDispatcher, request } = require('..')
@@ -27,7 +27,7 @@ test('SnapshotAgent - record mode', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-snapshots-${Date.now()}.json`)
-  const agent = new SnapshotAgent({ 
+  const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath
   })
@@ -39,7 +39,7 @@ test('SnapshotAgent - record mode', async (t) => {
   // Make a request that should be recorded
   const response = await request(`${origin}/test`)
   const body = await response.body.json()
-  
+
   assert.strictEqual(response.statusCode, 200)
   assert.deepStrictEqual(body, { message: 'Hello World', timestamp: '2024-01-01T00:00:00Z' })
 
@@ -54,7 +54,7 @@ test('SnapshotAgent - record mode', async (t) => {
   assert.strictEqual(snapshots.length, 1)
   assert.strictEqual(snapshots[0].request.method, 'GET')
   assert.strictEqual(snapshots[0].request.url, `${origin}/test`)
-  assert.strictEqual(snapshots[0].response.statusCode, 200)
+  assert.strictEqual(snapshots[0].responses[0].statusCode, 200)
 
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))
@@ -62,9 +62,9 @@ test('SnapshotAgent - record mode', async (t) => {
 
 test('SnapshotAgent - playback mode', async (t) => {
   const snapshotPath = join(tmpdir(), `test-snapshots-playback-${Date.now()}.json`)
-  
+
   // First, create a recording
-  const recordingAgent = new SnapshotAgent({ 
+  const recordingAgent = new SnapshotAgent({
     mode: 'record',
     snapshotPath
   })
@@ -110,9 +110,9 @@ test('SnapshotAgent - playback mode', async (t) => {
 
 test('SnapshotAgent - update mode', async (t) => {
   const snapshotPath = join(tmpdir(), `test-snapshots-update-${Date.now()}.json`)
-  
+
   // Create agent in update mode
-  const agent = new SnapshotAgent({ 
+  const agent = new SnapshotAgent({
     mode: 'update',
     snapshotPath
   })
@@ -169,13 +169,13 @@ test('SnapshotAgent - update mode', async (t) => {
 
 test('SnapshotAgent - handles POST requests with body', async (t) => {
   const snapshotPath = join(tmpdir(), `test-snapshots-post-${Date.now()}.json`)
-  
+
   const server = createServer((req, res) => {
     let body = ''
     req.on('data', chunk => { body += chunk })
     req.on('end', () => {
       res.writeHead(200, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ 
+      res.end(JSON.stringify({
         received: body,
         method: req.method,
         headers: req.headers
@@ -190,7 +190,7 @@ test('SnapshotAgent - handles POST requests with body', async (t) => {
   t.after(() => server.close())
 
   // Record mode
-  const recordingAgent = new SnapshotAgent({ 
+  const recordingAgent = new SnapshotAgent({
     mode: 'record',
     snapshotPath
   })
@@ -237,7 +237,7 @@ test('SnapshotAgent - handles POST requests with body', async (t) => {
 
 test('SnapshotAgent - error handling in playback mode', async (t) => {
   const snapshotPath = join(tmpdir(), `test-snapshots-error-${Date.now()}.json`)
-  
+
   const agent = new SnapshotAgent({
     mode: 'playback',
     snapshotPath // File doesn't exist
@@ -259,7 +259,7 @@ test('SnapshotAgent - error handling in playback mode', async (t) => {
     assert(error.message.includes('No snapshot found for GET /nonexistent'))
     assert.strictEqual(error.code, 'UND_ERR')
   }
-  
+
   assert(errorThrown, 'Expected an error to be thrown')
 
   // Cleanup
@@ -268,7 +268,7 @@ test('SnapshotAgent - error handling in playback mode', async (t) => {
 
 test('SnapshotAgent - snapshot file format', async (t) => {
   const snapshotPath = join(tmpdir(), `test-snapshots-format-${Date.now()}.json`)
-  
+
   const server = createServer((req, res) => {
     res.writeHead(200, { 'x-custom-header': 'test-value' })
     res.end('Test response')
@@ -280,7 +280,7 @@ test('SnapshotAgent - snapshot file format', async (t) => {
 
   t.after(() => server.close())
 
-  const agent = new SnapshotAgent({ 
+  const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath
   })
@@ -297,22 +297,22 @@ test('SnapshotAgent - snapshot file format', async (t) => {
   // Read and verify the snapshot file format
   const { readFile } = require('node:fs/promises')
   const snapshotData = JSON.parse(await readFile(snapshotPath, 'utf8'))
-  
+
   assert(Array.isArray(snapshotData))
   assert.strictEqual(snapshotData.length, 1)
-  
+
   const snapshot = snapshotData[0]
   assert(typeof snapshot.hash === 'string')
   assert(typeof snapshot.snapshot === 'object')
-  
-  const { request: req, response: res, timestamp } = snapshot.snapshot
+
+  const { request: req, responses, timestamp } = snapshot.snapshot
   assert.strictEqual(req.method, 'GET')
   assert.strictEqual(req.url, `${origin}/test-endpoint`)
-  assert.strictEqual(res.statusCode, 200)
-  
+  assert.strictEqual(responses[0].statusCode, 200)
+
   // Headers should be normalized to lowercase
-  assert(res.headers['x-custom-header'], 'Expected x-custom-header to be present')
-  assert.strictEqual(res.headers['x-custom-header'], 'test-value')
+  assert(responses[0].headers['x-custom-header'], 'Expected x-custom-header to be present')
+  assert.strictEqual(responses[0].headers['x-custom-header'], 'test-value')
   assert(typeof timestamp === 'string')
 
   // Cleanup
@@ -322,7 +322,7 @@ test('SnapshotAgent - snapshot file format', async (t) => {
 test('SnapshotAgent - constructor options validation', async (t) => {
   // Test invalid mode
   assert.throws(() => {
-    new SnapshotAgent({ mode: 'invalid' })
+    return new SnapshotAgent({ mode: 'invalid' })
   }, {
     name: 'InvalidArgumentError',
     message: /Invalid snapshot mode: invalid\. Must be one of: record, playback, update/
@@ -330,7 +330,7 @@ test('SnapshotAgent - constructor options validation', async (t) => {
 
   // Test missing snapshotPath for playback mode
   assert.throws(() => {
-    new SnapshotAgent({ mode: 'playback' })
+    return new SnapshotAgent({ mode: 'playback' })
   }, {
     name: 'InvalidArgumentError',
     message: /snapshotPath is required when mode is 'playback'/
@@ -338,7 +338,7 @@ test('SnapshotAgent - constructor options validation', async (t) => {
 
   // Test missing snapshotPath for update mode
   assert.throws(() => {
-    new SnapshotAgent({ mode: 'update' })
+    return new SnapshotAgent({ mode: 'update' })
   }, {
     name: 'InvalidArgumentError',
     message: /snapshotPath is required when mode is 'update'/
@@ -347,19 +347,19 @@ test('SnapshotAgent - constructor options validation', async (t) => {
   // Test valid configurations should not throw
   assert.doesNotThrow(() => {
     const agent1 = new SnapshotAgent({ mode: 'record' })
-    agent1.close()
+    return agent1.close()
   })
 
   assert.doesNotThrow(() => {
     const snapshotPath = join(tmpdir(), `test-valid-${Date.now()}.json`)
     const agent2 = new SnapshotAgent({ mode: 'playback', snapshotPath })
-    agent2.close()
+    return agent2.close()
   })
 
   assert.doesNotThrow(() => {
     const snapshotPath = join(tmpdir(), `test-valid-${Date.now()}.json`)
     const agent3 = new SnapshotAgent({ mode: 'update', snapshotPath })
-    agent3.close()
+    return agent3.close()
   })
 })
 
@@ -376,7 +376,7 @@ test('SnapshotAgent - maxSnapshots and LRU eviction', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-lru-${Date.now()}.json`)
-  const agent = new SnapshotAgent({ 
+  const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
     maxSnapshots: 2 // Only keep 2 snapshots
@@ -394,13 +394,13 @@ test('SnapshotAgent - maxSnapshots and LRU eviction', async (t) => {
   await request(`${origin}/third`)
 
   const recorder = agent.getRecorder()
-  
+
   // Should only have 2 snapshots due to LRU eviction
   assert.strictEqual(recorder.size(), 2)
 
   const snapshots = recorder.getSnapshots()
   const urls = snapshots.map(s => s.request.url)
-  
+
   // First snapshot should be evicted, should have second and third
   assert(urls.includes(`${origin}/second`))
   assert(urls.includes(`${origin}/third`))
@@ -423,7 +423,7 @@ test('SnapshotAgent - auto-flush functionality', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-autoflush-${Date.now()}.json`)
-  const agent = new SnapshotAgent({ 
+  const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
     autoFlush: true,
@@ -441,7 +441,7 @@ test('SnapshotAgent - auto-flush functionality', async (t) => {
 
   // Wait for auto-flush to trigger and ensure it completes
   await new Promise(resolve => setTimeout(resolve, 200))
-  
+
   // Force a final flush to ensure all data is written
   await agent.saveSnapshots()
 
@@ -449,7 +449,7 @@ test('SnapshotAgent - auto-flush functionality', async (t) => {
   const { readFile } = require('node:fs/promises')
   const fileData = await readFile(snapshotPath, 'utf8')
   const snapshots = JSON.parse(fileData)
-  
+
   assert(Array.isArray(snapshots))
   assert.strictEqual(snapshots.length, 1)
   assert.strictEqual(snapshots[0].snapshot.request.url, `${origin}/autoflush-test`)
@@ -460,10 +460,10 @@ test('SnapshotAgent - auto-flush functionality', async (t) => {
 
 test('SnapshotAgent - custom header matching with matchHeaders', async (t) => {
   const server = createServer((req, res) => {
-    res.writeHead(200, { 
+    res.writeHead(200, {
       'content-type': 'application/json',
       'x-request-id': '12345',
-      'authorization': 'Bearer secret-token'
+      authorization: 'Bearer secret-token'
     })
     res.end('{"message": "test"}')
   })
@@ -475,7 +475,7 @@ test('SnapshotAgent - custom header matching with matchHeaders', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-match-headers-${Date.now()}.json`)
-  const agent = new SnapshotAgent({ 
+  const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
     matchHeaders: ['content-type'] // Only match on content-type header
@@ -490,7 +490,7 @@ test('SnapshotAgent - custom header matching with matchHeaders', async (t) => {
   // Make first request with authorization header
   await request(`${origin}/test`, {
     headers: {
-      'authorization': 'Bearer secret-token',
+      authorization: 'Bearer secret-token',
       'content-type': 'application/json'
     }
   })
@@ -511,7 +511,7 @@ test('SnapshotAgent - custom header matching with matchHeaders', async (t) => {
 
   const response = await request(`${origin}/test`, {
     headers: {
-      'authorization': 'Bearer different-token', // Different auth token
+      authorization: 'Bearer different-token', // Different auth token
       'content-type': 'application/json' // Same content-type
     }
   })
@@ -537,7 +537,7 @@ test('SnapshotAgent - ignore headers functionality', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-ignore-headers-${Date.now()}.json`)
-  const agent = new SnapshotAgent({ 
+  const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
     ignoreHeaders: ['authorization', 'x-request-id'] // Ignore these for matching
@@ -552,7 +552,7 @@ test('SnapshotAgent - ignore headers functionality', async (t) => {
   // Make first request
   await request(`${origin}/test`, {
     headers: {
-      'authorization': 'Bearer token1',
+      authorization: 'Bearer token1',
       'x-request-id': 'req-123',
       'content-type': 'application/json'
     }
@@ -573,7 +573,7 @@ test('SnapshotAgent - ignore headers functionality', async (t) => {
 
   const response = await request(`${origin}/test`, {
     headers: {
-      'authorization': 'Bearer different-token', // Different (ignored)
+      authorization: 'Bearer different-token', // Different (ignored)
       'x-request-id': 'req-456', // Different (ignored)
       'content-type': 'application/json' // Same (not ignored)
     }
@@ -589,10 +589,10 @@ test('SnapshotAgent - ignore headers functionality', async (t) => {
 
 test('SnapshotAgent - exclude headers for security', async (t) => {
   const server = createServer((req, res) => {
-    res.writeHead(200, { 
+    res.writeHead(200, {
       'content-type': 'application/json',
       'set-cookie': 'session=secret123; HttpOnly',
-      'authorization': 'Bearer server-token'
+      authorization: 'Bearer server-token'
     })
     res.end('{"data": "sensitive"}')
   })
@@ -604,7 +604,7 @@ test('SnapshotAgent - exclude headers for security', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-exclude-headers-${Date.now()}.json`)
-  const agent = new SnapshotAgent({ 
+  const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
     excludeHeaders: ['authorization', 'set-cookie'] // Don't store these sensitive headers
@@ -623,14 +623,14 @@ test('SnapshotAgent - exclude headers for security', async (t) => {
   const { readFile } = require('node:fs/promises')
   const fileData = await readFile(snapshotPath, 'utf8')
   const snapshots = JSON.parse(fileData)
-  
+
   assert.strictEqual(snapshots.length, 1)
   const snapshot = snapshots[0].snapshot
-  
+
   // Verify excluded headers are not in stored response
-  assert(!snapshot.response.headers.authorization, 'Authorization header should be excluded')
-  assert(!snapshot.response.headers['set-cookie'], 'Set-Cookie header should be excluded')
-  assert(snapshot.response.headers['content-type'], 'Content-Type header should be preserved')
+  assert(!snapshot.responses[0].headers.authorization, 'Authorization header should be excluded')
+  assert(!snapshot.responses[0].headers['set-cookie'], 'Set-Cookie header should be excluded')
+  assert(snapshot.responses[0].headers['content-type'], 'Content-Type header should be preserved')
 
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))
@@ -649,7 +649,7 @@ test('SnapshotAgent - query parameter matching control', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-query-matching-${Date.now()}.json`)
-  const agent = new SnapshotAgent({ 
+  const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
     matchQuery: false // Ignore query parameters in matching
@@ -682,7 +682,7 @@ test('SnapshotAgent - query parameter matching control', async (t) => {
 
   assert.strictEqual(response.statusCode, 200)
   const body = await response.body.text()
-  assert.strictEqual(body, `Response for /api/data?timestamp=123&session=abc`)
+  assert.strictEqual(body, 'Response for /api/data?timestamp=123&session=abc')
 
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))
@@ -705,7 +705,7 @@ test('SnapshotAgent - body matching control', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-body-matching-${Date.now()}.json`)
-  const agent = new SnapshotAgent({ 
+  const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
     matchBody: false // Ignore request body in matching
@@ -747,6 +747,227 @@ test('SnapshotAgent - body matching control', async (t) => {
   assert.strictEqual(response.statusCode, 200)
   const responseBody = await response.body.json()
   assert.strictEqual(responseBody.received, 'original-data')
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - sequential response support', async (t) => {
+  const responses = ['First response', 'Second response', 'Third response']
+  let callCount = 0
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end(responses[callCount] || responses[responses.length - 1])
+    callCount++
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-sequential-${Date.now()}.json`)
+
+  // Record multiple responses to the same endpoint
+  const recordingAgent = new SnapshotAgent({
+    mode: 'record',
+    snapshotPath
+  })
+
+  t.after(() => recordingAgent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(recordingAgent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Make multiple requests to record sequential responses
+  await request(`${origin}/api/test`)
+  await request(`${origin}/api/test`)
+  await request(`${origin}/api/test`)
+
+  await recordingAgent.saveSnapshots()
+
+  // Switch to playback mode and test sequential responses
+  const playbackAgent = new SnapshotAgent({
+    mode: 'playback',
+    snapshotPath
+  })
+
+  t.after(() => playbackAgent.close())
+  setGlobalDispatcher(playbackAgent)
+
+  // First call should return first response
+  const response1 = await request(`${origin}/api/test`)
+  const body1 = await response1.body.text()
+  assert.strictEqual(body1, 'First response')
+
+  // Second call should return second response
+  const response2 = await request(`${origin}/api/test`)
+  const body2 = await response2.body.text()
+  assert.strictEqual(body2, 'Second response')
+
+  // Third call should return third response
+  const response3 = await request(`${origin}/api/test`)
+  const body3 = await response3.body.text()
+  assert.strictEqual(body3, 'Third response')
+
+  // Fourth call should repeat the last response
+  const response4 = await request(`${origin}/api/test`)
+  const body4 = await response4.body.text()
+  assert.strictEqual(body4, 'Third response')
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - call count reset functionality', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('Test response')
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-reset-${Date.now()}.json`)
+  const agent = new SnapshotAgent({
+    mode: 'record',
+    snapshotPath
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Record a snapshot
+  await request(`${origin}/api/test`)
+  await agent.saveSnapshots()
+
+  // Check initial call count
+  const info1 = agent.getSnapshotInfo({
+    origin,
+    path: '/api/test',
+    method: 'GET'
+  })
+  assert(info1)
+  assert.strictEqual(info1.callCount, 0) // Call count is only incremented during findSnapshot
+
+  // Reset call counts
+  agent.resetCallCounts()
+
+  const info2 = agent.getSnapshotInfo({
+    origin,
+    path: '/api/test',
+    method: 'GET'
+  })
+  assert(info2)
+  assert.strictEqual(info2.callCount, 0)
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - snapshot management methods', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end(`Response for ${req.url}`)
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-management-${Date.now()}.json`)
+  const agent = new SnapshotAgent({
+    mode: 'record',
+    snapshotPath
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Record multiple snapshots
+  await request(`${origin}/api/users`)
+  await request(`${origin}/api/posts`)
+
+  // Test getSnapshotInfo
+  const userInfo = agent.getSnapshotInfo({
+    origin,
+    path: '/api/users',
+    method: 'GET'
+  })
+  assert(userInfo)
+  assert.strictEqual(userInfo.request.method, 'GET')
+  assert.strictEqual(userInfo.request.url, `${origin}/api/users`)
+  assert.strictEqual(userInfo.responseCount, 1)
+
+  // Test deleteSnapshot
+  const deleted = agent.deleteSnapshot({
+    origin,
+    path: '/api/users',
+    method: 'GET'
+  })
+  assert.strictEqual(deleted, true)
+
+  // Verify deletion
+  const deletedInfo = agent.getSnapshotInfo({
+    origin,
+    path: '/api/users',
+    method: 'GET'
+  })
+  assert.strictEqual(deletedInfo, null)
+
+  // Post snapshot should still exist
+  const postInfo = agent.getSnapshotInfo({
+    origin,
+    path: '/api/posts',
+    method: 'GET'
+  })
+  assert(postInfo)
+
+  // Test replaceSnapshots - create a snapshot with proper hash
+  const { createRequestHash, formatRequestKey } = require('../lib/mock/snapshot-recorder')
+  const mockRequestOpts = {
+    origin,
+    path: '/api/mock',
+    method: 'GET'
+  }
+  const mockRequest = formatRequestKey(mockRequestOpts)
+  const mockHash = createRequestHash(mockRequest)
+
+  const mockData = [
+    {
+      hash: mockHash,
+      snapshot: {
+        request: mockRequest,
+        responses: [{ statusCode: 200, headers: {}, body: 'bW9jaw==', trailers: {} }],
+        callCount: 0,
+        timestamp: new Date().toISOString()
+      }
+    }
+  ]
+
+  agent.replaceSnapshots(mockData)
+
+  // Should only have the mock snapshot now
+  const recorder = agent.getRecorder()
+  assert.strictEqual(recorder.size(), 1)
+
+  const mockInfo = agent.getSnapshotInfo(mockRequestOpts)
+  assert(mockInfo)
+  assert.strictEqual(mockInfo.request.url, `${origin}/api/mock`)
 
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))

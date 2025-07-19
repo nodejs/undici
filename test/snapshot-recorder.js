@@ -14,7 +14,7 @@ test('SnapshotRecorder - basic recording and retrieval', (t) => {
     origin: 'https://api.example.com',
     path: '/users/123',
     method: 'GET',
-    headers: { 'authorization': 'Bearer token' }
+    headers: { authorization: 'Bearer token' }
   }
 
   const response = {
@@ -47,7 +47,7 @@ test('SnapshotRecorder - request key formatting', (t) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer token'
+      Authorization: 'Bearer token'
     },
     body: '{"filter": "active"}'
   }
@@ -65,21 +65,21 @@ test('SnapshotRecorder - request hashing', (t) => {
   const request1 = {
     method: 'GET',
     url: 'https://api.example.com/users',
-    headers: { 'authorization': 'Bearer token' },
+    headers: { authorization: 'Bearer token' },
     body: undefined
   }
 
   const request2 = {
-    method: 'GET', 
+    method: 'GET',
     url: 'https://api.example.com/users',
-    headers: { 'authorization': 'Bearer token' },
+    headers: { authorization: 'Bearer token' },
     body: undefined
   }
 
   const request3 = {
     method: 'POST',
     url: 'https://api.example.com/users',
-    headers: { 'authorization': 'Bearer token' },
+    headers: { authorization: 'Bearer token' },
     body: undefined
   }
 
@@ -89,10 +89,10 @@ test('SnapshotRecorder - request hashing', (t) => {
 
   // Same requests should have same hash
   assert.strictEqual(hash1, hash2)
-  
+
   // Different requests should have different hashes
   assert.notStrictEqual(hash1, hash3)
-  
+
   // Hashes should be URL-safe base64
   assert(hash1.match(/^[A-Za-z0-9_-]+$/))
 })
@@ -103,16 +103,16 @@ test('SnapshotRecorder - header normalization', (t) => {
     path: '/test',
     headers: {
       'Content-Type': 'application/json',
-      'AUTHORIZATION': 'Bearer token'
+      AUTHORIZATION: 'Bearer token'
     }
   }
 
   const requestOpts2 = {
-    origin: 'https://api.example.com', 
+    origin: 'https://api.example.com',
     path: '/test',
     headers: {
       'content-type': 'application/json',
-      'authorization': 'Bearer token'
+      authorization: 'Bearer token'
     }
   }
 
@@ -180,13 +180,13 @@ test('SnapshotRecorder - array header handling', (t) => {
     origin: 'https://api.example.com',
     path: '/test',
     headers: {
-      'accept': ['application/json', 'text/plain'],
+      accept: ['application/json', 'text/plain'],
       'x-custom': 'single-value'
     }
   }
 
   const formatted = formatRequestKey(requestOpts)
-  
+
   // Array headers should be joined with comma
   assert.strictEqual(formatted.headers.accept, 'application/json, text/plain')
   assert.strictEqual(formatted.headers['x-custom'], 'single-value')
@@ -210,11 +210,11 @@ test('SnapshotRecorder - query parameter handling', (t) => {
 
   // URLs with different query parameter order should be normalized
   assert.strictEqual(formatted1.url, 'https://api.example.com/search?q=test&sort=date')
-  
+
   // But they should still create different hashes if params are truly different
   const hash1 = createRequestHash(formatted1)
   const hash2 = createRequestHash(formatted2)
-  
+
   // This tests that parameter order matters in our current implementation
   // We might want to normalize parameter order in the future
   assert.notStrictEqual(hash1, hash2)
@@ -251,40 +251,40 @@ test('SnapshotRecorder - clear functionality', async (t) => {
 test('SnapshotRecorder - custom header matching', (t) => {
   const headers = {
     'content-type': 'application/json',
-    'authorization': 'Bearer token',
+    authorization: 'Bearer token',
     'x-request-id': '123',
-    'accept': 'application/json'
+    accept: 'application/json'
   }
 
   // Test matchHeaders option
   const matchSpecific = filterHeadersForMatching(headers, {
     matchHeaders: ['content-type', 'accept']
   })
-  
+
   assert.deepStrictEqual(matchSpecific, {
     'content-type': 'application/json',
-    'accept': 'application/json'
+    accept: 'application/json'
   })
 
   // Test ignoreHeaders option
   const ignoreAuth = filterHeadersForMatching(headers, {
     ignoreHeaders: ['authorization', 'x-request-id']
   })
-  
+
   assert.deepStrictEqual(ignoreAuth, {
     'content-type': 'application/json',
-    'accept': 'application/json'
+    accept: 'application/json'
   })
 
   // Test excludeHeaders option
   const excludeSensitive = filterHeadersForMatching(headers, {
     excludeHeaders: ['authorization']
   })
-  
+
   assert.deepStrictEqual(excludeSensitive, {
     'content-type': 'application/json',
     'x-request-id': '123',
-    'accept': 'application/json'
+    accept: 'application/json'
   })
 })
 
@@ -292,7 +292,7 @@ test('SnapshotRecorder - header filtering for storage', (t) => {
   const headers = {
     'content-type': 'application/json',
     'set-cookie': 'session=secret',
-    'authorization': 'Bearer token',
+    authorization: 'Bearer token',
     'cache-control': 'no-cache'
   }
 
@@ -300,7 +300,7 @@ test('SnapshotRecorder - header filtering for storage', (t) => {
   const filtered = filterHeadersForStorage(headers, {
     excludeHeaders: ['set-cookie', 'authorization']
   })
-  
+
   assert.deepStrictEqual(filtered, {
     'content-type': 'application/json',
     'cache-control': 'no-cache'
@@ -310,7 +310,7 @@ test('SnapshotRecorder - header filtering for storage', (t) => {
 test('SnapshotRecorder - case sensitivity in header filtering', (t) => {
   const headers = {
     'Content-Type': 'application/json',
-    'AUTHORIZATION': 'Bearer token',
+    AUTHORIZATION: 'Bearer token',
     'X-Request-ID': '123'
   }
 
@@ -318,7 +318,7 @@ test('SnapshotRecorder - case sensitivity in header filtering', (t) => {
   const caseInsensitive = filterHeadersForMatching(headers, {
     ignoreHeaders: ['authorization', 'x-request-id']
   })
-  
+
   assert.deepStrictEqual(caseInsensitive, {
     'content-type': 'application/json'
   })
@@ -328,11 +328,11 @@ test('SnapshotRecorder - case sensitivity in header filtering', (t) => {
     ignoreHeaders: ['authorization', 'x-request-id'],
     caseSensitive: true
   })
-  
+
   // Should keep all headers since case doesn't match
   assert.deepStrictEqual(caseSensitive, {
     'Content-Type': 'application/json',
-    'AUTHORIZATION': 'Bearer token',
+    AUTHORIZATION: 'Bearer token',
     'X-Request-ID': '123'
   })
 })
@@ -344,7 +344,7 @@ test('SnapshotRecorder - request formatting with match options', (t) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer token',
+      Authorization: 'Bearer token',
       'X-Request-ID': '123'
     },
     body: '{"filter": "active"}'

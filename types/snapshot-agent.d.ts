@@ -1,16 +1,15 @@
-import Agent from './agent'
 import MockAgent from './mock-agent'
 
 declare class SnapshotRecorder {
-  constructor(options?: SnapshotRecorder.Options)
-  
-  record(requestOpts: any, response: any): Promise<void>
-  findSnapshot(requestOpts: any): SnapshotRecorder.Snapshot | undefined
-  loadSnapshots(filePath?: string): Promise<void>
-  saveSnapshots(filePath?: string): Promise<void>
-  clear(): void
-  getSnapshots(): SnapshotRecorder.Snapshot[]
-  size(): number
+  constructor (options?: SnapshotRecorder.Options)
+
+  record (requestOpts: any, response: any): Promise<void>
+  findSnapshot (requestOpts: any): SnapshotRecorder.Snapshot | undefined
+  loadSnapshots (filePath?: string): Promise<void>
+  saveSnapshots (filePath?: string): Promise<void>
+  clear (): void
+  getSnapshots (): SnapshotRecorder.Snapshot[]
+  size (): number
 }
 
 declare namespace SnapshotRecorder {
@@ -37,13 +36,13 @@ declare namespace SnapshotRecorder {
 }
 
 declare class SnapshotAgent extends MockAgent {
-  constructor(options?: SnapshotAgent.Options)
-  
-  saveSnapshots(filePath?: string): Promise<void>
-  loadSnapshots(filePath?: string): Promise<void>
-  getRecorder(): SnapshotRecorder
-  getMode(): 'record' | 'playback' | 'update'
-  clearSnapshots(): void
+  constructor (options?: SnapshotAgent.Options)
+
+  saveSnapshots (filePath?: string): Promise<void>
+  loadSnapshots (filePath?: string): Promise<void>
+  getRecorder (): SnapshotRecorder
+  getMode (): 'record' | 'playback' | 'update'
+  clearSnapshots (): void
 }
 
 declare namespace SnapshotAgent {

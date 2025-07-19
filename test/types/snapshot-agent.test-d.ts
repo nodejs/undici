@@ -9,9 +9,9 @@ expectAssignable<SnapshotAgent>(new SnapshotAgent({ mode: 'record' }))
 expectAssignable<SnapshotAgent>(new SnapshotAgent({ mode: 'playback' }))
 expectAssignable<SnapshotAgent>(new SnapshotAgent({ mode: 'update' }))
 expectAssignable<SnapshotAgent>(new SnapshotAgent({ snapshotPath: './snapshots.json' }))
-expectAssignable<SnapshotAgent>(new SnapshotAgent({ 
-  mode: 'record', 
-  snapshotPath: './snapshots.json' 
+expectAssignable<SnapshotAgent>(new SnapshotAgent({
+  mode: 'record',
+  snapshotPath: './snapshots.json'
 }))
 
 // SnapshotAgent extends MockAgent
@@ -48,18 +48,18 @@ expectAssignable<Dispatcher>(new SnapshotAgent())
     enableCallHistory: true,
     acceptNonStandardSearchParameters: true
   })
-  
+
   expectAssignable<SnapshotAgent>(snapshotAgent)
 }
 
 {
   // Constructor with agent option
   const agent = new Agent()
-  const snapshotAgent = new SnapshotAgent({ 
+  const snapshotAgent = new SnapshotAgent({
     mode: 'record',
-    agent 
+    agent
   })
-  
+
   expectAssignable<SnapshotAgent>(snapshotAgent)
 }
 
@@ -83,7 +83,7 @@ expectAssignable<Dispatcher>(new SnapshotAgent())
     snapshotPath: './test.json',
     mode: 'record'
   })
-  
+
   expectAssignable<SnapshotRecorder>(recorder)
 }
 
@@ -93,7 +93,7 @@ expectAssignable<Dispatcher>(new SnapshotAgent())
     request: {
       method: 'GET',
       url: 'https://api.example.com/test',
-      headers: { 'authorization': 'Bearer token' },
+      headers: { authorization: 'Bearer token' },
       body: '{"test": "data"}'
     },
     response: {
@@ -104,7 +104,7 @@ expectAssignable<Dispatcher>(new SnapshotAgent())
     },
     timestamp: '2024-01-01T00:00:00.000Z'
   }
-  
+
   expectType<string>(snapshot.request.method)
   expectType<string>(snapshot.request.url)
   expectType<Record<string, string>>(snapshot.request.headers)
