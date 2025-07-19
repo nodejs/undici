@@ -243,17 +243,24 @@ test('SnapshotAgent - error handling in playback mode', async (t) => {
     snapshotPath // File doesn't exist
   })
 
+  t.after(() => agent.close())
+
   const originalDispatcher = getGlobalDispatcher()
   setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
 
   // This should throw because no snapshot exists for this request
+  let errorThrown = false
   try {
     await request('http://localhost:9999/nonexistent')
-    assert.fail('Expected request to throw')
   } catch (error) {
-    assert.match(error.message, /No snapshot found for GET \/nonexistent/)
+    errorThrown = true
+    assert.strictEqual(error.name, 'UndiciError')
+    assert(error.message.includes('No snapshot found for GET /nonexistent'))
+    assert.strictEqual(error.code, 'UND_ERR')
   }
+  
+  assert(errorThrown, 'Expected an error to be thrown')
 
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))
@@ -278,6 +285,8 @@ test('SnapshotAgent - snapshot file format', async (t) => {
     snapshotPath
   })
 
+  t.after(() => agent.close())
+
   const originalDispatcher = getGlobalDispatcher()
   setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
@@ -301,13 +310,149 @@ test('SnapshotAgent - snapshot file format', async (t) => {
   assert.strictEqual(req.url, `${origin}/test-endpoint`)
   assert.strictEqual(res.statusCode, 200)
   
-  // Debug headers
-  console.log('Response headers:', JSON.stringify(res.headers, null, 2))
-  
   // Headers should be normalized to lowercase
   assert(res.headers['x-custom-header'], 'Expected x-custom-header to be present')
   assert.strictEqual(res.headers['x-custom-header'], 'test-value')
   assert(typeof timestamp === 'string')
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - constructor options validation', async (t) => {
+  // Test invalid mode
+  assert.throws(() => {
+    new SnapshotAgent({ mode: 'invalid' })
+  }, {
+    name: 'InvalidArgumentError',
+    message: /Invalid snapshot mode: invalid\. Must be one of: record, playback, update/
+  })
+
+  // Test missing snapshotPath for playback mode
+  assert.throws(() => {
+    new SnapshotAgent({ mode: 'playback' })
+  }, {
+    name: 'InvalidArgumentError',
+    message: /snapshotPath is required when mode is 'playback'/
+  })
+
+  // Test missing snapshotPath for update mode
+  assert.throws(() => {
+    new SnapshotAgent({ mode: 'update' })
+  }, {
+    name: 'InvalidArgumentError',
+    message: /snapshotPath is required when mode is 'update'/
+  })
+
+  // Test valid configurations should not throw
+  assert.doesNotThrow(() => {
+    const agent1 = new SnapshotAgent({ mode: 'record' })
+    agent1.close()
+  })
+
+  assert.doesNotThrow(() => {
+    const snapshotPath = join(tmpdir(), `test-valid-${Date.now()}.json`)
+    const agent2 = new SnapshotAgent({ mode: 'playback', snapshotPath })
+    agent2.close()
+  })
+
+  assert.doesNotThrow(() => {
+    const snapshotPath = join(tmpdir(), `test-valid-${Date.now()}.json`)
+    const agent3 = new SnapshotAgent({ mode: 'update', snapshotPath })
+    agent3.close()
+  })
+})
+
+test('SnapshotAgent - maxSnapshots and LRU eviction', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end(`Response for ${req.url}`)
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-lru-${Date.now()}.json`)
+  const agent = new SnapshotAgent({ 
+    mode: 'record',
+    snapshotPath,
+    maxSnapshots: 2 // Only keep 2 snapshots
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Make 3 requests
+  await request(`${origin}/first`)
+  await request(`${origin}/second`)
+  await request(`${origin}/third`)
+
+  const recorder = agent.getRecorder()
+  
+  // Should only have 2 snapshots due to LRU eviction
+  assert.strictEqual(recorder.size(), 2)
+
+  const snapshots = recorder.getSnapshots()
+  const urls = snapshots.map(s => s.request.url)
+  
+  // First snapshot should be evicted, should have second and third
+  assert(urls.includes(`${origin}/second`))
+  assert(urls.includes(`${origin}/third`))
+  assert(!urls.includes(`${origin}/first`))
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - auto-flush functionality', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('Auto-flush test')
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-autoflush-${Date.now()}.json`)
+  const agent = new SnapshotAgent({ 
+    mode: 'record',
+    snapshotPath,
+    autoFlush: true,
+    flushInterval: 100 // Very short interval for testing
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Make a request
+  await request(`${origin}/autoflush-test`)
+
+  // Wait for auto-flush to trigger and ensure it completes
+  await new Promise(resolve => setTimeout(resolve, 200))
+  
+  // Force a final flush to ensure all data is written
+  await agent.saveSnapshots()
+
+  // Verify file was written automatically
+  const { readFile } = require('node:fs/promises')
+  const fileData = await readFile(snapshotPath, 'utf8')
+  const snapshots = JSON.parse(fileData)
+  
+  assert(Array.isArray(snapshots))
+  assert.strictEqual(snapshots.length, 1)
+  assert.strictEqual(snapshots[0].snapshot.request.url, `${origin}/autoflush-test`)
 
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))
