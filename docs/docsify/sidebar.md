@@ -14,6 +14,7 @@
   * [Errors](/docs/api/Errors.md "Undici API - Errors")
   * [EventSource](/docs/api/EventSource.md "Undici API - EventSource")
   * [Fetch](/docs/api/Fetch.md "Undici API - Fetch")
+  * [Global Installation](/docs/api/GlobalInstallation.md "Undici API - Global Installation")
   * [Cookies](/docs/api/Cookies.md "Undici API - Cookies")
   * [MockClient](/docs/api/MockClient.md "Undici API - MockClient")
   * [MockPool](/docs/api/MockPool.md "Undici API - MockPool")

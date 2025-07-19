@@ -119,6 +119,46 @@ test('should accept string, URL and object as options', (t) => {
   t.doesNotThrow(() => new ProxyAgent({ uri: 'http://example.com' }))
 })
 
+test('use proxy-agent to connect through proxy (keep alive)', async (t) => {
+  t = tspl(t, { plan: 6 })
+  const server = await buildServer()
+  const proxy = await buildProxy()
+  delete proxy.authenticate
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({
+    uri: proxyUrl
+  })
+  const parsedOrigin = new URL(serverUrl)
+
+  proxy.on('connect', (msg) => {
+    t.strictEqual(msg.headers['proxy-connection'], 'keep-alive')
+  })
+
+  server.on('request', (req, res) => {
+    t.strictEqual(req.url, '/')
+    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    res.setHeader('content-type', 'application/json')
+    res.end(JSON.stringify({ hello: 'world' }))
+  })
+
+  const {
+    statusCode,
+    headers,
+    body
+  } = await request(serverUrl, { dispatcher: proxyAgent })
+  const json = await body.json()
+
+  t.strictEqual(statusCode, 200)
+  t.deepStrictEqual(json, { hello: 'world' })
+  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 test('use proxy-agent to connect through proxy', async (t) => {
   t = tspl(t, { plan: 6 })
   const server = await buildServer()
@@ -519,6 +559,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   }
 
   const expectedProxyHeaders = {
+    'proxy-connection': 'keep-alive',
     host: `localhost:${server.address().port}`,
     connection: 'close'
   }
