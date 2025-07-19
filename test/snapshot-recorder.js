@@ -5,7 +5,7 @@ const assert = require('node:assert')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { unlink } = require('node:fs/promises')
-const { SnapshotRecorder, formatRequestKey, createRequestHash } = require('../lib/mock/snapshot-recorder')
+const { SnapshotRecorder, formatRequestKey, createRequestHash, filterHeadersForMatching, filterHeadersForStorage } = require('../lib/mock/snapshot-recorder')
 
 test('SnapshotRecorder - basic recording and retrieval', (t) => {
   const recorder = new SnapshotRecorder()
@@ -246,4 +246,121 @@ test('SnapshotRecorder - clear functionality', async (t) => {
     path: '/test1'
   })
   assert.strictEqual(snapshot, undefined)
+})
+
+test('SnapshotRecorder - custom header matching', (t) => {
+  const headers = {
+    'content-type': 'application/json',
+    'authorization': 'Bearer token',
+    'x-request-id': '123',
+    'accept': 'application/json'
+  }
+
+  // Test matchHeaders option
+  const matchSpecific = filterHeadersForMatching(headers, {
+    matchHeaders: ['content-type', 'accept']
+  })
+  
+  assert.deepStrictEqual(matchSpecific, {
+    'content-type': 'application/json',
+    'accept': 'application/json'
+  })
+
+  // Test ignoreHeaders option
+  const ignoreAuth = filterHeadersForMatching(headers, {
+    ignoreHeaders: ['authorization', 'x-request-id']
+  })
+  
+  assert.deepStrictEqual(ignoreAuth, {
+    'content-type': 'application/json',
+    'accept': 'application/json'
+  })
+
+  // Test excludeHeaders option
+  const excludeSensitive = filterHeadersForMatching(headers, {
+    excludeHeaders: ['authorization']
+  })
+  
+  assert.deepStrictEqual(excludeSensitive, {
+    'content-type': 'application/json',
+    'x-request-id': '123',
+    'accept': 'application/json'
+  })
+})
+
+test('SnapshotRecorder - header filtering for storage', (t) => {
+  const headers = {
+    'content-type': 'application/json',
+    'set-cookie': 'session=secret',
+    'authorization': 'Bearer token',
+    'cache-control': 'no-cache'
+  }
+
+  // Test excluding sensitive headers from storage
+  const filtered = filterHeadersForStorage(headers, {
+    excludeHeaders: ['set-cookie', 'authorization']
+  })
+  
+  assert.deepStrictEqual(filtered, {
+    'content-type': 'application/json',
+    'cache-control': 'no-cache'
+  })
+})
+
+test('SnapshotRecorder - case sensitivity in header filtering', (t) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'AUTHORIZATION': 'Bearer token',
+    'X-Request-ID': '123'
+  }
+
+  // Test case insensitive (default)
+  const caseInsensitive = filterHeadersForMatching(headers, {
+    ignoreHeaders: ['authorization', 'x-request-id']
+  })
+  
+  assert.deepStrictEqual(caseInsensitive, {
+    'content-type': 'application/json'
+  })
+
+  // Test case sensitive
+  const caseSensitive = filterHeadersForMatching(headers, {
+    ignoreHeaders: ['authorization', 'x-request-id'],
+    caseSensitive: true
+  })
+  
+  // Should keep all headers since case doesn't match
+  assert.deepStrictEqual(caseSensitive, {
+    'Content-Type': 'application/json',
+    'AUTHORIZATION': 'Bearer token',
+    'X-Request-ID': '123'
+  })
+})
+
+test('SnapshotRecorder - request formatting with match options', (t) => {
+  const requestOpts = {
+    origin: 'https://api.example.com',
+    path: '/search?q=test&limit=10',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer token',
+      'X-Request-ID': '123'
+    },
+    body: '{"filter": "active"}'
+  }
+
+  // Test with matchHeaders option
+  const formatted = formatRequestKey(requestOpts, {
+    matchHeaders: ['content-type'],
+    matchBody: false,
+    matchQuery: false
+  })
+
+  assert.strictEqual(formatted.method, 'POST')
+  assert.strictEqual(formatted.url, 'https://api.example.com/search') // No query
+  assert.deepStrictEqual(formatted.headers, {
+    'content-type': 'application/json'
+  })
+  assert.strictEqual(formatted.body, undefined) // No body
 })

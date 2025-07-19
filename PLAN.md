@@ -2,15 +2,28 @@
 
 This plan addresses all feedback from PR #4270 "feat: add SnapshotAgent for HTTP request recording and playback".
 
-## Current Status: Phase 1 Complete ✅
+## Current Status: Phase 2 Complete ✅
 
-**Phase 1 (Code Review Fixes)** has been successfully implemented and all tests are passing. This phase addressed the immediate code review feedback with:
+**Phase 1 (Code Review Fixes)** - ✅ Complete
+**Phase 2 (Enhanced Request Matching)** - ✅ Complete
+
+All tests are passing (18 total tests). Recent accomplishments:
+
+### Phase 1 ✅
 - ✅ Constructor options validation with proper error messages
 - ✅ Memory management with maxSnapshots and LRU eviction  
 - ✅ Auto-flush functionality with configurable intervals
 - ✅ Enhanced documentation with JSDoc
 - ✅ Comprehensive test coverage
 - ✅ Bug fixes for header handling and error propagation
+
+### Phase 2 ✅  
+- ✅ Customizable request matching (matchHeaders, ignoreHeaders)
+- ✅ Security-focused header filtering (excludeHeaders)
+- ✅ Query parameter matching control (matchQuery)
+- ✅ Request body matching control (matchBody)
+- ✅ Case sensitivity options for header matching
+- ✅ Comprehensive test coverage for all matching scenarios
 
 ## Summary of Feedback
 
@@ -142,9 +155,9 @@ Based on the code review, the implementation is more complete than initially app
 - [x] Document _setupMockInterceptors method with JSDoc
 - [x] Add comprehensive options validation tests
 
-### Medium Priority  
-- [ ] Implement customizable request matching (matchHeaders, ignoreHeaders)
-- [ ] Add security-focused header filtering (excludeHeaders, sanitizeHeaders)
+### Medium Priority (Phase 2 - COMPLETED ✅)
+- [x] Implement customizable request matching (matchHeaders, ignoreHeaders)
+- [x] Add security-focused header filtering (excludeHeaders, sanitizeHeaders)
 - [ ] Implement sequential response support for multiple calls
 - [ ] Add snapshot management methods (replace, delete, inspect)
 - [ ] Add request filtering callbacks (shouldRecord, shouldPlayback)
@@ -159,7 +172,7 @@ Based on the code review, the implementation is more complete than initially app
 ### Testing & Documentation
 - [x] Add tests for new options validation (Phase 1)
 - [x] Add tests for memory management features (Phase 1)
-- [ ] Add tests for custom matching scenarios
+- [x] Add tests for custom matching scenarios (Phase 2)
 - [ ] Add tests for sequential response playback
 - [ ] Add tests for request filtering
 - [ ] Update TypeScript definitions for new options

@@ -457,3 +457,297 @@ test('SnapshotAgent - auto-flush functionality', async (t) => {
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))
 })
+
+test('SnapshotAgent - custom header matching with matchHeaders', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 
+      'content-type': 'application/json',
+      'x-request-id': '12345',
+      'authorization': 'Bearer secret-token'
+    })
+    res.end('{"message": "test"}')
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-match-headers-${Date.now()}.json`)
+  const agent = new SnapshotAgent({ 
+    mode: 'record',
+    snapshotPath,
+    matchHeaders: ['content-type'] // Only match on content-type header
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Make first request with authorization header
+  await request(`${origin}/test`, {
+    headers: {
+      'authorization': 'Bearer secret-token',
+      'content-type': 'application/json'
+    }
+  })
+
+  // Save snapshots before switching to playback
+  await agent.saveSnapshots()
+
+  // Make second request with different authorization but same content-type
+  // This should match the first request due to matchHeaders config
+  const playbackAgent = new SnapshotAgent({
+    mode: 'playback',
+    snapshotPath,
+    matchHeaders: ['content-type']
+  })
+
+  t.after(() => playbackAgent.close())
+  setGlobalDispatcher(playbackAgent)
+
+  const response = await request(`${origin}/test`, {
+    headers: {
+      'authorization': 'Bearer different-token', // Different auth token
+      'content-type': 'application/json' // Same content-type
+    }
+  })
+
+  assert.strictEqual(response.statusCode, 200)
+  const body = await response.body.text()
+  assert.strictEqual(body, '{"message": "test"}')
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - ignore headers functionality', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('ignore headers test')
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-ignore-headers-${Date.now()}.json`)
+  const agent = new SnapshotAgent({ 
+    mode: 'record',
+    snapshotPath,
+    ignoreHeaders: ['authorization', 'x-request-id'] // Ignore these for matching
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Make first request
+  await request(`${origin}/test`, {
+    headers: {
+      'authorization': 'Bearer token1',
+      'x-request-id': 'req-123',
+      'content-type': 'application/json'
+    }
+  })
+
+  // Save snapshots before switching to playback
+  await agent.saveSnapshots()
+
+  // Switch to playback mode and make request with different ignored headers
+  const playbackAgent = new SnapshotAgent({
+    mode: 'playback',
+    snapshotPath,
+    ignoreHeaders: ['authorization', 'x-request-id']
+  })
+
+  t.after(() => playbackAgent.close())
+  setGlobalDispatcher(playbackAgent)
+
+  const response = await request(`${origin}/test`, {
+    headers: {
+      'authorization': 'Bearer different-token', // Different (ignored)
+      'x-request-id': 'req-456', // Different (ignored)
+      'content-type': 'application/json' // Same (not ignored)
+    }
+  })
+
+  assert.strictEqual(response.statusCode, 200)
+  const body = await response.body.text()
+  assert.strictEqual(body, 'ignore headers test')
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - exclude headers for security', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 
+      'content-type': 'application/json',
+      'set-cookie': 'session=secret123; HttpOnly',
+      'authorization': 'Bearer server-token'
+    })
+    res.end('{"data": "sensitive"}')
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-exclude-headers-${Date.now()}.json`)
+  const agent = new SnapshotAgent({ 
+    mode: 'record',
+    snapshotPath,
+    excludeHeaders: ['authorization', 'set-cookie'] // Don't store these sensitive headers
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  await request(`${origin}/test`)
+  await agent.saveSnapshots()
+
+  // Read snapshot file and verify sensitive headers are not stored
+  const { readFile } = require('node:fs/promises')
+  const fileData = await readFile(snapshotPath, 'utf8')
+  const snapshots = JSON.parse(fileData)
+  
+  assert.strictEqual(snapshots.length, 1)
+  const snapshot = snapshots[0].snapshot
+  
+  // Verify excluded headers are not in stored response
+  assert(!snapshot.response.headers.authorization, 'Authorization header should be excluded')
+  assert(!snapshot.response.headers['set-cookie'], 'Set-Cookie header should be excluded')
+  assert(snapshot.response.headers['content-type'], 'Content-Type header should be preserved')
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - query parameter matching control', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end(`Response for ${req.url}`)
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-query-matching-${Date.now()}.json`)
+  const agent = new SnapshotAgent({ 
+    mode: 'record',
+    snapshotPath,
+    matchQuery: false // Ignore query parameters in matching
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Record request with query parameters
+  await request(`${origin}/api/data?timestamp=123&session=abc`)
+
+  // Save snapshots before switching to playback
+  await agent.saveSnapshots()
+
+  // Switch to playback with different query parameters
+  const playbackAgent = new SnapshotAgent({
+    mode: 'playback',
+    snapshotPath,
+    matchQuery: false
+  })
+
+  t.after(() => playbackAgent.close())
+  setGlobalDispatcher(playbackAgent)
+
+  // This should match the recorded request despite different query params
+  const response = await request(`${origin}/api/data?timestamp=456&session=xyz`)
+
+  assert.strictEqual(response.statusCode, 200)
+  const body = await response.body.text()
+  assert.strictEqual(body, `Response for /api/data?timestamp=123&session=abc`)
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - body matching control', async (t) => {
+  const server = createServer((req, res) => {
+    let body = ''
+    req.on('data', chunk => { body += chunk })
+    req.on('end', () => {
+      res.writeHead(200, { 'content-type': 'application/json' })
+      res.end(`{"received": "${body}"}`)
+    })
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-body-matching-${Date.now()}.json`)
+  const agent = new SnapshotAgent({ 
+    mode: 'record',
+    snapshotPath,
+    matchBody: false // Ignore request body in matching
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Record request with specific body
+  await request(`${origin}/api/submit`, {
+    method: 'POST',
+    body: 'original-data',
+    headers: { 'content-type': 'text/plain' }
+  })
+
+  // Save snapshots before switching to playback
+  await agent.saveSnapshots()
+
+  // Switch to playback with different body
+  const playbackAgent = new SnapshotAgent({
+    mode: 'playback',
+    snapshotPath,
+    matchBody: false
+  })
+
+  t.after(() => playbackAgent.close())
+  setGlobalDispatcher(playbackAgent)
+
+  // This should match despite different body content
+  const response = await request(`${origin}/api/submit`, {
+    method: 'POST',
+    body: 'different-data',
+    headers: { 'content-type': 'text/plain' }
+  })
+
+  assert.strictEqual(response.statusCode, 200)
+  const responseBody = await response.body.json()
+  assert.strictEqual(responseBody.received, 'original-data')
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
