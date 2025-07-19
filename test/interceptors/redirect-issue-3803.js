@@ -29,8 +29,7 @@ test('redirecting works with a FormData body', async (t) => {
   const { context } = await request(`http://localhost:${server.address().port}/1`, {
     body,
     method: 'POST',
-    dispatcher: agent,
-    maxRedirections: 1
+    dispatcher: agent
   })
 
   plan.deepStrictEqual(context.history, [
