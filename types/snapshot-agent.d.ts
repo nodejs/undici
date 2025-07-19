@@ -10,12 +10,26 @@ declare class SnapshotRecorder {
   clear (): void
   getSnapshots (): SnapshotRecorder.Snapshot[]
   size (): number
+  resetCallCounts (): void
+  deleteSnapshot (requestOpts: any): boolean
+  getSnapshotInfo (requestOpts: any): SnapshotRecorder.SnapshotInfo | null
+  replaceSnapshots (snapshotData: SnapshotRecorder.SnapshotData[]): void
+  destroy (): void
 }
 
 declare namespace SnapshotRecorder {
   export interface Options {
     snapshotPath?: string
     mode?: 'record' | 'playback' | 'update'
+    maxSnapshots?: number
+    autoFlush?: boolean
+    flushInterval?: number
+    matchHeaders?: string[]
+    ignoreHeaders?: string[]
+    excludeHeaders?: string[]
+    matchBody?: boolean
+    matchQuery?: boolean
+    caseSensitive?: boolean
   }
 
   export interface Snapshot {
@@ -25,13 +39,32 @@ declare namespace SnapshotRecorder {
       headers: Record<string, string>
       body?: string
     }
-    response: {
+    responses: {
       statusCode: number
       headers: Record<string, string>
       body: string
       trailers: Record<string, string>
-    }
+    }[]
+    callCount: number
     timestamp: string
+  }
+
+  export interface SnapshotInfo {
+    hash: string
+    request: {
+      method: string
+      url: string
+      headers: Record<string, string>
+      body?: string
+    }
+    responseCount: number
+    callCount: number
+    timestamp: string
+  }
+
+  export interface SnapshotData {
+    hash: string
+    snapshot: Snapshot
   }
 }
 
@@ -43,12 +76,25 @@ declare class SnapshotAgent extends MockAgent {
   getRecorder (): SnapshotRecorder
   getMode (): 'record' | 'playback' | 'update'
   clearSnapshots (): void
+  resetCallCounts (): void
+  deleteSnapshot (requestOpts: any): boolean
+  getSnapshotInfo (requestOpts: any): SnapshotRecorder.SnapshotInfo | null
+  replaceSnapshots (snapshotData: SnapshotRecorder.SnapshotData[]): void
 }
 
 declare namespace SnapshotAgent {
   export interface Options extends MockAgent.Options {
     mode?: 'record' | 'playback' | 'update'
     snapshotPath?: string
+    maxSnapshots?: number
+    autoFlush?: boolean
+    flushInterval?: number
+    matchHeaders?: string[]
+    ignoreHeaders?: string[]
+    excludeHeaders?: string[]
+    matchBody?: boolean
+    matchQuery?: boolean
+    caseSensitive?: boolean
   }
 }
 
