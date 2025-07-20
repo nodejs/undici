@@ -972,3 +972,235 @@ test('SnapshotAgent - snapshot management methods', async (t) => {
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))
 })
+
+test('SnapshotAgent - shouldRecord filtering', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end(`Response for ${req.url}`)
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-should-record-${Date.now()}.json`)
+  const agent = new SnapshotAgent({
+    mode: 'record',
+    snapshotPath,
+    shouldRecord: (requestOpts) => {
+      // Only record requests to /api/allowed
+      return requestOpts.path === '/api/allowed'
+    }
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Make requests - only one should be recorded
+  await request(`${origin}/api/allowed`)
+  await request(`${origin}/api/filtered`)
+
+  const recorder = agent.getRecorder()
+  assert.strictEqual(recorder.size(), 1)
+
+  const snapshots = recorder.getSnapshots()
+  assert.strictEqual(snapshots[0].request.url, `${origin}/api/allowed`)
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - shouldPlayback filtering', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end(`Live response for ${req.url}`)
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-should-playback-${Date.now()}.json`)
+
+  // First, record some snapshots without filtering
+  const recordingAgent = new SnapshotAgent({
+    mode: 'record',
+    snapshotPath
+  })
+
+  t.after(() => recordingAgent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(recordingAgent)
+
+  await request(`${origin}/api/cached`)
+  await request(`${origin}/api/live`)
+  await recordingAgent.saveSnapshots()
+
+  // Now test playback with filtering
+  const playbackAgent = new SnapshotAgent({
+    mode: 'playback',
+    snapshotPath,
+    shouldPlayback: (requestOpts) => {
+      // Only playback requests to /api/cached
+      return requestOpts.path === '/api/cached'
+    }
+  })
+
+  t.after(() => playbackAgent.close())
+  setGlobalDispatcher(playbackAgent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // This should use cached response
+  const cachedResponse = await request(`${origin}/api/cached`)
+  const cachedBody = await cachedResponse.body.text()
+  assert.strictEqual(cachedBody, 'Live response for /api/cached')
+
+  // This should fail because playback is filtered and no live server
+  // Need to close the recording server to ensure no fallback
+  server.close()
+  let errorThrown = false
+  try {
+    await request(`${origin}/api/live`)
+  } catch (error) {
+    errorThrown = true
+    assert.strictEqual(error.name, 'UndiciError')
+  }
+
+  assert(errorThrown, 'Expected an error for filtered playback request')
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - URL exclusion patterns (string)', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end(`Response for ${req.url}`)
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-url-exclusion-${Date.now()}.json`)
+  const agent = new SnapshotAgent({
+    mode: 'record',
+    snapshotPath,
+    excludeUrls: ['/private', 'secret']
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Make requests
+  await request(`${origin}/api/public`)
+  await request(`${origin}/private/data`)
+  await request(`${origin}/api/secret-endpoint`)
+
+  const recorder = agent.getRecorder()
+  assert.strictEqual(recorder.size(), 1)
+
+  const snapshots = recorder.getSnapshots()
+  assert.strictEqual(snapshots[0].request.url, `${origin}/api/public`)
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - URL exclusion patterns (regex)', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end(`Response for ${req.url}`)
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-url-regex-${Date.now()}.json`)
+  const agent = new SnapshotAgent({
+    mode: 'record',
+    snapshotPath,
+    excludeUrls: [/\/admin\/.*/, /.*\?token=.*/]
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Make requests
+  await request(`${origin}/api/data`)
+  await request(`${origin}/admin/users`)
+  await request(`${origin}/api/auth?token=secret`)
+
+  const recorder = agent.getRecorder()
+  assert.strictEqual(recorder.size(), 1)
+
+  const snapshots = recorder.getSnapshots()
+  assert.strictEqual(snapshots[0].request.url, `${origin}/api/data`)
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - complex filtering scenarios', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end(`Response for ${req.url}`)
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  const snapshotPath = join(tmpdir(), `test-complex-filtering-${Date.now()}.json`)
+  const agent = new SnapshotAgent({
+    mode: 'record',
+    snapshotPath,
+    shouldRecord: (requestOpts) => {
+      // Only record GET requests
+      return (requestOpts.method || 'GET') === 'GET'
+    },
+    excludeUrls: ['/health']
+  })
+
+  t.after(() => agent.close())
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Make various requests
+  await request(`${origin}/api/users`) // Should record
+  await request(`${origin}/health`) // Should not record (excluded URL)
+  await request(`${origin}/api/data`, { method: 'POST' }) // Should not record (POST method)
+
+  const recorder = agent.getRecorder()
+  assert.strictEqual(recorder.size(), 1)
+
+  const snapshots = recorder.getSnapshots()
+  assert.strictEqual(snapshots[0].request.url, `${origin}/api/users`)
+  assert.strictEqual(snapshots[0].request.method, 'GET')
+
+  // Cleanup
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+})

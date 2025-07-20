@@ -30,6 +30,9 @@ declare namespace SnapshotRecorder {
     matchBody?: boolean
     matchQuery?: boolean
     caseSensitive?: boolean
+    shouldRecord?: (requestOpts: any) => boolean
+    shouldPlayback?: (requestOpts: any) => boolean
+    excludeUrls?: (string | RegExp)[]
   }
 
   export interface Snapshot {
@@ -95,6 +98,9 @@ declare namespace SnapshotAgent {
     matchBody?: boolean
     matchQuery?: boolean
     caseSensitive?: boolean
+    shouldRecord?: (requestOpts: any) => boolean
+    shouldPlayback?: (requestOpts: any) => boolean
+    excludeUrls?: (string | RegExp)[]
   }
 }
 

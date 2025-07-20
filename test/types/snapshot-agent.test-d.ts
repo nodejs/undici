@@ -410,3 +410,16 @@ expectAssignable<SnapshotRecorder.Options>({
   maxSnapshots: 50,
   flushInterval: 15000
 })
+
+// Test Phase 4 filtering options
+expectAssignable<SnapshotRecorder.Options>({
+  shouldRecord: (requestOpts) => requestOpts.path.startsWith('/api'),
+  shouldPlayback: (requestOpts) => !requestOpts.path.includes('admin'),
+  excludeUrls: ['/health', /\/private\/.*/, /token=/]
+})
+
+expectAssignable<SnapshotAgent.Options>({
+  shouldRecord: (requestOpts) => requestOpts.method === 'GET',
+  shouldPlayback: (requestOpts) => requestOpts.path !== '/forbidden',
+  excludeUrls: ['secret', /admin/]
+})
