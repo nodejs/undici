@@ -796,6 +796,11 @@ test('SnapshotAgent - sequential response support', async (t) => {
   })
 
   t.after(() => playbackAgent.close())
+
+  // Wait for snapshots to load and reset call counts to ensure clean state
+  await playbackAgent.loadSnapshots()
+  playbackAgent.resetCallCounts()
+
   setGlobalDispatcher(playbackAgent)
 
   // First call should return first response
