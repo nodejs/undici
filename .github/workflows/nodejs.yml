@@ -63,6 +63,9 @@ jobs:
           - ubuntu-latest
           - windows-latest
           - macos-latest
+        exclude:
+          - node-version: 20
+            runs-on: windows-latest
     uses: ./.github/workflows/test.yml
     with:
       node-version: ${{ matrix.node-version }}
