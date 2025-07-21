@@ -11,7 +11,9 @@ dictionary SecurePaymentConfirmationRequest {
     unsigned long timeout;
     USVString payeeName;
     USVString payeeOrigin;
+    sequence<PaymentEntityLogo> paymentEntitiesLogos;
     AuthenticationExtensionsClientInputs extensions;
+    sequence<PublicKeyCredentialParameters> browserBoundPubKeyCredParams;
     sequence<USVString> locale;
     boolean showOptOut;
 };
@@ -34,18 +36,32 @@ partial dictionary AuthenticationExtensionsClientInputs {
 
 dictionary AuthenticationExtensionsPaymentInputs {
   boolean isPayment;
+  sequence<PublicKeyCredentialParameters> browserBoundPubKeyCredParams;
 
   // Only used for authentication.
   USVString rpId;
   USVString topOrigin;
   USVString payeeName;
   USVString payeeOrigin;
+  sequence<PaymentEntityLogo> paymentEntitiesLogos;
   PaymentCurrencyAmount total;
   PaymentCredentialInstrument instrument;
 };
 
+partial dictionary AuthenticationExtensionsClientOutputs {
+  AuthenticationExtensionsPaymentOutputs payment;
+};
+
+dictionary AuthenticationExtensionsPaymentOutputs {
+  BrowserBoundSignature browserBoundSignature;
+};
+
+dictionary BrowserBoundSignature {
+  required ArrayBuffer signature;
+};
+
 dictionary CollectedClientPaymentData : CollectedClientData {
-    required CollectedClientAdditionalPaymentData payment;
+    required (CollectedClientAdditionalPaymentData or CollectedClientAdditionalPaymentRegistrationData) payment;
 };
 
 dictionary CollectedClientAdditionalPaymentData {
@@ -53,12 +69,24 @@ dictionary CollectedClientAdditionalPaymentData {
     required USVString topOrigin;
     USVString payeeName;
     USVString payeeOrigin;
+    sequence<PaymentEntityLogo> paymentEntitiesLogos;
     required PaymentCurrencyAmount total;
     required PaymentCredentialInstrument instrument;
+    USVString browserBoundPublicKey;
+};
+
+dictionary CollectedClientAdditionalPaymentRegistrationData {
+    USVString browserBoundPublicKey;
 };
 
 dictionary PaymentCredentialInstrument {
     required USVString displayName;
     required USVString icon;
     boolean iconMustBeShown = true;
+    USVString details;
+};
+
+dictionary PaymentEntityLogo {
+    required USVString url;
+    required USVString label;
 };
