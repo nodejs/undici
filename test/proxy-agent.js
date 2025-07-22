@@ -1290,6 +1290,48 @@ test('ProxyAgent keeps customized host in request headers - #3019', async (t) =>
   proxyAgent.close()
 })
 
+test('ProxyAgent handles multiple concurrent HTTP requests via HTTP proxy', async (t) => {
+  t = tspl(t, { plan: 20 })
+  // Start target HTTP server
+  const server = createServer((req, res) => {
+    setTimeout(() => {
+      res.setHeader('content-type', 'application/json')
+      res.end(JSON.stringify({ url: req.url }))
+    }, 50)
+  })
+  await new Promise(resolve => server.listen(0, resolve))
+  const targetPort = server.address().port
+
+  // Start HTTP proxy server
+  const proxy = createProxy(createServer())
+  await new Promise(resolve => proxy.listen(0, resolve))
+  const proxyPort = proxy.address().port
+
+  // Create ProxyAgent (no tunneling, plain HTTP)
+  const proxyAgent = new ProxyAgent(`http://localhost:${proxyPort}`)
+
+  const N = 10
+  const requests = []
+  for (let i = 0; i < N; i++) {
+    requests.push(
+      request(`http://localhost:${targetPort}/test${i}`, { dispatcher: proxyAgent })
+        .then(async res => {
+          t.strictEqual(res.statusCode, 200)
+          const json = await res.body.json()
+          t.deepStrictEqual(json, { url: `/test${i}` })
+        })
+    )
+  }
+  try {
+    await Promise.all(requests)
+  } catch (err) {
+    t.fail(err)
+  }
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 function buildServer () {
   return new Promise((resolve) => {
     const server = createServer({ joinDuplicateHeaders: true })
