@@ -244,7 +244,7 @@ test('use proxy-agent to connect through proxy using path with params', async (t
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent(proxyUrl)
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   const parsedOrigin = new URL(serverUrl)
 
   proxy.on('connect', () => {
@@ -316,7 +316,7 @@ test('use proxy-agent to connect through proxy with basic auth in URL', async (t
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = new URL(`http://user:pass@localhost:${proxy.address().port}`)
-  const proxyAgent = new ProxyAgent(proxyUrl)
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   const parsedOrigin = new URL(serverUrl)
 
   proxy.authenticate = function (req, fn) {
@@ -400,7 +400,8 @@ test('use proxy-agent with auth', async (t) => {
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     auth: Buffer.from('user:pass').toString('base64'),
-    uri: proxyUrl
+    uri: proxyUrl,
+    proxyTunnel: false
   })
   const parsedOrigin = new URL(serverUrl)
 
@@ -489,7 +490,8 @@ test('use proxy-agent with token', async (t) => {
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     token: `Bearer ${Buffer.from('user:pass').toString('base64')}`,
-    uri: proxyUrl
+    uri: proxyUrl,
+    proxyTunnel: false
   })
   const parsedOrigin = new URL(serverUrl)
 
@@ -578,6 +580,7 @@ test('use proxy-agent with custom headers', async (t) => {
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     uri: proxyUrl,
+    proxyTunnel: false,
     headers: {
       'User-Agent': 'Foobar/1.0.0'
     }
@@ -702,7 +705,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent(proxyUrl)
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   const parsedOrigin = new URL(serverUrl)
   setGlobalDispatcher(proxyAgent)
 
@@ -786,7 +789,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
-  const proxyAgent = new ProxyAgent(proxyUrl)
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   setGlobalDispatcher(proxyAgent)
 
   after(() => setGlobalDispatcher(defaultDispatcher))
@@ -896,7 +899,7 @@ test('should throw when proxy does not return 200', async (t) => {
     return false
   }
 
-  const proxyAgent = new ProxyAgent(proxyUrl)
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   try {
     await request(serverUrl, { dispatcher: proxyAgent })
     t.fail()
