@@ -1,10 +1,11 @@
 import { expectAssignable } from 'tsd'
-import Undici, { Pool, Client, errors, fetch, Interceptable, RedirectHandler, Headers, Response, Request, FormData } from '../..'
+import Undici, { Pool, Client, errors, fetch, Interceptable, RedirectHandler, Headers, Response, Request, FormData, SnapshotAgent } from '../..'
 import Dispatcher from '../../types/dispatcher'
 
 expectAssignable<Pool>(new Undici.Pool('', {}))
 expectAssignable<Client>(new Undici.Client('', {}))
 expectAssignable<Interceptable>(new Undici.MockAgent().get(''))
+expectAssignable<SnapshotAgent>(new Undici.SnapshotAgent())
 expectAssignable<typeof errors>(Undici.errors)
 expectAssignable<typeof fetch>(Undici.fetch)
 expectAssignable<typeof Headers>(Undici.Headers)
