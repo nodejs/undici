@@ -1437,8 +1437,11 @@ describe('Cache Interceptor', () => {
     })
   })
 
+  // Partial list.
   const cacheableStatusCodes = [
     { code: 204, body: '' },
+    { code: 302, body: 'Found' },
+    { code: 307, body: 'Temporary Redirect' },
     { code: 404, body: 'Not Found' },
     { code: 410, body: 'Gone' }
   ]
@@ -1489,13 +1492,71 @@ describe('Cache Interceptor', () => {
     })
   }
 
-  test('does not cache non-heuristically cacheable error status codes', async () => {
+  // Partial list.
+  const nonHeuristicallyCacheableStatusCodes = [
+    { code: 201, body: 'Created' },
+    { code: 307, body: 'Temporary Redirect' },
+    { code: 418, body: 'I am a teapot' }
+  ]
+
+  for (const { code, body } of nonHeuristicallyCacheableStatusCodes) {
+    test(`does not cache non-heuristically cacheable status ${code} without explicit directive`, async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.statusCode = code
+        // By default the response may have a date and last-modified header set to 'now',
+        // causing the cache to compute a 0 heuristic expiry, causing the test to not ascertain
+        // it is really not cached.
+        res.setHeader('date', '')
+        res.end(body)
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({ cacheByDefault: 60 }))
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      equal(requestsToOrigin, 0)
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit the origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        equal(res.statusCode, code)
+        strictEqual(await res.body.text(), body)
+      }
+
+      // Second request should also hit the origin (not cached)
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 2) // Should be 2 (not cached)
+        equal(res.statusCode, code)
+        strictEqual(await res.body.text(), body)
+      }
+    })
+  }
+
+  test('discriminates caching of range requests, or does not cache them', async () => {
     let requestsToOrigin = 0
+    const body = 'Fake range request response'
+    const code = 206
     const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       requestsToOrigin++
-      res.statusCode = 418 // I'm a teapot - not in heuristically cacheable list
+      res.statusCode = code
       res.setHeader('cache-control', 'public, max-age=60')
-      res.end('I am a teapot')
+      res.end(body)
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1513,23 +1574,127 @@ describe('Cache Interceptor', () => {
     const request = {
       origin: 'localhost',
       method: 'GET',
-      path: '/'
+      path: '/',
+      headers: {
+        range: 'bytes=10-'
+      }
     }
 
     // First request should hit the origin
     {
       const res = await client.request(request)
       equal(requestsToOrigin, 1)
-      equal(res.statusCode, 418)
-      strictEqual(await res.body.text(), 'I am a teapot')
+      equal(res.statusCode, code)
+      strictEqual(await res.body.text(), body)
     }
 
-    // Second request should also hit the origin (not cached)
+    // Second request with different range should hit the origin too
+    request.headers.range = 'bytes=5-'
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 2) // Should be 2 (not cached)
-      equal(res.statusCode, 418)
-      strictEqual(await res.body.text(), 'I am a teapot')
+      equal(requestsToOrigin, 2)
+      equal(res.statusCode, code)
+      strictEqual(await res.body.text(), body)
+    }
+  })
+
+  test('discriminates caching of conditionnal requests (if-none-match), or does not cache them', async () => {
+    let requestsToOrigin = 0
+    const body = ''
+    const code = 304
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      requestsToOrigin++
+      res.statusCode = code
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.end(body)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    equal(requestsToOrigin, 0)
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/',
+      headers: {
+        'if-none-match': 'some-etag'
+      }
+    }
+
+    // First request should hit the origin
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 1)
+      equal(res.statusCode, code)
+      strictEqual(await res.body.text(), body)
+    }
+
+    // Second request with different etag should hit the origin too
+    request.headers['if-none-match'] = 'another-etag'
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      equal(res.statusCode, code)
+      strictEqual(await res.body.text(), body)
+    }
+  })
+
+  test('discriminates caching of conditionnal requests (if-modified-since), or does not cache them', async () => {
+    let requestsToOrigin = 0
+    const body = ''
+    const code = 304
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      requestsToOrigin++
+      res.statusCode = code
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.end(body)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    equal(requestsToOrigin, 0)
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/',
+      headers: {
+        'if-modified-since': new Date().toUTCString()
+      }
+    }
+
+    // First request should hit the origin
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 1)
+      equal(res.statusCode, code)
+      strictEqual(await res.body.text(), body)
+    }
+
+    // Second request with different since should hit the origin too
+    request.headers['if-modified-since'] = new Date(0).toUTCString()
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      equal(res.statusCode, code)
+      strictEqual(await res.body.text(), body)
     }
   })
 })
