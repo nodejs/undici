@@ -135,7 +135,7 @@ test('should decompress brotli response', async t => {
   await t.completed
 })
 
-test('should decompress zstd response', async t => {
+test('should decompress zstd response', { skip: typeof createZstdCompress !== 'function' }, async t => {
   t = tspl(t, { plan: 3 })
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
