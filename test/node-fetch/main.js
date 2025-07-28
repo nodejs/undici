@@ -8,7 +8,6 @@ const zlib = require('node:zlib')
 const stream = require('node:stream')
 const vm = require('node:vm')
 const crypto = require('node:crypto')
-const { Blob } = require('node:buffer')
 
 const {
   fetch,

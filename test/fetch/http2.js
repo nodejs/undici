@@ -3,7 +3,6 @@
 const { createSecureServer } = require('node:http2')
 const { createReadStream, readFileSync } = require('node:fs')
 const { once } = require('node:events')
-const { Blob } = require('node:buffer')
 const { Readable } = require('node:stream')
 
 const { test } = require('node:test')

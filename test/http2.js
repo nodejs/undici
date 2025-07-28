@@ -5,7 +5,6 @@ const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
 const { createReadStream, readFileSync } = require('node:fs')
 const { once } = require('node:events')
-const { Blob } = require('node:buffer')
 const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
 const pem = require('https-pem')
