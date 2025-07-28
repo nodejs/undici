@@ -20,6 +20,18 @@ new SnapshotAgent([options])
 - **options** `Object` (optional)
   - **mode** `String` - The snapshot mode: `'record'`, `'playback'`, or `'update'`. Default: `'record'`
   - **snapshotPath** `String` - Path to the snapshot file for loading/saving
+  - **maxSnapshots** `Number` - Maximum number of snapshots to keep in memory. Default: `Infinity`
+  - **autoFlush** `Boolean` - Whether to automatically save snapshots to disk. Default: `false`
+  - **flushInterval** `Number` - Interval in milliseconds for auto-flush. Default: `30000`
+  - **matchHeaders** `Array<String>` - Specific headers to include in request matching. Default: all headers
+  - **ignoreHeaders** `Array<String>` - Headers to ignore during request matching
+  - **excludeHeaders** `Array<String>` - Headers to exclude from snapshots (for security)
+  - **matchBody** `Boolean` - Whether to include request body in matching. Default: `true`
+  - **matchQuery** `Boolean` - Whether to include query parameters in matching. Default: `true`
+  - **caseSensitive** `Boolean` - Whether header matching is case-sensitive. Default: `false`
+  - **shouldRecord** `Function` - Callback to determine if a request should be recorded
+  - **shouldPlayback** `Function` - Callback to determine if a request should be played back
+  - **excludeUrls** `Array` - URL patterns (strings or RegExp) to exclude from recording/playback
   - All other options from `MockAgent` are supported
 
 ### Modes
@@ -92,6 +104,142 @@ Saves all recorded snapshots to a file.
 
 ```javascript
 await agent.saveSnapshots('./custom-snapshots.json')
+```
+
+## Advanced Configuration
+
+### Header Filtering
+
+Control which headers are used for request matching and what gets stored in snapshots:
+
+```javascript
+const agent = new SnapshotAgent({
+  mode: 'record',
+  snapshotPath: './snapshots.json',
+  
+  // Only match these specific headers
+  matchHeaders: ['content-type', 'accept'],
+  
+  // Ignore these headers during matching (but still store them)
+  ignoreHeaders: ['user-agent', 'date'],
+  
+  // Exclude sensitive headers from snapshots entirely
+  excludeHeaders: ['authorization', 'x-api-key', 'cookie']
+})
+```
+
+### Custom Request/Response Filtering
+
+Use callback functions to determine what gets recorded or played back:
+
+```javascript
+const agent = new SnapshotAgent({
+  mode: 'record',
+  snapshotPath: './snapshots.json',
+  
+  // Only record GET requests to specific endpoints
+  shouldRecord: (requestOpts) => {
+    const url = new URL(requestOpts.path, requestOpts.origin)
+    return requestOpts.method === 'GET' && url.pathname.startsWith('/api/v1/')
+  },
+  
+  // Skip authentication endpoints during playback
+  shouldPlayback: (requestOpts) => {
+    const url = new URL(requestOpts.path, requestOpts.origin)
+    return !url.pathname.includes('/auth/')
+  }
+})
+```
+
+### URL Pattern Exclusion
+
+Exclude specific URLs from recording/playback using patterns:
+
+```javascript
+const agent = new SnapshotAgent({
+  mode: 'record',
+  snapshotPath: './snapshots.json',
+  
+  excludeUrls: [
+    'https://analytics.example.com',  // String match
+    /\/api\/v\d+\/health/,           // Regex pattern
+    'telemetry'                      // Substring match
+  ]
+})
+```
+
+### Memory Management
+
+Configure automatic memory and disk management:
+
+```javascript
+const agent = new SnapshotAgent({
+  mode: 'record',
+  snapshotPath: './snapshots.json',
+  
+  // Keep only 1000 snapshots in memory
+  maxSnapshots: 1000,
+  
+  // Automatically save to disk every 30 seconds
+  autoFlush: true,
+  flushInterval: 30000
+})
+```
+
+### Sequential Response Handling
+
+Handle multiple responses for the same request (similar to nock):
+
+```javascript
+// In record mode, multiple identical requests get recorded as separate responses
+const agent = new SnapshotAgent({ mode: 'record', snapshotPath: './sequential.json' })
+
+// First call returns response A
+await fetch('https://api.example.com/random')
+
+// Second call returns response B  
+await fetch('https://api.example.com/random')
+
+await agent.saveSnapshots()
+
+// In playback mode, calls return responses in sequence
+const playbackAgent = new SnapshotAgent({ mode: 'playback', snapshotPath: './sequential.json' })
+
+// Returns response A
+const first = await fetch('https://api.example.com/random')
+
+// Returns response B
+const second = await fetch('https://api.example.com/random')
+
+// Third call repeats the last response (B)
+const third = await fetch('https://api.example.com/random')
+```
+
+## Managing Snapshots
+
+### Replacing Existing Snapshots
+
+```javascript
+// Load existing snapshots
+await agent.loadSnapshots('./old-snapshots.json')
+
+// Get snapshot data
+const recorder = agent.getRecorder()
+const snapshots = recorder.getSnapshots()
+
+// Modify or filter snapshots
+const filteredSnapshots = snapshots.filter(s => 
+  !s.request.url.includes('deprecated')
+)
+
+// Replace all snapshots
+agent.replaceSnapshots(filteredSnapshots.map((snapshot, index) => ({
+  hash: `new-hash-${index}`,
+  snapshot
+})))
+
+// Save updated snapshots
+await agent.saveSnapshots('./updated-snapshots.json')
 ```
 
 ### `agent.loadSnapshots([filePath])`
@@ -275,6 +423,69 @@ Snapshots are stored as JSON with the following structure:
     }
   }
 ]
+```
+
+## Security Considerations
+
+### Sensitive Data in Snapshots
+
+By default, SnapshotAgent records all headers and request/response data. For production use, always exclude sensitive information:
+
+```javascript
+const agent = new SnapshotAgent({
+  mode: 'record',
+  snapshotPath: './snapshots.json',
+  
+  // Exclude sensitive headers from snapshots
+  excludeHeaders: [
+    'authorization',
+    'x-api-key', 
+    'cookie',
+    'set-cookie',
+    'x-auth-token',
+    'x-csrf-token'
+  ],
+  
+  // Filter out requests with sensitive data
+  shouldRecord: (requestOpts) => {
+    const url = new URL(requestOpts.path, requestOpts.origin)
+    
+    // Don't record authentication endpoints
+    if (url.pathname.includes('/auth/') || url.pathname.includes('/login')) {
+      return false
+    }
+    
+    // Don't record if request contains sensitive body data
+    if (requestOpts.body && typeof requestOpts.body === 'string') {
+      const body = requestOpts.body.toLowerCase()
+      if (body.includes('password') || body.includes('secret')) {
+        return false
+      }
+    }
+    
+    return true
+  }
+})
+```
+
+### Snapshot File Security
+
+**Important**: Snapshot files may contain sensitive data. Handle them securely:
+
+- ✅ Add snapshot files to `.gitignore` if they contain real API data
+- ✅ Use environment-specific snapshots (dev/staging/prod)
+- ✅ Regularly review snapshot contents for sensitive information
+- ✅ Use the `excludeHeaders` option for production snapshots
+- ❌ Never commit snapshots with real authentication tokens
+- ❌ Don't share snapshot files containing personal data
+
+```gitignore
+# Exclude snapshots with real data
+/test/snapshots/production-*.json
+/test/snapshots/*-real-data.json
+
+# Include sanitized test snapshots
+!/test/snapshots/mock-*.json
 ```
 
 ## Error Handling
