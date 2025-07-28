@@ -1,7 +1,6 @@
 'use strict'
 
 const assert = require('node:assert')
-const { File } = require('node:buffer')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
