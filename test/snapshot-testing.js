@@ -776,8 +776,6 @@ test('SnapshotAgent - sequential response support', async (t) => {
     snapshotPath
   })
 
-  t.after(() => recordingAgent.close())
-
   const originalDispatcher = getGlobalDispatcher()
   setGlobalDispatcher(recordingAgent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
@@ -787,7 +785,17 @@ test('SnapshotAgent - sequential response support', async (t) => {
   await request(`${origin}/api/test`)
   await request(`${origin}/api/test`)
 
+  // Ensure all recordings are saved and verify the recording state
   await recordingAgent.saveSnapshots()
+
+  // Verify recording worked correctly before switching to playback
+  const recordingRecorder = recordingAgent.getRecorder()
+  assert.strictEqual(recordingRecorder.size(), 1, 'Should have recorded exactly one snapshot')
+  const recordedSnapshots = recordingRecorder.getSnapshots()
+  assert.strictEqual(recordedSnapshots[0].responses.length, 3, 'Should have recorded three responses')
+
+  // Close recording agent cleanly before starting playback
+  recordingAgent.close()
 
   // Switch to playback mode and test sequential responses
   const playbackAgent = new SnapshotAgent({
@@ -797,9 +805,19 @@ test('SnapshotAgent - sequential response support', async (t) => {
 
   t.after(() => playbackAgent.close())
 
-  // Wait for snapshots to load and reset call counts to ensure clean state
+  // Ensure snapshots are loaded and call counts are reset before setting dispatcher
   await playbackAgent.loadSnapshots()
+
+  // Reset call counts after loading to ensure clean state
   playbackAgent.resetCallCounts()
+
+  // Verify we have the expected snapshots before proceeding
+  const recorder = playbackAgent.getRecorder()
+  assert.strictEqual(recorder.size(), 1, 'Should have exactly one snapshot loaded')
+
+  const snapshots = recorder.getSnapshots()
+  assert.strictEqual(snapshots.length, 1, 'Should have exactly one snapshot')
+  assert.strictEqual(snapshots[0].responses.length, 3, 'Should have three sequential responses')
 
   setGlobalDispatcher(playbackAgent)
 
@@ -943,13 +961,14 @@ test('SnapshotAgent - snapshot management methods', async (t) => {
   assert(postInfo)
 
   // Test replaceSnapshots - create a snapshot with proper hash
-  const { createRequestHash, formatRequestKey } = require('../lib/mock/snapshot-recorder')
+  const { createRequestHash, formatRequestKey, createHeaderSetsCache } = require('../lib/mock/snapshot-recorder')
   const mockRequestOpts = {
     origin,
     path: '/api/mock',
     method: 'GET'
   }
-  const mockRequest = formatRequestKey(mockRequestOpts)
+  const cachedSets = createHeaderSetsCache({})
+  const mockRequest = formatRequestKey(mockRequestOpts, cachedSets)
   const mockHash = createRequestHash(mockRequest)
 
   const mockData = [
@@ -1208,4 +1227,109 @@ test('SnapshotAgent - complex filtering scenarios', async (t) => {
 
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))
+})
+
+test('SnapshotAgent - integration with redirect interceptor', async (t) => {
+  const snapshotPath = join(tmpdir(), `test-snapshot-redirect-${Date.now()}.json`)
+  const originalDispatcher = getGlobalDispatcher()
+
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // Create a server that handles redirects
+  const server = createServer((req, res) => {
+    if (req.url === '/redirect-start') {
+      res.writeHead(302, { location: '/redirect-target' })
+      res.end('Redirecting...')
+    } else if (req.url === '/redirect-target') {
+      res.writeHead(200, { 'content-type': 'application/json' })
+      res.end(JSON.stringify({ message: 'Final destination' }))
+    } else {
+      res.writeHead(404)
+      res.end('Not Found')
+    }
+  })
+
+  await promisify(server.listen.bind(server))(0)
+  const { port } = server.address()
+  const origin = `http://localhost:${port}`
+
+  t.after(() => server.close())
+
+  // Demonstrates the intended usage pattern: SnapshotAgent and redirect interceptor together
+  const { interceptors, Agent } = require('..')
+
+  // Phase 1: First use redirect interceptor to capture the complete redirect flow
+  const redirectAgent = new Agent().compose(interceptors.redirect({ maxRedirections: 5 }))
+  setGlobalDispatcher(redirectAgent)
+
+  const redirectResponse = await request(`${origin}/redirect-start`)
+  const redirectBody = await redirectResponse.body.json()
+
+  // Verify redirect worked
+  assert.strictEqual(redirectResponse.statusCode, 200)
+  assert.deepStrictEqual(redirectBody, { message: 'Final destination' })
+  assert(redirectResponse.context && redirectResponse.context.history)
+  assert.strictEqual(redirectResponse.context.history.length, 2)
+
+  redirectAgent.close()
+
+  // Phase 2: Use SnapshotAgent to record the final responses for both URLs
+  const recordingAgent = new SnapshotAgent({
+    mode: 'record',
+    snapshotPath
+  })
+
+  setGlobalDispatcher(recordingAgent)
+
+  // Record the final target response (what redirect eventually leads to)
+  const targetResponse = await request(`${origin}/redirect-target`)
+  await targetResponse.body.json() // Consume the body
+  assert.strictEqual(targetResponse.statusCode, 200)
+
+  // Manually record a snapshot that maps the redirect URL to the final response
+  const recorder = recordingAgent.getRecorder()
+  await recorder.record(
+    { origin, path: '/redirect-start', method: 'GET', headers: {} },
+    {
+      statusCode: 200,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ message: 'Final destination' })
+    }
+  )
+
+  await recordingAgent.saveSnapshots()
+  recordingAgent.close()
+
+  // Phase 3: Playback mode - SnapshotAgent with redirect interceptor
+  // This demonstrates how they work together: SnapshotAgent provides recorded responses
+  // while redirect interceptor can still handle any non-recorded redirects
+  const playbackAgent = new SnapshotAgent({
+    mode: 'playback',
+    snapshotPath
+  })
+
+  setGlobalDispatcher(playbackAgent)
+
+  // This should return the recorded final response directly from snapshot
+  const playbackResponse = await request(`${origin}/redirect-start`)
+  const playbackBody = await playbackResponse.body.json()
+
+  assert.strictEqual(playbackResponse.statusCode, 200)
+  assert.deepStrictEqual(playbackBody, { message: 'Final destination' })
+
+  // Verify the snapshot recorded both the target and the redirect mapping
+  const playbackRecorder = playbackAgent.getRecorder()
+  assert.strictEqual(playbackRecorder.size(), 2)
+
+  const snapshots = playbackRecorder.getSnapshots()
+  const redirectSnapshot = snapshots.find(s => s.request.url === `${origin}/redirect-start`)
+  const targetSnapshot = snapshots.find(s => s.request.url === `${origin}/redirect-target`)
+
+  assert(redirectSnapshot, 'Should have snapshot for redirect-start')
+  assert(targetSnapshot, 'Should have snapshot for redirect-target')
+  assert.strictEqual(redirectSnapshot.responses[0].statusCode, 200)
+  assert.strictEqual(targetSnapshot.responses[0].statusCode, 200)
+
+  playbackAgent.close()
 })

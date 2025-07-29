@@ -5,7 +5,7 @@ const assert = require('node:assert')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { unlink } = require('node:fs/promises')
-const { SnapshotRecorder, formatRequestKey, createRequestHash, filterHeadersForMatching, filterHeadersForStorage } = require('../lib/mock/snapshot-recorder')
+const { SnapshotRecorder, formatRequestKey, createRequestHash, filterHeadersForMatching, filterHeadersForStorage, createHeaderSetsCache } = require('../lib/mock/snapshot-recorder')
 
 test('SnapshotRecorder - basic recording and retrieval', (t) => {
   const recorder = new SnapshotRecorder()
@@ -52,7 +52,8 @@ test('SnapshotRecorder - request key formatting', (t) => {
     body: '{"filter": "active"}'
   }
 
-  const formatted = formatRequestKey(requestOpts)
+  const cachedSets = createHeaderSetsCache({})
+  const formatted = formatRequestKey(requestOpts, cachedSets)
 
   assert.strictEqual(formatted.method, 'POST')
   assert.strictEqual(formatted.url, 'https://api.example.com/search?q=test&limit=10')
@@ -116,8 +117,9 @@ test('SnapshotRecorder - header normalization', (t) => {
     }
   }
 
-  const formatted1 = formatRequestKey(requestOpts1)
-  const formatted2 = formatRequestKey(requestOpts2)
+  const cachedSets = createHeaderSetsCache({})
+  const formatted1 = formatRequestKey(requestOpts1, cachedSets)
+  const formatted2 = formatRequestKey(requestOpts2, cachedSets)
 
   // Headers should be normalized to lowercase
   assert.deepStrictEqual(formatted1.headers, formatted2.headers)
@@ -185,7 +187,8 @@ test('SnapshotRecorder - array header handling', (t) => {
     }
   }
 
-  const formatted = formatRequestKey(requestOpts)
+  const cachedSets = createHeaderSetsCache({})
+  const formatted = formatRequestKey(requestOpts, cachedSets)
 
   // Array headers should be joined with comma
   assert.strictEqual(formatted.headers.accept, 'application/json, text/plain')
@@ -205,8 +208,9 @@ test('SnapshotRecorder - query parameter handling', (t) => {
     method: 'GET'
   }
 
-  const formatted1 = formatRequestKey(requestOpts1)
-  const formatted2 = formatRequestKey(requestOpts2)
+  const cachedSets = createHeaderSetsCache({})
+  const formatted1 = formatRequestKey(requestOpts1, cachedSets)
+  const formatted2 = formatRequestKey(requestOpts2, cachedSets)
 
   // URLs with different query parameter order should be normalized
   assert.strictEqual(formatted1.url, 'https://api.example.com/search?q=test&sort=date')
@@ -257,9 +261,9 @@ test('SnapshotRecorder - custom header matching', (t) => {
   }
 
   // Test matchHeaders option
-  const matchSpecific = filterHeadersForMatching(headers, {
-    matchHeaders: ['content-type', 'accept']
-  })
+  const matchSpecificOptions = { matchHeaders: ['content-type', 'accept'] }
+  const matchSpecificCachedSets = createHeaderSetsCache(matchSpecificOptions)
+  const matchSpecific = filterHeadersForMatching(headers, matchSpecificCachedSets, matchSpecificOptions)
 
   assert.deepStrictEqual(matchSpecific, {
     'content-type': 'application/json',
@@ -267,9 +271,9 @@ test('SnapshotRecorder - custom header matching', (t) => {
   })
 
   // Test ignoreHeaders option
-  const ignoreAuth = filterHeadersForMatching(headers, {
-    ignoreHeaders: ['authorization', 'x-request-id']
-  })
+  const ignoreOptions = { ignoreHeaders: ['authorization', 'x-request-id'] }
+  const ignoreCachedSets = createHeaderSetsCache(ignoreOptions)
+  const ignoreAuth = filterHeadersForMatching(headers, ignoreCachedSets, ignoreOptions)
 
   assert.deepStrictEqual(ignoreAuth, {
     'content-type': 'application/json',
@@ -277,9 +281,9 @@ test('SnapshotRecorder - custom header matching', (t) => {
   })
 
   // Test excludeHeaders option
-  const excludeSensitive = filterHeadersForMatching(headers, {
-    excludeHeaders: ['authorization']
-  })
+  const excludeOptions = { excludeHeaders: ['authorization'] }
+  const excludeCachedSets = createHeaderSetsCache(excludeOptions)
+  const excludeSensitive = filterHeadersForMatching(headers, excludeCachedSets, excludeOptions)
 
   assert.deepStrictEqual(excludeSensitive, {
     'content-type': 'application/json',
@@ -315,19 +319,18 @@ test('SnapshotRecorder - case sensitivity in header filtering', (t) => {
   }
 
   // Test case insensitive (default)
-  const caseInsensitive = filterHeadersForMatching(headers, {
-    ignoreHeaders: ['authorization', 'x-request-id']
-  })
+  const caseInsensitiveOptions = { ignoreHeaders: ['authorization', 'x-request-id'] }
+  const caseInsensitiveCachedSets = createHeaderSetsCache(caseInsensitiveOptions)
+  const caseInsensitive = filterHeadersForMatching(headers, caseInsensitiveCachedSets, caseInsensitiveOptions)
 
   assert.deepStrictEqual(caseInsensitive, {
     'content-type': 'application/json'
   })
 
   // Test case sensitive
-  const caseSensitive = filterHeadersForMatching(headers, {
-    ignoreHeaders: ['authorization', 'x-request-id'],
-    caseSensitive: true
-  })
+  const caseSensitiveOptions = { ignoreHeaders: ['authorization', 'x-request-id'], caseSensitive: true }
+  const caseSensitiveCachedSets = createHeaderSetsCache(caseSensitiveOptions)
+  const caseSensitive = filterHeadersForMatching(headers, caseSensitiveCachedSets, caseSensitiveOptions)
 
   // Should keep all headers since case doesn't match
   assert.deepStrictEqual(caseSensitive, {
@@ -351,11 +354,13 @@ test('SnapshotRecorder - request formatting with match options', (t) => {
   }
 
   // Test with matchHeaders option
-  const formatted = formatRequestKey(requestOpts, {
+  const matchOptions = {
     matchHeaders: ['content-type'],
     matchBody: false,
     matchQuery: false
-  })
+  }
+  const cachedSets = createHeaderSetsCache(matchOptions)
+  const formatted = formatRequestKey(requestOpts, cachedSets, matchOptions)
 
   assert.strictEqual(formatted.method, 'POST')
   assert.strictEqual(formatted.url, 'https://api.example.com/search') // No query
