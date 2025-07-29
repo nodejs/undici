@@ -5,7 +5,6 @@ import { URL } from 'url'
 
 expectAssignable<Agent>(new Agent())
 expectAssignable<Agent>(new Agent({}))
-expectAssignable<Agent>(new Agent({}))
 expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
 
 {
@@ -98,7 +97,6 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
   }))
 
   // dispatch
-  expectAssignable<boolean>(agent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
   expectAssignable<boolean>(agent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
 
   // close
