@@ -1238,3 +1238,101 @@ test('SnapshotAgent - complex filtering scenarios', async (t) => {
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))
 })
+
+test('SnapshotAgent - playback with pre-existing array of responses', async (t) => {
+  const snapshotPath = join(tmpdir(), `test-array-responses-${Date.now()}.json`)
+  const origin = 'http://localhost:3000'
+
+  // Create a snapshot file with multiple responses for the same request
+  const { writeFile } = require('node:fs/promises')
+  const { createRequestHash, formatRequestKey, createHeaderSetsCache } = require('../lib/mock/snapshot-recorder')
+
+  const requestOpts = {
+    origin,
+    path: '/api/test',
+    method: 'GET'
+  }
+
+  const cachedSets = createHeaderSetsCache({})
+  const requestKey = formatRequestKey(requestOpts, cachedSets)
+  const hash = createRequestHash(requestKey)
+
+  const snapshotData = [
+    {
+      hash,
+      snapshot: {
+        request: requestKey,
+        responses: [
+          {
+            statusCode: 200,
+            headers: { 'content-type': 'application/json' },
+            body: Buffer.from(JSON.stringify({ message: 'First response' })).toString('base64'),
+            trailers: {}
+          },
+          {
+            statusCode: 200,
+            headers: { 'content-type': 'application/json' },
+            body: Buffer.from(JSON.stringify({ message: 'Second response' })).toString('base64'),
+            trailers: {}
+          },
+          {
+            statusCode: 200,
+            headers: { 'content-type': 'application/json' },
+            body: Buffer.from(JSON.stringify({ message: 'Third response' })).toString('base64'),
+            trailers: {}
+          }
+        ],
+        callCount: 0,
+        timestamp: new Date().toISOString()
+      }
+    }
+  ]
+
+  await writeFile(snapshotPath, JSON.stringify(snapshotData, null, 2))
+
+  // Create playback agent
+  const agent = new SnapshotAgent({
+    mode: 'playback',
+    snapshotPath
+  })
+
+  t.after(() => agent.close())
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
+  const originalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(agent)
+  t.after(() => setGlobalDispatcher(originalDispatcher))
+
+  // First request should return first response
+  const response1 = await request(`${origin}/api/test`)
+  const body1 = await response1.body.json()
+  assert.strictEqual(response1.statusCode, 200)
+  assert.deepStrictEqual(body1, { message: 'First response' })
+
+  // Second request should return second response
+  const response2 = await request(`${origin}/api/test`)
+  const body2 = await response2.body.json()
+  assert.strictEqual(response2.statusCode, 200)
+  assert.deepStrictEqual(body2, { message: 'Second response' })
+
+  // Third request should return third response
+  const response3 = await request(`${origin}/api/test`)
+  const body3 = await response3.body.json()
+  assert.strictEqual(response3.statusCode, 200)
+  assert.deepStrictEqual(body3, { message: 'Third response' })
+
+  // Fourth request should repeat the last response
+  const response4 = await request(`${origin}/api/test`)
+  const body4 = await response4.body.json()
+  assert.strictEqual(response4.statusCode, 200)
+  assert.deepStrictEqual(body4, { message: 'Third response' })
+
+  // Verify the recorder has the correct structure
+  const recorder = agent.getRecorder()
+  assert.strictEqual(recorder.size(), 1)
+
+  const snapshots = recorder.getSnapshots()
+  assert.strictEqual(snapshots.length, 1)
+  assert.strictEqual(snapshots[0].responses.length, 3)
+  assert.strictEqual(snapshots[0].callCount, 4) // Should be 4 after 4 calls
+})
