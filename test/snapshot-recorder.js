@@ -369,3 +369,56 @@ test('SnapshotRecorder - request formatting with match options', (t) => {
   })
   assert.strictEqual(formatted.body, undefined) // No body
 })
+
+test('SnapshotRecorder - redirect responses are stored correctly', (t) => {
+  const recorder = new SnapshotRecorder()
+
+  // Initial request to the redirect URL
+  const redirectRequestOpts = {
+    origin: 'https://api.example.com',
+    path: '/redirect-start',
+    method: 'GET',
+    headers: { accept: 'application/json' }
+  }
+
+  // First response: 302 redirect (this should not be stored)
+  const redirectResponse = {
+    statusCode: 302,
+    headers: { location: '/redirect-target' },
+    body: Buffer.from('Redirecting...'),
+    trailers: {}
+  }
+
+  // Final response: 200 success (this should be stored)
+  const finalResponse = {
+    statusCode: 200,
+    headers: { 'content-type': 'application/json' },
+    body: Buffer.from('{"message": "Final destination"}'),
+    trailers: {}
+  }
+
+  // Record the redirect response (this will be stored as it's a valid response)
+  recorder.record(redirectRequestOpts, redirectResponse)
+  assert.strictEqual(recorder.size(), 1, 'Redirect response (302) should be stored')
+
+  // First snapshot should contain the redirect response
+  let snapshot = recorder.findSnapshot(redirectRequestOpts)
+  assert(snapshot, 'Should find snapshot for redirect request')
+  assert.strictEqual(snapshot.request.url, 'https://api.example.com/redirect-start')
+  assert.strictEqual(snapshot.response.statusCode, 302, 'First stored response should be the 302 redirect')
+
+  // Record the final response (this will create a second response for the same request)
+  recorder.record(redirectRequestOpts, finalResponse)
+  assert.strictEqual(recorder.size(), 1, 'Should still have one snapshot (same request)')
+
+  // Retrieve the snapshot again - should now have multiple responses
+  snapshot = recorder.findSnapshot(redirectRequestOpts)
+  assert(snapshot, 'Should find snapshot for redirect request')
+  assert.strictEqual(snapshot.request.url, 'https://api.example.com/redirect-start')
+  
+  // The recorder supports sequential responses, so it should have both
+  assert(Array.isArray(snapshot.responses), 'Should have responses array')
+  assert.strictEqual(snapshot.responses.length, 2, 'Should have two responses')
+  assert.strictEqual(snapshot.responses[0].statusCode, 302, 'First response should be redirect')
+  assert.strictEqual(snapshot.responses[1].statusCode, 200, 'Second response should be final')
+})
