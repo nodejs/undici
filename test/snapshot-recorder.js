@@ -415,7 +415,7 @@ test('SnapshotRecorder - redirect responses are stored correctly', (t) => {
   snapshot = recorder.findSnapshot(redirectRequestOpts)
   assert(snapshot, 'Should find snapshot for redirect request')
   assert.strictEqual(snapshot.request.url, 'https://api.example.com/redirect-start')
-  
+
   // The recorder supports sequential responses, so it should have both
   assert(Array.isArray(snapshot.responses), 'Should have responses array')
   assert.strictEqual(snapshot.responses.length, 2, 'Should have two responses')

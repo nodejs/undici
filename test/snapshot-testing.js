@@ -25,7 +25,6 @@ test('SnapshotAgent - record mode', async (t) => {
   const origin = `http://localhost:${port}`
 
   t.after(() => new Promise((resolve, reject) => {
-    console.log('closing')
     server.close((err) => {
       if (err) {
         reject(err)
@@ -66,8 +65,6 @@ test('SnapshotAgent - record mode', async (t) => {
   assert.strictEqual(snapshots[0].request.method, 'GET')
   assert.strictEqual(snapshots[0].request.url, `${origin}/test`)
   assert.strictEqual(snapshots[0].responses[0].statusCode, 200)
-
-  console.log('bbb')
 
   // Cleanup
   t.after(() => unlink(snapshotPath))
@@ -1241,4 +1238,3 @@ test('SnapshotAgent - complex filtering scenarios', async (t) => {
   // Cleanup
   t.after(() => unlink(snapshotPath).catch(() => {}))
 })
-
