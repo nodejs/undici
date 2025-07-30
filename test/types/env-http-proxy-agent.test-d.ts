@@ -94,7 +94,6 @@ expectAssignable<EnvHttpProxyAgent>(new EnvHttpProxyAgent({ httpProxy: 'http://l
 
   // dispatch
   expectAssignable<boolean>(agent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
-  expectAssignable<boolean>(agent.dispatch({ origin: '', path: '', method: 'GET', maxRedirections: 1 }, {}))
 
   // close
   expectAssignable<Promise<void>>(agent.close())
