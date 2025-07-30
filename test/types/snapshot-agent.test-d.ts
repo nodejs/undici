@@ -10,7 +10,7 @@ expectAssignable<SnapshotAgent>(new SnapshotAgent({ mode: 'playback' }))
 expectAssignable<SnapshotAgent>(new SnapshotAgent({ mode: 'update' }))
 expectAssignable<SnapshotAgent>(new SnapshotAgent({ snapshotPath: './snapshots.json' }))
 
-// Constructor with basic Phase 1-3 options
+// Constructor with basic options
 expectAssignable<SnapshotAgent>(new SnapshotAgent({
   mode: 'record',
   snapshotPath: './snapshots.json',
@@ -19,7 +19,7 @@ expectAssignable<SnapshotAgent>(new SnapshotAgent({
   flushInterval: 5000
 }))
 
-// Constructor with Phase 2 matching options
+// Constructor with matching options
 expectAssignable<SnapshotAgent>(new SnapshotAgent({
   mode: 'playback',
   snapshotPath: './snapshots.json',
@@ -65,7 +65,7 @@ expectAssignable<Dispatcher>(new SnapshotAgent())
   expectType<'record' | 'playback' | 'update'>(snapshotAgent.getMode())
   expectType<void>(snapshotAgent.clearSnapshots())
 
-  // New Phase 3 snapshot management methods
+  // New snapshot management methods
   expectType<void>(snapshotAgent.resetCallCounts())
   expectType<boolean>(snapshotAgent.deleteSnapshot({}))
   expectType<SnapshotRecorder.SnapshotInfo | null>(snapshotAgent.getSnapshotInfo({}))
@@ -104,7 +104,7 @@ expectAssignable<Dispatcher>(new SnapshotAgent())
   expectType<SnapshotRecorder.Snapshot[]>(recorder.getSnapshots())
   expectType<number>(recorder.size())
 
-  // New Phase 3 methods
+  // New methods
   expectType<void>(recorder.resetCallCounts())
   expectType<boolean>(recorder.deleteSnapshot({}))
   expectType<SnapshotRecorder.SnapshotInfo | null>(recorder.getSnapshotInfo({}))
@@ -411,7 +411,7 @@ expectAssignable<SnapshotRecorder.Options>({
   flushInterval: 15000
 })
 
-// Test Phase 4 filtering options
+// Test filtering options
 expectAssignable<SnapshotRecorder.Options>({
   shouldRecord: (requestOpts) => requestOpts.path.startsWith('/api'),
   shouldPlayback: (requestOpts) => !requestOpts.path.includes('admin'),

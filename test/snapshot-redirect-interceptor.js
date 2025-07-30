@@ -39,7 +39,7 @@ test('SnapshotAgent - integration with redirect interceptor', async (t) => {
   // Demonstrates the intended usage pattern: SnapshotAgent and redirect interceptor together
   const { interceptors, Agent } = require('..')
 
-  // Phase 1: First use redirect interceptor to capture the complete redirect flow
+  // First use redirect interceptor to capture the complete redirect flow
   const redirectAgent = new Agent().compose(interceptors.redirect({ maxRedirections: 5 }))
   setGlobalDispatcher(redirectAgent)
 
@@ -54,7 +54,7 @@ test('SnapshotAgent - integration with redirect interceptor', async (t) => {
 
   redirectAgent.close()
 
-  // Phase 2: Record redirected responses using SnapshotAgent with redirect interceptor
+  // Record redirected responses using SnapshotAgent with redirect interceptor
   // This tests the fixed integration where SnapshotAgent automatically records final responses
   const recordingAgent = new SnapshotAgent({
     mode: 'record',
@@ -76,7 +76,7 @@ test('SnapshotAgent - integration with redirect interceptor', async (t) => {
   await recordingAgent.saveSnapshots()
   recordingAgent.close()
 
-  // Phase 3: Playback mode - SnapshotAgent provides recorded responses
+  // Playback mode - SnapshotAgent provides recorded responses
   // In playback mode, SnapshotAgent returns the recorded final response directly
   // Also include redirect interceptor to handle any redirect scenarios consistently
   const playbackAgent = new SnapshotAgent({

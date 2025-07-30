@@ -36,6 +36,8 @@ test('SnapshotAgent - record mode', async (t) => {
   }))
 
   const snapshotPath = join(tmpdir(), `test-snapshots-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     keepAliveTimeout: 10,
     keepAliveMaxTimeout: 10,
@@ -65,13 +67,11 @@ test('SnapshotAgent - record mode', async (t) => {
   assert.strictEqual(snapshots[0].request.method, 'GET')
   assert.strictEqual(snapshots[0].request.url, `${origin}/test`)
   assert.strictEqual(snapshots[0].responses[0].statusCode, 200)
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath))
 })
 
 test('SnapshotAgent - playback mode', async (t) => {
   const snapshotPath = join(tmpdir(), `test-snapshots-playback-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
 
   // First, create a recording
   const recordingAgent = new SnapshotAgent({
@@ -92,6 +92,7 @@ test('SnapshotAgent - playback mode', async (t) => {
   t.after(() => server.close())
 
   const originalDispatcher = getGlobalDispatcher()
+  t.after(() => setGlobalDispatcher(originalDispatcher))
   setGlobalDispatcher(recordingAgent)
 
   // Record the request
@@ -105,7 +106,6 @@ test('SnapshotAgent - playback mode', async (t) => {
   })
 
   setGlobalDispatcher(playbackAgent)
-  t.after(() => setGlobalDispatcher(originalDispatcher))
 
   // This should use the recorded response, not make a real request
   const response = await request(`${origin}/api/test`)
@@ -113,13 +113,11 @@ test('SnapshotAgent - playback mode', async (t) => {
 
   assert.strictEqual(response.statusCode, 200)
   assert.strictEqual(body, 'Recorded response')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - update mode', async (t) => {
   const snapshotPath = join(tmpdir(), `test-snapshots-update-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
 
   // Create agent in update mode
   const agent = new SnapshotAgent({
@@ -148,8 +146,8 @@ test('SnapshotAgent - update mode', async (t) => {
   t.after(() => server.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // First request - should be recorded as new
   const response1 = await request(`${origin}/existing`)
@@ -172,13 +170,11 @@ test('SnapshotAgent - update mode', async (t) => {
   // Verify we have 2 different snapshots
   const recorder = agent.getRecorder()
   assert.strictEqual(recorder.size(), 2)
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - handles POST requests with body', async (t) => {
   const snapshotPath = join(tmpdir(), `test-snapshots-post-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
 
   const server = createServer((req, res) => {
     let body = ''
@@ -206,6 +202,7 @@ test('SnapshotAgent - handles POST requests with body', async (t) => {
   })
 
   const originalDispatcher = getGlobalDispatcher()
+  t.after(() => setGlobalDispatcher(originalDispatcher))
   setGlobalDispatcher(recordingAgent)
 
   const requestBody = JSON.stringify({ test: 'data' })
@@ -228,7 +225,6 @@ test('SnapshotAgent - handles POST requests with body', async (t) => {
   })
 
   setGlobalDispatcher(playbackAgent)
-  t.after(() => setGlobalDispatcher(originalDispatcher))
 
   // Make the same request - should get recorded response
   const playbackResponse = await request(`${origin}/api/submit`, {
@@ -240,13 +236,11 @@ test('SnapshotAgent - handles POST requests with body', async (t) => {
   const playbackBody = await playbackResponse.body.json()
   assert.strictEqual(playbackBody.received, requestBody)
   assert.strictEqual(playbackBody.method, 'POST')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - error handling in playback mode', async (t) => {
   const snapshotPath = join(tmpdir(), `test-snapshots-error-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
 
   const agent = new SnapshotAgent({
     mode: 'playback',
@@ -256,8 +250,8 @@ test('SnapshotAgent - error handling in playback mode', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // This should throw because no snapshot exists for this request
   let errorThrown = false
@@ -271,13 +265,11 @@ test('SnapshotAgent - error handling in playback mode', async (t) => {
   }
 
   assert(errorThrown, 'Expected an error to be thrown')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - snapshot file format', async (t) => {
   const snapshotPath = join(tmpdir(), `test-snapshots-format-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
 
   const server = createServer((req, res) => {
     res.writeHead(200, { 'x-custom-header': 'test-value' })
@@ -298,8 +290,8 @@ test('SnapshotAgent - snapshot file format', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   await request(`${origin}/test-endpoint`)
   await agent.saveSnapshots()
@@ -324,9 +316,6 @@ test('SnapshotAgent - snapshot file format', async (t) => {
   assert(responses[0].headers['x-custom-header'], 'Expected x-custom-header to be present')
   assert.strictEqual(responses[0].headers['x-custom-header'], 'test-value')
   assert(typeof timestamp === 'string')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - constructor options validation', async (t) => {
@@ -386,6 +375,8 @@ test('SnapshotAgent - maxSnapshots and LRU eviction', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-lru-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -395,8 +386,8 @@ test('SnapshotAgent - maxSnapshots and LRU eviction', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Make 3 requests
   await request(`${origin}/first`)
@@ -415,9 +406,6 @@ test('SnapshotAgent - maxSnapshots and LRU eviction', async (t) => {
   assert(urls.includes(`${origin}/second`))
   assert(urls.includes(`${origin}/third`))
   assert(!urls.includes(`${origin}/first`))
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - auto-flush functionality', async (t) => {
@@ -433,6 +421,8 @@ test('SnapshotAgent - auto-flush functionality', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-autoflush-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -443,8 +433,8 @@ test('SnapshotAgent - auto-flush functionality', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Make a request
   await request(`${origin}/autoflush-test`)
@@ -463,9 +453,6 @@ test('SnapshotAgent - auto-flush functionality', async (t) => {
   assert(Array.isArray(snapshots))
   assert.strictEqual(snapshots.length, 1)
   assert.strictEqual(snapshots[0].snapshot.request.url, `${origin}/autoflush-test`)
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - custom header matching with matchHeaders', async (t) => {
@@ -485,6 +472,8 @@ test('SnapshotAgent - custom header matching with matchHeaders', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-match-headers-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -494,8 +483,8 @@ test('SnapshotAgent - custom header matching with matchHeaders', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Make first request with authorization header
   await request(`${origin}/test`, {
@@ -529,9 +518,6 @@ test('SnapshotAgent - custom header matching with matchHeaders', async (t) => {
   assert.strictEqual(response.statusCode, 200)
   const body = await response.body.text()
   assert.strictEqual(body, '{"message": "test"}')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - ignore headers functionality', async (t) => {
@@ -547,6 +533,8 @@ test('SnapshotAgent - ignore headers functionality', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-ignore-headers-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -556,8 +544,8 @@ test('SnapshotAgent - ignore headers functionality', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Make first request
   await request(`${origin}/test`, {
@@ -592,9 +580,6 @@ test('SnapshotAgent - ignore headers functionality', async (t) => {
   assert.strictEqual(response.statusCode, 200)
   const body = await response.body.text()
   assert.strictEqual(body, 'ignore headers test')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - exclude headers for security', async (t) => {
@@ -614,6 +599,8 @@ test('SnapshotAgent - exclude headers for security', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-exclude-headers-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -623,8 +610,8 @@ test('SnapshotAgent - exclude headers for security', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   await request(`${origin}/test`)
   await agent.saveSnapshots()
@@ -641,9 +628,6 @@ test('SnapshotAgent - exclude headers for security', async (t) => {
   assert(!snapshot.responses[0].headers.authorization, 'Authorization header should be excluded')
   assert(!snapshot.responses[0].headers['set-cookie'], 'Set-Cookie header should be excluded')
   assert(snapshot.responses[0].headers['content-type'], 'Content-Type header should be preserved')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - query parameter matching control', async (t) => {
@@ -659,6 +643,8 @@ test('SnapshotAgent - query parameter matching control', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-query-matching-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -668,8 +654,8 @@ test('SnapshotAgent - query parameter matching control', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Record request with query parameters
   await request(`${origin}/api/data?timestamp=123&session=abc`)
@@ -693,9 +679,6 @@ test('SnapshotAgent - query parameter matching control', async (t) => {
   assert.strictEqual(response.statusCode, 200)
   const body = await response.body.text()
   assert.strictEqual(body, 'Response for /api/data?timestamp=123&session=abc')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - body matching control', async (t) => {
@@ -715,6 +698,8 @@ test('SnapshotAgent - body matching control', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-body-matching-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -724,8 +709,8 @@ test('SnapshotAgent - body matching control', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Record request with specific body
   await request(`${origin}/api/submit`, {
@@ -757,9 +742,6 @@ test('SnapshotAgent - body matching control', async (t) => {
   assert.strictEqual(response.statusCode, 200)
   const responseBody = await response.body.json()
   assert.strictEqual(responseBody.received, 'original-data')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - sequential response support', async (t) => {
@@ -779,6 +761,7 @@ test('SnapshotAgent - sequential response support', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-sequential-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
 
   // Record multiple responses to the same endpoint
   const recordingAgent = new SnapshotAgent({
@@ -787,8 +770,8 @@ test('SnapshotAgent - sequential response support', async (t) => {
   })
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(recordingAgent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(recordingAgent)
 
   // Make multiple requests to record sequential responses
   await request(`${origin}/api/test`)
@@ -850,9 +833,6 @@ test('SnapshotAgent - sequential response support', async (t) => {
   const response4 = await request(`${origin}/api/test`)
   const body4 = await response4.body.text()
   assert.strictEqual(body4, 'Third response')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - call count reset functionality', async (t) => {
@@ -868,6 +848,8 @@ test('SnapshotAgent - call count reset functionality', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-reset-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath
@@ -876,8 +858,8 @@ test('SnapshotAgent - call count reset functionality', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Record a snapshot
   await request(`${origin}/api/test`)
@@ -902,9 +884,6 @@ test('SnapshotAgent - call count reset functionality', async (t) => {
   })
   assert(info2)
   assert.strictEqual(info2.callCount, 0)
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - snapshot management methods', async (t) => {
@@ -920,6 +899,8 @@ test('SnapshotAgent - snapshot management methods', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-management-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath
@@ -928,8 +909,8 @@ test('SnapshotAgent - snapshot management methods', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Record multiple snapshots
   await request(`${origin}/api/users`)
@@ -1002,9 +983,6 @@ test('SnapshotAgent - snapshot management methods', async (t) => {
   const mockInfo = agent.getSnapshotInfo(mockRequestOpts)
   assert(mockInfo)
   assert.strictEqual(mockInfo.request.url, `${origin}/api/mock`)
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - shouldRecord filtering', async (t) => {
@@ -1020,6 +998,8 @@ test('SnapshotAgent - shouldRecord filtering', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-should-record-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -1032,8 +1012,8 @@ test('SnapshotAgent - shouldRecord filtering', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Make requests - only one should be recorded
   await request(`${origin}/api/allowed`)
@@ -1044,9 +1024,6 @@ test('SnapshotAgent - shouldRecord filtering', async (t) => {
 
   const snapshots = recorder.getSnapshots()
   assert.strictEqual(snapshots[0].request.url, `${origin}/api/allowed`)
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - shouldPlayback filtering', async (t) => {
@@ -1062,6 +1039,7 @@ test('SnapshotAgent - shouldPlayback filtering', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-should-playback-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
 
   // First, record some snapshots without filtering
   const recordingAgent = new SnapshotAgent({
@@ -1072,6 +1050,7 @@ test('SnapshotAgent - shouldPlayback filtering', async (t) => {
   t.after(() => recordingAgent.close())
 
   const originalDispatcher = getGlobalDispatcher()
+  t.after(() => setGlobalDispatcher(originalDispatcher))
   setGlobalDispatcher(recordingAgent)
 
   await request(`${origin}/api/cached`)
@@ -1090,7 +1069,6 @@ test('SnapshotAgent - shouldPlayback filtering', async (t) => {
 
   t.after(() => playbackAgent.close())
   setGlobalDispatcher(playbackAgent)
-  t.after(() => setGlobalDispatcher(originalDispatcher))
 
   // This should use cached response
   const cachedResponse = await request(`${origin}/api/cached`)
@@ -1109,9 +1087,6 @@ test('SnapshotAgent - shouldPlayback filtering', async (t) => {
   }
 
   assert(errorThrown, 'Expected an error for filtered playback request')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - URL exclusion patterns (string)', async (t) => {
@@ -1127,6 +1102,8 @@ test('SnapshotAgent - URL exclusion patterns (string)', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-url-exclusion-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -1136,8 +1113,8 @@ test('SnapshotAgent - URL exclusion patterns (string)', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Make requests
   await request(`${origin}/api/public`)
@@ -1149,9 +1126,6 @@ test('SnapshotAgent - URL exclusion patterns (string)', async (t) => {
 
   const snapshots = recorder.getSnapshots()
   assert.strictEqual(snapshots[0].request.url, `${origin}/api/public`)
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - URL exclusion patterns (regex)', async (t) => {
@@ -1167,6 +1141,8 @@ test('SnapshotAgent - URL exclusion patterns (regex)', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-url-regex-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -1176,8 +1152,8 @@ test('SnapshotAgent - URL exclusion patterns (regex)', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Make requests
   await request(`${origin}/api/data`)
@@ -1189,9 +1165,6 @@ test('SnapshotAgent - URL exclusion patterns (regex)', async (t) => {
 
   const snapshots = recorder.getSnapshots()
   assert.strictEqual(snapshots[0].request.url, `${origin}/api/data`)
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - complex filtering scenarios', async (t) => {
@@ -1207,6 +1180,8 @@ test('SnapshotAgent - complex filtering scenarios', async (t) => {
   t.after(() => server.close())
 
   const snapshotPath = join(tmpdir(), `test-complex-filtering-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const agent = new SnapshotAgent({
     mode: 'record',
     snapshotPath,
@@ -1220,8 +1195,8 @@ test('SnapshotAgent - complex filtering scenarios', async (t) => {
   t.after(() => agent.close())
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // Make various requests
   await request(`${origin}/api/users`) // Should record
@@ -1234,13 +1209,12 @@ test('SnapshotAgent - complex filtering scenarios', async (t) => {
   const snapshots = recorder.getSnapshots()
   assert.strictEqual(snapshots[0].request.url, `${origin}/api/users`)
   assert.strictEqual(snapshots[0].request.method, 'GET')
-
-  // Cleanup
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 })
 
 test('SnapshotAgent - playback with pre-existing array of responses', async (t) => {
   const snapshotPath = join(tmpdir(), `test-array-responses-${Date.now()}.json`)
+  t.after(() => unlink(snapshotPath).catch(() => {}))
+
   const origin = 'http://localhost:3000'
 
   // Create a snapshot file with multiple responses for the same request
@@ -1297,11 +1271,10 @@ test('SnapshotAgent - playback with pre-existing array of responses', async (t) 
   })
 
   t.after(() => agent.close())
-  t.after(() => unlink(snapshotPath).catch(() => {}))
 
   const originalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(agent)
   t.after(() => setGlobalDispatcher(originalDispatcher))
+  setGlobalDispatcher(agent)
 
   // First request should return first response
   const response1 = await request(`${origin}/api/test`)
