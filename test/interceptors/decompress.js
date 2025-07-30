@@ -6,7 +6,7 @@ const { once } = require('node:events')
 const { createGzip, createDeflate, createBrotliCompress, createZstdCompress } = require('node:zlib')
 const { tspl } = require('@matteo.collina/tspl')
 
-const { Client } = require('../..')
+const { Client, getGlobalDispatcher, setGlobalDispatcher, request } = require('../..')
 const createDecompressInterceptor = require('../../lib/interceptor/decompress')
 
 test('should decompress gzip response', async t => {
@@ -935,5 +935,121 @@ test('should override controller pause/resume methods when decompression is acti
   }
 
   await client.dispatch({ method: 'GET', path: '/' }, handler)
+  await t.completed
+})
+
+test('should behave like fetch() for compressed responses', async t => {
+  t = tspl(t, { plan: 10 })
+
+  const testData = 'Test data that will be compressed and should be automatically decompressed by both fetch and request with decompress interceptor'
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    const gzip = createGzip()
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'gzip'
+    })
+    gzip.pipe(res)
+    gzip.end(testData)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const { fetch } = require('../..')
+  const fetchResponse = await fetch(baseUrl)
+  const fetchBody = await fetchResponse.text()
+
+  const client = new Client(baseUrl)
+  const requestResponseWithoutDecompression = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+  const requestBodyWithoutDecompression = await requestResponseWithoutDecompression.body.text()
+
+  const clientWithDecompression = client.compose(createDecompressInterceptor())
+  const requestResponseWithDecompression = await clientWithDecompression.request({
+    method: 'GET',
+    path: '/'
+  })
+  const requestBodyWithDecompression = await requestResponseWithDecompression.body.text()
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  t.equal(fetchResponse.status, 200)
+  t.equal(fetchBody, testData, 'fetch should automatically decompress')
+  t.equal(requestBodyWithDecompression, fetchBody, 'request with decompression interceptor should match fetch behavior')
+  t.notEqual(requestBodyWithoutDecompression, fetchBody, 'request without decompression interceptor should return compressed data')
+  t.equal(fetchResponse.headers.get('content-type'), 'text/plain', 'content-type header should be preserved with fetch')
+  t.equal(fetchResponse.headers.get('content-encoding'), 'gzip', 'content-encoding header should be preserved with fetch')
+  t.equal(requestResponseWithoutDecompression.headers['content-type'], 'text/plain', 'content-type header should be preserved without decompression')
+  t.equal(requestResponseWithoutDecompression.headers['content-encoding'], 'gzip', 'content-encoding header should be preserved without decompression')
+  t.equal(requestResponseWithDecompression.headers['content-type'], 'text/plain', 'content-type header should be preserved with decompression')
+  t.equal(requestResponseWithDecompression.headers['content-encoding'], undefined, 'content-encoding header should be removed with decompression')
+  await t.completed
+})
+
+test('should work with global dispatcher for both fetch() and request()', async t => {
+  t = tspl(t, { plan: 8 })
+
+  const testData = 'Global dispatcher test data for decompression interceptor'
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    const gzip = createGzip()
+    const chunks = []
+
+    gzip.on('data', chunk => chunks.push(chunk))
+    gzip.on('end', () => {
+      const compressedData = Buffer.concat(chunks)
+      res.writeHead(200, {
+        'Content-Type': 'text/plain',
+        'Content-Encoding': 'gzip',
+        'Content-Length': compressedData.length
+      })
+      res.end(compressedData)
+    })
+
+    gzip.end(testData)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const originalDispatcher = getGlobalDispatcher()
+
+  setGlobalDispatcher(getGlobalDispatcher().compose(createDecompressInterceptor()))
+
+  after(async () => {
+    setGlobalDispatcher(originalDispatcher)
+    server.close()
+    await once(server, 'close')
+  })
+
+  const { fetch } = require('../..')
+  const fetchResponse = await fetch(baseUrl)
+  const fetchBody = await fetchResponse.text()
+
+  const requestResponse = await request(baseUrl, {
+    method: 'GET'
+  })
+  const requestBody = await requestResponse.body.text()
+
+  t.equal(fetchResponse.status, 200)
+  t.equal(fetchBody, testData, 'fetch should automatically decompress with global interceptor')
+  t.equal(requestResponse.statusCode, 200)
+  t.equal(requestBody, testData, 'request should automatically decompress with global interceptor')
+  t.equal(requestResponse.headers['content-encoding'], undefined, 'request content-encoding header should be removed with global interceptor')
+  t.equal(requestResponse.headers['content-length'], undefined, 'request content-length header should be removed with global interceptor')
+  t.equal(fetchResponse.headers.get('content-length'), undefined, 'content-length header should be removed with fetch due to global interceptor')
+  t.equal(fetchResponse.headers.get('content-encoding'), undefined, 'content-encoding header should be removed with fetch due to global interceptor')
+
   await t.completed
 })
