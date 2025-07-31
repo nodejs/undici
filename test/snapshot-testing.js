@@ -53,7 +53,7 @@ function setupCleanup (t, resources) {
     t.after(() => unlink(resources.snapshotPath).catch(() => {}))
   }
   if (resources.agent) {
-    t.after(() => resources.agent.close())
+    t.after(async () => await resources.agent.close())
   }
   if (resources.originalDispatcher) {
     t.after(() => setGlobalDispatcher(resources.originalDispatcher))
@@ -361,7 +361,7 @@ describe('SnapshotAgent - Request Handling', () => {
     assert.strictEqual(recordedSnapshots[0].responses.length, 3, 'Should have recorded three responses')
 
     // Close recording agent cleanly before starting playback
-    recordingAgent.close()
+    await recordingAgent.close()
 
     // Switch to playback mode and test sequential responses
     const playbackAgent = new SnapshotAgent({
@@ -462,21 +462,21 @@ describe('SnapshotAgent - Error Handling', () => {
     }, 'Should throw for missing snapshotPath in update mode')
 
     // Test valid configurations should not throw
-    assert.doesNotThrow(() => {
+    await assert.doesNotReject(async () => {
       const agent1 = new SnapshotAgent({ mode: 'record' })
-      return agent1.close()
+      await agent1.close()
     }, 'Should not throw for valid record mode')
 
-    assert.doesNotThrow(() => {
+    await assert.doesNotReject(async () => {
       const snapshotPath = createSnapshotPath('valid-playback')
       const agent2 = new SnapshotAgent({ mode: 'playback', snapshotPath })
-      return agent2.close()
+      await agent2.close()
     }, 'Should not throw for valid playback mode')
 
-    assert.doesNotThrow(() => {
+    await assert.doesNotReject(async () => {
       const snapshotPath = createSnapshotPath('valid-update')
       const agent3 = new SnapshotAgent({ mode: 'update', snapshotPath })
-      return agent3.close()
+      await agent3.close()
     }, 'Should not throw for valid update mode')
   })
 })
