@@ -19,7 +19,7 @@ Returns: `Agent`
 Extends: [`PoolOptions`](/docs/docs/api/Pool.md#parameter-pooloptions)
 
 * **factory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Pool(origin, opts)`
-* **maxGlobalConnections** `number | null` - Default: `null` - Limits the total number of connections that can be open at one time across all origins. If `null`, no limit is enforced.
+* **origins** `number` (optional) - Default: `Infinity` - Limits the total number of origins that can receive requests at a time. If `Infinity`, no limit is enforced.
 
 ## Instance Properties
 
