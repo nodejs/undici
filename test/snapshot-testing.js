@@ -347,9 +347,18 @@ describe('SnapshotAgent - Request Handling', () => {
     setGlobalDispatcher(recordingAgent)
 
     // Make multiple requests to record sequential responses
-    await request(`${origin}/api/test`)
-    await request(`${origin}/api/test`)
-    await request(`${origin}/api/test`)
+    {
+      const res = await request(`${origin}/api/test`)
+      await res.body.text()
+    }
+    {
+      const res = await request(`${origin}/api/test`)
+      await res.body.text()
+    }
+    {
+      const res = await request(`${origin}/api/test`)
+      await res.body.text()
+    }
 
     // Ensure all recordings are saved and verify the recording state
     await recordingAgent.saveSnapshots()
@@ -370,6 +379,7 @@ describe('SnapshotAgent - Request Handling', () => {
     })
 
     setupCleanup(t, { agent: playbackAgent })
+    setGlobalDispatcher(playbackAgent)
 
     // Ensure snapshots are loaded and call counts are reset before setting dispatcher
     await playbackAgent.loadSnapshots()
@@ -384,8 +394,6 @@ describe('SnapshotAgent - Request Handling', () => {
     const snapshots = recorder.getSnapshots()
     assert.strictEqual(snapshots.length, 1, 'Should have exactly one snapshot')
     assert.strictEqual(snapshots[0].responses.length, 3, 'Should have three sequential responses')
-
-    setGlobalDispatcher(playbackAgent)
 
     // Test sequential responses
     const response1 = await request(`${origin}/api/test`)
