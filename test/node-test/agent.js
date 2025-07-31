@@ -41,11 +41,11 @@ test('Agent', t => {
   p.doesNotThrow(() => new Agent())
 })
 
-test('Agent enforces maxGlobalConnections', async (t) => {
+test('Agent enforces max origins', async (t) => {
   const p = tspl(t, { plan: 5 })
 
   const dispatcher = new Agent({
-    maxGlobalConnections: 1,
+    origins: 1,
     keepAliveMaxTimeout: 100,
     keepAliveTimeout: 100
   })
