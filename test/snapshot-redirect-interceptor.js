@@ -52,7 +52,7 @@ test('SnapshotAgent - integration with redirect interceptor', async (t) => {
   assert(redirectResponse.context && redirectResponse.context.history)
   assert.strictEqual(redirectResponse.context.history.length, 2)
 
-  redirectAgent.close()
+  await redirectAgent.close()
 
   // Record redirected responses using SnapshotAgent with redirect interceptor
   // This tests the fixed integration where SnapshotAgent automatically records final responses
@@ -73,8 +73,7 @@ test('SnapshotAgent - integration with redirect interceptor', async (t) => {
   // Note: context.history is not preserved in SnapshotAgent recording mode
   // since we capture the final response directly
 
-  await recordingAgent.saveSnapshots()
-  recordingAgent.close()
+  await recordingAgent.close()
 
   // Playback mode - SnapshotAgent provides recorded responses
   // In playback mode, SnapshotAgent returns the recorded final response directly
@@ -118,5 +117,5 @@ test('SnapshotAgent - integration with redirect interceptor', async (t) => {
     })
   }
 
-  playbackAgent.close()
+  await playbackAgent.close()
 })
