@@ -1287,3 +1287,146 @@ describe('SnapshotAgent - Filtering', () => {
       'Recorded request should have GET method')
   })
 })
+
+describe('SnapshotAgent - Close Method', () => {
+  it('close() saves recordings before cleanup', async (t) => {
+    const snapshotPath = createSnapshotPath('close-saves')
+    setupCleanup(t, { snapshotPath })
+
+    const server = createTestServer(createDefaultHandler())
+    const { origin } = await setupServer(server)
+    setupCleanup(t, { server })
+
+    const agent = new SnapshotAgent({
+      mode: 'record',
+      snapshotPath,
+      autoFlush: false // Disable auto-flush to test manual save on close
+    })
+
+    const originalDispatcher = getGlobalDispatcher()
+    setupCleanup(t, { originalDispatcher })
+    setGlobalDispatcher(agent)
+
+    // Make a request that should be recorded
+    await request(`${origin}/test`)
+
+    // Verify snapshot is in memory but not yet saved to file
+    const recorder = agent.getRecorder()
+    assert.strictEqual(recorder.size(), 1, 'Should have recorded one snapshot in memory')
+
+    // Check that file doesn't exist yet (since autoFlush is false)
+    let fileExists = false
+    try {
+      await readFile(snapshotPath)
+      fileExists = true
+    } catch {
+      // File doesn't exist, which is expected
+    }
+    assert.strictEqual(fileExists, false, 'File should not exist before close()')
+
+    // Close the agent - this should save the snapshots
+    await agent.close()
+
+    // Verify the snapshots were saved to file
+    let savedData
+    try {
+      const fileContent = await readFile(snapshotPath, 'utf8')
+      savedData = JSON.parse(fileContent)
+    } catch (error) {
+      assert.fail(`Failed to read saved snapshot file: ${error.message}`)
+    }
+
+    assert(Array.isArray(savedData), 'Saved data should be an array')
+    assert.strictEqual(savedData.length, 1, 'Should have saved one snapshot')
+    assert.strictEqual(savedData[0].snapshot.request.method, 'GET', 'Saved snapshot should have correct method')
+    assert.strictEqual(savedData[0].snapshot.request.url, `${origin}/test`, 'Saved snapshot should have correct URL')
+  })
+
+  it('close() works when no recordings exist', async (t) => {
+    const snapshotPath = createSnapshotPath('close-no-recordings')
+    setupCleanup(t, { snapshotPath })
+
+    const agent = new SnapshotAgent({
+      mode: 'record',
+      snapshotPath
+    })
+
+    // Close agent immediately without making any requests or setting as dispatcher
+    await assert.doesNotReject(async () => {
+      await agent.close()
+    }, 'Should not throw when closing agent with no recordings')
+
+    // Verify no file was created
+    let fileExists = false
+    try {
+      await readFile(snapshotPath)
+      fileExists = true
+    } catch {
+      // File doesn't exist, which is expected
+    }
+    assert.strictEqual(fileExists, false, 'No file should be created when no recordings exist')
+  })
+
+  it('close() works when no snapshot path is configured', async (t) => {
+    const agent = new SnapshotAgent({
+      mode: 'record'
+      // No snapshotPath provided
+    })
+
+    const server = createTestServer(createDefaultHandler())
+    const { origin } = await setupServer(server)
+    setupCleanup(t, { server })
+
+    const originalDispatcher = getGlobalDispatcher()
+    t.after(() => setGlobalDispatcher(originalDispatcher))
+    setGlobalDispatcher(agent)
+
+    // Make a request
+    await request(`${origin}/test`)
+
+    // Close should not throw even without snapshot path
+    await assert.doesNotReject(async () => {
+      await agent.close()
+    }, 'Should not throw when closing agent without snapshot path')
+  })
+
+  it('recorder close() method works independently', async (t) => {
+    const { SnapshotRecorder } = require('../lib/mock/snapshot-recorder')
+    const snapshotPath = createSnapshotPath('recorder-close')
+    setupCleanup(t, { snapshotPath })
+
+    const recorder = new SnapshotRecorder({
+      snapshotPath,
+      mode: 'record'
+    })
+
+    // Manually add a snapshot to test saving
+    await recorder.record(
+      { origin: 'http://test.com', path: '/api', method: 'GET' },
+      {
+        statusCode: 200,
+        headers: { 'content-type': 'application/json' },
+        body: Buffer.from('{"test": true}'),
+        trailers: {}
+      }
+    )
+
+    assert.strictEqual(recorder.size(), 1, 'Should have one recorded snapshot')
+
+    // Close the recorder
+    await recorder.close()
+
+    // Verify the snapshot was saved
+    let savedData
+    try {
+      const fileContent = await readFile(snapshotPath, 'utf8')
+      savedData = JSON.parse(fileContent)
+    } catch (error) {
+      assert.fail(`Failed to read saved snapshot file: ${error.message}`)
+    }
+
+    assert(Array.isArray(savedData), 'Saved data should be an array')
+    assert.strictEqual(savedData.length, 1, 'Should have saved one snapshot')
+    assert.strictEqual(savedData[0].snapshot.request.method, 'GET', 'Should have correct method')
+  })
+})
