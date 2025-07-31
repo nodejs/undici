@@ -347,9 +347,18 @@ describe('SnapshotAgent - Request Handling', () => {
     setGlobalDispatcher(recordingAgent)
 
     // Make multiple requests to record sequential responses
-    await request(`${origin}/api/test`)
-    await request(`${origin}/api/test`)
-    await request(`${origin}/api/test`)
+    {
+      const res = await request(`${origin}/api/test`)
+      await res.body.text()
+    }
+    {
+      const res = await request(`${origin}/api/test`)
+      await res.body.text()
+    }
+    {
+      const res = await request(`${origin}/api/test`)
+      await res.body.text()
+    }
 
     // Ensure all recordings are saved and verify the recording state
     await recordingAgent.saveSnapshots()
@@ -368,6 +377,7 @@ describe('SnapshotAgent - Request Handling', () => {
       mode: 'playback',
       snapshotPath
     })
+    setGlobalDispatcher(playbackAgent)
 
     setupCleanup(t, { agent: playbackAgent })
 
