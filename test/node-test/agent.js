@@ -699,8 +699,10 @@ test('stream: fails with invalid onInfo', async (t) => {
 })
 
 test('constructor validations', t => {
-  const p = tspl(t, { plan: 1 })
+  const p = tspl(t, { plan: 3 })
   p.throws(() => new Agent({ factory: 'ASD' }), errors.InvalidArgumentError, 'throws on invalid opts argument')
+  p.throws(() => new Agent({ maxOrigins: -1 }), errors.InvalidArgumentError, 'maxOrigins must be a number greater than 0')
+  p.throws(() => new Agent({ maxOrigins: 'foo' }), errors.InvalidArgumentError, 'maxOrigins must be a number greater than 0')
 })
 
 test('dispatch validations', async t => {
