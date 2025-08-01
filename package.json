@@ -83,7 +83,7 @@
     "test:h2:core": "borp -p \"test/+(http2|h2)*.js\"",
     "test:h2:fetch": "npm run build:node && borp -p \"test/fetch/http2*.js\"",
     "test:interceptors": "borp -p \"test/interceptors/*.js\"",
-    "test:jest": "cross-env NODE_V8_COVERAGE= jest --runInBand --detectOpenHandles --forceExit",
+    "test:jest": "cross-env NODE_V8_COVERAGE= jest",
     "test:unit": "borp --expose-gc -p \"test/*.js\"",
     "test:node-fetch": "borp -p \"test/node-fetch/**/*.js\"",
     "test:node-test": "borp -p \"test/node-test/**/*.js\"",
