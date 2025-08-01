@@ -41,33 +41,15 @@ test('Agent', t => {
   p.doesNotThrow(() => new Agent())
 })
 
-test('Agent enforces max origins', async (t) => {
-  const p = tspl(t, { plan: 5 })
+test('Agent enforces maxOrigins', async (t) => {
+  const p = tspl(t, { plan: 1 })
 
   const dispatcher = new Agent({
-    origins: 1,
+    maxOrigins: 1,
     keepAliveMaxTimeout: 100,
     keepAliveTimeout: 100
   })
   t.after(() => dispatcher.close())
-
-  let connectCount = 0
-  let openConnections = 0
-  dispatcher.on('connect', () => {
-    connectCount++
-    openConnections++
-    p.strictEqual(openConnections, 1, 'Only one connection should be allowed at a time')
-  })
-
-  let disconnectCount = 0
-  const disconnectPromise = new Promise(resolve => {
-    dispatcher.on('disconnect', () => {
-      disconnectCount++
-      openConnections--
-
-      if (disconnectCount === 2) resolve()
-    })
-  })
 
   const handler = (_req, res) => {
     setTimeout(() => res.end('ok'), 50)
@@ -83,14 +65,15 @@ test('Agent enforces max origins', async (t) => {
   await once(server2, 'listening')
   t.after(closeServerAsPromise(server2))
 
-  const req1 = request(`http://localhost:${server1.address().port}`, { dispatcher })
-  const req2 = request(`http://localhost:${server2.address().port}`, { dispatcher })
+  try {
+    await Promise.all([
+      request(`http://localhost:${server1.address().port}`, { dispatcher }),
+      request(`http://localhost:${server2.address().port}`, { dispatcher })
+    ])
+  } catch (err) {
+    p.ok(err instanceof errors.AgentMaxOriginsReached)
+  }
 
-  await Promise.all([req1, req2, disconnectPromise])
-
-  p.strictEqual(connectCount, 2, 'Connect should happen exactly twice')
-  p.strictEqual(disconnectCount, 2, 'Disconnect should happen exactly twice')
-  p.strictEqual(openConnections, 0, 'No connections should be open any longer')
   await p.completed
 })
 
