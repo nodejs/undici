@@ -405,6 +405,27 @@ for (const factory of [
     await t.completed
   })
 
+  test('should follow a redirect chain up to the allowed number of times for maxRedirections using the undici.request opts and undocumented throwOnMaxRedirect', async t => {
+    t = tspl(t, { plan: 1 })
+
+    const server = await startRedirectingServer()
+
+    try {
+      await request(t, server, undefined, `http://${server}/300`, {
+        maxRedirections: 2,
+        throwOnMaxRedirect: true
+      })
+    } catch (error) {
+      if (error.message.startsWith('max redirects')) {
+        t.ok(true, 'Max redirects handled correctly')
+      } else {
+        t.fail(`Unexpected error: ${error.message}`)
+      }
+    }
+
+    await t.completed
+  })
+
   test('should follow a redirect chain up to the allowed number of times for maxRedirections using the undici.request opts', async t => {
     t = tspl(t, { plan: 1 })
 
