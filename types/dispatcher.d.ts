@@ -135,7 +135,7 @@ declare namespace Dispatcher {
     signal?: AbortSignal | EventEmitter | null;
     /** This argument parameter is passed through to `ConnectData` */
     opaque?: TOpaque;
-    /** Default: false */
+    /** @deprecated. Default: false */
     redirectionLimitReached?: boolean;
     /** Default: `null` */
     responseHeaders?: 'raw' | null;
@@ -145,7 +145,7 @@ declare namespace Dispatcher {
     opaque?: TOpaque;
     /** Default: `null` */
     signal?: AbortSignal | EventEmitter | null;
-    /** Default: false */
+    /** @deprecated .Default: false */
     redirectionLimitReached?: boolean;
     /** Default: `null` */
     onInfo?: (info: { statusCode: number, headers: Record<string, string | string[]> }) => void;
@@ -168,7 +168,7 @@ declare namespace Dispatcher {
     protocol?: string;
     /** Default: `null` */
     signal?: AbortSignal | EventEmitter | null;
-    /** Default: false */
+    /** @deprecated. Default: false */
     redirectionLimitReached?: boolean;
     /** Default: `null` */
     responseHeaders?: 'raw' | null;

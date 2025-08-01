@@ -22,5 +22,5 @@ const handler: Dispatcher.DispatchHandler = {}
 
 const redirectHandler = new Undici.RedirectHandler(dispatcher.dispatch, 10, {
   path: '/', method: 'GET'
-}, handler, false) as RedirectHandler
+}, handler)
 expectAssignable<RedirectHandler>(redirectHandler)

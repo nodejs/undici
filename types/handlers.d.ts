@@ -6,7 +6,6 @@ export declare class RedirectHandler implements Dispatcher.DispatchHandler {
     maxRedirections: number,
     opts: Dispatcher.DispatchOptions,
     handler: Dispatcher.DispatchHandler,
-    redirectionLimitReached: boolean
   )
 }
 
