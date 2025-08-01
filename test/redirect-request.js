@@ -17,14 +17,14 @@ const { Headers: UndiciHeaders } = require('..')
 const redirect = undici.interceptors.redirect
 
 for (const factory of [
-  (server, opts) => new undici.Agent(opts).compose(redirect({ maxRedirections: opts?.maxRedirections })),
-  (server, opts) => new undici.Pool(`http://${server}`, opts).compose(redirect({ maxRedirections: opts?.maxRedirections })),
-  (server, opts) => new undici.Client(`http://${server}`, opts).compose(redirect({ maxRedirections: opts?.maxRedirections }))
+  (server, dispatchOpts) => new undici.Agent(dispatchOpts).compose(redirect({ maxRedirections: dispatchOpts?.maxRedirections, throwOnMaxRedirections: dispatchOpts?.throwOnMaxRedirections })),
+  (server, dispatchOpts) => new undici.Pool(`http://${server}`, dispatchOpts).compose(redirect({ maxRedirections: dispatchOpts?.maxRedirections, throwOnMaxRedirections: dispatchOpts?.throwOnMaxRedirections })),
+  (server, dispatchOpts) => new undici.Client(`http://${server}`, dispatchOpts).compose(redirect({ maxRedirections: dispatchOpts?.maxRedirections, throwOnMaxRedirections: dispatchOpts?.throwOnMaxRedirections }))
 ]) {
-  const request = (t, server, opts, ...args) => {
-    const dispatcher = factory(server, opts)
+  const request = (t, server, dispatchOpts, url, requestOpts) => {
+    const dispatcher = factory(server, dispatchOpts)
     after(() => dispatcher.close())
-    return undici.request(args[0], { ...args[1], dispatcher }, args[2])
+    return undici.request(url, { ...requestOpts, dispatcher })
   }
 
   test('should always have a history with the final URL even if no redirections were followed', async t => {
@@ -405,7 +405,7 @@ for (const factory of [
     await t.completed
   })
 
-  test('should follow a redirect chain up to the allowed number of times for redirectionLimitReached', async t => {
+  test('should follow a redirect chain up to the allowed number of times for maxRedirections using the undici.request opts', async t => {
     t = tspl(t, { plan: 1 })
 
     const server = await startRedirectingServer()
@@ -413,8 +413,29 @@ for (const factory of [
     try {
       await request(t, server, undefined, `http://${server}/300`, {
         maxRedirections: 2,
-        throwOnMaxRedirect: true
+        throwOnMaxRedirections: true
       })
+    } catch (error) {
+      if (error.message.startsWith('max redirects')) {
+        t.ok(true, 'Max redirects handled correctly')
+      } else {
+        t.fail(`Unexpected error: ${error.message}`)
+      }
+    }
+
+    await t.completed
+  })
+
+  test('should follow a redirect chain up to the allowed number of times for maxRedirections using the dispatch opts', async t => {
+    t = tspl(t, { plan: 1 })
+
+    const server = await startRedirectingServer()
+
+    try {
+      await request(t, server, {
+        maxRedirections: 2,
+        throwOnMaxRedirections: true
+      }, `http://${server}/300`, undefined)
     } catch (error) {
       if (error.message.startsWith('max redirects')) {
         t.ok(true, 'Max redirects handled correctly')
@@ -462,6 +483,23 @@ for (const factory of [
     await t.completed
   })
 
+  test('should not allow invalid throwOnMaxRedirections arguments', async t => {
+    t = tspl(t, { plan: 1 })
+
+    try {
+      await request(t, 'localhost', undefined, 'http://localhost', {
+        method: 'GET',
+        maxRedirections: 1,
+        throwOnMaxRedirections: 'INVALID'
+      })
+
+      t.fail('Did not throw')
+    } catch (err) {
+      t.strictEqual(err.message, 'throwOnMaxRedirections must be a boolean')
+    }
+    await t.completed
+  })
+
   test('should not allow invalid maxRedirections arguments default', async t => {
     t = tspl(t, { plan: 1 })
 
@@ -474,6 +512,24 @@ for (const factory of [
       t.fail('Did not throw')
     } catch (err) {
       t.strictEqual(err.message, 'maxRedirections must be a positive number')
+    }
+
+    await t.completed
+  })
+
+  test('should not allow invalid throwOnMaxRedirections arguments default', async t => {
+    t = tspl(t, { plan: 1 })
+
+    try {
+      await request(t, 'localhost', undefined, 'http://localhost', {
+        method: 'GET',
+        maxRedirections: 1,
+        throwOnMaxRedirections: 'INVALID'
+      })
+
+      t.fail('Did not throw')
+    } catch (err) {
+      t.strictEqual(err.message, 'throwOnMaxRedirections must be a boolean')
     }
 
     await t.completed
