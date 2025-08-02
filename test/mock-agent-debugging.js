@@ -70,7 +70,7 @@ describe('MockAgent - Debugging Features', () => {
   test('should provide enhanced error messages with context', async t => {
     t = tspl(t, { plan: 3 })
 
-    const mockAgent = new MockAgent()
+    const mockAgent = new MockAgent({ verboseErrors: true })
     setGlobalDispatcher(mockAgent)
     mockAgent.disableNetConnect()
 

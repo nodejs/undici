@@ -112,5 +112,8 @@ declare namespace MockAgent {
 
     /** Enable verbose error messages with context and suggestions. default false */
     verboseErrors?: boolean;
+
+    /** Custom console implementation for tracing output. Must have an error method. default global console */
+    console?: { error: (...args: any[]) => void };
   }
 }
