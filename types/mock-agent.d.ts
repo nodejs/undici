@@ -64,11 +64,25 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   pendingInterceptors (): PendingInterceptor[]
   assertNoPendingInterceptors (options?: {
     pendingInterceptorsFormatter?: PendingInterceptorsFormatter;
+    showUnusedInterceptors?: boolean;
+    showCallHistory?: boolean;
+    includeRequestDiff?: boolean;
   }): void
   /** Returns comprehensive debugging information about the MockAgent state */
   debug (): MockAgentDebugInfo
   /** Prints formatted debugging information to console */
   inspect (): MockAgentDebugInfo
+  /** Compare a request against an interceptor and return detailed differences */
+  compareRequest (request: any, interceptor: any): {
+    matches: boolean;
+    differences: Array<{
+      field: string;
+      expected: any;
+      actual: any;
+      similarity: number;
+    }>;
+    score: number;
+  }
 }
 
 interface PendingInterceptorsFormatter {

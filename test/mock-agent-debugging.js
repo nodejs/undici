@@ -137,4 +137,77 @@ describe('MockAgent - Debugging Features', () => {
       console.log = originalConsoleLog
     }
   })
+
+  test('should provide compareRequest method for interceptor diff analysis', t => {
+    t = tspl(t, { plan: 5 })
+
+    const mockAgent = new MockAgent()
+    const request = { method: 'GET', path: '/api/user', body: undefined, headers: {} }
+    const interceptor = { method: 'GET', path: '/api/users', body: undefined, headers: undefined }
+
+    const comparison = mockAgent.compareRequest(request, interceptor)
+
+    t.strictEqual(typeof comparison, 'object')
+    t.strictEqual(comparison.matches, false)
+    t.strictEqual(Array.isArray(comparison.differences), true)
+    t.strictEqual(comparison.differences.length, 1)
+    t.strictEqual(comparison.differences[0].field, 'path')
+  })
+
+  test('should validate interceptor configuration', t => {
+    t = tspl(t, { plan: 4 })
+
+    const mockAgent = new MockAgent()
+    const mockPool = mockAgent.get('http://localhost:3000')
+    const interceptor = mockPool.intercept({ path: '/test', method: 'GET' }).reply(200, 'test')
+
+    const validation = interceptor.validate()
+
+    t.strictEqual(typeof validation, 'object')
+    t.strictEqual(validation.valid, true)
+    t.strictEqual(Array.isArray(validation.issues), true)
+    t.strictEqual(typeof validation.interceptor, 'object')
+  })
+
+  test('should detect validation issues in interceptor configuration', t => {
+    t = tspl(t, { plan: 2 })
+
+    const mockAgent = new MockAgent()
+    const mockPool = mockAgent.get('http://localhost:3000')
+    const interceptor = mockPool.intercept({ path: '//double-slash', method: 'CUSTOM' }).reply(200, 'test')
+
+    const validation = interceptor.validate()
+
+    t.strictEqual(validation.valid, true) // warnings don't make it invalid
+    t.ok(validation.issues.length > 0) // should have at least one warning
+  })
+
+  test('should enhance assertNoPendingInterceptors with additional options', async t => {
+    t = tspl(t, { plan: 2 })
+
+    const mockAgent = new MockAgent({ enableCallHistory: true })
+    setGlobalDispatcher(mockAgent)
+    mockAgent.disableNetConnect()
+
+    const mockPool = mockAgent.get('http://localhost:3000')
+    mockPool.intercept({ path: '/api/users', method: 'GET' }).reply(200, { users: [] })
+    mockPool.intercept({ path: '/api/unused', method: 'POST' }).reply(201, { id: 1 })
+
+    // Make a request to populate call history
+    await request('http://localhost:3000/api/users')
+
+    try {
+      mockAgent.assertNoPendingInterceptors({
+        showUnusedInterceptors: true,
+        showCallHistory: true,
+        includeRequestDiff: true
+      })
+      t.fail('Should have thrown')
+    } catch (error) {
+      t.strictEqual(error.name, 'UndiciError')
+      t.ok(error.message.includes('interceptors were never used'))
+    }
+
+    await mockAgent.close()
+  })
 })
