@@ -84,6 +84,23 @@ expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCall
 
   // times
   expectAssignable<MockScope>(mockScope.times(2))
+
+  // validate
+  expectType<{
+    valid: boolean;
+    issues: Array<{
+      severity: 'error' | 'warning';
+      field: string;
+      message: string;
+    }>;
+    interceptor: {
+      method: string;
+      path: string | RegExp;
+      times?: number;
+      persist?: boolean;
+      statusCode?: number;
+    };
+  }>(mockScope.validate())
 }
 
 {

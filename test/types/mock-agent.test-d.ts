@@ -10,6 +10,29 @@ import MockDispatch = MockInterceptor.MockDispatch
 expectAssignable<MockAgent>(new MockAgent())
 expectAssignable<MockAgent>(new MockAgent({}))
 
+// Test new constructor options
+expectAssignable<MockAgent>(new MockAgent({
+  traceRequests: true
+}))
+expectAssignable<MockAgent>(new MockAgent({
+  traceRequests: 'verbose'
+}))
+expectAssignable<MockAgent>(new MockAgent({
+  developmentMode: true
+}))
+expectAssignable<MockAgent>(new MockAgent({
+  verboseErrors: true
+}))
+expectAssignable<MockAgent>(new MockAgent({
+  console: { error: (...args: any[]) => undefined }
+}))
+expectAssignable<MockAgent>(new MockAgent({
+  traceRequests: 'verbose',
+  developmentMode: true,
+  verboseErrors: true,
+  console
+}))
+
 {
   const mockAgent = new MockAgent()
   expectAssignable<void>(setGlobalDispatcher(mockAgent))
@@ -76,8 +99,65 @@ expectAssignable<MockAgent>(new MockAgent({}))
   expectType<(options?: {
     pendingInterceptorsFormatter?: {
       format(pendingInterceptors: readonly PendingInterceptor[]): string;
-    }
+    };
+    showUnusedInterceptors?: boolean;
+    showCallHistory?: boolean;
+    includeRequestDiff?: boolean;
   }) => void>(agent.assertNoPendingInterceptors)
+
+  // Test new debugging methods
+  expectType<() => {
+    origins: string[];
+    totalInterceptors: number;
+    pendingInterceptors: number;
+    callHistory: {
+      enabled: boolean;
+      calls: any[];
+    };
+    interceptorsByOrigin: Record<string, any[]>;
+    options: {
+      traceRequests: boolean | 'verbose';
+      developmentMode: boolean;
+      verboseErrors: boolean;
+      enableCallHistory: boolean;
+      acceptNonStandardSearchParameters: boolean;
+      ignoreTrailingSlash: boolean;
+    };
+    isMockActive: boolean;
+    netConnect: boolean | string[] | RegExp[] | ((host: string) => boolean)[];
+  }>(agent.debug)
+
+  expectType<() => {
+    origins: string[];
+    totalInterceptors: number;
+    pendingInterceptors: number;
+    callHistory: {
+      enabled: boolean;
+      calls: any[];
+    };
+    interceptorsByOrigin: Record<string, any[]>;
+    options: {
+      traceRequests: boolean | 'verbose';
+      developmentMode: boolean;
+      verboseErrors: boolean;
+      enableCallHistory: boolean;
+      acceptNonStandardSearchParameters: boolean;
+      ignoreTrailingSlash: boolean;
+    };
+    isMockActive: boolean;
+    netConnect: boolean | string[] | RegExp[] | ((host: string) => boolean)[];
+  }>(agent.inspect)
+
+  expectType<(request: any, interceptor: any) => {
+    matches: boolean;
+    differences: Array<{
+      field: string;
+      expected: any;
+      actual: any;
+      similarity: number;
+    }>;
+    score: number;
+  }>(agent.compareRequest)
 }
 
 // issue #3444
