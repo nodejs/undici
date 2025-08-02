@@ -10,6 +10,27 @@ interface PendingInterceptor extends MockDispatch {
   origin: string;
 }
 
+interface MockAgentDebugInfo {
+  origins: string[];
+  totalInterceptors: number;
+  pendingInterceptors: number;
+  callHistory: {
+    enabled: boolean;
+    calls: any[];
+  };
+  interceptorsByOrigin: Record<string, any[]>;
+  options: {
+    traceRequests: boolean | 'verbose';
+    developmentMode: boolean;
+    verboseErrors: boolean;
+    enableCallHistory: boolean;
+    acceptNonStandardSearchParameters: boolean;
+    ignoreTrailingSlash: boolean;
+  };
+  isMockActive: boolean;
+  netConnect: boolean | string[] | RegExp[] | ((host: string) => boolean)[];
+}
+
 /** A mocked Agent class that implements the Agent API. It allows one to intercept HTTP requests made through undici and return mocked responses instead. */
 declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.Options> extends Dispatcher {
   constructor (options?: TMockAgentOptions)
@@ -44,6 +65,10 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   assertNoPendingInterceptors (options?: {
     pendingInterceptorsFormatter?: PendingInterceptorsFormatter;
   }): void
+  /** Returns comprehensive debugging information about the MockAgent state */
+  debug (): MockAgentDebugInfo
+  /** Prints formatted debugging information to console */
+  inspect (): MockAgentDebugInfo
 }
 
 interface PendingInterceptorsFormatter {
@@ -63,6 +88,15 @@ declare namespace MockAgent {
     acceptNonStandardSearchParameters?: boolean;
 
     /** Enable call history. you can either call MockAgent.enableCallHistory(). default false */
-    enableCallHistory?: boolean
+    enableCallHistory?: boolean;
+
+    /** Enable request tracing to console.error. Use 'verbose' for detailed tracing. default false */
+    traceRequests?: boolean | 'verbose';
+
+    /** Enable development mode with enhanced debugging features. default false */
+    developmentMode?: boolean;
+
+    /** Enable verbose error messages with context and suggestions. default false */
+    verboseErrors?: boolean;
   }
 }
