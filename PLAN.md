@@ -84,6 +84,32 @@ class Socks5Client {
 - Send username/password credentials
 - Handle authentication success/failure
 
+### Phase 1.5: Docker Compose Testing Environment
+
+#### 1.5.1 Create Docker Compose Configuration
+**File**: `docker-compose.yml`
+
+**Components**:
+- SOCKS5 proxy server (Dante or similar)
+- HTTP/HTTPS test servers
+- Network isolation for testing
+- Multiple authentication scenarios
+
+**Features**:
+- No-auth SOCKS5 proxy
+- Username/password auth proxy
+- Test target servers (HTTP/HTTPS)
+- Network failure simulation
+- Performance testing environment
+
+#### 1.5.2 Test Scenarios
+- Basic connectivity tests
+- Authentication tests (success/failure)
+- Connection refused scenarios
+- Network unreachable tests
+- High concurrency tests
+- TLS through SOCKS5 tests
+
 ### Phase 2: ProxyAgent Integration
 
 #### 2.1 Extend ProxyAgent Constructor
