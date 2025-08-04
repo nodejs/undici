@@ -65,7 +65,7 @@ class Socks5Client {
   constructor(socket, options)
   async authenticate(methods)
   async connect(address, port, addressType)
-  async bind(address, port, addressType)  
+  async bind(address, port, addressType)
   async udpAssociate(address, port, addressType)
 }
 ```
@@ -157,11 +157,27 @@ connect: async (opts, callback) => {
 }
 ```
 
-#### 3.2 Socket Management
-- Handle raw TCP socket communication
-- Implement connection pooling for SOCKS5 connections
-- Manage connection lifecycle (establish, use, close)
-- Error handling and connection recovery
+#### 3.2 Socket Management and Connection Pooling
+
+**CRITICAL ARCHITECTURAL REQUIREMENT**: SOCKS5 implementation must use Pool instead of Client for connection management to ensure proper connection pooling and lifecycle management.
+
+**Connection Pooling Architecture**:
+- Use `Pool` dispatcher for managing multiple connections to the same origin through SOCKS5 proxy
+- Each Pool instance should manage connections to a specific target origin via the SOCKS5 proxy
+- Implement proper connection reuse for the same target host/port combinations
+- Handle connection lifecycle (establish, use, close) at the Pool level
+
+**Key Changes Required**:
+- Modify `Socks5ProxyWrapper` to use Pool instead of Client for target connections
+- Implement custom connect function that establishes SOCKS5 tunnel and returns socket to Pool
+- Ensure proper cleanup and error handling for pooled SOCKS5 connections
+- Support connection limits and timeout configurations per Pool instance
+
+**Implementation Details**:
+- Handle raw TCP socket communication for SOCKS5 protocol
+- Manage SOCKS5 tunnel establishment before handing socket to Pool
+- Error handling and connection recovery at both SOCKS5 and Pool levels
+- Support for HTTP/1.1 pipelining over SOCKS5 tunnels
 
 #### 3.3 Address Resolution
 - Support for IPv4, IPv6, and domain name addresses
@@ -196,7 +212,7 @@ connect: async (opts, callback) => {
 - Error condition handling
 - Address type encoding/decoding
 
-#### 5.2 Integration Tests  
+#### 5.2 Integration Tests
 **File**: `test/socks5-proxy-agent.js`
 - End-to-end SOCKS5 proxy connection
 - Authentication scenarios
@@ -209,6 +225,43 @@ connect: async (opts, callback) => {
 - Usage examples and best practices
 - Migration guide from HTTP proxies
 - Performance considerations
+
+## Critical Implementation Issue
+
+### Current Architecture Problem
+
+**Issue**: The current SOCKS5 implementation in `Socks5ProxyWrapper` uses `Client` instead of `Pool` for managing connections to target servers. This violates Undici's architectural principles and limits performance.
+
+**Problems with Current Approach**:
+1. **No Connection Pooling**: Client only supports single connections, preventing connection reuse
+2. **Performance Impact**: Each request creates a new SOCKS5 tunnel, increasing latency
+3. **Resource Inefficiency**: No connection sharing for multiple requests to same origin
+4. **Architectural Inconsistency**: Differs from HTTP proxy implementation pattern
+
+### Required Changes
+
+**Immediate Action Required**:
+1. **Update Socks5ProxyWrapper**: Replace Client with Pool in the dispatch method
+2. **Implement Pool-based Connection Management**:
+   - Create Pool instances for each target origin
+   - Implement custom connect function that establishes SOCKS5 tunnel
+   - Return established socket to Pool for HTTP communication
+3. **Test Connection Reuse**: Verify multiple requests reuse SOCKS5 connections
+4. **Performance Validation**: Ensure connection pooling provides expected performance benefits
+
+**Code Changes Needed**:
+```javascript
+// Current (incorrect) approach:
+const client = new Client(origin, { connect: () => socket })
+
+// Required (correct) approach:
+const pool = new Pool(origin, {
+  connect: async (opts, callback) => {
+    const socket = await this.establishSocks5Connection(opts)
+    callback(null, socket)
+  }
+})
+```
 
 ## Implementation Details
 
@@ -288,7 +341,7 @@ docs/
 // Old HTTP proxy configuration
 const agent = new ProxyAgent('http://proxy.example.com:8080');
 
-// New SOCKS5 proxy configuration  
+// New SOCKS5 proxy configuration
 const agent = new ProxyAgent('socks5://proxy.example.com:1080');
 
 // Mixed environments
@@ -337,7 +390,7 @@ const socksAgent = new ProxyAgent('socks5://proxy.example.com:1080');
 ## Timeline Estimation
 
 - **Phase 1** (Core Protocol): 2-3 weeks
-- **Phase 2** (ProxyAgent Integration): 1-2 weeks  
+- **Phase 2** (ProxyAgent Integration): 1-2 weeks
 - **Phase 3** (Connection Management): 2-3 weeks
 - **Phase 4** (Advanced Features): 3-4 weeks
 - **Phase 5** (Testing & Documentation): 1-2 weeks
