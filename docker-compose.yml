@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # SOCKS5 proxy without authentication
+  socks5-no-auth:
+    image: serjs/go-socks5-proxy:latest
+    container_name: socks5-no-auth
+    environment:
+      - PROXY_PORT=1080
+    ports:
+      - "1080:1080"
+    networks:
+      - test-network
+
+  # SOCKS5 proxy with username/password authentication
+  socks5-auth:
+    image: serjs/go-socks5-proxy:latest
+    container_name: socks5-auth
+    environment:
+      - PROXY_USER=testuser
+      - PROXY_PASS=testpass
+      - PROXY_PORT=1081
+    ports:
+      - "1081:1081"
+    networks:
+      - test-network
+
+  # Alternative: Dante SOCKS5 server (more configurable)
+  dante-socks5:
+    build:
+      context: ./test/fixtures/docker/dante
+      dockerfile: Dockerfile
+    container_name: dante-socks5
+    ports:
+      - "1082:1080"
+    networks:
+      - test-network
+    volumes:
+      - ./test/fixtures/docker/dante/danted.conf:/etc/danted.conf:ro
+
+  # HTTP test server
+  http-server:
+    image: node:20-alpine
+    container_name: http-test-server
+    working_dir: /app
+    volumes:
+      - ./test/fixtures/servers/http-server.js:/app/server.js:ro
+    command: node server.js
+    ports:
+      - "8080:8080"
+    networks:
+      - test-network
+
+  # HTTPS test server
+  https-server:
+    image: node:20-alpine
+    container_name: https-test-server
+    working_dir: /app
+    volumes:
+      - ./test/fixtures/servers/https-server.js:/app/server.js:ro
+      - ./test/fixtures/certs:/app/certs:ro
+    command: node server.js
+    ports:
+      - "8443:8443"
+    networks:
+      - test-network
+
+  # Echo server for testing
+  echo-server:
+    image: ealen/echo-server:latest
+    container_name: echo-server
+    environment:
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    networks:
+      - test-network
+
+  # Blocked target (for testing connection failures)
+  blocked-server:
+    image: alpine:latest
+    container_name: blocked-server
+    command: sleep infinity
+    networks:
+      - isolated-network
+
+networks:
+  test-network:
+    driver: bridge
+  isolated-network:
+    driver: bridge
+    internal: true
