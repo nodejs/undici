@@ -33,21 +33,21 @@ declare namespace Socks5ProxyWrapper {
     readonly GSSAPI: 0x01;
     readonly USERNAME_PASSWORD: 0x02;
     readonly NO_ACCEPTABLE: 0xFF;
-  };
+  }
 
   /** SOCKS5 commands */
   export const COMMANDS: {
     readonly CONNECT: 0x01;
     readonly BIND: 0x02;
     readonly UDP_ASSOCIATE: 0x03;
-  };
+  }
 
   /** SOCKS5 address types */
   export const ADDRESS_TYPES: {
     readonly IPV4: 0x01;
     readonly DOMAIN: 0x03;
     readonly IPV6: 0x04;
-  };
+  }
 
   /** SOCKS5 reply codes */
   export const REPLY_CODES: {
@@ -60,7 +60,7 @@ declare namespace Socks5ProxyWrapper {
     readonly TTL_EXPIRED: 0x06;
     readonly COMMAND_NOT_SUPPORTED: 0x07;
     readonly ADDRESS_TYPE_NOT_SUPPORTED: 0x08;
-  };
+  }
 
   /** SOCKS5 client states */
   export const STATES: {
@@ -71,7 +71,7 @@ declare namespace Socks5ProxyWrapper {
     readonly CONNECTED: 'connected';
     readonly ERROR: 'error';
     readonly CLOSED: 'closed';
-  };
+  }
 }
 
 export interface Socks5Client {
@@ -103,4 +103,4 @@ export interface Socks5ClientConstructor {
   new(socket: import('net').Socket, options?: Socks5ProxyWrapper.Options): Socks5Client;
 }
 
-export const Socks5Client: Socks5ClientConstructor;
+export const Socks5Client: Socks5ClientConstructor
