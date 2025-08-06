@@ -19,7 +19,8 @@ test('long-lived-abort-controller', { skip: true }, async (t) => {
   t.after(closeServerAsPromise(server))
 
   let warningEmitted = false
-  function onWarning () {
+  function onWarning (warning) {
+    console.error(warning)
     warningEmitted = true
   }
   process.on('warning', onWarning)
