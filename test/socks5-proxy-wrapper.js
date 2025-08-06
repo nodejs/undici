@@ -3,18 +3,11 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 const { request } = require('..')
-const { InvalidArgumentError, Socks5ProxyError } = require('../lib/core/errors')
+const { InvalidArgumentError } = require('../lib/core/errors')
 const Socks5ProxyWrapper = require('../lib/dispatcher/socks5-proxy-wrapper')
 const { createServer } = require('node:http')
-const https = require('node:https')
 const net = require('node:net')
-const fs = require('node:fs')
-const path = require('node:path')
 const { AUTH_METHODS, REPLY_CODES } = require('../lib/core/socks5-client')
-
-// SSL certificates for HTTPS testing
-const key = fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem'))
-const cert = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'))
 
 // Enhanced SOCKS5 test server
 class TestSocks5Server {
@@ -50,7 +43,6 @@ class TestSocks5Server {
   handleConnection (socket) {
     let state = 'handshake'
     let buffer = Buffer.alloc(0)
-    let selectedAuthMethod = null
 
     socket.on('data', (data) => {
       buffer = Buffer.concat([buffer, data])
@@ -58,7 +50,6 @@ class TestSocks5Server {
       if (state === 'handshake') {
         this.handleHandshake(socket, buffer, (newBuffer, method) => {
           buffer = newBuffer
-          selectedAuthMethod = method
           if (method === AUTH_METHODS.NO_AUTH) {
             state = 'connect'
           } else if (method === AUTH_METHODS.USERNAME_PASSWORD) {
@@ -94,7 +85,7 @@ class TestSocks5Server {
 
       if (version === 0x05 && buffer.length >= 2 + nmethods) {
         const methods = Array.from(buffer.subarray(2, 2 + nmethods))
-        
+
         // Select authentication method
         let selectedMethod
         if (this.requireAuth && methods.includes(AUTH_METHODS.USERNAME_PASSWORD)) {
@@ -124,13 +115,13 @@ class TestSocks5Server {
       if (buffer.length >= 3 + usernameLen) {
         const username = buffer.subarray(2, 2 + usernameLen).toString()
         const passwordLen = buffer[2 + usernameLen]
-        
+
         if (buffer.length >= 3 + usernameLen + passwordLen) {
           const password = buffer.subarray(3 + usernameLen, 3 + usernameLen + passwordLen).toString()
-          
-          const success = username === this.validCredentials.username && 
+
+          const success = username === this.validCredentials.username &&
                          password === this.validCredentials.password
-          
+
           socket.write(Buffer.from([0x01, success ? 0x00 : 0x01]))
           callback(buffer.subarray(3 + usernameLen + passwordLen), success)
         }
@@ -294,7 +285,7 @@ test('Socks5ProxyWrapper - basic HTTP connection', async (t) => {
     p.equal(response.statusCode, 200, 'should get 200 status code')
 
     const body = await response.body.json()
-    p.deepEqual(body, { 
+    p.deepEqual(body, {
       message: 'Hello from target server',
       path: '/test'
     }, 'should get correct response body')
@@ -327,7 +318,7 @@ test('Socks5ProxyWrapper - with authentication', async (t) => {
   const serverPort = server.address().port
 
   // Create SOCKS5 proxy server with auth
-  const socksServer = new TestSocks5Server({ 
+  const socksServer = new TestSocks5Server({
     requireAuth: true,
     credentials: { username: 'testuser', password: 'testpass' }
   })
@@ -345,7 +336,7 @@ test('Socks5ProxyWrapper - with authentication', async (t) => {
     p.equal(response.statusCode, 200, 'should get 200 status code')
 
     const body = await response.body.json()
-    p.deepEqual(body, { 
+    p.deepEqual(body, {
       message: 'Authenticated request successful'
     }, 'should get correct response body')
   } finally {
@@ -372,7 +363,7 @@ test('Socks5ProxyWrapper - authentication with options', async (t) => {
   const serverPort = server.address().port
 
   // Create SOCKS5 proxy server with auth
-  const socksServer = new TestSocks5Server({ 
+  const socksServer = new TestSocks5Server({
     requireAuth: true,
     credentials: { username: 'optuser', password: 'optpass' }
   })
@@ -393,7 +384,7 @@ test('Socks5ProxyWrapper - authentication with options', async (t) => {
     p.equal(response.statusCode, 200, 'should get 200 status code')
 
     const body = await response.body.json()
-    p.deepEqual(body, { 
+    p.deepEqual(body, {
       message: 'Options auth successful'
     }, 'should get correct response body')
   } finally {
