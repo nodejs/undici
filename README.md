@@ -211,12 +211,9 @@ setGlobalDispatcher(client);
 
 // Now all fetch requests will use the cache
 async function getData() {
-  const response = await fetch('https://api.example.com/data', {
-    // Cache control can be set per-request
-    headers: {
-      'Cache-Control': 'max-age=60' // Cache for 60 seconds
-    }
-  });
+  const response = await fetch('https://api.example.com/data');
+  // The server should set appropriate Cache-Control headers in the response
+  // which the cache will respect based on the cache policy
   return response.json();
 }
 
