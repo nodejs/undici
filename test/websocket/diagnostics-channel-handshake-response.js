@@ -27,6 +27,17 @@ test('diagnostics channel - undici:websocket:open includes handshake response', 
     ok(data.handshakeResponse, 'handshakeResponse should be defined')
     equal(data.handshakeResponse.status, 101, 'status should be 101')
     equal(data.handshakeResponse.statusText, 'Switching Protocols', 'statusText should be correct')
+    // Check handshake response headers
+    const headers = data.handshakeResponse.headers
+    ok(headers, 'headers should be defined')
+    ok(typeof headers === 'object', 'headers should be an object')
+    ok('upgrade' in headers, 'upgrade header should be present')
+    ok('connection' in headers, 'connection header should be present')
+    ok('sec-websocket-accept' in headers, 'sec-websocket-accept header should be present')
+    // Optionally, check values
+    equal(headers.upgrade.value.toLowerCase(), 'websocket', 'upgrade header should be websocket')
+    equal(headers.connection.value.toLowerCase(), 'upgrade', 'connection header should be upgrade')
+    ok(typeof headers['sec-websocket-accept'].value === 'string', 'sec-websocket-accept header should be a string')
   }
 
   dc.channel('undici:websocket:open').subscribe(openListener)
@@ -40,9 +51,6 @@ test('diagnostics channel - undici:websocket:open includes handshake response', 
   // Create WebSocket connection
   const ws = new WebSocket(`ws://localhost:${port}`)
   console.log('[TEST] WebSocket client created:', ws.url)
-
-  // Ensure connection is created (avoid no-new linting error)
-  ws.url // eslint-disable-line no-unused-expressions
 
   await completed
 })
