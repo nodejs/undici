@@ -44,8 +44,8 @@ test('diagnostics channel - undici:websocket:open includes handshake response', 
   })
 
   // Create WebSocket connection
-  const ws = new WebSocket(`ws://localhost:${port}`)
-  console.log('[TEST] WebSocket client created:', ws.url)
+  // eslint-disable-next-line no-unused-vars
+  const _ws = new WebSocket(`ws://localhost:${port}`)
 
   await completed
 })
