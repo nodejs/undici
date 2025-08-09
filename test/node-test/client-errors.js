@@ -7,7 +7,7 @@ const { Readable } = require('node:stream')
 const { test, after } = require('node:test')
 const { Client, Pool, errors } = require('../..')
 const { createServer } = require('node:http')
-const pem = require('https-pem')
+const pem = require('../fixtures/test-cert')
 const { tspl } = require('@matteo.collina/tspl')
 
 const { kSocket } = require('../../lib/core/symbols')

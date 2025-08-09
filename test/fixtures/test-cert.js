@@ -1,8 +1,5 @@
 'use strict'
-/* istanbul ignore file */
 
-const fs = require('node:fs')
-const path = require('node:path')
 const forge = require('node-forge')
 
 function generateCertificate () {
@@ -51,19 +48,8 @@ function generateCertificate () {
 
   return {
     key: forge.pki.privateKeyToPem(keys.privateKey),
-    cert: forge.pki.certificateToPem(cert),
-    ca: forge.pki.certificateToPem(cert) // For CA, we'll use the same cert
+    cert: forge.pki.certificateToPem(cert)
   }
 }
 
-// Generate certificates
-const pem = generateCertificate()
-
-// Write to test/fixtures directory
-const fixturesDir = path.join(__dirname, '..', 'test', 'fixtures')
-
-fs.writeFileSync(path.join(fixturesDir, 'key.pem'), pem.key)
-fs.writeFileSync(path.join(fixturesDir, 'cert.pem'), pem.cert)
-fs.writeFileSync(path.join(fixturesDir, 'ca.pem'), pem.ca)
-
-console.log('Generated PEM files in test/fixtures/')
+module.exports = generateCertificate()

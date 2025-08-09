@@ -7,7 +7,7 @@ const { Readable } = require('node:stream')
 
 const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
-const pem = require('https-pem')
+const pem = require('../fixtures/test-cert')
 
 const { Client, fetch, Headers } = require('../..')
 
