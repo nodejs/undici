@@ -17,6 +17,7 @@ import { SnapshotAgent } from './snapshot-agent'
 import { MockCallHistory, MockCallHistoryLog } from './mock-call-history'
 import mockErrors from './mock-errors'
 import ProxyAgent from './proxy-agent'
+import Socks5ProxyWrapper from './socks5-proxy'
 import EnvHttpProxyAgent from './env-http-proxy-agent'
 import RetryHandler from './retry-handler'
 import RetryAgent from './retry-agent'
@@ -34,7 +35,7 @@ export * from './content-type'
 export * from './cache'
 export { Interceptable } from './mock-interceptor'
 
-export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, interceptors, MockClient, MockPool, MockAgent, SnapshotAgent, MockCallHistory, MockCallHistoryLog, mockErrors, ProxyAgent, EnvHttpProxyAgent, RedirectHandler, DecoratorHandler, RetryHandler, RetryAgent, H2CClient }
+export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, interceptors, MockClient, MockPool, MockAgent, SnapshotAgent, MockCallHistory, MockCallHistoryLog, mockErrors, ProxyAgent, Socks5ProxyWrapper, EnvHttpProxyAgent, RedirectHandler, DecoratorHandler, RetryHandler, RetryAgent, H2CClient }
 export default Undici
 
 declare namespace Undici {
@@ -63,6 +64,8 @@ declare namespace Undici {
   const MockCallHistory: typeof import('./mock-call-history').MockCallHistory
   const MockCallHistoryLog: typeof import('./mock-call-history').MockCallHistoryLog
   const mockErrors: typeof import('./mock-errors').default
+  const ProxyAgent: typeof import('./proxy-agent').default
+  const Socks5ProxyWrapper: typeof import('./socks5-proxy').default
   const fetch: typeof import('./fetch').fetch
   const Headers: typeof import('./fetch').Headers
   const Response: typeof import('./fetch').Response

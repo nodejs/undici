@@ -168,4 +168,14 @@ declare namespace Errors {
     name: 'SecureProxyConnectionError'
     code: 'UND_ERR_PRX_TLS'
   }
+
+  /** SOCKS5 proxy related error. */
+  export class Socks5ProxyError extends UndiciError {
+    constructor (
+      message?: string,
+      code?: string
+    )
+    name: 'Socks5ProxyError'
+    code: string
+  }
 }
