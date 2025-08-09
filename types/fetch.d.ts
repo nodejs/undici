@@ -23,6 +23,7 @@ export type BodyInit =
   | FormData
   | Iterable<Uint8Array>
   | NodeJS.ArrayBufferView
+  | ReadableStream
   | URLSearchParams
   | null
   | string
