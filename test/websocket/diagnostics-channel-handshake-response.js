@@ -7,7 +7,7 @@ const { WebSocket } = require('../..')
 const { tspl } = require('@matteo.collina/tspl')
 
 test('diagnostics channel - undici:websocket:open includes handshake response', async (t) => {
-  const { equal, ok, completed } = tspl(t, { plan: 3 })
+  const { equal, ok, completed } = tspl(t, { plan: 11 })
 
   const server = new WebSocketServer({ port: 0 })
   const { port } = server.address()
@@ -35,9 +35,9 @@ test('diagnostics channel - undici:websocket:open includes handshake response', 
     ok('connection' in headers, 'connection header should be present')
     ok('sec-websocket-accept' in headers, 'sec-websocket-accept header should be present')
     // Optionally, check values
-    equal(headers.upgrade.value.toLowerCase(), 'websocket', 'upgrade header should be websocket')
-    equal(headers.connection.value.toLowerCase(), 'upgrade', 'connection header should be upgrade')
-    ok(typeof headers['sec-websocket-accept'].value === 'string', 'sec-websocket-accept header should be a string')
+    equal(headers.upgrade.toLowerCase(), 'websocket', 'upgrade header should be websocket')
+    equal(headers.connection.toLowerCase(), 'upgrade', 'connection header should be upgrade')
+    ok(typeof headers['sec-websocket-accept'] === 'string', 'sec-websocket-accept header should be a string')
   }
 
   dc.channel('undici:websocket:open').subscribe(openListener)
