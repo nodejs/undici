@@ -7,7 +7,7 @@ const { Readable } = require('node:stream')
 
 const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
-const pem = require('https-pem')
+const pem = require('@metcoder95/https-pem')
 
 const { Client, fetch, Headers } = require('../..')
 
@@ -16,7 +16,7 @@ const { closeClientAndServerAsPromise } = require('../utils/node-http')
 test('[Fetch] Issue#2311', async (t) => {
   const expectedBody = 'hello from client!'
 
-  const server = createSecureServer(pem, async (req, res) => {
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }), async (req, res) => {
     let body = ''
 
     req.setEncoding('utf8')
@@ -68,7 +68,7 @@ test('[Fetch] Issue#2311', async (t) => {
 })
 
 test('[Fetch] Simple GET with h2', async (t) => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedRequestBody = 'hello h2!'
 
   server.on('stream', async (stream, headers) => {
@@ -124,7 +124,7 @@ test('[Fetch] Simple GET with h2', async (t) => {
 })
 
 test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
   const expectedRequestBody = 'hello h2!'
   const requestBody = []
@@ -179,7 +179,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) 
 test(
   '[Fetch] Should handle h2 request with body (stream)',
   async (t) => {
-    const server = createSecureServer(pem)
+    const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
     const expectedBody = readFileSync(__filename, 'utf-8')
     const stream = createReadStream(__filename)
     const requestChunks = []
@@ -241,7 +241,7 @@ test(
   }
 )
 test('Should handle h2 request with body (Blob)', { skip: !Blob }, async (t) => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'asd'
   const requestChunks = []
   const body = new Blob(['asd'], {
@@ -305,7 +305,7 @@ test(
   'Should handle h2 request with body (Blob:ArrayBuffer)',
   { skip: !Blob },
   async (t) => {
-    const server = createSecureServer(pem)
+    const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
     const expectedBody = 'hello'
     const requestChunks = []
     const expectedResponseBody = { hello: 'h2' }
@@ -370,7 +370,7 @@ test(
 
 test('Issue#2415', async (t) => {
   const { doesNotThrow } = tspl(t, { plan: 1 })
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', async (stream, headers) => {
     stream.respond({
@@ -406,7 +406,7 @@ test('Issue#2415', async (t) => {
 })
 
 test('Issue #2386', async (t) => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const body = Buffer.from('hello')
   const requestChunks = []
   const expectedResponseBody = { hello: 'h2' }
@@ -463,7 +463,7 @@ test('Issue #2386', async (t) => {
 })
 
 test('Issue #3046', async (t) => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   const { strictEqual, deepStrictEqual } = tspl(t, { plan: 6 })
 

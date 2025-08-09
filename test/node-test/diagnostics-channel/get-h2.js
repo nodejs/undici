@@ -5,7 +5,7 @@ const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
 const diagnosticsChannel = require('node:diagnostics_channel')
 const { once } = require('node:events')
-const pem = require('https-pem')
+const pem = require('@metcoder95/https-pem')
 const { Client } = require('../../..')
 
 test('Diagnostics channel - get support H2', async t => {

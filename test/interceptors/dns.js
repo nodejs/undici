@@ -9,7 +9,7 @@ const { createServer: createSecureServer } = require('node:https')
 const { once } = require('node:events')
 
 const { tspl } = require('@matteo.collina/tspl')
-const pem = require('https-pem')
+const pem = require('@metcoder95/https-pem')
 
 const { interceptors, Agent } = require('../..')
 const { dns } = interceptors

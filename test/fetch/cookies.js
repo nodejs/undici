@@ -7,7 +7,7 @@ const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { Client, fetch, Headers } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
-const pem = require('https-pem')
+const pem = require('@metcoder95/https-pem')
 const { createSecureServer } = require('node:http2')
 const { closeClientAndServerAsPromise } = require('../utils/node-http')
 
