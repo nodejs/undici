@@ -1,5 +1,18 @@
-import { expectAssignable } from 'tsd'
-import Undici, { Pool, Client, errors, fetch, Interceptable, RedirectHandler, Headers, Response, Request, FormData, SnapshotAgent } from '../..'
+import { expectAssignable, expectType } from 'tsd'
+import Undici, {
+  Pool,
+  Client,
+  errors,
+  fetch,
+  Interceptable,
+  RedirectHandler,
+  Headers,
+  Response,
+  Request,
+  FormData,
+  SnapshotAgent,
+  install
+} from '../..'
 import Dispatcher from '../../types/dispatcher'
 
 expectAssignable<Pool>(new Undici.Pool('', {}))
@@ -24,3 +37,6 @@ const redirectHandler = new Undici.RedirectHandler(dispatcher.dispatch, 10, {
   path: '/', method: 'GET'
 }, handler, false) as RedirectHandler
 expectAssignable<RedirectHandler>(redirectHandler)
+
+expectType<() => void>(install)
+expectType<() => void>(Undici.install)
