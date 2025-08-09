@@ -4,9 +4,9 @@ const { test } = require('node:test')
 const { Client, Pool } = require('../../')
 const http = require('node:http')
 const https = require('node:https')
-const pem = require('https-pem')
 const fs = require('node:fs')
 const { tspl } = require('@matteo.collina/tspl')
+const pem = require('../fixtures/https-pem.js')
 
 const skip = process.platform === 'win32'
 
