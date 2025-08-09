@@ -7,7 +7,7 @@ const { createReadStream, readFileSync } = require('node:fs')
 const { once } = require('node:events')
 const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
-const pem = require('https-pem')
+const pem = require('./fixtures/https-pem.js')
 
 const { Client, Agent, FormData } = require('..')
 

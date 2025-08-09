@@ -7,9 +7,9 @@ const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { Client, fetch, Headers } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
-const pem = require('https-pem')
 const { createSecureServer } = require('node:http2')
 const { closeClientAndServerAsPromise } = require('../utils/node-http')
+const pem = require('../fixtures/https-pem.js')
 
 test('Can receive set-cookie headers from a server using fetch - issue #1262', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
