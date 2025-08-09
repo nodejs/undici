@@ -168,4 +168,9 @@ declare namespace Errors {
     name: 'SecureProxyConnectionError'
     code: 'UND_ERR_PRX_TLS'
   }
+
+  class AgentMaxOriginsReached extends UndiciError {
+    name: 'AgentMaxOriginsReached'
+    code: 'UND_ERR_MAX_ORIGINS'
+  }
 }

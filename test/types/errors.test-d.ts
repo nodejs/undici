@@ -119,6 +119,11 @@ expectAssignable<errors.SecureProxyConnectionError>(new errors.SecureProxyConnec
 expectAssignable<'SecureProxyConnectionError'>(new errors.SecureProxyConnectionError().name)
 expectAssignable<'UND_ERR_PRX_TLS'>(new errors.SecureProxyConnectionError().code)
 
+expectAssignable<errors.UndiciError>(new errors.AgentMaxOriginsReached())
+expectAssignable<errors.AgentMaxOriginsReached>(new errors.AgentMaxOriginsReached())
+expectAssignable<'AgentMaxOriginsReached'>(new errors.AgentMaxOriginsReached().name)
+expectAssignable<'UND_ERR_MAX_ORIGINS'>(new errors.AgentMaxOriginsReached().code)
+
 {
   // @ts-ignore
   function f (): errors.HeadersTimeoutError | errors.ConnectTimeoutError { }
