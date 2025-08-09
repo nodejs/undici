@@ -6,6 +6,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const util = require('../../lib/web/fetch/util')
 const { HeadersList } = require('../../lib/web/fetch/headers')
 const { createHash } = require('node:crypto')
+const { createDeferredPromise } = require('../../lib/util/promise')
 
 test('responseURL', (t) => {
   const { ok } = tspl(t, { plan: 2 })
@@ -275,7 +276,7 @@ test('parseMetadata', async (t) => {
     ])
   })
 
-  await t.test('should set hash as undefined when invalid base64 chars are provided', () => {
+  await t.test('should set hash as empty string when invalid base64 chars are provided', () => {
     const body = 'Hello world!'
     const hash256 = createHash('sha256').update(body).digest('base64')
     const invalidHash384 = 'zifp5hE1Xl5LQQqQz[]Bq/iaq9Wb6jVb//T7EfTmbXD2aEP5c2ZdJr9YTDfcTE1ZH+'
@@ -286,7 +287,7 @@ test('parseMetadata', async (t) => {
 
     assert.deepEqual(result, [
       { algo: 'sha256', hash: hash256.replace(/=/g, '') },
-      { algo: 'sha384', hash: undefined },
+      { algo: 'sha384', hash: '' },
       { algo: 'sha512', hash: hash512.replace(/=/g, '') }
     ])
   })
@@ -373,5 +374,37 @@ describe('isOriginIPPotentiallyTrustworthy()', () => {
     test(`${ip} is ${expected ? '' : 'not '}potentially trustworthy`, () => {
       assert.strictEqual(util.isOriginIPPotentiallyTrustworthy(ip), expected)
     })
+  })
+})
+
+describe('readAllBytes', () => {
+  const iterations = 1000000
+
+  test(`should not break on potential stack overflow, when simulating ${iterations} enqueued chunks`, async (t) => {
+    const { strictEqual, fail } = tspl(t, { plan: 1 })
+
+    const deferredPromise = createDeferredPromise()
+
+    let i = 0
+    const value = Buffer.alloc(1).fill('a')
+    const reader = {
+      read: () => {
+        return Promise.resolve({ done: i++ === iterations, value })
+      }
+    }
+
+    const successSteps = (bytes) => {
+      strictEqual(bytes.length, iterations)
+      deferredPromise.resolve()
+    }
+
+    const errorSteps = (err) => {
+      fail(`Unexpected error: ${err}`)
+      deferredPromise.reject(err)
+    }
+
+    util.readAllBytes(reader, successSteps, errorSteps)
+
+    await deferredPromise.promise
   })
 })
