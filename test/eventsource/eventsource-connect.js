@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const events = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
-const { EventSource } = require('../../lib/web/eventsource/eventsource')
+const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
 const { randomInt } = require('node:crypto')
 
 describe('EventSource - sending correct request headers', () => {
@@ -184,6 +184,7 @@ describe('EventSource - received response must have content-type to be text/even
   })
 
   test('should try to connect again if server is unreachable', async () => {
+    const reconnectionTime = defaultReconnectionTime
     const domain = 'bad.n' + randomInt(1e10).toString(36) + '.proxy'
 
     const eventSourceInstance = new EventSource(`http://${domain}`)
@@ -192,32 +193,39 @@ describe('EventSource - received response must have content-type to be text/even
     eventSourceInstance.onerror = (error) => {
       onerrorCalls.push(error)
     }
+    await events.once(eventSourceInstance, 'error')
 
-    await new Promise(resolve => setTimeout(resolve, 8000))
+    const start = Date.now()
+    await events.once(eventSourceInstance, 'error')
+    await events.once(eventSourceInstance, 'error')
+    await events.once(eventSourceInstance, 'error')
+    const end = Date.now()
 
     eventSourceInstance.close()
 
-    assert.strictEqual(onerrorCalls.length, 3)
+    assert.strictEqual(end - start < (3.5 * reconnectionTime), true)
   })
 
   test('should try to connect again if server is unreachable', async () => {
+    const reconnectionTime = 500
+
     const domain = 'bad.n' + randomInt(1e10).toString(36) + '.proxy'
 
     const eventSourceInstance = new EventSource(`http://${domain}`, {
       node: {
-        reconnectionTime: 1000
+        reconnectionTime
       }
     })
+    await events.once(eventSourceInstance, 'error')
 
-    const onerrorCalls = []
-    eventSourceInstance.onerror = (error) => {
-      onerrorCalls.push(error)
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 5000))
+    const start = Date.now()
+    await events.once(eventSourceInstance, 'error')
+    await events.once(eventSourceInstance, 'error')
+    await events.once(eventSourceInstance, 'error')
+    const end = Date.now()
 
     eventSourceInstance.close()
 
-    assert.strictEqual(onerrorCalls.length, 5)
+    assert.strictEqual(end - start < (3.5 * reconnectionTime), true)
   })
 })
