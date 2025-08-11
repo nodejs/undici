@@ -9,7 +9,7 @@ const { once } = require('node:events')
 const { setTimeout: sleep } = require('node:timers/promises')
 
 const { tspl } = require('@matteo.collina/tspl')
-const pem = require('https-pem')
+const pem = require('@metcoder95/https-pem')
 
 const { interceptors, Agent } = require('../..')
 const { dns } = interceptors

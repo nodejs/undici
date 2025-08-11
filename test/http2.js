@@ -8,7 +8,7 @@ const { once } = require('node:events')
 const { Blob } = require('node:buffer')
 const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
-const pem = require('https-pem')
+const pem = require('@metcoder95/https-pem')
 
 const { Client, Agent, FormData } = require('..')
 
@@ -16,7 +16,7 @@ const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 
 test('Should support H2 connection', async t => {
   const body = []
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
     t.strictEqual(headers['x-my-header'], 'foo')
@@ -63,7 +63,7 @@ test('Should support H2 connection', async t => {
 })
 
 test('Should support H2 connection(multiple requests)', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', async (stream, headers, _flags, rawHeaders) => {
     t.strictEqual(headers['x-my-header'], 'foo')
@@ -122,7 +122,7 @@ test('Should support H2 connection(multiple requests)', async t => {
 
 test('Should support H2 connection (headers as array)', async t => {
   const body = []
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers) => {
     t.strictEqual(headers['x-my-header'], 'foo')
@@ -168,7 +168,7 @@ test('Should support H2 connection (headers as array)', async t => {
 })
 
 test('Should support H2 connection(POST Buffer)', async t => {
-  const server = createSecureServer({ ...pem, allowHTTP1: false })
+  const server = createSecureServer({ ...await pem.generate({ opts: { keySize: 2048 } }), allowHTTP1: false })
 
   server.on('stream', async (stream, headers, _flags, rawHeaders) => {
     t.strictEqual(headers[':method'], 'POST')
@@ -273,7 +273,7 @@ test(
 
     const server = createSecureServer(
       {
-        ...pem,
+        ...await pem.generate({ opts: { keySize: 2048 } }),
         allowHTTP1: false,
         ALPNProtocols: ['http/1.1']
       },
@@ -313,7 +313,7 @@ test(
   async t => {
     const server = createSecureServer(
       {
-        ...pem,
+        ...await pem.generate({ opts: { keySize: 2048 } }),
         allowHTTP1: false,
         ALPNProtocols: ['http/1.1']
       },
@@ -348,7 +348,7 @@ test(
 
 test('Should handle h2 continue', async t => {
   const requestBody = []
-  const server = createSecureServer(pem, () => {})
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }), () => {})
   const responseBody = []
 
   server.on('checkContinue', (request, response) => {
@@ -404,7 +404,7 @@ test('Should handle h2 continue', async t => {
 })
 
 test('Dispatcher#Stream', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
   const bufs = []
   let requestBody = ''
@@ -455,7 +455,7 @@ test('Dispatcher#Stream', async t => {
 })
 
 test('Dispatcher#Pipeline', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
   const bufs = []
   let requestBody = ''
@@ -517,7 +517,7 @@ test('Dispatcher#Pipeline', async t => {
 })
 
 test('Dispatcher#Connect', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
   let requestBody = ''
 
@@ -574,7 +574,7 @@ test('Dispatcher#Connect', async t => {
 })
 
 test('Dispatcher#Upgrade', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', async (stream, headers) => {
     stream.end()
@@ -605,7 +605,7 @@ test('Dispatcher#Upgrade', async t => {
 
 test('Dispatcher#destroy', async t => {
   const promises = []
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers) => {
     setTimeout(stream.end.bind(stream), 1500)
@@ -675,7 +675,7 @@ test('Dispatcher#destroy', async t => {
 })
 
 test('Should handle h2 request without body', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = ''
   const requestChunks = []
   const responseBody = []
@@ -734,7 +734,7 @@ test('Should handle h2 request without body', async t => {
 })
 
 test('Should handle h2 request with body (string or buffer) - dispatch', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
   const response = []
   const requestBody = []
@@ -812,7 +812,7 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
 })
 
 test('Should handle h2 request with body (stream)', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = readFileSync(__filename, 'utf-8')
   const stream = createReadStream(__filename)
   const requestChunks = []
@@ -872,7 +872,7 @@ test('Should handle h2 request with body (stream)', async t => {
 })
 
 test('Should handle h2 request with body (iterable)', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello'
   const requestChunks = []
   const responseBody = []
@@ -941,7 +941,7 @@ test('Should handle h2 request with body (iterable)', async t => {
 })
 
 test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'asd'
   const requestChunks = []
   const responseBody = []
@@ -1006,7 +1006,7 @@ test(
   'Should handle h2 request with body (Blob:ArrayBuffer)',
   { skip: !Blob },
   async t => {
-    const server = createSecureServer(pem)
+    const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
     const expectedBody = 'hello'
     const requestChunks = []
     const responseBody = []
@@ -1071,7 +1071,7 @@ test(
 
 test('Agent should support H2 connection', async t => {
   const body = []
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers) => {
     t.strictEqual(headers['x-my-header'], 'foo')
@@ -1121,7 +1121,7 @@ test('Agent should support H2 connection', async t => {
 test('Should provide pseudo-headers in proper order', async t => {
   t = tspl(t, { plan: 2 })
 
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   server.on('stream', (stream, _headers, _flags, rawHeaders) => {
     t.deepStrictEqual(rawHeaders, [
       ':authority',
@@ -1167,7 +1167,7 @@ test('Should provide pseudo-headers in proper order', async t => {
 })
 
 test('The h2 pseudo-headers is not included in the headers', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers) => {
     stream.respond({
@@ -1202,7 +1202,7 @@ test('The h2 pseudo-headers is not included in the headers', async t => {
 })
 
 test('Should throw informational error on half-closed streams (remote)', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers) => {
     stream.destroy()
@@ -1236,7 +1236,7 @@ test('Should throw informational error on half-closed streams (remote)', async t
 })
 
 test('#2364 - Concurrent aborts', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
     t.strictEqual(headers['x-my-header'], 'foo')
@@ -1336,7 +1336,7 @@ test('#2364 - Concurrent aborts', async t => {
 })
 
 test('#3046 - GOAWAY Frame', async t => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers) => {
     setTimeout(() => {
@@ -1398,7 +1398,7 @@ test('#3046 - GOAWAY Frame', async t => {
 })
 
 test('#3671 - Graceful close', async (t) => {
-  const server = createSecureServer(pem)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers) => {
     setTimeout(() => {
@@ -1443,10 +1443,11 @@ test('#3671 - Graceful close', async (t) => {
   await t.completed
 })
 
+
 test('#3803 - sending FormData bodies works', async (t) => {
   const assert = tspl(t, { plan: 4 })
 
-  const server = createSecureServer(pem).listen(0)
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } })).listen(0)
   server.on('stream', async (stream, headers) => {
     const contentLength = Number(headers['content-length'])
 
@@ -1493,3 +1494,4 @@ test('#3803 - sending FormData bodies works', async (t) => {
 
   await assert.completed
 })
+

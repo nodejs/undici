@@ -5,7 +5,7 @@ const assert = require('node:assert')
 const { Client, Pool, errors } = require('../..')
 const { createServer } = require('node:http')
 const https = require('node:https')
-const pem = require('https-pem')
+const pem = require('@metcoder95/https-pem')
 const { Readable } = require('node:stream')
 const { tspl } = require('@matteo.collina/tspl')
 
