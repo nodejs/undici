@@ -7,7 +7,7 @@ const https = require('node:https')
 const { Client, Pool, errors } = require('../..')
 const stream = require('node:stream')
 const { createSecureServer } = require('node:http2')
-const pem = require('https-pem')
+const pem = require('@metcoder95/https-pem')
 const { tspl } = require('@matteo.collina/tspl')
 const { closeServerAsPromise, closeClientAndServerAsPromise } = require('../utils/node-http')
 

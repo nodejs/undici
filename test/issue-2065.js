@@ -5,7 +5,6 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { FormData, request } = require('..')
-const { File } = require('node:buffer')
 
 test('undici.request with a FormData body should set content-length header', async (t) => {
   t = tspl(t, { plan: 1 })

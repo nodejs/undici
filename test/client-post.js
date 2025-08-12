@@ -5,7 +5,6 @@ const { test, after } = require('node:test')
 const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
-const { Blob } = require('node:buffer')
 
 test('request post blob', { skip: !Blob }, async (t) => {
   t = tspl(t, { plan: 3 })

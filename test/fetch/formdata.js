@@ -4,7 +4,6 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { FormData, Response, Request } = require('../../')
-const { Blob, File } = require('node:buffer')
 const { isFormDataLike } = require('../../lib/core/util')
 
 test('arg validation', () => {

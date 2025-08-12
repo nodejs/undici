@@ -77,7 +77,7 @@ expectAssignable<Client>(
 )
 expectAssignable<Client>(
   new Client('', {
-    maxRedirections: 1
+    maxCachedSessions: 1
   })
 )
 expectAssignable<Client>(
