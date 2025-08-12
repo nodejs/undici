@@ -203,6 +203,7 @@ describe('EventSource - received response must have content-type to be text/even
 
     eventSourceInstance.close()
 
+    assert.strictEqual(end - start > (2.9 * reconnectionTime), true)
     assert.strictEqual(end - start < (3.5 * reconnectionTime), true)
   })
 
@@ -226,6 +227,7 @@ describe('EventSource - received response must have content-type to be text/even
 
     eventSourceInstance.close()
 
+    assert.strictEqual(end - start > (2.9 * reconnectionTime), true)
     assert.strictEqual(end - start < (3.5 * reconnectionTime), true)
   })
 })
