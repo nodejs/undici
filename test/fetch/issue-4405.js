@@ -25,12 +25,13 @@ if (isMainThread) {
 
     return new Promise((resolve, reject) => {
       // Set a reasonable timeout - the process should exit within a few seconds
-      // If it takes longer than 12 seconds, it indicates the bug is present
+      // If it takes longer than 8 seconds, it indicates the bug is present
+      // Without the fix, it would hang indefinitely due to unreleased timers
       const timeout = setTimeout(() => {
         worker.terminate()
         const elapsedTime = Date.now() - startTime
         reject(new Error(`Worker did not exit within ${elapsedTime}ms - process was kept alive by internal handles. This indicates the bug is present.`))
-      }, 12000)
+      }, 8000)
 
       worker.on('exit', (code) => {
         clearTimeout(timeout)
@@ -38,11 +39,11 @@ if (isMainThread) {
         const elapsedTime = Date.now() - startTime
         console.log(`Worker exited after ${elapsedTime}ms with code ${code}`)
 
-        // EXPECTED BEHAVIOR: Process should exit within connection timeout (10s) after abort
+        // EXPECTED BEHAVIOR: Process should exit within connection timeout (~2-3s) after abort
         // PREVIOUS BEHAVIOR (bug): Process would hang indefinitely due to internal timers
         // The fix ensures cleanup happens when connection timeout expires
-        const timeoutOk = elapsedTime < 12000 // Should complete within connection timeout + margin
-        ok(timeoutOk, `Process exited in ${elapsedTime}ms (should be < 12000ms, was hanging indefinitely before fix)`)
+        const timeoutOk = elapsedTime < 8000 // Should complete within connection timeout + margin
+        ok(timeoutOk, `Process exited in ${elapsedTime}ms (should be < 8000ms, was hanging indefinitely before fix)`)
         resolve()
       })
 
