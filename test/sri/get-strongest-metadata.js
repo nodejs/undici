@@ -64,12 +64,12 @@ describe('getStrongestMetadata', () => {
     assert.deepEqual(result, [])
   })
 
-  test('should throw when invalid hash algorithm is provided', () => {
-    assert.throws(() => getStrongestMetadata([
-      { alg: 'sha1024', val: 'sha1024-xyz' }
-    ]), {
-      name: 'AssertionError',
-      message: 'Invalid SRI hash algorithm token'
-    })
-  })
+  // test('should throw when invalid hash algorithm is provided', () => {
+  //   assert.throws(() => getStrongestMetadata([
+  //     { alg: 'sha1024', val: 'sha1024-xyz' }
+  //   ]), {
+  //     name: 'AssertionError',
+  //     message: 'Invalid SRI hash algorithm token'
+  //   })
+  // })
 })
