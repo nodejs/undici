@@ -203,8 +203,8 @@ describe('EventSource - received response must have content-type to be text/even
 
     eventSourceInstance.close()
 
-    assert.strictEqual(end - start > (2.9 * reconnectionTime), true)
-    assert.strictEqual(end - start < (3.5 * reconnectionTime), true)
+    assert.strictEqual(end - start > (2.9 * reconnectionTime), true, `Expected reconnection to happen after at least ${2.9 * reconnectionTime}ms, but took ${end - start}ms`)
+    assert.strictEqual(end - start < (3.5 * reconnectionTime), true, `Expected reconnection to happen within ${3.5 * reconnectionTime}ms, but took ${end - start}ms`)
   })
 
   test('should try to connect again if server is unreachable', async () => {
@@ -227,7 +227,7 @@ describe('EventSource - received response must have content-type to be text/even
 
     eventSourceInstance.close()
 
-    assert.strictEqual(end - start > (2.9 * reconnectionTime), true)
-    assert.strictEqual(end - start < (3.5 * reconnectionTime), true)
+    assert.strictEqual(end - start > (2.9 * reconnectionTime), true, `Expected reconnection to happen after at least ${2.9 * reconnectionTime}ms, but took ${end - start}ms`)
+    assert.strictEqual(end - start < (3.5 * reconnectionTime), true, `Expected reconnection to happen within ${3.5 * reconnectionTime}ms, but took ${end - start}ms`)
   })
 })
