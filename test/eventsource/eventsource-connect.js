@@ -3,7 +3,8 @@
 const assert = require('node:assert')
 const events = require('node:events')
 const http = require('node:http')
-const { test, describe } = require('node:test')
+const { test, describe, after } = require('node:test')
+const FakeTimers = require('@sinonjs/fake-timers')
 const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
 const { randomInt } = require('node:crypto')
 
@@ -184,6 +185,9 @@ describe('EventSource - received response must have content-type to be text/even
   })
 
   test('should try to connect again if server is unreachable', async () => {
+    const clock = FakeTimers.install()
+
+    after(() => clock.uninstall())
     const reconnectionTime = defaultReconnectionTime
     const domain = 'bad.n' + randomInt(1e10).toString(36) + '.proxy'
 
@@ -193,22 +197,29 @@ describe('EventSource - received response must have content-type to be text/even
     eventSourceInstance.onerror = (error) => {
       onerrorCalls.push(error)
     }
+    clock.tick(reconnectionTime)
+
     await events.once(eventSourceInstance, 'error')
 
     const start = Date.now()
+    clock.tick(reconnectionTime)
     await events.once(eventSourceInstance, 'error')
+    clock.tick(reconnectionTime)
     await events.once(eventSourceInstance, 'error')
+    clock.tick(reconnectionTime)
     await events.once(eventSourceInstance, 'error')
     const end = Date.now()
 
     eventSourceInstance.close()
 
-    assert.strictEqual(end - start > (2.9 * reconnectionTime), true, `Expected reconnection to happen after at least ${2.9 * reconnectionTime}ms, but took ${end - start}ms`)
-    assert.strictEqual(end - start < (3.5 * reconnectionTime), true, `Expected reconnection to happen within ${3.5 * reconnectionTime}ms, but took ${end - start}ms`)
+    assert.strictEqual(onerrorCalls.length, 4, 'Expected 4 error events')
+    assert.strictEqual(end - start, 3 * reconnectionTime, `Expected reconnection to happen after ${3 * reconnectionTime}ms, but took ${end - start}ms`)
   })
 
   test('should try to connect again if server is unreachable, configure reconnectionTime', async () => {
     const reconnectionTime = 1000
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
 
     const domain = 'bad.n' + randomInt(1e10).toString(36) + '.proxy'
 
@@ -217,17 +228,26 @@ describe('EventSource - received response must have content-type to be text/even
         reconnectionTime
       }
     })
+
+    const onerrorCalls = []
+    eventSourceInstance.onerror = (error) => {
+      onerrorCalls.push(error)
+    }
+
     await events.once(eventSourceInstance, 'error')
 
     const start = Date.now()
+    clock.tick(reconnectionTime)
     await events.once(eventSourceInstance, 'error')
+    clock.tick(reconnectionTime)
     await events.once(eventSourceInstance, 'error')
+    clock.tick(reconnectionTime)
     await events.once(eventSourceInstance, 'error')
     const end = Date.now()
 
     eventSourceInstance.close()
 
-    assert.strictEqual(end - start > (2.9 * reconnectionTime), true, `Expected reconnection to happen after at least ${2.9 * reconnectionTime}ms, but took ${end - start}ms`)
-    assert.strictEqual(end - start < (3.5 * reconnectionTime), true, `Expected reconnection to happen within ${3.5 * reconnectionTime}ms, but took ${end - start}ms`)
+    assert.strictEqual(onerrorCalls.length, 4, 'Expected 4 error events')
+    assert.strictEqual(end - start, 3 * reconnectionTime, `Expected reconnection to happen after ${3 * reconnectionTime}ms, but took ${end - start}ms`)
   })
 })
