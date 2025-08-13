@@ -207,8 +207,8 @@ describe('EventSource - received response must have content-type to be text/even
     assert.strictEqual(end - start < (3.5 * reconnectionTime), true, `Expected reconnection to happen within ${3.5 * reconnectionTime}ms, but took ${end - start}ms`)
   })
 
-  test('should try to connect again if server is unreachable', async () => {
-    const reconnectionTime = 500
+  test('should try to connect again if server is unreachable, configure reconnectionTime', async () => {
+    const reconnectionTime = 1000
 
     const domain = 'bad.n' + randomInt(1e10).toString(36) + '.proxy'
 
