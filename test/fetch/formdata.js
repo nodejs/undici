@@ -341,7 +341,7 @@ test('FormData should be compatible with third-party libraries', (t) => {
 })
 
 test('arguments', () => {
-  assert.strictEqual(FormData.prototype.constructor.length, 0)
+  assert.strictEqual(FormData.length, 0)
   assert.strictEqual(FormData.prototype.append.length, 2)
   assert.strictEqual(FormData.prototype.delete.length, 1)
   assert.strictEqual(FormData.prototype.get.length, 1)
