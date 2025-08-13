@@ -6,7 +6,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { request } = require('..')
 
 test('pre abort signal w/ reason', async (t) => {
-  t = tspl(t, { plan: 1 })
+  t = tspl(t, { plan: 2 })
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
@@ -20,7 +20,8 @@ test('pre abort signal w/ reason', async (t) => {
     try {
       await request(`http://0.0.0.0:${server.address().port}`, { signal: ac.signal })
     } catch (err) {
-      t.equal(err, _err)
+      t.equal(err.code, 'ABORT_ERR')
+      t.strictEqual(err.cause, _err)
     }
   })
   await t.completed

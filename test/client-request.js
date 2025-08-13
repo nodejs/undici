@@ -1359,7 +1359,7 @@ test('#3736 - Aborted Response (without consuming body)', async (t) => {
 
   controller.abort()
 
-  await plan.rejects(promise, { message: 'This operation was aborted' })
+  await plan.rejects(promise, { message: 'The operation was aborted' })
 
   await plan.completed
 })
