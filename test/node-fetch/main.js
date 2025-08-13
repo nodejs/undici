@@ -8,7 +8,6 @@ const zlib = require('node:zlib')
 const stream = require('node:stream')
 const vm = require('node:vm')
 const crypto = require('node:crypto')
-const { Blob } = require('node:buffer')
 
 const {
   fetch,
@@ -1621,7 +1620,7 @@ describe('node-fetch', () => {
 
   it('should support http request', { timeout: 5000 }, async function (t) {
     t = tspl(t, { plan: 2 })
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
     after(() => server.close())

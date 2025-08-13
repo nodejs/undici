@@ -2,7 +2,7 @@ import Dispatcher from './dispatcher'
 
 export default RetryHandler
 
-declare class RetryHandler implements Dispatcher.DispatchHandlers {
+declare class RetryHandler implements Dispatcher.DispatchHandler {
   constructor (
     options: Dispatcher.DispatchOptions & {
       retryOptions?: RetryHandler.RetryOptions;
@@ -32,9 +32,18 @@ declare namespace RetryHandler {
       };
     },
     callback: OnRetryCallback
-  ) => number | null
+  ) => void
 
   export interface RetryOptions {
+    /**
+     * If true, the retry handler will throw an error if the request fails,
+     * this will prevent the folling handlers from being called, and will destroy the socket.
+     *
+     * @type {boolean}
+     * @memberof RetryOptions
+     * @default true
+     */
+    throwOnError?: boolean;
     /**
      * Callback to be invoked on every retry iteration.
      * It receives the error, current state of the retry object and the options object
@@ -111,6 +120,6 @@ declare namespace RetryHandler {
 
   export interface RetryHandlers {
     dispatch: Dispatcher['dispatch'];
-    handler: Dispatcher.DispatchHandlers;
+    handler: Dispatcher.DispatchHandler;
   }
 }

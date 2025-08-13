@@ -10,7 +10,7 @@ describe('fetch respects --max-http-header-size', () => {
   let server
 
   before(async () => {
-    server = createServer((req, res) => {
+    server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', {
         'Content-Length': 2
       })

@@ -9,7 +9,7 @@ The WebSocket object provides a way to manage a WebSocket connection to a server
 Arguments:
 
 * **url** `URL | string`
-* **protocol** `string | string[] | WebSocketInit` (optional) - Subprotocol(s) to request the server use, or a [`Dispatcher`](./Dispatcher.md).
+* **protocol** `string | string[] | WebSocketInit` (optional) - Subprotocol(s) to request the server use, or a [`Dispatcher`](/docs/docs/api/Dispatcher.md).
 
 ### Example:
 
@@ -77,6 +77,33 @@ read()
 setInterval(() => write(), 5000)
 
 ```
+
+## ping(websocket, payload)
+Arguments:
+
+* **websocket** `WebSocket` - The WebSocket instance to send the ping frame on
+* **payload** `Buffer|undefined` (optional) - Optional payload data to include with the ping frame. Must not exceed 125 bytes.
+
+Sends a ping frame to the WebSocket server. The server must respond with a pong frame containing the same payload data. This can be used for keepalive purposes or to verify that the connection is still active.
+
+### Example:
+
+```js
+import { WebSocket, ping } from 'undici'
+
+const ws = new WebSocket('wss://echo.websocket.events')
+
+ws.addEventListener('open', () => {
+  // Send ping with no payload
+  ping(ws)
+
+  // Send ping with payload
+  const payload = Buffer.from('hello')
+  ping(ws, payload)
+})
+```
+
+**Note**: A ping frame cannot have a payload larger than 125 bytes. The ping will only be sent if the WebSocket connection is in the OPEN state.
 
 ## Read More
 

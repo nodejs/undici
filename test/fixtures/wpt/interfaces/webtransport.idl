@@ -3,10 +3,17 @@
 // (https://github.com/w3c/webref)
 // Source: WebTransport (https://w3c.github.io/webtransport/)
 
+[Exposed=(Window,Worker), SecureContext, Transferable]
+interface WebTransportDatagramsWritable : WritableStream {
+  attribute WebTransportSendGroup? sendGroup;
+  attribute long long sendOrder;
+};
+
 [Exposed=(Window,Worker), SecureContext]
 interface WebTransportDatagramDuplexStream {
+  WebTransportDatagramsWritable createWritable(
+      optional WebTransportSendOptions options = {});
   readonly attribute ReadableStream readable;
-  readonly attribute WritableStream writable;
 
   readonly attribute unsigned long maxDatagramSize;
   attribute unrestricted double? incomingMaxAge;
@@ -20,6 +27,7 @@ interface WebTransport {
   constructor(USVString url, optional WebTransportOptions options = {});
 
   Promise<WebTransportConnectionStats> getStats();
+  [NewObject] Promise<ArrayBuffer> exportKeyingMaterial(BufferSource label, optional BufferSource context);
   readonly attribute Promise<undefined> ready;
   readonly attribute WebTransportReliabilityMode reliability;
   readonly attribute WebTransportCongestionControl congestionControl;
@@ -66,6 +74,7 @@ dictionary WebTransportOptions {
   [EnforceRange] unsigned short? anticipatedConcurrentIncomingUnidirectionalStreams = null;
   [EnforceRange] unsigned short? anticipatedConcurrentIncomingBidirectionalStreams = null;
   sequence<DOMString> protocols = [];
+  DatagramsReadableMode datagramsReadableMode;
 };
 
 enum WebTransportCongestionControl {
@@ -74,14 +83,19 @@ enum WebTransportCongestionControl {
   "low-latency",
 };
 
+enum DatagramsReadableMode { "bytes" };
+
 dictionary WebTransportCloseInfo {
   unsigned long closeCode = 0;
   USVString reason = "";
 };
 
-dictionary WebTransportSendStreamOptions {
+dictionary WebTransportSendOptions {
   WebTransportSendGroup? sendGroup = null;
   long long sendOrder = 0;
+};
+
+dictionary WebTransportSendStreamOptions : WebTransportSendOptions {
   boolean waitUntilAvailable = false;
 };
 
@@ -96,7 +110,8 @@ dictionary WebTransportConnectionStats {
   required DOMHighResTimeStamp rttVariation;
   required DOMHighResTimeStamp minRtt;
   required WebTransportDatagramStats datagrams;
-  required unsigned long long? estimatedSendRate;
+  unsigned long long? estimatedSendRate = null;
+  boolean atSendCapacity = false;
 };
 
 dictionary WebTransportDatagramStats {
@@ -144,6 +159,7 @@ interface WebTransportBidirectionalStream {
 [Exposed=*, SecureContext]
 interface WebTransportWriter : WritableStreamDefaultWriter {
   Promise<undefined> atomicWrite(optional any chunk);
+  undefined commit();
 };
 
 [Exposed=(Window,Worker), Serializable, SecureContext]

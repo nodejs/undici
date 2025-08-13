@@ -11,7 +11,7 @@ const { closeServerAsPromise } = require('../utils/node-http')
 test('basic connect', async (t) => {
   const p = tspl(t, { plan: 3 })
 
-  const server = http.createServer((c) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (c) => {
     p.ok(0)
   })
   server.on('connect', (req, socket, firstBodyChunk) => {
@@ -60,7 +60,7 @@ test('basic connect', async (t) => {
 test('connect error', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  const server = http.createServer((c) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (c) => {
     p.ok(0)
   })
   server.on('connect', (req, socket, firstBodyChunk) => {
@@ -115,7 +115,7 @@ test('connect wait for empty pipeline', async (t) => {
   const p = tspl(t, { plan: 7 })
 
   let canConnect = false
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
     canConnect = true
   })
@@ -142,7 +142,8 @@ test('connect wait for empty pipeline', async (t) => {
 
     client.request({
       path: '/',
-      method: 'GET'
+      method: 'GET',
+      blocking: false
     }, (err) => {
       p.ifError(err)
     })
@@ -183,7 +184,7 @@ test('connect wait for empty pipeline', async (t) => {
 test('connect aborted', async (t) => {
   const p = tspl(t, { plan: 6 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.ok(0)
   })
   server.on('connect', (req, c, firstBodyChunk) => {
@@ -224,7 +225,7 @@ test('connect aborted', async (t) => {
 test('basic connect error', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = http.createServer((c) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (c) => {
     p.ok(0)
   })
   server.on('connect', (req, socket, firstBodyChunk) => {
@@ -263,7 +264,7 @@ test('basic connect error', async (t) => {
 test('connect invalid signal', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.ok(0)
   })
   server.on('connect', (req, c, firstBodyChunk) => {

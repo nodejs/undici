@@ -23,7 +23,7 @@ it('Real use-case', async () => {
   const ac = new AbortController()
   ac.abort()
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   }).listen(0)
 
@@ -33,7 +33,7 @@ it('Real use-case', async () => {
     signal: ac.signal
   })
 
-  await expect(promise).rejects.toThrowError(/^Th(e|is) operation was aborted\.?$/)
+  await expect(async () => await promise).rejects.toThrow(/^Th(e|is) operation was aborted\.?$/)
 
   server.close()
   await once(server, 'close')

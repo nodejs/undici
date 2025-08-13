@@ -33,6 +33,7 @@ export class BodyMixin {
 
   readonly arrayBuffer: () => Promise<ArrayBuffer>
   readonly blob: () => Promise<Blob>
+  readonly bytes: () => Promise<Uint8Array>
   /**
    * @deprecated This method is not recommended for parsing multipart/form-data bodies in server environments.
    * It is recommended to use a library such as [@fastify/busboy](https://www.npmjs.com/package/@fastify/busboy) as follows:
@@ -119,20 +120,21 @@ type RequestDestination =
   | 'xslt'
 
 export interface RequestInit {
-  method?: string
-  keepalive?: boolean
-  headers?: HeadersInit
   body?: BodyInit | null
-  redirect?: RequestRedirect
-  integrity?: string
-  signal?: AbortSignal | null
+  cache?: RequestCache
   credentials?: RequestCredentials
-  mode?: RequestMode
-  referrer?: string
-  referrerPolicy?: ReferrerPolicy
-  window?: null
   dispatcher?: Dispatcher
   duplex?: RequestDuplex
+  headers?: HeadersInit
+  integrity?: string
+  keepalive?: boolean
+  method?: string
+  mode?: RequestMode
+  redirect?: RequestRedirect
+  referrer?: string
+  referrerPolicy?: ReferrerPolicy
+  signal?: AbortSignal | null
+  window?: null
 }
 
 export type ReferrerPolicy =

@@ -80,7 +80,7 @@ test('should follow redirection after a HTTP 300', async t => {
   t.strictEqual(body.join(''), `GET /5 key=value :: host@${server} connection@keep-alive`)
 })
 
-test('should follow redirection after a HTTP 301', async t => {
+test('should follow redirection after a HTTP 301 changing method to GET', async t => {
   t = tspl(t, { plan: 3 })
 
   const body = []
@@ -97,7 +97,7 @@ test('should follow redirection after a HTTP 301', async t => {
     }
   )
 
-  t.strictEqual(body.join(''), `POST /5 :: host@${server} connection@keep-alive content-length@7 :: REQUEST`)
+  t.strictEqual(body.join(''), `GET /5 :: host@${server} connection@keep-alive`)
 })
 
 test('should follow redirection after a HTTP 302', async t => {
@@ -316,7 +316,7 @@ test('should follow redirections when going cross origin', async t => {
     }
   )
 
-  t.strictEqual(body.join(''), 'POST')
+  t.strictEqual(body.join(''), 'GET')
 })
 
 describe('when a Location response header is NOT present', async () => {
@@ -331,7 +331,7 @@ describe('when a Location response header is NOT present', async () => {
 
       await stream(
         `http://${server}/${code}`,
-        { opaque: body, maxRedirections: 10 },
+        { opaque: body },
         ({ statusCode, headers, opaque }) => {
           t.strictEqual(statusCode, code)
           t.strictEqual(headers.location, undefined)
@@ -357,8 +357,7 @@ test('should not follow redirects when using Readable request bodies', async t =
     {
       method: 'POST',
       body: createReadable('REQUEST'),
-      opaque: body,
-      maxRedirections: 10
+      opaque: body
     },
     ({ statusCode, headers, opaque }) => {
       t.strictEqual(statusCode, 302)
@@ -377,7 +376,7 @@ test('should handle errors', async t => {
   const body = []
 
   try {
-    await stream('http://localhost:0', { opaque: body, maxRedirections: 10 }, ({ statusCode, headers, opaque }) => {
+    await stream('http://localhost:0', { opaque: body }, ({ statusCode, headers, opaque }) => {
       return createWritable(opaque)
     })
 
@@ -395,7 +394,6 @@ test('removes authorization header on third party origin', async t => {
 
   const [server1] = await startRedirectingWithAuthorization('secret')
   await stream(`http://${server1}`, {
-    maxRedirections: 10,
     opaque: body,
     headers: {
       authorization: 'secret'
@@ -412,7 +410,6 @@ test('removes cookie header on third party origin', async t => {
 
   const [server1] = await startRedirectingWithCookie('a=b')
   await stream(`http://${server1}`, {
-    maxRedirections: 10,
     opaque: body,
     headers: {
       cookie: 'a=b'

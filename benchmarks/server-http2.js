@@ -40,13 +40,13 @@ if (cluster.isPrimary) {
 
   server.on('stream', (stream) => {
     setTimeout(() => {
-      stream.respond({
-        'content-type': 'text/plain; charset=utf-8',
-        ':status': 200
-      })
-
       stream.setEncoding('utf-8').end(buf)
     }, timeout)
+
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      ':status': 200
+    })
   })
 
   server.keepAliveTimeout = 600e3

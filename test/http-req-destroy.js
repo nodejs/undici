@@ -11,7 +11,7 @@ function doNotKillReqSocket (bodyType) {
   test(`do not kill req socket ${bodyType}`, async (t) => {
     t = tspl(t, { plan: 3 })
 
-    const server1 = createServer((req, res) => {
+    const server1 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       const client = new undici.Client(`http://localhost:${server2.address().port}`)
       after(() => client.close())
       client.request({
@@ -32,7 +32,7 @@ function doNotKillReqSocket (bodyType) {
     })
     after(() => server1.close())
 
-    const server2 = createServer((req, res) => {
+    const server2 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       setTimeout(() => {
         req.pipe(res)
       }, 100)

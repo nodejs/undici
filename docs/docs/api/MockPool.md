@@ -512,11 +512,11 @@ await mockPool.close()
 
 ### `MockPool.dispatch(options, handlers)`
 
-Implements [`Dispatcher.dispatch(options, handlers)`](Dispatcher.md#dispatcherdispatchoptions-handler).
+Implements [`Dispatcher.dispatch(options, handlers)`](/docs/docs/api/Dispatcher.md#dispatcherdispatchoptions-handler).
 
 ### `MockPool.request(options[, callback])`
 
-See [`Dispatcher.request(options [, callback])`](Dispatcher.md#dispatcherrequestoptions-callback).
+See [`Dispatcher.request(options [, callback])`](/docs/docs/api/Dispatcher.md#dispatcherrequestoptions-callback).
 
 #### Example - MockPool request
 
@@ -546,3 +546,9 @@ for await (const data of body) {
   console.log('data', data.toString('utf8')) // data foo
 }
 ```
+
+### `MockPool.cleanMocks()`
+
+This method cleans up all the prepared mocks.
+
+Returns: `void`

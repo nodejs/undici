@@ -52,7 +52,6 @@ expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCall
     expectAssignable<MockInterceptor.MockResponseCallbackOptions['headers']>(options.headers)
     expectAssignable<MockInterceptor.MockResponseCallbackOptions['origin']>(options.origin)
     expectAssignable<MockInterceptor.MockResponseCallbackOptions['body']>(options.body)
-    expectAssignable<MockInterceptor.MockResponseCallbackOptions['maxRedirections']>(options.maxRedirections)
     return { statusCode: 200, data: { foo: 'bar' } }
   })
 
