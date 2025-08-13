@@ -115,7 +115,7 @@
     "abort-controller": "^3.0.0",
     "borp": "^0.20.0",
     "c8": "^10.0.0",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.0.0",
     "dns-packet": "^5.4.0",
     "esbuild": "^0.25.2",
     "eslint": "^9.9.0",
