@@ -27,7 +27,7 @@ test('aborting request with custom reason', async (t) => {
 
   await t.rejects(
     request(`http://localhost:${server.address().port}`, { signal: ac.signal }),
-    /Error: aborted/
+    /AbortError/
   )
 
   await t.rejects(

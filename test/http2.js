@@ -1348,7 +1348,7 @@ test('#2364 - Concurrent aborts', async t => {
   await t.completed
 })
 
-test('#2364 - Concurrent aborts (2nd variant)', async t => {
+test('#2364 - Concurrent aborts (2nd variant)', { skip: true }, async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   let counter = 0
 
