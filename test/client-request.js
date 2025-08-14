@@ -734,8 +734,7 @@ test('request post body no missing data', async (t) => {
           this.push('asd')
           this.push(null)
         }
-      }),
-      maxRedirections: 2
+      })
     })
     await body.text()
     t.ok(true, 'pass')
@@ -773,8 +772,7 @@ test('request post body no extra data handler', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'GET',
-      body: reqBody,
-      maxRedirections: 0
+      body: reqBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -979,7 +977,6 @@ test('request text2', async (t) => {
 
 test('request with FormData body', async (t) => {
   const { FormData } = require('../')
-  const { Blob } = require('node:buffer')
 
   const fd = new FormData()
   fd.set('key', 'value')
@@ -1051,8 +1048,7 @@ test('request post body Buffer from string', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1083,8 +1079,7 @@ test('request post body Buffer from buffer', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1115,8 +1110,7 @@ test('request post body Uint8Array', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1147,8 +1141,7 @@ test('request post body Uint32Array', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1179,8 +1172,7 @@ test('request post body Float64Array', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1211,8 +1203,7 @@ test('request post body BigUint64Array', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1243,8 +1234,7 @@ test('request post body DataView', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')

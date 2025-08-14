@@ -3,11 +3,10 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { fetch } = require('../..')
-const { Blob } = require('node:buffer')
 
 test('fetching blob: uris', async (t) => {
   const blobContents = 'hello world'
-  /** @type {import('buffer').Blob} */
+  /** @type {Blob} */
   let blob
   /** @type {string} */
   let objectURL

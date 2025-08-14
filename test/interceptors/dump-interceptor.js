@@ -5,7 +5,7 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 
-const { Client, interceptors } = require('../..')
+const { Client, Agent, interceptors } = require('../..')
 const { dump } = interceptors
 
 if (platform() === 'win32') {
@@ -13,6 +13,71 @@ if (platform() === 'win32') {
   console.log('Skipping test on Windows')
   process.exit(0)
 }
+
+test('Should handle preemptive network error', async t => {
+  t = tspl(t, { plan: 4 })
+  let offset = 0
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const max = 1024 * 1024
+    const buffer = Buffer.alloc(max)
+
+    res.writeHead(200, {
+      'Content-Length': buffer.length,
+      'Content-Type': 'application/octet-stream'
+    })
+
+    const interval = setInterval(() => {
+      offset += 256
+      const chunk = buffer.subarray(offset - 256, offset)
+
+      if (offset === max) {
+        clearInterval(interval)
+        res.end(chunk)
+        return
+      }
+
+      res.write(chunk)
+    }, 0)
+  })
+
+  const requestOptions = {
+    method: 'GET',
+    path: '/'
+  }
+
+  const client = new Agent().compose(dump({ maxSize: 1024 * 1024 }))
+
+  after(async () => {
+    await client.close()
+
+    server.close()
+    await once(server, 'close')
+  })
+
+  try {
+    await client.request({
+      origin: 'http://localhost',
+      ...requestOptions
+    })
+  } catch (error) {
+    t.equal(error.code, 'ECONNREFUSED')
+  }
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const response = await client.request({
+    origin: `http://localhost:${server.address().port}`,
+    ...requestOptions
+  })
+  const body = await response.body.text()
+
+  t.equal(response.headers['content-length'], `${1024 * 1024}`)
+  t.equal(response.statusCode, 200)
+  t.equal(body, '')
+
+  await t.completed
+})
 
 test('Should dump on abort', async t => {
   t = tspl(t, { plan: 2 })

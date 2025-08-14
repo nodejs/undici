@@ -4,7 +4,6 @@ const assert = require('node:assert')
 const { describe, it, before, after } = require('node:test')
 const stream = require('node:stream')
 const http = require('node:http')
-const { Blob } = require('node:buffer')
 
 const { Request } = require('../../index.js')
 const TestServer = require('./utils/server.js')
