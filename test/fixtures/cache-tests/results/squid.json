@@ -69,10 +69,7 @@
   "ccreq-ma1": true,
   "ccreq-magreaterage": true,
   "ccreq-max-stale": true,
-  "ccreq-max-stale-age": [
-    "Setup",
-    "Response 1 status is 409, not 200"
-  ],
+  "ccreq-max-stale-age": true,
   "ccreq-min-fresh": true,
   "ccreq-min-fresh-age": true,
   "ccreq-no-cache": true,
@@ -94,7 +91,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Mon, 03 Feb 2025 05:33:42 GMT\""
+    "Response 2 header Expires is \"null\", not \"Sat, 24 May 2025 02:00:04 GMT\""
   ],
   "cdn-fresh-cc-nostore": [
     "Assertion",
@@ -438,15 +435,16 @@
   "heuristic-delta-60": true,
   "heuristic-delta-600": true,
   "heuristic-delta-86400": true,
+  "interim-102": true,
+  "interim-103": true,
+  "interim-no-header-reuse": true,
+  "interim-not-cached": true,
   "invalidate-DELETE": true,
   "invalidate-DELETE-cl": true,
   "invalidate-DELETE-failed": true,
   "invalidate-DELETE-location": true,
   "invalidate-M-SEARCH": true,
-  "invalidate-M-SEARCH-cl": [
-    "TypeError",
-    "fetch failed"
-  ],
+  "invalidate-M-SEARCH-cl": true,
   "invalidate-M-SEARCH-failed": [
     "Assertion",
     "Response 3 does not come from cache"
@@ -456,7 +454,10 @@
   "invalidate-POST-cl": true,
   "invalidate-POST-failed": true,
   "invalidate-POST-location": true,
-  "invalidate-PUT": true,
+  "invalidate-PUT": [
+    "Setup",
+    "Response 1 status is 409, not 200"
+  ],
   "invalidate-PUT-cl": true,
   "invalidate-PUT-failed": true,
   "invalidate-PUT-location": true,

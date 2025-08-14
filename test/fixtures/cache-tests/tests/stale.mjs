@@ -94,6 +94,10 @@ export default {
         {
           setup: true,
           pause_after: true,
+          response_headers: [
+            ['Cache-Control', 'no-cache', false],
+            ['ETag', '"def"', false]
+          ],
           expected_type: 'cached'
         },
         {

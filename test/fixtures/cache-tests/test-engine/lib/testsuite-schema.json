@@ -133,6 +133,102 @@
                     "description": "Whether to rewrite Location and Content-Location to full URLs",
                     "type": "boolean"
                   },
+                  "interim_responses": {
+                    "description": "Interim responses to send before the final response",
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "description": "Status code only",
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 1,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/status-code"
+                            }
+                          ]
+                        },
+                        {
+                          "description": "Status code and headers",
+                          "type": "array",
+                          "minItems": 2,
+                          "maxItems": 2,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/status-code"
+                            },
+                            {
+                              "description": "Interim response headers",
+                              "type": "array",
+                              "items": {
+                                "type": "array",
+                                "additionalItems": false,
+                                "minItems": 2,
+                                "maxItems": 2,
+                                "items": [
+                                  {
+                                    "$ref": "#/definitions/field-name"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/magic-field-value"
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "expected_interim_responses": {
+                    "description": "Interim responses expected to be received by the client",
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "description": "Status code only",
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 1,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/status-code"
+                            }
+                          ]
+                        },
+                        {
+                          "description": "Status code and headers",
+                          "type": "array",
+                          "minItems": 2,
+                          "maxItems": 2,
+                          "items": [
+                            {
+                              "$ref": "#/definitions/status-code"
+                            },
+                            {
+                              "description": "Expected interim response headers",
+                              "type": "array",
+                              "items": {
+                                "type": "array",
+                                "additionalItems": false,
+                                "minItems": 2,
+                                "maxItems": 2,
+                                "items": [
+                                  {
+                                    "$ref": "#/definitions/field-name"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/magic-field-value"
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
                   "magic_ims": {
                     "description": "Whether to rewrite If-Modified-Since to a delta from the previous Last-Modified",
                     "type": "boolean"
