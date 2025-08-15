@@ -103,7 +103,7 @@ function createSequentialHandler (responses) {
 }
 
 async function createLargeSnapshotFile (path, size = 1000) {
-  const { createRequestHash, formatRequestKey, createHeaderFilterSets } = require('../lib/mock/snapshot-recorder')
+  const { createRequestHash, formatRequestKey, createHeaderFilters } = require('../lib/mock/snapshot-recorder')
 
   const snapshots = []
   for (let i = 0; i < size; i++) {
@@ -113,7 +113,7 @@ async function createLargeSnapshotFile (path, size = 1000) {
       method: 'GET'
     }
 
-    const cachedSets = createHeaderFilterSets({})
+    const cachedSets = createHeaderFilters({})
     const requestKey = formatRequestKey(requestOpts, cachedSets)
     const hash = createRequestHash(requestKey)
 
@@ -1057,13 +1057,13 @@ describe('SnapshotAgent - Management Features', () => {
     assert(postInfo, 'Post snapshot should still exist after deleting user snapshot')
 
     // Test replaceSnapshots - create a snapshot with proper hash
-    const { createRequestHash, formatRequestKey, createHeaderFilterSets } = require('../lib/mock/snapshot-recorder')
+    const { createRequestHash, formatRequestKey, createHeaderFilters } = require('../lib/mock/snapshot-recorder')
     const mockRequestOpts = {
       origin,
       path: '/api/mock',
       method: 'GET'
     }
-    const cachedSets = createHeaderFilterSets({})
+    const cachedSets = createHeaderFilters({})
     const mockRequest = formatRequestKey(mockRequestOpts, cachedSets)
     const mockHash = createRequestHash(mockRequest)
 
