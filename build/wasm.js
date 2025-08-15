@@ -105,7 +105,7 @@ ${WASM_LDLIBS}`, { stdio: 'inherit' })
 
 if (hasOptimizer) {
   // Split WASM_OPT_FLAGS into an array, if not empty
-  const wasmOptFlagsArray = WASM_OPT_FLAGS ? WASM_OPT_FLAGS.split(/\s+/).filter(Boolean) : [];
+  const wasmOptFlagsArray = WASM_OPT_FLAGS ? WASM_OPT_FLAGS.split(/\s+/).filter(Boolean) : []
   execFileSync(
     WASM_OPT,
     [
@@ -116,7 +116,7 @@ if (hasOptimizer) {
       join(WASM_OUT, 'llhttp_simd.wasm')
     ],
     { stdio: 'inherit' }
-  );
+  )
 }
 writeWasmChunk('llhttp_simd.wasm', 'llhttp_simd-wasm.js')
 
