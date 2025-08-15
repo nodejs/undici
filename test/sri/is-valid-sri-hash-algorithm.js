@@ -3,7 +3,7 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
 
-const { isValidSRIHashAlgorithm } = require('../../lib/web/sri/sri')
+const { isValidSRIHashAlgorithm } = require('../../lib/web/subresource-integrity/subresource-integrity')
 
 let skip
 try {

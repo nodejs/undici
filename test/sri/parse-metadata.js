@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const { createHash } = require('node:crypto')
 const { test, describe } = require('node:test')
 
-const { parseMetadata } = require('../../lib/web/sri/sri')
+const { parseMetadata } = require('../../lib/web/subresource-integrity/subresource-integrity')
 
 let skip
 try {

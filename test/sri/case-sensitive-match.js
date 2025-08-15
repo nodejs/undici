@@ -3,7 +3,7 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
 
-const { caseSensitiveMatch } = require('../../lib/web/sri/sri')
+const { caseSensitiveMatch } = require('../../lib/web/subresource-integrity/subresource-integrity')
 
 describe('caseSensitiveMatch', () => {
   test('identical strings', () => {

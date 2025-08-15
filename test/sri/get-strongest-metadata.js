@@ -3,7 +3,7 @@
 const assert = require('node:assert')
 const { test, describe } = require('node:test')
 
-const { getStrongestMetadata } = require('../../lib/web/sri/sri')
+const { getStrongestMetadata } = require('../../lib/web/subresource-integrity/subresource-integrity')
 
 describe('getStrongestMetadata', () => {
   test('should return strongest sha512 /1', () => {

@@ -3,7 +3,7 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
 
-const { applyAlgorithmToBytes } = require('../../lib/web/sri/sri')
+const { applyAlgorithmToBytes } = require('../../lib/web/subresource-integrity/subresource-integrity')
 
 let crypto = null
 
