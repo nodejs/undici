@@ -313,3 +313,29 @@ test('clone body garbage collection', async () => {
   const cloneBody = ref.deref()
   assert.equal(cloneBody, undefined, 'clone body was not garbage collected')
 })
+
+test('clone body garbage collection should not affect original res', async () => {
+  const { promise, resolve } = Promise.withResolvers()
+  const registry = new FinalizationRegistry(resolve)
+
+  const doFetch = async () => {
+    const res = new Response('hello world')
+
+    // Clone res and consume its body
+    const clone = res.clone()
+    await clone.text()
+
+    // Use finalization registry to know when the *clone* has been reclaimed
+    registry.register(clone, {})
+
+    return res
+  }
+
+  const res = await doFetch()
+
+  global.gc()
+  await promise
+  await setImmediate()
+
+  assert.doesNotThrow(() => res.clone(), 'original body was already consumed')
+})
