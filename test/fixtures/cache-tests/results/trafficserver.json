@@ -97,7 +97,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Mon, 03 Feb 2025 05:35:20 GMT\""
+    "Response 2 header Expires is \"null\", not \"Sat, 24 May 2025 02:03:28 GMT\""
   ],
   "cdn-fresh-cc-nostore": [
     "Assertion",
@@ -455,6 +455,22 @@
   "heuristic-delta-86400": [
     "Assertion",
     "Response 2 does not come from cache"
+  ],
+  "interim-102": [
+    "AbortError",
+    "This operation was aborted"
+  ],
+  "interim-103": [
+    "Assertion",
+    "Interim response 1 not received"
+  ],
+  "interim-no-header-reuse": [
+    "Assertion",
+    "Interim response 1 not received"
+  ],
+  "interim-not-cached": [
+    "Assertion",
+    "Interim response 1 not received"
   ],
   "invalidate-DELETE": [
     "Setup",
