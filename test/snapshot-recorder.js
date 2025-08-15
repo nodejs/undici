@@ -302,7 +302,7 @@ test('SnapshotRecorder - header filtering for storage', (t) => {
 
   // Test excluding sensitive headers from storage
   const filtered = filterHeadersForStorage(headers, {
-    excludeHeaders: ['set-cookie', 'authorization']
+    excludeSet: new Set(['set-cookie', 'authorization'])
   })
 
   assert.deepStrictEqual(filtered, {
