@@ -977,7 +977,6 @@ test('request text2', async (t) => {
 
 test('request with FormData body', async (t) => {
   const { FormData } = require('../')
-  const { Blob } = require('node:buffer')
 
   const fd = new FormData()
   fd.set('key', 'value')
