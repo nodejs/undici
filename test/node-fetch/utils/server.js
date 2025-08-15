@@ -7,7 +7,7 @@ const Busboy = require('@fastify/busboy')
 
 module.exports = class TestServer {
   constructor () {
-    this.server = http.createServer(this.router)
+    this.server = http.createServer({ joinDuplicateHeaders: true }, this.router)
     // Node 8 default keepalive timeout is 5000ms
     // make it shorter here as we want to close server quickly at the end of tests
     this.server.keepAliveTimeout = 1000

@@ -214,6 +214,40 @@ describe('parseVaryHeader', () => {
       'another-one': '123'
     })
   })
+
+  test('handles missing headers with null', () => {
+    const result = parseVaryHeader('Accept-Encoding, Authorization', {})
+    deepStrictEqual(result, {
+      'accept-encoding': null,
+      authorization: null
+    })
+  })
+
+  test('handles mix of present and missing headers', () => {
+    const result = parseVaryHeader('Accept-Encoding, Authorization', {
+      authorization: 'example-value'
+    })
+    deepStrictEqual(result, {
+      'accept-encoding': null,
+      authorization: 'example-value'
+    })
+  })
+
+  test('handles array input', () => {
+    const result = parseVaryHeader(['Accept-Encoding', 'Authorization'], {
+      'accept-encoding': 'gzip'
+    })
+    deepStrictEqual(result, {
+      'accept-encoding': 'gzip',
+      authorization: null
+    })
+  })
+
+  test('preserves existing * behavior', () => {
+    const headers = { accept: 'text/html' }
+    const result = parseVaryHeader('*', headers)
+    deepStrictEqual(result, headers)
+  })
 })
 
 describe('isEtagUsable', () => {

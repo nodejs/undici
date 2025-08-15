@@ -6,12 +6,15 @@ import { RedirectHandler, DecoratorHandler } from './handlers'
 
 import BalancedPool from './balanced-pool'
 import Client from './client'
+import H2CClient from './h2c-client'
 import buildConnector from './connector'
 import errors from './errors'
 import Agent from './agent'
 import MockClient from './mock-client'
 import MockPool from './mock-pool'
 import MockAgent from './mock-agent'
+import { SnapshotAgent } from './snapshot-agent'
+import { MockCallHistory, MockCallHistoryLog } from './mock-call-history'
 import mockErrors from './mock-errors'
 import ProxyAgent from './proxy-agent'
 import EnvHttpProxyAgent from './env-http-proxy-agent'
@@ -31,7 +34,9 @@ export * from './content-type'
 export * from './cache'
 export { Interceptable } from './mock-interceptor'
 
-export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, interceptors, MockClient, MockPool, MockAgent, mockErrors, ProxyAgent, EnvHttpProxyAgent, RedirectHandler, DecoratorHandler, RetryHandler, RetryAgent }
+declare function globalThisInstall (): void
+
+export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, interceptors, MockClient, MockPool, MockAgent, SnapshotAgent, MockCallHistory, MockCallHistoryLog, mockErrors, ProxyAgent, EnvHttpProxyAgent, RedirectHandler, DecoratorHandler, RetryHandler, RetryAgent, H2CClient, globalThisInstall as install }
 export default Undici
 
 declare namespace Undici {
@@ -42,6 +47,7 @@ declare namespace Undici {
   const RetryHandler: typeof import ('./retry-handler').default
   const BalancedPool: typeof import('./balanced-pool').default
   const Client: typeof import('./client').default
+  const H2CClient: typeof import('./h2c-client').default
   const buildConnector: typeof import('./connector').default
   const errors: typeof import('./errors').default
   const Agent: typeof import('./agent').default
@@ -55,6 +61,9 @@ declare namespace Undici {
   const MockClient: typeof import('./mock-client').default
   const MockPool: typeof import('./mock-pool').default
   const MockAgent: typeof import('./mock-agent').default
+  const SnapshotAgent: typeof import('./snapshot-agent').SnapshotAgent
+  const MockCallHistory: typeof import('./mock-call-history').MockCallHistory
+  const MockCallHistoryLog: typeof import('./mock-call-history').MockCallHistoryLog
   const mockErrors: typeof import('./mock-errors').default
   const fetch: typeof import('./fetch').fetch
   const Headers: typeof import('./fetch').Headers
@@ -67,4 +76,5 @@ declare namespace Undici {
     MemoryCacheStore: typeof import('./cache-interceptor').default.MemoryCacheStore,
     SqliteCacheStore: typeof import('./cache-interceptor').default.SqliteCacheStore
   }
+  const install: typeof globalThisInstall
 }

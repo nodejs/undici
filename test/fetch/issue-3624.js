@@ -1,7 +1,6 @@
 'use strict'
 
 const assert = require('node:assert')
-const { File } = require('node:buffer')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
@@ -9,7 +8,7 @@ const { fetch, FormData } = require('../..')
 
 // https://github.com/nodejs/undici/issues/3624
 test('crlf is appended to formdata body (issue #3624)', async (t) => {
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   }).listen(0)
 

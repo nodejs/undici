@@ -3,7 +3,7 @@
 const { createServer } = require('node:http')
 const hostname = '127.0.0.1'
 
-const server = createServer(async (req, res) => {
+const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
   res.statusCode = 200
   res.setHeader('Content-Type', 'text/plain')
 

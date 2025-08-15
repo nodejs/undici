@@ -21,7 +21,7 @@ test('request with correct integrity checksum', (t, done) => {
   const body = 'Hello world!'
   const hash = createHash('sha256').update(body).digest('base64')
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   })
 
@@ -40,7 +40,7 @@ test('request with wrong integrity checksum', async (t) => {
   const body = 'Hello world!'
   const hash = 'c0535e4be2b79ffd93291305436bf889314e4a3faec05ecffcbb7df31ad9e51b'
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   }).listen(0)
 
@@ -60,7 +60,7 @@ test('request with integrity checksum on encoded body', (t, done) => {
   const body = 'Hello world!'
   const hash = createHash('sha256').update(body).digest('base64')
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-encoding', 'gzip')
     res.end(gzipSync(body))
   })
@@ -77,7 +77,7 @@ test('request with integrity checksum on encoded body', (t, done) => {
 })
 
 test('request with a totally incorrect integrity', async (t) => {
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   }).listen(0)
 
@@ -93,7 +93,7 @@ test('request with mixed in/valid integrities', async (t) => {
   const body = 'Hello world!'
   const hash = createHash('sha256').update(body).digest('base64')
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   }).listen(0)
 
@@ -109,7 +109,7 @@ test('request with sha384 hash', { skip: !supportedHashes.includes('sha384') }, 
   const body = 'Hello world!'
   const hash = createHash('sha384').update(body).digest('base64')
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   }).listen(0)
 
@@ -131,7 +131,7 @@ test('request with sha512 hash', { skip: !supportedHashes.includes('sha512') }, 
   const body = 'Hello world!'
   const hash = createHash('sha512').update(body).digest('base64')
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   }).listen(0)
 
@@ -154,7 +154,7 @@ test('request with correct integrity checksum (base64url)', async (t) => {
   const body = 'Hello world!'
   const hash = createHash('sha256').update(body).digest('base64url')
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   })
 
@@ -176,7 +176,7 @@ test('request with incorrect integrity checksum (base64url)', async (t) => {
   const body = 'Hello world!'
   const hash = createHash('sha256').update('invalid').digest('base64url')
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   })
 
@@ -196,7 +196,7 @@ test('request with incorrect integrity checksum (only dash)', async (t) => {
 
   const body = 'Hello world!'
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   })
 
@@ -216,7 +216,7 @@ test('request with incorrect integrity checksum (non-ascii character)', async (t
 
   const body = 'Hello world!'
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   })
 
@@ -238,7 +238,7 @@ test('request with incorrect stronger integrity checksum (non-ascii character)',
   const sha256 = createHash('sha256').update(body).digest('base64')
   const sha384 = 'ä'
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   })
 
@@ -263,7 +263,7 @@ test('request with correct integrity checksum (base64). mixed', async (t) => {
   const sha384 = createHash('sha384').update(body).digest('base64')
   const sha512 = createHash('sha512').update(body).digest('base64')
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   })
 
@@ -309,7 +309,7 @@ test('request with correct integrity checksum (base64url). mixed', async (t) => 
   const sha384 = createHash('sha384').update(body).digest('base64url')
   const sha512 = createHash('sha512').update(body).digest('base64url')
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(body)
   })
 

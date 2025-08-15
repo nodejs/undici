@@ -8,13 +8,13 @@ const { request, errors } = require('..')
 test('no-slash/one-slash pathname should be included in req.path', async (t) => {
   t = tspl(t, { plan: 24 })
 
-  const pathServer = createServer((req, res) => {
+  const pathServer = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('it shouldn\'t be called')
     res.statusCode = 200
     res.end('hello')
   })
 
-  const requestedServer = createServer((req, res) => {
+  const requestedServer = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(`/localhost:${pathServer.address().port}`, req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual(`localhost:${requestedServer.address().port}`, req.headers.host)
@@ -72,13 +72,13 @@ test('no-slash/one-slash pathname should be included in req.path', async (t) => 
 test('protocol-relative URL as pathname should be included in req.path', async (t) => {
   t = tspl(t, { plan: 12 })
 
-  const pathServer = createServer((req, res) => {
+  const pathServer = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('it shouldn\'t be called')
     res.statusCode = 200
     res.end('hello')
   })
 
-  const requestedServer = createServer((req, res) => {
+  const requestedServer = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(`//localhost:${pathServer.address().port}`, req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual(`localhost:${requestedServer.address().port}`, req.headers.host)
@@ -119,13 +119,13 @@ test('protocol-relative URL as pathname should be included in req.path', async (
 test('Absolute URL as pathname should be included in req.path', async (t) => {
   t = tspl(t, { plan: 12 })
 
-  const pathServer = createServer((req, res) => {
+  const pathServer = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('it shouldn\'t be called')
     res.statusCode = 200
     res.end('hello')
   })
 
-  const requestedServer = createServer((req, res) => {
+  const requestedServer = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual(`/http://localhost:${pathServer.address().port}`, req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual(`localhost:${requestedServer.address().port}`, req.headers.host)
@@ -177,6 +177,46 @@ describe('DispatchOptions#expectContinue', () => {
   })
 })
 
+describe('DispatchOptions#maxRedirections', () => {
+  test('Should throw if maxRedirections option is used', async t => {
+    t = tspl(t, { plan: 2 })
+
+    await t.rejects(request({
+      method: 'GET',
+      origin: 'http://somehost.xyz',
+      maxRedirections: 5
+    }), /maxRedirections is not supported, use the redirect interceptor/)
+
+    await t.rejects(request({
+      method: 'GET',
+      origin: 'http://somehost.xyz',
+      maxRedirections: 1
+    }), /maxRedirections is not supported, use the redirect interceptor/)
+
+    await t.completed
+  })
+
+  test('Should allow maxRedirections: 0 for internal use', async t => {
+    t = tspl(t, { plan: 2 })
+    const server = createServer((req, res) => {
+      t.ok('request received')
+      res.end('hello world')
+    })
+    after(() => server.close())
+    await new Promise((resolve) => server.listen(0, resolve))
+
+    const res = await request({
+      method: 'GET',
+      origin: `http://localhost:${server.address().port}`,
+      maxRedirections: 0
+    })
+
+    const body = await res.body.text()
+
+    t.strictEqual(body, 'hello world')
+  })
+})
+
 describe('DispatchOptions#reset', () => {
   test('Should throw if invalid reset option', async t => {
     t = tspl(t, { plan: 1 })
@@ -193,7 +233,7 @@ describe('DispatchOptions#reset', () => {
   test('Should include "connection:close" if reset true', async t => {
     t = tspl(t, { plan: 3 })
 
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
       t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.connection, 'close')
@@ -220,7 +260,7 @@ describe('DispatchOptions#reset', () => {
   test('Should include "connection:keep-alive" if reset false', async t => {
     t = tspl(t, { plan: 3 })
 
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
       t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.connection, 'keep-alive')
@@ -247,7 +287,7 @@ describe('DispatchOptions#reset', () => {
   test('Should react to manual set of "connection:close" header', async t => {
     t = tspl(t, { plan: 3 })
 
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
       t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.connection, 'close')
@@ -278,7 +318,7 @@ describe('Should include headers from iterable objects', scope => {
   test('Should include headers built with Headers global object', { skip: !globalThis.Headers }, async t => {
     t = tspl(t, { plan: 3 })
 
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
       t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.hello, 'world')
@@ -309,7 +349,7 @@ describe('Should include headers from iterable objects', scope => {
   test('Should include headers built with Map', async t => {
     t = tspl(t, { plan: 3 })
 
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
       t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.hello, 'world')
@@ -340,7 +380,7 @@ describe('Should include headers from iterable objects', scope => {
   test('Should include headers built with custom iterable object', async t => {
     t = tspl(t, { plan: 3 })
 
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
       t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.hello, 'world')
@@ -374,7 +414,7 @@ describe('Should include headers from iterable objects', scope => {
   test('Should throw error if headers iterable object does not yield key-value pairs', async t => {
     t = tspl(t, { plan: 2 })
 
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
 

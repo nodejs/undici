@@ -141,7 +141,7 @@ dictionary AudioDecoderConfig {
   required DOMString codec;
   [EnforceRange] required unsigned long sampleRate;
   [EnforceRange] required unsigned long numberOfChannels;
-  BufferSource description;
+  AllowSharedBufferSource description;
 };
 
 dictionary VideoDecoderConfig {
@@ -154,6 +154,8 @@ dictionary VideoDecoderConfig {
   VideoColorSpaceInit colorSpace;
   HardwareAcceleration hardwareAcceleration = "no-preference";
   boolean optimizeForLatency;
+  double rotation = 0;
+  boolean flip = false;
 };
 
 dictionary AudioEncoderConfig {

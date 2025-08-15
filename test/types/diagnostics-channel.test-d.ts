@@ -28,11 +28,14 @@ const connectParams = {
 }
 
 expectAssignable<DiagnosticsChannel.RequestCreateMessage>({ request })
+expectAssignable<DiagnosticsChannel.RequestBodyChunkSentMessage>({ request, chunk: Buffer.from('') })
+expectAssignable<DiagnosticsChannel.RequestBodyChunkSentMessage>({ request, chunk: '' })
 expectAssignable<DiagnosticsChannel.RequestBodySentMessage>({ request })
 expectAssignable<DiagnosticsChannel.RequestHeadersMessage>({
   request,
   response
 })
+expectAssignable<DiagnosticsChannel.RequestBodyChunkReceivedMessage>({ request, chunk: Buffer.from('') })
 expectAssignable<DiagnosticsChannel.RequestTrailersMessage>({
   request,
   trailers: [Buffer.from(''), Buffer.from('')]

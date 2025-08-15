@@ -5,7 +5,6 @@ const { describe, it, before, after } = require('node:test')
 const stream = require('node:stream')
 const { Response } = require('../../index.js')
 const TestServer = require('./utils/server.js')
-const { Blob } = require('node:buffer')
 
 describe('Response', () => {
   const local = new TestServer()

@@ -71,6 +71,7 @@ dictionary SharedStorageSetMethodOptions : SharedStorageModifierMethodOptions {
 
 [Exposed=(Window,SharedStorageWorklet)]
 interface SharedStorage {
+  Promise<DOMString> get(DOMString key);
   Promise<any> set(DOMString key,
                    DOMString value,
                    optional SharedStorageSetMethodOptions options = {});
@@ -98,9 +99,6 @@ interface SharedStorage {
   readonly attribute SharedStorageWorklet worklet;
 
   [Exposed=SharedStorageWorklet]
-  Promise<DOMString> get(DOMString key);
-
-  [Exposed=SharedStorageWorklet]
   Promise<unsigned long> length();
 
   [Exposed=SharedStorageWorklet]
@@ -114,6 +112,7 @@ dictionary SharedStoragePrivateAggregationConfig {
   USVString aggregationCoordinatorOrigin;
   USVString contextId;
   [EnforceRange] unsigned long long filteringIdMaxBytes;
+  [EnforceRange] unsigned long long maxContributions;
 };
 
 dictionary SharedStorageRunOperationMethodOptions {
