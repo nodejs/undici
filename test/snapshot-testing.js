@@ -98,8 +98,7 @@ function createSequentialHandler (responses) {
   let callCount = 0
   return (req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
-    res.end(responses[callCount] || responses[responses.length - 1])
-    callCount++
+    res.end(responses[callCount++] || responses[responses.length - 1])
   }
 }
 
