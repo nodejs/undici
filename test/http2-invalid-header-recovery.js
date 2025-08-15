@@ -1,6 +1,7 @@
-// Test: HTTP2 invalid header recovery
-// This test spins up an HTTP2 server that sends an invalid HTTP/1 header in the response.
-// Undici client should recover and retry the request instead of crashing.
+// Test: HTTP2 invalid header handling (fail-fast)
+// This test spins up an HTTP/2 TLS server and patches the client's HTTP/2 session
+// to throw ERR_HTTP2_INVALID_CONNECTION_HEADERS from session.request(). Undici
+// should fail-fast and wrap the error as an Undici error without internal retry.
 
 const { test } = require('node:test')
 const assert = require('node:assert')
@@ -8,74 +9,62 @@ const http2 = require('node:http2')
 const { Client } = require('..')
 const pem = require('https-pem')
 
-const PORT = 5678
-
-function createInvalidHeaderServer (cb) {
+function createServer (cb) {
   const server = http2.createSecureServer(pem)
-  let callCount = 0
-  server.on('stream', (stream, headers) => {
-    console.log('[SERVER] Received stream, callCount:', callCount + 1)
-    callCount++
-    if (callCount === 1) {
-      // First request: send invalid HTTP/1 header in HTTP2 response
-      console.log('[SERVER] Sending invalid header response')
-      stream.respond({
-        ':status': 200,
-        'http2-settings': 'invalid' // forbidden in HTTP2
-      })
-      stream.end('hello')
-    } else {
-      // Second request (retry): send valid response
-      console.log('[SERVER] Sending valid response')
-      stream.respond({
-        ':status': 200
-      })
-      stream.end('world')
-    }
+  server.on('stream', (stream) => {
+    // Normal valid response; client error should occur before this if invalid headers are sent
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
   })
-  server.listen(PORT, cb)
+  server.listen(0, cb)
   return server
 }
 
-test('undici should recover from invalid HTTP2 headers', async (t) => {
-  const server = createInvalidHeaderServer(() => {
-    // console.log('Server listening');
-  })
+test('undici should fail-fast and wrap invalid HTTP/2 connection header errors', async (t) => {
+  const server = createServer(() => {})
 
-  const client = new Client(`https://localhost:${PORT}`, {
+  const address = server.address()
+  const port = typeof address === 'string' ? 0 : address.port
+
+  // Monkey-patch http2.connect to throw on request creation
+  const originalConnect = http2.connect
+  let thrown = false
+  http2.connect = function (...args) {
+    const session = originalConnect.apply(this, args)
+    const originalRequest = session.request
+    session.request = function (...rargs) {
+      if (!thrown) {
+        thrown = true
+        const e = new TypeError('HTTP/1 Connection specific headers are forbidden: "http2-settings"')
+        e.code = 'ERR_HTTP2_INVALID_CONNECTION_HEADERS'
+        throw e
+      }
+      return originalRequest.apply(this, rargs)
+    }
+    return session
+  }
+
+  const client = new Client(`https://localhost:${port}`, {
     connect: {
       rejectUnauthorized: false
     },
     allowH2: true
   })
-  let errorCaught = false
-  let responseText = ''
+  let errorCaught = null
 
   try {
-    await new Promise((resolve, reject) => {
-      client.request({
-        path: '/',
-        method: 'GET'
-      })
-        .then(async (res) => {
-          for await (const chunk of res.body) {
-            responseText += chunk
-          }
-          console.log('[CLIENT] Received response:', responseText)
-          resolve()
-        })
-        .catch((err) => {
-          errorCaught = true
-          console.log('[CLIENT] Caught error:', err)
-          resolve()
-        })
+    await client.request({
+      path: '/',
+      method: 'GET'
     })
+  } catch (err) {
+    errorCaught = err
   } finally {
-    client.close()
-    server.close()
+    await client.close()
+    await new Promise((resolve) => server.close(resolve))
+    http2.connect = originalConnect
   }
 
-  // The client should not crash, and should either retry or surface a handled error
-  assert.ok(!errorCaught, 'Request should not crash the process')
-  assert.strictEqual(responseText, 'world', 'Retry should succeed and receive valid response body')
+  assert.ok(errorCaught, 'Request should surface an error')
+  assert.strictEqual(errorCaught.code, 'UND_ERR_H2_INVALID_CONNECTION_HEADERS', 'Error code should indicate invalid HTTP/2 connection headers')
 })
