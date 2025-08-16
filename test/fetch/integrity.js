@@ -149,7 +149,7 @@ test('request with sha512 hash', { skip: !supportedHashAlgorithms.includes('sha5
   }))
 })
 
-test('request with sha512 hash', { skip: !supportedHashAlgorithms.includes('sha512') }, async (t) => {
+test('request with sha512 hash', { skip: !supportedHashAlgorithms.includes('sha512') || !supportedHashAlgorithms.includes('sha384') }, async (t) => {
   const body = 'Hello world!'
   const hash384 = createHash('sha384').update(body).digest('base64')
 
