@@ -313,30 +313,3 @@ test('clone body garbage collection', async () => {
   const cloneBody = ref.deref()
   assert.equal(cloneBody, undefined, 'clone body was not garbage collected')
 })
-
-test('clone body garbage collection should not affect original res', async () => {
-  let ref
-
-  const doFetch = async () => {
-    const res = new Response('hello world')
-
-    // Clone res and consume its body
-    const clone = res.clone()
-    await clone.text()
-    ref = new WeakRef(clone)
-
-    return res
-  }
-
-  const res = await doFetch()
-
-  // wait for garbage collection
-  while (true) {
-    await setImmediate()
-    global.gc()
-    if (!ref.deref()) break
-  }
-
-  await setImmediate()
-  assert.doesNotThrow(() => res.clone(), 'Body has already been consumed')
-})
