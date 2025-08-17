@@ -3,6 +3,7 @@
 const { describe, test } = require('node:test')
 const { deepStrictEqual } = require('node:assert')
 const { parseHttpDate } = require('../../lib/util/date')
+const { randomInt } = require('node:crypto')
 
 describe('parseHttpDate', () => {
   test('IMF-fixdate', () => {
@@ -263,6 +264,104 @@ describe('parseHttpDate', () => {
 
     for (const date of Object.keys(values)) {
       deepStrictEqual(parseHttpDate(date), values[date], date)
+    }
+  })
+
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const daysLong = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const fuzzingCount = 1e6
+
+  test('fuzzing asctime', () => {
+    function asctime (date) {
+      let result = ''
+
+      result += days[date.getUTCDay()]
+      result += ' '
+      result += months[date.getUTCMonth()]
+      result += ' '
+      result += date.getUTCDate().toString().padStart(2, ' ')
+      result += ' '
+      result += date.getUTCHours().toString().padStart(2, '0')
+      result += ':'
+      result += date.getUTCMinutes().toString().padStart(2, '0')
+      result += ':'
+      result += date.getUTCSeconds().toString().padStart(2, '0')
+      result += ' '
+      result += date.getUTCFullYear().toString().padStart(4, '0')
+
+      return result
+    }
+
+    for (let i = 0; i < fuzzingCount; i++) {
+      const date = new Date(Date.UTC(
+        randomInt(0, 9999), // Year between 0 and 3000
+        randomInt(0, 11),   // Month between 0 and 11
+        randomInt(1, 31),   // Day between 1 and 31
+        randomInt(0, 23),   // Hour between 0 and 23
+        randomInt(0, 59),   // Minute between 0 and 59
+        randomInt(0, 59)    // Second between 0 and 59
+      ))
+
+      const dateAsAscTime = asctime(date)
+      deepStrictEqual(parseHttpDate(dateAsAscTime), date, `Fuzzing failed for: ${dateAsAscTime}`)
+    }
+  })
+
+  test('fuzzing imf', () => {
+    for (let i = 0; i < fuzzingCount; i++) {
+      const date = new Date(Date.UTC(
+        randomInt(0, 9999), // Year between 0 and 3000
+        randomInt(0, 11),   // Month between 0 and 11
+        randomInt(1, 31),   // Day between 1 and 31
+        randomInt(0, 23),   // Hour between 0 and 23
+        randomInt(0, 59),   // Minute between 0 and 59
+        randomInt(0, 59)    // Second between 0 and 59
+      ))
+
+      const dateAsImf = date.toUTCString()
+      deepStrictEqual(parseHttpDate(dateAsImf), date, `Fuzzing failed for: ${dateAsImf}`)
+    }
+  })
+
+  test('fuzzing rfc850', () => {
+    function rfc850 (date) {
+      let result = ''
+
+      result += daysLong[date.getUTCDay()]
+      result += ', '
+      result += date.getUTCDate().toString().padStart(2, '0')
+      result += '-'
+      result += months[date.getUTCMonth()]
+      result += '-'
+      result += date.getUTCFullYear().toString().slice(2)
+      result += ' '
+      result += date.getUTCHours().toString().padStart(2, '0')
+      result += ':'
+      result += date.getUTCMinutes().toString().padStart(2, '0')
+      result += ':'
+      result += date.getUTCSeconds().toString().padStart(2, '0')
+      result += ' GMT'
+
+      return result
+    }
+
+    const year = new Date().getUTCFullYear()
+    const minYear = year - 49
+    const maxYear = year + 50
+
+    for (let i = 0; i < fuzzingCount; i++) {
+      const date = new Date(Date.UTC(
+        randomInt(minYear, maxYear), // Year between minYear and maxYear
+        randomInt(0, 11),   // Month between 0 and 11
+        randomInt(1, 31),   // Day between 1 and 31
+        randomInt(0, 23),   // Hour between 0 and 23
+        randomInt(0, 59),   // Minute between 0 and 59
+        randomInt(0, 59)    // Second between 0 and 59
+      ))
+
+      const dateAsRfc850 = rfc850(date)
+      deepStrictEqual(parseHttpDate(dateAsRfc850), date, `Fuzzing failed for: ${dateAsRfc850}`)
     }
   })
 })
