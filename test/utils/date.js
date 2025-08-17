@@ -42,6 +42,13 @@ describe('parseHttpDate', () => {
   test('RFC850', () => {
     const values = {
       'Sunday, 06-Nov-94 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
+      'Monday, 06-Nov-94 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
+      'Tuesday, 06-Nov-94 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
+      'Wednesday, 06-Nov-94 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
+      'Thursday, 06-Nov-94 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
+      'Friday, 06-Nov-94 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
+      'Saturday, 06-Nov-94 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
+
       'Thursday, 18-Aug-50 02:01:18 GMT': new Date(Date.UTC(2050, 7, 18, 2, 1, 18)),
       'Wednesday, 11-Dec-24 23:20:57 GMT': new Date(Date.UTC(2024, 11, 11, 23, 20, 57)),
       'Wednesday, 11-Dec-24 23:20:57 UTC': undefined, // UTC is not a valid timezone
