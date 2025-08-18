@@ -1,12 +1,11 @@
 'use strict'
 
 const { randomFillSync } = require('node:crypto')
-const { setTimeout: sleep } = require('node:timers/promises')
+const { setTimeout: sleep, setImmediate: nextTick } = require('node:timers/promises')
 const { test } = require('node:test')
-const { fetch, Request, Agent, setGlobalDispatcher } = require('../..')
+const { fetch, Request, Response, Agent, setGlobalDispatcher } = require('../..')
 const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
-const assert = require('node:assert')
 
 const blob = randomFillSync(new Uint8Array(1024 * 512))
 
@@ -20,14 +19,31 @@ test('test finalizer cloned request', async () => {
 
   const request = new Request('http://localhost', { method: 'POST', body: 'Hello' })
 
-  for (let i = 0; i < 800; ++i) request.clone()
+  request.clone()
 
-  await sleep(50)
-
+  await nextTick()
   // eslint-disable-next-line no-undef
-  gc(true)
+  gc()
 
-  assert.strictEqual(request.bodyUsed, false)
+  await nextTick()
+  await request.arrayBuffer() // check consume body
+})
+
+test('test finalizer cloned response', async () => {
+  if (!hasGC) {
+    throw new Error('gc is not available. Run with \'--expose-gc\'.')
+  }
+
+  const response = new Response('Hello')
+
+  response.clone()
+
+  await nextTick()
+  // eslint-disable-next-line no-undef
+  gc()
+
+  await nextTick()
+  await response.arrayBuffer() // check consume body
 })
 
 test('does not need the body to be consumed to continue', { timeout: 180_000 }, async (t) => {
