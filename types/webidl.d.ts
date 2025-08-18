@@ -1,4 +1,5 @@
 // These types are not exported, and are only used internally
+import * as undici from './index'
 
 /**
  * Take in an unknown value and return one that is of type T
@@ -15,9 +16,12 @@ interface ConvertToIntOpts {
 }
 
 interface WebidlErrors {
+  /**
+   * @description Instantiate an error
+   */
   exception (opts: { header: string, message: string }): TypeError
   /**
-   * @description Throw an error when conversion from one type to another has failed
+   * @description Instantiate an error when conversion from one type to another has failed
    */
   conversionFailed (opts: {
     prefix: string
@@ -49,7 +53,7 @@ interface WebidlUtil {
   /**
    * @see https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values
    */
-  Type (object: unknown): WebIDLTypes
+  Type (object: unknown): WebIDLTypes[keyof WebIDLTypes]
 
   TypeValueToString (o: unknown):
     | 'Undefined'
@@ -74,7 +78,7 @@ interface WebidlUtil {
   ): number
 
   /**
-   * @see https://webidl.spec.whatwg.org/#abstract-opdef-converttoint
+   * @see https://webidl.spec.whatwg.org/#abstract-opdef-integerpart
    */
   IntegerPart (N: number): number
 
@@ -82,6 +86,14 @@ interface WebidlUtil {
    * Stringifies {@param V}
    */
   Stringify (V: any): string
+
+  MakeTypeAssertion <I>(I: I): (arg: any) => arg is I
+
+  /**
+   * Mark a value as uncloneable for Node.js.
+   * This is only effective in some newer Node.js versions.
+   */
+  markAsUncloneable (V: any): void
 }
 
 interface WebidlConverters {
@@ -170,13 +182,41 @@ interface WebidlConverters {
 
   ['record<ByteString, ByteString>']: RecordConverter<string, string>
 
+  /**
+  * @see https://fetch.spec.whatwg.org/#requestinfo
+  */
+  RequestInfo (V: unknown): undici.Request | string
+
+  /**
+   * @see https://fetch.spec.whatwg.org/#requestinit
+   */
+  RequestInit (V: unknown): undici.RequestInit
+
   [Key: string]: (...args: any[]) => unknown
+}
+
+type WebidlIsFunction<T> = (arg: any) => arg is T
+
+interface WebidlIs {
+  Request: WebidlIsFunction<undici.Request>
+  Response: WebidlIsFunction<undici.Response>
+  ReadableStream: WebidlIsFunction<ReadableStream>
+  Blob: WebidlIsFunction<Blob>
+  URLSearchParams: WebidlIsFunction<URLSearchParams>
+  File: WebidlIsFunction<File>
+  FormData: WebidlIsFunction<undici.FormData>
+  URL: WebidlIsFunction<URL>
+  WebSocketError: WebidlIsFunction<undici.WebSocketError>
+  AbortSignal: WebidlIsFunction<AbortSignal>
+  MessagePort: WebidlIsFunction<MessagePort>
+  USVString: WebidlIsFunction<string>
 }
 
 export interface Webidl {
   errors: WebidlErrors
   util: WebidlUtil
   converters: WebidlConverters
+  is: WebidlIs
 
   /**
    * @description Performs a brand-check on {@param V} to ensure it is a
@@ -184,7 +224,7 @@ export interface Webidl {
    */
   brandCheck <Interface extends new () => unknown>(V: unknown, cls: Interface): asserts V is Interface
 
-  brandCheckMultiple <Interfaces extends (new () => unknown)[]> (V: unknown, list: Interfaces): asserts V is Interfaces[number]
+  brandCheckMultiple <Interfaces extends (new () => unknown)[]> (list: Interfaces): (V: any) => asserts V is Interfaces[number]
 
   /**
    * @see https://webidl.spec.whatwg.org/#es-sequence
@@ -207,11 +247,11 @@ export interface Webidl {
    * Similar to {@link Webidl.brandCheck} but allows skipping the check if third party
    * interfaces are allowed.
    */
-  interfaceConverter <Interface>(cls: Interface): (
+  interfaceConverter <Interface>(typeCheck: WebidlIsFunction<Interface>, name: string): (
     V: unknown,
     prefix: string,
     argument: string
-  ) => asserts V is typeof cls
+  ) => asserts V is Interface
 
   // TODO(@KhafraDev): a type could likely be implemented that can infer the return type
   // from the converters given?

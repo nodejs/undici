@@ -16,7 +16,7 @@ describe('Ternary Search Tree', () => {
   test('looking up not inserted key returns null', () => {
     const tst = new TernarySearchTree()
     tst.insert('a', 'a')
-    assert.strictEqual(tst.lookup(Buffer.from('non-existant')), null)
+    assert.strictEqual(tst.lookup(Buffer.from('non-existent')), null)
   })
 
   test('not ascii string', () => {

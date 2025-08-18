@@ -26,7 +26,7 @@ test('Headers initialization', async (t) => {
       throws(() => new Headers(['undici', 'fetch', 'fetch']), TypeError)
       throws(
         () => new Headers([0, 1, 2]),
-        TypeError('Headers contructor: init[0] (0) is not iterable.')
+        TypeError('Headers constructor: init[0] (0) is not iterable.')
       )
     })
 
@@ -41,7 +41,7 @@ test('Headers initialization', async (t) => {
       const init = ['undici', 'fetch', 'fetch', 'undici']
       throws(
         () => new Headers(init),
-        TypeError('Headers contructor: init[0] ("undici") is not iterable.')
+        TypeError('Headers constructor: init[0] ("undici") is not iterable.')
       )
     })
   })
@@ -694,7 +694,7 @@ test('Headers.prototype.getSetCookie', async (t) => {
 
   // https://github.com/nodejs/undici/issues/1935
   await t.test('When Headers are cloned, so are the cookies (single entry)', async (t) => {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('Set-Cookie', 'test=onetwo')
       res.end('Hello World!')
     }).listen(0)
@@ -710,7 +710,7 @@ test('Headers.prototype.getSetCookie', async (t) => {
   })
 
   await t.test('When Headers are cloned, so are the cookies (multiple entries)', async (t) => {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('Set-Cookie', ['test=onetwo', 'test=onetwothree'])
       res.end('Hello World!')
     }).listen(0)
@@ -766,4 +766,17 @@ test('Invalid Symbol.iterators', (t) => {
 
     new Headers(obj) // eslint-disable-line no-new
   }, TypeError)
+})
+
+// https://github.com/nodejs/undici/issues/3829
+test('Invalid key/value records passed to constructor (issue #3829)', (t) => {
+  assert.throws(
+    () => new Headers({ [Symbol('x-fake-header')]: '??' }),
+    new TypeError('Headers constructor: Key Symbol(x-fake-header) in init is a symbol, which cannot be converted to a ByteString.')
+  )
+
+  assert.throws(
+    () => new Headers({ 'x-fake-header': Symbol('why is this here?') }),
+    new TypeError('Headers constructor: init["x-fake-header"] is a symbol, which cannot be converted to a ByteString.')
+  )
 })

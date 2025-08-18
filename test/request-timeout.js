@@ -28,10 +28,10 @@ beforeEach(() => {
 test('request timeout', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
-    }, 1000)
+    }, 2000)
   })
   after(() => server.close())
 
@@ -50,7 +50,7 @@ test('request timeout', async (t) => {
 test('request timeout with readable body', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
   })
   after(() => server.close())
 
@@ -80,7 +80,7 @@ test('body timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('hello')
   })
   after(() => server.close())
@@ -115,7 +115,7 @@ test('overridden request timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
@@ -148,7 +148,7 @@ test('overridden body timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('hello')
   })
   after(() => server.close())
@@ -183,7 +183,7 @@ test('With EE signal', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
@@ -219,7 +219,7 @@ test('With abort-controller signal', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
@@ -256,7 +256,7 @@ test('Abort before timeout (EE)', async (t) => {
   after(() => clock.uninstall())
 
   const ee = new EventEmitter()
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
@@ -292,7 +292,7 @@ test('Abort before timeout (abort-controller)', async (t) => {
   after(() => clock.uninstall())
 
   const abortController = new AbortController()
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
@@ -327,7 +327,7 @@ test('Timeout with pipelining', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
@@ -368,7 +368,7 @@ test('Global option', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
@@ -403,7 +403,7 @@ test('Request options overrides global option', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 100)
@@ -432,7 +432,7 @@ test('Request options overrides global option', async (t) => {
 test('client.destroy should cancel the timeout', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('hello')
   })
   after(() => server.close())
@@ -463,7 +463,7 @@ test('client.close should wait for the timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
   })
   after(() => server.close())
 
@@ -543,7 +543,7 @@ test('Disable request timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 32e3)
@@ -586,7 +586,7 @@ test('Disable request timeout for a single request', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 32e3)
@@ -629,7 +629,7 @@ test('stream timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 301e3)
@@ -665,7 +665,7 @@ test('stream custom timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       res.end('hello')
     }, 31e3)
@@ -703,7 +703,7 @@ test('pipeline timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       req.pipe(res)
     }, 301e3)
@@ -758,7 +758,7 @@ test('pipeline timeout', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     setTimeout(() => {
       req.pipe(res)
     }, 31e3)
@@ -815,7 +815,7 @@ test('client.close should not deadlock', async (t) => {
   })
   after(() => clock.uninstall())
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
   })
   after(() => server.close())
 

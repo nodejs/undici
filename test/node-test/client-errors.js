@@ -1,12 +1,13 @@
 'use strict'
 
-const { test } = require('node:test')
 const assert = require('node:assert')
+const https = require('node:https')
+const net = require('node:net')
+const { Readable } = require('node:stream')
+const { test, after } = require('node:test')
 const { Client, Pool, errors } = require('../..')
 const { createServer } = require('node:http')
-const https = require('node:https')
-const pem = require('https-pem')
-const { Readable } = require('node:stream')
+const pem = require('@metcoder95/https-pem')
 const { tspl } = require('@matteo.collina/tspl')
 
 const { kSocket } = require('../../lib/core/symbols')
@@ -19,7 +20,7 @@ class IteratorError extends Error {}
 test('GET errors and reconnect with pipelining 1', async (t) => {
   const p = tspl(t, { plan: 9 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
 
   server.once('request', (req, res) => {
     // first request received, destroying
@@ -64,7 +65,7 @@ test('GET errors and reconnect with pipelining 1', async (t) => {
 })
 
 test('GET errors and reconnect with pipelining 3', async (t) => {
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const requestsThatWillError = 3
   let requests = 0
 
@@ -125,7 +126,7 @@ function errorAndPipelining (type) {
   test(`POST with a ${type} that errors and pipelining 1 should reconnect`, async (t) => {
     const p = tspl(t, { plan: 12 })
 
-    const server = createServer()
+    const server = createServer({ joinDuplicateHeaders: true })
     server.once('request', (req, res) => {
       p.strictEqual('/', req.url)
       p.strictEqual('POST', req.method)
@@ -200,7 +201,7 @@ function errorAndChunkedEncodingPipelining (type) {
   test(`POST with chunked encoding, ${type} body that errors and pipelining 1 should reconnect`, async (t) => {
     const p = tspl(t, { plan: 12 })
 
-    const server = createServer()
+    const server = createServer({ joinDuplicateHeaders: true })
     server.once('request', (req, res) => {
       p.strictEqual('/', req.url)
       p.strictEqual('POST', req.method)
@@ -400,6 +401,46 @@ test('invalid options throws', (t, done) => {
   }
 
   try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: 0
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: 0
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: -10
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      maxHeaderSize: 1.5
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'invalid maxHeaderSize')
+  }
+
+  try {
     new Client(1) // eslint-disable-line
     assert.ok(0)
   } catch (err) {
@@ -559,7 +600,7 @@ test('invalid options throws', (t, done) => {
 test('POST which fails should error response', async (t) => {
   const p = tspl(t, { plan: 6 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     req.once('data', () => {
       res.destroy()
@@ -652,7 +693,7 @@ test('client destroy cleanup', async (t) => {
 
   const _err = new Error('kaboom')
   let client
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.once('request', (req, res) => {
     req.once('data', () => {
       client.destroy(_err, (err) => {
@@ -687,7 +728,7 @@ test('client destroy cleanup', async (t) => {
 test('throwing async-iterator causes error', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(Buffer.alloc(4 + 1, 'a'))
   })
   t.after(closeServerAsPromise(server))
@@ -716,7 +757,7 @@ test('client async-iterator destroy cleanup', async (t) => {
 
   const _err = new Error('kaboom')
   let client
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.once('request', (req, res) => {
     req.once('data', () => {
       client.destroy(_err, (err) => {
@@ -747,7 +788,7 @@ test('client async-iterator destroy cleanup', async (t) => {
 test('GET errors body', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.once('request', (req, res) => {
     res.write('asd')
     setTimeout(() => {
@@ -775,7 +816,7 @@ test('GET errors body', async (t) => {
 test('validate request body', async (t) => {
   const p = tspl(t, { plan: 6 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   t.after(closeServerAsPromise(server))
@@ -843,7 +884,7 @@ function socketFailWrite (type) {
   test(`socket fail while writing ${type} request body`, async (t) => {
     const p = tspl(t, { plan: 2 })
 
-    const server = createServer()
+    const server = createServer({ joinDuplicateHeaders: true })
     server.once('request', (req, res) => {
     })
     t.after(closeServerAsPromise(server))
@@ -883,7 +924,7 @@ function socketFailEndWrite (type) {
   test(`socket fail while ending ${type} request body`, async (t) => {
     const p = tspl(t, { plan: 3 })
 
-    const server = createServer()
+    const server = createServer({ joinDuplicateHeaders: true })
     server.once('request', (req, res) => {
       res.end()
     })
@@ -930,7 +971,7 @@ socketFailEndWrite(consts.ASYNC_ITERATOR)
 test('queued request should not fail on socket destroy', async (t) => {
   const p = tspl(t, { plan: 4 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     res.end()
   })
@@ -969,7 +1010,7 @@ test('queued request should not fail on socket destroy', async (t) => {
 test('queued request should fail on client destroy', async (t) => {
   const p = tspl(t, { plan: 6 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     res.end()
   })
@@ -1013,7 +1054,7 @@ test('queued request should fail on client destroy', async (t) => {
 test('retry idempotent inflight', async (t) => {
   const p = tspl(t, { plan: 3 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     res.end()
   })
@@ -1120,7 +1161,7 @@ test('default port for http and https', async (t) => {
 test('CONNECT throws in next tick', async (t) => {
   const p = tspl(t, { plan: 3 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     res.end()
   })
@@ -1184,7 +1225,7 @@ test('invalid signal', async (t) => {
 test('invalid body chunk does not crash', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     res.end()
   })
@@ -1228,7 +1269,7 @@ test('socket errors', async (t) => {
 
 test('headers overflow', (t, done) => {
   const p = tspl(t, { plan: 2 })
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     res.writeHead(200, {
       'x-test-1': '1',
@@ -1255,7 +1296,7 @@ test('headers overflow', (t, done) => {
 test('SocketError should expose socket details (net)', async (t) => {
   const p = tspl(t, { plan: 8 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
 
   server.once('request', (req, res) => {
     res.destroy()
@@ -1289,7 +1330,7 @@ test('SocketError should expose socket details (net)', async (t) => {
 test('SocketError should expose socket details (tls)', async (t) => {
   const p = tspl(t, { plan: 8 })
 
-  const server = https.createServer(pem)
+  const server = https.createServer({ ...pem, joinDuplicateHeaders: true })
 
   server.once('request', (req, res) => {
     res.destroy()
@@ -1323,4 +1364,28 @@ test('SocketError should expose socket details (tls)', async (t) => {
   })
 
   await p.completed
+})
+
+test('parser error', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const server = net.createServer({ joinDuplicateHeaders: true })
+  server.once('connection', (socket) => {
+    socket.write('asd\n\r213123')
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    client.request({ path: '/', method: 'GET' }, (err) => {
+      t.ok(err)
+      client.close((err) => {
+        t.ifError(err)
+      })
+    })
+  })
+
+  await t.completed
 })

@@ -8,7 +8,7 @@ export default ProxyAgent
 declare class ProxyAgent extends Dispatcher {
   constructor (options: ProxyAgent.Options | string)
 
-  dispatch (options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandlers): boolean
+  dispatch (options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandler): boolean
   close (): Promise<void>
 }
 
@@ -24,5 +24,6 @@ declare namespace ProxyAgent {
     requestTls?: buildConnector.BuildOptions;
     proxyTls?: buildConnector.BuildOptions;
     clientFactory?(origin: URL, opts: object): Dispatcher;
+    proxyTunnel?: boolean;
   }
 }

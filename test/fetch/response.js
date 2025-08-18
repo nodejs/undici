@@ -9,9 +9,6 @@ const {
   Response,
   FormData
 } = require('../../')
-const { fromInnerResponse, makeResponse } = require('../../lib/web/fetch/response')
-const { kState, kHeaders } = require('../../lib/web/fetch/symbols')
-const { getHeadersGuard, getHeadersList } = require('../../lib/web/fetch/headers')
 
 test('arg validation', async () => {
   // constructor
@@ -270,19 +267,6 @@ test('Check the Content-Type of invalid formData', async (t) => {
     const response = new Response(formData, { headers: { 'content-type': 'multipart/form-data_' } })
     await rejects(response.formData(), TypeError)
   })
-})
-
-test('fromInnerResponse', () => {
-  const innerResponse = makeResponse({
-    urlList: [new URL('http://asd')]
-  })
-
-  const response = fromInnerResponse(innerResponse, 'immutable')
-
-  // check property
-  assert.strictEqual(response[kState], innerResponse)
-  assert.strictEqual(getHeadersList(response[kHeaders]), innerResponse.headersList)
-  assert.strictEqual(getHeadersGuard(response[kHeaders]), 'immutable')
 })
 
 test('clone body garbage collection', async () => {

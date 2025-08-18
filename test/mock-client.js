@@ -198,7 +198,7 @@ test('MockClient - close should run without error', async (t) => {
 test('MockClient - should be able to set as globalDispatcher', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -234,7 +234,7 @@ test('MockClient - should be able to set as globalDispatcher', async (t) => {
 test('MockClient - should support query params', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -275,7 +275,7 @@ test('MockClient - should support query params', async (t) => {
 test('MockClient - should intercept query params with hardcoded path', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -315,7 +315,7 @@ test('MockClient - should intercept query params with hardcoded path', async (t)
 test('MockClient - should intercept query params regardless of key ordering', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -363,7 +363,7 @@ test('MockClient - should intercept query params regardless of key ordering', as
 test('MockClient - should be able to use as a local dispatcher', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -399,7 +399,7 @@ test('MockClient - should be able to use as a local dispatcher', async (t) => {
 test('MockClient - basic intercept with MockClient.request', async (t) => {
   t = tspl(t, { plan: 5 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
@@ -439,4 +439,44 @@ test('MockClient - basic intercept with MockClient.request', async (t) => {
   t.deepStrictEqual(jsonResponse, {
     foo: 'bar'
   })
+})
+
+test('MockClient - cleans mocks', async (t) => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  after(() => server.close())
+
+  await promisify(server.listen.bind(server))(0)
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent({ connections: 1 })
+  after(() => mockAgent.close())
+
+  const mockClient = mockAgent.get(baseUrl)
+  t.ok(mockClient instanceof MockClient)
+  setGlobalDispatcher(mockClient)
+
+  mockClient.intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(500, () => {
+    t.fail('should not be called')
+  })
+
+  mockClient.cleanMocks()
+
+  t.strictEqual(mockClient[kDispatches].length, 0)
+
+  const { statusCode, body } = await request(`${baseUrl}/foo`, {
+    method: 'GET'
+  })
+  t.strictEqual(statusCode, 200)
+
+  const response = await getResponse(body)
+  t.deepStrictEqual(response, 'hello')
 })

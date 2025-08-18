@@ -18,7 +18,7 @@ function close (server) {
 
 function startServer (handler) {
   return new Promise(resolve => {
-    const server = createServer(handler)
+    const server = createServer({ joinDuplicateHeaders: true }, handler)
 
     server.listen(0, () => {
       resolve(`localhost:${server.address().port}`)

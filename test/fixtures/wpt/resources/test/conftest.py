@@ -55,6 +55,7 @@ def pytest_configure(config):
 
     config.driver = webdriver.Session("localhost", 4444,
                                       capabilities=capabilities)
+    config.driver.start()
     config.add_cleanup(config.driver.end)
 
     # Although the name of the `_create_unverified_context` method suggests
@@ -263,4 +264,4 @@ class HTMLItem(pytest.Item):
     @staticmethod
     def _assert_sequence(nums):
         if nums and len(nums) > 0:
-            assert nums == list(range(1, nums[-1] + 1))
+            assert nums == list(range(nums[-1] + 1))

@@ -8,7 +8,6 @@ const zlib = require('node:zlib')
 const stream = require('node:stream')
 const vm = require('node:vm')
 const crypto = require('node:crypto')
-const { Blob } = require('node:buffer')
 
 const {
   fetch,
@@ -23,6 +22,8 @@ const HeadersOrig = require('../../lib/web/fetch/headers.js').Headers
 const ResponseOrig = require('../../lib/web/fetch/response.js').Response
 const RequestOrig = require('../../lib/web/fetch/request.js').Request
 const TestServer = require('./utils/server.js')
+const { createServer } = require('node:http')
+const { default: tspl } = require('@matteo.collina/tspl')
 
 const {
   Uint8Array: VMUint8Array
@@ -735,7 +736,7 @@ describe('node-fetch', () => {
       })
       .catch(() => { })
       .then(new Promise((resolve) => {
-        // Wait a few ms to see if a uncaught error occurs
+        // Wait a few ms to see if an uncaught error occurs
         setTimeout(() => {
           resolve()
         }, 20)
@@ -1231,7 +1232,7 @@ describe('node-fetch', () => {
     })
   })
 
-  // Body should been cloned...
+  // Body should be cloned...
   it('constructing a Request/Response with URLSearchParams and mutating it should not affected body', () => {
     const parameters = new URLSearchParams()
     const request = new Request(`${base}inspect`, { method: 'POST', body: parameters })
@@ -1617,15 +1618,23 @@ describe('node-fetch', () => {
     })
   })
 
-  it('should support http request', { timeout: 5000 }, function () {
-    const url = 'https://github.com/'
-    const options = {
-      method: 'HEAD'
-    }
-    return fetch(url, options).then(res => {
-      assert.strictEqual(res.status, 200)
-      assert.strictEqual(res.ok, true)
+  it('should support http request', { timeout: 5000 }, async function (t) {
+    t = tspl(t, { plan: 2 })
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.end()
     })
+    after(() => server.close())
+    server.listen(0, () => {
+      const url = `http://localhost:${server.address().port}`
+      const options = {
+        method: 'HEAD'
+      }
+      fetch(url, options).then(res => {
+        t.strictEqual(res.status, 200)
+        t.strictEqual(res.ok, true)
+      })
+    })
+    await t.completed
   })
 
   it('should encode URLs as UTF-8', async () => {

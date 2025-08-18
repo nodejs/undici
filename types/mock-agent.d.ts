@@ -2,6 +2,7 @@ import Agent from './agent'
 import Dispatcher from './dispatcher'
 import { Interceptable, MockInterceptor } from './mock-interceptor'
 import MockDispatch = MockInterceptor.MockDispatch
+import { MockCallHistory } from './mock-call-history'
 
 export default MockAgent
 
@@ -17,7 +18,7 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   get<TInterceptable extends Interceptable>(origin: RegExp): TInterceptable
   get<TInterceptable extends Interceptable>(origin: ((origin: string) => boolean)): TInterceptable
   /** Dispatches a mocked request. */
-  dispatch (options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandlers): boolean
+  dispatch (options: Agent.DispatchOptions, handler: Dispatcher.DispatchHandler): boolean
   /** Closes the mock agent and waits for registered mock pools and clients to also close before resolving. */
   close (): Promise<void>
   /** Disables mocking in MockAgent. */
@@ -31,6 +32,14 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   enableNetConnect (host: ((host: string) => boolean)): void
   /** Causes all requests to throw when requests are not matched in a MockAgent intercept. */
   disableNetConnect (): void
+  /** get call history. returns the MockAgent call history or undefined if the option is not enabled. */
+  getCallHistory (): MockCallHistory | undefined
+  /** clear every call history. Any MockCallHistoryLog will be deleted on the MockCallHistory instance */
+  clearCallHistory (): void
+  /** Enable call history. Any subsequence calls will then be registered. */
+  enableCallHistory (): this
+  /** Disable call history. Any subsequence calls will then not be registered. */
+  disableCallHistory (): this
   pendingInterceptors (): PendingInterceptor[]
   assertNoPendingInterceptors (options?: {
     pendingInterceptorsFormatter?: PendingInterceptorsFormatter;
@@ -46,5 +55,14 @@ declare namespace MockAgent {
   export interface Options extends Agent.Options {
     /** A custom agent to be encapsulated by the MockAgent. */
     agent?: Dispatcher;
+
+    /** Ignore trailing slashes in the path */
+    ignoreTrailingSlash?: boolean;
+
+    /** Accept URLs with search parameters using non standard syntaxes. default false */
+    acceptNonStandardSearchParameters?: boolean;
+
+    /** Enable call history. you can either call MockAgent.enableCallHistory(). default false */
+    enableCallHistory?: boolean
   }
 }

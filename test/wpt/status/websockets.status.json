@@ -1,7 +1,35 @@
 {
   "stream": {
     "tentative": {
-      "skip": true
+      "backpressure-send.any.js": {
+        "note": "Deno also fails this test",
+        "fail": [
+          "backpressure should be applied to sent messages"
+        ]
+      },
+      "backpressure-receive.any.js": {
+        "fail": [
+          "backpressure should be applied to received messages"
+        ]
+      },
+      "abort.any.js": {
+        "note": "Relies on exact timing - ie. aborting *during* the handshake.",
+        "flaky": [
+          "abort during handshake should work"
+        ]
+      },
+      "write.any.js": {
+        "note": "TODO: investigate failure",
+        "skip": true
+      },
+      "remote-close.any.js": {
+        "note": "TODO: investigate failure in Node 24",
+        "skip": true
+      },
+      "websocket-error.any.js": {
+        "note": "TODO: investigate failure in Node 24",
+        "skip": true
+      }
     }
   },
   "interfaces": {

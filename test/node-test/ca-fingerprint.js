@@ -4,7 +4,7 @@ const crypto = require('node:crypto')
 const https = require('node:https')
 const { test } = require('node:test')
 const { Client, buildConnector } = require('../..')
-const pem = require('https-pem')
+const pem = require('@metcoder95/https-pem')
 const { tspl } = require('@matteo.collina/tspl')
 
 const caFingerprint = getFingerprint(pem.cert.toString()
@@ -17,7 +17,7 @@ const caFingerprint = getFingerprint(pem.cert.toString()
 test('Validate CA fingerprint with a custom connector', async t => {
   const p = tspl(t, { plan: 2 })
 
-  const server = https.createServer(pem, (req, res) => {
+  const server = https.createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
@@ -64,7 +64,7 @@ test('Validate CA fingerprint with a custom connector', async t => {
 test('Bad CA fingerprint with a custom connector', async t => {
   const p = tspl(t, { plan: 2 })
 
-  const server = https.createServer(pem, (req, res) => {
+  const server = https.createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })

@@ -4,7 +4,6 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { FormData, Response, Request } = require('../../')
-const { Blob, File } = require('node:buffer')
 const { isFormDataLike } = require('../../lib/core/util')
 
 test('arg validation', () => {
@@ -342,7 +341,7 @@ test('FormData should be compatible with third-party libraries', (t) => {
 })
 
 test('arguments', () => {
-  assert.strictEqual(FormData.constructor.length, 1)
+  assert.strictEqual(FormData.length, 0)
   assert.strictEqual(FormData.prototype.append.length, 2)
   assert.strictEqual(FormData.prototype.delete.length, 1)
   assert.strictEqual(FormData.prototype.get.length, 1)

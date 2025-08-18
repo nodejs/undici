@@ -10,11 +10,11 @@ const { RetryHandler, Client } = require('..')
 const { RequestHandler } = require('../lib/api/api-request')
 
 test('Should retry status code', async t => {
-  t = tspl(t, { plan: 4 })
+  t = tspl(t, { plan: 3 })
 
   let counter = 0
   const chunks = []
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const dispatchOptions = {
     retryOptions: {
       retry: (err, { state, opts }, done) => {
@@ -64,9 +64,6 @@ test('Should retry status code', async t => {
         onConnect () {
           t.ok(true, 'pass')
         },
-        onBodySent () {
-          t.ok(true, 'pass')
-        },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.strictEqual(status, 200)
           return true
@@ -108,11 +105,11 @@ test('Should retry status code', async t => {
 })
 
 test('Should account for network and response errors', async t => {
-  t = tspl(t, { plan: 4 })
+  t = tspl(t, { plan: 3 })
 
   let counter = 0
   const chunks = []
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const dispatchOptions = {
     retryOptions: {
       retry: (err, { state, opts }, done) => {
@@ -162,9 +159,6 @@ test('Should account for network and response errors', async t => {
         onConnect () {
           t.ok(true, 'pass')
         },
-        onBodySent () {
-          t.ok(true, 'pass')
-        },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
           t.strictEqual(status, 200)
           return true
@@ -206,8 +200,8 @@ test('Should account for network and response errors', async t => {
 })
 
 test('Issue #3288 - request with body (asynciterable)', async t => {
-  t = tspl(t, { plan: 6 })
-  const server = createServer()
+  t = tspl(t, { plan: 4 })
+  const server = createServer({ joinDuplicateHeaders: true })
   const dispatchOptions = {
     method: 'POST',
     path: '/',
@@ -236,11 +230,7 @@ test('Issue #3288 - request with body (asynciterable)', async t => {
         onConnect () {
           t.ok(true, 'pass')
         },
-        onBodySent () {
-          t.ok(true, 'pass')
-        },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
-          t.strictEqual(status, 500)
           return true
         },
         onData (chunk) {
@@ -274,11 +264,11 @@ test('Issue #3288 - request with body (asynciterable)', async t => {
 })
 
 test('Should use retry-after header for retries', async t => {
-  t = tspl(t, { plan: 4 })
+  t = tspl(t, { plan: 3 })
 
   let counter = 0
   const chunks = []
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   let checkpoint
   const dispatchOptions = {
     method: 'PUT',
@@ -315,9 +305,6 @@ test('Should use retry-after header for retries', async t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -360,11 +347,11 @@ test('Should use retry-after header for retries', async t => {
 })
 
 test('Should use retry-after header for retries (date)', async t => {
-  t = tspl(t, { plan: 4 })
+  t = tspl(t, { plan: 3 })
 
   let counter = 0
   const chunks = []
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   let checkpoint
   const dispatchOptions = {
     method: 'PUT',
@@ -377,19 +364,19 @@ test('Should use retry-after header for retries (date)', async t => {
   server.on('request', (req, res) => {
     switch (counter) {
       case 0:
+        checkpoint = Date.now()
         res.writeHead(429, {
           'retry-after': new Date(
-            new Date().setSeconds(new Date().getSeconds() + 1)
+            checkpoint + 2000
           ).toUTCString()
         })
         res.end('rate limit')
-        checkpoint = Date.now()
         counter++
         return
       case 1:
         res.writeHead(200)
         res.end('hello world!')
-        t.ok(Date.now() - checkpoint >= 1)
+        t.ok(Date.now() - checkpoint >= 1000)
         counter++
         return
       default:
@@ -403,9 +390,6 @@ test('Should use retry-after header for retries (date)', async t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -452,7 +436,7 @@ test('Should retry with defaults', async t => {
 
   let counter = 0
   const chunks = []
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const dispatchOptions = {
     method: 'GET',
     path: '/',
@@ -488,9 +472,6 @@ test('Should retry with defaults', async t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -533,14 +514,14 @@ test('Should retry with defaults', async t => {
 })
 
 test('Should handle 206 partial content', async t => {
-  t = tspl(t, { plan: 8 })
+  t = tspl(t, { plan: 6 })
 
   const chunks = []
   let counter = 0
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
       t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
@@ -586,13 +567,7 @@ test('Should handle 206 partial content', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onRequestSent () {
-          t.ok(true, 'pass')
-        },
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, _resume, _statusMessage) {
@@ -636,13 +611,13 @@ test('Should handle 206 partial content', async t => {
 })
 
 test('Should handle 206 partial content - bad-etag', async t => {
-  t = tspl(t, { plan: 8 })
+  t = tspl(t, { plan: 7 })
 
   const chunks = []
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
       t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
@@ -680,11 +655,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
           onConnect () {
             t.ok(true, 'pass')
           },
-          onBodySent () {
-            t.ok(true, 'pass')
-          },
           onHeaders (_status, _rawHeaders, _resume, _statusMessage) {
-            t.ok(true, 'pass')
             return true
           },
           onData (chunk) {
@@ -728,7 +699,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
 
 test('retrying a request with a body', async t => {
   let counter = 0
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const dispatchOptions = {
     retryOptions: {
       retry: (err, { state, opts }, done) => {
@@ -807,7 +778,7 @@ test('retrying a request with a body', async t => {
 
 test('retrying a request with a body (stream)', async t => {
   let counter = 0
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const dispatchOptions = {
     retryOptions: {
       retry: (err, { state, opts }, done) => {
@@ -874,7 +845,7 @@ test('retrying a request with a body (stream)', async t => {
 
 test('retrying a request with a body (buffer)', async t => {
   let counter = 0
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   const dispatchOptions = {
     retryOptions: {
       retry: (err, { state, opts }, done) => {
@@ -947,7 +918,7 @@ test('retrying a request with a body (buffer)', async t => {
 test('should not error if request is not meant to be retried', async t => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     res.writeHead(400)
     res.end('Bad request')
@@ -970,9 +941,6 @@ test('should not error if request is not meant to be retried', async t => {
       dispatch: client.dispatch.bind(client),
       handler: {
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -1018,7 +986,7 @@ test('Should be able to properly pass the minTimeout to the RetryContext when co
   t = tspl(t, { plan: 2 })
 
   let counter = 0
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     switch (counter) {
       case 0:
@@ -1087,14 +1055,14 @@ test('Should be able to properly pass the minTimeout to the RetryContext when co
 })
 
 test('Issue#2986 - Handle custom 206', async t => {
-  t = tspl(t, { plan: 8 })
+  t = tspl(t, { plan: 6 })
 
   const chunks = []
   let counter = 0
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
       t.deepStrictEqual(req.headers.range, 'bytes=0-3')
       res.setHeader('etag', 'asd')
@@ -1140,13 +1108,7 @@ test('Issue#2986 - Handle custom 206', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onRequestSent () {
-          t.ok(true, 'pass')
-        },
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -1191,14 +1153,14 @@ test('Issue#2986 - Handle custom 206', async t => {
 })
 
 test('Issue#3128 - Support if-match', async t => {
-  t = tspl(t, { plan: 9 })
+  t = tspl(t, { plan: 7 })
 
   const chunks = []
   let counter = 0
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
       t.deepStrictEqual(req.headers.range, 'bytes=0-3')
       res.setHeader('etag', 'asd')
@@ -1246,13 +1208,7 @@ test('Issue#3128 - Support if-match', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onRequestSent () {
-          t.ok(true, 'pass')
-        },
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -1297,14 +1253,14 @@ test('Issue#3128 - Support if-match', async t => {
 })
 
 test('Issue#3128 - Should ignore weak etags', async t => {
-  t = tspl(t, { plan: 9 })
+  t = tspl(t, { plan: 7 })
 
   const chunks = []
   let counter = 0
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
       t.deepStrictEqual(req.headers.range, 'bytes=0-3')
       res.setHeader('etag', 'W/asd')
@@ -1352,13 +1308,7 @@ test('Issue#3128 - Should ignore weak etags', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onRequestSent () {
-          t.ok(true, 'pass')
-        },
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -1403,14 +1353,14 @@ test('Issue#3128 - Should ignore weak etags', async t => {
 })
 
 test('Weak etags are ignored on range-requests', async t => {
-  t = tspl(t, { plan: 9 })
+  t = tspl(t, { plan: 7 })
 
   const chunks = []
   let counter = 0
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
       t.deepStrictEqual(req.headers.range, 'bytes=0-3')
       res.setHeader('etag', 'W/asd')
@@ -1458,13 +1408,7 @@ test('Weak etags are ignored on range-requests', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onRequestSent () {
-          t.ok(true, 'pass')
-        },
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, resume, _statusMessage) {
@@ -1509,13 +1453,13 @@ test('Weak etags are ignored on range-requests', async t => {
 })
 
 test('Should throw RequestRetryError when Content-Range mismatch', async t => {
-  t = tspl(t, { plan: 10 })
+  t = tspl(t, { plan: 8 })
 
   const chunks = []
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
       t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
@@ -1559,13 +1503,7 @@ test('Should throw RequestRetryError when Content-Range mismatch', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onRequestSent () {
-          t.ok(true, 'pass')
-        },
         onConnect () {
-          t.ok(true, 'pass')
-        },
-        onBodySent () {
           t.ok(true, 'pass')
         },
         onHeaders (status, _rawHeaders, _resume, _statusMessage) {
@@ -1605,6 +1543,92 @@ test('Should throw RequestRetryError when Content-Range mismatch', async t => {
       server.close()
       await once(server, 'close')
     })
+  })
+
+  await t.completed
+})
+
+test('Should use retry-after header for retries (date) but date format is wrong', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let counter = 0
+  const chunks = []
+  const server = createServer({ joinDuplicateHeaders: true })
+  let checkpoint
+  const dispatchOptions = {
+    method: 'PUT',
+    path: '/',
+    headers: {
+      'content-type': 'application/json'
+    },
+    retryOptions: {
+      minTimeout: 1000
+    }
+  }
+
+  server.on('request', (req, res) => {
+    switch (counter) {
+      case 0:
+        checkpoint = Date.now()
+        res.writeHead(429, {
+          'retry-after': 'this is not a date'
+        })
+        res.end('rate limit')
+        counter++
+        return
+      case 1:
+        res.writeHead(200)
+        res.end('hello world!')
+        t.ok(Date.now() - checkpoint >= 1000)
+        counter++
+        return
+      default:
+        t.fail('unexpected request')
+    }
+  })
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const handler = new RetryHandler(dispatchOptions, {
+      dispatch: client.dispatch.bind(client),
+      handler: {
+        onConnect () {
+          t.ok(true, 'pass')
+        },
+        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+          t.strictEqual(status, 200)
+          return true
+        },
+        onData (chunk) {
+          chunks.push(chunk)
+          return true
+        },
+        onComplete () {
+          t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
+        },
+        onError (err) {
+          t.ifError(err)
+        }
+      }
+    })
+
+    after(async () => {
+      await client.close()
+      server.close()
+
+      await once(server, 'close')
+    })
+
+    client.dispatch(
+      {
+        method: 'PUT',
+        path: '/',
+        headers: {
+          'content-type': 'application/json'
+        }
+      },
+      handler
+    )
   })
 
   await t.completed

@@ -10,7 +10,7 @@ import { route as redirectRoute } from './routes/redirect.mjs'
 import { Pipeline } from './util.mjs'
 import { symbols } from './constants.mjs'
 
-const tests = fileURLToPath(join(import.meta.url, '../../../fixtures/wpt'))
+const tests = join(fileURLToPath(import.meta.url), '../../../fixtures/wpt')
 
 // https://web-platform-tests.org/tools/wptserve/docs/stash.html
 class Stash extends Map {
@@ -30,7 +30,7 @@ class Stash extends Map {
 
 const stash = new Stash()
 
-const server = createServer(async (req, res) => {
+const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
   const fullUrl = new URL(req.url, `http://localhost:${server.address().port}`)
 
   if (fullUrl.searchParams.has('pipe')) {
@@ -43,10 +43,17 @@ const server = createServer(async (req, res) => {
       res.setHeader('content-type', 'text/html')
       // fall through
     }
-    case '/fetch/content-encoding/resources/big.text.gz':
+    case '/fetch/content-encoding/gzip/resources/big.text.gz':
+    case '/fetch/content-encoding/gzip/resources/foo.octetstream.gz':
+    case '/fetch/content-encoding/gzip/resources/foo.text.gz':
+    case '/fetch/content-encoding/br/resources/big.text.br':
+    case '/fetch/content-encoding/br/resources/foo.octetstream.br':
+    case '/fetch/content-encoding/br/resources/foo.text.br':
+    case '/fetch/content-encoding/zstd/resources/big.window.zst':
+    case '/fetch/content-encoding/zstd/resources/big.text.zst':
+    case '/fetch/content-encoding/zstd/resources/foo.octetstream.zst':
+    case '/fetch/content-encoding/zstd/resources/foo.text.zst':
     case '/service-workers/cache-storage/resources/simple.txt':
-    case '/fetch/content-encoding/resources/foo.octetstream.gz':
-    case '/fetch/content-encoding/resources/foo.text.gz':
     case '/fetch/api/resources/cors-top.txt':
     case '/fetch/api/resources/top.txt':
     case '/mimesniff/mime-types/resources/generated-mime-types.json':
@@ -327,9 +334,19 @@ const server = createServer(async (req, res) => {
 
       break
     }
-    case '/fetch/content-encoding/resources/bad-gzip-body.py': {
+    case '/fetch/content-encoding/gzip/resources/bad-gzip-body.py': {
       res.setHeader('Content-Encoding', 'gzip')
       res.end('not actually gzip')
+      break
+    }
+    case '/fetch/content-encoding/br/resources/bad-br-body.py': {
+      res.setHeader('Content-Encoding', 'br')
+      res.end('not actually br')
+      break
+    }
+    case '/fetch/content-encoding/zstd/resources/bad-zstd-body.py': {
+      res.setHeader('Content-Encoding', 'zstd')
+      res.end('not actually zstd')
       break
     }
     case '/fetch/api/resources/dump-authorization-header.py': {

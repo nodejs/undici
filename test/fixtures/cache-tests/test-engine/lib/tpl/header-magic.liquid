@@ -1,0 +1,6 @@
+{%- assign mytype = header[1] | typeof -%}
+{{ header[0] }}: {% if mytype == 'number' -%}
+  [ {{ header[1] | toLocaleString }} seconds delta ]
+{%- else -%}
+  {{ header[1] }}
+{%- endif -%}
