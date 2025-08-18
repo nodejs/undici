@@ -1,6 +1,5 @@
 name: Node.js compiled --shared-builtin-undici/undici-path CI
 
-# Temporarily disabled - shared builtin tests
 on:
   push:
     branches:
