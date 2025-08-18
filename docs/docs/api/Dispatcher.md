@@ -1096,6 +1096,8 @@ await client.request({
 
 ##### `decompress`
 
+⚠️ The decompress interceptor is experimental and subject to change.
+
 The `decompress` interceptor automatically decompresses response bodies that are compressed with gzip, deflate, brotli, or zstd compression. It removes the `content-encoding` and `content-length` headers from decompressed responses and supports RFC-9110 compliant multiple encodings.
 
 **Options**
