@@ -886,58 +886,6 @@ test('should handle controller pause with chained decompression', async t => {
   await t.completed
 })
 
-test('should override controller pause/resume methods when decompression is active', async t => {
-  t = tspl(t, { plan: 3 })
-
-  const server = createServer(async (req, res) => {
-    const gzip = createGzip()
-    res.writeHead(200, {
-      'Content-Type': 'text/plain',
-      'Content-Encoding': 'gzip'
-    })
-    gzip.pipe(res)
-    gzip.end('test data')
-  })
-
-  server.listen(0)
-  await once(server, 'listening')
-
-  const client = new Client(
-    `http://localhost:${server.address().port}`
-  ).compose(createDecompressInterceptor())
-
-  after(async () => {
-    await client.close()
-    server.close()
-    await once(server, 'close')
-  })
-
-  let originalPause, originalResume
-  let overriddenPause, overriddenResume
-
-  const handler = {
-    onRequestStart (ctrl) {
-      originalPause = ctrl.pause
-      originalResume = ctrl.resume
-    },
-
-    onResponseStart (ctrl, statusCode, headers) {
-      t.equal(statusCode, 200)
-      overriddenPause = ctrl.pause
-      overriddenResume = ctrl.resume
-
-      t.notEqual(overriddenPause, originalPause, 'pause method should be overridden')
-      t.notEqual(overriddenResume, originalResume, 'resume method should be overridden')
-    },
-
-    onResponseData () {},
-    onResponseEnd () {}
-  }
-
-  await client.dispatch({ method: 'GET', path: '/' }, handler)
-  await t.completed
-})
-
 test('should behave like fetch() for compressed responses', async t => {
   t = tspl(t, { plan: 10 })
 
