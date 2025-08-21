@@ -79,7 +79,7 @@ declare class SnapshotAgent extends MockAgent {
   saveSnapshots (filePath?: string): Promise<void>
   loadSnapshots (filePath?: string): Promise<void>
   getRecorder (): SnapshotRecorder
-  getMode (): SnapshotRecorderMode
+  getMode (): SnapshotRecorder.SnapshotRecorderMode
   clearSnapshots (): void
   resetCallCounts (): void
   deleteSnapshot (requestOpts: any): boolean
@@ -89,7 +89,7 @@ declare class SnapshotAgent extends MockAgent {
 
 declare namespace SnapshotAgent {
   export interface Options extends MockAgent.Options {
-    mode?: SnapshotRecorderMode
+    mode?: SnapshotRecorder.SnapshotRecorderMode
     snapshotPath?: string
     maxSnapshots?: number
     autoFlush?: boolean

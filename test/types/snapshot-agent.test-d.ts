@@ -62,7 +62,7 @@ expectAssignable<Dispatcher>(new SnapshotAgent())
   expectType<Promise<void>>(snapshotAgent.loadSnapshots())
   expectType<Promise<void>>(snapshotAgent.loadSnapshots('./custom.json'))
   expectType<SnapshotRecorder>(snapshotAgent.getRecorder())
-  expectType<'record' | 'playback' | 'update'>(snapshotAgent.getMode())
+  expectType<SnapshotRecorder.SnapshotRecorderMode>(snapshotAgent.getMode())
   expectType<void>(snapshotAgent.clearSnapshots())
 
   // New snapshot management methods
@@ -361,9 +361,9 @@ expectAssignable<SnapshotAgent.Options>({
   const playbackAgent = new SnapshotAgent({ mode: 'playback', snapshotPath: './test.json' })
   const updateAgent = new SnapshotAgent({ mode: 'update', snapshotPath: './test.json' })
 
-  expectType<'record' | 'playback' | 'update'>(recordAgent.getMode())
-  expectType<'record' | 'playback' | 'update'>(playbackAgent.getMode())
-  expectType<'record' | 'playback' | 'update'>(updateAgent.getMode())
+  expectType<SnapshotRecorder.SnapshotRecorderMode>(recordAgent.getMode())
+  expectType<SnapshotRecorder.SnapshotRecorderMode>(playbackAgent.getMode())
+  expectType<SnapshotRecorder.SnapshotRecorderMode>(updateAgent.getMode())
 }
 
 {
