@@ -92,7 +92,7 @@ async function basicSnapshotExample () {
       const { unlink } = require('node:fs/promises')
       await unlink(snapshotPath)
       console.log('\n🗑️  Cleaned up temporary snapshot file')
-    } catch (error) {
+    } catch {
       // File might not exist or already be deleted
     }
   }
