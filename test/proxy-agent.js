@@ -9,6 +9,7 @@ const Pool = require('../lib/dispatcher/pool')
 const { createServer } = require('node:http')
 const https = require('node:https')
 const { createProxy } = require('proxy')
+const nodeMajorVersion = Number(process.versions.node.split('.')[0])
 
 const certs = (() => {
   const forge = require('node-forge')
@@ -832,7 +833,8 @@ test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
   const json = await data.body.json()
   t.deepStrictEqual(json, {
     host: `localhost:${server.address().port}`,
-    connection: 'keep-alive'
+    // Mismatch on behaviour between 18 and upwards
+    connection: nodeMajorVersion > 18 ? 'keep-alive' : 'close'
   })
 
   server.close()
