@@ -40,11 +40,18 @@ export function logRequest (request, reqNum) {
   console.log('')
 }
 
-export function logResponse (response, resNum) {
+export function logResponse (response, interimResponses, resNum) {
   console.log(`${BLUE}=== Server response ${resNum}${NC}`)
   if (response === 'disconnect') {
     console.log('    [ server disconnect ]')
   } else {
+    for (const [statusCode, headers] of interimResponses) {
+      console.log(`    HTTP ${statusCode}`)
+      for (const [key, value] of headers) {
+        console.log(`    ${key}: ${value}`)
+      }
+      console.log('')
+    }
     console.log(`    HTTP ${response.statusCode} ${response.statusPhrase}`)
     for (const [key, value] of Object.entries(response.getHeaders())) {
       console.log(`    ${key}: ${value}`)
