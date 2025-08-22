@@ -35,5 +35,5 @@ test(`fetch instantiates ${expectedCount} Promises`, { timeout: 180_000 }, async
 
   const actualCount = Object.entries(promiseCount).reduce((acc, [key, value]) => acc + value, 0)
 
-  assert.strictEqual(actualCount, expectedCount, `Expected ${expectedCount} Promises, got ${promiseCount}`)
+  assert.strictEqual(actualCount, expectedCount, `Expected ${expectedCount} Promises, got ${actualCount}`)
 })
