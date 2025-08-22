@@ -756,7 +756,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
 
   const expectedHeaders = {
     host: `localhost:${server.address().port}`,
-    connection: 'keep-alive',
+    connection: nodeMajorVersion > 18 ? 'keep-alive' : 'close',
     'test-header': 'value',
     accept: '*/*',
     'accept-language': '*',
