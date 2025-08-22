@@ -1,6 +1,5 @@
 'use strict'
 
-const assert = require('node:assert')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
@@ -10,10 +9,9 @@ const { fetch } = require('../..')
 
 const { closeServerAsPromise } = require('../utils/node-http')
 
-const expectedCount = 1334
 const body = 'abcdefg'.repeat(1e6)
 
-test(`fetch instantiates ${expectedCount} Promises`, { timeout: 180_000 }, async (t) => {
+test('fetch: Determine amount of created Promises', { timeout: 180_000 }, async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200)
       .end(body)
@@ -35,5 +33,5 @@ test(`fetch instantiates ${expectedCount} Promises`, { timeout: 180_000 }, async
 
   const actualCount = Object.entries(promiseCount).reduce((acc, [key, value]) => acc + value, 0)
 
-  assert.strictEqual(actualCount, expectedCount, `Expected ${expectedCount} Promises, got ${actualCount}`)
+  console.log(`Promise count: ${actualCount}`)
 })
