@@ -71,7 +71,7 @@ test('Agent enforces maxOrigins', async (t) => {
       request(`http://localhost:${server2.address().port}`, { dispatcher })
     ])
   } catch (err) {
-    p.ok(err instanceof errors.AgentMaxOriginsReached)
+    p.ok(err instanceof errors.AgentMaxOriginsReachedError)
   }
 
   await p.completed
