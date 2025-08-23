@@ -4,6 +4,7 @@ const assert = require('node:assert')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
+const { sep } = require('node:path')
 
 const countPromises = require('count-promises')
 const { fetch } = require('../..')
@@ -30,9 +31,9 @@ test(`fetch: should create ${expectedCount} Promises for fetch-call and using .t
   const response = await fetch(url)
   await response.text()
 
-  const promiseCount = Object.fromEntries(Object.entries(getPromiseCount()).filter(([path, value]) => path.includes('undici') && !path.includes('node:internal') && !path.includes('undici/test')))
+  const promiseCount = Object.fromEntries(Object.entries(getPromiseCount()).filter(([path, value]) => path.includes('undici') && !path.includes('node:internal') && !path.includes(`undici${sep}test`)))
 
-  console.log(promiseCount)
+  // console.log(promiseCount)
 
   const actualCount = Object.entries(promiseCount).reduce((acc, [key, value]) => acc + value, 0)
 
