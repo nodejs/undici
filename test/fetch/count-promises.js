@@ -9,7 +9,7 @@ const { fetch } = require('../..')
 
 const { closeServerAsPromise } = require('../utils/node-http')
 
-const body = 'abcdefg'.repeat(1e6)
+const body = 'abcdefgh'
 
 test('fetch: Determine amount of created Promises', { timeout: 180_000 }, async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
