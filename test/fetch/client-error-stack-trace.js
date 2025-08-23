@@ -2,6 +2,7 @@
 
 const { test } = require('node:test')
 const assert = require('node:assert')
+const { sep } = require('node:path')
 const { fetch, setGlobalDispatcher, Agent } = require('../..')
 const { fetch: fetchIndex } = require('../../index-fetch')
 
@@ -16,7 +17,7 @@ test('FETCH: request errors and prints trimmed stack trace', async (t) => {
   } catch (error) {
     const stackLines = error.stack.split('\n')
     assert.ok(stackLines[0].includes('TypeError: fetch failed'))
-    assert.ok(stackLines[1].includes('undici/index.js'))
+    assert.ok(stackLines[1].includes(`undici${sep}index.js`))
     assert.ok(stackLines[2].includes('at process.processTicksAndRejections'))
     assert.ok(stackLines[3].includes(`at async TestContext.<anonymous> (${__filename}`))
   }
@@ -28,7 +29,7 @@ test('FETCH-index: request errors and prints trimmed stack trace', async (t) => 
   } catch (error) {
     const stackLines = error.stack.split('\n')
     assert.ok(stackLines[0].includes('TypeError: fetch failed'))
-    assert.ok(stackLines[1].includes('undici/index-fetch.js'))
+    assert.ok(stackLines[1].includes(`undici${sep}index-fetch.js`))
     assert.ok(stackLines[2].includes('at process.processTicksAndRejections'))
     assert.ok(stackLines[3].includes(`at async TestContext.<anonymous> (${__filename}`))
   }
