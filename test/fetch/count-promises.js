@@ -11,7 +11,7 @@ const { fetch } = require('../..')
 
 const { closeServerAsPromise } = require('../utils/node-http')
 
-const expectedCount = 25
+const expectedCount = 22
 
 const body = 'abcdefgh'
 
