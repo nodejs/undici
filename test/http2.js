@@ -16,10 +16,14 @@ const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
 test('Should support H2 connection', async t => {
   const body = []
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  let authority = ''
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
     t.strictEqual(headers['x-my-header'], 'foo')
     t.strictEqual(headers[':method'], 'GET')
+    t.strictEqual(headers[':scheme'], 'https')
+    t.strictEqual(headers[':path'], '/')
+    t.strictEqual(headers[':authority'], authority)
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -30,15 +34,15 @@ test('Should support H2 connection', async t => {
 
   server.listen(0)
   await once(server, 'listening')
-
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  authority = `localhost:${server.address().port}`
+  const client = new Client(`https://${authority}`, {
     connect: {
       rejectUnauthorized: false
     },
     allowH2: true
   })
 
-  t = tspl(t, { plan: 6 })
+  t = tspl(t, { plan: 9 })
   after(() => server.close())
   after(() => client.close())
 
