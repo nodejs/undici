@@ -32,6 +32,8 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
 
   assert.strictEqual(await response.text(), text)
   assert.strictEqual(response.headers.get('content-encoding'), contentCodings)
+
+  await t.completed
 })
 
 test('response decompression according to content-encoding should be handled in a correct order', async (t) => {
@@ -57,6 +59,8 @@ test('response decompression according to content-encoding should be handled in 
   const response = await fetch(`http://localhost:${server.address().port}`)
 
   assert.strictEqual(await response.text(), text)
+
+  await t.completed
 })
 
 test('should decompress zstandard response',
@@ -84,4 +88,6 @@ test('should decompress zstandard response',
     assert.strictEqual(await response.text(), text)
     assert.strictEqual(response.headers.get('content-encoding'), contentCodings)
     assert.strictEqual(response.headers.get('content-type'), 'text/plain')
+
+    await t.completed
   })
