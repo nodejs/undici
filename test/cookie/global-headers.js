@@ -10,7 +10,7 @@ const {
 } = require('../..')
 
 describe('Using global Headers', async () => {
-  test('deleteCookies', { skip: !globalThis.Headers }, () => {
+  test('deleteCookies', () => {
     const headers = new globalThis.Headers()
 
     assert.equal(headers.get('set-cookie'), null)
@@ -18,7 +18,7 @@ describe('Using global Headers', async () => {
     assert.equal(headers.get('set-cookie'), 'undici=; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
   })
 
-  test('getCookies', { skip: !globalThis.Headers }, () => {
+  test('getCookies', () => {
     const headers = new globalThis.Headers({
       cookie: 'get=cookies; and=attributes'
     })
@@ -26,7 +26,7 @@ describe('Using global Headers', async () => {
     assert.deepEqual(getCookies(headers), { get: 'cookies', and: 'attributes' })
   })
 
-  test('getSetCookies', { skip: !globalThis.Headers }, () => {
+  test('getSetCookies', () => {
     const headers = new globalThis.Headers({
       'set-cookie': 'undici=getSetCookies; Secure'
     })
@@ -46,7 +46,7 @@ describe('Using global Headers', async () => {
     }
   })
 
-  test('setCookie', { skip: !globalThis.Headers }, () => {
+  test('setCookie', () => {
     const headers = new globalThis.Headers()
 
     setCookie(headers, { name: 'undici', value: 'setCookie' })
@@ -54,7 +54,7 @@ describe('Using global Headers', async () => {
   })
 })
 
-describe('Headers check is not too lax', { skip: !globalThis.Headers }, () => {
+describe('Headers check is not too lax', () => {
   class Headers { }
   Object.defineProperty(globalThis.Headers.prototype, Symbol.toStringTag, {
     value: 'Headers',
