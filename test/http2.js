@@ -173,6 +173,89 @@ test('Should support H2 connection (headers as array)', async t => {
   t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
 
+test('Should support multiple header values with semicolon separator', async t => {
+  const body = []
+  const body2 = []
+  const expectedCookieHeaders = ['a=b', 'c=d', 'e=f']
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', (stream, headers) => {
+    t.strictEqual(headers['x-my-header'], 'foo, bar')
+    t.strictEqual(headers['x-my-drink'], 'coffee, tea, water')
+    t.strictEqual(headers['x-other'], 'value')
+    t.strictEqual(headers['cookie'], expectedCookieHeaders.join('; '))
+    t.strictEqual(headers[':method'], 'GET')
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': 'hello',
+      ':status': 200
+    })
+    stream.end('hello h2!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 9 * 2 })
+  after(() => server.close())
+  after(() => client.close())
+
+  const response = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: [
+      'x-my-header', 'foo',
+      'x-my-drink', ['coffee', 'tea'],
+      'x-my-drink', 'water',
+      'X-My-Header', 'bar',
+      'x-other', 'value',
+      'cookie', expectedCookieHeaders
+    ]
+  })
+
+  response.body.on('data', chunk => {
+    body.push(chunk)
+  })
+
+  await once(response.body, 'end')
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+
+  const response2 = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: [
+      'x-my-header', 'foo',
+      'x-my-drink', ['coffee', 'tea'],
+      'cookie', 'a=b',
+      'x-my-drink', 'water',
+      'X-My-Header', 'bar',
+      'cookie', 'c=d',
+      'x-other', 'value',
+      'cookie', 'e=f'
+    ]
+  })
+
+  response2.body.on('data', chunk => {
+    body2.push(chunk)
+  })
+
+  await once(response2.body, 'end')
+  t.strictEqual(response2.statusCode, 200)
+  t.strictEqual(response2.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response2.headers['x-custom-h2'], 'hello')
+  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+})
+
 test('Should support H2 connection(POST Buffer)', async t => {
   const server = createSecureServer({ ...await pem.generate({ opts: { keySize: 2048 } }), allowHTTP1: false })
 
