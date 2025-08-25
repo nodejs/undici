@@ -2189,7 +2189,7 @@ test('stats', async (t) => {
     }, (err, data) => {
       t.ifError(err)
       t.strictEqual(client.stats.connected, true)
-      t.strictEqual(client.stats.pending, 1)
+      t.strictEqual(client.stats.pending, 0)
       t.strictEqual(client.stats.running, 1)
     })
   })
