@@ -11,8 +11,6 @@ const pem = require('@metcoder95/https-pem')
 
 const { Client, Agent, FormData } = require('..')
 
-const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
-
 test('Should support H2 connection', async t => {
   const body = []
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
@@ -356,49 +354,6 @@ test('Should throw if bad maxConcurrentStreams has been passed', async t => {
 
 test(
   'Request should fail if allowH2 is false and server advertises h1 only',
-  { skip: isGreaterThanv20 },
-  async t => {
-    t = tspl(t, { plan: 1 })
-
-    const server = createSecureServer(
-      {
-        ...await pem.generate({ opts: { keySize: 2048 } }),
-        allowHTTP1: false,
-        ALPNProtocols: ['http/1.1']
-      },
-      (req, res) => {
-        t.fail('Should not create a valid h2 stream')
-      }
-    )
-
-    server.listen(0)
-    await once(server, 'listening')
-
-    const client = new Client(`https://localhost:${server.address().port}`, {
-      allowH2: false,
-      connect: {
-        rejectUnauthorized: false
-      }
-    })
-
-    after(() => server.close())
-    after(() => client.close())
-
-    const response = await client.request({
-      path: '/',
-      method: 'GET',
-      headers: {
-        'x-my-header': 'foo'
-      }
-    })
-
-    t.strictEqual(response.statusCode, 403)
-  }
-)
-
-test(
-  '[v20] Request should fail if allowH2 is false and server advertises h1 only',
-  { skip: !isGreaterThanv20 },
   async t => {
     const server = createSecureServer(
       {
@@ -1029,7 +984,7 @@ test('Should handle h2 request with body (iterable)', async t => {
   t.strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
 })
 
-test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
+test('Should handle h2 request with body (Blob)', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'asd'
   const requestChunks = []
