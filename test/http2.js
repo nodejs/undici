@@ -1029,7 +1029,7 @@ test('Should handle h2 request with body (iterable)', async t => {
   t.strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
 })
 
-test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
+test('Should handle h2 request with body (Blob)', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'asd'
   const requestChunks = []
@@ -1093,7 +1093,6 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
 
 test(
   'Should handle h2 request with body (Blob:ArrayBuffer)',
-  { skip: !Blob },
   async t => {
     const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
     const expectedBody = 'hello'
