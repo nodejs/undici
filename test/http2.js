@@ -1048,7 +1048,6 @@ test('Should handle h2 request with body (Blob)', async t => {
 
 test(
   'Should handle h2 request with body (Blob:ArrayBuffer)',
-  { skip: !Blob },
   async t => {
     const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
     const expectedBody = 'hello'
