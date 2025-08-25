@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { closeServerAsPromise } = require('../utils/node-http')
 
-test('error reason is forwarded - issue #2171', { skip: !AbortSignal.timeout }, async (t) => {
+test('error reason is forwarded - issue #2171', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, () => {}).listen(0)
 
   t.after(closeServerAsPromise(server))

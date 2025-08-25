@@ -1,7 +1,7 @@
 'use strict'
 
-const { test } = require('node:test')
 const { deepStrictEqual } = require('node:assert')
+const { test } = require('node:test')
 const { Response } = require('../..')
 
 // https://github.com/nodejs/node/issues/56474

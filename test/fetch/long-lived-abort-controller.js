@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { closeServerAsPromise } = require('../utils/node-http')
 const { strictEqual } = require('node:assert')
 
-test('long-lived-abort-controller', { skip: true }, async (t) => {
+test('long-lived-abort-controller', async (t) => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.write('Hello World!')
