@@ -169,8 +169,8 @@ declare namespace Errors {
     code: 'UND_ERR_PRX_TLS'
   }
 
-  class AgentMaxOriginsReachedError extends UndiciError {
-    name: 'AgentMaxOriginsReachedError'
+  class MaxOriginsReachedError extends UndiciError {
+    name: 'MaxOriginsReachedError'
     code: 'UND_ERR_MAX_ORIGINS'
   }
 }
