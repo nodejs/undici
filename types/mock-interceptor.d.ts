@@ -11,6 +11,22 @@ declare class MockScope<TData extends object = object> {
   persist (): MockScope<TData>
   /** Define a reply for a set amount of matching requests. */
   times (repeatTimes: number): MockScope<TData>
+  /** Validate the interceptor configuration and provide feedback */
+  validate (): {
+    valid: boolean;
+    issues: Array<{
+      severity: 'error' | 'warning';
+      field: string;
+      message: string;
+    }>;
+    interceptor: {
+      method: string;
+      path: string | RegExp;
+      times?: number;
+      persist?: boolean;
+      statusCode?: number;
+    };
+  }
 }
 
 /** The interceptor for a Mock. */
