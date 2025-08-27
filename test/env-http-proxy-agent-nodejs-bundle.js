@@ -20,7 +20,7 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     process.env = { ...env }
   })
 
-  test('should work global fetch from undici bundled with Node.js', async (t) => {
+  test('should work with global fetch from undici bundled with Node.js', async (t) => {
     const { strictEqual } = tspl(t, { plan: 3 })
 
     // Instead of using mocks, start a real server and a minimal proxy server
