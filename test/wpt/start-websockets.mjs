@@ -7,6 +7,7 @@ import { on } from 'events'
 const { WPT_REPORT } = process.env
 
 function isGlobalAvailable () {
+  // eslint-disable-next-line no-restricted-globals
   if (typeof WebSocket !== 'undefined') {
     return true
   }

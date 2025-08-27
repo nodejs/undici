@@ -20,7 +20,7 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     process.env = { ...env }
   })
 
-  test('should work together from the Node.js bundle', async (t) => {
+  test('should work global fetch from undici bundled with Node.js', async (t) => {
     const { strictEqual } = tspl(t, { plan: 3 })
 
     // Instead of using mocks, start a real server and a minimal proxy server
@@ -69,6 +69,7 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     process.env.http_proxy = proxyAddress
     setGlobalDispatcher(new EnvHttpProxyAgent())
 
+    // eslint-disable-next-line no-restricted-globals
     const res = await fetch(serverAddress)
     strictEqual(await res.text(), 'Hello world')
   })
