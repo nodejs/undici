@@ -401,11 +401,11 @@ test('backpressure algorithm', async (t) => {
 
   writeMore = true
 
-  d4.client.emit('drain', new URL('http://notahost'), [])
+  d4.client.emit('drain', new URL('http://notahost'), [d4.client])
 
   pool.dispatch({}, noopHandler) // d5 = c1
 
-  d3.client.emit('drain', new URL('http://notahost'), [])
+  d3.client.emit('drain', new URL('http://notahost'), [d3.client])
 
   pool.dispatch({}, noopHandler) // d6 = c0
 
