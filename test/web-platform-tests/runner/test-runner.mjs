@@ -15,6 +15,7 @@ import {
 import { Cache } from '../../../lib/web/cache/cache.js'
 import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
 import { runInThisContext } from 'node:vm'
+import { debuglog } from 'node:util'
 
 const globalPropertyDescriptors = {
   writable: true,
@@ -78,6 +79,7 @@ Object.defineProperties(globalThis, {
   }
 })
 
+const log = debuglog('UNDICI_WPT')
 const testUrl = process.argv[2]
 
 // Set up environment
@@ -92,7 +94,10 @@ async function generateAndRunBundle (url) {
     const response = await fetch(url)
     const body = await response.text()
 
-    const scriptSrcRegex = /<script[^>]*src="([^"]*)"[^>]*><\/script>/g
+    // Scripts may have src tags without being enclosed in quotes. This matches both
+    // <script src="whatever"></script> and
+    // <script src=whatever></script> (See )
+    const scriptSrcRegex = /<script[^>]*src="?([^"\s>]*)"?[^>]*><\/script>/g
     const inlineScriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g
 
     const scriptContents = []
@@ -103,7 +108,7 @@ async function generateAndRunBundle (url) {
 
       try {
         const scriptUrl = new URL(src, url)
-        console.log(`Loading script: ${scriptUrl}`)
+        log(`Loading script: ${scriptUrl}`)
         const scriptResponse = await fetch(scriptUrl)
         if (scriptResponse.ok) {
           const scriptContent = await scriptResponse.text()
@@ -120,11 +125,11 @@ async function generateAndRunBundle (url) {
       scriptContents.push(scriptContent)
     }
 
-    console.log(`Loaded ${scriptContents.length} scripts`)
+    log(`Loaded ${scriptContents.length} scripts`)
 
     // Execute all scripts in order
     for (let i = 0; i < scriptContents.length; i++) {
-      console.log(`Executing script ${i + 1}/${scriptContents.length}`)
+      log(`Executing script ${i + 1}/${scriptContents.length}`)
       try {
         runInThisContext(scriptContents[i])
       } catch (error) {

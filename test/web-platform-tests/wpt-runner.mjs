@@ -3,9 +3,6 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createInterface } from 'node:readline'
-import {
-  setupHostsFile
-} from './runner/utils.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const WPT_DIR = join(__dirname, 'wpt')
@@ -21,14 +18,10 @@ class TestFilter {
       return true
     }
     for (const filter of this.filter) {
-      if (filter.startsWith('/')) {
-        if (path.startsWith(filter)) {
-          return true
-        }
-      } else {
-        if (path.substring(1).startsWith(filter)) {
-          return true
-        }
+      if (filter.startsWith('/') && path.startsWith(filter)) {
+        return true
+      } else if (path.substring(1).startsWith(filter)) {
+        return true
       }
     }
     return false
@@ -70,7 +63,7 @@ async function runWithTestUtil (testFunction) {
   }
 }
 
-async function runSingleTest (url, options, expectation, timeout = 10000) {
+function runSingleTest (url, options, expectation, timeout = 10000) {
   const startTime = Date.now()
 
   return new Promise((resolve) => {
@@ -109,19 +102,16 @@ async function runSingleTest (url, options, expectation, timeout = 10000) {
 }
 
 function getExpectation () {
-  if (!existsSync(EXPECTATION_PATH)) {
-    return {}
-  }
   return JSON.parse(readFileSync(EXPECTATION_PATH, 'utf8'))
 }
 
 function updateExpectations (results) {
   const expectations = getExpectation()
-  
+
   for (const { test, result } of results) {
     const pathSegments = test.path.slice(1).split('/')
     const filename = pathSegments.pop()
-    
+
     // Navigate to the correct nested object
     let current = expectations
     for (const segment of pathSegments) {
@@ -130,11 +120,11 @@ function updateExpectations (results) {
       }
       current = current[segment]
     }
-    
+
     // Set the expectation based on test result
     current[filename] = result.status === 0
   }
-  
+
   writeFileSync(EXPECTATION_PATH, JSON.stringify(expectations, null, 2) + '\n')
   console.log(`✅ Updated expectations file: ${EXPECTATION_PATH}`)
 }
@@ -162,7 +152,6 @@ function discoverTestsToRun (filter, expectation) {
           const url = new URL(testPath, 'http://web-platform.test:8000')
 
           if (url.pathname.includes('.worker.') ||
-              url.pathname.includes('request-upload') ||
               url.pathname.includes('serviceworker') ||
               url.pathname.includes('sharedworker') ||
               url.pathname.includes('shadowrealm')) {
@@ -197,7 +186,6 @@ function discoverTestsToRun (filter, expectation) {
             ? parentExpectation
             : parentExpectation?.[key]
 
-        // Walk manifest even if no expectation is set (default to allow)
         walkManifest(entry, folderExpectation, `${prefix}/${key}`)
       }
     }
@@ -250,6 +238,35 @@ async function setup () {
 
   const hostsContent = existsSync(hostsPath) ? readFileSync(hostsPath, 'utf8') : ''
   const etcHostsConfigured = hostsContent.includes('web-platform.test')
+
+  async function setupHostsFile () {
+    const makeHostsProc = spawn('python3', ['wpt', 'make-hosts-file'], {
+      cwd: WPT_DIR,
+      stdio: ['ignore', 'pipe', 'pipe']
+    })
+
+    let stdout = ''
+    makeHostsProc.stdout.on('data', (data) => {
+      stdout += data.toString()
+    })
+
+    const success = await new Promise(resolve => {
+      makeHostsProc.on('exit', code => resolve(code === 0))
+    })
+
+    if (success) {
+      try {
+        const entries = '\n\n# Configured for Web Platform Tests (Node.js)\n' + stdout
+        writeFileSync(hostsPath, entries, { flag: 'a' })
+        console.log(`Updated ${hostsPath}`)
+      } catch (err) {
+        console.error(`Failed to write to ${hostsPath}. Please run with sudo or configure manually.`)
+        throw err
+      }
+    } else {
+      throw new Error('Failed to generate hosts entries')
+    }
+  }
 
   if (etcHostsConfigured) {
     console.log(hostsPath + ' is already configured.')
@@ -311,12 +328,12 @@ async function run (filters = []) {
 
   const endTime = Date.now()
   console.log(`\nCompleted in ${endTime - startTime}ms`)
-  
+
   // Calculate summary
   const totalTests = results.length
   const passingTests = results.filter(({ result }) => result.status === 0).length
   const failingTests = totalTests - passingTests
-  
+
   console.log('\n' + '='.repeat(50))
   console.log('TEST SUMMARY')
   console.log('='.repeat(50))
@@ -331,43 +348,43 @@ async function run (filters = []) {
 async function updateExpectationsCommand (folders = []) {
   const startTime = Date.now()
   const expectation = getExpectation()
-  
+
   // Parse comma-separated folders
   const filters = folders.length > 0 ? folders.join(',').split(',') : []
   const filter = new TestFilter(filters)
   const tests = discoverTestsToRun(filter, expectation)
-  
+
   if (tests.length === 0) {
     console.log('No tests found to run')
     return
   }
-  
+
   console.log(`Going to run ${tests.length} test files and update expectations`)
-  
+
   const results = await runWithTestUtil(async () => {
     const testResults = []
-    
+
     for (const test of tests) {
       console.log(`${'='.repeat(40)}\n${test.path}\n`)
-      
+
       const timeout = test.options.timeout === 'long' ? 60_000 : 10_000
       const result = await runSingleTest(test.url, test.options, test.expectation, timeout)
       testResults.push({ test, result })
-      
+
       console.log(`Result: ${result.status === 0 ? '✅ PASS' : '❌ FAIL'} (${result.duration}ms)`)
     }
-    
+
     return testResults
   })
-  
+
   const endTime = Date.now()
   console.log(`\nCompleted in ${endTime - startTime}ms`)
-  
+
   // Calculate and display summary
   const totalTests = results.length
   const passingTests = results.filter(({ result }) => result.status === 0).length
   const failingTests = totalTests - passingTests
-  
+
   console.log('\n' + '='.repeat(50))
   console.log('TEST SUMMARY')
   console.log('='.repeat(50))
@@ -375,7 +392,7 @@ async function updateExpectationsCommand (folders = []) {
   console.log(`✅ Passing: ${passingTests}`)
   console.log(`❌ Failing: ${failingTests}`)
   console.log('='.repeat(50))
-  
+
   // Update expectations file
   updateExpectations(results)
 }
