@@ -192,6 +192,11 @@ interface WebidlConverters {
    */
   RequestInit (V: unknown): undici.RequestInit
 
+  /**
+   * @see https://html.spec.whatwg.org/multipage/webappapis.html#eventhandlernonnull
+   */
+  EventHandlerNonNull (V: unknown): Function | null
+
   [Key: string]: (...args: any[]) => unknown
 }
 
@@ -210,6 +215,10 @@ interface WebidlIs {
   AbortSignal: WebidlIsFunction<AbortSignal>
   MessagePort: WebidlIsFunction<MessagePort>
   USVString: WebidlIsFunction<string>
+  /**
+   * @see https://webidl.spec.whatwg.org/#BufferSource
+   */
+  BufferSource: WebidlIsFunction<ArrayBuffer | NodeJS.TypedArray>
 }
 
 export interface Webidl {
