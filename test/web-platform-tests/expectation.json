@@ -1,0 +1,28 @@
+{
+  "fetch": {
+    "api": {
+      "basic": {
+        "request-head.any.html": true,
+        "response-null-body.any.html": true,
+        "scheme-about.any.html": false,
+        "scheme-data.any.html": true,
+        "text-utf8.any.html": true
+      },
+      "request": {
+        "request.any.html": true,
+        "request-consume.any.html": true,
+        "request-headers.any.html": true
+      },
+      "response": {
+        "response.any.html": true,
+        "response-consume.any.html": true,
+        "response-json.any.html": true
+      },
+      "headers": {
+        "headers-basic.any.html": true,
+        "headers-combine.any.html": true,
+        "headers-normalize.any.html": true
+      }
+    }
+  }
+}
