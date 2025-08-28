@@ -9,7 +9,7 @@ const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
 const pem = require('@metcoder95/https-pem')
 
-const { Client, Agent, FormData } = require('..')
+const { Client, Agent, FormData, Response } = require('..')
 
 test('Should support H2 connection', async t => {
   const body = []

@@ -1,7 +1,7 @@
 import * as http from 'node:http'
 import { once } from 'node:events'
 import { createProxy } from 'proxy'
-import { ProxyAgent } from '../../../index.js'
+import { fetch, ProxyAgent } from '../../../'
 
 const proxyServer = createProxy(http.createServer())
 const server = http.createServer((req, res) => {

@@ -5,7 +5,7 @@ const { describe, it, before, after } = require('node:test')
 const stream = require('node:stream')
 const http = require('node:http')
 
-const { Request } = require('../../index.js')
+const { Request, FormData } = require('../../index.js')
 const TestServer = require('./utils/server.js')
 
 describe('Request', () => {
