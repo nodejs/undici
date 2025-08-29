@@ -384,7 +384,7 @@ switch (command) {
     break
   case 'run':
     // TODO: find what's causing the unsettled top-level await
-    await run(filters).then(
+    run(filters).then(
       () => process.exit(0),
       () => process.exit(1)
     )
