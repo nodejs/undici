@@ -380,12 +380,10 @@ const filters = process.argv.slice(3)
 
 switch (command) {
   case 'setup':
-    setup().catch(console.error)
+    await setup()
     break
   case 'run':
-    run(filters)
-      .catch(console.error)
-      .finally(() => process.exit(0))
+    await run(filters)
     break
   default:
     console.log(`
@@ -394,8 +392,6 @@ WPT Test Runner for Node.js
 Commands:
   setup                    Configure environment
   run [filter...]          Run tests
-  update-expectations      Run tests and update expectations.json
-                          [folder1,folder2,...]
 `)
     break
 }
