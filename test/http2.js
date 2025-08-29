@@ -1308,7 +1308,8 @@ test('#2364 - Concurrent aborts', async t => {
     connect: {
       rejectUnauthorized: false
     },
-    allowH2: true
+    allowH2: true,
+    pipelining: 1
   })
 
   t = tspl(t, { plan: 10 })
