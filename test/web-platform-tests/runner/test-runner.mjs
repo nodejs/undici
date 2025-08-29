@@ -138,22 +138,36 @@ async function generateAndRunBundle (url) {
       }
     }
 
-    console.log('All scripts executed')
+    log('All scripts executed')
 
     // Now set up the WPT test harness callbacks
     globalThis.add_result_callback(({ message, name, stack, status }) => {
       const data = JSON.stringify({ name, status, message, stack })
-      process.stderr.write(data + '\n')
+      process.stdout.write(data + '\n')
     })
 
-    globalThis.add_completion_callback((_tests, harnessStatus) => {
-      const data = JSON.stringify(harnessStatus)
-      process.stderr.write('#$#$#' + data + '\n')
-      process.exit(harnessStatus.status === 0 ? 0 : 1)
+    globalThis.add_completion_callback((tests, harnessStatus) => {
+      process.stdout.write('#$#$#' + JSON.stringify({ tests, harnessStatus }) + '\n')
+      process.stdout._flush?.()
+
+      if (process.platform === 'win32') {
+        // https://github.com/nodejs/node/issues/56645#issuecomment-3077594952
+        setTimeout(() => {
+          process.exit(harnessStatus.status === 0 ? 0 : 1)
+        }, 50)
+      } else {
+        process.exit(harnessStatus.status === 0 ? 0 : 1)
+      }
     })
   } catch (error) {
     console.error('Test execution failed:', error)
-    process.exit(1)
+
+    if (process.platform === 'win32') {
+      // https://github.com/nodejs/node/issues/56645#issuecomment-3077594952
+      setTimeout(() => process.exit(1), 50)
+    } else {
+      process.exit(1)
+    }
   }
 }
 

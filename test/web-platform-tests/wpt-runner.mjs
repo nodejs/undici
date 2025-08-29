@@ -71,7 +71,7 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
       join(__dirname, 'runner/test-runner.mjs'),
       url.toString()
     ], {
-      stdio: ['ignore', 'inherit', 'inherit'],
+      stdio: ['ignore', 'pipe', 'inherit'],
       env: {
         ...process.env,
         NO_COLOR: '1'
@@ -79,18 +79,42 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
     })
 
     const cases = []
-    const harnessStatus = null
+    let harnessStatus = null
+    let output = ''
 
     const timer = setTimeout(() => {
       proc.kill('SIGINT')
     }, timeout)
 
-    proc.on('exit', (code) => {
+    proc.stdout.setEncoding('utf-8')
+    proc.stdout.on('data', (chunk) => {
+      output += chunk
+
+      let delimiterIndex
+      while ((delimiterIndex = output.indexOf('#$#$#')) !== -1) {
+        const endIndex = output.indexOf('\n', delimiterIndex)
+        if (endIndex !== -1) {
+          const message = output.slice(delimiterIndex + 5, endIndex)
+          try {
+            const { tests, harnessStatus: _harnessStatus } = JSON.parse(message)
+            harnessStatus = _harnessStatus
+            cases.push(...tests)
+          } catch (e) {
+            console.error('Failed to parse:', message)
+          }
+          output = output.slice(endIndex + 1)
+        } else {
+          break // Wait for more data
+        }
+      }
+    })
+
+    proc.on('exit', () => {
       clearTimeout(timer)
       const duration = Date.now() - startTime
 
       resolve({
-        status: code,
+        status: harnessStatus?.status ?? 1,
         harnessStatus,
         duration,
         cases,
@@ -342,58 +366,12 @@ async function run (filters = []) {
   console.log(`❌ Failing: ${failingTests}`)
   console.log('='.repeat(50))
 
-  process.exit(0)
+  return results
 }
 
-async function updateExpectationsCommand (folders = []) {
-  const startTime = Date.now()
-  const expectation = getExpectation()
+async function updateExpectationsCommand (filters = []) {
+  const results = await run(filters)
 
-  // Parse comma-separated folders
-  const filters = folders.length > 0 ? folders.join(',').split(',') : []
-  const filter = new TestFilter(filters)
-  const tests = discoverTestsToRun(filter, expectation)
-
-  if (tests.length === 0) {
-    console.log('No tests found to run')
-    return
-  }
-
-  console.log(`Going to run ${tests.length} test files and update expectations`)
-
-  const results = await runWithTestUtil(async () => {
-    const testResults = []
-
-    for (const test of tests) {
-      console.log(`${'='.repeat(40)}\n${test.path}\n`)
-
-      const timeout = test.options.timeout === 'long' ? 60_000 : 10_000
-      const result = await runSingleTest(test.url, test.options, test.expectation, timeout)
-      testResults.push({ test, result })
-
-      console.log(`Result: ${result.status === 0 ? '✅ PASS' : '❌ FAIL'} (${result.duration}ms)`)
-    }
-
-    return testResults
-  })
-
-  const endTime = Date.now()
-  console.log(`\nCompleted in ${endTime - startTime}ms`)
-
-  // Calculate and display summary
-  const totalTests = results.length
-  const passingTests = results.filter(({ result }) => result.status === 0).length
-  const failingTests = totalTests - passingTests
-
-  console.log('\n' + '='.repeat(50))
-  console.log('TEST SUMMARY')
-  console.log('='.repeat(50))
-  console.log(`Total tests: ${totalTests}`)
-  console.log(`✅ Passing: ${passingTests}`)
-  console.log(`❌ Failing: ${failingTests}`)
-  console.log('='.repeat(50))
-
-  // Update expectations file
   updateExpectations(results)
 }
 
@@ -406,10 +384,14 @@ switch (command) {
     setup().catch(console.error)
     break
   case 'run':
-    run(filters).catch(console.error)
+    run(filters)
+      .catch(console.error)
+      .finally(() => process.exit(0))
     break
   case 'update-expectations':
-    updateExpectationsCommand(filters).catch(console.error)
+    updateExpectationsCommand(filters)
+      .catch(console.error)
+      .finally(() => process.exit(0))
     break
   default:
     console.log(`
