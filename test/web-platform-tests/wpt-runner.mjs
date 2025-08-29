@@ -371,12 +371,6 @@ async function run (filters = []) {
   console.log(`❌ Failing: ${fail}`)
   console.log('='.repeat(50))
 
-  return results
-}
-
-async function updateExpectationsCommand (filters = []) {
-  const results = await run(filters)
-
   updateExpectations(results)
 }
 
@@ -390,11 +384,6 @@ switch (command) {
     break
   case 'run':
     run(filters)
-      .catch(console.error)
-      .finally(() => process.exit(0))
-    break
-  case 'update-expectations':
-    updateExpectationsCommand(filters)
       .catch(console.error)
       .finally(() => process.exit(0))
     break

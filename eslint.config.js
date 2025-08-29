@@ -7,7 +7,6 @@ module.exports = [
   ...neo({
     ignores: [
       'lib/llhttp',
-      'test/fixtures/wpt',
       'test/fixtures/cache-tests',
       'undici-fetch.js',
       'test/web-platform-tests/wpt'

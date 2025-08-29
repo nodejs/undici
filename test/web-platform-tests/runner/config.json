@@ -1,3 +1,11 @@
 {
-  "check_subdomains": false
+  "check_subdomains": false,
+  "ssl": {
+    "type": "pregenerated",
+    "pregenerated": {
+      "ca_cert_path": "./certs/cacert.pem",
+      "host_cert_path": "./certs/web-platform.test.pem",
+      "host_key_path": "./certs/web-platform.test.key"
+    }
+  }
 }
