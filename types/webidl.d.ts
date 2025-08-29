@@ -192,6 +192,11 @@ interface WebidlConverters {
    */
   RequestInit (V: unknown): undici.RequestInit
 
+  /**
+   * @see https://html.spec.whatwg.org/multipage/webappapis.html#eventhandlernonnull
+   */
+  EventHandlerNonNull (V: unknown): Function | null
+
   [Key: string]: (...args: any[]) => unknown
 }
 
