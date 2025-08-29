@@ -283,9 +283,7 @@ async function setup () {
 
   if (etcHostsConfigured) {
     console.log(hostsPath + ' is already configured.')
-  } else if (process.env.CI) {
-    await setupHostsFile()
-  } else {
+  } else if (!process.env.CI) {
     const rl = createInterface({
       input: process.stdin,
       output: process.stdout
