@@ -86,6 +86,7 @@ jobs:
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
           persist-credentials: false
+          submodules: recursive
 
       # Setup node, install deps, and build undici prior to building icu-less node and testing
       - name: Setup Node.js@${{ inputs.version }}
@@ -139,6 +140,19 @@ jobs:
           echo npm: $(npm --version)
           echo git: $(git --version)
           echo icu config: $(node -e "console.log(process.config)" | grep icu)
+
+      - name: Configure hosts file for WPT (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cd ${{ github.workspace }}\test\web-platform-tests\wpt
+          python wpt make-hosts-file | Out-File $env:SystemRoot\System32\drivers\etc\hosts -Encoding ascii -Append
+        shell: powershell
+
+      - name: Configure hosts file for WPT (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd ${{ github.workspace }}/test/web-platform-tests/wpt
+          python3 wpt make-hosts-file | sudo tee -a /etc/hosts
 
       - name: Run tests
         run: npm run test:javascript:without-intl

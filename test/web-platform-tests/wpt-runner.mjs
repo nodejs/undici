@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { once } from 'node:events'
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline'
@@ -39,8 +40,9 @@ async function runWithTestUtil (testFunction) {
     return await testFunction()
   } finally {
     console.log('Killing WPT server')
-    proc.kill('SIGINT')
-    await new Promise(resolve => proc.on('exit', resolve))
+
+    proc.kill()
+    await once(proc, 'exit')
   }
 }
 
@@ -381,7 +383,11 @@ switch (command) {
     await setup()
     break
   case 'run':
-    await run(filters)
+    // TODO: find what's causing the unsettled top-level await
+    await run(filters).then(
+      () => process.exit(0),
+      () => process.exit(1)
+    )
     break
   default:
     console.log(`
