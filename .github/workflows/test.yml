@@ -43,6 +43,9 @@ jobs:
         run: npm ls --all
         continue-on-error: true
 
+      - name: Update git submodules
+        run: git submodule update --init --recursive
+
       - name: Run tests with coverage
         id: coverage
         if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 22
