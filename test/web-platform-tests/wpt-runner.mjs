@@ -1,32 +1,13 @@
 import { spawn } from 'node:child_process'
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { createInterface } from 'node:readline'
+import { debuglog } from 'node:util'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const WPT_DIR = join(__dirname, 'wpt')
-const EXPECTATION_PATH = join(__dirname, 'expectation.json')
+const WPT_DIR = join(import.meta.dirname, 'wpt')
+const EXPECTATION_PATH = join(import.meta.dirname, 'expectation.json')
 
-class TestFilter {
-  constructor (filter) {
-    this.filter = filter
-  }
-
-  matches (path) {
-    if (!this.filter || this.filter.length === 0) {
-      return true
-    }
-    for (const filter of this.filter) {
-      if (filter.startsWith('/') && path.startsWith(filter)) {
-        return true
-      } else if (path.substring(1).startsWith(filter)) {
-        return true
-      }
-    }
-    return false
-  }
-}
+const log = debuglog('UNDICI_WPT')
 
 async function runWithTestUtil (testFunction) {
   console.log('Starting WPT server...')
@@ -39,7 +20,7 @@ async function runWithTestUtil (testFunction) {
 
   // Wait for server to be ready
   while (true) {
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     try {
       const req = await fetch(serverUrl) // eslint-disable-line no-restricted-globals
@@ -68,10 +49,12 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
 
   return new Promise((resolve) => {
     const proc = spawn('node', [
-      join(__dirname, 'runner/test-runner.mjs'),
+      '--expose-gc',
+      '--no-warnings',
+      join(import.meta.dirname, 'runner/test-runner.mjs'),
       url.toString()
     ], {
-      stdio: ['ignore', 'pipe', 'inherit'],
+      stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
         NO_COLOR: '1'
@@ -117,9 +100,7 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
         status: harnessStatus?.status ?? 1,
         harnessStatus,
         duration,
-        cases,
-        stderr: proc.stderr,
-        stdout: proc.stdout
+        cases
       })
     })
   })
@@ -139,9 +120,7 @@ function updateExpectations (results) {
     // Navigate to the correct nested object
     let current = expectations
     for (const segment of pathSegments) {
-      if (!current[segment]) {
-        current[segment] = {}
-      }
+      current[segment] ??= {}
       current = current[segment]
     }
 
@@ -183,7 +162,7 @@ function discoverTestsToRun (filter, expectation) {
           }
 
           const finalPath = url.pathname + url.search
-          if (!filter.matches(finalPath)) {
+          if (!filter.some((filter) => finalPath.startsWith(filter) || finalPath.slice(1).startsWith(filter))) {
             continue
           }
 
@@ -227,11 +206,22 @@ async function setup () {
 
   // Check Python
   const pythonCheck = spawn('python3', ['--version'], { stdio: 'pipe' })
-  const pythonOk = await new Promise(resolve => {
-    pythonCheck.on('close', code => resolve(code === 0))
+  pythonCheck.stdout.setEncoding('ascii')
+  const pythonVersion = await new Promise((resolve, reject) => {
+    pythonCheck.stdout.on('data', (c) => {
+      const versionRegex = /^Python (?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/.exec(c.trim())
+
+      if (versionRegex !== null) {
+        const { major, minor, patch } = versionRegex.groups
+        resolve({ major: Number(major), minor: Number(minor), patch: Number(patch) })
+        clearTimeout(timeout)
+      }
+    })
+
+    const timeout = setTimeout(reject, 30_000, 'Took too long to determine Python version')
   })
 
-  if (!pythonOk) {
+  if (pythonVersion.major !== 3) {
     throw new Error('Python 3 is required')
   }
 
@@ -270,9 +260,8 @@ async function setup () {
     })
 
     let stdout = ''
-    makeHostsProc.stdout.on('data', (data) => {
-      stdout += data.toString()
-    })
+    makeHostsProc.stdout.setEncoding('utf-8')
+    makeHostsProc.stdout.on('data', (data) => stdout += data) // eslint-disable-line no-return-assign
 
     const success = await new Promise(resolve => {
       makeHostsProc.on('exit', code => resolve(code === 0))
@@ -281,7 +270,7 @@ async function setup () {
     if (success) {
       try {
         const entries = '\n\n# Configured for Web Platform Tests (Node.js)\n' + stdout
-        writeFileSync(hostsPath, entries, { flag: 'a' })
+        writeFileSync(hostsPath, entries)
         console.log(`Updated ${hostsPath}`)
       } catch (err) {
         console.error(`Failed to write to ${hostsPath}. Please run with sudo or configure manually.`)
@@ -329,8 +318,7 @@ async function setup () {
 async function run (filters = []) {
   const startTime = Date.now()
   const expectation = getExpectation()
-  const filter = new TestFilter(filters)
-  const tests = discoverTestsToRun(filter, expectation)
+  const tests = discoverTestsToRun(filters, expectation)
 
   console.log(`Going to run ${tests.length} test files`)
 
@@ -344,7 +332,15 @@ async function run (filters = []) {
       const result = await runSingleTest(test.url, test.options, test.expectation, timeout)
       testResults.push({ test, result })
 
-      console.log(`Result: ${result.status === 0 ? '✅ PASS' : '❌ FAIL'} (${result.duration}ms)`)
+      console.log(`${test.path}: ${result.cases.length} tests ran in ${result.duration}ms:`)
+
+      for (const c of result.cases) {
+        console.log(`\t${c.index + 1}. "${c.name}": ${c.status === 0 ? '✅ PASS' : '❌ FAIL'}`)
+
+        if (c.status !== 0 && (c.message || c.stack)) {
+          log(`${c.message}:\n${c.stack.split('\n').slice(1).join('\n')}`)
+        }
+      }
     }
 
     return testResults
@@ -355,15 +351,24 @@ async function run (filters = []) {
 
   // Calculate summary
   const totalTests = results.length
-  const passingTests = results.filter(({ result }) => result.status === 0).length
-  const failingTests = totalTests - passingTests
+  const { pass, fail } = results.reduce((curr, { result }) => {
+    for (const c of result.cases) {
+      if (c.status !== 0) {
+        curr.fail++
+      } else {
+        curr.pass++
+      }
+    }
+
+    return curr
+  }, { pass: 0, fail: 0 })
 
   console.log('\n' + '='.repeat(50))
   console.log('TEST SUMMARY')
   console.log('='.repeat(50))
-  console.log(`Total tests: ${totalTests}`)
-  console.log(`✅ Passing: ${passingTests}`)
-  console.log(`❌ Failing: ${failingTests}`)
+  console.log(`Total Test Files: ${totalTests}`)
+  console.log(`✅ Passing: ${pass}`)
+  console.log(`❌ Failing: ${fail}`)
   console.log('='.repeat(50))
 
   return results
