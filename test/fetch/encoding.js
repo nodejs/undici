@@ -14,10 +14,13 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
   const gzipBrotliText = Buffer.from('CxCAH4sIAAAAAAAAA/NIzcnJ11EIzy/KSVEEANDDSuwNAAAAAw==', 'base64')
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    res.setHeader('Content-Encoding', contentCodings)
-    res.setHeader('Content-Type', 'text/plain')
-    res.write(gzipBrotliText)
-    res.end()
+    res.writeHead(200,
+      {
+        'Content-Encoding': contentCodings,
+        'Content-Type': 'text/plain'
+      }
+    )
+      .end(gzipBrotliText)
   }).listen(0)
 
   t.after(closeServerAsPromise(server))
@@ -37,10 +40,11 @@ test('response decompression according to content-encoding should be handled in 
   const gzipDeflateText = Buffer.from('H4sIAAAAAAAAA6uY89nj7MmT1wM5zuuf8gxkYZCfx5IFACQ8u/wVAAAA', 'base64')
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    res.setHeader('Content-Encoding', contentCodings)
-    res.setHeader('Content-Type', 'text/plain')
-    res.write(gzipDeflateText)
-    res.end()
+    res.writeHead(200, {
+      'Content-Encoding': contentCodings,
+      'Content-Type': 'text/plain'
+    })
+      .end(gzipDeflateText)
   }).listen(0)
 
   t.after(closeServerAsPromise(server))
@@ -61,10 +65,12 @@ test('should decompress zstandard response',
     const zstdText = Buffer.from('KLUv/QBYaQAASGVsbG8sIFdvcmxkIQ==', 'base64')
 
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      res.setHeader('Content-Encoding', contentCodings)
-      res.setHeader('Content-Type', 'text/plain')
-      res.write(zstdText)
-      res.end()
+      res.writeHead(200,
+        {
+          'Content-Encoding': contentCodings,
+          'Content-Type': 'text/plain'
+        })
+        .end(zstdText)
     }
     ).listen(0)
     t.after(closeServerAsPromise(server))
