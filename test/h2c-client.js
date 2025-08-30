@@ -26,16 +26,22 @@ test('Should throw if pipelining greather than concurrent streams', async t => {
 })
 
 test('Should support h2c connection', async t => {
-  const planner = tspl(t, { plan: 2 })
+  const planner = tspl(t, { plan: 6 })
+  let authority = ''
 
   const server = createServer((req, res) => {
+    planner.equal(req.headers[':authority'], authority)
+    planner.equal(req.headers[':method'], 'GET')
+    planner.equal(req.headers[':path'], '/')
+    planner.equal(req.headers[':scheme'], 'http')
     res.writeHead(200)
     res.end('Hello, world!')
   })
 
   server.listen()
   await once(server, 'listening')
-  const client = new H2CClient(`http://localhost:${server.address().port}/`)
+  authority = `localhost:${server.address().port}`
+  const client = new H2CClient(`http://${authority}/`)
 
   t.after(() => client.close())
   t.after(() => server.close())
