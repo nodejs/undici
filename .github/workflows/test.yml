@@ -23,6 +23,7 @@ jobs:
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
           persist-credentials: false
+          submodules: recursive
 
       - name: Setup Node.js@${{ inputs.node-version }}
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
@@ -42,6 +43,19 @@ jobs:
       - name: Print installed dependencies
         run: npm ls --all
         continue-on-error: true
+
+      - name: Configure hosts file for WPT (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cd ${{ github.workspace }}\test\web-platform-tests\wpt
+          python wpt make-hosts-file | Out-File $env:SystemRoot\System32\drivers\etc\hosts -Encoding ascii -Append
+        shell: powershell
+
+      - name: Configure hosts file for WPT (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd ${{ github.workspace }}/test/web-platform-tests/wpt
+          python3 wpt make-hosts-file | sudo tee -a /etc/hosts
 
       - name: Run tests with coverage
         id: coverage

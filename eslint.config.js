@@ -7,9 +7,9 @@ module.exports = [
   ...neo({
     ignores: [
       'lib/llhttp',
-      'test/fixtures/wpt',
       'test/fixtures/cache-tests',
-      'undici-fetch.js'
+      'undici-fetch.js',
+      'test/web-platform-tests/wpt'
     ],
     noJsx: true,
     ts: true
