@@ -24,7 +24,7 @@ describe('EventSource - close', () => {
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
+    eventSourceInstance.onopen = () => {
       eventSourceInstance.close()
     }
 

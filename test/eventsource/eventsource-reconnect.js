@@ -8,7 +8,7 @@ const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsou
 const { createDeferredPromise } = require('../../lib/util/promise')
 
 describe('EventSource - reconnect', () => {
-  test('Should reconnect on connection close', async () => {
+  test('Should reconnect on connection closed by server', async () => {
     const finishedPromise = createDeferredPromise()
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -20,15 +20,16 @@ describe('EventSource - reconnect', () => {
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
-      eventSourceInstance.onopen = () => {
-        server.close()
+    let connectionCount = 0
+    eventSourceInstance.onopen = () => {
+      if (++connectionCount === 2) {
         eventSourceInstance.close()
         finishedPromise.resolve()
       }
     }
 
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should reconnect on with reconnection timeout', async () => {
@@ -44,16 +45,18 @@ describe('EventSource - reconnect', () => {
 
     const start = Date.now()
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
-      eventSourceInstance.onopen = () => {
+
+    let connectionCount = 0
+    eventSourceInstance.onopen = () => {
+      if (++connectionCount === 2) {
         assert.ok(Date.now() - start >= defaultReconnectionTime)
-        server.close()
         eventSourceInstance.close()
         finishedPromise.resolve()
       }
     }
 
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should reconnect on with modified reconnection timeout', async () => {
@@ -70,17 +73,19 @@ describe('EventSource - reconnect', () => {
 
     const start = Date.now()
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
-      eventSourceInstance.onopen = () => {
+
+    let connectionCount = 0
+    eventSourceInstance.onopen = () => {
+      if (++connectionCount === 2) {
         assert.ok(Date.now() - start >= 100)
         assert.ok(Date.now() - start < 1000)
-        server.close()
         eventSourceInstance.close()
         finishedPromise.resolve()
       }
     }
 
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should reconnect and send lastEventId', async () => {
@@ -102,15 +107,17 @@ describe('EventSource - reconnect', () => {
 
     const start = Date.now()
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
-      eventSourceInstance.onopen = () => {
+
+    let connectionCount = 0
+    eventSourceInstance.onopen = () => {
+      if (++connectionCount === 2) {
         assert.ok(Date.now() - start >= 3000)
-        server.close()
         eventSourceInstance.close()
         finishedPromise.resolve()
       }
     }
 
     await finishedPromise.promise
+    server.close()
   })
 })

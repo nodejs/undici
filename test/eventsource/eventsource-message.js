@@ -3,7 +3,6 @@
 const assert = require('node:assert')
 const { once } = require('node:events')
 const http = require('node:http')
-const { setTimeout } = require('node:timers/promises')
 const { test, describe } = require('node:test')
 const { EventSource } = require('../../lib/web/eventsource/eventsource')
 const { createDeferredPromise } = require('../../lib/util/promise')
@@ -15,21 +14,19 @@ describe('EventSource - message', () => {
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('retry: 100\n\n')
-      await setTimeout(100)
-
-      res.end()
+      setTimeout(() => res.end(), 100)
     })
 
     await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const start = Date.now()
+    let connectionCount = 0
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
-      eventSourceInstance.onopen = () => {
+    eventSourceInstance.onopen = () => {
+      if (++connectionCount === 2) {
         assert.ok(Date.now() - start >= 100)
         assert.ok(Date.now() - start < 1000)
-        server.close()
         eventSourceInstance.close()
         finishedPromise.resolve()
       }
@@ -37,12 +34,10 @@ describe('EventSource - message', () => {
     eventSourceInstance.onmessage = () => {
       finishedPromise.reject('Should not have received a message')
       eventSourceInstance.close()
-      server.close()
     }
 
-    await setTimeout(500)
-
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should not emit a message if no data is provided', async () => {
@@ -51,9 +46,7 @@ describe('EventSource - message', () => {
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('event:message\n\n')
-      await setTimeout(100)
-
-      res.end()
+      setTimeout(() => res.end(), 100)
     })
 
     await once(server.listen(0), 'listening')
@@ -64,15 +57,13 @@ describe('EventSource - message', () => {
     eventSourceInstance.onmessage = () => {
       finishedPromise.reject('Should not have received a message')
       eventSourceInstance.close()
-      server.close()
     }
 
-    await setTimeout(500)
-    server.close()
     eventSourceInstance.close()
     finishedPromise.resolve()
 
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should emit a custom type message if data is provided', async () => {
@@ -81,26 +72,20 @@ describe('EventSource - message', () => {
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('event:custom\ndata:test\n\n')
-      await setTimeout(100)
-
-      res.end()
+      setTimeout(() => res.end(), 100)
     })
 
-    server.listen(0)
-
-    await once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('custom', () => {
       finishedPromise.resolve()
       eventSourceInstance.close()
-      server.close()
     })
 
-    await setTimeout(500)
-
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should emit a message event if data is provided', async () => {
@@ -109,26 +94,20 @@ describe('EventSource - message', () => {
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('data:test\n\n')
-      await setTimeout(100)
-
-      res.end()
+      setTimeout(() => res.end(), 100)
     })
 
-    server.listen(0)
-
-    await once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('message', () => {
       finishedPromise.resolve()
       eventSourceInstance.close()
-      server.close()
     })
 
-    await setTimeout(500)
-
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should emit a message event if data as a field is provided', async () => {
@@ -137,26 +116,20 @@ describe('EventSource - message', () => {
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('data\n\n')
-      await setTimeout(100)
-
-      res.end()
+      setTimeout(() => res.end(), 100)
     })
 
-    server.listen(0)
-
-    await once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('message', () => {
       finishedPromise.resolve()
       eventSourceInstance.close()
-      server.close()
     })
 
-    await setTimeout(500)
-
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should emit a custom message event if data is empty', async () => {
@@ -165,26 +138,20 @@ describe('EventSource - message', () => {
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('event:custom\ndata:\n\n')
-      await setTimeout(100)
-
-      res.end()
+      setTimeout(() => res.end(), 100)
     })
 
-    server.listen(0)
-
-    await once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('custom', () => {
       finishedPromise.resolve()
       eventSourceInstance.close()
-      server.close()
     })
 
-    await setTimeout(500)
-
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should emit a message event if data is empty', async () => {
@@ -193,26 +160,20 @@ describe('EventSource - message', () => {
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('data:\n\n')
-      await setTimeout(100)
-
-      res.end()
+      setTimeout(() => res.end(), 100)
     })
 
-    server.listen(0)
-
-    await once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('message', () => {
       finishedPromise.resolve()
       eventSourceInstance.close()
-      server.close()
     })
 
-    await setTimeout(500)
-
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should emit a custom message event if data only as a field is provided', async () => {
@@ -221,26 +182,20 @@ describe('EventSource - message', () => {
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('event:custom\ndata\n\n')
-      await setTimeout(100)
-
-      res.end()
+      setTimeout(() => res.end(), 100)
     })
 
-    server.listen(0)
-
-    await once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('custom', () => {
       finishedPromise.resolve()
       eventSourceInstance.close()
-      server.close()
     })
 
-    await setTimeout(500)
-
     await finishedPromise.promise
+    server.close()
   })
 
   test('Should not emit a custom type message if no data is provided', async () => {
@@ -249,35 +204,26 @@ describe('EventSource - message', () => {
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('event:custom\n\n')
-      await setTimeout(100)
-
-      res.end()
+      setTimeout(() => res.end(), 100)
     })
 
-    server.listen(0)
-
     let reconnectionCount = 0
-    await once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
-      eventSourceInstance.onopen = () => {
-        if (++reconnectionCount === 2) {
-          server.close()
-          eventSourceInstance.close()
-          finishedPromise.resolve()
-        }
+    eventSourceInstance.onopen = () => {
+      if (++reconnectionCount === 2) {
+        eventSourceInstance.close()
+        finishedPromise.resolve()
       }
     }
     eventSourceInstance.addEventListener('custom', () => {
       finishedPromise.reject('Should not have received a message')
       eventSourceInstance.close()
-      server.close()
     })
 
-    await setTimeout(500)
-
     await finishedPromise.promise
+    server.close()
   })
 })
