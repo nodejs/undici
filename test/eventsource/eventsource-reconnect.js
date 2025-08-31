@@ -5,19 +5,11 @@ const { once } = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
 const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
+const { createDeferredPromise } = require('../../lib/util/promise')
 
 describe('EventSource - reconnect', () => {
   test('Should reconnect on connection close', async () => {
-    const finishedPromise = {
-      promise: undefined,
-      resolve: undefined,
-      reject: undefined
-    }
-
-    finishedPromise.promise = new Promise((resolve, reject) => {
-      finishedPromise.resolve = resolve
-      finishedPromise.reject = reject
-    })
+    const finishedPromise = createDeferredPromise()
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -40,16 +32,7 @@ describe('EventSource - reconnect', () => {
   })
 
   test('Should reconnect on with reconnection timeout', async () => {
-    const finishedPromise = {
-      promise: undefined,
-      resolve: undefined,
-      reject: undefined
-    }
-
-    finishedPromise.promise = new Promise((resolve, reject) => {
-      finishedPromise.resolve = resolve
-      finishedPromise.reject = reject
-    })
+    const finishedPromise = createDeferredPromise()
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -74,16 +57,7 @@ describe('EventSource - reconnect', () => {
   })
 
   test('Should reconnect on with modified reconnection timeout', async () => {
-    const finishedPromise = {
-      promise: undefined,
-      resolve: undefined,
-      reject: undefined
-    }
-
-    finishedPromise.promise = new Promise((resolve, reject) => {
-      finishedPromise.resolve = resolve
-      finishedPromise.reject = reject
-    })
+    const finishedPromise = createDeferredPromise()
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -112,16 +86,7 @@ describe('EventSource - reconnect', () => {
   test('Should reconnect and send lastEventId', async () => {
     let requestCount = 0
 
-    const finishedPromise = {
-      promise: undefined,
-      resolve: undefined,
-      reject: undefined
-    }
-
-    finishedPromise.promise = new Promise((resolve, reject) => {
-      finishedPromise.resolve = resolve
-      finishedPromise.reject = reject
-    })
+    const finishedPromise = createDeferredPromise()
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
