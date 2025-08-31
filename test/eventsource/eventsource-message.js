@@ -1,16 +1,15 @@
 'use strict'
 
-const assert = require('node:assert')
 const { once } = require('node:events')
 const http = require('node:http')
 const { test, describe, after } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
-const { createDeferredPromise } = require('../../lib/util/promise')
 const FakeTimers = require('@sinonjs/fake-timers')
 
 describe('EventSource - message', () => {
-  test('Should not emit a message if only retry field was sent', async () => {
-    const finishedPromise = createDeferredPromise()
+  test('Should not emit a message if only retry field was sent', async (t) => {
+    t = tspl(t, { plan: 2 })
 
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -18,6 +17,7 @@ describe('EventSource - message', () => {
       setTimeout(() => res.end(), 100)
     })
 
+    after(() => server.close())
     await once(server.listen(0), 'listening')
     const port = server.address().port
 
@@ -26,23 +26,21 @@ describe('EventSource - message', () => {
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.onopen = () => {
       if (++connectionCount === 2) {
-        assert.ok(Date.now() - start >= 100)
-        assert.ok(Date.now() - start < 1000)
+        t.ok(Date.now() - start >= 100)
+        t.ok(Date.now() - start < 1000)
         eventSourceInstance.close()
-        finishedPromise.resolve()
       }
     }
     eventSourceInstance.onmessage = () => {
-      finishedPromise.reject('Should not have received a message')
+      t.fail('Should not have received a message')
       eventSourceInstance.close()
     }
 
-    await finishedPromise.promise
-    server.close()
+    await t.completed
   })
 
-  test('Should not emit a message if no data is provided', async () => {
-    const finishedPromise = createDeferredPromise()
+  test('Should not emit a message if no data is provided', async (t) => {
+    t = tspl(t, { plan: 1 })
 
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -50,25 +48,25 @@ describe('EventSource - message', () => {
       setTimeout(() => res.end(), 100)
     })
 
+    after(() => server.close())
     await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
 
     eventSourceInstance.onmessage = () => {
-      finishedPromise.reject('Should not have received a message')
+      t.fail('Should not have received a message')
       eventSourceInstance.close()
     }
 
     eventSourceInstance.close()
-    finishedPromise.resolve()
+    t.ok('Should not have received a message')
 
-    await finishedPromise.promise
-    server.close()
+    await t.completed
   })
 
-  test('Should emit a custom type message if data is provided', async () => {
-    const finishedPromise = createDeferredPromise()
+  test('Should emit a custom type message if data is provided', async (t) => {
+    t = tspl(t, { plan: 1 })
 
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -76,21 +74,21 @@ describe('EventSource - message', () => {
       setTimeout(() => res.end(), 100)
     })
 
+    after(() => server.close())
     await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('custom', () => {
-      finishedPromise.resolve()
+      t.ok(true)
       eventSourceInstance.close()
     })
 
-    await finishedPromise.promise
-    server.close()
+    await t.completed
   })
 
-  test('Should emit a message event if data is provided', async () => {
-    const finishedPromise = createDeferredPromise()
+  test('Should emit a message event if data is provided', async (t) => {
+    t = tspl(t, { plan: 1 })
 
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -98,21 +96,21 @@ describe('EventSource - message', () => {
       setTimeout(() => res.end(), 100)
     })
 
+    after(() => server.close())
     await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('message', () => {
-      finishedPromise.resolve()
+      t.ok(true)
       eventSourceInstance.close()
     })
 
-    await finishedPromise.promise
-    server.close()
+    await t.completed
   })
 
-  test('Should emit a message event if data as a field is provided', async () => {
-    const finishedPromise = createDeferredPromise()
+  test('Should emit a message event if data as a field is provided', async (t) => {
+    t = tspl(t, { plan: 1 })
 
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -120,21 +118,21 @@ describe('EventSource - message', () => {
       setTimeout(() => res.end(), 100)
     })
 
+    after(() => server.close())
     await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('message', () => {
-      finishedPromise.resolve()
+      t.ok(true)
       eventSourceInstance.close()
     })
 
-    await finishedPromise.promise
-    server.close()
+    await t.completed
   })
 
-  test('Should emit a custom message event if data is empty', async () => {
-    const finishedPromise = createDeferredPromise()
+  test('Should emit a custom message event if data is empty', async (t) => {
+    t = tspl(t, { plan: 1 })
 
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -142,21 +140,21 @@ describe('EventSource - message', () => {
       setTimeout(() => res.end(), 100)
     })
 
+    after(() => server.close())
     await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('custom', () => {
-      finishedPromise.resolve()
+      t.ok(true)
       eventSourceInstance.close()
     })
 
-    await finishedPromise.promise
-    server.close()
+    await t.completed
   })
 
-  test('Should emit a message event if data is empty', async () => {
-    const finishedPromise = createDeferredPromise()
+  test('Should emit a message event if data is empty', async (t) => {
+    t = tspl(t, { plan: 1 })
 
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -164,21 +162,21 @@ describe('EventSource - message', () => {
       setTimeout(() => res.end(), 100)
     })
 
+    after(() => server.close())
     await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('message', () => {
-      finishedPromise.resolve()
+      t.ok(true)
       eventSourceInstance.close()
     })
 
-    await finishedPromise.promise
-    server.close()
+    await t.completed
   })
 
-  test('Should emit a custom message event if data only as a field is provided', async () => {
-    const finishedPromise = createDeferredPromise()
+  test('Should emit a custom message event if data only as a field is provided', async (t) => {
+    t = tspl(t, { plan: 1 })
 
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -186,24 +184,24 @@ describe('EventSource - message', () => {
       setTimeout(() => res.end(), 100)
     })
 
+    after(() => server.close())
     await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
     eventSourceInstance.addEventListener('custom', () => {
-      finishedPromise.resolve()
+      t.ok(true)
       eventSourceInstance.close()
     })
 
-    await finishedPromise.promise
-    server.close()
+    await t.completed
   })
 
-  test('Should not emit a custom type message if no data is provided', async () => {
+  test('Should not emit a custom type message if no data is provided', async (t) => {
     const clock = FakeTimers.install()
     after(() => clock.uninstall())
 
-    const finishedPromise = createDeferredPromise()
+    t = tspl(t, { plan: 1 })
 
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -212,6 +210,7 @@ describe('EventSource - message', () => {
     })
 
     let reconnectionCount = 0
+    after(() => server.close())
     await once(server.listen(0), 'listening')
     const port = server.address().port
 
@@ -219,11 +218,11 @@ describe('EventSource - message', () => {
     eventSourceInstance.onopen = () => {
       if (++reconnectionCount === 2) {
         eventSourceInstance.close()
-        finishedPromise.resolve()
+        t.ok(true)
       }
     }
     eventSourceInstance.addEventListener('custom', () => {
-      finishedPromise.reject('Should not have received a message')
+      t.fail('Should not have received a message')
       eventSourceInstance.close()
     })
 
@@ -234,7 +233,6 @@ describe('EventSource - message', () => {
     clock.tick(defaultReconnectionTime)
     await once(eventSourceInstance, 'open')
     clock.tick(defaultReconnectionTime)
-    await finishedPromise.promise
-    server.close()
+    await t.completed
   })
 })
