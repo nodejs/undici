@@ -1936,3 +1936,89 @@ test('#3951 - Should handle lookup errors correctly', async t => {
     origin: 'http://localhost'
   }), new Error('lookup error'))
 })
+
+test('Headers iterable-of-pairs should work with DNS interceptor', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    t.equal(req.headers.foo, 'bar')
+    t.match(req.headers.host, /^localhost:\d+$/)
+    res.end('ok')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const { cache: cacheInterceptor, dns: dnsInterceptor } = interceptors
+
+  const agent = new Agent().compose([
+    cacheInterceptor(),
+    dnsInterceptor({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          { address: '127.0.0.1', family: 4 }
+        ])
+      }
+    })
+  ])
+
+  const origin = `http://localhost:${server.address().port}`
+  const headersIterable = [['foo', 'bar']]
+
+  const r = await agent.request({
+    origin,
+    path: '/',
+    method: 'GET',
+    headers: headersIterable
+  })
+  t.equal(r.statusCode, 200)
+  await r.body.text()
+
+  server.close()
+  await once(server, 'close')
+  await agent.close()
+})
+
+test('Headers object should work with DNS interceptor', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    t.equal(req.headers.foo, 'bar')
+    t.match(req.headers.host, /^localhost:\d+$/)
+    res.end('ok')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const { dns: dnsInterceptor } = interceptors
+  const client = new Agent().compose([
+    dnsInterceptor({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          { address: '127.0.0.1', family: 4 }
+        ])
+      }
+    })
+  ])
+
+  const origin = `http://localhost:${server.address().port}`
+  const headersRecord = { foo: 'bar' }
+
+  const r = await client.request({
+    origin,
+    path: '/',
+    method: 'GET',
+    headers: headersRecord
+  })
+  t.equal(r.statusCode, 200)
+  await r.body.text()
+
+  server.close()
+  await once(server, 'close')
+  await client.close()
+})
