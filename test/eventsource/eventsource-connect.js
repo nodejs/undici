@@ -1,7 +1,7 @@
 'use strict'
 
 const assert = require('node:assert')
-const events = require('node:events')
+const { once } = require('node:events')
 const http = require('node:http')
 const { test, describe, after } = require('node:test')
 const FakeTimers = require('@sinonjs/fake-timers')
@@ -16,8 +16,7 @@ describe('EventSource - sending correct request headers', () => {
       res.end()
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
@@ -38,8 +37,7 @@ describe('EventSource - sending correct request headers', () => {
       res.end()
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
@@ -61,8 +59,7 @@ describe('EventSource - sending correct request headers', () => {
       res.end()
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
@@ -83,8 +80,7 @@ describe('EventSource - sending correct request headers', () => {
       res.end()
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
@@ -106,8 +102,7 @@ describe('EventSource - received response must have content-type to be text/even
       res.end()
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
@@ -127,8 +122,7 @@ describe('EventSource - received response must have content-type to be text/even
       res.end()
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
@@ -148,8 +142,7 @@ describe('EventSource - received response must have content-type to be text/even
       res.end()
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
@@ -169,8 +162,7 @@ describe('EventSource - received response must have content-type to be text/even
       res.end()
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
@@ -199,15 +191,15 @@ describe('EventSource - received response must have content-type to be text/even
     }
     clock.tick(reconnectionTime)
 
-    await events.once(eventSourceInstance, 'error')
+    await once(eventSourceInstance, 'error')
 
     const start = Date.now()
     clock.tick(reconnectionTime)
-    await events.once(eventSourceInstance, 'error')
+    await once(eventSourceInstance, 'error')
     clock.tick(reconnectionTime)
-    await events.once(eventSourceInstance, 'error')
+    await once(eventSourceInstance, 'error')
     clock.tick(reconnectionTime)
-    await events.once(eventSourceInstance, 'error')
+    await once(eventSourceInstance, 'error')
     const end = Date.now()
 
     eventSourceInstance.close()
@@ -234,15 +226,15 @@ describe('EventSource - received response must have content-type to be text/even
       onerrorCalls.push(error)
     }
 
-    await events.once(eventSourceInstance, 'error')
+    await once(eventSourceInstance, 'error')
 
     const start = Date.now()
     clock.tick(reconnectionTime)
-    await events.once(eventSourceInstance, 'error')
+    await once(eventSourceInstance, 'error')
     clock.tick(reconnectionTime)
-    await events.once(eventSourceInstance, 'error')
+    await once(eventSourceInstance, 'error')
     clock.tick(reconnectionTime)
-    await events.once(eventSourceInstance, 'error')
+    await once(eventSourceInstance, 'error')
     const end = Date.now()
 
     eventSourceInstance.close()
