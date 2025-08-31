@@ -3,9 +3,10 @@
 const assert = require('node:assert')
 const { once } = require('node:events')
 const http = require('node:http')
-const { test, describe } = require('node:test')
-const { EventSource } = require('../../lib/web/eventsource/eventsource')
+const { test, describe, after } = require('node:test')
+const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
 const { createDeferredPromise } = require('../../lib/util/promise')
+const FakeTimers = require('@sinonjs/fake-timers')
 
 describe('EventSource - message', () => {
   test('Should not emit a message if only retry field was sent', async () => {
@@ -199,6 +200,9 @@ describe('EventSource - message', () => {
   })
 
   test('Should not emit a custom type message if no data is provided', async () => {
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
+
     const finishedPromise = createDeferredPromise()
 
     const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
@@ -223,6 +227,13 @@ describe('EventSource - message', () => {
       eventSourceInstance.close()
     })
 
+    await once(eventSourceInstance, 'open')
+    clock.tick(defaultReconnectionTime)
+    await once(eventSourceInstance, 'error')
+
+    clock.tick(defaultReconnectionTime)
+    await once(eventSourceInstance, 'open')
+    clock.tick(defaultReconnectionTime)
     await finishedPromise.promise
     server.close()
   })
