@@ -4,6 +4,7 @@ const { createServer } = require('node:http')
 const { describe, test, after } = require('node:test')
 const { once } = require('node:events')
 const { equal, strictEqual, notEqual, fail } = require('node:assert')
+const { setTimeout: sleep } = require('node:timers/promises')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { Client, interceptors, cacheStores: { MemoryCacheStore } } = require('../../index')
 
@@ -479,7 +480,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for background revalidation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await sleep(100)
     equal(revalidationRequests, 1)
 
     // Response is still stale, will trigger another background revalidation
@@ -499,7 +500,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for second background revalidation
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await sleep(100)
     equal(revalidationRequests, 2)
 
     // Third request triggers another background revalidation that returns updated content
@@ -514,7 +515,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for third background revalidation
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await sleep(100)
     equal(revalidationRequests, 3)
 
     // Now the cache should have updated content
@@ -615,7 +616,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for background revalidation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await sleep(100)
     equal(revalidationRequests, 1)
 
     // Response is still stale, will trigger another background revalidation
@@ -635,7 +636,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for second background revalidation
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await sleep(100)
     equal(revalidationRequests, 2)
 
     // Third request triggers another background revalidation that returns updated content
@@ -650,7 +651,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for third background revalidation
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await sleep(100)
     equal(revalidationRequests, 3)
 
     // Now the cache should have updated content
@@ -754,7 +755,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for background revalidation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await sleep(100)
     strictEqual(revalidationRequests, 1)
   })
 
@@ -1156,7 +1157,7 @@ describe('Cache Interceptor', () => {
       equal(requestsToOrigin, 1)
 
       // Wait for background revalidation to complete
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       equal(revalidationRequests, 1)
     })
 
@@ -1454,7 +1455,7 @@ describe('Cache Interceptor', () => {
       }
 
       // Wait for background revalidation to complete (which will fail with 500)
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       equal(requestsToOrigin, 2)
 
       // Send a fourth request. Still within stale-while-revalidate but without stale-if-error,
@@ -1470,7 +1471,7 @@ describe('Cache Interceptor', () => {
       }
 
       // Wait for another background revalidation
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       equal(requestsToOrigin, 3)
 
       clock.tick(25000)
@@ -1798,7 +1799,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for response to become stale
-    await new Promise(resolve => setTimeout(resolve, 1100))
+    await sleep(1100)
 
     // Request stale content - should return immediately with stale content
     const startTime = Date.now()
@@ -1818,7 +1819,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for background revalidation to complete
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await sleep(500)
 
     // Verify that revalidation occurred in background
     equal(revalidationRequests, 1, 'Background revalidation should have occurred')
@@ -1867,7 +1868,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for staleness
-    await new Promise(resolve => setTimeout(resolve, 1100))
+    await sleep(1100)
 
     // First stale request - gets stale content immediately
     {
@@ -1876,7 +1877,7 @@ describe('Cache Interceptor', () => {
     }
 
     // Wait for background revalidation
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await sleep(500)
     equal(revalidationRequests, 1)
 
     // Second stale request - should get updated content from cache
