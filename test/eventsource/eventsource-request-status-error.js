@@ -14,9 +14,7 @@ describe('EventSource - status error', () => {
         res.end()
       })
 
-      server.listen(0)
-      await once(server, 'listening')
-
+      await once(server.listen(0), 'listening')
       const port = server.address().port
 
       const eventSourceInstance = new EventSource(`http://localhost:${port}`)

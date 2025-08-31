@@ -11,8 +11,7 @@ describe('EventSource - eventhandler idl', async () => {
     res.writeHead(200, 'dummy')
   })
 
-  server.listen(0)
-  await once(server, 'listening')
+  await once(server.listen(0), 'listening')
   const port = server.address().port
 
   let done = 0
