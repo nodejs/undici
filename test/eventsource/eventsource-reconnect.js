@@ -3,12 +3,16 @@
 const assert = require('node:assert')
 const { once } = require('node:events')
 const http = require('node:http')
-const { test, describe } = require('node:test')
+const { test, describe, after } = require('node:test')
+const FakeTimers = require('@sinonjs/fake-timers')
 const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
 const { createDeferredPromise } = require('../../lib/util/promise')
 
 describe('EventSource - reconnect', () => {
   test('Should reconnect on connection closed by server', async () => {
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
+
     const finishedPromise = createDeferredPromise()
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -28,11 +32,21 @@ describe('EventSource - reconnect', () => {
       }
     }
 
+    await once(eventSourceInstance, 'open')
+
+    clock.tick(10)
+    await once(eventSourceInstance, 'error')
+
+    clock.tick(defaultReconnectionTime)
+
     await finishedPromise.promise
     server.close()
   })
 
   test('Should reconnect on with reconnection timeout', async () => {
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
+
     const finishedPromise = createDeferredPromise()
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -55,11 +69,21 @@ describe('EventSource - reconnect', () => {
       }
     }
 
+    await once(eventSourceInstance, 'open')
+
+    clock.tick(10)
+    await once(eventSourceInstance, 'error')
+
+    clock.tick(defaultReconnectionTime)
+
     await finishedPromise.promise
     server.close()
   })
 
   test('Should reconnect on with modified reconnection timeout', async () => {
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
+
     const finishedPromise = createDeferredPromise()
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -84,13 +108,22 @@ describe('EventSource - reconnect', () => {
       }
     }
 
+    await once(eventSourceInstance, 'open')
+
+    clock.tick(10)
+    await once(eventSourceInstance, 'error')
+
+    clock.tick(100)
+
     await finishedPromise.promise
     server.close()
   })
 
   test('Should reconnect and send lastEventId', async () => {
-    let requestCount = 0
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
 
+    let requestCount = 0
     const finishedPromise = createDeferredPromise()
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -111,11 +144,18 @@ describe('EventSource - reconnect', () => {
     let connectionCount = 0
     eventSourceInstance.onopen = () => {
       if (++connectionCount === 2) {
-        assert.ok(Date.now() - start >= 3000)
+        assert.ok(Date.now() - start >= defaultReconnectionTime)
         eventSourceInstance.close()
         finishedPromise.resolve()
       }
     }
+
+    await once(eventSourceInstance, 'open')
+
+    clock.tick(10)
+    await once(eventSourceInstance, 'error')
+
+    clock.tick(defaultReconnectionTime)
 
     await finishedPromise.promise
     server.close()
