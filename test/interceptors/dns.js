@@ -1937,88 +1937,73 @@ test('#3951 - Should handle lookup errors correctly', async t => {
   }), new Error('lookup error'))
 })
 
-test('Headers iterable-of-pairs should work with DNS interceptor', async t => {
-  t = tspl(t, { plan: 3 })
-
+test('Various (parameterized) header shapes should work with DNS interceptor', async t => {
   const server = createServer({ joinDuplicateHeaders: true })
-
   server.on('request', (req, res) => {
     t.equal(req.headers.foo, 'bar')
+    t.equal(typeof req.headers['0'], 'undefined')
     t.match(req.headers.host, /^localhost:\d+$/)
     res.end('ok')
   })
 
   server.listen(0)
   await once(server, 'listening')
+
+  const origin = `http://localhost:${server.address().port}`
 
   const { cache: cacheInterceptor, dns: dnsInterceptor } = interceptors
 
-  const agent = new Agent().compose([
-    cacheInterceptor(),
-    dnsInterceptor({
-      lookup: (_origin, _opts, cb) => {
-        cb(null, [
-          { address: '127.0.0.1', family: 4 }
-        ])
-      }
-    })
-  ])
+  function * genPairs () { yield ['foo', 'bar'] }
 
-  const origin = `http://localhost:${server.address().port}`
-  const headersIterable = [['foo', 'bar']]
+  const cases = [
+    {
+      name: 'record',
+      headers: { foo: 'bar' },
+      interceptors: [dnsInterceptor()]
+    },
+    {
+      name: 'flat array',
+      headers: ['foo', 'bar'],
+      interceptors: [dnsInterceptor()]
+    },
+    {
+      name: 'record with multi-value',
+      headers: { foo: ['bar'] },
+      interceptors: [dnsInterceptor()]
+    },
+    {
+      name: 'iterable generator of pairs',
+      headers: genPairs(),
+      interceptors: [cacheInterceptor(), dnsInterceptor({
+        lookup: (_origin, _opts, cb) => cb(null, [{ address: '127.0.0.1', family: 4 }])
+      })]
+    },
+    {
+      name: 'set of pairs',
+      headers: new Set([['foo', 'bar']]),
+      interceptors: [cacheInterceptor(), dnsInterceptor({
+        lookup: (_origin, _opts, cb) => cb(null, [{ address: '127.0.0.1', family: 4 }])
+      })]
+    },
+    {
+      name: 'map of pairs (single)',
+      headers: new Map([['foo', 'bar']]),
+      interceptors: [cacheInterceptor(), dnsInterceptor({
+        lookup: (_origin, _opts, cb) => cb(null, [{ address: '127.0.0.1', family: 4 }])
+      })]
+    }
+  ]
 
-  const r = await agent.request({
-    origin,
-    path: '/',
-    method: 'GET',
-    headers: headersIterable
-  })
-  t.equal(r.statusCode, 200)
-  await r.body.text()
+  t = tspl(t, { plan: cases.length * 4 })
 
-  server.close()
-  await once(server, 'close')
-  await agent.close()
-})
-
-test('Headers object should work with DNS interceptor', async t => {
-  t = tspl(t, { plan: 3 })
-
-  const server = createServer({ joinDuplicateHeaders: true })
-
-  server.on('request', (req, res) => {
-    t.equal(req.headers.foo, 'bar')
-    t.match(req.headers.host, /^localhost:\d+$/)
-    res.end('ok')
-  })
-
-  server.listen(0)
-  await once(server, 'listening')
-
-  const { dns: dnsInterceptor } = interceptors
-  const client = new Agent().compose([
-    dnsInterceptor({
-      lookup: (_origin, _opts, cb) => {
-        cb(null, [
-          { address: '127.0.0.1', family: 4 }
-        ])
-      }
-    })
-  ])
-
-  const origin = `http://localhost:${server.address().port}`
-  const headersRecord = { foo: 'bar' }
-
-  const r = await client.request({
-    origin,
-    path: '/',
-    method: 'GET',
-    headers: headersRecord
-  })
-  t.equal(r.statusCode, 200)
-  await r.body.text()
+  for (const c of cases) {
+    const agent = new Agent().compose(c.interceptors)
+    const r = await agent.request({ origin, path: '/', method: 'GET', headers: c.headers })
+    t.equal(r.statusCode, 200, c.name)
+    await r.body.text()
+    await agent.close()
+  }
 
   server.close()
   await once(server, 'close')
-  await client.close()
 })
