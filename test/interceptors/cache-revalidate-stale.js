@@ -4,12 +4,19 @@ const { test, after } = require('node:test')
 const { strictEqual } = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { setTimeout: sleep } = require('node:timers/promises')
 const { request, Client, interceptors } = require('../../index')
+const FakeTimers = require('@sinonjs/fake-timers')
 
 test('revalidates the request when the response is stale', async () => {
+  const clock = FakeTimers.install({
+    now: 1
+  })
+  after(() => clock.uninstall())
+
   let count = 0
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.sendDate = false
+    res.setHeader('Date', new Date(clock.now).toUTCString())
     res.setHeader('Cache-Control', 'public, max-age=1')
     res.end('hello world ' + count++)
   })
@@ -32,16 +39,31 @@ test('revalidates the request when the response is stale', async () => {
     strictEqual(await res.body.text(), 'hello world 0')
   }
 
+  clock.tick(999)
+
   {
     const res = await request(url, { dispatcher })
     strictEqual(await res.body.text(), 'hello world 0')
   }
 
-  await sleep(1000)
+  clock.tick(1)
 
   {
     const res = await request(url, { dispatcher })
-
     strictEqual(await res.body.text(), 'hello world 1')
+  }
+
+  clock.tick(999)
+
+  {
+    const res = await request(url, { dispatcher })
+    strictEqual(await res.body.text(), 'hello world 1')
+  }
+
+  clock.tick(1)
+
+  {
+    const res = await request(url, { dispatcher })
+    strictEqual(await res.body.text(), 'hello world 2')
   }
 })
