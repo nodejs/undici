@@ -39837,13 +39837,11 @@
             },
             {
               "name": "writing a resizable ArrayBuffer should be rejected",
-              "success": false,
-              "message": "assert_unreached: Should have rejected: write() should reject Reached unreachable code"
+              "success": true
             },
             {
               "name": "writing a view on a shared buffer should be rejected",
-              "success": false,
-              "message": "promise_rejects_js: write() should reject function \"function() { throw e; }\" threw object \"RangeError: Invalid string length\" (\"RangeError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
+              "success": true
             },
             {
               "name": "Garbage collecting a WebSocket stream doesn't crash while write promise is pending",
