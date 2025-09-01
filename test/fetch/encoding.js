@@ -2,11 +2,10 @@
 
 const { once } = require('node:events')
 const { createServer } = require('node:http')
-const { test } = require('node:test')
+const { test, after } = require('node:test')
 const zlib = require('node:zlib')
 const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
-const { closeServerAsPromise } = require('../utils/node-http')
 
 test('content-encoding header', async (t) => {
   const { strictEqual } = tspl(t, { plan: 2 })
@@ -24,7 +23,7 @@ test('content-encoding header', async (t) => {
     )
       .end(gzipDeflateText)
   })
-  t.after(closeServerAsPromise(server))
+  after(() => server.close())
 
   await once(server.listen(0), 'listening')
 
@@ -52,7 +51,7 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
     )
       .end(gzipDeflateText)
   })
-  t.after(closeServerAsPromise(server))
+  after(() => server.close())
 
   await once(server.listen(0), 'listening')
 
@@ -81,8 +80,7 @@ test('should decompress zstandard response',
         })
         .end(zstdText)
     })
-
-    t.after(closeServerAsPromise(server))
+    after(() => server.close())
 
     await once(server.listen(0), 'listening')
 
