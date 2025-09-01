@@ -94,6 +94,8 @@ interface WebidlUtil {
    * This is only effective in some newer Node.js versions.
    */
   markAsUncloneable (V: any): void
+
+  IsResizableArrayBuffer (V: ArrayBufferLike): boolean
 }
 
 interface WebidlConverters {
@@ -147,34 +149,82 @@ interface WebidlConverters {
   /**
    * @see https://webidl.spec.whatwg.org/#idl-ArrayBuffer
    */
-  ArrayBuffer (V: unknown): ArrayBufferLike
-  ArrayBuffer (V: unknown, opts: { allowShared: false }): ArrayBuffer
+  ArrayBuffer (
+    V: unknown,
+    prefix: string,
+    argument: string,
+    options?: { allowResizable: boolean }
+  ): ArrayBuffer
+
+  /**
+   * @see https://webidl.spec.whatwg.org/#idl-SharedArrayBuffer
+   */
+  SharedArrayBuffer (
+    V: unknown,
+    prefix: string,
+    argument: string,
+    options?: { allowResizable: boolean }
+  ): SharedArrayBuffer
 
   /**
    * @see https://webidl.spec.whatwg.org/#es-buffer-source-types
    */
   TypedArray (
     V: unknown,
-    TypedArray: NodeJS.TypedArray | ArrayBufferLike
-  ): NodeJS.TypedArray | ArrayBufferLike
-  TypedArray (
-    V: unknown,
-    TypedArray: NodeJS.TypedArray | ArrayBufferLike,
-    opts?: { allowShared: false }
-  ): NodeJS.TypedArray | ArrayBuffer
+    T: new () => NodeJS.TypedArray,
+    prefix: string,
+    argument: string,
+    opts?: {
+      allowResizable: boolean
+      allowShared: boolean
+    }
+  ): NodeJS.TypedArray
 
   /**
    * @see https://webidl.spec.whatwg.org/#es-buffer-source-types
    */
-  DataView (V: unknown, opts?: { allowShared: boolean }): DataView
+  DataView (
+    V: unknown,
+    prefix: string,
+    argument: string,
+    opts?: {
+      allowResizable: boolean
+      allowShared: boolean
+    }
+  ): DataView
+
+  /**
+   * @see https://webidl.spec.whatwg.org/#es-buffer-source-types
+   */
+  ArrayBufferView (
+    V: unknown,
+    prefix: string,
+    argument: string,
+    opts?: {
+      allowResizable: boolean
+      allowShared: boolean
+    }
+  ): NodeJS.ArrayBufferView
 
   /**
    * @see https://webidl.spec.whatwg.org/#BufferSource
    */
   BufferSource (
     V: unknown,
-    opts?: { allowShared: boolean }
-  ): NodeJS.TypedArray | ArrayBufferLike | DataView
+    prefix: string,
+    argument: string,
+    opts?: { allowResizable: boolean }
+  ): ArrayBuffer | NodeJS.ArrayBufferView
+
+  /**
+   * @see https://webidl.spec.whatwg.org/#AllowSharedBufferSource
+   */
+  AllowSharedBufferSource (
+    V: unknown,
+    prefix: string,
+    argument: string,
+    opts?: { allowResizable: boolean }
+  ): ArrayBuffer | SharedArrayBuffer | NodeJS.ArrayBufferView
 
   ['sequence<ByteString>']: SequenceConverter<string>
 
