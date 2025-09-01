@@ -2,8 +2,7 @@
 
 const { once } = require('node:events')
 const { createServer } = require('node:http')
-const { test, after } = require('node:test')
-const zlib = require('node:zlib')
+const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
 
@@ -14,7 +13,7 @@ test('content-encoding header', async (t) => {
   const text = 'Hello, World!'
   const gzipDeflateText = Buffer.from('H4sIAAAAAAAAA6uY89nj7MmT1wM5zuuf8gxkYZCfx5IFACQ8u/wVAAAA', 'base64')
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200,
       {
         'Content-Encoding': contentEncoding,
@@ -23,8 +22,6 @@ test('content-encoding header', async (t) => {
     )
       .end(gzipDeflateText)
   })
-  after(() => server.close())
-
   await once(server.listen(0), 'listening')
 
   const response = await fetch(`http://localhost:${server.address().port}`)
@@ -33,6 +30,7 @@ test('content-encoding header', async (t) => {
   strictEqual(await response.text(), text)
 
   await t.completed
+  server.close()
 })
 
 test('content-encoding header is case-iNsENsITIve', async (t) => {
@@ -42,7 +40,7 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
   const text = 'Hello, World!'
   const gzipDeflateText = Buffer.from('H4sIAAAAAAAAA6uY89nj7MmT1wM5zuuf8gxkYZCfx5IFACQ8u/wVAAAA', 'base64')
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer((req, res) => {
     res.writeHead(200,
       {
         'Content-Encoding': contentEncoding,
@@ -51,7 +49,6 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
     )
       .end(gzipDeflateText)
   })
-  after(() => server.close())
 
   await once(server.listen(0), 'listening')
 
@@ -61,10 +58,11 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
   strictEqual(await response.text(), text)
 
   await t.completed
+  server.close()
 })
 
 test('should decompress zstandard response',
-  { skip: typeof zlib.createZstdDecompress !== 'function' },
+  { skip: typeof require('node:zlib').createZstdDecompress !== 'function' },
   async (t) => {
     const { strictEqual } = tspl(t, { plan: 3 })
 
@@ -72,7 +70,7 @@ test('should decompress zstandard response',
     const text = 'Hello, World!'
     const zstdText = Buffer.from('KLUv/QBYaQAASGVsbG8sIFdvcmxkIQ==', 'base64')
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const server = createServer((req, res) => {
       res.writeHead(200,
         {
           'Content-Encoding': contentEncoding,
@@ -80,7 +78,6 @@ test('should decompress zstandard response',
         })
         .end(zstdText)
     })
-    after(() => server.close())
 
     await once(server.listen(0), 'listening')
 
@@ -92,4 +89,5 @@ test('should decompress zstandard response',
     strictEqual(response.headers.get('content-type'), 'text/plain')
 
     await t.completed
+    server.close()
   })
