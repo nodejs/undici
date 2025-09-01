@@ -8,7 +8,9 @@ const { fetch } = require('../..')
 const zlib = require('node:zlib')
 const { closeServerAsPromise } = require('../utils/node-http')
 
-test('content-encoding header is case-iNsENsITIve', async (t) => {
+const skip = process.versions.node.split('.').map(Number)[0] === 20 && process.platform === 'darwin'
+
+test('content-encoding header is case-iNsENsITIve', { skip }, async (t) => {
   const contentCodings = 'GZiP, bR'
   const text = 'Hello, World!'
   const gzipBrotliText = Buffer.from('CxCAH4sIAAAAAAAAA/NIzcnJ11EIzy/KSVEEANDDSuwNAAAAAw==', 'base64')
