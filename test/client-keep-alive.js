@@ -4,7 +4,6 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
 const { Client } = require('..')
-const timers = require('../lib/util/timers')
 const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('node:net')
 const http = require('node:http')
@@ -21,10 +20,8 @@ test('keep-alive header', async (t) => {
     socket.write('\r\n\r\n')
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0)
-
-  await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
 
@@ -52,10 +49,6 @@ test('keep-alive header 0', async (t) => {
   const clock = FakeTimers.install()
   after(() => clock.uninstall())
 
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => { Object.assign(timers, orgTimers) })
-
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
     socket.write('Content-Length: 0\r\n')
@@ -64,10 +57,8 @@ test('keep-alive header 0', async (t) => {
     socket.write('\r\n\r\n')
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0)
-
-  await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`, {
     keepAliveTimeoutThreshold: 500
   })
@@ -99,10 +90,8 @@ test('keep-alive header 1', async (t) => {
     socket.write('\r\n\r\n')
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0)
-
-  await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
 
@@ -135,10 +124,8 @@ test('keep-alive header no postfix', async (t) => {
     socket.write('\r\n\r\n')
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0)
-
-  await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
 
@@ -163,6 +150,11 @@ test('keep-alive header no postfix', async (t) => {
 test('keep-alive not timeout', async (t) => {
   t = tspl(t, { plan: 2 })
 
+  const clock = FakeTimers.install({
+    apis: ['setTimeout']
+  })
+  after(() => clock.uninstall())
+
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
     socket.write('Content-Length: 0\r\n')
@@ -172,9 +164,8 @@ test('keep-alive not timeout', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0)
+  await once(server.listen(0), 'listening')
 
-  await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`, {
     keepAliveTimeout: 1e3
   })
@@ -186,20 +177,25 @@ test('keep-alive not timeout', async (t) => {
   }, (err, { body }) => {
     t.ifError(err)
     body.on('end', () => {
-      const timeout = setTimeout(() => {
-        t.fail()
-      }, 3e3)
+      const timeout = setTimeout(t.fail, 3e3)
       client.on('disconnect', () => {
         t.ok(true, 'pass')
         clearTimeout(timeout)
       })
+      clock.tick(1000)
     }).resume()
   })
+
   await t.completed
 })
 
 test('keep-alive threshold', async (t) => {
   t = tspl(t, { plan: 2 })
+
+  const clock = FakeTimers.install({
+    apis: ['setTimeout']
+  })
+  after(() => clock.uninstall())
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -209,10 +205,8 @@ test('keep-alive threshold', async (t) => {
     socket.write('\r\n\r\n')
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0)
-
-  await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`, {
     keepAliveTimeout: 30e3,
     keepAliveTimeoutThreshold: 29e3
@@ -232,6 +226,7 @@ test('keep-alive threshold', async (t) => {
         t.ok(true, 'pass')
         clearTimeout(timeout)
       })
+      clock.tick(1000)
     }).resume()
   })
   await t.completed
@@ -239,6 +234,11 @@ test('keep-alive threshold', async (t) => {
 
 test('keep-alive max keepalive', async (t) => {
   t = tspl(t, { plan: 2 })
+
+  const clock = FakeTimers.install({
+    apis: ['setTimeout']
+  })
+  after(() => clock.uninstall())
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -248,10 +248,8 @@ test('keep-alive max keepalive', async (t) => {
     socket.write('\r\n\r\n')
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0)
-
-  await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`, {
     keepAliveTimeout: 30e3,
     keepAliveMaxTimeout: 1e3
@@ -271,6 +269,7 @@ test('keep-alive max keepalive', async (t) => {
         t.ok(true, 'pass')
         clearTimeout(timeout)
       })
+      clock.tick(1000)
     }).resume()
   })
   await t.completed
@@ -291,10 +290,8 @@ test('connection close', async (t) => {
     socket.write('\r\n\r\n')
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0)
-
-  await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`, {
     pipelining: 2
   })
@@ -349,10 +346,8 @@ test('Disable keep alive', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0)
-
-  await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 0 })
   after(() => client.close())
 
