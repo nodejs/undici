@@ -1,83 +1,93 @@
 'use strict'
 
-const { test } = require('node:test')
-const assert = require('node:assert')
-const { createServer } = require('node:http')
 const { once } = require('node:events')
+const { createServer } = require('node:http')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
-const zlib = require('node:zlib')
-const { closeServerAsPromise } = require('../utils/node-http')
 
-const skip = process.versions.node.split('.').map(Number)[0] === 20 && process.platform === 'darwin'
+test('content-encoding header', async (t) => {
+  const { strictEqual } = tspl(t, { plan: 2 })
 
-test('content-encoding header is case-iNsENsITIve', { skip }, async (t) => {
-  const contentCodings = 'GZiP, bR'
-  const text = 'Hello, World!'
-  const gzipBrotliText = Buffer.from('CxCAH4sIAAAAAAAAA/NIzcnJ11EIzy/KSVEEANDDSuwNAAAAAw==', 'base64')
-
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    res.setHeader('Content-Encoding', contentCodings)
-    res.setHeader('Content-Type', 'text/plain')
-    res.write(gzipBrotliText)
-    res.end()
-  }).listen(0)
-
-  t.after(closeServerAsPromise(server))
-  await once(server, 'listening')
-
-  const response = await fetch(`http://localhost:${server.address().port}`)
-
-  assert.strictEqual(await response.text(), text)
-  assert.strictEqual(response.headers.get('content-encoding'), contentCodings)
-
-  await t.completed
-})
-
-test('response decompression according to content-encoding should be handled in a correct order', async (t) => {
-  const contentCodings = 'deflate, gzip'
+  const contentEncoding = 'deflate, gzip'
   const text = 'Hello, World!'
   const gzipDeflateText = Buffer.from('H4sIAAAAAAAAA6uY89nj7MmT1wM5zuuf8gxkYZCfx5IFACQ8u/wVAAAA', 'base64')
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    res.setHeader('Content-Encoding', contentCodings)
-    res.setHeader('Content-Type', 'text/plain')
-    res.write(gzipDeflateText)
-    res.end()
-  }).listen(0)
-
-  t.after(closeServerAsPromise(server))
-  await once(server, 'listening')
+  const server = createServer((req, res) => {
+    res.writeHead(200,
+      {
+        'Content-Encoding': contentEncoding,
+        'Content-Type': 'text/plain'
+      }
+    )
+      .end(gzipDeflateText)
+  })
+  await once(server.listen(0), 'listening')
 
   const response = await fetch(`http://localhost:${server.address().port}`)
 
-  assert.strictEqual(await response.text(), text)
+  strictEqual(response.headers.get('content-encoding'), contentEncoding)
+  strictEqual(await response.text(), text)
 
   await t.completed
+  server.close()
+})
+
+test('content-encoding header is case-iNsENsITIve', async (t) => {
+  const { strictEqual } = tspl(t, { plan: 2 })
+
+  const contentEncoding = 'DeFlAtE, GzIp'
+  const text = 'Hello, World!'
+  const gzipDeflateText = Buffer.from('H4sIAAAAAAAAA6uY89nj7MmT1wM5zuuf8gxkYZCfx5IFACQ8u/wVAAAA', 'base64')
+
+  const server = createServer((req, res) => {
+    res.writeHead(200,
+      {
+        'Content-Encoding': contentEncoding,
+        'Content-Type': 'text/plain'
+      }
+    )
+      .end(gzipDeflateText)
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const response = await fetch(`http://localhost:${server.address().port}`)
+
+  strictEqual(response.headers.get('content-encoding'), contentEncoding)
+  strictEqual(await response.text(), text)
+
+  await t.completed
+  server.close()
 })
 
 test('should decompress zstandard response',
-  { skip: typeof zlib.createZstdDecompress !== 'function' },
+  { skip: typeof require('node:zlib').createZstdDecompress !== 'function' },
   async (t) => {
-    const contentCodings = 'zstd'
+    const { strictEqual } = tspl(t, { plan: 3 })
+
+    const contentEncoding = 'zstd'
     const text = 'Hello, World!'
     const zstdText = Buffer.from('KLUv/QBYaQAASGVsbG8sIFdvcmxkIQ==', 'base64')
 
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      res.setHeader('Content-Encoding', contentCodings)
-      res.setHeader('Content-Type', 'text/plain')
-      res.write(zstdText)
-      res.end()
-    }
-    ).listen(0)
-    t.after(closeServerAsPromise(server))
+    const server = createServer((req, res) => {
+      res.writeHead(200,
+        {
+          'Content-Encoding': contentEncoding,
+          'Content-Type': 'text/plain'
+        })
+        .end(zstdText)
+    })
 
-    await once(server, 'listening')
+    await once(server.listen(0), 'listening')
+
     const url = `http://localhost:${server.address().port}`
 
     const response = await fetch(url)
-    assert.strictEqual(await response.text(), text)
-    assert.strictEqual(response.headers.get('content-encoding'), contentCodings)
-    assert.strictEqual(response.headers.get('content-type'), 'text/plain')
+    strictEqual(await response.text(), text)
+    strictEqual(response.headers.get('content-encoding'), contentEncoding)
+    strictEqual(response.headers.get('content-type'), 'text/plain')
 
     await t.completed
+    server.close()
   })
