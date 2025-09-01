@@ -117,16 +117,14 @@ module.exports.setGlobalDispatcher = setGlobalDispatcher
 module.exports.getGlobalDispatcher = getGlobalDispatcher
 
 const fetchImpl = require('./lib/web/fetch').fetch
-module.exports.fetch = async function fetch (init, options = undefined) {
-  try {
-    return await fetchImpl(init, options)
-  } catch (err) {
+
+module.exports.fetch = function fetch (init, options = undefined) {
+  return fetchImpl(init, options).catch(err => {
     if (err && typeof err === 'object') {
       Error.captureStackTrace(err)
     }
-
     throw err
-  }
+  })
 }
 module.exports.Headers = require('./lib/web/fetch/headers').Headers
 module.exports.Response = require('./lib/web/fetch/response').Response

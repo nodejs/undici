@@ -10,16 +10,18 @@ const FakeTimers = require('@sinonjs/fake-timers')
  * @typedef {import('../../types/cache-interceptor.d.ts').default.CacheStore} CacheStore
  *
  * @param {{ new(...any): CacheStore }} CacheStore
+ * @param {object} [options]
+ * @param {boolean} [options.skip]
  */
-function cacheStoreTests (CacheStore) {
+function cacheStoreTests (CacheStore, options) {
   describe(CacheStore.prototype.constructor.name, () => {
-    test('matches interface', () => {
+    test('matches interface', options, () => {
       equal(typeof CacheStore.prototype.get, 'function')
       equal(typeof CacheStore.prototype.createWriteStream, 'function')
       equal(typeof CacheStore.prototype.delete, 'function')
     })
 
-    test('caches request', async () => {
+    test('caches request', options, async () => {
       /**
        * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
        */
@@ -106,7 +108,7 @@ function cacheStoreTests (CacheStore) {
       }
     })
 
-    test('returns stale response before deleteAt', async () => {
+    test('returns stale response before deleteAt', options, async () => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
@@ -164,7 +166,7 @@ function cacheStoreTests (CacheStore) {
       equal(await store.get(key), undefined)
     })
 
-    test('a stale request is overwritten', async () => {
+    test('a stale request is overwritten', options, async () => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
@@ -245,7 +247,7 @@ function cacheStoreTests (CacheStore) {
       }
     })
 
-    test('vary directives used to decide which response to use', async () => {
+    test('vary directives used to decide which response to use', options, async () => {
       /**
        * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
        */

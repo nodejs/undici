@@ -1,7 +1,7 @@
 'use strict'
 
 const assert = require('node:assert')
-const events = require('node:events')
+const { once } = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
 const { EventSource } = require('../../lib/web/eventsource/eventsource')
@@ -13,8 +13,7 @@ describe('EventSource - withCredentials', () => {
       res.end()
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
@@ -35,8 +34,7 @@ describe('EventSource - withCredentials', () => {
       res.end()
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`, { withCredentials: true })

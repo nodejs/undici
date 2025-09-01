@@ -235,6 +235,7 @@ for (const factory of [
 
     const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/303`, {
       method: 'PATCH',
+      // eslint-disable-next-line no-restricted-globals
       headers: new Headers({
         'Content-Encoding': 'gzip',
         'X-Foo1': '1',

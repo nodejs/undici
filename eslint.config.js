@@ -1,6 +1,7 @@
 'use strict'
 
 const neo = require('neostandard')
+const { installedExports } = require('./lib/global')
 
 module.exports = [
   ...neo({
@@ -22,7 +23,15 @@ module.exports = [
         exports: 'never',
         functions: 'never'
       }],
-      '@typescript-eslint/no-redeclare': 'off'
+      '@typescript-eslint/no-redeclare': 'off',
+      'no-restricted-globals': ['error',
+        ...installedExports.map(name => {
+          return {
+            name,
+            message: `Use undici-own ${name} instead of the global.`
+          }
+        })
+      ]
     }
   }
 ]

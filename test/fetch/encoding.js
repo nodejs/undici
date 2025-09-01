@@ -11,18 +11,13 @@ const { closeServerAsPromise } = require('../utils/node-http')
 test('content-encoding header is case-iNsENsITIve', async (t) => {
   const contentCodings = 'GZiP, bR'
   const text = 'Hello, World!'
+  const gzipBrotliText = Buffer.from('CxCAH4sIAAAAAAAAA/NIzcnJ11EIzy/KSVEEANDDSuwNAAAAAw==', 'base64')
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    const gzip = zlib.createGzip()
-    const brotli = zlib.createBrotliCompress()
-
     res.setHeader('Content-Encoding', contentCodings)
     res.setHeader('Content-Type', 'text/plain')
-
-    gzip.pipe(brotli).pipe(res)
-
-    gzip.write(text)
-    gzip.end()
+    res.write(gzipBrotliText)
+    res.end()
   }).listen(0)
 
   t.after(closeServerAsPromise(server))
@@ -32,23 +27,20 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
 
   assert.strictEqual(await response.text(), text)
   assert.strictEqual(response.headers.get('content-encoding'), contentCodings)
+
+  await t.completed
 })
 
 test('response decompression according to content-encoding should be handled in a correct order', async (t) => {
   const contentCodings = 'deflate, gzip'
   const text = 'Hello, World!'
+  const gzipDeflateText = Buffer.from('H4sIAAAAAAAAA6uY89nj7MmT1wM5zuuf8gxkYZCfx5IFACQ8u/wVAAAA', 'base64')
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    const gzip = zlib.createGzip()
-    const deflate = zlib.createDeflate()
-
     res.setHeader('Content-Encoding', contentCodings)
     res.setHeader('Content-Type', 'text/plain')
-
-    deflate.pipe(gzip).pipe(res)
-
-    deflate.write(text)
-    deflate.end()
+    res.write(gzipDeflateText)
+    res.end()
   }).listen(0)
 
   t.after(closeServerAsPromise(server))
@@ -57,6 +49,8 @@ test('response decompression according to content-encoding should be handled in 
   const response = await fetch(`http://localhost:${server.address().port}`)
 
   assert.strictEqual(await response.text(), text)
+
+  await t.completed
 })
 
 test('should decompress zstandard response',
@@ -64,15 +58,13 @@ test('should decompress zstandard response',
   async (t) => {
     const contentCodings = 'zstd'
     const text = 'Hello, World!'
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      const zstd = zlib.createZstdCompress()
+    const zstdText = Buffer.from('KLUv/QBYaQAASGVsbG8sIFdvcmxkIQ==', 'base64')
 
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('Content-Encoding', contentCodings)
       res.setHeader('Content-Type', 'text/plain')
-
-      zstd.pipe(res)
-      zstd.write(text)
-      zstd.end()
+      res.write(zstdText)
+      res.end()
     }
     ).listen(0)
     t.after(closeServerAsPromise(server))
@@ -84,4 +76,6 @@ test('should decompress zstandard response',
     assert.strictEqual(await response.text(), text)
     assert.strictEqual(response.headers.get('content-encoding'), contentCodings)
     assert.strictEqual(response.headers.get('content-type'), 'text/plain')
+
+    await t.completed
   })
