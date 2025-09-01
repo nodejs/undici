@@ -123,82 +123,270 @@ describe('webidl.dictionaryConverter', () => {
   })
 })
 
-test('ArrayBuffer', () => {
-  assert.throws(() => {
-    webidl.converters.ArrayBuffer(true, 'converter', 'converter')
-  }, TypeError)
+describe('buffer source converters', () => {
+  test('ArrayBuffer', () => {
+    assert.throws(() => {
+      webidl.converters.ArrayBuffer(true, 'converter', 'converter')
+    }, TypeError)
 
-  assert.throws(() => {
-    webidl.converters.ArrayBuffer({}, 'converter', 'converter')
-  }, TypeError)
+    assert.throws(() => {
+      webidl.converters.ArrayBuffer({}, 'converter', 'converter')
+    }, TypeError)
 
-  assert.throws(() => {
-    const sab = new SharedArrayBuffer(1024)
-    webidl.converters.ArrayBuffer(sab, 'converter', 'converter', { allowShared: false })
-  }, TypeError)
-
-  assert.doesNotThrow(() => {
-    const sab = new SharedArrayBuffer(1024)
-    webidl.converters.ArrayBuffer(sab, 'converter', 'converter')
-  })
-
-  assert.doesNotThrow(() => {
-    const ab = new ArrayBuffer(8)
-    webidl.converters.ArrayBuffer(ab, 'converter', 'converter')
-  })
-})
-
-test('TypedArray', () => {
-  assert.throws(() => {
-    webidl.converters.TypedArray(3, 'converter', 'converter')
-  }, TypeError)
-
-  assert.throws(() => {
-    webidl.converters.TypedArray({}, 'converter', 'converter')
-  }, TypeError)
-
-  assert.throws(() => {
-    const uint8 = new Uint8Array([1, 2, 3])
-    Object.defineProperty(uint8, 'buffer', {
-      get () {
-        return new SharedArrayBuffer(8)
-      }
+    assert.doesNotThrow(() => {
+      webidl.converters.ArrayBuffer(new ArrayBuffer(8), 'converter', 'converter')
     })
 
-    webidl.converters.TypedArray(uint8, Uint8Array, 'converter', 'converter', {
-      allowShared: false
-    })
-  }, TypeError)
-})
+    assert.throws(() => {
+      webidl.converters.ArrayBuffer(new SharedArrayBuffer(64), 'converter', 'converter')
+    }, TypeError)
 
-test('DataView', () => {
-  assert.throws(() => {
-    webidl.converters.DataView(3, 'converter', 'converter')
-  }, TypeError)
-
-  assert.throws(() => {
-    webidl.converters.DataView({}, 'converter', 'converter')
-  }, TypeError)
-
-  assert.throws(() => {
-    const buffer = new ArrayBuffer(16)
-    const view = new DataView(buffer, 0)
-
-    Object.defineProperty(view, 'buffer', {
-      get () {
-        return new SharedArrayBuffer(8)
-      }
+    assert.throws(() => {
+      webidl.converters.ArrayBuffer(
+        new ArrayBuffer(16, { maxByteLength: 64 }),
+        'converter',
+        'converter'
+      )
     })
 
-    webidl.converters.DataView(view, 'converter', 'converter', {
-      allowShared: false
+    assert.doesNotThrow(() => {
+      webidl.converters.ArrayBuffer(
+        new ArrayBuffer(16, { maxByteLength: 64 }),
+        'converter',
+        'converter',
+        { allowResizable: true }
+      )
     })
   })
 
-  const buffer = new ArrayBuffer(16)
-  const view = new DataView(buffer, 0)
+  test('SharedArrayBuffer', () => {
+    assert.throws(() => {
+      webidl.converters.SharedArrayBuffer(true, 'converter', 'converter')
+    }, TypeError)
 
-  assert.equal(webidl.converters.DataView(view, 'converter', 'converter'), view)
+    assert.throws(() => {
+      webidl.converters.SharedArrayBuffer({}, 'converter', 'converter')
+    }, TypeError)
+
+    assert.doesNotThrow(() => {
+      webidl.converters.SharedArrayBuffer(new SharedArrayBuffer(8), 'converter', 'converter')
+    })
+
+    assert.throws(() => {
+      webidl.converters.SharedArrayBuffer(new ArrayBuffer(64), 'converter', 'converter')
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.SharedArrayBuffer(
+        new SharedArrayBuffer(16, { maxByteLength: 64 }),
+        'converter',
+        'converter'
+      )
+    }, TypeError)
+
+    assert.doesNotThrow(() => {
+      webidl.converters.SharedArrayBuffer(
+        new SharedArrayBuffer(16, { maxByteLength: 64 }),
+        'converter',
+        'converter',
+        { allowResizable: true }
+      )
+    })
+  })
+
+  test('TypedArray', () => {
+    assert.throws(() => {
+      webidl.converters.TypedArray(3, 'converter', 'converter')
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.TypedArray({}, 'converter', 'converter')
+    }, TypeError)
+
+    assert.doesNotThrow(() => {
+      webidl.converters.TypedArray(new Uint8Array(), Uint8Array, 'converter', 'converter')
+    })
+
+    assert.throws(() => {
+      webidl.converters.TypedArray(
+        new Uint8Array(new SharedArrayBuffer(16)),
+        Uint8Array,
+        'converter',
+        'converter'
+      )
+    }, TypeError)
+
+    assert.doesNotThrow(() => {
+      webidl.converters.TypedArray(
+        new Uint8Array(new SharedArrayBuffer(16)),
+        Uint8Array,
+        'converter',
+        'converter',
+        { allowShared: true }
+      )
+    })
+
+    assert.throws(() => {
+      webidl.converters.TypedArray(
+        new Uint8Array(new ArrayBuffer(16, { maxByteLength: 32 })),
+        Uint8Array,
+        'converter',
+        'converter'
+      )
+    }, TypeError)
+
+    assert.doesNotThrow(() => {
+      webidl.converters.TypedArray(
+        new Uint8Array(new ArrayBuffer(16, { maxByteLength: 32 })),
+        Uint8Array,
+        'converter',
+        'converter',
+        { allowResizable: true }
+      )
+    })
+
+    assert.throws(() => {
+      webidl.converters.TypedArray(
+        new Uint8Array(new SharedArrayBuffer(16, { maxByteLength: 32 })),
+        Uint8Array,
+        'converter',
+        'converter',
+        { allowResizable: true }
+      )
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.TypedArray(
+        new Uint8Array(new SharedArrayBuffer(16, { maxByteLength: 32 })),
+        Uint8Array,
+        'converter',
+        'converter',
+        { allowShared: true }
+      )
+    }, TypeError)
+
+    assert.doesNotThrow(() => {
+      webidl.converters.TypedArray(
+        new Uint8Array(new SharedArrayBuffer(16, { maxByteLength: 32 })),
+        Uint8Array,
+        'converter',
+        'converter',
+        { allowResizable: true, allowShared: true }
+      )
+    })
+  })
+
+  test('DataView', () => {
+    assert.throws(() => {
+      webidl.converters.DataView(3, 'converter', 'converter')
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.DataView({}, 'converter', 'converter')
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.DataView(new Uint8Array(), 'converter', 'converter')
+    }, TypeError)
+
+    assert.doesNotThrow(() => {
+      webidl.converters.DataView(new DataView(new ArrayBuffer(8)), 'converter', 'converter')
+    })
+
+    assert.throws(() => {
+      webidl.converters.DataView(
+        new DataView(new SharedArrayBuffer(16)),
+        'converter',
+        'converter'
+      )
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.DataView(
+        new DataView(new ArrayBuffer(16, { maxByteLength: 64 })),
+        'converter',
+        'converter'
+      )
+    }, TypeError)
+  })
+
+  test('ArrayBufferView', () => {
+    assert.throws(() => {
+      webidl.converters.ArrayBufferView(3, 'converter', 'converter')
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.ArrayBufferView({}, 'converter', 'converter')
+    }, TypeError)
+
+    assert.doesNotThrow(() => {
+      webidl.converters.ArrayBufferView(new Uint8Array(), 'converter', 'converter')
+    }, TypeError)
+
+    assert.doesNotThrow(() => {
+      webidl.converters.ArrayBufferView(new DataView(new ArrayBuffer(8)), 'converter', 'converter')
+    })
+
+    assert.throws(() => {
+      webidl.converters.ArrayBufferView(
+        new Uint8Array(new SharedArrayBuffer(16)),
+        'converter',
+        'converter'
+      )
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.ArrayBufferView(
+        new Float32Array(new ArrayBuffer(16, { maxByteLength: 64 })),
+        'converter',
+        'converter'
+      )
+    }, TypeError)
+  })
+
+  test('BufferSource', () => {
+    assert.throws(() => {
+      webidl.converters.BufferSource(3, 'converter', 'converter')
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.BufferSource({}, 'converter', 'converter')
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.BufferSource(new SharedArrayBuffer(16), 'converter', 'converter')
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.BufferSource(
+        new Uint8Array(new SharedArrayBuffer(16)),
+        'converter',
+        'converter'
+      )
+    }, TypeError)
+  })
+
+  test('AllowSharedBufferSource', () => {
+    assert.throws(() => {
+      webidl.converters.AllowSharedBufferSource(3, 'converter', 'converter')
+    }, TypeError)
+
+    assert.throws(() => {
+      webidl.converters.AllowSharedBufferSource({}, 'converter', 'converter')
+    }, TypeError)
+
+    assert.doesNotThrow(() => {
+      webidl.converters.AllowSharedBufferSource(new SharedArrayBuffer(16), 'converter', 'converter')
+    })
+
+    assert.doesNotThrow(() => {
+      webidl.converters.AllowSharedBufferSource(
+        new Uint8Array(new SharedArrayBuffer(16)),
+        'converter',
+        'converter'
+      )
+    })
+  })
 })
 
 test('ByteString', () => {
