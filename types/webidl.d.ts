@@ -247,6 +247,8 @@ interface WebidlConverters {
    */
   EventHandlerNonNull (V: unknown): Function | null
 
+  WebSocketStreamWrite (V: unknown): ArrayBuffer | NodeJS.TypedArray | string
+
   [Key: string]: (...args: any[]) => unknown
 }
 
