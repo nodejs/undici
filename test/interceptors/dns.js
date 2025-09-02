@@ -1953,28 +1953,29 @@ test('Various (parameterized) header shapes should work with DNS interceptor', a
 
   const { cache: cacheInterceptor, dns: dnsInterceptor } = interceptors
 
-  function * genPairs () { yield ['foo', 'bar'] }
-
+  // will expand
   const cases = [
     {
       name: 'array of pairs',
       headers: [['foo', 'bar']],
-      interceptors: [dnsInterceptor()]
+      interceptors: [cacheInterceptor(), dnsInterceptor()]
     },
     {
       name: 'record',
       headers: { foo: 'bar' },
-      interceptors: [dnsInterceptor()]
+      interceptors: [cacheInterceptor(), dnsInterceptor()]
     },
     {
       name: 'flat array',
       headers: ['foo', 'bar'],
+      // note: cacheInterceptor cannot accept flat arrays as it calls normalizeHeaders
+      // possibly need to fix
       interceptors: [dnsInterceptor()]
     },
     {
-      name: 'record with multi-value',
+    //   name: 'record with multi-value',
       headers: { foo: ['bar'] },
-      interceptors: [dnsInterceptor()]
+      interceptors: [cacheInterceptor(), dnsInterceptor()]
     }
   ]
 
