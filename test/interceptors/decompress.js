@@ -38,7 +38,6 @@ test('should decompress gzip response', async t => {
   })
 
   const response = await client.request({
-    headers: [['foo', 'bar']],
     method: 'GET',
     path: '/'
   })
