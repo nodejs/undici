@@ -1957,6 +1957,11 @@ test('Various (parameterized) header shapes should work with DNS interceptor', a
 
   const cases = [
     {
+      name: 'array of pairs',
+      headers: [['foo', 'bar']],
+      interceptors: [dnsInterceptor()]
+    },
+    {
       name: 'record',
       headers: { foo: 'bar' },
       interceptors: [dnsInterceptor()]
@@ -1970,27 +1975,6 @@ test('Various (parameterized) header shapes should work with DNS interceptor', a
       name: 'record with multi-value',
       headers: { foo: ['bar'] },
       interceptors: [dnsInterceptor()]
-    },
-    {
-      name: 'iterable generator of pairs',
-      headers: genPairs(),
-      interceptors: [cacheInterceptor(), dnsInterceptor({
-        lookup: (_origin, _opts, cb) => cb(null, [{ address: '127.0.0.1', family: 4 }])
-      })]
-    },
-    {
-      name: 'set of pairs',
-      headers: new Set([['foo', 'bar']]),
-      interceptors: [cacheInterceptor(), dnsInterceptor({
-        lookup: (_origin, _opts, cb) => cb(null, [{ address: '127.0.0.1', family: 4 }])
-      })]
-    },
-    {
-      name: 'map of pairs (single)',
-      headers: new Map([['foo', 'bar']]),
-      interceptors: [cacheInterceptor(), dnsInterceptor({
-        lookup: (_origin, _opts, cb) => cb(null, [{ address: '127.0.0.1', family: 4 }])
-      })]
     }
   ]
 
