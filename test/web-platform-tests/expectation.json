@@ -638,7 +638,7 @@
               "message": "promise_test: Unhandled rejection with value: object \"TypeError: fetch failed\""
             },
             {
-              "name": "Fetch http://web-platform.test:61288/fetch/api/resources/top.txt with no-cors mode",
+              "name": "Fetch http://web-platform.test:61273/fetch/api/resources/top.txt with no-cors mode",
               "success": false,
               "message": "assert_equals: Opaque filter: status is 0 expected 0 but got 200"
             }
@@ -4869,7 +4869,7 @@
             {
               "name": "Consume response's body: from FormData to blob",
               "success": false,
-              "message": "assert_equals: Blob body type should be computed from the response Content-Type expected \"multipart/form-data; boundary=----formdata-undici-021177090905\" but got \"multipart/form-data;boundary=----formdata-undici-021177090905\""
+              "message": "assert_equals: Blob body type should be computed from the response Content-Type expected \"multipart/form-data; boundary=----formdata-undici-081851221061\" but got \"multipart/form-data;boundary=----formdata-undici-081851221061\""
             },
             {
               "name": "Consume response's body: from FormData to text",
@@ -10982,8 +10982,7 @@
             },
             {
               "name": "Same origin redirection, empty init, no-referrer-when-downgrade redirect header ",
-              "success": false,
-              "message": "assert_equals: Check referrer header expected \"http://web-platform.test:8000/fetch/api/redirect/redirect-referrer.any.html\" but got \"http://web-platform.test:8000/\""
+              "success": true
             },
             {
               "name": "Same origin redirection, empty init, same-origin redirect header ",
@@ -11017,8 +11016,7 @@
             },
             {
               "name": "Same origin redirection, empty redirect header, no-referrer-when-downgrade init ",
-              "success": false,
-              "message": "assert_equals: Check referrer header expected \"http://web-platform.test:8000/fetch/api/redirect/redirect-referrer.any.html\" but got \"http://web-platform.test:8000/\""
+              "success": true
             },
             {
               "name": "Same origin redirection, empty redirect header, same-origin init ",
@@ -11052,8 +11050,7 @@
             },
             {
               "name": "Cross origin redirection, empty init, no-referrer-when-downgrade redirect header ",
-              "success": false,
-              "message": "assert_equals: Check referrer header expected \"http://web-platform.test:8000/fetch/api/redirect/redirect-referrer.any.html\" but got \"http://web-platform.test:8000/\""
+              "success": true
             },
             {
               "name": "Cross origin redirection, empty init, same-origin redirect header ",
@@ -11085,8 +11082,7 @@
             },
             {
               "name": "Cross origin redirection, empty redirect header, no-referrer-when-downgrade init ",
-              "success": false,
-              "message": "assert_equals: Check referrer header expected \"http://web-platform.test:8000/fetch/api/redirect/redirect-referrer.any.html\" but got \"http://web-platform.test:8000/\""
+              "success": true
             },
             {
               "name": "Cross origin redirection, empty redirect header, same-origin init ",
@@ -15129,7 +15125,7 @@
           {
             "name": "Response with Cache-Control: max-age=2592000, public and Pragma: no-cache should be cached",
             "success": false,
-            "message": "assert_equals: Responses should be identical, indicating caching expected \"Timestamp: 1756764774.678671\" but got \"Timestamp: 1756764774.6756718\""
+            "message": "assert_equals: Responses should be identical, indicating caching expected \"Timestamp: 1756778464.9260645\" but got \"Timestamp: 1756778464.9230638\""
           }
         ]
       },
@@ -24889,7 +24885,7 @@
           {
             "name": "Second fetch returns same response",
             "success": false,
-            "message": "assert_equals: expected \"kifkoeecooqjsfkzmpwg\" but got \"ufxtucitipiyrqotmakz\""
+            "message": "assert_equals: expected \"ohqqejvmbaayfsbxnlht\" but got \"xbssfkdevkjnzvyehxux\""
           }
         ]
       },
