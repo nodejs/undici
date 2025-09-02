@@ -31,7 +31,7 @@ jobs:
           - ${{ github.workspace }}/test/autobahn/reports:/reports
     steps:
       - name: Checkout Code
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
           clean: false
