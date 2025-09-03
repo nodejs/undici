@@ -1,4 +1,4 @@
-name: Run tests
+name: Node.js
 
 on:
   workflow_call:
