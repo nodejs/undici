@@ -137,6 +137,7 @@ jobs:
         run: |
           echo OS: $(node -p "os.version()")
           echo Node.js: $(node --version)
+          echo "Node.js built-in dependencies: $(node -p "'\r\n' + (Object.entries(process.versions).map(([k, v], i, arr) => (i !== arr.length - 1 ? '├──' : '└──') + k + '@' + v)).join('\r\n')")"
           echo npm: $(npm --version)
           echo git: $(git --version)
           echo icu config: $(node -e "console.log(process.config)" | grep icu)
