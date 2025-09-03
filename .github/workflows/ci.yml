@@ -73,12 +73,12 @@ jobs:
     secrets: inherit
 
   test-without-intl:
-    name: Test with Node.js ${{ matrix.version }} compiled --without-intl
+    name: Test with Node.js ${{ matrix.node-version }} compiled --without-intl
     strategy:
       fail-fast: false
       max-parallel: 0
       matrix:
-        version: [20, 22, 24]
+        node-version: [20, 22, 24]
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -89,10 +89,10 @@ jobs:
           submodules: recursive
 
       # Setup node, install deps, and build undici prior to building icu-less node and testing
-      - name: Setup Node.js@${{ inputs.version }}
+      - name: Setup Node.js@${{ matrix.node-version }}
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: ${{ inputs.version }}
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
         run: npm install
@@ -109,7 +109,7 @@ jobs:
             const req = await fetch('https://nodejs.org/download/release/index.json')
             const releases = await req.json()
 
-            const latest = releases.find((r) => r.version.startsWith('v${{ matrix.version }}'))
+            const latest = releases.find((r) => r.version.startsWith('v${{ matrix.node-version }}'))
             return latest.version
 
       - name: Download and extract source
@@ -121,7 +121,7 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@63069e3931dedbf3b63792097479563182fe70d1 #v1.2.18
         with:
-          key: node${{ matrix.version }}
+          key: node${{ matrix.node-version }}
 
       - name: Build node
         working-directory: ./node-${{ steps.release.outputs.result }}
