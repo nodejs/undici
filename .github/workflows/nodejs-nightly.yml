@@ -13,9 +13,9 @@ jobs:
     if: github.repository == 'nodejs/undici'
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 0
       matrix:
-        node-version: [25-nightly]
+        node-version: ['25-nightly']
         runs-on: [ubuntu-latest, windows-latest, macos-latest]
     uses: ./.github/workflows/nodejs.yml
     with:
@@ -27,7 +27,7 @@ jobs:
     if: github.repository == 'nodejs/undici'
     uses: ./.github/workflows/autobahn.yml
     with:
-      node-version: 25-nightly
+      node-version: '25-nightly'
     secrets: inherit
 
   report-failure:

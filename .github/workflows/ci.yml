@@ -42,7 +42,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: lts/*
+          node-version: 'lts/*'
 
       - name: Install dependencies
         run: npm install
@@ -55,20 +55,17 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version:
-          - 20
-          - 22
-          - 24
+        node-version: ['20', '22', '24']
         runs-on:
           - ubuntu-latest
           - windows-latest
           - macos-latest
         exclude:
-          - node-version: 20
+          - node-version: '20'
             runs-on: windows-latest
     uses: ./.github/workflows/nodejs.yml
     with:
-      codecov: ${{ matrix.node-version == 22 && matrix.runs-on == 'ubuntu-latest' }}
+      codecov: ${{ matrix.node-version == '24' && matrix.runs-on == 'ubuntu-latest' }}
       node-version: ${{ matrix.node-version }}
       runs-on: ${{ matrix.runs-on }}
     secrets: inherit
@@ -79,7 +76,7 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: [20, 22, 24]
+        node-version: ['20', '22', '24']
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -213,7 +210,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: 22
+          node-version: '24'
 
       - name: Install dependencies
         run: npm install
