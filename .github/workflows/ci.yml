@@ -68,6 +68,7 @@ jobs:
             runs-on: windows-latest
     uses: ./.github/workflows/nodejs.yml
     with:
+      codecov: ${{ matrix.node-version == 22 && matrix.runs-on == 'ubuntu-latest' }}
       node-version: ${{ matrix.node-version }}
       runs-on: ${{ matrix.runs-on }}
     secrets: inherit

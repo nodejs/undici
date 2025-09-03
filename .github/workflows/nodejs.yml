@@ -9,6 +9,10 @@ on:
       runs-on:
         required: true
         type: string
+      codecov:
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -60,20 +64,20 @@ jobs:
 
       - name: Run tests with coverage
         id: coverage
-        if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 22
+        if: inputs.codecov == true
         run: npm run coverage:ci
         env:
           CI: true
           NODE_V8_COVERAGE: ./coverage/tmp
 
       - name: Run tests
-        if: steps.coverage.outcome == 'skipped'
+        if: inputs.codecov != true
         run: npm run test:javascript
         env:
           CI: true
 
       - name: Coverage Report
-        if: inputs.runs-on == 'ubuntu-latest' && inputs.node-version == 20
+        if: inputs.codecov == true
         uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
