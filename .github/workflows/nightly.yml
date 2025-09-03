@@ -13,7 +13,7 @@ jobs:
     if: github.repository == 'nodejs/undici'
     uses: ./.github/workflows/nodejs.yml
     with:
-      node-version: 23-nightly
+      node-version: 25-nightly
       runs-on: ubuntu-latest
     secrets: inherit
 
@@ -21,14 +21,14 @@ jobs:
     if: github.repository == 'nodejs/undici'
     uses: ./.github/workflows/autobahn.yml
     with:
-      node-version: 23-nightly
+      node-version: 25-nightly
     secrets: inherit
 
   test-windows:
     if: github.repository == 'nodejs/undici'
     uses: ./.github/workflows/nodejs.yml
     with:
-      node-version: 23-nightly
+      node-version: 25-nightly
       runs-on: windows-latest
     secrets: inherit
 
@@ -36,7 +36,7 @@ jobs:
     if: github.repository == 'nodejs/undici'
     uses: ./.github/workflows/nodejs.yml
     with:
-      node-version: 23-nightly
+      node-version: 25-nightly
       runs-on: macos-latest
     secrets: inherit
 
