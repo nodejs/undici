@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   test:
+    name: Test with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
     if: github.repository == 'nodejs/undici'
     strategy:
       fail-fast: false
