@@ -1,4 +1,4 @@
-name: Create release
+name: Release undici and undici-types on NPM and create GitHub Release
 
 on:
   push:
@@ -11,19 +11,19 @@ permissions:
   contents: read
 
 jobs:
-  check-release-version:
+  determine-release-version:
     runs-on: ubuntu-latest
     outputs:
-      release-version: ${{ steps.set-release-version.outputs.result }}
+      release-version: ${{ steps.determine-release-version.outputs.result }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         id: checkout
         with:
-          persist-credentials: true
-      - name: Set release version
+          persist-credentials: false
+      - name: Determine release version
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        id: set-release-version
+        id: determine-release-version
         with:
           result-encoding: string
           script: |
@@ -44,8 +44,8 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    needs: check-release-version
-    if: ${{ startsWith(needs.check-release-version.outputs.release-version, 'v') }}
+    needs: determine-release-version
+    if: ${{ startsWith(needs.determine-release-version.outputs.release-version, 'v') }}
 
     permissions:
       contents: write
@@ -59,32 +59,39 @@ jobs:
         id: checkout
         with:
           persist-credentials: true
+
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
+
       - name: Install globally latest npm
         run: npm install -g npm@latest
         id: install-globally-latest-npm
+
       - name: Install dependencies
         run: npm install
         id: install-dependencies
-      - name: Create NPM release
+
+      - name: Publish undici on NPM
         run: npm publish --access public
-        id: create-npm-release
+        id: npm-publish-undici
+
       - name: Generate Types Package
         run: node scripts/generate-undici-types-package-json.js
         id: generate-types-package
-      - name: Publish Types Package
+
+      - name: Publish undici-types on NPM
         run: npm publish
-        id: publish-types-package
+        id: npm-publish-undici-types
         working-directory: './types'
+
       - name: Create GitHub release
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        id: create-release
+        id: create-gh-release
         with:
           script: |
             const defaultBranch = "${{ github.event.repository.default_branch }}"
-            const versionTag = "${{ needs.check-release-version.outputs.release-version }}"
+            const versionTag = "${{ needs.determine-release-version.outputs.release-version }}"
             await require('./scripts/release').release({ github, context, defaultBranch, versionTag })
