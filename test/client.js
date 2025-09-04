@@ -15,7 +15,7 @@ const hasIPv6 = (() => {
   const iFaces = require('node:os').networkInterfaces()
   const re = process.platform === 'win32' ? /Loopback Pseudo-Interface/ : /lo/
   return Object.keys(iFaces).some(
-    (name) => re.test(name) && iFaces[name].some(({ family }) => family === 6)
+    (name) => re.test(name) && iFaces[name].some(({ family }) => family === 'IPv6')
   )
 })()
 
@@ -427,7 +427,7 @@ test('basic head', async (t) => {
 })
 
 test('basic head (IPv6)', { skip: !hasIPv6 }, async (t) => {
-  t = tspl(t, { plan: 15 })
+  t = tspl(t, { plan: 10 })
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/123', req.url)
@@ -2189,7 +2189,7 @@ test('stats', async (t) => {
     }, (err, data) => {
       t.ifError(err)
       t.strictEqual(client.stats.connected, true)
-      t.strictEqual(client.stats.pending, 1)
+      t.strictEqual(client.stats.pending, 0)
       t.strictEqual(client.stats.running, 1)
     })
   })

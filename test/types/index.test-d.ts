@@ -28,6 +28,7 @@ expectAssignable<typeof FormData>(Undici.FormData)
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.dump())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.redirect())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.retry())
+expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.decompress())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.cache())
 
 const dispatcher = new Dispatcher()

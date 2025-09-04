@@ -3,7 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after, describe } = require('node:test')
 const { createServer } = require('node:http')
-const { promisify } = require('node:util')
+const { once } = require('node:events')
 const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
@@ -83,7 +83,7 @@ describe('MockAgent - constructor', () => {
   })
 })
 
-describe('MockAgent - enableCallHistory', t => {
+describe('MockAgent - enableCallHistory', () => {
   test('should enable call history and add call history log', async (t) => {
     t = tspl(t, { plan: 2 })
 
@@ -106,10 +106,12 @@ describe('MockAgent - enableCallHistory', t => {
     await request('http://localhost:9999/foo')
 
     t.strictEqual(mockAgent.getCallHistory()?.calls()?.length, 1)
+
+    await t.completed
   })
 })
 
-describe('MockAgent - disableCallHistory', t => {
+describe('MockAgent - disableCallHistory', () => {
   test('should disable call history and not add call history log', async (t) => {
     t = tspl(t, { plan: 2 })
 
@@ -132,10 +134,12 @@ describe('MockAgent - disableCallHistory', t => {
     await request('http://localhost:9999/foo')
 
     t.strictEqual(mockAgent.getCallHistory()?.calls()?.length, 1)
+
+    await t.completed
   })
 })
 
-describe('MockAgent - get', t => {
+describe('MockAgent - get', () => {
   test('should return MockClient', (t) => {
     t = tspl(t, { plan: 1 })
 
@@ -246,6 +250,8 @@ test('MockAgent - .close should clean up registered pools', async (t) => {
   await mockAgent.close()
   t.strictEqual(mockPool[kConnected], 0)
   t.strictEqual(mockAgent[kClients].size, 0)
+
+  await t.completed
 })
 
 test('MockAgent - .close should clean up registered clients', async (t) => {
@@ -264,6 +270,8 @@ test('MockAgent - .close should clean up registered clients', async (t) => {
   await mockAgent.close()
   t.strictEqual(mockClient[kConnected], 0)
   t.strictEqual(mockAgent[kClients].size, 0)
+
+  await t.completed
 })
 
 test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
@@ -273,11 +281,10 @@ test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -294,6 +301,8 @@ test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
 
   // The MockAgent should encapsulate the input agent clients
   t.strictEqual(mockAgent[kClients].size, agent[kClients].size)
+
+  await t.completed
 })
 
 test('MockAgent - basic intercept with MockAgent.request', async (t) => {
@@ -303,11 +312,10 @@ test('MockAgent - basic intercept with MockAgent.request', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -338,6 +346,8 @@ test('MockAgent - basic intercept with MockAgent.request', async (t) => {
   t.deepStrictEqual(jsonResponse, {
     foo: 'bar'
   })
+
+  await t.completed
 })
 
 test('MockAgent - basic intercept with request', async (t) => {
@@ -347,11 +357,10 @@ test('MockAgent - basic intercept with request', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -381,6 +390,8 @@ test('MockAgent - basic intercept with request', async (t) => {
   t.deepStrictEqual(jsonResponse, {
     foo: 'bar'
   })
+
+  await t.completed
 })
 
 test('MockAgent - should support local agents', async (t) => {
@@ -390,11 +401,10 @@ test('MockAgent - should support local agents', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -427,6 +437,8 @@ test('MockAgent - should support local agents', async (t) => {
   t.deepStrictEqual(jsonResponse, {
     foo: 'bar'
   })
+
+  await t.completed
 })
 
 test('MockAgent - should support specifying custom agents to mock', async (t) => {
@@ -436,11 +448,10 @@ test('MockAgent - should support specifying custom agents to mock', async (t) =>
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -474,6 +485,8 @@ test('MockAgent - should support specifying custom agents to mock', async (t) =>
   t.deepStrictEqual(jsonResponse, {
     foo: 'bar'
   })
+
+  await t.completed
 })
 
 test('MockAgent - basic Client intercept with request', async (t) => {
@@ -483,11 +496,10 @@ test('MockAgent - basic Client intercept with request', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -519,6 +531,8 @@ test('MockAgent - basic Client intercept with request', async (t) => {
   t.deepStrictEqual(jsonResponse, {
     foo: 'bar'
   })
+
+  await t.completed
 })
 
 test('MockAgent - basic intercept with multiple pools', async (t) => {
@@ -528,11 +542,10 @@ test('MockAgent - basic intercept with multiple pools', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -571,6 +584,8 @@ test('MockAgent - basic intercept with multiple pools', async (t) => {
   t.deepStrictEqual(jsonResponse, {
     foo: 'bar-1'
   })
+
+  await t.completed
 })
 
 test('MockAgent - should handle multiple responses for an interceptor', async (t) => {
@@ -580,11 +595,10 @@ test('MockAgent - should handle multiple responses for an interceptor', async (t
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -634,6 +648,8 @@ test('MockAgent - should handle multiple responses for an interceptor', async (t
       hello: 'there'
     })
   }
+
+  await t.completed
 })
 
 test('MockAgent - should call original Pool dispatch if request not found', async (t) => {
@@ -647,7 +663,7 @@ test('MockAgent - should call original Pool dispatch if request not found', asyn
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -663,6 +679,8 @@ test('MockAgent - should call original Pool dispatch if request not found', asyn
 
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
+
+  await t.completed
 })
 
 test('MockAgent - should call original Client dispatch if request not found', async (t) => {
@@ -676,7 +694,7 @@ test('MockAgent - should call original Client dispatch if request not found', as
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -692,6 +710,8 @@ test('MockAgent - should call original Client dispatch if request not found', as
 
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
+
+  await t.completed
 })
 
 test('MockAgent - should handle string responses', async (t) => {
@@ -701,11 +721,10 @@ test('MockAgent - should handle string responses', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -726,6 +745,8 @@ test('MockAgent - should handle string responses', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
+
+  await t.completed
 })
 
 test('MockAgent - should handle basic concurrency for requests', { jobs: 5 }, async (t) => {
@@ -754,8 +775,12 @@ test('MockAgent - should handle basic concurrency for requests', { jobs: 5 }, as
       t.deepStrictEqual(jsonResponse, {
         foo: `bar ${idx}`
       })
+
+      await t.completed
     })
   ))
+
+  await t.completed
 })
 
 test('MockAgent - handle delays to simulate work', async (t) => {
@@ -765,11 +790,10 @@ test('MockAgent - handle delays to simulate work', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -794,6 +818,8 @@ test('MockAgent - handle delays to simulate work', async (t) => {
   t.strictEqual(response, 'hello')
   const elapsedInMs = Math.ceil(process.hrtime(start)[1] / 1e6)
   t.ok(elapsedInMs >= 50, `Elapsed time is not greater than 50ms: ${elapsedInMs}`)
+
+  await t.completed
 })
 
 test('MockAgent - should persist requests', async (t) => {
@@ -803,11 +829,10 @@ test('MockAgent - should persist requests', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -856,6 +881,8 @@ test('MockAgent - should persist requests', async (t) => {
       foo: 'bar'
     })
   }
+
+  await t.completed
 })
 
 test('MockAgent - getCallHistory with no name parameter should return the agent call history', async (t) => {
@@ -872,6 +899,8 @@ test('MockAgent - getCallHistory with no name parameter should return the agent 
   }).reply(200, 'foo')
 
   t.ok(mockAgent.getCallHistory() instanceof MockCallHistory)
+
+  await t.completed
 })
 
 test('MockAgent - getCallHistory with request should return the call history instance with history log', async (t) => {
@@ -907,6 +936,8 @@ test('MockAgent - getCallHistory with request should return the call history ins
   t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.path, path)
   t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.fullUrl, `${url.toString()}?${new URLSearchParams(query).toString()}`)
   t.deepStrictEqual(mockAgent.getCallHistory()?.lastCall()?.searchParams, { a: '1' })
+
+  await t.completed
 })
 
 test('MockAgent - getCallHistory with fetch should return the call history instance with history log', async (t) => {
@@ -952,6 +983,8 @@ test('MockAgent - getCallHistory with fetch should return the call history insta
   t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.path, url.pathname)
   t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.fullUrl, url.toString())
   t.deepStrictEqual(mockAgent.getCallHistory()?.lastCall()?.searchParams, { a: '1' })
+
+  await t.completed
 })
 
 test('MockAgent - getCallHistory with fetch with a minimal configuration should register call history log', async (t) => {
@@ -989,6 +1022,8 @@ test('MockAgent - getCallHistory with fetch with a minimal configuration should 
   t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.host, 'localhost:9999')
   t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.port, '9999')
   t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.protocol, 'http:')
+
+  await t.completed
 })
 
 test('MockAgent - getCallHistory with request with a minimal configuration should register call history log', async (t) => {
@@ -1020,6 +1055,8 @@ test('MockAgent - getCallHistory with request with a minimal configuration shoul
   t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.host, 'localhost:9999')
   t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.port, '9999')
   t.strictEqual(mockAgent.getCallHistory()?.lastCall()?.protocol, 'http:')
+
+  await t.completed
 })
 
 test('MockAgent - clearCallHistory should clear call history logs', async (t) => {
@@ -1055,6 +1092,8 @@ test('MockAgent - clearCallHistory should clear call history logs', async (t) =>
   mockAgent.clearCallHistory()
 
   t.ok(mockAgent.getCallHistory()?.calls().length === 0)
+
+  await t.completed
 })
 
 test('MockAgent - handle persists with delayed requests', async (t) => {
@@ -1064,11 +1103,10 @@ test('MockAgent - handle persists with delayed requests', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1101,6 +1139,8 @@ test('MockAgent - handle persists with delayed requests', async (t) => {
     const response = await getResponse(body)
     t.strictEqual(response, 'hello')
   }
+
+  await t.completed
 })
 
 test('MockAgent - calling close on a mock pool should not affect other mock pools', async (t) => {
@@ -1110,11 +1150,10 @@ test('MockAgent - calling close on a mock pool should not affect other mock pool
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1159,6 +1198,8 @@ test('MockAgent - calling close on a mock pool should not affect other mock pool
     const response = await getResponse(body)
     t.strictEqual(response, 'bar')
   }
+
+  await t.completed
 })
 
 test('MockAgent - close removes all registered mock clients', async (t) => {
@@ -1168,11 +1209,10 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1193,6 +1233,8 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
   } catch (err) {
     t.ok(err instanceof ClientDestroyedError)
   }
+
+  await t.completed
 })
 
 test('MockAgent - close clear all registered mock call history logs', async (t) => {
@@ -1215,6 +1257,8 @@ test('MockAgent - close clear all registered mock call history logs', async (t) 
   await mockAgent.close()
 
   t.strictEqual(mockAgent.getCallHistory().calls().length, 0)
+
+  await t.completed
 })
 
 test('MockAgent - close removes all registered mock pools', async (t) => {
@@ -1224,11 +1268,10 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1249,6 +1292,8 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
   } catch (err) {
     t.ok(err instanceof ClientDestroyedError)
   }
+
+  await t.completed
 })
 
 test('MockAgent - should handle replyWithError', async (t) => {
@@ -1258,11 +1303,10 @@ test('MockAgent - should handle replyWithError', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1277,6 +1321,8 @@ test('MockAgent - should handle replyWithError', async (t) => {
   }).replyWithError(new Error('kaboom'))
 
   await t.rejects(request(`${baseUrl}/foo`, { method: 'GET' }), new Error('kaboom'))
+
+  await t.completed
 })
 
 test('MockAgent - should support setting a reply to respond a set amount of times', async (t) => {
@@ -1290,7 +1336,7 @@ test('MockAgent - should support setting a reply to respond a set amount of time
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1328,6 +1374,8 @@ test('MockAgent - should support setting a reply to respond a set amount of time
     const response = await getResponse(body)
     t.strictEqual(response, 'hello')
   }
+
+  await t.completed
 })
 
 test('MockAgent - persist overrides times', async (t) => {
@@ -1337,11 +1385,10 @@ test('MockAgent - persist overrides times', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1384,6 +1431,8 @@ test('MockAgent - persist overrides times', async (t) => {
     const response = await getResponse(body)
     t.strictEqual(response, 'foo')
   }
+
+  await t.completed
 })
 
 test('MockAgent - matcher should not find mock dispatch if path is of unsupported type', async (t) => {
@@ -1396,7 +1445,7 @@ test('MockAgent - matcher should not find mock dispatch if path is of unsupporte
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1417,6 +1466,8 @@ test('MockAgent - matcher should not find mock dispatch if path is of unsupporte
 
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
+
+  await t.completed
 })
 
 test('MockAgent - should match path with regex', async (t) => {
@@ -1426,11 +1477,10 @@ test('MockAgent - should match path with regex', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1463,6 +1513,8 @@ test('MockAgent - should match path with regex', async (t) => {
     const response = await getResponse(body)
     t.strictEqual(response, 'foo')
   }
+
+  await t.completed
 })
 
 test('MockAgent - should match path with function', async (t) => {
@@ -1472,11 +1524,10 @@ test('MockAgent - should match path with function', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1497,6 +1548,8 @@ test('MockAgent - should match path with function', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - should match method with regex', async (t) => {
@@ -1506,11 +1559,10 @@ test('MockAgent - should match method with regex', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1531,6 +1583,8 @@ test('MockAgent - should match method with regex', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - should match method with function', async (t) => {
@@ -1540,11 +1594,10 @@ test('MockAgent - should match method with function', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1565,6 +1618,8 @@ test('MockAgent - should match method with function', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - should match body with regex', async (t) => {
@@ -1574,11 +1629,10 @@ test('MockAgent - should match body with regex', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1601,6 +1655,8 @@ test('MockAgent - should match body with regex', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - should match body with function', async (t) => {
@@ -1610,11 +1666,10 @@ test('MockAgent - should match body with function', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1637,6 +1692,8 @@ test('MockAgent - should match body with function', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - should match headers with string', async (t) => {
@@ -1645,11 +1702,10 @@ test('MockAgent - should match headers with string', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1710,6 +1766,8 @@ test('MockAgent - should match headers with string', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - should match headers with regex', async (t) => {
@@ -1718,11 +1776,10 @@ test('MockAgent - should match headers with regex', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1783,6 +1840,8 @@ test('MockAgent - should match headers with regex', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - should match headers with function', async (t) => {
@@ -1791,11 +1850,10 @@ test('MockAgent - should match headers with function', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1856,6 +1914,8 @@ test('MockAgent - should match headers with function', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - should match url with regex', async (t) => {
@@ -1865,11 +1925,10 @@ test('MockAgent - should match url with regex', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1890,6 +1949,8 @@ test('MockAgent - should match url with regex', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - should match url with function', async (t) => {
@@ -1899,11 +1960,10 @@ test('MockAgent - should match url with function', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1924,6 +1984,8 @@ test('MockAgent - should match url with function', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - handle default reply headers', async (t) => {
@@ -1933,11 +1995,10 @@ test('MockAgent - handle default reply headers', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -1962,6 +2023,8 @@ test('MockAgent - handle default reply headers', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - handle default reply trailers', async (t) => {
@@ -1971,11 +2034,10 @@ test('MockAgent - handle default reply trailers', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2000,6 +2062,8 @@ test('MockAgent - handle default reply trailers', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - return calculated content-length if specified', async (t) => {
@@ -2009,11 +2073,10 @@ test('MockAgent - return calculated content-length if specified', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2038,6 +2101,8 @@ test('MockAgent - return calculated content-length if specified', async (t) => {
 
   const response = await getResponse(body)
   t.strictEqual(response, 'foo')
+
+  await t.completed
 })
 
 test('MockAgent - return calculated content-length for object response if specified', async (t) => {
@@ -2047,11 +2112,10 @@ test('MockAgent - return calculated content-length for object response if specif
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
     t.fail('should not be called')
-    t.end()
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2076,6 +2140,8 @@ test('MockAgent - return calculated content-length for object response if specif
 
   const jsonResponse = JSON.parse(await getResponse(body))
   t.deepStrictEqual(jsonResponse, { foo: 'bar' })
+
+  await t.completed
 })
 
 test('MockAgent - should activate and deactivate mock clients', async (t) => {
@@ -2089,7 +2155,7 @@ test('MockAgent - should activate and deactivate mock clients', async (t) => {
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2137,6 +2203,8 @@ test('MockAgent - should activate and deactivate mock clients', async (t) => {
     const response = await getResponse(body)
     t.strictEqual(response, 'foo')
   }
+
+  await t.completed
 })
 
 test('MockAgent - enableNetConnect should allow all original dispatches to be called if dispatch not found', async (t) => {
@@ -2150,7 +2218,7 @@ test('MockAgent - enableNetConnect should allow all original dispatches to be ca
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2174,6 +2242,8 @@ test('MockAgent - enableNetConnect should allow all original dispatches to be ca
 
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
+
+  await t.completed
 })
 
 test('MockAgent - enableNetConnect with a host string should allow all original dispatches to be called if mockDispatch not found', async (t) => {
@@ -2187,7 +2257,7 @@ test('MockAgent - enableNetConnect with a host string should allow all original 
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2211,6 +2281,8 @@ test('MockAgent - enableNetConnect with a host string should allow all original 
 
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
+
+  await t.completed
 })
 
 test('MockAgent - enableNetConnect when called with host string multiple times should allow all original dispatches to be called if mockDispatch not found', async (t) => {
@@ -2224,7 +2296,7 @@ test('MockAgent - enableNetConnect when called with host string multiple times s
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2249,6 +2321,8 @@ test('MockAgent - enableNetConnect when called with host string multiple times s
 
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
+
+  await t.completed
 })
 
 test('MockAgent - enableNetConnect with a host regex should allow all original dispatches to be called if mockDispatch not found', async (t) => {
@@ -2262,7 +2336,7 @@ test('MockAgent - enableNetConnect with a host regex should allow all original d
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2286,6 +2360,8 @@ test('MockAgent - enableNetConnect with a host regex should allow all original d
 
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
+
+  await t.completed
 })
 
 test('MockAgent - enableNetConnect with a function should allow all original dispatches to be called if mockDispatch not found', async (t) => {
@@ -2299,7 +2375,7 @@ test('MockAgent - enableNetConnect with a function should allow all original dis
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2323,6 +2399,8 @@ test('MockAgent - enableNetConnect with a function should allow all original dis
 
   const response = await getResponse(body)
   t.strictEqual(response, 'hello')
+
+  await t.completed
 })
 
 test('MockAgent - enableNetConnect with an unknown input should throw', async (t) => {
@@ -2339,6 +2417,8 @@ test('MockAgent - enableNetConnect with an unknown input should throw', async (t
   }).reply(200, 'foo')
 
   t.throws(() => mockAgent.enableNetConnect({}), new InvalidArgumentError('Unsupported matcher. Must be one of String|Function|RegExp.'))
+
+  await t.completed
 })
 
 test('MockAgent - enableNetConnect should throw if dispatch not matched for path and the origin was not allowed by net connect', async (t) => {
@@ -2346,12 +2426,11 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for path
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
-    t.end()
     res.end('should not be called')
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2370,6 +2449,8 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for path
   await t.rejects(request(`${baseUrl}/wrong`, {
     method: 'GET'
   }), new MockNotMatchedError(`Mock dispatch not matched for path '/wrong': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+
+  await t.completed
 })
 
 test('MockAgent - enableNetConnect should throw if dispatch not matched for method and the origin was not allowed by net connect', async (t) => {
@@ -2377,12 +2458,11 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for meth
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
-    t.end()
     res.end('should not be called')
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2401,6 +2481,8 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for meth
   await t.rejects(request(`${baseUrl}/foo`, {
     method: 'WRONG'
   }), new MockNotMatchedError(`Mock dispatch not matched for method 'WRONG' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+
+  await t.completed
 })
 
 test('MockAgent - enableNetConnect should throw if dispatch not matched for body and the origin was not allowed by net connect', async (t) => {
@@ -2408,12 +2490,11 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for body
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
-    t.end()
     res.end('should not be called')
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2434,6 +2515,8 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for body
     method: 'GET',
     body: 'wrong'
   }), new MockNotMatchedError(`Mock dispatch not matched for body 'wrong' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+
+  await t.completed
 })
 
 test('MockAgent - enableNetConnect should throw if dispatch not matched for headers and the origin was not allowed by net connect', async (t) => {
@@ -2441,12 +2524,11 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for head
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
-    t.end()
     res.end('should not be called')
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2471,6 +2553,8 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for head
       'User-Agent': 'wrong'
     }
   }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"User-Agent":"wrong"}' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+
+  await t.completed
 })
 
 test('MockAgent - disableNetConnect should throw if dispatch not found by net connect', async (t) => {
@@ -2484,7 +2568,7 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2503,6 +2587,8 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
   await t.rejects(request(`${baseUrl}/foo`, {
     method: 'GET'
   }), new MockNotMatchedError(`Mock dispatch not matched for path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+
+  await t.completed
 })
 
 test('MockAgent - headers function interceptor', async (t) => {
@@ -2510,12 +2596,11 @@ test('MockAgent - headers function interceptor', async (t) => {
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
-    t.end()
     res.end('should not be called')
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2564,6 +2649,8 @@ test('MockAgent - headers function interceptor', async (t) => {
     })
     t.strictEqual(statusCode, 200)
   }
+
+  await t.completed
 })
 
 test('MockAgent - clients are not garbage collected', async (t) => {
@@ -2572,12 +2659,11 @@ test('MockAgent - clients are not garbage collected', async (t) => {
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail('should not be called')
-    t.end()
     res.end('should not be called')
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2618,6 +2704,8 @@ test('MockAgent - clients are not garbage collected', async (t) => {
 
   t.strictEqual(results.size, 1)
   t.ok(results.has(200))
+
+  await t.completed
 })
 
 // https://github.com/nodejs/undici/issues/1321
@@ -2650,7 +2738,7 @@ test('MockAgent - using fetch yields correct statusText', async (t) => {
   t.strictEqual(unknownStatusCodeRes.status, 420)
   t.strictEqual(unknownStatusCodeRes.statusText, 'unknown')
 
-  t.end()
+  await t.completed
 })
 
 // https://github.com/nodejs/undici/issues/1556
@@ -2791,6 +2879,8 @@ test('MockAgent - reply callback can be asynchronous', async (t) => {
 
     t.deepStrictEqual(await response.json(), { foo: 'bar' })
   }
+
+  await t.completed
 })
 
 test('MockAgent - headers should be array of strings', async (t) => {
@@ -2824,6 +2914,8 @@ test('MockAgent - headers should be array of strings', async (t) => {
     'bar=baz',
     'baz=qux'
   ])
+
+  await t.completed
 })
 
 // https://github.com/nodejs/undici/issues/2418
@@ -2841,7 +2933,7 @@ test('MockAgent - Sending ReadableStream body', async (t) => {
   after(() => mockAgent.close())
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const url = `http://localhost:${server.address().port}`
 
@@ -2857,6 +2949,8 @@ test('MockAgent - Sending ReadableStream body', async (t) => {
   })
 
   t.deepStrictEqual(await response.text(), 'test')
+
+  await t.completed
 })
 
 // https://github.com/nodejs/undici/issues/2616
@@ -2887,6 +2981,8 @@ test('MockAgent - headers should be array of strings (fetch)', async (t) => {
   })
 
   t.deepStrictEqual(response.headers.getSetCookie(), ['foo=bar', 'bar=baz', 'baz=qux'])
+
+  await t.completed
 })
 
 // https://github.com/nodejs/undici/issues/4146
@@ -2906,7 +3002,7 @@ test('MockAgent - headers should be array of strings (fetch)', async (t) => {
     })
     after(() => server.close())
 
-    await promisify(server.listen.bind(server))(0)
+    await once(server.listen(0), 'listening')
 
     const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2938,6 +3034,8 @@ test('MockAgent - headers should be array of strings (fetch)', async (t) => {
     t.deepStrictEqual(jsonResponse, {
       foo: 'bar'
     })
+
+    await t.completed
   })
 })
 
@@ -2950,7 +3048,7 @@ test('MockAgent - should not accept non-standard search parameters when acceptNo
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const baseUrl = `http://localhost:${server.address().port}`
 
@@ -2979,4 +3077,6 @@ test('MockAgent - should not accept non-standard search parameters when acceptNo
 
   const textResponse = await getResponse(body)
   t.strictEqual(textResponse, '(non-intercepted) response from server')
+
+  await t.completed
 })

@@ -1,155 +1,149 @@
 'use strict'
 
 const assert = require('node:assert')
-const events = require('node:events')
+const { once } = require('node:events')
 const http = require('node:http')
-const { test, describe } = require('node:test')
+const { test, describe, after } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
+const FakeTimers = require('@sinonjs/fake-timers')
 const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
 
 describe('EventSource - reconnect', () => {
-  test('Should reconnect on connection close', async () => {
-    const finishedPromise = {
-      promise: undefined,
-      resolve: undefined,
-      reject: undefined
-    }
+  test('Should reconnect on connection closed by server', async (t) => {
+    t = tspl(t, { plan: 1 })
 
-    finishedPromise.promise = new Promise((resolve, reject) => {
-      finishedPromise.resolve = resolve
-      finishedPromise.reject = reject
-    })
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.end()
     })
+    after(() => server.close())
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
-      eventSourceInstance.onopen = () => {
-        server.close()
+    let connectionCount = 0
+    eventSourceInstance.onopen = () => {
+      if (++connectionCount === 2) {
         eventSourceInstance.close()
-        finishedPromise.resolve()
+        t.ok(true)
       }
     }
 
-    await finishedPromise.promise
+    await once(eventSourceInstance, 'open')
+
+    clock.tick(10)
+    await once(eventSourceInstance, 'error')
+
+    clock.tick(defaultReconnectionTime)
+
+    await t.completed
   })
 
-  test('Should reconnect on with reconnection timeout', async () => {
-    const finishedPromise = {
-      promise: undefined,
-      resolve: undefined,
-      reject: undefined
-    }
-
-    finishedPromise.promise = new Promise((resolve, reject) => {
-      finishedPromise.resolve = resolve
-      finishedPromise.reject = reject
-    })
+  test('Should reconnect on with reconnection timeout', async (t) => {
+    t = tspl(t, { plan: 1 })
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.end()
     })
-
-    server.listen(0)
-    await events.once(server, 'listening')
+    after(() => server.close())
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const start = Date.now()
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
-      eventSourceInstance.onopen = () => {
+
+    let connectionCount = 0
+    eventSourceInstance.onopen = () => {
+      if (++connectionCount === 2) {
         assert.ok(Date.now() - start >= defaultReconnectionTime)
-        server.close()
         eventSourceInstance.close()
-        finishedPromise.resolve()
+        t.ok(true)
       }
     }
 
-    await finishedPromise.promise
+    await once(eventSourceInstance, 'open')
+
+    clock.tick(10)
+    await once(eventSourceInstance, 'error')
+
+    clock.tick(defaultReconnectionTime)
+
+    await t.completed
   })
 
-  test('Should reconnect on with modified reconnection timeout', async () => {
-    const finishedPromise = {
-      promise: undefined,
-      resolve: undefined,
-      reject: undefined
-    }
-
-    finishedPromise.promise = new Promise((resolve, reject) => {
-      finishedPromise.resolve = resolve
-      finishedPromise.reject = reject
-    })
+  test('Should reconnect on with modified reconnection timeout', async (t) => {
+    t = tspl(t, { plan: 1 })
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('retry: 100\n\n')
       res.end()
     })
-
-    server.listen(0)
-    await events.once(server, 'listening')
+    after(() => server.close())
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const start = Date.now()
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
-      eventSourceInstance.onopen = () => {
+
+    let connectionCount = 0
+    eventSourceInstance.onopen = () => {
+      if (++connectionCount === 2) {
         assert.ok(Date.now() - start >= 100)
         assert.ok(Date.now() - start < 1000)
-        server.close()
         eventSourceInstance.close()
-        finishedPromise.resolve()
+        t.ok(true)
       }
     }
 
-    await finishedPromise.promise
+    await once(eventSourceInstance, 'open')
+
+    clock.tick(10)
+    await once(eventSourceInstance, 'error')
+
+    clock.tick(100)
+
+    await t.completed
   })
 
-  test('Should reconnect and send lastEventId', async () => {
+  test('Should reconnect and send lastEventId', async (t) => {
+    t = tspl(t, { plan: 1 })
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
+
     let requestCount = 0
-
-    const finishedPromise = {
-      promise: undefined,
-      resolve: undefined,
-      reject: undefined
-    }
-
-    finishedPromise.promise = new Promise((resolve, reject) => {
-      finishedPromise.resolve = resolve
-      finishedPromise.reject = reject
-    })
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('id: 1337\n\n')
-      if (requestCount++ !== 0) {
-        assert.strictEqual(req.headers['last-event-id'], '1337')
+      if (++requestCount === 2) {
+        t.strictEqual(req.headers['last-event-id'], '1337')
       }
       res.end()
     })
-
-    server.listen(0)
-    await events.once(server, 'listening')
+    after(() => server.close())
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
-    const start = Date.now()
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
-    eventSourceInstance.onopen = async () => {
-      eventSourceInstance.onopen = () => {
-        assert.ok(Date.now() - start >= 3000)
-        server.close()
-        eventSourceInstance.close()
-        finishedPromise.resolve()
-      }
-    }
 
-    await finishedPromise.promise
+    await once(eventSourceInstance, 'open')
+
+    clock.tick(10)
+    await once(eventSourceInstance, 'error')
+
+    clock.tick(defaultReconnectionTime)
+    await once(eventSourceInstance, 'open')
+
+    await t.completed
   })
 })
