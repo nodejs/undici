@@ -20,7 +20,7 @@ permissions:
 jobs:
   test:
     name: Test with Node.js ${{ inputs.node-version }} on ${{ inputs.runs-on }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Checkout Repository
