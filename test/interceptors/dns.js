@@ -1951,38 +1951,33 @@ test('Various (parameterized) header shapes should work with DNS interceptor', a
 
   const origin = `http://localhost:${server.address().port}`
 
-  const { cache: cacheInterceptor, dns: dnsInterceptor } = interceptors
-
-  // will expand
   const cases = [
     {
-      name: 'array of pairs',
-      headers: [['foo', 'bar']],
-      interceptors: [cacheInterceptor(), dnsInterceptor()]
+      name: 'flat array',
+      headers: ['foo', 'bar']
     },
     {
       name: 'record',
-      headers: { foo: 'bar' },
-      interceptors: [cacheInterceptor(), dnsInterceptor()]
+      headers: { foo: 'bar' }
     },
     {
-      name: 'flat array',
-      headers: ['foo', 'bar'],
-      // note: cacheInterceptor cannot accept flat arrays as it calls normalizeHeaders
-      // possibly need to fix
-      interceptors: [dnsInterceptor()]
+      name: 'record with multi-value',
+      headers: { foo: ['bar'] }
     },
     {
-    //   name: 'record with multi-value',
-      headers: { foo: ['bar'] },
-      interceptors: [cacheInterceptor(), dnsInterceptor()]
+      name: 'iterable (map) object',
+      headers: new Map([['foo', 'bar']])
+    },
+    {
+      name: 'iterable (set) object',
+      headers: new Set([['foo', 'bar']])
     }
   ]
 
   t = tspl(t, { plan: cases.length * 4 })
 
   for (const c of cases) {
-    const agent = new Agent().compose(c.interceptors)
+    const agent = new Agent().compose(dns())
     const r = await agent.request({ origin, path: '/', method: 'GET', headers: c.headers })
     t.equal(r.statusCode, 200, c.name)
     await r.body.text()
