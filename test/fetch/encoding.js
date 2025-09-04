@@ -12,7 +12,9 @@ describe('content-encoding handling', () => {
 
   let server
   before(async () => {
-    server = createServer((req, res) => {
+    server = createServer({
+      keepAlive: false
+    }, (req, res) => {
       if (req.headers['accept-encoding'].toLowerCase() === 'deflate, gzip') {
         res.writeHead(200,
           {
