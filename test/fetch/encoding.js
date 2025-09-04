@@ -13,16 +13,21 @@ describe('content-encoding handling', () => {
   let server
   before(async () => {
     server = createServer({
-      keepAlive: false
+      noDelay: true
     }, (req, res) => {
-      if (req.headers['accept-encoding'].toLowerCase() === 'deflate, gzip') {
+      res.socket.setNoDelay(true)
+      if (
+        req.headers['accept-encoding'] === 'deflate, gzip' ||
+        req.headers['accept-encoding'] === 'DeFlAtE, GzIp'
+      ) {
         res.writeHead(200,
           {
             'Content-Encoding': 'deflate, gzip',
             'Content-Type': 'text/plain'
           }
         )
-          .end(gzipDeflateText)
+        res.flushHeaders()
+        res.end(gzipDeflateText)
       } else if (req.headers['accept-encoding'] === 'zstd') {
         res.writeHead(200,
           {
@@ -30,14 +35,16 @@ describe('content-encoding handling', () => {
             'Content-Type': 'text/plain'
           }
         )
-          .end(zstdText)
+        res.flushHeaders()
+        res.end(zstdText)
       } else {
         res.writeHead(200,
           {
             'Content-Type': 'text/plain'
           }
         )
-          .end('Hello, World!')
+        res.flushHeaders()
+        res.end('Hello, World!')
       }
     })
     await once(server.listen(0), 'listening')
