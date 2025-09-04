@@ -1,0 +1,68 @@
+name: Node.js Nightly
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 10 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
+    if: github.repository == 'nodejs/undici'
+    strategy:
+      fail-fast: false
+      max-parallel: 0
+      matrix:
+        node-version: ['25-nightly']
+        runs-on: [ubuntu-latest, windows-latest, macos-latest]
+    uses: ./.github/workflows/nodejs.yml
+    with:
+      node-version: ${{ matrix.node-version }}
+      runs-on: ${{ matrix.runs-on }}
+    secrets: inherit
+
+  autobahn:
+    if: github.repository == 'nodejs/undici'
+    uses: ./.github/workflows/autobahn.yml
+    with:
+      node-version: '25-nightly'
+    secrets: inherit
+
+  report-failure:
+    if: ${{ always() && (needs.test.result == 'failure' || needs.autobahn.result == 'failure') }}
+    needs:
+      - test
+      - autobahn
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create or update issue
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const ISSUE_TITLE = "Nightly tests are failing"
+
+            const actionRunUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+            const issueContext = {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            }
+
+            let issue = (await github.rest.issues.listForRepo({
+              state: "open",
+              creator: "github-actions[bot]",
+              ...issueContext
+            })).data.find((issue) => issue.title === ISSUE_TITLE)
+
+            if(!issue) {
+              issue = (await github.rest.issues.create({
+                title: ISSUE_TITLE,
+                body: `Tests against nightly failed, see: ${actionRunUrl}`,
+                ...issueContext
+              })).data
+            }

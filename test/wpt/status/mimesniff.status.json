@@ -1,7 +1,0 @@
-{
-  "mime-types": {
-    "parsing.any.js": {
-      "allowUnexpectedFailures": true
-    }
-  }
-}
