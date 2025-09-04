@@ -1,4 +1,4 @@
-name: Nightly tests
+name: Node.js Nightly
 
 on:
   workflow_dispatch:
@@ -9,44 +9,33 @@ permissions:
   contents: read
 
 jobs:
-  test-linux:
+  test:
+    name: Test with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
     if: github.repository == 'nodejs/undici'
-    uses: ./.github/workflows/test.yml
+    strategy:
+      fail-fast: false
+      max-parallel: 0
+      matrix:
+        node-version: ['25-nightly']
+        runs-on: [ubuntu-latest, windows-latest, macos-latest]
+    uses: ./.github/workflows/nodejs.yml
     with:
-      node-version: 23-nightly
-      runs-on: ubuntu-latest
+      node-version: ${{ matrix.node-version }}
+      runs-on: ${{ matrix.runs-on }}
     secrets: inherit
 
-  test-autobahn:
+  autobahn:
     if: github.repository == 'nodejs/undici'
     uses: ./.github/workflows/autobahn.yml
     with:
-      node-version: 23-nightly
-    secrets: inherit
-
-  test-windows:
-    if: github.repository == 'nodejs/undici'
-    uses: ./.github/workflows/test.yml
-    with:
-      node-version: 23-nightly
-      runs-on: windows-latest
-    secrets: inherit
-
-  test-macos:
-    if: github.repository == 'nodejs/undici'
-    uses: ./.github/workflows/test.yml
-    with:
-      node-version: 23-nightly
-      runs-on: macos-latest
+      node-version: '25-nightly'
     secrets: inherit
 
   report-failure:
-    if: ${{ always() && (needs.test-linux.result == 'failure' && needs.test-windows.result == 'failure' && needs.test-macos.result == 'failure') }}
+    if: ${{ always() && (needs.test.result == 'failure' || needs.autobahn.result == 'failure') }}
     needs:
-      - test-linux
-      - test-windows
-      - test-macos
-      - test-autobahn
+      - test
+      - autobahn
     runs-on: ubuntu-latest
     permissions:
       issues: write
