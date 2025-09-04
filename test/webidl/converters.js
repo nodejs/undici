@@ -154,7 +154,7 @@ describe('buffer source converters', () => {
         new ArrayBuffer(16, { maxByteLength: 64 }),
         'converter',
         'converter',
-        { allowResizable: true }
+        webidl.attributes.AllowResizable
       )
     })
   })
@@ -189,7 +189,7 @@ describe('buffer source converters', () => {
         new SharedArrayBuffer(16, { maxByteLength: 64 }),
         'converter',
         'converter',
-        { allowResizable: true }
+        webidl.attributes.AllowResizable
       )
     })
   })
@@ -222,7 +222,7 @@ describe('buffer source converters', () => {
         Uint8Array,
         'converter',
         'converter',
-        { allowShared: true }
+        webidl.attributes.AllowShared
       )
     })
 
@@ -241,7 +241,7 @@ describe('buffer source converters', () => {
         Uint8Array,
         'converter',
         'converter',
-        { allowResizable: true }
+        webidl.attributes.AllowResizable
       )
     })
 
@@ -251,7 +251,7 @@ describe('buffer source converters', () => {
         Uint8Array,
         'converter',
         'converter',
-        { allowResizable: true }
+        webidl.attributes.AllowResizable
       )
     }, TypeError)
 
@@ -261,7 +261,7 @@ describe('buffer source converters', () => {
         Uint8Array,
         'converter',
         'converter',
-        { allowShared: true }
+        webidl.attributes.AllowShared
       )
     }, TypeError)
 
@@ -271,7 +271,7 @@ describe('buffer source converters', () => {
         Uint8Array,
         'converter',
         'converter',
-        { allowResizable: true, allowShared: true }
+        webidl.attributes.AllowResizable | webidl.attributes.AllowShared
       )
     })
   })

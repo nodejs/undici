@@ -10,11 +10,6 @@ type SequenceConverter<T> = (object: unknown, iterable?: IterableIterator<T>) =>
 
 type RecordConverter<K extends string, V> = (object: unknown) => Record<K, V>
 
-interface ConvertToIntOpts {
-  clamp?: boolean
-  enforceRange?: boolean
-}
-
 interface WebidlErrors {
   /**
    * @description Instantiate an error
@@ -74,7 +69,7 @@ interface WebidlUtil {
     V: unknown,
     bitLength: number,
     signedness: 'signed' | 'unsigned',
-    opts?: ConvertToIntOpts
+    flags?: number
   ): number
 
   /**
@@ -96,15 +91,15 @@ interface WebidlUtil {
   markAsUncloneable (V: any): void
 
   IsResizableArrayBuffer (V: ArrayBufferLike): boolean
+
+  HasFlag (flag: number, attributes: number): boolean
 }
 
 interface WebidlConverters {
   /**
    * @see https://webidl.spec.whatwg.org/#es-DOMString
    */
-  DOMString (V: unknown, prefix: string, argument: string, opts?: {
-    legacyNullToEmptyString: boolean
-  }): string
+  DOMString (V: unknown, prefix: string, argument: string, flags?: number): string
 
   /**
    * @see https://webidl.spec.whatwg.org/#es-ByteString
@@ -144,7 +139,7 @@ interface WebidlConverters {
   /**
    * @see https://webidl.spec.whatwg.org/#es-unsigned-short
    */
-  ['unsigned short'] (V: unknown, opts?: ConvertToIntOpts): number
+  ['unsigned short'] (V: unknown, flags?: number): number
 
   /**
    * @see https://webidl.spec.whatwg.org/#idl-ArrayBuffer
@@ -174,10 +169,7 @@ interface WebidlConverters {
     T: new () => NodeJS.TypedArray,
     prefix: string,
     argument: string,
-    opts?: {
-      allowResizable: boolean
-      allowShared: boolean
-    }
+    flags?: number
   ): NodeJS.TypedArray
 
   /**
@@ -187,10 +179,7 @@ interface WebidlConverters {
     V: unknown,
     prefix: string,
     argument: string,
-    opts?: {
-      allowResizable: boolean
-      allowShared: boolean
-    }
+    flags?: number
   ): DataView
 
   /**
@@ -200,10 +189,7 @@ interface WebidlConverters {
     V: unknown,
     prefix: string,
     argument: string,
-    opts?: {
-      allowResizable: boolean
-      allowShared: boolean
-    }
+    flags?: number
   ): NodeJS.ArrayBufferView
 
   /**
@@ -213,7 +199,7 @@ interface WebidlConverters {
     V: unknown,
     prefix: string,
     argument: string,
-    opts?: { allowResizable: boolean }
+    flags?: number
   ): ArrayBuffer | NodeJS.ArrayBufferView
 
   /**
@@ -223,7 +209,7 @@ interface WebidlConverters {
     V: unknown,
     prefix: string,
     argument: string,
-    opts?: { allowResizable: boolean }
+    flags?: number
   ): ArrayBuffer | SharedArrayBuffer | NodeJS.ArrayBufferView
 
   ['sequence<ByteString>']: SequenceConverter<string>
@@ -278,6 +264,7 @@ export interface Webidl {
   util: WebidlUtil
   converters: WebidlConverters
   is: WebidlIs
+  attributes: WebIDLExtendedAttributes
 
   /**
    * @description Performs a brand-check on {@param V} to ensure it is a
@@ -338,4 +325,17 @@ export interface Webidl {
   ): (V: unknown) => ReturnType<typeof converter> | null
 
   argumentLengthCheck (args: { length: number }, min: number, context: string): void
+}
+
+interface WebIDLExtendedAttributes {
+  /** https://webidl.spec.whatwg.org/#Clamp */
+  Clamp: number
+  /** https://webidl.spec.whatwg.org/#EnforceRange */
+  EnforceRange: number
+  /** https://webidl.spec.whatwg.org/#AllowShared */
+  AllowShared: number
+  /** https://webidl.spec.whatwg.org/#AllowResizable */
+  AllowResizable: number
+  /** https://webidl.spec.whatwg.org/#LegacyNullToEmptyString */
+  LegacyNullToEmptyString: number
 }
