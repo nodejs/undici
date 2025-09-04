@@ -51,6 +51,7 @@ describe('content-encoding handling', () => {
     const { strictEqual } = tspl(t, { plan: 3 })
 
     const response = await fetch(`http://localhost:${server.address().port}`, {
+      keepalive: false,
       headers: { 'accept-encoding': 'deflate, gzip' }
     })
 
@@ -65,6 +66,7 @@ describe('content-encoding handling', () => {
     const { strictEqual } = tspl(t, { plan: 3 })
 
     const response = await fetch(`http://localhost:${server.address().port}`, {
+      keepalive: false,
       headers: { 'accept-encoding': 'DeFlAtE, GzIp' }
     })
 
@@ -81,6 +83,7 @@ describe('content-encoding handling', () => {
       const { strictEqual } = tspl(t, { plan: 3 })
 
       const response = await fetch(`http://localhost:${server.address().port}`, {
+        keepalive: false,
         headers: { 'accept-encoding': 'zstd' }
       })
 
