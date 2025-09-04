@@ -113,7 +113,7 @@ expectAssignable<'UND_ERR_PRX_TLS'>(new errors.SecureProxyConnectionError().code
 expectAssignable<errors.UndiciError>(new errors.MaxOriginsReachedError())
 expectAssignable<errors.MaxOriginsReachedError>(new errors.MaxOriginsReachedError())
 expectAssignable<'MaxOriginsReachedError'>(new errors.MaxOriginsReachedError().name)
-expectAssignable<'UND_ERR_MAX_ORIGINS'>(new errors.MaxOriginsReachedError().code)
+expectAssignable<'UND_ERR_MAX_ORIGINS_REACHED'>(new errors.MaxOriginsReachedError().code)
 
 {
   // @ts-ignore

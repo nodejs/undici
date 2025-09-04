@@ -156,6 +156,6 @@ declare namespace Errors {
 
   class MaxOriginsReachedError extends UndiciError {
     name: 'MaxOriginsReachedError'
-    code: 'UND_ERR_MAX_ORIGINS'
+    code: 'UND_ERR_MAX_ORIGINS_REACHED'
   }
 }
