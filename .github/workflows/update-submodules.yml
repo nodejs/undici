@@ -1,4 +1,4 @@
-name: Update WPT
+name: Update Submodules
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   update-wpt:
-    name: Update WPT
+    name: Update Submodules
     runs-on: ubuntu-latest
     steps:
       - name: Git Config
@@ -26,7 +26,7 @@ jobs:
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           base: main
-          branch: wpt-update
-          title: Update WPT
-          body: Automated update of the WPT
-          commit-message: "chore: update WPT"
+          branch: submodules-update
+          title: Update Submodules
+          body: Automated update of the Submodules
+          commit-message: "chore: update Submodules"
