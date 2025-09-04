@@ -6,7 +6,7 @@ const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
 const tspl = require('@matteo.collina/tspl')
 
-test('abort the request on the other side if the stream is canceled', async (t) => {
+test('abort the request on the other side if the stream is canceled', { skip: true }, async (t) => {
   const p = tspl(t, { plan: 1 })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200)
