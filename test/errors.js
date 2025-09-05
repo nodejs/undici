@@ -48,8 +48,7 @@ assert.strictEqual(scenarios.length, Object.keys(errors).length)
 
 // Read Errors.md and extract the table of errors
 const errorsMd = fs.readFileSync(path.resolve(__dirname, '..', 'docs', 'docs', 'api', 'Errors.md'), 'utf8')
-const errorsMdTableHead = `| Error                                | Error Code                            | Description                                                               |
-| ------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------- |`
+const errorsMdTableHead = '| ------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------- |'
 const errorsMdTableStart = errorsMd.indexOf(errorsMdTableHead)
 assert.notStrictEqual(errorsMdTableStart, -1)
 const errorsMdTableEnd = errorsMd.indexOf('\n\n', errorsMdTableStart)
