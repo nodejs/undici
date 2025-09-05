@@ -208,3 +208,27 @@ describe('Default HTTPParseError Codes', () => {
     t.strictEqual(error.data, undefined)
   })
 })
+
+describe('SecureProxyConnectionError constructor should be backwards compatible', () => {
+  test('message is first and cause is second parameter', t => {
+    t = tspl(t, { plan: 2 })
+
+    const message = 'message'
+    const cause = new Error('cause error')
+    const error = new errors.SecureProxyConnectionError(message, cause)
+
+    t.strictEqual(error.cause, cause)
+    t.strictEqual(error.message, 'message')
+  })
+
+  test('cause is first and message is second parameter', t => {
+    t = tspl(t, { plan: 2 })
+
+    const message = 'message'
+    const cause = new Error('cause error')
+    const error = new errors.SecureProxyConnectionError(cause, message)
+
+    t.strictEqual(error.cause, cause)
+    t.strictEqual(error.message, 'message')
+  })
+})
