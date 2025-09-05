@@ -87,11 +87,20 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test cache-interceptor
+      - name: Test cache-interceptor without sqlite
+        if: inputs.node-version == '20'
         run: npm run test:cache-interceptor
         id: test-cache-interceptor
         env:
           CI: true
+      
+      - name: Test cache-interceptor with sqlite
+        if: inputs.node-version != '20'
+        run: npm run test:sqlite
+        id: test-sqlite
+        env:
+          CI: true
+          NODE_OPTIONS: --experimental-sqlite
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
       - name: Test interceptors
@@ -163,14 +172,6 @@ jobs:
         env:
           CI: true
           NODE_V8_COVERAGE: ''
-
-      - name: Test sqlite
-        if: inputs.node-version != '20'
-        run: npm run test:sqlite
-        id: test-sqlite
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
       - name: Test wpt
         run: npm run test:wpt
