@@ -51,11 +51,18 @@ const errorsMd = fs.readFileSync(path.resolve(__dirname, '..', 'docs', 'docs', '
 const errorsMdTableHead = '| ------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------- |'
 const errorsMdTableStart = errorsMd.indexOf(errorsMdTableHead)
 assert.notStrictEqual(errorsMdTableStart, -1)
-const errorsMdTableEnd = errorsMd.indexOf('\n\n', errorsMdTableStart)
+const errorsMdTableEnd = errorsMd.indexOf('Be aware', errorsMdTableStart)
 assert.notStrictEqual(errorsMdTableEnd, -1)
-const errorsTable = errorsMd.slice(errorsMdTableStart + errorsMdTableHead.length + 1, errorsMdTableEnd).split('\n')
+const errorsList = errorsMd.slice(errorsMdTableStart + errorsMdTableHead.length + 1, errorsMdTableEnd).trim().split('\n').map(v => {
+  const arr = v.split('|').map(v => v.trim())
+  return {
+    name: arr[1].slice(1, -1),
+    code: arr[2].slice(1, -1),
+    description: arr[3]
+  }
+})
 
-assert.strictEqual(errorsTable.length, scenarios.length, 'Errors.md should not have more or less documented errors than actual errors')
+assert.strictEqual(errorsList.length, scenarios.length, 'Errors.md should not have more or less documented errors than actual errors')
 
 // Read errors.d.ts and parse it with TypeScript
 const errorsDts = fs.readFileSync(path.resolve(__dirname, '..', 'types', 'errors.d.ts'), 'utf8')
@@ -113,16 +120,16 @@ for (const { name, ErrorClass, defaultMessage, code } of scenarios) {
     test('should be documented in Errors.md', t => {
       t = tspl(t, { plan: 2 })
 
-      const errorsTableEntry = errorsTable.find(line => line.includes(`| \`${name}\` `))
-      t.ok(errorsTableEntry, `${name} should be documented in Errors.md`)
+      const errorsListEntry = errorsList.find(entry => entry.name === name)
+      t.ok(errorsListEntry, `${name} should be documented in Errors.md`)
       const documentedCode = code !== undefined
-        ? `| \`${code}\` `
-        : '|                                       |'
-      t.ok(errorsTableEntry.includes(documentedCode), `${name} should have code ${code} documented in Errors.md`)
+        ? code
+        : ''
+      t.strictEqual(errorsListEntry.code, documentedCode, `${name} should have code ${code} documented in Errors.md`)
 
       // remove the entry so that we can check at the end if there are undocumented errors
-      const index = errorsTable.indexOf(errorsTableEntry)
-      errorsTable.splice(index, 1)
+      const index = errorsList.indexOf(errorsListEntry)
+      errorsList.splice(index, 1)
     })
 
     test('should be declared in errors.d.ts', t => {
