@@ -870,7 +870,7 @@ test('pool request abort in queue', async (t) => {
       method: 'GET',
       signal
     }, (err) => {
-      t.strictEqual(err.code, 'UND_ERR_ABORTED')
+      t.strictEqual(err.code, 'UND_ERR_REQUEST_ABORTED')
     })
     signal.emit('abort')
   })
@@ -917,7 +917,7 @@ test('pool stream abort in queue', async (t) => {
       method: 'GET',
       signal
     }, ({ body }) => body, (err) => {
-      t.strictEqual(err.code, 'UND_ERR_ABORTED')
+      t.strictEqual(err.code, 'UND_ERR_REQUEST_ABORTED')
     })
     signal.emit('abort')
   })
@@ -964,7 +964,7 @@ test('pool pipeline abort in queue', async (t) => {
       method: 'GET',
       signal
     }, ({ body }) => body).end().on('error', (err) => {
-      t.strictEqual(err.code, 'UND_ERR_ABORTED')
+      t.strictEqual(err.code, 'UND_ERR_REQUEST_ABORTED')
     })
     signal.emit('abort')
   })
