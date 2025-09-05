@@ -7,7 +7,7 @@ You can find all the error objects inside the `errors` key.
 import { errors } from 'undici'
 ```
 
-| Error                                | Error Codes                           | Description                                                               |
+| Error                                | Error Code                            | Description                                                               |
 | ------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------- |
 | `UndiciError`                        | `UND_ERR`                             | all errors below are extended from `UndiciError`.                         |
 | `AbortError`                         | `UND_ERR_ABORT`                       | the operation was aborted.                                                |
@@ -18,7 +18,7 @@ import { errors } from 'undici'
 | `ConnectTimeoutError`                | `UND_ERR_CONNECT_TIMEOUT`             | socket is destroyed due to connect timeout.                               |
 | `HeadersOverflowError`               | `UND_ERR_HEADERS_OVERFLOW`            | socket is destroyed due to headers' max size being exceeded.              |
 | `HeadersTimeoutError`                | `UND_ERR_HEADERS_TIMEOUT`             | socket is destroyed due to headers timeout.                               |
-| `HTTPParserError`                    | `UND_ERR_HTTP_PARSE`                  | there is an error while parsing the HTTP.                                 |
+| `HTTPParserError`                    |                                       | there is an error while parsing the HTTP.                                 |
 | `InformationalError`                 | `UND_ERR_INFO`                        | expected error with reason                                                |
 | `InvalidArgumentError`               | `UND_ERR_INVALID_ARG`                 | passed an invalid argument.                                               |
 | `InvalidReturnValueError`            | `UND_ERR_INVALID_RETURN_VALUE`        | returned an invalid value.                                                |

@@ -47,7 +47,7 @@ assert.strictEqual(scenarios.length, Object.keys(errors).length)
 
 // Read Errors.md and extract the table of errors
 const errorsMd = fs.readFileSync(require.resolve('../docs/docs/api/Errors.md'), 'utf8')
-const errorsMdTableHead = `| Error                                | Error Codes                           | Description                                                               |
+const errorsMdTableHead = `| Error                                | Error Code                            | Description                                                               |
 | ------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------- |`
 const errorsMdTableStart = errorsMd.indexOf(errorsMdTableHead)
 assert.notStrictEqual(errorsMdTableStart, -1)
@@ -111,13 +111,14 @@ for (const { name, ErrorClass, defaultMessage, code } of scenarios) {
     })
 
     test('should be documented in Errors.md', t => {
-      t = tspl(t, { plan: code !== undefined ? 2 : 1 })
+      t = tspl(t, { plan: 2 })
 
       const errorsTableEntry = errorsTable.find(line => line.includes(`| \`${name}\` `))
       t.ok(errorsTableEntry, `${name} should be documented in Errors.md`)
-      if (code !== undefined) {
-        t.ok(errorsTableEntry.includes(`| \`${code}\` `), `${name} should have code ${code} documented in Errors.md`)
-      }
+      const documentedCode = code !== undefined
+        ? `| \`${code}\` `
+        : '|                                       |'
+      t.ok(errorsTableEntry.includes(documentedCode), `${name} should have code ${code} documented in Errors.md`)
 
       // remove the entry so that we can check at the end if there are undocumented errors
       const index = errorsTable.indexOf(errorsTableEntry)
@@ -136,25 +137,24 @@ for (const { name, ErrorClass, defaultMessage, code } of scenarios) {
 
       function visit (node) {
         if (typescript.isClassDeclaration(node) &&
-          node.name &&
-          node.name.text === name) {
+          node.name?.text === name) {
           // Check inheritance
           if (node.heritageClauses) {
-            node.heritageClauses.forEach(heritageClause => {
+            for (const heritageClause of node.heritageClauses) {
               if (heritageClause.token === typescript.SyntaxKind.ExtendsKeyword) {
-                heritageClause.types.forEach(type => {
+                for (const type of heritageClause.types) {
                   if (typescript.isIdentifier(type.expression) &&
                     type.expression.text === 'UndiciError') {
                     extendsUndiciError = true
                   }
-                })
+                }
               }
-            })
+            }
           }
 
           // Check properties
           if (node.members) {
-            node.members.forEach(member => {
+            for (const member of node.members) {
               if (typescript.isPropertyDeclaration(member) &&
                 member.name &&
                 typescript.isIdentifier(member.name)) {
@@ -176,7 +176,7 @@ for (const { name, ErrorClass, defaultMessage, code } of scenarios) {
                   }
                 }
               }
-            })
+            }
           }
         }
 
