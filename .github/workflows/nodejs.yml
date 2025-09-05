@@ -20,7 +20,7 @@ permissions:
 jobs:
   test:
     name: Test with Node.js ${{ inputs.node-version }} on ${{ inputs.runs-on }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Checkout Repository
@@ -62,19 +62,122 @@ jobs:
           cd ${{ github.workspace }}/test/web-platform-tests/wpt
           python3 wpt make-hosts-file | sudo tee -a /etc/hosts
 
-      - name: Run tests with coverage
-        id: coverage
-        if: inputs.codecov == true
-        run: npm run coverage:ci
+      - name: Generate PEM files
+        run: npm run generate-pem
+        id: generate-pem
+      
+      - name: Test unit
+        run: npm run test:unit
+        id: test-unit
         env:
           CI: true
-          NODE_V8_COVERAGE: ./coverage/tmp
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test node-fetch
+        run: npm run test:node-fetch
+        id: test-node-fetch
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test cache
+        run: npm run test:cache
+        id: test-cache
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test cache-interceptor
+        run: npm run test:cache-interceptor
+        id: test-cache-interceptor
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test interceptors
+        run: npm run test:interceptors
+        id: test-interceptors
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test fetch
+        run: npm run test:fetch
+        id: test-fetch
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test cookies
+        run: npm run test:cookies
+        id: test-cookies
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test eventsource
+        run: npm run test:eventsource
+        id: test-eventsource
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test subresource-integrity
+        run: npm run test:subresource-integrity
+        id: test-subresource-integrity
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test websocket
+        run: npm run test:websocket
+        id: test-websocket
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test node-test
+        run: npm run test:node-test
+        id: test-node-test
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test cache-tests
+        run: npm run test:cache-tests
+        id: test-cache-tests
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test h2
+        run: npm run test:h2
+        id: test-h2
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test jest
+        run: npm run test:jest
+        id: test-jest
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ''
 
-      - name: Run tests
-        if: inputs.codecov != true
-        run: npm run test:javascript
+      - name: Test sqlite
+        if: inputs.node-version != '20'
+        run: npm run test:sqlite
+        id: test-sqlite
         env:
           CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      
+      - name: Test wpt
+        run: npm run test:wpt
+        id: test-wpt
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
 
       - name: Coverage Report
         if: inputs.codecov == true
