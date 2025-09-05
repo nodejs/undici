@@ -407,11 +407,18 @@ async function setup () {
         `The WPT require certain entries to be present in your ${hostsPath} file. Should these be configured automatically? (y/n): `,
         resolve
       )
-    }).finally(() => rl.close())
+    }).finally(() => rl.close()).then((a) => a.trim().toLowerCase())
 
-    if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
-      await setupHostsFile()
-    } else {
+    let hostsModified = false
+    if (answer === 'y' || answer === 'yes') {
+      try {
+        await setupHostsFile()
+        hostsModified = true
+      } catch (err) {
+        console.error('❌ \x1B[31mAutomatic configuration failed.\x1B[0m')
+      }
+    }
+    if (!hostsModified) {
       console.log('Please configure hosts file manually:')
       console.log(`cd ${WPT_DIR}`)
       if (process.platform === 'win32') {
@@ -419,6 +426,9 @@ async function setup () {
       } else {
         console.log('python3 wpt make-hosts-file | sudo tee -a /etc/hosts')
       }
+
+      console.log('❌ \x1B[31mSetup incomplete.\x1B[0m')
+      process.exit(1)
     }
   }
 
