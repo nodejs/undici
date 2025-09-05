@@ -180,7 +180,12 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
 
-      - name: Coverage Report
+      - name: Prepare coverage report for Codecov
+        if: inputs.codecov == true
+        run: npm run coverage:report:ci
+        id: prepare-coverage-report
+      
+      - name: Upload coverage report to Codecov
         if: inputs.codecov == true
         uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
         with:
