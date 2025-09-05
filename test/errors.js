@@ -2,6 +2,7 @@
 
 const assert = require('node:assert')
 const fs = require('node:fs')
+const path = require('node:path')
 const { tspl } = require('@matteo.collina/tspl')
 const { describe, test } = require('node:test')
 const typescript = require('typescript')
@@ -46,7 +47,7 @@ const scenarios = [
 assert.strictEqual(scenarios.length, Object.keys(errors).length)
 
 // Read Errors.md and extract the table of errors
-const errorsMd = fs.readFileSync(require.resolve('../docs/docs/api/Errors.md'), 'utf8')
+const errorsMd = fs.readFileSync(path.resolve(__dirname, '..', 'docs', 'docs', 'api', 'Errors.md'), 'utf8')
 const errorsMdTableHead = `| Error                                | Error Code                            | Description                                                               |
 | ------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------- |`
 const errorsMdTableStart = errorsMd.indexOf(errorsMdTableHead)
@@ -58,7 +59,7 @@ const errorsTable = errorsMd.slice(errorsMdTableStart + errorsMdTableHead.length
 assert.strictEqual(errorsTable.length, scenarios.length, 'Errors.md should not have more or less documented errors than actual errors')
 
 // Read errors.d.ts and parse it with TypeScript
-const errorsDts = fs.readFileSync(require.resolve('../types/errors.d.ts'), 'utf8')
+const errorsDts = fs.readFileSync(path.resolve(__dirname, '..', 'types', 'errors.d.ts'), 'utf8')
 const errorsSourceFile = typescript.createSourceFile('errors.d.ts', errorsDts, typescript.ScriptTarget.ES2015, /* setParentNodes */ true)
 assert.strictEqual([...errorsSourceFile.identifiers.values()].filter(v => v.endsWith('Error') && v !== 'Error').length, scenarios.length, 'errors.d.ts should not have more or less declared errors than actual errors')
 
