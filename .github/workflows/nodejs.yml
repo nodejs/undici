@@ -96,8 +96,8 @@ jobs:
       
       - name: Test cache-interceptor with sqlite
         if: inputs.node-version != '20'
-        run: npm run test:sqlite
-        id: test-sqlite
+        run: npm run test:cache-interceptor
+        id: test-cache-interceptor-sqlite
         env:
           CI: true
           NODE_OPTIONS: --experimental-sqlite
