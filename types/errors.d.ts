@@ -9,6 +9,11 @@ declare namespace Errors {
     code: string
   }
 
+  export class AbortError extends UndiciError {
+    name: 'AbortError'
+    code: 'UND_ERR_ABORT'
+  }
+
   /** Connect timeout error. */
   export class ConnectTimeoutError extends UndiciError {
     name: 'ConnectTimeoutError'
@@ -63,8 +68,8 @@ declare namespace Errors {
 
   /** The request has been aborted by the user. */
   export class RequestAbortedError extends UndiciError {
-    name: 'AbortError'
-    code: 'UND_ERR_ABORTED'
+    name: 'RequestAbortedError'
+    code: 'UND_ERR_REQUEST_ABORTED'
   }
 
   /** Expected error with reason. */
@@ -112,7 +117,7 @@ declare namespace Errors {
 
   /** No upstream has been added to the BalancedPool. */
   export class BalancedPoolMissingUpstreamError extends UndiciError {
-    name: 'MissingUpstreamError'
+    name: 'BalancedPoolMissingUpstreamError'
     code: 'UND_ERR_BPL_MISSING_UPSTREAM'
   }
 
@@ -146,8 +151,8 @@ declare namespace Errors {
 
   export class SecureProxyConnectionError extends UndiciError {
     constructor (
-      cause?: Error,
       message?: string,
+      cause?: Error,
       options?: Record<any, any>
     )
     name: 'SecureProxyConnectionError'
