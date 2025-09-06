@@ -101,21 +101,21 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }}
       
-      # - name: Test cache-interceptor without sqlite
-      #   if: inputs.node-version == '20'
-      #   run: npm run test:cache-interceptor
-      #   id: test-cache-interceptor
-      #   env:
-      #     CI: true
+      - name: Test cache-interceptor without sqlite
+        if: inputs.node-version == '20'
+        run: npm run test:cache-interceptor
+        id: test-cache-interceptor
+        env:
+          CI: true
       
-      # - name: Test cache-interceptor with sqlite
-      #   if: inputs.node-version != '20'
-      #   run: npm run test:cache-interceptor
-      #   id: test-cache-interceptor-sqlite
-      #   env:
-      #     CI: true
-      #     NODE_OPTIONS: --experimental-sqlite
-      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      - name: Test cache-interceptor with sqlite
+        if: inputs.node-version != '20'
+        run: npm run test:cache-interceptor
+        id: test-cache-interceptor-sqlite
+        env:
+          CI: true
+          NODE_OPTIONS: --experimental-sqlite
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
       - name: Test interceptors
         run: npm run test:interceptors
@@ -166,12 +166,12 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      # - name: Test jest
-      #   run: npm run test:jest
-      #   id: test-jest
-      #   env:
-      #     CI: true
-      #     NODE_V8_COVERAGE: ''
+      - name: Test jest
+        run: npm run test:jest
+        id: test-jest
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ''
       
       # - name: Test wpt
       #   run: npm run test:wpt
