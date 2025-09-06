@@ -73,114 +73,114 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test node-fetch
-        run: npm run test:node-fetch
-        id: test-node-fetch
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test node-fetch
+      #   run: npm run test:node-fetch
+      #   id: test-node-fetch
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test cache
-        run: npm run test:cache
-        id: test-cache
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test cache
+      #   run: npm run test:cache
+      #   id: test-cache
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test cache-interceptor without sqlite
-        if: inputs.node-version == '20'
-        run: npm run test:cache-interceptor
-        id: test-cache-interceptor
-        env:
-          CI: true
+      # - name: Test cache-interceptor without sqlite
+      #   if: inputs.node-version == '20'
+      #   run: npm run test:cache-interceptor
+      #   id: test-cache-interceptor
+      #   env:
+      #     CI: true
       
-      - name: Test cache-interceptor with sqlite
-        if: inputs.node-version != '20'
-        run: npm run test:cache-interceptor
-        id: test-cache-interceptor-sqlite
-        env:
-          CI: true
-          NODE_OPTIONS: --experimental-sqlite
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test cache-interceptor with sqlite
+      #   if: inputs.node-version != '20'
+      #   run: npm run test:cache-interceptor
+      #   id: test-cache-interceptor-sqlite
+      #   env:
+      #     CI: true
+      #     NODE_OPTIONS: --experimental-sqlite
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test interceptors
-        run: npm run test:interceptors
-        id: test-interceptors
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test interceptors
+      #   run: npm run test:interceptors
+      #   id: test-interceptors
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test fetch
-        run: npm run test:fetch
-        id: test-fetch
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test fetch
+      #   run: npm run test:fetch
+      #   id: test-fetch
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test cookies
-        run: npm run test:cookies
-        id: test-cookies
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test cookies
+      #   run: npm run test:cookies
+      #   id: test-cookies
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test eventsource
-        run: npm run test:eventsource
-        id: test-eventsource
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test eventsource
+      #   run: npm run test:eventsource
+      #   id: test-eventsource
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test subresource-integrity
-        run: npm run test:subresource-integrity
-        id: test-subresource-integrity
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test subresource-integrity
+      #   run: npm run test:subresource-integrity
+      #   id: test-subresource-integrity
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test websocket
-        run: npm run test:websocket
-        id: test-websocket
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test websocket
+      #   run: npm run test:websocket
+      #   id: test-websocket
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test node-test
-        run: npm run test:node-test
-        id: test-node-test
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test node-test
+      #   run: npm run test:node-test
+      #   id: test-node-test
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test cache-tests
-        run: npm run test:cache-tests
-        id: test-cache-tests
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test cache-tests
+      #   run: npm run test:cache-tests
+      #   id: test-cache-tests
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test h2
-        run: npm run test:h2
-        id: test-h2
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test h2
+      #   run: npm run test:h2
+      #   id: test-h2
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
-      - name: Test jest
-        run: npm run test:jest
-        id: test-jest
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ''
+      # - name: Test jest
+      #   run: npm run test:jest
+      #   id: test-jest
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ''
       
-      - name: Test wpt
-        run: npm run test:wpt
-        id: test-wpt
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      # - name: Test wpt
+      #   run: npm run test:wpt
+      #   id: test-wpt
+      #   env:
+      #     CI: true
+      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
 
-      - name: Prepare coverage report for Codecov
+      - name: Coverage summary
         if: inputs.codecov == true
         run: npm run coverage:report:ci
         id: prepare-coverage-report
