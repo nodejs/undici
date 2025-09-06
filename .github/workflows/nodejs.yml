@@ -173,12 +173,12 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ''
       
-      # - name: Test wpt
-      #   run: npm run test:wpt
-      #   id: test-wpt
-      #   env:
-      #     CI: true
-      #     NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+      - name: Test wpt
+        run: npm run test:wpt
+        id: test-wpt
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
 
       - name: Coverage summary
         if: inputs.codecov == true
