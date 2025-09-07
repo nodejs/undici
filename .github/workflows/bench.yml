@@ -3,6 +3,10 @@ on:
   - push
   - pull_request
 
+concurrency:
+  group: benchmarks-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
