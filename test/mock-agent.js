@@ -2653,7 +2653,7 @@ test('MockAgent - headers function interceptor', async (t) => {
   await t.completed
 })
 
-test('MockAgent - clients are not garbage collected', async (t) => {
+test('MockAgent - clients are not garbage collected', { skip: typeof global.gc === 'function' }, async (t) => {
   const samples = 250
   t = tspl(t, { plan: 2 })
 
@@ -2670,13 +2670,6 @@ test('MockAgent - clients are not garbage collected', async (t) => {
   // Create the dispatcher and disable net connect so we can make sure it matches properly
   const dispatcher = new MockAgent()
   dispatcher.disableNetConnect()
-
-  // When Node 16 is the minimum supported, this can be replaced by simply requiring setTimeout from timers/promises
-  function sleep (delay) {
-    return new Promise(resolve => {
-      setTimeout(resolve, delay)
-    })
-  }
 
   // Purposely create the pool inside a function so that the reference is lost
   function intercept () {
@@ -2695,8 +2688,7 @@ test('MockAgent - clients are not garbage collected', async (t) => {
 
   const results = new Set()
   for (let i = 0; i < samples; i++) {
-    // Let's make some time pass to allow garbage collection to happen
-    await sleep(10)
+    global.gc()
 
     const { statusCode } = await request(`${baseUrl}/foo/${i}`, { method: 'GET', dispatcher })
     results.add(statusCode)
