@@ -139,8 +139,6 @@ module.exports.getGlobalOrigin = getGlobalOrigin
 const { CacheStorage } = require('./lib/web/cache/cachestorage')
 const { kConstruct } = require('./lib/core/symbols')
 
-// Cache & CacheStorage are tightly coupled with fetch. Even if it may run
-// in an older version of Node, it doesn't have any use without fetch.
 module.exports.caches = new CacheStorage(kConstruct)
 
 const { deleteCookie, getCookies, getSetCookies, setCookie, parseCookie } = require('./lib/web/cookies')

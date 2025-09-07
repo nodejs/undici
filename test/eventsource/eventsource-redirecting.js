@@ -1,7 +1,7 @@
 'use strict'
 
 const assert = require('node:assert')
-const events = require('node:events')
+const { once } = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
 const { EventSource } = require('../../lib/web/eventsource/eventsource')
@@ -19,8 +19,7 @@ describe('EventSource - redirecting', () => {
         }
       })
 
-      server.listen(0)
-      await events.once(server, 'listening')
+      await once(server.listen(0), 'listening')
 
       const port = server.address().port
 
@@ -47,8 +46,7 @@ describe('EventSource - redirecting', () => {
       }
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}/redirect`)
@@ -73,8 +71,7 @@ describe('EventSource - redirecting', () => {
       }
     })
 
-    server.listen(0)
-    await events.once(server, 'listening')
+    await once(server.listen(0), 'listening')
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}/redirect`)
@@ -92,17 +89,16 @@ describe('EventSource - redirecting', () => {
         res.write('event: message\ndata: test\n\n')
       }
     })
-    targetServer.listen(0)
-    await events.once(targetServer, 'listening')
+
+    await once(targetServer.listen(0), 'listening')
     const targetPort = targetServer.address().port
 
     const sourceServer = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(301, undefined, { Location: `http://127.0.0.1:${targetPort}/target` })
       res.end()
     })
-    sourceServer.listen(0)
-    await events.once(sourceServer, 'listening')
 
+    await once(sourceServer.listen(0), 'listening')
     const sourcePort = sourceServer.address().port
 
     const eventSourceInstance = new EventSource(`http://127.0.0.1:${sourcePort}/redirect`)

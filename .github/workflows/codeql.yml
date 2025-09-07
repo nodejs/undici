@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ["javascript", "python", "typescript"]
+        language: ["javascript", "typescript"]
         # CodeQL supports [ $supported-codeql-languages ]
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
@@ -46,11 +46,13 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@51f77329afa6477de8c49fc9c7046c15b9a4e79d # v2.3.3
+        uses: github/codeql-action/init@2d92b76c45b91eb80fc44c74ce3fce0ee94e8f9d # v2.3.3
         with:
           languages: ${{ matrix.language }}
           # If you wish to specify custom queries, you can do so here or in a config file.
@@ -60,7 +62,7 @@ jobs:
       # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
       # If this step fails, then you should remove it and run the build manually (see below)
       - name: Autobuild
-        uses: github/codeql-action/autobuild@51f77329afa6477de8c49fc9c7046c15b9a4e79d # v2.3.3
+        uses: github/codeql-action/autobuild@2d92b76c45b91eb80fc44c74ce3fce0ee94e8f9d # v2.3.3
 
       # ℹ️ Command-line programs to run using the OS shell.
       # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
@@ -73,6 +75,6 @@ jobs:
       #   ./location_of_script_within_repo/buildscript.sh
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@51f77329afa6477de8c49fc9c7046c15b9a4e79d # v2.3.3
+        uses: github/codeql-action/analyze@2d92b76c45b91eb80fc44c74ce3fce0ee94e8f9d # v2.3.3
         with:
           category: "/language:${{matrix.language}}"

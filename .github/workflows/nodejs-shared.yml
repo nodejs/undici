@@ -14,27 +14,27 @@ permissions:
 
 jobs:
   test-shared-builtin:
-    name: Test with Node.js ${{ matrix.version }} compiled --shared-builtin-undici/undici-path
+    name: Test with Node.js ${{ matrix.node-version }} compiled --shared-builtin-undici/undici-path
     strategy:
       fail-fast: false
       max-parallel: 0
       matrix:
-        version: [20, 22, 24]
+        node-version: ['20', '22', '24']
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
       # Checkout into a subdirectory otherwise Node.js tests will break due to finding Undici's package.json in a parent directory.
-      - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: ./undici
           persist-credentials: false
 
       # Setup node, install deps, and build undici prior to building node with `--shared-builtin-undici/undici-path` and testing
-      - name: Setup Node.js@${{ inputs.version }}
+      - name: Setup Node.js@${{ matrix.node-version }}
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: ${{ inputs.version }}
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
         working-directory: ./undici
@@ -62,7 +62,7 @@ jobs:
             const req = await fetch('https://nodejs.org/download/release/index.json')
             const releases = await req.json()
 
-            const latest = releases.find((r) => r.version.startsWith('v${{ matrix.version }}'))
+            const latest = releases.find((r) => r.version.startsWith('v${{ matrix.node-version }}'))
             return latest.version
 
       - name: Download and extract source
@@ -74,7 +74,7 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@63069e3931dedbf3b63792097479563182fe70d1 #v1.2.18
         with:
-          key: node(external_undici)${{ matrix.version }}
+          key: node(external_undici)${{ matrix.node-version }}
 
       - name: Build node
         working-directory: ./node-${{ steps.release.outputs.result }}
@@ -91,6 +91,7 @@ jobs:
         run: |
           echo OS: $(node -p "os.version()")
           echo Node.js: $(node --version)
+          echo "Node.js built-in dependencies: $(node -p "'\r\n' + (Object.entries(process.versions).map(([k, v], i, arr) => (i !== arr.length - 1 ? '├──' : '└──') + k + '@' + v)).join('\r\n')")"
           echo npm: $(npm --version)
           echo git: $(git --version)
           echo external config: $(node -e "console.log(process.config)" | grep NODE_SHARED_BUILTIN_UNDICI_UNDICI_PATH)
