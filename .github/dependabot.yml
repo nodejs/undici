@@ -28,8 +28,3 @@ updates:
     directory: /build
     schedule:
       interval: daily
-
-  - package-ecosystem: pip
-    directory: /test/wpt/tests/resources/test
-    schedule:
-      interval: daily

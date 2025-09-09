@@ -1,6 +1,6 @@
 'use strict'
 
-const { test } = require('node:test')
+const { test, after } = require('node:test')
 const assert = require('node:assert')
 const { once } = require('node:events')
 const { WebSocketServer } = require('ws')
@@ -8,13 +8,15 @@ const { WebSocket } = require('../..')
 
 test('Close without receiving code does not send an invalid payload', async () => {
   const server = new WebSocketServer({ port: 0 })
+  after(() => {
+    server.close()
+    return once(server, 'close')
+  })
 
   await once(server, 'listening')
 
   server.on('connection', (sock, request) => {
-    setTimeout(() => {
-      sock.close()
-    }, 3000)
+    sock.close()
   })
 
   server.on('error', (err) => assert.ifError(err))
@@ -23,7 +25,4 @@ test('Close without receiving code does not send an invalid payload', async () =
   await once(client, 'open')
 
   await once(client, 'close')
-
-  server.close()
-  await once(server, 'close')
 })
