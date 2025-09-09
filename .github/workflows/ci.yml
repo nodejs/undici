@@ -9,6 +9,10 @@ on:
      - 'v*'
   pull_request:
 
+concurrency:
+  group: nodejs-shared-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
