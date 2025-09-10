@@ -9,7 +9,7 @@ on:
       node-download-server-path:
         required: false
         type: string
-        default: 'https://nodejs.org/download/release'
+        default: '/release'
 
 permissions:
   contents: read
@@ -56,14 +56,14 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const req = await fetch('${{ inputs.node-download-server-path }}/index.json')
+            const req = await fetch('https://nodejs.org/download${{ inputs.node-download-server-path }}/index.json')
             const releases = await req.json()
 
             const latest = releases.find((r) => r.version.startsWith('v${{ inputs.node-version }}'))
             return latest.version
 
       - name: Download and extract source for Node.js ${{ steps.release.outputs.result }}
-        run: curl ${{ inputs.node-download-server-path }}/${{ steps.release.outputs.result }}/node-${{ steps.release.outputs.result }}.tar.xz | tar xfJ -
+        run: curl https://nodejs.org/download${{ inputs.node-download-server-path }}/${{ steps.release.outputs.result }}/node-${{ steps.release.outputs.result }}.tar.xz | tar xfJ -
 
       - name: Install ninja
         run: sudo apt-get install ninja-build

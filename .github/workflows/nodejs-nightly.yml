@@ -36,7 +36,7 @@ jobs:
     uses: ./.github/workflows/nodejs-shared.yml
     with:
       node-version: '25-nightly'
-      node-download-server-path: 'https://nodejs.org/download/nightly'
+      node-download-server-path: '/nightly'
 
   report-failure:
     if: ${{ always() && (needs.test.result == 'failure' || needs.test-shared-builtin.result == 'failure' || needs.autobahn.result == 'failure') }}
