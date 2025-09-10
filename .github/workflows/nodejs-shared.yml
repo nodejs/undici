@@ -41,7 +41,7 @@ jobs:
         run: npm install
 
       - name: Install wasi-libc
-        run: sudo apt-get install -y wasi-libc
+        run: sudo apt-get install -y wasi-libc binaryen
 
       - name: Build WASM
         working-directory: ./undici
@@ -74,7 +74,7 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@63069e3931dedbf3b63792097479563182fe70d1 #v1.2.18
         with:
-          key: node(external_undici)${{ matrix.node-version }}
+          key: node(external_undici)${{ steps.release.outputs.result }}
 
       - name: Build node
         working-directory: ./node-${{ steps.release.outputs.result }}
