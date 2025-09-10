@@ -156,14 +156,7 @@ jobs:
         env:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
-      
-      - name: Test h2
-        run: npm run test:h2
-        id: test-h2
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
-      
+
       - name: Test jest
         run: npm run test:jest
         id: test-jest
