@@ -53,7 +53,7 @@ jobs:
           export WASM_LDLIBS='-lc'
           node build/wasm.js
 
-      - name: Determine latest release
+      - name: Determine latest release for Node.js ${{ matrix.node-version }}
         id: release
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
@@ -65,7 +65,7 @@ jobs:
             const latest = releases.find((r) => r.version.startsWith('v${{ matrix.node-version }}'))
             return latest.version
 
-      - name: Download and extract source
+      - name: Download and extract source for Node.js ${{ steps.release.outputs.result }}
         run: curl https://nodejs.org/download/release/${{ steps.release.outputs.result }}/node-${{ steps.release.outputs.result }}.tar.xz | tar xfJ -
 
       - name: Install ninja
@@ -76,7 +76,7 @@ jobs:
         with:
           key: node(external_undici)${{ steps.release.outputs.result }}
 
-      - name: Build node
+      - name: Build node ${{ steps.release.outputs.result }} with --shared-builtin-undici/undici-path
         working-directory: ./node-${{ steps.release.outputs.result }}
         run: |
           export CC="ccache gcc"
