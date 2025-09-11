@@ -17,7 +17,7 @@ const {
   getGlobalDispatcher
 } = require('../..')
 const { tspl } = require('@matteo.collina/tspl')
-const { closeServerAsPromise } = require('../utils/node-http')
+const { closeServerAsPromise, closeClientAndServerAsPromise } = require('../utils/node-http')
 
 describe('setGlobalDispatcher', () => {
   after(() => {
@@ -73,6 +73,81 @@ test('Agent enforces maxOrigins', async (t) => {
   } catch (err) {
     p.ok(err instanceof errors.MaxOriginsReachedError)
   }
+
+  await p.completed
+})
+
+test('Agent passes maxIdle to each Pool (per-origin limit)', async (t) => {
+  const p = tspl(t, { plan: 2 })
+  const dispatcher = new Agent({
+    maxIdle: 3,
+    keepAliveTimeout: 1000
+  })
+
+  const handler = (_req, res) => res.end('ok')
+  const server1 = http.createServer({ joinDuplicateHeaders: true }, handler)
+  const server2 = http.createServer({ joinDuplicateHeaders: true }, handler)
+
+  server1.listen(0)
+  await once(server1, 'listening')
+  t.after(closeServerAsPromise(server1))
+
+  server2.listen(0)
+  await once(server2, 'listening')
+  t.after(closeServerAsPromise(server2))
+
+  const host1 = `http://localhost:${server1.address().port}`
+  const host2 = `http://localhost:${server2.address().port}`
+
+  await Promise.all([
+    request(host1, { dispatcher }),
+    request(host1, { dispatcher }),
+    request(host1, { dispatcher }),
+    request(host1, { dispatcher }),
+    request(host1, { dispatcher }),
+    request(host2, { dispatcher }),
+    request(host2, { dispatcher }),
+    request(host2, { dispatcher }),
+    request(host2, { dispatcher }),
+    request(host2, { dispatcher })
+  ])
+
+  await new Promise(resolve => setTimeout(resolve, 10))
+
+  const host1Free = dispatcher.stats[host1]?.free ?? 0
+  p.ok(host1Free <= 3, `Host 1 should have 3 or fewer free connections, found ${host1Free}`)
+  const host2Free = dispatcher.stats[host2]?.free ?? 0
+  p.ok(host2Free <= 3, `Host 2 should have 3 or fewer free connections, found ${host2Free}`)
+
+  await p.completed
+})
+
+test('Pool enforces maxIdle', async (t) => {
+  const p = tspl(t, { plan: 1 })
+
+  const handler = (_req, res) => res.end('ok')
+  const server = http.createServer({ joinDuplicateHeaders: true }, handler)
+  server.listen(0)
+  await once(server, 'listening')
+
+  const host = `http://localhost:${server.address().port}`
+  const dispatcher = new Pool(host, {
+    maxIdle: 3,
+    keepAliveTimeout: 1000
+  })
+
+  t.after(closeClientAndServerAsPromise(dispatcher, server))
+
+  await Promise.all([
+    request(host, { dispatcher }),
+    request(host, { dispatcher }),
+    request(host, { dispatcher }),
+    request(host, { dispatcher }),
+    request(host, { dispatcher })
+  ])
+
+  await new Promise(resolve => setTimeout(resolve, 1))
+  p.ok(dispatcher.stats.free <= 3, `Should be 3 or fewer free connections, found ${dispatcher.stats.free}`)
 
   await p.completed
 })
@@ -698,11 +773,21 @@ test('stream: fails with invalid onInfo', async (t) => {
   }
 })
 
-test('constructor validations', t => {
+test('Agent constructor validations', t => {
   const p = tspl(t, { plan: 3 })
   p.throws(() => new Agent({ factory: 'ASD' }), errors.InvalidArgumentError, 'throws on invalid opts argument')
   p.throws(() => new Agent({ maxOrigins: -1 }), errors.InvalidArgumentError, 'maxOrigins must be a number greater than 0')
   p.throws(() => new Agent({ maxOrigins: 'foo' }), errors.InvalidArgumentError, 'maxOrigins must be a number greater than 0')
+})
+
+test('Pool constructor validatons', t => {
+  const p = tspl(t, { plan: 6 })
+  p.throws(() => new Pool({ connections: 'ASD' }), errors.InvalidArgumentError, 'throws on non-number')
+  p.throws(() => new Pool({ connect: 'ASD' }), errors.InvalidArgumentError, 'throws if not a function or object')
+  p.throws(() => new Pool({ factory: 'ASD' }), errors.InvalidArgumentError, 'throws on non-function')
+  p.throws(() => new Pool({ maxIdle: -1 }), errors.InvalidArgumentError, 'throws on negative number')
+  p.throws(() => new Pool({ maxIdle: 'foo' }), errors.InvalidArgumentError, 'throws on non-number')
+  p.throws(() => new Pool({ maxIdle: NaN }), errors.InvalidArgumentError, 'throws on NaN')
 })
 
 test('dispatch validations', async t => {
