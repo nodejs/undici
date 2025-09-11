@@ -76,9 +76,6 @@ jobs:
       matrix:
         node-version: ['24']
         runs-on: ['ubuntu-latest']
-        exclude:
-          - node-version: '20'
-            runs-on: windows-latest
     uses: ./.github/workflows/nodejs.yml
     with:
       node-version: ${{ matrix.node-version }}
