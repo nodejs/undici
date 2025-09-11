@@ -15,7 +15,7 @@ const WASM_CC = process.env.WASM_CC || 'clang'
 let WASM_CFLAGS = process.env.WASM_CFLAGS || '--sysroot=/usr/share/wasi-sysroot -target wasm32-unknown-wasi'
 let WASM_LDFLAGS = process.env.WASM_LDFLAGS || ''
 const WASM_LDLIBS = process.env.WASM_LDLIBS || ''
-const WASM_OPT = process.env.WASM_OPT || './wasm-opt'
+const WASM_OPT = process.env.WASM_OPT || 'wasm-opt'
 
 // For compatibility with Node.js' `configure --shared-builtin-undici/undici-path ...`
 const EXTERNAL_PATH = process.env.EXTERNAL_PATH
