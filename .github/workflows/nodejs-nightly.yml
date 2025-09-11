@@ -31,10 +31,18 @@ jobs:
       node-version: '25-nightly'
     secrets: inherit
 
+  test-shared-builtin:
+    if: github.repository == 'nodejs/undici'
+    uses: ./.github/workflows/nodejs-shared.yml
+    with:
+      node-version: '25-nightly'
+      node-download-server-path: '/nightly'
+
   report-failure:
-    if: ${{ always() && (needs.test.result == 'failure' || needs.autobahn.result == 'failure') }}
+    if: ${{ always() && (needs.test.result == 'failure' || needs.test-shared-builtin.result == 'failure' || needs.autobahn.result == 'failure') }}
     needs:
       - test
+      - test-shared-builtin
       - autobahn
     runs-on: ubuntu-latest
     permissions:

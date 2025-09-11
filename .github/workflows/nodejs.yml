@@ -138,6 +138,13 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
       
+      - name: Test infra
+        run: npm run test:infra
+        id: test-infra
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+
       - name: Test subresource-integrity
         run: npm run test:subresource-integrity
         id: test-subresource-integrity
@@ -158,14 +165,7 @@ jobs:
         env:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
-      
-      - name: Test h2
-        run: npm run test:h2
-        id: test-h2
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
-      
+
       - name: Test jest
         run: npm run test:jest
         id: test-jest
