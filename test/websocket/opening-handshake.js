@@ -3,8 +3,10 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { createServer } = require('node:http')
+const { createSecureServer } = require('node:http2')
 const { WebSocketServer } = require('ws')
-const { WebSocket } = require('../..')
+const { key, cert } = require('@metcoder95/https-pem')
+const { WebSocket, Agent } = require('../..')
 
 test('WebSocket connecting to server that isn\'t a Websocket server', () => {
   return new Promise((resolve, reject) => {
@@ -46,6 +48,38 @@ test('Open event is emitted', () => {
       server.close()
       resolve()
     })
+  })
+})
+
+// TODO: ws does not supports HTTP2; will need to potentially write a custom server for this
+test('Open event is emitted (h2)', { skip: true }, () => {
+  return new Promise((resolve, reject) => {
+    const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
+    const dispatcher = new Agent({
+      allowH2: true,
+      connect: {
+        rejectUnauthorized: false
+      }
+    })
+    const server = new WebSocketServer({ server: h2Server })
+
+    server.on('connection', (ws) => {
+      ws.close(1000)
+      ws.send('something') // should be noop
+    })
+
+    h2Server.listen(0, () => {
+      const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
+      ws.onmessage = ws.onerror = (err) => {
+        console.log(err)
+        reject(err)
+      }
+      ws.addEventListener('open', () => {
+        server.close()
+        resolve()
+      })
+    })
+    h2Server.on('stream', console.log)
   })
 })
 
