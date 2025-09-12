@@ -98,7 +98,7 @@ declare namespace RetryHandler {
      *
      * @type {Dispatcher.HttpMethod[]}
      * @memberof RetryOptions
-     * @default ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE'],
+     * @default Array<'GET','HEAD','OPTIONS','PUT','DELETE','TRACE'>,
      */
     methods?: Dispatcher.HttpMethod[];
     /**
@@ -113,7 +113,7 @@ declare namespace RetryHandler {
      *
      * @type {number[]}
      * @memberof RetryOptions
-     * @default [500, 502, 503, 504, 429],
+     * @default Array<500,502,503,504,429>,
      */
     statusCodes?: number[];
   }
