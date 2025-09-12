@@ -36,12 +36,14 @@ describe('cookies', () => {
     const response = await fetch(`http://localhost:${server.address().port}?${query}`)
 
     strictEqual(response.headers.get('set-cookie'), 'name=value; Domain=example.com')
+    strictEqual(await response.text(), '')
 
     const response2 = await fetch(`http://localhost:${server.address().port}?${query}`, {
       credentials: 'include'
     })
 
     strictEqual(response2.headers.get('set-cookie'), 'name=value; Domain=example.com')
+    strictEqual(await response2.text(), '')
   })
 
   test('Can send cookies to a server with fetch - issue #1463', async () => {
@@ -82,8 +84,7 @@ describe('cookies', () => {
       stream.end('test')
     })
 
-    server.listen(0)
-    await once(server, 'listening')
+    await once(server.listen(0), 'listening')
 
     const client = new Client(`https://localhost:${server.address().port}`, {
       connect: {
