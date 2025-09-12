@@ -12,6 +12,7 @@ on:
       - '.github/workflows/autobahn.yml'
       - 'lib/web/websocket/**'
       - 'test/autobahn/**'
+
 permissions:
   contents: read
 

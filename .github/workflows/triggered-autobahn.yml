@@ -5,10 +5,6 @@ on:
     types:
       - labeled
   
-permissions:
-  contents: read
-  pull-requests: write
-
 jobs:
   autobahn:
     if: ${{ github.event.label.name == 'autobahn' }}
