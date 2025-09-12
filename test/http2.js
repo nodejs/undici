@@ -579,7 +579,7 @@ test('Dispatcher#Connect', async t => {
   await t.completed
 })
 
-test('Dispatcher#Upgrade', async t => {
+test('Dispatcher#Upgrade - Should throw on non-websocket upgrade', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', async (stream, headers) => {
@@ -600,9 +600,9 @@ test('Dispatcher#Upgrade', async t => {
     after(() => client.close())
 
     try {
-      await client.upgrade({ path: '/' })
+      await client.upgrade({ path: '/', protocol: 'any' })
     } catch (error) {
-      t.strictEqual(error.message, 'Upgrade not supported for H2')
+      t.strictEqual(error.message, 'Custom upgrade "any" not supported over HTTP/2')
     }
   })
 
