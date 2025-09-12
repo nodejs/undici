@@ -6,15 +6,18 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { fetch } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
+const { createDeferredPromise } = require('../../lib/util/promise')
 
 // https://github.com/nodejs/undici/issues/1776
 test('Redirecting with a body does not cancel the current request - #1776', async (t) => {
+  const promise = createDeferredPromise()
+
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.url === '/redirect') {
       res.statusCode = 301
       res.setHeader('location', '/redirect/')
       res.write('<a href="/redirect/">Moved Permanently</a>')
-      setTimeout(() => res.end(), 500)
+      promise.promise.then(() => res.end())
       return
     }
 
@@ -26,6 +29,7 @@ test('Redirecting with a body does not cancel the current request - #1776', asyn
   await once(server, 'listening')
 
   const resp = await fetch(`http://localhost:${server.address().port}/redirect`)
+  promise.resolve()
   assert.strictEqual(await resp.text(), '/redirect/')
   assert.ok(resp.redirected)
 })
@@ -52,11 +56,13 @@ test('Redirecting with an empty body does not throw an error - #2027', async (t)
 })
 
 test('Redirecting with a body does not fail to write body - #2543', async (t) => {
+  const promise = createDeferredPromise()
+
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.url === '/redirect') {
       res.writeHead(307, { location: '/target' })
       res.write('<a href="/redirect/">Moved Permanently</a>')
-      setTimeout(() => res.end(), 500)
+      promise.promise.then(() => res.end())
     } else {
       let body = ''
       req.on('data', (chunk) => { body += chunk })
@@ -74,5 +80,6 @@ test('Redirecting with a body does not fail to write body - #2543', async (t) =>
     body: 'body'
   })
   assert.strictEqual(await resp.text(), 'ok')
+  promise.resolve()
   assert.ok(resp.redirected)
 })

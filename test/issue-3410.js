@@ -6,8 +6,23 @@ const { resolve: pathResolve } = require('node:path')
 const { describe, test } = require('node:test')
 const { Agent, fetch, setGlobalDispatcher } = require('..')
 const { eventLoopBlocker } = require('./utils/event-loop-blocker')
+const { setTimeout, kFastTimer, clearTimeout } = require('../lib/util/timers')
+
+const RESOLUTION_MS = 1000
 
 describe('https://github.com/nodejs/undici/issues/3410', () => {
+  test('ensure RESOLUTION_MS is set correctly', async (t) => {
+    t = tspl(t, { plan: 2 })
+
+    const nativeTimer = setTimeout(() => {}, RESOLUTION_MS)
+    t.equal(nativeTimer[kFastTimer], undefined)
+    clearTimeout(nativeTimer)
+
+    const fastTimer = setTimeout(() => {}, RESOLUTION_MS + 1)
+    t.equal(fastTimer[kFastTimer], true)
+    clearTimeout(fastTimer)
+  })
+
   test('FastTimers', async (t) => {
     t = tspl(t, { plan: 1 })
 
@@ -33,12 +48,17 @@ describe('https://github.com/nodejs/undici/issues/3410', () => {
       })
     })
 
-    const connectTimeout = 2000
+    const connectTimeout = 1001
     setGlobalDispatcher(new Agent({ connectTimeout }))
 
-    const fetchPromise = fetch(address)
+    // With a delay of 95ms between each chunk and a total of 11 chunks
+    // the total time to receive the full response should be around 1045ms
+    // which is above the connectTimeout of 1001ms.
+    const fetchPromise = fetch(address + '?delay=95')
 
-    eventLoopBlocker(3000)
+    process.nextTick(() => {
+      eventLoopBlocker(1100)
+    })
 
     const response = await fetchPromise
 
@@ -70,15 +90,20 @@ describe('https://github.com/nodejs/undici/issues/3410', () => {
       childProcess.on('error', err => {
         reject(err)
       })
+      childProcess.unref()
     })
 
-    const connectTimeout = 900
+    const connectTimeout = 100
     setGlobalDispatcher(new Agent({ connectTimeout }))
 
-    const fetchPromise = fetch(address)
+    // With a delay of 10ms between each chunk and a total of 11 chunks
+    // the total time to receive the full response should be around 110ms
+    // which is above the connectTimeout of 100ms.
+    const fetchPromise = fetch(address + '?delay=10')
 
-    eventLoopBlocker(1500)
-
+    process.nextTick(() => {
+      eventLoopBlocker(200)
+    })
     const response = await fetchPromise
 
     t.equal(await response.text(), 'Hello World')

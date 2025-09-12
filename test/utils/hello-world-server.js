@@ -7,7 +7,9 @@ const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => 
   res.statusCode = 200
   res.setHeader('Content-Type', 'text/plain')
 
-  await sendInDelayedChunks(res, 'Hello World', 125)
+  const query = new URL(req.url, 'http://localhost').searchParams
+
+  await sendInDelayedChunks(res, 'Hello World', query.get('delay') || 125)
   res.end()
 })
 
