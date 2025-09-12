@@ -1,15 +1,13 @@
 'use strict'
 
+const { strictEqual, deepStrictEqual } = require('node:assert').strict
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test, describe, before, after } = require('node:test')
-const assert = require('node:assert')
 const { stringify: qsStringify } = require('node:querystring')
-const { tspl } = require('@matteo.collina/tspl')
 const { Client, fetch, Headers } = require('../..')
 const pem = require('@metcoder95/https-pem')
 const { createSecureServer } = require('node:http2')
-const { closeClientAndServerAsPromise } = require('../utils/node-http')
 
 describe('cookies', () => {
   let server
@@ -31,26 +29,22 @@ describe('cookies', () => {
     return once(server, 'close')
   })
 
-  test('Can receive set-cookie headers from a server using fetch - issue #1262', async (t) => {
-    t = tspl(t, { plan: 2 })
-
+  test('Can receive set-cookie headers from a server using fetch - issue #1262', async () => {
     const query = qsStringify({
       'set-cookie': 'name=value; Domain=example.com'
     })
     const response = await fetch(`http://localhost:${server.address().port}?${query}`)
 
-    t.strictEqual(response.headers.get('set-cookie'), 'name=value; Domain=example.com')
+    strictEqual(response.headers.get('set-cookie'), 'name=value; Domain=example.com')
 
     const response2 = await fetch(`http://localhost:${server.address().port}?${query}`, {
       credentials: 'include'
     })
 
-    t.strictEqual(response2.headers.get('set-cookie'), 'name=value; Domain=example.com')
+    strictEqual(response2.headers.get('set-cookie'), 'name=value; Domain=example.com')
   })
 
-  test('Can send cookies to a server with fetch - issue #1463', async (t) => {
-    t = tspl(t, { plan: 3 })
-
+  test('Can send cookies to a server with fetch - issue #1463', async () => {
     const headersInit = [
       new Headers([['cookie', 'value']]),
       { cookie: 'value' },
@@ -60,13 +54,11 @@ describe('cookies', () => {
     for (const headers of headersInit) {
       const response = await fetch(`http://localhost:${server.address().port}`, { headers })
       const text = await response.text()
-      t.strictEqual(text, 'value')
+      strictEqual(text, 'value')
     }
   })
 
-  test('Cookie header is delimited with a semicolon rather than a comma - issue #1905', async (t) => {
-    t = tspl(t, { plan: 1 })
-
+  test('Cookie header is delimited with a semicolon rather than a comma - issue #1905', async () => {
     const response = await fetch(`http://localhost:${server.address().port}`, {
       headers: [
         ['cookie', 'FOO=lorem-ipsum-dolor-sit-amet'],
@@ -74,12 +66,12 @@ describe('cookies', () => {
       ]
     })
 
-    t.strictEqual(await response.text(), 'FOO=lorem-ipsum-dolor-sit-amet; BAR=the-quick-brown-fox')
+    strictEqual(await response.text(), 'FOO=lorem-ipsum-dolor-sit-amet; BAR=the-quick-brown-fox')
   })
 
-  test('Can receive set-cookie headers from a http2 server using fetch - issue #2885', async (t) => {
+  test('Can receive set-cookie headers from a http2 server using fetch - issue #2885', async () => {
     const server = createSecureServer(pem)
-    server.on('stream', async (stream, headers) => {
+    server.on('stream', (stream, headers) => {
       stream.respond({
         'content-type': 'text/plain; charset=utf-8',
         'x-method': headers[':method'],
@@ -112,8 +104,10 @@ describe('cookies', () => {
       }
     )
 
-    t.after(closeClientAndServerAsPromise(client, server))
+    deepStrictEqual(response.headers.getSetCookie(), ['Space=Cat; Secure; HttpOnly'])
 
-    assert.deepStrictEqual(response.headers.getSetCookie(), ['Space=Cat; Secure; HttpOnly'])
+    await client.close()
+    server.close()
+    await once(server, 'close')
   })
 })
