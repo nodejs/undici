@@ -8,7 +8,6 @@ const { stringify: qsStringify } = require('node:querystring')
 const { Client, fetch, Headers } = require('../..')
 const pem = require('@metcoder95/https-pem')
 const { createSecureServer } = require('node:http2')
-const { createDeferredPromise } = require('../../lib/util/promise')
 
 describe('cookies', () => {
   let server
@@ -73,7 +72,6 @@ describe('cookies', () => {
   })
 
   test('Can receive set-cookie headers from a http2 server using fetch - issue #2885', async () => {
-    const donePromise = createDeferredPromise()
     const server = createSecureServer(pem)
     server.on('stream', (stream, headers) => {
       stream.respond({
@@ -84,7 +82,6 @@ describe('cookies', () => {
       })
 
       stream.end('test')
-      donePromise.resolve()
     })
 
     await once(server.listen(0), 'listening')
@@ -94,11 +91,6 @@ describe('cookies', () => {
         rejectUnauthorized: false
       },
       allowH2: true
-    })
-
-    after(async () => {
-      await client.close()
-      await new Promise((resolve, reject) => server.close(err => err ? reject(err) : resolve()))
     })
 
     const response = await fetch(
@@ -116,6 +108,7 @@ describe('cookies', () => {
     deepStrictEqual(response.headers.getSetCookie(), ['Space=Cat; Secure; HttpOnly'])
     strictEqual(await response.text(), 'test')
 
-    await donePromise.promise
+    await client.close()
+    await new Promise((resolve, reject) => server.close(err => err ? reject(err) : resolve()))
   })
 })
