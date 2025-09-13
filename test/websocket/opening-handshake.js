@@ -3,8 +3,10 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { createServer } = require('node:http')
+const { createSecureServer } = require('node:http2')
 const { WebSocketServer } = require('ws')
-const { WebSocket } = require('../..')
+const { key, cert } = require('@metcoder95/https-pem')
+const { WebSocket, Agent } = require('../..')
 
 test('WebSocket connecting to server that isn\'t a Websocket server', () => {
   return new Promise((resolve, reject) => {
@@ -46,6 +48,76 @@ test('Open event is emitted', () => {
       server.close()
       resolve()
     })
+  })
+})
+
+// TODO: ws does not supports HTTP2; will need to potentially write a custom server for this
+test('WebSocket connecting to server that isn\'t a Websocket server (h2 - supports extended CONNECT protocol)', () => {
+  return new Promise((resolve, reject) => {
+    const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
+      .on('stream', (stream, headers) => {
+        assert.equal(headers[':method'], 'CONNECT')
+        assert.equal(headers[':protocol'], 'websocket')
+        assert.ok(headers['sec-websocket-key'])
+        assert.ok(headers['sec-websocket-protocol'], 'chat')
+        assert.equal(headers['sec-websocket-version'], '13')
+
+        stream.respond({ ':status': 200 })
+        stream.end()
+        h2Server.unref()
+      })
+      .listen(0, () => {
+        const dispatcher = new Agent({
+          allowH2: true,
+          connect: {
+            rejectUnauthorized: false
+          }
+        })
+        const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
+        ws.onmessage = ws.onopen = reject
+        ws.addEventListener('error', ({ error }) => {
+          assert.ok(error)
+          ws.close()
+          h2Server.close()
+          resolve()
+        })
+        ws.onerror = () => {}
+      })
+  })
+})
+
+// TODO:
+test('WebSocket on H2 with a server that does not support extended CONNECT protocol', { skip: true }, () => {
+  return new Promise((resolve, reject) => {
+    const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: false } })
+      .on('stream', (stream, headers) => {
+        assert.equal(headers[':method'], 'CONNECT')
+        assert.equal(headers[':protocol'], 'websocket')
+        assert.ok(headers['sec-websocket-key'])
+        assert.ok(headers['sec-websocket-protocol'], 'chat')
+        assert.equal(headers['sec-websocket-version'], '13')
+
+        stream.respond({ ':status': 200 })
+        stream.end()
+        h2Server.unref()
+      })
+      .listen(0, () => {
+        const dispatcher = new Agent({
+          allowH2: true,
+          connect: {
+            rejectUnauthorized: false
+          }
+        })
+        const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
+        ws.onmessage = ws.onopen = reject
+        ws.addEventListener('error', ({ error }) => {
+          assert.ok(error)
+          ws.close()
+          h2Server.close()
+          resolve()
+        })
+        ws.onerror = () => {}
+      })
   })
 })
 
