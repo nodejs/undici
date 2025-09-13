@@ -1,9 +1,9 @@
 'use strict'
 
+const { strictEqual } = require('node:assert').strict
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test, before, after, describe } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
 
 describe('content-encoding handling', () => {
@@ -55,8 +55,6 @@ describe('content-encoding handling', () => {
   })
 
   test('content-encoding header', async (t) => {
-    const { strictEqual } = tspl(t, { plan: 3 })
-
     const response = await fetch(`http://localhost:${server.address().port}`, {
       keepalive: false,
       headers: { 'accept-encoding': 'deflate, gzip' }
@@ -65,13 +63,9 @@ describe('content-encoding handling', () => {
     strictEqual(response.headers.get('content-encoding'), 'deflate, gzip')
     strictEqual(response.headers.get('content-type'), 'text/plain')
     strictEqual(await response.text(), 'Hello, World!')
-
-    await t.completed
   })
 
   test('content-encoding header is case-iNsENsITIve', async (t) => {
-    const { strictEqual } = tspl(t, { plan: 3 })
-
     const response = await fetch(`http://localhost:${server.address().port}`, {
       keepalive: false,
       headers: { 'accept-encoding': 'DeFlAtE, GzIp' }
@@ -80,15 +74,11 @@ describe('content-encoding handling', () => {
     strictEqual(response.headers.get('content-encoding'), 'deflate, gzip')
     strictEqual(response.headers.get('content-type'), 'text/plain')
     strictEqual(await response.text(), 'Hello, World!')
-
-    await t.completed
   })
 
   test('should decompress zstandard response',
     { skip: typeof require('node:zlib').createZstdDecompress !== 'function' },
-    async (t) => {
-      const { strictEqual } = tspl(t, { plan: 3 })
-
+    async () => {
       const response = await fetch(`http://localhost:${server.address().port}`, {
         keepalive: false,
         headers: { 'accept-encoding': 'zstd' }
@@ -97,7 +87,5 @@ describe('content-encoding handling', () => {
       strictEqual(response.headers.get('content-encoding'), 'zstd')
       strictEqual(response.headers.get('content-type'), 'text/plain')
       strictEqual(await response.text(), 'Hello, World!')
-
-      await t.completed
     })
 })
