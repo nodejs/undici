@@ -114,6 +114,7 @@ describe('cookies', () => {
     )
 
     deepStrictEqual(response.headers.getSetCookie(), ['Space=Cat; Secure; HttpOnly'])
+    strictEqual(await response.text(), 'test')
 
     await donePromise.promise
   })
