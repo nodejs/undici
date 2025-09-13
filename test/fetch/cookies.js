@@ -96,6 +96,11 @@ describe('cookies', () => {
       allowH2: true
     })
 
+    after(async () => {
+      await client.close()
+      await new Promise((resolve, reject) => server.close(err => err ? reject(err) : resolve()))
+    })
+
     const response = await fetch(
       `https://localhost:${server.address().port}/`,
       // Needs to be passed to disable the reject unauthorized
@@ -111,8 +116,5 @@ describe('cookies', () => {
     deepStrictEqual(response.headers.getSetCookie(), ['Space=Cat; Secure; HttpOnly'])
 
     await donePromise.promise
-    await client.close()
-    server.close()
-    await once(server, 'close')
   })
 })

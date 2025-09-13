@@ -54,15 +54,6 @@ describe('content-encoding handling', () => {
     server.close()
   })
 
-  // test('warmup', async (t) => {
-  //   try {
-  //     await fetch(`http://localhost:${server.address().port}`, {
-  //       keepalive: false,
-  //       headers: { 'accept-encoding': 'deflate, gzip' }
-  //     })
-  //   } catch { }
-  // })
-
   test('content-encoding header', async (t) => {
     const response = await fetch(`http://localhost:${server.address().port}`, {
       keepalive: false,
