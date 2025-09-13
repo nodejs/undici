@@ -1,9 +1,31 @@
 'use strict'
 
 const neo = require('neostandard')
+const { default: sonarjs } = require('eslint-plugin-sonarjs')
 const { installedExports } = require('./lib/global')
 
 module.exports = [
+  {
+    plugins: { sonarjs },
+    ignores: [
+      'benchmarks/**',
+      'build/**',
+      'lib/llhttp',
+      'test/**/*',
+      'test/fixtures/wpt',
+      'test/fixtures/cache-tests',
+      'undici-fetch.js'
+    ],
+    rules: {
+      ...sonarjs.configs.recommended.rules,
+      'sonarjs/todo-tag': 'off',
+      'sonarjs/cognitive-complexity': 'off',
+      'sonarjs/updated-loop-counter': 'off',
+      'sonarjs/no-nested-assignment': 'off',
+      'sonarjs/use-type-alias': 'off',
+      'sonarjs/no-nested-conditional': 'off'
+    }
+  },
   ...neo({
     ignores: [
       'lib/llhttp',
