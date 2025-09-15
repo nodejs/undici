@@ -102,9 +102,11 @@ function setupGlobalTestharnessCallbacks () {
     if (process.platform === 'win32') {
       // https://github.com/nodejs/node/issues/56645#issuecomment-3077594952
       setTimeout(() => {
+        // eslint-disable-next-line n/no-process-exit
         process.exit(harnessStatus.status === 0 ? 0 : 1)
       }, 50)
     } else {
+      // eslint-disable-next-line n/no-process-exit
       process.exit(harnessStatus.status === 0 ? 0 : 1)
     }
   })
