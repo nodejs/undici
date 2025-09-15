@@ -51,6 +51,7 @@ jobs:
         run: npm run lint
 
   test:
+    name: Test with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       max-parallel: 0
@@ -172,6 +173,18 @@ jobs:
 
       - name: Run fuzzing tests
         run: npm run test:fuzzing
+
+  test-shared-builtin:
+    name: Test with Node.js ${{ matrix.node-version }} compiled --shared-builtin-undici/undici-path
+    uses: ./.github/workflows/nodejs-shared.yml
+    strategy:
+      fail-fast: false
+      max-parallel: 0
+      matrix:
+        node-version: ['20', '22', '24']
+        runs-on: ['ubuntu-latest']
+    with:
+      node-version: ${{ matrix.node-version }}
 
   test-types:
     name: Test TypeScript types
