@@ -5,12 +5,9 @@ on:
       - closed
       - labeled
 
-permissions:
-  pull-requests: write
-  contents: write
-
 jobs:
   backport:
+    name: Backport
     runs-on: ubuntu-latest
     if: >
       github.event.pull_request.merged
@@ -21,7 +18,9 @@ jobs:
           && contains(github.event.label.name, 'backport')
         )
       )
-    name: Backport
+    permissions:
+      pull-requests: write
+      contents: write
     steps:
       - name: Backport
         uses: tibdex/backport@9565281eda0731b1d20c4025c43339fb0a23812e # v2.0.4

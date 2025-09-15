@@ -1,7 +1,13 @@
 name: Benchmarks
+
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+     - main
+     - current
+     - next
+     - 'v*'
+  pull_request:
 
 permissions:
   contents: read
