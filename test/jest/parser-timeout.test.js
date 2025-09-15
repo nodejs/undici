@@ -2,7 +2,7 @@
 /* global jest, describe, it, beforeEach, afterEach, expect */
 
 // test/jest/parser-timeout.test.js
-const EventEmitter = require('events')
+const EventEmitter = require('node:events')
 const connectH1 = require('../../lib/dispatcher/client-h1')
 const { kParser } = require('../../lib/core/symbols')
 
