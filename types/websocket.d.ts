@@ -1,8 +1,8 @@
 /// <reference types="node" />
 
-import type { Blob } from 'buffer'
-import type { ReadableStream, WritableStream } from 'stream/web'
-import type { MessagePort } from 'worker_threads'
+import type { Blob } from 'node:buffer'
+import type { ReadableStream, WritableStream } from 'node:stream/web'
+import type { MessagePort } from 'node:worker_threads'
 import {
   EventInit,
   EventListenerOptions,

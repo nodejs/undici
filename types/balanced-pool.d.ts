@@ -1,6 +1,6 @@
 import Pool from './pool'
 import Dispatcher from './dispatcher'
-import { URL } from 'url'
+import { URL } from 'node:url'
 
 export default BalancedPool
 
