@@ -1,4 +1,4 @@
-import { Duplex, Readable, Writable } from 'stream'
+import { Duplex, Readable, Writable } from 'node:stream'
 import { expectAssignable } from 'tsd'
 import { EnvHttpProxyAgent, setGlobalDispatcher, getGlobalDispatcher, Dispatcher } from '../..'
 

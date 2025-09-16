@@ -42,7 +42,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: 'lts/*'
+          # Using `latest` as `lts` could point to previous major version.
+          # Different versions of Node.js can cause different linting results
+          # (e.g. dependening on process.getBuiltinModule())
+          node-version: 'latest'
 
       - name: Install dependencies
         run: npm install

@@ -1,4 +1,4 @@
-import { URL } from 'url'
+import { URL } from 'node:url'
 import { expectType, expectAssignable } from 'tsd'
 
 import { EventSource, EventSourceInit, Dispatcher } from '../../'

@@ -35,7 +35,7 @@ jobs:
     if: github.repository == 'nodejs/undici'
     uses: ./.github/workflows/nodejs-shared.yml
     with:
-      node-version: '25-nightly'
+      node-version: '25'
       node-download-server-path: '/nightly'
 
   report-failure:

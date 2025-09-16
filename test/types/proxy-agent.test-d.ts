@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import { URL } from 'url'
+import { URL } from 'node:url'
 import { ProxyAgent, setGlobalDispatcher, getGlobalDispatcher, Agent, Pool } from '../..'
 
 expectAssignable<ProxyAgent>(new ProxyAgent(''))

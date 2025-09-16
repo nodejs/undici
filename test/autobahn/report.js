@@ -103,4 +103,4 @@ console.log('Details:')
 
 console.table(reorderedResult)
 
-process.exit(runFailed ? 1 : 0)
+process.exitCode = runFailed ? 1 : 0

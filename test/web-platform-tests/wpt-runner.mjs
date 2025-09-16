@@ -428,7 +428,7 @@ async function setup () {
       }
 
       console.log('❌ \x1B[31mSetup incomplete.\x1B[0m')
-      process.exit(1)
+      process.exit(1) // eslint-disable-line n/no-process-exit
     }
   }
 
