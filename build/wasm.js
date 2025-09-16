@@ -65,7 +65,7 @@ if (process.argv[2] === '--docker') {
            -t ${WASM_BUILDER_CONTAINER} node build/wasm.js`
   console.log(`> ${cmd}\n\n`)
   execSync(cmd, { stdio: 'inherit' })
-  process.exit(0)
+  process.exit(0) // eslint-disable-line n/no-process-exit
 }
 
 const hasApk = (function () {
@@ -78,8 +78,7 @@ if (hasApk) {
   // Gather information about the tools used for the build
   const buildInfo = execSync('apk info -v').toString()
   if (!buildInfo.includes('wasi-sdk')) {
-    console.log('Failed to generate build environment information')
-    process.exit(-1)
+    throw new Error('Failed to generate build environment information')
   }
   console.log(buildInfo)
 }

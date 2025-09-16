@@ -1,5 +1,5 @@
 import { tspl } from '@matteo.collina/tspl'
-import { createServer } from 'http'
+import { createServer } from 'node:http'
 import { test, after } from 'node:test'
 import { once } from 'node:events'
 import {

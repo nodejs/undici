@@ -1,4 +1,4 @@
-import { ReadableStream, WritableStream } from 'stream/web'
+import { ReadableStream, WritableStream } from 'node:stream/web'
 import { expectType } from 'tsd'
 import { WebSocketStream, ErrorEvent } from '../../types'
 
