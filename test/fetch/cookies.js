@@ -25,7 +25,9 @@ describe('cookies', () => {
   })
 
   after(() => {
-    server.close()
+    setImmediate(() => {
+      server.close()
+    })
     return once(server, 'close')
   })
 
