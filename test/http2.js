@@ -565,58 +565,85 @@ test('Dispatcher#Pipeline', async t => {
 })
 
 test('Dispatcher#Connect', async t => {
+  const proxy = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
+  let responseBody = ''
   let requestBody = ''
 
-  server.on('stream', async (stream, headers) => {
-    stream.setEncoding('utf-8')
-    stream.on('data', chunk => {
-      requestBody += chunk
-    })
+  t = tspl(t, { plan: 5 })
 
-    stream.respond({ ':status': 200, 'x-custom': 'custom-header' })
-    stream.end('hello h2!')
-  })
+  proxy.on('stream', async (stream, headers) => {
+    if (headers[':method'] !== 'CONNECT') {
+      t.fail('Unexpected CONNECT method')
+      return
+    }
 
-  t = tspl(t, { plan: 6 })
-
-  server.listen(0, () => {
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const forward = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
       },
       allowH2: true
     })
 
-    after(() => server.close())
-    after(() => client.close())
-
-    let result = ''
-    client.connect({ path: '/' }, (err, { socket }) => {
-      t.ifError(err)
-      socket.on('data', chunk => {
-        result += chunk
-      })
-      socket.on('response', headers => {
-        t.strictEqual(headers[':status'], 200)
-        t.strictEqual(headers['x-custom'], 'custom-header')
-        t.strictEqual(socket.closed, false)
-      })
-
-      // We need to handle the error event although
-      // is not controlled by Undici, the fact that a session
-      // is destroyed and destroys subsequent streams, causes
-      // unhandled errors to surface if not handling this event.
-      socket.on('error', () => {})
-
-      socket.once('end', () => {
-        t.strictEqual(requestBody, expectedBody)
-        t.strictEqual(result, 'hello h2!')
-      })
-      socket.end(expectedBody)
+    const response = await forward.request({
+      path: '/',
+      method: 'POST',
+      body: stream,
+      headers: {
+        'x-my-header': headers['x-my-header']
+      }
     })
+
+    stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
+    response.body.pipe(stream)
+
+    after(() => forward.close())
   })
+
+  server.on('stream', async (stream, headers) => {
+    stream.setEncoding('utf-8')
+    stream.on('data', chunk => {
+      requestBody += chunk
+    })
+    stream.once('end', () => {
+      t.strictEqual(requestBody, expectedBody)
+    })
+
+    stream.respond({ ':status': 200, 'x-my-header': headers['x-my-header'] })
+    stream.end('helloworld')
+  })
+
+  proxy.listen()
+  await once(proxy, 'listening')
+  server.listen()
+  await once(server, 'listening')
+
+  after(() => client.close())
+  after(() => proxy.close())
+  after(() => server.close())
+
+  const client = new Client(`https://localhost:${proxy.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  const { statusCode, headers, socket } = await client.connect({ path: '/', headers: { 'x-my-header': 'foo' } })
+  t.strictEqual(statusCode, 200)
+  t.strictEqual(headers['x-my-header'], 'foo')
+  t.strictEqual(socket.closed, false)
+
+  socket.on('data', chunk => { responseBody += chunk })
+  socket.once('end', () => {
+    t.strictEqual(responseBody, 'helloworld')
+  })
+  socket.setEncoding('utf-8')
+  socket.cork()
+  socket.write(expectedBody)
+  socket.uncork()
+  socket.end()
 
   await t.completed
 })
