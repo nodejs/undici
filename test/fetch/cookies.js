@@ -25,10 +25,7 @@ describe('cookies', () => {
   })
 
   after(() => {
-    setImmediate(() => {
-      server.close()
-    })
-    return once(server, 'close')
+    setImmediate(() => server.close())
   })
 
   test('Can receive set-cookie headers from a server using fetch - issue #1262', async () => {
