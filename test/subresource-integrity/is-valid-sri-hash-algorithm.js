@@ -2,16 +2,11 @@
 
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
+const { runtimeFeatures } = require('../../lib/util/runtime-features.js')
 
 const { isValidSRIHashAlgorithm } = require('../../lib/web/subresource-integrity/subresource-integrity')
 
-let skip
-try {
-  require('node:crypto')
-  skip = false
-} catch {
-  skip = 'crypto not available'
-}
+const skip = runtimeFeatures.has('crypto') === false
 
 describe('isValidSRIHashAlgorithm', () => {
   test('valid sha256', { skip }, () => {
