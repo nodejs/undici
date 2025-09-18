@@ -1,6 +1,6 @@
 # undici
 
-[![Node CI](https://github.com/nodejs/undici/actions/workflows/nodejs.yml/badge.svg)](https://github.com/nodejs/undici/actions/workflows/nodejs.yml) [![neostandard javascript style](https://img.shields.io/badge/neo-standard-7fffff?style=flat\&labelColor=ff80ff)](https://github.com/neostandard/neostandard) [![npm version](https://badge.fury.io/js/undici.svg)](https://badge.fury.io/js/undici) [![codecov](https://codecov.io/gh/nodejs/undici/branch/main/graph/badge.svg?token=yZL6LtXkOA)](https://codecov.io/gh/nodejs/undici)
+[![Node CI](https://github.com/nodejs/undici/actions/workflows/ci.yml/badge.svg)](https://github.com/nodejs/undici/actions/workflows/nodejs.yml) [![neostandard javascript style](https://img.shields.io/badge/neo-standard-7fffff?style=flat\&labelColor=ff80ff)](https://github.com/neostandard/neostandard) [![npm version](https://badge.fury.io/js/undici.svg)](https://badge.fury.io/js/undici) [![codecov](https://codecov.io/gh/nodejs/undici/branch/main/graph/badge.svg?token=yZL6LtXkOA)](https://codecov.io/gh/nodejs/undici)
 
 An HTTP/1.1 client, written from scratch for Node.js.
 
@@ -166,6 +166,8 @@ Installing undici as a module allows you to use a newer version than what's bund
 
 ## Quick Start
 
+### Basic Request
+
 ```js
 import { request } from 'undici'
 
@@ -183,6 +185,50 @@ for await (const data of body) { console.log('data', data) }
 
 console.log('trailers', trailers)
 ```
+
+### Using Cache Interceptor
+
+Undici provides a powerful HTTP caching interceptor that follows HTTP caching best practices. Here's how to use it:
+
+```js
+import { fetch, Agent, interceptors } from 'undici';
+
+// Create a client with cache interceptor
+const client = new Agent().compose(interceptors.cache({
+  // Optional: Configure cache store (defaults to MemoryCacheStore)
+  store: new interceptors.cacheStores.MemoryCacheStore({
+    maxSize: 100 * 1024 * 1024, // 100MB
+    maxCount: 1000,
+    maxEntrySize: 5 * 1024 * 1024 // 5MB
+  }),
+  
+  // Optional: Specify which HTTP methods to cache (default: ['GET', 'HEAD'])
+  methods: ['GET', 'HEAD']
+}));
+
+// Set the global dispatcher to use our caching client
+setGlobalDispatcher(client);
+
+// Now all fetch requests will use the cache
+async function getData() {
+  const response = await fetch('https://api.example.com/data');
+  // The server should set appropriate Cache-Control headers in the response
+  // which the cache will respect based on the cache policy
+  return response.json();
+}
+
+// First request - fetches from origin
+const data1 = await getData();
+
+// Second request - served from cache if within max-age
+const data2 = await getData();
+```
+
+#### Key Features:
+- **Automatic Caching**: Respects `Cache-Control` and `Expires` headers
+- **Validation**: Supports `ETag` and `Last-Modified` validation
+- **Storage Options**: In-memory or persistent SQLite storage
+- **Flexible**: Configure cache size, TTL, and more
 
 ## Global Installation
 

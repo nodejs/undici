@@ -1,4 +1,4 @@
-import { Socket } from 'net'
+import { Socket } from 'node:net'
 import { expectAssignable } from 'tsd'
 import { DiagnosticsChannel, buildConnector } from '../..'
 

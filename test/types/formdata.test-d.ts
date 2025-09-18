@@ -1,5 +1,5 @@
-import { Blob, File } from 'buffer'
-import { Readable } from 'stream'
+import { Blob, File } from 'node:buffer'
+import { Readable } from 'node:stream'
 import { expectAssignable, expectType } from 'tsd'
 import { FormData, SpecIterableIterator } from '../..'
 import Dispatcher from '../../types/dispatcher'

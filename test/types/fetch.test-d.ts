@@ -1,6 +1,6 @@
-import { URL } from 'url'
-import { Blob } from 'buffer'
-import { ReadableStream } from 'stream/web'
+import { URL } from 'node:url'
+import { Blob } from 'node:buffer'
+import { ReadableStream } from 'node:stream/web'
 import { expectType, expectError, expectAssignable, expectNotAssignable } from 'tsd'
 import {
   Agent,

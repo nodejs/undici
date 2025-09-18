@@ -1,7 +1,13 @@
 name: Benchmarks
+
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+     - main
+     - current
+     - next
+     - 'v*'
+  pull_request:
 
 permissions:
   contents: read
@@ -11,15 +17,15 @@ jobs:
     name: benchmark current
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
           ref: ${{ github.base_ref }}
       - name: Setup Node
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: lts/*
+          node-version: 'lts/*'
       - name: Install Modules for undici
         run: npm i --ignore-scripts --omit=dev
       - name: Install Modules for Benchmarks
@@ -33,14 +39,14 @@ jobs:
     name: benchmark branch
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
       - name: Setup Node
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: lts/*
+          node-version: 'lts/*'
       - name: Install Modules for undici
         run: npm i --ignore-scripts --omit=dev
       - name: Install Modules for Benchmarks
@@ -54,15 +60,15 @@ jobs:
     name: benchmark (sending data) current
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
           ref: ${{ github.base_ref }}
       - name: Setup Node
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: lts/*
+          node-version: 'lts/*'
       - name: Install Modules for undici
         run: npm i --ignore-scripts --omit=dev
       - name: Install Modules for Benchmarks
@@ -76,14 +82,14 @@ jobs:
     name: benchmark (sending data) branch
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
       - name: Setup Node
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: lts/*
+          node-version: 'lts/*'
       - name: Install Modules for undici
         run: npm i --ignore-scripts --omit=dev
       - name: Install Modules for Benchmarks
@@ -97,15 +103,15 @@ jobs:
     name: benchmark current h2
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
           ref: ${{ github.base_ref }}
       - name: Setup Node
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: lts/*
+          node-version: 'lts/*'
       - name: Install Modules for undici
         run: npm i --ignore-scripts --omit=dev
       - name: Install Modules for Benchmarks
@@ -119,14 +125,14 @@ jobs:
     name: benchmark branch h2
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
       - name: Setup Node
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: lts/*
+          node-version: 'lts/*'
       - name: Install Modules for undici
         run: npm i --ignore-scripts --omit=dev
       - name: Install Modules for Benchmarks
