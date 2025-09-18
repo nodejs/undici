@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { exit } from 'node:process'
 import { fork } from 'node:child_process'
+import { runtimeFeatures } from '../../lib/util/runtime-features.js'
 
 /**
  * @typedef {import('../../types/cache-interceptor.d.ts').default.CacheOptions} CacheOptions
@@ -106,10 +107,9 @@ const CACHE_STORES = [
   { opts: {}, cacheStore: 'MemoryCacheStore' }
 ]
 
-try {
-  await import('node:sqlite')
+if (runtimeFeatures.has('sqlite')) {
   CACHE_STORES.push({ opts: {}, cacheStore: 'SqliteCacheStore' })
-} catch (err) {
+} else {
   console.warn('Skipping SqliteCacheStore, node:sqlite not present')
 }
 

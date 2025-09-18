@@ -10,7 +10,7 @@ const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 test('Headers initialization', async (t) => {
-  await t.test('allows undefined', () => {
+  await t.test('allows undefined', (t) => {
     const { doesNotThrow } = tspl(t, { plan: 1 })
 
     doesNotThrow(() => new Headers())
