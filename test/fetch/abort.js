@@ -14,7 +14,7 @@ test('allows aborting with custom errors', async (t) => {
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  await t.test('Using AbortSignal.timeout with cause', async () => {
+  await t.test('Using AbortSignal.timeout with cause', async (t) => {
     const { strictEqual } = tspl(t, { plan: 2 })
     try {
       await fetch(`http://localhost:${server.address().port}`, {
