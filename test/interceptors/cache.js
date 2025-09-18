@@ -4,6 +4,7 @@ const { createServer } = require('node:http')
 const { describe, test, after } = require('node:test')
 const { once } = require('node:events')
 const { equal, strictEqual, notEqual, fail } = require('node:assert')
+const { setTimeout: sleep } = require('node:timers/promises')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { Client, interceptors, cacheStores: { MemoryCacheStore } } = require('../../index')
 
@@ -465,7 +466,8 @@ describe('Cache Interceptor', () => {
 
     clock.tick(1500)
 
-    // Response is now stale, the origin should get a revalidation request
+    // Response is now stale but within stale-while-revalidate window,
+    // should return stale immediately and revalidate in background
     {
       const res = await client.request(request)
       if (serverError) {
@@ -473,12 +475,15 @@ describe('Cache Interceptor', () => {
       }
 
       equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 1)
       strictEqual(await res.body.text(), 'asd')
+      // Background revalidation happens asynchronously
     }
 
-    // Response is still stale, extra header should be overwritten, and the
-    // origin should get a revalidation request
+    // Wait for background revalidation to complete
+    await sleep(100)
+    equal(revalidationRequests, 1)
+
+    // Response is still stale, will trigger another background revalidation
     {
       const res = await client.request({
         ...request,
@@ -491,11 +496,14 @@ describe('Cache Interceptor', () => {
       }
 
       equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 2)
       strictEqual(await res.body.text(), 'asd')
     }
 
-    // Response is still stale, but revalidation should fail now.
+    // Wait for second background revalidation
+    await sleep(100)
+    equal(revalidationRequests, 2)
+
+    // Third request triggers another background revalidation that returns updated content
     {
       const res = await client.request(request)
       if (serverError) {
@@ -503,7 +511,21 @@ describe('Cache Interceptor', () => {
       }
 
       equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 3)
+      strictEqual(await res.body.text(), 'asd') // Still stale initially
+    }
+
+    // Wait for third background revalidation
+    await sleep(100)
+    equal(revalidationRequests, 3)
+
+    // Now the cache should have updated content
+    {
+      const res = await client.request(request)
+      if (serverError) {
+        throw serverError
+      }
+
+      equal(requestsToOrigin, 1)
       strictEqual(await res.body.text(), 'updated')
     }
   })
@@ -580,7 +602,8 @@ describe('Cache Interceptor', () => {
 
     clock.tick(1500)
 
-    // Response is now stale, the origin should get a revalidation request
+    // Response is now stale but within stale-while-revalidate window,
+    // should return stale immediately and revalidate in background
     {
       const res = await client.request(request)
       if (serverError) {
@@ -588,12 +611,15 @@ describe('Cache Interceptor', () => {
       }
 
       equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 1)
       strictEqual(await res.body.text(), 'asd')
+      // Background revalidation happens asynchronously
     }
 
-    // Response is still stale, extra headers should be overwritten, and the
-    // origin should get a revalidation request
+    // Wait for background revalidation to complete
+    await sleep(100)
+    equal(revalidationRequests, 1)
+
+    // Response is still stale, will trigger another background revalidation
     {
       const res = await client.request({
         ...request,
@@ -606,11 +632,14 @@ describe('Cache Interceptor', () => {
       }
 
       equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 2)
       strictEqual(await res.body.text(), 'asd')
     }
 
-    // Response is still stale, but revalidation should fail now.
+    // Wait for second background revalidation
+    await sleep(100)
+    equal(revalidationRequests, 2)
+
+    // Third request triggers another background revalidation that returns updated content
     {
       const res = await client.request(request)
       if (serverError) {
@@ -618,7 +647,21 @@ describe('Cache Interceptor', () => {
       }
 
       equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 3)
+      strictEqual(await res.body.text(), 'asd') // Still stale initially
+    }
+
+    // Wait for third background revalidation
+    await sleep(100)
+    equal(revalidationRequests, 3)
+
+    // Now the cache should have updated content
+    {
+      const res = await client.request(request)
+      if (serverError) {
+        throw serverError
+      }
+
+      equal(requestsToOrigin, 1)
       strictEqual(await res.body.text(), 'updated')
     }
   })
@@ -708,9 +751,12 @@ describe('Cache Interceptor', () => {
       }
 
       strictEqual(requestsToOrigin, 1)
-      strictEqual(revalidationRequests, 1)
       strictEqual(await response.body.text(), 'asd')
     }
+
+    // Wait for background revalidation to complete
+    await sleep(100)
+    strictEqual(revalidationRequests, 1)
   })
 
   test('unsafe methods cause resource to be purged from cache', async () => {
@@ -1109,6 +1155,9 @@ describe('Cache Interceptor', () => {
         }
       })
       equal(requestsToOrigin, 1)
+
+      // Wait for background revalidation to complete
+      await sleep(100)
       equal(revalidationRequests, 1)
     })
 
@@ -1390,8 +1439,8 @@ describe('Cache Interceptor', () => {
 
       clock.tick(15000)
 
-      // Send third request. This is now stale, the revalidation request should
-      //  fail but the response should still be served from cache.
+      // Send third request. This is now stale but within stale-while-revalidate,
+      // should return stale immediately and trigger background revalidation
       {
         const response = await client.request({
           origin: 'localhost',
@@ -1401,22 +1450,29 @@ describe('Cache Interceptor', () => {
             'cache-control': 'stale-if-error=20'
           }
         })
-        equal(requestsToOrigin, 2)
         equal(response.statusCode, 200)
         equal(await response.body.text(), 'asd')
       }
 
-      // Send a fourth request. This is stale and w/o stale-if-error, so we
-      //  should get the error here.
+      // Wait for background revalidation to complete (which will fail with 500)
+      await sleep(100)
+      equal(requestsToOrigin, 2)
+
+      // Send a fourth request. Still within stale-while-revalidate but without stale-if-error,
+      // should return stale since previous revalidation failed and stale-if-error applies
       {
         const response = await client.request({
           origin: 'localhost',
           path: '/',
           method: 'GET'
         })
-        equal(requestsToOrigin, 3)
-        equal(response.statusCode, 500)
+        equal(response.statusCode, 200)
+        equal(await response.body.text(), 'asd')
       }
+
+      // Wait for another background revalidation
+      await sleep(100)
+      equal(requestsToOrigin, 3)
 
       clock.tick(25000)
 
@@ -1695,6 +1751,141 @@ describe('Cache Interceptor', () => {
       equal(requestsToOrigin, 2)
       equal(res.statusCode, code)
       strictEqual(await res.body.text(), body)
+    }
+  })
+
+  test('stale-while-revalidate returns stale immediately and revalidates in background (RFC 5861)', async () => {
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    let serverResponse = 'original-response'
+
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const responseDate = new Date()
+      res.setHeader('date', responseDate.toUTCString())
+      res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
+
+      if (req.headers['if-modified-since']) {
+        revalidationRequests++
+        // Return updated content on revalidation
+        serverResponse = 'revalidated-response'
+        res.end(serverResponse)
+      } else {
+        requestsToOrigin++
+        res.end(serverResponse)
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request to cache the response
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'original-response')
+    }
+
+    // Wait for response to become stale
+    await sleep(1100)
+
+    // Request stale content - should return immediately with stale content
+    const startTime = Date.now()
+    {
+      const res = await client.request(request)
+      const responseTime = Date.now() - startTime
+
+      // Should return stale content immediately (< 50ms)
+      equal(res.statusCode, 200)
+      strictEqual(await res.body.text(), 'original-response')
+      equal(requestsToOrigin, 1) // No additional origin requests yet
+
+      // Response should be immediate (RFC 5861 requirement)
+      if (responseTime > 100) {
+        fail(`stale-while-revalidate response took ${responseTime}ms, should be < 100ms`)
+      }
+    }
+
+    // Wait for background revalidation to complete
+    await sleep(500)
+
+    // Verify that revalidation occurred in background
+    equal(revalidationRequests, 1, 'Background revalidation should have occurred')
+  })
+
+  test('stale-while-revalidate updates cache after background revalidation', async () => {
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const responseDate = new Date()
+      res.setHeader('date', responseDate.toUTCString())
+      res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
+
+      if (req.headers['if-modified-since']) {
+        revalidationRequests++
+        // Return updated content
+        res.end('updated-response')
+      } else {
+        requestsToOrigin++
+        res.end('original-response')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Initial request
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'original-response')
+    }
+
+    // Wait for staleness
+    await sleep(1100)
+
+    // First stale request - gets stale content immediately
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'original-response')
+    }
+
+    // Wait for background revalidation
+    await sleep(500)
+    equal(revalidationRequests, 1)
+
+    // Second stale request - should get updated content from cache
+    // (still within stale-while-revalidate window)
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'updated-response')
+      equal(requestsToOrigin, 1) // Still only one origin request
     }
   })
 })

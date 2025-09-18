@@ -153,4 +153,9 @@ declare namespace Errors {
     name: 'SecureProxyConnectionError'
     code: 'UND_ERR_PRX_TLS'
   }
+
+  class MaxOriginsReachedError extends UndiciError {
+    name: 'MaxOriginsReachedError'
+    code: 'UND_ERR_MAX_ORIGINS_REACHED'
+  }
 }

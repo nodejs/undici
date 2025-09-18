@@ -1,9 +1,9 @@
-import { IncomingHttpHeaders } from 'http'
-import { Duplex, Readable, Writable } from 'stream'
+import { IncomingHttpHeaders } from 'node:http'
+import { Duplex, Readable, Writable } from 'node:stream'
 import { expectAssignable, expectType } from 'tsd'
 import { Dispatcher, Headers } from '../..'
-import { URL } from 'url'
-import { Blob } from 'buffer'
+import { URL } from 'node:url'
+import { Blob } from 'node:buffer'
 
 expectAssignable<Dispatcher>(new Dispatcher())
 

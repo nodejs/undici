@@ -1,4 +1,4 @@
-import { IncomingHttpHeaders as CoreIncomingHttpHeaders } from 'http'
+import { IncomingHttpHeaders as CoreIncomingHttpHeaders } from 'node:http'
 import { expectAssignable, expectNotAssignable } from 'tsd'
 import { IncomingHttpHeaders } from '../../types/header'
 

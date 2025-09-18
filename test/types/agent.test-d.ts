@@ -1,7 +1,7 @@
-import { Duplex, Readable, Writable } from 'stream'
+import { Duplex, Readable, Writable } from 'node:stream'
 import { expectAssignable } from 'tsd'
 import { Agent, Dispatcher } from '../..'
-import { URL } from 'url'
+import { URL } from 'node:url'
 
 expectAssignable<Agent>(new Agent())
 expectAssignable<Agent>(new Agent({}))

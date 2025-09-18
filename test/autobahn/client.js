@@ -48,5 +48,5 @@ ws.addEventListener('close', () => {
 })
 ws.addEventListener('error', (e) => {
   console.error(e.error)
-  process.exit(1)
+  process.exitCode = 1
 })

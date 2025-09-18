@@ -393,7 +393,7 @@ test('Should handle 206 partial content', async t => {
 })
 
 test('Should handle 206 partial content - bad-etag', async t => {
-  t = tspl(t, { plan: 3 })
+  t = tspl(t, { plan: 5 })
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
@@ -452,11 +452,9 @@ test('Should handle 206 partial content - bad-etag', async t => {
     const response = await client.request(requestOptions)
     await response.body.text()
   } catch (error) {
-    t.strict(error, {
-      message: 'ETag mismatch',
-      code: 'UND_ERR_REQ_RETRY',
-      name: 'RequestRetryError'
-    })
+    t.strictEqual(error.name, 'RequestRetryError')
+    t.strictEqual(error.code, 'UND_ERR_REQ_RETRY')
+    t.strictEqual(error.message, 'ETag mismatch')
   }
 })
 
