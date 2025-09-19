@@ -9,17 +9,19 @@ const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
 const pem = require('@metcoder95/https-pem')
 
-const { Client, Agent, FormData } = require('..')
-
-const isGreaterThanv20 = process.versions.node.split('.').map(Number)[0] >= 20
+const { Client, Agent, FormData, Response } = require('..')
 
 test('Should support H2 connection', async t => {
   const body = []
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  let authority = ''
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
     t.strictEqual(headers['x-my-header'], 'foo')
     t.strictEqual(headers[':method'], 'GET')
+    t.strictEqual(headers[':scheme'], 'https')
+    t.strictEqual(headers[':path'], '/')
+    t.strictEqual(headers[':authority'], authority)
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -30,15 +32,15 @@ test('Should support H2 connection', async t => {
 
   server.listen(0)
   await once(server, 'listening')
-
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  authority = `localhost:${server.address().port}`
+  const client = new Client(`https://${authority}`, {
     connect: {
       rejectUnauthorized: false
     },
     allowH2: true
   })
 
-  t = tspl(t, { plan: 6 })
+  t = tspl(t, { plan: 9 })
   after(() => server.close())
   after(() => client.close())
 
@@ -173,6 +175,89 @@ test('Should support H2 connection (headers as array)', async t => {
   t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
 
+test('Should support multiple header values with semicolon separator', async t => {
+  const body = []
+  const body2 = []
+  const expectedCookieHeaders = ['a=b', 'c=d', 'e=f']
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', (stream, headers) => {
+    t.strictEqual(headers['x-my-header'], 'foo, bar')
+    t.strictEqual(headers['x-my-drink'], 'coffee, tea, water')
+    t.strictEqual(headers['x-other'], 'value')
+    t.strictEqual(headers['cookie'], expectedCookieHeaders.join('; '))
+    t.strictEqual(headers[':method'], 'GET')
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': 'hello',
+      ':status': 200
+    })
+    stream.end('hello h2!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t = tspl(t, { plan: 9 * 2 })
+  after(() => server.close())
+  after(() => client.close())
+
+  const response = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: [
+      'x-my-header', 'foo',
+      'x-my-drink', ['coffee', 'tea'],
+      'x-my-drink', 'water',
+      'X-My-Header', 'bar',
+      'x-other', 'value',
+      'cookie', expectedCookieHeaders
+    ]
+  })
+
+  response.body.on('data', chunk => {
+    body.push(chunk)
+  })
+
+  await once(response.body, 'end')
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+
+  const response2 = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: [
+      'x-my-header', 'foo',
+      'x-my-drink', ['coffee', 'tea'],
+      'cookie', 'a=b',
+      'x-my-drink', 'water',
+      'X-My-Header', 'bar',
+      'cookie', 'c=d',
+      'x-other', 'value',
+      'cookie', 'e=f'
+    ]
+  })
+
+  response2.body.on('data', chunk => {
+    body2.push(chunk)
+  })
+
+  await once(response2.body, 'end')
+  t.strictEqual(response2.statusCode, 200)
+  t.strictEqual(response2.headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(response2.headers['x-custom-h2'], 'hello')
+  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+})
+
 test('Should support H2 connection(POST Buffer)', async t => {
   const server = createSecureServer({ ...await pem.generate({ opts: { keySize: 2048 } }), allowHTTP1: false })
 
@@ -273,49 +358,6 @@ test('Should throw if bad maxConcurrentStreams has been passed', async t => {
 
 test(
   'Request should fail if allowH2 is false and server advertises h1 only',
-  { skip: isGreaterThanv20 },
-  async t => {
-    t = tspl(t, { plan: 1 })
-
-    const server = createSecureServer(
-      {
-        ...await pem.generate({ opts: { keySize: 2048 } }),
-        allowHTTP1: false,
-        ALPNProtocols: ['http/1.1']
-      },
-      (req, res) => {
-        t.fail('Should not create a valid h2 stream')
-      }
-    )
-
-    server.listen(0)
-    await once(server, 'listening')
-
-    const client = new Client(`https://localhost:${server.address().port}`, {
-      allowH2: false,
-      connect: {
-        rejectUnauthorized: false
-      }
-    })
-
-    after(() => server.close())
-    after(() => client.close())
-
-    const response = await client.request({
-      path: '/',
-      method: 'GET',
-      headers: {
-        'x-my-header': 'foo'
-      }
-    })
-
-    t.strictEqual(response.statusCode, 403)
-  }
-)
-
-test(
-  '[v20] Request should fail if allowH2 is false and server advertises h1 only',
-  { skip: !isGreaterThanv20 },
   async t => {
     const server = createSecureServer(
       {
@@ -523,58 +565,85 @@ test('Dispatcher#Pipeline', async t => {
 })
 
 test('Dispatcher#Connect', async t => {
+  const proxy = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
+  let responseBody = ''
   let requestBody = ''
 
-  server.on('stream', async (stream, headers) => {
-    stream.setEncoding('utf-8')
-    stream.on('data', chunk => {
-      requestBody += chunk
-    })
+  t = tspl(t, { plan: 5 })
 
-    stream.respond({ ':status': 200, 'x-custom': 'custom-header' })
-    stream.end('hello h2!')
-  })
+  proxy.on('stream', async (stream, headers) => {
+    if (headers[':method'] !== 'CONNECT') {
+      t.fail('Unexpected CONNECT method')
+      return
+    }
 
-  t = tspl(t, { plan: 6 })
-
-  server.listen(0, () => {
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const forward = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
       },
       allowH2: true
     })
 
-    after(() => server.close())
-    after(() => client.close())
-
-    let result = ''
-    client.connect({ path: '/' }, (err, { socket }) => {
-      t.ifError(err)
-      socket.on('data', chunk => {
-        result += chunk
-      })
-      socket.on('response', headers => {
-        t.strictEqual(headers[':status'], 200)
-        t.strictEqual(headers['x-custom'], 'custom-header')
-        t.strictEqual(socket.closed, false)
-      })
-
-      // We need to handle the error event although
-      // is not controlled by Undici, the fact that a session
-      // is destroyed and destroys subsequent streams, causes
-      // unhandled errors to surface if not handling this event.
-      socket.on('error', () => {})
-
-      socket.once('end', () => {
-        t.strictEqual(requestBody, expectedBody)
-        t.strictEqual(result, 'hello h2!')
-      })
-      socket.end(expectedBody)
+    const response = await forward.request({
+      path: '/',
+      method: 'POST',
+      body: stream,
+      headers: {
+        'x-my-header': headers['x-my-header']
+      }
     })
+
+    stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
+    response.body.pipe(stream)
+
+    after(() => forward.close())
   })
+
+  server.on('stream', async (stream, headers) => {
+    stream.setEncoding('utf-8')
+    stream.on('data', chunk => {
+      requestBody += chunk
+    })
+    stream.once('end', () => {
+      t.strictEqual(requestBody, expectedBody)
+    })
+
+    stream.respond({ ':status': 200, 'x-my-header': headers['x-my-header'] })
+    stream.end('helloworld')
+  })
+
+  proxy.listen()
+  await once(proxy, 'listening')
+  server.listen()
+  await once(server, 'listening')
+
+  after(() => client.close())
+  after(() => proxy.close())
+  after(() => server.close())
+
+  const client = new Client(`https://localhost:${proxy.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  const { statusCode, headers, socket } = await client.connect({ path: '/', headers: { 'x-my-header': 'foo' } })
+  t.strictEqual(statusCode, 200)
+  t.strictEqual(headers['x-my-header'], 'foo')
+  t.strictEqual(socket.closed, false)
+
+  socket.on('data', chunk => { responseBody += chunk })
+  socket.once('end', () => {
+    t.strictEqual(responseBody, 'helloworld')
+  })
+  socket.setEncoding('utf-8')
+  socket.cork()
+  socket.write(expectedBody)
+  socket.uncork()
+  socket.end()
 
   await t.completed
 })
@@ -946,7 +1015,7 @@ test('Should handle h2 request with body (iterable)', async t => {
   t.strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
 })
 
-test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
+test('Should handle h2 request with body (Blob)', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'asd'
   const requestChunks = []
@@ -1010,7 +1079,6 @@ test('Should handle h2 request with body (Blob)', { skip: !Blob }, async t => {
 
 test(
   'Should handle h2 request with body (Blob:ArrayBuffer)',
-  { skip: !Blob },
   async t => {
     const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
     const expectedBody = 'hello'

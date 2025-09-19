@@ -1,31 +1,15 @@
 'use strict'
 
-const { test, skip } = require('node:test')
+const { test } = require('node:test')
 const { notEqual, strictEqual, deepStrictEqual } = require('node:assert')
 const { rm } = require('node:fs/promises')
 const { cacheStoreTests, writeBody, compareGetResults } = require('./cache-store-test-utils.js')
+const { runtimeFeatures } = require('../../lib/util/runtime-features.js')
 
-let hasSqlite = false
-try {
-  require('node:sqlite')
+const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+cacheStoreTests(SqliteCacheStore, { skip: runtimeFeatures.has('sqlite') === false })
 
-  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
-  cacheStoreTests(SqliteCacheStore)
-  hasSqlite = true
-} catch (err) {
-  if (err.code === 'ERR_UNKNOWN_BUILTIN_MODULE') {
-    skip('`node:sqlite` not present')
-  } else {
-    throw err
-  }
-}
-
-test('SqliteCacheStore works nicely with multiple stores', async (t) => {
-  if (!hasSqlite) {
-    t.skip()
-    return
-  }
-
+test('SqliteCacheStore works nicely with multiple stores', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
   const sqliteLocation = 'cache-interceptor.sqlite'
 
@@ -88,12 +72,7 @@ test('SqliteCacheStore works nicely with multiple stores', async (t) => {
   }
 })
 
-test('SqliteCacheStore maxEntries', async (t) => {
-  if (!hasSqlite) {
-    t.skip()
-    return
-  }
-
+test('SqliteCacheStore maxEntries', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
 
   const store = new SqliteCacheStore({
@@ -133,12 +112,7 @@ test('SqliteCacheStore maxEntries', async (t) => {
   strictEqual(store.size <= 11, true)
 })
 
-test('SqliteCacheStore two writes', async (t) => {
-  if (!hasSqlite) {
-    t.skip()
-    return
-  }
-
+test('SqliteCacheStore two writes', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
 
   const store = new SqliteCacheStore({
@@ -182,12 +156,7 @@ test('SqliteCacheStore two writes', async (t) => {
   }
 })
 
-test('SqliteCacheStore write & read', async (t) => {
-  if (!hasSqlite) {
-    t.skip()
-    return
-  }
-
+test('SqliteCacheStore write & read', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
 
   const store = new SqliteCacheStore({

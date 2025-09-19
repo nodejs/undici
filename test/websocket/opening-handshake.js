@@ -9,6 +9,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { WebSocketServer } = require('ws')
 const { key, cert } = require('@metcoder95/https-pem')
 const { WebSocket, Agent } = require('../..')
+const { runtimeFeatures } = require('../../lib/util/runtime-features')
 
 test('WebSocket connecting to server that isn\'t a Websocket server', () => {
   return new Promise((resolve, reject) => {
@@ -263,16 +264,15 @@ test('Server sends invalid Sec-WebSocket-Accept header', () => {
   })
 })
 
-test('Server sends invalid Sec-WebSocket-Extensions header', () => {
+test('Server sends invalid Sec-WebSocket-Extensions header', { skip: runtimeFeatures.has('crypto') === false }, () => {
   return new Promise((resolve, reject) => {
     const uid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-    const { createHash } = require('node:crypto')
 
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       const key = req.headers['sec-websocket-key']
       assert.ok(key)
 
-      const accept = createHash('sha1').update(key + uid).digest('base64')
+      const accept = require('node:crypto').hash('sha1', key + uid, 'base64')
 
       res.setHeader('Upgrade', 'websocket')
       res.setHeader('Connection', 'upgrade')
@@ -295,16 +295,15 @@ test('Server sends invalid Sec-WebSocket-Extensions header', () => {
   })
 })
 
-test('Server sends invalid Sec-WebSocket-Extensions header', () => {
+test('Server sends invalid Sec-WebSocket-Extensions header', { skip: runtimeFeatures.has('crypto') === false }, () => {
   const uid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-  const { createHash } = require('node:crypto')
 
   return new Promise((resolve, reject) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       const key = req.headers['sec-websocket-key']
       assert.ok(key)
 
-      const accept = createHash('sha1').update(key + uid).digest('base64')
+      const accept = require('node:crypto').hash('sha1', key + uid, 'base64')
 
       res.setHeader('Upgrade', 'websocket')
       res.setHeader('Connection', 'upgrade')

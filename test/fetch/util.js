@@ -282,6 +282,7 @@ describe('isValidHeaderValue', () => {
 
 describe('isOriginIPPotentiallyTrustworthy()', () => {
   [
+    ['', false],
     ['0000:0000:0000:0000:0000:0000:0000:0001', true],
     ['0001:0000:0000:0000:0000:0000:0000:0001', false],
     ['0000:0000:0000:0000:0000:0000::0001', true],
@@ -292,16 +293,20 @@ describe('isOriginIPPotentiallyTrustworthy()', () => {
     ['0000:0000:0000::0001', true],
     ['0000:0000::0001', true],
     ['0000::0001', true],
+    ['::1001', false],
     ['::0001', true],
+    ['::0011', false],
     ['::1', true],
     ['[::1]', true],
+    ['[::1', false],
+    ['::1]', false],
     ['::2', false],
     ['::', false],
+    ['126.0.0.0', false],
+    ['127.0.0.0', true],
     ['127.0.0.1', true],
     ['127.255.255.255', true],
-    ['128.255.255.255', false],
-    ['127.0.0.1', true],
-    ['127.0.0.0', false]
+    ['128.255.255.255', false]
   ].forEach(([ip, expected]) => {
     test(`${ip} is ${expected ? '' : 'not '}potentially trustworthy`, () => {
       assert.strictEqual(util.isOriginIPPotentiallyTrustworthy(ip), expected)

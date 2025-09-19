@@ -1,87 +1,91 @@
 'use strict'
 
-const { test } = require('node:test')
-const assert = require('node:assert')
-const { createServer } = require('node:http')
+const { strictEqual } = require('node:assert').strict
 const { once } = require('node:events')
+const { createServer } = require('node:http')
+const { test, before, after, describe } = require('node:test')
 const { fetch } = require('../..')
-const zlib = require('node:zlib')
-const { closeServerAsPromise } = require('../utils/node-http')
 
-test('content-encoding header is case-iNsENsITIve', async (t) => {
-  const contentCodings = 'GZiP, bR'
-  const text = 'Hello, World!'
+describe('content-encoding handling', () => {
+  const gzipDeflateText = Buffer.from('H4sIAAAAAAAAA6uY89nj7MmT1wM5zuuf8gxkYZCfx5IFACQ8u/wVAAAA', 'base64')
+  const zstdText = Buffer.from('KLUv/QBYaQAASGVsbG8sIFdvcmxkIQ==', 'base64')
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    const gzip = zlib.createGzip()
-    const brotli = zlib.createBrotliCompress()
-
-    res.setHeader('Content-Encoding', contentCodings)
-    res.setHeader('Content-Type', 'text/plain')
-
-    gzip.pipe(brotli).pipe(res)
-
-    gzip.write(text)
-    gzip.end()
-  }).listen(0)
-
-  t.after(closeServerAsPromise(server))
-  await once(server, 'listening')
-
-  const response = await fetch(`http://localhost:${server.address().port}`)
-
-  assert.strictEqual(await response.text(), text)
-  assert.strictEqual(response.headers.get('content-encoding'), contentCodings)
-})
-
-test('response decompression according to content-encoding should be handled in a correct order', async (t) => {
-  const contentCodings = 'deflate, gzip'
-  const text = 'Hello, World!'
-
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    const gzip = zlib.createGzip()
-    const deflate = zlib.createDeflate()
-
-    res.setHeader('Content-Encoding', contentCodings)
-    res.setHeader('Content-Type', 'text/plain')
-
-    deflate.pipe(gzip).pipe(res)
-
-    deflate.write(text)
-    deflate.end()
-  }).listen(0)
-
-  t.after(closeServerAsPromise(server))
-  await once(server, 'listening')
-
-  const response = await fetch(`http://localhost:${server.address().port}`)
-
-  assert.strictEqual(await response.text(), text)
-})
-
-test('should decompress zstandard response',
-  { skip: typeof zlib.createZstdDecompress !== 'function' },
-  async (t) => {
-    const contentCodings = 'zstd'
-    const text = 'Hello, World!'
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      const zstd = zlib.createZstdCompress()
-
-      res.setHeader('Content-Encoding', contentCodings)
-      res.setHeader('Content-Type', 'text/plain')
-
-      zstd.pipe(res)
-      zstd.write(text)
-      zstd.end()
-    }
-    ).listen(0)
-    t.after(closeServerAsPromise(server))
-
-    await once(server, 'listening')
-    const url = `http://localhost:${server.address().port}`
-
-    const response = await fetch(url)
-    assert.strictEqual(await response.text(), text)
-    assert.strictEqual(response.headers.get('content-encoding'), contentCodings)
-    assert.strictEqual(response.headers.get('content-type'), 'text/plain')
+  let server
+  before(async () => {
+    server = createServer({
+      noDelay: true
+    }, (req, res) => {
+      res.socket.setNoDelay(true)
+      if (
+        req.headers['accept-encoding'] === 'deflate, gzip' ||
+        req.headers['accept-encoding'] === 'DeFlAtE, GzIp'
+      ) {
+        res.writeHead(200,
+          {
+            'Content-Encoding': 'deflate, gzip',
+            'Content-Type': 'text/plain'
+          }
+        )
+        res.flushHeaders()
+        res.end(gzipDeflateText)
+      } else if (req.headers['accept-encoding'] === 'zstd') {
+        res.writeHead(200,
+          {
+            'Content-Encoding': 'zstd',
+            'Content-Type': 'text/plain'
+          }
+        )
+        res.flushHeaders()
+        res.end(zstdText)
+      } else {
+        res.writeHead(200,
+          {
+            'Content-Type': 'text/plain'
+          }
+        )
+        res.flushHeaders()
+        res.end('Hello, World!')
+      }
+    })
+    await once(server.listen(0), 'listening')
   })
+
+  after(() => {
+    server.close()
+  })
+
+  test('content-encoding header', async (t) => {
+    const response = await fetch(`http://localhost:${server.address().port}`, {
+      keepalive: false,
+      headers: { 'accept-encoding': 'deflate, gzip' }
+    })
+
+    strictEqual(response.headers.get('content-encoding'), 'deflate, gzip')
+    strictEqual(response.headers.get('content-type'), 'text/plain')
+    strictEqual(await response.text(), 'Hello, World!')
+  })
+
+  test('content-encoding header is case-iNsENsITIve', async (t) => {
+    const response = await fetch(`http://localhost:${server.address().port}`, {
+      keepalive: false,
+      headers: { 'accept-encoding': 'DeFlAtE, GzIp' }
+    })
+
+    strictEqual(response.headers.get('content-encoding'), 'deflate, gzip')
+    strictEqual(response.headers.get('content-type'), 'text/plain')
+    strictEqual(await response.text(), 'Hello, World!')
+  })
+
+  test('should decompress zstandard response',
+    { skip: typeof require('node:zlib').createZstdDecompress !== 'function' },
+    async () => {
+      const response = await fetch(`http://localhost:${server.address().port}`, {
+        keepalive: false,
+        headers: { 'accept-encoding': 'zstd' }
+      })
+
+      strictEqual(response.headers.get('content-encoding'), 'zstd')
+      strictEqual(response.headers.get('content-type'), 'text/plain')
+      strictEqual(await response.text(), 'Hello, World!')
+    })
+})

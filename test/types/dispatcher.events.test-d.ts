@@ -1,6 +1,6 @@
 import { Dispatcher } from '../..'
 import { expectAssignable } from 'tsd'
-import { URL } from 'url'
+import { URL } from 'node:url'
 import Errors from '../../types/errors'
 
 interface EventHandler {

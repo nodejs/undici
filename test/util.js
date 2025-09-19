@@ -11,14 +11,14 @@ describe('isBlobLike', () => {
     strictEqual(isBlobLike(buffer), false)
   })
 
-  test('blob', { skip: !Blob }, () => {
+  test('blob', () => {
     const blob = new Blob(['asd'], {
       type: 'application/json'
     })
     strictEqual(isBlobLike(blob), true)
   })
 
-  test('file', { skip: !File }, () => {
+  test('file', () => {
     const file = new File(['asd'], 'file.txt', {
       type: 'text/plain'
     })
