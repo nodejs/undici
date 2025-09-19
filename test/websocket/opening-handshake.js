@@ -106,7 +106,6 @@ test('WebSocket connecting to server that isn\'t a Websocket server (h2 - suppor
     .listen(0)
 
   await once(h2Server, 'listening')
-  t.after(() => { h2Server.close() })
 
   const dispatcher = new Agent({
     allowH2: true,
@@ -115,16 +114,15 @@ test('WebSocket connecting to server that isn\'t a Websocket server (h2 - suppor
     }
   })
   const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
-
-  t.after(() => { ws.close() || dispatcher.close() })
-
+  t.after(() => {
+    ws.close()
+    h2Server.close()
+    dispatcher.close().then(console.log, console.log)
+  })
   ws.onmessage = ws.onopen = () => planner.fail('should not open')
   ws.addEventListener('error', ({ error }) => {
     planner.ok(error)
-    ws.close()
-    h2Server.close()
   })
-
   await planner.completed
 })
 
