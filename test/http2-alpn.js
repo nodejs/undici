@@ -44,11 +44,9 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for GET', async (t) => 
     }
   )
 
-  server.listen(0)
-  await once(server, 'listening')
-
   // close the server on teardown
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
   // set the port
   const port = server.address().port
@@ -122,6 +120,8 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for GET', async (t) => 
     alpnProtocol: false,
     httpVersion: '1.1'
   }))
+
+  await t.completed
 })
 
 test('Should upgrade to HTTP/2 when HTTPS/1 is available for POST', async (t) => {
@@ -191,11 +191,9 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for POST', async (t) =>
     stream.end('hello h2!')
   })
 
-  server.listen(0)
-  await once(server, 'listening')
-
   // close the server on teardown
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
   // set the port
   const port = server.address().port
@@ -275,4 +273,6 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for POST', async (t) =>
   t.equal(httpsResponse.headers['x-custom-alpn-protocol'], 'false')
   t.equal(Buffer.concat(httpsResponseBody).toString('utf-8'), 'hello http/1!')
   t.equal(Buffer.concat(httpsRequestChunks).toString('utf-8'), expectedBody)
+
+  await t.completed
 })
