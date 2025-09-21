@@ -90,7 +90,7 @@ test('WebSocket on H2', { skip: true }, () => {
 })
 
 // TODO:
-test('WebSocket connecting to server that isn\'t a Websocket server (h2 - supports extended CONNECT protocol)', { skip: true }, async (t) => {
+test('WebSocket connecting to server that isn\'t a Websocket server (h2 - supports extended CONNECT protocol)', async (t) => {
   const planner = tspl(t, { plan: 6 })
   const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
     .on('stream', (stream, headers) => {
@@ -100,7 +100,8 @@ test('WebSocket connecting to server that isn\'t a Websocket server (h2 - suppor
       planner.ok(headers['sec-websocket-protocol'], 'chat')
       planner.equal(headers['sec-websocket-version'], '13')
 
-      stream.close(7) // NGHTTP2_REFUSED_STREAM
+      stream.respond({ ':status': 200 })
+      stream.close(8) // NGHTTP2_CANCEL
       h2Server.unref()
     })
     .listen(0)
@@ -117,7 +118,6 @@ test('WebSocket connecting to server that isn\'t a Websocket server (h2 - suppor
   t.after(() => {
     ws.close()
     h2Server.close()
-    dispatcher.close().then(console.log, console.log)
   })
   ws.onmessage = ws.onopen = () => planner.fail('should not open')
   ws.addEventListener('error', ({ error }) => {
