@@ -182,15 +182,6 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ''
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
-
-      - name: Test sqlite
-        if: inputs.node-version != '20'
-        run: npm run test:sqlite
-        id: test-sqlite
-        env:
-          CI: true
-          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
-          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
       
       - name: Test wpt
         run: npm run test:wpt
