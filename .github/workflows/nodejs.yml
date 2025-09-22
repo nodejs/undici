@@ -112,7 +112,7 @@ jobs:
       
       - name: Test cache-interceptor  ${{ inputs.node-version != '20' && 'with' || 'without' }} sqlite
         run: npm run test:cache-interceptor
-        id: test-cache-interceptor-sqlite
+        id: test-cache-interceptor
         env:
           CI: true
           NODE_OPTIONS: ${{ inputs.node-version != '20' && '--experimental-sqlite' || '' }}
