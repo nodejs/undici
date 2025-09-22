@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   test:
-    name: Test with Node.js ${{ inputs.node-version }} on ${{ inputs.runs-on }}
+    name: Test ${{ inputs.codecov == true && 'and Coverage ' || '' }}with Node.js ${{ inputs.node-version }} on ${{ inputs.runs-on }}
     timeout-minutes: 20
     runs-on: ${{ inputs.runs-on }}
     steps:
