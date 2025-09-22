@@ -89,7 +89,6 @@ test('WebSocket on H2', { skip: true }, () => {
   })
 })
 
-// TODO:
 test('WebSocket connecting to server that isn\'t a Websocket server (h2 - supports extended CONNECT protocol)', async (t) => {
   const planner = tspl(t, { plan: 6 })
   const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
@@ -97,12 +96,11 @@ test('WebSocket connecting to server that isn\'t a Websocket server (h2 - suppor
       planner.equal(headers[':method'], 'CONNECT')
       planner.equal(headers[':protocol'], 'websocket')
       planner.ok(headers['sec-websocket-key'])
-      planner.ok(headers['sec-websocket-protocol'], 'chat')
+      planner.equal(headers['sec-websocket-protocol'], 'chat')
       planner.equal(headers['sec-websocket-version'], '13')
 
       stream.respond({ ':status': 200 })
       stream.close(8) // NGHTTP2_CANCEL
-      h2Server.unref()
     })
     .listen(0)
 
@@ -115,15 +113,27 @@ test('WebSocket connecting to server that isn\'t a Websocket server (h2 - suppor
     }
   })
   const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
+  const cleaner = setupListener()
+  ws.onmessage = ws.onopen = () => planner.fail('should not open')
+
   t.after(() => {
+    cleaner()
+    dispatcher.close()
     ws.close()
     h2Server.close()
   })
-  ws.onmessage = ws.onopen = () => planner.fail('should not open')
-  ws.addEventListener('error', ({ error }) => {
-    planner.ok(error)
-  })
+
   await planner.completed
+
+  function setupListener () {
+    ws.addEventListener('error', listener)
+
+    return () => { ws.removeEventListener('error', listener) }
+
+    function listener ({ error }) {
+      planner.ok(error)
+    }
+  }
 })
 
 test('WebSocket on H2 with a server that does not support extended CONNECT protocol', async (t) => {
@@ -147,7 +157,7 @@ test('WebSocket on H2 with a server that does not support extended CONNECT proto
   })
   const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
 
-  t.after(() => { ws.close() || dispatcher.close() })
+  t.after(() => { return ws.close() || dispatcher.close() })
 
   ws.onmessage = ws.onopen = () => planner.fail('should not open')
   ws.addEventListener('error', ({ error }) => {
