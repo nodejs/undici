@@ -3,7 +3,9 @@
 const { describe, test } = require('node:test')
 const { deepStrictEqual } = require('node:assert')
 const { parseHttpDate } = require('../../lib/util/date')
-const { randomInt } = require('node:crypto')
+const { runtimeFeatures } = require('../../lib/util/runtime-features')
+
+const skipFuzzing = runtimeFeatures.has('crypto') === false
 
 describe('parseHttpDate', () => {
   test('IMF-fixdate', () => {
@@ -272,7 +274,9 @@ describe('parseHttpDate', () => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const fuzzingCount = 1e6
 
-  test('fuzzing asctime', () => {
+  test('fuzzing asctime', { skip: skipFuzzing }, () => {
+    const { randomInt } = require('node:crypto')
+
     function asctime (date) {
       let result = ''
 
@@ -308,7 +312,9 @@ describe('parseHttpDate', () => {
     }
   })
 
-  test('fuzzing imf', () => {
+  test('fuzzing imf', { skip: skipFuzzing }, () => {
+    const { randomInt } = require('node:crypto')
+
     for (let i = 0; i < fuzzingCount; i++) {
       const date = new Date(Date.UTC(
         randomInt(0, 9999), // Year between 0 and 3000
@@ -324,7 +330,9 @@ describe('parseHttpDate', () => {
     }
   })
 
-  test('fuzzing rfc850', () => {
+  test('fuzzing rfc850', { skip: skipFuzzing }, () => {
+    const { randomInt } = require('node:crypto')
+
     function rfc850 (date) {
       let result = ''
 

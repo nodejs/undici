@@ -4,22 +4,14 @@ const assert = require('node:assert')
 const { test, describe } = require('node:test')
 
 const { bytesMatch } = require('../../lib/web/subresource-integrity/subresource-integrity')
+const { runtimeFeatures } = require('../../lib/util/runtime-features')
 
-let crypto = null
-
-let skip
-try {
-  crypto = require('node:crypto')
-  skip = false
-} catch {
-  skip = 'crypto not available'
-}
+const skip = runtimeFeatures.has('crypto') === false
 
 describe('bytesMatch', () => {
   test('valid sha256 and base64', { skip }, () => {
     const data = Buffer.from('Hello world!')
-
-    const validSha256Base64 = `sha256-${crypto.hash('sha256', data, 'base64')}`
-    assert.ok(bytesMatch(data, validSha256Base64))
+    const hash256 = 'sha256-wFNeS+K3n/2TKRMFQ2v4iTFOSj+uwF7P/Lt98xrZ5Ro='
+    assert.ok(bytesMatch(data, hash256))
   })
 })
