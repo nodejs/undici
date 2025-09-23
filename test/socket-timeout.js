@@ -5,6 +5,14 @@ const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
+const { once } = require('node:events')
+
+const clock = FakeTimers.install({
+  toFake: ['setTimeout', 'Date'],
+  shouldAdvanceTime: true,
+  now: 1
+})
+after(() => clock.uninstall())
 
 test('timeout with pipelining 1', async (t) => {
   t = tspl(t, { plan: 9 })
@@ -22,40 +30,43 @@ test('timeout with pipelining 1', async (t) => {
     })
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 1,
-      headersTimeout: 500,
-      bodyTimeout: 500
+  const client = new Client(`http://localhost:${server.address().port}`, {
+    pipelining: 1,
+    headersTimeout: 500,
+    bodyTimeout: 500
+  })
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    opaque: 'asd'
+  }, (err, data) => {
+    t.ok(err instanceof errors.HeadersTimeoutError) // we are expecting an error
+    t.strictEqual(data.opaque, 'asd')
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { statusCode, headers, body }) => {
+    t.ifError(err)
+    t.strictEqual(statusCode, 200)
+    t.strictEqual(headers['content-type'], 'text/plain')
+    const bufs = []
+    body.on('data', (buf) => {
+      bufs.push(buf)
     })
-    after(() => client.close())
-
-    client.request({
-      path: '/',
-      method: 'GET',
-      opaque: 'asd'
-    }, (err, data) => {
-      t.ok(err instanceof errors.HeadersTimeoutError) // we are expecting an error
-      t.strictEqual(data.opaque, 'asd')
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { statusCode, headers, body }) => {
-      t.ifError(err)
-      t.strictEqual(statusCode, 200)
-      t.strictEqual(headers['content-type'], 'text/plain')
-      const bufs = []
-      body.on('data', (buf) => {
-        bufs.push(buf)
-      })
-      body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
-      })
+    body.on('end', () => {
+      t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
     })
   })
+
+  await clock.nextAsync()
+  await clock.nextAsync()
+  await clock.nextAsync()
 
   await t.completed
 })
@@ -64,8 +75,6 @@ test('Disable socket timeout', async (t) => {
   t = tspl(t, { plan: 2 })
 
   const server = createServer({ joinDuplicateHeaders: true })
-  const clock = FakeTimers.install()
-  after(clock.uninstall.bind(clock))
 
   server.once('request', (req, res) => {
     setTimeout(() => {
@@ -75,22 +84,21 @@ test('Disable socket timeout', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      bodyTimeout: 0,
-      headersTimeout: 0
-    })
-    after(() => client.close())
+  await once(server.listen(0), 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`, {
+    bodyTimeout: 0,
+    headersTimeout: 0
+  })
+  after(() => client.close())
 
-    client.request({ path: '/', method: 'GET' }, (err, result) => {
-      t.ifError(err)
-      const bufs = []
-      result.body.on('data', (buf) => {
-        bufs.push(buf)
-      })
-      result.body.on('end', () => {
-        t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
-      })
+  client.request({ path: '/', method: 'GET' }, (err, result) => {
+    t.ifError(err)
+    const bufs = []
+    result.body.on('data', (buf) => {
+      bufs.push(buf)
+    })
+    result.body.on('end', () => {
+      t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
     })
   })
 
