@@ -1,13 +1,12 @@
 'use strict'
 
 const { test, after } = require('node:test')
-const { strictEqual } = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { request, Client, interceptors } = require('../../index')
 const FakeTimers = require('@sinonjs/fake-timers')
 
-test('revalidates the request when the response is stale', async () => {
+test('revalidates the request when the response is stale', async (t) => {
   const clock = FakeTimers.install({
     now: 1
   })
@@ -36,34 +35,34 @@ test('revalidates the request when the response is stale', async () => {
 
   {
     const res = await request(url, { dispatcher })
-    strictEqual(await res.body.text(), 'hello world 0')
+    t.assert.strictEqual(await res.body.text(), 'hello world 0')
   }
 
   clock.tick(999)
 
   {
     const res = await request(url, { dispatcher })
-    strictEqual(await res.body.text(), 'hello world 0')
+    t.assert.strictEqual(await res.body.text(), 'hello world 0')
   }
 
   clock.tick(1)
 
   {
     const res = await request(url, { dispatcher })
-    strictEqual(await res.body.text(), 'hello world 1')
+    t.assert.strictEqual(await res.body.text(), 'hello world 1')
   }
 
   clock.tick(999)
 
   {
     const res = await request(url, { dispatcher })
-    strictEqual(await res.body.text(), 'hello world 1')
+    t.assert.strictEqual(await res.body.text(), 'hello world 1')
   }
 
   clock.tick(1)
 
   {
     const res = await request(url, { dispatcher })
-    strictEqual(await res.body.text(), 'hello world 2')
+    t.assert.strictEqual(await res.body.text(), 'hello world 2')
   }
 })

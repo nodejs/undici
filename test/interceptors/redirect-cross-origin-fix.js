@@ -3,7 +3,6 @@
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { tspl } = require('@matteo.collina/tspl')
 const undici = require('../..')
 
 const {
@@ -11,7 +10,7 @@ const {
 } = undici
 
 test('Client should throw redirect loop error for cross-origin redirect', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const serverA = createServer((req, res) => {
     res.writeHead(301, {
@@ -34,17 +33,15 @@ test('Client should throw redirect loop error for cross-origin redirect', async 
       method: 'GET',
       path: '/test'
     })
-    t.fail('Expected error but request succeeded')
+    t.assert.fail('Expected error but request succeeded')
   } catch (error) {
-    t.ok(error.message.includes('Redirect loop detected'), 'Error message indicates redirect loop')
-    t.ok(error.message.includes('Client or Pool'), 'Error message mentions Client or Pool')
+    t.assert.ok(error.message.includes('Redirect loop detected'), 'Error message indicates redirect loop')
+    t.assert.ok(error.message.includes('Client or Pool'), 'Error message mentions Client or Pool')
   }
-
-  await t.completed
 })
 
 test('Pool should throw redirect loop error for cross-origin redirect', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const serverA = createServer((req, res) => {
     res.writeHead(301, {
@@ -67,17 +64,15 @@ test('Pool should throw redirect loop error for cross-origin redirect', async (t
       method: 'GET',
       path: '/test'
     })
-    t.fail('Expected error but request succeeded')
+    t.assert.fail('Expected error but request succeeded')
   } catch (error) {
-    t.ok(error.message.includes('Redirect loop detected'), 'Error message indicates redirect loop')
-    t.ok(error.message.includes('Client or Pool'), 'Error message mentions Client or Pool')
+    t.assert.ok(error.message.includes('Redirect loop detected'), 'Error message indicates redirect loop')
+    t.assert.ok(error.message.includes('Client or Pool'), 'Error message mentions Client or Pool')
   }
-
-  await t.completed
 })
 
 test('Agent should successfully follow cross-origin redirect', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const serverB = createServer((req, res) => {
     res.writeHead(200)
@@ -116,8 +111,6 @@ test('Agent should successfully follow cross-origin redirect', async (t) => {
 
   const body = await response.body.text()
 
-  t.strictEqual(response.statusCode, 200, 'Response has 200 status code')
-  t.ok(body.includes('Cross-origin redirect success'), 'Response body indicates successful cross-origin redirect')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200, 'Response has 200 status code')
+  t.assert.ok(body.includes('Cross-origin redirect success'), 'Response body indicates successful cross-origin redirect')
 })

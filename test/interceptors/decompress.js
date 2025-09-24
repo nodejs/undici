@@ -4,13 +4,12 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { createGzip, createDeflate, createBrotliCompress, createZstdCompress } = require('node:zlib')
-const { tspl } = require('@matteo.collina/tspl')
 
 const { Client, getGlobalDispatcher, setGlobalDispatcher, request } = require('../..')
 const createDecompressInterceptor = require('../../lib/interceptor/decompress')
 
 test('should decompress gzip response', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const data = 'This is a test message for gzip compression validation.'
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
@@ -44,15 +43,13 @@ test('should decompress gzip response', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], undefined)
-  t.equal(body, data)
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], undefined)
+  t.assert.strictEqual(body, data)
 })
 
 test('should decompress deflate response', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const deflate = createDeflate()
@@ -86,15 +83,13 @@ test('should decompress deflate response', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], undefined)
-  t.equal(body, 'This message is compressed with deflate algorithm!')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], undefined)
+  t.assert.strictEqual(body, 'This message is compressed with deflate algorithm!')
 })
 
 test('should decompress brotli response', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const brotli = createBrotliCompress()
@@ -128,15 +123,13 @@ test('should decompress brotli response', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], undefined)
-  t.equal(body, 'This message is compressed with brotli compression!')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], undefined)
+  t.assert.strictEqual(body, 'This message is compressed with brotli compression!')
 })
 
 test('should decompress zstd response', { skip: typeof createZstdCompress !== 'function' }, async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const zstd = createZstdCompress()
@@ -170,15 +163,13 @@ test('should decompress zstd response', { skip: typeof createZstdCompress !== 'f
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], undefined)
-  t.equal(body, 'This message is compressed with zstd compression!')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], undefined)
+  t.assert.strictEqual(body, 'This message is compressed with zstd compression!')
 })
 
 test('should pass through uncompressed response', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
@@ -207,15 +198,13 @@ test('should pass through uncompressed response', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-type'], 'text/plain')
-  t.equal(body, 'This is uncompressed data')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-type'], 'text/plain')
+  t.assert.strictEqual(body, 'This is uncompressed data')
 })
 
 test('should pass through unsupported encoding', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
@@ -245,15 +234,13 @@ test('should pass through unsupported encoding', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], 'unsupported')
-  t.equal(body, 'This has unsupported encoding')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], 'unsupported')
+  t.assert.strictEqual(body, 'This has unsupported encoding')
 })
 
 test('should pass through error responses (4xx, 5xx)', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const gzip = createGzip()
@@ -287,15 +274,13 @@ test('should pass through error responses (4xx, 5xx)', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 404)
-  t.equal(response.headers['content-encoding'], 'gzip')
-  t.notEqual(body, 'Not found error message')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 404)
+  t.assert.strictEqual(response.headers['content-encoding'], 'gzip')
+  t.assert.notEqual(body, 'Not found error message')
 })
 
 test('should pass through 204 No Content responses', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(204, {
@@ -322,14 +307,12 @@ test('should pass through 204 No Content responses', async t => {
     path: '/'
   })
 
-  t.equal(response.statusCode, 204)
-  t.equal(response.headers['content-encoding'], 'gzip')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 204)
+  t.assert.strictEqual(response.headers['content-encoding'], 'gzip')
 })
 
 test('should pass through 304 Not Modified responses', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(304, {
@@ -356,14 +339,12 @@ test('should pass through 304 Not Modified responses', async t => {
     path: '/'
   })
 
-  t.equal(response.statusCode, 304)
-  t.equal(response.headers['content-encoding'], 'gzip')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 304)
+  t.assert.strictEqual(response.headers['content-encoding'], 'gzip')
 })
 
 test('should handle large compressed responses', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const gzip = createGzip()
@@ -397,15 +378,13 @@ test('should handle large compressed responses', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], undefined)
-  t.equal(body.length, 30000)
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], undefined)
+  t.assert.strictEqual(body.length, 30000)
 })
 
 test('should handle case-insensitive content-encoding', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const gzip = createGzip()
@@ -439,15 +418,13 @@ test('should handle case-insensitive content-encoding', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], undefined)
-  t.equal(body, 'Case insensitive test')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], undefined)
+  t.assert.strictEqual(body, 'Case insensitive test')
 })
 
 test('should remove content-length header when decompressing', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const gzip = createGzip()
@@ -481,15 +458,13 @@ test('should remove content-length header when decompressing', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-length'], undefined)
-  t.equal(body, 'Test data')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-length'], undefined)
+  t.assert.strictEqual(body, 'Test data')
 })
 
 test('should allow decompressing 5xx responses when skipErrorResponses is false', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const gzip = createGzip()
@@ -523,15 +498,13 @@ test('should allow decompressing 5xx responses when skipErrorResponses is false'
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 500)
-  t.equal(response.headers['content-encoding'], undefined) // Should be removed when decompressing
-  t.equal(body, 'Internal server error message') // Should be decompressed
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 500)
+  t.assert.strictEqual(response.headers['content-encoding'], undefined) // Should be removed when decompressing
+  t.assert.strictEqual(body, 'Internal server error message') // Should be decompressed
 })
 
 test('should allow custom skipStatusCodes', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const gzip = createGzip()
@@ -566,15 +539,13 @@ test('should allow custom skipStatusCodes', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 201)
-  t.equal(response.headers['content-encoding'], 'gzip') // Should be preserved when skipping
-  t.notEqual(body, 'Created response') // Should still be compressed
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 201)
+  t.assert.strictEqual(response.headers['content-encoding'], 'gzip') // Should be preserved when skipping
+  t.assert.notEqual(body, 'Created response') // Should still be compressed
 })
 
 test('should decompress multiple encodings in correct order', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     // First compress with gzip, then with deflate (gzip, deflate)
@@ -614,15 +585,13 @@ test('should decompress multiple encodings in correct order', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], undefined) // Should be removed
-  t.equal(body, 'Multiple encoding test message') // Should be fully decompressed
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], undefined) // Should be removed
+  t.assert.strictEqual(body, 'Multiple encoding test message') // Should be fully decompressed
 })
 
 test('should handle legacy encoding names (x-gzip)', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const gzip = createGzip()
@@ -656,15 +625,13 @@ test('should handle legacy encoding names (x-gzip)', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], undefined) // Should be removed
-  t.equal(body, 'Legacy encoding test')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], undefined) // Should be removed
+  t.assert.strictEqual(body, 'Legacy encoding test')
 })
 
 test('should pass through responses with unsupported encoding in chain', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
@@ -694,15 +661,13 @@ test('should pass through responses with unsupported encoding in chain', async t
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], 'gzip, unsupported, deflate') // Should be preserved
-  t.equal(body, 'This should pass through unchanged')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], 'gzip, unsupported, deflate') // Should be preserved
+  t.assert.strictEqual(body, 'This should pass through unchanged')
 })
 
 test('should handle empty encoding values', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const gzip = createGzip()
@@ -736,15 +701,13 @@ test('should handle empty encoding values', async t => {
 
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-encoding'], undefined)
-  t.equal(body, 'Empty encoding value test')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-encoding'], undefined)
+  t.assert.strictEqual(body, 'Empty encoding value test')
 })
 
 test('should handle multiple pause/resume cycles during decompression', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const data = 'Large data chunk for testing multiple pause/resume cycles. '.repeat(1000)
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
@@ -781,7 +744,7 @@ test('should handle multiple pause/resume cycles during decompression', async t 
     },
 
     onResponseStart (ctrl, statusCode, headers, statusMessage) {
-      t.equal(statusCode, 200)
+      t.assert.strictEqual(statusCode, 200)
 
       for (let i = 0; i < 3; i++) {
         callCount++
@@ -795,12 +758,12 @@ test('should handle multiple pause/resume cycles during decompression', async t 
     },
 
     onResponseEnd (ctrl, trailers) {
-      t.equal(callCount, 3, 'Should have called pause/resume 3 times')
-      t.equal(responseData, data, 'All data should be received')
+      t.assert.strictEqual(callCount, 3, 'Should have called pause/resume 3 times')
+      t.assert.strictEqual(responseData, data, 'All data should be received')
     },
 
     onResponseError (ctrl, err) {
-      t.fail(err)
+      t.assert.fail(err)
     }
   }
 
@@ -808,12 +771,10 @@ test('should handle multiple pause/resume cycles during decompression', async t 
     method: 'GET',
     path: '/'
   }, handler)
-
-  await t.completed
 })
 
 test('should handle controller pause with chained decompression', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const data = 'Test data for chained decompression pause/resume functionality'
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
@@ -853,14 +814,14 @@ test('should handle controller pause with chained decompression', async t => {
     },
 
     onResponseStart (ctrl, statusCode, headers, statusMessage) {
-      t.equal(statusCode, 200)
+      t.assert.strictEqual(statusCode, 200)
 
       try {
         controller.pause()
         controller.resume()
         pauseResumeWorked = true
       } catch (err) {
-        t.fail('Pause/resume should not throw error')
+        t.assert.fail('Pause/resume should not throw error')
       }
     },
 
@@ -869,12 +830,12 @@ test('should handle controller pause with chained decompression', async t => {
     },
 
     onResponseEnd (ctrl, trailers) {
-      t.ok(pauseResumeWorked, 'Pause/resume should work with chained decompression')
-      t.equal(responseData, data, 'Data should be correctly decompressed from chained encodings')
+      t.assert.ok(pauseResumeWorked, 'Pause/resume should work with chained decompression')
+      t.assert.strictEqual(responseData, data, 'Data should be correctly decompressed from chained encodings')
     },
 
     onResponseError (ctrl, err) {
-      t.fail(err)
+      t.assert.fail(err)
     }
   }
 
@@ -882,12 +843,10 @@ test('should handle controller pause with chained decompression', async t => {
     method: 'GET',
     path: '/'
   }, handler)
-
-  await t.completed
 })
 
 test('should behave like fetch() for compressed responses', async t => {
-  t = tspl(t, { plan: 10 })
+  t.plan(10)
 
   const testData = 'Test data that will be compressed and should be automatically decompressed by both fetch and request with decompress interceptor'
 
@@ -930,21 +889,20 @@ test('should behave like fetch() for compressed responses', async t => {
     await once(server, 'close')
   })
 
-  t.equal(fetchResponse.status, 200)
-  t.equal(fetchBody, testData, 'fetch should automatically decompress')
-  t.equal(requestBodyWithDecompression, fetchBody, 'request with decompression interceptor should match fetch behavior')
-  t.notEqual(requestBodyWithoutDecompression, fetchBody, 'request without decompression interceptor should return compressed data')
-  t.equal(fetchResponse.headers.get('content-type'), 'text/plain', 'content-type header should be preserved with fetch')
-  t.equal(fetchResponse.headers.get('content-encoding'), 'gzip', 'content-encoding header should be preserved with fetch')
-  t.equal(requestResponseWithoutDecompression.headers['content-type'], 'text/plain', 'content-type header should be preserved without decompression')
-  t.equal(requestResponseWithoutDecompression.headers['content-encoding'], 'gzip', 'content-encoding header should be preserved without decompression')
-  t.equal(requestResponseWithDecompression.headers['content-type'], 'text/plain', 'content-type header should be preserved with decompression')
-  t.equal(requestResponseWithDecompression.headers['content-encoding'], undefined, 'content-encoding header should be removed with decompression')
-  await t.completed
+  t.assert.strictEqual(fetchResponse.status, 200)
+  t.assert.strictEqual(fetchBody, testData, 'fetch should automatically decompress')
+  t.assert.strictEqual(requestBodyWithDecompression, fetchBody, 'request with decompression interceptor should match fetch behavior')
+  t.assert.notEqual(requestBodyWithoutDecompression, fetchBody, 'request without decompression interceptor should return compressed data')
+  t.assert.strictEqual(fetchResponse.headers.get('content-type'), 'text/plain', 'content-type header should be preserved with fetch')
+  t.assert.strictEqual(fetchResponse.headers.get('content-encoding'), 'gzip', 'content-encoding header should be preserved with fetch')
+  t.assert.strictEqual(requestResponseWithoutDecompression.headers['content-type'], 'text/plain', 'content-type header should be preserved without decompression')
+  t.assert.strictEqual(requestResponseWithoutDecompression.headers['content-encoding'], 'gzip', 'content-encoding header should be preserved without decompression')
+  t.assert.strictEqual(requestResponseWithDecompression.headers['content-type'], 'text/plain', 'content-type header should be preserved with decompression')
+  t.assert.strictEqual(requestResponseWithDecompression.headers['content-encoding'], undefined, 'content-encoding header should be removed with decompression')
 })
 
 test('should work with global dispatcher for both fetch() and request()', async t => {
-  t = tspl(t, { plan: 8 })
+  t.plan(8)
 
   const testData = 'Global dispatcher test data for decompression interceptor'
 
@@ -990,14 +948,12 @@ test('should work with global dispatcher for both fetch() and request()', async 
   })
   const requestBody = await requestResponse.body.text()
 
-  t.equal(fetchResponse.status, 200)
-  t.equal(fetchBody, testData, 'fetch should automatically decompress with global interceptor')
-  t.equal(requestResponse.statusCode, 200)
-  t.equal(requestBody, testData, 'request should automatically decompress with global interceptor')
-  t.equal(requestResponse.headers['content-encoding'], undefined, 'request content-encoding header should be removed with global interceptor')
-  t.equal(requestResponse.headers['content-length'], undefined, 'request content-length header should be removed with global interceptor')
-  t.equal(fetchResponse.headers.get('content-length'), undefined, 'content-length header should be removed with fetch due to global interceptor')
-  t.equal(fetchResponse.headers.get('content-encoding'), undefined, 'content-encoding header should be removed with fetch due to global interceptor')
-
-  await t.completed
+  t.assert.strictEqual(fetchResponse.status, 200)
+  t.assert.strictEqual(fetchBody, testData, 'fetch should automatically decompress with global interceptor')
+  t.assert.strictEqual(requestResponse.statusCode, 200)
+  t.assert.strictEqual(requestBody, testData, 'request should automatically decompress with global interceptor')
+  t.assert.strictEqual(requestResponse.headers['content-encoding'], undefined, 'request content-encoding header should be removed with global interceptor')
+  t.assert.strictEqual(requestResponse.headers['content-length'], undefined, 'request content-length header should be removed with global interceptor')
+  t.assert.strictEqual(fetchResponse.headers.get('content-length'), null, 'content-length header should be removed with fetch due to global interceptor')
+  t.assert.strictEqual(fetchResponse.headers.get('content-encoding'), null, 'content-encoding header should be removed with fetch due to global interceptor')
 })

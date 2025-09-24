@@ -3,7 +3,6 @@
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { tspl } = require('@matteo.collina/tspl')
 const undici = require('../..')
 const {
   startRedirectingServer,
@@ -43,7 +42,7 @@ for (const factory of [
   }
 
   test('should always have a history with the final URL even if no redirections were followed', async t => {
-    t = tspl(t, { plan: 4 })
+    t.plan(4)
 
     const server = await startRedirectingServer()
 
@@ -58,22 +57,20 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.deepStrictEqual(
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.deepStrictEqual(
       history.map(x => x.toString()),
       [`http://${server}/200?key=value`]
     )
-    t.strictEqual(
+    t.assert.strictEqual(
       body,
       `GET /5 key=value :: host@${server} connection@keep-alive`
     )
-
-    await t.completed
   })
 
   test('should not follow redirection by default if not using RedirectAgent', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     const server = await startRedirectingServer()
 
@@ -84,15 +81,13 @@ for (const factory of [
     } = await request(t, server, undefined, `http://${server}`)
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 302)
-    t.strictEqual(headers.location, `http://${server}/302/1`)
-    t.strictEqual(body.length, 0)
-
-    await t.completed
+    t.assert.strictEqual(statusCode, 302)
+    t.assert.strictEqual(headers.location, `http://${server}/302/1`)
+    t.assert.strictEqual(body.length, 0)
   })
 
   test('should follow redirection after a HTTP 300', async t => {
-    t = tspl(t, { plan: 4 })
+    t.plan(4)
 
     const server = await startRedirectingServer()
 
@@ -107,9 +102,9 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.deepStrictEqual(
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.deepStrictEqual(
       history.map(x => x.toString()),
       [
         `http://${server}/300?key=value`,
@@ -120,16 +115,14 @@ for (const factory of [
         `http://${server}/300/5?key=value`
       ]
     )
-    t.strictEqual(
+    t.assert.strictEqual(
       body,
       `GET /5 key=value :: host@${server} connection@keep-alive`
     )
-
-    await t.completed
   })
 
   test('should follow redirection after a HTTP 300 default', async t => {
-    t = tspl(t, { plan: 4 })
+    t.plan(4)
 
     const server = await startRedirectingServer()
 
@@ -146,9 +139,9 @@ for (const factory of [
     )
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.deepStrictEqual(
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.deepStrictEqual(
       history.map(x => x.toString()),
       [
         `http://${server}/300?key=value`,
@@ -159,16 +152,14 @@ for (const factory of [
         `http://${server}/300/5?key=value`
       ]
     )
-    t.strictEqual(
+    t.assert.strictEqual(
       body,
       `GET /5 key=value :: host@${server} connection@keep-alive`
     )
-
-    await t.completed
   })
 
   test('should follow redirection after a HTTP 301 changing method to GET', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     const server = await startRedirectingServer()
 
@@ -184,16 +175,16 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.strictEqual(
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.strictEqual(
       body,
       `GET /5 :: host@${server} connection@keep-alive`
     )
   })
 
   test('should follow redirection after a HTTP 302', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
     const server = await startRedirectingServer()
 
     const {
@@ -208,16 +199,16 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.strictEqual(
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.strictEqual(
       body,
       `PUT /5 :: host@${server} connection@keep-alive content-length@7 :: REQUEST`
     )
   })
 
   test('should follow redirection after a HTTP 303 changing method to GET', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     const server = await startRedirectingServer()
 
@@ -233,15 +224,13 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.strictEqual(body, `GET /5 :: host@${server} connection@keep-alive`)
-
-    await t.completed
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.strictEqual(body, `GET /5 :: host@${server} connection@keep-alive`)
   })
 
   test('should remove Host and request body related headers when following HTTP 303 (array)', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     const server = await startRedirectingServer()
 
@@ -272,18 +261,16 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.strictEqual(
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.strictEqual(
       body,
       `GET /5 :: host@${server} connection@keep-alive x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`
     )
-
-    await t.completed
   })
 
   test('should remove Host and request body related headers when following HTTP 303 (object)', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     const server = await startRedirectingServer()
 
@@ -307,18 +294,16 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.strictEqual(
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.strictEqual(
       body,
       `GET /5 :: host@${server} connection@keep-alive x-foo1@1 x-foo2@2 x-foo3@3 x-bar@4`
     )
-
-    await t.completed
   })
 
   test('should follow redirection after a HTTP 307', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     const server = await startRedirectingServer()
 
@@ -333,15 +318,13 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.strictEqual(body, `DELETE /5 :: host@${server} connection@keep-alive`)
-
-    await t.completed
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.strictEqual(body, `DELETE /5 :: host@${server} connection@keep-alive`)
   })
 
   test('should follow redirection after a HTTP 308', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     const server = await startRedirectingServer()
 
@@ -356,15 +339,13 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.strictEqual(body, `OPTIONS /5 :: host@${server} connection@keep-alive`)
-
-    await t.completed
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.strictEqual(body, `OPTIONS /5 :: host@${server} connection@keep-alive`)
   })
 
   test('should ignore HTTP 3xx response bodies', async t => {
-    t = tspl(t, { plan: 4 })
+    t.plan(4)
 
     const server = await startRedirectingWithBodyServer()
 
@@ -379,19 +360,17 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.deepStrictEqual(
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.deepStrictEqual(
       history.map(x => x.toString()),
       [`http://${server}/`, `http://${server}/end`]
     )
-    t.strictEqual(body, 'FINAL')
-
-    await t.completed
+    t.assert.strictEqual(body, 'FINAL')
   })
 
   test('should ignore query after redirection', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     const server = await startRedirectingWithQueryParams()
 
@@ -404,18 +383,16 @@ for (const factory of [
       query: { param1: 'first' }
     })
 
-    t.strictEqual(statusCode, 200)
-    t.ok(!headers.location)
-    t.deepStrictEqual(
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.ok(!headers.location)
+    t.assert.deepStrictEqual(
       history.map(x => x.toString()),
       [`http://${server}/`, `http://${server}/?param2=second`]
     )
-
-    await t.completed
   })
 
   test('should follow a redirect chain up to the allowed number of times', async t => {
-    t = tspl(t, { plan: 4 })
+    t.plan(4)
 
     const server = await startRedirectingServer()
 
@@ -430,9 +407,9 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 300)
-    t.strictEqual(headers.location, `http://${server}/300/3`)
-    t.deepStrictEqual(
+    t.assert.strictEqual(statusCode, 300)
+    t.assert.strictEqual(headers.location, `http://${server}/300/3`)
+    t.assert.deepStrictEqual(
       history.map(x => x.toString()),
       [
         `http://${server}/300`,
@@ -440,13 +417,11 @@ for (const factory of [
         `http://${server}/300/2`
       ]
     )
-    t.strictEqual(body.length, 0)
-
-    await t.completed
+    t.assert.strictEqual(body.length, 0)
   })
 
   test('should follow a redirect chain up to the allowed number of times for redirectionLimitReached', async t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const server = await startRedirectingServer()
 
@@ -457,17 +432,15 @@ for (const factory of [
       })
     } catch (error) {
       if (error.message.startsWith('max redirects')) {
-        t.ok(true, 'Max redirects handled correctly')
+        t.assert.ok(true, 'Max redirects handled correctly')
       } else {
-        t.fail(`Unexpected error: ${error.message}`)
+        t.assert.fail(`Unexpected error: ${error.message}`)
       }
     }
-
-    await t.completed
   })
 
   test('when a Location response header is NOT present', async t => {
-    t = tspl(t, { plan: 6 * 3 })
+    t.plan(6 * 3)
 
     const redirectCodes = [300, 301, 302, 303, 307, 308]
     const server = await startRedirectingWithoutLocationServer()
@@ -483,15 +456,14 @@ for (const factory of [
 
       const body = await bodyStream.text()
 
-      t.strictEqual(statusCode, code)
-      t.ok(!headers.location)
-      t.strictEqual(body.length, 0)
+      t.assert.strictEqual(statusCode, code)
+      t.assert.ok(!headers.location)
+      t.assert.strictEqual(body.length, 0)
     }
-    await t.completed
   })
 
   test('should not allow invalid maxRedirections arguments', async t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     try {
       await request(t, 'localhost', undefined, 'http://localhost', {
@@ -499,15 +471,14 @@ for (const factory of [
         maxRedirections: 'INVALID'
       })
 
-      t.fail('Did not throw')
+      t.assert.fail('Did not throw')
     } catch (err) {
-      t.strictEqual(err.message, 'maxRedirections must be a positive number')
+      t.assert.strictEqual(err.message, 'maxRedirections must be a positive number')
     }
-    await t.completed
   })
 
   test('should not allow invalid maxRedirections arguments default', async t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     try {
       await request(
@@ -522,16 +493,14 @@ for (const factory of [
         }
       )
 
-      t.fail('Did not throw')
+      t.assert.fail('Did not throw')
     } catch (err) {
-      t.strictEqual(err.message, 'maxRedirections must be a positive number')
+      t.assert.strictEqual(err.message, 'maxRedirections must be a positive number')
     }
-
-    await t.completed
   })
 
   test('should not follow redirects when using ReadableStream request bodies', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     const server = await startRedirectingServer()
 
@@ -547,15 +516,13 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 301)
-    t.strictEqual(headers.location, `http://${server}/301/2`)
-    t.strictEqual(body.length, 0)
-
-    await t.completed
+    t.assert.strictEqual(statusCode, 301)
+    t.assert.strictEqual(headers.location, `http://${server}/301/2`)
+    t.assert.strictEqual(body.length, 0)
   })
 
   test('should not follow redirects when using Readable request bodies', async t => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     const server = await startRedirectingServer()
 
@@ -571,14 +538,13 @@ for (const factory of [
 
     const body = await bodyStream.text()
 
-    t.strictEqual(statusCode, 301)
-    t.strictEqual(headers.location, `http://${server}/301/1`)
-    t.strictEqual(body.length, 0)
-    await t.completed
+    t.assert.strictEqual(statusCode, 301)
+    t.assert.strictEqual(headers.location, `http://${server}/301/1`)
+    t.assert.strictEqual(body.length, 0)
   })
 
   test('should follow redirects when using Readable request bodies w/ POST 101', async t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const server = await startRedirectingServer()
 
@@ -593,13 +559,12 @@ for (const factory of [
 
     await bodyStream.text()
 
-    t.strictEqual(statusCode, 200)
-    await t.completed
+    t.assert.strictEqual(statusCode, 200)
   })
 }
 
 test('should follow redirections when going cross origin', async t => {
-  t = tspl(t, { plan: 4 })
+  t.plan(4)
 
   const [server1, server2, server3] = await startRedirectingChainServers()
 
@@ -615,9 +580,9 @@ test('should follow redirections when going cross origin', async t => {
 
   const body = await bodyStream.text()
 
-  t.strictEqual(statusCode, 200)
-  t.ok(!headers.location)
-  t.deepStrictEqual(
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.ok(!headers.location)
+  t.assert.deepStrictEqual(
     history.map(x => x.toString()),
     [
       `http://${server1}/`,
@@ -628,13 +593,11 @@ test('should follow redirections when going cross origin', async t => {
       `http://${server1}/end`
     ]
   )
-  t.strictEqual(body, 'GET')
-
-  await t.completed
+  t.assert.strictEqual(body, 'GET')
 })
 
-test('should handle errors (callback)', async t => {
-  t = tspl(t, { plan: 1 })
+test('should handle errors (callback)', (t, done) => {
+  t.plan(1)
 
   undici.request(
     'http://localhost:0',
@@ -644,15 +607,14 @@ test('should handle errors (callback)', async t => {
       )
     },
     error => {
-      t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
+      t.assert.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
+      done()
     }
   )
-
-  await t.completed
 })
 
 test('should handle errors (promise)', async t => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   try {
     await undici.request('http://localhost:0', {
@@ -660,16 +622,14 @@ test('should handle errors (promise)', async t => {
         redirect({ maxRedirections: 10 })
       )
     })
-    t.fail('Did not throw')
+    t.assert.fail('Did not throw')
   } catch (error) {
-    t.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
+    t.assert.match(error.code, /EADDRNOTAVAIL|ECONNREFUSED/)
   }
-
-  await t.completed
 })
 
 test('removes authorization header on third party origin', async t => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const [server1] = await startRedirectingWithAuthorization('secret')
   const { body: bodyStream } = await undici.request(`http://${server1}`, {
@@ -681,13 +641,11 @@ test('removes authorization header on third party origin', async t => {
 
   const body = await bodyStream.text()
 
-  t.strictEqual(body, '')
-
-  await t.completed
+  t.assert.strictEqual(body, '')
 })
 
 test('removes cookie header on third party origin', async t => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
   const [server1] = await startRedirectingWithCookie('a=b')
   const { body: bodyStream } = await undici.request(`http://${server1}`, {
     dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 10 })),
@@ -698,13 +656,11 @@ test('removes cookie header on third party origin', async t => {
 
   const body = await bodyStream.text()
 
-  t.strictEqual(body, '')
-
-  await t.completed
+  t.assert.strictEqual(body, '')
 })
 
 test('should upgrade the connection when no redirects are present', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = await startServer((req, res) => {
     if (req.url === '/') {
@@ -728,14 +684,12 @@ test('should upgrade the connection when no redirects are present', async t => {
 
   socket.end()
 
-  t.strictEqual(headers.connection, 'upgrade')
-  t.strictEqual(headers.upgrade, 'foo/1')
-
-  await t.completed
+  t.assert.strictEqual(headers.connection, 'upgrade')
+  t.assert.strictEqual(headers.upgrade, 'foo/1')
 })
 
 test('should redirect to relative URL according to RFC 7231', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = await startRedirectingWithRelativePath()
 
@@ -745,24 +699,24 @@ test('should redirect to relative URL according to RFC 7231', async t => {
 
   const finalPath = await body.text()
 
-  t.strictEqual(statusCode, 200)
-  t.strictEqual(finalPath, '/absolute/b')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.strictEqual(finalPath, '/absolute/b')
 })
 
 test('Cross-origin redirects clear forbidden headers', async (t) => {
-  const { strictEqual } = tspl(t, { plan: 6 })
+  t.plan(6)
 
   const server1 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    strictEqual(req.headers.cookie, undefined)
-    strictEqual(req.headers.authorization, undefined)
-    strictEqual(req.headers['proxy-authorization'], undefined)
+    t.assert.strictEqual(req.headers.cookie, undefined)
+    t.assert.strictEqual(req.headers.authorization, undefined)
+    t.assert.strictEqual(req.headers['proxy-authorization'], undefined)
 
     res.end('redirected')
   }).listen(0)
 
   const server2 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    strictEqual(req.headers.authorization, 'test')
-    strictEqual(req.headers.cookie, 'ddd=dddd')
+    t.assert.strictEqual(req.headers.authorization, 'test')
+    t.assert.strictEqual(req.headers.cookie, 'ddd=dddd')
 
     res.writeHead(302, {
       ...req.headers,
@@ -791,5 +745,5 @@ test('Cross-origin redirects clear forbidden headers', async (t) => {
   })
 
   const text = await res.body.text()
-  strictEqual(text, 'redirected')
+  t.assert.strictEqual(text, 'redirected')
 })
