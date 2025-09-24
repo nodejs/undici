@@ -1,7 +1,6 @@
 'use strict'
 
 const { test, describe } = require('node:test')
-const assert = require('node:assert')
 
 const { applyAlgorithmToBytes } = require('../../lib/web/subresource-integrity/subresource-integrity')
 const { runtimeFeatures } = require('../../lib/util/runtime-features')
@@ -14,16 +13,16 @@ describe('applyAlgorithmToBytes', () => {
   const hash384 = 'hiVfosNuSzCWnq4X3DTHcsvr38WLWEA5AL6HYU6xo0uHgCY/JV615lypu7hkHMz+'
   const hash512 = '9s3ioPgZMUzd5V/CJ9jX2uPSjMVWIioKitZtkcytSq1glPUXohgjYMmqz2o9wyMWLLb9jN/+2w/gOPVehf+1tg=='
 
-  test('valid sha256', { skip }, () => {
+  test('valid sha256', { skip }, (t) => {
     const result = applyAlgorithmToBytes('sha256', Buffer.from('Hello world!'))
-    assert.strictEqual(result, hash256)
+    t.assert.strictEqual(result, hash256)
   })
-  test('valid sha384', { skip }, () => {
+  test('valid sha384', { skip }, (t) => {
     const result = applyAlgorithmToBytes('sha384', Buffer.from('Hello world!'))
-    assert.strictEqual(result, hash384)
+    t.assert.strictEqual(result, hash384)
   })
-  test('valid sha512', { skip }, () => {
+  test('valid sha512', { skip }, (t) => {
     const result = applyAlgorithmToBytes('sha512', Buffer.from('Hello world!'))
-    assert.strictEqual(result, hash512)
+    t.assert.strictEqual(result, hash512)
   })
 })
