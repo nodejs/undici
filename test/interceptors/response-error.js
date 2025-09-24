@@ -1,13 +1,12 @@
 'use strict'
 
-const assert = require('node:assert')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test, after } = require('node:test')
 const { interceptors, Client } = require('../..')
 const { responseError } = interceptors
 
-test('should throw error for error response', async () => {
+test('should throw error for error response', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true })
 
   server.on('request', (req, res) => {
@@ -23,7 +22,7 @@ test('should throw error for error response', async () => {
     `http://localhost:${server.address().port}`
   ).compose(responseError())
 
-  after(async () => {
+  after(async (t) => {
     await client.close()
     server.close()
 
@@ -43,12 +42,12 @@ test('should throw error for error response', async () => {
     error = err
   }
 
-  assert.equal(error.statusCode, 400)
-  assert.equal(error.message, 'Response Error')
-  assert.equal(error.body, 'Bad Request')
+  t.assert.strictEqual(error.statusCode, 400)
+  t.assert.strictEqual(error.message, 'Response Error')
+  t.assert.strictEqual(error.body, 'Bad Request')
 })
 
-test('should not throw error for ok response', async () => {
+test('should not throw error for ok response', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true })
 
   server.on('request', (req, res) => {
@@ -64,7 +63,7 @@ test('should not throw error for ok response', async () => {
     `http://localhost:${server.address().port}`
   ).compose(responseError())
 
-  after(async () => {
+  after(async (t) => {
     await client.close()
     server.close()
 
@@ -79,11 +78,11 @@ test('should not throw error for ok response', async () => {
     }
   })
 
-  assert.equal(response.statusCode, 200)
-  assert.equal(await response.body.text(), 'hello')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello')
 })
 
-test('should throw error for error response, parsing JSON', async () => {
+test('should throw error for error response, parsing JSON', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true })
 
   server.on('request', (req, res) => {
@@ -99,7 +98,7 @@ test('should throw error for error response, parsing JSON', async () => {
     `http://localhost:${server.address().port}`
   ).compose(responseError())
 
-  after(async () => {
+  after(async (t) => {
     await client.close()
     server.close()
 
@@ -119,14 +118,14 @@ test('should throw error for error response, parsing JSON', async () => {
     error = err
   }
 
-  assert.equal(error.statusCode, 400)
-  assert.equal(error.message, 'Response Error')
-  assert.deepStrictEqual(error.body, {
+  t.assert.strictEqual(error.statusCode, 400)
+  t.assert.strictEqual(error.message, 'Response Error')
+  t.assert.deepStrictEqual(error.body, {
     message: 'Bad Request'
   })
 })
 
-test('should throw error for error response, parsing JSON without charset', async () => {
+test('should throw error for error response, parsing JSON without charset', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true })
 
   server.on('request', (req, res) => {
@@ -142,7 +141,7 @@ test('should throw error for error response, parsing JSON without charset', asyn
     `http://localhost:${server.address().port}`
   ).compose(responseError())
 
-  after(async () => {
+  after(async (t) => {
     await client.close()
     server.close()
 
@@ -162,19 +161,19 @@ test('should throw error for error response, parsing JSON without charset', asyn
     error = err
   }
 
-  assert.equal(error.statusCode, 400)
-  assert.equal(error.message, 'Response Error')
-  assert.deepStrictEqual(error.body, {
+  t.assert.strictEqual(error.statusCode, 400)
+  t.assert.strictEqual(error.message, 'Response Error')
+  t.assert.deepStrictEqual(error.body, {
     message: 'Bad Request'
   })
 })
 
-test('should throw error for networking errors response', async () => {
+test('should throw error for networking errors response', async (t) => {
   const client = new Client(
     'http://localhost:12345'
   ).compose(responseError())
 
-  after(async () => {
+  after(async (t) => {
     await client.close()
   })
 
@@ -191,10 +190,10 @@ test('should throw error for networking errors response', async () => {
     error = err
   }
 
-  assert.equal(error.code, 'ECONNREFUSED')
+  t.assert.strictEqual(error.code, 'ECONNREFUSED')
 })
 
-test('should throw error for error response without content type', async () => {
+test('should throw error for error response without content type', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true })
 
   server.on('request', (req, res) => {
@@ -210,7 +209,7 @@ test('should throw error for error response without content type', async () => {
     `http://localhost:${server.address().port}`
   ).compose(responseError())
 
-  after(async () => {
+  after(async (t) => {
     await client.close()
     server.close()
 
@@ -230,7 +229,7 @@ test('should throw error for error response without content type', async () => {
     error = err
   }
 
-  assert.equal(error.statusCode, 400)
-  assert.equal(error.message, 'Response Error')
-  assert.deepStrictEqual(error.body, '')
+  t.assert.strictEqual(error.statusCode, 400)
+  t.assert.strictEqual(error.message, 'Response Error')
+  t.assert.deepStrictEqual(error.body, '')
 })

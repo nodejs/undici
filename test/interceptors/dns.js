@@ -8,29 +8,28 @@ const { createServer } = require('node:http')
 const { createServer: createSecureServer } = require('node:https')
 const { once } = require('node:events')
 
-const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
 const { interceptors, Agent } = require('../..')
 const { dns } = interceptors
 
 test('Should validate options', t => {
-  t = tspl(t, { plan: 10 })
+  t.plan(10)
 
-  t.throws(() => dns({ dualStack: 'true' }), { code: 'UND_ERR_INVALID_ARG' })
-  t.throws(() => dns({ dualStack: 0 }), { code: 'UND_ERR_INVALID_ARG' })
-  t.throws(() => dns({ affinity: '4' }), { code: 'UND_ERR_INVALID_ARG' })
-  t.throws(() => dns({ affinity: 7 }), { code: 'UND_ERR_INVALID_ARG' })
-  t.throws(() => dns({ maxTTL: -1 }), { code: 'UND_ERR_INVALID_ARG' })
-  t.throws(() => dns({ maxTTL: '0' }), { code: 'UND_ERR_INVALID_ARG' })
-  t.throws(() => dns({ maxItems: '1' }), { code: 'UND_ERR_INVALID_ARG' })
-  t.throws(() => dns({ maxItems: -1 }), { code: 'UND_ERR_INVALID_ARG' })
-  t.throws(() => dns({ lookup: {} }), { code: 'UND_ERR_INVALID_ARG' })
-  t.throws(() => dns({ pick: [] }), { code: 'UND_ERR_INVALID_ARG' })
+  t.assert.throws(() => dns({ dualStack: 'true' }), { code: 'UND_ERR_INVALID_ARG' })
+  t.assert.throws(() => dns({ dualStack: 0 }), { code: 'UND_ERR_INVALID_ARG' })
+  t.assert.throws(() => dns({ affinity: '4' }), { code: 'UND_ERR_INVALID_ARG' })
+  t.assert.throws(() => dns({ affinity: 7 }), { code: 'UND_ERR_INVALID_ARG' })
+  t.assert.throws(() => dns({ maxTTL: -1 }), { code: 'UND_ERR_INVALID_ARG' })
+  t.assert.throws(() => dns({ maxTTL: '0' }), { code: 'UND_ERR_INVALID_ARG' })
+  t.assert.throws(() => dns({ maxItems: '1' }), { code: 'UND_ERR_INVALID_ARG' })
+  t.assert.throws(() => dns({ maxItems: -1 }), { code: 'UND_ERR_INVALID_ARG' })
+  t.assert.throws(() => dns({ lookup: {} }), { code: 'UND_ERR_INVALID_ARG' })
+  t.assert.throws(() => dns({ pick: [] }), { code: 'UND_ERR_INVALID_ARG' })
 })
 
 test('Should automatically resolve IPs (dual stack)', async t => {
-  t = tspl(t, { plan: 8 })
+  t.plan(8)
 
   const hostsnames = []
   const server = createServer({ joinDuplicateHeaders: true })
@@ -56,13 +55,13 @@ test('Should automatically resolve IPs (dual stack)', async t => {
       return (opts, handler) => {
         const url = new URL(opts.origin)
 
-        t.equal(hostsnames.includes(url.hostname), false)
+        t.assert.strictEqual(hostsnames.includes(url.hostname), false)
 
         if (url.hostname[0] === '[') {
           // [::1] -> ::1
-          t.equal(isIP(url.hostname.slice(1, 4)), 6)
+          t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
         } else {
-          t.equal(isIP(url.hostname), 4)
+          t.assert.strictEqual(isIP(url.hostname), 4)
         }
 
         hostsnames.push(url.hostname)
@@ -98,20 +97,20 @@ test('Should automatically resolve IPs (dual stack)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 })
 
 test('Should respect DNS origin hostname for SNI on TLS', async t => {
-  t = tspl(t, { plan: 12 })
+  t.plan(12)
 
   const hostsnames = []
   const server = createSecureServer(pem)
@@ -124,7 +123,7 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
   }
 
   server.on('request', (req, res) => {
-    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    t.assert.strictEqual(req.headers.host, `localhost:${server.address().port}`)
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.end('hello world!')
   })
@@ -142,14 +141,14 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
       return (opts, handler) => {
         const url = new URL(opts.origin)
 
-        t.equal(hostsnames.includes(url.hostname), false)
-        t.equal(opts.servername, 'localhost')
+        t.assert.strictEqual(hostsnames.includes(url.hostname), false)
+        t.assert.strictEqual(opts.servername, 'localhost')
 
         if (url.hostname[0] === '[') {
           // [::1] -> ::1
-          t.equal(isIP(url.hostname.slice(1, 4)), 6)
+          t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
         } else {
-          t.equal(isIP(url.hostname), 4)
+          t.assert.strictEqual(isIP(url.hostname), 4)
         }
 
         hostsnames.push(url.hostname)
@@ -185,20 +184,20 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
     origin: `https://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: `https://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 })
 
 test('Should recover on network errors (dual stack - 4)', async t => {
-  t = tspl(t, { plan: 7 })
+  t.plan(7)
 
   let counter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -227,20 +226,20 @@ test('Should recover on network errors (dual stack - 4)', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
 
           case 2:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
 
           case 3:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         return dispatch(opts, handler)
@@ -274,20 +273,20 @@ test('Should recover on network errors (dual stack - 4)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 })
 
 test('Should recover on network errors (dual stack - 6)', async t => {
-  t = tspl(t, { plan: 7 })
+  t.plan(7)
 
   let counter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -316,20 +315,20 @@ test('Should recover on network errors (dual stack - 6)', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
 
           case 2:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
 
           case 3:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         return dispatch(opts, handler)
@@ -363,20 +362,20 @@ test('Should recover on network errors (dual stack - 6)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 })
 
 test('Should throw when on dual-stack disabled (4)', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   let counter = 0
   const requestOptions = {
@@ -395,11 +394,11 @@ test('Should throw when on dual-stack disabled (4)', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
 
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         return dispatch(opts, handler)
@@ -413,13 +412,11 @@ test('Should throw when on dual-stack disabled (4)', async t => {
     origin: 'http://localhost:1234'
   })
 
-  await t.rejects(promise, 'ECONNREFUSED')
-
-  await t.completed
+  await t.assert.rejects(promise, 'ECONNREFUSED')
 })
 
 test('Should throw when on dual-stack disabled (6)', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   let counter = 0
   const requestOptions = {
@@ -439,11 +436,11 @@ test('Should throw when on dual-stack disabled (6)', async t => {
         switch (counter) {
           case 1:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
 
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         return dispatch(opts, handler)
@@ -457,13 +454,11 @@ test('Should throw when on dual-stack disabled (6)', async t => {
     origin: 'http://localhost:9999'
   })
 
-  await t.rejects(promise, 'ECONNREFUSED')
-
-  await t.completed
+  await t.assert.rejects(promise, 'ECONNREFUSED')
 })
 
 test('Should automatically resolve IPs (dual stack disabled - 4)', async t => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
 
   let counter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -492,15 +487,15 @@ test('Should automatically resolve IPs (dual stack disabled - 4)', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
 
           case 2:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         return dispatch(opts, handler)
@@ -521,20 +516,20 @@ test('Should automatically resolve IPs (dual stack disabled - 4)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 })
 
 test('Should automatically resolve IPs (dual stack disabled - 6)', async t => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
 
   let counter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -564,15 +559,15 @@ test('Should automatically resolve IPs (dual stack disabled - 6)', async t => {
         switch (counter) {
           case 1:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
 
           case 2:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         return dispatch(opts, handler)
@@ -593,20 +588,20 @@ test('Should automatically resolve IPs (dual stack disabled - 6)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 })
 
 test('Should we handle TTL (4)', async t => {
-  t = tspl(t, { plan: 10 })
+  t.plan(10)
 
   const clock = FakeTimers.install()
   let counter = 0
@@ -637,18 +632,18 @@ test('Should we handle TTL (4)', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
 
           case 2:
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
 
           case 3:
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         return dispatch(opts, handler)
@@ -682,8 +677,8 @@ test('Should we handle TTL (4)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   clock.tick(200)
 
@@ -692,8 +687,8 @@ test('Should we handle TTL (4)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 
   clock.tick(300)
 
@@ -702,14 +697,14 @@ test('Should we handle TTL (4)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response3.statusCode, 200)
-  t.equal(await response3.body.text(), 'hello world!')
+  t.assert.strictEqual(response3.statusCode, 200)
+  t.assert.strictEqual(await response3.body.text(), 'hello world!')
 
-  t.equal(lookupCounter, 2)
+  t.assert.strictEqual(lookupCounter, 2)
 })
 
 test('Should we handle TTL (6)', async t => {
-  t = tspl(t, { plan: 10 })
+  t.plan(10)
 
   const clock = FakeTimers.install()
   let counter = 0
@@ -741,20 +736,20 @@ test('Should we handle TTL (6)', async t => {
         switch (counter) {
           case 1:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
 
           case 2:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
 
           case 3:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         return dispatch(opts, handler)
@@ -788,8 +783,8 @@ test('Should we handle TTL (6)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   clock.tick(200)
 
@@ -798,8 +793,8 @@ test('Should we handle TTL (6)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 
   clock.tick(300)
 
@@ -808,13 +803,13 @@ test('Should we handle TTL (6)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response3.statusCode, 200)
-  t.equal(await response3.body.text(), 'hello world!')
-  t.equal(lookupCounter, 2)
+  t.assert.strictEqual(response3.statusCode, 200)
+  t.assert.strictEqual(await response3.body.text(), 'hello world!')
+  t.assert.strictEqual(lookupCounter, 2)
 })
 
 test('Should set lowest TTL between resolved and option maxTTL', async t => {
-  t = tspl(t, { plan: 9 })
+  t.plan(9)
 
   const clock = FakeTimers.install()
   let lookupCounter = 0
@@ -867,8 +862,8 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   clock.tick(100)
 
@@ -878,8 +873,8 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 
   clock.tick(100)
 
@@ -889,8 +884,8 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response3.statusCode, 200)
-  t.equal(await response3.body.text(), 'hello world!')
+  t.assert.strictEqual(response3.statusCode, 200)
+  t.assert.strictEqual(await response3.body.text(), 'hello world!')
 
   clock.tick(150)
 
@@ -900,14 +895,14 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response4.statusCode, 200)
-  t.equal(await response4.body.text(), 'hello world!')
+  t.assert.strictEqual(response4.statusCode, 200)
+  t.assert.strictEqual(await response4.body.text(), 'hello world!')
 
-  t.equal(lookupCounter, 3)
+  t.assert.strictEqual(lookupCounter, 3)
 })
 
 test('Should use all dns entries (dual stack)', async t => {
-  t = tspl(t, { plan: 16 })
+  t.plan(16)
 
   let counter = 0
   let lookupCounter = 0
@@ -936,26 +931,26 @@ test('Should use all dns entries (dual stack)', async t => {
         const url = new URL(opts.origin)
         switch (counter) {
           case 1:
-            t.equal(url.hostname, '1.1.1.1')
+            t.assert.strictEqual(url.hostname, '1.1.1.1')
             break
 
           case 2:
-            t.equal(url.hostname, '[::1]')
+            t.assert.strictEqual(url.hostname, '[::1]')
             break
 
           case 3:
-            t.equal(url.hostname, '2.2.2.2')
+            t.assert.strictEqual(url.hostname, '2.2.2.2')
             break
 
           case 4:
-            t.equal(url.hostname, '[::2]')
+            t.assert.strictEqual(url.hostname, '[::2]')
             break
 
           case 5:
-            t.equal(url.hostname, '1.1.1.1')
+            t.assert.strictEqual(url.hostname, '1.1.1.1')
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         url.hostname = '127.0.0.1'
@@ -989,15 +984,15 @@ test('Should use all dns entries (dual stack)', async t => {
       origin: `http://localhost:${server.address().port}`
     })
 
-    t.equal(response.statusCode, 200)
-    t.equal(await response.body.text(), 'hello world!')
+    t.assert.strictEqual(response.statusCode, 200)
+    t.assert.strictEqual(await response.body.text(), 'hello world!')
   }
 
-  t.equal(lookupCounter, 1)
+  t.assert.strictEqual(lookupCounter, 1)
 })
 
 test('Should use all dns entries (dual stack disabled - 4)', async t => {
-  t = tspl(t, { plan: 10 })
+  t.plan(10)
 
   let counter = 0
   let lookupCounter = 0
@@ -1027,18 +1022,18 @@ test('Should use all dns entries (dual stack disabled - 4)', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(url.hostname, '1.1.1.1')
+            t.assert.strictEqual(url.hostname, '1.1.1.1')
             break
 
           case 2:
-            t.equal(url.hostname, '2.2.2.2')
+            t.assert.strictEqual(url.hostname, '2.2.2.2')
             break
 
           case 3:
-            t.equal(url.hostname, '1.1.1.1')
+            t.assert.strictEqual(url.hostname, '1.1.1.1')
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         url.hostname = '127.0.0.1'
@@ -1070,30 +1065,30 @@ test('Should use all dns entries (dual stack disabled - 4)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response1.statusCode, 200)
-  t.equal(await response1.body.text(), 'hello world!')
+  t.assert.strictEqual(response1.statusCode, 200)
+  t.assert.strictEqual(await response1.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 
   const response3 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response3.statusCode, 200)
-  t.equal(await response3.body.text(), 'hello world!')
+  t.assert.strictEqual(response3.statusCode, 200)
+  t.assert.strictEqual(await response3.body.text(), 'hello world!')
 
-  t.equal(lookupCounter, 1)
+  t.assert.strictEqual(lookupCounter, 1)
 })
 
 test('Should use all dns entries (dual stack disabled - 6)', async t => {
-  t = tspl(t, { plan: 10 })
+  t.plan(10)
 
   let counter = 0
   let lookupCounter = 0
@@ -1123,18 +1118,18 @@ test('Should use all dns entries (dual stack disabled - 6)', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(url.hostname, '[::1]')
+            t.assert.strictEqual(url.hostname, '[::1]')
             break
 
           case 2:
-            t.equal(url.hostname, '[::2]')
+            t.assert.strictEqual(url.hostname, '[::2]')
             break
 
           case 3:
-            t.equal(url.hostname, '[::1]')
+            t.assert.strictEqual(url.hostname, '[::1]')
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         url.hostname = '127.0.0.1'
@@ -1167,30 +1162,30 @@ test('Should use all dns entries (dual stack disabled - 6)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response1.statusCode, 200)
-  t.equal(await response1.body.text(), 'hello world!')
+  t.assert.strictEqual(response1.statusCode, 200)
+  t.assert.strictEqual(await response1.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 
   const response3 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response3.statusCode, 200)
-  t.equal(await response3.body.text(), 'hello world!')
+  t.assert.strictEqual(response3.statusCode, 200)
+  t.assert.strictEqual(await response3.body.text(), 'hello world!')
 
-  t.equal(lookupCounter, 1)
+  t.assert.strictEqual(lookupCounter, 1)
 })
 
 test('Should handle single family resolved (dual stack)', async t => {
-  t = tspl(t, { plan: 7 })
+  t.plan(7)
 
   const clock = FakeTimers.install()
   let counter = 0
@@ -1221,15 +1216,15 @@ test('Should handle single family resolved (dual stack)', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
 
           case 2:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         return dispatch(opts, handler)
@@ -1264,8 +1259,8 @@ test('Should handle single family resolved (dual stack)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   clock.tick(100)
 
@@ -1274,14 +1269,14 @@ test('Should handle single family resolved (dual stack)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 
-  t.equal(lookupCounter, 2)
+  t.assert.strictEqual(lookupCounter, 2)
 })
 
 test('Should prefer affinity (dual stack - 4)', async t => {
-  t = tspl(t, { plan: 10 })
+  t.plan(10)
 
   const clock = FakeTimers.install()
   let counter = 0
@@ -1312,18 +1307,18 @@ test('Should prefer affinity (dual stack - 4)', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(url.hostname, '1.1.1.1')
+            t.assert.strictEqual(url.hostname, '1.1.1.1')
             break
 
           case 2:
-            t.equal(url.hostname, '2.2.2.2')
+            t.assert.strictEqual(url.hostname, '2.2.2.2')
             break
 
           case 3:
-            t.equal(url.hostname, '1.1.1.1')
+            t.assert.strictEqual(url.hostname, '1.1.1.1')
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         url.hostname = '127.0.0.1'
@@ -1358,8 +1353,8 @@ test('Should prefer affinity (dual stack - 4)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   clock.tick(100)
 
@@ -1368,22 +1363,22 @@ test('Should prefer affinity (dual stack - 4)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 
   const response3 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response3.statusCode, 200)
-  t.equal(await response3.body.text(), 'hello world!')
+  t.assert.strictEqual(response3.statusCode, 200)
+  t.assert.strictEqual(await response3.body.text(), 'hello world!')
 
-  t.equal(lookupCounter, 1)
+  t.assert.strictEqual(lookupCounter, 1)
 })
 
 test('Should prefer affinity (dual stack - 6)', async t => {
-  t = tspl(t, { plan: 10 })
+  t.plan(10)
 
   const clock = FakeTimers.install()
   let counter = 0
@@ -1414,18 +1409,18 @@ test('Should prefer affinity (dual stack - 6)', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(url.hostname, '[::1]')
+            t.assert.strictEqual(url.hostname, '[::1]')
             break
 
           case 2:
-            t.equal(url.hostname, '[::2]')
+            t.assert.strictEqual(url.hostname, '[::2]')
             break
 
           case 3:
-            t.equal(url.hostname, '[::1]')
+            t.assert.strictEqual(url.hostname, '[::1]')
             break
           default:
-            t.fail('should not reach this point')
+            t.assert.fail('should not reach this point')
         }
 
         url.hostname = '127.0.0.1'
@@ -1460,8 +1455,8 @@ test('Should prefer affinity (dual stack - 6)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   clock.tick(100)
 
@@ -1470,22 +1465,22 @@ test('Should prefer affinity (dual stack - 6)', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 
   const response3 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response3.statusCode, 200)
-  t.equal(await response3.body.text(), 'hello world!')
+  t.assert.strictEqual(response3.statusCode, 200)
+  t.assert.strictEqual(await response3.body.text(), 'hello world!')
 
-  t.equal(lookupCounter, 1)
+  t.assert.strictEqual(lookupCounter, 1)
 })
 
 test('Should use resolved ports (4)', async t => {
-  t = tspl(t, { plan: 5 })
+  t.plan(5)
 
   let lookupCounter = 0
   const server1 = createServer({ joinDuplicateHeaders: true })
@@ -1538,22 +1533,22 @@ test('Should use resolved ports (4)', async t => {
     origin: 'http://localhost'
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: 'http://localhost'
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world! (x2)')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world! (x2)')
 
-  t.equal(lookupCounter, 1)
+  t.assert.strictEqual(lookupCounter, 1)
 })
 
 test('Should use resolved ports (6)', async t => {
-  t = tspl(t, { plan: 5 })
+  t.plan(5)
 
   let lookupCounter = 0
   const server1 = createServer({ joinDuplicateHeaders: true })
@@ -1606,22 +1601,22 @@ test('Should use resolved ports (6)', async t => {
     origin: 'http://localhost'
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: 'http://localhost'
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world! (x2)')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world! (x2)')
 
-  t.equal(lookupCounter, 1)
+  t.assert.strictEqual(lookupCounter, 1)
 })
 
 test('Should handle max cached items', async t => {
-  t = tspl(t, { plan: 9 })
+  t.plan(9)
 
   let counter = 0
   const server1 = createServer({ joinDuplicateHeaders: true })
@@ -1657,21 +1652,21 @@ test('Should handle max cached items', async t => {
 
         switch (counter) {
           case 1:
-            t.equal(isIP(url.hostname), 4)
+            t.assert.strictEqual(isIP(url.hostname), 4)
             break
 
           case 2:
             // [::1] -> ::1
-            t.equal(isIP(url.hostname.slice(1, 4)), 6)
+            t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
             break
 
           case 3:
-            t.equal(url.hostname, 'developer.mozilla.org')
+            t.assert.strictEqual(url.hostname, 'developer.mozilla.org')
             // Rewrite origin to avoid reaching internet
             opts.origin = `http://127.0.0.1:${server2.address().port}`
             break
           default:
-            t.fails('should not reach this point')
+            t.assert.fails('should not reach this point')
         }
 
         return dispatch(opts, handler)
@@ -1707,28 +1702,28 @@ test('Should handle max cached items', async t => {
     origin: `http://localhost:${server1.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server1.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 
   const response3 = await client.request({
     ...requestOptions,
     origin: 'https://developer.mozilla.org'
   })
 
-  t.equal(response3.statusCode, 200)
-  t.equal(await response3.body.text(), 'hello world! (x2)')
+  t.assert.strictEqual(response3.statusCode, 200)
+  t.assert.strictEqual(await response3.body.text(), 'hello world! (x2)')
 })
 
 test('retry once with dual-stack', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const requestOptions = {
     method: 'GET',
@@ -1770,16 +1765,16 @@ test('retry once with dual-stack', async t => {
     await client.close()
   })
 
-  await t.rejects(client.request({
+  await t.assert.rejects(client.request({
     ...requestOptions,
     origin: 'http://localhost'
   }), 'ECONNREFUSED')
 
-  t.equal(counter, 2)
+  t.assert.strictEqual(counter, 2)
 })
 
 test('Should handle ENOTFOUND response error', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   let lookupCounter = 0
 
   const requestOptions = {
@@ -1814,7 +1809,7 @@ test('Should handle ENOTFOUND response error', async t => {
   } catch (err) {
     error1 = err
   }
-  t.equal(error1.code, 'ENOTFOUND')
+  t.assert.strictEqual(error1.code, 'ENOTFOUND')
 
   // Test that the records in the dns interceptor were deleted after the
   // previous request
@@ -1824,13 +1819,13 @@ test('Should handle ENOTFOUND response error', async t => {
   } catch (err) {
     error2 = err
   }
-  t.equal(error2.name, 'InformationalError')
+  t.assert.strictEqual(error2.name, 'InformationalError')
 
-  t.equal(lookupCounter, 2)
+  t.assert.strictEqual(lookupCounter, 2)
 })
 
 test('#3937 - Handle host correctly', async t => {
-  t = tspl(t, { plan: 10 })
+  t.plan(10)
 
   const hostsnames = []
   const server = createServer({ joinDuplicateHeaders: true })
@@ -1843,7 +1838,7 @@ test('#3937 - Handle host correctly', async t => {
   }
 
   server.on('request', (req, res) => {
-    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    t.assert.strictEqual(req.headers.host, `localhost:${server.address().port}`)
 
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.end('hello world!')
@@ -1858,13 +1853,13 @@ test('#3937 - Handle host correctly', async t => {
       return (opts, handler) => {
         const url = new URL(opts.origin)
 
-        t.equal(hostsnames.includes(url.hostname), false)
+        t.assert.strictEqual(hostsnames.includes(url.hostname), false)
 
         if (url.hostname[0] === '[') {
           // [::1] -> ::1
-          t.equal(isIP(url.hostname.slice(1, 4)), 6)
+          t.assert.strictEqual(isIP(url.hostname.slice(1, 4)), 6)
         } else {
-          t.equal(isIP(url.hostname), 4)
+          t.assert.strictEqual(isIP(url.hostname), 4)
         }
 
         hostsnames.push(url.hostname)
@@ -1900,20 +1895,20 @@ test('#3937 - Handle host correctly', async t => {
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 
   const response2 = await client.request({
     ...requestOptions,
     origin: `http://localhost:${server.address().port}`
   })
 
-  t.equal(response2.statusCode, 200)
-  t.equal(await response2.body.text(), 'hello world!')
+  t.assert.strictEqual(response2.statusCode, 200)
+  t.assert.strictEqual(await response2.body.text(), 'hello world!')
 })
 
 test('#3951 - Should handle lookup errors correctly', async t => {
-  const suite = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const requestOptions = {
     method: 'GET',
@@ -1931,7 +1926,7 @@ test('#3951 - Should handle lookup errors correctly', async t => {
     })
   ])
 
-  suite.rejects(client.request({
+  await t.assert.rejects(client.request({
     ...requestOptions,
     origin: 'http://localhost'
   }), new Error('lookup error'))

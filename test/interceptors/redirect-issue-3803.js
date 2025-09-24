@@ -4,10 +4,9 @@ const { FormData, request, Agent, interceptors } = require('../..')
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { tspl } = require('@matteo.collina/tspl')
 
 test('redirecting works with a FormData body', async (t) => {
-  const plan = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.url === '/1') {
@@ -32,7 +31,7 @@ test('redirecting works with a FormData body', async (t) => {
     dispatcher: agent
   })
 
-  plan.deepStrictEqual(context.history, [
+  t.assert.deepStrictEqual(context.history, [
     new URL(`http://localhost:${server.address().port}/1`),
     new URL(`http://localhost:${server.address().port}/2`)
   ])

@@ -3,7 +3,6 @@ const { platform } = require('node:os')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { tspl } = require('@matteo.collina/tspl')
 
 const { Client, Agent, interceptors } = require('../..')
 const { dump } = interceptors
@@ -12,7 +11,7 @@ const { dump } = interceptors
 const skip = platform() === 'win32'
 
 test('Should handle preemptive network error', { skip }, async t => {
-  t = tspl(t, { plan: 4 })
+  t.plan(4)
   let offset = 0
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const max = 1024 * 1024
@@ -57,7 +56,7 @@ test('Should handle preemptive network error', { skip }, async t => {
       ...requestOptions
     })
   } catch (error) {
-    t.equal(error.code, 'ECONNREFUSED')
+    t.assert.strictEqual(error.code, 'ECONNREFUSED')
   }
 
   server.listen(0)
@@ -69,15 +68,13 @@ test('Should handle preemptive network error', { skip }, async t => {
   })
   const body = await response.body.text()
 
-  t.equal(response.headers['content-length'], `${1024 * 1024}`)
-  t.equal(response.statusCode, 200)
-  t.equal(body, '')
-
-  await t.completed
+  t.assert.strictEqual(response.headers['content-length'], `${1024 * 1024}`)
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(body, '')
 })
 
 test('Should dump on abort', { skip }, async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
   let offset = 0
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const max = 1024 * 1024
@@ -131,15 +128,13 @@ test('Should dump on abort', { skip }, async t => {
   try {
     await response.body.text()
   } catch (error) {
-    t.equal(response.statusCode, 200)
-    t.equal(error.name, 'AbortError')
+    t.assert.strictEqual(response.statusCode, 200)
+    t.assert.strictEqual(error.name, 'AbortError')
   }
-
-  await t.completed
 })
 
 test('Should dump on already aborted request', { skip }, async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   let offset = 0
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const max = 1024
@@ -150,7 +145,7 @@ test('Should dump on already aborted request', { skip }, async t => {
     })
 
     res.once('close', () => {
-      t.equal(offset, 1024)
+      t.assert.strictEqual(offset, 1024)
     })
 
     const interval = setInterval(() => {
@@ -192,15 +187,13 @@ test('Should dump on already aborted request', { skip }, async t => {
 
   abc.abort()
   client.request(requestOptions).catch(err => {
-    t.equal(err.name, 'AbortError')
-    t.equal(err.message, 'This operation was aborted')
+    t.assert.strictEqual(err.name, 'AbortError')
+    t.assert.strictEqual(err.message, 'This operation was aborted')
   })
-
-  await t.completed
 })
 
 test('Should dump response body up to limit (default)', { skip }, async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const buffer = Buffer.alloc(1024 * 1024)
     res.writeHead(200, {
@@ -234,15 +227,13 @@ test('Should dump response body up to limit (default)', { skip }, async t => {
   const response = await client.request(requestOptions)
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-length'], `${1024 * 1024}`)
-  t.equal(body, '')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-length'], `${1024 * 1024}`)
+  t.assert.strictEqual(body, '')
 })
 
 test('Should dump response body up to limit and ignore trailers', { skip }, async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/plain',
@@ -278,15 +269,13 @@ test('Should dump response body up to limit and ignore trailers', { skip }, asyn
   const response = await client.request(requestOptions)
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(body, '')
-  t.equal(response.trailers['x-foo'], undefined)
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(body, '')
+  t.assert.strictEqual(response.trailers['x-foo'], undefined)
 })
 
 test('Should forward common error', { skip }, async t => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.destroy()
   })
@@ -311,19 +300,17 @@ test('Should forward common error', { skip }, async t => {
     await once(server, 'close')
   })
 
-  await t.rejects(client.request.bind(client, requestOptions), {
+  await t.assert.rejects(client.request.bind(client, requestOptions), {
     name: 'SocketError',
     code: 'UND_ERR_SOCKET',
     message: 'other side closed'
   })
-
-  await t.completed
 })
 
 test('Should throw on bad opts', { skip }, async t => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
 
-  t.throws(
+  t.assert.throws(
     () => {
       new Client('http://localhost').compose(dump({ maxSize: {} })).dispatch(
         {
@@ -338,7 +325,7 @@ test('Should throw on bad opts', { skip }, async t => {
       message: 'maxSize must be a number greater than 0'
     }
   )
-  t.throws(
+  t.assert.throws(
     () => {
       new Client('http://localhost').compose(dump({ maxSize: '0' })).dispatch(
         {
@@ -353,7 +340,7 @@ test('Should throw on bad opts', { skip }, async t => {
       message: 'maxSize must be a number greater than 0'
     }
   )
-  t.throws(
+  t.assert.throws(
     () => {
       new Client('http://localhost').compose(dump({ maxSize: -1 })).dispatch(
         {
@@ -368,7 +355,7 @@ test('Should throw on bad opts', { skip }, async t => {
       message: 'maxSize must be a number greater than 0'
     }
   )
-  t.throws(
+  t.assert.throws(
     () => {
       new Client('http://localhost').compose(dump()).dispatch(
         {
@@ -384,7 +371,7 @@ test('Should throw on bad opts', { skip }, async t => {
       message: 'maxSize must be a number greater than 0'
     }
   )
-  t.throws(
+  t.assert.throws(
     () => {
       new Client('http://localhost').compose(dump()).dispatch(
         {
@@ -400,7 +387,7 @@ test('Should throw on bad opts', { skip }, async t => {
       message: 'maxSize must be a number greater than 0'
     }
   )
-  t.throws(
+  t.assert.throws(
     () => {
       new Client('http://localhost').compose(dump()).dispatch(
         {
@@ -419,7 +406,7 @@ test('Should throw on bad opts', { skip }, async t => {
 })
 
 test('Should dump response body up to limit (opts)', { skip }, async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const buffer = Buffer.alloc(1 * 1024)
     res.writeHead(200, {
@@ -452,15 +439,13 @@ test('Should dump response body up to limit (opts)', { skip }, async t => {
   const response = await client.request(requestOptions)
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-length'], `${1 * 1024}`)
-  t.equal(body, '')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-length'], `${1 * 1024}`)
+  t.assert.strictEqual(body, '')
 })
 
 test('Should abort if content length grater than max size', { skip }, async t => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const buffer = Buffer.alloc(2 * 1024)
     res.writeHead(200, {
@@ -490,16 +475,14 @@ test('Should abort if content length grater than max size', { skip }, async t =>
     await once(server, 'close')
   })
 
-  t.rejects(client.request(requestOptions), {
+  await t.assert.rejects(client.request(requestOptions), {
     name: 'AbortError',
     message: 'Response size (2048) larger than maxSize (1024)'
   })
-
-  await t.completed
 })
 
 test('Should dump response body up to limit (dispatch opts)', { skip }, async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const buffer = Buffer.alloc(1 * 1024)
     res.writeHead(200, {
@@ -534,15 +517,13 @@ test('Should dump response body up to limit (dispatch opts)', { skip }, async t 
   const response = await client.request(requestOptions)
   const body = await response.body.text()
 
-  t.equal(response.statusCode, 200)
-  t.equal(response.headers['content-length'], `${1 * 1024}`)
-  t.equal(body, '')
-
-  await t.completed
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-length'], `${1 * 1024}`)
+  t.assert.strictEqual(body, '')
 })
 
 test('Should abort if content length grater than max size (dispatch opts)', { skip }, async t => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     const buffer = Buffer.alloc(2 * 1024)
     res.writeHead(200, {
@@ -573,7 +554,7 @@ test('Should abort if content length grater than max size (dispatch opts)', { sk
     await once(server, 'close')
   })
 
-  await t.rejects(
+  await t.assert.rejects(
     async () => {
       return await client.request(requestOptions).then(res => res.body.text())
     },
@@ -582,6 +563,4 @@ test('Should abort if content length grater than max size (dispatch opts)', { sk
       message: 'Response size (2048) larger than maxSize (100)'
     }
   )
-
-  await t.completed
 })

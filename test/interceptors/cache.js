@@ -3,13 +3,12 @@
 const { createServer } = require('node:http')
 const { describe, test, after } = require('node:test')
 const { once } = require('node:events')
-const { equal, strictEqual, notEqual, fail } = require('node:assert')
 const { setTimeout: sleep } = require('node:timers/promises')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { Client, interceptors, cacheStores: { MemoryCacheStore } } = require('../../index')
 
 describe('Cache Interceptor', () => {
-  test('caches request', async () => {
+  test('caches request', async (t) => {
     let requestsToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       requestsToOrigin++
@@ -28,7 +27,7 @@ describe('Cache Interceptor', () => {
     await once(server, 'listening')
 
     // Sanity check
-    equal(requestsToOrigin, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
 
     /**
      * @type {import('../../types/dispatcher').default.RequestOptions}
@@ -41,18 +40,18 @@ describe('Cache Interceptor', () => {
 
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
   })
 
-  test('vary directives used to decide which response to use', async () => {
+  test('vary directives used to decide which response to use', async (t) => {
     let requestsToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       requestsToOrigin++
@@ -103,33 +102,33 @@ describe('Cache Interceptor', () => {
     // Should reach origin
     {
       const res = await client.request(requestA)
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     // Should reach origin
     {
       const res = await client.request(requestB)
-      equal(requestsToOrigin, 2)
-      strictEqual(await res.body.text(), 'dsa')
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(await res.body.text(), 'dsa')
     }
 
     // Should be cached
     {
       const res = await client.request(requestA)
-      equal(requestsToOrigin, 2)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     // Should be cached
     {
       const res = await client.request(requestB)
-      equal(requestsToOrigin, 2)
-      strictEqual(await res.body.text(), 'dsa')
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(await res.body.text(), 'dsa')
     }
   })
 
-  test('revalidates reponses with no-cache directive, regardless of cacheByDefault', async () => {
+  test('revalidates reponses with no-cache directive, regardless of cacheByDefault', async (t) => {
     let requestCount = 0
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       ++requestCount
@@ -159,16 +158,16 @@ describe('Cache Interceptor', () => {
 
     const res1 = await client.request(request)
     const body1 = await res1.body.text()
-    strictEqual(body1, 'Request count: 1')
-    strictEqual(requestCount, 1)
+    t.assert.strictEqual(body1, 'Request count: 1')
+    t.assert.strictEqual(requestCount, 1)
 
     const res2 = await client.request(request)
     const body2 = await res2.body.text()
-    strictEqual(body2, 'Request count: 2')
-    strictEqual(requestCount, 2)
+    t.assert.strictEqual(body2, 'Request count: 2')
+    t.assert.strictEqual(requestCount, 2)
   })
 
-  test('expires caching', async () => {
+  test('expires caching', async (t) => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
@@ -195,7 +194,7 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    strictEqual(requestsToOrigin, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
 
     /**
      * @type {import('../../types/dispatcher').default.RequestOptions}
@@ -213,8 +212,8 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     // This is cached
@@ -224,8 +223,8 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     clock.tick(1500)
@@ -233,19 +232,19 @@ describe('Cache Interceptor', () => {
     // Response is now stale, the origin should get a request
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 2)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     // Response is now cached, the origin should not get a request
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 2)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
   })
 
-  test('expires caching with Etag', async () => {
+  test('expires caching with Etag', async (t) => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
@@ -273,7 +272,7 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    strictEqual(requestsToOrigin, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
 
     /**
      * @type {import('../../types/dispatcher').default.RequestOptions}
@@ -291,8 +290,8 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     // This is cached
@@ -302,8 +301,8 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     clock.tick(1500)
@@ -311,19 +310,19 @@ describe('Cache Interceptor', () => {
     // Response is now stale, the origin should get a request
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 2)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     // Response is now cached, the origin should not get a request
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 2)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
   })
 
-  test('max-age caching', async () => {
+  test('max-age caching', async (t) => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
@@ -348,7 +347,7 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    strictEqual(requestsToOrigin, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
 
     /**
      * @type {import('../../types/dispatcher').default.RequestOptions}
@@ -366,8 +365,8 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     clock.tick(1500)
@@ -375,19 +374,19 @@ describe('Cache Interceptor', () => {
     // Response is now stale, the origin should get a request
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 2)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     // Response is now cached, the origin should not get a request
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 2)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
   })
 
-  test('stale responses are revalidated before deleteAt (if-modified-since)', async () => {
+  test('stale responses are revalidated before deleteAt (if-modified-since)', async (t) => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
@@ -401,7 +400,7 @@ describe('Cache Interceptor', () => {
 
       try {
         if (req.headers['if-modified-since']) {
-          equal(req.headers['if-modified-since'].length, 29)
+          t.assert.strictEqual(req.headers['if-modified-since'].length, 29)
 
           revalidationRequests++
 
@@ -425,7 +424,7 @@ describe('Cache Interceptor', () => {
       .compose((dispatch) => {
         return (opts, handler) => {
           if (opts.headers) {
-            strictEqual(Object.prototype.hasOwnProperty.call(opts.headers, 'if-none-match'), false)
+            t.assert.strictEqual(Object.prototype.hasOwnProperty.call(opts.headers, 'if-none-match'), false)
           }
           return dispatch(opts, handler)
         }
@@ -440,8 +439,8 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    strictEqual(requestsToOrigin, 0)
-    strictEqual(revalidationRequests, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
+    t.assert.strictEqual(revalidationRequests, 0)
 
     /**
      * @type {import('../../types/dispatcher').default.RequestOptions}
@@ -459,9 +458,9 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 0)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(revalidationRequests, 0)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     clock.tick(1500)
@@ -474,14 +473,14 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
       // Background revalidation happens asynchronously
     }
 
     // Wait for background revalidation to complete
     await sleep(100)
-    equal(revalidationRequests, 1)
+    t.assert.strictEqual(revalidationRequests, 1)
 
     // Response is still stale, will trigger another background revalidation
     {
@@ -495,13 +494,13 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     // Wait for second background revalidation
     await sleep(100)
-    equal(revalidationRequests, 2)
+    t.assert.strictEqual(revalidationRequests, 2)
 
     // Third request triggers another background revalidation that returns updated content
     {
@@ -510,13 +509,13 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd') // Still stale initially
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd') // Still stale initially
     }
 
     // Wait for third background revalidation
     await sleep(100)
-    equal(revalidationRequests, 3)
+    t.assert.strictEqual(revalidationRequests, 3)
 
     // Now the cache should have updated content
     {
@@ -525,12 +524,12 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'updated')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'updated')
     }
   })
 
-  test('stale responses are revalidated before deleteAt (if-none-match)', async () => {
+  test('stale responses are revalidated before deleteAt (if-none-match)', async (t) => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
@@ -546,7 +545,7 @@ describe('Cache Interceptor', () => {
         if (req.headers['if-none-match']) {
           revalidationRequests++
 
-          equal(req.headers['if-none-match'], '"asd123"')
+          t.assert.strictEqual(req.headers['if-none-match'], '"asd123"')
 
           if (revalidationRequests === 3) {
             res.end('updated')
@@ -576,8 +575,8 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    strictEqual(requestsToOrigin, 0)
-    strictEqual(revalidationRequests, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
+    t.assert.strictEqual(revalidationRequests, 0)
 
     /**
      * @type {import('../../types/dispatcher').default.RequestOptions}
@@ -595,9 +594,9 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 0)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(revalidationRequests, 0)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     clock.tick(1500)
@@ -610,14 +609,14 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
       // Background revalidation happens asynchronously
     }
 
     // Wait for background revalidation to complete
     await sleep(100)
-    equal(revalidationRequests, 1)
+    t.assert.strictEqual(revalidationRequests, 1)
 
     // Response is still stale, will trigger another background revalidation
     {
@@ -631,13 +630,13 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     // Wait for second background revalidation
     await sleep(100)
-    equal(revalidationRequests, 2)
+    t.assert.strictEqual(revalidationRequests, 2)
 
     // Third request triggers another background revalidation that returns updated content
     {
@@ -646,13 +645,13 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd') // Still stale initially
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd') // Still stale initially
     }
 
     // Wait for third background revalidation
     await sleep(100)
-    equal(revalidationRequests, 3)
+    t.assert.strictEqual(revalidationRequests, 3)
 
     // Now the cache should have updated content
     {
@@ -661,12 +660,12 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'updated')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'updated')
     }
   })
 
-  test('vary headers are present in revalidation request', async () => {
+  test('vary headers are present in revalidation request', async (t) => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
@@ -683,8 +682,8 @@ describe('Cache Interceptor', () => {
 
         if (ifNoneMatch) {
           revalidationRequests++
-          notEqual(req.headers.a, undefined)
-          notEqual(req.headers['b-mixed-case'], undefined)
+          t.assert.notEqual(req.headers.a, undefined)
+          t.assert.notEqual(req.headers['b-mixed-case'], undefined)
 
           res.statusCode = 304
           res.end()
@@ -711,8 +710,8 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    strictEqual(requestsToOrigin, 0)
-    strictEqual(revalidationRequests, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
+    t.assert.strictEqual(revalidationRequests, 0)
 
     const request = {
       origin: 'localhost',
@@ -732,8 +731,8 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      strictEqual(requestsToOrigin, 1)
-      strictEqual(await response.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await response.body.text(), 'asd')
     }
 
     clock.tick(1500)
@@ -750,16 +749,16 @@ describe('Cache Interceptor', () => {
         throw serverError
       }
 
-      strictEqual(requestsToOrigin, 1)
-      strictEqual(await response.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await response.body.text(), 'asd')
     }
 
     // Wait for background revalidation to complete
     await sleep(100)
-    strictEqual(revalidationRequests, 1)
+    t.assert.strictEqual(revalidationRequests, 1)
   })
 
-  test('unsafe methods cause resource to be purged from cache', async () => {
+  test('unsafe methods cause resource to be purged from cache', async (t) => {
     const server = createServer({ joinDuplicateHeaders: true }, (_, res) => res.end('asd')).listen(0)
 
     after(() => server.close())
@@ -793,7 +792,7 @@ describe('Cache Interceptor', () => {
     await client.request(request)
 
     // Sanity check
-    equal(deleteCalled, false)
+    t.assert.strictEqual(deleteCalled, false)
 
     // Make sure the common unsafe methods cause cache purges
     for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
@@ -804,11 +803,11 @@ describe('Cache Interceptor', () => {
         method
       })
 
-      equal(deleteCalled, true, method)
+      t.assert.strictEqual(deleteCalled, true, method)
     }
   })
 
-  test('unsafe methods aren\'t cached', async () => {
+  test('unsafe methods aren\'t cached', async (t) => {
     const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       res.setHeader('cache-control', 'public, s-maxage=1')
       res.end('')
@@ -823,7 +822,7 @@ describe('Cache Interceptor', () => {
             return undefined
           },
           createWriteStream (key) {
-            fail(key.method)
+            t.assert.fail(key.method)
           },
           delete () {}
         }
@@ -838,7 +837,7 @@ describe('Cache Interceptor', () => {
     }
   })
 
-  test('necessary headers are stripped', async () => {
+  test('necessary headers are stripped', async (t) => {
     const headers = [
       // Headers defined in the spec that we need to strip
       'connection',
@@ -886,27 +885,27 @@ describe('Cache Interceptor', () => {
 
     {
       const res = await client.request(request)
-      equal(requestToOrigin, 1)
-      equal(res.headers['should-not-be-stripped'], 'asd')
+      t.assert.strictEqual(requestToOrigin, 1)
+      t.assert.strictEqual(res.headers['should-not-be-stripped'], 'asd')
 
       for (const header of headers) {
-        equal(res.headers[header], 'asd')
+        t.assert.strictEqual(res.headers[header], 'asd')
       }
     }
 
     {
       const res = await client.request(request)
-      equal(requestToOrigin, 1)
-      equal(res.headers['should-not-be-stripped'], 'asd')
-      equal(res.headers['transfer-encoding'], undefined)
+      t.assert.strictEqual(requestToOrigin, 1)
+      t.assert.strictEqual(res.headers['should-not-be-stripped'], 'asd')
+      t.assert.strictEqual(res.headers['transfer-encoding'], undefined)
 
       for (const header of headers) {
-        equal(res.headers[header], undefined)
+        t.assert.strictEqual(res.headers[header], undefined)
       }
     }
   })
 
-  test('cacheByDefault', async () => {
+  test('cacheByDefault', async (t) => {
     let requestsToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       requestsToOrigin++
@@ -920,7 +919,7 @@ describe('Cache Interceptor', () => {
         cacheByDefault: 3600
       }))
 
-    equal(requestsToOrigin, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
 
     // Should hit the origin
     {
@@ -929,8 +928,8 @@ describe('Cache Interceptor', () => {
         path: '/',
         method: 'GET'
       })
-      equal(requestsToOrigin, 1)
-      equal(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
 
     // Should hit the cache
@@ -940,12 +939,12 @@ describe('Cache Interceptor', () => {
         path: '/',
         method: 'GET'
       })
-      equal(requestsToOrigin, 1)
-      equal(await res.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'asd')
     }
   })
 
-  test('stale-if-error (response)', async () => {
+  test('stale-if-error (response)', async (t) => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
     })
@@ -976,7 +975,7 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    strictEqual(requestsToOrigin, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
 
     /**
      * @type {import('../../types/dispatcher').default.RequestOptions}
@@ -990,18 +989,18 @@ describe('Cache Interceptor', () => {
     // Send first request. This will hit the origin and succeed
     {
       const response = await client.request(request)
-      equal(requestsToOrigin, 1)
-      equal(response.statusCode, 200)
-      equal(await response.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(response.statusCode, 200)
+      t.assert.strictEqual(await response.body.text(), 'asd')
     }
 
     // Send second request. It isn't stale yet, so this should be from the
     //  cache and succeed
     {
       const response = await client.request(request)
-      equal(requestsToOrigin, 1)
-      equal(response.statusCode, 200)
-      equal(await response.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(response.statusCode, 200)
+      t.assert.strictEqual(await response.body.text(), 'asd')
     }
 
     clock.tick(15000)
@@ -1010,9 +1009,9 @@ describe('Cache Interceptor', () => {
     //  fail but the response should still be served from cache.
     {
       const response = await client.request(request)
-      equal(requestsToOrigin, 2)
-      equal(response.statusCode, 200)
-      equal(await response.body.text(), 'asd')
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(response.statusCode, 200)
+      t.assert.strictEqual(await response.body.text(), 'asd')
     }
 
     clock.tick(25000)
@@ -1021,13 +1020,13 @@ describe('Cache Interceptor', () => {
     //  should see the error.
     {
       const response = await client.request(request)
-      equal(requestsToOrigin, 3)
-      equal(response.statusCode, 500)
+      t.assert.strictEqual(requestsToOrigin, 3)
+      t.assert.strictEqual(response.statusCode, 500)
     }
   })
 
   describe('Client-side directives', () => {
-    test('max-age', async () => {
+    test('max-age', async (t) => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
@@ -1051,7 +1050,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      strictEqual(requestsToOrigin, 0)
+      t.assert.strictEqual(requestsToOrigin, 0)
 
       /**
        * @type {import('../../types/dispatcher').default.RequestOptions}
@@ -1064,7 +1063,7 @@ describe('Cache Interceptor', () => {
 
       // Send first request to cache the response
       await client.request(request)
-      equal(requestsToOrigin, 1)
+      t.assert.strictEqual(requestsToOrigin, 1)
 
       // Send second request, should be served by the cache since it's within
       //  the window
@@ -1074,7 +1073,7 @@ describe('Cache Interceptor', () => {
           'cache-control': 'max-age=5'
         }
       })
-      equal(requestsToOrigin, 1)
+      t.assert.strictEqual(requestsToOrigin, 1)
 
       clock.tick(6000)
 
@@ -1085,10 +1084,10 @@ describe('Cache Interceptor', () => {
           'cache-control': 'max-age=5'
         }
       })
-      equal(requestsToOrigin, 2)
+      t.assert.strictEqual(requestsToOrigin, 2)
     })
 
-    test('max-stale', async () => {
+    test('max-stale', async (t) => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
@@ -1120,7 +1119,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      strictEqual(requestsToOrigin, 0)
+      t.assert.strictEqual(requestsToOrigin, 0)
 
       /**
        * @type {import('../../types/dispatcher').default.RequestOptions}
@@ -1132,8 +1131,8 @@ describe('Cache Interceptor', () => {
       }
 
       await client.request(request)
-      equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 0)
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(revalidationRequests, 0)
 
       clock.tick(1500)
 
@@ -1144,8 +1143,8 @@ describe('Cache Interceptor', () => {
           'cache-control': 'max-stale=5'
         }
       })
-      equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 0)
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(revalidationRequests, 0)
 
       // Send third request outside the max-stale threshold
       await client.request({
@@ -1154,14 +1153,14 @@ describe('Cache Interceptor', () => {
           'cache-control': 'max-stale=0'
         }
       })
-      equal(requestsToOrigin, 1)
+      t.assert.strictEqual(requestsToOrigin, 1)
 
       // Wait for background revalidation to complete
       await sleep(100)
-      equal(revalidationRequests, 1)
+      t.assert.strictEqual(revalidationRequests, 1)
     })
 
-    test('min-fresh', async () => {
+    test('min-fresh', async (t) => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
@@ -1185,7 +1184,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      strictEqual(requestsToOrigin, 0)
+      t.assert.strictEqual(requestsToOrigin, 0)
 
       /**
        * @type {import('../../types/dispatcher').default.RequestOptions}
@@ -1197,7 +1196,7 @@ describe('Cache Interceptor', () => {
       }
 
       await client.request(request)
-      equal(requestsToOrigin, 1)
+      t.assert.strictEqual(requestsToOrigin, 1)
 
       // Fast forward to response having 8sec ttl
       clock.tick(2000)
@@ -1209,7 +1208,7 @@ describe('Cache Interceptor', () => {
           'cache-control': 'min-fresh=5'
         }
       })
-      equal(requestsToOrigin, 1)
+      t.assert.strictEqual(requestsToOrigin, 1)
 
       // Fast forward again, response has 2sec ttl
       clock.tick(6000)
@@ -1220,10 +1219,10 @@ describe('Cache Interceptor', () => {
           'cache-control': 'min-fresh=5'
         }
       })
-      equal(requestsToOrigin, 2)
+      t.assert.strictEqual(requestsToOrigin, 2)
     })
 
-    test('no-cache', async () => {
+    test('no-cache', async (t) => {
       let requestsToOrigin = 0
       let revalidationRequests = 0
       const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -1248,7 +1247,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      strictEqual(requestsToOrigin, 0)
+      t.assert.strictEqual(requestsToOrigin, 0)
 
       // Send initial request. This should reach the origin
       await client.request({
@@ -1259,8 +1258,8 @@ describe('Cache Interceptor', () => {
           'cache-control': 'no-cache'
         }
       })
-      strictEqual(requestsToOrigin, 1)
-      strictEqual(revalidationRequests, 0)
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(revalidationRequests, 0)
 
       // Send second request, a validation request should be sent
       await client.request({
@@ -1271,8 +1270,8 @@ describe('Cache Interceptor', () => {
           'cache-control': 'no-cache'
         }
       })
-      strictEqual(requestsToOrigin, 1)
-      strictEqual(revalidationRequests, 1)
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(revalidationRequests, 1)
 
       // Send third request w/o no-cache, this should be handled by the cache
       await client.request({
@@ -1280,11 +1279,11 @@ describe('Cache Interceptor', () => {
         method: 'GET',
         path: '/'
       })
-      strictEqual(requestsToOrigin, 1)
-      strictEqual(revalidationRequests, 1)
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(revalidationRequests, 1)
     })
 
-    test('no-store', async () => {
+    test('no-store', async (t) => {
       const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         res.setHeader('cache-control', 'public, s-maxage=100')
         res.end('asd')
@@ -1292,7 +1291,7 @@ describe('Cache Interceptor', () => {
 
       const store = new MemoryCacheStore()
       store.createWriteStream = () => {
-        fail('shouln\'t have reached this')
+        t.assert.fail('shouln\'t have reached this')
       }
 
       const client = new Client(`http://localhost:${server.address().port}`)
@@ -1315,7 +1314,7 @@ describe('Cache Interceptor', () => {
       })
     })
 
-    test('only-if-cached', async () => {
+    test('only-if-cached', async (t) => {
       let requestsToOrigin = 0
       const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         res.setHeader('cache-control', 'public, s-maxage=100')
@@ -1339,7 +1338,7 @@ describe('Cache Interceptor', () => {
         method: 'GET',
         path: '/'
       })
-      equal(requestsToOrigin, 1)
+      t.assert.strictEqual(requestsToOrigin, 1)
 
       // Send second request, this shouldn't reach the origin
       await client.request({
@@ -1350,7 +1349,7 @@ describe('Cache Interceptor', () => {
           'cache-control': 'only-if-cached'
         }
       })
-      equal(requestsToOrigin, 1)
+      t.assert.strictEqual(requestsToOrigin, 1)
 
       // Send third request to an uncached resource, this should return a 504
       {
@@ -1362,7 +1361,7 @@ describe('Cache Interceptor', () => {
             'cache-control': 'only-if-cached'
           }
         })
-        equal(res.statusCode, 504)
+        t.assert.strictEqual(res.statusCode, 504)
       }
 
       // Send fourth request to an uncached resource w/ a , this should return a 504
@@ -1375,11 +1374,11 @@ describe('Cache Interceptor', () => {
             'cache-control': 'only-if-cached'
           }
         })
-        equal(res.statusCode, 504)
+        t.assert.strictEqual(res.statusCode, 504)
       }
     })
 
-    test('stale-if-error', async () => {
+    test('stale-if-error', async (t) => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
@@ -1410,7 +1409,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      strictEqual(requestsToOrigin, 0)
+      t.assert.strictEqual(requestsToOrigin, 0)
 
       // Send first request. This will hit the origin and succeed
       {
@@ -1419,9 +1418,9 @@ describe('Cache Interceptor', () => {
           path: '/',
           method: 'GET'
         })
-        equal(requestsToOrigin, 1)
-        equal(response.statusCode, 200)
-        equal(await response.body.text(), 'asd')
+        t.assert.strictEqual(requestsToOrigin, 1)
+        t.assert.strictEqual(response.statusCode, 200)
+        t.assert.strictEqual(await response.body.text(), 'asd')
       }
 
       // Send second request. It isn't stale yet, so this should be from the
@@ -1432,9 +1431,9 @@ describe('Cache Interceptor', () => {
           path: '/',
           method: 'GET'
         })
-        equal(requestsToOrigin, 1)
-        equal(response.statusCode, 200)
-        equal(await response.body.text(), 'asd')
+        t.assert.strictEqual(requestsToOrigin, 1)
+        t.assert.strictEqual(response.statusCode, 200)
+        t.assert.strictEqual(await response.body.text(), 'asd')
       }
 
       clock.tick(15000)
@@ -1450,13 +1449,13 @@ describe('Cache Interceptor', () => {
             'cache-control': 'stale-if-error=20'
           }
         })
-        equal(response.statusCode, 200)
-        equal(await response.body.text(), 'asd')
+        t.assert.strictEqual(response.statusCode, 200)
+        t.assert.strictEqual(await response.body.text(), 'asd')
       }
 
       // Wait for background revalidation to complete (which will fail with 500)
       await sleep(100)
-      equal(requestsToOrigin, 2)
+      t.assert.strictEqual(requestsToOrigin, 2)
 
       // Send a fourth request. Still within stale-while-revalidate but without stale-if-error,
       // should return stale since previous revalidation failed and stale-if-error applies
@@ -1466,13 +1465,13 @@ describe('Cache Interceptor', () => {
           path: '/',
           method: 'GET'
         })
-        equal(response.statusCode, 200)
-        equal(await response.body.text(), 'asd')
+        t.assert.strictEqual(response.statusCode, 200)
+        t.assert.strictEqual(await response.body.text(), 'asd')
       }
 
       // Wait for another background revalidation
       await sleep(100)
-      equal(requestsToOrigin, 3)
+      t.assert.strictEqual(requestsToOrigin, 3)
 
       clock.tick(25000)
 
@@ -1487,8 +1486,8 @@ describe('Cache Interceptor', () => {
             'cache-control': 'stale-if-error=20'
           }
         })
-        equal(requestsToOrigin, 4)
-        equal(response.statusCode, 500)
+        t.assert.strictEqual(requestsToOrigin, 4)
+        t.assert.strictEqual(response.statusCode, 500)
       }
     })
   })
@@ -1503,7 +1502,7 @@ describe('Cache Interceptor', () => {
   ]
 
   for (const { code, body } of cacheableStatusCodes) {
-    test(`caches ${code} response with cache headers`, async () => {
+    test(`caches ${code} response with cache headers`, async (t) => {
       let requestsToOrigin = 0
       const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         requestsToOrigin++
@@ -1522,7 +1521,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      equal(requestsToOrigin, 0)
+      t.assert.strictEqual(requestsToOrigin, 0)
 
       const request = {
         origin: 'localhost',
@@ -1533,17 +1532,17 @@ describe('Cache Interceptor', () => {
       // First request should hit the origin
       {
         const res = await client.request(request)
-        equal(requestsToOrigin, 1)
-        equal(res.statusCode, code)
-        strictEqual(await res.body.text(), body)
+        t.assert.strictEqual(requestsToOrigin, 1)
+        t.assert.strictEqual(res.statusCode, code)
+        t.assert.strictEqual(await res.body.text(), body)
       }
 
       // Second request should be served from cache
       {
         const res = await client.request(request)
-        equal(requestsToOrigin, 1) // Should still be 1 (cached)
-        equal(res.statusCode, code)
-        strictEqual(await res.body.text(), body)
+        t.assert.strictEqual(requestsToOrigin, 1) // Should still be 1 (cached)
+        t.assert.strictEqual(res.statusCode, code)
+        t.assert.strictEqual(await res.body.text(), body)
       }
     })
   }
@@ -1556,7 +1555,7 @@ describe('Cache Interceptor', () => {
   ]
 
   for (const { code, body } of nonHeuristicallyCacheableStatusCodes) {
-    test(`does not cache non-heuristically cacheable status ${code} without explicit directive`, async () => {
+    test(`does not cache non-heuristically cacheable status ${code} without explicit directive`, async (t) => {
       let requestsToOrigin = 0
       const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         requestsToOrigin++
@@ -1578,7 +1577,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      equal(requestsToOrigin, 0)
+      t.assert.strictEqual(requestsToOrigin, 0)
 
       const request = {
         origin: 'localhost',
@@ -1589,22 +1588,22 @@ describe('Cache Interceptor', () => {
       // First request should hit the origin
       {
         const res = await client.request(request)
-        equal(requestsToOrigin, 1)
-        equal(res.statusCode, code)
-        strictEqual(await res.body.text(), body)
+        t.assert.strictEqual(requestsToOrigin, 1)
+        t.assert.strictEqual(res.statusCode, code)
+        t.assert.strictEqual(await res.body.text(), body)
       }
 
       // Second request should also hit the origin (not cached)
       {
         const res = await client.request(request)
-        equal(requestsToOrigin, 2) // Should be 2 (not cached)
-        equal(res.statusCode, code)
-        strictEqual(await res.body.text(), body)
+        t.assert.strictEqual(requestsToOrigin, 2) // Should be 2 (not cached)
+        t.assert.strictEqual(res.statusCode, code)
+        t.assert.strictEqual(await res.body.text(), body)
       }
     })
   }
 
-  test('discriminates caching of range requests, or does not cache them', async () => {
+  test('discriminates caching of range requests, or does not cache them', async (t) => {
     let requestsToOrigin = 0
     const body = 'Fake range request response'
     const code = 206
@@ -1625,7 +1624,7 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    equal(requestsToOrigin, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
 
     const request = {
       origin: 'localhost',
@@ -1639,22 +1638,22 @@ describe('Cache Interceptor', () => {
     // First request should hit the origin
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      equal(res.statusCode, code)
-      strictEqual(await res.body.text(), body)
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(res.statusCode, code)
+      t.assert.strictEqual(await res.body.text(), body)
     }
 
     // Second request with different range should hit the origin too
     request.headers.range = 'bytes=5-'
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 2)
-      equal(res.statusCode, code)
-      strictEqual(await res.body.text(), body)
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(res.statusCode, code)
+      t.assert.strictEqual(await res.body.text(), body)
     }
   })
 
-  test('discriminates caching of conditionnal requests (if-none-match), or does not cache them', async () => {
+  test('discriminates caching of conditionnal requests (if-none-match), or does not cache them', async (t) => {
     let requestsToOrigin = 0
     const body = ''
     const code = 304
@@ -1675,7 +1674,7 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    equal(requestsToOrigin, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
 
     const request = {
       origin: 'localhost',
@@ -1689,22 +1688,22 @@ describe('Cache Interceptor', () => {
     // First request should hit the origin
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      equal(res.statusCode, code)
-      strictEqual(await res.body.text(), body)
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(res.statusCode, code)
+      t.assert.strictEqual(await res.body.text(), body)
     }
 
     // Second request with different etag should hit the origin too
     request.headers['if-none-match'] = 'another-etag'
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 2)
-      equal(res.statusCode, code)
-      strictEqual(await res.body.text(), body)
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(res.statusCode, code)
+      t.assert.strictEqual(await res.body.text(), body)
     }
   })
 
-  test('discriminates caching of conditionnal requests (if-modified-since), or does not cache them', async () => {
+  test('discriminates caching of conditionnal requests (if-modified-since), or does not cache them', async (t) => {
     let requestsToOrigin = 0
     const body = ''
     const code = 304
@@ -1725,7 +1724,7 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    equal(requestsToOrigin, 0)
+    t.assert.strictEqual(requestsToOrigin, 0)
 
     const request = {
       origin: 'localhost',
@@ -1739,22 +1738,22 @@ describe('Cache Interceptor', () => {
     // First request should hit the origin
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      equal(res.statusCode, code)
-      strictEqual(await res.body.text(), body)
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(res.statusCode, code)
+      t.assert.strictEqual(await res.body.text(), body)
     }
 
     // Second request with different since should hit the origin too
     request.headers['if-modified-since'] = new Date(0).toUTCString()
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 2)
-      equal(res.statusCode, code)
-      strictEqual(await res.body.text(), body)
+      t.assert.strictEqual(requestsToOrigin, 2)
+      t.assert.strictEqual(res.statusCode, code)
+      t.assert.strictEqual(await res.body.text(), body)
     }
   })
 
-  test('stale-while-revalidate returns stale immediately and revalidates in background (RFC 5861)', async () => {
+  test('stale-while-revalidate returns stale immediately and revalidates in background (RFC 5861)', async (t) => {
     let requestsToOrigin = 0
     let revalidationRequests = 0
     let serverResponse = 'original-response'
@@ -1794,8 +1793,8 @@ describe('Cache Interceptor', () => {
     // Send initial request to cache the response
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'original-response')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'original-response')
     }
 
     // Wait for response to become stale
@@ -1808,13 +1807,13 @@ describe('Cache Interceptor', () => {
       const responseTime = Date.now() - startTime
 
       // Should return stale content immediately (< 50ms)
-      equal(res.statusCode, 200)
-      strictEqual(await res.body.text(), 'original-response')
-      equal(requestsToOrigin, 1) // No additional origin requests yet
+      t.assert.strictEqual(res.statusCode, 200)
+      t.assert.strictEqual(await res.body.text(), 'original-response')
+      t.assert.strictEqual(requestsToOrigin, 1) // No additional origin requests yet
 
       // Response should be immediate (RFC 5861 requirement)
       if (responseTime > 100) {
-        fail(`stale-while-revalidate response took ${responseTime}ms, should be < 100ms`)
+        t.assert.fail(`stale-while-revalidate response took ${responseTime}ms, should be < 100ms`)
       }
     }
 
@@ -1822,10 +1821,10 @@ describe('Cache Interceptor', () => {
     await sleep(500)
 
     // Verify that revalidation occurred in background
-    equal(revalidationRequests, 1, 'Background revalidation should have occurred')
+    t.assert.strictEqual(revalidationRequests, 1, 'Background revalidation should have occurred')
   })
 
-  test('stale-while-revalidate updates cache after background revalidation', async () => {
+  test('stale-while-revalidate updates cache after background revalidation', async (t) => {
     let requestsToOrigin = 0
     let revalidationRequests = 0
 
@@ -1863,8 +1862,8 @@ describe('Cache Interceptor', () => {
     // Initial request
     {
       const res = await client.request(request)
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'original-response')
+      t.assert.strictEqual(requestsToOrigin, 1)
+      t.assert.strictEqual(await res.body.text(), 'original-response')
     }
 
     // Wait for staleness
@@ -1873,19 +1872,19 @@ describe('Cache Interceptor', () => {
     // First stale request - gets stale content immediately
     {
       const res = await client.request(request)
-      strictEqual(await res.body.text(), 'original-response')
+      t.assert.strictEqual(await res.body.text(), 'original-response')
     }
 
     // Wait for background revalidation
     await sleep(500)
-    equal(revalidationRequests, 1)
+    t.assert.strictEqual(revalidationRequests, 1)
 
     // Second stale request - should get updated content from cache
     // (still within stale-while-revalidate window)
     {
       const res = await client.request(request)
-      strictEqual(await res.body.text(), 'updated-response')
-      equal(requestsToOrigin, 1) // Still only one origin request
+      t.assert.strictEqual(await res.body.text(), 'updated-response')
+      t.assert.strictEqual(requestsToOrigin, 1) // Still only one origin request
     }
   })
 })
