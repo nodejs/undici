@@ -1,15 +1,14 @@
 'use strict'
 
-const assert = require('node:assert')
 const { once } = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
 const { EventSource } = require('../../lib/web/eventsource/eventsource')
 
 describe('EventSource - constructor stringify', () => {
-  test('should stringify argument', async () => {
+  test('should stringify argument', async (t) => {
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      assert.strictEqual(req.headers.connection, 'keep-alive')
+      t.assert.strictEqual(req.headers.connection, 'keep-alive')
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.end()
     })
@@ -24,7 +23,7 @@ describe('EventSource - constructor stringify', () => {
     }
 
     eventSourceInstance.onerror = () => {
-      assert.fail('Should not have errored')
+      t.assert.fail('Should not have errored')
     }
   })
 })
