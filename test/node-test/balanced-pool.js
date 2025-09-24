@@ -1,61 +1,59 @@
 'use strict'
 
 const { describe, test } = require('node:test')
-const assert = require('node:assert/strict')
 const { BalancedPool, Pool, Client, errors } = require('../..')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
-const { tspl } = require('@matteo.collina/tspl')
 
 test('throws when factory is not a function', (t) => {
-  const p = tspl(t, { plan: 2 })
+  t.plan(2)
 
   try {
     new BalancedPool(null, { factory: '' }) // eslint-disable-line
   } catch (err) {
-    p.ok(err instanceof errors.InvalidArgumentError)
-    p.strictEqual(err.message, 'factory must be a function.')
+    t.assert.ok(err instanceof errors.InvalidArgumentError)
+    t.assert.strictEqual(err.message, 'factory must be a function.')
   }
 })
 
 test('add/remove upstreams', (t) => {
-  const p = tspl(t, { plan: 7 })
+  t.plan(7)
 
   const upstream01 = 'http://localhost:1'
   const upstream02 = 'http://localhost:2'
 
   const pool = new BalancedPool()
-  p.deepStrictEqual(pool.upstreams, [])
+  t.assert.deepStrictEqual(pool.upstreams, [])
 
   // try to remove non-existent upstream
   pool.removeUpstream(upstream01)
-  p.deepStrictEqual(pool.upstreams, [])
+  t.assert.deepStrictEqual(pool.upstreams, [])
 
   pool.addUpstream(upstream01)
-  p.deepStrictEqual(pool.upstreams, [upstream01])
+  t.assert.deepStrictEqual(pool.upstreams, [upstream01])
 
   // try to add the same upstream
   pool.addUpstream(upstream01)
-  p.deepStrictEqual(pool.upstreams, [upstream01])
+  t.assert.deepStrictEqual(pool.upstreams, [upstream01])
 
   pool.addUpstream(upstream02)
-  p.deepStrictEqual(pool.upstreams, [upstream01, upstream02])
+  t.assert.deepStrictEqual(pool.upstreams, [upstream01, upstream02])
 
   pool.removeUpstream(upstream02)
-  p.deepStrictEqual(pool.upstreams, [upstream01])
+  t.assert.deepStrictEqual(pool.upstreams, [upstream01])
 
   pool.removeUpstream(upstream01)
-  p.deepStrictEqual(pool.upstreams, [])
+  t.assert.deepStrictEqual(pool.upstreams, [])
 })
 
 test('basic get', async (t) => {
-  const p = tspl(t, { plan: 16 })
+  t.plan(16)
 
   let server1Called = 0
   const server1 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     server1Called++
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
@@ -66,8 +64,8 @@ test('basic get', async (t) => {
   let server2Called = 0
   const server2 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     server2Called++
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
@@ -82,32 +80,32 @@ test('basic get', async (t) => {
 
   {
     const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
-    p.strictEqual(statusCode, 200)
-    p.strictEqual(headers['content-type'], 'text/plain')
-    p.strictEqual('hello', await body.text())
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.strictEqual(headers['content-type'], 'text/plain')
+    t.assert.strictEqual('hello', await body.text())
   }
 
   {
     const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
-    p.strictEqual(statusCode, 200)
-    p.strictEqual(headers['content-type'], 'text/plain')
-    p.strictEqual('hello', await body.text())
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.strictEqual(headers['content-type'], 'text/plain')
+    t.assert.strictEqual('hello', await body.text())
   }
 
-  p.strictEqual(server1Called, 1)
-  p.strictEqual(server2Called, 1)
+  t.assert.strictEqual(server1Called, 1)
+  t.assert.strictEqual(server2Called, 1)
 
-  p.strictEqual(client.destroyed, false)
-  p.strictEqual(client.closed, false)
+  t.assert.strictEqual(client.destroyed, false)
+  t.assert.strictEqual(client.closed, false)
   await client.close()
-  p.strictEqual(client.destroyed, true)
-  p.strictEqual(client.closed, true)
+  t.assert.strictEqual(client.destroyed, true)
+  t.assert.strictEqual(client.closed, true)
 })
 
-test('connect/disconnect event(s)', async (t) => {
+test('connect/disconnect event(s)', (t, done) => {
   const clients = 2
 
-  const p = tspl(t, { plan: clients * 5 })
+  t.plan(clients * 5)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
@@ -119,6 +117,7 @@ test('connect/disconnect event(s)', async (t) => {
   t.after(server.close.bind(server))
 
   server.listen(0, () => {
+    let callCount = 0
     const pool = new BalancedPool(`http://localhost:${server.address().port}`, {
       connections: clients,
       keepAliveTimeoutThreshold: 100
@@ -126,12 +125,13 @@ test('connect/disconnect event(s)', async (t) => {
     t.after(() => pool.close.bind(pool)())
 
     pool.on('connect', (origin, [pool, pool2, client]) => {
-      p.ok(client instanceof Client)
+      t.assert.ok(client instanceof Client)
     })
     pool.on('disconnect', (origin, [pool, pool2, client], error) => {
-      p.ok(client instanceof Client)
-      p.ok(error instanceof errors.InformationalError)
-      p.strictEqual(error.code, 'UND_ERR_INFO')
+      t.assert.ok(client instanceof Client)
+      t.assert.ok(error instanceof errors.InformationalError)
+      t.assert.strictEqual(error.code, 'UND_ERR_INFO')
+      if (++callCount === clients) { done() }
     })
 
     for (let i = 0; i < clients; i++) {
@@ -139,21 +139,19 @@ test('connect/disconnect event(s)', async (t) => {
         path: '/',
         method: 'GET'
       }, (err, { headers, body }) => {
-        p.ifError(err)
+        t.assert.ifError(err)
         body.resume()
       })
     }
   })
-
-  await p.completed
 })
 
-test('busy', async (t) => {
-  const p = tspl(t, { plan: 8 * 6 + 2 + 1 })
+test('busy', (t, done) => {
+  t.plan(8 * 6 + 2 + 1)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
@@ -165,34 +163,35 @@ test('busy', async (t) => {
       pipelining: 2
     })
     client.on('drain', () => {
-      p.ok(1)
+      t.assert.ok(1)
     })
     client.on('connect', () => {
-      p.ok(1)
+      t.assert.ok(1)
     })
     t.after(client.destroy.bind(client))
 
     for (let n = 1; n <= 8; ++n) {
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
-        p.ifError(err)
-        p.strictEqual(statusCode, 200)
-        p.strictEqual(headers['content-type'], 'text/plain')
+        t.assert.ifError(err)
+        t.assert.strictEqual(statusCode, 200)
+        t.assert.strictEqual(headers['content-type'], 'text/plain')
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+          t.assert.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+          if (n === 8) {
+            done()
+          }
         })
       })
     }
   })
-
-  await p.completed
 })
 
 test('factory option with basic get request', async (t) => {
-  const p = tspl(t, { plan: 12 })
+  t.plan(12)
 
   let factoryCalled = 0
   const opts = {
@@ -207,8 +206,8 @@ test('factory option with basic get request', async (t) => {
   let serverCalled = 0
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     serverCalled++
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
@@ -218,37 +217,37 @@ test('factory option with basic get request', async (t) => {
 
   client.addUpstream(`http://localhost:${server.address().port}`)
 
-  p.deepStrictEqual(client.upstreams, [`http://localhost:${server.address().port}`])
+  t.assert.deepStrictEqual(client.upstreams, [`http://localhost:${server.address().port}`])
 
   t.after(client.destroy.bind(client))
 
   {
     const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
-    p.strictEqual(statusCode, 200)
-    p.strictEqual(headers['content-type'], 'text/plain')
-    p.strictEqual('hello', await body.text())
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.strictEqual(headers['content-type'], 'text/plain')
+    t.assert.strictEqual('hello', await body.text())
   }
 
-  p.strictEqual(serverCalled, 1)
-  p.strictEqual(factoryCalled, 1)
+  t.assert.strictEqual(serverCalled, 1)
+  t.assert.strictEqual(factoryCalled, 1)
 
-  p.strictEqual(client.destroyed, false)
-  p.strictEqual(client.closed, false)
+  t.assert.strictEqual(client.destroyed, false)
+  t.assert.strictEqual(client.closed, false)
   await client.close()
-  p.strictEqual(client.destroyed, true)
-  p.strictEqual(client.closed, true)
+  t.assert.strictEqual(client.destroyed, true)
+  t.assert.strictEqual(client.closed, true)
 })
 
 test('throws when upstream is missing', async (t) => {
-  const p = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const pool = new BalancedPool()
 
   try {
     await pool.request({ path: '/', method: 'GET' })
   } catch (e) {
-    p.ok(e instanceof errors.BalancedPoolMissingUpstreamError)
-    p.strictEqual(e.message, 'No upstream has been added to the BalancedPool')
+    t.assert.ok(e instanceof errors.BalancedPoolMissingUpstreamError)
+    t.assert.strictEqual(e.message, 'No upstream has been added to the BalancedPool')
   }
 })
 
@@ -532,10 +531,10 @@ describe('weighted round robin', () => {
         return acc + server.requestsCount
       }, 0)
 
-      assert.strictEqual(totalRequests, iterations)
+      t.assert.strictEqual(totalRequests, iterations)
 
-      assert.strictEqual(connectionRefusedErrors, expectedConnectionRefusedErrors)
-      assert.strictEqual(socketErrors, expectedSocketErrors)
+      t.assert.strictEqual(connectionRefusedErrors, expectedConnectionRefusedErrors)
+      t.assert.strictEqual(socketErrors, expectedSocketErrors)
 
       if (expectedRatios) {
         const ratios = servers.reduce((acc, el) => {
@@ -544,11 +543,11 @@ describe('weighted round robin', () => {
         }, {})
         requestLog.map(el => ratios[el[0]]++)
 
-        assert.deepStrictEqual(Object.keys(ratios).map(k => ratios[k] / iterations), expectedRatios)
+        t.assert.deepStrictEqual(Object.keys(ratios).map(k => ratios[k] / iterations), expectedRatios)
       }
 
       if (expected) {
-        assert.deepStrictEqual(requestLog.slice(0, expected.length), expected)
+        t.assert.deepStrictEqual(requestLog.slice(0, expected.length), expected)
       }
 
       await client.close()
