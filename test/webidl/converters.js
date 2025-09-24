@@ -43,7 +43,7 @@ test('sequence', (t) => {
   }, TypeError, 'invalid generator')
 })
 
-describe('webidl.dictionaryConverter', (t) => {
+describe('webidl.dictionaryConverter', () => {
   test('arguments', (t) => {
     const converter = webidl.dictionaryConverter([])
 
