@@ -1,7 +1,6 @@
 'use strict'
 
 const { describe, test } = require('node:test')
-const assert = require('node:assert')
 const { webidl } = require('../../lib/web/webidl')
 
 test('webidl.interfaceConverter', (t) => {
@@ -10,11 +9,11 @@ test('webidl.interfaceConverter', (t) => {
 
   const converter = webidl.interfaceConverter(webidl.util.MakeTypeAssertion(A))
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     converter(new B(), 'converter', 'converter')
   }, TypeError)
 
-  assert.doesNotThrow(() => {
+  t.assert.doesNotThrow(() => {
     converter(new A(), 'converter', 'converter')
   })
 
@@ -27,13 +26,13 @@ test('webidl.interfaceConverter', (t) => {
 
     const blobConverter = webidl.interfaceConverter(webidl.is.Blob, 'Blob')
 
-    assert.throws(() => blobConverter(new V()))
-    assert.equal(webidl.is.Blob(new V()), false)
+    t.assert.throws(() => blobConverter(new V()))
+    t.assert.strictEqual(webidl.is.Blob(new V()), false)
   })
 })
 
 describe('webidl.dictionaryConverter', () => {
-  test('extraneous keys are provided', () => {
+  test('extraneous keys are provided', (t) => {
     const converter = webidl.dictionaryConverter([
       {
         key: 'key',
@@ -43,7 +42,7 @@ describe('webidl.dictionaryConverter', () => {
       }
     ])
 
-    assert.deepStrictEqual(
+    t.assert.deepStrictEqual(
       converter({
         a: 'b',
         key: 'string',
@@ -56,7 +55,7 @@ describe('webidl.dictionaryConverter', () => {
     )
   })
 
-  test('defaultValue with key = null', () => {
+  test('defaultValue with key = null', (t) => {
     const converter = webidl.dictionaryConverter([
       {
         key: 'key',
@@ -65,10 +64,10 @@ describe('webidl.dictionaryConverter', () => {
       }
     ])
 
-    assert.deepStrictEqual(converter({ key: null }, 'converter', 'converter'), { key: 0 })
+    t.assert.deepStrictEqual(converter({ key: null }, 'converter', 'converter'), { key: 0 })
   })
 
-  test('no defaultValue and optional', () => {
+  test('no defaultValue and optional', (t) => {
     const converter = webidl.dictionaryConverter([
       {
         key: 'key',
@@ -76,6 +75,6 @@ describe('webidl.dictionaryConverter', () => {
       }
     ])
 
-    assert.deepStrictEqual(converter({ a: 'b', c: 'd' }, 'converter', 'converter'), {})
+    t.assert.deepStrictEqual(converter({ a: 'b', c: 'd' }, 'converter', 'converter'), {})
   })
 })
