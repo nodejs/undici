@@ -19,7 +19,12 @@ declare namespace Interceptors {
 
   // DNS interceptor
   export type DNSInterceptorRecord = { address: string, ttl: number, family: 4 | 6 }
-  export type DNSInterceptorOriginRecords = { 4: { ips: DNSInterceptorRecord[] } | null, 6: { ips: DNSInterceptorRecord[] } | null }
+  export type DNSInterceptorOriginRecords = { records: { 4: { ips: DNSInterceptorRecord[] } | null, 6: { ips: DNSInterceptorRecord[] } | null } }
+  export type DNSInterceptorCache = {
+    size: number
+    get(origin: string, options?: Record<string, any>): DNSInterceptorOriginRecords | null
+    set(origin: string, records: DNSInterceptorOriginRecords | null, options?: Record<string, any>): void
+  }
   export type DNSInterceptorOpts = {
     maxTTL?: number
     maxItems?: number
@@ -27,6 +32,7 @@ declare namespace Interceptors {
     pick?: (origin: URL, records: DNSInterceptorOriginRecords, affinity: 4 | 6) => DNSInterceptorRecord
     dualStack?: boolean
     affinity?: 4 | 6
+    cache?: DNSInterceptorCache
   }
 
   export function dump (opts?: DumpInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
