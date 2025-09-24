@@ -147,3 +147,59 @@ const defaultDispatcher = new Agent({
 
 setGlobalDispatcher(defaultDispatcher) // Add these interceptors to all `fetch` and Undici `request` calls
 ```
+
+## Connecting via Unix domain sockets (UDS)
+
+### request() over UDS (per-call dispatcher)
+```js
+const { Agent, request } = require('undici')
+
+async function requestOverUds () {
+  const uds = new Agent({ connect: { socketPath: '/var/run/docker.sock' } })
+  try {
+    const { statusCode, headers, body } = await request('http://localhost/_ping', {
+      dispatcher: uds
+    })
+    console.log(statusCode, headers, await body.text())
+  } finally {
+    await uds.close()
+  }
+}
+```
+
+### fetch() over UDS (per-call dispatcher)
+```js
+const { Agent, fetch } = require('undici')
+
+async function fetchOverUds () {
+  const uds = new Agent({ connect: { socketPath: '/var/run/docker.sock' } })
+  try {
+    const res = await fetch('http://localhost/containers/json', { dispatcher: uds })
+    console.log(res.status, await res.text())
+  } finally {
+    await uds.close()
+  }
+}
+```
+
+### Global dispatcher (apply to all request()/fetch())
+```js
+const { Agent, setGlobalDispatcher } = require('undici')
+
+setGlobalDispatcher(new Agent({ connect: { socketPath: '/var/run/docker.sock' } }))
+
+// Now all `request`/`fetch` calls using http(s)://localhost will go over the Unix socket
+```
+
+### HTTPS over UDS (optional)
+```js
+const { Agent, fetch } = require('undici')
+
+const udsTls = new Agent({
+  connect: { socketPath: '/var/run/my.sock', tls: { rejectUnauthorized: false } }
+})
+
+const res = await fetch('https://localhost/secure', { dispatcher: udsTls })
+console.log(res.status)
+await udsTls.close()
+```
