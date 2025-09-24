@@ -3,17 +3,18 @@
 const { test } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
+const { once } = require('node:events')
 
 test('check cloned', async (t) => {
-  const assert = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = new WebSocketServer({ port: 0 })
   const buffer = new Uint8Array([0x61])
 
   server.on('connection', (ws) => {
     ws.on('message', (data) => {
-      assert.deepStrictEqual(data, Buffer.from([0x61]))
+      t.assert.deepStrictEqual(data, Buffer.from([0x61]))
+      ws.close()
     })
   })
 
@@ -30,5 +31,5 @@ test('check cloned', async (t) => {
     ws.close()
   })
 
-  await assert.completed
+  await once(ws, 'close')
 })
