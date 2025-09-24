@@ -3,7 +3,6 @@
 const { test } = require('node:test')
 const { spawn } = require('node:child_process')
 const { join } = require('node:path')
-const { tspl } = require('@matteo.collina/tspl')
 
 // eslint-disable-next-line no-control-regex
 const removeEscapeColorsRE = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g
@@ -11,8 +10,8 @@ const removeEscapeColorsRE = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4}
 const isNode23Plus = process.versions.node.split('.')[0] >= 23
 const isCITGM = !!process.env.CITGM
 
-test('debug#websocket', { skip: !process.versions.icu || isCITGM || isNode23Plus }, async t => {
-  const assert = tspl(t, { plan: 6 })
+test('debug#websocket', { skip: !process.versions.icu || isCITGM || isNode23Plus }, (t, done) => {
+  t.plan(6)
   const child = spawn(
     process.execPath,
     [
@@ -40,17 +39,16 @@ test('debug#websocket', { skip: !process.versions.icu || isCITGM || isNode23Plus
   })
   child.stderr.on('end', () => {
     const lines = extractLines(chunks)
-    assert.strictEqual(lines.length, assertions.length)
+    t.assert.strictEqual(lines.length, assertions.length)
     for (let i = 1; i < lines.length; i++) {
-      assert.match(lines[i], assertions[i])
+      t.assert.match(lines[i], assertions[i])
     }
+    done()
   })
-
-  await assert.completed
 })
 
-test('debug#fetch', { skip: isCITGM || isNode23Plus }, async t => {
-  const assert = tspl(t, { plan: 7 })
+test('debug#fetch', { skip: isCITGM || isNode23Plus }, (t, done) => {
+  t.plan(7)
   const child = spawn(
     process.execPath,
     [
@@ -77,18 +75,17 @@ test('debug#fetch', { skip: isCITGM || isNode23Plus }, async t => {
   })
   child.stderr.on('end', () => {
     const lines = extractLines(chunks)
-    assert.strictEqual(lines.length, assertions.length)
+    t.assert.strictEqual(lines.length, assertions.length)
     for (let i = 0; i < lines.length; i++) {
-      assert.match(lines[i], assertions[i])
+      t.assert.match(lines[i], assertions[i])
     }
+    done()
   })
-
-  await assert.completed
 })
 
-test('debug#undici', { skip: isCITGM || isNode23Plus }, async t => {
+test('debug#undici', { skip: isCITGM || isNode23Plus }, (t, done) => {
   // Due to Node.js webpage redirect
-  const assert = tspl(t, { plan: 7 })
+  t.plan(7)
   const child = spawn(
     process.execPath,
     [
@@ -117,13 +114,12 @@ test('debug#undici', { skip: isCITGM || isNode23Plus }, async t => {
   })
   child.stderr.on('end', () => {
     const lines = extractLines(chunks)
-    assert.strictEqual(lines.length, assertions.length)
+    t.assert.strictEqual(lines.length, assertions.length)
     for (let i = 0; i < lines.length; i++) {
-      assert.match(lines[i], assertions[i])
+      t.assert.match(lines[i], assertions[i])
     }
+    done()
   })
-
-  await assert.completed
 })
 
 function extractLines (chunks) {
