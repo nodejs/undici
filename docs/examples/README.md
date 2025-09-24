@@ -181,3 +181,7 @@ async function fetchOverUds () {
   }
 }
 ```
+
+> Note
+> - `connect.socketPath` must be the exact filesystem path your server listens on (e.g., Docker: `/var/run/docker.sock`)..
+> - Not supported on Windows (uses named pipes instead).
