@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { Response } = require('../..')
 
 // https://github.com/nodejs/undici/issues/3676
@@ -20,5 +19,5 @@ test('Leading and trailing CRLFs are ignored', async (t) => {
     }
   })
 
-  await assert.doesNotReject(response.formData())
+  await t.assert.doesNotReject(response.formData())
 })

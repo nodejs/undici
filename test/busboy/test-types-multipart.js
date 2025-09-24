@@ -1,8 +1,7 @@
 'use strict'
 
-const assert = require('node:assert')
 const { inspect } = require('node:util')
-const { describe } = require('node:test')
+const { test } = require('node:test')
 const { Response } = require('../..')
 
 const active = new Map()
@@ -563,7 +562,7 @@ const tests = [
   }
 ]
 
-describe('FormData parsing tests', async (t) => {
+test('FormData parsing tests', async (t) => {
   for (const test of tests) {
     active.set(test, 1)
 
@@ -618,7 +617,7 @@ describe('FormData parsing tests', async (t) => {
 
     active.delete(test)
 
-    assert.deepStrictEqual(
+    t.assert.deepStrictEqual(
       results,
       test.expected,
       `[${what}] Results mismatch.\n` +
