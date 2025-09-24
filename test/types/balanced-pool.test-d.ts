@@ -1,6 +1,6 @@
 import { Duplex, Readable, Writable } from 'node:stream'
 import { expectAssignable } from 'tsd'
-import { Dispatcher, BalancedPool, Client } from '../..'
+import { Dispatcher, BalancedPool, Client, Pool } from '../..'
 import { URL } from 'node:url'
 
 expectAssignable<BalancedPool>(new BalancedPool(''))
@@ -24,6 +24,8 @@ expectAssignable<BalancedPool>(new BalancedPool([new URL('http://localhost:4242'
   expectAssignable<BalancedPool>(pool.removeUpstream('http://www.nodejs.org'))
   expectAssignable<BalancedPool>(pool.addUpstream(new URL('http://www.nodejs.org')))
   expectAssignable<BalancedPool>(pool.removeUpstream(new URL('http://www.nodejs.org')))
+  expectAssignable<Pool | undefined>(pool.getUpstream('http://www.nodejs.org'))
+  expectAssignable<Pool | undefined>(pool.getUpstream(new URL('http://www.nodejs.org')))
   expectAssignable<string[]>(pool.upstreams)
 
   // request
