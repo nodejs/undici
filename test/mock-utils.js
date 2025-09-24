@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, describe } = require('node:test')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 const {
@@ -14,7 +13,7 @@ const {
 } = require('../lib/mock/mock-utils')
 
 test('deleteMockDispatch - should do nothing if not able to find mock dispatch', (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const key = {
     url: 'url',
@@ -23,12 +22,12 @@ test('deleteMockDispatch - should do nothing if not able to find mock dispatch',
     body: 'body'
   }
 
-  t.doesNotThrow(() => deleteMockDispatch([], key))
+  t.assert.doesNotThrow(() => deleteMockDispatch([], key))
 })
 
 describe('getMockDispatch', () => {
   test('it should find a mock dispatch', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const dispatches = [
       {
         path: 'path',
@@ -41,7 +40,7 @@ describe('getMockDispatch', () => {
       path: 'path',
       method: 'method'
     })
-    t.deepStrictEqual(result, {
+    t.assert.deepStrictEqual(result, {
       path: 'path',
       method: 'method',
       consumed: false
@@ -49,7 +48,7 @@ describe('getMockDispatch', () => {
   })
 
   test('it should skip consumed dispatches', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const dispatches = [
       {
         path: 'path',
@@ -67,7 +66,7 @@ describe('getMockDispatch', () => {
       path: 'path',
       method: 'method'
     })
-    t.deepStrictEqual(result, {
+    t.assert.deepStrictEqual(result, {
       path: 'path',
       method: 'method',
       consumed: false
@@ -75,7 +74,7 @@ describe('getMockDispatch', () => {
   })
 
   test('it should throw if dispatch not found', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const dispatches = [
       {
         path: 'path',
@@ -84,14 +83,14 @@ describe('getMockDispatch', () => {
       }
     ]
 
-    t.throws(() => getMockDispatch(dispatches, {
+    t.assert.throws(() => getMockDispatch(dispatches, {
       path: 'wrong',
       method: 'wrong'
     }), new MockNotMatchedError('Mock dispatch not matched for path \'wrong\''))
   })
 
   test('it should throw if no dispatch matches method', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const dispatches = [
       {
         path: 'path',
@@ -100,14 +99,14 @@ describe('getMockDispatch', () => {
       }
     ]
 
-    t.throws(() => getMockDispatch(dispatches, {
+    t.assert.throws(() => getMockDispatch(dispatches, {
       path: 'path',
       method: 'wrong'
     }), new MockNotMatchedError('Mock dispatch not matched for method \'wrong\' on path \'path\''))
   })
 
   test('it should throw if no dispatch matches body', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const dispatches = [
       {
         path: 'path',
@@ -117,7 +116,7 @@ describe('getMockDispatch', () => {
       }
     ]
 
-    t.throws(() => getMockDispatch(dispatches, {
+    t.assert.throws(() => getMockDispatch(dispatches, {
       path: 'path',
       method: 'method',
       body: 'wrong'
@@ -125,7 +124,7 @@ describe('getMockDispatch', () => {
   })
 
   test('it should throw if no dispatch matches headers', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const dispatches = [
       {
         path: 'path',
@@ -136,7 +135,7 @@ describe('getMockDispatch', () => {
       }
     ]
 
-    t.throws(() => getMockDispatch(dispatches, {
+    t.assert.throws(() => getMockDispatch(dispatches, {
       path: 'path',
       method: 'method',
       body: 'body',
@@ -147,44 +146,44 @@ describe('getMockDispatch', () => {
 
 describe('getResponseData', () => {
   test('it should stringify objects', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const responseData = getResponseData({ str: 'string', num: 42 })
-    t.strictEqual(responseData, '{"str":"string","num":42}')
+    t.assert.strictEqual(responseData, '{"str":"string","num":42}')
   })
 
   test('it should return strings untouched', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const responseData = getResponseData('test')
-    t.strictEqual(responseData, 'test')
+    t.assert.strictEqual(responseData, 'test')
   })
 
   test('it should return buffers untouched', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const responseData = getResponseData(Buffer.from('test'))
-    t.ok(Buffer.isBuffer(responseData))
+    t.assert.ok(Buffer.isBuffer(responseData))
   })
 
   test('it should return Uint8Array untouched', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const responseData = getResponseData(new TextEncoder().encode('{"test":true}'))
-    t.ok(responseData instanceof Uint8Array)
+    t.assert.ok(responseData instanceof Uint8Array)
   })
 
   test('it should return ArrayBuffers untouched', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const responseData = getResponseData(new TextEncoder().encode('{"test":true}').buffer)
-    t.ok(responseData instanceof ArrayBuffer)
+    t.assert.ok(responseData instanceof ArrayBuffer)
   })
 
   test('it should handle undefined', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const responseData = getResponseData(undefined)
-    t.strictEqual(responseData, '')
+    t.assert.strictEqual(responseData, '')
   })
 })
 
 test('getStatusText', (t) => {
-  t = tspl(t, { plan: 64 })
+  t.plan(64)
 
   for (const statusCode of [
     100, 101, 102, 103, 200, 201, 202, 203,
@@ -196,28 +195,26 @@ test('getStatusText', (t) => {
     428, 429, 431, 451, 500, 501, 502, 503,
     504, 505, 506, 507, 508, 510, 511
   ]) {
-    t.ok(getStatusText(statusCode))
+    t.assert.ok(getStatusText(statusCode))
   }
 
-  t.strictEqual(getStatusText(420), 'unknown')
-
-  t.end()
+  t.assert.strictEqual(getStatusText(420), 'unknown')
 })
 
 test('getHeaderByName', (t) => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
 
   const headersRecord = {
     key: 'value'
   }
 
-  t.strictEqual(getHeaderByName(headersRecord, 'key'), 'value')
-  t.strictEqual(getHeaderByName(headersRecord, 'anotherKey'), undefined)
+  t.assert.strictEqual(getHeaderByName(headersRecord, 'key'), 'value')
+  t.assert.strictEqual(getHeaderByName(headersRecord, 'anotherKey'), undefined)
 
   const headersArray = ['key', 'value']
 
-  t.strictEqual(getHeaderByName(headersArray, 'key'), 'value')
-  t.strictEqual(getHeaderByName(headersArray, 'anotherKey'), undefined)
+  t.assert.strictEqual(getHeaderByName(headersArray, 'key'), 'value')
+  t.assert.strictEqual(getHeaderByName(headersArray, 'anotherKey'), undefined)
 
   const { Headers } = require('../index')
 
@@ -225,51 +222,49 @@ test('getHeaderByName', (t) => {
     ['key', 'value']
   ])
 
-  t.strictEqual(getHeaderByName(headers, 'key'), 'value')
-  t.strictEqual(getHeaderByName(headers, 'anotherKey'), null)
-
-  t.end()
+  t.assert.strictEqual(getHeaderByName(headers, 'key'), 'value')
+  t.assert.strictEqual(getHeaderByName(headers, 'anotherKey'), null)
 })
 
 describe('buildHeadersFromArray', () => {
   test('it should build headers from array', (t) => {
-    t = tspl(t, { plan: 2 })
+    t.plan(2)
 
     const headers = buildHeadersFromArray([
       'key', 'value'
     ])
 
-    t.deepStrictEqual(Object.keys(headers).length, 1)
-    t.strictEqual(headers.key, 'value')
+    t.assert.deepStrictEqual(Object.keys(headers).length, 1)
+    t.assert.strictEqual(headers.key, 'value')
   })
 })
 
 describe('normalizeQueryParams', () => {
   test('it should handle basic cases', (t) => {
-    t = tspl(t, { plan: 4 })
+    t.plan(4)
 
-    t.deepStrictEqual(normalizeSearchParams('').toString(), '')
-    t.deepStrictEqual(normalizeSearchParams('a').toString(), 'a=')
-    t.deepStrictEqual(normalizeSearchParams('b=2&c=3&a=1').toString(), 'b=2&c=3&a=1')
-    t.deepStrictEqual(normalizeSearchParams('lang=en_EN&id=123').toString(), 'lang=en_EN&id=123')
+    t.assert.deepStrictEqual(normalizeSearchParams('').toString(), '')
+    t.assert.deepStrictEqual(normalizeSearchParams('a').toString(), 'a=')
+    t.assert.deepStrictEqual(normalizeSearchParams('b=2&c=3&a=1').toString(), 'b=2&c=3&a=1')
+    t.assert.deepStrictEqual(normalizeSearchParams('lang=en_EN&id=123').toString(), 'lang=en_EN&id=123')
   })
 
   // https://github.com/nodejs/undici/issues/4146
   test('it should handle multiple values set using different syntaxes', (t) => {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
-    t.deepStrictEqual(normalizeSearchParams('a=1&a=2&a=3').toString(), 'a=1&a=2&a=3')
-    t.deepStrictEqual(normalizeSearchParams('a[]=1&a[]=2&a[]=3').toString(), 'a=1&a=2&a=3')
-    t.deepStrictEqual(normalizeSearchParams('a=1,2,3').toString(), 'a=1&a=2&a=3')
+    t.assert.deepStrictEqual(normalizeSearchParams('a=1&a=2&a=3').toString(), 'a=1&a=2&a=3')
+    t.assert.deepStrictEqual(normalizeSearchParams('a[]=1&a[]=2&a[]=3').toString(), 'a=1&a=2&a=3')
+    t.assert.deepStrictEqual(normalizeSearchParams('a=1,2,3').toString(), 'a=1&a=2&a=3')
   })
 
   test('should handle edge case scenarios', (t) => {
-    t = tspl(t, { plan: 4 })
+    t.plan(4)
 
-    t.deepStrictEqual(normalizeSearchParams('a="b[]"').toString(), `a=${encodeURIComponent('"b[]"')}`)
-    t.deepStrictEqual(normalizeSearchParams('a="1,2,3"').toString(), `a=${encodeURIComponent('"1,2,3"')}`)
+    t.assert.deepStrictEqual(normalizeSearchParams('a="b[]"').toString(), `a=${encodeURIComponent('"b[]"')}`)
+    t.assert.deepStrictEqual(normalizeSearchParams('a="1,2,3"').toString(), `a=${encodeURIComponent('"1,2,3"')}`)
     const encodedSingleQuote = '%27'
-    t.deepStrictEqual(normalizeSearchParams("a='b[]'").toString(), `a=${encodedSingleQuote}${encodeURIComponent('b[]')}${encodedSingleQuote}`)
-    t.deepStrictEqual(normalizeSearchParams("a='1,2,3'").toString(), `a=${encodedSingleQuote}${encodeURIComponent('1,2,3')}${encodedSingleQuote}`)
+    t.assert.deepStrictEqual(normalizeSearchParams("a='b[]'").toString(), `a=${encodedSingleQuote}${encodeURIComponent('b[]')}${encodedSingleQuote}`)
+    t.assert.deepStrictEqual(normalizeSearchParams("a='1,2,3'").toString(), `a=${encodedSingleQuote}${encodeURIComponent('1,2,3')}${encodedSingleQuote}`)
   })
 })
