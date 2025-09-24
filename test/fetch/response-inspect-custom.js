@@ -1,12 +1,11 @@
 'use strict'
 
 const { describe, it } = require('node:test')
-const assert = require('node:assert')
 const util = require('node:util')
 const { Response } = require('../../')
 
 describe('Response custom inspection', () => {
-  it('should return a custom inspect output', () => {
+  it('should return a custom inspect output', (t) => {
     const response = new Response(null)
     const inspectedOutput = util.inspect(response, {
       depth: null,
@@ -25,6 +24,6 @@ describe('Response custom inspection', () => {
   url: ''
 }`
 
-    assert.strictEqual(inspectedOutput, expectedOutput)
+    t.assert.strictEqual(inspectedOutput, expectedOutput)
   })
 })

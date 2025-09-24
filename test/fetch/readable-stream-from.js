@@ -1,11 +1,10 @@
 'use strict'
 
-const { deepStrictEqual } = require('node:assert')
 const { test } = require('node:test')
 const { Response } = require('../..')
 
 // https://github.com/nodejs/node/issues/56474
-test('ReadableStream empty enqueue then other enqueued', async () => {
+test('ReadableStream empty enqueue then other enqueued', async (t) => {
   const iterable = {
     async * [Symbol.asyncIterator] () {
       yield ''
@@ -15,10 +14,10 @@ test('ReadableStream empty enqueue then other enqueued', async () => {
   }
 
   const response = new Response(iterable)
-  deepStrictEqual(await response.text(), '34')
+  t.assert.deepStrictEqual(await response.text(), '34')
 })
 
-test('ReadableStream empty enqueue', async () => {
+test('ReadableStream empty enqueue', async (t) => {
   const iterable = {
     async * [Symbol.asyncIterator] () {
       yield ''
@@ -26,5 +25,5 @@ test('ReadableStream empty enqueue', async () => {
   }
 
   const response = new Response(iterable)
-  deepStrictEqual(await response.text(), '')
+  t.assert.deepStrictEqual(await response.text(), '')
 })

@@ -1,6 +1,5 @@
 'use strict'
 
-const assert = require('node:assert')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
@@ -24,5 +23,5 @@ test('crlf is appended to formdata body (issue #3624)', async (t) => {
     method: 'POST'
   })
 
-  assert((await response.text()).endsWith('\r\n'))
+  t.assert.ok((await response.text()).endsWith('\r\n'))
 })

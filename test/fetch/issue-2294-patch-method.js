@@ -1,11 +1,10 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Request } = require('../..')
 
 test('Using `patch` method emits a warning.', (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const { emitWarning } = process
 
@@ -14,7 +13,7 @@ test('Using `patch` method emits a warning.', (t) => {
   })
 
   process.emitWarning = (warning, options) => {
-    t.strictEqual(options.code, 'UNDICI-FETCH-patch')
+    t.assert.strictEqual(options.code, 'UNDICI-FETCH-patch')
   }
 
   // eslint-disable-next-line no-new

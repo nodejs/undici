@@ -1,25 +1,24 @@
 'use strict'
 
 const { test } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { fetch } = require('../..')
 
 test('Cross-origin redirects clear forbidden headers', async (t) => {
-  const { strictEqual } = tspl(t, { plan: 6 })
+  t.plan(6)
 
   const server1 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    strictEqual(req.headers.cookie, undefined)
-    strictEqual(req.headers.authorization, undefined)
-    strictEqual(req.headers['proxy-authorization'], undefined)
+    t.assert.strictEqual(req.headers.cookie, undefined)
+    t.assert.strictEqual(req.headers.authorization, undefined)
+    t.assert.strictEqual(req.headers['proxy-authorization'], undefined)
 
     res.end('redirected')
   }).listen(0)
 
   const server2 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    strictEqual(req.headers.authorization, 'test')
-    strictEqual(req.headers.cookie, 'ddd=dddd')
+    t.assert.strictEqual(req.headers.authorization, 'test')
+    t.assert.strictEqual(req.headers.cookie, 'ddd=dddd')
 
     res.writeHead(302, {
       ...req.headers,
@@ -47,5 +46,5 @@ test('Cross-origin redirects clear forbidden headers', async (t) => {
   })
 
   const text = await res.text()
-  strictEqual(text, 'redirected')
+  t.assert.strictEqual(text, 'redirected')
 })

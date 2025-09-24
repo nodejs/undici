@@ -1,7 +1,6 @@
 'use strict'
 
 const { test, afterEach } = require('node:test')
-const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const {
@@ -15,35 +14,35 @@ const { closeServerAsPromise } = require('../utils/node-http')
 
 afterEach(() => setGlobalOrigin(undefined))
 
-test('setGlobalOrigin & getGlobalOrigin', () => {
-  assert.strictEqual(getGlobalOrigin(), undefined)
+test('setGlobalOrigin & getGlobalOrigin', (t) => {
+  t.assert.strictEqual(getGlobalOrigin(), undefined)
 
   setGlobalOrigin('http://localhost:3000')
-  assert.deepStrictEqual(getGlobalOrigin(), new URL('http://localhost:3000'))
+  t.assert.deepStrictEqual(getGlobalOrigin(), new URL('http://localhost:3000'))
 
   setGlobalOrigin(undefined)
-  assert.strictEqual(getGlobalOrigin(), undefined)
+  t.assert.strictEqual(getGlobalOrigin(), undefined)
 
   setGlobalOrigin(new URL('http://localhost:3000'))
-  assert.deepStrictEqual(getGlobalOrigin(), new URL('http://localhost:3000'))
+  t.assert.deepStrictEqual(getGlobalOrigin(), new URL('http://localhost:3000'))
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     setGlobalOrigin('invalid.url')
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     setGlobalOrigin('wss://invalid.protocol')
   }, TypeError)
 
-  assert.throws(() => setGlobalOrigin(true))
+  t.assert.throws(() => setGlobalOrigin(true))
 })
 
-test('Response.redirect', () => {
-  assert.throws(() => {
+test('Response.redirect', (t) => {
+  t.assert.throws(() => {
     Response.redirect('/relative/path', 302)
   }, TypeError('Failed to parse URL from /relative/path'))
 
-  assert.doesNotThrow(() => {
+  t.assert.doesNotThrow(() => {
     setGlobalOrigin('http://localhost:3000')
     Response.redirect('/relative/path', 302)
   })
@@ -51,16 +50,16 @@ test('Response.redirect', () => {
   setGlobalOrigin('http://localhost:3000')
   const response = Response.redirect('/relative/path', 302)
   // See step #7 of https://fetch.spec.whatwg.org/#dom-response-redirect
-  assert.strictEqual(response.headers.get('location'), 'http://localhost:3000/relative/path')
+  t.assert.strictEqual(response.headers.get('location'), 'http://localhost:3000/relative/path')
 })
 
 test('new Request', (t) => {
-  assert.throws(
+  t.assert.throws(
     () => new Request('/relative/path'),
     TypeError('Failed to parse URL from /relative/path')
   )
 
-  assert.doesNotThrow(() => {
+  t.assert.doesNotThrow(() => {
     setGlobalOrigin('http://localhost:3000')
     // eslint-disable-next-line no-new
     new Request('/relative/path')
@@ -68,15 +67,15 @@ test('new Request', (t) => {
 
   setGlobalOrigin('http://localhost:3000')
   const request = new Request('/relative/path')
-  assert.strictEqual(request.url, 'http://localhost:3000/relative/path')
+  t.assert.strictEqual(request.url, 'http://localhost:3000/relative/path')
 })
 
 test('fetch', async (t) => {
-  await assert.rejects(fetch('/relative/path'), TypeError('Failed to parse URL from /relative/path'))
+  await t.assert.rejects(fetch('/relative/path'), TypeError('Failed to parse URL from /relative/path'))
 
   await t.test('Basic fetch', async (t) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      assert.strictEqual(req.url, '/relative/path')
+      t.assert.strictEqual(req.url, '/relative/path')
       res.end()
     }).listen(0)
 
@@ -84,12 +83,12 @@ test('fetch', async (t) => {
     t.after(closeServerAsPromise(server))
     await once(server, 'listening')
 
-    await assert.doesNotReject(fetch('/relative/path'))
+    await t.assert.doesNotReject(fetch('/relative/path'))
   })
 
   await t.test('fetch return', async (t) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      assert.strictEqual(req.url, '/relative/path')
+      t.assert.strictEqual(req.url, '/relative/path')
       res.end()
     }).listen(0)
 
@@ -99,6 +98,6 @@ test('fetch', async (t) => {
 
     const response = await fetch('/relative/path')
 
-    assert.strictEqual(response.url, `http://localhost:${server.address().port}/relative/path`)
+    t.assert.strictEqual(response.url, `http://localhost:${server.address().port}/relative/path`)
   })
 })
