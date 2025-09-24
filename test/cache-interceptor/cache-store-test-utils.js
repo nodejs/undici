@@ -1,6 +1,5 @@
 'use strict'
 
-const { equal, notEqual, deepStrictEqual } = require('node:assert')
 const { describe, test, after } = require('node:test')
 const { Readable } = require('node:stream')
 const { once } = require('node:events')
@@ -15,13 +14,13 @@ const FakeTimers = require('@sinonjs/fake-timers')
  */
 function cacheStoreTests (CacheStore, options) {
   describe(CacheStore.prototype.constructor.name, () => {
-    test('matches interface', options, () => {
-      equal(typeof CacheStore.prototype.get, 'function')
-      equal(typeof CacheStore.prototype.createWriteStream, 'function')
-      equal(typeof CacheStore.prototype.delete, 'function')
+    test('matches interface', options, (t) => {
+      t.assert.strictEqual(typeof CacheStore.prototype.get, 'function')
+      t.assert.strictEqual(typeof CacheStore.prototype.createWriteStream, 'function')
+      t.assert.strictEqual(typeof CacheStore.prototype.delete, 'function')
     })
 
-    test('caches request', options, async () => {
+    test('caches request', options, async (t) => {
       /**
        * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
        */
@@ -50,20 +49,20 @@ function cacheStoreTests (CacheStore, options) {
       const store = new CacheStore()
 
       // Sanity check
-      equal(await store.get(key), undefined)
+      t.assert.strictEqual(await store.get(key), undefined)
 
       // Write response to store
       {
         const writable = store.createWriteStream(key, value)
-        notEqual(writable, undefined)
+        t.assert.notEqual(writable, undefined)
         writeBody(writable, body)
       }
 
       // Now let's try fetching the response from the store
       {
         const result = await store.get(structuredClone(key))
-        notEqual(result, undefined)
-        await compareGetResults(result, value, body)
+        t.assert.notEqual(result, undefined)
+        await compareGetResults(t, result, value, body)
       }
 
       /**
@@ -93,22 +92,22 @@ function cacheStoreTests (CacheStore, options) {
 
       const anotherBody = [Buffer.from('asd'), Buffer.from('123')]
 
-      equal(store.get(anotherKey), undefined)
+      t.assert.strictEqual(store.get(anotherKey), undefined)
 
       {
         const writable = store.createWriteStream(anotherKey, anotherValue)
-        notEqual(writable, undefined)
+        t.assert.notEqual(writable, undefined)
         writeBody(writable, anotherBody)
       }
 
       {
         const result = await store.get(structuredClone(anotherKey))
-        notEqual(result, undefined)
-        await compareGetResults(result, anotherValue, anotherBody)
+        t.assert.notEqual(result, undefined)
+        await compareGetResults(t, result, anotherValue, anotherBody)
       }
     })
 
-    test('returns stale response before deleteAt', options, async () => {
+    test('returns stale response before deleteAt', options, async (t) => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
@@ -144,11 +143,11 @@ function cacheStoreTests (CacheStore, options) {
       const store = new CacheStore()
 
       // Sanity check
-      equal(store.get(key), undefined)
+      t.assert.strictEqual(store.get(key), undefined)
 
       {
         const writable = store.createWriteStream(key, value)
-        notEqual(writable, undefined)
+        t.assert.notEqual(writable, undefined)
         writeBody(writable, body)
       }
 
@@ -156,17 +155,17 @@ function cacheStoreTests (CacheStore, options) {
 
       {
         const result = await store.get(structuredClone(key))
-        notEqual(result, undefined)
-        await compareGetResults(result, value, body)
+        t.assert.notEqual(result, undefined)
+        await compareGetResults(t, result, value, body)
       }
 
       clock.tick(6000)
 
       // Past deleteAt, shouldn't be returned
-      equal(await store.get(key), undefined)
+      t.assert.strictEqual(await store.get(key), undefined)
     })
 
-    test('a stale request is overwritten', options, async () => {
+    test('a stale request is overwritten', options, async (t) => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
       })
@@ -202,11 +201,11 @@ function cacheStoreTests (CacheStore, options) {
       const store = new CacheStore()
 
       // Sanity check
-      equal(store.get(key), undefined)
+      t.assert.strictEqual(store.get(key), undefined)
 
       {
         const writable = store.createWriteStream(key, value)
-        notEqual(writable, undefined)
+        t.assert.notEqual(writable, undefined)
         writeBody(writable, body)
       }
 
@@ -214,8 +213,8 @@ function cacheStoreTests (CacheStore, options) {
 
       {
         const result = await store.get(structuredClone(key))
-        notEqual(result, undefined)
-        await compareGetResults(result, value, body)
+        t.assert.notEqual(result, undefined)
+        await compareGetResults(t, result, value, body)
       }
 
       /**
@@ -236,18 +235,18 @@ function cacheStoreTests (CacheStore, options) {
 
       {
         const writable = store.createWriteStream(key, value2)
-        notEqual(writable, undefined)
+        t.assert.notEqual(writable, undefined)
         writeBody(writable, body2)
       }
 
       {
         const result = await store.get(structuredClone(key))
-        notEqual(result, undefined)
-        await compareGetResults(result, value2, body2)
+        t.assert.notEqual(result, undefined)
+        await compareGetResults(t, result, value2, body2)
       }
     })
 
-    test('vary directives used to decide which response to use', options, async () => {
+    test('vary directives used to decide which response to use', options, async (t) => {
       /**
        * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
        */
@@ -281,18 +280,18 @@ function cacheStoreTests (CacheStore, options) {
       const store = new CacheStore()
 
       // Sanity check
-      equal(store.get(key), undefined)
+      t.assert.strictEqual(store.get(key), undefined)
 
       {
         const writable = store.createWriteStream(key, value)
-        notEqual(writable, undefined)
+        t.assert.notEqual(writable, undefined)
         writeBody(writable, body)
       }
 
       {
         const result = await store.get(structuredClone(key))
-        notEqual(result, undefined)
-        await compareGetResults(result, value, body)
+        t.assert.notEqual(result, undefined)
+        await compareGetResults(t, result, value, body)
       }
 
       /**
@@ -327,24 +326,24 @@ function cacheStoreTests (CacheStore, options) {
 
       const anotherBody = [Buffer.from('asd'), Buffer.from('123')]
 
-      equal(await store.get(anotherKey), undefined)
+      t.assert.strictEqual(await store.get(anotherKey), undefined)
 
       {
         const writable = store.createWriteStream(anotherKey, anotherValue)
-        notEqual(writable, undefined)
+        t.assert.notEqual(writable, undefined)
         writeBody(writable, anotherBody)
       }
 
       {
         const result = await store.get(structuredClone(key))
-        notEqual(result, undefined)
-        await compareGetResults(result, value, body)
+        t.assert.notEqual(result, undefined)
+        await compareGetResults(t, result, value, body)
       }
 
       {
         const result = await store.get(structuredClone(anotherKey))
-        notEqual(result, undefined)
-        await compareGetResults(result, anotherValue, anotherBody)
+        t.assert.notEqual(result, undefined)
+        await compareGetResults(t, result, anotherValue, anotherBody)
       }
     })
   })
@@ -417,15 +416,15 @@ function joinBufferArray (buffers) {
  * @param {import('../../types/cache-interceptor.d.ts').default.CacheValue} expected
  * @param {Buffer[]} expectedBody
 */
-async function compareGetResults (actual, expected, expectedBody) {
+async function compareGetResults (t, actual, expected, expectedBody) {
   const actualBody = await readBody(actual)
-  deepStrictEqual(
+  t.assert.deepStrictEqual(
     actualBody ? joinBufferArray(actualBody) : undefined,
     joinBufferArray(expectedBody)
   )
 
   for (const key of Object.keys(expected)) {
-    deepStrictEqual(actual[key], expected[key])
+    t.assert.deepStrictEqual(actual[key], expected[key])
   }
 }
 
