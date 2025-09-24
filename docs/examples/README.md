@@ -181,25 +181,3 @@ async function fetchOverUds () {
   }
 }
 ```
-
-### Global dispatcher (apply to all request()/fetch())
-```js
-const { Agent, setGlobalDispatcher } = require('undici')
-
-setGlobalDispatcher(new Agent({ connect: { socketPath: '/var/run/docker.sock' } }))
-
-// Now all `request`/`fetch` calls using http(s)://localhost will go over the Unix socket
-```
-
-### HTTPS over UDS (optional)
-```js
-const { Agent, fetch } = require('undici')
-
-const udsTls = new Agent({
-  connect: { socketPath: '/var/run/my.sock', tls: { rejectUnauthorized: false } }
-})
-
-const res = await fetch('https://localhost/secure', { dispatcher: udsTls })
-console.log(res.status)
-await udsTls.close()
-```

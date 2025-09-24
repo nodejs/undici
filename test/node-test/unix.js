@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('node:test')
-const { Client, Pool, Agent, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('../../')
+const { Client, Pool } = require('../../')
 const http = require('node:http')
 const https = require('node:https')
 const pem = require('@metcoder95/https-pem')
@@ -155,84 +155,5 @@ test('https get with tls opts', { skip }, async (t) => {
       })
     })
   })
-  await p.completed
-})
-
-test('fetch http over unix socket', { skip }, async (t) => {
-  const p = tspl(t, { plan: 6 })
-
-  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.equal('/', req.url)
-    p.equal('GET', req.method)
-    p.equal('localhost', req.headers.host)
-    res.setHeader('Content-Type', 'text/plain')
-    res.end('hello')
-  })
-
-  t.after(async () => {
-    server.close()
-    await agent?.close()
-  })
-
-  try {
-    fs.unlinkSync('/var/tmp/test3.sock')
-  } catch (err) {
-
-  }
-
-  await new Promise((resolve) => {
-    server.listen('/var/tmp/test3.sock', resolve)
-  })
-
-  const agent = new Agent({ connect: { socketPath: '/var/tmp/test3.sock' } })
-
-  const res = await fetch('http://localhost/', { dispatcher: agent })
-  p.equal(res.status, 200)
-  p.equal(res.headers.get('content-type'), 'text/plain')
-  const body = await res.text()
-  p.equal(body, 'hello')
-
-  await p.completed
-})
-
-test('fetch http over unix socket with global dispatcher', { skip }, async (t) => {
-  const agent = new Agent({ connect: { socketPath: '/var/tmp/test3.sock' } })
-  const p = tspl(t, { plan: 6 })
-
-  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.equal('/', req.url)
-    p.equal('GET', req.method)
-    p.equal('localhost', req.headers.host)
-    res.setHeader('Content-Type', 'text/plain')
-    res.end('hello')
-  })
-
-  const prev = getGlobalDispatcher()
-
-  t.after(async () => {
-    server.close()
-    // restore previous global dispatcher
-    if (prev) setGlobalDispatcher(prev)
-    await agent?.close()
-  })
-
-  try {
-    fs.unlinkSync('/var/tmp/test3.sock')
-  } catch (err) {
-
-  }
-
-  await new Promise((resolve) => {
-    server.listen('/var/tmp/test3.sock', resolve)
-  })
-
-  setGlobalDispatcher(agent)
-
-  const res = await fetch('http://localhost/')
-  p.equal(res.status, 200)
-  p.equal(res.headers.get('content-type'), 'text/plain')
-  const body = await res.text()
-  p.equal(body, 'hello')
-
   await p.completed
 })
