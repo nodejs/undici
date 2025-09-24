@@ -4,7 +4,6 @@ const { fetch } = require('../..')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 test('error reason is forwarded - issue #2171', async (t) => {
@@ -14,7 +13,7 @@ test('error reason is forwarded - issue #2171', async (t) => {
   await once(server, 'listening')
 
   const timeout = AbortSignal.timeout(100)
-  await assert.rejects(
+  await t.assert.rejects(
     fetch(`http://localhost:${server.address().port}`, {
       signal: timeout
     }),

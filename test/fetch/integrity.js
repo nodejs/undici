@@ -1,8 +1,6 @@
 'use strict'
 
 const { test, after } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
-const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { gzipSync } = require('node:zlib')
 const { fetch, setGlobalDispatcher, Agent } = require('../..')
@@ -32,7 +30,7 @@ test('request with correct integrity checksum', { skip }, async (t) => {
   const response = await fetch(`http://localhost:${server.address().port}`, {
     integrity: `sha256-${hash}`
   })
-  assert.strictEqual(body, await response.text())
+  t.assert.strictEqual(body, await response.text())
 })
 
 test('request with wrong integrity checksum', { skip }, async (t) => {
@@ -50,7 +48,7 @@ test('request with wrong integrity checksum', { skip }, async (t) => {
     cause: new Error('integrity mismatch')
   })
 
-  await assert.rejects(fetch(`http://localhost:${server.address().port}`, {
+  await t.assert.rejects(fetch(`http://localhost:${server.address().port}`, {
     integrity: `sha256-${hash}`
   }), expectedError)
 })
@@ -70,7 +68,7 @@ test('request with integrity checksum on encoded body', { skip }, async (t) => {
   const response = await fetch(`http://localhost:${server.address().port}`, {
     integrity: `sha256-${hash}`
   })
-  assert.strictEqual(body, await response.text())
+  t.assert.strictEqual(body, await response.text())
 })
 
 test('request with a totally incorrect integrity', { skip }, async (t) => {
@@ -81,7 +79,7 @@ test('request with a totally incorrect integrity', { skip }, async (t) => {
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  await assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
+  await t.assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
     integrity: 'what-integrityisthis'
   }))
 })
@@ -97,7 +95,7 @@ test('request with mixed in/valid integrities', { skip }, async (t) => {
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  await assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
+  await t.assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
     integrity: `invalid-integrity sha256-${hash}`
   }))
 })
@@ -114,12 +112,12 @@ test('request with sha384 hash', { skip }, async (t) => {
   await once(server, 'listening')
 
   // request should succeed
-  await assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
+  await t.assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
     integrity: `sha384-${hash}`
   }))
 
   // request should fail
-  await assert.rejects(fetch(`http://localhost:${server.address().port}`, {
+  await t.assert.rejects(fetch(`http://localhost:${server.address().port}`, {
     integrity: 'sha384-ypeBEsobvcr6wjGzmiPcTaeG7/gUfE5yuYB3ha/uSLs='
   }))
 })
@@ -136,12 +134,12 @@ test('request with sha512 hash', { skip }, async (t) => {
   await once(server, 'listening')
 
   // request should succeed
-  await assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
+  await t.assert.doesNotReject(fetch(`http://localhost:${server.address().port}`, {
     integrity: `sha512-${hash}`
   }))
 
   // request should fail
-  await assert.rejects(fetch(`http://localhost:${server.address().port}`, {
+  await t.assert.rejects(fetch(`http://localhost:${server.address().port}`, {
     integrity: 'sha512-ypeBEsobvcr6wjGzmiPcTaeG7/gUfE5yuYB3ha/uSLs='
   }))
 })
@@ -158,13 +156,13 @@ test('request with sha512 hash', { skip }, async (t) => {
   await once(server, 'listening')
 
   // request should fail
-  await assert.rejects(fetch(`http://localhost:${server.address().port}`, {
+  await t.assert.rejects(fetch(`http://localhost:${server.address().port}`, {
     integrity: `sha512-${hash384} sha384-${hash384}`
   }))
 })
 
 test('request with correct integrity checksum (base64url)', { skip }, async (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
   const body = 'Hello world!'
   const hash = 'wFNeS-K3n_2TKRMFQ2v4iTFOSj-uwF7P_Lt98xrZ5Ro'
 
@@ -174,18 +172,15 @@ test('request with correct integrity checksum (base64url)', { skip }, async (t) 
 
   after(closeServerAsPromise(server))
 
-  server.listen(0, async () => {
-    const response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha256-${hash}`
-    })
-    t.strictEqual(body, await response.text())
+  await once(server.listen(0), 'listening')
+  const response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha256-${hash}`
   })
-
-  await t.completed
+  t.assert.strictEqual(body, await response.text())
 })
 
 test('request with incorrect integrity checksum (base64url)', { skip }, async (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const body = 'Hello world!'
   // base64url for 'invalid' sha256
@@ -197,17 +192,14 @@ test('request with incorrect integrity checksum (base64url)', { skip }, async (t
 
   after(closeServerAsPromise(server))
 
-  server.listen(0, async () => {
-    await t.rejects(fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha256-${hash}`
-    }))
-  })
-
-  await t.completed
+  await once(server.listen(0), 'listening')
+  await t.assert.rejects(fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha256-${hash}`
+  }))
 })
 
 test('request with incorrect integrity checksum (only dash)', { skip }, async (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const body = 'Hello world!'
 
@@ -217,17 +209,14 @@ test('request with incorrect integrity checksum (only dash)', { skip }, async (t
 
   after(closeServerAsPromise(server))
 
-  server.listen(0, async () => {
-    await t.rejects(fetch(`http://localhost:${server.address().port}`, {
-      integrity: 'sha256--'
-    }))
-  })
-
-  await t.completed
+  await once(server.listen(0), 'listening')
+  await t.assert.rejects(fetch(`http://localhost:${server.address().port}`, {
+    integrity: 'sha256--'
+  }))
 })
 
 test('request with incorrect integrity checksum (non-ascii character)', { skip }, async (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const body = 'Hello world!'
 
@@ -237,17 +226,14 @@ test('request with incorrect integrity checksum (non-ascii character)', { skip }
 
   after(closeServerAsPromise(server))
 
-  server.listen(0, async () => {
-    await t.rejects(() => fetch(`http://localhost:${server.address().port}`, {
-      integrity: 'sha256-ä'
-    }))
-  })
-
-  await t.completed
+  await once(server.listen(0), 'listening')
+  await t.assert.rejects(() => fetch(`http://localhost:${server.address().port}`, {
+    integrity: 'sha256-ä'
+  }))
 })
 
 test('request with incorrect stronger integrity checksum (non-ascii character)', { skip }, async (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const body = 'Hello world!'
   const sha256 = 'wFNeS+K3n/2TKRMFQ2v4iTFOSj+uwF7P/Lt98xrZ5Ro='
@@ -259,20 +245,17 @@ test('request with incorrect stronger integrity checksum (non-ascii character)',
 
   after(closeServerAsPromise(server))
 
-  server.listen(0, async () => {
-    await t.rejects(() => fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha256-${sha256} sha384-${sha384}`
-    }))
-    await t.rejects(() => fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha384-${sha384} sha256-${sha256}`
-    }))
-  })
-
-  await t.completed
+  await once(server.listen(0), 'listening')
+  await t.assert.rejects(() => fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha256-${sha256} sha384-${sha384}`
+  }))
+  await t.assert.rejects(() => fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha384-${sha384} sha256-${sha256}`
+  }))
 })
 
 test('request with correct integrity checksum (base64). mixed', { skip }, async (t) => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
   const body = 'Hello world!'
   const sha256 = 'wFNeS+K3n/2TKRMFQ2v4iTFOSj+uwF7P/Lt98xrZ5Ro='
   const sha384 = 'hiVfosNuSzCWnq4X3DTHcsvr38WLWEA5AL6HYU6xo0uHgCY/JV615lypu7hkHMz+'
@@ -284,41 +267,38 @@ test('request with correct integrity checksum (base64). mixed', { skip }, async 
 
   after(closeServerAsPromise(server))
 
-  server.listen(0, async () => {
-    let response
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha256-${sha256} sha512-${sha512}`
-    })
-    t.strictEqual(body, await response.text())
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha512-${sha512} sha256-${sha256}`
-    })
-
-    t.strictEqual(body, await response.text())
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha384-${sha384} sha512-${sha512}`
-    })
-    t.strictEqual(body, await response.text())
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha384-${sha384} sha512-${sha512}`
-    })
-    t.strictEqual(body, await response.text())
-
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha256-${sha256} sha384-${sha384}`
-    })
-    t.strictEqual(body, await response.text())
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha384-${sha384} sha256-${sha256}`
-    })
-    t.strictEqual(body, await response.text())
+  await once(server.listen(0), 'listening')
+  let response
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha256-${sha256} sha512-${sha512}`
+  })
+  t.assert.strictEqual(body, await response.text())
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha512-${sha512} sha256-${sha256}`
   })
 
-  await t.completed
+  t.assert.strictEqual(body, await response.text())
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha384-${sha384} sha512-${sha512}`
+  })
+  t.assert.strictEqual(body, await response.text())
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha384-${sha384} sha512-${sha512}`
+  })
+  t.assert.strictEqual(body, await response.text())
+
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha256-${sha256} sha384-${sha384}`
+  })
+  t.assert.strictEqual(body, await response.text())
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha384-${sha384} sha256-${sha256}`
+  })
+  t.assert.strictEqual(body, await response.text())
 })
 
 test('request with correct integrity checksum (base64url). mixed', { skip }, async (t) => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
   const body = 'Hello world!'
   const sha256 = 'wFNeS-K3n_2TKRMFQ2v4iTFOSj-uwF7P_Lt98xrZ5Ro'
   const sha384 = 'hiVfosNuSzCWnq4X3DTHcsvr38WLWEA5AL6HYU6xo0uHgCY_JV615lypu7hkHMz-'
@@ -330,35 +310,32 @@ test('request with correct integrity checksum (base64url). mixed', { skip }, asy
 
   after(closeServerAsPromise(server))
 
-  server.listen(0, async () => {
-    let response
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha256-${sha256} sha512-${sha512}`
-    })
-    t.strictEqual(body, await response.text())
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha512-${sha512} sha256-${sha256}`
-    })
-
-    t.strictEqual(body, await response.text())
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha384-${sha384} sha512-${sha512}`
-    })
-    t.strictEqual(body, await response.text())
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha384-${sha384} sha512-${sha512}`
-    })
-    t.strictEqual(body, await response.text())
-
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha256-${sha256} sha384-${sha384}`
-    })
-    t.strictEqual(body, await response.text())
-    response = await fetch(`http://localhost:${server.address().port}`, {
-      integrity: `sha384-${sha384} sha256-${sha256}`
-    })
-    t.strictEqual(body, await response.text())
+  await once(server.listen(0), 'listening')
+  let response
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha256-${sha256} sha512-${sha512}`
+  })
+  t.assert.strictEqual(body, await response.text())
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha512-${sha512} sha256-${sha256}`
   })
 
-  await t.completed
+  t.assert.strictEqual(body, await response.text())
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha384-${sha384} sha512-${sha512}`
+  })
+  t.assert.strictEqual(body, await response.text())
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha384-${sha384} sha512-${sha512}`
+  })
+  t.assert.strictEqual(body, await response.text())
+
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha256-${sha256} sha384-${sha384}`
+  })
+  t.assert.strictEqual(body, await response.text())
+  response = await fetch(`http://localhost:${server.address().port}`, {
+    integrity: `sha384-${sha384} sha256-${sha256}`
+  })
+  t.assert.strictEqual(body, await response.text())
 })

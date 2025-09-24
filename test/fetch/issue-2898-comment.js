@@ -4,10 +4,9 @@ const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
 const { Agent, Request, fetch } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
 
 test('issue #2828, RequestInit dispatcher options overrides Request input dispatcher', async (t) => {
-  const { strictEqual } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   class CustomAgentA extends Agent {
     dispatch (options, handler) {
@@ -24,8 +23,8 @@ test('issue #2828, RequestInit dispatcher options overrides Request input dispat
   }
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    strictEqual(req.headers['x-my-header-a'], undefined)
-    strictEqual(req.headers['x-my-header-b'], 'world')
+    t.assert.strictEqual(req.headers['x-my-header-a'], undefined)
+    t.assert.strictEqual(req.headers['x-my-header-b'], 'world')
     res.end()
   }).listen(0)
 

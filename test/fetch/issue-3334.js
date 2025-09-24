@@ -1,17 +1,16 @@
 'use strict'
 
 const { test } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { fetch } = require('../..')
 
 test('a non-empty origin is not appended (issue #3334)', async (t) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
   const origin = 'https://origin.example.com'
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    strictEqual(req.headers.origin, origin)
+    t.assert.strictEqual(req.headers.origin, origin)
     res.end()
   }).listen(0)
 

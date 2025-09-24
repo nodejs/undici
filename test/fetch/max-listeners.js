@@ -2,7 +2,6 @@
 
 const { setMaxListeners, getMaxListeners, defaultMaxListeners } = require('node:events')
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { Request } = require('../..')
 
 test('test max listeners', (t) => {
@@ -12,5 +11,5 @@ test('test max listeners', (t) => {
     // eslint-disable-next-line no-new
     new Request('http://asd', { signal: controller.signal })
   }
-  assert.strictEqual(getMaxListeners(controller.signal), Infinity)
+  t.assert.strictEqual(getMaxListeners(controller.signal), Infinity)
 })
