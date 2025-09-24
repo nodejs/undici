@@ -1,5 +1,4 @@
 const { describe, test, after } = require('node:test')
-const assert = require('node:assert')
 const { createServer } = require('node:http')
 const MemoryCacheStore = require('../lib/cache/memory-cache-store.js')
 const { request, Agent, setGlobalDispatcher } = require('..')
@@ -7,7 +6,7 @@ const { interceptors } = require('..')
 const { runtimeFeatures } = require('../lib/util/runtime-features.js')
 
 describe('Cache with Vary headers', () => {
-  async function runCacheTest (store) {
+  async function runCacheTest (t, store) {
     let requestCount = 0
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       requestCount++
@@ -33,13 +32,13 @@ describe('Cache with Vary headers', () => {
 
     const res1 = await request(url)
     const body1 = await res1.body.text()
-    assert.strictEqual(body1, 'Request count: 1')
-    assert.strictEqual(requestCount, 1)
+    t.assert.strictEqual(body1, 'Request count: 1')
+    t.assert.strictEqual(requestCount, 1)
 
     const res2 = await request(url)
     const body2 = await res2.body.text()
-    assert.strictEqual(body2, 'Request count: 1')
-    assert.strictEqual(requestCount, 1)
+    t.assert.strictEqual(body2, 'Request count: 1')
+    t.assert.strictEqual(requestCount, 1)
 
     const res3 = await request(url, {
       headers: {
@@ -47,20 +46,20 @@ describe('Cache with Vary headers', () => {
       }
     })
     const body3 = await res3.body.text()
-    assert.strictEqual(body3, 'Request count: 2')
-    assert.strictEqual(requestCount, 2)
+    t.assert.strictEqual(body3, 'Request count: 2')
+    t.assert.strictEqual(requestCount, 2)
 
     await new Promise(resolve => server.close(resolve))
   }
 
-  test('should cache response with MemoryCacheStore when Vary header exists but request header is missing', async () => {
-    await runCacheTest(new MemoryCacheStore())
+  test('should cache response with MemoryCacheStore when Vary header exists but request header is missing', async (t) => {
+    await runCacheTest(t, new MemoryCacheStore())
   })
 
-  test('should cache response with SqliteCacheStore when Vary header exists but request header is missing', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
+  test('should cache response with SqliteCacheStore when Vary header exists but request header is missing', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
     const SqliteCacheStore = require('../lib/cache/sqlite-cache-store.js')
     const sqliteStore = new SqliteCacheStore()
-    await runCacheTest(sqliteStore)
+    await runCacheTest(t, sqliteStore)
     after(() => sqliteStore.close())
   })
 })

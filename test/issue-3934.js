@@ -3,7 +3,6 @@
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const assert = require('node:assert')
 const { Agent, RetryAgent, request } = require('..')
 
 // https://github.com/nodejs/undici/issues/3934
@@ -28,5 +27,5 @@ test('WrapHandler works with multiple header values', async (t) => {
     headers
   } = await request(`http://localhost:${server.address().port}`, { dispatcher: retryAgent })
 
-  assert.deepStrictEqual(headers['set-cookie'], ['a', 'b', 'c'])
+  t.assert.deepStrictEqual(headers['set-cookie'], ['a', 'b', 'c'])
 })

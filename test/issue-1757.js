@@ -1,6 +1,5 @@
 'use strict'
 
-const { deepStrictEqual, strictEqual } = require('node:assert')
 const { test } = require('node:test')
 const { Dispatcher, setGlobalDispatcher, fetch, MockAgent } = require('..')
 
@@ -23,7 +22,7 @@ class MiniflareDispatcher extends Dispatcher {
   }
 }
 
-test('https://github.com/nodejs/undici/issues/1757', async () => {
+test('https://github.com/nodejs/undici/issues/1757', async (t) => {
   const mockAgent = new MockAgent()
   const mockClient = mockAgent.get('http://localhost:3000')
   mockAgent.disableNetConnect()
@@ -50,6 +49,6 @@ test('https://github.com/nodejs/undici/issues/1757', async () => {
     body: JSON.stringify({ foo: 'bar' })
   })
 
-  deepStrictEqual(await response.json(), { foo: 'bar' })
-  strictEqual(response.status, 200)
+  t.assert.deepStrictEqual(await response.json(), { foo: 'bar' })
+  t.assert.strictEqual(response.status, 200)
 })

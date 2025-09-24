@@ -1,13 +1,12 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 
-test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, async (t) => {
-  t = tspl(t, { plan: 2 })
+test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, (t, done) => {
+  t.plan(2)
   const SIZE = 5900373096
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
@@ -33,25 +32,24 @@ test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, async (t
   })
   after(() => server.close())
 
-  server.listen(0)
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.close())
 
-  await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`)
-  after(() => client.close())
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      t.assert.ifError(err)
 
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err, data) => {
-    t.ifError(err)
-
-    let pos = 0
-    data.body.on('data', (buf) => {
-      pos += buf.length
-    })
-    data.body.on('end', () => {
-      t.strictEqual(pos, SIZE)
+      let pos = 0
+      data.body.on('data', (buf) => {
+        pos += buf.length
+      })
+      data.body.on('end', () => {
+        t.assert.strictEqual(pos, SIZE)
+        done()
+      })
     })
   })
-  await t.completed
 })

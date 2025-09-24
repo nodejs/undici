@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { createServer } = require('node:http')
@@ -9,7 +8,7 @@ const { tick: fastTimersTick } = require('../lib/util/timers')
 const { fetch, Agent, RetryAgent } = require('..')
 
 test('https://github.com/nodejs/undici/issues/3356', { skip: process.env.CITGM }, async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   let shouldRetry = true
   const server = createServer({ joinDuplicateHeaders: true })
@@ -49,13 +48,11 @@ test('https://github.com/nodejs/undici/issues/3356', { skip: process.env.CITGM }
   await sleep(500)
 
   try {
-    t.equal(response.status, 200)
+    t.assert.strictEqual(response.status, 200)
     // consume response
     await response.text()
   } catch (err) {
-    t.equal(err.name, 'TypeError')
-    t.equal(err.cause.code, 'UND_ERR_REQ_RETRY')
+    t.assert.strictEqual(err.name, 'TypeError')
+    t.assert.strictEqual(err.cause.code, 'UND_ERR_REQ_RETRY')
   }
-
-  await t.completed
 })
