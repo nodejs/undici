@@ -1,6 +1,5 @@
 'use strict'
 
-const assert = require('node:assert')
 const { once } = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
@@ -8,7 +7,7 @@ const { EventSource } = require('../../lib/web/eventsource/eventsource')
 
 describe('EventSource - redirecting', () => {
   [301, 302, 307, 308].forEach((statusCode) => {
-    test(`Should redirect on ${statusCode} status code`, async () => {
+    test(`Should redirect on ${statusCode} status code`, async (t) => {
       const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
         if (res.req.url === '/redirect') {
           res.writeHead(statusCode, undefined, { Location: '/target' })
@@ -25,17 +24,17 @@ describe('EventSource - redirecting', () => {
 
       const eventSourceInstance = new EventSource(`http://localhost:${port}/redirect`)
       eventSourceInstance.onerror = (e) => {
-        assert.fail('Should not have errored')
+        t.assert.fail('Should not have errored')
       }
       eventSourceInstance.onopen = () => {
-        assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/redirect`)
+        t.assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/redirect`)
         eventSourceInstance.close()
         server.close()
       }
     })
   })
 
-  test('Stop trying to connect when getting a 204 response', async () => {
+  test('Stop trying to connect when getting a 204 response', async (t) => {
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       if (res.req.url === '/redirect') {
         res.writeHead(301, undefined, { Location: '/target' })
@@ -51,16 +50,16 @@ describe('EventSource - redirecting', () => {
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}/redirect`)
     eventSourceInstance.onerror = (event) => {
-      assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/redirect`)
-      assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
+      t.assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/redirect`)
+      t.assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
       server.close()
     }
     eventSourceInstance.onopen = () => {
-      assert.fail('Should not have opened')
+      t.assert.fail('Should not have opened')
     }
   })
 
-  test('Throw when missing a Location header', async () => {
+  test('Throw when missing a Location header', async (t) => {
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       if (res.req.url === '/redirect') {
         res.writeHead(301, undefined)
@@ -76,13 +75,13 @@ describe('EventSource - redirecting', () => {
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}/redirect`)
     eventSourceInstance.onerror = () => {
-      assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/redirect`)
-      assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
+      t.assert.strictEqual(eventSourceInstance.url, `http://localhost:${port}/redirect`)
+      t.assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
       server.close()
     }
   })
 
-  test('Should set origin attribute of messages after redirecting', async () => {
+  test('Should set origin attribute of messages after redirecting', async (t) => {
     const targetServer = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       if (res.req.url === '/target') {
         res.writeHead(200, undefined, { 'Content-Type': 'text/event-stream' })
@@ -103,13 +102,13 @@ describe('EventSource - redirecting', () => {
 
     const eventSourceInstance = new EventSource(`http://127.0.0.1:${sourcePort}/redirect`)
     eventSourceInstance.onmessage = (event) => {
-      assert.strictEqual(event.origin, `http://127.0.0.1:${targetPort}`)
+      t.assert.strictEqual(event.origin, `http://127.0.0.1:${targetPort}`)
       eventSourceInstance.close()
       targetServer.close()
       sourceServer.close()
     }
     eventSourceInstance.onerror = (e) => {
-      assert.fail('Should not have errored')
+      t.assert.fail('Should not have errored')
     }
   })
 })
