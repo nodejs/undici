@@ -16,13 +16,13 @@
 
 //   client.request({ method: 'GET', path: '/' }, (err, data) => {
 //     t.error(err)
-//     t.equal(data.statusCode, 301)
-//     t.equal(client[kSocket].authorized, true)
+//     t.assert.strictEqual(data.statusCode, 301)
+//     t.assert.strictEqual(client[kSocket].authorized, true)
 
 //     data.body
 //       .resume()
 //       .on('end', () => {
-//         t.ok(true, 'pass')
+//         t.assert.ok(true, 'pass')
 //       })
 //   })
 // })
@@ -39,13 +39,13 @@
 
 //   client.request({ method: 'GET', path: '/' }, (err, data) => {
 //     t.error(err)
-//     t.equal(data.statusCode, 301)
-//     t.equal(client[kSocket].authorized, true)
+//     t.assert.strictEqual(data.statusCode, 301)
+//     t.assert.strictEqual(client[kSocket].authorized, true)
 
 //     data.body
 //       .resume()
 //       .on('end', () => {
-//         t.ok(true, 'pass')
+//         t.assert.ok(true, 'pass')
 //       })
 //   })
 // })
@@ -65,23 +65,23 @@
 //     }
 //   }, (err, data) => {
 //     t.error(err)
-//     t.equal(data.statusCode, 301)
-//     t.equal(client[kSocket].authorized, true)
+//     t.assert.strictEqual(data.statusCode, 301)
+//     t.assert.strictEqual(client[kSocket].authorized, true)
 
 //     data.body
 //       .resume()
 //       .on('end', () => {
-//         t.ok(true, 'pass')
+//         t.assert.ok(true, 'pass')
 //       })
 //     client.once('disconnect', () => {
-//       t.ok(true, 'pass')
+//       t.assert.ok(true, 'pass')
 //       didDisconnect = true
 //     })
 //   })
 
 //   const body = new Readable({ read () {} })
 //   body.on('error', (err) => {
-//     t.ok(err)
+//     t.assert.ok(err)
 //   })
 //   client.request({
 //     method: 'POST',
@@ -91,8 +91,8 @@
 //       host: 'www.asd.com'
 //     }
 //   }, (err, data) => {
-//     t.equal(didDisconnect, true)
-//     t.ok(err)
+//     t.assert.strictEqual(didDisconnect, true)
+//     t.assert.ok(err)
 //   })
 // })
 
@@ -115,9 +115,9 @@
 //     }
 //   }, (err, data) => {
 //     t.error(err)
-//     t.equal(client[kRunning], 1)
-//     t.equal(data.statusCode, 301)
-//     t.equal(client[kSocket].authorized, true)
+//     t.assert.strictEqual(client[kRunning], 1)
+//     t.assert.strictEqual(data.statusCode, 301)
+//     t.assert.strictEqual(client[kSocket].authorized, true)
 
 //     client.request({
 //       method: 'GET',
@@ -127,20 +127,20 @@
 //       }
 //     }, (err, data) => {
 //       t.error(err)
-//       t.equal(data.statusCode, 301)
-//       t.equal(client[kSocket].authorized, true)
+//       t.assert.strictEqual(data.statusCode, 301)
+//       t.assert.strictEqual(client[kSocket].authorized, true)
 
 //       data.body
 //         .resume()
 //         .on('end', () => {
-//           t.ok(true, 'pass')
+//           t.assert.ok(true, 'pass')
 //         })
 //     })
 
 //     data.body
 //       .resume()
 //       .on('end', () => {
-//         t.ok(true, 'pass')
+//         t.assert.ok(true, 'pass')
 //       })
 //   })
 // })
@@ -160,16 +160,16 @@
 //     }
 //   }, (err, data) => {
 //     t.error(err)
-//     t.equal(data.statusCode, 301)
-//     t.equal(client[kSocket].authorized, true)
+//     t.assert.strictEqual(data.statusCode, 301)
+//     t.assert.strictEqual(client[kSocket].authorized, true)
 
 //     data.body
 //       .resume()
 //       .on('end', () => {
-//         t.ok(true, 'pass')
+//         t.assert.ok(true, 'pass')
 //       })
 //     client.once('disconnect', () => {
-//       t.ok(true, 'pass')
+//       t.assert.ok(true, 'pass')
 //       didDisconnect = true
 //     })
 //   })
@@ -182,7 +182,7 @@
 //       host: 'www.asd.com'
 //     }
 //   }, (err, data) => {
-//     t.equal(didDisconnect, true)
-//     t.ok(err)
+//     t.assert.strictEqual(didDisconnect, true)
+//     t.assert.ok(err)
 //   })
 // })

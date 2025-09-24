@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
 const { unlink } = require('node:fs/promises')
@@ -47,10 +46,10 @@ test('SnapshotAgent - integration with redirect interceptor', async (t) => {
   const redirectBody = await redirectResponse.body.json()
 
   // Verify redirect worked
-  assert.strictEqual(redirectResponse.statusCode, 200)
-  assert.deepStrictEqual(redirectBody, { message: 'Final destination' })
-  assert(redirectResponse.context && redirectResponse.context.history)
-  assert.strictEqual(redirectResponse.context.history.length, 2)
+  t.assert.strictEqual(redirectResponse.statusCode, 200)
+  t.assert.deepStrictEqual(redirectBody, { message: 'Final destination' })
+  t.assert.ok(redirectResponse.context && redirectResponse.context.history)
+  t.assert.strictEqual(redirectResponse.context.history.length, 2)
 
   await redirectAgent.close()
 
@@ -68,8 +67,8 @@ test('SnapshotAgent - integration with redirect interceptor', async (t) => {
   const recordingBody = await recordingResponse.body.json()
 
   // Verify that we got the final response (not the 302)
-  assert.strictEqual(recordingResponse.statusCode, 200)
-  assert.deepStrictEqual(recordingBody, { message: 'Final destination' })
+  t.assert.strictEqual(recordingResponse.statusCode, 200)
+  t.assert.deepStrictEqual(recordingBody, { message: 'Final destination' })
   // Note: context.history is not preserved in SnapshotAgent recording mode
   // since we capture the final response directly
 
@@ -89,30 +88,30 @@ test('SnapshotAgent - integration with redirect interceptor', async (t) => {
   const playbackResponse = await request(`${origin}/redirect-start`)
   const playbackBody = await playbackResponse.body.json()
 
-  assert.strictEqual(playbackResponse.statusCode, 200)
-  assert.deepStrictEqual(playbackBody, { message: 'Final destination' })
+  t.assert.strictEqual(playbackResponse.statusCode, 200)
+  t.assert.deepStrictEqual(playbackBody, { message: 'Final destination' })
 
   // In playback mode, context is not preserved since we're replaying recorded responses
   // The important thing is that we get the correct final response content
 
   // Verify the snapshot recorded the redirect request with final response
   const playbackRecorder = playbackAgent.getRecorder()
-  assert.strictEqual(playbackRecorder.size(), 2, 'Should have two snapshots')
+  t.assert.strictEqual(playbackRecorder.size(), 2, 'Should have two snapshots')
 
   const snapshots = playbackRecorder.getSnapshots()
 
   {
     const snapshot = snapshots[0]
-    assert.strictEqual(snapshot.request.url, `${origin}/redirect-start`)
-    assert.strictEqual(snapshot.responses[0].statusCode, 302)
-    assert.strictEqual(Buffer.from(snapshot.responses[0].body, 'base64').toString(), 'Redirecting...')
+    t.assert.strictEqual(snapshot.request.url, `${origin}/redirect-start`)
+    t.assert.strictEqual(snapshot.responses[0].statusCode, 302)
+    t.assert.strictEqual(Buffer.from(snapshot.responses[0].body, 'base64').toString(), 'Redirecting...')
   }
 
   {
     const snapshot = snapshots[1]
-    assert.strictEqual(snapshot.request.url, `${origin}/redirect-target`)
-    assert.strictEqual(snapshot.responses[0].statusCode, 200)
-    assert.deepStrictEqual(JSON.parse(Buffer.from(snapshot.responses[0].body, 'base64')), {
+    t.assert.strictEqual(snapshot.request.url, `${origin}/redirect-target`)
+    t.assert.strictEqual(snapshot.responses[0].statusCode, 200)
+    t.assert.deepStrictEqual(JSON.parse(Buffer.from(snapshot.responses[0].body, 'base64')), {
       message: 'Final destination'
     })
   }

@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { describe, test } = require('node:test')
 
 const errors = require('../lib/core/errors')
@@ -38,28 +37,28 @@ scenarios.forEach(scenario => {
     const errorWithProvidedMessage = () => new scenario.ErrorClass(SAMPLE_MESSAGE)
 
     test('should use default message', t => {
-      t = tspl(t, { plan: 1 })
+      t.plan(1)
 
       const error = errorWithDefaultMessage()
 
-      t.strictEqual(error.message, scenario.defaultMessage)
+      t.assert.strictEqual(error.message, scenario.defaultMessage)
     })
 
     test('should use provided message', t => {
-      t = tspl(t, { plan: 1 })
+      t.plan(1)
 
       const error = errorWithProvidedMessage()
 
-      t.strictEqual(error.message, SAMPLE_MESSAGE)
+      t.assert.strictEqual(error.message, SAMPLE_MESSAGE)
     })
 
     test('should have proper fields', t => {
-      t = tspl(t, { plan: 6 })
+      t.plan(6)
       const errorInstances = [errorWithDefaultMessage(), errorWithProvidedMessage()]
       errorInstances.forEach(error => {
-        t.strictEqual(error.name, scenario.name)
-        t.strictEqual(error.code, scenario.code)
-        t.ok(error.stack)
+        t.assert.strictEqual(error.name, scenario.name)
+        t.assert.strictEqual(error.code, scenario.code)
+        t.assert.ok(error.stack)
       })
     })
   })
@@ -67,11 +66,11 @@ scenarios.forEach(scenario => {
 
 describe('Default HTTPParseError Codes', () => {
   test('code and data should be undefined when not set', t => {
-    t = tspl(t, { plan: 2 })
+    t.plan(2)
 
     const error = new errors.HTTPParserError('HTTPParserError')
 
-    t.strictEqual(error.code, undefined)
-    t.strictEqual(error.data, undefined)
+    t.assert.strictEqual(error.code, undefined)
+    t.assert.strictEqual(error.data, undefined)
   })
 })
