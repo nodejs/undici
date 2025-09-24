@@ -4,16 +4,15 @@ const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
 
 // https://github.com/nodejs/undici/issues/3767
 test('referrerPolicy unsafe-url is respected', async (t) => {
-  const { completed, deepEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const referrer = 'https://google.com/hello/world'
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    deepEqual(req.headers.referer, referrer)
+    t.assert.deepEqual(req.headers.referer, referrer)
 
     res.end()
   }).listen(0)
@@ -25,6 +24,4 @@ test('referrerPolicy unsafe-url is respected', async (t) => {
     referrer,
     referrerPolicy: 'unsafe-url'
   })
-
-  await completed
 })

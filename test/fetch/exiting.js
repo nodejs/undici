@@ -4,23 +4,26 @@ const { test } = require('node:test')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
-const tspl = require('@matteo.collina/tspl')
+const { once } = require('node:events')
+const { createDeferredPromise } = require('../../lib/util/promise')
 
 test('abort the request on the other side if the stream is canceled', async (t) => {
-  const p = tspl(t, { plan: 1 })
+  t.plan(1)
+
+  const promise = createDeferredPromise()
+
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200)
     res.write('hello')
     req.on('aborted', () => {
-      p.ok('aborted')
+      t.assert.ok('aborted')
+      promise.resolve()
     })
     // Let's not end the response on purpose
   })
   t.after(closeServerAsPromise(server))
 
-  await new Promise((resolve) => {
-    server.listen(0, resolve)
-  })
+  await once(server.listen(0), 'listening')
 
   const url = new URL(`http://127.0.0.1:${server.address().port}`)
 
@@ -35,5 +38,5 @@ test('abort the request on the other side if the stream is canceled', async (t) 
     await response.body.cancel()
   }
 
-  await p.completed
+  await promise.promise
 })

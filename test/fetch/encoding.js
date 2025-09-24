@@ -1,6 +1,5 @@
 'use strict'
 
-const { strictEqual } = require('node:assert').strict
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test, before, after, describe } = require('node:test')
@@ -60,9 +59,9 @@ describe('content-encoding handling', () => {
       headers: { 'accept-encoding': 'deflate, gzip' }
     })
 
-    strictEqual(response.headers.get('content-encoding'), 'deflate, gzip')
-    strictEqual(response.headers.get('content-type'), 'text/plain')
-    strictEqual(await response.text(), 'Hello, World!')
+    t.assert.strictEqual(response.headers.get('content-encoding'), 'deflate, gzip')
+    t.assert.strictEqual(response.headers.get('content-type'), 'text/plain')
+    t.assert.strictEqual(await response.text(), 'Hello, World!')
   })
 
   test('content-encoding header is case-iNsENsITIve', async (t) => {
@@ -71,21 +70,21 @@ describe('content-encoding handling', () => {
       headers: { 'accept-encoding': 'DeFlAtE, GzIp' }
     })
 
-    strictEqual(response.headers.get('content-encoding'), 'deflate, gzip')
-    strictEqual(response.headers.get('content-type'), 'text/plain')
-    strictEqual(await response.text(), 'Hello, World!')
+    t.assert.strictEqual(response.headers.get('content-encoding'), 'deflate, gzip')
+    t.assert.strictEqual(response.headers.get('content-type'), 'text/plain')
+    t.assert.strictEqual(await response.text(), 'Hello, World!')
   })
 
   test('should decompress zstandard response',
     { skip: typeof require('node:zlib').createZstdDecompress !== 'function' },
-    async () => {
+    async (t) => {
       const response = await fetch(`http://localhost:${server.address().port}`, {
         keepalive: false,
         headers: { 'accept-encoding': 'zstd' }
       })
 
-      strictEqual(response.headers.get('content-encoding'), 'zstd')
-      strictEqual(response.headers.get('content-type'), 'text/plain')
-      strictEqual(await response.text(), 'Hello, World!')
+      t.assert.strictEqual(response.headers.get('content-encoding'), 'zstd')
+      t.assert.strictEqual(response.headers.get('content-type'), 'text/plain')
+      t.assert.strictEqual(await response.text(), 'Hello, World!')
     })
 })

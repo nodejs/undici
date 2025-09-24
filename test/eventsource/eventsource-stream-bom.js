@@ -1,19 +1,18 @@
 'use strict'
 
-const assert = require('node:assert')
 const { test, describe } = require('node:test')
 const { EventSourceStream } = require('../../lib/web/eventsource/eventsource-stream')
 
 describe('EventSourceStream - handle BOM', () => {
-  test('Remove BOM from the beginning of the stream. 1 byte chunks', () => {
+  test('Remove BOM from the beginning of the stream. 1 byte chunks', (t) => {
     const dataField = 'data: Hello'
     const content = Buffer.from(`\uFEFF${dataField}`, 'utf8')
 
     const stream = new EventSourceStream()
 
     stream.parseLine = function (line) {
-      assert.strictEqual(line.byteLength, dataField.length)
-      assert.strictEqual(line.toString(), dataField)
+      t.assert.strictEqual(line.byteLength, dataField.length)
+      t.assert.strictEqual(line.toString(), dataField)
     }
 
     for (let i = 0; i < content.length; i++) {
@@ -21,15 +20,15 @@ describe('EventSourceStream - handle BOM', () => {
     }
   })
 
-  test('Remove BOM from the beginning of the stream. 2 byte chunks', () => {
+  test('Remove BOM from the beginning of the stream. 2 byte chunks', (t) => {
     const dataField = 'data: Hello'
     const content = Buffer.from(`\uFEFF${dataField}`, 'utf8')
 
     const stream = new EventSourceStream()
 
     stream.parseLine = function (line) {
-      assert.strictEqual(line.byteLength, dataField.length)
-      assert.strictEqual(line.toString(), dataField)
+      t.assert.strictEqual(line.byteLength, dataField.length)
+      t.assert.strictEqual(line.toString(), dataField)
     }
 
     for (let i = 0; i < content.length; i += 2) {
@@ -37,15 +36,15 @@ describe('EventSourceStream - handle BOM', () => {
     }
   })
 
-  test('Remove BOM from the beginning of the stream. 3 byte chunks', () => {
+  test('Remove BOM from the beginning of the stream. 3 byte chunks', (t) => {
     const dataField = 'data: Hello'
     const content = Buffer.from(`\uFEFF${dataField}`, 'utf8')
 
     const stream = new EventSourceStream()
 
     stream.parseLine = function (line) {
-      assert.strictEqual(line.byteLength, dataField.length)
-      assert.strictEqual(line.toString(), dataField)
+      t.assert.strictEqual(line.byteLength, dataField.length)
+      t.assert.strictEqual(line.toString(), dataField)
     }
 
     for (let i = 0; i < content.length; i += 3) {
@@ -53,15 +52,15 @@ describe('EventSourceStream - handle BOM', () => {
     }
   })
 
-  test('Remove BOM from the beginning of the stream. 4 byte chunks', () => {
+  test('Remove BOM from the beginning of the stream. 4 byte chunks', (t) => {
     const dataField = 'data: Hello'
     const content = Buffer.from(`\uFEFF${dataField}`, 'utf8')
 
     const stream = new EventSourceStream()
 
     stream.parseLine = function (line) {
-      assert.strictEqual(line.byteLength, dataField.length)
-      assert.strictEqual(line.toString(), dataField)
+      t.assert.strictEqual(line.byteLength, dataField.length)
+      t.assert.strictEqual(line.toString(), dataField)
     }
 
     for (let i = 0; i < content.length; i += 4) {
@@ -69,15 +68,15 @@ describe('EventSourceStream - handle BOM', () => {
     }
   })
 
-  test('Not containing BOM from the beginning of the stream. 1 byte chunks', () => {
+  test('Not containing BOM from the beginning of the stream. 1 byte chunks', (t) => {
     const dataField = 'data: Hello'
     const content = Buffer.from(`${dataField}`, 'utf8')
 
     const stream = new EventSourceStream()
 
     stream.parseLine = function (line) {
-      assert.strictEqual(line.byteLength, dataField.length)
-      assert.strictEqual(line.toString(), dataField)
+      t.assert.strictEqual(line.byteLength, dataField.length)
+      t.assert.strictEqual(line.toString(), dataField)
     }
 
     for (let i = 0; i < content.length; i += 1) {
@@ -85,15 +84,15 @@ describe('EventSourceStream - handle BOM', () => {
     }
   })
 
-  test('Not containing BOM from the beginning of the stream. 2 byte chunks', () => {
+  test('Not containing BOM from the beginning of the stream. 2 byte chunks', (t) => {
     const dataField = 'data: Hello'
     const content = Buffer.from(`${dataField}`, 'utf8')
 
     const stream = new EventSourceStream()
 
     stream.parseLine = function (line) {
-      assert.strictEqual(line.byteLength, dataField.length)
-      assert.strictEqual(line.toString(), dataField)
+      t.assert.strictEqual(line.byteLength, dataField.length)
+      t.assert.strictEqual(line.toString(), dataField)
     }
 
     for (let i = 0; i < content.length; i += 2) {
@@ -101,15 +100,15 @@ describe('EventSourceStream - handle BOM', () => {
     }
   })
 
-  test('Not containing BOM from the beginning of the stream. 3 byte chunks', () => {
+  test('Not containing BOM from the beginning of the stream. 3 byte chunks', (t) => {
     const dataField = 'data: Hello'
     const content = Buffer.from(`${dataField}`, 'utf8')
 
     const stream = new EventSourceStream()
 
     stream.parseLine = function (line) {
-      assert.strictEqual(line.byteLength, dataField.length)
-      assert.strictEqual(line.toString(), dataField)
+      t.assert.strictEqual(line.byteLength, dataField.length)
+      t.assert.strictEqual(line.toString(), dataField)
     }
 
     for (let i = 0; i < content.length; i += 3) {
@@ -117,15 +116,15 @@ describe('EventSourceStream - handle BOM', () => {
     }
   })
 
-  test('Not containing BOM from the beginning of the stream. 4 byte chunks', () => {
+  test('Not containing BOM from the beginning of the stream. 4 byte chunks', (t) => {
     const dataField = 'data: Hello'
     const content = Buffer.from(`${dataField}`, 'utf8')
 
     const stream = new EventSourceStream()
 
     stream.parseLine = function (line) {
-      assert.strictEqual(line.byteLength, dataField.length)
-      assert.strictEqual(line.toString(), dataField)
+      t.assert.strictEqual(line.byteLength, dataField.length)
+      t.assert.strictEqual(line.toString(), dataField)
     }
 
     for (let i = 0; i < content.length; i += 4) {

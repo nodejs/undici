@@ -1,6 +1,5 @@
 'use strict'
 
-const assert = require('node:assert')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
@@ -24,12 +23,12 @@ test('Redirecting a bunch does not cause a MaxListenersExceededWarning', async (
   t.after(server.close.bind(server))
   await once(server, 'listening')
 
-  process.emitWarning = assert.bind(null, false)
+  process.emitWarning = t.assert.fail.bind(t)
 
   const url = `http://localhost:${server.address().port}`
   const response = await fetch(url, { redirect: 'follow' })
 
-  assert.deepStrictEqual(response.url, `${url}/${redirects - 1}`)
+  t.assert.deepStrictEqual(response.url, `${url}/${redirects - 1}`)
 })
 
 test(

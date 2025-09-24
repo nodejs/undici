@@ -1,8 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
-const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -15,20 +13,20 @@ test('allows aborting with custom errors', async (t) => {
   await once(server, 'listening')
 
   await t.test('Using AbortSignal.timeout with cause', async (t) => {
-    const { strictEqual } = tspl(t, { plan: 2 })
+    t.plan(2)
     try {
       await fetch(`http://localhost:${server.address().port}`, {
         signal: AbortSignal.timeout(50)
       })
-      assert.fail('should throw')
+      t.assert.fail('should throw')
     } catch (err) {
       if (err.name === 'TypeError') {
         const cause = err.cause
-        strictEqual(cause.name, 'HeadersTimeoutError')
-        strictEqual(cause.code, 'UND_ERR_HEADERS_TIMEOUT')
+        t.assert.strictEqual(cause.name, 'HeadersTimeoutError')
+        t.assert.strictEqual(cause.code, 'UND_ERR_HEADERS_TIMEOUT')
       } else if (err.name === 'TimeoutError') {
-        strictEqual(err.code, DOMException.TIMEOUT_ERR)
-        strictEqual(err.cause, undefined)
+        t.assert.strictEqual(err.code, DOMException.TIMEOUT_ERR)
+        t.assert.strictEqual(err.cause, undefined)
       } else {
         throw err
       }
@@ -39,7 +37,7 @@ test('allows aborting with custom errors', async (t) => {
     const ac = new AbortController()
     ac.abort() // no reason
 
-    await assert.rejects(
+    await t.assert.rejects(
       fetch(`http://localhost:${server.address().port}`, {
         signal: ac.signal
       }),
