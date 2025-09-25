@@ -1,7 +1,5 @@
-import { tspl } from '@matteo.collina/tspl'
 import { createServer } from 'node:http'
 import { test, after } from 'node:test'
-import { once } from 'node:events'
 import {
   Agent,
   Client,
@@ -16,16 +14,16 @@ import {
   stream
 } from '../../index.js'
 
-test('imported Client works with basic GET', async (t) => {
-  t = tspl(t, { plan: 10 })
+test('imported Client works with basic GET', (t, done) => {
+  t.plan(10)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    t.strictEqual('/', req.url)
-    t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
-    t.strictEqual(undefined, req.headers.foo)
-    t.strictEqual('bar', req.headers.bar)
-    t.strictEqual(undefined, req.headers['content-length'])
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
+    t.assert.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.assert.strictEqual(undefined, req.headers.foo)
+    t.assert.strictEqual('bar', req.headers.bar)
+    t.assert.strictEqual(undefined, req.headers['content-length'])
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
@@ -37,69 +35,67 @@ test('imported Client works with basic GET', async (t) => {
     bar: 'bar'
   }
 
-  server.listen(0)
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.close())
 
-  await once(server, 'listening')
-
-  const client = new Client(`http://localhost:${server.address().port}`)
-  after(() => client.close())
-
-  client.request({
-    path: '/',
-    method: 'GET',
-    headers: reqHeaders
-  }, (err, data) => {
-    t.ifError(err)
-    const { statusCode, headers, body } = data
-    t.strictEqual(statusCode, 200)
-    t.strictEqual(headers['content-type'], 'text/plain')
-    const bufs = []
-    body.on('data', (buf) => {
-      bufs.push(buf)
-    })
-    body.on('end', () => {
-      t.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+    client.request({
+      path: '/',
+      method: 'GET',
+      headers: reqHeaders
+    }, (err, data) => {
+      t.assert.ifError(err)
+      const { statusCode, headers, body } = data
+      t.assert.strictEqual(statusCode, 200)
+      t.assert.strictEqual(headers['content-type'], 'text/plain')
+      const bufs = []
+      body.on('data', (buf) => {
+        bufs.push(buf)
+      })
+      body.on('end', () => {
+        t.assert.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        done()
+      })
     })
   })
-  await t.completed
 })
 
 test('imported errors work with request args validation', (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const client = new Client('http://localhost:5000')
 
   client.request(null, (err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.assert.ok(err instanceof errors.InvalidArgumentError)
   })
 
   try {
     client.request(null, 'asd')
   } catch (err) {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.assert.ok(err instanceof errors.InvalidArgumentError)
   }
 })
 
 test('imported errors work with request args validation promise', (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const client = new Client('http://localhost:5000')
 
   client.request(null).catch((err) => {
-    t.ok(err instanceof errors.InvalidArgumentError)
+    t.assert.ok(err instanceof errors.InvalidArgumentError)
   })
 })
 
 test('named exports', (t) => {
-  t = tspl(t, { plan: 10 })
-  t.strictEqual(typeof Client, 'function')
-  t.strictEqual(typeof Pool, 'function')
-  t.strictEqual(typeof Agent, 'function')
-  t.strictEqual(typeof request, 'function')
-  t.strictEqual(typeof stream, 'function')
-  t.strictEqual(typeof pipeline, 'function')
-  t.strictEqual(typeof connect, 'function')
-  t.strictEqual(typeof upgrade, 'function')
-  t.strictEqual(typeof setGlobalDispatcher, 'function')
-  t.strictEqual(typeof getGlobalDispatcher, 'function')
+  t.plan(10)
+  t.assert.strictEqual(typeof Client, 'function')
+  t.assert.strictEqual(typeof Pool, 'function')
+  t.assert.strictEqual(typeof Agent, 'function')
+  t.assert.strictEqual(typeof request, 'function')
+  t.assert.strictEqual(typeof stream, 'function')
+  t.assert.strictEqual(typeof pipeline, 'function')
+  t.assert.strictEqual(typeof connect, 'function')
+  t.assert.strictEqual(typeof upgrade, 'function')
+  t.assert.strictEqual(typeof setGlobalDispatcher, 'function')
+  t.assert.strictEqual(typeof getGlobalDispatcher, 'function')
 })
