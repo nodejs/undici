@@ -30,7 +30,7 @@ declare namespace Interceptors {
   export type DNSInterceptorOpts = {
     maxTTL?: number
     maxItems?: number
-    lookup?: (hostname: string, options: LookupOptions, callback: (err: NodeJS.ErrnoException | null, addresses: DNSInterceptorRecord[]) => void) => void
+    lookup?: (origin: URL, options: LookupOptions, callback: (err: NodeJS.ErrnoException | null, addresses: DNSInterceptorRecord[]) => void) => void
     pick?: (origin: URL, records: DNSInterceptorOriginRecords, affinity: 4 | 6) => DNSInterceptorRecord
     dualStack?: boolean
     affinity?: 4 | 6
