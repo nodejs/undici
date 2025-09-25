@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { exec } = require('node:child_process')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
@@ -23,23 +22,23 @@ describe('fetch respects --max-http-header-size', () => {
 
   after(() => server.close())
 
-  test("respect Node.js' --max-http-header-size", async (t) => {
-    t = tspl(t, { plan: 6 })
+  test("respect Node.js' --max-http-header-size", (t, done) => {
+    t.plan(6)
 
     const command = 'node -e "require(\'./undici-fetch.js\').fetch(\'http://localhost:' + server.address().port + '\')"'
 
     exec(`${command} --max-http-header-size=1`, { stdio: 'pipe' }, (err, stdout, stderr) => {
-      t.strictEqual(err.code, 1)
-      t.strictEqual(stdout, '')
-      t.match(stderr, /UND_ERR_HEADERS_OVERFLOW/, '--max-http-header-size=1 should throw')
-    })
+      t.assert.strictEqual(err.code, 1)
+      t.assert.strictEqual(stdout, '')
+      t.assert.match(stderr, /UND_ERR_HEADERS_OVERFLOW/, '--max-http-header-size=1 should throw')
 
-    exec(command, { stdio: 'pipe' }, (err, stdout, stderr) => {
-      t.ifError(err)
-      t.strictEqual(stdout, '')
-      t.strictEqual(stderr, '', 'default max-http-header-size should not throw')
-    })
+      exec(command, { stdio: 'pipe' }, (err, stdout, stderr) => {
+        t.assert.ifError(err)
+        t.assert.strictEqual(stdout, '')
+        t.assert.strictEqual(stderr, '', 'default max-http-header-size should not throw')
 
-    await t.completed
+        done()
+      })
+    })
   })
 })

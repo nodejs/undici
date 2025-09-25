@@ -1,6 +1,5 @@
 'use strict'
 
-const assert = require('node:assert')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
@@ -27,7 +26,7 @@ test('421 requests with a body work as expected', async (t) => {
       body
     })
 
-    assert.deepStrictEqual(response.status, 421)
-    assert.deepStrictEqual(await response.text(), expected)
+    t.assert.deepStrictEqual(response.status, 421)
+    t.assert.deepStrictEqual(await response.text(), expected)
   }
 })

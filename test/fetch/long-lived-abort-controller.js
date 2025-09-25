@@ -5,7 +5,6 @@ const { fetch } = require('../../')
 const { once, setMaxListeners } = require('node:events')
 const { test } = require('node:test')
 const { closeServerAsPromise } = require('../utils/node-http')
-const { strictEqual } = require('node:assert')
 
 test('long-lived-abort-controller', async (t) => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -43,5 +42,5 @@ test('long-lived-abort-controller', async (t) => {
     await res.text()
   }
 
-  strictEqual(warningEmitted, false)
+  t.assert.strictEqual(warningEmitted, false)
 })

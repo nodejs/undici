@@ -2,7 +2,6 @@
 
 const { Headers } = require('../..')
 const { test } = require('node:test')
-const assert = require('node:assert')
 
 test('Spreading a Headers object yields 0 symbols', (t) => {
   const baseHeaders = { 'x-foo': 'bar' }
@@ -13,6 +12,6 @@ test('Spreading a Headers object yields 0 symbols', (t) => {
     ...requestHeaders
   }
 
-  assert.deepStrictEqual(headers, { 'x-foo': 'bar' })
-  assert.doesNotThrow(() => new Headers(headers))
+  t.assert.deepStrictEqual(headers, { 'x-foo': 'bar' })
+  t.assert.doesNotThrow(() => new Headers(headers))
 })
