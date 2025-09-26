@@ -6,30 +6,24 @@ const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
-const timers = require('../lib/util/timers')
 
 test('multiple reconnect', async (t) => {
   t = tspl(t, { plan: 5 })
 
   let n = 0
-  const clock = FakeTimers.install()
-  after(() => clock.uninstall())
-
-  const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
-  after(() => {
-    Object.assign(timers, orgTimers)
+  const clock = FakeTimers.install({
+    toFake: ['Date']
   })
+  after(() => clock.uninstall())
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     n === 0 ? res.destroy() : res.end('ok')
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0)
-  await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`)
-  after(client.destroy.bind(client))
+  after(() => client.destroy())
 
   client.request({ path: '/', method: 'GET' }, (err, data) => {
     t.ok(err)
