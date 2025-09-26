@@ -4131,8 +4131,7 @@
             },
             {
               "name": "new Request() throws a TypeError if any of RequestInit's members' values are invalid",
-              "success": false,
-              "message": "assert_throws_js: a new Request() must throw a TypeError if RequestInit's priority is an invalid value function \"() => {\n    new Request(\"\", {priority: 'invalid'});\n  }\" did not throw"
+              "success": true
             },
             {
               "name": "fetch() with a 'high' priority completes successfully",
@@ -4148,8 +4147,7 @@
             },
             {
               "name": "fetch() with an invalid priority returns a rejected promise with a TypeError",
-              "success": false,
-              "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+              "success": true
             }
           ]
         },
