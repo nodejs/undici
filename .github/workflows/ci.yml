@@ -54,7 +54,7 @@ jobs:
         run: npm run lint
 
   test:
-    name: Test with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
+    name: Test ${{ matrix.node-version == '24' && matrix.runs-on == 'ubuntu-latest' && 'and Coverage ' || ''}}with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       max-parallel: 0
