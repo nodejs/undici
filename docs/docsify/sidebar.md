@@ -42,3 +42,4 @@
   * [Client Certificate](/docs/best-practices/client-certificate.md "Connect using a client certificate")
   * [Writing Tests](/docs/best-practices/writing-tests.md "Using Undici inside tests")
   * [Mocking Request](/docs/best-practices/mocking-request.md "Using Undici inside tests")
+  * [Crawling](/docs/best-practices/crawling.md "Crawling")
