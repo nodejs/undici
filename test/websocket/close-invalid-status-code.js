@@ -4,10 +4,9 @@ const { test } = require('node:test')
 const { once } = require('node:events')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
 
 test('Client fails the connection if receiving a masked frame', async (t) => {
-  const assert = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = new WebSocketServer({ port: 0 })
 
@@ -21,11 +20,11 @@ test('Client fails the connection if receiving a masked frame', async (t) => {
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
   ws.addEventListener('close', (e) => {
-    assert.deepStrictEqual(e.code, 1006)
+    t.assert.deepStrictEqual(e.code, 1006)
   })
 
   ws.addEventListener('error', () => {
-    assert.ok(true)
+    t.assert.ok(true)
   })
 
   t.after(() => {
@@ -34,6 +33,4 @@ test('Client fails the connection if receiving a masked frame', async (t) => {
   })
 
   await once(ws, 'close')
-
-  await assert.completed
 })

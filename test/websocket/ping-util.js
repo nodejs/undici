@@ -3,17 +3,18 @@
 const { test } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket, ping } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
+const { once } = require('node:events')
 
 test('ping', async (t) => {
-  const { deepStrictEqual, completed } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const pingBody = Buffer.from('ping body')
   const wss = new WebSocketServer({ port: 0 })
 
   wss.on('connection', (ws) => {
     ws.on('ping', (b) => {
-      deepStrictEqual(b, pingBody)
+      t.assert.deepStrictEqual(b, pingBody)
+      ws.close()
     })
   })
 
@@ -25,41 +26,40 @@ test('ping', async (t) => {
     wss.close()
   })
 
-  await completed
+  await once(ws, 'close')
 })
 
-test('attempting to send invalid ping body', async (t) => {
-  const { completed, throws, fail } = tspl(t, { plan: 2 })
+test('attempting to send invalid ping body', (t) => {
+  t.plan(2)
 
   const wss = new WebSocketServer({ port: 0 })
 
   wss.on('connection', (ws) => {
     ws.on('ping', () => {
-      fail('Received unexpected ping')
+      t.assert.fail('Received unexpected ping')
     })
   })
 
   const ws = new WebSocket(`ws://localhost:${wss.address().port}`)
 
-  throws(() => ping(ws, Buffer.from('a'.repeat(126))))
-  throws(() => ping(ws, 'a'.repeat(125)))
+  t.assert.throws(() => ping(ws, Buffer.from('a'.repeat(126))))
+  t.assert.throws(() => ping(ws, 'a'.repeat(125)))
 
   t.after(() => {
     ws.close()
     wss.close()
   })
-
-  await completed
 })
 
 test('ping with no payload', async (t) => {
-  const { completed, deepStrictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const wss = new WebSocketServer({ port: 0 })
 
   wss.on('connection', (ws) => {
     ws.on('ping', (b) => {
-      deepStrictEqual(b, Buffer.alloc(0))
+      t.assert.deepStrictEqual(b, Buffer.alloc(0))
+      ws.close()
     })
   })
 
@@ -71,5 +71,5 @@ test('ping with no payload', async (t) => {
     wss.close()
   })
 
-  await completed
+  await once(ws, 'close')
 })

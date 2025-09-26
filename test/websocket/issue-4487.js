@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { once } = require('node:events')
 
 const { WebSocketServer } = require('ws')
@@ -23,5 +22,5 @@ test('should be emit error event on aborted connection', async (t) => {
   ws.onerror = () => errorEmitted = true
   await once(ws, 'close')
 
-  assert(errorEmitted)
+  t.assert.ok(errorEmitted)
 })

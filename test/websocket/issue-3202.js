@@ -3,10 +3,9 @@
 const { test } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
 
-test('Receiving frame with payload length 0 works', async (t) => {
-  const { ok, completed } = tspl(t, { plan: 1 })
+test('Receiving frame with payload length 0 works', (t, done) => {
+  t.plan(1)
 
   const server = new WebSocketServer({ port: 0 })
 
@@ -28,8 +27,7 @@ test('Receiving frame with payload length 0 works', async (t) => {
   })
 
   ws.addEventListener('message', () => {
-    ok(true)
+    t.assert.ok(true)
+    done()
   })
-
-  await completed
 })
