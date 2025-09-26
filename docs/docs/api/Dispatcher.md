@@ -1043,6 +1043,7 @@ The `dns` interceptor enables you to cache DNS lookups for a given duration, per
   - The function should return a single record from the records array.
   - By default a simplified version of Round Robin is used.
   - The `records` property can be mutated to store the state of the balancing algorithm.
+- `storage: { size: number, get(origin: string): DNSInterceptorOriginRecords | null, set(origin: string, records: DNSInterceptorOriginRecords | null, options?: { ttl: number }): void, delete(origin: string): void, full(): boolean }` - Custom storage for resolved DNS records
 
 > The `Dispatcher#options` also gets extended with the options `dns.affinity`, `dns.dualStack`, `dns.lookup` and `dns.pick` which can be used to configure the interceptor at a request-per-request basis.
 
@@ -1065,6 +1066,45 @@ const { dns } = interceptors;
 
 const client = new Agent().compose([
   dns({ ...opts })
+])
+
+const response = await client.request({
+  origin: `http://localhost:3030`,
+  ...requestOpts
+})
+```
+
+**Example - DNS Interceptor and LRU cache as a storage**
+
+```js
+const { Client, interceptors } = require("undici");
+const QuickLRU = require("quick-lru");
+const { dns } = interceptors;
+
+const lru = new QuickLRU({ maxSize: 100 });
+
+const lruAdapter = {
+  get size() {
+    return lru.size;
+  },
+  get(origin) {
+    return lru.get(origin);
+  },
+  set(origin, records, { ttl }) {
+    lru.set(origin, records, { maxAge: ttl });
+  },
+  delete(origin) {
+    lru.delete(origin);
+  },
+  full() {
+    // For LRU cache, we can always store new records,
+    // old records will be evicted automatically
+    return false;
+  }
+}
+
+const client = new Agent().compose([
+  dns({ storage: lruAdapter })
 ])
 
 const response = await client.request({

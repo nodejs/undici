@@ -1802,7 +1802,6 @@ test('Should support external storage', async t => {
       }
     },
     dns({
-      maxItems: Infinity,
       storage,
       lookup: (_origin, _opts, cb) => {
         cb(null, [
