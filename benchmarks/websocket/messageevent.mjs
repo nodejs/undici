@@ -13,6 +13,7 @@ group('MessageEvent instantiation', () => {
   })
 
   bench('global - MessageEvent init', () => {
+    // eslint-disable-next-line no-restricted-globals
     return new MessageEvent('event', { data: null, ports: [port1, port2] })
   })
 })

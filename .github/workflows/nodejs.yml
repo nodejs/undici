@@ -1,226 +1,203 @@
-name: Node CI
+name: Node.js
 
 on:
-  push:
-    branches:
-     - main
-     - current
-     - next
-     - 'v*'
-  pull_request:
+  workflow_call:
+    inputs:
+      node-version:
+        required: true
+        type: string
+      runs-on:
+        required: true
+        type: string
+      codecov:
+        required: false
+        type: boolean
+        default: false
+      no-wasm-simd:
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
 
 jobs:
-  dependency-review:
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
-        with:
-          egress-policy: audit
-
-      - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-        with:
-          persist-credentials: false
-
-      - name: Dependency Review
-        uses: actions/dependency-review-action@da24556b548a50705dd671f47852072ea4c105d9 # v4.7.1
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: lts/*
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Lint
-        run: npm run lint
-
   test:
-    strategy:
-      fail-fast: false
-      max-parallel: 0
-      matrix:
-        node-version:
-          - 20
-          - 22
-          - 24
-        runs-on:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
-        exclude:
-          - node-version: 20
-            runs-on: windows-latest
-    uses: ./.github/workflows/test.yml
-    with:
-      node-version: ${{ matrix.node-version }}
-      runs-on: ${{ matrix.runs-on }}
-    secrets: inherit
-
-  test-without-intl:
-    name: Test with Node.js ${{ matrix.version }} compiled --without-intl
-    strategy:
-      fail-fast: false
-      max-parallel: 0
-      matrix:
-        version: [20, 22, 24]
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
+    name: Test ${{ inputs.codecov == true && 'and Coverage ' || '' }}with Node.js ${{ inputs.node-version }} on ${{ inputs.runs-on }}
+    timeout-minutes: 20
+    runs-on: ${{ inputs.runs-on }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
+          submodules: recursive
 
-      # Setup node, install deps, and build undici prior to building icu-less node and testing
-      - name: Setup Node.js@${{ inputs.version }}
+      - name: Setup Node.js@${{ inputs.node-version }}
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: ${{ inputs.version }}
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build undici
-        run: npm run build:node
-
-      - name: Determine latest release
-        id: release
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        with:
-          result-encoding: string
-          script: |
-            const req = await fetch('https://nodejs.org/download/release/index.json')
-            const releases = await req.json()
-
-            const latest = releases.find((r) => r.version.startsWith('v${{ matrix.version }}'))
-            return latest.version
-
-      - name: Download and extract source
-        run: curl https://nodejs.org/download/release/${{ steps.release.outputs.result }}/node-${{ steps.release.outputs.result }}.tar.xz | tar xfJ -
-
-      - name: Install ninja
-        run: sudo apt-get install ninja-build
-
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@63069e3931dedbf3b63792097479563182fe70d1 #v1.2.18
-        with:
-          key: node${{ matrix.version }}
-
-      - name: Build node
-        working-directory: ./node-${{ steps.release.outputs.result }}
-        run: |
-          export CC="ccache gcc"
-          export CXX="ccache g++"
-          ./configure --without-intl --ninja --prefix=./final
-          make
-          make install
-          echo "$(pwd)/final/bin" >> $GITHUB_PATH
+          node-version: ${{ inputs.node-version }}
 
       - name: Print version information
         run: |
           echo OS: $(node -p "os.version()")
           echo Node.js: $(node --version)
+          echo "Node.js built-in dependencies: $(node -p "'\r\n' + (Object.entries(process.versions).map(([k, v], i, arr) => (i !== arr.length - 1 ? '├──' : '└──') + k + '@' + v)).join('\r\n')")"
           echo npm: $(npm --version)
           echo git: $(git --version)
-          echo icu config: $(node -e "console.log(process.config)" | grep icu)
-
-      - name: Run tests
-        run: npm run test:javascript:without-intl
-
-  test-fuzzing:
-    name: Fuzzing
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: lts/*
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run fuzzing tests
-        run: npm run test:fuzzing
+      - name: Print installed dependencies
+        run: npm ls --all
+        continue-on-error: true
 
-  test-types:
-    name: Test TypeScript types
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Configure hosts file for WPT (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cd ${{ github.workspace }}\test\web-platform-tests\wpt
+          python wpt make-hosts-file | Out-File $env:SystemRoot\System32\drivers\etc\hosts -Encoding ascii -Append
+        shell: powershell
+
+      - name: Configure hosts file for WPT (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd ${{ github.workspace }}/test/web-platform-tests/wpt
+          python3 wpt make-hosts-file | sudo tee -a /etc/hosts
+
+      - name: Generate PEM files
+        run: npm run generate-pem
+        id: generate-pem
+      
+      - name: Test unit
+        run: npm run test:unit
+        id: test-unit
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test node-test
+        run: npm run test:node-test
+        id: test-node-test
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test fetch
+        run: npm run test:fetch
+        id: test-fetch
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test node-fetch
+        run: npm run test:node-fetch
+        id: test-node-fetch
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test cache
+        run: npm run test:cache
+        id: test-cache
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test cache-interceptor  ${{ inputs.node-version != '20' && 'with' || 'without' }} sqlite
+        run: npm run test:cache-interceptor
+        id: test-cache-interceptor
+        env:
+          CI: true
+          NODE_OPTIONS: ${{ inputs.node-version != '20' && '--experimental-sqlite' || '' }}
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+
+      - name: Test cache-tests
+        run: npm run test:cache-tests
+        id: test-cache-tests
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test cookies
+        run: npm run test:cookies
+        id: test-cookies
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+
+      - name: Test interceptors
+        run: npm run test:interceptors
+        id: test-interceptors
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test eventsource
+        run: npm run test:eventsource
+        id: test-eventsource
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test infra
+        run: npm run test:infra
+        id: test-infra
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+
+      - name: Test subresource-integrity
+        run: npm run test:subresource-integrity
+        id: test-subresource-integrity
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test websocket
+        run: npm run test:websocket
+        id: test-websocket
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test jest
+        run: npm run test:jest
+        id: test-jest
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ''
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+      
+      - name: Test wpt
+        run: npm run test:wpt
+        id: test-wpt
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+
+      - name: Coverage summary
+        if: inputs.codecov == true
+        run: npm run coverage:report:ci
+        id: prepare-coverage-report
+      
+      - name: Upload coverage report to Codecov
+        if: inputs.codecov == true
+        uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
         with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: lts/*
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run typings tests
-        run: npm run test:typescript
-
-  test-sqlite:
-    name: Test with SQLite enabled
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: 22
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run typings tests
-        run: npm run test:sqlite
-
-  automerge:
-    if: >
-      github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
-    needs:
-      - dependency-review
-      - test
-      - test-types
-      - test-without-intl
-      - test-fuzzing
-      - lint
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Merge Dependabot PR
-        uses: fastify/github-action-merge-dependabot@e820d631adb1d8ab16c3b93e5afe713450884a4a # v3.11.1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}

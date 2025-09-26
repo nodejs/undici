@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { exit } from 'node:process'
 import { fork } from 'node:child_process'
+import { runtimeFeatures } from '../../lib/util/runtime-features.js'
 
 /**
  * @typedef {import('../../types/cache-interceptor.d.ts').default.CacheOptions} CacheOptions
@@ -106,10 +107,9 @@ const CACHE_STORES = [
   { opts: {}, cacheStore: 'MemoryCacheStore' }
 ]
 
-try {
-  await import('node:sqlite')
+if (runtimeFeatures.has('sqlite')) {
   CACHE_STORES.push({ opts: {}, cacheStore: 'SqliteCacheStore' })
-} catch (err) {
+} else {
   console.warn('Skipping SqliteCacheStore, node:sqlite not present')
 }
 
@@ -135,9 +135,11 @@ for (let i = 0; i < testEnvironments.length; i++) {
   const port = PORT + i
 
   const promise = new Promise((resolve) => {
-    const process = fork(join(import.meta.dirname, 'cache-tests-worker.mjs'), {
+    const cacheTestsWorkerProcess = fork(join(import.meta.dirname, 'cache-tests-worker.mjs'), {
       stdio: 'pipe',
       env: {
+        NODE_OPTIONS: process.env.NODE_OPTIONS,
+        NODE_V8_COVERAGE: process.env.NODE_V8_COVERAGE,
         TEST_ENVIRONMENT: JSON.stringify(environment),
         BASE_URL: `${PROTOCOL}://localhost:${port}`,
         CI: CLI_OPTIONS.values.ci ? 'true' : undefined,
@@ -148,15 +150,15 @@ for (let i = 0; i < testEnvironments.length; i++) {
     })
 
     const stdout = []
-    process.stdout.on('data', chunk => {
+    cacheTestsWorkerProcess.stdout.on('data', chunk => {
       stdout.push(chunk)
     })
 
-    process.stderr.on('error', chunk => {
+    cacheTestsWorkerProcess.stderr.on('error', chunk => {
       stdout.push(chunk)
     })
 
-    process.on('close', code => {
+    cacheTestsWorkerProcess.on('close', code => {
       resolve([code, stdout])
     })
   })

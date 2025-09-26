@@ -82,62 +82,44 @@ test('webidl.util.ConvertToInt(V)', () => {
 
   for (const signedness of ['signed', 'unsigned']) {
     assert.throws(() => {
-      ConvertToInt(NaN, 64, signedness, {
-        enforceRange: true
-      })
+      ConvertToInt(NaN, 64, signedness, webidl.attributes.EnforceRange)
     }, TypeError)
 
     assert.throws(() => {
-      ConvertToInt(Infinity, 64, signedness, {
-        enforceRange: true
-      })
+      ConvertToInt(Infinity, 64, signedness, webidl.attributes.EnforceRange)
     }, TypeError)
 
     assert.throws(() => {
-      ConvertToInt(-Infinity, 64, signedness, {
-        enforceRange: true
-      })
+      ConvertToInt(-Infinity, 64, signedness, webidl.attributes.EnforceRange)
     }, TypeError)
 
     assert.throws(() => {
-      ConvertToInt(2 ** 53 + 1, 32, 'signed', {
-        enforceRange: true
-      })
+      ConvertToInt(2 ** 53 + 1, 32, 'signed', webidl.attributes.EnforceRange)
     }, TypeError)
 
     assert.throws(() => {
-      ConvertToInt(-(2 ** 53 + 1), 32, 'unsigned', {
-        enforceRange: true
-      })
+      ConvertToInt(-(2 ** 53 + 1), 32, 'unsigned', webidl.attributes.EnforceRange)
     }, TypeError)
 
     assert.equal(
-      ConvertToInt(65.5, 64, signedness, {
-        enforceRange: true
-      }),
+      ConvertToInt(65.5, 64, signedness, webidl.attributes.EnforceRange),
       65
     )
   }
 
   for (const signedness of ['signed', 'unsigned']) {
     assert.equal(
-      ConvertToInt(63.49, 64, signedness, {
-        clamp: true
-      }),
+      ConvertToInt(63.49, 64, signedness, webidl.attributes.Clamp),
       64
     )
 
     assert.equal(
-      ConvertToInt(63.51, 64, signedness, {
-        clamp: true
-      }),
+      ConvertToInt(63.51, 64, signedness, webidl.attributes.Clamp),
       64
     )
 
     assert.equal(
-      ConvertToInt(-0, 64, signedness, {
-        clamp: true
-      }),
+      ConvertToInt(-0, 64, signedness, webidl.attributes.Clamp),
       0
     )
   }

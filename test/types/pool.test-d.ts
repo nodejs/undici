@@ -1,7 +1,7 @@
-import { Duplex, Readable, Writable } from 'stream'
+import { Duplex, Readable, Writable } from 'node:stream'
 import { expectAssignable, expectType } from 'tsd'
 import { Dispatcher, Pool, Client } from '../..'
-import { URL } from 'url'
+import { URL } from 'node:url'
 
 expectAssignable<Pool>(new Pool(''))
 expectAssignable<Pool>(new Pool('', {}))

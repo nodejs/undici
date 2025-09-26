@@ -1,7 +1,6 @@
 'use strict'
 
 const { createServer } = require('node:http')
-const { tspl } = require('@matteo.collina/tspl')
 const { describe, test, after } = require('node:test')
 const { fetch } = require('../..')
 const { once } = require('node:events')
@@ -16,7 +15,7 @@ describe('https://github.com/nodejs/undici/issues/3616', () => {
 
   for (const encoding of cases) {
     test(encoding, async t => {
-      t = tspl(t, { plan: 2 })
+      t.plan(2)
       const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
         res.writeHead(200, {
           'Content-Length': '0',
@@ -35,14 +34,14 @@ describe('https://github.com/nodejs/undici/issues/3616', () => {
       await once(server, 'listening')
       const result = await fetch(`http://localhost:${server.address().port}/`)
 
-      t.ok(result.body.getReader())
+      t.assert.ok(result.body.getReader())
 
       process.on('uncaughtException', (reason) => {
-        t.fail('Uncaught Exception:', reason, encoding)
+        t.assert.fail('Uncaught Exception:', reason, encoding)
       })
 
       await new Promise(resolve => setTimeout(resolve, 100))
-      t.ok(true)
+      t.assert.ok(true)
     })
   }
 })

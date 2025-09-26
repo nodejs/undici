@@ -4,6 +4,7 @@ const { createServer } = require('node:http')
 const MemoryCacheStore = require('../lib/cache/memory-cache-store.js')
 const { request, Agent, setGlobalDispatcher } = require('..')
 const { interceptors } = require('..')
+const { runtimeFeatures } = require('../lib/util/runtime-features.js')
 
 describe('Cache with Vary headers', () => {
   async function runCacheTest (store) {
@@ -56,7 +57,7 @@ describe('Cache with Vary headers', () => {
     await runCacheTest(new MemoryCacheStore())
   })
 
-  test('should cache response with SqliteCacheStore when Vary header exists but request header is missing', { skip: process.versions.node < '22' }, async () => {
+  test('should cache response with SqliteCacheStore when Vary header exists but request header is missing', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
     const SqliteCacheStore = require('../lib/cache/sqlite-cache-store.js')
     const sqliteStore = new SqliteCacheStore()
     await runCacheTest(sqliteStore)

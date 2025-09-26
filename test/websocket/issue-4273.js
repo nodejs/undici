@@ -9,8 +9,7 @@ test('first error than close event is fired on failed connection', async (t) => 
   const ws = new WebSocket('ws://localhost:1')
 
   ws.addEventListener('error', (ev) => {
-    const { cause } = ev.error
-    ok(cause instanceof Error)
+    ok(ev.error instanceof TypeError)
   })
 
   await completed

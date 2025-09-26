@@ -3,166 +3,162 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
-const { tspl } = require('@matteo.collina/tspl')
 const {
   Request,
   Headers,
   fetch
 } = require('../../')
 
-const hasSignalReason = 'reason' in AbortSignal.prototype
-
 test('arg validation', async (t) => {
   // constructor
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request()
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', 0)
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     const url = new URL('http://asd')
     url.password = 'asd'
     // eslint-disable-next-line
     new Request(url)
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     const url = new URL('http://asd')
     url.username = 'asd'
     // eslint-disable-next-line
     new Request(url)
   }, TypeError)
-  assert.doesNotThrow(() => {
+  t.assert.doesNotThrow(() => {
     // eslint-disable-next-line
     new Request('http://asd', undefined)
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
       window: {}
     })
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
       window: 1
     })
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
       mode: 'navigate'
     })
   })
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
       referrerPolicy: 'agjhagna'
     })
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
       mode: 'agjhagna'
     })
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
       credentials: 'agjhagna'
     })
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
       cache: 'agjhagna'
     })
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
       method: 'agjhagnaöööö'
     })
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new Request('http://asd', {
       method: 'TRACE'
     })
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.destination.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.referrer.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.referrerPolicy.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.mode.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.credentials.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.cache.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.redirect.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.integrity.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.keepalive.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.isReloadNavigation.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.isHistoryNavigation.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.signal.toString()
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line no-unused-expressions
     Request.prototype.body
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line no-unused-expressions
     Request.prototype.bodyUsed
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     Request.prototype.clone.call(null)
   }, TypeError)
 
-  assert.doesNotThrow(() => {
+  t.assert.doesNotThrow(() => {
     Request.prototype[Symbol.toStringTag].charAt(0)
   })
 
@@ -173,7 +169,7 @@ test('arg validation', async (t) => {
     'blob',
     'formData'
   ]) {
-    await assert.rejects(async () => {
+    await t.assert.rejects(async () => {
       await new Request('http://localhost')[method].call({
         blob () {
           return {
@@ -187,112 +183,104 @@ test('arg validation', async (t) => {
   }
 })
 
-test('undefined window', () => {
-  assert.doesNotThrow(() => new Request('http://asd', { window: undefined }))
+test('undefined window', (t) => {
+  t.assert.doesNotThrow(() => new Request('http://asd', { window: undefined }))
 })
 
-test('undefined body', () => {
+test('undefined body', (t) => {
   const req = new Request('http://asd', { body: undefined })
-  assert.strictEqual(req.body, null)
+  t.assert.strictEqual(req.body, null)
 })
 
-test('undefined method', () => {
+test('undefined method', (t) => {
   const req = new Request('http://asd', { method: undefined })
-  assert.strictEqual(req.method, 'GET')
+  t.assert.strictEqual(req.method, 'GET')
 })
 
-test('undefined headers', () => {
+test('undefined headers', (t) => {
   const req = new Request('http://asd', { headers: undefined })
-  assert.strictEqual([...req.headers.entries()].length, 0)
+  t.assert.strictEqual([...req.headers.entries()].length, 0)
 })
 
-test('undefined referrer', () => {
+test('undefined referrer', (t) => {
   const req = new Request('http://asd', { referrer: undefined })
-  assert.strictEqual(req.referrer, 'about:client')
+  t.assert.strictEqual(req.referrer, 'about:client')
 })
 
-test('undefined referrerPolicy', () => {
+test('undefined referrerPolicy', (t) => {
   const req = new Request('http://asd', { referrerPolicy: undefined })
-  assert.strictEqual(req.referrerPolicy, '')
+  t.assert.strictEqual(req.referrerPolicy, '')
 })
 
-test('undefined mode', () => {
+test('undefined mode', (t) => {
   const req = new Request('http://asd', { mode: undefined })
-  assert.strictEqual(req.mode, 'cors')
+  t.assert.strictEqual(req.mode, 'cors')
 })
 
-test('undefined credentials', () => {
+test('undefined credentials', (t) => {
   const req = new Request('http://asd', { credentials: undefined })
-  assert.strictEqual(req.credentials, 'same-origin')
+  t.assert.strictEqual(req.credentials, 'same-origin')
 })
 
-test('undefined cache', () => {
+test('undefined cache', (t) => {
   const req = new Request('http://asd', { cache: undefined })
-  assert.strictEqual(req.cache, 'default')
+  t.assert.strictEqual(req.cache, 'default')
 })
 
-test('undefined redirect', () => {
+test('undefined redirect', (t) => {
   const req = new Request('http://asd', { redirect: undefined })
-  assert.strictEqual(req.redirect, 'follow')
+  t.assert.strictEqual(req.redirect, 'follow')
 })
 
-test('undefined keepalive', () => {
+test('undefined keepalive', (t) => {
   const req = new Request('http://asd', { keepalive: undefined })
-  assert.strictEqual(req.keepalive, false)
+  t.assert.strictEqual(req.keepalive, false)
 })
 
-test('undefined integrity', () => {
+test('undefined integrity', (t) => {
   const req = new Request('http://asd', { integrity: undefined })
-  assert.strictEqual(req.integrity, '')
+  t.assert.strictEqual(req.integrity, '')
 })
 
-test('null integrity', () => {
+test('null integrity', (t) => {
   const req = new Request('http://asd', { integrity: null })
-  assert.strictEqual(req.integrity, 'null')
+  t.assert.strictEqual(req.integrity, 'null')
 })
 
-test('undefined signal', () => {
+test('undefined signal', (t) => {
   const req = new Request('http://asd', { signal: undefined })
-  assert.strictEqual(req.signal.aborted, false)
+  t.assert.strictEqual(req.signal.aborted, false)
 })
 
-test('pre aborted signal', () => {
+test('pre aborted signal', (t) => {
   const ac = new AbortController()
   ac.abort('gwak')
   const req = new Request('http://asd', { signal: ac.signal })
-  assert.strictEqual(req.signal.aborted, true)
-  if (hasSignalReason) {
-    assert.strictEqual(req.signal.reason, 'gwak')
-  }
+  t.assert.strictEqual(req.signal.aborted, true)
+  t.assert.strictEqual(req.signal.reason, 'gwak')
 })
 
 test('post aborted signal', (t) => {
-  const { strictEqual, ok } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const ac = new AbortController()
   const req = new Request('http://asd', { signal: ac.signal })
-  strictEqual(req.signal.aborted, false)
+  t.assert.strictEqual(req.signal.aborted, false)
   ac.signal.addEventListener('abort', () => {
-    if (hasSignalReason) {
-      strictEqual(req.signal.reason, 'gwak')
-    } else {
-      ok(true)
-    }
+    t.assert.strictEqual(req.signal.reason, 'gwak')
   }, { once: true })
   ac.abort('gwak')
 })
 
-test('pre aborted signal cloned', () => {
+test('pre aborted signal cloned', (t) => {
   const ac = new AbortController()
   ac.abort('gwak')
   const req = new Request('http://asd', { signal: ac.signal }).clone()
-  assert.strictEqual(req.signal.aborted, true)
-  if (hasSignalReason) {
-    assert.strictEqual(req.signal.reason, 'gwak')
-  }
+  t.assert.strictEqual(req.signal.aborted, true)
+  t.assert.strictEqual(req.signal.reason, 'gwak')
 })
 
-test('URLSearchParams body with Headers object - issue #1407', async () => {
+test('URLSearchParams body with Headers object - issue #1407', async (t) => {
   const body = new URLSearchParams({
     abc: 123
   })
@@ -308,131 +296,127 @@ test('URLSearchParams body with Headers object - issue #1407', async () => {
     }
   )
 
-  assert.strictEqual(request.headers.get('content-type'), 'application/x-www-form-urlencoded;charset=UTF-8')
-  assert.strictEqual(request.headers.get('authorization'), 'test')
-  assert.strictEqual(await request.text(), 'abc=123')
+  t.assert.strictEqual(request.headers.get('content-type'), 'application/x-www-form-urlencoded;charset=UTF-8')
+  t.assert.strictEqual(request.headers.get('authorization'), 'test')
+  t.assert.strictEqual(await request.text(), 'abc=123')
 })
 
 test('post aborted signal cloned', (t) => {
-  const { strictEqual, ok } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const ac = new AbortController()
   const req = new Request('http://asd', { signal: ac.signal }).clone()
-  strictEqual(req.signal.aborted, false)
+  t.assert.strictEqual(req.signal.aborted, false)
   ac.signal.addEventListener('abort', () => {
-    if (hasSignalReason) {
-      strictEqual(req.signal.reason, 'gwak')
-    } else {
-      ok(true)
-    }
+    t.assert.strictEqual(req.signal.reason, 'gwak')
   }, { once: true })
   ac.abort('gwak')
 })
 
 test('Passing headers in init', async (t) => {
   // https://github.com/nodejs/undici/issues/1400
-  await t.test('Headers instance', () => {
+  await t.test('Headers instance', (t) => {
     const req = new Request('http://localhost', {
       headers: new Headers({ key: 'value' })
     })
 
-    assert.strictEqual(req.headers.get('key'), 'value')
+    t.assert.strictEqual(req.headers.get('key'), 'value')
   })
 
-  await t.test('key:value object', () => {
+  await t.test('key:value object', (t) => {
     const req = new Request('http://localhost', {
       headers: { key: 'value' }
     })
 
-    assert.strictEqual(req.headers.get('key'), 'value')
+    t.assert.strictEqual(req.headers.get('key'), 'value')
   })
 
-  await t.test('[key, value][]', () => {
+  await t.test('[key, value][]', (t) => {
     const req = new Request('http://localhost', {
       headers: [['key', 'value']]
     })
 
-    assert.strictEqual(req.headers.get('key'), 'value')
+    t.assert.strictEqual(req.headers.get('key'), 'value')
   })
 })
 
-test('Symbol.toStringTag', () => {
+test('Symbol.toStringTag', (t) => {
   const req = new Request('http://localhost')
 
-  assert.strictEqual(req[Symbol.toStringTag], 'Request')
-  assert.strictEqual(Request.prototype[Symbol.toStringTag], 'Request')
+  t.assert.strictEqual(req[Symbol.toStringTag], 'Request')
+  t.assert.strictEqual(Request.prototype[Symbol.toStringTag], 'Request')
 })
 
-test('invalid RequestInit values', () => {
+test('invalid RequestInit values', (t) => {
   /* eslint-disable no-new */
-  assert.throws(() => {
+  t.assert.throws(() => {
     new Request('http://l', { mode: 'CoRs' })
   }, TypeError, 'not exact case = error')
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     new Request('http://l', { mode: 'random' })
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     new Request('http://l', { credentials: 'OMIt' })
   }, TypeError, 'not exact case = error')
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     new Request('http://l', { credentials: 'random' })
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     new Request('http://l', { cache: 'DeFaULt' })
   }, TypeError, 'not exact case = error')
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     new Request('http://l', { cache: 'random' })
   }, TypeError)
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     new Request('http://l', { redirect: 'FOllOW' })
   }, TypeError, 'not exact case = error')
 
-  assert.throws(() => {
+  t.assert.throws(() => {
     new Request('http://l', { redirect: 'random' })
   }, TypeError)
   /* eslint-enable no-new */
 })
 
-test('RequestInit.signal option', async () => {
-  assert.throws(() => {
+test('RequestInit.signal option', async (t) => {
+  t.assert.throws(() => {
     // eslint-disable-next-line no-new
     new Request('http://asd', {
       signal: true
     })
   }, TypeError)
 
-  await assert.rejects(fetch('http://asd', {
+  await t.assert.rejects(fetch('http://asd', {
     signal: false
   }), TypeError)
 })
 
 // https://github.com/nodejs/undici/issues/2050
-test('set-cookie headers get cleared when passing a Request as first param', () => {
+test('set-cookie headers get cleared when passing a Request as first param', (t) => {
   const req1 = new Request('http://localhost', {
     headers: {
       'set-cookie': 'a=1'
     }
   })
 
-  assert.deepStrictEqual([...req1.headers], [['set-cookie', 'a=1']])
+  t.assert.deepStrictEqual([...req1.headers], [['set-cookie', 'a=1']])
   const req2 = new Request(req1, { headers: {} })
-  assert.deepStrictEqual([...req1.headers], [['set-cookie', 'a=1']])
-  assert.deepStrictEqual([...req2.headers], [])
-  assert.deepStrictEqual(req2.headers.getSetCookie(), [])
+  t.assert.deepStrictEqual([...req1.headers], [['set-cookie', 'a=1']])
+  t.assert.deepStrictEqual([...req2.headers], [])
+  t.assert.deepStrictEqual(req2.headers.getSetCookie(), [])
 })
 
 // https://github.com/nodejs/undici/issues/2124
-test('request.referrer', () => {
+test('request.referrer', (t) => {
   for (const referrer of ['about://client', 'about://client:1234']) {
     const request = new Request('http://a', { referrer })
 
-    assert.strictEqual(request.referrer, 'about:client')
+    t.assert.strictEqual(request.referrer, 'about:client')
   }
 })
 
@@ -440,22 +424,22 @@ test('request.referrer', () => {
 test('Clone the set-cookie header when Request is passed as the first parameter and no header is passed.', (t) => {
   const request = new Request('http://localhost', { headers: { 'set-cookie': 'A' } })
   const request2 = new Request(request)
-  assert.deepStrictEqual([...request.headers], [['set-cookie', 'A']])
+  t.assert.deepStrictEqual([...request.headers], [['set-cookie', 'A']])
   request2.headers.append('set-cookie', 'B')
-  assert.deepStrictEqual([...request.headers], [['set-cookie', 'A']])
-  assert.strictEqual(request.headers.getSetCookie().join(', '), request.headers.get('set-cookie'))
-  assert.strictEqual(request2.headers.getSetCookie().join(', '), request2.headers.get('set-cookie'))
+  t.assert.deepStrictEqual([...request.headers], [['set-cookie', 'A']])
+  t.assert.strictEqual(request.headers.getSetCookie().join(', '), request.headers.get('set-cookie'))
+  t.assert.strictEqual(request2.headers.getSetCookie().join(', '), request2.headers.get('set-cookie'))
 })
 
 // Tests for optimization introduced in https://github.com/nodejs/undici/pull/2456
 test('keys to object prototypes method', (t) => {
   const request = new Request('http://localhost', { method: 'hasOwnProperty' })
-  assert(typeof request.method === 'string')
+  t.assert.ok(typeof request.method === 'string')
 })
 
 // https://github.com/nodejs/undici/issues/2465
 test('Issue#2465', async (t) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
   const request = new Request('http://localhost', { body: new SharedArrayBuffer(0), method: 'POST' })
-  strictEqual(await request.text(), '[object SharedArrayBuffer]')
+  t.assert.strictEqual(await request.text(), '[object SharedArrayBuffer]')
 })
