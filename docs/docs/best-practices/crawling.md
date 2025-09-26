@@ -14,6 +14,8 @@ A user agent string should include sufficient detail to identify the crawler and
 AcmeCo Crawler - acme.co - contact@acme.co
 ```
 
+When adding contact details, avoid using personal identifiers such as your own name or a private email address—especially in a professional or employment context. Instead, use a role-based or organizational contact (e.g., crawler-team@company.com) to protect individual privacy while still enabling communication.
+
 If a crawler behaves unexpectedly—for example, due to misconfiguration or implementation errors—server administrators can use the information in the user agent to contact the operator and coordinate an appropriate resolution.
 
 The `User-Agent` header can be set on individual requests or applied globally by configuring a custom dispatcher.
