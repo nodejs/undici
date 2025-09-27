@@ -1,13 +1,12 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 const { Client, Pool } = require('..')
 const { createServer } = require('node:http')
 const { createProxy } = require('proxy')
 
 test('connect through proxy', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = await buildServer()
   const proxy = await buildProxy()
@@ -16,7 +15,7 @@ test('connect through proxy', async (t) => {
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -33,8 +32,8 @@ test('connect through proxy', async (t) => {
   for await (const chunk of response.body) {
     data += chunk
   }
-  t.strictEqual(response.statusCode, 200)
-  t.deepStrictEqual(JSON.parse(data), { hello: 'world' })
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.deepStrictEqual(JSON.parse(data), { hello: 'world' })
 
   server.close()
   proxy.close()
@@ -42,7 +41,7 @@ test('connect through proxy', async (t) => {
 })
 
 test('connect through proxy with auth', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = await buildServer()
   const proxy = await buildProxy()
@@ -55,7 +54,7 @@ test('connect through proxy with auth', async (t) => {
   }
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -75,8 +74,8 @@ test('connect through proxy with auth', async (t) => {
   for await (const chunk of response.body) {
     data += chunk
   }
-  t.strictEqual(response.statusCode, 200)
-  t.deepStrictEqual(JSON.parse(data), { hello: 'world' })
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.deepStrictEqual(JSON.parse(data), { hello: 'world' })
 
   server.close()
   proxy.close()
@@ -84,7 +83,7 @@ test('connect through proxy with auth', async (t) => {
 })
 
 test('connect through proxy with auth but invalid credentials', async (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const server = await buildServer()
   const proxy = await buildProxy()
@@ -97,7 +96,7 @@ test('connect through proxy with auth but invalid credentials', async (t) => {
   }
 
   server.on('request', (req, res) => {
-    t.fail('should not be called')
+    t.assert.fail('should not be called')
   })
 
   const client = new Client(proxyUrl)
@@ -110,7 +109,7 @@ test('connect through proxy with auth but invalid credentials', async (t) => {
     }
   })
 
-  t.strictEqual(response.statusCode, 407)
+  t.assert.strictEqual(response.statusCode, 407)
 
   server.close()
   proxy.close()
@@ -118,7 +117,7 @@ test('connect through proxy with auth but invalid credentials', async (t) => {
 })
 
 test('connect through proxy (with pool)', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = await buildServer()
   const proxy = await buildProxy()
@@ -127,7 +126,7 @@ test('connect through proxy (with pool)', async (t) => {
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -144,8 +143,8 @@ test('connect through proxy (with pool)', async (t) => {
   for await (const chunk of response.body) {
     data += chunk
   }
-  t.strictEqual(response.statusCode, 200)
-  t.deepStrictEqual(JSON.parse(data), { hello: 'world' })
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.deepStrictEqual(JSON.parse(data), { hello: 'world' })
 
   server.close()
   proxy.close()
