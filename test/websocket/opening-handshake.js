@@ -1,10 +1,14 @@
 'use strict'
 
 const { test } = require('node:test')
+const { once } = require('node:events')
 const assert = require('node:assert')
 const { createServer } = require('node:http')
+const { createSecureServer } = require('node:http2')
+const { tspl } = require('@matteo.collina/tspl')
 const { WebSocketServer } = require('ws')
-const { WebSocket } = require('../..')
+const { key, cert } = require('@metcoder95/https-pem')
+const { WebSocket, Agent } = require('../..')
 const { runtimeFeatures } = require('../../lib/util/runtime-features')
 
 test('WebSocket connecting to server that isn\'t a Websocket server', () => {
@@ -48,6 +52,121 @@ test('Open event is emitted', () => {
       resolve()
     })
   })
+})
+
+// TODO: ws does not supports HTTP2; will need to potentially write a custom server for this
+test('WebSocket on H2', { skip: true }, () => {
+  return new Promise((resolve, reject) => {
+    const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
+      .on('stream', (stream, headers) => {
+        assert.equal(headers[':method'], 'CONNECT')
+        assert.equal(headers[':protocol'], 'websocket')
+        assert.ok(headers['sec-websocket-key'])
+        assert.ok(headers['sec-websocket-protocol'], 'chat')
+        assert.equal(headers['sec-websocket-version'], '13')
+
+        stream.respond({ ':status': 200 })
+        stream.end()
+        h2Server.unref()
+      })
+      .listen(0, () => {
+        const dispatcher = new Agent({
+          allowH2: true,
+          connect: {
+            rejectUnauthorized: false
+          }
+        })
+        const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
+        ws.onmessage = ws.onopen = reject
+        ws.addEventListener('error', ({ error }) => {
+          assert.ok(error)
+          ws.close()
+          h2Server.close()
+          resolve()
+        })
+        ws.onerror = () => {}
+      })
+  })
+})
+
+test('WebSocket connecting to server that isn\'t a Websocket server (h2 - supports extended CONNECT protocol)', async (t) => {
+  const planner = tspl(t, { plan: 6 })
+  const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
+    .on('stream', (stream, headers) => {
+      planner.equal(headers[':method'], 'CONNECT')
+      planner.equal(headers[':protocol'], 'websocket')
+      planner.ok(headers['sec-websocket-key'])
+      planner.equal(headers['sec-websocket-protocol'], 'chat')
+      planner.equal(headers['sec-websocket-version'], '13')
+
+      stream.respond({ ':status': 200 })
+      stream.close(8) // NGHTTP2_CANCEL
+    })
+    .listen(0)
+
+  await once(h2Server, 'listening')
+
+  const dispatcher = new Agent({
+    allowH2: true,
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+  const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
+  const cleaner = setupListener()
+  ws.onmessage = ws.onopen = () => planner.fail('should not open')
+
+  t.after(() => {
+    cleaner()
+    dispatcher.close()
+    ws.close()
+    h2Server.close()
+  })
+
+  await planner.completed
+
+  function setupListener () {
+    ws.addEventListener('error', listener)
+
+    return () => { ws.removeEventListener('error', listener) }
+
+    function listener ({ error }) {
+      planner.ok(error)
+    }
+  }
+})
+
+test('WebSocket on H2 with a server that does not support extended CONNECT protocol', async (t) => {
+  const planner = tspl(t, { plan: 1 })
+  const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: false } })
+    .on('stream', (stream) => {
+      stream.respond({ ':status': 200 })
+      stream.end('')
+      h2Server.unref()
+    })
+    .listen(0)
+
+  await once(h2Server, 'listening')
+  t.after(() => { h2Server.close() })
+
+  const dispatcher = new Agent({
+    allowH2: true,
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+  const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
+
+  t.after(() => { return ws.close() || dispatcher.close() })
+
+  ws.onmessage = ws.onopen = () => planner.fail('should not open')
+  ws.addEventListener('error', ({ error }) => {
+    planner.ok(error)
+    ws.close()
+    h2Server.close()
+  })
+
+  await planner.completed
 })
 
 test('Multiple protocols are joined by a comma', () => {
