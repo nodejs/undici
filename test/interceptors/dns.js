@@ -15,7 +15,7 @@ const { interceptors, Agent } = require('../..')
 const { dns } = interceptors
 
 test('Should validate options', t => {
-  t = tspl(t, { plan: 10 })
+  t = tspl(t, { plan: 11 })
 
   t.throws(() => dns({ dualStack: 'true' }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ dualStack: 0 }), { code: 'UND_ERR_INVALID_ARG' })
@@ -27,6 +27,7 @@ test('Should validate options', t => {
   t.throws(() => dns({ maxItems: -1 }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ lookup: {} }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ pick: [] }), { code: 'UND_ERR_INVALID_ARG' })
+  t.throws(() => dns({ storage: new Map() }), { code: 'UND_ERR_INVALID_ARG' })
 })
 
 test('Should automatically resolve IPs (dual stack)', async t => {
