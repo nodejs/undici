@@ -23,6 +23,12 @@ import RetryAgent from './retry-agent'
 import { request, pipeline, stream, connect, upgrade } from './api'
 import interceptors from './interceptors'
 
+import CacheInterceptor from './cache-interceptor'
+declare const cacheStores: {
+  MemoryCacheStore: typeof CacheInterceptor.MemoryCacheStore;
+  SqliteCacheStore: typeof CacheInterceptor.SqliteCacheStore;
+}
+
 export * from './util'
 export * from './cookies'
 export * from './eventsource'
@@ -36,7 +42,7 @@ export { Interceptable } from './mock-interceptor'
 
 declare function globalThisInstall (): void
 
-export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, interceptors, MockClient, MockPool, MockAgent, SnapshotAgent, MockCallHistory, MockCallHistoryLog, mockErrors, ProxyAgent, EnvHttpProxyAgent, RedirectHandler, DecoratorHandler, RetryHandler, RetryAgent, H2CClient, globalThisInstall as install }
+export { Dispatcher, BalancedPool, Pool, Client, buildConnector, errors, Agent, request, stream, pipeline, connect, upgrade, setGlobalDispatcher, getGlobalDispatcher, setGlobalOrigin, getGlobalOrigin, interceptors, cacheStores, MockClient, MockPool, MockAgent, SnapshotAgent, MockCallHistory, MockCallHistoryLog, mockErrors, ProxyAgent, EnvHttpProxyAgent, RedirectHandler, DecoratorHandler, RetryHandler, RetryAgent, H2CClient, globalThisInstall as install }
 export default Undici
 
 declare namespace Undici {
