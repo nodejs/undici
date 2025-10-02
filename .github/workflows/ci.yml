@@ -69,6 +69,7 @@ jobs:
       codecov: ${{ matrix.node-version == '24' && matrix.runs-on == 'ubuntu-latest' }}
       node-version: ${{ matrix.node-version }}
       runs-on: ${{ matrix.runs-on }}
+      no-wasm-simd: ${{ matrix.runs-on == 'macos-latest' && '1' || '0' }}
     secrets: inherit
 
   test-with-no-wasm-simd:
