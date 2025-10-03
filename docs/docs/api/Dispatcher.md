@@ -1043,7 +1043,7 @@ The `dns` interceptor enables you to cache DNS lookups for a given duration, per
   - The function should return a single record from the records array.
   - By default a simplified version of Round Robin is used.
   - The `records` property can be mutated to store the state of the balancing algorithm.
-- `storage: { size: number, get(origin: string): DNSInterceptorOriginRecords | null, set(origin: string, records: DNSInterceptorOriginRecords | null, options?: { ttl: number }): void, delete(origin: string): void, full(): boolean }` - Custom storage for resolved DNS records
+- `storage: DNSStorage` - Custom storage for resolved DNS records
 
 > The `Dispatcher#options` also gets extended with the options `dns.affinity`, `dns.dualStack`, `dns.lookup` and `dns.pick` which can be used to configure the interceptor at a request-per-request basis.
 
@@ -1057,6 +1057,15 @@ It represents a DNS record.
 It represents a map of DNS IP addresses records for a single origin.
 - `4.ips` - (`DNSInterceptorRecord[] | null`) The IPv4 addresses.
 - `6.ips` - (`DNSInterceptorRecord[] | null`) The IPv6 addresses.
+
+**DNSStorage**
+It represents a storage object for resolved DNS records.
+- `size` - (`number`) current size of the storage.
+- `get` - (`(origin: string) => DNSInterceptorOriginRecords | null`) method to get the records for a given origin.
+- `set` - (`(origin: string, records: DNSInterceptorOriginRecords | null, options: { ttl: number }) => void`) method to set the records for a given origin.
+- `delete` - (`(origin: string) => void`) method to delete records for a given origin.
+- `full` - (`() => boolean`) method to check if the storage is full, if returns `true`, DNS lookup will be skipped in this interceptor and new records will not be stored.
+```ts
 
 **Example - Basic DNS Interceptor**
 

@@ -23,7 +23,7 @@ declare namespace Interceptors {
   export type DNSStorage = {
     size: number
     get(origin: string): DNSInterceptorOriginRecords | null
-    set(origin: string, records: DNSInterceptorOriginRecords | null, options?: { ttl: number }): void
+    set(origin: string, records: DNSInterceptorOriginRecords | null, options: { ttl: number }): void
     delete(origin: string): void
     full(): boolean
   }
