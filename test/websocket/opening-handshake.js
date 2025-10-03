@@ -5,11 +5,40 @@ const { once } = require('node:events')
 const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { createSecureServer } = require('node:http2')
+
 const { tspl } = require('@matteo.collina/tspl')
-const { WebSocketServer } = require('ws')
+const { WebSocketServer, WebSocket: WSWebsocket } = require('ws')
 const { key, cert } = require('@metcoder95/https-pem')
 const { WebSocket, Agent } = require('../..')
 const { runtimeFeatures } = require('../../lib/util/runtime-features')
+const { uid } = require('../../lib/web/websocket/constants')
+
+const crypto = runtimeFeatures.has('crypto')
+  ? require('node:crypto')
+  : null
+
+function getH2WebSocketServer (server) {
+  const wsServer = new WebSocketServer({ noServer: true })
+  server.on('stream', (stream, headers) => {
+    if (headers[':protocol'] === 'websocket' &&
+      headers[':method'] === 'CONNECT') {
+      stream.respond({
+        ':status': 200,
+        'sec-websocket-protocol': headers['sec-websocket-protocol'],
+        'sec-websocket-accept': crypto.hash('sha1', `${headers['sec-websocket-key']}${uid}`, 'base64')
+      })
+      const ws = new WSWebsocket(null, null, { autoPong: true })
+      ws.setSocket(stream, Buffer.alloc(0), {
+        maxPayload: 104857600,
+        skipUTF8Validation: false
+      })
+
+      wsServer.emit('connection', ws, stream)
+    }
+  })
+
+  return wsServer
+}
 
 test('WebSocket connecting to server that isn\'t a Websocket server', () => {
   return new Promise((resolve, reject) => {
@@ -54,39 +83,45 @@ test('Open event is emitted', () => {
   })
 })
 
-// TODO: ws does not supports HTTP2; will need to potentially write a custom server for this
-test('WebSocket on H2', { skip: true }, () => {
-  return new Promise((resolve, reject) => {
-    const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
-      .on('stream', (stream, headers) => {
-        assert.equal(headers[':method'], 'CONNECT')
-        assert.equal(headers[':protocol'], 'websocket')
-        assert.ok(headers['sec-websocket-key'])
-        assert.ok(headers['sec-websocket-protocol'], 'chat')
-        assert.equal(headers['sec-websocket-version'], '13')
+test('WebSocket on H2', { skip: crypto == null }, async (t) => {
+  const planner = tspl(t, { plan: 2 })
+  const server = createSecureServer({ cert, key, allowHTTP1: true, settings: { enableConnectProtocol: true } })
+  const wsServer = getH2WebSocketServer(server)
 
-        stream.respond({ ':status': 200 })
-        stream.end()
-        h2Server.unref()
-      })
-      .listen(0, () => {
-        const dispatcher = new Agent({
-          allowH2: true,
-          connect: {
-            rejectUnauthorized: false
-          }
-        })
-        const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
-        ws.onmessage = ws.onopen = reject
-        ws.addEventListener('error', ({ error }) => {
-          assert.ok(error)
-          ws.close()
-          h2Server.close()
-          resolve()
-        })
-        ws.onerror = () => {}
-      })
+  wsServer.on('connection', (ws) => {
+    ws.send('hello')
   })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const dispatcher = new Agent({
+    allowH2: true,
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+  const ws = new WebSocket(`wss://localhost:${server.address().port}`, { dispatcher, protocols: ['chat'] })
+
+  t.after(() => {
+    // Cleanup - Seems that due to the nature of H2 we need to remove the error listener
+    // TODO: investigate if this is a bug
+    ws.onerror = null
+    return new Promise((resolve) => {
+      ws.close()
+      server.close()
+      wsServer.close(() => {
+        dispatcher.close().then(resolve)
+      })
+    })
+  })
+
+  // ws.onclose = (code, reason) => console.log('CLOSE', code, reason)
+  ws.onmessage = (evt) => planner.equal(evt.data, 'hello')
+  ws.onerror = (err) => planner.fail(err)
+  ws.addEventListener('open', () => planner.ok(true))
+
+  await planner.completed
 })
 
 test('WebSocket connecting to server that isn\'t a Websocket server (h2 - supports extended CONNECT protocol)', async (t) => {
