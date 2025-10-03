@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { Response } = require('../..')
 
 // https://github.com/nodejs/undici/issues/3760
@@ -21,10 +20,10 @@ test('filename* parameter is parsed properly', async (t) => {
   })
 
   const fd = await response.formData()
-  assert.deepEqual(fd.get('file').name, '€ rates')
+  t.assert.deepEqual(fd.get('file').name, '€ rates')
 })
 
-test('whitespace after filename[*]= is ignored', async () => {
+test('whitespace after filename[*]= is ignored', async (t) => {
   for (const response of [
     new Response([
       '--83d82e0d-9ced-44c0-ac79-4e66a827415b\r\n' +
@@ -54,6 +53,6 @@ test('whitespace after filename[*]= is ignored', async () => {
     })
   ]) {
     const fd = await response.formData()
-    assert.deepEqual(fd.get('file').name, 'hello')
+    t.assert.deepEqual(fd.get('file').name, 'hello')
   }
 })
