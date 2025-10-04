@@ -9,6 +9,13 @@ const { createServer } = require('node:net')
 const http = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 
+const clock = FakeTimers.install({
+  shouldAdvanceTime: true,
+  toFake: ['Date'],
+  advanceTimeDelta: 1
+})
+after(() => clock.uninstall())
+
 test('keep-alive header', async (t) => {
   t = tspl(t, { plan: 2 })
 
@@ -45,9 +52,6 @@ test('keep-alive header', async (t) => {
 
 test('keep-alive header 0', async (t) => {
   t = tspl(t, { plan: 2 })
-
-  const clock = FakeTimers.install()
-  after(() => clock.uninstall())
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -101,9 +105,7 @@ test('keep-alive header 1', async (t) => {
   }, (err, { body }) => {
     t.ifError(err)
     body.on('end', () => {
-      const timeout = setTimeout(() => {
-        t.fail()
-      }, 0)
+      const timeout = setTimeout(() => t.fail(), 0)
       client.on('disconnect', () => {
         t.ok(true, 'pass')
         clearTimeout(timeout)
@@ -150,11 +152,6 @@ test('keep-alive header no postfix', async (t) => {
 test('keep-alive not timeout', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install({
-    apis: ['setTimeout']
-  })
-  after(() => clock.uninstall())
-
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
     socket.write('Content-Length: 0\r\n')
@@ -191,11 +188,6 @@ test('keep-alive not timeout', async (t) => {
 
 test('keep-alive threshold', async (t) => {
   t = tspl(t, { plan: 2 })
-
-  const clock = FakeTimers.install({
-    apis: ['setTimeout']
-  })
-  after(() => clock.uninstall())
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
@@ -234,11 +226,6 @@ test('keep-alive threshold', async (t) => {
 
 test('keep-alive max keepalive', async (t) => {
   t = tspl(t, { plan: 2 })
-
-  const clock = FakeTimers.install({
-    apis: ['setTimeout']
-  })
-  after(() => clock.uninstall())
 
   const server = createServer((socket) => {
     socket.write('HTTP/1.1 200 OK\r\n')
