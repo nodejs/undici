@@ -1,26 +1,25 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, describe } = require('node:test')
 const { MockCallHistoryLog } = require('../lib/mock/mock-call-history')
 const { InvalidArgumentError } = require('../lib/core/errors')
 
 describe('MockCallHistoryLog - constructor', () => {
   function assertConsistent (t, mockCallHistoryLog) {
-    t.strictEqual(mockCallHistoryLog.body, null)
-    t.strictEqual(mockCallHistoryLog.headers, undefined)
-    t.deepStrictEqual(mockCallHistoryLog.searchParams, { query: 'value' })
-    t.strictEqual(mockCallHistoryLog.method, 'PUT')
-    t.strictEqual(mockCallHistoryLog.origin, 'https://localhost:4000')
-    t.strictEqual(mockCallHistoryLog.path, '/endpoint')
-    t.strictEqual(mockCallHistoryLog.hash, '#here')
-    t.strictEqual(mockCallHistoryLog.protocol, 'https:')
-    t.strictEqual(mockCallHistoryLog.host, 'localhost:4000')
-    t.strictEqual(mockCallHistoryLog.port, '4000')
+    t.assert.strictEqual(mockCallHistoryLog.body, null)
+    t.assert.strictEqual(mockCallHistoryLog.headers, undefined)
+    t.assert.deepStrictEqual(mockCallHistoryLog.searchParams, { query: 'value' })
+    t.assert.strictEqual(mockCallHistoryLog.method, 'PUT')
+    t.assert.strictEqual(mockCallHistoryLog.origin, 'https://localhost:4000')
+    t.assert.strictEqual(mockCallHistoryLog.path, '/endpoint')
+    t.assert.strictEqual(mockCallHistoryLog.hash, '#here')
+    t.assert.strictEqual(mockCallHistoryLog.protocol, 'https:')
+    t.assert.strictEqual(mockCallHistoryLog.host, 'localhost:4000')
+    t.assert.strictEqual(mockCallHistoryLog.port, '4000')
   }
 
   test('should populate class properties with query in path', t => {
-    t = tspl(t, { plan: 10 })
+    t.plan(10)
 
     const mockCallHistoryLog = new MockCallHistoryLog({
       body: null,
@@ -34,7 +33,7 @@ describe('MockCallHistoryLog - constructor', () => {
   })
 
   test('should populate class properties with query in argument', t => {
-    t = tspl(t, { plan: 10 })
+    t.plan(10)
 
     const mockCallHistoryLog = new MockCallHistoryLog({
       body: null,
@@ -49,15 +48,15 @@ describe('MockCallHistoryLog - constructor', () => {
   })
 
   test('should throw when url computing failed', t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
-    t.throws(() => new MockCallHistoryLog({}), new InvalidArgumentError('An error occurred when computing MockCallHistoryLog.url'))
+    t.assert.throws(() => new MockCallHistoryLog({}), new InvalidArgumentError('An error occurred when computing MockCallHistoryLog.url'))
   })
 })
 
 describe('MockCallHistoryLog - toMap', () => {
   test('should return a Map of eleven element', t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const mockCallHistoryLog = new MockCallHistoryLog({
       body: '"{}"',
@@ -67,13 +66,13 @@ describe('MockCallHistoryLog - toMap', () => {
       path: '/endpoint?query=value#here'
     })
 
-    t.strictEqual(mockCallHistoryLog.toMap().size, 11)
+    t.assert.strictEqual(mockCallHistoryLog.toMap().size, 11)
   })
 })
 
 describe('MockCallHistoryLog - toString', () => {
   test('should return a string with all property', t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const mockCallHistoryLog = new MockCallHistoryLog({
       body: '"{ "data": "hello" }"',
@@ -83,11 +82,11 @@ describe('MockCallHistoryLog - toString', () => {
       path: '/endpoint?query=value#here'
     })
 
-    t.strictEqual(mockCallHistoryLog.toString(), 'protocol->https:|host->localhost:4000|port->4000|origin->https://localhost:4000|path->/endpoint|hash->#here|searchParams->{"query":"value"}|fullUrl->https://localhost:4000/endpoint?query=value#here|method->PUT|body->"{ "data": "hello" }"|headers->{"content-type":"application/json"}')
+    t.assert.strictEqual(mockCallHistoryLog.toString(), 'protocol->https:|host->localhost:4000|port->4000|origin->https://localhost:4000|path->/endpoint|hash->#here|searchParams->{"query":"value"}|fullUrl->https://localhost:4000/endpoint?query=value#here|method->PUT|body->"{ "data": "hello" }"|headers->{"content-type":"application/json"}')
   })
 
   test('should return a string when headers is an Array of string Array', t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const mockCallHistoryLog = new MockCallHistoryLog({
       body: '"{ "data": "hello" }"',
@@ -97,6 +96,6 @@ describe('MockCallHistoryLog - toString', () => {
       path: '/endpoint?query=value#here'
     })
 
-    t.strictEqual(mockCallHistoryLog.toString(), 'protocol->https:|host->localhost:4000|port->4000|origin->https://localhost:4000|path->/endpoint|hash->#here|searchParams->{"query":"value"}|fullUrl->https://localhost:4000/endpoint?query=value#here|method->PUT|body->"{ "data": "hello" }"|headers->["content-type",["application/json","application/xml"]]')
+    t.assert.strictEqual(mockCallHistoryLog.toString(), 'protocol->https:|host->localhost:4000|port->4000|origin->https://localhost:4000|path->/endpoint|hash->#here|searchParams->{"query":"value"}|fullUrl->https://localhost:4000/endpoint?query=value#here|method->PUT|body->"{ "data": "hello" }"|headers->["content-type",["application/json","application/xml"]]')
   })
 })
