@@ -1,11 +1,10 @@
 'use strict'
 
 const { test } = require('node:test')
-const { rejects } = require('node:assert')
 const { Writable } = require('node:stream')
 const { MockAgent, stream } = require('..')
 
-test('stream() does not fail after request has been aborted', () => {
+test('stream() does not fail after request has been aborted', async (t) => {
   const mockAgent = new MockAgent()
 
   mockAgent.disableNetConnect()
@@ -22,7 +21,7 @@ test('stream() does not fail after request has been aborted', () => {
 
   setTimeout(() => ac.abort(), 5)
 
-  rejects(
+  await t.assert.rejects(
     stream(
       'http://localhost:3333/',
       {
