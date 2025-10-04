@@ -1,13 +1,12 @@
 'use strict'
 
 const { test } = require('node:test')
-const { equal } = require('node:assert')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 const { cacheStoreTests } = require('./cache-store-test-utils.js')
 
 cacheStoreTests(MemoryCacheStore)
 
-test('default limits prevent memory leaks', async () => {
+test('default limits prevent memory leaks', async (t) => {
   const store = new MemoryCacheStore() // Uses new defaults
 
   // Test that maxCount default (1024) is enforced
@@ -28,10 +27,10 @@ test('default limits prevent memory leaks', async () => {
   }
 
   // Should be full after exceeding maxCount default of 1024
-  equal(store.isFull(), true, 'Store should be full after exceeding maxCount default')
+  t.assert.strictEqual(store.isFull(), true, 'Store should be full after exceeding maxCount default')
 })
 
-test('default maxEntrySize prevents large entries', async () => {
+test('default maxEntrySize prevents large entries', async (t) => {
   const store = new MemoryCacheStore() // Uses new defaults
 
   // Create entry larger than default maxEntrySize (5MB)
@@ -54,14 +53,14 @@ test('default maxEntrySize prevents large entries', async () => {
 
   // Entry should not be cached due to maxEntrySize limit
   const result = store.get({ origin: 'test', path: '/large', method: 'GET', headers: {} })
-  equal(result, undefined, 'Large entry should not be cached due to maxEntrySize limit')
+  t.assert.strictEqual(result, undefined, 'Large entry should not be cached due to maxEntrySize limit')
 })
 
-test('size getter returns correct total size', async () => {
+test('size getter returns correct total size', async (t) => {
   const store = new MemoryCacheStore()
   const testData = 'test data'
 
-  equal(store.size, 0, 'Initial size should be 0')
+  t.assert.strictEqual(store.size, 0, 'Initial size should be 0')
 
   const writeStream = store.createWriteStream(
     { origin: 'test', path: '/', method: 'GET' },
@@ -78,19 +77,19 @@ test('size getter returns correct total size', async () => {
   writeStream.write(testData)
   writeStream.end()
 
-  equal(store.size, testData.length, 'Size should match written data length')
+  t.assert.strictEqual(store.size, testData.length, 'Size should match written data length')
 })
 
-test('isFull returns false when under limits', () => {
+test('isFull returns false when under limits', (t) => {
   const store = new MemoryCacheStore({
     maxSize: 1000,
     maxCount: 10
   })
 
-  equal(store.isFull(), false, 'Should not be full when empty')
+  t.assert.strictEqual(store.isFull(), false, 'Should not be full when empty')
 })
 
-test('isFull returns true when maxSize reached', async () => {
+test('isFull returns true when maxSize reached', async (t) => {
   const maxSize = 10
   const store = new MemoryCacheStore({ maxSize })
   const testData = 'x'.repeat(maxSize + 1) // Exceed maxSize
@@ -110,10 +109,10 @@ test('isFull returns true when maxSize reached', async () => {
   writeStream.write(testData)
   writeStream.end()
 
-  equal(store.isFull(), true, 'Should be full when maxSize exceeded')
+  t.assert.strictEqual(store.isFull(), true, 'Should be full when maxSize exceeded')
 })
 
-test('isFull returns true when maxCount reached', async () => {
+test('isFull returns true when maxCount reached', async (t) => {
   const maxCount = 2
   const store = new MemoryCacheStore({ maxCount })
 
@@ -133,10 +132,10 @@ test('isFull returns true when maxCount reached', async () => {
     writeStream.end('test')
   }
 
-  equal(store.isFull(), true, 'Should be full when maxCount exceeded')
+  t.assert.strictEqual(store.isFull(), true, 'Should be full when maxCount exceeded')
 })
 
-test('emits maxSizeExceeded event when limits exceeded', async () => {
+test('emits maxSizeExceeded event when limits exceeded', async (t) => {
   const maxSize = 10
   const store = new MemoryCacheStore({ maxSize })
 
@@ -165,10 +164,10 @@ test('emits maxSizeExceeded event when limits exceeded', async () => {
   writeStream.write(testData)
   writeStream.end()
 
-  equal(eventFired, true, 'maxSizeExceeded event should fire')
-  equal(typeof eventPayload, 'object', 'Event should have payload')
-  equal(typeof eventPayload.size, 'number', 'Payload should have size')
-  equal(typeof eventPayload.maxSize, 'number', 'Payload should have maxSize')
-  equal(typeof eventPayload.count, 'number', 'Payload should have count')
-  equal(typeof eventPayload.maxCount, 'number', 'Payload should have maxCount')
+  t.assert.strictEqual(eventFired, true, 'maxSizeExceeded event should fire')
+  t.assert.strictEqual(typeof eventPayload, 'object', 'Event should have payload')
+  t.assert.strictEqual(typeof eventPayload.size, 'number', 'Payload should have size')
+  t.assert.strictEqual(typeof eventPayload.maxSize, 'number', 'Payload should have maxSize')
+  t.assert.strictEqual(typeof eventPayload.count, 'number', 'Payload should have count')
+  t.assert.strictEqual(typeof eventPayload.maxCount, 'number', 'Payload should have maxCount')
 })
