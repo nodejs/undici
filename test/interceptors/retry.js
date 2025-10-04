@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -10,7 +9,7 @@ const { Client, interceptors } = require('../..')
 const { retry, redirect, dns } = interceptors
 
 test('Should retry status code', async t => {
-  t = tspl(t, { plan: 4 })
+  t.plan(4)
 
   let counter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -38,19 +37,19 @@ test('Should retry status code', async t => {
     switch (counter) {
       case 0:
         req.destroy()
-        t.ok(true, 'pass')
+        t.assert.ok(true, 'pass')
         return
       case 1:
         res.writeHead(500)
         res.end('failed')
-        t.ok(true, 'pass')
+        t.assert.ok(true, 'pass')
         return
       case 2:
         res.writeHead(200)
         res.end('hello world!')
         return
       default:
-        t.fail()
+        t.assert.fail()
     }
   })
 
@@ -71,12 +70,12 @@ test('Should retry status code', async t => {
 
   const response = await client.request(requestOptions)
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 })
 
 test('Should retry on error code', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   let counter = 0
   const retryOptions = {
@@ -114,12 +113,12 @@ test('Should retry on error code', async t => {
     await client.close()
   })
 
-  await t.rejects(client.request(requestOptions), { code: 'ENOTFOUND' })
-  t.equal(counter, 5)
+  await t.assert.rejects(client.request(requestOptions), { code: 'ENOTFOUND' })
+  t.assert.strictEqual(counter, 5)
 })
 
 test('Should use retry-after header for retries', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   let counter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -145,11 +144,11 @@ test('Should use retry-after header for retries', async t => {
       case 1:
         res.writeHead(200)
         res.end('hello world!')
-        t.ok(Date.now() - checkpoint >= 500)
+        t.assert.ok(Date.now() - checkpoint >= 500)
         counter++
         return
       default:
-        t.fail('unexpected request')
+        t.assert.fail('unexpected request')
     }
   })
 
@@ -170,12 +169,12 @@ test('Should use retry-after header for retries', async t => {
 
   const response = await client.request(dispatchOptions)
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 })
 
 test('Should use retry-after header for retries (date)', async t => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   let counter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -203,11 +202,11 @@ test('Should use retry-after header for retries (date)', async t => {
       case 1:
         res.writeHead(200)
         res.end('hello world!')
-        t.ok(Date.now() - checkpoint >= 1000)
+        t.assert.ok(Date.now() - checkpoint >= 1000)
         counter++
         return
       default:
-        t.fail('unexpected request')
+        t.assert.fail('unexpected request')
     }
   })
 
@@ -228,12 +227,12 @@ test('Should use retry-after header for retries (date)', async t => {
 
   const response = await client.request(requestOptions)
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 })
 
 test('Should retry with defaults', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   let counter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -262,7 +261,7 @@ test('Should retry with defaults', async t => {
         counter++
         return
       default:
-        t.fail()
+        t.assert.fail()
     }
   })
 
@@ -283,12 +282,12 @@ test('Should retry with defaults', async t => {
 
   const response = await client.request(requestOptions)
 
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 })
 
 test('Should pass context from other interceptors', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = createServer({ joinDuplicateHeaders: true })
   const requestOptions = {
@@ -318,12 +317,12 @@ test('Should pass context from other interceptors', async t => {
 
   const response = await client.request(requestOptions)
 
-  t.equal(response.statusCode, 200)
-  t.deepStrictEqual(response.context, { history: [] })
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.deepStrictEqual(response.context, { history: [] })
 })
 
 test('Should handle 206 partial content', async t => {
-  t = tspl(t, { plan: 5 })
+  t.plan(5)
 
   let counter = 0
 
@@ -331,7 +330,7 @@ test('Should handle 206 partial content', async t => {
   let x = 0
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
-      t.ok(true, 'pass')
+      t.assert.ok(true, 'pass')
       res.setHeader('content-length', '6')
       res.setHeader('etag', 'asd')
       res.write('abc')
@@ -339,7 +338,7 @@ test('Should handle 206 partial content', async t => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
+      t.assert.deepStrictEqual(req.headers.range, 'bytes=3-5')
       res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
@@ -387,26 +386,26 @@ test('Should handle 206 partial content', async t => {
 
   const response = await client.request(requestOptions)
 
-  t.equal(response.statusCode, 200)
-  t.strictEqual(await response.body.text(), 'abcdef')
-  t.strictEqual(counter, 1)
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'abcdef')
+  t.assert.strictEqual(counter, 1)
 })
 
 test('Should handle 206 partial content - bad-etag', async t => {
-  t = tspl(t, { plan: 5 })
+  t.plan(5)
 
   // Took from: https://github.com/nxtedition/nxt-lib/blob/4b001ebc2f22cf735a398f35ff800dd553fe5933/test/undici/retry.js#L47
   let x = 0
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (x === 0) {
-      t.ok(true, 'pass')
+      t.assert.ok(true, 'pass')
       res.setHeader('etag', 'asd')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      t.assert.deepStrictEqual(req.headers.range, 'bytes=3-')
       res.setHeader('content-range', 'bytes 3-6/6')
       res.setHeader('etag', 'erwsd')
       res.statusCode = 206
@@ -452,14 +451,14 @@ test('Should handle 206 partial content - bad-etag', async t => {
     const response = await client.request(requestOptions)
     await response.body.text()
   } catch (error) {
-    t.strictEqual(error.name, 'RequestRetryError')
-    t.strictEqual(error.code, 'UND_ERR_REQ_RETRY')
-    t.strictEqual(error.message, 'ETag mismatch')
+    t.assert.strictEqual(error.name, 'RequestRetryError')
+    t.assert.strictEqual(error.code, 'UND_ERR_REQ_RETRY')
+    t.assert.strictEqual(error.message, 'ETag mismatch')
   }
 })
 
 test('retrying a request with a body', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
   let counter = 0
   const server = createServer({ joinDuplicateHeaders: true })
   const requestOptions = {
@@ -500,7 +499,7 @@ test('retrying a request with a body', async t => {
         res.end('hello world!')
         return
       default:
-        t.fail()
+        t.assert.fail()
     }
   })
 
@@ -519,12 +518,12 @@ test('retrying a request with a body', async t => {
   })
 
   const response = await client.request(requestOptions)
-  t.equal(response.statusCode, 200)
-  t.equal(await response.body.text(), 'hello world!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'hello world!')
 })
 
 test('should not error if request is not meant to be retried', async t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
@@ -555,18 +554,18 @@ test('should not error if request is not meant to be retried', async t => {
     }
   })
 
-  t.equal(response.statusCode, 400)
-  t.equal(await response.body.text(), 'Bad request')
+  t.assert.strictEqual(response.statusCode, 400)
+  t.assert.strictEqual(await response.body.text(), 'Bad request')
 })
 
 test('#3975 - keep event loop ticking', async t => {
-  const suite = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const res = spawnSync('node', ['./test/fixtures/interceptors/retry-event-loop.js'], {
     stdio: 'pipe'
   })
 
   const output = res.stderr.toString()
-  suite.ok(output.includes('UND_ERR_REQ_RETRY'))
-  suite.ok(output.includes('RequestRetryError: Request failed'))
+  t.assert.ok(output.includes('UND_ERR_REQ_RETRY'))
+  t.assert.ok(output.includes('RequestRetryError: Request failed'))
 })
