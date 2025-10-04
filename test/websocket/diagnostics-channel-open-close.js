@@ -4,10 +4,10 @@ const { test } = require('node:test')
 const dc = require('node:diagnostics_channel')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
+const { once } = require('node:events')
 
 test('diagnostics channel - undici:websocket:[open/close]', async (t) => {
-  const { equal, completed } = tspl(t, { plan: 6 })
+  t.plan(6)
 
   const server = new WebSocketServer({ port: 0 })
   const { port } = server.address()
@@ -18,15 +18,15 @@ test('diagnostics channel - undici:websocket:[open/close]', async (t) => {
   })
 
   const openListener = ({ extensions, protocol, websocket }) => {
-    equal(extensions, '')
-    equal(protocol, 'chat')
-    equal(websocket, ws)
+    t.assert.strictEqual(extensions, '')
+    t.assert.strictEqual(protocol, 'chat')
+    t.assert.strictEqual(websocket, ws)
   }
 
   const closeListener = ({ websocket, code, reason }) => {
-    equal(code, 1000)
-    equal(reason, 'goodbye')
-    equal(websocket, ws)
+    t.assert.strictEqual(code, 1000)
+    t.assert.strictEqual(reason, 'goodbye')
+    t.assert.strictEqual(websocket, ws)
   }
 
   dc.channel('undici:websocket:open').subscribe(openListener)
@@ -38,5 +38,5 @@ test('diagnostics channel - undici:websocket:[open/close]', async (t) => {
     dc.channel('undici:websocket:close').unsubscribe(closeListener)
   })
 
-  await completed
+  await once(ws, 'close')
 })

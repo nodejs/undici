@@ -1,10 +1,9 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { MessageEvent } = require('../..')
 
-test('test/parallel/test-messageevent-brandcheck.js', () => {
+test('test/parallel/test-messageevent-brandcheck.js', (t) => {
   [
     'data',
     'origin',
@@ -12,14 +11,14 @@ test('test/parallel/test-messageevent-brandcheck.js', () => {
     'source',
     'ports'
   ].forEach((i) => {
-    assert.throws(() => Reflect.get(MessageEvent.prototype, i, {}), {
+    t.assert.throws(() => Reflect.get(MessageEvent.prototype, i, {}), {
       constructor: TypeError,
       message: 'Illegal invocation'
     })
   })
 })
 
-test('test/parallel/test-worker-message-port.js', () => {
+test('test/parallel/test-worker-message-port.js', (t) => {
   const dummyPort = new MessageChannel().port1
 
   for (const [args, expected] of [
@@ -92,45 +91,45 @@ test('test/parallel/test-worker-message-port.js', () => {
   ]) {
     const ev = new MessageEvent(...args)
     const { type, data, origin, lastEventId, source, ports } = ev
-    assert.deepStrictEqual(expected, {
+    t.assert.deepStrictEqual(expected, {
       type, data, origin, lastEventId, source, ports
     })
   }
 
-  assert.throws(() => new MessageEvent('message', { source: 1 }), {
+  t.assert.throws(() => new MessageEvent('message', { source: 1 }), {
     constructor: TypeError,
     message: 'MessageEvent constructor: Expected eventInitDict.source ("1") to be an instance of MessagePort.'
   })
-  assert.throws(() => new MessageEvent('message', { source: {} }), {
+  t.assert.throws(() => new MessageEvent('message', { source: {} }), {
     constructor: TypeError,
     message: 'MessageEvent constructor: Expected eventInitDict.source ("{}") to be an instance of MessagePort.'
   })
-  assert.throws(() => new MessageEvent('message', { ports: 0 }), {
+  t.assert.throws(() => new MessageEvent('message', { ports: 0 }), {
     constructor: TypeError,
     message: 'MessageEvent constructor: eventInitDict.ports (0) is not iterable.'
   })
-  assert.throws(() => new MessageEvent('message', { ports: [null] }), {
+  t.assert.throws(() => new MessageEvent('message', { ports: [null] }), {
     constructor: TypeError,
     message: 'MessageEvent constructor: Expected eventInitDict.ports[0] ("null") to be an instance of MessagePort.'
   })
-  assert.throws(() =>
+  t.assert.throws(() =>
     new MessageEvent('message', { ports: [{}] })
   , {
     constructor: TypeError,
     message: 'MessageEvent constructor: Expected eventInitDict.ports[0] ("{}") to be an instance of MessagePort.'
   })
 
-  assert(new MessageEvent('message') instanceof Event)
+  t.assert.ok(new MessageEvent('message') instanceof Event)
 
   // https://github.com/nodejs/node/issues/51767
   const event = new MessageEvent('type', { cancelable: true })
   event.preventDefault()
 
-  assert(event.cancelable)
-  assert(event.defaultPrevented)
+  t.assert.ok(event.cancelable)
+  t.assert.ok(event.defaultPrevented)
 })
 
-test('bug in node core', () => {
+test('bug in node core', (t) => {
   // In node core, this will throw an error.
   new MessageEvent('', null) // eslint-disable-line no-new
 })

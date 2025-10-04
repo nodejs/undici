@@ -1,7 +1,6 @@
 'use strict'
 
 const { test, describe } = require('node:test')
-const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
 const { WebSocket, Dispatcher, Agent } = require('../..')
 
@@ -17,7 +16,7 @@ describe('WebSocketInit', () => {
     }
   }
 
-  test('WebSocketInit as 2nd param', () => {
+  test('WebSocketInit as 2nd param', (t) => {
     const server = new WebSocketServer({ port: 0 })
 
     server.on('connection', (ws) => {
@@ -32,7 +31,7 @@ describe('WebSocketInit', () => {
       ws.onerror = reject
 
       ws.addEventListener('message', async (event) => {
-        assert.equal(await event.data.text(), 'hello, world')
+        t.assert.strictEqual(await event.data.text(), 'hello, world')
         server.close()
         ws.close()
         resolve()
