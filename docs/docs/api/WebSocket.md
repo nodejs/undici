@@ -2,6 +2,8 @@
 
 Extends: [`EventTarget`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget)
 
+> ⚠️ Warning: WebSocket over HTTP/2 is experimental, it is likely to change in the future.
+
 The WebSocket object provides a way to manage a WebSocket connection to a server, allowing bidirectional communication. The API follows the [WebSocket spec](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) and [RFC 6455](https://datatracker.ietf.org/doc/html/rfc6455).
 
 ## `new WebSocket(url[, protocol])`
