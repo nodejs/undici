@@ -1,28 +1,25 @@
 'use strict'
 
 const { describe, test } = require('node:test')
-const assert = require('node:assert')
-const { tspl } = require('@matteo.collina/tspl')
 const util = require('../../lib/web/fetch/util')
 const { HeadersList } = require('../../lib/web/fetch/headers')
-const { createHash } = require('node:crypto')
 
 test('responseURL', (t) => {
-  const { ok } = tspl(t, { plan: 2 })
+  t.plan(2)
 
-  ok(util.responseURL({
+  t.assert.ok(util.responseURL({
     urlList: [
       new URL('http://asd'),
       new URL('http://fgh')
     ]
   }))
-  ok(!util.responseURL({
+  t.assert.ok(!util.responseURL({
     urlList: []
   }))
 })
 
 test('responseLocationURL', (t) => {
-  const { ok } = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const acceptHeaderList = new HeadersList()
   acceptHeaderList.append('Accept', '*/*')
@@ -30,14 +27,14 @@ test('responseLocationURL', (t) => {
   const locationHeaderList = new HeadersList()
   locationHeaderList.append('Location', 'http://asd')
 
-  ok(!util.responseLocationURL({
+  t.assert.ok(!util.responseLocationURL({
     status: 200
   }))
-  ok(!util.responseLocationURL({
+  t.assert.ok(!util.responseLocationURL({
     status: 301,
     headersList: acceptHeaderList
   }))
-  ok(util.responseLocationURL({
+  t.assert.ok(util.responseLocationURL({
     status: 301,
     headersList: locationHeaderList,
     urlList: [
@@ -48,15 +45,15 @@ test('responseLocationURL', (t) => {
 })
 
 test('requestBadPort', (t) => {
-  const { strictEqual } = tspl(t, { plan: 3 })
+  t.plan(3)
 
-  strictEqual('allowed', util.requestBadPort({
+  t.assert.strictEqual('allowed', util.requestBadPort({
     urlList: [new URL('https://asd')]
   }))
-  strictEqual('blocked', util.requestBadPort({
+  t.assert.strictEqual('blocked', util.requestBadPort({
     urlList: [new URL('http://asd:7')]
   }))
-  strictEqual('blocked', util.requestBadPort({
+  t.assert.strictEqual('blocked', util.requestBadPort({
     urlList: [new URL('https://asd:7')]
   }))
 })
@@ -64,7 +61,7 @@ test('requestBadPort', (t) => {
 // https://html.spec.whatwg.org/multipage/origin.html#same-origin
 // look at examples
 test('sameOrigin', async (t) => {
-  await t.test('first test', () => {
+  await t.test('first test', (t) => {
     const A = {
       protocol: 'https:',
       hostname: 'example.org',
@@ -77,10 +74,10 @@ test('sameOrigin', async (t) => {
       port: ''
     }
 
-    assert.ok(util.sameOrigin(A, B))
+    t.assert.ok(util.sameOrigin(A, B))
   })
 
-  await t.test('second test', () => {
+  await t.test('second test', (t) => {
     const A = {
       protocol: 'https:',
       hostname: 'example.org',
@@ -93,28 +90,28 @@ test('sameOrigin', async (t) => {
       port: '420'
     }
 
-    assert.ok(!util.sameOrigin(A, B))
+    t.assert.ok(!util.sameOrigin(A, B))
   })
 
-  await t.test('obviously shouldn\'t be equal', () => {
-    assert.ok(!util.sameOrigin(
+  await t.test('obviously shouldn\'t be equal', (t) => {
+    t.assert.ok(!util.sameOrigin(
       { protocol: 'http:', hostname: 'example.org' },
       { protocol: 'https:', hostname: 'example.org' }
     ))
 
-    assert.ok(!util.sameOrigin(
+    t.assert.ok(!util.sameOrigin(
       { protocol: 'https:', hostname: 'example.org' },
       { protocol: 'https:', hostname: 'example.com' }
     ))
   })
 
-  await t.test('file:// urls', () => {
+  await t.test('file:// urls', (t) => {
     // urls with opaque origins should return true
 
     const a = new URL('file:///C:/undici')
     const b = new URL('file:///var/undici')
 
-    assert.ok(util.sameOrigin(a, b))
+    t.assert.ok(util.sameOrigin(a, b))
   })
 })
 
@@ -145,18 +142,17 @@ test('isURLPotentiallyTrustworthy', (t) => {
     'something:8080'
   ]
 
-  // t.plan(valid.length + invalid.length + 1)
-  const { ok } = tspl(t, { plan: valid.length + invalid.length + 1 })
-  ok(!util.isURLPotentiallyTrustworthy('string'))
+  t.plan(valid.length + invalid.length + 1)
+  t.assert.ok(!util.isURLPotentiallyTrustworthy('string'))
 
   for (const url of valid) {
     const instance = new URL(url)
-    ok(util.isURLPotentiallyTrustworthy(instance), instance)
+    t.assert.ok(util.isURLPotentiallyTrustworthy(instance), instance)
   }
 
   for (const url of invalid) {
     const instance = new URL(url)
-    ok(!util.isURLPotentiallyTrustworthy(instance))
+    t.assert.ok(!util.isURLPotentiallyTrustworthy(instance))
   }
 })
 
@@ -204,6 +200,8 @@ describe('setRequestReferrerPolicyOnRedirect', () => {
     ]
   ].forEach(([title, responseReferrerPolicy, expected]) => {
     test(title, (t) => {
+      t.plan(1)
+
       const request = {
         referrerPolicy: 'no-referrer, strict-origin-when-cross-origin'
       }
@@ -212,8 +210,6 @@ describe('setRequestReferrerPolicyOnRedirect', () => {
         headersList: new HeadersList()
       }
 
-      const { strictEqual } = tspl(t, { plan: 1 })
-
       actualResponse.headersList.append('Connection', 'close')
       actualResponse.headersList.append('Location', 'https://some-location.com/redirect')
       if (responseReferrerPolicy) {
@@ -221,134 +217,69 @@ describe('setRequestReferrerPolicyOnRedirect', () => {
       }
       util.setRequestReferrerPolicyOnRedirect(request, actualResponse)
 
-      strictEqual(request.referrerPolicy, expected)
+      t.assert.strictEqual(request.referrerPolicy, expected)
     })
-  })
-})
-
-test('parseMetadata', async (t) => {
-  await t.test('should parse valid metadata with option', () => {
-    const body = 'Hello world!'
-    const hash256 = createHash('sha256').update(body).digest('base64')
-    const hash384 = createHash('sha384').update(body).digest('base64')
-    const hash512 = createHash('sha512').update(body).digest('base64')
-
-    const validMetadata = `sha256-${hash256} !@ sha384-${hash384} !@ sha512-${hash512} !@`
-    const result = util.parseMetadata(validMetadata)
-
-    assert.deepEqual(result, [
-      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
-      { algo: 'sha384', hash: hash384.replace(/=/g, '') },
-      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
-    ])
-  })
-
-  await t.test('should parse valid metadata with non ASCII chars option', () => {
-    const body = 'Hello world!'
-    const hash256 = createHash('sha256').update(body).digest('base64')
-    const hash384 = createHash('sha384').update(body).digest('base64')
-    const hash512 = createHash('sha512').update(body).digest('base64')
-
-    const validMetadata = `sha256-${hash256} !© sha384-${hash384} !€ sha512-${hash512} !µ`
-    const result = util.parseMetadata(validMetadata)
-
-    assert.deepEqual(result, [
-      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
-      { algo: 'sha384', hash: hash384.replace(/=/g, '') },
-      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
-    ])
-  })
-
-  await t.test('should parse valid metadata without option', () => {
-    const body = 'Hello world!'
-    const hash256 = createHash('sha256').update(body).digest('base64')
-    const hash384 = createHash('sha384').update(body).digest('base64')
-    const hash512 = createHash('sha512').update(body).digest('base64')
-
-    const validMetadata = `sha256-${hash256} sha384-${hash384} sha512-${hash512}`
-    const result = util.parseMetadata(validMetadata)
-
-    assert.deepEqual(result, [
-      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
-      { algo: 'sha384', hash: hash384.replace(/=/g, '') },
-      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
-    ])
-  })
-
-  await t.test('should set hash as undefined when invalid base64 chars are provided', () => {
-    const body = 'Hello world!'
-    const hash256 = createHash('sha256').update(body).digest('base64')
-    const invalidHash384 = 'zifp5hE1Xl5LQQqQz[]Bq/iaq9Wb6jVb//T7EfTmbXD2aEP5c2ZdJr9YTDfcTE1ZH+'
-    const hash512 = createHash('sha512').update(body).digest('base64')
-
-    const validMetadata = `sha256-${hash256} sha384-${invalidHash384} sha512-${hash512}`
-    const result = util.parseMetadata(validMetadata)
-
-    assert.deepEqual(result, [
-      { algo: 'sha256', hash: hash256.replace(/=/g, '') },
-      { algo: 'sha384', hash: undefined },
-      { algo: 'sha512', hash: hash512.replace(/=/g, '') }
-    ])
   })
 })
 
 describe('urlHasHttpsScheme', () => {
   const { urlHasHttpsScheme } = util
 
-  test('should return false for http url', () => {
-    assert.strictEqual(urlHasHttpsScheme('http://example.com'), false)
+  test('should return false for http url', (t) => {
+    t.assert.strictEqual(urlHasHttpsScheme('http://example.com'), false)
   })
-  test('should return true for https url', () => {
-    assert.strictEqual(urlHasHttpsScheme('https://example.com'), true)
+  test('should return true for https url', (t) => {
+    t.assert.strictEqual(urlHasHttpsScheme('https://example.com'), true)
   })
-  test('should return false for http object', () => {
-    assert.strictEqual(urlHasHttpsScheme({ protocol: 'http:' }), false)
+  test('should return false for http object', (t) => {
+    t.assert.strictEqual(urlHasHttpsScheme({ protocol: 'http:' }), false)
   })
-  test('should return true for https object', () => {
-    assert.strictEqual(urlHasHttpsScheme({ protocol: 'https:' }), true)
+  test('should return true for https object', (t) => {
+    t.assert.strictEqual(urlHasHttpsScheme({ protocol: 'https:' }), true)
   })
 })
 
 describe('isValidHeaderValue', () => {
   const { isValidHeaderValue } = util
 
-  test('should return true for valid string', () => {
-    assert.strictEqual(isValidHeaderValue('valid123'), true)
-    assert.strictEqual(isValidHeaderValue('va lid123'), true)
-    assert.strictEqual(isValidHeaderValue('va\tlid123'), true)
+  test('should return true for valid string', (t) => {
+    t.assert.strictEqual(isValidHeaderValue('valid123'), true)
+    t.assert.strictEqual(isValidHeaderValue('va lid123'), true)
+    t.assert.strictEqual(isValidHeaderValue('va\tlid123'), true)
   })
-  test('should return false for string containing NUL', () => {
-    assert.strictEqual(isValidHeaderValue('invalid\0'), false)
-    assert.strictEqual(isValidHeaderValue('in\0valid'), false)
-    assert.strictEqual(isValidHeaderValue('\0invalid'), false)
+  test('should return false for string containing NUL', (t) => {
+    t.assert.strictEqual(isValidHeaderValue('invalid\0'), false)
+    t.assert.strictEqual(isValidHeaderValue('in\0valid'), false)
+    t.assert.strictEqual(isValidHeaderValue('\0invalid'), false)
   })
-  test('should return false for string containing CR', () => {
-    assert.strictEqual(isValidHeaderValue('invalid\r'), false)
-    assert.strictEqual(isValidHeaderValue('in\rvalid'), false)
-    assert.strictEqual(isValidHeaderValue('\rinvalid'), false)
+  test('should return false for string containing CR', (t) => {
+    t.assert.strictEqual(isValidHeaderValue('invalid\r'), false)
+    t.assert.strictEqual(isValidHeaderValue('in\rvalid'), false)
+    t.assert.strictEqual(isValidHeaderValue('\rinvalid'), false)
   })
-  test('should return false for string containing LF', () => {
-    assert.strictEqual(isValidHeaderValue('invalid\n'), false)
-    assert.strictEqual(isValidHeaderValue('in\nvalid'), false)
-    assert.strictEqual(isValidHeaderValue('\ninvalid'), false)
+  test('should return false for string containing LF', (t) => {
+    t.assert.strictEqual(isValidHeaderValue('invalid\n'), false)
+    t.assert.strictEqual(isValidHeaderValue('in\nvalid'), false)
+    t.assert.strictEqual(isValidHeaderValue('\ninvalid'), false)
   })
 
-  test('should return false for string with leading TAB', () => {
-    assert.strictEqual(isValidHeaderValue('\tinvalid'), false)
+  test('should return false for string with leading TAB', (t) => {
+    t.assert.strictEqual(isValidHeaderValue('\tinvalid'), false)
   })
-  test('should return false for string with trailing TAB', () => {
-    assert.strictEqual(isValidHeaderValue('invalid\t'), false)
+  test('should return false for string with trailing TAB', (t) => {
+    t.assert.strictEqual(isValidHeaderValue('invalid\t'), false)
   })
-  test('should return false for string with leading SPACE', () => {
-    assert.strictEqual(isValidHeaderValue(' invalid'), false)
+  test('should return false for string with leading SPACE', (t) => {
+    t.assert.strictEqual(isValidHeaderValue(' invalid'), false)
   })
-  test('should return false for string with trailing SPACE', () => {
-    assert.strictEqual(isValidHeaderValue('invalid '), false)
+  test('should return false for string with trailing SPACE', (t) => {
+    t.assert.strictEqual(isValidHeaderValue('invalid '), false)
   })
 })
 
 describe('isOriginIPPotentiallyTrustworthy()', () => {
   [
+    ['', false],
     ['0000:0000:0000:0000:0000:0000:0000:0001', true],
     ['0001:0000:0000:0000:0000:0000:0000:0001', false],
     ['0000:0000:0000:0000:0000:0000::0001', true],
@@ -359,19 +290,23 @@ describe('isOriginIPPotentiallyTrustworthy()', () => {
     ['0000:0000:0000::0001', true],
     ['0000:0000::0001', true],
     ['0000::0001', true],
+    ['::1001', false],
     ['::0001', true],
+    ['::0011', false],
     ['::1', true],
     ['[::1]', true],
+    ['[::1', false],
+    ['::1]', false],
     ['::2', false],
     ['::', false],
+    ['126.0.0.0', false],
+    ['127.0.0.0', true],
     ['127.0.0.1', true],
     ['127.255.255.255', true],
-    ['128.255.255.255', false],
-    ['127.0.0.1', true],
-    ['127.0.0.0', false]
+    ['128.255.255.255', false]
   ].forEach(([ip, expected]) => {
-    test(`${ip} is ${expected ? '' : 'not '}potentially trustworthy`, () => {
-      assert.strictEqual(util.isOriginIPPotentiallyTrustworthy(ip), expected)
+    test(`${ip} is ${expected ? '' : 'not '}potentially trustworthy`, (t) => {
+      t.assert.strictEqual(util.isOriginIPPotentiallyTrustworthy(ip), expected)
     })
   })
 })

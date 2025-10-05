@@ -1,6 +1,6 @@
 import { expectAssignable } from 'tsd'
 import BodyReadable from '../../types/readable'
-import { Blob } from 'buffer'
+import { Blob } from 'node:buffer'
 
 expectAssignable<BodyReadable>(new BodyReadable({
   abort: () => null,

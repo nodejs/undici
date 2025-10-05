@@ -415,7 +415,7 @@ test('Should throw when on dual-stack disabled (4)', async t => {
 
   await t.rejects(promise, 'ECONNREFUSED')
 
-  await t.complete
+  await t.completed
 })
 
 test('Should throw when on dual-stack disabled (6)', async t => {
@@ -459,7 +459,7 @@ test('Should throw when on dual-stack disabled (6)', async t => {
 
   await t.rejects(promise, 'ECONNREFUSED')
 
-  await t.complete
+  await t.completed
 })
 
 test('Should automatically resolve IPs (dual stack disabled - 4)', async t => {

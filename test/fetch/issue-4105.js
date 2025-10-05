@@ -4,14 +4,16 @@ const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
 const { PerformanceObserver } = require('node:perf_hooks')
+const { createDeferredPromise } = require('../../lib/util/promise')
 
 const isAtLeastv22 = process.versions.node.split('.').map(Number)[0] >= 22
 
 // https://github.com/nodejs/undici/issues/4105
 test('markResourceTiming responseStatus is set', { skip: !isAtLeastv22 }, async (t) => {
-  const { completed, deepEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
+
+  const promise = createDeferredPromise()
 
   const server = createServer((req, res) => {
     res.statusCode = 200
@@ -23,12 +25,13 @@ test('markResourceTiming responseStatus is set', { skip: !isAtLeastv22 }, async 
 
   new PerformanceObserver(items => {
     items.getEntries().forEach(entry => {
-      deepEqual(entry.responseStatus, 200)
+      t.assert.strictEqual(entry.responseStatus, 200)
+      promise.resolve()
     })
   }).observe({ type: 'resource', buffered: true })
 
   const response = await fetch('http://localhost:3000')
   await response.text()
 
-  await completed
+  await promise.promise
 })

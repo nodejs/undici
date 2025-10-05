@@ -2,6 +2,7 @@
 
 const { describe, test, after } = require('node:test')
 const assert = require('node:assert/strict')
+const { once } = require('node:events')
 const http = require('node:http')
 const { PassThrough } = require('node:stream')
 const { kRunning } = require('../../lib/core/symbols')
@@ -38,6 +39,42 @@ test('Agent', t => {
   const p = tspl(t, { plan: 1 })
 
   p.doesNotThrow(() => new Agent())
+})
+
+test('Agent enforces maxOrigins', async (t) => {
+  const p = tspl(t, { plan: 1 })
+
+  const dispatcher = new Agent({
+    maxOrigins: 1,
+    keepAliveMaxTimeout: 100,
+    keepAliveTimeout: 100
+  })
+  t.after(() => dispatcher.close())
+
+  const handler = (_req, res) => {
+    setTimeout(() => res.end('ok'), 50)
+  }
+
+  const server1 = http.createServer({ joinDuplicateHeaders: true }, handler)
+  server1.listen(0)
+  await once(server1, 'listening')
+  t.after(closeServerAsPromise(server1))
+
+  const server2 = http.createServer({ joinDuplicateHeaders: true }, handler)
+  server2.listen(0)
+  await once(server2, 'listening')
+  t.after(closeServerAsPromise(server2))
+
+  try {
+    await Promise.all([
+      request(`http://localhost:${server1.address().port}`, { dispatcher }),
+      request(`http://localhost:${server2.address().port}`, { dispatcher })
+    ])
+  } catch (err) {
+    p.ok(err instanceof errors.MaxOriginsReachedError)
+  }
+
+  await p.completed
 })
 
 test('agent should call callback after closing internal pools', async (t) => {
@@ -662,8 +699,10 @@ test('stream: fails with invalid onInfo', async (t) => {
 })
 
 test('constructor validations', t => {
-  const p = tspl(t, { plan: 1 })
+  const p = tspl(t, { plan: 3 })
   p.throws(() => new Agent({ factory: 'ASD' }), errors.InvalidArgumentError, 'throws on invalid opts argument')
+  p.throws(() => new Agent({ maxOrigins: -1 }), errors.InvalidArgumentError, 'maxOrigins must be a number greater than 0')
+  p.throws(() => new Agent({ maxOrigins: 'foo' }), errors.InvalidArgumentError, 'maxOrigins must be a number greater than 0')
 })
 
 test('dispatch validations', async t => {

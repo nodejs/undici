@@ -401,11 +401,11 @@ test('backpressure algorithm', async (t) => {
 
   writeMore = true
 
-  d4.client.emit('drain', new URL('http://notahost'), [])
+  d4.client.emit('drain', new URL('http://notahost'), [d4.client])
 
   pool.dispatch({}, noopHandler) // d5 = c1
 
-  d3.client.emit('drain', new URL('http://notahost'), [])
+  d3.client.emit('drain', new URL('http://notahost'), [d3.client])
 
   pool.dispatch({}, noopHandler) // d6 = c0
 
@@ -579,11 +579,9 @@ test('pool connect', async (t) => {
 })
 
 test('pool connect with clientTtl specified', async (t) => {
-  t = tspl(t, { plan: 1 })
+  t = tspl(t, { plan: 3 })
 
-  const server = createServer({ joinDuplicateHeaders: true }, (c) => {
-    t.fail()
-  })
+  const server = createServer({ joinDuplicateHeaders: true }, t.fail)
   server.on('connect', (req, socket, firstBodyChunk) => {
     socket.write('HTTP/1.1 200 Connection established\r\n\r\n')
 
@@ -607,7 +605,7 @@ test('pool connect with clientTtl specified', async (t) => {
       path: '/'
     })
 
-    t.strictEqual(socket.closed, false)
+    t.strictEqual(socket.closed, false, 'client not closed yet')
 
     let recvData = ''
     socket.on('data', (d) => {
@@ -619,10 +617,12 @@ test('pool connect with clientTtl specified', async (t) => {
     })
 
     socket.write('Body')
-    socket.end()
+    await new Promise((resolve, reject) => socket.end((e) => e ? reject(e) : resolve()))
+
+    t.strictEqual(socket.closed, false, 'client not closed yet')
 
     await new Promise(resolve => setTimeout(resolve, 10))
-    t.strictEqual(socket.closed, true)
+    t.strictEqual(socket.closed, true, 'client closed after ttl')
   })
 
   await t.completed

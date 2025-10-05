@@ -1,4 +1,4 @@
-import { Duplex, Readable, Writable } from 'stream'
+import { Duplex, Readable, Writable } from 'node:stream'
 import { expectAssignable, expectType } from 'tsd'
 import { Dispatcher, request, stream, pipeline, connect, upgrade } from '../..'
 

@@ -6,6 +6,7 @@ import { getResults, runTests as runTestSuite } from '../fixtures/cache-tests/te
 import { determineTestResult, testLookup } from '../fixtures/cache-tests/test-engine/lib/results.mjs'
 import tests from '../fixtures/cache-tests/tests/index.mjs'
 import { Agent, fetch, interceptors, setGlobalDispatcher } from '../../index.js'
+import { runtimeFeatures } from '../../lib/util/runtime-features.js'
 import MemoryCacheStore from '../../lib/cache/memory-cache-store.js'
 
 if (!process.env.TEST_ENVIRONMENT) {
@@ -72,13 +73,9 @@ async function makeCacheStore (type) {
     MemoryCacheStore
   }
 
-  try {
-    await import('node:sqlite')
-
+  if (runtimeFeatures.has('sqlite')) {
     const { default: SqliteCacheStore } = await import('../../lib/cache/sqlite-cache-store.js')
     stores.SqliteCacheStore = SqliteCacheStore
-  } catch (err) {
-    // Do nothing
   }
 
   const Store = stores[type]

@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { HeadersList, compareHeaderName } = require('../../lib/web/fetch/headers')
 
 const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -17,22 +16,22 @@ function generateAsciiString (length) {
 
 const SORT_RUN = 4000
 
-test('toSortedArray (fast-path)', () => {
+test('toSortedArray (fast-path)', (t) => {
   for (let i = 0; i < SORT_RUN; ++i) {
     const headersList = new HeadersList()
     for (let j = 0; j < 32; ++j) {
       headersList.append(generateAsciiString(4), generateAsciiString(4))
     }
-    assert.deepStrictEqual(headersList.toSortedArray(), [...headersList].sort(compareHeaderName))
+    t.assert.deepStrictEqual(headersList.toSortedArray(), [...headersList].sort(compareHeaderName))
   }
 })
 
-test('toSortedArray (slow-path)', () => {
+test('toSortedArray (slow-path)', (t) => {
   for (let i = 0; i < SORT_RUN; ++i) {
     const headersList = new HeadersList()
     for (let j = 0; j < 64; ++j) {
       headersList.append(generateAsciiString(4), generateAsciiString(4))
     }
-    assert.deepStrictEqual(headersList.toSortedArray(), [...headersList].sort(compareHeaderName))
+    t.assert.deepStrictEqual(headersList.toSortedArray(), [...headersList].sort(compareHeaderName))
   }
 })
