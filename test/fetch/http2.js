@@ -506,12 +506,10 @@ test('Issue #3046', async (t) => {
   t.assert.deepStrictEqual(response.headers.getSetCookie(), ['hello=world', 'foo=bar'])
 })
 
-// The two following tests expose a discrepancy of behavior when enabling HTTP/2.
-// Without H2 enabled, empty POST requests have a Content-Length of 0 specified.
-// With H2 enabled, empty POST requests do not have a Content-Length header.
+// The two following tests ensure that empty POST requests have a Content-Length of 0
+// specified, both with and without HTTP/2 enabled.
 // The RFC 9110 (see https://httpwg.org/specs/rfc9110.html#field.content-length)
-// states it SHOULD have one, so that is not mandatory, but is there a good reason
-// for not having it?
+// states it SHOULD have one for methods like POST that define a meaning for enclosed content.
 test('[Fetch] Empty POST without h2 has Content-Length', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.statusCode = 200
@@ -540,7 +538,7 @@ test('[Fetch] Empty POST without h2 has Content-Length', async (t) => {
   t.assert.strictEqual(responseBody, `content-length:${0}`)
 })
 
-test('[Fetch] Empty POST with h2 has no Content-Length', async (t) => {
+test('[Fetch] Empty POST with h2 has Content-Length', async (t) => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', async (stream, headers) => {
@@ -577,5 +575,5 @@ test('[Fetch] Empty POST with h2 has no Content-Length', async (t) => {
 
   const responseBody = await response.text()
 
-  t.assert.strictEqual(responseBody, `content-length:${undefined}`)
+  t.assert.strictEqual(responseBody, `content-length:${0}`)
 })
