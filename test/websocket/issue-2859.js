@@ -4,10 +4,9 @@ const { test } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 const diagnosticsChannel = require('node:diagnostics_channel')
-const { tspl } = require('@matteo.collina/tspl')
 
-test('Fragmented frame with a ping frame in the first of it', async (t) => {
-  const { completed, deepStrictEqual, strictEqual } = tspl(t, { plan: 2 })
+test('Fragmented frame with a ping frame in the first of it', (t, done) => {
+  t.plan(2)
 
   const server = new WebSocketServer({ port: 0 })
 
@@ -27,12 +26,11 @@ test('Fragmented frame with a ping frame in the first of it', async (t) => {
   const ws = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
 
   diagnosticsChannel.channel('undici:websocket:ping').subscribe(
-    ({ payload }) => deepStrictEqual(payload, Buffer.from('Hello'))
+    ({ payload }) => t.assert.deepStrictEqual(payload, Buffer.from('Hello'))
   )
 
   ws.addEventListener('message', ({ data }) => {
-    strictEqual(data, 'Hello')
+    t.assert.strictEqual(data, 'Hello')
+    done()
   })
-
-  await completed
 })

@@ -4,10 +4,10 @@ const { test } = require('node:test')
 const dc = require('node:diagnostics_channel')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
+const { once } = require('node:events')
 
 test('diagnostics channel - undici:websocket:[ping/pong]', async (t) => {
-  const { deepStrictEqual, equal, completed } = tspl(t, { plan: 4 })
+  t.plan(4)
 
   const server = new WebSocketServer({ port: 0 })
   const { port } = server.address()
@@ -16,16 +16,17 @@ test('diagnostics channel - undici:websocket:[ping/pong]', async (t) => {
   server.on('connection', (ws) => {
     ws.ping('Ping')
     ws.pong('Pong')
+    ws.close()
   })
 
   const pingListener = ({ websocket, payload }) => {
-    equal(websocket, ws)
-    deepStrictEqual(payload, Buffer.from('Ping'))
+    t.assert.strictEqual(websocket, ws)
+    t.assert.deepStrictEqual(payload, Buffer.from('Ping'))
   }
 
   const pongListener = ({ websocket, payload }) => {
-    equal(websocket, ws)
-    deepStrictEqual(payload, Buffer.from('Pong'))
+    t.assert.strictEqual(websocket, ws)
+    t.assert.deepStrictEqual(payload, Buffer.from('Pong'))
   }
 
   dc.channel('undici:websocket:ping').subscribe(pingListener)
@@ -33,10 +34,9 @@ test('diagnostics channel - undici:websocket:[ping/pong]', async (t) => {
 
   t.after(() => {
     server.close()
-    ws.close()
     dc.channel('undici:websocket:ping').unsubscribe(pingListener)
     dc.channel('undici:websocket:pong').unsubscribe(pongListener)
   })
 
-  await completed
+  await once(ws, 'close')
 })

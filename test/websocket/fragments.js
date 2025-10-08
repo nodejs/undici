@@ -1,12 +1,11 @@
 'use strict'
 
-const assert = require('node:assert')
 const { test, after } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 const diagnosticsChannel = require('node:diagnostics_channel')
 
-test('Fragmented frame with a ping frame in the middle of it', () => {
+test('Fragmented frame with a ping frame in the middle of it', (t) => {
   const server = new WebSocketServer({ port: 0 })
 
   server.on('connection', (ws) => {
@@ -28,12 +27,12 @@ test('Fragmented frame with a ping frame in the middle of it', () => {
   const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
   diagnosticsChannel.channel('undici:websocket:ping').subscribe(
-    ({ payload }) => assert.deepStrictEqual(payload, Buffer.from('Hello'))
+    ({ payload }) => t.assert.deepStrictEqual(payload, Buffer.from('Hello'))
   )
 
   return new Promise((resolve) => {
     ws.addEventListener('message', ({ data }) => {
-      assert.strictEqual(data, 'Hello')
+      t.assert.strictEqual(data, 'Hello')
 
       ws.close()
       resolve()
