@@ -1,8 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
-const { tspl } = require('@matteo.collina/tspl')
 const { fetch } = require('..')
 const https = require('node:https')
 const fs = require('node:fs')
@@ -18,7 +16,7 @@ test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t)
     throw new Error('gc is not available. Run with \'--expose-gc\'.')
   }
 
-  const { ok } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   // Create HTTPS server with self-signed certificate
   const serverOptions = {
@@ -123,7 +121,7 @@ test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t)
       const leakDetected = await processBatch(i, batchSize)
       if (leakDetected) {
         // If a leak is detected, fail the test
-        assert.fail('Memory leak detected: heap usage is consistently increasing at a significant rate')
+        t.assert.fail('Memory leak detected: heap usage is consistently increasing at a significant rate')
         return
       }
 
@@ -136,9 +134,9 @@ test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t)
     // Final check
     const finalCheckResult = finalMemoryCheck()
     if (finalCheckResult) {
-      assert.fail(`Memory leak detected: ${finalCheckResult}`)
+      t.assert.fail(`Memory leak detected: ${finalCheckResult}`)
     } else {
-      ok(true, 'Memory usage has stabilized')
+      t.assert.ok(true, 'Memory usage has stabilized')
     }
   }
 
