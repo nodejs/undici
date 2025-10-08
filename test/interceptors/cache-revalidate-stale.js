@@ -9,7 +9,8 @@ const FakeTimers = require('@sinonjs/fake-timers')
 
 test('revalidates the request when the response is stale', async () => {
   const clock = FakeTimers.install({
-    now: 1
+    now: 1,
+    toFake: ['Date']
   })
   after(() => clock.uninstall())
 
