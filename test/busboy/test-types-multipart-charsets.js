@@ -1,6 +1,5 @@
 'use strict'
 
-const assert = require('node:assert')
 const { inspect } = require('node:util')
 const { test } = require('node:test')
 const { Response } = require('../..')
@@ -63,7 +62,7 @@ test('unicode filename', async (t) => {
     }
   }
 
-  assert.deepStrictEqual(
+  t.assert.deepStrictEqual(
     results,
     expected,
     'Results mismatch.\n' +
