@@ -3,7 +3,6 @@
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { request } = require('../../')
-const { strictEqual } = require('node:assert')
 
 test('socket should not be reused unless body is consumed', async (t) => {
   const LARGE_BODY = 'x'.repeat(10000000)
@@ -39,7 +38,7 @@ test('socket should not be reused unless body is consumed', async (t) => {
   const fooBody = await fooRes.body.text()
   await barRes.body.text()
 
-  strictEqual(fooRes.headers['content-length'], String(LARGE_BODY.length))
-  strictEqual(fooBody.length, LARGE_BODY.length)
-  strictEqual(fooBody, LARGE_BODY)
+  t.assert.strictEqual(fooRes.headers['content-length'], String(LARGE_BODY.length))
+  t.assert.strictEqual(fooBody.length, LARGE_BODY.length)
+  t.assert.strictEqual(fooBody, LARGE_BODY)
 })
