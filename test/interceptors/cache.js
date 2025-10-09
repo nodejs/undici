@@ -1546,7 +1546,7 @@ describe('Cache Interceptor', () => {
     equal(revalidationRequests, 1, 'Background revalidation should have occurred')
   })
 
-  test('stale-while-revalidate updates cache after background revalidation', async () => {
+  test('stale-while-revalidate updates cache after background revalidation (receiving new data)', async () => {
     let requestsToOrigin = 0
     let revalidationRequests = 0
 
