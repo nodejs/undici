@@ -207,5 +207,5 @@ export declare class Response extends BodyMixin {
 
   static error (): Response
   static json (data: any, init?: ResponseInit): Response
-  static redirect (url: string | URL, status: ResponseRedirectStatus): Response
+  static redirect (url: string | URL, status?: ResponseRedirectStatus): Response
 }
