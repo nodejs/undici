@@ -48,7 +48,6 @@ test('Should support h2c connection', async t => {
 
   const response = await client
     .request({ path: '/', method: 'GET' })
-    .catch(console.log)
   planner.equal(response.statusCode, 200)
   planner.equal(await response.body.text(), 'Hello, world!')
 })
@@ -84,26 +83,6 @@ test('Should support h2c connection with body', async t => {
   planner.equal(Buffer.concat(bodyChunks).toString(), 'Hello, world!')
 })
 
-test('Should support h2c connection', async t => {
-  const planner = tspl(t, { plan: 2 })
-
-  const server = createServer((req, res) => {
-    res.writeHead(200)
-    res.end('Hello, world!')
-  })
-
-  server.listen()
-  await once(server, 'listening')
-  const client = new H2CClient(`http://localhost:${server.address().port}/`)
-
-  t.after(() => client.close())
-  t.after(() => server.close())
-
-  const response = await client.request({ path: '/', method: 'GET' })
-  planner.equal(response.statusCode, 200)
-  planner.equal(await response.body.text(), 'Hello, world!')
-})
-
 test('Should reject request if not h2c supported', async t => {
   const planner = tspl(t, { plan: 1 })
 
@@ -112,7 +91,6 @@ test('Should reject request if not h2c supported', async t => {
     res.end('Hello, world!')
   })
 
-  server.on('sessionError', console.error)
   server.listen()
   await once(server, 'listening')
   const client = new H2CClient(`http://localhost:${server.address().port}/`)

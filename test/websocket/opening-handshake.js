@@ -17,29 +17,6 @@ const crypto = runtimeFeatures.has('crypto')
   ? require('node:crypto')
   : null
 
-function getH2WebSocketServer (server) {
-  const wsServer = new WebSocketServer({ noServer: true })
-  server.on('stream', (stream, headers) => {
-    if (headers[':protocol'] === 'websocket' &&
-      headers[':method'] === 'CONNECT') {
-      stream.respond({
-        ':status': 200,
-        'sec-websocket-protocol': headers['sec-websocket-protocol'],
-        'sec-websocket-accept': crypto.hash('sha1', `${headers['sec-websocket-key']}${uid}`, 'base64')
-      })
-      const ws = new WSWebsocket(null, null, { autoPong: true })
-      ws.setSocket(stream, Buffer.alloc(0), {
-        maxPayload: 104857600,
-        skipUTF8Validation: false
-      })
-
-      wsServer.emit('connection', ws, stream)
-    }
-  })
-
-  return wsServer
-}
-
 test('WebSocket connecting to server that isn\'t a Websocket server', () => {
   return new Promise((resolve, reject) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -84,9 +61,28 @@ test('Open event is emitted', () => {
 })
 
 test('WebSocket on H2', { skip: crypto == null }, async (t) => {
-  const planner = tspl(t, { plan: 2 })
+  const planner = tspl(t, { plan: 6 })
   const server = createSecureServer({ cert, key, allowHTTP1: true, settings: { enableConnectProtocol: true } })
-  const wsServer = getH2WebSocketServer(server)
+  const wsServer = new WebSocketServer({ noServer: true })
+  server.on('stream', (stream, headers) => {
+    planner.equal(headers[':method'], 'CONNECT')
+    planner.equal(headers[':protocol'], 'websocket')
+    planner.equal(headers[':path'], '/')
+    planner.equal(headers[':scheme'], 'https')
+
+    stream.respond({
+      ':status': 200,
+      'sec-websocket-protocol': headers['sec-websocket-protocol'],
+      'sec-websocket-accept': crypto.hash('sha1', `${headers['sec-websocket-key']}${uid}`, 'base64')
+    })
+    const ws = new WSWebsocket(null, null, { autoPong: true })
+    ws.setSocket(stream, Buffer.alloc(0), {
+      maxPayload: 104857600,
+      skipUTF8Validation: false
+    })
+
+    wsServer.emit('connection', ws, stream)
+  })
 
   wsServer.on('connection', (ws) => {
     ws.send('hello')
@@ -116,9 +112,10 @@ test('WebSocket on H2', { skip: crypto == null }, async (t) => {
     })
   })
 
-  // ws.onclose = (code, reason) => console.log('CLOSE', code, reason)
   ws.onmessage = (evt) => planner.equal(evt.data, 'hello')
-  ws.onerror = (err) => planner.fail(err)
+  ws.onerror = (err) => {
+    planner.fail(err)
+  }
   ws.addEventListener('open', () => planner.ok(true))
 
   await planner.completed
