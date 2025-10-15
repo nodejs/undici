@@ -203,12 +203,43 @@ test('Dispatcher#Connect', async t => {
   await t.completed
 })
 
-test('Dispatcher#Upgrade', async t => {
-  t = tspl(t, { plan: 1 })
-
+test('Dispatcher#Upgrade - Should throw on non-websocket upgrade', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
+  server.on('stream', async (stream, headers) => {
+    stream.end()
+  })
+
+  t = tspl(t, { plan: 1 })
+
+  server.listen(0, async () => {
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      },
+      allowH2: true
+    })
+
+    after(() => server.close())
+    after(() => client.close())
+
+    try {
+      await client.upgrade({ path: '/', protocol: 'any' })
+    } catch (error) {
+      t.strictEqual(error.message, 'Custom upgrade "any" not supported over HTTP/2')
+    }
+  })
+
+  await t.completed
+})
+
+test('Dispatcher#Upgrade', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createSecureServer({ ...(await pem.generate({ opts: { keySize: 2048 } })), settings: { enableConnectProtocol: true } })
+
   server.on('stream', (stream, headers) => {
+    stream.respond({ ':status': 200 })
     stream.end()
   })
 
@@ -223,12 +254,13 @@ test('Dispatcher#Upgrade', async t => {
   })
   after(() => client.close())
 
-  await t.rejects(
-    client.upgrade({ path: '/' }),
-    {
-      message: 'Upgrade not supported for H2'
-    }
-  )
+  const { socket } = await client.upgrade({ path: '/', protocol: 'websocket' })
+
+  t.ok(socket.readable)
+  t.ok(socket.writable)
+  t.strictEqual(socket.closed, false)
+
+  after(() => socket.end())
 
   await t.completed
 })
