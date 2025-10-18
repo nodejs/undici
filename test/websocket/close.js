@@ -2,18 +2,17 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { describe, test, after } = require('node:test')
-const assert = require('node:assert')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 
 describe('Close', () => {
-  test('Close with code', () => {
+  test('Close with code', (t) => {
     return new Promise((resolve) => {
       const server = new WebSocketServer({ port: 0 })
 
       server.on('connection', (ws) => {
         ws.on('close', (code) => {
-          assert.equal(code, 1000)
+          t.assert.strictEqual(code, 1000)
           server.close()
           resolve()
         })
@@ -24,14 +23,14 @@ describe('Close', () => {
     })
   })
 
-  test('Close with code and reason', () => {
+  test('Close with code and reason', (t) => {
     return new Promise((resolve) => {
       const server = new WebSocketServer({ port: 0 })
 
       server.on('connection', (ws) => {
         ws.on('close', (code, reason) => {
-          assert.equal(code, 1000)
-          assert.deepStrictEqual(reason, Buffer.from('Goodbye'))
+          t.assert.strictEqual(code, 1000)
+          t.assert.deepStrictEqual(reason, Buffer.from('Goodbye'))
           server.close()
           resolve()
         })
@@ -42,14 +41,14 @@ describe('Close', () => {
     })
   })
 
-  test('Close with invalid code', () => {
+  test('Close with invalid code', (t) => {
     const server = new WebSocketServer({ port: 0 })
 
     const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
     return new Promise((resolve) => {
       ws.addEventListener('open', () => {
-        assert.throws(
+        t.assert.throws(
           () => ws.close(2999),
           {
             name: 'InvalidAccessError',
@@ -57,7 +56,7 @@ describe('Close', () => {
           }
         )
 
-        assert.throws(
+        t.assert.throws(
           () => ws.close(5000),
           {
             name: 'InvalidAccessError',
@@ -72,14 +71,14 @@ describe('Close', () => {
     })
   })
 
-  test('Close with invalid reason', () => {
+  test('Close with invalid reason', (t) => {
     const server = new WebSocketServer({ port: 0 })
 
     const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
     return new Promise((resolve) => {
       ws.addEventListener('open', () => {
-        assert.throws(
+        t.assert.throws(
           () => ws.close(1000, 'a'.repeat(124)),
           {
             name: 'SyntaxError',
@@ -94,14 +93,14 @@ describe('Close', () => {
     })
   })
 
-  test('Close with no code or reason', () => {
+  test('Close with no code or reason', (t) => {
     const server = new WebSocketServer({ port: 0 })
 
     return new Promise((resolve) => {
       server.on('connection', (ws) => {
         ws.on('close', (code, reason) => {
-          assert.equal(code, 1005)
-          assert.deepStrictEqual(reason, Buffer.alloc(0))
+          t.assert.strictEqual(code, 1005)
+          t.assert.deepStrictEqual(reason, Buffer.alloc(0))
           server.close()
           resolve()
         })
@@ -112,14 +111,14 @@ describe('Close', () => {
     })
   })
 
-  test('Close with a 3000 status code', () => {
+  test('Close with a 3000 status code', (t) => {
     const server = new WebSocketServer({ port: 0 })
 
     return new Promise((resolve) => {
       server.on('connection', (ws) => {
         ws.on('close', (code, reason) => {
-          assert.equal(code, 3000)
-          assert.deepStrictEqual(reason, Buffer.alloc(0))
+          t.assert.strictEqual(code, 3000)
+          t.assert.deepStrictEqual(reason, Buffer.alloc(0))
           server.close()
           resolve()
         })
