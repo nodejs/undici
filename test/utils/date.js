@@ -1,14 +1,13 @@
 'use strict'
 
 const { describe, test } = require('node:test')
-const { deepStrictEqual } = require('node:assert')
 const { parseHttpDate } = require('../../lib/util/date')
 const { runtimeFeatures } = require('../../lib/util/runtime-features')
 
 const skipFuzzing = runtimeFeatures.has('crypto') === false
 
 describe('parseHttpDate', () => {
-  test('IMF-fixdate', () => {
+  test('IMF-fixdate', (t) => {
     const values = {
       'Sun, 06 Nov 1994 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
       'Fri, 18 Aug 1950 02:01:18 GMT': new Date(Date.UTC(1950, 7, 18, 2, 1, 18)),
@@ -38,11 +37,11 @@ describe('parseHttpDate', () => {
     }
 
     for (const date of Object.keys(values)) {
-      deepStrictEqual(parseHttpDate(date), values[date], date)
+      t.assert.deepStrictEqual(parseHttpDate(date), values[date], date)
     }
   })
 
-  test('RFC850', () => {
+  test('RFC850', (t) => {
     const values = {
       'Sunday, 06-Nov-94 08:49:37 GMT': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
       'Monday, 07-Nov-94 08:49:37 GMT': new Date(Date.UTC(1994, 10, 7, 8, 49, 37)),
@@ -74,11 +73,11 @@ describe('parseHttpDate', () => {
     }
 
     for (const date of Object.keys(values)) {
-      deepStrictEqual(parseHttpDate(date), values[date], date)
+      t.assert.deepStrictEqual(parseHttpDate(date), values[date], date)
     }
   })
 
-  test('asctime()', () => {
+  test('asctime()', (t) => {
     const values = {
       'Sun Nov  6 08:49:37 1994': new Date(Date.UTC(1994, 10, 6, 8, 49, 37)),
       'Fri Aug 18 02:01:18 1950': new Date(Date.UTC(1950, 7, 18, 2, 1, 18)),
@@ -265,7 +264,7 @@ describe('parseHttpDate', () => {
     }
 
     for (const date of Object.keys(values)) {
-      deepStrictEqual(parseHttpDate(date), values[date], date)
+      t.assert.deepStrictEqual(parseHttpDate(date), values[date], date)
     }
   })
 
@@ -274,7 +273,7 @@ describe('parseHttpDate', () => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const fuzzingCount = 1e6
 
-  test('fuzzing asctime', { skip: skipFuzzing }, () => {
+  test('fuzzing asctime', { skip: skipFuzzing }, (t) => {
     const { randomInt } = require('node:crypto')
 
     function asctime (date) {
@@ -308,11 +307,11 @@ describe('parseHttpDate', () => {
       ))
 
       const dateAsAscTime = asctime(date)
-      deepStrictEqual(parseHttpDate(dateAsAscTime), date, `Fuzzing failed for: ${dateAsAscTime}`)
+      t.assert.deepStrictEqual(parseHttpDate(dateAsAscTime), date, `Fuzzing failed for: ${dateAsAscTime}`)
     }
   })
 
-  test('fuzzing imf', { skip: skipFuzzing }, () => {
+  test('fuzzing imf', { skip: skipFuzzing }, (t) => {
     const { randomInt } = require('node:crypto')
 
     for (let i = 0; i < fuzzingCount; i++) {
@@ -326,11 +325,11 @@ describe('parseHttpDate', () => {
       ))
 
       const dateAsImf = date.toUTCString()
-      deepStrictEqual(parseHttpDate(dateAsImf), date, `Fuzzing failed for: ${dateAsImf}`)
+      t.assert.deepStrictEqual(parseHttpDate(dateAsImf), date, `Fuzzing failed for: ${dateAsImf}`)
     }
   })
 
-  test('fuzzing rfc850', { skip: skipFuzzing }, () => {
+  test('fuzzing rfc850', { skip: skipFuzzing }, (t) => {
     const { randomInt } = require('node:crypto')
 
     function rfc850 (date) {
@@ -368,7 +367,7 @@ describe('parseHttpDate', () => {
       ))
 
       const dateAsRfc850 = rfc850(date)
-      deepStrictEqual(parseHttpDate(dateAsRfc850), date, `Fuzzing failed for: ${dateAsRfc850}`)
+      t.assert.deepStrictEqual(parseHttpDate(dateAsRfc850), date, `Fuzzing failed for: ${dateAsRfc850}`)
     }
   })
 })

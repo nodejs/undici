@@ -11,9 +11,11 @@ import Undici, {
   Request,
   FormData,
   SnapshotAgent,
-  install
+  install,
+  cacheStores
 } from '../..'
 import Dispatcher from '../../types/dispatcher'
+import CacheInterceptor from '../../types/cache-interceptor'
 
 expectAssignable<Pool>(new Undici.Pool('', {}))
 expectAssignable<Client>(new Undici.Client('', {}))
@@ -30,6 +32,10 @@ expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.re
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.retry())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.decompress())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.cache())
+expectAssignable<CacheInterceptor.CacheStore>(new Undici.cacheStores.MemoryCacheStore())
+expectAssignable<CacheInterceptor.CacheStore>(new Undici.cacheStores.SqliteCacheStore())
+expectAssignable<CacheInterceptor.CacheStore>(new cacheStores.MemoryCacheStore())
+expectAssignable<CacheInterceptor.CacheStore>(new cacheStores.SqliteCacheStore())
 
 const dispatcher = new Dispatcher()
 const handler: Dispatcher.DispatchHandler = {}

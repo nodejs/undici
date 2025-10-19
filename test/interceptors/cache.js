@@ -387,285 +387,6 @@ describe('Cache Interceptor', () => {
     }
   })
 
-  test('stale responses are revalidated before deleteAt (if-modified-since)', async () => {
-    const clock = FakeTimers.install({
-      shouldClearNativeTimers: true
-    })
-
-    let requestsToOrigin = 0
-    let revalidationRequests = 0
-    let serverError
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      res.setHeader('date', 0)
-      res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
-
-      try {
-        if (req.headers['if-modified-since']) {
-          equal(req.headers['if-modified-since'].length, 29)
-
-          revalidationRequests++
-
-          if (revalidationRequests === 3) {
-            res.end('updated')
-          } else {
-            res.statusCode = 304
-            res.end()
-          }
-        } else {
-          requestsToOrigin++
-          res.end('asd')
-        }
-      } catch (err) {
-        serverError = err
-        res.end()
-      }
-    }).listen(0)
-
-    const client = new Client(`http://localhost:${server.address().port}`)
-      .compose((dispatch) => {
-        return (opts, handler) => {
-          if (opts.headers) {
-            strictEqual(Object.prototype.hasOwnProperty.call(opts.headers, 'if-none-match'), false)
-          }
-          return dispatch(opts, handler)
-        }
-      })
-      .compose(interceptors.cache())
-
-    after(async () => {
-      server.close()
-      await client.close()
-      clock.uninstall()
-    })
-
-    await once(server, 'listening')
-
-    strictEqual(requestsToOrigin, 0)
-    strictEqual(revalidationRequests, 0)
-
-    /**
-     * @type {import('../../types/dispatcher').default.RequestOptions}
-     */
-    const request = {
-      origin: 'localhost',
-      method: 'GET',
-      path: '/'
-    }
-
-    // Send initial request. This should reach the origin
-    {
-      const res = await client.request(request)
-      if (serverError) {
-        throw serverError
-      }
-
-      equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 0)
-      strictEqual(await res.body.text(), 'asd')
-    }
-
-    clock.tick(1500)
-
-    // Response is now stale but within stale-while-revalidate window,
-    // should return stale immediately and revalidate in background
-    {
-      const res = await client.request(request)
-      if (serverError) {
-        throw serverError
-      }
-
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
-      // Background revalidation happens asynchronously
-    }
-
-    // Wait for background revalidation to complete
-    await sleep(100)
-    equal(revalidationRequests, 1)
-
-    // Response is still stale, will trigger another background revalidation
-    {
-      const res = await client.request({
-        ...request,
-        headers: {
-          'if-modified-SINCE': 'Thu, 01 Jan 1970 00:00:00 GMT'
-        }
-      })
-      if (serverError) {
-        throw serverError
-      }
-
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
-    }
-
-    // Wait for second background revalidation
-    await sleep(100)
-    equal(revalidationRequests, 2)
-
-    // Third request triggers another background revalidation that returns updated content
-    {
-      const res = await client.request(request)
-      if (serverError) {
-        throw serverError
-      }
-
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd') // Still stale initially
-    }
-
-    // Wait for third background revalidation
-    await sleep(100)
-    equal(revalidationRequests, 3)
-
-    // Now the cache should have updated content
-    {
-      const res = await client.request(request)
-      if (serverError) {
-        throw serverError
-      }
-
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'updated')
-    }
-  })
-
-  test('stale responses are revalidated before deleteAt (if-none-match)', async () => {
-    const clock = FakeTimers.install({
-      shouldClearNativeTimers: true
-    })
-
-    let requestsToOrigin = 0
-    let revalidationRequests = 0
-    let serverError
-    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      res.setHeader('date', 0)
-      res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
-
-      try {
-        if (req.headers['if-none-match']) {
-          revalidationRequests++
-
-          equal(req.headers['if-none-match'], '"asd123"')
-
-          if (revalidationRequests === 3) {
-            res.end('updated')
-          } else {
-            res.statusCode = 304
-            res.end()
-          }
-        } else {
-          requestsToOrigin++
-          res.setHeader('etag', '"asd123"')
-          res.end('asd')
-        }
-      } catch (err) {
-        serverError = err
-        res.end()
-      }
-    }).listen(0)
-
-    const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
-
-    after(async () => {
-      server.close()
-      await client.close()
-      clock.uninstall()
-    })
-
-    await once(server, 'listening')
-
-    strictEqual(requestsToOrigin, 0)
-    strictEqual(revalidationRequests, 0)
-
-    /**
-     * @type {import('../../types/dispatcher').default.RequestOptions}
-     */
-    const request = {
-      origin: 'localhost',
-      method: 'GET',
-      path: '/'
-    }
-
-    // Send initial request. This should reach the origin
-    {
-      const res = await client.request(request)
-      if (serverError) {
-        throw serverError
-      }
-
-      equal(requestsToOrigin, 1)
-      equal(revalidationRequests, 0)
-      strictEqual(await res.body.text(), 'asd')
-    }
-
-    clock.tick(1500)
-
-    // Response is now stale but within stale-while-revalidate window,
-    // should return stale immediately and revalidate in background
-    {
-      const res = await client.request(request)
-      if (serverError) {
-        throw serverError
-      }
-
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
-      // Background revalidation happens asynchronously
-    }
-
-    // Wait for background revalidation to complete
-    await sleep(100)
-    equal(revalidationRequests, 1)
-
-    // Response is still stale, will trigger another background revalidation
-    {
-      const res = await client.request({
-        ...request,
-        headers: {
-          'if-NONE-match': '"nonsense-etag"'
-        }
-      })
-      if (serverError) {
-        throw serverError
-      }
-
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd')
-    }
-
-    // Wait for second background revalidation
-    await sleep(100)
-    equal(revalidationRequests, 2)
-
-    // Third request triggers another background revalidation that returns updated content
-    {
-      const res = await client.request(request)
-      if (serverError) {
-        throw serverError
-      }
-
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'asd') // Still stale initially
-    }
-
-    // Wait for third background revalidation
-    await sleep(100)
-    equal(revalidationRequests, 3)
-
-    // Now the cache should have updated content
-    {
-      const res = await client.request(request)
-      if (serverError) {
-        throw serverError
-      }
-
-      equal(requestsToOrigin, 1)
-      strictEqual(await res.body.text(), 'updated')
-    }
-  })
-
   test('vary headers are present in revalidation request', async () => {
     const clock = FakeTimers.install({
       shouldClearNativeTimers: true
@@ -825,7 +546,7 @@ describe('Cache Interceptor', () => {
           createWriteStream (key) {
             fail(key.method)
           },
-          delete () {}
+          delete () { }
         }
       }))
 
@@ -1654,7 +1375,7 @@ describe('Cache Interceptor', () => {
     }
   })
 
-  test('discriminates caching of conditionnal requests (if-none-match), or does not cache them', async () => {
+  test('discriminates caching of conditional requests (if-none-match), or does not cache them', async () => {
     let requestsToOrigin = 0
     const body = ''
     const code = 304
@@ -1704,7 +1425,7 @@ describe('Cache Interceptor', () => {
     }
   })
 
-  test('discriminates caching of conditionnal requests (if-modified-since), or does not cache them', async () => {
+  test('discriminates caching of conditional requests (if-modified-since), or does not cache them', async () => {
     let requestsToOrigin = 0
     const body = ''
     const code = 304
@@ -1825,7 +1546,7 @@ describe('Cache Interceptor', () => {
     equal(revalidationRequests, 1, 'Background revalidation should have occurred')
   })
 
-  test('stale-while-revalidate updates cache after background revalidation', async () => {
+  test('stale-while-revalidate updates cache after background revalidation (receiving new data)', async () => {
     let requestsToOrigin = 0
     let revalidationRequests = 0
 
