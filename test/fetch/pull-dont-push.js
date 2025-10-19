@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -42,7 +41,7 @@ test('pull dont\'t push', async (t) => {
   await sleep(1000)
 
   socket.destroy()
-  assert.strictEqual(count < max, true) // the stream should be closed before the max
+  t.assert.strictEqual(count < max, true) // the stream should be closed before the max
 
   // consume the  stream
   try {

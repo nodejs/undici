@@ -3,14 +3,10 @@
 const { createServer } = require('node:http')
 const { after } = require('node:test')
 
-const isNode20 = process.version.startsWith('v20.')
-
 function close (server) {
   return function () {
     return new Promise(resolve => {
-      if (isNode20) {
-        server.closeAllConnections()
-      }
+      server.closeAllConnections()
       server.close(resolve)
     })
   }

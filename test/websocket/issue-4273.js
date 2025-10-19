@@ -2,16 +2,16 @@
 
 const { test } = require('node:test')
 const { WebSocket } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
+const { once } = require('node:events')
 
 test('first error than close event is fired on failed connection', async (t) => {
-  const { completed, ok } = tspl(t, { plan: 1 })
+  t.plan(1)
+
   const ws = new WebSocket('ws://localhost:1')
 
   ws.addEventListener('error', (ev) => {
-    const { cause } = ev.error
-    ok(cause instanceof Error)
+    t.assert.ok(ev.error instanceof TypeError)
   })
 
-  await completed
+  await once(ws, 'close')
 })

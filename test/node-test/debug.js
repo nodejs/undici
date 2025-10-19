@@ -126,6 +126,46 @@ test('debug#undici', { skip: isCITGM || isNode23Plus }, async t => {
   await assert.completed
 })
 
+test('debug#undici no duplicates', { skip: isCITGM || isNode23Plus }, async t => {
+  const assert = tspl(t, { plan: 7 })
+  const child = spawn(
+    process.execPath,
+    [
+      '--no-experimental-fetch',
+      join(__dirname, '../fixtures/duplicate-debug.js')
+    ],
+    {
+      env: {
+        NODE_DEBUG: 'undici'
+      }
+    }
+  )
+  const chunks = []
+  const assertions = [
+    /(UNDICI [0-9]+:) (connecting to)/,
+    /(UNDICI [0-9]+:) (connected to)/,
+    /(UNDICI [0-9]+:) (sending request)/,
+    /(UNDICI [0-9]+:) (received response)/,
+    /(UNDICI [0-9]+:) (trailers received)/,
+    /^$/
+  ]
+
+  child.stderr.setEncoding('utf8')
+  child.stderr.on('data', chunk => {
+    chunks.push(chunk)
+  })
+  child.stderr.on('end', () => {
+    const lines = extractLines(chunks)
+    // Should have exactly the expected number of lines, no duplicates
+    assert.strictEqual(lines.length, assertions.length, 'Should not have duplicate log lines')
+    for (let i = 0; i < lines.length; i++) {
+      assert.match(lines[i], assertions[i])
+    }
+  })
+
+  await assert.completed
+})
+
 function extractLines (chunks) {
   return chunks
     .join('')

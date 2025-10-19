@@ -1,38 +1,72 @@
 'use strict'
 
 const { createServer } = require('node:http')
-const { once } = require('node:events')
 const { Agent, EventSource } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 
-test('EventSource allows setting custom dispatcher.', async (t) => {
-  const { completed, deepStrictEqual } = tspl(t, { plan: 1 })
+test('EventSource allows setting custom dispatcher.', (t, done) => {
+  t.plan(1)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
-    deepStrictEqual(req.headers['x-customer-header'], 'hello world')
+    t.assert.deepStrictEqual(req.headers['x-customer-header'], 'hello world')
 
     res.end()
-  }).listen(0)
+    done()
+  })
 
   t.after(() => {
     server.close()
-    eventSourceInstance.close()
   })
 
-  await once(server, 'listening')
-
-  class CustomHeaderAgent extends Agent {
-    dispatch (opts) {
-      opts.headers['x-customer-header'] = 'hello world'
-      return super.dispatch(...arguments)
+  server.listen(0, () => {
+    class CustomHeaderAgent extends Agent {
+      dispatch (opts) {
+        opts.headers['x-customer-header'] = 'hello world'
+        return super.dispatch(...arguments)
+      }
     }
-  }
 
-  const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`, {
-    dispatcher: new CustomHeaderAgent()
+    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`, {
+      dispatcher: new CustomHeaderAgent()
+    })
+    t.after(() => {
+      eventSourceInstance.close()
+    })
+  })
+})
+
+test('EventSource allows setting custom dispatcher in EventSourceDict.', (t, done) => {
+  t.plan(1)
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+    t.assert.deepStrictEqual(req.headers['x-customer-header'], 'hello world')
+
+    res.end()
+
+    done()
   })
 
-  await completed
+  t.after(() => {
+    server.close()
+  })
+
+  server.listen(0, () => {
+    class CustomHeaderAgent extends Agent {
+      dispatch (opts) {
+        opts.headers['x-customer-header'] = 'hello world'
+        return super.dispatch(...arguments)
+      }
+    }
+
+    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`, {
+      node: {
+        dispatcher: new CustomHeaderAgent()
+      }
+    })
+    t.after(() => {
+      eventSourceInstance.close()
+    })
+  })
 })

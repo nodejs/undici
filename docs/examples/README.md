@@ -147,3 +147,41 @@ const defaultDispatcher = new Agent({
 
 setGlobalDispatcher(defaultDispatcher) // Add these interceptors to all `fetch` and Undici `request` calls
 ```
+
+## Connecting via Unix domain sockets (UDS)
+
+### request() over UDS (per-call dispatcher)
+```js
+const { Agent, request } = require('undici')
+
+async function requestOverUds () {
+  const uds = new Agent({ connect: { socketPath: '/var/run/docker.sock' } })
+  try {
+    const { statusCode, headers, body } = await request('http://localhost/_ping', {
+      dispatcher: uds
+    })
+    console.log(statusCode, headers, await body.text())
+  } finally {
+    await uds.close()
+  }
+}
+```
+
+### fetch() over UDS (per-call dispatcher)
+```js
+const { Agent, fetch } = require('undici')
+
+async function fetchOverUds () {
+  const uds = new Agent({ connect: { socketPath: '/var/run/docker.sock' } })
+  try {
+    const res = await fetch('http://localhost/containers/json', { dispatcher: uds })
+    console.log(res.status, await res.text())
+  } finally {
+    await uds.close()
+  }
+}
+```
+
+> Note
+> - `connect.socketPath` must be the exact filesystem path your server listens on (e.g., Docker: `/var/run/docker.sock`)..
+> - Not supported on Windows (uses named pipes instead).

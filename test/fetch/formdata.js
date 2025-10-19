@@ -1,164 +1,161 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
-const { tspl } = require('@matteo.collina/tspl')
 const { FormData, Response, Request } = require('../../')
-const { Blob, File } = require('node:buffer')
 const { isFormDataLike } = require('../../lib/core/util')
 
-test('arg validation', () => {
+test('arg validation', (t) => {
   const form = new FormData()
 
   // constructor
-  assert.throws(() => {
+  t.assert.throws(() => {
     // eslint-disable-next-line
     new FormData('asd')
   }, TypeError)
 
   // append
-  assert.throws(() => {
+  t.assert.throws(() => {
     FormData.prototype.append.call(null)
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     form.append()
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     form.append('k', 'not usv', '')
   }, TypeError)
 
   // delete
-  assert.throws(() => {
+  t.assert.throws(() => {
     FormData.prototype.delete.call(null)
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     form.delete()
   }, TypeError)
 
   // get
-  assert.throws(() => {
+  t.assert.throws(() => {
     FormData.prototype.get.call(null)
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     form.get()
   }, TypeError)
 
   // getAll
-  assert.throws(() => {
+  t.assert.throws(() => {
     FormData.prototype.getAll.call(null)
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     form.getAll()
   }, TypeError)
 
   // has
-  assert.throws(() => {
+  t.assert.throws(() => {
     FormData.prototype.has.call(null)
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     form.has()
   }, TypeError)
 
   // set
-  assert.throws(() => {
+  t.assert.throws(() => {
     FormData.prototype.set.call(null)
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     form.set('k')
   }, TypeError)
-  assert.throws(() => {
+  t.assert.throws(() => {
     form.set('k', 'not usv', '')
   }, TypeError)
 
   // iterator
-  assert.throws(() => {
+  t.assert.throws(() => {
     Reflect.apply(FormData.prototype[Symbol.iterator], null)
   }, TypeError)
 
   // toStringTag
-  assert.doesNotThrow(() => {
+  t.assert.doesNotThrow(() => {
     FormData.prototype[Symbol.toStringTag].charAt(0)
   })
 })
 
-test('set blob', () => {
+test('set blob', (t) => {
   const form = new FormData()
 
   form.set('key', new Blob([]), undefined)
-  assert.strictEqual(form.get('key').name, 'blob')
+  t.assert.strictEqual(form.get('key').name, 'blob')
 
   form.set('key1', new Blob([]), null)
-  assert.strictEqual(form.get('key1').name, 'null')
+  t.assert.strictEqual(form.get('key1').name, 'null')
 })
 
-test('append file', () => {
+test('append file', (t) => {
   const form = new FormData()
   form.set('asd', new File([], 'asd1', { type: 'text/plain' }), 'asd2')
   form.append('asd2', new File([], 'asd1'), 'asd2')
 
-  assert.strictEqual(form.has('asd'), true)
-  assert.strictEqual(form.has('asd2'), true)
-  assert.strictEqual(form.get('asd').name, 'asd2')
-  assert.strictEqual(form.get('asd2').name, 'asd2')
-  assert.strictEqual(form.get('asd').type, 'text/plain')
+  t.assert.strictEqual(form.has('asd'), true)
+  t.assert.strictEqual(form.has('asd2'), true)
+  t.assert.strictEqual(form.get('asd').name, 'asd2')
+  t.assert.strictEqual(form.get('asd2').name, 'asd2')
+  t.assert.strictEqual(form.get('asd').type, 'text/plain')
   form.delete('asd')
-  assert.strictEqual(form.get('asd'), null)
-  assert.strictEqual(form.has('asd2'), true)
-  assert.strictEqual(form.has('asd'), false)
+  t.assert.strictEqual(form.get('asd'), null)
+  t.assert.strictEqual(form.has('asd2'), true)
+  t.assert.strictEqual(form.has('asd'), false)
 })
 
-test('append blob', async () => {
+test('append blob', async (t) => {
   const form = new FormData()
   form.set('asd', new Blob(['asd1'], { type: 'text/plain' }))
 
-  assert.strictEqual(form.has('asd'), true)
-  assert.strictEqual(form.get('asd').type, 'text/plain')
-  assert.strictEqual(await form.get('asd').text(), 'asd1')
+  t.assert.strictEqual(form.has('asd'), true)
+  t.assert.strictEqual(form.get('asd').type, 'text/plain')
+  t.assert.strictEqual(await form.get('asd').text(), 'asd1')
   form.delete('asd')
-  assert.strictEqual(form.get('asd'), null)
+  t.assert.strictEqual(form.get('asd'), null)
 
   form.append('key', new Blob([]), undefined)
-  assert.strictEqual(form.get('key').name, 'blob')
+  t.assert.strictEqual(form.get('key').name, 'blob')
 
   form.append('key1', new Blob([]), null)
-  assert.strictEqual(form.get('key1').name, 'null')
+  t.assert.strictEqual(form.get('key1').name, 'null')
 })
 
-test('append string', () => {
+test('append string', (t) => {
   const form = new FormData()
   form.set('k1', 'v1')
   form.set('k2', 'v2')
-  assert.deepStrictEqual([...form], [['k1', 'v1'], ['k2', 'v2']])
-  assert.strictEqual(form.has('k1'), true)
-  assert.strictEqual(form.get('k1'), 'v1')
+  t.assert.deepStrictEqual([...form], [['k1', 'v1'], ['k2', 'v2']])
+  t.assert.strictEqual(form.has('k1'), true)
+  t.assert.strictEqual(form.get('k1'), 'v1')
   form.append('k1', 'v1+')
-  assert.deepStrictEqual(form.getAll('k1'), ['v1', 'v1+'])
+  t.assert.deepStrictEqual(form.getAll('k1'), ['v1', 'v1+'])
   form.set('k2', 'v1++')
-  assert.strictEqual(form.get('k2'), 'v1++')
+  t.assert.strictEqual(form.get('k2'), 'v1++')
   form.delete('asd')
-  assert.strictEqual(form.get('asd'), null)
+  t.assert.strictEqual(form.get('asd'), null)
 })
 
 test('formData.entries', async (t) => {
   const form = new FormData()
 
   await t.test('with 0 entries', (t) => {
-    const { deepStrictEqual } = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const entries = [...form.entries()]
-    deepStrictEqual(entries, [])
+    t.assert.deepStrictEqual(entries, [])
   })
 
   await t.test('with 1+ entries', (t) => {
-    const { deepStrictEqual } = tspl(t, { plan: 2 })
+    t.plan(2)
 
     form.set('k1', 'v1')
     form.set('k2', 'v2')
 
     const entries = [...form.entries()]
     const entries2 = [...form.entries()]
-    deepStrictEqual(entries, [['k1', 'v1'], ['k2', 'v2']])
-    deepStrictEqual(entries, entries2)
+    t.assert.deepStrictEqual(entries, [['k1', 'v1'], ['k2', 'v2']])
+    t.assert.deepStrictEqual(entries, entries2)
   })
 })
 
@@ -166,22 +163,22 @@ test('formData.keys', async (t) => {
   const form = new FormData()
 
   await t.test('with 0 keys', (t) => {
-    const { deepStrictEqual } = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const keys = [...form.entries()]
-    deepStrictEqual(keys, [])
+    t.assert.deepStrictEqual(keys, [])
   })
 
   await t.test('with 1+ keys', (t) => {
-    const { deepStrictEqual } = tspl(t, { plan: 2 })
+    t.plan(2)
 
     form.set('k1', 'v1')
     form.set('k2', 'v2')
 
     const keys = [...form.keys()]
     const keys2 = [...form.keys()]
-    deepStrictEqual(keys, ['k1', 'k2'])
-    deepStrictEqual(keys, keys2)
+    t.assert.deepStrictEqual(keys, ['k1', 'k2'])
+    t.assert.deepStrictEqual(keys, keys2)
   })
 })
 
@@ -189,39 +186,39 @@ test('formData.values', async (t) => {
   const form = new FormData()
 
   await t.test('with 0 values', (t) => {
-    const { deepStrictEqual } = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const values = [...form.values()]
-    deepStrictEqual(values, [])
+    t.assert.deepStrictEqual(values, [])
   })
 
   await t.test('with 1+ values', (t) => {
-    const { deepStrictEqual } = tspl(t, { plan: 2 })
+    t.plan(2)
 
     form.set('k1', 'v1')
     form.set('k2', 'v2')
 
     const values = [...form.values()]
     const values2 = [...form.values()]
-    deepStrictEqual(values, ['v1', 'v2'])
-    deepStrictEqual(values, values2)
+    t.assert.deepStrictEqual(values, ['v1', 'v2'])
+    t.assert.deepStrictEqual(values, values2)
   })
 })
 
 test('formData forEach', async (t) => {
-  await t.test('invalid arguments', () => {
-    assert.throws(() => {
+  await t.test('invalid arguments', (t) => {
+    t.assert.throws(() => {
       FormData.prototype.forEach.call({})
     }, TypeError('Illegal invocation'))
 
-    assert.throws(() => {
+    t.assert.throws(() => {
       const fd = new FormData()
 
       fd.forEach({})
     }, TypeError)
   })
 
-  await t.test('with a callback', () => {
+  await t.test('with a callback', (t) => {
     const fd = new FormData()
 
     fd.set('a', 'b')
@@ -230,48 +227,48 @@ test('formData forEach', async (t) => {
     let i = 0
     fd.forEach((value, key, self) => {
       if (i++ === 0) {
-        assert.strictEqual(value, 'b')
-        assert.strictEqual(key, 'a')
+        t.assert.strictEqual(value, 'b')
+        t.assert.strictEqual(key, 'a')
       } else {
-        assert.strictEqual(value, 'd')
-        assert.strictEqual(key, 'c')
+        t.assert.strictEqual(value, 'd')
+        t.assert.strictEqual(key, 'c')
       }
 
-      assert.strictEqual(fd, self)
+      t.assert.strictEqual(fd, self)
     })
   })
 
-  await t.test('with a thisArg', () => {
+  await t.test('with a thisArg', (t) => {
     const fd = new FormData()
     fd.set('b', 'a')
 
     fd.forEach(function (value, key, self) {
-      assert.strictEqual(this, globalThis)
-      assert.strictEqual(fd, self)
-      assert.strictEqual(key, 'b')
-      assert.strictEqual(value, 'a')
+      t.assert.strictEqual(this, globalThis)
+      t.assert.strictEqual(fd, self)
+      t.assert.strictEqual(key, 'b')
+      t.assert.strictEqual(value, 'a')
     })
 
     const thisArg = Symbol('thisArg')
     fd.forEach(function () {
-      assert.strictEqual(this, thisArg)
+      t.assert.strictEqual(this, thisArg)
     }, thisArg)
   })
 })
 
-test('formData toStringTag', () => {
+test('formData toStringTag', (t) => {
   const form = new FormData()
-  assert.strictEqual(form[Symbol.toStringTag], 'FormData')
-  assert.strictEqual(FormData.prototype[Symbol.toStringTag], 'FormData')
+  t.assert.strictEqual(form[Symbol.toStringTag], 'FormData')
+  t.assert.strictEqual(FormData.prototype[Symbol.toStringTag], 'FormData')
 })
 
-test('formData.constructor.name', () => {
+test('formData.constructor.name', (t) => {
   const form = new FormData()
-  assert.strictEqual(form.constructor.name, 'FormData')
+  t.assert.strictEqual(form.constructor.name, 'FormData')
 })
 
 test('formData should be an instance of FormData', async (t) => {
-  await t.test('Invalid class FormData', () => {
+  await t.test('Invalid class FormData', (t) => {
     class FormData {
       constructor () {
         this.data = []
@@ -287,10 +284,10 @@ test('formData should be an instance of FormData', async (t) => {
     }
 
     const form = new FormData()
-    assert.strictEqual(isFormDataLike(form), false)
+    t.assert.strictEqual(isFormDataLike(form), false)
   })
 
-  await t.test('Invalid function FormData', () => {
+  await t.test('Invalid function FormData', (t) => {
     function FormData () {
       const data = []
       return {
@@ -304,17 +301,17 @@ test('formData should be an instance of FormData', async (t) => {
     }
 
     const form = new FormData()
-    assert.strictEqual(isFormDataLike(form), false)
+    t.assert.strictEqual(isFormDataLike(form), false)
   })
 
-  await t.test('Valid FormData', () => {
+  await t.test('Valid FormData', (t) => {
     const form = new FormData()
-    assert.strictEqual(isFormDataLike(form), true)
+    t.assert.strictEqual(isFormDataLike(form), true)
   })
 })
 
 test('FormData should be compatible with third-party libraries', (t) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   class FormData {
     constructor () {
@@ -338,21 +335,21 @@ test('FormData should be compatible with third-party libraries', (t) => {
   }
 
   const form = new FormData()
-  strictEqual(isFormDataLike(form), true)
+  t.assert.strictEqual(isFormDataLike(form), true)
 })
 
-test('arguments', () => {
-  assert.strictEqual(FormData.constructor.length, 1)
-  assert.strictEqual(FormData.prototype.append.length, 2)
-  assert.strictEqual(FormData.prototype.delete.length, 1)
-  assert.strictEqual(FormData.prototype.get.length, 1)
-  assert.strictEqual(FormData.prototype.getAll.length, 1)
-  assert.strictEqual(FormData.prototype.has.length, 1)
-  assert.strictEqual(FormData.prototype.set.length, 2)
+test('arguments', (t) => {
+  t.assert.strictEqual(FormData.length, 0)
+  t.assert.strictEqual(FormData.prototype.append.length, 2)
+  t.assert.strictEqual(FormData.prototype.delete.length, 1)
+  t.assert.strictEqual(FormData.prototype.get.length, 1)
+  t.assert.strictEqual(FormData.prototype.getAll.length, 1)
+  t.assert.strictEqual(FormData.prototype.has.length, 1)
+  t.assert.strictEqual(FormData.prototype.set.length, 2)
 })
 
 // https://github.com/nodejs/undici/pull/1814
-test('FormData returned from bodyMixin.formData is not a clone', async () => {
+test('FormData returned from bodyMixin.formData is not a clone', async (t) => {
   const fd = new FormData()
   fd.set('foo', 'bar')
 
@@ -361,13 +358,13 @@ test('FormData returned from bodyMixin.formData is not a clone', async () => {
 
   const fd2 = await res.formData()
 
-  assert.strictEqual(fd2.get('foo'), 'bar')
-  assert.strictEqual(fd.get('foo'), 'foo')
+  t.assert.strictEqual(fd2.get('foo'), 'bar')
+  t.assert.strictEqual(fd.get('foo'), 'foo')
 
   fd2.set('foo', 'baz')
 
-  assert.strictEqual(fd2.get('foo'), 'baz')
-  assert.strictEqual(fd.get('foo'), 'foo')
+  t.assert.strictEqual(fd2.get('foo'), 'baz')
+  t.assert.strictEqual(fd.get('foo'), 'foo')
 })
 
 test('.formData() with multipart/form-data body that ends with --\r\n', async (t) => {

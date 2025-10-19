@@ -1,10 +1,8 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { Blob } = require('node:buffer')
 const { fetch, FormData } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
 
@@ -12,8 +10,8 @@ const { closeServerAsPromise } = require('../utils/node-http')
 test('Content-Length is set when using a FormData body with fetch', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     // TODO: check the length's value once the boundary has a fixed length
-    assert.ok('content-length' in req.headers) // request has content-length header
-    assert.ok(!Number.isNaN(Number(req.headers['content-length'])))
+    t.assert.ok('content-length' in req.headers) // request has content-length header
+    t.assert.ok(!Number.isNaN(Number(req.headers['content-length'])))
     res.end()
   }).listen(0)
 

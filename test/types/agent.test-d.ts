@@ -1,11 +1,10 @@
-import { Duplex, Readable, Writable } from 'stream'
+import { Duplex, Readable, Writable } from 'node:stream'
 import { expectAssignable } from 'tsd'
 import { Agent, Dispatcher } from '../..'
-import { URL } from 'url'
+import { URL } from 'node:url'
 
 expectAssignable<Agent>(new Agent())
 expectAssignable<Agent>(new Agent({}))
-expectAssignable<Agent>(new Agent({ maxRedirections: 1 }))
 expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
 
 {
@@ -99,7 +98,6 @@ expectAssignable<Agent>(new Agent({ factory: () => new Dispatcher() }))
 
   // dispatch
   expectAssignable<boolean>(agent.dispatch({ origin: '', path: '', method: 'GET' }, {}))
-  expectAssignable<boolean>(agent.dispatch({ origin: '', path: '', method: 'GET', maxRedirections: 1 }, {}))
 
   // close
   expectAssignable<Promise<void>>(agent.close())

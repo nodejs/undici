@@ -3,7 +3,6 @@
 const { strictEqual, throws, doesNotThrow } = require('node:assert')
 const { test, describe } = require('node:test')
 const { isBlobLike, parseURL, isHttpOrHttpsPrefixed, isValidPort } = require('../lib/core/util')
-const { Blob, File } = require('node:buffer')
 const { InvalidArgumentError } = require('../lib/core/errors')
 
 describe('isBlobLike', () => {
@@ -12,14 +11,14 @@ describe('isBlobLike', () => {
     strictEqual(isBlobLike(buffer), false)
   })
 
-  test('blob', { skip: !Blob }, () => {
+  test('blob', () => {
     const blob = new Blob(['asd'], {
       type: 'application/json'
     })
     strictEqual(isBlobLike(blob), true)
   })
 
-  test('file', { skip: !File }, () => {
+  test('file', () => {
     const file = new File(['asd'], 'file.txt', {
       type: 'text/plain'
     })

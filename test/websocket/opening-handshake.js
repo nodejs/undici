@@ -1,18 +1,18 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
+const { runtimeFeatures } = require('../../lib/util/runtime-features')
 
-test('WebSocket connecting to server that isn\'t a Websocket server', () => {
+test('WebSocket connecting to server that isn\'t a Websocket server', (t) => {
   return new Promise((resolve, reject) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      assert.equal(req.headers.connection, 'upgrade')
-      assert.equal(req.headers.upgrade, 'websocket')
-      assert.ok(req.headers['sec-websocket-key'])
-      assert.equal(req.headers['sec-websocket-version'], '13')
+      t.assert.strictEqual(req.headers.connection, 'upgrade')
+      t.assert.strictEqual(req.headers.upgrade, 'websocket')
+      t.assert.ok(req.headers['sec-websocket-key'])
+      t.assert.strictEqual(req.headers['sec-websocket-version'], '13')
 
       res.end()
       server.unref()
@@ -23,7 +23,7 @@ test('WebSocket connecting to server that isn\'t a Websocket server', () => {
       ws.onmessage = ws.onopen = reject
 
       ws.addEventListener('error', ({ error }) => {
-        assert.ok(error)
+        t.assert.ok(error)
         server.close()
         resolve()
       })
@@ -31,7 +31,7 @@ test('WebSocket connecting to server that isn\'t a Websocket server', () => {
   })
 })
 
-test('Open event is emitted', () => {
+test('Open event is emitted', (t) => {
   return new Promise((resolve, reject) => {
     const server = new WebSocketServer({ port: 0 })
 
@@ -42,19 +42,19 @@ test('Open event is emitted', () => {
     const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
     ws.onmessage = ws.onerror = reject
-    ws.addEventListener('open', () => {
+    ws.addEventListener('open', (t) => {
       server.close()
       resolve()
     })
   })
 })
 
-test('Multiple protocols are joined by a comma', () => {
+test('Multiple protocols are joined by a comma', (t) => {
   return new Promise((resolve, reject) => {
     const server = new WebSocketServer({ port: 0 })
 
     server.on('connection', (ws, req) => {
-      assert.equal(req.headers['sec-websocket-protocol'], 'chat, echo')
+      t.assert.strictEqual(req.headers['sec-websocket-protocol'], 'chat, echo')
 
       ws.close(1000)
       server.close()
@@ -66,7 +66,7 @@ test('Multiple protocols are joined by a comma', () => {
   })
 })
 
-test('Server doesn\'t send Sec-WebSocket-Protocol header when protocols are used', () => {
+test('Server doesn\'t send Sec-WebSocket-Protocol header when protocols are used', (t) => {
   return new Promise((resolve, reject) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.statusCode = 101
@@ -78,7 +78,7 @@ test('Server doesn\'t send Sec-WebSocket-Protocol header when protocols are used
       ws.onopen = reject
 
       ws.addEventListener('error', ({ error }) => {
-        assert.ok(error)
+        t.assert.ok(error)
         server.close()
         resolve()
       })
@@ -86,7 +86,7 @@ test('Server doesn\'t send Sec-WebSocket-Protocol header when protocols are used
   })
 })
 
-test('Server sends invalid Upgrade header', () => {
+test('Server sends invalid Upgrade header', (t) => {
   return new Promise((resolve, reject) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('Upgrade', 'NotWebSocket')
@@ -99,7 +99,7 @@ test('Server sends invalid Upgrade header', () => {
       ws.onopen = reject
 
       ws.addEventListener('error', ({ error }) => {
-        assert.ok(error)
+        t.assert.ok(error)
         server.close()
         resolve()
       })
@@ -107,7 +107,7 @@ test('Server sends invalid Upgrade header', () => {
   })
 })
 
-test('Server sends invalid Connection header', () => {
+test('Server sends invalid Connection header', (t) => {
   return new Promise((resolve, reject) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('Upgrade', 'websocket')
@@ -121,7 +121,7 @@ test('Server sends invalid Connection header', () => {
       ws.onopen = reject
 
       ws.addEventListener('error', ({ error }) => {
-        assert.ok(error)
+        t.assert.ok(error)
         server.close()
         resolve()
       })
@@ -129,7 +129,7 @@ test('Server sends invalid Connection header', () => {
   })
 })
 
-test('Server sends invalid Sec-WebSocket-Accept header', () => {
+test('Server sends invalid Sec-WebSocket-Accept header', (t) => {
   return new Promise((resolve, reject) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('Upgrade', 'websocket')
@@ -144,7 +144,7 @@ test('Server sends invalid Sec-WebSocket-Accept header', () => {
       ws.onopen = reject
 
       ws.addEventListener('error', ({ error }) => {
-        assert.ok(error)
+        t.assert.ok(error)
         server.close()
         resolve()
       })
@@ -152,16 +152,15 @@ test('Server sends invalid Sec-WebSocket-Accept header', () => {
   })
 })
 
-test('Server sends invalid Sec-WebSocket-Extensions header', () => {
+test('Server sends invalid Sec-WebSocket-Extensions header', { skip: runtimeFeatures.has('crypto') === false }, (t) => {
   return new Promise((resolve, reject) => {
     const uid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-    const { createHash } = require('node:crypto')
 
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       const key = req.headers['sec-websocket-key']
-      assert.ok(key)
+      t.assert.ok(key)
 
-      const accept = createHash('sha1').update(key + uid).digest('base64')
+      const accept = require('node:crypto').hash('sha1', key + uid, 'base64')
 
       res.setHeader('Upgrade', 'websocket')
       res.setHeader('Connection', 'upgrade')
@@ -176,7 +175,7 @@ test('Server sends invalid Sec-WebSocket-Extensions header', () => {
       ws.onopen = reject
 
       ws.addEventListener('error', ({ error }) => {
-        assert.ok(error)
+        t.assert.ok(error)
         server.close()
         resolve()
       })
@@ -184,16 +183,15 @@ test('Server sends invalid Sec-WebSocket-Extensions header', () => {
   })
 })
 
-test('Server sends invalid Sec-WebSocket-Extensions header', () => {
+test('Server sends invalid Sec-WebSocket-Extensions header', { skip: runtimeFeatures.has('crypto') === false }, (t) => {
   const uid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-  const { createHash } = require('node:crypto')
 
   return new Promise((resolve, reject) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       const key = req.headers['sec-websocket-key']
-      assert.ok(key)
+      t.assert.ok(key)
 
-      const accept = createHash('sha1').update(key + uid).digest('base64')
+      const accept = require('node:crypto').hash('sha1', key + uid, 'base64')
 
       res.setHeader('Upgrade', 'websocket')
       res.setHeader('Connection', 'upgrade')
@@ -208,7 +206,7 @@ test('Server sends invalid Sec-WebSocket-Extensions header', () => {
       ws.onopen = reject
 
       ws.addEventListener('error', ({ error }) => {
-        assert.ok(error)
+        t.assert.ok(error)
         server.close()
         resolve()
       })

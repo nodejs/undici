@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
 
 const { fetch, Agent } = require('../..')
 const timers = require('../../lib/util/timers')
@@ -13,7 +12,7 @@ test('Fetch very long request, timeout overridden so no error', (t, done) => {
   const minutes = 6
   const msToDelay = 1000 * 60 * minutes
 
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const clock = FakeTimers.install()
   t.after(clock.uninstall.bind(clock))
@@ -44,7 +43,7 @@ test('Fetch very long request, timeout overridden so no error', (t, done) => {
     })
       .then((response) => response.text())
       .then((response) => {
-        strictEqual('hello', response)
+        t.assert.strictEqual('hello', response)
         done()
       })
       .catch((err) => {

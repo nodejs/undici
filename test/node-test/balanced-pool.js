@@ -252,6 +252,52 @@ test('throws when upstream is missing', async (t) => {
   }
 })
 
+test('getUpstream returns the correct Pool for given upstream', (t) => {
+  const p = tspl(t, { plan: 4 })
+
+  const upstream1 = 'http://localhost:3001'
+  const upstream2 = 'http://localhost:3002'
+
+  const pool = new BalancedPool()
+  pool.addUpstream(upstream1)
+  pool.addUpstream(upstream2)
+
+  const pool1 = pool.getUpstream(upstream1)
+  const pool2 = pool.getUpstream(upstream2)
+
+  p.ok(pool1 instanceof Pool)
+  p.ok(pool2 instanceof Pool)
+  const { kUrl } = require('../../lib/core/symbols')
+  p.strictEqual(pool1[kUrl].origin, upstream1)
+  p.strictEqual(pool2[kUrl].origin, upstream2)
+})
+
+test('getUpstream returns undefined for non-existent upstream', (t) => {
+  const p = tspl(t, { plan: 1 })
+
+  const pool = new BalancedPool()
+  pool.addUpstream('http://localhost:3001')
+
+  const result = pool.getUpstream('http://localhost:9999')
+  p.strictEqual(result, undefined)
+})
+
+test('getUpstream returns undefined for closed/destroyed upstream', (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  const upstream = 'http://localhost:3001'
+  const pool = new BalancedPool()
+  pool.addUpstream(upstream)
+
+  const upstreamPool = pool.getUpstream(upstream)
+  p.ok(upstreamPool instanceof Pool)
+
+  upstreamPool.destroy()
+
+  const result = pool.getUpstream(upstream)
+  p.strictEqual(result, undefined)
+})
+
 class TestServer {
   constructor ({ config: { server, socketHangup, downOnRequests, socketHangupOnRequests }, onRequest }) {
     this.config = {

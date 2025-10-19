@@ -3,10 +3,7 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
-const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('node:http')
-const { Blob, File } = require('node:buffer')
 const { fetch, Response, Request, FormData } = require('../..')
 const { Client, setGlobalDispatcher, Agent } = require('../..')
 const nodeFetch = require('../../index-fetch')
@@ -23,21 +20,21 @@ setGlobalDispatcher(new Agent({
 }))
 
 test('function signature', (t) => {
-  const { strictEqual } = tspl(t, { plan: 2 })
+  t.plan(2)
 
-  strictEqual(fetch.name, 'fetch')
-  strictEqual(fetch.length, 1)
+  t.assert.strictEqual(fetch.name, 'fetch')
+  t.assert.strictEqual(fetch.length, 1)
 })
 
 test('args validation', async (t) => {
-  const { rejects } = tspl(t, { plan: 2 })
+  t.plan(2)
 
-  await rejects(fetch(), TypeError)
-  await rejects(fetch('ftp://unsupported'), TypeError)
+  await t.assert.rejects(fetch(), TypeError)
+  await t.assert.rejects(fetch('ftp://unsupported'), TypeError)
 })
 
 test('request json', (t, done) => {
-  const { deepStrictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const obj = { asd: true }
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -47,13 +44,13 @@ test('request json', (t, done) => {
 
   server.listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
-    deepStrictEqual(obj, await body.json())
+    t.assert.deepStrictEqual(obj, await body.json())
     done()
   })
 })
 
 test('request text', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const obj = { asd: true }
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -63,13 +60,13 @@ test('request text', (t, done) => {
 
   server.listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
-    strictEqual(JSON.stringify(obj), await body.text())
+    t.assert.strictEqual(JSON.stringify(obj), await body.text())
     done()
   })
 })
 
 test('request arrayBuffer', (t, done) => {
-  const { deepStrictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const obj = { asd: true }
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -79,13 +76,13 @@ test('request arrayBuffer', (t, done) => {
 
   server.listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
-    deepStrictEqual(Buffer.from(JSON.stringify(obj)), Buffer.from(await body.arrayBuffer()))
+    t.assert.deepStrictEqual(Buffer.from(JSON.stringify(obj)), Buffer.from(await body.arrayBuffer()))
     done()
   })
 })
 
 test('should set type of blob object to the value of the `Content-Type` header from response', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const obj = { asd: true }
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -96,13 +93,13 @@ test('should set type of blob object to the value of the `Content-Type` header f
 
   server.listen(0, async () => {
     const response = await fetch(`http://localhost:${server.address().port}`)
-    strictEqual('application/json', (await response.blob()).type)
+    t.assert.strictEqual('application/json', (await response.blob()).type)
     done()
   })
 })
 
 test('pre aborted with readable request body', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
   })
@@ -116,18 +113,18 @@ test('pre aborted with readable request body', (t, done) => {
       method: 'POST',
       body: new ReadableStream({
         async cancel (reason) {
-          strictEqual(reason.name, 'AbortError')
+          t.assert.strictEqual(reason.name, 'AbortError')
         }
       }),
       duplex: 'half'
     }).catch(err => {
-      strictEqual(err.name, 'AbortError')
+      t.assert.strictEqual(err.name, 'AbortError')
     }).finally(done)
   })
 })
 
 test('pre aborted with closed readable request body', (t, done) => {
-  const { ok, strictEqual } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
   })
@@ -138,11 +135,11 @@ test('pre aborted with closed readable request body', (t, done) => {
     ac.abort()
     const body = new ReadableStream({
       async start (c) {
-        ok(true)
+        t.assert.ok(true)
         c.close()
       },
       async cancel (reason) {
-        assert.fail()
+        t.assert.fail()
       }
     })
     queueMicrotask(() => {
@@ -152,14 +149,14 @@ test('pre aborted with closed readable request body', (t, done) => {
         body,
         duplex: 'half'
       }).catch(err => {
-        strictEqual(err.name, 'AbortError')
+        t.assert.strictEqual(err.name, 'AbortError')
       }).finally(done)
     })
   })
 })
 
 test('unsupported formData 1', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'asdasdsad')
@@ -171,14 +168,14 @@ test('unsupported formData 1', (t, done) => {
     fetch(`http://localhost:${server.address().port}`)
       .then(res => res.formData())
       .catch(err => {
-        strictEqual(err.name, 'TypeError')
+        t.assert.strictEqual(err.name, 'TypeError')
       })
       .finally(done)
   })
 })
 
 test('multipart formdata not base64', async (t) => {
-  const { strictEqual } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   // Construct example form data, with text and blob fields
   const formData = new FormData()
@@ -202,14 +199,14 @@ test('multipart formdata not base64', async (t) => {
 
   const res = await fetch(`http://localhost:${server.address().port}`)
   const form = await res.formData()
-  strictEqual(form.get('field1'), 'value1')
+  t.assert.strictEqual(form.get('field1'), 'value1')
 
   const text = await form.get('field2').text()
-  strictEqual(text, 'example\ntext file')
+  t.assert.strictEqual(text, 'example\ntext file')
 })
 
 test('multipart formdata base64', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   // Example form data with base64 encoding
   const data = randomFillSync(Buffer.alloc(256))
@@ -240,14 +237,14 @@ test('multipart formdata base64', (t, done) => {
       .then(form => form.get('file').arrayBuffer())
       .then(buffer => createHash('sha256').update(Buffer.from(buffer)).digest('base64'))
       .then(digest => {
-        strictEqual(createHash('sha256').update(data).digest('base64'), digest)
+        t.assert.strictEqual(createHash('sha256').update(data).digest('base64'), digest)
       })
       .finally(done)
   })
 })
 
 test('multipart fromdata non-ascii filed names', async (t) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const request = new Request('http://localhost', {
     method: 'POST',
@@ -263,11 +260,11 @@ test('multipart fromdata non-ascii filed names', async (t) => {
   })
 
   const form = await request.formData()
-  strictEqual(form.get('fiŝo'), 'value1')
+  t.assert.strictEqual(form.get('fiŝo'), 'value1')
 })
 
 test('busboy emit error', async (t) => {
-  const { rejects } = tspl(t, { plan: 1 })
+  t.plan(1)
   const formData = new FormData()
   formData.append('field1', 'value1')
 
@@ -285,23 +282,23 @@ test('busboy emit error', async (t) => {
   await listen(0)
 
   const res = await fetch(`http://localhost:${server.address().port}`)
-  await rejects(res.formData(), 'Unexpected end of multipart data')
+  await t.assert.rejects(res.formData(), 'Unexpected end of multipart data')
 })
 
 // https://github.com/nodejs/undici/issues/2244
 test('parsing formData preserve full path on files', async (t) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
   const formData = new FormData()
   formData.append('field1', new File(['foo'], 'a/b/c/foo.txt'))
 
   const tempRes = new Response(formData)
   const form = await tempRes.formData()
 
-  strictEqual(form.get('field1').name, 'a/b/c/foo.txt')
+  t.assert.strictEqual(form.get('field1').name, 'a/b/c/foo.txt')
 })
 
 test('urlencoded formData', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
@@ -313,15 +310,15 @@ test('urlencoded formData', (t, done) => {
     fetch(`http://localhost:${server.address().port}`)
       .then(res => res.formData())
       .then(formData => {
-        strictEqual(formData.get('field1'), 'value1')
-        strictEqual(formData.get('field2'), 'value2')
+        t.assert.strictEqual(formData.get('field1'), 'value1')
+        t.assert.strictEqual(formData.get('field2'), 'value2')
       })
       .finally(done)
   })
 })
 
 test('text with BOM', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
@@ -333,14 +330,14 @@ test('text with BOM', (t, done) => {
     fetch(`http://localhost:${server.address().port}`)
       .then(res => res.text())
       .then(text => {
-        strictEqual(text, 'test=\uFEFF')
+        t.assert.strictEqual(text, 'test=\uFEFF')
       })
       .finally(done)
   })
 })
 
 test('formData with BOM', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
@@ -352,14 +349,14 @@ test('formData with BOM', (t, done) => {
     fetch(`http://localhost:${server.address().port}`)
       .then(res => res.formData())
       .then(formData => {
-        strictEqual(formData.get('\uFEFFtest'), '\uFEFF')
+        t.assert.strictEqual(formData.get('\uFEFFtest'), '\uFEFF')
       })
       .finally(done)
   })
 })
 
 test('locked blob body', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
@@ -370,14 +367,14 @@ test('locked blob body', (t, done) => {
     const res = await fetch(`http://localhost:${server.address().port}`)
     const reader = res.body.getReader()
     res.blob().catch(err => {
-      strictEqual(err.message, 'Body is unusable: Body has already been read')
+      t.assert.strictEqual(err.message, 'Body is unusable: Body has already been read')
       reader.cancel()
     }).finally(done)
   })
 })
 
 test('disturbed blob body', (t, done) => {
-  const { ok, strictEqual } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
@@ -387,17 +384,17 @@ test('disturbed blob body', (t, done) => {
   server.listen(0, async () => {
     const res = await fetch(`http://localhost:${server.address().port}`)
     await res.blob().then(() => {
-      ok(true)
+      t.assert.ok(true)
     })
     await res.blob().catch(err => {
-      strictEqual(err.message, 'Body is unusable: Body has already been read')
+      t.assert.strictEqual(err.message, 'Body is unusable: Body has already been read')
     })
     done()
   })
 })
 
 test('redirect with body', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 3 })
+  t.plan(3)
 
   let count = 0
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
@@ -405,7 +402,7 @@ test('redirect with body', (t, done) => {
     for await (const chunk of req) {
       body += chunk
     }
-    strictEqual(body, 'asd')
+    t.assert.strictEqual(body, 'asd')
     if (count++ === 0) {
       res.setHeader('location', 'asd')
       res.statusCode = 302
@@ -421,13 +418,13 @@ test('redirect with body', (t, done) => {
       method: 'PUT',
       body: 'asd'
     })
-    strictEqual(await res.text(), '2')
+    t.assert.strictEqual(await res.text(), '2')
     done()
   })
 })
 
 test('redirect with stream', (t, done) => {
-  const { strictEqual } = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const location = '/asd'
   const body = 'hello!'
@@ -448,15 +445,15 @@ test('redirect with stream', (t, done) => {
     const res = await fetch(`http://localhost:${server.address().port}`, {
       redirect: 'manual'
     })
-    strictEqual(res.status, 302)
-    strictEqual(res.headers.get('location'), location)
-    strictEqual(await res.text(), body)
+    t.assert.strictEqual(res.status, 302)
+    t.assert.strictEqual(res.headers.get('location'), location)
+    t.assert.strictEqual(await res.text(), body)
     done()
   })
 })
 
 test('fail to extract locked body', (t) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const stream = new ReadableStream({})
   const reader = stream.getReader()
@@ -464,13 +461,13 @@ test('fail to extract locked body', (t) => {
     // eslint-disable-next-line
     new Response(stream)
   } catch (err) {
-    strictEqual(err.name, 'TypeError')
+    t.assert.strictEqual(err.name, 'TypeError')
   }
   reader.cancel()
 })
 
 test('fail to extract locked body', (t) => {
-  const { strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const stream = new ReadableStream({})
   const reader = stream.getReader()
@@ -482,13 +479,13 @@ test('fail to extract locked body', (t) => {
       keepalive: true
     })
   } catch (err) {
-    strictEqual(err.message, 'keepalive')
+    t.assert.strictEqual(err.message, 'keepalive')
   }
   reader.cancel()
 })
 
 test('post FormData with Blob', (t, done) => {
-  const { ok } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const body = new FormData()
   body.append('field1', new Blob(['asd1']))
@@ -503,13 +500,13 @@ test('post FormData with Blob', (t, done) => {
       method: 'PUT',
       body
     })
-    ok(/asd1/.test(await res.text()))
+    t.assert.ok(/asd1/.test(await res.text()))
     done()
   })
 })
 
 test('post FormData with File', (t, done) => {
-  const { ok } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const body = new FormData()
   body.append('field1', new File(['asd1'], 'filename123'))
@@ -525,24 +522,24 @@ test('post FormData with File', (t, done) => {
       body
     })
     const result = await res.text()
-    ok(/asd1/.test(result))
-    ok(/filename123/.test(result))
+    t.assert.ok(/asd1/.test(result))
+    t.assert.ok(/filename123/.test(result))
     done()
   })
 })
 
 test('invalid url', async (t) => {
-  const { match } = tspl(t, { plan: 1 })
+  t.plan(1)
 
   try {
     await fetch('http://invalid')
   } catch (e) {
-    match(e.cause.message, /invalid/)
+    t.assert.match(e.cause.message, /invalid/)
   }
 })
 
 test('custom agent', (t, done) => {
-  const { ok, deepStrictEqual } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const obj = { asd: true }
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -557,19 +554,19 @@ test('custom agent', (t, done) => {
     })
     const oldDispatch = dispatcher.dispatch
     dispatcher.dispatch = function (options, handler) {
-      ok(true)
+      t.assert.ok(true)
       return oldDispatch.call(this, options, handler)
     }
     const body = await fetch(`http://localhost:${server.address().port}`, {
       dispatcher
     })
-    deepStrictEqual(obj, await body.json())
+    t.assert.deepStrictEqual(obj, await body.json())
     done()
   })
 })
 
 test('custom agent node fetch', (t, done) => {
-  const { ok, deepStrictEqual } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const obj = { asd: true }
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -584,13 +581,13 @@ test('custom agent node fetch', (t, done) => {
     })
     const oldDispatch = dispatcher.dispatch
     dispatcher.dispatch = function (options, handler) {
-      ok(true)
+      t.assert.ok(true)
       return oldDispatch.call(this, options, handler)
     }
     const body = await nodeFetch.fetch(`http://localhost:${server.address().port}`, {
       dispatcher
     })
-    deepStrictEqual(obj, await body.json())
+    t.assert.deepStrictEqual(obj, await body.json())
     done()
   })
 })
@@ -607,7 +604,7 @@ test('error on redirect', (t, done) => {
       redirect: 'error'
     }).catch((e) => e.cause)
 
-    assert.strictEqual(errorCause.message, 'unexpected redirect')
+    t.assert.strictEqual(errorCause.message, 'unexpected redirect')
     done()
   })
 })
@@ -615,7 +612,7 @@ test('error on redirect', (t, done) => {
 // https://github.com/nodejs/undici/issues/1527
 test('fetching with Request object - issue #1527', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    assert.ok(true)
+    t.assert.ok(true)
     res.end()
   }).listen(0)
 
@@ -628,16 +625,16 @@ test('fetching with Request object - issue #1527', async (t) => {
     body
   })
 
-  await assert.doesNotReject(fetch(request))
+  await t.assert.doesNotReject(fetch(request))
 })
 
 test('do not decode redirect body', (t, done) => {
-  const { ok, strictEqual } = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const obj = { asd: true }
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.url === '/resource') {
-      ok(true)
+      t.assert.ok(true)
       res.statusCode = 301
       res.setHeader('location', '/resource/')
       // Some dumb http servers set the content-encoding gzip
@@ -646,7 +643,7 @@ test('do not decode redirect body', (t, done) => {
       res.end()
       return
     }
-    ok(true)
+    t.assert.ok(true)
     res.setHeader('content-encoding', 'gzip')
     res.end(gzipSync(JSON.stringify(obj)))
   })
@@ -654,17 +651,17 @@ test('do not decode redirect body', (t, done) => {
 
   server.listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}/resource`)
-    strictEqual(JSON.stringify(obj), await body.text())
+    t.assert.strictEqual(JSON.stringify(obj), await body.text())
     done()
   })
 })
 
 test('decode non-redirect body with location header', (t, done) => {
-  const { ok, strictEqual } = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const obj = { asd: true }
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    ok(true)
+    t.assert.ok(true)
     res.statusCode = 201
     res.setHeader('location', '/resource/')
     res.setHeader('content-encoding', 'gzip')
@@ -674,7 +671,7 @@ test('decode non-redirect body with location header', (t, done) => {
 
   server.listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}/resource`)
-    strictEqual(JSON.stringify(obj), await body.text())
+    t.assert.strictEqual(JSON.stringify(obj), await body.text())
     done()
   })
 })
@@ -706,6 +703,6 @@ test('Receiving non-Latin1 headers', async (t) => {
     .map(([, v]) => v)
   const lengths = cdHeaders.map(h => h.length)
 
-  assert.deepStrictEqual(cdHeaders, ContentDisposition)
-  assert.deepStrictEqual(lengths, [30, 34, 94, 104, 90])
+  t.assert.deepStrictEqual(cdHeaders, ContentDisposition)
+  t.assert.deepStrictEqual(lengths, [30, 34, 94, 104, 90])
 })

@@ -5,9 +5,8 @@ const { test, after } = require('node:test')
 const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
-const { Blob } = require('node:buffer')
 
-test('request post blob', { skip: !Blob }, async (t) => {
+test('request post blob', async (t) => {
   t = tspl(t, { plan: 3 })
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
@@ -43,7 +42,7 @@ test('request post blob', { skip: !Blob }, async (t) => {
   await t.completed
 })
 
-test('request post arrayBuffer', { skip: !Blob }, async (t) => {
+test('request post arrayBuffer', async (t) => {
   t = tspl(t, { plan: 3 })
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {

@@ -4,7 +4,6 @@ const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { describe, test } = require('node:test')
 const { fetch } = require('../..')
-const tspl = require('@matteo.collina/tspl')
 
 describe('referrer-policy', () => {
   ;[
@@ -71,7 +70,7 @@ describe('referrer-policy', () => {
     ]
   ].forEach(([title, responseReferrerPolicy, expectedReferrerPolicy, referrer]) => {
     test(title, async (t) => {
-      t = tspl(t, { plan: 1 })
+      t.plan(1)
 
       const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
         switch (res.req.url) {
@@ -85,16 +84,16 @@ describe('referrer-policy', () => {
           case '/target':
             switch (expectedReferrerPolicy) {
               case 'no-referrer':
-                t.strictEqual(req.headers['referer'], undefined)
+                t.assert.strictEqual(req.headers['referer'], undefined)
                 break
               case 'origin':
-                t.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/`)
+                t.assert.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/`)
                 break
               case 'strict-origin-when-cross-origin':
-                t.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/index.html?test=1`)
+                t.assert.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/index.html?test=1`)
                 break
               case 'unsafe-url':
-                t.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/index.html?test=1`)
+                t.assert.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/index.html?test=1`)
                 break
             }
             res.writeHead(200, 'dummy', { 'Content-Type': 'text/plain' })
@@ -110,8 +109,6 @@ describe('referrer-policy', () => {
       await fetch(`http://127.0.0.1:${port}/redirect`, {
         referrer: referrer || `http://127.0.0.1:${port}/index.html?test=1`
       })
-
-      await t.completed
 
       server.closeAllConnections()
       server.closeIdleConnections()

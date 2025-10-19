@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const {
   FormData,
   Headers,
@@ -9,7 +8,7 @@ const {
   Response
 } = require('../../index')
 
-test('Symbol.toStringTag descriptor', () => {
+test('Symbol.toStringTag descriptor', (t) => {
   for (const cls of [
     FormData,
     Headers,
@@ -17,7 +16,7 @@ test('Symbol.toStringTag descriptor', () => {
     Response
   ]) {
     const desc = Object.getOwnPropertyDescriptor(cls.prototype, Symbol.toStringTag)
-    assert.deepStrictEqual(desc, {
+    t.assert.deepStrictEqual(desc, {
       value: cls.name,
       writable: false,
       enumerable: false,

@@ -1,4 +1,4 @@
-import { URL } from 'url'
+import { URL } from 'node:url'
 import Dispatcher from './dispatcher'
 import buildConnector from './connector'
 
@@ -50,8 +50,6 @@ export declare namespace H2CClient {
     strictContentLength?: boolean;
     /** TODO */
     maxCachedSessions?: number;
-    /** TODO */
-    maxRedirections?: number;
     /** TODO */
     connect?: Omit<Partial<buildConnector.BuildOptions>, 'allowH2'> | buildConnector.connector;
     /** TODO */

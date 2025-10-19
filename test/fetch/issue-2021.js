@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { fetch } = require('../..')
@@ -24,7 +23,7 @@ test('content-length header is removed on redirect', async (t) => {
 
   const body = 'a+b+c'
 
-  await assert.doesNotReject(fetch(`http://localhost:${server.address().port}/redirect`, {
+  await t.assert.doesNotReject(fetch(`http://localhost:${server.address().port}/redirect`, {
     method: 'POST',
     body,
     headers: {

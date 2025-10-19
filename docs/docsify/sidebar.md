@@ -19,6 +19,7 @@
   * [MockClient](/docs/api/MockClient.md "Undici API - MockClient")
   * [MockPool](/docs/api/MockPool.md "Undici API - MockPool")
   * [MockAgent](/docs/api/MockAgent.md "Undici API - MockAgent")
+  * [SnapshotAgent](/docs/api/SnapshotAgent.md "Undici API - SnapshotAgent")
   * [MockCallHistory](/docs/api/MockCallHistory.md "Undici API - MockCallHistory")
   * [MockCallHistoryLog](/docs/api/MockCallHistoryLog.md "Undici API - MockCallHistoryLog")
   * [MockErrors](/docs/api/MockErrors.md "Undici API - MockErrors")
@@ -41,3 +42,4 @@
   * [Client Certificate](/docs/best-practices/client-certificate.md "Connect using a client certificate")
   * [Writing Tests](/docs/best-practices/writing-tests.md "Using Undici inside tests")
   * [Mocking Request](/docs/best-practices/mocking-request.md "Using Undici inside tests")
+  * [Crawling](/docs/best-practices/crawling.md "Crawling")

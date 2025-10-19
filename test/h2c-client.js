@@ -5,7 +5,7 @@ const { once } = require('node:events')
 const { test } = require('node:test')
 
 const { tspl } = require('@matteo.collina/tspl')
-const pem = require('https-pem')
+const pem = require('@metcoder95/https-pem')
 
 const { H2CClient } = require('..')
 
@@ -26,16 +26,22 @@ test('Should throw if pipelining greather than concurrent streams', async t => {
 })
 
 test('Should support h2c connection', async t => {
-  const planner = tspl(t, { plan: 2 })
+  const planner = tspl(t, { plan: 6 })
+  let authority = ''
 
   const server = createServer((req, res) => {
+    planner.equal(req.headers[':authority'], authority)
+    planner.equal(req.headers[':method'], 'GET')
+    planner.equal(req.headers[':path'], '/')
+    planner.equal(req.headers[':scheme'], 'http')
     res.writeHead(200)
     res.end('Hello, world!')
   })
 
   server.listen()
   await once(server, 'listening')
-  const client = new H2CClient(`http://localhost:${server.address().port}/`)
+  authority = `localhost:${server.address().port}`
+  const client = new H2CClient(`http://${authority}/`)
 
   t.after(() => client.close())
   t.after(() => server.close())
@@ -101,7 +107,7 @@ test('Should support h2c connection', async t => {
 test('Should reject request if not h2c supported', async t => {
   const planner = tspl(t, { plan: 1 })
 
-  const server = createSecureServer(pem, (req, res) => {
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }), (req, res) => {
     res.writeHead(200)
     res.end('Hello, world!')
   })

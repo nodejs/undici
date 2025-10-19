@@ -4,14 +4,13 @@ const { fetch, Headers, Request } = require('../..')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { test } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 test('Headers retain keys case-sensitive', async (t) => {
-  const assert = tspl(t, { plan: 4 })
+  t.plan(4)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    assert.ok(req.rawHeaders.includes('Content-Type'))
+    t.assert.ok(req.rawHeaders.includes('Content-Type'))
 
     res.end()
   }).listen(0)

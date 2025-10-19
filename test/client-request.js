@@ -11,7 +11,7 @@ const { kConnect } = require('../lib/core/symbols')
 const { Readable } = require('node:stream')
 const net = require('node:net')
 const { promisify } = require('node:util')
-const { NotSupportedError, InvalidArgumentError } = require('../lib/core/errors')
+const { NotSupportedError, InvalidArgumentError, AbortError } = require('../lib/core/errors')
 const { parseFormDataString } = require('./utils/formdata')
 
 test('request dump head', async (t) => {
@@ -116,7 +116,7 @@ test('request dump', async (t) => {
 })
 
 test('request dump with abort signal', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t = tspl(t, { plan: 10 })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('hello')
   })
@@ -134,6 +134,89 @@ test('request dump with abort signal', async (t) => {
       const ac = new AbortController()
       body.dump({ signal: ac.signal }).catch((err) => {
         t.strictEqual(err.name, 'AbortError')
+        t.strictEqual(err.message, 'This operation was aborted')
+        const stackLines = err.stack.split('\n').map((l) => l.trim())
+
+        t.ok(stackLines[0].startsWith('AbortError: This operation was aborted'))
+        t.ok(stackLines[1].startsWith('at new DOMException'))
+        t.ok(stackLines[2].startsWith('at AbortController.abort'))
+        t.ok(/client-request.js/.test(stackLines[3]))
+        t.ok(stackLines[4].startsWith('at RequestHandler.runInAsyncScope'))
+        t.ok(stackLines[5].startsWith('at RequestHandler.onHeaders'))
+        t.ok(stackLines[6].startsWith('at Request.onHeaders'))
+        server.close()
+      })
+      ac.abort()
+    })
+  })
+
+  await t.completed
+})
+
+test('request dump with POJO as invalid signal', async (t) => {
+  t = tspl(t, { plan: 9 })
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.write('hello')
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.ifError(err)
+      body.dump({ signal: {} }).catch((err) => {
+        t.strictEqual(err.name, 'InvalidArgumentError')
+        t.strictEqual(err.message, 'signal must be an AbortSignal')
+        const stackLines = err.stack.split('\n').map((l) => l.trim())
+
+        t.ok(stackLines[0].startsWith('InvalidArgumentError: signal must be an AbortSignal'))
+        t.ok(stackLines[1].startsWith('at BodyReadable.dump'))
+        t.ok(/client-request.js/.test(stackLines[2]))
+        t.ok(stackLines[3].startsWith('at RequestHandler.runInAsyncScope'))
+        t.ok(stackLines[4].startsWith('at RequestHandler.onHeaders'))
+        t.ok(stackLines[5].startsWith('at Request.onHeaders'))
+        server.close()
+      })
+    })
+  })
+
+  await t.completed
+})
+
+test('request dump with aborted signal', async (t) => {
+  t = tspl(t, { plan: 8 })
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.write('hello')
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { body }) => {
+      t.ifError(err)
+      const ac = new AbortController()
+      ac.abort(new AbortError('This operation was with purpose aborted'))
+
+      body.dump({ signal: ac.signal }).catch((err) => {
+        t.strictEqual(err.name, 'AbortError')
+        t.strictEqual(err.message, 'This operation was with purpose aborted')
+        const stackLines = err.stack.split('\n').map((l) => l.trim())
+
+        t.ok(stackLines[0].startsWith('AbortError: This operation was with purpose aborted'))
+        t.ok(/client-request.js/.test(stackLines[1]))
+        t.ok(stackLines[2].startsWith('at RequestHandler.runInAsyncScope'))
+        t.ok(stackLines[3].startsWith('at RequestHandler.onHeaders'))
+        t.ok(stackLines[4].startsWith('at Request.onHeaders'))
         server.close()
       })
       ac.abort()
@@ -734,8 +817,7 @@ test('request post body no missing data', async (t) => {
           this.push('asd')
           this.push(null)
         }
-      }),
-      maxRedirections: 2
+      })
     })
     await body.text()
     t.ok(true, 'pass')
@@ -773,8 +855,7 @@ test('request post body no extra data handler', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'GET',
-      body: reqBody,
-      maxRedirections: 0
+      body: reqBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -979,7 +1060,6 @@ test('request text2', async (t) => {
 
 test('request with FormData body', async (t) => {
   const { FormData } = require('../')
-  const { Blob } = require('node:buffer')
 
   const fd = new FormData()
   fd.set('key', 'value')
@@ -1051,8 +1131,7 @@ test('request post body Buffer from string', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1083,8 +1162,7 @@ test('request post body Buffer from buffer', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1115,8 +1193,7 @@ test('request post body Uint8Array', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1147,8 +1224,7 @@ test('request post body Uint32Array', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1179,8 +1255,7 @@ test('request post body Float64Array', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1211,8 +1286,7 @@ test('request post body BigUint64Array', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')
@@ -1243,8 +1317,7 @@ test('request post body DataView', async (t) => {
     const { body } = await client.request({
       path: '/',
       method: 'POST',
-      body: requestBody,
-      maxRedirections: 2
+      body: requestBody
     })
     await body.text()
     t.ok(true, 'pass')

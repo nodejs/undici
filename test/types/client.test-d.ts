@@ -1,7 +1,7 @@
-import { Duplex, Readable, Writable } from 'stream'
+import { Duplex, Readable, Writable } from 'node:stream'
 import { expectAssignable, expectType } from 'tsd'
 import { Client, Dispatcher } from '../..'
-import { URL } from 'url'
+import { URL } from 'node:url'
 
 expectAssignable<Client>(new Client(''))
 expectAssignable<Client>(new Client('', {}))
@@ -77,7 +77,7 @@ expectAssignable<Client>(
 )
 expectAssignable<Client>(
   new Client('', {
-    maxRedirections: 1
+    maxCachedSessions: 1
   })
 )
 expectAssignable<Client>(

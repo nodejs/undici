@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import { URL } from 'url'
+import { URL } from 'node:url'
 import { ProxyAgent, setGlobalDispatcher, getGlobalDispatcher, Agent, Pool } from '../..'
 
 expectAssignable<ProxyAgent>(new ProxyAgent(''))
@@ -10,7 +10,6 @@ expectAssignable<ProxyAgent>(
     uri: '',
     auth: '',
     token: '',
-    maxRedirections: 1,
     factory: (_origin: URL, opts: Object) => new Agent(opts),
     requestTls: {
       ca: [''],

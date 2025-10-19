@@ -2,14 +2,16 @@
 
 const { test } = require('node:test')
 const { WebSocket } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
+const { once } = require('node:events')
 
 // https://github.com/nodejs/undici/issues/3697#issuecomment-2399493917
 test('closing before a connection is established changes readyState', async (t) => {
-  const { completed, strictEqual } = tspl(t, { plan: 1 })
+  t.plan(1)
 
-  const ws = new WebSocket('wss://example.com/non-existing-url')
-  ws.onclose = () => strictEqual(ws.readyState, WebSocket.CLOSED)
+  const ws = new WebSocket('wss://localhost')
+  ws.onclose = () => {
+    t.assert.strictEqual(ws.readyState, WebSocket.CLOSED)
+  }
 
-  await completed
+  await once(ws, 'close')
 })

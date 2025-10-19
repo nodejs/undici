@@ -1,4 +1,4 @@
-import { URL } from 'url'
+import { URL } from 'node:url'
 import Dispatcher from './dispatcher'
 import buildConnector from './connector'
 import TClientStats from './client-stats'
@@ -70,8 +70,6 @@ export declare namespace Client {
     strictContentLength?: boolean;
     /** TODO */
     maxCachedSessions?: number;
-    /** TODO */
-    maxRedirections?: number;
     /** TODO */
     connect?: Partial<buildConnector.BuildOptions> | buildConnector.connector;
     /** TODO */

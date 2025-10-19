@@ -5,22 +5,20 @@ const { fetch } = require('../../')
 const { once, setMaxListeners } = require('node:events')
 const { test } = require('node:test')
 const { closeServerAsPromise } = require('../utils/node-http')
-const { strictEqual } = require('node:assert')
 
-test('long-lived-abort-controller', { skip: true }, async (t) => {
+test('long-lived-abort-controller', async (t) => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
-    res.write('Hello World!')
-    res.end()
-  }).listen(0)
+    res.end('Hello World!')
+  })
 
-  await once(server, 'listening')
+  await once(server.listen(0), 'listening')
 
   t.after(closeServerAsPromise(server))
 
-  let warningEmitted = false
-  function onWarning () {
-    warningEmitted = true
+  let emittedWarning = ''
+  function onWarning (warning) {
+    emittedWarning = warning
   }
   process.on('warning', onWarning)
   t.after(() => {
@@ -43,5 +41,5 @@ test('long-lived-abort-controller', { skip: true }, async (t) => {
     await res.text()
   }
 
-  strictEqual(warningEmitted, false)
+  t.assert.strictEqual(emittedWarning, '')
 })
