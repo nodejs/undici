@@ -171,10 +171,7 @@ test('Dispatcher#Connect', async t => {
     stream.end('helloworld')
   })
 
-  after(() => proxy.close())
   await once(proxy.listen(0), 'listening')
-
-  after(() => server.close())
   await once(server.listen(0), 'listening')
 
   const client = new Client(`https://localhost:${proxy.address().port}`, {
@@ -184,6 +181,8 @@ test('Dispatcher#Connect', async t => {
     allowH2: true
   })
   after(() => client.close())
+  after(() => proxy.close())
+  after(() => server.close())
 
   const { statusCode, headers, socket } = await client.connect({ path: '/', headers: { 'x-my-header': 'foo' } })
   t.strictEqual(statusCode, 200)
