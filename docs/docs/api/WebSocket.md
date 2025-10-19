@@ -2,8 +2,6 @@
 
 Extends: [`EventTarget`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget)
 
-> ⚠️ Warning: WebSocket over HTTP/2 is experimental, it is likely to change in the future.
-
 The WebSocket object provides a way to manage a WebSocket connection to a server, allowing bidirectional communication. The API follows the [WebSocket spec](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) and [RFC 6455](https://datatracker.ietf.org/doc/html/rfc6455).
 
 ## `new WebSocket(url[, protocol])`
@@ -34,6 +32,27 @@ If you do not need a custom Dispatcher, it's recommended to use the following pa
 import { WebSocket } from 'undici'
 
 const ws = new WebSocket('wss://echo.websocket.events', ['echo', 'chat'])
+```
+
+### Example with HTTP/2:
+
+> ⚠️ Warning: WebSocket over HTTP/2 is experimental, it is likely to change in the future.
+
+> 🗒️ Note: WebSocket over HTTP/2 is possible to be enabled by default in further major versions,
+> this will happen by enabling HTTP/2 connections as the de`fault behavior of Undici's Agent as well the global dispatcher.
+> Stay tuned to the changelog for more information.
+
+This example will not work in browsers or other platforms that don't allow passing an object.
+
+```mjs
+import { Agent } from 'undici'
+
+const agent = new Agent({ allowH2: true })
+
+const ws = new WebSocket('wss://echo.websocket.events', {
+  dispatcher: agent,
+  protocols: ['echo', 'chat']
+})
 ```
 
 # Class: WebSocketStream
