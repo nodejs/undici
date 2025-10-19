@@ -2,7 +2,6 @@
 
 const { test } = require('node:test')
 const { once } = require('node:events')
-const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { createSecureServer } = require('node:http2')
 
@@ -201,7 +200,7 @@ test('WebSocket on H2 with a server that does not support extended CONNECT proto
   await planner.completed
 })
 
-test('Multiple protocols are joined by a comma', () => {
+test('Multiple protocols are joined by a comma', (t) => {
   return new Promise((resolve, reject) => {
     const server = new WebSocketServer({ port: 0 })
 
