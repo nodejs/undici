@@ -38,8 +38,8 @@ const ws = new WebSocket('wss://echo.websocket.events', ['echo', 'chat'])
 
 > ⚠️ Warning: WebSocket over HTTP/2 is experimental, it is likely to change in the future.
 
-> 🗒️ Note: WebSocket over HTTP/2 is possible to be enabled by default in further major versions,
-> this will happen by enabling HTTP/2 connections as the de`fault behavior of Undici's Agent as well the global dispatcher.
+> 🗒️ Note: WebSocket over HTTP/2 may be enabled by default in a future version,
+> this will happen by enabling HTTP/2 connections as the default behavior of Undici's Agent as well the global dispatcher.
 > Stay tuned to the changelog for more information.
 
 This example will not work in browsers or other platforms that don't allow passing an object.
