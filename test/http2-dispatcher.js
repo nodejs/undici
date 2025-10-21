@@ -156,13 +156,29 @@ test('Dispatcher#Connect', async t => {
       })
 
       stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
+
+      // Add error handlers before pipeline to prevent uncaught exceptions
+      let pipelineEnded = false
+      response.body.on('error', (err) => {
+        if (!pipelineEnded && !stream.destroyed) {
+          stream.destroy(err)
+        }
+      })
+      stream.on('error', () => {
+        // Error already handled by pipeline callback
+      })
+
       pipeline(response.body, stream, (err) => {
-        if (err) {
+        pipelineEnded = true
+        if (err && !stream.destroyed) {
           stream.destroy(err)
         }
       })
     } catch (err) {
-      stream.destroy(err)
+      if (!stream.destroyed) {
+        stream.on('error', () => {})
+        stream.destroy(err)
+      }
     }
   })
 
