@@ -5,7 +5,6 @@ const https = require('node:https')
 const { test } = require('node:test')
 const { Client, buildConnector } = require('../..')
 const pem = require('@metcoder95/https-pem')
-const { tspl } = require('@matteo.collina/tspl')
 
 const caFingerprint = getFingerprint(pem.cert.toString()
   .split('\n')
@@ -14,8 +13,8 @@ const caFingerprint = getFingerprint(pem.cert.toString()
   .join('')
 )
 
-test('Validate CA fingerprint with a custom connector', async t => {
-  const p = tspl(t, { plan: 2 })
+test('Validate CA fingerprint with a custom connector', (t, done) => {
+  t.plan(2)
 
   const server = https.createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
@@ -48,21 +47,20 @@ test('Validate CA fingerprint with a custom connector', async t => {
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      p.ifError(err)
+      t.assert.ifError(err)
 
       data.body
         .resume()
         .on('end', () => {
-          p.ok(1)
+          t.assert.ok(1)
+          done()
         })
     })
   })
-
-  await p.completed
 })
 
-test('Bad CA fingerprint with a custom connector', async t => {
-  const p = tspl(t, { plan: 2 })
+test('Bad CA fingerprint with a custom connector', (t, done) => {
+  t.plan(2)
 
   const server = https.createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
@@ -95,12 +93,11 @@ test('Bad CA fingerprint with a custom connector', async t => {
       path: '/',
       method: 'GET'
     }, (err, data) => {
-      p.strictEqual(err.message, 'Fingerprint does not match')
-      p.strictEqual(data.body, undefined)
+      t.assert.strictEqual(err.message, 'Fingerprint does not match')
+      t.assert.strictEqual(data.body, undefined)
+      done()
     })
   })
-
-  await p.completed
 })
 
 function getIssuerCertificate (socket) {
