@@ -145,17 +145,25 @@ test('Dispatcher#Connect', async t => {
     })
     after(() => forward.close())
 
-    const response = await forward.request({
-      path: '/',
-      method: 'POST',
-      body: stream,
-      headers: {
-        'x-my-header': headers['x-my-header']
-      }
-    })
+    try {
+      const response = await forward.request({
+        path: '/',
+        method: 'POST',
+        body: stream,
+        headers: {
+          'x-my-header': headers['x-my-header']
+        }
+      })
 
-    stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
-    response.body.pipe(stream)
+      stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
+      pipeline(response.body, stream, (err) => {
+        if (err) {
+          stream.destroy(err)
+        }
+      })
+    } catch (err) {
+      stream.destroy(err)
+    }
   })
 
   server.on('stream', (stream, headers) => {
