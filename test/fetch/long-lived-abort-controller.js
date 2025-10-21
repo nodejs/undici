@@ -39,6 +39,9 @@ test('long-lived-abort-controller', async (t) => {
 
     // drain body
     await res.text()
+
+    // eslint-disable-next-line no-undef
+    gc()
   }
 
   t.assert.strictEqual(emittedWarning, '')
