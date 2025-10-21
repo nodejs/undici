@@ -156,11 +156,7 @@ test('Dispatcher#Connect', async t => {
       })
 
       stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
-      pipeline(response.body, stream, (err) => {
-        if (err) {
-          stream.destroy(err)
-        }
-      })
+      pipeline(response.body, stream, () => {})
     } catch (err) {
       stream.destroy(err)
     }
