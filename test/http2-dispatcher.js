@@ -167,8 +167,10 @@ test('Dispatcher#Connect', async t => {
         }
       })
 
+      console.log('proxy received response headers:', response.headers)
+
       stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
-      pipeline(response.body, stream, () => {})
+      response.body.pipe(stream)
     } catch (err) {
       console.log('proxy forward error', err)
       stream.destroy(err)
@@ -176,11 +178,14 @@ test('Dispatcher#Connect', async t => {
   })
 
   server.on('stream', (stream, headers) => {
+    console.log('server received headers:', headers)
     stream.setEncoding('utf-8')
     stream.on('data', chunk => {
+      console.log('server received chunk:', chunk)
       requestBody += chunk
     })
     stream.once('end', () => {
+      console.log('server received body:', requestBody)
       t.strictEqual(requestBody, expectedBody)
     })
 
@@ -217,9 +222,7 @@ test('Dispatcher#Connect', async t => {
     t.strictEqual(responseBody, 'helloworld')
   })
   socket.setEncoding('utf-8')
-  socket.cork()
   socket.write(expectedBody)
-  socket.uncork()
   socket.end()
 
   await t.completed
