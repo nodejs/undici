@@ -1,12 +1,11 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 
-test('response trailers missing is OK', async (t) => {
-  t = tspl(t, { plan: 1 })
+test('response trailers missing is OK', (t, done) => {
+  t.plan(1)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
@@ -24,14 +23,13 @@ test('response trailers missing is OK', async (t) => {
       body: 'asd'
     })
 
-    t.strictEqual(await body.text(), 'response')
+    t.assert.strictEqual(await body.text(), 'response')
+    done()
   })
-
-  await t.completed
 })
 
-test('response trailers missing w trailers is OK', async (t) => {
-  t = tspl(t, { plan: 2 })
+test('response trailers missing w trailers is OK', (t, done) => {
+  t.plan(2)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
@@ -52,9 +50,8 @@ test('response trailers missing w trailers is OK', async (t) => {
       body: 'asd'
     })
 
-    t.strictEqual(await body.text(), 'response')
-    t.deepStrictEqual(trailers, { asd: 'foo' })
+    t.assert.strictEqual(await body.text(), 'response')
+    t.assert.deepStrictEqual(trailers, { asd: 'foo' })
+    done()
   })
-
-  await t.completed
 })
