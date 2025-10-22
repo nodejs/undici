@@ -145,7 +145,6 @@ test('Dispatcher#Connect', async t => {
     }
 
     stream.on('error', err => {
-      console.log('proxy stream error', err)
       t.fail(err)
     })
 
@@ -167,30 +166,23 @@ test('Dispatcher#Connect', async t => {
         }
       })
 
-      console.log('proxy received response headers:', response.headers)
-
       stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
       response.body.pipe(stream)
     } catch (err) {
-      console.log('proxy forward error', err)
       stream.destroy(err)
     }
   })
 
   server.on('stream', (stream, headers) => {
-    console.log('server received headers:', headers)
     stream.setEncoding('utf-8')
     stream.on('data', chunk => {
-      console.log('server received chunk:', chunk)
       requestBody += chunk
     })
     stream.once('end', () => {
-      console.log('server received body:', requestBody)
       t.strictEqual(requestBody, expectedBody)
     })
 
     stream.on('error', err => {
-      console.log('server stream error', err)
       t.fail(err)
     })
 
