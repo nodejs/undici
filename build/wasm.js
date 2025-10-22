@@ -96,11 +96,19 @@ if (hasOptimizer) {
 writeWasmChunk('llhttp.wasm', 'llhttp-wasm.js')
 
 // Build wasm simd binary
-execSync(`${WASM_CC} ${WASM_CFLAGS} -msimd128 ${WASM_LDFLAGS} \
-${join(WASM_SRC, 'src')}/*.c \
--I${join(WASM_SRC, 'include')} \
--o ${join(WASM_OUT, 'llhttp_simd.wasm')} \
-${WASM_LDLIBS}`, { stdio: 'inherit' })
+// Split flags into arrays for safe argument passing
+const wasmCcArgsSimd = [
+  ...(WASM_CFLAGS ? WASM_CFLAGS.split(/\s+/).filter(Boolean) : []),
+  '-msimd128',
+  ...(WASM_LDFLAGS ? WASM_LDFLAGS.split(/\s+/).filter(Boolean) : []),
+  ...require('node:fs').readdirSync(join(WASM_SRC, 'src'))
+    .filter(f => f.endsWith('.c'))
+    .map(f => join(WASM_SRC, 'src', f)),
+  `-I${join(WASM_SRC, 'include')}`,
+  '-o', join(WASM_OUT, 'llhttp_simd.wasm'),
+  ...(WASM_LDLIBS ? WASM_LDLIBS.split(/\s+/).filter(Boolean) : [])
+];
+execFileSync(WASM_CC, wasmCcArgsSimd, { stdio: 'inherit' });
 
 if (hasOptimizer) {
   // Split WASM_OPT_FLAGS into an array, if not empty
