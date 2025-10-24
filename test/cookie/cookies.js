@@ -23,7 +23,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const {
   deleteCookie,
   getCookies,
@@ -34,31 +33,31 @@ const {
 
 // https://raw.githubusercontent.com/denoland/deno_std/b4239898d6c6b4cdbfd659a4ea1838cf4e656336/http/cookie_test.ts
 
-test('Cookie parser', () => {
+test('Cookie parser', (t) => {
   let headers = new Headers()
-  assert.deepEqual(getCookies(headers), {})
+  t.assert.deepEqual(getCookies(headers), {})
   headers = new Headers()
   headers.set('Cookie', 'foo=bar')
-  assert.deepEqual(getCookies(headers), { foo: 'bar' })
+  t.assert.deepEqual(getCookies(headers), { foo: 'bar' })
 
   headers = new Headers()
   headers.set('Cookie', 'full=of  ; tasty=chocolate')
-  assert.deepEqual(getCookies(headers), { full: 'of  ', tasty: 'chocolate' })
+  t.assert.deepEqual(getCookies(headers), { full: 'of  ', tasty: 'chocolate' })
 
   headers = new Headers()
   headers.set('Cookie', 'igot=99; problems=but...')
-  assert.deepEqual(getCookies(headers), { igot: '99', problems: 'but...' })
+  t.assert.deepEqual(getCookies(headers), { igot: '99', problems: 'but...' })
 
   headers = new Headers()
   headers.set('Cookie', 'PREF=al=en-GB&f1=123; wide=1; SID=123')
-  assert.deepEqual(getCookies(headers), {
+  t.assert.deepEqual(getCookies(headers), {
     PREF: 'al=en-GB&f1=123',
     wide: '1',
     SID: '123'
   })
 })
 
-test('Cookie Name Validation', () => {
+test('Cookie Name Validation', (t) => {
   const tokens = [
     '"id"',
     'id\t',
@@ -72,7 +71,7 @@ test('Cookie Name Validation', () => {
   ]
   const headers = new Headers()
   tokens.forEach((name) => {
-    assert.throws(
+    t.assert.throws(
       () => {
         setCookie(headers, {
           name,
@@ -87,7 +86,7 @@ test('Cookie Name Validation', () => {
   })
 })
 
-test('Cookie Value Validation', () => {
+test('Cookie Value Validation', (t) => {
   const tokens = [
     '1f\tWa',
     '\t',
@@ -103,7 +102,7 @@ test('Cookie Value Validation', () => {
 
   const headers = new Headers()
   tokens.forEach((value) => {
-    assert.throws(
+    t.assert.throws(
       () => {
         setCookie(
           headers,
@@ -121,7 +120,7 @@ test('Cookie Value Validation', () => {
     )
   })
 
-  assert.throws(
+  t.assert.throws(
     () => {
       setCookie(headers, {
         name: 'location',
@@ -133,10 +132,10 @@ test('Cookie Value Validation', () => {
   )
 })
 
-test('Cookie Path Validation', () => {
+test('Cookie Path Validation', (t) => {
   const path = '/;domain=sub.domain.com'
   const headers = new Headers()
-  assert.throws(
+  t.assert.throws(
     () => {
       setCookie(headers, {
         name: 'Space',
@@ -152,11 +151,11 @@ test('Cookie Path Validation', () => {
   )
 })
 
-test('Cookie Domain Validation', () => {
+test('Cookie Domain Validation', (t) => {
   const tokens = ['-domain.com', 'domain.org.', 'domain.org-']
   const headers = new Headers()
   tokens.forEach((domain) => {
-    assert.throws(
+    t.assert.throws(
       () => {
         setCookie(headers, {
           name: 'Space',
@@ -173,10 +172,10 @@ test('Cookie Domain Validation', () => {
   })
 })
 
-test('Cookie Delete', () => {
+test('Cookie Delete', (t) => {
   let headers = new Headers()
   deleteCookie(headers, 'deno')
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'deno=; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
   )
@@ -188,24 +187,24 @@ test('Cookie Delete', () => {
     path: '/'
   })
   deleteCookie(headers, 'Space', { domain: '', path: '' })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'Space=Cat; Domain=deno.land; Path=/, Space=; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
   )
 })
 
-test('Cookie Set', () => {
+test('Cookie Set', (t) => {
   let headers = new Headers()
   setCookie(headers, { name: 'Space', value: 'Cat' })
-  assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
+  t.assert.strictEqual(headers.get('Set-Cookie'), 'Space=Cat')
 
   headers = new Headers()
   setCookie(headers, { name: 'Space', value: 'Cat', secure: true })
-  assert.equal(headers.get('Set-Cookie'), 'Space=Cat; Secure')
+  t.assert.strictEqual(headers.get('Set-Cookie'), 'Space=Cat; Secure')
 
   headers = new Headers()
   setCookie(headers, { name: 'Space', value: 'Cat', httpOnly: true })
-  assert.equal(headers.get('Set-Cookie'), 'Space=Cat; HttpOnly')
+  t.assert.strictEqual(headers.get('Set-Cookie'), 'Space=Cat; HttpOnly')
 
   headers = new Headers()
   setCookie(headers, {
@@ -214,7 +213,7 @@ test('Cookie Set', () => {
     httpOnly: true,
     secure: true
   })
-  assert.equal(headers.get('Set-Cookie'), 'Space=Cat; Secure; HttpOnly')
+  t.assert.strictEqual(headers.get('Set-Cookie'), 'Space=Cat; Secure; HttpOnly')
 
   headers = new Headers()
   setCookie(headers, {
@@ -224,7 +223,7 @@ test('Cookie Set', () => {
     secure: true,
     maxAge: 2
   })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'Space=Cat; Secure; HttpOnly; Max-Age=2'
   )
@@ -237,7 +236,7 @@ test('Cookie Set', () => {
     secure: true,
     maxAge: 0
   })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'Space=Cat; Secure; HttpOnly; Max-Age=0'
   )
@@ -255,7 +254,7 @@ test('Cookie Set', () => {
   } catch {
     error = true
   }
-  assert.ok(error)
+  t.assert.ok(error)
 
   headers = new Headers()
   setCookie(headers, {
@@ -266,7 +265,7 @@ test('Cookie Set', () => {
     maxAge: 2,
     domain: 'deno.land'
   })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land'
   )
@@ -281,7 +280,7 @@ test('Cookie Set', () => {
     domain: 'deno.land',
     sameSite: 'Strict'
   })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land; ' +
         'SameSite=Strict'
@@ -297,7 +296,7 @@ test('Cookie Set', () => {
     domain: 'deno.land',
     sameSite: 'Lax'
   })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land; SameSite=Lax'
   )
@@ -312,7 +311,7 @@ test('Cookie Set', () => {
     domain: 'deno.land',
     path: '/'
   })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land; Path=/'
   )
@@ -328,7 +327,7 @@ test('Cookie Set', () => {
     path: '/',
     unparsed: ['unparsed=keyvalue', 'batman=Bruce']
   })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land; Path=/; ' +
         'unparsed=keyvalue; batman=Bruce'
@@ -345,7 +344,7 @@ test('Cookie Set', () => {
     path: '/',
     expires: new Date(Date.UTC(1983, 0, 7, 15, 32))
   })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land; Path=/; ' +
         'Expires=Fri, 07 Jan 1983 15:32:00 GMT'
@@ -357,14 +356,14 @@ test('Cookie Set', () => {
     value: 'Cat',
     expires: Date.UTC(1983, 0, 7, 15, 32)
   })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'Space=Cat; Expires=Fri, 07 Jan 1983 15:32:00 GMT'
   )
 
   headers = new Headers()
   setCookie(headers, { name: '__Secure-Kitty', value: 'Meow' })
-  assert.equal(headers.get('Set-Cookie'), '__Secure-Kitty=Meow; Secure')
+  t.assert.strictEqual(headers.get('Set-Cookie'), '__Secure-Kitty=Meow; Secure')
 
   headers = new Headers()
   setCookie(headers, {
@@ -372,7 +371,7 @@ test('Cookie Set', () => {
     value: 'Meow',
     domain: 'deno.land'
   })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     '__Host-Kitty=Meow; Secure; Path=/'
   )
@@ -380,39 +379,39 @@ test('Cookie Set', () => {
   headers = new Headers()
   setCookie(headers, { name: 'cookie-1', value: 'value-1', secure: true })
   setCookie(headers, { name: 'cookie-2', value: 'value-2', maxAge: 3600 })
-  assert.equal(
+  t.assert.strictEqual(
     headers.get('Set-Cookie'),
     'cookie-1=value-1; Secure, cookie-2=value-2; Max-Age=3600'
   )
 
   headers = new Headers()
   setCookie(headers, { name: '', value: '' })
-  assert.equal(headers.get('Set-Cookie'), null)
+  t.assert.strictEqual(headers.get('Set-Cookie'), null)
 })
 
-test('Set-Cookie parser', () => {
+test('Set-Cookie parser', (t) => {
   let headers = new Headers({ 'set-cookie': 'Space=Cat' })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat'
   }])
 
   headers = new Headers({ 'set-cookie': 'Space=Cat; Secure' })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true
   }])
 
   headers = new Headers({ 'set-cookie': 'Space=Cat; HttpOnly' })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     httpOnly: true
   }])
 
   headers = new Headers({ 'set-cookie': 'Space=Cat; Secure; HttpOnly' })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true,
@@ -422,7 +421,7 @@ test('Set-Cookie parser', () => {
   headers = new Headers({
     'set-cookie': 'Space=Cat; Secure; HttpOnly; Max-Age=2'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true,
@@ -433,7 +432,7 @@ test('Set-Cookie parser', () => {
   headers = new Headers({
     'set-cookie': 'Space=Cat; Secure; HttpOnly; Max-Age=0'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true,
@@ -444,7 +443,7 @@ test('Set-Cookie parser', () => {
   headers = new Headers({
     'set-cookie': 'Space=Cat; Secure; HttpOnly; Max-Age=-1'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true,
@@ -454,7 +453,7 @@ test('Set-Cookie parser', () => {
   headers = new Headers({
     'set-cookie': 'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true,
@@ -467,7 +466,7 @@ test('Set-Cookie parser', () => {
     'set-cookie':
         'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land; SameSite=Strict'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true,
@@ -481,7 +480,7 @@ test('Set-Cookie parser', () => {
     'set-cookie':
         'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land; SameSite=Lax'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true,
@@ -495,7 +494,7 @@ test('Set-Cookie parser', () => {
     'set-cookie':
         'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land; Path=/'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true,
@@ -509,7 +508,7 @@ test('Set-Cookie parser', () => {
     'set-cookie':
         'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land; Path=/; unparsed=keyvalue; batman=Bruce'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true,
@@ -525,7 +524,7 @@ test('Set-Cookie parser', () => {
         'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land; Path=/; ' +
         'Expires=Fri, 07 Jan 1983 15:32:00 GMT'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: 'Space',
     value: 'Cat',
     secure: true,
@@ -537,14 +536,14 @@ test('Set-Cookie parser', () => {
   }])
 
   headers = new Headers({ 'set-cookie': '__Secure-Kitty=Meow; Secure' })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: '__Secure-Kitty',
     value: 'Meow',
     secure: true
   }])
 
   headers = new Headers({ 'set-cookie': '__Secure-Kitty=Meow' })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: '__Secure-Kitty',
     value: 'Meow'
   }])
@@ -552,7 +551,7 @@ test('Set-Cookie parser', () => {
   headers = new Headers({
     'set-cookie': '__Host-Kitty=Meow; Secure; Path=/'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: '__Host-Kitty',
     value: 'Meow',
     secure: true,
@@ -560,7 +559,7 @@ test('Set-Cookie parser', () => {
   }])
 
   headers = new Headers({ 'set-cookie': '__Host-Kitty=Meow; Path=/' })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: '__Host-Kitty',
     value: 'Meow',
     path: '/'
@@ -569,7 +568,7 @@ test('Set-Cookie parser', () => {
   headers = new Headers({
     'set-cookie': '__Host-Kitty=Meow; Secure; Domain=deno.land; Path=/'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: '__Host-Kitty',
     value: 'Meow',
     secure: true,
@@ -580,7 +579,7 @@ test('Set-Cookie parser', () => {
   headers = new Headers({
     'set-cookie': '__Host-Kitty=Meow; Secure; Path=/not-root'
   })
-  assert.deepEqual(getSetCookies(headers), [{
+  t.assert.deepEqual(getSetCookies(headers), [{
     name: '__Host-Kitty',
     value: 'Meow',
     secure: true,
@@ -591,21 +590,21 @@ test('Set-Cookie parser', () => {
     ['set-cookie', 'cookie-1=value-1; Secure'],
     ['set-cookie', 'cookie-2=value-2; Max-Age=3600']
   ])
-  assert.deepEqual(getSetCookies(headers), [
+  t.assert.deepEqual(getSetCookies(headers), [
     { name: 'cookie-1', value: 'value-1', secure: true },
     { name: 'cookie-2', value: 'value-2', maxAge: 3600 }
   ])
 
   headers = new Headers()
-  assert.deepEqual(getSetCookies(headers), [])
+  t.assert.deepEqual(getSetCookies(headers), [])
 })
 
-test('Cookie setCookie throws if headers is not of type Headers', () => {
+test('Cookie setCookie throws if headers is not of type Headers', (t) => {
   class Headers {
     [Symbol.toStringTag] = 'CustomHeaders'
   }
   const headers = new Headers()
-  assert.throws(
+  t.assert.throws(
     () => {
       setCookie(headers, {
         name: 'key',
@@ -619,7 +618,7 @@ test('Cookie setCookie throws if headers is not of type Headers', () => {
   )
 })
 
-test('Cookie setCookie does not throw if headers is an instance of undici owns Headers class', () => {
+test('Cookie setCookie does not throw if headers is an instance of undici owns Headers class', (t) => {
   const headers = new Headers()
   setCookie(headers, {
     name: 'key',
@@ -630,7 +629,7 @@ test('Cookie setCookie does not throw if headers is an instance of undici owns H
   })
 })
 
-test('Cookie setCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, () => {
+test('Cookie setCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, (t) => {
   const headers = new globalThis.Headers()
   setCookie(headers, {
     name: 'key',
@@ -641,12 +640,12 @@ test('Cookie setCookie does not throw if headers is an instance of the global He
   })
 })
 
-test('Cookie getCookies throws if headers is not of type Headers', () => {
+test('Cookie getCookies throws if headers is not of type Headers', (t) => {
   class Headers {
     [Symbol.toStringTag] = 'CustomHeaders'
   }
   const headers = new Headers()
-  assert.throws(
+  t.assert.throws(
     () => {
       getCookies(headers)
     },
@@ -654,22 +653,22 @@ test('Cookie getCookies throws if headers is not of type Headers', () => {
   )
 })
 
-test('Cookie getCookies does not throw if headers is an instance of undici owns Headers class', () => {
+test('Cookie getCookies does not throw if headers is an instance of undici owns Headers class', (t) => {
   const headers = new Headers()
   getCookies(headers)
 })
 
-test('Cookie getCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, () => {
+test('Cookie getCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, (t) => {
   const headers = new globalThis.Headers()
   getCookies(headers)
 })
 
-test('Cookie getSetCookies throws if headers is not of type Headers', () => {
+test('Cookie getSetCookies throws if headers is not of type Headers', (t) => {
   class Headers {
     [Symbol.toStringTag] = 'CustomHeaders'
   }
   const headers = new Headers({ 'set-cookie': 'Space=Cat' })
-  assert.throws(
+  t.assert.throws(
     () => {
       getSetCookies(headers)
     },
@@ -677,22 +676,22 @@ test('Cookie getSetCookies throws if headers is not of type Headers', () => {
   )
 })
 
-test('Cookie getSetCookies does not throw if headers is an instance of undici owns Headers class', () => {
+test('Cookie getSetCookies does not throw if headers is an instance of undici owns Headers class', (t) => {
   const headers = new Headers({ 'set-cookie': 'Space=Cat' })
   getSetCookies(headers)
 })
 
-test('Cookie setCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, () => {
+test('Cookie setCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, (t) => {
   const headers = new globalThis.Headers({ 'set-cookie': 'Space=Cat' })
   getSetCookies(headers)
 })
 
-test('Cookie deleteCookie throws if headers is not of type Headers', () => {
+test('Cookie deleteCookie throws if headers is not of type Headers', (t) => {
   class Headers {
     [Symbol.toStringTag] = 'CustomHeaders'
   }
   const headers = new Headers()
-  assert.throws(
+  t.assert.throws(
     () => {
       deleteCookie(headers, 'deno')
     },
@@ -700,12 +699,12 @@ test('Cookie deleteCookie throws if headers is not of type Headers', () => {
   )
 })
 
-test('Cookie deleteCookie does not throw if headers is an instance of undici owns Headers class', () => {
+test('Cookie deleteCookie does not throw if headers is an instance of undici owns Headers class', (t) => {
   const headers = new Headers()
   deleteCookie(headers, 'deno')
 })
 
-test('Cookie getCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, () => {
+test('Cookie getCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, (t) => {
   const headers = new globalThis.Headers()
   deleteCookie(headers, 'deno')
 })
