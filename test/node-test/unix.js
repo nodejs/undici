@@ -6,18 +6,18 @@ const http = require('node:http')
 const https = require('node:https')
 const pem = require('@metcoder95/https-pem')
 const fs = require('node:fs')
-const { tspl } = require('@matteo.collina/tspl')
+const { once } = require('node:events')
 
 const skip = process.platform === 'win32'
 
 test('http unix get', { skip }, async (t) => {
   let client
-  const p = tspl(t, { plan: 7 })
+  t.plan(7)
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.equal('/', req.url)
-    p.equal('GET', req.method)
-    p.equal('localhost', req.headers.host)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
+    t.assert.strictEqual('localhost', req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
@@ -42,31 +42,32 @@ test('http unix get', { skip }, async (t) => {
     })
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
-      p.ifError(err)
+      t.assert.ifError(err)
       const { statusCode, headers, body } = data
-      p.equal(statusCode, 200)
-      p.equal(headers['content-type'], 'text/plain')
+      t.assert.strictEqual(statusCode, 200)
+      t.assert.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        p.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.assert.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        server.close()
       })
     })
   })
 
-  await p.completed
+  await once(server, 'close')
 })
 
 test('http unix get pool', { skip }, async (t) => {
   let client
-  const p = tspl(t, { plan: 7 })
+  t.plan(7)
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.equal('/', req.url)
-    p.equal('GET', req.method)
-    p.equal('localhost', req.headers.host)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
+    t.assert.strictEqual('localhost', req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
@@ -91,30 +92,32 @@ test('http unix get pool', { skip }, async (t) => {
     })
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
-      p.ifError(err)
+      t.assert.ifError(err)
       const { statusCode, headers, body } = data
-      p.equal(statusCode, 200)
-      p.equal(headers['content-type'], 'text/plain')
+      t.assert.strictEqual(statusCode, 200)
+      t.assert.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        p.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.assert.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        server.close()
       })
     })
   })
 
-  await p.completed
+  await once(server, 'close')
 })
 
 test('https get with tls opts', { skip }, async (t) => {
+  t.plan(6)
+
   let client
-  const p = tspl(t, { plan: 6 })
 
   const server = https.createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
-    p.equal('/', req.url)
-    p.equal('GET', req.method)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
@@ -142,18 +145,20 @@ test('https get with tls opts', { skip }, async (t) => {
     })
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
-      p.ifError(err)
+      t.assert.ifError(err)
       const { statusCode, headers, body } = data
-      p.equal(statusCode, 200)
-      p.equal(headers['content-type'], 'text/plain')
+      t.assert.strictEqual(statusCode, 200)
+      t.assert.strictEqual(headers['content-type'], 'text/plain')
       const bufs = []
       body.on('data', (buf) => {
         bufs.push(buf)
       })
       body.on('end', () => {
-        p.equal('hello', Buffer.concat(bufs).toString('utf8'))
+        t.assert.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
+        server.close()
       })
     })
   })
-  await p.completed
+
+  await once(server, 'close')
 })
