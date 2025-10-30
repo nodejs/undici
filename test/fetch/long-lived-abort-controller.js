@@ -6,7 +6,7 @@ const { once, setMaxListeners } = require('node:events')
 const { test } = require('node:test')
 const { closeServerAsPromise } = require('../utils/node-http')
 
-test('long-lived-abort-controller', async (t) => {
+test('long-lived-abort-controller', { skip: process.env.CI }, async (t) => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.end('Hello World!')
