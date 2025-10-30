@@ -27,7 +27,25 @@ jobs:
         run: |
           git submodule update --init --recursive
 
+
+      - name: Check for Changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "no_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "no_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+      
+      - name: Create Branch
+        if: steps.check_changes.outputs.no_changes == 'false'
+        run: |
+          git checkout -b submodules-update
+          git add .
+          git commit -m "chore: update Submodules"
+      
       - name: Create Pull Request
+        if: steps.check_changes.outputs.no_changes == 'false'
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           base: main
