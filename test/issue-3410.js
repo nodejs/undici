@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { fork } = require('node:child_process')
 const { resolve: pathResolve } = require('node:path')
 const { describe, test } = require('node:test')
@@ -9,7 +8,7 @@ const { eventLoopBlocker } = require('./utils/event-loop-blocker')
 
 describe('https://github.com/nodejs/undici/issues/3410', () => {
   test('FastTimers', async (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     // Spawn a server in a new process to avoid effects from the blocking event loop
     const {
@@ -42,13 +41,13 @@ describe('https://github.com/nodejs/undici/issues/3410', () => {
 
     const response = await fetchPromise
 
-    t.equal(await response.text(), 'Hello World')
+    t.assert.strictEqual(await response.text(), 'Hello World')
 
     serverProcess.kill('SIGKILL')
   })
 
   test('native Timers', async (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     // Spawn a server in a new process to avoid effects from the blocking event loop
     const {
@@ -81,7 +80,7 @@ describe('https://github.com/nodejs/undici/issues/3410', () => {
 
     const response = await fetchPromise
 
-    t.equal(await response.text(), 'Hello World')
+    t.assert.strictEqual(await response.text(), 'Hello World')
 
     serverProcess.kill('SIGKILL')
   })
