@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, after, describe } = require('node:test')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
@@ -15,26 +14,26 @@ const { fetch } = require('..')
 
 describe('MockPool - constructor', () => {
   test('fails if opts.agent does not implement `get` method', t => {
-    t = tspl(t, { plan: 1 })
-    t.throws(() => new MockPool('http://localhost:9999', { agent: { get: 'not a function' } }), InvalidArgumentError)
+    t.plan(1)
+    t.assert.throws(() => new MockPool('http://localhost:9999', { agent: { get: 'not a function' } }), InvalidArgumentError)
   })
 
   test('sets agent', t => {
-    t = tspl(t, { plan: 1 })
-    t.doesNotThrow(() => new MockPool('http://localhost:9999', { agent: new MockAgent() }))
+    t.plan(1)
+    t.assert.doesNotThrow(() => new MockPool('http://localhost:9999', { agent: new MockAgent() }))
   })
 
   test('should implement the Dispatcher API', t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const mockPool = new MockPool('http://localhost:9999', { agent: new MockAgent() })
-    t.ok(mockPool instanceof Dispatcher)
+    t.assert.ok(mockPool instanceof Dispatcher)
   })
 })
 
 describe('MockPool - dispatch', () => {
   test('should handle a single interceptor', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const baseUrl = 'http://localhost:9999'
 
@@ -58,7 +57,7 @@ describe('MockPool - dispatch', () => {
       }
     ]
 
-    t.doesNotThrow(() => mockPool.dispatch({
+    t.assert.doesNotThrow(() => mockPool.dispatch({
       path: '/foo',
       method: 'GET'
     }, {
@@ -69,7 +68,7 @@ describe('MockPool - dispatch', () => {
   })
 
   test('should directly throw error from mockDispatch function if error is not a MockNotMatchedError', (t) => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     const baseUrl = 'http://localhost:9999'
 
@@ -93,7 +92,7 @@ describe('MockPool - dispatch', () => {
       }
     ]
 
-    t.throws(() => mockPool.dispatch({
+    t.assert.throws(() => mockPool.dispatch({
       path: '/foo',
       method: 'GET'
     }, {
@@ -105,7 +104,7 @@ describe('MockPool - dispatch', () => {
 })
 
 test('MockPool - intercept should return a MockInterceptor', (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const baseUrl = 'http://localhost:9999'
 
@@ -119,42 +118,42 @@ test('MockPool - intercept should return a MockInterceptor', (t) => {
     method: 'GET'
   })
 
-  t.ok(interceptor instanceof MockInterceptor)
+  t.assert.ok(interceptor instanceof MockInterceptor)
 })
 
 describe('MockPool - intercept validation', () => {
   test('it should error if no options specified in the intercept', t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const mockAgent = new MockAgent()
     after(() => mockAgent.close())
 
     const mockPool = mockAgent.get('http://localhost:9999')
 
-    t.throws(() => mockPool.intercept(), new InvalidArgumentError('opts must be an object'))
+    t.assert.throws(() => mockPool.intercept(), new InvalidArgumentError('opts must be an object'))
   })
 
   test('it should error if no path specified in the intercept', t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const mockAgent = new MockAgent()
     after(() => mockAgent.close())
 
     const mockPool = mockAgent.get('http://localhost:9999')
 
-    t.throws(() => mockPool.intercept({}), new InvalidArgumentError('opts.path must be defined'))
+    t.assert.throws(() => mockPool.intercept({}), new InvalidArgumentError('opts.path must be defined'))
   })
 
   test('it should default to GET if no method specified in the intercept', t => {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
     const mockAgent = new MockAgent()
     after(() => mockAgent.close())
 
     const mockPool = mockAgent.get('http://localhost:9999')
-    t.doesNotThrow(() => mockPool.intercept({ path: '/foo' }))
+    t.assert.doesNotThrow(() => mockPool.intercept({ path: '/foo' }))
   })
 })
 
 test('MockPool - close should run without error', async (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const baseUrl = 'http://localhost:9999'
 
@@ -178,17 +177,16 @@ test('MockPool - close should run without error', async (t) => {
   ]
 
   await mockPool.close()
-  t.ok(true, 'pass')
+  t.assert.ok(true, 'pass')
 })
 
 test('MockPool - should be able to set as globalDispatcher', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
-    t.fail('should not be called')
-    t.end()
+    t.assert.fail('should not be called')
   })
   after(() => server.close())
 
@@ -200,7 +198,7 @@ test('MockPool - should be able to set as globalDispatcher', async (t) => {
   after(() => mockAgent.close())
 
   const mockPool = mockAgent.get(baseUrl)
-  t.ok(mockPool instanceof MockPool)
+  t.assert.ok(mockPool instanceof MockPool)
   setGlobalDispatcher(mockPool)
 
   mockPool.intercept({
@@ -211,20 +209,19 @@ test('MockPool - should be able to set as globalDispatcher', async (t) => {
   const { statusCode, body } = await request(`${baseUrl}/foo`, {
     method: 'GET'
   })
-  t.strictEqual(statusCode, 200)
+  t.assert.strictEqual(statusCode, 200)
 
   const response = await getResponse(body)
-  t.deepStrictEqual(response, 'hello')
+  t.assert.deepStrictEqual(response, 'hello')
 })
 
 test('MockPool - should be able to use as a local dispatcher', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
-    t.fail('should not be called')
-    t.end()
+    t.assert.fail('should not be called')
   })
   after(() => server.close())
 
@@ -236,7 +233,7 @@ test('MockPool - should be able to use as a local dispatcher', async (t) => {
   after(() => mockAgent.close())
 
   const mockPool = mockAgent.get(baseUrl)
-  t.ok(mockPool instanceof MockPool)
+  t.assert.ok(mockPool instanceof MockPool)
 
   mockPool.intercept({
     path: '/foo',
@@ -247,20 +244,19 @@ test('MockPool - should be able to use as a local dispatcher', async (t) => {
     method: 'GET',
     dispatcher: mockPool
   })
-  t.strictEqual(statusCode, 200)
+  t.assert.strictEqual(statusCode, 200)
 
   const response = await getResponse(body)
-  t.deepStrictEqual(response, 'hello')
+  t.assert.deepStrictEqual(response, 'hello')
 })
 
 test('MockPool - basic intercept with MockPool.request', async (t) => {
-  t = tspl(t, { plan: 5 })
+  t.plan(5)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('should not be called')
-    t.fail('should not be called')
-    t.end()
+    t.assert.fail('should not be called')
   })
   after(() => server.close())
 
@@ -271,7 +267,7 @@ test('MockPool - basic intercept with MockPool.request', async (t) => {
   const mockAgent = new MockAgent()
   after(() => mockAgent.close())
   const mockPool = mockAgent.get(baseUrl)
-  t.ok(mockPool instanceof MockPool)
+  t.assert.ok(mockPool instanceof MockPool)
 
   mockPool.intercept({
     path: '/foo?hello=there&see=ya',
@@ -288,19 +284,19 @@ test('MockPool - basic intercept with MockPool.request', async (t) => {
     method: 'POST',
     body: 'form1=data1&form2=data2'
   })
-  t.strictEqual(statusCode, 200)
-  t.strictEqual(headers['content-type'], 'application/json')
-  t.deepStrictEqual(trailers, { 'content-md5': 'test' })
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.strictEqual(headers['content-type'], 'application/json')
+  t.assert.deepStrictEqual(trailers, { 'content-md5': 'test' })
 
   const jsonResponse = JSON.parse(await getResponse(body))
-  t.deepStrictEqual(jsonResponse, {
+  t.assert.deepStrictEqual(jsonResponse, {
     foo: 'bar'
   })
 })
 
 // https://github.com/nodejs/undici/issues/1546
 test('MockPool - correct errors when consuming invalid JSON body', async (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const oldDispatcher = getGlobalDispatcher()
 
@@ -316,13 +312,11 @@ test('MockPool - correct errors when consuming invalid JSON body', async (t) => 
   }).reply(200, 'it\'s just a text')
 
   const { body } = await request('https://google.com')
-  await t.rejects(body.json(), SyntaxError)
-
-  t.end()
+  await t.assert.rejects(body.json(), SyntaxError)
 })
 
 test('MockPool - allows matching headers in fetch', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const oldDispatcher = getGlobalDispatcher()
 
@@ -352,10 +346,10 @@ test('MockPool - allows matching headers in fetch', async (t) => {
   })
 
   // no 'accept: application/json' header sent, not matched
-  await t.rejects(fetch(`${baseUrl}/foo`))
+  await t.assert.rejects(fetch(`${baseUrl}/foo`))
 
   // not 'accept: application/json', not matched
-  await t.rejects(fetch(`${baseUrl}/foo`, {
+  await t.assert.rejects(fetch(`${baseUrl}/foo`, {
     headers: {
       accept: 'text/plain'
     }
@@ -363,7 +357,7 @@ test('MockPool - allows matching headers in fetch', async (t) => {
 })
 
 test('MockPool - cleans mocks', async (t) => {
-  t = tspl(t, { plan: 4 })
+  t.plan(4)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
@@ -379,26 +373,25 @@ test('MockPool - cleans mocks', async (t) => {
   after(() => mockAgent.close())
 
   const mockPool = mockAgent.get(baseUrl)
-  t.ok(mockPool instanceof MockPool)
+  t.assert.ok(mockPool instanceof MockPool)
   setGlobalDispatcher(mockPool)
 
   mockPool.intercept({
     path: '/foo',
     method: 'GET'
   }).reply(500, () => {
-    t.fail('should not be called')
-    t.end()
+    t.assert.fail('should not be called')
   })
 
   mockPool.cleanMocks()
 
-  t.strictEqual(mockPool[kDispatches].length, 0)
+  t.assert.strictEqual(mockPool[kDispatches].length, 0)
 
   const { statusCode, body } = await request(`${baseUrl}/foo`, {
     method: 'GET'
   })
-  t.strictEqual(statusCode, 200)
+  t.assert.strictEqual(statusCode, 200)
 
   const response = await getResponse(body)
-  t.deepStrictEqual(response, 'hello')
+  t.assert.deepStrictEqual(response, 'hello')
 })

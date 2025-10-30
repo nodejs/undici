@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, beforeEach, afterEach } = require('node:test')
 const { MockAgent, setGlobalDispatcher } = require('..')
 const PendingInterceptorsFormatter = require('../lib/mock/pending-interceptors-formatter')
@@ -46,13 +45,13 @@ function mockAgentWithOneInterceptor () {
 }
 
 test('1 pending interceptor', t => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   try {
     mockAgentWithOneInterceptor().assertNoPendingInterceptors({ pendingInterceptorsFormatter })
-    t.fail('Should have thrown')
+    t.assert.fail('Should have thrown')
   } catch (err) {
-    t.deepStrictEqual(err.message, tableRowsAlignedToLeft
+    t.assert.deepStrictEqual(err.message, tableRowsAlignedToLeft
       ? `
 1 interceptor is pending:
 
@@ -75,7 +74,7 @@ test('1 pending interceptor', t => {
 })
 
 test('2 pending interceptors', t => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const withTwoInterceptors = mockAgentWithOneInterceptor()
   withTwoInterceptors
@@ -85,7 +84,7 @@ test('2 pending interceptors', t => {
   try {
     withTwoInterceptors.assertNoPendingInterceptors({ pendingInterceptorsFormatter })
   } catch (err) {
-    t.deepStrictEqual(err.message, tableRowsAlignedToLeft
+    t.assert.deepStrictEqual(err.message, tableRowsAlignedToLeft
       ? `
 2 interceptors are pending:
 
@@ -110,7 +109,7 @@ test('2 pending interceptors', t => {
 })
 
 test('Variations of persist(), times(), and pending status', async t => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
 
   // Agent with unused interceptor
   const agent = mockAgentWithOneInterceptor()
@@ -128,20 +127,20 @@ test('Variations of persist(), times(), and pending status', async t => {
     .intercept({ method: 'GET', path: '/persistent/used' })
     .reply(200, 'OK')
     .persist()
-  t.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/persistent/used' })).statusCode, 200)
+  t.assert.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/persistent/used' })).statusCode, 200)
 
   // Consumed without persist()
   agent.get(origin)
     .intercept({ method: 'post', path: '/transient/pending' })
     .reply(201, 'Created')
-  t.deepStrictEqual((await agent.request({ origin, method: 'POST', path: '/transient/pending' })).statusCode, 201)
+  t.assert.deepStrictEqual((await agent.request({ origin, method: 'POST', path: '/transient/pending' })).statusCode, 201)
 
   // Partially pending with times()
   agent.get(origin)
     .intercept({ method: 'get', path: '/times/partial' })
     .reply(200, 'OK')
     .times(5)
-  t.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/times/partial' })).statusCode, 200)
+  t.assert.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/times/partial' })).statusCode, 200)
 
   // Unused with times()
   agent.get(origin)
@@ -154,14 +153,14 @@ test('Variations of persist(), times(), and pending status', async t => {
     .intercept({ method: 'get', path: '/times/pending' })
     .reply(200, 'OK')
     .times(2)
-  t.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/times/pending' })).statusCode, 200)
-  t.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/times/pending' })).statusCode, 200)
+  t.assert.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/times/pending' })).statusCode, 200)
+  t.assert.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/times/pending' })).statusCode, 200)
 
   try {
     agent.assertNoPendingInterceptors({ pendingInterceptorsFormatter })
-    t.fail('Should have thrown')
+    t.assert.fail('Should have thrown')
   } catch (err) {
-    t.deepStrictEqual(err.message, tableRowsAlignedToLeft
+    t.assert.deepStrictEqual(err.message, tableRowsAlignedToLeft
       ? `
 4 interceptors are pending:
 
@@ -190,33 +189,33 @@ test('Variations of persist(), times(), and pending status', async t => {
 })
 
 test('works when no interceptors are registered', t => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const agent = new MockAgent()
   agent.disableNetConnect()
 
-  t.deepStrictEqual(agent.pendingInterceptors(), [])
-  t.doesNotThrow(() => agent.assertNoPendingInterceptors())
+  t.assert.deepStrictEqual(agent.pendingInterceptors(), [])
+  t.assert.doesNotThrow(() => agent.assertNoPendingInterceptors())
 })
 
 test('works when all interceptors are pending', async t => {
-  t = tspl(t, { plan: 4 })
+  t.plan(4)
 
   const agent = new MockAgent()
   agent.disableNetConnect()
 
   agent.get(origin).intercept({ method: 'get', path: '/' }).reply(200, 'OK')
-  t.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/' })).statusCode, 200)
+  t.assert.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/' })).statusCode, 200)
 
   agent.get(origin).intercept({ method: 'get', path: '/persistent' }).reply(200, 'OK')
-  t.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/persistent' })).statusCode, 200)
+  t.assert.deepStrictEqual((await agent.request({ origin, method: 'GET', path: '/persistent' })).statusCode, 200)
 
-  t.deepStrictEqual(agent.pendingInterceptors(), [])
-  t.doesNotThrow(() => agent.assertNoPendingInterceptors())
+  t.assert.deepStrictEqual(agent.pendingInterceptors(), [])
+  t.assert.doesNotThrow(() => agent.assertNoPendingInterceptors())
 })
 
 test('defaults to rendering output with terminal color when process.env.CI is unset', t => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   // This ensures that the test works in an environment where the CI env var is set.
   const oldCiEnvVar = process.env.CI
@@ -224,9 +223,9 @@ test('defaults to rendering output with terminal color when process.env.CI is un
 
   try {
     mockAgentWithOneInterceptor().assertNoPendingInterceptors()
-    t.fail('Should have thrown')
+    t.assert.fail('Should have thrown')
   } catch (err) {
-    t.deepStrictEqual(err.message, tableRowsAlignedToLeft
+    t.assert.deepStrictEqual(err.message, tableRowsAlignedToLeft
       ? `
 1 interceptor is pending:
 
@@ -257,9 +256,9 @@ test('defaults to rendering output with terminal color when process.env.CI is un
 })
 
 test('returns unused interceptors', t => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
-  t.deepStrictEqual(mockAgentWithOneInterceptor().pendingInterceptors(), [
+  t.assert.deepStrictEqual(mockAgentWithOneInterceptor().pendingInterceptors(), [
     {
       timesInvoked: 0,
       times: 1,
