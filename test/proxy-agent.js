@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { request, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('..')
 const { InvalidArgumentError, SecureProxyConnectionError } = require('../lib/core/errors')
@@ -96,14 +95,14 @@ const certs = (() => {
 })()
 
 test('should throw error when no uri is provided', (t) => {
-  t = tspl(t, { plan: 2 })
-  t.throws(() => new ProxyAgent(), InvalidArgumentError)
-  t.throws(() => new ProxyAgent({}), InvalidArgumentError)
+  t.plan(2)
+  t.assert.throws(() => new ProxyAgent(), InvalidArgumentError)
+  t.assert.throws(() => new ProxyAgent({}), InvalidArgumentError)
 })
 
 test('using auth in combination with token should throw', (t) => {
-  t = tspl(t, { plan: 1 })
-  t.throws(() => new ProxyAgent({
+  t.plan(1)
+  t.assert.throws(() => new ProxyAgent({
     auth: 'foo',
     token: 'Bearer bar',
     uri: 'http://example.com'
@@ -113,14 +112,14 @@ test('using auth in combination with token should throw', (t) => {
 })
 
 test('should accept string, URL and object as options', (t) => {
-  t = tspl(t, { plan: 3 })
-  t.doesNotThrow(() => new ProxyAgent('http://example.com'))
-  t.doesNotThrow(() => new ProxyAgent(new URL('http://example.com')))
-  t.doesNotThrow(() => new ProxyAgent({ uri: 'http://example.com' }))
+  t.plan(3)
+  t.assert.doesNotThrow(() => new ProxyAgent('http://example.com'))
+  t.assert.doesNotThrow(() => new ProxyAgent(new URL('http://example.com')))
+  t.assert.doesNotThrow(() => new ProxyAgent({ uri: 'http://example.com' }))
 })
 
 test('use proxy-agent to connect through proxy (keep alive)', async (t) => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
   const server = await buildServer()
   const proxy = await buildProxy()
   delete proxy.authenticate
@@ -134,12 +133,12 @@ test('use proxy-agent to connect through proxy (keep alive)', async (t) => {
   const parsedOrigin = new URL(serverUrl)
 
   proxy.on('connect', (msg) => {
-    t.strictEqual(msg.headers['proxy-connection'], 'keep-alive')
+    t.assert.strictEqual(msg.headers['proxy-connection'], 'keep-alive')
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -151,9 +150,9 @@ test('use proxy-agent to connect through proxy (keep alive)', async (t) => {
   } = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -161,7 +160,7 @@ test('use proxy-agent to connect through proxy (keep alive)', async (t) => {
 })
 
 test('use proxy-agent to connect through proxy', async (t) => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
   const server = await buildServer()
   const proxy = await buildProxy()
   delete proxy.authenticate
@@ -172,12 +171,12 @@ test('use proxy-agent to connect through proxy', async (t) => {
   const parsedOrigin = new URL(serverUrl)
 
   proxy.on('connect', () => {
-    t.ok(true, 'should connect to proxy')
+    t.assert.ok(true, 'should connect to proxy')
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -189,9 +188,9 @@ test('use proxy-agent to connect through proxy', async (t) => {
   } = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -199,7 +198,7 @@ test('use proxy-agent to connect through proxy', async (t) => {
 })
 
 test('use proxy agent to connect through proxy using Pool', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   const server = await buildServer()
   const proxy = await buildProxy()
   let resolveFirstConnect
@@ -207,7 +206,7 @@ test('use proxy agent to connect through proxy using Pool', async (t) => {
 
   proxy.authenticate = async function (req) {
     if (++connectCount === 2) {
-      t.ok(true, 'second connect should arrive while first is still inflight')
+      t.assert.ok(true, 'second connect should arrive while first is still inflight')
       resolveFirstConnect()
       return true
     } else {
@@ -230,15 +229,15 @@ test('use proxy agent to connect through proxy using Pool', async (t) => {
   const proxyAgent = new ProxyAgent({ auth: Buffer.from('user:pass').toString('base64'), uri: proxyUrl, clientFactory })
   const firstRequest = request(`${serverUrl}`, { dispatcher: proxyAgent })
   const secondRequest = await request(`${serverUrl}`, { dispatcher: proxyAgent })
-  t.strictEqual((await firstRequest).statusCode, 200)
-  t.strictEqual(secondRequest.statusCode, 200)
+  t.assert.strictEqual((await firstRequest).statusCode, 200)
+  t.assert.strictEqual(secondRequest.statusCode, 200)
   server.close()
   proxy.close()
   proxyAgent.close()
 })
 
 test('use proxy-agent to connect through proxy using path with params', async (t) => {
-  t = tspl(t, { plan: 5 })
+  t.plan(5)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -248,11 +247,11 @@ test('use proxy-agent to connect through proxy using path with params', async (t
   const parsedOrigin = new URL(serverUrl)
 
   proxy.on('connect', () => {
-    t.fail('proxy tunnel should not be established')
+    t.assert.fail('proxy tunnel should not be established')
   })
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -264,9 +263,9 @@ test('use proxy-agent to connect through proxy using path with params', async (t
   } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -274,7 +273,7 @@ test('use proxy-agent to connect through proxy using path with params', async (t
 })
 
 test('use proxy-agent to connect through proxy using path with params with tunneling enabled', async (t) => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -284,11 +283,11 @@ test('use proxy-agent to connect through proxy using path with params with tunne
   const parsedOrigin = new URL(serverUrl)
 
   proxy.on('connect', () => {
-    t.ok(true, 'should call proxy')
+    t.assert.ok(true, 'should call proxy')
   })
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -300,9 +299,9 @@ test('use proxy-agent to connect through proxy using path with params with tunne
   } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -310,7 +309,7 @@ test('use proxy-agent to connect through proxy using path with params with tunne
 })
 
 test('use proxy-agent to connect through proxy with basic auth in URL', async (t) => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -320,16 +319,16 @@ test('use proxy-agent to connect through proxy with basic auth in URL', async (t
   const parsedOrigin = new URL(serverUrl)
 
   proxy.authenticate = function (req, fn) {
-    t.ok(true, 'authentication should be called')
+    t.assert.ok(true, 'authentication should be called')
     return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`
   }
   proxy.on('connect', () => {
-    t.fail('proxy tunnel should not be established')
+    t.assert.fail('proxy tunnel should not be established')
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -341,9 +340,9 @@ test('use proxy-agent to connect through proxy with basic auth in URL', async (t
   } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -351,7 +350,7 @@ test('use proxy-agent to connect through proxy with basic auth in URL', async (t
 })
 
 test('use proxy-agent to connect through proxy with basic auth in URL with tunneling enabled', async (t) => {
-  t = tspl(t, { plan: 7 })
+  t.plan(7)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -361,16 +360,16 @@ test('use proxy-agent to connect through proxy with basic auth in URL with tunne
   const parsedOrigin = new URL(serverUrl)
 
   proxy.authenticate = function (req, fn) {
-    t.ok(true, 'authentication should be called')
+    t.assert.ok(true, 'authentication should be called')
     return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`
   }
   proxy.on('connect', () => {
-    t.ok(true, 'proxy should be called')
+    t.assert.ok(true, 'proxy should be called')
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -382,9 +381,9 @@ test('use proxy-agent to connect through proxy with basic auth in URL with tunne
   } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -392,7 +391,7 @@ test('use proxy-agent to connect through proxy with basic auth in URL with tunne
 })
 
 test('use proxy-agent with auth', async (t) => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -406,16 +405,16 @@ test('use proxy-agent with auth', async (t) => {
   const parsedOrigin = new URL(serverUrl)
 
   proxy.authenticate = function (req) {
-    t.ok(true, 'authentication should be called')
+    t.assert.ok(true, 'authentication should be called')
     return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`
   }
   proxy.on('connect', () => {
-    t.fail('proxy tunnel should not be established')
+    t.assert.fail('proxy tunnel should not be established')
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -427,9 +426,9 @@ test('use proxy-agent with auth', async (t) => {
   } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -437,7 +436,7 @@ test('use proxy-agent with auth', async (t) => {
 })
 
 test('use proxy-agent with auth with tunneling enabled', async (t) => {
-  t = tspl(t, { plan: 7 })
+  t.plan(7)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -451,16 +450,16 @@ test('use proxy-agent with auth with tunneling enabled', async (t) => {
   const parsedOrigin = new URL(serverUrl)
 
   proxy.authenticate = function (req) {
-    t.ok(true, 'authentication should be called')
+    t.assert.ok(true, 'authentication should be called')
     return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`
   }
   proxy.on('connect', () => {
-    t.ok(true, 'proxy should be called')
+    t.assert.ok(true, 'proxy should be called')
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -472,9 +471,9 @@ test('use proxy-agent with auth with tunneling enabled', async (t) => {
   } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -482,7 +481,7 @@ test('use proxy-agent with auth with tunneling enabled', async (t) => {
 })
 
 test('use proxy-agent with token', async (t) => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -496,16 +495,16 @@ test('use proxy-agent with token', async (t) => {
   const parsedOrigin = new URL(serverUrl)
 
   proxy.authenticate = function (req) {
-    t.ok(true, 'authentication should be called')
+    t.assert.ok(true, 'authentication should be called')
     return req.headers['proxy-authorization'] === `Bearer ${Buffer.from('user:pass').toString('base64')}`
   }
   proxy.on('connect', () => {
-    t.fail('proxy tunnel should not be established')
+    t.assert.fail('proxy tunnel should not be established')
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -517,9 +516,9 @@ test('use proxy-agent with token', async (t) => {
   } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -527,7 +526,7 @@ test('use proxy-agent with token', async (t) => {
 })
 
 test('use proxy-agent with token with tunneling enabled', async (t) => {
-  t = tspl(t, { plan: 7 })
+  t.plan(7)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -541,16 +540,16 @@ test('use proxy-agent with token with tunneling enabled', async (t) => {
   const parsedOrigin = new URL(serverUrl)
 
   proxy.authenticate = function (req) {
-    t.ok(true, 'authentication should be called')
+    t.assert.ok(true, 'authentication should be called')
     return req.headers['proxy-authorization'] === `Bearer ${Buffer.from('user:pass').toString('base64')}`
   }
   proxy.on('connect', () => {
-    t.ok(true, 'proxy should be called')
+    t.assert.ok(true, 'proxy should be called')
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -562,9 +561,9 @@ test('use proxy-agent with token with tunneling enabled', async (t) => {
   } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -572,7 +571,7 @@ test('use proxy-agent with token with tunneling enabled', async (t) => {
 })
 
 test('use proxy-agent with custom headers', async (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -587,11 +586,11 @@ test('use proxy-agent with custom headers', async (t) => {
   })
 
   proxy.on('connect', (req) => {
-    t.fail('proxy tunnel should not be established')
+    t.assert.fail('proxy tunnel should not be established')
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.headers['user-agent'], 'BarBaz/1.0.0')
+    t.assert.strictEqual(req.headers['user-agent'], 'BarBaz/1.0.0')
     res.end()
   })
 
@@ -606,7 +605,7 @@ test('use proxy-agent with custom headers', async (t) => {
 })
 
 test('use proxy-agent with custom headers with tunneling enabled', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -621,11 +620,11 @@ test('use proxy-agent with custom headers with tunneling enabled', async (t) => 
   })
 
   proxy.on('connect', (req) => {
-    t.strictEqual(req.headers['user-agent'], 'Foobar/1.0.0')
+    t.assert.strictEqual(req.headers['user-agent'], 'Foobar/1.0.0')
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.headers['user-agent'], 'BarBaz/1.0.0')
+    t.assert.strictEqual(req.headers['user-agent'], 'BarBaz/1.0.0')
     res.end()
   })
 
@@ -640,7 +639,7 @@ test('use proxy-agent with custom headers with tunneling enabled', async (t) => 
 })
 
 test('sending proxy-authorization in request headers should throw', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -652,7 +651,7 @@ test('sending proxy-authorization in request headers should throw', async (t) =>
     res.end(JSON.stringify({ hello: 'world' }))
   })
 
-  await t.rejects(
+  await t.assert.rejects(
     request(
       serverUrl + '/hello?foo=bar',
       {
@@ -665,7 +664,7 @@ test('sending proxy-authorization in request headers should throw', async (t) =>
     'Proxy-Authorization should be sent in ProxyAgent'
   )
 
-  await t.rejects(
+  await t.assert.rejects(
     request(
       serverUrl + '/hello?foo=bar',
       {
@@ -678,7 +677,7 @@ test('sending proxy-authorization in request headers should throw', async (t) =>
     'Proxy-Authorization should be sent in ProxyAgent'
   )
 
-  await t.rejects(
+  await t.assert.rejects(
     request(
       serverUrl + '/hello?foo=bar',
       {
@@ -697,7 +696,7 @@ test('sending proxy-authorization in request headers should throw', async (t) =>
 })
 
 test('use proxy-agent with setGlobalDispatcher', async (t) => {
-  t = tspl(t, { plan: 5 })
+  t.plan(5)
   const defaultDispatcher = getGlobalDispatcher()
 
   const server = await buildServer()
@@ -713,11 +712,11 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
 
   proxy.on('connect', () => {
     // proxyTunnel must be set to true in order to tunnel into the endpoint for HTTP->HTTP proxy connections
-    t.fail(true, 'connect to proxy should unreachable by default for HTTP->HTTP proxy connections')
+    t.assert.fail(true, 'connect to proxy should unreachable by default for HTTP->HTTP proxy connections')
   })
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -729,9 +728,9 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
   } = await request(serverUrl + '/hello?foo=bar')
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -739,7 +738,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
 })
 
 test('use proxy-agent with setGlobalDispatcher with tunneling enabled', async (t) => {
-  t = tspl(t, { plan: 6 })
+  t.plan(6)
   const defaultDispatcher = getGlobalDispatcher()
 
   const server = await buildServer()
@@ -754,11 +753,11 @@ test('use proxy-agent with setGlobalDispatcher with tunneling enabled', async (t
   after(() => setGlobalDispatcher(defaultDispatcher))
 
   proxy.on('connect', () => {
-    t.ok(true, 'should call proxy')
+    t.assert.ok(true, 'should call proxy')
   })
   server.on('request', (req, res) => {
-    t.strictEqual(req.url, '/hello?foo=bar')
-    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    t.assert.strictEqual(req.url, '/hello?foo=bar')
+    t.assert.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -770,9 +769,9 @@ test('use proxy-agent with setGlobalDispatcher with tunneling enabled', async (t
   } = await request(serverUrl + '/hello?foo=bar')
   const json = await body.json()
 
-  t.strictEqual(statusCode, 200)
-  t.deepStrictEqual(json, { hello: 'world' })
-  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.deepStrictEqual(json, { hello: 'world' })
+  t.assert.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
 
   server.close()
   proxy.close()
@@ -780,7 +779,7 @@ test('use proxy-agent with setGlobalDispatcher with tunneling enabled', async (t
 })
 
 test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async (t) => {
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
   const defaultDispatcher = getGlobalDispatcher()
 
   const server = await buildServer()
@@ -807,7 +806,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
 
   proxy.on('connect', (req, res) => {
     // proxyTunnel must be set to true in order to tunnel into the endpoint for HTTP->HTTP proxy connections
-    t.fail(true, 'connect to proxy should unreachable by default for HTTP->HTTP proxy connections')
+    t.assert.fail(true, 'connect to proxy should unreachable by default for HTTP->HTTP proxy connections')
   })
 
   server.on('request', (req, res) => {
@@ -815,7 +814,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
     for (const header of ['via', 'x-forwarded-for']) {
       delete req.headers[header]
     }
-    t.deepStrictEqual(req.headers, expectedHeaders)
+    t.assert.deepStrictEqual(req.headers, expectedHeaders)
     res.end('goodbye')
   })
 
@@ -826,11 +825,10 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   server.close()
   proxy.close()
   proxyAgent.close()
-  t.end()
 })
 
 test('ProxyAgent correctly sends headers when using fetch - #1355, #1623 (with proxy tunneling enabled)', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
   const defaultDispatcher = getGlobalDispatcher()
 
   const server = await buildServer()
@@ -862,11 +860,11 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623 (with p
   }
 
   proxy.on('connect', (req, res) => {
-    t.deepStrictEqual(req.headers, expectedProxyHeaders)
+    t.assert.deepStrictEqual(req.headers, expectedProxyHeaders)
   })
 
   server.on('request', (req, res) => {
-    t.deepStrictEqual(req.headers, expectedHeaders)
+    t.assert.deepStrictEqual(req.headers, expectedHeaders)
     res.end('goodbye')
   })
 
@@ -877,11 +875,10 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623 (with p
   server.close()
   proxy.close()
   proxyAgent.close()
-  t.end()
 })
 
 test('should throw when proxy does not return 200', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = await buildServer()
   const proxy = await buildProxy()
@@ -891,31 +888,30 @@ test('should throw when proxy does not return 200', async (t) => {
 
   proxy.on('connect', () => {
     // proxyTunnel must be set to true in order to tunnel into the endpoint for HTTP->HTTP proxy connections
-    t.fail(true, 'connect to proxy should unreachable by default for HTTP->HTTP proxy connections')
+    t.assert.fail(true, 'connect to proxy should unreachable by default for HTTP->HTTP proxy connections')
   })
 
   proxy.authenticate = function (_req) {
-    t.ok(true, 'should call authenticate')
+    t.assert.ok(true, 'should call authenticate')
     return false
   }
 
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   try {
     await request(serverUrl, { dispatcher: proxyAgent })
-    t.fail()
+    t.assert.fail()
   } catch (e) {
-    t.ok(true, 'pass')
-    t.ok(e)
+    t.assert.ok(true, 'pass')
+    t.assert.ok(e)
   }
 
   server.close()
   proxy.close()
   proxyAgent.close()
-  await t.completed
 })
 
 test('should throw when proxy does not return 200 with tunneling enabled', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
 
   const server = await buildServer()
   const proxy = await buildProxy()
@@ -924,27 +920,26 @@ test('should throw when proxy does not return 200 with tunneling enabled', async
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   proxy.authenticate = function (_req) {
-    t.ok(true, 'should call authenticate')
+    t.assert.ok(true, 'should call authenticate')
     return false
   }
 
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
   try {
     await request(serverUrl, { dispatcher: proxyAgent })
-    t.fail()
+    t.assert.fail()
   } catch (e) {
-    t.ok(true, 'pass')
-    t.ok(e)
+    t.assert.ok(true, 'pass')
+    t.assert.ok(e)
   }
 
   server.close()
   proxy.close()
   proxyAgent.close()
-  await t.completed
 })
 
 test('pass ProxyAgent proxy status code error when using fetch - #2161', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -952,7 +947,7 @@ test('pass ProxyAgent proxy status code error when using fetch - #2161', async (
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   proxy.authenticate = function (_req) {
-    t.ok(true, 'should call authenticate')
+    t.assert.ok(true, 'should call authenticate')
     return false
   }
 
@@ -960,18 +955,16 @@ test('pass ProxyAgent proxy status code error when using fetch - #2161', async (
   try {
     await fetch(serverUrl, { dispatcher: proxyAgent })
   } catch (e) {
-    t.ok('cause' in e)
+    t.assert.ok('cause' in e)
   }
 
   server.close()
   proxy.close()
   proxyAgent.close()
-
-  await t.completed
 })
 
 test('Proxy via HTTP to HTTPS endpoint', async (t) => {
-  t = tspl(t, { plan: 4 })
+  t.plan(4)
 
   const server = await buildSSLServer()
   const proxy = await buildProxy()
@@ -989,29 +982,29 @@ test('Proxy via HTTP to HTTPS endpoint', async (t) => {
   })
 
   server.on('request', function (req, res) {
-    t.ok(req.connection.encrypted)
+    t.assert.ok(req.connection.encrypted)
     res.end(JSON.stringify(req.headers))
   })
 
   server.on('secureConnection', () => {
-    t.ok(true, 'server should be connected secured')
+    t.assert.ok(true, 'server should be connected secured')
   })
 
   proxy.on('secureConnection', () => {
-    t.fail('proxy over http should not call secureConnection')
+    t.assert.fail('proxy over http should not call secureConnection')
   })
 
   proxy.on('connect', function () {
-    t.ok(true, 'proxy should be connected')
+    t.assert.ok(true, 'proxy should be connected')
   })
 
   proxy.on('request', function () {
-    t.fail('proxy should never receive requests')
+    t.assert.fail('proxy should never receive requests')
   })
 
   const data = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await data.body.json()
-  t.deepStrictEqual(json, {
+  t.assert.deepStrictEqual(json, {
     host: `localhost:${server.address().port}`,
     connection: 'keep-alive'
   })
@@ -1022,7 +1015,7 @@ test('Proxy via HTTP to HTTPS endpoint', async (t) => {
 })
 
 test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
-  t = tspl(t, { plan: 5 })
+  t.plan(5)
   const server = await buildSSLServer()
   const proxy = await buildSSLProxy()
 
@@ -1045,29 +1038,29 @@ test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
   })
 
   server.on('request', function (req, res) {
-    t.ok(req.connection.encrypted)
+    t.assert.ok(req.connection.encrypted)
     res.end(JSON.stringify(req.headers))
   })
 
   server.on('secureConnection', () => {
-    t.ok(true, 'server should be connected secured')
+    t.assert.ok(true, 'server should be connected secured')
   })
 
   proxy.on('secureConnection', () => {
-    t.ok(true, 'proxy over http should call secureConnection')
+    t.assert.ok(true, 'proxy over http should call secureConnection')
   })
 
   proxy.on('connect', function () {
-    t.ok(true, 'proxy should be connected')
+    t.assert.ok(true, 'proxy should be connected')
   })
 
   proxy.on('request', function () {
-    t.fail('proxy should never receive requests')
+    t.assert.fail('proxy should never receive requests')
   })
 
   const data = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await data.body.json()
-  t.deepStrictEqual(json, {
+  t.assert.deepStrictEqual(json, {
     host: `localhost:${server.address().port}`,
     connection: 'keep-alive'
   })
@@ -1078,7 +1071,7 @@ test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
 })
 
 test('Proxy via HTTPS to HTTP endpoint with tunneling enabled', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   const server = await buildServer()
   const proxy = await buildSSLProxy()
 
@@ -1096,25 +1089,25 @@ test('Proxy via HTTPS to HTTP endpoint with tunneling enabled', async (t) => {
   })
 
   server.on('request', function (req, res) {
-    t.ok(!req.connection.encrypted)
+    t.assert.ok(!req.connection.encrypted)
     res.end(JSON.stringify(req.headers))
   })
 
   server.on('secureConnection', () => {
-    t.fail('server is http')
+    t.assert.fail('server is http')
   })
 
   proxy.on('secureConnection', () => {
-    t.ok(true, 'proxy over http should call secureConnection')
+    t.assert.ok(true, 'proxy over http should call secureConnection')
   })
 
   proxy.on('request', function () {
-    t.fail('proxy should never receive requests')
+    t.assert.fail('proxy should never receive requests')
   })
 
   const data = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await data.body.json()
-  t.deepStrictEqual(json, {
+  t.assert.deepStrictEqual(json, {
     host: `localhost:${server.address().port}`,
     connection: 'keep-alive'
   })
@@ -1125,7 +1118,7 @@ test('Proxy via HTTPS to HTTP endpoint with tunneling enabled', async (t) => {
 })
 
 test('Proxy via HTTP to HTTP endpoint with tunneling enabled', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -1134,29 +1127,29 @@ test('Proxy via HTTP to HTTP endpoint with tunneling enabled', async (t) => {
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
 
   server.on('request', function (req, res) {
-    t.ok(!req.connection.encrypted)
+    t.assert.ok(!req.connection.encrypted)
     res.end(JSON.stringify(req.headers))
   })
 
   server.on('secureConnection', () => {
-    t.fail('server is http')
+    t.assert.fail('server is http')
   })
 
   proxy.on('secureConnection', () => {
-    t.fail('proxy is http')
+    t.assert.fail('proxy is http')
   })
 
   proxy.on('connect', () => {
-    t.ok(true, 'connect to proxy')
+    t.assert.ok(true, 'connect to proxy')
   })
 
   proxy.on('request', function () {
-    t.fail('proxy should never receive requests')
+    t.assert.fail('proxy should never receive requests')
   })
 
   const data = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await data.body.json()
-  t.deepStrictEqual(json, {
+  t.assert.deepStrictEqual(json, {
     host: `localhost:${server.address().port}`,
     connection: 'keep-alive'
   })
@@ -1167,7 +1160,7 @@ test('Proxy via HTTP to HTTP endpoint with tunneling enabled', async (t) => {
 })
 
 test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -1176,26 +1169,26 @@ test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
 
   server.on('request', function (req, res) {
-    t.ok(!req.connection.encrypted)
+    t.assert.ok(!req.connection.encrypted)
     const headers = { host: req.headers.host, connection: req.headers.connection }
     res.end(JSON.stringify(headers))
   })
 
   server.on('secureConnection', () => {
-    t.fail('server is http')
+    t.assert.fail('server is http')
   })
 
   proxy.on('secureConnection', () => {
-    t.fail('proxy is http')
+    t.assert.fail('proxy is http')
   })
 
   proxy.on('connect', () => {
-    t.fail(true, 'connect to proxy should unreachable if proxyTunnel is false')
+    t.assert.fail(true, 'connect to proxy should unreachable if proxyTunnel is false')
   })
 
   proxy.on('request', function (req) {
     const bits = { method: req.method, url: req.url }
-    t.deepStrictEqual(bits, {
+    t.assert.deepStrictEqual(bits, {
       method: 'GET',
       url: `${serverUrl}/`
     })
@@ -1203,7 +1196,7 @@ test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
 
   const data = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await data.body.json()
-  t.deepStrictEqual(json, {
+  t.assert.deepStrictEqual(json, {
     host: `localhost:${server.address().port}`,
     connection: 'keep-alive'
   })
@@ -1214,7 +1207,7 @@ test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
 })
 
 test('Proxy via HTTPS to HTTP fails on wrong SNI', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t.plan(3)
   const server = await buildServer()
   const proxy = await buildSSLProxy()
 
@@ -1230,33 +1223,33 @@ test('Proxy via HTTPS to HTTP fails on wrong SNI', async (t) => {
   })
 
   server.on('request', function (req, res) {
-    t.ok(!req.connection.encrypted)
+    t.assert.ok(!req.connection.encrypted)
     res.end(JSON.stringify(req.headers))
   })
 
   server.on('secureConnection', () => {
-    t.fail('server is http')
+    t.assert.fail('server is http')
   })
 
   proxy.on('secureConnection', () => {
-    t.fail('proxy is http')
+    t.assert.fail('proxy is http')
   })
 
   proxy.on('connect', () => {
-    t.ok(true, 'connect to proxy')
+    t.assert.ok(true, 'connect to proxy')
   })
 
   proxy.on('request', function () {
-    t.fail('proxy should never receive requests')
+    t.assert.fail('proxy should never receive requests')
   })
 
   try {
     await request(serverUrl, { dispatcher: proxyAgent })
     throw new Error('should fail')
   } catch (e) {
-    t.ok(e instanceof SecureProxyConnectionError)
-    t.ok(e.cause instanceof Error)
-    t.ok(e.cause.code === 'ERR_TLS_CERT_ALTNAME_INVALID')
+    t.assert.ok(e instanceof SecureProxyConnectionError)
+    t.assert.ok(e.cause instanceof Error)
+    t.assert.ok(e.cause.code === 'ERR_TLS_CERT_ALTNAME_INVALID')
   }
 
   server.close()
@@ -1265,7 +1258,7 @@ test('Proxy via HTTPS to HTTP fails on wrong SNI', async (t) => {
 })
 
 test('ProxyAgent keeps customized host in request headers - #3019', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -1275,11 +1268,11 @@ test('ProxyAgent keeps customized host in request headers - #3019', async (t) =>
   const customHost = 'example.com'
 
   proxy.on('connect', (req) => {
-    t.strictEqual(req.headers.host, `localhost:${server.address().port}`)
+    t.assert.strictEqual(req.headers.host, `localhost:${server.address().port}`)
   })
 
   server.on('request', (req, res) => {
-    t.strictEqual(req.headers.host, customHost)
+    t.assert.strictEqual(req.headers.host, customHost)
     res.end()
   })
 
@@ -1294,7 +1287,7 @@ test('ProxyAgent keeps customized host in request headers - #3019', async (t) =>
 })
 
 test('ProxyAgent handles multiple concurrent HTTP requests via HTTP proxy', async (t) => {
-  t = tspl(t, { plan: 20 })
+  t.plan(20)
   // Start target HTTP server
   const server = createServer((req, res) => {
     setTimeout(() => {
@@ -1319,16 +1312,16 @@ test('ProxyAgent handles multiple concurrent HTTP requests via HTTP proxy', asyn
     requests.push(
       request(`http://localhost:${targetPort}/test${i}`, { dispatcher: proxyAgent })
         .then(async res => {
-          t.strictEqual(res.statusCode, 200)
+          t.assert.strictEqual(res.statusCode, 200)
           const json = await res.body.json()
-          t.deepStrictEqual(json, { url: `/test${i}` })
+          t.assert.deepStrictEqual(json, { url: `/test${i}` })
         })
     )
   }
   try {
     await Promise.all(requests)
   } catch (err) {
-    t.fail(err)
+    t.assert.fail(err)
   }
   server.close()
   proxy.close()

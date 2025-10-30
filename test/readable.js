@@ -1,12 +1,11 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, describe } = require('node:test')
 const { Readable } = require('../lib/api/readable')
 
 describe('Readable', () => {
   test('avoid body reordering', async function (t) {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     function resume () {
     }
@@ -23,11 +22,11 @@ describe('Readable', () => {
 
     const text = await r.text()
 
-    t.strictEqual(text, 'helloworld')
+    t.assert.strictEqual(text, 'helloworld')
   })
 
   test('destroy timing text', async function (t) {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     function resume () {
     }
@@ -37,11 +36,11 @@ describe('Readable', () => {
     const r = new Readable({ resume, abort })
     r.destroy(new Error('kaboom'))
 
-    await t.rejects(r.text(), new Error('kaboom'))
+    await t.assert.rejects(r.text(), new Error('kaboom'))
   })
 
   test('destroy timing promise', async function (t) {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     function resume () {
     }
@@ -54,14 +53,14 @@ describe('Readable', () => {
     })
     await new Promise(resolve => {
       r.on('error', err => {
-        t.ok(err)
+        t.assert.ok(err)
         resolve(null)
       })
     })
   })
 
   test('.arrayBuffer()', async function (t) {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     function resume () {
     }
@@ -80,11 +79,11 @@ describe('Readable', () => {
     const expected = new ArrayBuffer(11)
     const view = new Uint8Array(expected)
     view.set(Buffer.from('hello world'))
-    t.deepStrictEqual(arrayBuffer, expected)
+    t.assert.deepStrictEqual(arrayBuffer, expected)
   })
 
   test('.bytes()', async function (t) {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     function resume () {
     }
@@ -101,11 +100,11 @@ describe('Readable', () => {
 
     const bytes = await r.bytes()
 
-    t.deepStrictEqual(bytes, new TextEncoder().encode('hello world'))
+    t.assert.deepStrictEqual(bytes, new TextEncoder().encode('hello world'))
   })
 
   test('.json()', async function (t) {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     function resume () {
     }
@@ -121,11 +120,11 @@ describe('Readable', () => {
 
     const obj = await r.json()
 
-    t.deepStrictEqual(obj, { hello: 'world' })
+    t.assert.deepStrictEqual(obj, { hello: 'world' })
   })
 
   test('.text()', async function (t) {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     function resume () {
     }
@@ -141,11 +140,11 @@ describe('Readable', () => {
 
     const text = await r.text()
 
-    t.strictEqual(text, 'hello world')
+    t.assert.strictEqual(text, 'hello world')
   })
 
   test('ignore BOM', async function (t) {
-    t = tspl(t, { plan: 1 })
+    t.plan(1)
 
     function resume () {
     }
@@ -162,11 +161,11 @@ describe('Readable', () => {
 
     const text = await r.text()
 
-    t.strictEqual(text, 'hello world')
+    t.assert.strictEqual(text, 'hello world')
   })
 
   test('.bodyUsed', async function (t) {
-    t = tspl(t, { plan: 3 })
+    t.plan(3)
 
     function resume () {
     }
@@ -180,12 +179,12 @@ describe('Readable', () => {
       r.push(null)
     })
 
-    t.strictEqual(r.bodyUsed, false)
+    t.assert.strictEqual(r.bodyUsed, false)
 
     const text = await r.text()
 
-    t.strictEqual(r.bodyUsed, true)
+    t.assert.strictEqual(r.bodyUsed, true)
 
-    t.strictEqual(text, 'hello world')
+    t.assert.strictEqual(text, 'hello world')
   })
 })

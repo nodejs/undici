@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, after, describe } = require('node:test')
 const { readFileSync } = require('node:fs')
 const { join } = require('node:path')
@@ -20,8 +19,8 @@ describe('A client should disable session caching', () => {
   const clientSessions = {}
   let serverRequests = 0
 
-  test('Prepare request', async t => {
-    t = tspl(t, { plan: 3 })
+  test('Prepare request', (t, done) => {
+    t.plan(3)
     const server = https.createServer(options, (req, res) => {
       if (req.url === '/drop-key') {
         server.setTicketKeys(crypto.randomBytes(48))
@@ -66,30 +65,28 @@ describe('A client should disable session caching', () => {
           delete tls.ciphers
         }
         client.request(options, (err, data) => {
-          t.ifError(err)
+          t.assert.ifError(err)
           clientSessions[options.name] = client[kSocket].getSession()
           data.body.resume().on('end', () => {
             if (queue.length !== 0) {
               return request()
             }
-            t.ok(true, 'pass')
+            t.assert.ok(true, 'pass')
+            done()
           })
         })
       }
       request()
     })
-
-    await t.completed
   })
 
-  test('Verify cached sessions', async t => {
-    t = tspl(t, { plan: 2 })
-    t.strictEqual(serverRequests, 2)
-    t.notEqual(
+  test('Verify cached sessions', t => {
+    t.plan(2)
+    t.assert.strictEqual(serverRequests, 2)
+    t.assert.notEqual(
       clientSessions.first.toString('hex'),
       clientSessions.second.toString('hex')
     )
-    await t.completed
   })
 })
 
@@ -99,8 +96,8 @@ describe('A pool should be able to reuse TLS sessions between clients', () => {
   const REQ_COUNT = 10
   const ASSERT_PERFORMANCE_GAIN = false
 
-  test('Prepare request', async t => {
-    t = tspl(t, { plan: 2 + 1 + (ASSERT_PERFORMANCE_GAIN ? 1 : 0) })
+  test('Prepare request', (t, done) => {
+    t.plan(2 + 1 + (ASSERT_PERFORMANCE_GAIN ? 1 : 0))
     const server = https.createServer(options, (req, res) => {
       serverRequests++
       res.end()
@@ -171,11 +168,10 @@ describe('A pool should be able to reuse TLS sessions between clients', () => {
       await runRequests(poolWithoutSessionReuse, REQ_COUNT, false)
       await runRequests(poolWithSessionReuse, REQ_COUNT, true)
 
-      t.strictEqual(numSessions, 2)
-      t.strictEqual(serverRequests, 2 + REQ_COUNT * 2)
-      t.ok(true, 'pass')
+      t.assert.strictEqual(numSessions, 2)
+      t.assert.strictEqual(serverRequests, 2 + REQ_COUNT * 2)
+      t.assert.ok(true, 'pass')
+      done()
     })
-
-    await t.completed
   })
 })
