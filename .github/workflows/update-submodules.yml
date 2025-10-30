@@ -30,19 +30,20 @@ jobs:
         run: |
           git submodule update --init --recursive
 
-
       - name: Check for Changes
         id: check-for-changes
         run: |
           if git diff --quiet; then
+            echo "no changes detected"
             echo "change=false" >> "$GITHUB_OUTPUT"
           else
+            echo "changes detected"
             echo "change=true" >> "$GITHUB_OUTPUT"
           fi
       
       - name: Create Branch
         id: create-branch
-        if: steps.check-for-changes.outputs.change == 'true'
+        if: ${{ steps.check-for-changes.outputs.change == 'true'}}
         run: |
           git checkout -b submodules-update
           git add .
@@ -51,7 +52,7 @@ jobs:
       
       - name: Create Pull Request
         id: create-pr
-        if: steps.check-for-changes.outputs.change == 'true'
+        if: ${{ steps.check-for-changes.outputs.change == 'true'}}
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           base: main
