@@ -47,6 +47,7 @@ jobs:
           git checkout -b submodules-update
           git add .
           git commit -m "chore: update Submodules"
+          git push --force --set-upstream origin submodules-update
       
       - name: Create Pull Request
         id: create-pr
