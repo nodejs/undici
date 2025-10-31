@@ -190,10 +190,7 @@ test('Dispatcher#Connect', async t => {
     stream.end('helloworld')
   })
 
-  after(() => proxy.close())
   await once(proxy.listen(0), 'listening')
-
-  after(() => server.close())
   await once(server.listen(0), 'listening')
 
   const client = new Client(`https://localhost:${proxy.address().port}`, {
@@ -203,6 +200,8 @@ test('Dispatcher#Connect', async t => {
     allowH2: true
   })
   after(() => client.close())
+  after(() => proxy.close())
+  after(() => server.close())
 
   const { statusCode, headers, socket } = await client.connect({ path: '/', headers: { 'x-my-header': 'foo' } })
   t.strictEqual(statusCode, 200)
@@ -220,22 +219,52 @@ test('Dispatcher#Connect', async t => {
   await t.completed
 })
 
-test('Dispatcher#Upgrade', async t => {
+test('Dispatcher#Upgrade - Should throw on non-websocket upgrade', async t => {
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', async (stream, headers) => {
+    stream.end()
+  })
+
   t = tspl(t, { plan: 1 })
 
-  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  server.listen(0, async () => {
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      },
+      allowH2: true
+    })
+
+    after(() => server.close())
+    after(() => client.close())
+
+    try {
+      await client.upgrade({ path: '/', protocol: 'any' })
+    } catch (error) {
+      t.strictEqual(error.message, 'Custom upgrade "any" not supported over HTTP/2')
+    }
+  })
+
+  await t.completed
+})
+
+test('Dispatcher#Upgrade', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createSecureServer({ ...(await pem.generate({ opts: { keySize: 2048 } })), settings: { enableConnectProtocol: true } })
 
   server.on('stream', (stream, headers) => {
     stream.on('error', err => {
       t.fail(err)
     })
 
+    stream.respond({ ':status': 200 })
     stream.resume()
 
     stream.end()
   })
 
-  after(() => server.close())
   await once(server.listen(0), 'listening')
 
   const client = new Client(`https://localhost:${server.address().port}`, {
@@ -244,14 +273,15 @@ test('Dispatcher#Upgrade', async t => {
     },
     allowH2: true
   })
-  after(() => client.close())
+  after(() => client.close().then(() => { server.close() }))
 
-  await t.rejects(
-    client.upgrade({ path: '/' }),
-    {
-      message: 'Upgrade not supported for H2'
-    }
-  )
+  const { socket } = await client.upgrade({ path: '/', protocol: 'websocket' })
+
+  t.ok(socket.readable)
+  t.ok(socket.writable)
+  t.strictEqual(socket.closed, false)
+
+  after(() => socket.end())
 
   await t.completed
 })
