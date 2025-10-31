@@ -265,7 +265,6 @@ test('Dispatcher#Upgrade', async t => {
     stream.end()
   })
 
-  after(() => server.close())
   await once(server.listen(0), 'listening')
 
   const client = new Client(`https://localhost:${server.address().port}`, {
@@ -274,7 +273,7 @@ test('Dispatcher#Upgrade', async t => {
     },
     allowH2: true
   })
-  after(() => client.close())
+  after(() => client.close().then(() => { server.close() }))
 
   const { socket } = await client.upgrade({ path: '/', protocol: 'websocket' })
 
