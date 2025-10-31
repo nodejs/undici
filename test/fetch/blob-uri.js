@@ -23,6 +23,19 @@ test('fetching blob: uris', async (t) => {
     t.assert.strictEqual(`${blob.size}`, res.headers.get('Content-Length'))
   })
 
+  await t.test('a range fetch request returns the inclusive byte range', async () => {
+    const res = await fetch(objectURL, {
+      headers: {
+        Range: 'bytes=1-3'
+      }
+    })
+
+    t.assert.strictEqual(res.status, 206)
+    t.assert.strictEqual(await res.text(), blobContents.slice(1, 4))
+    t.assert.strictEqual(res.headers.get('Content-Length'), '3')
+    t.assert.strictEqual(res.headers.get('Content-Range'), `bytes 1-3/${blob.size}`)
+  })
+
   await t.test('non-GET method to blob: fails', async () => {
     try {
       await fetch(objectURL, {

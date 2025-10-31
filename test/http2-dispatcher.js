@@ -23,6 +23,9 @@ test('Dispatcher#Stream', async t => {
     stream.on('data', chunk => {
       requestBody += chunk
     })
+    stream.on('error', err => {
+      t.fail(err)
+    })
 
     stream.respond({ ':status': 200, 'x-custom': 'custom-header' })
     stream.end('hello h2!')
@@ -72,6 +75,10 @@ test('Dispatcher#Pipeline', async t => {
     stream.setEncoding('utf-8')
     stream.on('data', chunk => {
       requestBody += chunk
+    })
+
+    stream.on('error', err => {
+      t.fail(err)
     })
 
     stream.respond({ ':status': 200, 'x-custom': 'custom-header' })
@@ -137,6 +144,10 @@ test('Dispatcher#Connect', async t => {
       return
     }
 
+    stream.on('error', err => {
+      t.fail(err)
+    })
+
     const forward = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
@@ -145,17 +156,21 @@ test('Dispatcher#Connect', async t => {
     })
     after(() => forward.close())
 
-    const response = await forward.request({
-      path: '/',
-      method: 'POST',
-      body: stream,
-      headers: {
-        'x-my-header': headers['x-my-header']
-      }
-    })
+    try {
+      const response = await forward.request({
+        path: '/',
+        method: 'POST',
+        body: stream,
+        headers: {
+          'x-my-header': headers['x-my-header']
+        }
+      })
 
-    stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
-    response.body.pipe(stream)
+      stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
+      response.body.pipe(stream)
+    } catch (err) {
+      stream.destroy(err)
+    }
   })
 
   server.on('stream', (stream, headers) => {
@@ -165,6 +180,10 @@ test('Dispatcher#Connect', async t => {
     })
     stream.once('end', () => {
       t.strictEqual(requestBody, expectedBody)
+    })
+
+    stream.on('error', err => {
+      t.fail(err)
     })
 
     stream.respond({ ':status': 200, 'x-my-header': headers['x-my-header'] })
@@ -194,9 +213,7 @@ test('Dispatcher#Connect', async t => {
     t.strictEqual(responseBody, 'helloworld')
   })
   socket.setEncoding('utf-8')
-  socket.cork()
   socket.write(expectedBody)
-  socket.uncork()
   socket.end()
 
   await t.completed
@@ -238,7 +255,13 @@ test('Dispatcher#Upgrade', async t => {
   const server = createSecureServer({ ...(await pem.generate({ opts: { keySize: 2048 } })), settings: { enableConnectProtocol: true } })
 
   server.on('stream', (stream, headers) => {
+    stream.on('error', err => {
+      t.fail(err)
+    })
+
     stream.respond({ ':status': 200 })
+    stream.resume()
+
     stream.end()
   })
 
@@ -271,6 +294,10 @@ test('Dispatcher#destroy', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers) => {
+    stream.on('error', err => {
+      t.fail(err)
+    })
+    stream.resume()
     setTimeout(stream.end.bind(stream), 1500)
   })
 
@@ -354,6 +381,10 @@ test('Should handle h2 request without body', async t => {
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': headers['x-my-header'],
       ':status': 200
+    })
+
+    stream.on('error', err => {
+      t.fail(err)
     })
 
     for await (const chunk of stream) {
