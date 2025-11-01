@@ -7,6 +7,7 @@
   * [H2CClient](/docs/api/H2CClient.md "Undici H2C API - Client")
   * [Pool](/docs/api/Pool.md "Undici API - Pool")
   * [BalancedPool](/docs/api/BalancedPool.md "Undici API - BalancedPool")
+  * [RoundRobinPool](/docs/api/RoundRobinPool.md "Undici API - RoundRobinPool")
   * [Agent](/docs/api/Agent.md "Undici API - Agent")
   * [ProxyAgent](/docs/api/ProxyAgent.md "Undici API - ProxyAgent")
   * [RetryAgent](/docs/api/RetryAgent.md "Undici API - RetryAgent")
