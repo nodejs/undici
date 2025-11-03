@@ -33,6 +33,27 @@ Extends: [`ClientOptions`](/docs/docs/api/Client.md#parameter-clientoptions)
 
 **Example**: In Kubernetes, when using a Service DNS name with multiple Pod replicas, kube-proxy load balances TCP connections. `RoundRobinPool` ensures each connection (and thus each Pod) receives an equal share of requests.
 
+### Important: Backend Distribution Considerations
+
+`RoundRobinPool` distributes **HTTP requests** evenly across **TCP connections**. Whether this translates to even backend server distribution depends on the load balancer's behavior:
+
+**✓ Works when the load balancer**:
+- Assigns different backends to different TCP connections from the same client
+- Uses algorithms like: round-robin, random, least-connections (without client affinity)
+- Example: Default Kubernetes Services without `sessionAffinity`
+
+**✗ Does NOT work when**:
+- Load balancer has client/source IP affinity (all connections from one IP → same backend)
+- Load balancer uses source-IP-hash or sticky sessions
+
+**How it works:**
+1. `RoundRobinPool` creates N TCP connections to the load balancer endpoint
+2. Load balancer assigns each TCP connection to a backend (per its algorithm)
+3. `RoundRobinPool` cycles HTTP requests across those N connections
+4. Result: Requests distributed proportionally to how the LB distributed the connections
+
+If the load balancer assigns all connections to the same backend (e.g., due to session affinity), `RoundRobinPool` cannot overcome this. In such cases, consider using [`BalancedPool`](/docs/docs/api/BalancedPool.md) with direct backend addresses (e.g., individual pod IPs) instead of a load-balanced endpoint.
+
 ## Instance Properties
 
 ### `RoundRobinPool.closed`

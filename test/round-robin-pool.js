@@ -302,3 +302,59 @@ test('close/destroy behavior', async (t) => {
 
   await t.completed
 })
+
+test('verifies round-robin kGetDispatcher cycling algorithm', async (t) => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer((req, res) => {
+    res.end('ok')
+  })
+
+  after(() => server.close())
+  await new Promise(resolve => server.listen(0, resolve))
+
+  const clientOrder = []
+  let clientIdCounter = 0
+
+  const pool = new RoundRobinPool(`http://localhost:${server.address().port}`, {
+    connections: 3,
+    factory: (origin, opts) => {
+      const client = new Client(origin, opts)
+      const id = clientIdCounter++
+
+      // Intercept dispatch to track which client handles each request
+      const originalDispatch = client.dispatch.bind(client)
+      client.dispatch = function (opts, handler) {
+        clientOrder.push(id)
+        return originalDispatch(opts, handler)
+      }
+
+      return client
+    }
+  })
+
+  after(() => pool.close())
+
+  // Make 6 requests concurrently
+  const responses = await Promise.all([
+    pool.request({ path: '/', method: 'GET' }),
+    pool.request({ path: '/', method: 'GET' }),
+    pool.request({ path: '/', method: 'GET' }),
+    pool.request({ path: '/', method: 'GET' }),
+    pool.request({ path: '/', method: 'GET' }),
+    pool.request({ path: '/', method: 'GET' })
+  ])
+
+  await Promise.all(responses.map(({ body }) => body.text()))
+
+  // Verify core round-robin behavior
+  t.strictEqual(clientIdCounter, 3, 'Should create exactly 3 clients')
+  t.deepStrictEqual(clientOrder.slice(0, 3), [0, 1, 2], 'First 3 dispatches create clients 0,1,2 in order')
+  t.ok(clientOrder.every(id => id < 3), 'All dispatches use one of the 3 clients')
+
+  // Verify all clients were used (proves cycling)
+  const uniqueClients = new Set(clientOrder)
+  t.strictEqual(uniqueClients.size, 3, 'All 3 clients used (cycling verified)')
+
+  await t.completed
+})
