@@ -518,7 +518,7 @@ Note that consuming the response body is _mandatory_ for `request`:
 ```js
 // Do
 const { body, headers } = await request(url);
-await res.body.dump(); // force consumption of body
+await body.dump(); // force consumption of body
 
 // Do not
 const { headers } = await request(url);
