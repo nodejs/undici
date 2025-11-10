@@ -22,7 +22,7 @@
     "request": "^2.88.2",
     "superagent": "^10.0.0",
     "tinybench": "^5.0.0",
-    "uWebSockets.js": "uNetworking/uWebSockets.js#v20.55.0",
+    "uWebSockets.js": "uNetworking/uWebSockets.js#v20.56.0",
     "wait-on": "^9.0.1"
   }
 }
