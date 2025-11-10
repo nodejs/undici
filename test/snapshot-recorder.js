@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { unlink } = require('node:fs/promises')
@@ -28,16 +27,16 @@ test('SnapshotRecorder - basic recording and retrieval', (t) => {
   recorder.record(requestOpts, response)
 
   // Verify it was recorded
-  assert.strictEqual(recorder.size(), 1)
+  t.assert.strictEqual(recorder.size(), 1)
 
   // Retrieve the snapshot
   const snapshot = recorder.findSnapshot(requestOpts)
-  assert(snapshot)
-  assert.strictEqual(snapshot.request.method, 'GET')
-  assert.strictEqual(snapshot.request.url, 'https://api.example.com/users/123')
-  assert.strictEqual(snapshot.response.statusCode, 200)
+  t.assert.ok(snapshot)
+  t.assert.strictEqual(snapshot.request.method, 'GET')
+  t.assert.strictEqual(snapshot.request.url, 'https://api.example.com/users/123')
+  t.assert.strictEqual(snapshot.response.statusCode, 200)
   // Body is stored as base64 string
-  assert.strictEqual(snapshot.response.body, response.body.toString('base64'))
+  t.assert.strictEqual(snapshot.response.body, response.body.toString('base64'))
 })
 
 test('SnapshotRecorder - request key formatting', (t) => {
@@ -55,11 +54,11 @@ test('SnapshotRecorder - request key formatting', (t) => {
   const cachedSets = createHeaderFilters({})
   const formatted = formatRequestKey(requestOpts, cachedSets)
 
-  assert.strictEqual(formatted.method, 'POST')
-  assert.strictEqual(formatted.url, 'https://api.example.com/search?q=test&limit=10')
-  assert.strictEqual(formatted.headers['content-type'], 'application/json')
-  assert.strictEqual(formatted.headers.authorization, 'Bearer token')
-  assert.strictEqual(formatted.body, '{"filter": "active"}')
+  t.assert.strictEqual(formatted.method, 'POST')
+  t.assert.strictEqual(formatted.url, 'https://api.example.com/search?q=test&limit=10')
+  t.assert.strictEqual(formatted.headers['content-type'], 'application/json')
+  t.assert.strictEqual(formatted.headers.authorization, 'Bearer token')
+  t.assert.strictEqual(formatted.body, '{"filter": "active"}')
 })
 
 test('SnapshotRecorder - request hashing', (t) => {
@@ -89,13 +88,13 @@ test('SnapshotRecorder - request hashing', (t) => {
   const hash3 = createRequestHash(request3)
 
   // Same requests should have same hash
-  assert.strictEqual(hash1, hash2)
+  t.assert.strictEqual(hash1, hash2)
 
   // Different requests should have different hashes
-  assert.notStrictEqual(hash1, hash3)
+  t.assert.notStrictEqual(hash1, hash3)
 
   // Hashes should be URL-safe base64
-  assert(hash1.match(/^[A-Za-z0-9_-]+$/))
+  t.assert.ok(hash1.match(/^[A-Za-z0-9_-]+$/))
 })
 
 test('SnapshotRecorder - header normalization', (t) => {
@@ -122,9 +121,9 @@ test('SnapshotRecorder - header normalization', (t) => {
   const formatted2 = formatRequestKey(requestOpts2, cachedSets)
 
   // Headers should be normalized to lowercase
-  assert.deepStrictEqual(formatted1.headers, formatted2.headers)
-  assert.strictEqual(formatted1.headers['content-type'], 'application/json')
-  assert.strictEqual(formatted1.headers.authorization, 'Bearer token')
+  t.assert.deepStrictEqual(formatted1.headers, formatted2.headers)
+  t.assert.strictEqual(formatted1.headers['content-type'], 'application/json')
+  t.assert.strictEqual(formatted1.headers.authorization, 'Bearer token')
 })
 
 test('SnapshotRecorder - file persistence', async (t) => {
@@ -144,7 +143,7 @@ test('SnapshotRecorder - file persistence', async (t) => {
     { statusCode: 200, headers: {}, body: Buffer.from('post data'), trailers: {} }
   )
 
-  assert.strictEqual(recorder.size(), 2)
+  t.assert.strictEqual(recorder.size(), 2)
 
   // Save to file
   await recorder.saveSnapshots()
@@ -153,7 +152,7 @@ test('SnapshotRecorder - file persistence', async (t) => {
   const newRecorder = new SnapshotRecorder({ snapshotPath })
   await newRecorder.loadSnapshots()
 
-  assert.strictEqual(newRecorder.size(), 2)
+  t.assert.strictEqual(newRecorder.size(), 2)
 
   // Verify snapshots were loaded correctly
   const userSnapshot = newRecorder.findSnapshot({
@@ -162,10 +161,10 @@ test('SnapshotRecorder - file persistence', async (t) => {
     method: 'GET'
   })
 
-  assert(userSnapshot)
-  assert.strictEqual(userSnapshot.response.statusCode, 200)
+  t.assert.ok(userSnapshot)
+  t.assert.strictEqual(userSnapshot.response.statusCode, 200)
   // Body is now stored as base64 string
-  assert.strictEqual(userSnapshot.response.body, Buffer.from('user data').toString('base64'))
+  t.assert.strictEqual(userSnapshot.response.body, Buffer.from('user data').toString('base64'))
 })
 
 test('SnapshotRecorder - loading non-existent file', async (t) => {
@@ -174,7 +173,7 @@ test('SnapshotRecorder - loading non-existent file', async (t) => {
 
   // Should not throw, just create empty recorder
   await recorder.loadSnapshots()
-  assert.strictEqual(recorder.size(), 0)
+  t.assert.strictEqual(recorder.size(), 0)
 })
 
 test('SnapshotRecorder - array header handling', (t) => {
@@ -191,8 +190,8 @@ test('SnapshotRecorder - array header handling', (t) => {
   const formatted = formatRequestKey(requestOpts, cachedSets)
 
   // Array headers should be joined with comma
-  assert.strictEqual(formatted.headers.accept, 'application/json, text/plain')
-  assert.strictEqual(formatted.headers['x-custom'], 'single-value')
+  t.assert.strictEqual(formatted.headers.accept, 'application/json, text/plain')
+  t.assert.strictEqual(formatted.headers['x-custom'], 'single-value')
 })
 
 test('SnapshotRecorder - query parameter handling', (t) => {
@@ -213,7 +212,7 @@ test('SnapshotRecorder - query parameter handling', (t) => {
   const formatted2 = formatRequestKey(requestOpts2, cachedSets)
 
   // URLs with different query parameter order should be normalized
-  assert.strictEqual(formatted1.url, 'https://api.example.com/search?q=test&sort=date')
+  t.assert.strictEqual(formatted1.url, 'https://api.example.com/search?q=test&sort=date')
 
   // But they should still create different hashes if params are truly different
   const hash1 = createRequestHash(formatted1)
@@ -221,7 +220,7 @@ test('SnapshotRecorder - query parameter handling', (t) => {
 
   // This tests that parameter order matters in our current implementation
   // We might want to normalize parameter order in the future
-  assert.notStrictEqual(hash1, hash2)
+  t.assert.notStrictEqual(hash1, hash2)
 })
 
 test('SnapshotRecorder - clear functionality', async (t) => {
@@ -238,18 +237,18 @@ test('SnapshotRecorder - clear functionality', async (t) => {
     { statusCode: 200, headers: {}, body: Buffer.from('data2'), trailers: {} }
   )
 
-  assert.strictEqual(recorder.size(), 2)
+  t.assert.strictEqual(recorder.size(), 2)
 
   // Clear and verify
   recorder.clear()
-  assert.strictEqual(recorder.size(), 0)
+  t.assert.strictEqual(recorder.size(), 0)
 
   // Should not find any snapshots
   const snapshot = recorder.findSnapshot({
     origin: 'https://api.example.com',
     path: '/test1'
   })
-  assert.strictEqual(snapshot, undefined)
+  t.assert.strictEqual(snapshot, undefined)
 })
 
 test('SnapshotRecorder - custom header matching', (t) => {
@@ -265,7 +264,7 @@ test('SnapshotRecorder - custom header matching', (t) => {
   const matchSpecificCachedSets = createHeaderFilters(matchSpecificOptions)
   const matchSpecific = filterHeadersForMatching(headers, matchSpecificCachedSets, matchSpecificOptions)
 
-  assert.deepStrictEqual(matchSpecific, {
+  t.assert.deepStrictEqual(matchSpecific, {
     'content-type': 'application/json',
     accept: 'application/json'
   })
@@ -275,7 +274,7 @@ test('SnapshotRecorder - custom header matching', (t) => {
   const ignoreCachedSets = createHeaderFilters(ignoreOptions)
   const ignoreAuth = filterHeadersForMatching(headers, ignoreCachedSets, ignoreOptions)
 
-  assert.deepStrictEqual(ignoreAuth, {
+  t.assert.deepStrictEqual(ignoreAuth, {
     'content-type': 'application/json',
     accept: 'application/json'
   })
@@ -285,7 +284,7 @@ test('SnapshotRecorder - custom header matching', (t) => {
   const excludeCachedSets = createHeaderFilters(excludeOptions)
   const excludeSensitive = filterHeadersForMatching(headers, excludeCachedSets, excludeOptions)
 
-  assert.deepStrictEqual(excludeSensitive, {
+  t.assert.deepStrictEqual(excludeSensitive, {
     'content-type': 'application/json',
     'x-request-id': '123',
     accept: 'application/json'
@@ -305,7 +304,7 @@ test('SnapshotRecorder - header filtering for storage', (t) => {
     exclude: new Set(['set-cookie', 'authorization'])
   })
 
-  assert.deepStrictEqual(filtered, {
+  t.assert.deepStrictEqual(filtered, {
     'content-type': 'application/json',
     'cache-control': 'no-cache'
   })
@@ -323,7 +322,7 @@ test('SnapshotRecorder - case sensitivity in header filtering', (t) => {
   const caseInsensitiveCachedSets = createHeaderFilters(caseInsensitiveOptions)
   const caseInsensitive = filterHeadersForMatching(headers, caseInsensitiveCachedSets, caseInsensitiveOptions)
 
-  assert.deepStrictEqual(caseInsensitive, {
+  t.assert.deepStrictEqual(caseInsensitive, {
     'content-type': 'application/json'
   })
 
@@ -333,7 +332,7 @@ test('SnapshotRecorder - case sensitivity in header filtering', (t) => {
   const caseSensitive = filterHeadersForMatching(headers, caseSensitiveCachedSets, caseSensitiveOptions)
 
   // Should keep all headers since case doesn't match
-  assert.deepStrictEqual(caseSensitive, {
+  t.assert.deepStrictEqual(caseSensitive, {
     'Content-Type': 'application/json',
     AUTHORIZATION: 'Bearer token',
     'X-Request-ID': '123'
@@ -362,12 +361,12 @@ test('SnapshotRecorder - request formatting with match options', (t) => {
   const cachedSets = createHeaderFilters(matchOptions)
   const formatted = formatRequestKey(requestOpts, cachedSets, matchOptions)
 
-  assert.strictEqual(formatted.method, 'POST')
-  assert.strictEqual(formatted.url, 'https://api.example.com/search') // No query
-  assert.deepStrictEqual(formatted.headers, {
+  t.assert.strictEqual(formatted.method, 'POST')
+  t.assert.strictEqual(formatted.url, 'https://api.example.com/search') // No query
+  t.assert.deepStrictEqual(formatted.headers, {
     'content-type': 'application/json'
   })
-  assert.strictEqual(formatted.body, '') // No body
+  t.assert.strictEqual(formatted.body, '') // No body
 })
 
 test('SnapshotRecorder - redirect responses are stored correctly', (t) => {
@@ -399,26 +398,26 @@ test('SnapshotRecorder - redirect responses are stored correctly', (t) => {
 
   // Record the redirect response (this will be stored as it's a valid response)
   recorder.record(redirectRequestOpts, redirectResponse)
-  assert.strictEqual(recorder.size(), 1, 'Redirect response (302) should be stored')
+  t.assert.strictEqual(recorder.size(), 1, 'Redirect response (302) should be stored')
 
   // First snapshot should contain the redirect response
   let snapshot = recorder.findSnapshot(redirectRequestOpts)
-  assert(snapshot, 'Should find snapshot for redirect request')
-  assert.strictEqual(snapshot.request.url, 'https://api.example.com/redirect-start')
-  assert.strictEqual(snapshot.response.statusCode, 302, 'First stored response should be the 302 redirect')
+  t.assert.ok(snapshot, 'Should find snapshot for redirect request')
+  t.assert.strictEqual(snapshot.request.url, 'https://api.example.com/redirect-start')
+  t.assert.strictEqual(snapshot.response.statusCode, 302, 'First stored response should be the 302 redirect')
 
   // Record the final response (this will create a second response for the same request)
   recorder.record(redirectRequestOpts, finalResponse)
-  assert.strictEqual(recorder.size(), 1, 'Should still have one snapshot (same request)')
+  t.assert.strictEqual(recorder.size(), 1, 'Should still have one snapshot (same request)')
 
   // Retrieve the snapshot again - should now have multiple responses
   snapshot = recorder.findSnapshot(redirectRequestOpts)
-  assert(snapshot, 'Should find snapshot for redirect request')
-  assert.strictEqual(snapshot.request.url, 'https://api.example.com/redirect-start')
+  t.assert.ok(snapshot, 'Should find snapshot for redirect request')
+  t.assert.strictEqual(snapshot.request.url, 'https://api.example.com/redirect-start')
 
   // The recorder supports sequential responses, so it should have both
-  assert(Array.isArray(snapshot.responses), 'Should have responses array')
-  assert.strictEqual(snapshot.responses.length, 2, 'Should have two responses')
-  assert.strictEqual(snapshot.responses[0].statusCode, 302, 'First response should be redirect')
-  assert.strictEqual(snapshot.responses[1].statusCode, 200, 'Second response should be final')
+  t.assert.ok(Array.isArray(snapshot.responses), 'Should have responses array')
+  t.assert.strictEqual(snapshot.responses.length, 2, 'Should have two responses')
+  t.assert.strictEqual(snapshot.responses[0].statusCode, 302, 'First response should be redirect')
+  t.assert.strictEqual(snapshot.responses[1].statusCode, 200, 'Second response should be final')
 })

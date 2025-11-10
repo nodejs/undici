@@ -1,7 +1,6 @@
 'use strict'
 
 const { describe, it } = require('node:test')
-const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
 const { unlink, writeFile, readFile } = require('node:fs/promises')
@@ -158,8 +157,8 @@ describe('SnapshotAgent - Basic Operations', () => {
     })
     const body = await response.body.json()
 
-    assert.strictEqual(response.statusCode, 200, 'Response should have status 200')
-    assert.deepStrictEqual(body, {
+    t.assert.strictEqual(response.statusCode, 200, 'Response should have status 200')
+    t.assert.deepStrictEqual(body, {
       message: TEST_CONSTANTS.TEST_MESSAGE,
       timestamp: TEST_CONSTANTS.TEST_TIMESTAMP
     }, 'Response body should match expected data')
@@ -169,13 +168,13 @@ describe('SnapshotAgent - Basic Operations', () => {
 
     // Verify snapshot was recorded
     const recorder = agent.getRecorder()
-    assert.strictEqual(recorder.size(), 1, 'Should have recorded exactly one snapshot')
+    t.assert.strictEqual(recorder.size(), 1, 'Should have recorded exactly one snapshot')
 
     const snapshots = recorder.getSnapshots()
-    assert.strictEqual(snapshots.length, 1, 'Snapshots array should contain one item')
-    assert.strictEqual(snapshots[0].request.method, 'GET', 'Recorded request method should be GET')
-    assert.strictEqual(snapshots[0].request.url, `${origin}/test`, 'Recorded request URL should match')
-    assert.strictEqual(snapshots[0].responses[0].statusCode, 200, 'Recorded response status should be 200')
+    t.assert.strictEqual(snapshots.length, 1, 'Snapshots array should contain one item')
+    t.assert.strictEqual(snapshots[0].request.method, 'GET', 'Recorded request method should be GET')
+    t.assert.strictEqual(snapshots[0].request.url, `${origin}/test`, 'Recorded request URL should match')
+    t.assert.strictEqual(snapshots[0].responses[0].statusCode, 200, 'Recorded response status should be 200')
   })
 
   it('playback mode', async (t) => {
@@ -216,8 +215,8 @@ describe('SnapshotAgent - Basic Operations', () => {
     const response = await request(`${origin}/api/test`)
     const body = await response.body.text()
 
-    assert.strictEqual(response.statusCode, 200, 'Playback response should have status 200')
-    assert.strictEqual(body, 'Recorded response', 'Playback should return recorded response')
+    t.assert.strictEqual(response.statusCode, 200, 'Playback response should have status 200')
+    t.assert.strictEqual(body, 'Recorded response', 'Playback should return recorded response')
   })
 
   it('update mode', async (t) => {
@@ -253,7 +252,7 @@ describe('SnapshotAgent - Basic Operations', () => {
     // First request - should be recorded as new
     const response1 = await request(`${origin}/existing`)
     const body1 = await response1.body.text()
-    assert.strictEqual(body1, 'Existing endpoint', 'First request should get live response')
+    t.assert.strictEqual(body1, 'Existing endpoint', 'First request should get live response')
 
     // Save and reload to simulate existing snapshots
     await agent.saveSnapshots()
@@ -261,16 +260,16 @@ describe('SnapshotAgent - Basic Operations', () => {
     // Second request to same endpoint - should use existing snapshot
     const response2 = await request(`${origin}/existing`)
     const body2 = await response2.body.text()
-    assert.strictEqual(body2, 'Existing endpoint', 'Second request should use cached response')
+    t.assert.strictEqual(body2, 'Existing endpoint', 'Second request should use cached response')
 
     // Request to new endpoint - should be recorded
     const response3 = await request(`${origin}/new`)
     const body3 = await response3.body.text()
-    assert.strictEqual(body3, 'New endpoint', 'New endpoint should get live response')
+    t.assert.strictEqual(body3, 'New endpoint', 'New endpoint should get live response')
 
     // Verify we have 2 different snapshots
     const recorder = agent.getRecorder()
-    assert.strictEqual(recorder.size(), 2, 'Should have exactly two snapshots recorded')
+    t.assert.strictEqual(recorder.size(), 2, 'Should have exactly two snapshots recorded')
   })
 })
 
@@ -302,8 +301,8 @@ describe('SnapshotAgent - Request Handling', () => {
     })
 
     const responseBody = await response.body.json()
-    assert.strictEqual(responseBody.received, requestBody, 'Server should receive the request body')
-    assert.strictEqual(responseBody.method, 'POST', 'Server should receive POST method')
+    t.assert.strictEqual(responseBody.received, requestBody, 'Server should receive the request body')
+    t.assert.strictEqual(responseBody.method, 'POST', 'Server should receive POST method')
 
     await recordingAgent.saveSnapshots()
 
@@ -323,8 +322,8 @@ describe('SnapshotAgent - Request Handling', () => {
     })
 
     const playbackBody = await playbackResponse.body.json()
-    assert.strictEqual(playbackBody.received, requestBody, 'Playback should return recorded request body')
-    assert.strictEqual(playbackBody.method, 'POST', 'Playback should return recorded method')
+    t.assert.strictEqual(playbackBody.received, requestBody, 'Playback should return recorded request body')
+    t.assert.strictEqual(playbackBody.method, 'POST', 'Playback should return recorded method')
   })
 
   it('sequential response support', async (t) => {
@@ -364,9 +363,9 @@ describe('SnapshotAgent - Request Handling', () => {
 
     // Verify recording worked correctly before switching to playback
     const recordingRecorder = recordingAgent.getRecorder()
-    assert.strictEqual(recordingRecorder.size(), 1, 'Should have recorded exactly one snapshot')
+    t.assert.strictEqual(recordingRecorder.size(), 1, 'Should have recorded exactly one snapshot')
     const recordedSnapshots = recordingRecorder.getSnapshots()
-    assert.strictEqual(recordedSnapshots[0].responses.length, 3, 'Should have recorded three responses')
+    t.assert.strictEqual(recordedSnapshots[0].responses.length, 3, 'Should have recorded three responses')
 
     // Close recording agent cleanly before starting playback
     await recordingAgent.close()
@@ -388,29 +387,29 @@ describe('SnapshotAgent - Request Handling', () => {
 
     // Verify we have the expected snapshots before proceeding
     const recorder = playbackAgent.getRecorder()
-    assert.strictEqual(recorder.size(), 1, 'Should have exactly one snapshot loaded')
+    t.assert.strictEqual(recorder.size(), 1, 'Should have exactly one snapshot loaded')
 
     const snapshots = recorder.getSnapshots()
-    assert.strictEqual(snapshots.length, 1, 'Should have exactly one snapshot')
-    assert.strictEqual(snapshots[0].responses.length, 3, 'Should have three sequential responses')
+    t.assert.strictEqual(snapshots.length, 1, 'Should have exactly one snapshot')
+    t.assert.strictEqual(snapshots[0].responses.length, 3, 'Should have three sequential responses')
 
     // Test sequential responses
     const response1 = await request(`${origin}/api/test`)
     const body1 = await response1.body.text()
-    assert.strictEqual(body1, 'First response', 'First call should return first response')
+    t.assert.strictEqual(body1, 'First response', 'First call should return first response')
 
     const response2 = await request(`${origin}/api/test`)
     const body2 = await response2.body.text()
-    assert.strictEqual(body2, 'Second response', 'Second call should return second response')
+    t.assert.strictEqual(body2, 'Second response', 'Second call should return second response')
 
     const response3 = await request(`${origin}/api/test`)
     const body3 = await response3.body.text()
-    assert.strictEqual(body3, 'Third response', 'Third call should return third response')
+    t.assert.strictEqual(body3, 'Third response', 'Third call should return third response')
 
     // Fourth call should repeat the last response
     const response4 = await request(`${origin}/api/test`)
     const body4 = await response4.body.text()
-    assert.strictEqual(body4, 'Third response', 'Fourth call should repeat the last response')
+    t.assert.strictEqual(body4, 'Third response', 'Fourth call should repeat the last response')
   })
 })
 
@@ -434,18 +433,18 @@ describe('SnapshotAgent - Error Handling', () => {
       await request('http://localhost:9999/nonexistent')
     } catch (error) {
       errorThrown = true
-      assert.strictEqual(error.name, 'UndiciError', 'Error should be UndiciError')
-      assert(error.message.includes(TEST_CONSTANTS.ERROR_MESSAGES.NO_SNAPSHOT_FOUND),
+      t.assert.strictEqual(error.name, 'UndiciError', 'Error should be UndiciError')
+      t.assert.ok(error.message.includes(TEST_CONSTANTS.ERROR_MESSAGES.NO_SNAPSHOT_FOUND),
         'Error message should indicate no snapshot found')
-      assert.strictEqual(error.code, 'UND_ERR', 'Error code should be UND_ERR')
+      t.assert.strictEqual(error.code, 'UND_ERR', 'Error code should be UND_ERR')
     }
 
-    assert(errorThrown, 'Expected an error to be thrown for missing snapshot')
+    t.assert.ok(errorThrown, 'Expected an error to be thrown for missing snapshot')
   })
 
   it('constructor options validation', async (t) => {
     // Test invalid mode
-    assert.throws(() => {
+    t.assert.throws(() => {
       return new SnapshotAgent({ mode: 'invalid' })
     }, {
       name: 'InvalidArgumentError',
@@ -453,7 +452,7 @@ describe('SnapshotAgent - Error Handling', () => {
     }, 'Should throw for invalid mode')
 
     // Test missing snapshotPath for playback mode
-    assert.throws(() => {
+    t.assert.throws(() => {
       return new SnapshotAgent({ mode: 'playback' })
     }, {
       name: 'InvalidArgumentError',
@@ -461,7 +460,7 @@ describe('SnapshotAgent - Error Handling', () => {
     }, 'Should throw for missing snapshotPath in playback mode')
 
     // Test missing snapshotPath for update mode
-    assert.throws(() => {
+    t.assert.throws(() => {
       return new SnapshotAgent({ mode: 'update' })
     }, {
       name: 'InvalidArgumentError',
@@ -469,18 +468,18 @@ describe('SnapshotAgent - Error Handling', () => {
     }, 'Should throw for missing snapshotPath in update mode')
 
     // Test valid configurations should not throw
-    await assert.doesNotReject(async () => {
+    await t.assert.doesNotReject(async () => {
       const agent1 = new SnapshotAgent({ mode: 'record' })
       await agent1.close()
     }, 'Should not throw for valid record mode')
 
-    await assert.doesNotReject(async () => {
+    await t.assert.doesNotReject(async () => {
       const snapshotPath = createSnapshotPath('valid-playback')
       const agent2 = new SnapshotAgent({ mode: 'playback', snapshotPath })
       await agent2.close()
     }, 'Should not throw for valid playback mode')
 
-    await assert.doesNotReject(async () => {
+    await t.assert.doesNotReject(async () => {
       const snapshotPath = createSnapshotPath('valid-update')
       const agent3 = new SnapshotAgent({ mode: 'update', snapshotPath })
       await agent3.close()
@@ -506,14 +505,14 @@ describe('SnapshotAgent - Edge Cases', () => {
     // Should load large files without issues
     await agent.loadSnapshots()
     const recorder = agent.getRecorder()
-    assert.strictEqual(recorder.size(), 100, 'Should load all 100 snapshots from large file')
+    t.assert.strictEqual(recorder.size(), 100, 'Should load all 100 snapshots from large file')
 
     setGlobalDispatcher(agent)
 
     // Should be able to find and use snapshots from large file
     const response = await request('http://localhost:3000/api/test-0')
     const body = await response.body.json()
-    assert.deepStrictEqual(body, { data: 'test-0' }, 'Should return correct data from large snapshot file')
+    t.assert.deepStrictEqual(body, { data: 'test-0' }, 'Should return correct data from large snapshot file')
   })
 
   it('concurrent access scenarios', async (t) => {
@@ -548,13 +547,13 @@ describe('SnapshotAgent - Edge Cases', () => {
     // Verify all responses were handled correctly
     for (let i = 0; i < responses.length; i++) {
       const body = await responses[i].body.json()
-      assert.deepStrictEqual(body, { path: `/api/test-${i}` },
+      t.assert.deepStrictEqual(body, { path: `/api/test-${i}` },
         `Concurrent request ${i} should return correct response`)
     }
 
     await agent.saveSnapshots()
     const recorder = agent.getRecorder()
-    assert.strictEqual(recorder.size(), 10, 'Should record all 10 concurrent requests')
+    t.assert.strictEqual(recorder.size(), 10, 'Should record all 10 concurrent requests')
   })
 })
 
@@ -586,22 +585,22 @@ describe('SnapshotAgent - Advanced Features', () => {
     // Read and verify the snapshot file format
     const snapshotData = JSON.parse(await readFile(snapshotPath, 'utf8'))
 
-    assert(Array.isArray(snapshotData), 'Snapshot data should be an array')
-    assert.strictEqual(snapshotData.length, 1, 'Should contain exactly one snapshot')
+    t.assert.ok(Array.isArray(snapshotData), 'Snapshot data should be an array')
+    t.assert.strictEqual(snapshotData.length, 1, 'Should contain exactly one snapshot')
 
     const snapshot = snapshotData[0]
-    assert(typeof snapshot.hash === 'string', 'Snapshot should have string hash')
-    assert(typeof snapshot.snapshot === 'object', 'Snapshot should have snapshot object')
+    t.assert.ok(typeof snapshot.hash === 'string', 'Snapshot should have string hash')
+    t.assert.ok(typeof snapshot.snapshot === 'object', 'Snapshot should have snapshot object')
 
     const { request: req, responses, timestamp } = snapshot.snapshot
-    assert.strictEqual(req.method, 'GET', 'Request method should be GET')
-    assert.strictEqual(req.url, `${origin}/test-endpoint`, 'Request URL should match')
-    assert.strictEqual(responses[0].statusCode, 200, 'Response status should be 200')
+    t.assert.strictEqual(req.method, 'GET', 'Request method should be GET')
+    t.assert.strictEqual(req.url, `${origin}/test-endpoint`, 'Request URL should match')
+    t.assert.strictEqual(responses[0].statusCode, 200, 'Response status should be 200')
 
     // Headers should be normalized to lowercase
-    assert(responses[0].headers['x-custom-header'], 'Custom header should be present')
-    assert.strictEqual(responses[0].headers['x-custom-header'], 'test-value', 'Custom header value should match')
-    assert(typeof timestamp === 'string', 'Timestamp should be a string')
+    t.assert.ok(responses[0].headers['x-custom-header'], 'Custom header should be present')
+    t.assert.strictEqual(responses[0].headers['x-custom-header'], 'test-value', 'Custom header value should match')
+    t.assert.ok(typeof timestamp === 'string', 'Timestamp should be a string')
   })
 
   it('maxSnapshots and LRU eviction', async (t) => {
@@ -633,16 +632,16 @@ describe('SnapshotAgent - Advanced Features', () => {
     const recorder = agent.getRecorder()
 
     // Should only have 2 snapshots due to LRU eviction
-    assert.strictEqual(recorder.size(), TEST_CONSTANTS.MAX_SNAPSHOTS_FOR_LRU,
+    t.assert.strictEqual(recorder.size(), TEST_CONSTANTS.MAX_SNAPSHOTS_FOR_LRU,
       `Should only keep ${TEST_CONSTANTS.MAX_SNAPSHOTS_FOR_LRU} snapshots due to LRU eviction`)
 
     const snapshots = recorder.getSnapshots()
     const urls = snapshots.map(s => s.request.url)
 
     // First snapshot should be evicted, should have second and third
-    assert(urls.includes(`${origin}/second`), 'Should contain second request')
-    assert(urls.includes(`${origin}/third`), 'Should contain third request')
-    assert(!urls.includes(`${origin}/first`), 'Should not contain first request (evicted)')
+    t.assert.ok(urls.includes(`${origin}/second`), 'Should contain second request')
+    t.assert.ok(urls.includes(`${origin}/third`), 'Should contain third request')
+    t.assert.ok(!urls.includes(`${origin}/first`), 'Should not contain first request (evicted)')
   })
 
   it('auto-flush functionality', async (t) => {
@@ -680,9 +679,9 @@ describe('SnapshotAgent - Advanced Features', () => {
     const fileData = await readFile(snapshotPath, 'utf8')
     const snapshots = JSON.parse(fileData)
 
-    assert(Array.isArray(snapshots), 'Auto-flushed data should be an array')
-    assert.strictEqual(snapshots.length, 1, 'Should contain exactly one auto-flushed snapshot')
-    assert.strictEqual(snapshots[0].snapshot.request.url, `${origin}/autoflush-test`,
+    t.assert.ok(Array.isArray(snapshots), 'Auto-flushed data should be an array')
+    t.assert.strictEqual(snapshots.length, 1, 'Should contain exactly one auto-flushed snapshot')
+    t.assert.strictEqual(snapshots[0].snapshot.request.url, `${origin}/autoflush-test`,
       'Auto-flushed snapshot should have correct URL')
   })
 })
@@ -742,9 +741,9 @@ describe('SnapshotAgent - Header Management', () => {
       }
     })
 
-    assert.strictEqual(response.statusCode, 200, 'Should match despite different auth token')
+    t.assert.strictEqual(response.statusCode, 200, 'Should match despite different auth token')
     const body = await response.body.text()
-    assert.strictEqual(body, '{"message": "test"}', 'Should return recorded response')
+    t.assert.strictEqual(body, '{"message": "test"}', 'Should return recorded response')
   })
 
   it('ignore headers functionality', async (t) => {
@@ -798,9 +797,9 @@ describe('SnapshotAgent - Header Management', () => {
       }
     })
 
-    assert.strictEqual(response.statusCode, 200, 'Should match despite different ignored headers')
+    t.assert.strictEqual(response.statusCode, 200, 'Should match despite different ignored headers')
     const body = await response.body.text()
-    assert.strictEqual(body, 'ignore headers test', 'Should return recorded response')
+    t.assert.strictEqual(body, 'ignore headers test', 'Should return recorded response')
   })
 
   it('exclude headers for security', async (t) => {
@@ -835,13 +834,13 @@ describe('SnapshotAgent - Header Management', () => {
     const fileData = await readFile(snapshotPath, 'utf8')
     const snapshots = JSON.parse(fileData)
 
-    assert.strictEqual(snapshots.length, 1, 'Should contain exactly one snapshot')
+    t.assert.strictEqual(snapshots.length, 1, 'Should contain exactly one snapshot')
     const snapshot = snapshots[0].snapshot
 
     // Verify excluded headers are not in stored response
-    assert(!snapshot.responses[0].headers.authorization, 'Authorization header should be excluded from storage')
-    assert(!snapshot.responses[0].headers['set-cookie'], 'Set-Cookie header should be excluded from storage')
-    assert(snapshot.responses[0].headers['content-type'], 'Content-Type header should be preserved')
+    t.assert.ok(!snapshot.responses[0].headers.authorization, 'Authorization header should be excluded from storage')
+    t.assert.ok(!snapshot.responses[0].headers['set-cookie'], 'Set-Cookie header should be excluded from storage')
+    t.assert.ok(snapshot.responses[0].headers['content-type'], 'Content-Type header should be preserved')
   })
 })
 
@@ -886,9 +885,9 @@ describe('SnapshotAgent - Request Matching', () => {
     // This should match the recorded request despite different query params
     const response = await request(`${origin}/api/data?timestamp=456&session=xyz`)
 
-    assert.strictEqual(response.statusCode, 200, 'Should match despite different query parameters')
+    t.assert.strictEqual(response.statusCode, 200, 'Should match despite different query parameters')
     const body = await response.body.text()
-    assert.strictEqual(body, 'Response for /api/data?timestamp=123&session=abc',
+    t.assert.strictEqual(body, 'Response for /api/data?timestamp=123&session=abc',
       'Should return original recorded response with original query params')
   })
 
@@ -944,9 +943,9 @@ describe('SnapshotAgent - Request Matching', () => {
       headers: { 'content-type': 'text/plain' }
     })
 
-    assert.strictEqual(response.statusCode, 200, 'Should match despite different request body')
+    t.assert.strictEqual(response.statusCode, 200, 'Should match despite different request body')
     const responseBody = await response.body.json()
-    assert.strictEqual(responseBody.received, 'original-data',
+    t.assert.strictEqual(responseBody.received, 'original-data',
       'Should return recorded response with original body')
   })
 })
@@ -982,8 +981,8 @@ describe('SnapshotAgent - Management Features', () => {
       path: '/api/test',
       method: 'GET'
     })
-    assert(info1, 'Should find snapshot info')
-    assert.strictEqual(info1.callCount, 0, 'Call count should be 0 initially (only incremented during findSnapshot)')
+    t.assert.ok(info1, 'Should find snapshot info')
+    t.assert.strictEqual(info1.callCount, 0, 'Call count should be 0 initially (only incremented during findSnapshot)')
 
     // Reset call counts
     agent.resetCallCounts()
@@ -993,8 +992,8 @@ describe('SnapshotAgent - Management Features', () => {
       path: '/api/test',
       method: 'GET'
     })
-    assert(info2, 'Should still find snapshot info after reset')
-    assert.strictEqual(info2.callCount, 0, 'Call count should remain 0 after reset')
+    t.assert.ok(info2, 'Should still find snapshot info after reset')
+    t.assert.strictEqual(info2.callCount, 0, 'Call count should remain 0 after reset')
   })
 
   it('snapshot management methods', async (t) => {
@@ -1027,10 +1026,10 @@ describe('SnapshotAgent - Management Features', () => {
       path: '/api/users',
       method: 'GET'
     })
-    assert(userInfo, 'Should find user snapshot info')
-    assert.strictEqual(userInfo.request.method, 'GET', 'User snapshot method should be GET')
-    assert.strictEqual(userInfo.request.url, `${origin}/api/users`, 'User snapshot URL should match')
-    assert.strictEqual(userInfo.responseCount, 1, 'User snapshot should have one response')
+    t.assert.ok(userInfo, 'Should find user snapshot info')
+    t.assert.strictEqual(userInfo.request.method, 'GET', 'User snapshot method should be GET')
+    t.assert.strictEqual(userInfo.request.url, `${origin}/api/users`, 'User snapshot URL should match')
+    t.assert.strictEqual(userInfo.responseCount, 1, 'User snapshot should have one response')
 
     // Test deleteSnapshot
     const deleted = agent.deleteSnapshot({
@@ -1038,7 +1037,7 @@ describe('SnapshotAgent - Management Features', () => {
       path: '/api/users',
       method: 'GET'
     })
-    assert.strictEqual(deleted, true, 'Should successfully delete user snapshot')
+    t.assert.strictEqual(deleted, true, 'Should successfully delete user snapshot')
 
     // Verify deletion
     const deletedInfo = agent.getSnapshotInfo({
@@ -1046,7 +1045,7 @@ describe('SnapshotAgent - Management Features', () => {
       path: '/api/users',
       method: 'GET'
     })
-    assert.strictEqual(deletedInfo, null, 'Deleted snapshot should not be found')
+    t.assert.strictEqual(deletedInfo, null, 'Deleted snapshot should not be found')
 
     // Post snapshot should still exist
     const postInfo = agent.getSnapshotInfo({
@@ -1054,7 +1053,7 @@ describe('SnapshotAgent - Management Features', () => {
       path: '/api/posts',
       method: 'GET'
     })
-    assert(postInfo, 'Post snapshot should still exist after deleting user snapshot')
+    t.assert.ok(postInfo, 'Post snapshot should still exist after deleting user snapshot')
 
     // Test replaceSnapshots - create a snapshot with proper hash
     const { createRequestHash, formatRequestKey, createHeaderFilters } = require('../lib/mock/snapshot-recorder')
@@ -1083,11 +1082,11 @@ describe('SnapshotAgent - Management Features', () => {
 
     // Should only have the mock snapshot now
     const recorder = agent.getRecorder()
-    assert.strictEqual(recorder.size(), 1, 'Should have only one snapshot after replacement')
+    t.assert.strictEqual(recorder.size(), 1, 'Should have only one snapshot after replacement')
 
     const mockInfo = agent.getSnapshotInfo(mockRequestOpts)
-    assert(mockInfo, 'Should find mock snapshot after replacement')
-    assert.strictEqual(mockInfo.request.url, `${origin}/api/mock`, 'Mock snapshot URL should match')
+    t.assert.ok(mockInfo, 'Should find mock snapshot after replacement')
+    t.assert.strictEqual(mockInfo.request.url, `${origin}/api/mock`, 'Mock snapshot URL should match')
   })
 })
 
@@ -1121,10 +1120,10 @@ describe('SnapshotAgent - Filtering', () => {
     await request(`${origin}/api/filtered`)
 
     const recorder = agent.getRecorder()
-    assert.strictEqual(recorder.size(), 1, 'Should record only the allowed request')
+    t.assert.strictEqual(recorder.size(), 1, 'Should record only the allowed request')
 
     const snapshots = recorder.getSnapshots()
-    assert.strictEqual(snapshots[0].request.url, `${origin}/api/allowed`,
+    t.assert.strictEqual(snapshots[0].request.url, `${origin}/api/allowed`,
       'Recorded snapshot should be the allowed request')
   })
 
@@ -1169,7 +1168,7 @@ describe('SnapshotAgent - Filtering', () => {
     // This should use cached response
     const cachedResponse = await request(`${origin}/api/cached`)
     const cachedBody = await cachedResponse.body.text()
-    assert.strictEqual(cachedBody, 'Live response for /api/cached',
+    t.assert.strictEqual(cachedBody, 'Live response for /api/cached',
       'Should return cached response for allowed path')
 
     // This should fail because playback is filtered and no live server
@@ -1180,10 +1179,10 @@ describe('SnapshotAgent - Filtering', () => {
       await request(`${origin}/api/live`)
     } catch (error) {
       errorThrown = true
-      assert.strictEqual(error.name, 'UndiciError', 'Should throw UndiciError for filtered request')
+      t.assert.strictEqual(error.name, 'UndiciError', 'Should throw UndiciError for filtered request')
     }
 
-    assert(errorThrown, 'Expected an error for filtered playback request')
+    t.assert.ok(errorThrown, 'Expected an error for filtered playback request')
   })
 
   it('URL exclusion patterns (string)', async (t) => {
@@ -1213,10 +1212,10 @@ describe('SnapshotAgent - Filtering', () => {
     await request(`${origin}/api/secret-endpoint`)
 
     const recorder = agent.getRecorder()
-    assert.strictEqual(recorder.size(), 1, 'Should record only non-excluded requests')
+    t.assert.strictEqual(recorder.size(), 1, 'Should record only non-excluded requests')
 
     const snapshots = recorder.getSnapshots()
-    assert.strictEqual(snapshots[0].request.url, `${origin}/api/public`,
+    t.assert.strictEqual(snapshots[0].request.url, `${origin}/api/public`,
       'Should record only the public API request')
   })
 
@@ -1247,10 +1246,10 @@ describe('SnapshotAgent - Filtering', () => {
     await request(`${origin}/api/auth?token=secret`)
 
     const recorder = agent.getRecorder()
-    assert.strictEqual(recorder.size(), 1, 'Should record only requests not matching exclusion patterns')
+    t.assert.strictEqual(recorder.size(), 1, 'Should record only requests not matching exclusion patterns')
 
     const snapshots = recorder.getSnapshots()
-    assert.strictEqual(snapshots[0].request.url, `${origin}/api/data`,
+    t.assert.strictEqual(snapshots[0].request.url, `${origin}/api/data`,
       'Should record only the non-excluded API request')
   })
 
@@ -1285,12 +1284,12 @@ describe('SnapshotAgent - Filtering', () => {
     await request(`${origin}/api/data`, { method: 'POST' }) // Should not record (POST method)
 
     const recorder = agent.getRecorder()
-    assert.strictEqual(recorder.size(), 1, 'Should record only requests passing all filters')
+    t.assert.strictEqual(recorder.size(), 1, 'Should record only requests passing all filters')
 
     const snapshots = recorder.getSnapshots()
-    assert.strictEqual(snapshots[0].request.url, `${origin}/api/users`,
+    t.assert.strictEqual(snapshots[0].request.url, `${origin}/api/users`,
       'Should record only the allowed GET request')
-    assert.strictEqual(snapshots[0].request.method, 'GET',
+    t.assert.strictEqual(snapshots[0].request.method, 'GET',
       'Recorded request should have GET method')
   })
 })
@@ -1319,7 +1318,7 @@ describe('SnapshotAgent - Close Method', () => {
 
     // Verify snapshot is in memory but not yet saved to file
     const recorder = agent.getRecorder()
-    assert.strictEqual(recorder.size(), 1, 'Should have recorded one snapshot in memory')
+    t.assert.strictEqual(recorder.size(), 1, 'Should have recorded one snapshot in memory')
 
     // Check that file doesn't exist yet (since autoFlush is false)
     let fileExists = false
@@ -1329,7 +1328,7 @@ describe('SnapshotAgent - Close Method', () => {
     } catch {
       // File doesn't exist, which is expected
     }
-    assert.strictEqual(fileExists, false, 'File should not exist before close()')
+    t.assert.strictEqual(fileExists, false, 'File should not exist before close()')
 
     // Close the agent - this should save the snapshots
     await agent.close()
@@ -1340,13 +1339,13 @@ describe('SnapshotAgent - Close Method', () => {
       const fileContent = await readFile(snapshotPath, 'utf8')
       savedData = JSON.parse(fileContent)
     } catch (error) {
-      assert.fail(`Failed to read saved snapshot file: ${error.message}`)
+      t.assert.fail(`Failed to read saved snapshot file: ${error.message}`)
     }
 
-    assert(Array.isArray(savedData), 'Saved data should be an array')
-    assert.strictEqual(savedData.length, 1, 'Should have saved one snapshot')
-    assert.strictEqual(savedData[0].snapshot.request.method, 'GET', 'Saved snapshot should have correct method')
-    assert.strictEqual(savedData[0].snapshot.request.url, `${origin}/test`, 'Saved snapshot should have correct URL')
+    t.assert.ok(Array.isArray(savedData), 'Saved data should be an array')
+    t.assert.strictEqual(savedData.length, 1, 'Should have saved one snapshot')
+    t.assert.strictEqual(savedData[0].snapshot.request.method, 'GET', 'Saved snapshot should have correct method')
+    t.assert.strictEqual(savedData[0].snapshot.request.url, `${origin}/test`, 'Saved snapshot should have correct URL')
   })
 
   it('close() works when no recordings exist', async (t) => {
@@ -1359,7 +1358,7 @@ describe('SnapshotAgent - Close Method', () => {
     })
 
     // Close agent immediately without making any requests or setting as dispatcher
-    await assert.doesNotReject(async () => {
+    await t.assert.doesNotReject(async () => {
       await agent.close()
     }, 'Should not throw when closing agent with no recordings')
 
@@ -1371,7 +1370,7 @@ describe('SnapshotAgent - Close Method', () => {
     } catch {
       // File doesn't exist, which is expected
     }
-    assert.strictEqual(fileExists, false, 'No file should be created when no recordings exist')
+    t.assert.strictEqual(fileExists, false, 'No file should be created when no recordings exist')
   })
 
   it('close() works when no snapshot path is configured', async (t) => {
@@ -1392,7 +1391,7 @@ describe('SnapshotAgent - Close Method', () => {
     await request(`${origin}/test`)
 
     // Close should not throw even without snapshot path
-    await assert.doesNotReject(async () => {
+    await t.assert.doesNotReject(async () => {
       await agent.close()
     }, 'Should not throw when closing agent without snapshot path')
   })
@@ -1418,7 +1417,7 @@ describe('SnapshotAgent - Close Method', () => {
       }
     )
 
-    assert.strictEqual(recorder.size(), 1, 'Should have one recorded snapshot')
+    t.assert.strictEqual(recorder.size(), 1, 'Should have one recorded snapshot')
 
     // Close the recorder
     await recorder.close()
@@ -1429,11 +1428,11 @@ describe('SnapshotAgent - Close Method', () => {
       const fileContent = await readFile(snapshotPath, 'utf8')
       savedData = JSON.parse(fileContent)
     } catch (error) {
-      assert.fail(`Failed to read saved snapshot file: ${error.message}`)
+      t.assert.fail(`Failed to read saved snapshot file: ${error.message}`)
     }
 
-    assert(Array.isArray(savedData), 'Saved data should be an array')
-    assert.strictEqual(savedData.length, 1, 'Should have saved one snapshot')
-    assert.strictEqual(savedData[0].snapshot.request.method, 'GET', 'Should have correct method')
+    t.assert.ok(Array.isArray(savedData), 'Saved data should be an array')
+    t.assert.strictEqual(savedData.length, 1, 'Should have saved one snapshot')
+    t.assert.strictEqual(savedData[0].snapshot.request.method, 'GET', 'Should have correct method')
   })
 })
