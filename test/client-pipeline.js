@@ -563,7 +563,7 @@ test('pipeline abort piped res', async (t) => {
       return pipeline(body, pt, () => {})
     })
       .on('error', (err) => {
-        t.strictEqual(err.code, 'UND_ERR_ABORTED')
+        t.strictEqual(err.code, 'UND_ERR_REQUEST_ABORTED')
       })
       .end()
   })
