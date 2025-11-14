@@ -254,3 +254,17 @@ diagnosticsChannel.channel('undici:websocket:pong').subscribe(({ payload, websoc
   console.log(websocket) // the WebSocket instance
 })
 ```
+
+## `undici:proxy:connected`
+
+This message is published after the `ProxyAgent` establishes a connection to the proxy server.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:proxy:connected').subscribe(({ socket, connectParams }) => {
+  console.log(socket)
+  console.log(connectParams)
+  // const { origin, port, path, signal, headers, servername } = connectParams
+})
+```
