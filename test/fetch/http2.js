@@ -1,6 +1,7 @@
 'use strict'
 
 const { createSecureServer } = require('node:http2')
+const { createServer } = require('node:http')
 const { createReadStream, readFileSync } = require('node:fs')
 const { once } = require('node:events')
 const { Readable } = require('node:stream')
@@ -503,4 +504,76 @@ test('Issue #3046', async (t) => {
   t.assert.strictEqual(response.status, 200)
   t.assert.strictEqual(response.headers.get('content-type'), 'text/html; charset=utf-8')
   t.assert.deepStrictEqual(response.headers.getSetCookie(), ['hello=world', 'foo=bar'])
+})
+
+// The two following tests ensure that empty POST requests have a Content-Length of 0
+// specified, both with and without HTTP/2 enabled.
+// The RFC 9110 (see https://httpwg.org/specs/rfc9110.html#field.content-length)
+// states it SHOULD have one for methods like POST that define a meaning for enclosed content.
+test('[Fetch] Empty POST without h2 has Content-Length', async (t) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.statusCode = 200
+    res.end(`content-length:${req.headers['content-length']}`)
+  }).listen(0)
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  t.after(async () => {
+    server.close()
+    await client.close()
+  })
+
+  t.plan(1)
+
+  await once(server, 'listening')
+
+  const response = await fetch(
+    `http://localhost:${server.address().port}/`, {
+      method: 'POST',
+      dispatcher: client
+    }
+  )
+
+  const responseBody = await response.text()
+  t.assert.strictEqual(responseBody, `content-length:${0}`)
+})
+
+test('[Fetch] Empty POST with h2 has Content-Length', async (t) => {
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', async (stream, headers) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      ':status': 200
+    })
+
+    stream.end(`content-length:${headers['content-length']}`)
+  })
+
+  t.plan(1)
+
+  server.listen()
+  await once(server, 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.after(closeClientAndServerAsPromise(client, server))
+
+  const response = await fetch(
+    `https://localhost:${server.address().port}/`,
+    // Needs to be passed to disable the reject unauthorized
+    {
+      method: 'POST',
+      dispatcher: client
+    }
+  )
+
+  const responseBody = await response.text()
+
+  t.assert.strictEqual(responseBody, `content-length:${0}`)
 })

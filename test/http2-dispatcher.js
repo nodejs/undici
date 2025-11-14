@@ -25,6 +25,9 @@ test('Dispatcher#Stream', async t => {
     stream.on('data', chunk => {
       requestBody += chunk
     })
+    stream.on('error', err => {
+      t.fail(err)
+    })
 
     stream.respond({ ':status': 200, 'x-custom': 'custom-header' })
     stream.end('hello h2!')
@@ -74,6 +77,10 @@ test('Dispatcher#Pipeline', async t => {
     stream.setEncoding('utf-8')
     stream.on('data', chunk => {
       requestBody += chunk
+    })
+
+    stream.on('error', err => {
+      t.fail(err)
     })
 
     stream.respond({ ':status': 200, 'x-custom': 'custom-header' })
@@ -139,6 +146,10 @@ test('Dispatcher#Connect', async t => {
       return
     }
 
+    stream.on('error', err => {
+      t.fail(err)
+    })
+
     const forward = new Client(`https://localhost:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
@@ -147,17 +158,21 @@ test('Dispatcher#Connect', async t => {
     })
     after(() => forward.close())
 
-    const response = await forward.request({
-      path: '/',
-      method: 'POST',
-      body: stream,
-      headers: {
-        'x-my-header': headers['x-my-header']
-      }
-    })
+    try {
+      const response = await forward.request({
+        path: '/',
+        method: 'POST',
+        body: stream,
+        headers: {
+          'x-my-header': headers['x-my-header']
+        }
+      })
 
-    stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
-    response.body.pipe(stream)
+      stream.respond({ ':status': 200, 'x-my-header': response.headers['x-my-header'] })
+      response.body.pipe(stream)
+    } catch (err) {
+      stream.destroy(err)
+    }
   })
 
   server.on('stream', (stream, headers) => {
@@ -169,14 +184,15 @@ test('Dispatcher#Connect', async t => {
       t.strictEqual(requestBody, expectedBody)
     })
 
+    stream.on('error', err => {
+      t.fail(err)
+    })
+
     stream.respond({ ':status': 200, 'x-my-header': headers['x-my-header'] })
     stream.end('helloworld')
   })
 
-  after(() => proxy.close())
   await once(proxy.listen(0), 'listening')
-
-  after(() => server.close())
   await once(server.listen(0), 'listening')
 
   const client = new Client(`https://localhost:${proxy.address().port}`, {
@@ -186,6 +202,8 @@ test('Dispatcher#Connect', async t => {
     allowH2: true
   })
   after(() => client.close())
+  after(() => proxy.close())
+  after(() => server.close())
 
   const { statusCode, headers, socket } = await client.connect({ path: '/', headers: { 'x-my-header': 'foo' } })
   t.strictEqual(statusCode, 200)
@@ -197,24 +215,58 @@ test('Dispatcher#Connect', async t => {
     t.strictEqual(responseBody, 'helloworld')
   })
   socket.setEncoding('utf-8')
-  socket.cork()
   socket.write(expectedBody)
-  socket.uncork()
   socket.end()
 
   await t.completed
 })
 
-test('Dispatcher#Upgrade', async t => {
-  t = tspl(t, { plan: 1 })
-
+test('Dispatcher#Upgrade - Should throw on non-websocket upgrade', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
-  server.on('stream', (stream, headers) => {
+  server.on('stream', async (stream, headers) => {
     stream.end()
   })
 
-  after(() => server.close())
+  t = tspl(t, { plan: 1 })
+
+  server.listen(0, async () => {
+    const client = new Client(`https://localhost:${server.address().port}`, {
+      connect: {
+        rejectUnauthorized: false
+      },
+      allowH2: true
+    })
+
+    after(() => server.close())
+    after(() => client.close())
+
+    try {
+      await client.upgrade({ path: '/', protocol: 'any' })
+    } catch (error) {
+      t.strictEqual(error.message, 'Custom upgrade "any" not supported over HTTP/2')
+    }
+  })
+
+  await t.completed
+})
+
+test('Dispatcher#Upgrade', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createSecureServer({ ...(await pem.generate({ opts: { keySize: 2048 } })), settings: { enableConnectProtocol: true } })
+
+  server.on('stream', (stream, headers) => {
+    stream.on('error', err => {
+      t.fail(err)
+    })
+
+    stream.respond({ ':status': 200 })
+    stream.resume()
+
+    stream.end()
+  })
+
   await once(server.listen(0), 'listening')
 
   const client = new Client(`https://localhost:${server.address().port}`, {
@@ -223,14 +275,15 @@ test('Dispatcher#Upgrade', async t => {
     },
     allowH2: true
   })
-  after(() => client.close())
+  after(() => client.close().then(() => { server.close() }))
 
-  await t.rejects(
-    client.upgrade({ path: '/' }),
-    {
-      message: 'Upgrade not supported for H2'
-    }
-  )
+  const { socket } = await client.upgrade({ path: '/', protocol: 'websocket' })
+
+  t.ok(socket.readable)
+  t.ok(socket.writable)
+  t.strictEqual(socket.closed, false)
+
+  after(() => socket.end())
 
   await t.completed
 })
@@ -242,6 +295,10 @@ test('Dispatcher#destroy', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream, headers) => {
+    stream.on('error', err => {
+      t.fail(err)
+    })
+    stream.resume()
     setTimeout(stream.end.bind(stream), 1500)
   })
 
@@ -325,6 +382,10 @@ test('Should handle h2 request without body', async t => {
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': headers['x-my-header'],
       ':status': 200
+    })
+
+    stream.on('error', err => {
+      t.fail(err)
     })
 
     for await (const chunk of stream) {
