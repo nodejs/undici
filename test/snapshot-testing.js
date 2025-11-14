@@ -1294,7 +1294,7 @@ describe('SnapshotAgent - Filtering', () => {
       'Recorded request should have GET method')
   })
 
-  it('excluded URLs should not error in playback mode (issue #4663)', async (t) => {
+  it('excluded URLs should not error in playback mode', async (t) => {
     const server = createTestServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' })
       res.end(`Response from ${req.url}`)
