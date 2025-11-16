@@ -16,7 +16,7 @@ test('preamble and epilogue is ignored', async (t) => {
 
   const contentType = request.headers.get('Content-Type')
   let bytes = await request.bytes()
-  bytes = new Uint8Array(bytes.buffer.transfer(bytes.length + 10))
+  bytes = new Uint8Array([...bytes, ...Array(10).fill(0)])
 
   await t.test('epilogue', async () => {
     await new Response(bytes, {
