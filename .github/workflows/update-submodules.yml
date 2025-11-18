@@ -13,15 +13,46 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Checkout Repository
+        id: checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: true
+  
       - name: Git Config
+        id: git-config
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Update WPT
+      - name: Update Submodules
+        id: update-submodules
         run: |
-          git submodule update --init --recursive
+          git submodule update --init --recursive --remote --merge
+
+      - name: Check for Changes
+        id: check-for-changes
+        run: |
+          if git diff --quiet; then
+            echo "no changes detected"
+            echo "change=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changes detected"
+            echo "change=true" >> "$GITHUB_OUTPUT"
+          fi
+      
+      - name: Create Branch
+        id: create-branch
+        if: ${{ steps.check-for-changes.outputs.change == 'true'}}
+        run: |
+          git checkout -b submodules-update
+          git add .
+          git commit -m "chore: update Submodules"
+          git push --force --set-upstream origin submodules-update
+      
       - name: Create Pull Request
+        id: create-pr
+        if: ${{ steps.check-for-changes.outputs.change == 'true'}}
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           base: main
