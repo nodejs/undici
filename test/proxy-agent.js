@@ -2,12 +2,14 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
+const diagnosticsChannel = require('node:diagnostics_channel')
 const { request, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('..')
 const { InvalidArgumentError, SecureProxyConnectionError } = require('../lib/core/errors')
 const ProxyAgent = require('../lib/dispatcher/proxy-agent')
 const Pool = require('../lib/dispatcher/pool')
 const { createServer } = require('node:http')
 const https = require('node:https')
+const { Socket } = require('node:net')
 const { createProxy } = require('proxy')
 
 const certs = (() => {
@@ -120,10 +122,16 @@ test('should accept string, URL and object as options', (t) => {
 })
 
 test('use proxy-agent to connect through proxy (keep alive)', async (t) => {
-  t = tspl(t, { plan: 6 })
+  t = tspl(t, { plan: 10 })
   const server = await buildServer()
   const proxy = await buildProxy()
   delete proxy.authenticate
+
+  let _socket, _connectParams
+  diagnosticsChannel.channel('undici:proxy:connected').subscribe(({ socket, connectParams }) => {
+    _socket = socket
+    _connectParams = connectParams
+  })
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
@@ -154,6 +162,10 @@ test('use proxy-agent to connect through proxy (keep alive)', async (t) => {
   t.strictEqual(statusCode, 200)
   t.deepStrictEqual(json, { hello: 'world' })
   t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+  t.ok(_socket instanceof Socket)
+  t.equal(_connectParams.origin, proxyUrl)
+  t.equal(_connectParams.path, serverUrl.replace('http://', ''))
+  t.equal(_connectParams.headers['proxy-connection'], 'keep-alive')
 
   server.close()
   proxy.close()
