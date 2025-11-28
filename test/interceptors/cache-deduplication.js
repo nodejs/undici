@@ -20,7 +20,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       server.close()
@@ -68,7 +68,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       server.close()
@@ -114,7 +114,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       server.close()
@@ -169,7 +169,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       server.close()
@@ -206,7 +206,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       server.close()
@@ -247,7 +247,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       server.close()
@@ -285,7 +285,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       server.close()
@@ -332,7 +332,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       server.close()
@@ -385,7 +385,7 @@ describe('Cache Interceptor Request Deduplication', () => {
 
     const store = new MemoryCacheStore()
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache({ store }))
+      .compose(interceptors.cache({ store, deduplication: true }))
 
     after(async () => {
       server.close()
@@ -436,7 +436,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       server.close()
@@ -481,7 +481,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       server.close()
@@ -534,7 +534,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       channel.unsubscribe(onMessage)
@@ -579,7 +579,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       channel.unsubscribe(onMessage)
@@ -628,7 +628,7 @@ describe('Cache Interceptor Request Deduplication', () => {
     }).listen(0)
 
     const client = new Client(`http://localhost:${server.address().port}`)
-      .compose(interceptors.cache())
+      .compose(interceptors.cache({ deduplication: true }))
 
     after(async () => {
       channel.unsubscribe(onMessage)

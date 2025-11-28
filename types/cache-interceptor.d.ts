@@ -38,6 +38,14 @@ declare namespace CacheHandler {
      * @default 'shared'
      */
     type?: 'shared' | 'private'
+
+    /**
+     * Enable request deduplication. When enabled, concurrent identical requests
+     * will be deduplicated so only one request is sent to the origin server.
+     * All waiting handlers receive the same response.
+     * @default false
+     */
+    deduplication?: boolean
   }
 
   export interface CacheControlDirectives {
