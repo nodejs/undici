@@ -1214,6 +1214,20 @@ The `cache` interceptor implements client-side response caching as described in
 - `cacheByDefault` - The default expiration time to cache responses by if they don't have an explicit expiration and cannot have an heuristic expiry computed. If this isn't present, responses neither with an explicit expiration nor heuristically cacheable will not be cached. Default `undefined`.
 - `type` - The [type of cache](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching#types_of_caches) for Undici to act as. Can be `shared` or `private`. Default `shared`. `private` implies privately cacheable responses will be cached and potentially shared with other users of your application.
 
+**Request Deduplication**
+
+The cache interceptor automatically deduplicates concurrent requests for the same cacheable resource. When multiple identical requests are made while one is already in-flight, only one request is sent to the origin server, and all waiting handlers receive the same response. This reduces server load and improves performance.
+
+Requests are considered identical if they have the same:
+- Origin
+- HTTP method
+- Path
+- Request headers (used for cache key generation)
+
+Request deduplication works transparently and requires no configuration. All deduplicated requests receive the complete response including status code, headers, and body.
+
+For observability, request deduplication events are published to the `undici:cache:pending-requests` [diagnostic channel](/docs/docs/api/DiagnosticsChannel.md#undicichachependingrequests).
+
 ## Instance Events
 
 ### Event: `'connect'`
