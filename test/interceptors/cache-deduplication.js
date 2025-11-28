@@ -5,6 +5,7 @@ const { describe, test, after } = require('node:test')
 const { once } = require('node:events')
 const { strictEqual } = require('node:assert')
 const { setTimeout: sleep } = require('node:timers/promises')
+const diagnosticsChannel = require('node:diagnostics_channel')
 const { Client, interceptors, cacheStores: { MemoryCacheStore } } = require('../../index')
 
 describe('Cache Interceptor Request Deduplication', () => {
@@ -515,5 +516,150 @@ describe('Cache Interceptor Request Deduplication', () => {
 
     strictEqual(body1, 'response')
     strictEqual(body2, 'response')
+  })
+
+  test('diagnostic channel tracks pending requests correctly', async () => {
+    const events = []
+    const channel = diagnosticsChannel.channel('undici:cache:pending-requests')
+
+    const onMessage = (message) => {
+      events.push(message)
+    }
+    channel.subscribe(onMessage)
+
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      await sleep(100)
+      res.setHeader('cache-control', 's-maxage=10')
+      res.end('response')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      channel.unsubscribe(onMessage)
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send concurrent requests
+    await Promise.all([
+      client.request(request),
+      client.request(request)
+    ])
+
+    // Should have seen: added (size=1), removed (size=0)
+    strictEqual(events.length, 2)
+    strictEqual(events[0].type, 'added')
+    strictEqual(events[0].size, 1)
+    strictEqual(events[1].type, 'removed')
+    strictEqual(events[1].size, 0)
+  })
+
+  test('diagnostic channel shows cleanup after error', async () => {
+    const events = []
+    const channel = diagnosticsChannel.channel('undici:cache:pending-requests')
+
+    const onMessage = (message) => {
+      events.push(message)
+    }
+    channel.subscribe(onMessage)
+
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      await sleep(50)
+      res.destroy() // Simulate error
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      channel.unsubscribe(onMessage)
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send concurrent requests that will error
+    await Promise.allSettled([
+      client.request(request),
+      client.request(request)
+    ])
+
+    // Should have seen: added (size=1), removed (size=0)
+    strictEqual(events.length, 2)
+    strictEqual(events[0].type, 'added')
+    strictEqual(events[0].size, 1)
+    strictEqual(events[1].type, 'removed')
+    strictEqual(events[1].size, 0)
+  })
+
+  test('diagnostic channel tracks multiple pending requests separately', async () => {
+    const events = []
+    const channel = diagnosticsChannel.channel('undici:cache:pending-requests')
+
+    const onMessage = (message) => {
+      events.push(message)
+    }
+    channel.subscribe(onMessage)
+
+    let requestsToOrigin = 0
+
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.setHeader('cache-control', 's-maxage=10')
+      res.end(`response for ${req.url}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      channel.unsubscribe(onMessage)
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send requests to two different paths concurrently
+    await Promise.all([
+      client.request({ origin: 'localhost', method: 'GET', path: '/a' }),
+      client.request({ origin: 'localhost', method: 'GET', path: '/b' }),
+      client.request({ origin: 'localhost', method: 'GET', path: '/a' }), // Deduplicated with first
+      client.request({ origin: 'localhost', method: 'GET', path: '/b' })  // Deduplicated with second
+    ])
+
+    // Should have 2 origin requests (one for /a, one for /b)
+    strictEqual(requestsToOrigin, 2)
+
+    // Should have 4 events: 2 added, 2 removed
+    strictEqual(events.length, 4)
+
+    // First two should be 'added' events with sizes 1 and 2
+    const addedEvents = events.filter(e => e.type === 'added')
+    const removedEvents = events.filter(e => e.type === 'removed')
+
+    strictEqual(addedEvents.length, 2)
+    strictEqual(removedEvents.length, 2)
+    strictEqual(addedEvents[0].size, 1)
+    strictEqual(addedEvents[1].size, 2)
+    strictEqual(removedEvents[removedEvents.length - 1].size, 0) // All cleaned up
   })
 })
