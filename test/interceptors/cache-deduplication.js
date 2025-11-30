@@ -662,4 +662,145 @@ describe('Cache Interceptor Request Deduplication', () => {
     strictEqual(addedEvents[1].size, 2)
     strictEqual(removedEvents[removedEvents.length - 1].size, 0) // All cleaned up
   })
+
+  test('does not deduplicate requests with different Authorization headers', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.setHeader('cache-control', 's-maxage=10')
+      res.end(`response for ${req.headers.authorization}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({ deduplication: true }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests with different Authorization headers
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { authorization: 'Bearer token-user-1' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { authorization: 'Bearer token-user-2' }
+      })
+    ])
+
+    // Both requests should reach origin since they have different Authorization headers
+    strictEqual(requestsToOrigin, 2)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response for Bearer token-user-1')
+    strictEqual(body2, 'response for Bearer token-user-2')
+  })
+
+  test('does not deduplicate requests with different Cookie headers', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.setHeader('cache-control', 's-maxage=10')
+      res.end(`response for ${req.headers.cookie}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({ deduplication: true }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests with different Cookie headers
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { cookie: 'session=user1-session-id' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { cookie: 'session=user2-session-id' }
+      })
+    ])
+
+    // Both requests should reach origin since they have different Cookie headers
+    strictEqual(requestsToOrigin, 2)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response for session=user1-session-id')
+    strictEqual(body2, 'response for session=user2-session-id')
+  })
+
+  test('deduplicates requests with same Authorization header', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.setHeader('cache-control', 's-maxage=10')
+      res.end(`response for ${req.headers.authorization}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({ deduplication: true }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests with the same Authorization header
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { authorization: 'Bearer same-token' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { authorization: 'Bearer same-token' }
+      })
+    ])
+
+    // Only one request should reach origin since they have the same Authorization header
+    strictEqual(requestsToOrigin, 1)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response for Bearer same-token')
+    strictEqual(body2, 'response for Bearer same-token')
+  })
 })
