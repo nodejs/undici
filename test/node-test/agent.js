@@ -1,7 +1,6 @@
 'use strict'
 
 const { describe, test, after } = require('node:test')
-const assert = require('node:assert/strict')
 const { once } = require('node:events')
 const http = require('node:http')
 const { PassThrough } = require('node:stream')
@@ -16,7 +15,6 @@ const {
   setGlobalDispatcher,
   getGlobalDispatcher
 } = require('../..')
-const { tspl } = require('@matteo.collina/tspl')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 describe('setGlobalDispatcher', () => {
@@ -25,24 +23,24 @@ describe('setGlobalDispatcher', () => {
     setGlobalDispatcher(new Agent())
   })
   test('fails if agent does not implement `get` method', t => {
-    const p = tspl(t, { plan: 1 })
-    p.throws(() => setGlobalDispatcher({ dispatch: 'not a function' }), errors.InvalidArgumentError)
+    t.plan(1)
+    t.assert.throws(() => setGlobalDispatcher({ dispatch: 'not a function' }), errors.InvalidArgumentError)
   })
   test('sets global agent', async t => {
-    const p = tspl(t, { plan: 2 })
-    p.doesNotThrow(() => setGlobalDispatcher(new Agent()))
-    p.doesNotThrow(() => setGlobalDispatcher({ dispatch: () => {} }))
+    t.plan(2)
+    t.assert.doesNotThrow(() => setGlobalDispatcher(new Agent()))
+    t.assert.doesNotThrow(() => setGlobalDispatcher({ dispatch: () => {} }))
   })
 })
 
 test('Agent', t => {
-  const p = tspl(t, { plan: 1 })
+  t.plan(1)
 
-  p.doesNotThrow(() => new Agent())
+  t.assert.doesNotThrow(() => new Agent())
 })
 
 test('Agent enforces maxOrigins', async (t) => {
-  const p = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const dispatcher = new Agent({
     maxOrigins: 1,
@@ -71,14 +69,12 @@ test('Agent enforces maxOrigins', async (t) => {
       request(`http://localhost:${server2.address().port}`, { dispatcher })
     ])
   } catch (err) {
-    p.ok(err instanceof errors.MaxOriginsReachedError)
+    t.assert.ok(err instanceof errors.MaxOriginsReachedError)
   }
-
-  await p.completed
 })
 
-test('agent should call callback after closing internal pools', async (t) => {
-  const p = tspl(t, { plan: 2 })
+test('agent should call callback after closing internal pools', (t, done) => {
+  t.plan(2)
 
   const wanted = 'payload'
 
@@ -97,40 +93,39 @@ test('agent should call callback after closing internal pools', async (t) => {
     request(origin, { dispatcher })
       .then(() => {
         // first request should resolve
-        p.ok(1)
+        t.assert.ok(1)
       })
       .catch(err => {
-        p.fail(err)
+        t.assert.fail(err)
       })
 
     dispatcher.once('connect', () => {
       dispatcher.close(() => {
         request(origin, { dispatcher })
           .then(() => {
-            p.fail('second request should not resolve')
+            t.assert.fail('second request should not resolve')
           })
           .catch(err => {
-            p.ok(err instanceof errors.ClientDestroyedError)
+            t.assert.ok(err instanceof errors.ClientDestroyedError)
+            done()
           })
       })
     })
   })
-
-  await p.completed
 })
 
 test('agent close throws when callback is not a function', t => {
-  const p = tspl(t, { plan: 1 })
+  t.plan(1)
   const dispatcher = new Agent()
   try {
     dispatcher.close({})
   } catch (err) {
-    p.ok(err instanceof errors.InvalidArgumentError)
+    t.assert.ok(err instanceof errors.InvalidArgumentError)
   }
 })
 
-test('agent should close internal pools', async (t) => {
-  const p = tspl(t, { plan: 2 })
+test('agent should close internal pools', (t, done) => {
+  t.plan(2)
 
   const wanted = 'payload'
 
@@ -149,29 +144,28 @@ test('agent should close internal pools', async (t) => {
     request(origin, { dispatcher })
       .then(() => {
         // first request should resolve
-        p.ok(1)
+        t.assert.ok(1)
       })
       .catch(err => {
-        p.fail(err)
+        t.assert.fail(err)
       })
 
     dispatcher.once('connect', () => {
       dispatcher.close()
         .then(() => request(origin, { dispatcher }))
         .then(() => {
-          p.fail('second request should not resolve')
+          t.assert.fail('second request should not resolve')
         })
         .catch(err => {
-          p.ok(err instanceof errors.ClientDestroyedError)
+          t.assert.ok(err instanceof errors.ClientDestroyedError)
+          done()
         })
     })
   })
-
-  await p.completed
 })
 
-test('agent should destroy internal pools and call callback', async (t) => {
-  const p = tspl(t, { plan: 2 })
+test('agent should destroy internal pools and call callback', (t, done) => {
+  t.plan(2)
 
   const wanted = 'payload'
 
@@ -189,51 +183,50 @@ test('agent should destroy internal pools and call callback', async (t) => {
 
     request(origin, { dispatcher })
       .then(() => {
-        p.fail()
+        t.assert.fail()
       })
       .catch(err => {
-        p.ok(err instanceof errors.ClientDestroyedError)
+        t.assert.ok(err instanceof errors.ClientDestroyedError)
       })
 
     dispatcher.once('connect', () => {
       dispatcher.destroy(() => {
         request(origin, { dispatcher })
           .then(() => {
-            p.fail()
+            t.assert.fail()
           })
           .catch(err => {
-            p.ok(err instanceof errors.ClientDestroyedError)
+            t.assert.ok(err instanceof errors.ClientDestroyedError)
+            done()
           })
       })
     })
   })
-
-  await p.completed
 })
 
 test('agent destroy throws when callback is not a function', t => {
-  const p = tspl(t, { plan: 1 })
+  t.plan(1)
   const dispatcher = new Agent()
   try {
     dispatcher.destroy(new Error('mock error'), {})
   } catch (err) {
-    p.ok(err instanceof errors.InvalidArgumentError)
+    t.assert.ok(err instanceof errors.InvalidArgumentError)
   }
 })
 
 test('agent close/destroy callback with error', t => {
-  const p = tspl(t, { plan: 4 })
+  t.plan(4)
   const dispatcher = new Agent()
-  p.strictEqual(dispatcher.closed, false)
+  t.assert.strictEqual(dispatcher.closed, false)
   dispatcher.close()
-  p.strictEqual(dispatcher.closed, true)
-  p.strictEqual(dispatcher.destroyed, false)
+  t.assert.strictEqual(dispatcher.closed, true)
+  t.assert.strictEqual(dispatcher.destroyed, false)
   dispatcher.destroy(new Error('mock error'))
-  p.strictEqual(dispatcher.destroyed, true)
+  t.assert.strictEqual(dispatcher.destroyed, true)
 })
 
-test('agent should destroy internal pools', async t => {
-  const p = tspl(t, { plan: 2 })
+test('agent should destroy internal pools', (t, done) => {
+  t.plan(2)
 
   const wanted = 'payload'
 
@@ -251,30 +244,29 @@ test('agent should destroy internal pools', async t => {
 
     request(origin, { dispatcher })
       .then(() => {
-        p.fail()
+        t.assert.fail()
       })
       .catch(err => {
-        p.ok(err instanceof errors.ClientDestroyedError)
+        t.assert.ok(err instanceof errors.ClientDestroyedError)
       })
 
     dispatcher.once('connect', () => {
       dispatcher.destroy()
         .then(() => request(origin, { dispatcher }))
         .then(() => {
-          p.fail()
+          t.assert.fail()
         })
         .catch(err => {
-          p.ok(err instanceof errors.ClientDestroyedError)
+          t.assert.ok(err instanceof errors.ClientDestroyedError)
+          done()
         })
     })
   })
-
-  await p.completed
 })
 
-test('multiple connections', async t => {
+test('multiple connections', (t, done) => {
   const connections = 3
-  const p = tspl(t, { plan: 6 * connections })
+  t.plan(6 * connections)
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
@@ -286,36 +278,37 @@ test('multiple connections', async t => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
+    let callCount = 0
     const origin = `http://localhost:${server.address().port}`
     const dispatcher = new Agent({ connections })
 
     t.after(() => { dispatcher.close.bind(dispatcher)() })
 
     dispatcher.on('connect', (origin, [dispatcher]) => {
-      p.ok(dispatcher)
+      t.assert.ok(dispatcher)
     })
     dispatcher.on('disconnect', (origin, [dispatcher], error) => {
-      p.ok(dispatcher)
-      p.ok(error instanceof errors.InformationalError)
-      p.strictEqual(error.code, 'UND_ERR_INFO')
-      p.strictEqual(error.message, 'reset')
+      t.assert.ok(dispatcher)
+      t.assert.ok(error instanceof errors.InformationalError)
+      t.assert.strictEqual(error.code, 'UND_ERR_INFO')
+      t.assert.strictEqual(error.message, 'reset')
+
+      if (++callCount === connections) done()
     })
 
     for (let i = 0; i < connections; i++) {
       try {
         await request(origin, { dispatcher })
-        p.ok(1)
+        t.assert.ok(1)
       } catch (err) {
-        p.fail(err)
+        t.assert.fail(err)
       }
     }
   })
-
-  await p.completed
 })
 
-test('agent factory supports URL parameter', async (t) => {
-  const p = tspl(t, { plan: 2 })
+test('agent factory supports URL parameter', (t, done) => {
+  t.plan(2)
 
   const noopHandler = {
     onConnect () {},
@@ -331,7 +324,7 @@ test('agent factory supports URL parameter', async (t) => {
 
   const dispatcher = new Agent({
     factory: (origin, opts) => {
-      p.ok(origin instanceof URL)
+      t.assert.ok(origin instanceof URL)
       return new Pool(origin, opts)
     }
   })
@@ -342,18 +335,17 @@ test('agent factory supports URL parameter', async (t) => {
   })
 
   server.listen(0, () => {
-    p.doesNotThrow(() => dispatcher.dispatch({
+    t.assert.doesNotThrow(() => dispatcher.dispatch({
       origin: new URL(`http://localhost:${server.address().port}`),
       path: '/',
       method: 'GET'
     }, noopHandler))
+    done()
   })
-
-  await p.completed
 })
 
 test('agent factory supports string parameter', async (t) => {
-  const p = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const noopHandler = {
     onConnect () {},
@@ -369,7 +361,7 @@ test('agent factory supports string parameter', async (t) => {
 
   const dispatcher = new Agent({
     factory: (origin, opts) => {
-      p.ok(typeof origin === 'string')
+      t.assert.ok(typeof origin === 'string')
       return new Pool(origin, opts)
     }
   })
@@ -379,25 +371,22 @@ test('agent factory supports string parameter', async (t) => {
     res.end('asd')
   })
 
-  server.listen(0, () => {
-    p.doesNotThrow(() => dispatcher.dispatch({
-      origin: `http://localhost:${server.address().port}`,
-      path: '/',
-      method: 'GET'
-    }, noopHandler))
-  })
-
-  await p.completed
+  await once(server.listen(0), 'listening')
+  t.assert.doesNotThrow(() => dispatcher.dispatch({
+    origin: `http://localhost:${server.address().port}`,
+    path: '/',
+    method: 'GET'
+  }, noopHandler))
 })
 
-test('with globalAgent', async t => {
-  const p = tspl(t, { plan: 6 })
+test('with globalAgent', (t, done) => {
+  t.plan(6)
   const wanted = 'payload'
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
+    t.assert.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -407,32 +396,31 @@ test('with globalAgent', async t => {
   server.listen(0, () => {
     request(`http://localhost:${server.address().port}`)
       .then(({ statusCode, headers, body }) => {
-        p.strictEqual(statusCode, 200)
-        p.strictEqual(headers['content-type'], 'text/plain')
+        t.assert.strictEqual(statusCode, 200)
+        t.assert.strictEqual(headers['content-type'], 'text/plain')
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          p.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          t.assert.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          done()
         })
       })
       .catch(err => {
-        p.fail(err)
+        t.assert.fail(err)
       })
   })
-
-  await p.completed
 })
 
-test('with local agent', async t => {
-  const p = tspl(t, { plan: 6 })
+test('with local agent', (t, done) => {
+  t.plan(6)
   const wanted = 'payload'
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
+    t.assert.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -448,42 +436,41 @@ test('with local agent', async t => {
   server.listen(0, () => {
     request(`http://localhost:${server.address().port}`, { dispatcher })
       .then(({ statusCode, headers, body }) => {
-        p.strictEqual(statusCode, 200)
-        p.strictEqual(headers['content-type'], 'text/plain')
+        t.assert.strictEqual(statusCode, 200)
+        t.assert.strictEqual(headers['content-type'], 'text/plain')
         const bufs = []
         body.on('data', (buf) => {
           bufs.push(buf)
         })
         body.on('end', () => {
-          p.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          t.assert.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          done()
         })
       })
       .catch(err => {
-        p.fail(err)
+        t.assert.fail(err)
       })
   })
-
-  await p.completed
 })
 
 test('fails with invalid args', t => {
-  assert.throws(() => request(), errors.InvalidArgumentError, 'throws on missing url argument')
-  assert.throws(() => request(''), errors.InvalidArgumentError, 'throws on invalid url')
-  assert.throws(() => request({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
-  assert.throws(() => request({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
-  assert.throws(() => request('https://example.com', { path: 0 }), errors.InvalidArgumentError, 'throws on opts.path argument')
-  assert.throws(() => request('https://example.com', { agent: new Agent() }), errors.InvalidArgumentError, 'throws on opts.path argument')
-  assert.throws(() => request('https://example.com', 'asd'), errors.InvalidArgumentError, 'throws on non object opts argument')
+  t.assert.throws(() => request(), errors.InvalidArgumentError, 'throws on missing url argument')
+  t.assert.throws(() => request(''), errors.InvalidArgumentError, 'throws on invalid url')
+  t.assert.throws(() => request({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
+  t.assert.throws(() => request({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
+  t.assert.throws(() => request('https://example.com', { path: 0 }), errors.InvalidArgumentError, 'throws on opts.path argument')
+  t.assert.throws(() => request('https://example.com', { agent: new Agent() }), errors.InvalidArgumentError, 'throws on opts.path argument')
+  t.assert.throws(() => request('https://example.com', 'asd'), errors.InvalidArgumentError, 'throws on non object opts argument')
 })
 
-test('with globalAgent', async t => {
-  const p = tspl(t, { plan: 6 })
+test('with globalAgent', (t, done) => {
+  t.plan(6)
   const wanted = 'payload'
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
+    t.assert.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -497,36 +484,36 @@ test('with globalAgent', async t => {
         opaque: new PassThrough()
       },
       ({ statusCode, headers, opaque: pt }) => {
-        p.strictEqual(statusCode, 200)
-        p.strictEqual(headers['content-type'], 'text/plain')
+        t.assert.strictEqual(statusCode, 200)
+        t.assert.strictEqual(headers['content-type'], 'text/plain')
         const bufs = []
         pt.on('data', (buf) => {
           bufs.push(buf)
         })
         pt.on('end', () => {
-          p.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          t.assert.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          done()
         })
         pt.on('error', () => {
-          p.fail()
+          t.assert.fail()
         })
         return pt
       }
     )
   })
-
-  await p.completed
 })
 
-test('with a local agent', async t => {
-  const p = tspl(t, { plan: 6 })
+test('with a local agent', (t, done) => {
+  t.plan(6)
   const wanted = 'payload'
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
+    t.assert.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
+    done()
   })
 
   t.after(closeServerAsPromise(server))
@@ -534,10 +521,10 @@ test('with a local agent', async t => {
   const dispatcher = new Agent()
 
   dispatcher.on('connect', (origin, [dispatcher]) => {
-    p.ok(dispatcher)
-    p.strictEqual(dispatcher[kRunning], 0)
+    t.assert.ok(dispatcher)
+    t.assert.strictEqual(dispatcher[kRunning], 0)
     process.nextTick(() => {
-      p.strictEqual(dispatcher[kRunning], 1)
+      t.assert.strictEqual(dispatcher[kRunning], 1)
     })
   })
 
@@ -549,42 +536,40 @@ test('with a local agent', async t => {
         opaque: new PassThrough()
       },
       ({ statusCode, headers, opaque: pt }) => {
-        p.strictEqual(statusCode, 200)
-        p.strictEqual(headers['content-type'], 'text/plain')
+        t.assert.strictEqual(statusCode, 200)
+        t.assert.strictEqual(headers['content-type'], 'text/plain')
         const bufs = []
         pt.on('data', (buf) => {
           bufs.push(buf)
         })
         pt.on('end', () => {
-          p.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+          t.assert.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
         })
         pt.on('error', (err) => {
-          p.fail(err)
+          t.assert.fail(err)
         })
         return pt
       }
     )
   })
-
-  await p.completed
 })
 
 test('stream: fails with invalid URL', t => {
-  const p = tspl(t, { plan: 4 })
-  p.throws(() => stream(), errors.InvalidArgumentError, 'throws on missing url argument')
-  p.throws(() => stream(''), errors.InvalidArgumentError, 'throws on invalid url')
-  p.throws(() => stream({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
-  p.throws(() => stream({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
+  t.plan(4)
+  t.assert.throws(() => stream(), errors.InvalidArgumentError, 'throws on missing url argument')
+  t.assert.throws(() => stream(''), errors.InvalidArgumentError, 'throws on invalid url')
+  t.assert.throws(() => stream({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
+  t.assert.throws(() => stream({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
 })
 
-test('with globalAgent', async t => {
-  const p = tspl(t, { plan: 6 })
+test('with globalAgent', (t, done) => {
+  t.plan(6)
   const wanted = 'payload'
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
+    t.assert.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -598,8 +583,9 @@ test('with globalAgent', async t => {
       `http://localhost:${server.address().port}`,
       {},
       ({ statusCode, headers, body }) => {
-        p.strictEqual(statusCode, 200)
-        p.strictEqual(headers['content-type'], 'text/plain')
+        t.assert.strictEqual(statusCode, 200)
+        t.assert.strictEqual(headers['content-type'], 'text/plain')
+        done()
         return body
       }
     )
@@ -608,24 +594,22 @@ test('with globalAgent', async t => {
         bufs.push(buf)
       })
       .on('end', () => {
-        p.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+        t.assert.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
       })
       .on('error', (err) => {
-        p.fail(err)
+        t.assert.fail(err)
       })
   })
-
-  await p.completed
 })
 
-test('with a local agent', async t => {
-  const p = tspl(t, { plan: 6 })
+test('with a local agent', (t, done) => {
+  t.plan(6)
   const wanted = 'payload'
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
+    t.assert.strictEqual(`localhost:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -641,8 +625,9 @@ test('with a local agent', async t => {
       `http://localhost:${server.address().port}`,
       { dispatcher },
       ({ statusCode, headers, body }) => {
-        p.strictEqual(statusCode, 200)
-        p.strictEqual(headers['content-type'], 'text/plain')
+        t.assert.strictEqual(statusCode, 200)
+        t.assert.strictEqual(headers['content-type'], 'text/plain')
+        done()
         return body
       }
     )
@@ -651,58 +636,56 @@ test('with a local agent', async t => {
         bufs.push(buf)
       })
       .on('end', () => {
-        p.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
+        t.assert.strictEqual(wanted, Buffer.concat(bufs).toString('utf8'))
       })
       .on('error', () => {
-        p.fail()
+        t.assert.fail()
       })
   })
-
-  await p.completed
 })
 
 test('pipeline: fails with invalid URL', t => {
-  const p = tspl(t, { plan: 4 })
-  p.throws(() => pipeline(), errors.InvalidArgumentError, 'throws on missing url argument')
-  p.throws(() => pipeline(''), errors.InvalidArgumentError, 'throws on invalid url')
-  p.throws(() => pipeline({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
-  p.throws(() => pipeline({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
+  t.plan(4)
+  t.assert.throws(() => pipeline(), errors.InvalidArgumentError, 'throws on missing url argument')
+  t.assert.throws(() => pipeline(''), errors.InvalidArgumentError, 'throws on invalid url')
+  t.assert.throws(() => pipeline({}), errors.InvalidArgumentError, 'throws on missing url.origin argument')
+  t.assert.throws(() => pipeline({ origin: '' }), errors.InvalidArgumentError, 'throws on invalid url.origin argument')
 })
 
-test('pipeline: fails with invalid onInfo', async (t) => {
-  const p = tspl(t, { plan: 2 })
+test('pipeline: fails with invalid onInfo', (t, done) => {
+  t.plan(2)
   pipeline({ origin: 'http://localhost', path: '/', onInfo: 'foo' }, () => {}).on('error', (err) => {
-    p.ok(err instanceof errors.InvalidArgumentError)
-    p.equal(err.message, 'invalid onInfo callback')
+    t.assert.ok(err instanceof errors.InvalidArgumentError)
+    t.assert.strictEqual(err.message, 'invalid onInfo callback')
+    done()
   })
-  await p.completed
 })
 
 test('request: fails with invalid onInfo', async (t) => {
   try {
     await request({ origin: 'http://localhost', path: '/', onInfo: 'foo' })
-    assert.fail('should throw')
+    t.assert.fail('should throw')
   } catch (e) {
-    assert.ok(e)
-    assert.strictEqual(e.message, 'invalid onInfo callback')
+    t.assert.ok(e)
+    t.assert.strictEqual(e.message, 'invalid onInfo callback')
   }
 })
 
 test('stream: fails with invalid onInfo', async (t) => {
   try {
     await stream({ origin: 'http://localhost', path: '/', onInfo: 'foo' }, () => new PassThrough())
-    assert.fail('should throw')
+    t.assert.fail('should throw')
   } catch (e) {
-    assert.ok(e)
-    assert.strictEqual(e.message, 'invalid onInfo callback')
+    t.assert.ok(e)
+    t.assert.strictEqual(e.message, 'invalid onInfo callback')
   }
 })
 
 test('constructor validations', t => {
-  const p = tspl(t, { plan: 3 })
-  p.throws(() => new Agent({ factory: 'ASD' }), errors.InvalidArgumentError, 'throws on invalid opts argument')
-  p.throws(() => new Agent({ maxOrigins: -1 }), errors.InvalidArgumentError, 'maxOrigins must be a number greater than 0')
-  p.throws(() => new Agent({ maxOrigins: 'foo' }), errors.InvalidArgumentError, 'maxOrigins must be a number greater than 0')
+  t.plan(3)
+  t.assert.throws(() => new Agent({ factory: 'ASD' }), errors.InvalidArgumentError, 'throws on invalid opts argument')
+  t.assert.throws(() => new Agent({ maxOrigins: -1 }), errors.InvalidArgumentError, 'maxOrigins must be a number greater than 0')
+  t.assert.throws(() => new Agent({ maxOrigins: 'foo' }), errors.InvalidArgumentError, 'maxOrigins must be a number greater than 0')
 })
 
 test('dispatch validations', async t => {
@@ -725,26 +708,23 @@ test('dispatch validations', async t => {
     res.end('asd')
   })
 
-  const p = tspl(t, { plan: 6 })
-  p.throws(() => dispatcher.dispatch('ASD'), errors.InvalidArgumentError, 'throws on missing handler')
-  p.throws(() => dispatcher.dispatch('ASD', noopHandler), errors.InvalidArgumentError, 'throws on invalid opts argument type')
-  p.throws(() => dispatcher.dispatch({}, noopHandler), errors.InvalidArgumentError, 'throws on invalid opts.origin argument')
-  p.throws(() => dispatcher.dispatch({ origin: '' }, noopHandler), errors.InvalidArgumentError, 'throws on invalid opts.origin argument')
-  p.throws(() => dispatcher.dispatch({}, {}), errors.InvalidArgumentError, 'throws on invalid handler.onError')
+  t.plan(6)
+  t.assert.throws(() => dispatcher.dispatch('ASD'), errors.InvalidArgumentError, 'throws on missing handler')
+  t.assert.throws(() => dispatcher.dispatch('ASD', noopHandler), errors.InvalidArgumentError, 'throws on invalid opts argument type')
+  t.assert.throws(() => dispatcher.dispatch({}, noopHandler), errors.InvalidArgumentError, 'throws on invalid opts.origin argument')
+  t.assert.throws(() => dispatcher.dispatch({ origin: '' }, noopHandler), errors.InvalidArgumentError, 'throws on invalid opts.origin argument')
+  t.assert.throws(() => dispatcher.dispatch({}, {}), errors.InvalidArgumentError, 'throws on invalid handler.onError')
 
-  server.listen(0, () => {
-    p.doesNotThrow(() => dispatcher.dispatch({
-      origin: new URL(`http://localhost:${server.address().port}`),
-      path: '/',
-      method: 'GET'
-    }, noopHandler))
-  })
-
-  await p.completed
+  await once(server.listen(0), 'listening')
+  t.assert.doesNotThrow(() => dispatcher.dispatch({
+    origin: new URL(`http://localhost:${server.address().port}`),
+    path: '/',
+    method: 'GET'
+  }, noopHandler))
 })
 
-test('drain', async t => {
-  const p = tspl(t, { plan: 2 })
+test('drain', (t, done) => {
+  t.plan(2)
 
   const dispatcher = new Agent({
     connections: 1,
@@ -752,7 +732,8 @@ test('drain', async t => {
   })
 
   dispatcher.on('drain', () => {
-    p.ok(1)
+    t.assert.ok(1)
+    done()
   })
 
   class Handler {
@@ -761,7 +742,7 @@ test('drain', async t => {
     onData () {}
     onComplete () {}
     onError () {
-      p.fail()
+      t.assert.fail()
     }
   }
 
@@ -773,88 +754,82 @@ test('drain', async t => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    p.strictEqual(dispatcher.dispatch({
+    t.assert.strictEqual(dispatcher.dispatch({
       origin: `http://localhost:${server.address().port}`,
       method: 'GET',
       path: '/'
     }, new Handler()), false)
   })
-
-  await p.completed
 })
 
-test('global api', async t => {
-  const p = tspl(t, { plan: 6 * 2 })
+test('global api', async (t) => {
+  t.plan(6 * 2)
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.url === '/bar') {
-      p.strictEqual(req.method, 'PUT')
-      p.strictEqual(req.url, '/bar')
+      t.assert.strictEqual(req.method, 'PUT')
+      t.assert.strictEqual(req.url, '/bar')
     } else {
-      p.strictEqual(req.method, 'GET')
-      p.strictEqual(req.url, '/foo')
+      t.assert.strictEqual(req.method, 'GET')
+      t.assert.strictEqual(req.url, '/foo')
     }
     req.pipe(res)
   })
 
   t.after(closeServerAsPromise(server))
 
-  server.listen(0, async () => {
-    const origin = `http://localhost:${server.address().port}`
-    await request(origin, { path: '/foo' })
-    await request(`${origin}/foo`)
-    await request({ origin, path: '/foo' })
-    await stream({ origin, path: '/foo' }, () => new PassThrough())
-    await request({ protocol: 'http:', hostname: 'localhost', port: server.address().port, path: '/foo' })
-    await request(`${origin}/bar`, { body: 'asd' })
-  })
-
-  await p.completed
+  await once(server.listen(0), 'listening')
+  const origin = `http://localhost:${server.address().port}`
+  await request(origin, { path: '/foo' })
+  await request(`${origin}/foo`)
+  await request({ origin, path: '/foo' })
+  await stream({ origin, path: '/foo' }, () => new PassThrough())
+  await request({ protocol: 'http:', hostname: 'localhost', port: server.address().port, path: '/foo' })
+  await request(`${origin}/bar`, { body: 'asd' })
 })
 
 test('global api throws', t => {
   const origin = 'http://asd'
-  assert.throws(() => request(`${origin}/foo`, { path: '/foo' }), errors.InvalidArgumentError)
-  assert.throws(() => request({ origin, path: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
-  assert.throws(() => request({ origin, pathname: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
-  assert.throws(() => request({ origin: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
-  assert.throws(() => request(0), errors.InvalidArgumentError)
-  assert.throws(() => request(1), errors.InvalidArgumentError)
+  t.assert.throws(() => request(`${origin}/foo`, { path: '/foo' }), errors.InvalidArgumentError)
+  t.assert.throws(() => request({ origin, path: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
+  t.assert.throws(() => request({ origin, pathname: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
+  t.assert.throws(() => request({ origin: 0 }, { path: '/foo' }), errors.InvalidArgumentError)
+  t.assert.throws(() => request(0), errors.InvalidArgumentError)
+  t.assert.throws(() => request(1), errors.InvalidArgumentError)
 })
 
-test('unreachable request rejects and can be caught', async t => {
-  const p = tspl(t, { plan: 1 })
+test('unreachable request rejects and can be caught', (t, done) => {
+  t.plan(1)
 
   request('https://thisis.not/avalid/url').catch(() => {
-    p.ok(1)
+    t.assert.ok(1)
+    done()
   })
-
-  await p.completed
 })
 
 test('connect is not valid', t => {
-  const p = tspl(t, { plan: 1 })
+  t.plan(1)
 
-  p.throws(() => new Agent({ connect: false }), errors.InvalidArgumentError, 'connect must be a function or an object')
+  t.assert.throws(() => new Agent({ connect: false }), errors.InvalidArgumentError, 'connect must be a function or an object')
 })
 
 test('the dispatcher is truly global', t => {
   const agent = getGlobalDispatcher()
-  assert.ok(require.resolve('../../index.js') in require.cache)
+  t.assert.ok(require.resolve('../../index.js') in require.cache)
   delete require.cache[require.resolve('../../index.js')]
-  assert.strictEqual(require.resolve('../../index.js') in require.cache, false)
+  t.assert.strictEqual(require.resolve('../../index.js') in require.cache, false)
   const undiciFresh = require('../../index.js')
-  assert.ok(require.resolve('../../index.js') in require.cache)
-  assert.strictEqual(agent, undiciFresh.getGlobalDispatcher())
+  t.assert.ok(require.resolve('../../index.js') in require.cache)
+  t.assert.strictEqual(agent, undiciFresh.getGlobalDispatcher())
 })
 
-test('stats', async t => {
-  const p = tspl(t, { plan: 7 })
+test('stats', (t, done) => {
+  t.plan(7)
   const wanted = 'payload'
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    p.strictEqual('/', req.url)
-    p.strictEqual('GET', req.method)
+    t.assert.strictEqual('/', req.url)
+    t.assert.strictEqual('GET', req.method)
     res.end(wanted)
   })
 
@@ -869,18 +844,17 @@ test('stats', async t => {
   server.listen(0, () => {
     request(`http://localhost:${server.address().port}`, { dispatcher })
       .then(({ statusCode, headers, body }) => {
-        p.strictEqual(statusCode, 200)
+        t.assert.strictEqual(statusCode, 200)
         const originForStats = `http://localhost:${server.address().port}`
         const agentStats = dispatcher.stats[originForStats]
-        p.strictEqual(agentStats.connected, 1)
-        p.strictEqual(agentStats.pending, 0)
-        p.strictEqual(agentStats.running, 0)
-        p.strictEqual(agentStats.size, 0)
+        t.assert.strictEqual(agentStats.connected, 1)
+        t.assert.strictEqual(agentStats.pending, 0)
+        t.assert.strictEqual(agentStats.running, 0)
+        t.assert.strictEqual(agentStats.size, 0)
+        done()
       })
       .catch(err => {
-        p.fail(err)
+        t.assert.fail(err)
       })
   })
-
-  await p.completed
 })
