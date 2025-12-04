@@ -1293,6 +1293,63 @@ describe('SnapshotAgent - Filtering', () => {
     assert.strictEqual(snapshots[0].request.method, 'GET',
       'Recorded request should have GET method')
   })
+
+  it('excluded URLs should not error in playback mode', async (t) => {
+    const server = createTestServer((req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' })
+      res.end(`Response from ${req.url}`)
+    })
+
+    const { origin } = await setupServer(server)
+    const snapshotPath = createSnapshotPath('exclude-playback-bug')
+
+    setupCleanup(t, { server, snapshotPath })
+
+    // Record mode: record one request, exclude another
+    const recordingAgent = new SnapshotAgent({
+      mode: 'record',
+      snapshotPath,
+      excludeUrls: [`${origin}/excluded`]
+    })
+
+    const originalDispatcher = getGlobalDispatcher()
+    setupCleanup(t, { agent: recordingAgent, originalDispatcher })
+    setGlobalDispatcher(recordingAgent)
+
+    // Request to included endpoint - should be recorded
+    const res1 = await request(`${origin}/included`)
+    await res1.body.text()
+
+    // Request to excluded endpoint - should NOT be recorded
+    const res2 = await request(`${origin}/excluded`)
+    await res2.body.text()
+
+    await recordingAgent.saveSnapshots()
+
+    const recorder = recordingAgent.getRecorder()
+    assert.strictEqual(recorder.size(), 1, 'Should have recorded only the included request')
+
+    // Playback mode: should allow excluded URL to pass through without error
+    const playbackAgent = new SnapshotAgent({
+      mode: 'playback',
+      snapshotPath,
+      excludeUrls: [`${origin}/excluded`]
+    })
+
+    setupCleanup(t, { agent: playbackAgent })
+    setGlobalDispatcher(playbackAgent)
+
+    // This should work - replays from snapshot
+    const res3 = await request(`${origin}/included`)
+    await res3.body.text()
+    assert.strictEqual(res3.statusCode, 200, 'Included request should replay successfully')
+
+    // Excluded URL should pass through to real server
+    const res4 = await request(`${origin}/excluded`)
+    const body4 = await res4.body.text()
+    assert.strictEqual(res4.statusCode, 200, 'Excluded request should pass through to real server')
+    assert.strictEqual(body4, 'Response from /excluded', 'Should get live response from server')
+  })
 })
 
 describe('SnapshotAgent - Close Method', () => {
