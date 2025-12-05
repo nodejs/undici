@@ -103,3 +103,39 @@ test('Should reject request if not h2c supported', async t => {
     'SocketError: other side closed'
   )
 })
+
+test('Connect to h2c server over a unix domain socket', async t => {
+  const planner = tspl(t, { plan: 6 })
+  const { mkdtemp, rm } = require('node:fs/promises')
+  const { join } = require('node:path')
+  const { tmpdir } = require('node:os')
+
+  const tmpDir = await mkdtemp(join(tmpdir(), 'h2c-client-'))
+  const socketPath = join(tmpDir, 'server.sock')
+  const authority = 'localhost'
+
+  const server = createServer((req, res) => {
+    planner.equal(req.headers[':authority'], authority)
+    planner.equal(req.headers[':method'], 'GET')
+    planner.equal(req.headers[':path'], '/')
+    planner.equal(req.headers[':scheme'], 'http')
+    res.writeHead(200)
+    res.end('Hello, world!')
+  })
+
+  server.listen(socketPath)
+  await once(server, 'listening')
+  const client = new H2CClient(`http://${authority}/`, {
+    socketPath
+  })
+
+  const response = await client.request({ path: '/', method: 'GET' })
+  planner.equal(response.statusCode, 200)
+  planner.equal(await response.body.text(), 'Hello, world!')
+
+  t.after(async () => {
+    await rm(tmpDir, { recursive: true })
+    client.close()
+    server.close()
+  })
+})
