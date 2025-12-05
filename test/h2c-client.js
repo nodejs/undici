@@ -104,7 +104,7 @@ test('Should reject request if not h2c supported', async t => {
   )
 })
 
-test('Connect to h2c server over a unix domain socket', async t => {
+test('Connect to h2c server over a unix domain socket', { skip: process.platform === 'win32' }, async t => {
   const planner = tspl(t, { plan: 6 })
   const { mkdtemp, rm } = require('node:fs/promises')
   const { join } = require('node:path')
