@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
-const { H2CClient } = require('..')
+const { H2CClient, Client } = require('..')
 
 test('Should throw if no h2c origin', async t => {
   const planner = tspl(t, { plan: 1 })
@@ -138,4 +138,19 @@ test('Connect to h2c server over a unix domain socket', { skip: process.platform
     client.close()
     server.close()
   })
+})
+
+test('Should throw if bad useH2c has been passed', async t => {
+  t = tspl(t, { plan: 1 })
+
+  t.throws(() => {
+    // eslint-disable-next-line
+    new Client('https://localhost:1000', {
+      useH2c: 'true'
+    })
+  }, {
+    message: 'useH2c must be a valid boolean value'
+  })
+
+  await t.completed
 })
