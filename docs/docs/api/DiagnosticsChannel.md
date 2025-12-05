@@ -269,16 +269,16 @@ diagnosticsChannel.channel('undici:proxy:connected').subscribe(({ socket, connec
 })
 ```
 
-## `undici:cache:pending-requests`
+## `undici:request:pending-requests`
 
-This message is published when the cache interceptor's pending request deduplication map changes. This is useful for monitoring and debugging request deduplication behavior.
+This message is published when the deduplicate interceptor's pending request map changes. This is useful for monitoring and debugging request deduplication behavior.
 
-The cache interceptor automatically deduplicates concurrent requests for the same cacheable resource. When multiple identical requests are made while one is already in-flight, only one request is sent to the origin server, and all waiting handlers receive the same response.
+The deduplicate interceptor automatically deduplicates concurrent requests for the same resource. When multiple identical requests are made while one is already in-flight, only one request is sent to the origin server, and all waiting handlers receive the same response.
 
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-diagnosticsChannel.channel('undici:cache:pending-requests').subscribe(({ type, size, key }) => {
+diagnosticsChannel.channel('undici:request:pending-requests').subscribe(({ type, size, key }) => {
   console.log(type)  // 'added' or 'removed'
   console.log(size)  // current number of pending requests
   console.log(key)   // the deduplication key for this request
@@ -296,7 +296,7 @@ diagnosticsChannel.channel('undici:cache:pending-requests').subscribe(({ type, s
 ```js
 import diagnosticsChannel from 'diagnostics_channel'
 
-const channel = diagnosticsChannel.channel('undici:cache:pending-requests')
+const channel = diagnosticsChannel.channel('undici:request:pending-requests')
 
 channel.subscribe(({ type, size, key }) => {
   if (type === 'added') {
@@ -310,4 +310,4 @@ channel.subscribe(({ type, size, key }) => {
 This can be useful for:
 - Verifying that request deduplication is working as expected
 - Monitoring the number of concurrent in-flight requests
-- Debugging cache behavior in production environments
+- Debugging deduplication behavior in production environments

@@ -1213,18 +1213,30 @@ The `cache` interceptor implements client-side response caching as described in
 - `methods` - The [**safe** HTTP methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1) to cache the response of.
 - `cacheByDefault` - The default expiration time to cache responses by if they don't have an explicit expiration and cannot have an heuristic expiry computed. If this isn't present, responses neither with an explicit expiration nor heuristically cacheable will not be cached. Default `undefined`.
 - `type` - The [type of cache](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching#types_of_caches) for Undici to act as. Can be `shared` or `private`. Default `shared`. `private` implies privately cacheable responses will be cached and potentially shared with other users of your application.
-- `deduplication` - Enable request deduplication. When `true`, concurrent identical requests will be deduplicated so only one request is sent to the origin server. Default `false`.
 
-**Request Deduplication**
+##### `Deduplicate Interceptor`
 
-When enabled via the `deduplication: true` option, the cache interceptor deduplicates concurrent requests for the same cacheable resource. When multiple identical requests are made while one is already in-flight, only one request is sent to the origin server, and all waiting handlers receive the same response. This reduces server load and improves performance.
+The `deduplicate` interceptor deduplicates concurrent identical requests. When multiple identical requests are made while one is already in-flight, only one request is sent to the origin server, and all waiting handlers receive the same response. This reduces server load and improves performance.
+
+**Options**
+
+- `methods` - The [**safe** HTTP methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1) to deduplicate. Default `['GET']`.
+
+**Usage**
 
 ```js
 const { Client, interceptors } = require("undici");
-const { cache } = interceptors;
+const { deduplicate, cache } = interceptors;
 
+// Deduplicate only
 const client = new Client("http://example.com").compose(
-  cache({ deduplication: true })
+  deduplicate()
+);
+
+// Deduplicate with caching
+const clientWithCache = new Client("http://example.com").compose(
+  deduplicate(),
+  cache()
 );
 ```
 
@@ -1232,11 +1244,11 @@ Requests are considered identical if they have the same:
 - Origin
 - HTTP method
 - Path
-- Request headers (used for cache key generation)
+- Request headers
 
 All deduplicated requests receive the complete response including status code, headers, and body.
 
-For observability, request deduplication events are published to the `undici:cache:pending-requests` [diagnostic channel](/docs/docs/api/DiagnosticsChannel.md#undiciacachepending-requests).
+For observability, request deduplication events are published to the `undici:request:pending-requests` [diagnostic channel](/docs/docs/api/DiagnosticsChannel.md#undicirequestpending-requests).
 
 ## Instance Events
 
