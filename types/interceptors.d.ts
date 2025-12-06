@@ -37,6 +37,17 @@ declare namespace Interceptors {
     storage?: DNSStorage
   }
 
+  // Deduplicate interceptor
+  export type DeduplicateMethods = 'GET' | 'HEAD' | 'OPTIONS' | 'TRACE'
+  export type DeduplicateInterceptorOpts = {
+    /**
+     * The HTTP methods to deduplicate.
+     * Note: Only safe HTTP methods can be deduplicated.
+     * @default ['GET']
+     */
+    methods?: DeduplicateMethods[]
+  }
+
   export function dump (opts?: DumpInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function retry (opts?: RetryInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function redirect (opts?: RedirectInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
@@ -44,4 +55,5 @@ declare namespace Interceptors {
   export function responseError (opts?: ResponseErrorInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function dns (opts?: DNSInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function cache (opts?: CacheInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
+  export function deduplicate (opts?: DeduplicateInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
 }
