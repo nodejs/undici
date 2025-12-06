@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
-const { H2CClient } = require('..')
+const { H2CClient, Client } = require('..')
 
 test('Should throw if no h2c origin', async t => {
   const planner = tspl(t, { plan: 1 })
@@ -102,4 +102,55 @@ test('Should reject request if not h2c supported', async t => {
     client.request({ path: '/', method: 'GET' }),
     'SocketError: other side closed'
   )
+})
+
+test('Connect to h2c server over a unix domain socket', { skip: process.platform === 'win32' }, async t => {
+  const planner = tspl(t, { plan: 6 })
+  const { mkdtemp, rm } = require('node:fs/promises')
+  const { join } = require('node:path')
+  const { tmpdir } = require('node:os')
+
+  const tmpDir = await mkdtemp(join(tmpdir(), 'h2c-client-'))
+  const socketPath = join(tmpDir, 'server.sock')
+  const authority = 'localhost'
+
+  const server = createServer((req, res) => {
+    planner.equal(req.headers[':authority'], authority)
+    planner.equal(req.headers[':method'], 'GET')
+    planner.equal(req.headers[':path'], '/')
+    planner.equal(req.headers[':scheme'], 'http')
+    res.writeHead(200)
+    res.end('Hello, world!')
+  })
+
+  server.listen(socketPath)
+  await once(server, 'listening')
+  const client = new H2CClient(`http://${authority}/`, {
+    socketPath
+  })
+
+  const response = await client.request({ path: '/', method: 'GET' })
+  planner.equal(response.statusCode, 200)
+  planner.equal(await response.body.text(), 'Hello, world!')
+
+  t.after(async () => {
+    await rm(tmpDir, { recursive: true })
+    client.close()
+    server.close()
+  })
+})
+
+test('Should throw if bad useH2c has been passed', async t => {
+  t = tspl(t, { plan: 1 })
+
+  t.throws(() => {
+    // eslint-disable-next-line
+    new Client('https://localhost:1000', {
+      useH2c: 'true'
+    })
+  }, {
+    message: 'useH2c must be a valid boolean value'
+  })
+
+  await t.completed
 })
