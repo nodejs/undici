@@ -158,4 +158,19 @@ declare namespace Errors {
     name: 'MaxOriginsReachedError'
     code: 'UND_ERR_MAX_ORIGINS_REACHED'
   }
+
+  /** Circuit breaker is open or half-open. */
+  export class CircuitBreakerError extends UndiciError {
+    constructor (
+      message: string,
+      options: {
+        state: 'open' | 'half-open'
+        key: string
+      }
+    )
+    name: 'CircuitBreakerError'
+    code: 'UND_ERR_CIRCUIT_BREAKER'
+    state: 'open' | 'half-open'
+    key: string
+  }
 }
