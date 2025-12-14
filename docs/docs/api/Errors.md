@@ -26,6 +26,7 @@ import { errors } from 'undici'
 | `InformationalError`                 | `UND_ERR_INFO`                        | expected error with reason                                                |
 | `ResponseExceededMaxSizeError`       | `UND_ERR_RES_EXCEEDED_MAX_SIZE`       | response body exceed the max size allowed                                 |
 | `SecureProxyConnectionError`         | `UND_ERR_PRX_TLS`                     | tls connection to a proxy failed                                          |
+| `CircuitBreakerError`                | `UND_ERR_CIRCUIT_BREAKER`             | circuit breaker is open or half-open, request rejected                    |
 
 Be aware of the possible difference between the global dispatcher version and the actual undici version you might be using. We recommend to avoid the check `instanceof errors.UndiciError` and seek for the `error.code === '<error_code>'` instead to avoid inconsistencies.
 ### `SocketError`
@@ -46,3 +47,24 @@ interface SocketInfo {
 ```
 
 Be aware that in some cases the `.socket` property can be `null`.
+
+### `CircuitBreakerError`
+
+The `CircuitBreakerError` is thrown when a request is rejected by the circuit breaker interceptor. It has the following properties:
+
+- `state` - The current state of the circuit breaker when the error was thrown. Either `'open'` or `'half-open'`.
+- `key` - The circuit key identifying which circuit rejected the request (e.g., the origin URL).
+
+```js
+const { errors } = require('undici')
+
+try {
+  await client.request({ path: '/', method: 'GET' })
+} catch (err) {
+  if (err instanceof errors.CircuitBreakerError) {
+    console.log(err.code)  // 'UND_ERR_CIRCUIT_BREAKER'
+    console.log(err.state) // 'open' or 'half-open'
+    console.log(err.key)   // e.g., 'http://example.com'
+  }
+}
+```

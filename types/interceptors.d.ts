@@ -37,6 +37,44 @@ declare namespace Interceptors {
     storage?: DNSStorage
   }
 
+  // Circuit breaker interceptor
+  export interface CircuitBreakerStorage {
+    get(key: string): CircuitBreakerState
+    delete(key: string): void
+    destroy(): void
+    readonly size: number
+  }
+
+  export interface CircuitBreakerState {
+    state: 0 | 1 | 2  // CLOSED | OPEN | HALF_OPEN
+    failureCount: number
+    successCount: number
+    lastFailureTime: number
+    halfOpenRequests: number
+    reset(): void
+  }
+
+  export type CircuitBreakerInterceptorOpts = {
+    /** Number of failures before opening circuit. Default: 5 */
+    threshold?: number
+    /** Duration circuit stays open in ms. Default: 30000 */
+    timeout?: number
+    /** Successes needed in half-open state to close circuit. Default: 1 */
+    successThreshold?: number
+    /** Max concurrent requests allowed in half-open state. Default: 1 */
+    maxHalfOpenRequests?: number
+    /** HTTP status codes that count as failures. Default: [500, 502, 503, 504] */
+    statusCodes?: Set<number> | number[]
+    /** Error codes that count as failures. Default: timeout and connection errors */
+    errorCodes?: Set<string> | string[]
+    /** Function to extract circuit key from request options. Default: uses origin */
+    getKey?: (opts: Dispatcher.DispatchOptions) => string
+    /** Custom storage instance for circuit states */
+    storage?: CircuitBreakerStorage
+    /** Callback when circuit state changes */
+    onStateChange?: (key: string, newState: 'closed' | 'open' | 'half-open', previousState: 'closed' | 'open' | 'half-open') => void
+  }
+
   export function dump (opts?: DumpInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function retry (opts?: RetryInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function redirect (opts?: RedirectInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
@@ -44,4 +82,5 @@ declare namespace Interceptors {
   export function responseError (opts?: ResponseErrorInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function dns (opts?: DNSInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function cache (opts?: CacheInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
+  export function circuitBreaker (opts?: CircuitBreakerInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
 }
