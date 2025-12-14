@@ -1065,7 +1065,6 @@ It represents a storage object for resolved DNS records.
 - `set` - (`(origin: string, records: DNSInterceptorOriginRecords | null, options: { ttl: number }) => void`) method to set the records for a given origin.
 - `delete` - (`(origin: string) => void`) method to delete records for a given origin.
 - `full` - (`() => boolean`) method to check if the storage is full, if returns `true`, DNS lookup will be skipped in this interceptor and new records will not be stored.
-```ts
 
 **Example - Basic DNS Interceptor**
 
