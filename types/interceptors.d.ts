@@ -46,6 +46,20 @@ declare namespace Interceptors {
      * @default ['GET']
      */
     methods?: DeduplicateMethods[]
+    /**
+     * Header names that, if present in a request, will cause the request to skip deduplication.
+     * Header name matching is case-insensitive.
+     * @default []
+     */
+    skipHeaderNames?: string[]
+    /**
+     * Header names to exclude from the deduplication key.
+     * Requests with different values for these headers will still be deduplicated together.
+     * Useful for headers like `x-request-id` that vary per request but shouldn't affect deduplication.
+     * Header name matching is case-insensitive.
+     * @default []
+     */
+    excludeHeaderNames?: string[]
   }
 
   export function dump (opts?: DumpInterceptorOpts): Dispatcher.DispatcherComposeInterceptor

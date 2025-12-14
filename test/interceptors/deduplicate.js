@@ -734,4 +734,400 @@ describe('Deduplicate Interceptor', () => {
     strictEqual(body1, 'response for Bearer same-token')
     strictEqual(body2, 'response for Bearer same-token')
   })
+
+  test('skipHeaderNames skips deduplication for requests with specified headers', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.end(`response ${requestsToOrigin}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate({ skipHeaderNames: ['x-no-dedupe'] }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests with the skip header
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-no-dedupe': 'true' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-no-dedupe': 'true' }
+      })
+    ])
+
+    // Both requests should reach origin since they have the skip header
+    strictEqual(requestsToOrigin, 2)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response 1')
+    strictEqual(body2, 'response 2')
+  })
+
+  test('skipHeaderNames is case-insensitive', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.end(`response ${requestsToOrigin}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate({ skipHeaderNames: ['X-No-Dedupe'] }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests with lowercase header (should still match)
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-no-dedupe': 'true' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-no-dedupe': 'true' }
+      })
+    ])
+
+    // Both requests should reach origin since header matching is case-insensitive
+    strictEqual(requestsToOrigin, 2)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response 1')
+    strictEqual(body2, 'response 2')
+  })
+
+  test('skipHeaderNames allows deduplication for requests without specified headers', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.end('response')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate({ skipHeaderNames: ['x-no-dedupe'] }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests without the skip header
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      })
+    ])
+
+    // Only one request should reach origin since they don't have the skip header
+    strictEqual(requestsToOrigin, 1)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response')
+    strictEqual(body2, 'response')
+  })
+
+  test('skipHeaderNames with multiple headers', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.end(`response ${requestsToOrigin}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate({ skipHeaderNames: ['x-skip-1', 'x-skip-2'] }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests with different skip headers
+    const [res1, res2, res3] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-skip-1': 'true' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-skip-2': 'true' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      })
+    ])
+
+    // First two should not be deduplicated (they have skip headers)
+    // Third request starts a new pending request (no skip header)
+    // If third request arrives after first two start, it won't be deduplicated with them
+    // but could be deduplicated with other requests without skip headers
+    strictEqual(requestsToOrigin, 3)
+
+    const [body1, body2, body3] = await Promise.all([
+      res1.body.text(),
+      res2.body.text(),
+      res3.body.text()
+    ])
+
+    strictEqual(body1, 'response 1')
+    strictEqual(body2, 'response 2')
+    strictEqual(body3, 'response 3')
+  })
+
+  test('throws TypeError if skipHeaderNames is not an array', () => {
+    const { throws } = require('node:assert')
+    throws(() => {
+      interceptors.deduplicate({ skipHeaderNames: 'not-an-array' })
+    }, {
+      name: 'TypeError',
+      message: 'expected opts.skipHeaderNames to be an array, got string'
+    })
+  })
+
+  test('excludeHeaderNames deduplicates requests with different excluded header values', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.end('response')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate({ excludeHeaderNames: ['x-request-id'] }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests with different x-request-id values
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-request-id': 'req-1' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-request-id': 'req-2' }
+      })
+    ])
+
+    // Only one request should reach origin since x-request-id is excluded from the key
+    strictEqual(requestsToOrigin, 1)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response')
+    strictEqual(body2, 'response')
+  })
+
+  test('excludeHeaderNames is case-insensitive', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.end('response')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate({ excludeHeaderNames: ['X-Request-ID'] }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests with lowercase header (should still be excluded)
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-request-id': 'req-1' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-request-id': 'req-2' }
+      })
+    ])
+
+    // Should be deduplicated since header matching is case-insensitive
+    strictEqual(requestsToOrigin, 1)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response')
+    strictEqual(body2, 'response')
+  })
+
+  test('excludeHeaderNames does not affect other headers in deduplication key', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.end(`response for ${req.headers['accept-encoding']}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate({ excludeHeaderNames: ['x-request-id'] }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests with different accept-encoding (not excluded)
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-request-id': 'req-1', 'accept-encoding': 'gzip' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-request-id': 'req-2', 'accept-encoding': 'br' }
+      })
+    ])
+
+    // Both should reach origin since accept-encoding differs and is not excluded
+    strictEqual(requestsToOrigin, 2)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response for gzip')
+    strictEqual(body2, 'response for br')
+  })
+
+  test('excludeHeaderNames with multiple headers', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.end('response')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate({ excludeHeaderNames: ['x-request-id', 'x-correlation-id'] }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent requests with different values for both excluded headers
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-request-id': 'req-1', 'x-correlation-id': 'corr-1' }
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'x-request-id': 'req-2', 'x-correlation-id': 'corr-2' }
+      })
+    ])
+
+    // Should be deduplicated since both varying headers are excluded
+    strictEqual(requestsToOrigin, 1)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response')
+    strictEqual(body2, 'response')
+  })
+
+  test('throws TypeError if excludeHeaderNames is not an array', () => {
+    const { throws } = require('node:assert')
+    throws(() => {
+      interceptors.deduplicate({ excludeHeaderNames: 'not-an-array' })
+    }, {
+      name: 'TypeError',
+      message: 'expected opts.excludeHeaderNames to be an array, got string'
+    })
+  })
 })

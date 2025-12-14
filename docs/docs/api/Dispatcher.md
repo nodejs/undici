@@ -1221,6 +1221,8 @@ The `deduplicate` interceptor deduplicates concurrent identical requests. When m
 **Options**
 
 - `methods` - The [**safe** HTTP methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1) to deduplicate. Default `['GET']`.
+- `skipHeaderNames` - Header names that, if present in a request, will cause the request to skip deduplication entirely. Useful for headers like `idempotency-key` where presence indicates unique processing. Header name matching is case-insensitive. Default `[]`.
+- `excludeHeaderNames` - Header names to exclude from the deduplication key. Requests with different values for these headers will still be deduplicated together. Useful for headers like `x-request-id` that vary per request but shouldn't affect deduplication. Header name matching is case-insensitive. Default `[]`.
 
 **Usage**
 
@@ -1244,7 +1246,7 @@ Requests are considered identical if they have the same:
 - Origin
 - HTTP method
 - Path
-- Request headers
+- Request headers (excluding any headers specified in `excludeHeaderNames`)
 
 All deduplicated requests receive the complete response including status code, headers, and body.
 
