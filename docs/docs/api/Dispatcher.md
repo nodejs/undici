@@ -1202,6 +1202,119 @@ const client = new Client("http://example.com").compose(
 - Handles case-insensitive encoding names
 - Supports streaming decompression without buffering
 
+##### `circuitBreaker`
+
+The `circuitBreaker` interceptor implements the [circuit breaker pattern](https://martinfowler.com/bliki/CircuitBreaker.html) to prevent cascading failures when upstream services are unavailable or responding with errors.
+
+The circuit breaker has three states:
+- **Closed** - Requests flow normally. Failures are counted, and when the threshold is reached, the circuit opens.
+- **Open** - All requests fail immediately with `CircuitBreakerError` without contacting the upstream service.
+- **Half-Open** - After the timeout period, a limited number of requests are allowed through to test if the service has recovered.
+
+**Options**
+
+- `threshold` - Number of consecutive failures before opening the circuit. Default: `5`.
+- `timeout` - How long (in milliseconds) the circuit stays open before transitioning to half-open. Default: `30000` (30 seconds).
+- `successThreshold` - Number of successful requests in half-open state needed to close the circuit. Default: `1`.
+- `maxHalfOpenRequests` - Maximum number of concurrent requests allowed in half-open state. Default: `1`.
+- `statusCodes` - Array or Set of HTTP status codes that count as failures. Default: `[500, 502, 503, 504]`.
+- `errorCodes` - Array or Set of error codes that count as failures. Default: `['UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT', 'UND_ERR_SOCKET', 'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'EPIPE', 'ENOTFOUND', 'ENETUNREACH', 'EHOSTUNREACH', 'EAI_AGAIN']`.
+- `getKey` - Function to extract a circuit key from request options. Default: uses origin only. Signature: `(opts: DispatchOptions) => string`.
+- `storage` - Custom `CircuitBreakerStorage` instance for storing circuit states. Useful for sharing state across multiple dispatchers.
+- `onStateChange` - Callback invoked when a circuit changes state. Signature: `(key: string, newState: 'open' | 'half-open' | 'closed', previousState: string) => void`.
+
+**Example - Basic Circuit Breaker**
+
+```js
+const { Client, interceptors } = require("undici");
+const { circuitBreaker } = interceptors;
+
+const client = new Client("http://example.com").compose(
+  circuitBreaker({
+    threshold: 5,
+    timeout: 30000
+  })
+);
+
+try {
+  const response = await client.request({ path: "/", method: "GET" });
+} catch (err) {
+  if (err.code === "UND_ERR_CIRCUIT_BREAKER") {
+    console.log("Circuit is open, service unavailable");
+  }
+}
+```
+
+**Example - Route-Level Circuit Breakers**
+
+Use the `getKey` option to create separate circuits for different routes:
+
+```js
+const { Agent, interceptors } = require("undici");
+const { circuitBreaker } = interceptors;
+
+const client = new Agent().compose(
+  circuitBreaker({
+    threshold: 3,
+    timeout: 10000,
+    getKey: (opts) => `${opts.origin}${opts.path}`
+  })
+);
+
+// /api/users and /api/products have independent circuits
+await client.request({ origin: "http://example.com", path: "/api/users", method: "GET" });
+await client.request({ origin: "http://example.com", path: "/api/products", method: "GET" });
+```
+
+**Example - Custom Status Codes**
+
+Configure the circuit breaker to trip on rate limiting:
+
+```js
+const { Client, interceptors } = require("undici");
+const { circuitBreaker } = interceptors;
+
+const client = new Client("http://example.com").compose(
+  circuitBreaker({
+    threshold: 3,
+    statusCodes: [429, 500, 502, 503, 504]
+  })
+);
+```
+
+**Example - State Change Monitoring**
+
+```js
+const { Client, interceptors } = require("undici");
+const { circuitBreaker } = interceptors;
+
+const client = new Client("http://example.com").compose(
+  circuitBreaker({
+    threshold: 5,
+    onStateChange: (key, newState, prevState) => {
+      console.log(`Circuit ${key}: ${prevState} -> ${newState}`);
+    }
+  })
+);
+```
+
+**Error Handling**
+
+When the circuit is open or half-open (with max requests reached), requests will fail with a `CircuitBreakerError`:
+
+```js
+const { errors } = require("undici");
+
+try {
+  await client.request({ path: "/", method: "GET" });
+} catch (err) {
+  if (err instanceof errors.CircuitBreakerError) {
+    console.log(`Circuit breaker triggered: ${err.state}`); // 'open' or 'half-open'
+    console.log(`Circuit key: ${err.key}`);
+  }
+}
+```
+
 ##### `Cache Interceptor`
 
 The `cache` interceptor implements client-side response caching as described in
