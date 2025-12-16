@@ -37,6 +37,31 @@ declare namespace Interceptors {
     storage?: DNSStorage
   }
 
+  // Deduplicate interceptor
+  export type DeduplicateMethods = 'GET' | 'HEAD' | 'OPTIONS' | 'TRACE'
+  export type DeduplicateInterceptorOpts = {
+    /**
+     * The HTTP methods to deduplicate.
+     * Note: Only safe HTTP methods can be deduplicated.
+     * @default ['GET']
+     */
+    methods?: DeduplicateMethods[]
+    /**
+     * Header names that, if present in a request, will cause the request to skip deduplication.
+     * Header name matching is case-insensitive.
+     * @default []
+     */
+    skipHeaderNames?: string[]
+    /**
+     * Header names to exclude from the deduplication key.
+     * Requests with different values for these headers will still be deduplicated together.
+     * Useful for headers like `x-request-id` that vary per request but shouldn't affect deduplication.
+     * Header name matching is case-insensitive.
+     * @default []
+     */
+    excludeHeaderNames?: string[]
+  }
+
   export function dump (opts?: DumpInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function retry (opts?: RetryInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function redirect (opts?: RedirectInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
@@ -44,4 +69,5 @@ declare namespace Interceptors {
   export function responseError (opts?: ResponseErrorInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function dns (opts?: DNSInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function cache (opts?: CacheInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
+  export function deduplicate (opts?: DeduplicateInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
 }
