@@ -1219,7 +1219,7 @@ The circuit breaker has three states:
 - `maxHalfOpenRequests` - Maximum number of concurrent requests allowed in half-open state. Default: `1`.
 - `statusCodes` - Array or Set of HTTP status codes that count as failures. Default: `[500, 502, 503, 504]`.
 - `errorCodes` - Array or Set of error codes that count as failures. Default: `['UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT', 'UND_ERR_SOCKET', 'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'EPIPE', 'ENOTFOUND', 'ENETUNREACH', 'EHOSTUNREACH', 'EAI_AGAIN']`.
-- `getKey` - Function to extract a circuit key from request options. Default: uses origin only. Signature: `(opts: DispatchOptions) => string`.
+- `getKey` - Function to extract a circuit key from request options. Default: uses origin only. Signature: `(opts: DispatchOptions) => string | null | undefined`. Return `null` or `undefined` to bypass the circuit breaker for a specific request.
 - `storage` - Custom `CircuitBreakerStorage` instance for storing circuit states. Useful for sharing state across multiple dispatchers.
 - `onStateChange` - Callback invoked when a circuit changes state. Signature: `(key: string, newState: 'open' | 'half-open' | 'closed', previousState: string) => void`.
 
@@ -1264,6 +1264,31 @@ const client = new Agent().compose(
 // /api/users and /api/products have independent circuits
 await client.request({ origin: "http://example.com", path: "/api/users", method: "GET" });
 await client.request({ origin: "http://example.com", path: "/api/products", method: "GET" });
+```
+
+**Example - Bypassing Circuit Breaker for Health Checks**
+
+Return `null` from `getKey` to bypass the circuit breaker for specific requests:
+
+```js
+const { Agent, interceptors } = require("undici");
+const { circuitBreaker } = interceptors;
+
+const client = new Agent().compose(
+  circuitBreaker({
+    threshold: 5,
+    getKey: (opts) => {
+      // Bypass circuit breaker for health check endpoints
+      if (opts.path === '/health' || opts.path === '/ready') {
+        return null;
+      }
+      return opts.origin;
+    }
+  })
+);
+
+// Health checks always go through, even when circuit is open
+await client.request({ origin: "http://example.com", path: "/health", method: "GET" });
 ```
 
 **Example - Custom Status Codes**

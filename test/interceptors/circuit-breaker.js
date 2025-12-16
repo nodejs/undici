@@ -576,6 +576,63 @@ test('circuit breaker - onStateChange callback', async t => {
   await t.completed
 })
 
+test('circuit breaker - bypasses when getKey returns null', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let requestCount = 0
+  const server = createServer((req, res) => {
+    requestCount++
+    res.writeHead(500)
+    res.end('error')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Agent().compose(circuitBreaker({
+    threshold: 2,
+    timeout: 1000,
+    getKey: (opts) => {
+      // Return null for /health to bypass circuit breaker
+      if (opts.path === '/health') {
+        return null
+      }
+      return opts.origin
+    }
+  }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const origin = `http://localhost:${server.address().port}`
+
+  // Trigger 2 failures to open circuit
+  for (let i = 0; i < 2; i++) {
+    const response = await client.request({ origin, path: '/', method: 'GET' })
+    await response.body.dump()
+  }
+
+  // Circuit is now open, regular requests should fail
+  try {
+    await client.request({ origin, path: '/', method: 'GET' })
+    t.fail('Should have thrown CircuitBreakerError')
+  } catch (err) {
+    t.ok(err instanceof CircuitBreakerError)
+  }
+
+  // But /health should bypass the circuit breaker and go through
+  const response = await client.request({ origin, path: '/health', method: 'GET' })
+  t.equal(response.statusCode, 500) // Request went through despite open circuit
+  await response.body.dump()
+
+  t.equal(requestCount, 3) // 2 initial + 1 health check
+
+  await t.completed
+})
+
 test('circuit breaker - success resets failure count in closed state', async t => {
   t = tspl(t, { plan: 3 })
 
