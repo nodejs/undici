@@ -4,13 +4,12 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after, describe, before } = require('node:test')
-const { Client, errors } = require('..')
+const { once, EventEmitter } = require('node:events')
 const { createServer } = require('node:http')
-const EE = require('node:events')
-const { kConnect } = require('../lib/core/symbols')
-const { Readable } = require('node:stream')
 const net = require('node:net')
-const { promisify } = require('node:util')
+const { Readable } = require('node:stream')
+const { Client, errors } = require('..')
+const { kConnect } = require('../lib/core/symbols')
 const { NotSupportedError, InvalidArgumentError, AbortError } = require('../lib/core/errors')
 const { parseFormDataString } = require('./utils/formdata')
 
@@ -24,23 +23,23 @@ test('request dump head', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await once(server.listen(0), 'listening')
 
-    let dumped = false
-    client.on('disconnect', () => {
-      t.strictEqual(dumped, true)
-    })
-    client.request({
-      path: '/',
-      method: 'HEAD'
-    }, (err, { body }) => {
-      t.ifError(err)
-      body.dump({ limit: 1 }).then(() => {
-        dumped = true
-        t.ok(true, 'pass')
-      })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
+
+  let dumped = false
+  client.on('disconnect', () => {
+    t.strictEqual(dumped, true)
+  })
+  client.request({
+    path: '/',
+    method: 'HEAD'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.dump({ limit: 1 }).then(() => {
+      dumped = true
+      t.ok(true, 'pass')
     })
   })
 
@@ -58,24 +57,24 @@ test('request dump big', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await once(server.listen(0), 'listening')
 
-    let dumped = false
-    client.on('disconnect', () => {
-      t.strictEqual(dumped, true)
-    })
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.ifError(err)
-      body.on('data', () => t.fail())
-      body.dump().then(() => {
-        dumped = true
-        t.ok(true, 'pass')
-      })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
+
+  let dumped = false
+  client.on('disconnect', () => {
+    t.strictEqual(dumped, true)
+  })
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.on('data', () => t.fail())
+    body.dump().then(() => {
+      dumped = true
+      t.ok(true, 'pass')
     })
   })
 
@@ -92,23 +91,23 @@ test('request dump', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await once(server.listen(0), 'listening')
 
-    let dumped = false
-    client.on('disconnect', () => {
-      t.strictEqual(dumped, true)
-    })
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.ifError(err)
-      body.dump().then(() => {
-        dumped = true
-        t.ok(true, 'pass')
-      })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
+
+  let dumped = false
+  client.on('disconnect', () => {
+    t.strictEqual(dumped, true)
+  })
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.dump().then(() => {
+      dumped = true
+      t.ok(true, 'pass')
     })
   })
 
@@ -122,32 +121,32 @@ test('request dump with abort signal', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await once(server.listen(0), 'listening')
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.ifError(err)
-      const ac = new AbortController()
-      body.dump({ signal: ac.signal }).catch((err) => {
-        t.strictEqual(err.name, 'AbortError')
-        t.strictEqual(err.message, 'This operation was aborted')
-        const stackLines = err.stack.split('\n').map((l) => l.trim())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-        t.ok(stackLines[0].startsWith('AbortError: This operation was aborted'))
-        t.ok(stackLines[1].startsWith('at new DOMException'))
-        t.ok(stackLines[2].startsWith('at AbortController.abort'))
-        t.ok(/client-request.js/.test(stackLines[3]))
-        t.ok(stackLines[4].startsWith('at RequestHandler.runInAsyncScope'))
-        t.ok(stackLines[5].startsWith('at RequestHandler.onHeaders'))
-        t.ok(stackLines[6].startsWith('at Request.onHeaders'))
-        server.close()
-      })
-      ac.abort()
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    const ac = new AbortController()
+    body.dump({ signal: ac.signal }).catch((err) => {
+      t.strictEqual(err.name, 'AbortError')
+      t.strictEqual(err.message, 'This operation was aborted')
+      const stackLines = err.stack.split('\n').map((l) => l.trim())
+
+      t.ok(stackLines[0].startsWith('AbortError: This operation was aborted'))
+      t.ok(stackLines[1].startsWith('at new DOMException'))
+      t.ok(stackLines[2].startsWith('at AbortController.abort'))
+      t.ok(/client-request.js/.test(stackLines[3]))
+      t.ok(stackLines[4].startsWith('at RequestHandler.runInAsyncScope'))
+      t.ok(stackLines[5].startsWith('at RequestHandler.onHeaders'))
+      t.ok(stackLines[6].startsWith('at Request.onHeaders'))
+      server.close()
     })
+    ac.abort()
   })
 
   await t.completed
@@ -160,28 +159,28 @@ test('request dump with POJO as invalid signal', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await once(server.listen(0), 'listening')
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.ifError(err)
-      body.dump({ signal: {} }).catch((err) => {
-        t.strictEqual(err.name, 'InvalidArgumentError')
-        t.strictEqual(err.message, 'signal must be an AbortSignal')
-        const stackLines = err.stack.split('\n').map((l) => l.trim())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-        t.ok(stackLines[0].startsWith('InvalidArgumentError: signal must be an AbortSignal'))
-        t.ok(stackLines[1].startsWith('at BodyReadable.dump'))
-        t.ok(/client-request.js/.test(stackLines[2]))
-        t.ok(stackLines[3].startsWith('at RequestHandler.runInAsyncScope'))
-        t.ok(stackLines[4].startsWith('at RequestHandler.onHeaders'))
-        t.ok(stackLines[5].startsWith('at Request.onHeaders'))
-        server.close()
-      })
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    body.dump({ signal: {} }).catch((err) => {
+      t.strictEqual(err.name, 'InvalidArgumentError')
+      t.strictEqual(err.message, 'signal must be an AbortSignal')
+      const stackLines = err.stack.split('\n').map((l) => l.trim())
+
+      t.ok(stackLines[0].startsWith('InvalidArgumentError: signal must be an AbortSignal'))
+      t.ok(stackLines[1].startsWith('at BodyReadable.dump'))
+      t.ok(/client-request.js/.test(stackLines[2]))
+      t.ok(stackLines[3].startsWith('at RequestHandler.runInAsyncScope'))
+      t.ok(stackLines[4].startsWith('at RequestHandler.onHeaders'))
+      t.ok(stackLines[5].startsWith('at Request.onHeaders'))
+      server.close()
     })
   })
 
@@ -195,32 +194,32 @@ test('request dump with aborted signal', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await once(server.listen(0), 'listening')
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.ifError(err)
-      const ac = new AbortController()
-      ac.abort(new AbortError('This operation was with purpose aborted'))
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-      body.dump({ signal: ac.signal }).catch((err) => {
-        t.strictEqual(err.name, 'AbortError')
-        t.strictEqual(err.message, 'This operation was with purpose aborted')
-        const stackLines = err.stack.split('\n').map((l) => l.trim())
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err, { body }) => {
+    t.ifError(err)
+    const ac = new AbortController()
+    ac.abort(new AbortError('This operation was with purpose aborted'))
 
-        t.ok(stackLines[0].startsWith('AbortError: This operation was with purpose aborted'))
-        t.ok(/client-request.js/.test(stackLines[1]))
-        t.ok(stackLines[2].startsWith('at RequestHandler.runInAsyncScope'))
-        t.ok(stackLines[3].startsWith('at RequestHandler.onHeaders'))
-        t.ok(stackLines[4].startsWith('at Request.onHeaders'))
-        server.close()
-      })
-      ac.abort()
+    body.dump({ signal: ac.signal }).catch((err) => {
+      t.strictEqual(err.name, 'AbortError')
+      t.strictEqual(err.message, 'This operation was with purpose aborted')
+      const stackLines = err.stack.split('\n').map((l) => l.trim())
+
+      t.ok(stackLines[0].startsWith('AbortError: This operation was with purpose aborted'))
+      t.ok(/client-request.js/.test(stackLines[1]))
+      t.ok(stackLines[2].startsWith('at RequestHandler.runInAsyncScope'))
+      t.ok(stackLines[3].startsWith('at RequestHandler.onHeaders'))
+      t.ok(stackLines[4].startsWith('at Request.onHeaders'))
+      server.close()
     })
+    ac.abort()
   })
 
   await t.completed
@@ -233,19 +232,19 @@ test('request hwm', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await once(server.listen(0), 'listening')
 
-    client.request({
-      path: '/',
-      method: 'GET',
-      highWaterMark: 1000
-    }, (err, { body }) => {
-      t.ifError(err)
-      t.deepStrictEqual(body.readableHighWaterMark, 1000)
-      body.dump()
-    })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    highWaterMark: 1000
+  }, (err, { body }) => {
+    t.ifError(err)
+    t.deepStrictEqual(body.readableHighWaterMark, 1000)
+    body.dump()
   })
 
   await t.completed
@@ -254,38 +253,38 @@ test('request hwm', async (t) => {
 test('request abort before headers', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const signal = new EE()
+  const signal = new EventEmitter()
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('hello')
     signal.emit('abort')
   })
   after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await once(server.listen(0), 'listening')
 
-    client[kConnect](() => {
-      client.request({
-        path: '/',
-        method: 'GET',
-        signal
-      }, (err) => {
-        t.ok(err instanceof errors.RequestAbortedError)
-        t.strictEqual(signal.listenerCount('abort'), 0)
-      })
-      t.strictEqual(signal.listenerCount('abort'), 1)
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-      client.request({
-        path: '/',
-        method: 'GET',
-        signal
-      }, (err) => {
-        t.ok(err instanceof errors.RequestAbortedError)
-        t.strictEqual(signal.listenerCount('abort'), 0)
-      })
-      t.strictEqual(signal.listenerCount('abort'), 2)
+  client[kConnect](() => {
+    client.request({
+      path: '/',
+      method: 'GET',
+      signal
+    }, (err) => {
+      t.ok(err instanceof errors.RequestAbortedError)
+      t.strictEqual(signal.listenerCount('abort'), 0)
     })
+    t.strictEqual(signal.listenerCount('abort'), 1)
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      signal
+    }, (err) => {
+      t.ok(err instanceof errors.RequestAbortedError)
+      t.strictEqual(signal.listenerCount('abort'), 0)
+    })
+    t.strictEqual(signal.listenerCount('abort'), 2)
   })
 
   await t.completed
@@ -298,23 +297,23 @@ test('request body destroyed on invalid callback', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await once(server.listen(0), 'listening')
 
-    const body = new Readable({
-      read () { }
-    })
-    try {
-      client.request({
-        path: '/',
-        method: 'GET',
-        body
-      }, null)
-    } catch (err) {
-      t.strictEqual(body.destroyed, true)
-    }
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
+
+  const body = new Readable({
+    read () { }
   })
+  try {
+    client.request({
+      path: '/',
+      method: 'GET',
+      body
+    }, null)
+  } catch (err) {
+    t.strictEqual(body.destroyed, true)
+  }
 
   await t.completed
 })
@@ -328,22 +327,21 @@ test('trailers', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.close())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.close())
 
-    const { body, trailers } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
-
-    body
-      .on('data', () => t.fail())
-      .on('end', () => {
-        t.deepStrictEqual(trailers, { 'content-md5': 'test' })
-      })
+  const { body, trailers } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+
+  body
+    .on('data', () => t.fail())
+    .on('end', () => {
+      t.deepStrictEqual(trailers, { 'content-md5': 'test' })
+    })
 
   await t.completed
 })
@@ -367,7 +365,8 @@ test('destroy socket abruptly', async (t) => {
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
+
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
 
@@ -409,7 +408,8 @@ test('destroy socket abruptly with keep-alive', async (t) => {
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
+
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
 
@@ -442,17 +442,16 @@ test('request json', async (t) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
-    t.deepStrictEqual(obj, await body.json())
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+  t.deepStrictEqual(obj, await body.json())
 
   await t.completed
 })
@@ -465,17 +464,16 @@ test('request long multibyte json', async (t) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
-    t.deepStrictEqual(obj, await body.json())
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+  t.deepStrictEqual(obj, await body.json())
 
   await t.completed
 })
@@ -488,17 +486,16 @@ test('request text', async (t) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
-    t.strictEqual(JSON.stringify(obj), await body.text())
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+  t.strictEqual(JSON.stringify(obj), await body.text())
 
   await t.completed
 })
@@ -573,7 +570,7 @@ describe('headers', () => {
 
     before(async () => {
       server.listen(0)
-      await EE.once(server, 'listening')
+      await once(server, 'listening')
       serverAddress = `localhost:${server.address().port}`
     })
 
@@ -613,7 +610,7 @@ describe('headers', () => {
 
     before(async () => {
       server.listen(0)
-      await EE.once(server, 'listening')
+      await once(server, 'listening')
       serverAddress = `localhost:${server.address().port}`
     })
 
@@ -670,17 +667,16 @@ test('request long multibyte text', async (t) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
-    t.strictEqual(JSON.stringify(obj), await body.text())
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+  t.strictEqual(JSON.stringify(obj), await body.text())
 
   await t.completed
 })
@@ -694,20 +690,19 @@ test('request blob', async (t) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
-
-    const blob = await body.blob()
-    t.deepStrictEqual(obj, JSON.parse(await blob.text()))
-    t.strictEqual(blob.type, 'application/json')
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+
+  const blob = await body.blob()
+  t.deepStrictEqual(obj, JSON.parse(await blob.text()))
+  t.strictEqual(blob.type, 'application/json')
 
   await t.completed
 })
@@ -720,20 +715,19 @@ test('request arrayBuffer', async (t) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
-    const ab = await body.arrayBuffer()
-
-    t.deepStrictEqual(Buffer.from(JSON.stringify(obj)), Buffer.from(ab))
-    t.ok(ab instanceof ArrayBuffer)
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+  const ab = await body.arrayBuffer()
+
+  t.deepStrictEqual(Buffer.from(JSON.stringify(obj)), Buffer.from(ab))
+  t.ok(ab instanceof ArrayBuffer)
 
   await t.completed
 })
@@ -746,20 +740,19 @@ test('request bytes', async (t) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
-    const bytes = await body.bytes()
-
-    t.deepStrictEqual(new TextEncoder().encode(JSON.stringify(obj)), bytes)
-    t.ok(bytes instanceof Uint8Array)
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+  const bytes = await body.bytes()
+
+  t.deepStrictEqual(new TextEncoder().encode(JSON.stringify(obj)), bytes)
+  t.ok(bytes instanceof Uint8Array)
 
   await t.completed
 })
@@ -772,22 +765,21 @@ test('request body', async (t) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
-
-    let x = ''
-    for await (const chunk of body.body) {
-      x += Buffer.from(chunk)
-    }
-    t.strictEqual(JSON.stringify(obj), x)
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+
+  let x = ''
+  for await (const chunk of body.body) {
+    x += Buffer.from(chunk)
+  }
+  t.strictEqual(JSON.stringify(obj), x)
 
   await t.completed
 })
@@ -804,24 +796,23 @@ test('request post body no missing data', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET',
-      body: new Readable({
-        read () {
-          this.push('asd')
-          this.push(null)
-        }
-      })
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET',
+    body: new Readable({
+      read () {
+        this.push('asd')
+        this.push(null)
+      }
     })
-    await body.text()
-    t.ok(true, 'pass')
   })
+  await body.text()
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -838,28 +829,27 @@ test('request post body no extra data handler', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const reqBody = new Readable({
-      read () {
-        this.push('asd')
-        this.push(null)
-      }
-    })
-    process.nextTick(() => {
-      t.strictEqual(reqBody.listenerCount('data'), 0)
-    })
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET',
-      body: reqBody
-    })
-    await body.text()
-    t.ok(true, 'pass')
+  const reqBody = new Readable({
+    read () {
+      this.push('asd')
+      this.push(null)
+    }
   })
+  process.nextTick(() => {
+    t.strictEqual(reqBody.listenerCount('data'), 0)
+  })
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET',
+    body: reqBody
+  })
+  await body.text()
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -873,20 +863,19 @@ test('request with onInfo callback', async (t) => {
     res.end(JSON.stringify({ foo: 'bar' }))
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    await client.request({
-      path: '/',
-      method: 'GET',
-      onInfo: (x) => { infos.push(x) }
-    })
-    t.strictEqual(infos.length, 1)
-    t.strictEqual(infos[0].statusCode, 102)
-    t.ok(true, 'pass')
+  await client.request({
+    path: '/',
+    method: 'GET',
+    onInfo: (x) => { infos.push(x) }
   })
+  t.strictEqual(infos.length, 1)
+  t.strictEqual(infos[0].statusCode, 102)
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -900,28 +889,27 @@ test('request with onInfo callback but socket is destroyed before end of respons
     res.writeProcessing()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
-    try {
-      await client.request({
-        path: '/',
-        method: 'GET',
-        onInfo: (x) => {
-          infos.push(x)
-          response.destroy()
-        }
-      })
-      t.fail()
-    } catch (e) {
-      t.ok(e)
-      t.strictEqual(e.message, 'other side closed')
-    }
-    t.strictEqual(infos.length, 1)
-    t.strictEqual(infos[0].statusCode, 102)
-    t.ok(true, 'pass')
-  })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
+  try {
+    await client.request({
+      path: '/',
+      method: 'GET',
+      onInfo: (x) => {
+        infos.push(x)
+        response.destroy()
+      }
+    })
+    t.fail()
+  } catch (e) {
+    t.ok(e)
+    t.strictEqual(e.message, 'other side closed')
+  }
+  t.strictEqual(infos.length, 1)
+  t.strictEqual(infos[0].statusCode, 102)
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -945,7 +933,7 @@ test('request onInfo callback headers parsing', async (t) => {
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
@@ -981,7 +969,7 @@ test('request raw responseHeaders', async (t) => {
   })
   after(() => server.close())
 
-  await promisify(server.listen.bind(server))(0)
+  await once(server.listen(0), 'listening')
 
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
@@ -1008,22 +996,22 @@ test('request formData', async (t) => {
   })
   after(() => server.close())
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await once(server.listen(0), 'listening')
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    try {
-      await body.formData()
-      t.fail('should throw NotSupportedError')
-    } catch (error) {
-      t.ok(error instanceof NotSupportedError)
-    }
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+
+  try {
+    await body.formData()
+    t.fail('should throw NotSupportedError')
+  } catch (error) {
+    t.ok(error instanceof NotSupportedError)
+  }
 
   await t.completed
 })
@@ -1036,29 +1024,29 @@ test('request text2', async (t) => {
     res.end(JSON.stringify(obj))
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
-    })
-    const p = body.text()
-    let ret = ''
-    body.on('data', chunk => {
-      ret += chunk
-    }).on('end', () => {
-      t.strictEqual(JSON.stringify(obj), ret)
-    })
-    t.strictEqual(JSON.stringify(obj), await p)
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
   })
+  const p = body.text()
+  let ret = ''
+  body.on('data', chunk => {
+    ret += chunk
+  }).on('end', () => {
+    t.strictEqual(JSON.stringify(obj), ret)
+  })
+  t.strictEqual(JSON.stringify(obj), await p)
 
   await t.completed
 })
 
 test('request with FormData body', async (t) => {
+  t = tspl(t, { plan: 5 })
   const { FormData } = require('../')
 
   const fd = new FormData()
@@ -1093,18 +1081,15 @@ test('request with FormData body', async (t) => {
     return res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    await client.request({
-      path: '/',
-      method: 'POST',
-      body: fd
-    })
-
-    t.end()
+  await client.request({
+    path: '/',
+    method: 'POST',
+    body: fd
   })
 
   await t.completed
@@ -1123,19 +1108,18 @@ test('request post body Buffer from string', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'POST',
-      body: requestBody
-    })
-    await body.text()
-    t.ok(true, 'pass')
+  const { body } = await client.request({
+    path: '/',
+    method: 'POST',
+    body: requestBody
   })
+  await body.text()
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -1154,19 +1138,18 @@ test('request post body Buffer from buffer', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'POST',
-      body: requestBody
-    })
-    await body.text()
-    t.ok(true, 'pass')
+  const { body } = await client.request({
+    path: '/',
+    method: 'POST',
+    body: requestBody
   })
+  await body.text()
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -1185,19 +1168,18 @@ test('request post body Uint8Array', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'POST',
-      body: requestBody
-    })
-    await body.text()
-    t.ok(true, 'pass')
+  const { body } = await client.request({
+    path: '/',
+    method: 'POST',
+    body: requestBody
   })
+  await body.text()
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -1216,19 +1198,18 @@ test('request post body Uint32Array', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'POST',
-      body: requestBody
-    })
-    await body.text()
-    t.ok(true, 'pass')
+  const { body } = await client.request({
+    path: '/',
+    method: 'POST',
+    body: requestBody
   })
+  await body.text()
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -1247,19 +1228,18 @@ test('request post body Float64Array', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'POST',
-      body: requestBody
-    })
-    await body.text()
-    t.ok(true, 'pass')
+  const { body } = await client.request({
+    path: '/',
+    method: 'POST',
+    body: requestBody
   })
+  await body.text()
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -1278,19 +1258,18 @@ test('request post body BigUint64Array', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'POST',
-      body: requestBody
-    })
-    await body.text()
-    t.ok(true, 'pass')
+  const { body } = await client.request({
+    path: '/',
+    method: 'POST',
+    body: requestBody
   })
+  await body.text()
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -1309,19 +1288,18 @@ test('request post body DataView', async (t) => {
     res.end()
   })
   after(() => server.close())
+  await once(server.listen(0), 'listening')
 
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
 
-    const { body } = await client.request({
-      path: '/',
-      method: 'POST',
-      body: requestBody
-    })
-    await body.text()
-    t.ok(true, 'pass')
+  const { body } = await client.request({
+    path: '/',
+    method: 'POST',
+    body: requestBody
   })
+  await body.text()
+  t.ok(true, 'pass')
 
   await t.completed
 })
@@ -1333,24 +1311,22 @@ test('request multibyte json with setEncoding', async (t) => {
   const data = JSON.stringify({ asd })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write(data.slice(0, 1))
-    setTimeout(() => {
-      res.write(data.slice(1))
-      res.end()
-    }, 100)
-  })
-  after(server.close.bind(server))
-
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(client.destroy.bind(client))
-
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
+    queueMicrotask(() => {
+      res.end(data.slice(1))
     })
-    body.setEncoding('utf8')
-    t.deepStrictEqual(JSON.parse(data), await body.json())
   })
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(client.destroy.bind(client))
+
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
+  })
+  body.setEncoding('utf8')
+  t.deepStrictEqual(JSON.parse(data), await body.json())
 
   await t.completed
 })
@@ -1361,24 +1337,22 @@ test('request multibyte text with setEncoding', async (t) => {
   const data = Buffer.from('あいうえお')
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write(data.slice(0, 1))
-    setTimeout(() => {
-      res.write(data.slice(1))
-      res.end()
-    }, 100)
-  })
-  after(server.close.bind(server))
-
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(client.destroy.bind(client))
-
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
+    queueMicrotask(() => {
+      res.end(data.slice(1))
     })
-    body.setEncoding('utf8')
-    t.deepStrictEqual(data.toString('utf8'), await body.text())
   })
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(client.destroy.bind(client))
+
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
+  })
+  body.setEncoding('utf8')
+  t.deepStrictEqual(data.toString('utf8'), await body.text())
 
   await t.completed
 })
@@ -1389,24 +1363,22 @@ test('request multibyte text with setEncoding', async (t) => {
   const data = Buffer.from('あいうえお')
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write(data.slice(0, 1))
-    setTimeout(() => {
-      res.write(data.slice(1))
-      res.end()
-    }, 100)
-  })
-  after(server.close.bind(server))
-
-  server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(client.destroy.bind(client))
-
-    const { body } = await client.request({
-      path: '/',
-      method: 'GET'
+    queueMicrotask(() => {
+      res.end(data.slice(1))
     })
-    body.setEncoding('hex')
-    t.deepStrictEqual(data.toString('hex'), await body.text())
   })
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(client.destroy.bind(client))
+
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET'
+  })
+  body.setEncoding('hex')
+  t.deepStrictEqual(data.toString('hex'), await body.text())
 
   await t.completed
 })
@@ -1422,15 +1394,16 @@ test('#3736 - Aborted Response (without consuming body)', async (t) => {
       })
       res.write('hello from server')
       res.end()
-    }, 100)
+    }, Infinity)
   })
 
   server.listen(0)
 
-  await EE.once(server, 'listening')
+  await once(server, 'listening')
+
   const client = new Client(`http://localhost:${server.address().port}`)
 
-  after(server.close.bind(server))
+  after(() => server.close())
   after(client.destroy.bind(client))
 
   const { signal } = controller
