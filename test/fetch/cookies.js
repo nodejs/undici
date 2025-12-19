@@ -28,6 +28,16 @@ describe('cookies', () => {
     return once(server, 'close')
   })
 
+  test('WarmUp for CI', { skip: !process.env.CI }, async (t) => {
+    // for some reason the first request in CI doesnt work as expected
+
+    const query = qsStringify({
+      'set-cookie': 'name=value; Domain=example.com'
+    })
+
+    await fetch(`http://localhost:${server.address().port}?${query}`)
+  })
+
   test('Can receive set-cookie headers from a server using fetch - issue #1262', async (t) => {
     const query = qsStringify({
       'set-cookie': 'name=value; Domain=example.com'
