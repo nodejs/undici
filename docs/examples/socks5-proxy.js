@@ -1,6 +1,6 @@
 'use strict'
 
-const { Socks5ProxyWrapper, request, fetch } = require('undici')
+const { Socks5Agent, request, fetch } = require('undici')
 
 // Basic example demonstrating SOCKS5 proxy usage
 async function basicSocks5Example () {
@@ -8,7 +8,7 @@ async function basicSocks5Example () {
 
   try {
     // Create SOCKS5 proxy wrapper
-    const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+    const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 
     // Make request through SOCKS5 proxy
     const response = await request('http://httpbin.org/ip', {
@@ -31,10 +31,10 @@ async function authenticatedSocks5Example () {
 
   try {
     // Using credentials in URL
-    const socks5Proxy = new Socks5ProxyWrapper('socks5://username:password@localhost:1080')
+    const socks5Proxy = new Socks5Agent('socks5://username:password@localhost:1080')
 
     // Alternative: using options
-    // const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080', {
+    // const socks5Proxy = new Socks5Agent('socks5://localhost:1080', {
     //   username: 'username',
     //   password: 'password'
     // })
@@ -58,7 +58,7 @@ async function fetchWithSocks5Example () {
   console.log('\n=== Fetch with SOCKS5 Proxy Example ===')
 
   try {
-    const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+    const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 
     const response = await fetch('http://httpbin.org/json', {
       dispatcher: socks5Proxy
@@ -79,7 +79,7 @@ async function httpsWithSocks5Example () {
   console.log('\n=== HTTPS with SOCKS5 Proxy Example ===')
 
   try {
-    const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+    const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 
     const response = await request('https://httpbin.org/ip', {
       dispatcher: socks5Proxy
@@ -100,7 +100,7 @@ async function connectionPoolingExample () {
   console.log('\n=== Connection Pooling Example ===')
 
   try {
-    const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080', {
+    const socks5Proxy = new Socks5Agent('socks5://localhost:1080', {
       connections: 5,  // Allow up to 5 concurrent connections
       pipelining: 1    // Enable HTTP/1.1 pipelining
     })
@@ -136,7 +136,7 @@ async function errorHandlingExample () {
 
   try {
     // Intentionally use a non-existent proxy
-    const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:9999')
+    const socks5Proxy = new Socks5Agent('socks5://localhost:9999')
 
     await request('http://httpbin.org/ip', {
       dispatcher: socks5Proxy
@@ -154,7 +154,7 @@ async function globalDispatcherExample () {
   const { setGlobalDispatcher, getGlobalDispatcher } = require('undici')
 
   try {
-    const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+    const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 
     // Save original dispatcher
     const originalDispatcher = getGlobalDispatcher()
