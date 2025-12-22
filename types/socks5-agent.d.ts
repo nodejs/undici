@@ -3,17 +3,17 @@ import buildConnector from './connector'
 import { IncomingHttpHeaders } from './header'
 import Pool from './pool'
 
-export default Socks5ProxyWrapper
+export default Socks5Agent
 
-declare class Socks5ProxyWrapper extends Dispatcher {
-  constructor (proxyUrl: string | URL, options?: Socks5ProxyWrapper.Options)
+declare class Socks5Agent extends Dispatcher {
+  constructor (proxyUrl: string | URL, options?: Socks5Agent.Options)
 
   dispatch (options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandler): boolean
   close (): Promise<void>
   destroy (err?: Error): Promise<void>
 }
 
-declare namespace Socks5ProxyWrapper {
+declare namespace Socks5Agent {
   export interface Options extends Pool.Options {
     /** Additional headers to send with the proxy connection */
     headers?: IncomingHttpHeaders;
@@ -75,9 +75,9 @@ declare namespace Socks5ProxyWrapper {
 }
 
 export interface Socks5Client {
-  readonly state: keyof typeof Socks5ProxyWrapper.STATES;
+  readonly state: keyof typeof Socks5Agent.STATES;
   readonly socket: import('net').Socket;
-  readonly options: Socks5ProxyWrapper.Options;
+  readonly options: Socks5Agent.Options;
 
   handshake(): Promise<void>;
   connect(address: string, port: number): Promise<void>;
@@ -100,7 +100,7 @@ export interface Socks5Client {
 }
 
 export interface Socks5ClientConstructor {
-  new(socket: import('net').Socket, options?: Socks5ProxyWrapper.Options): Socks5Client;
+  new(socket: import('net').Socket, options?: Socks5Agent.Options): Socks5Client;
 }
 
 export const Socks5Client: Socks5ClientConstructor

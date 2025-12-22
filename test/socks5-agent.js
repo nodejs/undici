@@ -4,7 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 const { request } = require('..')
 const { InvalidArgumentError } = require('../lib/core/errors')
-const Socks5ProxyWrapper = require('../lib/dispatcher/socks5-proxy-wrapper')
+const Socks5Agent = require('../lib/dispatcher/socks5-agent')
 const { createServer } = require('node:http')
 const net = require('node:net')
 const { AUTH_METHODS, REPLY_CODES } = require('../lib/core/socks5-client')
@@ -228,33 +228,33 @@ class TestSocks5Server {
   }
 }
 
-test('Socks5ProxyWrapper - constructor validation', async (t) => {
+test('Socks5Agent - constructor validation', async (t) => {
   const p = tspl(t, { plan: 4 })
 
   p.throws(() => {
     // eslint-disable-next-line no-new
-    new Socks5ProxyWrapper()
+    new Socks5Agent()
   }, InvalidArgumentError, 'should throw when proxy URL is not provided')
 
   p.throws(() => {
     // eslint-disable-next-line no-new
-    new Socks5ProxyWrapper('http://localhost:1080')
+    new Socks5Agent('http://localhost:1080')
   }, InvalidArgumentError, 'should throw when proxy URL protocol is not socks5')
 
   p.doesNotThrow(() => {
     // eslint-disable-next-line no-new
-    new Socks5ProxyWrapper('socks5://localhost:1080')
+    new Socks5Agent('socks5://localhost:1080')
   }, 'should accept socks5:// URLs')
 
   p.doesNotThrow(() => {
     // eslint-disable-next-line no-new
-    new Socks5ProxyWrapper('socks://localhost:1080')
+    new Socks5Agent('socks://localhost:1080')
   }, 'should accept socks:// URLs for compatibility')
 
   await p.completed
 })
 
-test('Socks5ProxyWrapper - basic HTTP connection', async (t) => {
+test('Socks5Agent - basic HTTP connection', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   // Create target HTTP server
@@ -274,8 +274,8 @@ test('Socks5ProxyWrapper - basic HTTP connection', async (t) => {
   const socksAddress = await socksServer.listen()
 
   try {
-    // Create Socks5ProxyWrapper
-    const proxyWrapper = new Socks5ProxyWrapper(`socks5://localhost:${socksAddress.port}`)
+    // Create Socks5Agent
+    const proxyWrapper = new Socks5Agent(`socks5://localhost:${socksAddress.port}`)
 
     // Make request through SOCKS5 proxy
     const response = await request(`http://localhost:${serverPort}/test`, {
@@ -297,12 +297,12 @@ test('Socks5ProxyWrapper - basic HTTP connection', async (t) => {
   await p.completed
 })
 
-test.skip('Socks5ProxyWrapper - HTTPS connection', async (t) => {
+test.skip('Socks5Agent - HTTPS connection', async (t) => {
   // Skip HTTPS test for now - TLS option passing needs additional work
   t.skip('HTTPS test requires TLS option refinement')
 })
 
-test('Socks5ProxyWrapper - with authentication', async (t) => {
+test('Socks5Agent - with authentication', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   // Create target HTTP server
@@ -325,8 +325,8 @@ test('Socks5ProxyWrapper - with authentication', async (t) => {
   const socksAddress = await socksServer.listen()
 
   try {
-    // Create Socks5ProxyWrapper with auth
-    const proxyWrapper = new Socks5ProxyWrapper(`socks5://testuser:testpass@localhost:${socksAddress.port}`)
+    // Create Socks5Agent with auth
+    const proxyWrapper = new Socks5Agent(`socks5://testuser:testpass@localhost:${socksAddress.port}`)
 
     // Make request through SOCKS5 proxy
     const response = await request(`http://localhost:${serverPort}/auth-test`, {
@@ -347,7 +347,7 @@ test('Socks5ProxyWrapper - with authentication', async (t) => {
   await p.completed
 })
 
-test('Socks5ProxyWrapper - authentication with options', async (t) => {
+test('Socks5Agent - authentication with options', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   // Create target HTTP server
@@ -370,8 +370,8 @@ test('Socks5ProxyWrapper - authentication with options', async (t) => {
   const socksAddress = await socksServer.listen()
 
   try {
-    // Create Socks5ProxyWrapper with auth in options
-    const proxyWrapper = new Socks5ProxyWrapper(`socks5://localhost:${socksAddress.port}`, {
+    // Create Socks5Agent with auth in options
+    const proxyWrapper = new Socks5Agent(`socks5://localhost:${socksAddress.port}`, {
       username: 'optuser',
       password: 'optpass'
     })
@@ -395,7 +395,7 @@ test('Socks5ProxyWrapper - authentication with options', async (t) => {
   await p.completed
 })
 
-test('Socks5ProxyWrapper - multiple requests through same proxy', async (t) => {
+test('Socks5Agent - multiple requests through same proxy', async (t) => {
   const p = tspl(t, { plan: 4 })
 
   // Create target HTTP server
@@ -417,8 +417,8 @@ test('Socks5ProxyWrapper - multiple requests through same proxy', async (t) => {
   const socksAddress = await socksServer.listen()
 
   try {
-    // Create Socks5ProxyWrapper
-    const proxyWrapper = new Socks5ProxyWrapper(`socks5://localhost:${socksAddress.port}`)
+    // Create Socks5Agent
+    const proxyWrapper = new Socks5Agent(`socks5://localhost:${socksAddress.port}`)
 
     // Make first request
     const response1 = await request(`http://localhost:${serverPort}/request1`, {
@@ -445,11 +445,11 @@ test('Socks5ProxyWrapper - multiple requests through same proxy', async (t) => {
   await p.completed
 })
 
-test('Socks5ProxyWrapper - connection failure', async (t) => {
+test('Socks5Agent - connection failure', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  // Create Socks5ProxyWrapper pointing to non-existent proxy
-  const proxyWrapper = new Socks5ProxyWrapper('socks5://localhost:9999')
+  // Create Socks5Agent pointing to non-existent proxy
+  const proxyWrapper = new Socks5Agent('socks5://localhost:9999')
 
   try {
     await request('http://example.com/', {
@@ -463,7 +463,7 @@ test('Socks5ProxyWrapper - connection failure', async (t) => {
   await p.completed
 })
 
-test('Socks5ProxyWrapper - proxy connection refused', async (t) => {
+test('Socks5Agent - proxy connection refused', async (t) => {
   const p = tspl(t, { plan: 1 })
 
   // Create target HTTP server
@@ -482,7 +482,7 @@ test('Socks5ProxyWrapper - proxy connection refused', async (t) => {
   const socksAddress = await socksServer.listen()
 
   try {
-    const proxyWrapper = new Socks5ProxyWrapper(`socks5://localhost:${socksAddress.port}`)
+    const proxyWrapper = new Socks5Agent(`socks5://localhost:${socksAddress.port}`)
 
     await request(`http://localhost:${serverPort}/`, {
       dispatcher: proxyWrapper
@@ -498,10 +498,10 @@ test('Socks5ProxyWrapper - proxy connection refused', async (t) => {
   await p.completed
 })
 
-test('Socks5ProxyWrapper - close and destroy', async (t) => {
+test('Socks5Agent - close and destroy', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const proxyWrapper = new Socks5ProxyWrapper('socks5://localhost:1080')
+  const proxyWrapper = new Socks5Agent('socks5://localhost:1080')
 
   // Test close
   await proxyWrapper.close()
@@ -514,26 +514,26 @@ test('Socks5ProxyWrapper - close and destroy', async (t) => {
   await p.completed
 })
 
-test('Socks5ProxyWrapper - URL parsing edge cases', async (t) => {
+test('Socks5Agent - URL parsing edge cases', async (t) => {
   const p = tspl(t, { plan: 3 })
 
   // Test with URL object
   const url = new URL('socks5://user:pass@proxy.example.com:1080')
   p.doesNotThrow(() => {
     // eslint-disable-next-line no-new
-    new Socks5ProxyWrapper(url)
+    new Socks5Agent(url)
   }, 'should accept URL object')
 
   // Test with encoded credentials
   p.doesNotThrow(() => {
     // eslint-disable-next-line no-new
-    new Socks5ProxyWrapper('socks5://user%40domain:p%40ss@localhost:1080')
+    new Socks5Agent('socks5://user%40domain:p%40ss@localhost:1080')
   }, 'should handle URL-encoded credentials')
 
   // Test default port
   p.doesNotThrow(() => {
     // eslint-disable-next-line no-new
-    new Socks5ProxyWrapper('socks5://localhost')
+    new Socks5Agent('socks5://localhost')
   }, 'should use default port 1080')
 
   await p.completed

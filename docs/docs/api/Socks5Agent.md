@@ -1,19 +1,19 @@
-# Class: Socks5ProxyWrapper
+# Class: Socks5Agent
 
 Extends: `undici.Dispatcher`
 
 A SOCKS5 proxy wrapper class that implements the Dispatcher API. It enables HTTP requests to be routed through a SOCKS5 proxy server, providing connection tunneling and authentication support.
 
-## `new Socks5ProxyWrapper(proxyUrl[, options])`
+## `new Socks5Agent(proxyUrl[, options])`
 
 Arguments:
 
 * **proxyUrl** `string | URL` (required) - The SOCKS5 proxy server URL. Must use `socks5://` or `socks://` protocol.
-* **options** `Socks5ProxyWrapperOptions` (optional) - Additional configuration options.
+* **options** `Socks5AgentOptions` (optional) - Additional configuration options.
 
-Returns: `Socks5ProxyWrapper`
+Returns: `Socks5Agent`
 
-### Parameter: `Socks5ProxyWrapperOptions`
+### Parameter: `Socks5AgentOptions`
 
 Extends: [`PoolOptions`](/docs/docs/api/Pool.md#parameter-pooloptions)
 
@@ -26,13 +26,13 @@ Extends: [`PoolOptions`](/docs/docs/api/Pool.md#parameter-pooloptions)
 Examples:
 
 ```js
-import { Socks5ProxyWrapper } from 'undici'
+import { Socks5Agent } from 'undici'
 
-const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 // or with authentication
-const socks5ProxyWithAuth = new Socks5ProxyWrapper('socks5://user:pass@localhost:1080')
+const socks5ProxyWithAuth = new Socks5Agent('socks5://user:pass@localhost:1080')
 // or with options
-const socks5ProxyWithOptions = new Socks5ProxyWrapper('socks5://localhost:1080', {
+const socks5ProxyWithOptions = new Socks5Agent('socks5://localhost:1080', {
   username: 'user',
   password: 'pass',
   connections: 10
@@ -41,20 +41,20 @@ const socks5ProxyWithOptions = new Socks5ProxyWrapper('socks5://localhost:1080',
 
 #### Example - Basic SOCKS5 Proxy instantiation
 
-This will instantiate the Socks5ProxyWrapper. It will not do anything until registered as the dispatcher to use with requests.
+This will instantiate the Socks5Agent. It will not do anything until registered as the dispatcher to use with requests.
 
 ```js
-import { Socks5ProxyWrapper } from 'undici'
+import { Socks5Agent } from 'undici'
 
-const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 ```
 
 #### Example - Basic SOCKS5 Proxy Request with global dispatcher
 
 ```js
-import { setGlobalDispatcher, request, Socks5ProxyWrapper } from 'undici'
+import { setGlobalDispatcher, request, Socks5Agent } from 'undici'
 
-const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 setGlobalDispatcher(socks5Proxy)
 
 const { statusCode, body } = await request('http://localhost:3000/foo')
@@ -69,9 +69,9 @@ for await (const data of body) {
 #### Example - Basic SOCKS5 Proxy Request with local dispatcher
 
 ```js
-import { Socks5ProxyWrapper, request } from 'undici'
+import { Socks5Agent, request } from 'undici'
 
-const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 
 const {
   statusCode,
@@ -88,13 +88,13 @@ for await (const data of body) {
 #### Example - SOCKS5 Proxy Request with authentication
 
 ```js
-import { setGlobalDispatcher, request, Socks5ProxyWrapper } from 'undici'
+import { setGlobalDispatcher, request, Socks5Agent } from 'undici'
 
 // Authentication via URL
-const socks5Proxy = new Socks5ProxyWrapper('socks5://username:password@localhost:1080')
+const socks5Proxy = new Socks5Agent('socks5://username:password@localhost:1080')
 
 // Or authentication via options
-// const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080', {
+// const socks5Proxy = new Socks5Agent('socks5://localhost:1080', {
 //   username: 'username',
 //   password: 'password'
 // })
@@ -115,9 +115,9 @@ for await (const data of body) {
 SOCKS5 proxy supports both HTTP and HTTPS requests through tunneling:
 
 ```js
-import { Socks5ProxyWrapper, request } from 'undici'
+import { Socks5Agent, request } from 'undici'
 
-const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 
 const response = await request('https://api.example.com/data', {
   dispatcher: socks5Proxy,
@@ -131,9 +131,9 @@ console.log('Response data:', await response.body.json())
 #### Example - SOCKS5 Proxy with Fetch
 
 ```js
-import { Socks5ProxyWrapper, fetch } from 'undici'
+import { Socks5Agent, fetch } from 'undici'
 
-const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 
 const response = await fetch('http://localhost:3000/api/users', {
   dispatcher: socks5Proxy,
@@ -149,9 +149,9 @@ console.log('Response data:', await response.text())
 SOCKS5ProxyWrapper automatically manages connection pooling for better performance:
 
 ```js
-import { Socks5ProxyWrapper, request } from 'undici'
+import { Socks5Agent, request } from 'undici'
 
-const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080', {
+const socks5Proxy = new Socks5Agent('socks5://localhost:1080', {
   connections: 10, // Allow up to 10 concurrent connections
   pipelining: 1    // Enable HTTP/1.1 pipelining
 })
@@ -166,7 +166,7 @@ const responses = await Promise.all([
 console.log('All requests completed through the same SOCKS5 proxy')
 ```
 
-### `Socks5ProxyWrapper.close()`
+### `Socks5Agent.close()`
 
 Closes the SOCKS5 proxy wrapper and waits for all underlying pools and connections to close before resolving.
 
@@ -175,9 +175,9 @@ Returns: `Promise<void>`
 #### Example - clean up after tests are complete
 
 ```js
-import { Socks5ProxyWrapper, setGlobalDispatcher } from 'undici'
+import { Socks5Agent, setGlobalDispatcher } from 'undici'
 
-const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 setGlobalDispatcher(socks5Proxy)
 
 // ... make requests
@@ -185,7 +185,7 @@ setGlobalDispatcher(socks5Proxy)
 await socks5Proxy.close()
 ```
 
-### `Socks5ProxyWrapper.destroy([err])`
+### `Socks5Agent.destroy([err])`
 
 Destroys the SOCKS5 proxy wrapper and all underlying connections immediately.
 
@@ -197,25 +197,25 @@ Returns: `Promise<void>`
 #### Example - force close all connections
 
 ```js
-import { Socks5ProxyWrapper } from 'undici'
+import { Socks5Agent } from 'undici'
 
-const socks5Proxy = new Socks5ProxyWrapper('socks5://localhost:1080')
+const socks5Proxy = new Socks5Agent('socks5://localhost:1080')
 
 // Force close all connections
 await socks5Proxy.destroy()
 ```
 
-### `Socks5ProxyWrapper.dispatch(options, handlers)`
+### `Socks5Agent.dispatch(options, handlers)`
 
 Implements [`Dispatcher.dispatch(options, handlers)`](/docs/docs/api/Dispatcher.md#dispatcherdispatchoptions-handlers).
 
-### `Socks5ProxyWrapper.request(options[, callback])`
+### `Socks5Agent.request(options[, callback])`
 
 See [`Dispatcher.request(options [, callback])`](/docs/docs/api/Dispatcher.md#dispatcherrequestoptions-callback).
 
 ## SOCKS5 Protocol Support
 
-The Socks5ProxyWrapper supports the following SOCKS5 features:
+The Socks5Agent supports the following SOCKS5 features:
 
 ### Authentication Methods
 
