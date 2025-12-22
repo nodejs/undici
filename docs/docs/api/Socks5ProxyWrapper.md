@@ -226,7 +226,7 @@ The Socks5ProxyWrapper supports the following SOCKS5 features:
 
 - **IPv4** (`0x01`) - Standard IPv4 addresses
 - **Domain Name** (`0x03`) - Domain names (recommended for flexibility)
-- **IPv6** (`0x04`) - IPv6 addresses (parsing not fully implemented)
+- **IPv6** (`0x04`) - IPv6 addresses (full support for standard and compressed notation)
 
 ### Commands
 
