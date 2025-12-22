@@ -7,10 +7,6 @@ export default Socks5Agent
 
 declare class Socks5Agent extends Dispatcher {
   constructor (proxyUrl: string | URL, options?: Socks5Agent.Options)
-
-  dispatch (options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandler): boolean
-  close (): Promise<void>
-  destroy (err?: Error): Promise<void>
 }
 
 declare namespace Socks5Agent {
