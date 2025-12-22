@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # SOCKS5 proxy without authentication
   socks5-no-auth:
@@ -7,6 +5,7 @@ services:
     container_name: socks5-no-auth
     environment:
       - PROXY_PORT=1080
+      - REQUIRE_AUTH=false
     ports:
       - "1080:1080"
     networks:
@@ -18,7 +17,7 @@ services:
     container_name: socks5-auth
     environment:
       - PROXY_USER=testuser
-      - PROXY_PASS=testpass
+      - PROXY_PASSWORD=testpass
       - PROXY_PORT=1081
     ports:
       - "1081:1081"
@@ -28,7 +27,7 @@ services:
   # Alternative: Dante SOCKS5 server (more configurable)
   dante-socks5:
     build:
-      context: ./test/fixtures/docker/dante
+      context: ./dante
       dockerfile: Dockerfile
     container_name: dante-socks5
     ports:
@@ -36,7 +35,7 @@ services:
     networks:
       - test-network
     volumes:
-      - ./test/fixtures/docker/dante/danted.conf:/etc/danted.conf:ro
+      - ./dante/danted.conf:/etc/danted.conf:ro
 
   # HTTP test server
   http-server:
@@ -44,7 +43,7 @@ services:
     container_name: http-test-server
     working_dir: /app
     volumes:
-      - ./test/fixtures/servers/http-server.js:/app/server.js:ro
+      - ../servers/http-server.js:/app/server.js:ro
     command: node server.js
     ports:
       - "8080:8080"
@@ -57,8 +56,8 @@ services:
     container_name: https-test-server
     working_dir: /app
     volumes:
-      - ./test/fixtures/servers/https-server.js:/app/server.js:ro
-      - ./test/fixtures/certs:/app/certs:ro
+      - ../servers/https-server.js:/app/server.js:ro
+      - ../certs:/app/certs:ro
     command: node server.js
     ports:
       - "8443:8443"
