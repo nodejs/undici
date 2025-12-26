@@ -1,19 +1,18 @@
 'use strict'
 
-const { deepStrictEqual, throws } = require('node:assert')
 const { test } = require('node:test')
 const { getFieldValues } = require('../../lib/web/cache/util')
 
-test('getFieldValues', () => {
-  throws(() => getFieldValues(null), {
+test('getFieldValues', (t) => {
+  t.assert.throws(() => getFieldValues(null), {
     name: 'AssertionError',
     message: 'The expression evaluated to a falsy value:\n\n  assert(header !== null)\n'
   })
-  deepStrictEqual(getFieldValues(''), [])
-  deepStrictEqual(getFieldValues('foo'), ['foo'])
-  deepStrictEqual(getFieldValues('invälid'), [])
-  deepStrictEqual(getFieldValues('foo, bar'), ['foo', 'bar'])
-  deepStrictEqual(getFieldValues('foo, bar, baz'), ['foo', 'bar', 'baz'])
-  deepStrictEqual(getFieldValues('foo, bar, baz, '), ['foo', 'bar', 'baz'])
-  deepStrictEqual(getFieldValues('foo, bar, baz, , '), ['foo', 'bar', 'baz'])
+  t.assert.deepStrictEqual(getFieldValues(''), [])
+  t.assert.deepStrictEqual(getFieldValues('foo'), ['foo'])
+  t.assert.deepStrictEqual(getFieldValues('invälid'), [])
+  t.assert.deepStrictEqual(getFieldValues('foo, bar'), ['foo', 'bar'])
+  t.assert.deepStrictEqual(getFieldValues('foo, bar, baz'), ['foo', 'bar', 'baz'])
+  t.assert.deepStrictEqual(getFieldValues('foo, bar, baz, '), ['foo', 'bar', 'baz'])
+  t.assert.deepStrictEqual(getFieldValues('foo, bar, baz, , '), ['foo', 'bar', 'baz'])
 })
