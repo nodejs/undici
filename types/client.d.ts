@@ -93,20 +93,15 @@ export declare namespace Client {
      */
     maxConcurrentStreams?: number;
     /**
-     * @description HTTP/2 session options.
+     * @description Sets the HTTP/2 stream-level flow-control window size (SETTINGS_INITIAL_WINDOW_SIZE).
+     * @default undefined
      */
-    http2?: {
-      /**
-       * @description Sets the HTTP/2 stream-level flow-control window size (SETTINGS_INITIAL_WINDOW_SIZE).
-       * @default undefined
-       */
-      initialWindowSize?: number;
-      /**
-       * @description Sets the HTTP/2 connection-level flow-control window size (ClientHttp2Session.setLocalWindowSize).
-       * @default undefined
-       */
-      connectionWindowSize?: number;
-    };
+    initialWindowSize?: number;
+    /**
+     * @description Sets the HTTP/2 connection-level flow-control window size (ClientHttp2Session.setLocalWindowSize).
+     * @default undefined
+     */
+    connectionWindowSize?: number;
   }
   export interface SocketInfo {
     localAddress?: string

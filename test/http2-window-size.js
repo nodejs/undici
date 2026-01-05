@@ -13,7 +13,7 @@ const {
   kHTTP2ConnectionWindowSize
 } = require('../lib/core/symbols')
 
-test('Should plumb http2.initialWindowSize and http2.connectionWindowSize into the HTTP/2 session creation path', async (t) => {
+test('Should plumb initialWindowSize and connectionWindowSize into the HTTP/2 session creation path', async (t) => {
   t = tspl(t, { plan: 6 })
 
   const http2 = require('node:http2')
