@@ -2934,3 +2934,185 @@ test('MockAgent - should not accept non-standard search parameters when acceptNo
   const textResponse = await getResponse(body)
   t.assert.strictEqual(textResponse, '(non-intercepted) response from server')
 })
+
+// https://github.com/nodejs/undici/issues/4703
+describe('MockAgent - case-insensitive origin matching', () => {
+  test('should match origins with different hostname case', async (t) => {
+    t.plan(2)
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const url1 = 'http://myEndpoint'
+    const url2 = 'http://myendpoint' // Different case
+
+    const mockPool = mockAgent.get(url1)
+    mockPool
+      .intercept({
+        path: '/test',
+        method: 'GET'
+      })
+      .reply(200, { success: true }, {
+        headers: { 'content-type': 'application/json' }
+      })
+
+    const { statusCode, body } = await mockAgent.request({
+      origin: url2, // Different case should still match
+      method: 'GET',
+      path: '/test'
+    })
+
+    t.assert.strictEqual(statusCode, 200)
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.assert.deepStrictEqual(jsonResponse, { success: true })
+  })
+
+  test('should match URL object origin with string origin', async (t) => {
+    t.plan(2)
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const url = 'http://myEndpoint'
+
+    const mockPool = mockAgent.get(url)
+    mockPool
+      .intercept({
+        path: '/path',
+        method: 'GET'
+      })
+      .reply(200, { key: 'value' }, {
+        headers: { 'content-type': 'application/json' }
+      })
+
+    const { statusCode, body } = await mockAgent.request({
+      origin: new URL(url), // URL object should match string origin
+      method: 'GET',
+      path: '/path'
+    })
+
+    t.assert.strictEqual(statusCode, 200)
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.assert.deepStrictEqual(jsonResponse, { key: 'value' })
+  })
+
+  test('should match URL object with different hostname case', async (t) => {
+    t.plan(2)
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const url1 = 'http://Example.com'
+    const url2 = new URL('http://example.com') // Different case
+
+    const mockPool = mockAgent.get(url1)
+    mockPool
+      .intercept({
+        path: '/test',
+        method: 'GET'
+      })
+      .reply(200, { success: true }, {
+        headers: { 'content-type': 'application/json' }
+      })
+
+    const { statusCode, body } = await mockAgent.request({
+      origin: url2, // URL object with different case should match
+      method: 'GET',
+      path: '/test'
+    })
+
+    t.assert.strictEqual(statusCode, 200)
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.assert.deepStrictEqual(jsonResponse, { success: true })
+  })
+
+  test('should handle mixed case scenarios correctly', async (t) => {
+    t.plan(2)
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const url1 = 'http://MyEndpoint.com'
+    const url2 = 'http://myendpoint.com' // All lowercase
+
+    const mockPool = mockAgent.get(url1)
+    mockPool
+      .intercept({
+        path: '/api',
+        method: 'GET'
+      })
+      .reply(200, { data: 'test' }, {
+        headers: { 'content-type': 'application/json' }
+      })
+
+    const { statusCode, body } = await mockAgent.request({
+      origin: url2,
+      method: 'GET',
+      path: '/api'
+    })
+
+    t.assert.strictEqual(statusCode, 200)
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.assert.deepStrictEqual(jsonResponse, { data: 'test' })
+  })
+
+  test('should preserve port numbers when normalizing', async (t) => {
+    t.plan(2)
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const url1 = 'http://Example.com:8080'
+    const url2 = 'http://example.com:8080' // Different case, same port
+
+    const mockPool = mockAgent.get(url1)
+    mockPool
+      .intercept({
+        path: '/test',
+        method: 'GET'
+      })
+      .reply(200, { port: 8080 }, {
+        headers: { 'content-type': 'application/json' }
+      })
+
+    const { statusCode, body } = await mockAgent.request({
+      origin: url2,
+      method: 'GET',
+      path: '/test'
+    })
+
+    t.assert.strictEqual(statusCode, 200)
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.assert.deepStrictEqual(jsonResponse, { port: 8080 })
+  })
+
+  test('should handle https origins with case differences', async (t) => {
+    t.plan(2)
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const url1 = 'https://Api.Example.com'
+    const url2 = new URL('https://api.example.com') // Different case
+
+    const mockPool = mockAgent.get(url1)
+    mockPool
+      .intercept({
+        path: '/data',
+        method: 'GET'
+      })
+      .reply(200, { secure: true }, {
+        headers: { 'content-type': 'application/json' }
+      })
+
+    const { statusCode, body } = await mockAgent.request({
+      origin: url2,
+      method: 'GET',
+      path: '/data'
+    })
+
+    t.assert.strictEqual(statusCode, 200)
+    const jsonResponse = JSON.parse(await getResponse(body))
+    t.assert.deepStrictEqual(jsonResponse, { secure: true })
+  })
+})
