@@ -36,7 +36,12 @@ describe("Node.js' --max-http-header-size cli option", () => {
     exec(command, { stdio: 'pipe' }, (err, stdout, stderr) => {
       t.ifError(err)
       t.strictEqual(stdout, '')
-      t.strictEqual(stderr, '', 'default max-http-header-size should not throw')
+      // Filter out debugger messages that may appear when running with --inspect
+      const filteredStderr = stderr.replace(/Debugger listening on ws:\/\/.*?\n/g, '')
+        .replace(/For help, see:.*?\n/g, '')
+        .replace(/Debugger attached\.\n/g, '')
+        .replace(/Waiting for the debugger to disconnect\.\.\.\n/g, '')
+      t.strictEqual(filteredStderr, '', 'default max-http-header-size should not throw')
     })
 
     await t.completed
@@ -55,7 +60,12 @@ describe("Node.js' --max-http-header-size cli option", () => {
     exec(command, { stdio: 'pipe' }, (err, stdout, stderr) => {
       t.ifError(err)
       t.strictEqual(stdout, '')
-      t.strictEqual(stderr, '', 'default max-http-header-size should not throw')
+      // Filter out debugger messages that may appear when running with --inspect
+      const filteredStderr = stderr.replace(/Debugger listening on ws:\/\/.*?\n/g, '')
+        .replace(/For help, see:.*?\n/g, '')
+        .replace(/Debugger attached\.\n/g, '')
+        .replace(/Waiting for the debugger to disconnect\.\.\.\n/g, '')
+      t.strictEqual(filteredStderr, '', 'default max-http-header-size should not throw')
     })
 
     await t.completed

@@ -594,6 +594,70 @@ test('invalid options throws', (t, done) => {
     assert.strictEqual(err.message, 'autoSelectFamilyAttemptTimeout must be a positive number')
   }
 
+  try {
+    new Client(new URL('http://localhost:200'), { initialWindowSize: 'foo' }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'initialWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { initialWindowSize: 0 }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'initialWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { initialWindowSize: -1 }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'initialWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { initialWindowSize: 1.5 }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'initialWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectionWindowSize: 'foo' }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'connectionWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectionWindowSize: 0 }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'connectionWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectionWindowSize: -1 }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'connectionWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { connectionWindowSize: 1.5 }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'connectionWindowSize must be a positive integer, greater than 0')
+  }
+
   done()
 })
 
