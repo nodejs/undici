@@ -310,17 +310,17 @@ describe('normalizeOrigin', () => {
   test('should remove trailing slash when ignoreTrailingSlash is true', (t) => {
     t.plan(4)
 
-    t.assert.strictEqual(normalizeOrigin('http://example.com/', true), 'http://example.com')
-    t.assert.strictEqual(normalizeOrigin('https://example.com/', true), 'https://example.com')
-    t.assert.strictEqual(normalizeOrigin(new URL('http://example.com/'), true), 'http://example.com')
-    t.assert.strictEqual(normalizeOrigin('http://example.com', true), 'http://example.com')
+    t.assert.strictEqual(normalizeOrigin('http://example.com/'), 'http://example.com')
+    t.assert.strictEqual(normalizeOrigin('https://example.com/'), 'https://example.com')
+    t.assert.strictEqual(normalizeOrigin(new URL('http://example.com/')), 'http://example.com')
+    t.assert.strictEqual(normalizeOrigin('http://example.com'), 'http://example.com')
   })
 
   test('should not remove trailing slash when ignoreTrailingSlash is false', (t) => {
     t.plan(2)
 
-    t.assert.strictEqual(normalizeOrigin('http://example.com/', false), 'http://example.com')
-    t.assert.strictEqual(normalizeOrigin('http://example.com', false), 'http://example.com')
+    t.assert.strictEqual(normalizeOrigin('http://example.com/'), 'http://example.com')
+    t.assert.strictEqual(normalizeOrigin('http://example.com'), 'http://example.com')
   })
 
   test('should return RegExp matchers as-is', (t) => {
@@ -328,7 +328,7 @@ describe('normalizeOrigin', () => {
 
     const regex = /http:\/\/example\.com/
     t.assert.strictEqual(normalizeOrigin(regex), regex)
-    t.assert.strictEqual(normalizeOrigin(regex, true), regex)
+    t.assert.strictEqual(normalizeOrigin(regex), regex)
   })
 
   test('should return function matchers as-is', (t) => {
@@ -336,7 +336,7 @@ describe('normalizeOrigin', () => {
 
     const fn = (origin) => origin === 'http://example.com'
     t.assert.strictEqual(normalizeOrigin(fn), fn)
-    t.assert.strictEqual(normalizeOrigin(fn, true), fn)
+    t.assert.strictEqual(normalizeOrigin(fn), fn)
   })
 
   test('should return other non-string, non-URL types as-is', (t) => {
