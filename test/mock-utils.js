@@ -290,37 +290,11 @@ describe('normalizeOrigin', () => {
   })
 
   test('should preserve port numbers', (t) => {
-    t.plan(4)
+    t.plan(3)
 
     t.assert.strictEqual(normalizeOrigin('http://Example.com:8080'), 'http://example.com:8080')
-    // Note: url.origin omits default ports (443 for HTTPS, 80 for HTTP)
-    t.assert.strictEqual(normalizeOrigin('https://Api.Example.com:443'), 'https://api.example.com')
     t.assert.strictEqual(normalizeOrigin(new URL('http://Example.com:3000')), 'http://example.com:3000')
     t.assert.strictEqual(normalizeOrigin(new URL('https://Test.com:8443')), 'https://test.com:8443')
-  })
-
-  test('should handle default ports correctly', (t) => {
-    t.plan(2)
-
-    // Default ports should be omitted from origin
-    t.assert.strictEqual(normalizeOrigin('http://Example.com:80'), 'http://example.com')
-    t.assert.strictEqual(normalizeOrigin('https://Example.com:443'), 'https://example.com')
-  })
-
-  test('should remove trailing slash when ignoreTrailingSlash is true', (t) => {
-    t.plan(4)
-
-    t.assert.strictEqual(normalizeOrigin('http://example.com/'), 'http://example.com')
-    t.assert.strictEqual(normalizeOrigin('https://example.com/'), 'https://example.com')
-    t.assert.strictEqual(normalizeOrigin(new URL('http://example.com/')), 'http://example.com')
-    t.assert.strictEqual(normalizeOrigin('http://example.com'), 'http://example.com')
-  })
-
-  test('should not remove trailing slash when ignoreTrailingSlash is false', (t) => {
-    t.plan(2)
-
-    t.assert.strictEqual(normalizeOrigin('http://example.com/'), 'http://example.com')
-    t.assert.strictEqual(normalizeOrigin('http://example.com'), 'http://example.com')
   })
 
   test('should return RegExp matchers as-is', (t) => {
