@@ -9,7 +9,8 @@ const {
   getStatusText,
   getHeaderByName,
   buildHeadersFromArray,
-  normalizeSearchParams
+  normalizeSearchParams,
+  normalizeOrigin
 } = require('../lib/mock/mock-utils')
 
 test('deleteMockDispatch - should do nothing if not able to find mock dispatch', (t) => {
@@ -266,5 +267,110 @@ describe('normalizeQueryParams', () => {
     const encodedSingleQuote = '%27'
     t.assert.deepStrictEqual(normalizeSearchParams("a='b[]'").toString(), `a=${encodedSingleQuote}${encodeURIComponent('b[]')}${encodedSingleQuote}`)
     t.assert.deepStrictEqual(normalizeSearchParams("a='1,2,3'").toString(), `a=${encodedSingleQuote}${encodeURIComponent('1,2,3')}${encodedSingleQuote}`)
+  })
+})
+
+describe('normalizeOrigin', () => {
+  test('should normalize hostname to lowercase for string origins', (t) => {
+    t.plan(4)
+
+    t.assert.strictEqual(normalizeOrigin('http://Example.com'), 'http://example.com')
+    t.assert.strictEqual(normalizeOrigin('http://EXAMPLE.COM'), 'http://example.com')
+    t.assert.strictEqual(normalizeOrigin('https://Api.Example.com'), 'https://api.example.com')
+    t.assert.strictEqual(normalizeOrigin('http://MyEndpoint'), 'http://myendpoint')
+  })
+
+  test('should normalize hostname to lowercase for URL objects', (t) => {
+    t.plan(4)
+
+    t.assert.strictEqual(normalizeOrigin(new URL('http://Example.com')), 'http://example.com')
+    t.assert.strictEqual(normalizeOrigin(new URL('http://EXAMPLE.COM')), 'http://example.com')
+    t.assert.strictEqual(normalizeOrigin(new URL('https://Api.Example.com')), 'https://api.example.com')
+    t.assert.strictEqual(normalizeOrigin(new URL('http://MyEndpoint')), 'http://myendpoint')
+  })
+
+  test('should preserve port numbers', (t) => {
+    t.plan(3)
+
+    t.assert.strictEqual(normalizeOrigin('http://Example.com:8080'), 'http://example.com:8080')
+    t.assert.strictEqual(normalizeOrigin(new URL('http://Example.com:3000')), 'http://example.com:3000')
+    t.assert.strictEqual(normalizeOrigin(new URL('https://Test.com:8443')), 'https://test.com:8443')
+  })
+
+  test('should return RegExp matchers as-is', (t) => {
+    t.plan(1)
+
+    const regex = /http:\/\/example\.com/
+    t.assert.strictEqual(normalizeOrigin(regex), regex)
+  })
+
+  test('should return function matchers as-is', (t) => {
+    t.plan(1)
+
+    const fn = (origin) => origin === 'http://example.com'
+    t.assert.strictEqual(normalizeOrigin(fn), fn)
+  })
+
+  test('should return other non-string, non-URL types as-is', (t) => {
+    t.plan(4)
+
+    const obj = { origin: 'http://example.com' }
+    const num = 123
+    const bool = true
+    const nullValue = null
+
+    t.assert.strictEqual(normalizeOrigin(obj), obj)
+    t.assert.strictEqual(normalizeOrigin(num), num)
+    t.assert.strictEqual(normalizeOrigin(bool), bool)
+    t.assert.strictEqual(normalizeOrigin(nullValue), nullValue)
+  })
+
+  test('should handle invalid URLs gracefully', (t) => {
+    t.plan(2)
+
+    // Invalid URL strings should be returned as-is
+    t.assert.strictEqual(normalizeOrigin('not-a-url'), 'not-a-url')
+    t.assert.strictEqual(normalizeOrigin('://invalid'), '://invalid')
+  })
+
+  test('should handle IPv4 addresses', (t) => {
+    t.plan(2)
+
+    t.assert.strictEqual(normalizeOrigin('http://192.168.1.1'), 'http://192.168.1.1')
+    t.assert.strictEqual(normalizeOrigin('http://127.0.0.1:3000'), 'http://127.0.0.1:3000')
+  })
+
+  test('should handle IPv6 addresses', (t) => {
+    t.plan(2)
+
+    t.assert.strictEqual(normalizeOrigin('http://[::1]'), 'http://[::1]')
+    t.assert.strictEqual(normalizeOrigin('http://[2001:db8::1]:8080'), 'http://[2001:db8::1]:8080')
+  })
+
+  test('should handle localhost with different cases', (t) => {
+    t.plan(3)
+
+    t.assert.strictEqual(normalizeOrigin('http://LocalHost'), 'http://localhost')
+    t.assert.strictEqual(normalizeOrigin('http://LOCALHOST:3000'), 'http://localhost:3000')
+    t.assert.strictEqual(normalizeOrigin(new URL('http://LocalHost')), 'http://localhost')
+  })
+
+  test('should handle subdomains with mixed case', (t) => {
+    t.plan(3)
+
+    t.assert.strictEqual(normalizeOrigin('http://Api.Example.Com'), 'http://api.example.com')
+    t.assert.strictEqual(normalizeOrigin('https://WWW.Example.COM'), 'https://www.example.com')
+    t.assert.strictEqual(normalizeOrigin(new URL('http://Sub.Domain.Example.Com')), 'http://sub.domain.example.com')
+  })
+
+  test('should handle paths in URL objects (should only normalize origin part)', (t) => {
+    t.plan(2)
+
+    // URL objects with paths should still only return the origin
+    const url1 = new URL('http://Example.com/path/to/resource')
+    t.assert.strictEqual(normalizeOrigin(url1), 'http://example.com')
+
+    const url2 = new URL('https://Api.Example.com:8080/api/v1')
+    t.assert.strictEqual(normalizeOrigin(url2), 'https://api.example.com:8080')
   })
 })
