@@ -107,6 +107,26 @@ expectAssignable<Client>(
 )
 expectAssignable<Client>(
   new Client('', {
+    allowH2: true
+  })
+)
+expectAssignable<Client>(
+  new Client('', {
+    maxConcurrentStreams: 100
+  })
+)
+expectAssignable<Client>(
+  new Client('', {
+    initialWindowSize: 262144
+  })
+)
+expectAssignable<Client>(
+  new Client('', {
+    connectionWindowSize: 524288
+  })
+)
+expectAssignable<Client>(
+  new Client('', {
     interceptors: {
       Client: [
         (dispatcher) => {
