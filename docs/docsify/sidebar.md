@@ -10,6 +10,7 @@
   * [RoundRobinPool](/docs/api/RoundRobinPool.md "Undici API - RoundRobinPool")
   * [Agent](/docs/api/Agent.md "Undici API - Agent")
   * [ProxyAgent](/docs/api/ProxyAgent.md "Undici API - ProxyAgent")
+  * [Socks5Agent](/docs/api/Socks5Agent.md "Undici API - SOCKS5 Agent")
   * [RetryAgent](/docs/api/RetryAgent.md "Undici API - RetryAgent")
   * [Connector](/docs/api/Connector.md "Custom connector")
   * [Errors](/docs/api/Errors.md "Undici API - Errors")
