@@ -1609,4 +1609,379 @@ describe('Cache Interceptor', () => {
       equal(requestsToOrigin, 1) // Still only one origin request
     }
   })
+
+  describe('origins option', () => {
+    test('caches request when origin matches string in whitelist', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=10')
+        res.end('cached')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({
+          origins: ['localhost']
+        }))
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      // Second request should be served from cache
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+    })
+
+    test('skips caching when origin does not match string in whitelist', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=10')
+        res.end('not cached')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({
+          origins: ['http://example.com']
+        }))
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'not cached')
+      }
+
+      // Second request should also hit origin (not cached)
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'not cached')
+      }
+    })
+
+    test('caches request when origin matches RegExp in whitelist', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=10')
+        res.end('cached')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({
+          origins: [/localhost/]
+        }))
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      // Second request should be served from cache
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+    })
+
+    test('skips caching when origin does not match RegExp in whitelist', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=10')
+        res.end('not cached')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({
+          origins: [/example\.com/]
+        }))
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'not cached')
+      }
+
+      // Second request should also hit origin (not cached)
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'not cached')
+      }
+    })
+
+    test('caches request when origin matches any entry in mixed array', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=10')
+        res.end('cached')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({
+          origins: ['http://other.com', /localhost/]
+        }))
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      // Second request should be served from cache (matches RegExp)
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+    })
+
+    test('caches all origins when origins option is undefined (default behavior)', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=10')
+        res.end('cached')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      // Second request should be served from cache
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+    })
+
+    test('caches nothing when origins is empty array', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=10')
+        res.end('not cached')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({
+          origins: []
+        }))
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'not cached')
+      }
+
+      // Second request should also hit origin (not cached)
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'not cached')
+      }
+    })
+
+    test('throws TypeError when origins is not an array', async () => {
+      const { throws } = require('node:assert')
+
+      throws(
+        () => interceptors.cache({ origins: 'http://example.com' }),
+        {
+          name: 'TypeError',
+          message: /expected opts\.origins to be an array or undefined/i
+        }
+      )
+    })
+
+    test('throws TypeError when origins array contains invalid type', async () => {
+      const { throws } = require('node:assert')
+
+      throws(
+        () => interceptors.cache({ origins: [123] }),
+        {
+          name: 'TypeError',
+          message: /expected opts\.origins\[0\] to be a string or RegExp/i
+        }
+      )
+    })
+
+    test('string matching is case insensitive', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=10')
+        res.end('cached')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({
+          origins: ['LOCALHOST']
+        }))
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      // Second request should be served from cache (case insensitive match)
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+    })
+
+    test('different hosts are treated as different origins', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=10')
+        res.end('not cached')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({
+          origins: ['example.com']
+        }))
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // First request should hit origin
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'not cached')
+      }
+
+      // Second request should also hit origin (different host = different origin)
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'not cached')
+      }
+    })
+  })
 })
