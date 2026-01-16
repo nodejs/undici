@@ -146,5 +146,12 @@ export declare const ErrorEvent: {
 interface WebSocketInit {
   protocols?: string | string[],
   dispatcher?: Dispatcher,
-  headers?: HeadersInit
+  headers?: HeadersInit,
+  /**
+   * Maximum size in bytes for decompressed WebSocket messages.
+   * When a message exceeds this limit during decompression, the connection
+   * will be closed with status code 1009 (Message Too Big).
+   * @default 4194304 (4 MB)
+   */
+  maxDecompressedMessageSize?: number
 }
