@@ -5,6 +5,8 @@ import {
   Request,
   Response,
   setGlobalOrigin,
+  setGlobalDispatcher,
+  Agent,
   CloseEvent,
   WebSocket,
   caches,
@@ -16,6 +18,15 @@ import { Cache } from '../../../lib/web/cache/cache.js'
 import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
 import { runInThisContext } from 'node:vm'
 import { debuglog } from 'node:util'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+// Configure global dispatcher to trust WPT server's CA certificate
+const caCertPath = join(import.meta.dirname, 'certs/cacert.pem')
+const ca = readFileSync(caCertPath)
+setGlobalDispatcher(new Agent({
+  connect: { ca }
+}))
 
 const globalPropertyDescriptors = {
   writable: true,

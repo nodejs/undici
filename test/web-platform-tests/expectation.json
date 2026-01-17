@@ -37734,8 +37734,7 @@
             "cases": [
               {
                 "name": "close event should be fired asynchronously when WebSocket is connecting",
-                "success": false,
-                "message": "assert_true: ws.close() should have returned expected true got false"
+                "success": true
               }
             ]
           },
@@ -37744,8 +37743,7 @@
             "cases": [
               {
                 "name": "close event should be fired asynchronously when WebSocket is connecting",
-                "success": false,
-                "message": "assert_true: ws.close() should have returned expected true got false"
+                "success": true
               }
             ]
           },
@@ -37754,8 +37752,7 @@
             "cases": [
               {
                 "name": "close event should be fired asynchronously when WebSocket is connecting",
-                "success": false,
-                "message": "assert_true: ws.close() should have returned expected true got false"
+                "success": true
               }
             ]
           },
@@ -37764,8 +37761,7 @@
             "cases": [
               {
                 "name": "close-connecting",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37774,8 +37770,7 @@
             "cases": [
               {
                 "name": "close-connecting",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37784,8 +37779,7 @@
             "cases": [
               {
                 "name": "close-multiple",
-                "success": false,
-                "message": "assert_equals: expected 1 but got 2"
+                "success": true
               }
             ]
           },
@@ -37794,8 +37788,7 @@
             "cases": [
               {
                 "name": "close-multiple",
-                "success": false,
-                "message": "assert_equals: expected 1 but got 2"
+                "success": true
               }
             ]
           },
@@ -37804,8 +37797,7 @@
             "cases": [
               {
                 "name": "close-nested",
-                "success": false,
-                "message": "assert_equals: expected 1 but got 2"
+                "success": true
               }
             ]
           },
@@ -37814,8 +37806,7 @@
             "cases": [
               {
                 "name": "close-nested",
-                "success": false,
-                "message": "assert_equals: expected 1 but got 2"
+                "success": true
               }
             ]
           },
