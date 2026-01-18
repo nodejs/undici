@@ -94,9 +94,6 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
     }
   }, timeout)
 
-  proc.stdout.pipe(process.stdout)
-  proc.stderr.pipe(process.stderr)
-
   proc.stdout.setEncoding('utf-8')
   proc.stdout.on('data', (chunk) => {
     stdoutOutput += chunk
