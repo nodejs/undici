@@ -13,6 +13,7 @@ import * as jsondiffpatch from 'jsondiffpatch'
 
 const WPT_DIR = join(import.meta.dirname, 'wpt')
 const EXPECTATION_PATH = join(import.meta.dirname, 'expectation.json')
+const CA_CERT_PATH = join(import.meta.dirname, 'runner/certs/cacert.pem')
 
 const log = debuglog('UNDICI_WPT')
 
@@ -76,7 +77,8 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
     stdio: ['ignore', 'pipe', 'pipe'],
     env: {
       ...process.env,
-      NO_COLOR: '1'
+      NO_COLOR: '1',
+      NODE_EXTRA_CA_CERTS: CA_CERT_PATH
     }
   })
 
@@ -91,6 +93,9 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
       proc.kill('SIGINT')
     }
   }, timeout)
+
+  proc.stdout.pipe(process.stdout)
+  proc.stderr.pipe(process.stderr)
 
   proc.stdout.setEncoding('utf-8')
   proc.stdout.on('data', (chunk) => {
