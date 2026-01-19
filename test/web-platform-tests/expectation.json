@@ -33082,7 +33082,8 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(1000, reason) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": true
+          "success": false,
+          "message": "assert_true: WebSocket connection should be opened expected true got false"
         }
       ]
     },
@@ -38917,7 +38918,7 @@
             {
               "name": "backpressure should be applied to received messages",
               "success": false,
-              "message": "assert_greater_than_equal: data send should have taken at least 2 seconds expected a number greater than or equal to 1.8 but got 0.03799891471862793"
+              "message": "assert_greater_than_equal: data send should have taken at least 2 seconds expected a number greater than or equal to 1.8 but got 0.03000044822692871"
             }
           ]
         },
@@ -38937,7 +38938,7 @@
             {
               "name": "backpressure should be applied to sent messages",
               "success": false,
-              "message": "assert_greater_than_equal: expected a number greater than or equal to 1800 but got 29.62790000000001"
+              "message": "assert_greater_than_equal: expected a number greater than or equal to 1800 but got 25.788400000000024"
             }
           ]
         },
@@ -38985,8 +38986,7 @@
             },
             {
               "name": "close during handshake should work",
-              "success": false,
-              "message": "Cannot read properties of undefined (reading 'error')"
+              "success": true
             },
             {
               "name": "close() with invalid code 999 should throw",
@@ -39090,12 +39090,82 @@
           "cases": []
         },
         "constructor.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "constructing with no URL should throw",
+              "success": true
+            },
+            {
+              "name": "constructing with an invalid URL should throw",
+              "success": true
+            },
+            {
+              "name": "constructing with invalid options should throw",
+              "success": true
+            },
+            {
+              "name": "protocols should be required to be a list",
+              "success": true
+            },
+            {
+              "name": "constructing with a valid URL should work",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "setting a protocol in the constructor should work",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "connection failure should reject the promises",
+              "success": true
+            },
+            {
+              "name": "wss.opened should resolve to the right types",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            }
+          ]
         },
         "constructor.any.html?wss": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "constructing with no URL should throw",
+              "success": true
+            },
+            {
+              "name": "constructing with an invalid URL should throw",
+              "success": true
+            },
+            {
+              "name": "constructing with invalid options should throw",
+              "success": true
+            },
+            {
+              "name": "protocols should be required to be a list",
+              "success": true
+            },
+            {
+              "name": "constructing with a valid URL should work",
+              "success": true
+            },
+            {
+              "name": "setting a protocol in the constructor should work",
+              "success": true
+            },
+            {
+              "name": "connection failure should reject the promises",
+              "success": true
+            },
+            {
+              "name": "wss.opened should resolve to the right types",
+              "success": false,
+              "message": "assert_equals: extensions should be a string expected \"string\" but got \"object\""
+            }
+          ]
         },
         "remote-close.any.html?default": {
           "success": true,
@@ -39132,8 +39202,44 @@
           ]
         },
         "remote-close.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "clean close should be clean",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "close frame with no body should result in status code 1005",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: unclean close\""
+            },
+            {
+              "name": "reason should be passed through",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: unclean close\""
+            },
+            {
+              "name": "UTF-8 reason should work",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: unclean close\""
+            },
+            {
+              "name": "close with unwritten data should not be considered clean",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "remote code and reason should be used",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "abrupt close should give an error",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            }
+          ]
         },
         "remote-close.any.html?wss": {
           "success": true,
