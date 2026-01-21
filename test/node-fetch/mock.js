@@ -1,7 +1,6 @@
 'use strict'
 
 // Test tools
-const assert = require('node:assert')
 const { describe, it } = require('node:test')
 
 const {
@@ -12,7 +11,7 @@ const {
 } = require('../../index.js')
 
 describe('node-fetch with MockAgent', () => {
-  it('should match the url', async () => {
+  it('should match the url', async (t) => {
     const mockAgent = new MockAgent()
     setGlobalDispatcher(mockAgent)
     const mockPool = mockAgent.get('http://localhost:3000')
@@ -29,11 +28,11 @@ describe('node-fetch with MockAgent', () => {
       method: 'GET'
     })
 
-    assert.strictEqual(res.status, 200)
-    assert.deepStrictEqual(await res.json(), { success: true })
+    t.assert.strictEqual(res.status, 200)
+    t.assert.deepStrictEqual(await res.json(), { success: true })
   })
 
-  it('should match the body', async () => {
+  it('should match the body', async (t) => {
     const mockAgent = new MockAgent()
     setGlobalDispatcher(mockAgent)
     const mockPool = mockAgent.get('http://localhost:3000')
@@ -54,11 +53,11 @@ describe('node-fetch with MockAgent', () => {
       body: 'request body'
     })
 
-    assert.strictEqual(res.status, 200)
-    assert.deepStrictEqual(await res.json(), { success: true })
+    t.assert.strictEqual(res.status, 200)
+    t.assert.deepStrictEqual(await res.json(), { success: true })
   })
 
-  it('should match the headers', async () => {
+  it('should match the headers', async (t) => {
     const mockAgent = new MockAgent()
     setGlobalDispatcher(mockAgent)
     const mockPool = mockAgent.get('http://localhost:3000')
@@ -79,11 +78,11 @@ describe('node-fetch with MockAgent', () => {
       headers: new Headers({ 'User-Agent': 'undici' })
     })
 
-    assert.strictEqual(res.status, 200)
-    assert.deepStrictEqual(await res.json(), { success: true })
+    t.assert.strictEqual(res.status, 200)
+    t.assert.deepStrictEqual(await res.json(), { success: true })
   })
 
-  it('should match the headers with a matching function', async () => {
+  it('should match the headers with a matching function', async (t) => {
     const mockAgent = new MockAgent()
     setGlobalDispatcher(mockAgent)
     const mockPool = mockAgent.get('http://localhost:3000')
@@ -93,8 +92,8 @@ describe('node-fetch with MockAgent', () => {
         path: '/test',
         method: 'GET',
         headers (headers) {
-          assert.strictEqual(typeof headers, 'object')
-          assert.strictEqual(headers['user-agent'], 'undici')
+          t.assert.strictEqual(typeof headers, 'object')
+          t.assert.strictEqual(headers['user-agent'], 'undici')
           return true
         }
       })
@@ -106,7 +105,7 @@ describe('node-fetch with MockAgent', () => {
       headers: new Headers({ 'User-Agent': 'undici' })
     })
 
-    assert.strictEqual(res.status, 200)
-    assert.deepStrictEqual(await res.json(), { success: true })
+    t.assert.strictEqual(res.status, 200)
+    t.assert.deepStrictEqual(await res.json(), { success: true })
   })
 })
