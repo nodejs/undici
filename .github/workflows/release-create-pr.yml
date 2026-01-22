@@ -65,4 +65,5 @@ jobs:
           script: |
             const defaultBranch = "${{ github.event.repository.default_branch }}"
             const versionTag = "v${{ steps.bump.outputs.version }}"
-            await require('./scripts/release').generatePr({ github, context, defaultBranch, versionTag })
+            const commitHash = "${{ github.sha }}"
+            await require('./scripts/release').generatePr({ github, context, defaultBranch, versionTag, commitHash })
