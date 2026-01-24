@@ -273,9 +273,9 @@ test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -305,9 +305,9 @@ test('MockAgent - basic intercept with MockAgent.request', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -351,9 +351,9 @@ test('MockAgent - basic intercept with request', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -396,9 +396,9 @@ test('MockAgent - should support local agents', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -444,9 +444,9 @@ test('MockAgent - should support specifying custom agents to mock', async (t) =>
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -493,9 +493,9 @@ test('MockAgent - basic Client intercept with request', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -540,9 +540,9 @@ test('MockAgent - basic intercept with multiple pools', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -594,9 +594,9 @@ test('MockAgent - should handle multiple responses for an interceptor', async (t
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -660,9 +660,9 @@ test('MockAgent - should call original Pool dispatch if request not found', asyn
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -692,9 +692,9 @@ test('MockAgent - should call original Client dispatch if request not found', as
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -723,9 +723,9 @@ test('MockAgent - should handle string responses', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -789,9 +789,9 @@ test('MockAgent - handle delays to simulate work', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -829,9 +829,9 @@ test('MockAgent - should persist requests', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1092,9 +1092,9 @@ test('MockAgent - handle persists with delayed requests', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1140,9 +1140,9 @@ test('MockAgent - calling close on a mock pool should not affect other mock pool
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1200,9 +1200,9 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1258,9 +1258,9 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1294,9 +1294,9 @@ test('MockAgent - should handle replyWithError', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1325,9 +1325,9 @@ test('MockAgent - should support setting a reply to respond a set amount of time
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1378,9 +1378,9 @@ test('MockAgent - persist overrides times', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1436,9 +1436,9 @@ test('MockAgent - matcher should not find mock dispatch if path is of unsupporte
     t.assert.strictEqual(req.method, 'GET')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1472,9 +1472,9 @@ test('MockAgent - should match path with regex', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1520,9 +1520,9 @@ test('MockAgent - should match path with function', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1556,9 +1556,9 @@ test('MockAgent - should match method with regex', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1592,9 +1592,9 @@ test('MockAgent - should match method with function', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1628,9 +1628,9 @@ test('MockAgent - should match body with regex', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1666,9 +1666,9 @@ test('MockAgent - should match body with function', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1703,9 +1703,9 @@ test('MockAgent - should match headers with string', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1778,9 +1778,9 @@ test('MockAgent - should match headers with regex', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1853,9 +1853,9 @@ test('MockAgent - should match headers with function', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1929,9 +1929,9 @@ test('MockAgent - should match url with regex', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -1965,9 +1965,9 @@ test('MockAgent - should match url with function', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2001,9 +2001,9 @@ test('MockAgent - handle default reply headers', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2041,9 +2041,9 @@ test('MockAgent - handle default reply trailers', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2081,9 +2081,9 @@ test('MockAgent - return calculated content-length if specified', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2121,9 +2121,9 @@ test('MockAgent - return calculated content-length for object response if specif
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2162,9 +2162,9 @@ test('MockAgent - should activate and deactivate mock clients', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2226,9 +2226,9 @@ test('MockAgent - enableNetConnect should allow all original dispatches to be ca
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2266,9 +2266,9 @@ test('MockAgent - enableNetConnect with a host string should allow all original 
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2306,9 +2306,9 @@ test('MockAgent - enableNetConnect when called with host string multiple times s
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2347,9 +2347,9 @@ test('MockAgent - enableNetConnect with a host regex should allow all original d
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2387,9 +2387,9 @@ test('MockAgent - enableNetConnect with a function should allow all original dis
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2441,9 +2441,9 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for path
     t.assert.fail('should not be called')
     res.end('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2474,9 +2474,9 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for meth
     t.assert.fail('should not be called')
     res.end('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2507,9 +2507,9 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for body
     t.assert.fail('should not be called')
     res.end('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2542,9 +2542,9 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for head
     t.assert.fail('should not be called')
     res.end('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2583,9 +2583,9 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2616,9 +2616,9 @@ test('MockAgent - headers function interceptor', async (t) => {
     t.assert.fail('should not be called')
     res.end('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2680,9 +2680,9 @@ test('MockAgent - clients are not garbage collected', async (t) => {
     t.assert.fail('should not be called')
     res.end('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -2941,9 +2941,9 @@ test('MockAgent - Sending ReadableStream body', async (t) => {
   })
 
   after(() => mockAgent.close())
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')
@@ -3008,9 +3008,9 @@ test('MockAgent - headers should be array of strings (fetch)', async (t) => {
       res.end('should not be called')
       t.assert.fail('should not be called')
     })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     await once(server.listen(0), 'listening')
@@ -3055,9 +3055,9 @@ test('MockAgent - should not accept non-standard search parameters when acceptNo
     res.setHeader('content-type', 'text/plain')
     res.end('(non-intercepted) response from server')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await once(server.listen(0), 'listening')

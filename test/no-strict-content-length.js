@@ -31,9 +31,9 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     server.listen(0, () => {
@@ -152,9 +152,9 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     server.listen(0, () => {
@@ -192,9 +192,9 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     server.listen(0, () => {
@@ -232,9 +232,9 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     server.listen(0, () => {
@@ -272,9 +272,9 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     server.listen(0, () => {
@@ -312,9 +312,9 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     server.listen(0, () => {
@@ -351,9 +351,9 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     server.listen(0, () => {

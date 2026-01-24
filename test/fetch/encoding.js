@@ -49,9 +49,9 @@ describe('content-encoding handling', () => {
     await once(server.listen(0), 'listening')
   })
 
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   test('content-encoding header', async (t) => {
@@ -112,9 +112,9 @@ describe('content-encoding chain limit', () => {
     await once(server.listen(0), 'listening')
   })
 
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   test(`should allow exactly ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {

@@ -188,9 +188,9 @@ test('MockPool - should be able to set as globalDispatcher', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await promisify(server.listen.bind(server))(0)
@@ -226,9 +226,9 @@ test('MockPool - should be able to use as a local dispatcher', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await promisify(server.listen.bind(server))(0)
@@ -264,9 +264,9 @@ test('MockPool - basic intercept with MockPool.request', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await promisify(server.listen.bind(server))(0)
@@ -372,9 +372,9 @@ test('MockPool - cleans mocks', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(async () => {
+  after(() => {
     server.closeAllConnections?.()
-    await new Promise(resolve => server.close(resolve))
+    server.close()
   })
 
   await promisify(server.listen.bind(server))(0)

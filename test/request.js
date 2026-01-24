@@ -202,9 +202,9 @@ describe('DispatchOptions#maxRedirections', () => {
       t.ok('request received')
       res.end('hello world')
     })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
     await new Promise((resolve) => server.listen(0, resolve))
 
@@ -244,9 +244,9 @@ describe('DispatchOptions#reset', () => {
       res.end('hello')
     })
 
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     await new Promise((resolve, reject) => {
@@ -274,9 +274,9 @@ describe('DispatchOptions#reset', () => {
       res.end('hello')
     })
 
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     await new Promise((resolve, reject) => {
@@ -304,9 +304,9 @@ describe('DispatchOptions#reset', () => {
       res.end('hello')
     })
 
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     await new Promise((resolve, reject) => {
@@ -341,9 +341,9 @@ describe('Should include headers from iterable objects', scope => {
     const headers = new globalThis.Headers()
     headers.set('hello', 'world')
 
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     await new Promise((resolve, reject) => {
@@ -375,9 +375,9 @@ describe('Should include headers from iterable objects', scope => {
     const headers = new Map()
     headers.set('hello', 'world')
 
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     await new Promise((resolve, reject) => {
@@ -412,9 +412,9 @@ describe('Should include headers from iterable objects', scope => {
       }
     }
 
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     await new Promise((resolve, reject) => {
@@ -445,9 +445,9 @@ describe('Should include headers from iterable objects', scope => {
       }
     }
 
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     await new Promise((resolve, reject) => {

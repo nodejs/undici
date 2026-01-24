@@ -47,9 +47,9 @@ async function setupServer (server) {
 
 function setupCleanup (t, resources) {
   if (resources.server) {
-    t.after(async () => {
+    t.after(() => {
       resources.server.closeAllConnections?.()
-      await new Promise(resolve => resources.server.close(resolve))
+      resources.server.close()
     })
   }
   if (resources.snapshotPath) {

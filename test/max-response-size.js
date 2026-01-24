@@ -10,9 +10,9 @@ describe('max response size', async (t) => {
     t = tspl(t, { plan: 3 })
 
     const server = createServer({ joinDuplicateHeaders: true })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     server.on('request', (req, res) => {
@@ -43,9 +43,9 @@ describe('max response size', async (t) => {
     t = tspl(t, { plan: 3 })
 
     const server = createServer({ joinDuplicateHeaders: true })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     server.on('request', (req, res) => {
@@ -76,9 +76,9 @@ describe('max response size', async (t) => {
     t = tspl(t, { plan: 3 })
 
     const server = createServer({ joinDuplicateHeaders: true })
-    after(async () => {
+    after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     server.on('request', (req, res) => {

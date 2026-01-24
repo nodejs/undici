@@ -12,9 +12,9 @@ describe('Agent should close inactive clients', () => {
       res.end('ok')
     }).listen(0)
 
-    t.after(async () => {
+    t.after(() => {
       server.closeAllConnections?.()
-      await new Promise(resolve => server.close(resolve))
+      server.close()
     })
 
     let p
