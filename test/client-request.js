@@ -22,7 +22,10 @@ test('request dump head', async (t) => {
     res.flushHeaders()
     res.write('hello'.repeat(100))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -56,7 +59,10 @@ test('request dump big', async (t) => {
       // Do nothing...
     }
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -90,7 +96,10 @@ test('request dump', async (t) => {
     res.setHeader('content-length', 5)
     res.end('hello')
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -120,7 +129,10 @@ test('request dump with abort signal', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('hello')
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -158,7 +170,10 @@ test('request dump with POJO as invalid signal', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('hello')
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -193,7 +208,10 @@ test('request dump with aborted signal', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('hello')
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -231,7 +249,10 @@ test('request hwm', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('hello')
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -259,7 +280,10 @@ test('request abort before headers', async (t) => {
     res.end('hello')
     signal.emit('abort')
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -296,7 +320,10 @@ test('request body destroyed on invalid callback', async (t) => {
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -327,7 +354,10 @@ test('trailers', async (t) => {
     res.addTrailers({ 'Content-MD5': 'test' })
     res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -365,7 +395,10 @@ test('destroy socket abruptly', async (t) => {
     // therefore we delay it to the next event loop run.
     setImmediate(socket.destroy.bind(socket))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   await promisify(server.listen.bind(server))(0)
   const client = new Client(`http://localhost:${server.address().port}`)
@@ -407,7 +440,10 @@ test('destroy socket abruptly with keep-alive', async (t) => {
     // therefore we delay it to the next event loop run.
     setImmediate(socket.destroy.bind(socket))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   await promisify(server.listen.bind(server))(0)
   const client = new Client(`http://localhost:${server.address().port}`)
@@ -441,7 +477,10 @@ test('request json', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -464,7 +503,10 @@ test('request long multibyte json', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -487,7 +529,10 @@ test('request text', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -577,7 +622,10 @@ describe('headers', () => {
       serverAddress = `localhost:${server.address().port}`
     })
 
-    after(() => server.close())
+    after(async () => {
+      server.closeAllConnections()
+      await new Promise(resolve => server.close(resolve))
+    })
 
     test('empty host header', async (t) => {
       t = tspl(t, { plan: 4 })
@@ -617,7 +665,10 @@ describe('headers', () => {
       serverAddress = `localhost:${server.address().port}`
     })
 
-    after(() => server.close())
+    after(async () => {
+      server.closeAllConnections()
+      await new Promise(resolve => server.close(resolve))
+    })
 
     test('invalid host header', async (t) => {
       t = tspl(t, { plan: 1 })
@@ -669,7 +720,10 @@ test('request long multibyte text', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -693,7 +747,10 @@ test('request blob', async (t) => {
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify(obj))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -719,7 +776,10 @@ test('request arrayBuffer', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -745,7 +805,10 @@ test('request bytes', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -771,7 +834,10 @@ test('request body', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -803,7 +869,10 @@ test('request post body no missing data', async (t) => {
     t.strictEqual(ret, 'asd')
     res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -837,7 +906,10 @@ test('request post body no extra data handler', async (t) => {
     t.strictEqual(ret, 'asd')
     res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -872,7 +944,10 @@ test('request with onInfo callback', async (t) => {
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify({ foo: 'bar' }))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -899,7 +974,10 @@ test('request with onInfo callback but socket is destroyed before end of respons
     response = res
     res.writeProcessing()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -943,7 +1021,10 @@ test('request onInfo callback headers parsing', async (t) => {
     ]
     socket.end(lines.join('\r\n'))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   await promisify(server.listen.bind(server))(0)
 
@@ -979,7 +1060,10 @@ test('request raw responseHeaders', async (t) => {
     ]
     socket.end(lines.join('\r\n'))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   await promisify(server.listen.bind(server))(0)
 
@@ -1006,7 +1090,10 @@ test('request formData', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1035,7 +1122,10 @@ test('request text2', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1092,7 +1182,10 @@ test('request with FormData body', async (t) => {
 
     return res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1122,7 +1215,10 @@ test('request post body Buffer from string', async (t) => {
     t.strictEqual(ret, 'abcdefghijklmnopqrstuvwxyz')
     res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1153,7 +1249,10 @@ test('request post body Buffer from buffer', async (t) => {
     t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1184,7 +1283,10 @@ test('request post body Uint8Array', async (t) => {
     t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1215,7 +1317,10 @@ test('request post body Uint32Array', async (t) => {
     t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1246,7 +1351,10 @@ test('request post body Float64Array', async (t) => {
     t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1277,7 +1385,10 @@ test('request post body BigUint64Array', async (t) => {
     t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
@@ -1308,7 +1419,10 @@ test('request post body DataView', async (t) => {
     t.strictEqual(ret, 'ijklmnopqrstuvwx')
     res.end()
   })
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)

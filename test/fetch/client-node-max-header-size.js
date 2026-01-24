@@ -20,7 +20,10 @@ describe('fetch respects --max-http-header-size', () => {
     await once(server, 'listening')
   })
 
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   test("respect Node.js' --max-http-header-size", (t, done) => {
     t.plan(6)

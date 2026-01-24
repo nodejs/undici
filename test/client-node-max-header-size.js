@@ -21,7 +21,10 @@ describe("Node.js' --max-http-header-size cli option", () => {
     await once(server, 'listening')
   })
 
-  after(() => server.close())
+  after(async () => {
+    server.closeAllConnections?.()
+    await new Promise(resolve => server.close(resolve))
+  })
 
   test("respect Node.js' --max-http-header-size", async (t) => {
     t = tspl(t, { plan: 6 })

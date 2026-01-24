@@ -31,7 +31,10 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(() => server.close())
+    after(async () => {
+      server.closeAllConnections?.()
+      await new Promise(resolve => server.close(resolve))
+    })
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
@@ -149,7 +152,10 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(() => server.close())
+    after(async () => {
+      server.closeAllConnections?.()
+      await new Promise(resolve => server.close(resolve))
+    })
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
@@ -186,7 +192,10 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(() => server.close())
+    after(async () => {
+      server.closeAllConnections?.()
+      await new Promise(resolve => server.close(resolve))
+    })
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
@@ -223,7 +232,10 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(() => server.close())
+    after(async () => {
+      server.closeAllConnections?.()
+      await new Promise(resolve => server.close(resolve))
+    })
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
@@ -260,7 +272,10 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(() => server.close())
+    after(async () => {
+      server.closeAllConnections?.()
+      await new Promise(resolve => server.close(resolve))
+    })
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
@@ -297,7 +312,10 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(() => server.close())
+    after(async () => {
+      server.closeAllConnections?.()
+      await new Promise(resolve => server.close(resolve))
+    })
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
@@ -333,7 +351,10 @@ describe('strictContentLength: false', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end()
     })
-    after(() => server.close())
+    after(async () => {
+      server.closeAllConnections?.()
+      await new Promise(resolve => server.close(resolve))
+    })
 
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, {
