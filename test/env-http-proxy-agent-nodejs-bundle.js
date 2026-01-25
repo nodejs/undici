@@ -30,7 +30,10 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     server.on('error', err => { console.log('Server error', err) })
     server.listen(0)
     await once(server, 'listening')
-    t.after(() => { server.close() })
+    t.after(() => {
+      server.closeAllConnections?.()
+      server.close()
+    })
 
     const proxy = http.createServer({ joinDuplicateHeaders: true })
     proxy.on('connect', (req, clientSocket, head) => {
@@ -60,7 +63,10 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
 
     proxy.listen(0)
     await once(proxy, 'listening')
-    t.after(() => { proxy.close() })
+    t.after(() => {
+      proxy.closeAllConnections?.()
+      proxy.close()
+    })
 
     // Use setGlobalDispatcher and EnvHttpProxyAgent from Node.js
     // and make sure that they work together.

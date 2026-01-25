@@ -50,6 +50,7 @@ describe('content-encoding handling', () => {
   })
 
   after(() => {
+    server.closeAllConnections?.()
     server.close()
   })
 
@@ -112,6 +113,7 @@ describe('content-encoding chain limit', () => {
   })
 
   after(() => {
+    server.closeAllConnections?.()
     server.close()
   })
 

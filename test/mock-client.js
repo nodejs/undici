@@ -202,7 +202,10 @@ test('MockClient - should be able to set as globalDispatcher', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(() => server.close())
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
 
   await promisify(server.listen.bind(server))(0)
 
@@ -237,7 +240,10 @@ test('MockClient - should support query params', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(() => server.close())
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
 
   await promisify(server.listen.bind(server))(0)
 
@@ -277,7 +283,10 @@ test('MockClient - should intercept query params with hardcoded path', async (t)
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(() => server.close())
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
 
   await promisify(server.listen.bind(server))(0)
 
@@ -316,7 +325,10 @@ test('MockClient - should intercept query params regardless of key ordering', as
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(() => server.close())
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
 
   await promisify(server.listen.bind(server))(0)
 
@@ -363,7 +375,10 @@ test('MockClient - should be able to use as a local dispatcher', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(() => server.close())
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
 
   await promisify(server.listen.bind(server))(0)
 
@@ -398,7 +413,10 @@ test('MockClient - basic intercept with MockClient.request', async (t) => {
     res.end('should not be called')
     t.assert.fail('should not be called')
   })
-  after(() => server.close())
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
 
   await promisify(server.listen.bind(server))(0)
 
@@ -441,7 +459,10 @@ test('MockClient - cleans mocks', async (t) => {
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
-  after(() => server.close())
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
 
   await promisify(server.listen.bind(server))(0)
 
