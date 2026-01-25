@@ -87,9 +87,57 @@ test('parseHeaders', () => {
   assert.deepEqual(util.parseHeaders([Buffer.from('key'), [Buffer.from('value1'), Buffer.from('value2'), Buffer.from('value3')]]), { key: ['value1', 'value2', 'value3'] })
 })
 
+test('parseHeaders decodes values as latin1, not utf8', () => {
+  // These bytes (0xE2, 0x80, 0xA6) are the UTF-8 encoding of U+2026 (ellipsis)
+  // When decoded as latin1, they should be 3 separate characters: â, €, ¦
+  // When incorrectly decoded as UTF-8, they would be a single character: …
+  const latin1Bytes = Buffer.from([0xe2, 0x80, 0xa6])
+  const result = util.parseHeaders([Buffer.from('x-test'), latin1Bytes])
+
+  assert.strictEqual(result['x-test'].length, 3)
+  assert.strictEqual(result['x-test'].charCodeAt(0), 0xe2)
+  assert.strictEqual(result['x-test'].charCodeAt(1), 0x80)
+  assert.strictEqual(result['x-test'].charCodeAt(2), 0xa6)
+})
+
+test('parseHeaders decodes duplicate header values as latin1', () => {
+  const latin1Bytes = Buffer.from([0xe2, 0x80, 0xa6])
+  const result = util.parseHeaders([
+    Buffer.from('x-test'), Buffer.from('first'),
+    Buffer.from('x-test'), latin1Bytes
+  ])
+
+  assert.deepEqual(result['x-test'][0], 'first')
+  assert.strictEqual(result['x-test'][1].length, 3)
+  assert.strictEqual(result['x-test'][1].charCodeAt(0), 0xe2)
+})
+
+test('parseHeaders decodes array header values as latin1', () => {
+  const latin1Bytes = Buffer.from([0xe2, 0x80, 0xa6])
+  const result = util.parseHeaders([Buffer.from('x-test'), [latin1Bytes, latin1Bytes]])
+
+  assert.strictEqual(result['x-test'].length, 2)
+  assert.strictEqual(result['x-test'][0].length, 3)
+  assert.strictEqual(result['x-test'][0].charCodeAt(0), 0xe2)
+})
+
 test('parseRawHeaders', () => {
   assert.deepEqual(util.parseRawHeaders(['key', 'value', Buffer.from('key'), Buffer.from('value')]), ['key', 'value', 'key', 'value'])
   assert.deepEqual(util.parseRawHeaders(['content-length', 'value', 'content-disposition', 'form-data; name="fieldName"']), ['content-length', 'value', 'content-disposition', 'form-data; name="fieldName"'])
+})
+
+test('parseRawHeaders decodes values as latin1, not utf8', () => {
+  // These bytes (0xE2, 0x80, 0xA6) are the UTF-8 encoding of U+2026 (ellipsis)
+  // When decoded as latin1, they should be 3 separate characters
+  // When incorrectly decoded as UTF-8, they would be a single character
+  const latin1Bytes = Buffer.from([0xe2, 0x80, 0xa6])
+  const result = util.parseRawHeaders([Buffer.from('x-test'), latin1Bytes])
+
+  assert.strictEqual(result[0], 'x-test')
+  assert.strictEqual(result[1].length, 3)
+  assert.strictEqual(result[1].charCodeAt(0), 0xe2)
+  assert.strictEqual(result[1].charCodeAt(1), 0x80)
+  assert.strictEqual(result[1].charCodeAt(2), 0xa6)
 })
 
 test('serializePathWithQuery', () => {
