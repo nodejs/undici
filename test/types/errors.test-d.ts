@@ -47,8 +47,8 @@ expectAssignable<'UND_ERR_INVALID_RETURN_VALUE'>(new errors.InvalidReturnValueEr
 
 expectAssignable<errors.UndiciError>(new errors.RequestAbortedError())
 expectAssignable<errors.RequestAbortedError>(new errors.RequestAbortedError())
-expectAssignable<'AbortError'>(new errors.RequestAbortedError().name)
-expectAssignable<'UND_ERR_ABORTED'>(new errors.RequestAbortedError().code)
+expectAssignable<'RequestAbortedError'>(new errors.RequestAbortedError().name)
+expectAssignable<'UND_ERR_REQUEST_ABORTED'>(new errors.RequestAbortedError().code)
 
 expectAssignable<errors.UndiciError>(new errors.InformationalError())
 expectAssignable<errors.InformationalError>(new errors.InformationalError())
@@ -88,7 +88,7 @@ expectAssignable<'UND_ERR_NOT_SUPPORTED'>(new errors.NotSupportedError().code)
 
 expectAssignable<errors.UndiciError>(new errors.BalancedPoolMissingUpstreamError())
 expectAssignable<errors.BalancedPoolMissingUpstreamError>(new errors.BalancedPoolMissingUpstreamError())
-expectAssignable<'MissingUpstreamError'>(new errors.BalancedPoolMissingUpstreamError().name)
+expectAssignable<'BalancedPoolMissingUpstreamError'>(new errors.BalancedPoolMissingUpstreamError().name)
 expectAssignable<'UND_ERR_BPL_MISSING_UPSTREAM'>(new errors.BalancedPoolMissingUpstreamError().code)
 
 expectAssignable<errors.UndiciError>(new errors.HTTPParserError())
