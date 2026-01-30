@@ -49,34 +49,36 @@ class HTTPHandler {
     })
   }
 
-  onConnect (abort) {
+  onRequestStart (controller) {
     if (this.req.aborted) {
-      abort()
+      controller.abort()
     } else {
-      this.abort = abort
-      this.res.on('close', abort)
+      this.abort = (reason) => controller.abort(reason)
+      this.res.on('close', this.abort)
     }
   }
 
-  onHeaders (statusCode, headers, resume) {
+  onResponseStart (controller, statusCode) {
     if (statusCode < 200) {
       return
     }
 
-    this.resume = resume
-    this.res.on('drain', resume)
+    this.resume = () => controller.resume()
+    this.res.on('drain', this.resume)
     this.res.writeHead(statusCode, getHeaders({
-      headers,
+      headers: controller.rawHeaders ?? [],
       proxyName: this.proxyName,
       httpVersion: this.httpVersion
     }))
   }
 
-  onData (chunk) {
-    return this.res.write(chunk)
+  onResponseData (controller, chunk) {
+    if (this.res.write(chunk) === false) {
+      controller.pause()
+    }
   }
 
-  onComplete () {
+  onResponseEnd () {
     this.res.off('close', this.abort)
     this.res.off('drain', this.resume)
 
@@ -84,7 +86,7 @@ class HTTPHandler {
     this.callback()
   }
 
-  onError (err) {
+  onResponseError (_controller, err) {
     this.res.off('close', this.abort)
     this.res.off('drain', this.resume)
 
@@ -108,16 +110,16 @@ class WSHandler {
     })
   }
 
-  onConnect (abort) {
+  onRequestStart (controller) {
     if (this.socket.destroyed) {
-      abort()
+      controller.abort()
     } else {
-      this.abort = abort
-      this.socket.on('close', abort)
+      this.abort = (reason) => controller.abort(reason)
+      this.socket.on('close', this.abort)
     }
   }
 
-  onUpgrade (statusCode, headers, socket) {
+  onRequestUpgrade (controller, statusCode, _headers, socket) {
     this.socket.off('close', this.abort)
 
     // TODO: Check statusCode?
@@ -128,8 +130,8 @@ class WSHandler {
 
     setupSocket(socket)
 
-    headers = getHeaders({
-      headers,
+    const headers = getHeaders({
+      headers: controller.rawHeaders ?? [],
       proxyName: this.proxyName,
       httpVersion: this.httpVersion
     })
@@ -144,7 +146,7 @@ class WSHandler {
     pipeline(socket, this.socket, socket, this.callback)
   }
 
-  onError (err) {
+  onResponseError (_controller, err) {
     this.socket.off('close', this.abort)
 
     this.callback(err)

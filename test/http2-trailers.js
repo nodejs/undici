@@ -49,19 +49,13 @@ test('Should handle http2 trailers', async t => {
     method: 'PUT',
     body: 'hello'
   }, {
-    onConnect () {
-
-    },
-    onHeaders () {
-      return true
-    },
-    onData () {
-      return true
-    },
-    onComplete (trailers) {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {},
+    onResponseEnd (_controller, trailers) {
       t.strictEqual(trailers['x-trailer'], 'hello')
     },
-    onError (err) {
+    onResponseError (_controller, err) {
       t.ifError(err)
     }
   })

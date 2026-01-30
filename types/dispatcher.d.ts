@@ -215,6 +215,8 @@ declare namespace Dispatcher {
     get aborted () : boolean
     get paused () : boolean
     get reason () : Error | null
+    rawHeaders?: Buffer[] | string[] | null
+    rawTrailers?: Buffer[] | string[] | null
     abort (reason: Error): void
     pause(): void
     resume(): void
@@ -228,30 +230,12 @@ declare namespace Dispatcher {
     onResponseEnd?(controller: DispatchController, trailers: IncomingHttpHeaders): void;
     onResponseError?(controller: DispatchController, error: Error): void;
 
-    /** Invoked before request is dispatched on socket. May be invoked multiple times when a request is retried when the request at the head of the pipeline fails. */
-    /** @deprecated */
-    onConnect?(abort: (err?: Error) => void): void;
-    /** Invoked when an error has occurred. */
-    /** @deprecated */
-    onError?(err: Error): void;
-    /** Invoked when request is upgraded either due to a `Upgrade` header or `CONNECT` method. */
-    /** @deprecated */
-    onUpgrade?(statusCode: number, headers: Buffer[] | string[] | null, socket: Duplex): void;
     /** Invoked when response is received, before headers have been read. **/
-    /** @deprecated */
     onResponseStarted?(): void;
-    /** Invoked when statusCode and headers have been received. May be invoked multiple times due to 1xx informational headers. */
-    /** @deprecated */
-    onHeaders?(statusCode: number, headers: Buffer[], resume: () => void, statusText: string): boolean;
-    /** Invoked when response payload data is received. */
-    /** @deprecated */
-    onData?(chunk: Buffer): boolean;
-    /** Invoked when response payload and trailers have been received and the request has completed. */
-    /** @deprecated */
-    onComplete?(trailers: string[] | null): void;
     /** Invoked when a body chunk is sent to the server. May be invoked multiple times for chunked requests */
-    /** @deprecated */
-    onBodySent?(chunkSize: number, totalBytesSent: number): void;
+    onBodySent?(chunk: Buffer): void;
+    /** Invoked after the request body is fully sent. */
+    onRequestSent?(): void;
   }
   export type PipelineHandler<TOpaque = null> = (data: PipelineHandlerData<TOpaque>) => Readable
   export type HttpMethod = Autocomplete<'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH'>

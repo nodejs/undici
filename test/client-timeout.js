@@ -26,21 +26,21 @@ test('refresh timeout on pause', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers, resume) {
+      onResponseStart (controller) {
         setTimeout(() => {
-          resume()
+          controller.resume()
         }, 1000)
-        return false
+        controller.pause()
       },
-      onData () {
+      onResponseData () {
 
       },
-      onComplete () {
+      onResponseEnd () {
 
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         t.ok(err instanceof errors.BodyTimeoutError)
       }
     })
@@ -78,7 +78,7 @@ test('start headers timeout after request body', async (t) => {
       body,
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
         process.nextTick(() => {
           clock.tick(200)
         })
@@ -89,15 +89,15 @@ test('start headers timeout after request body', async (t) => {
           })
         })
       },
-      onHeaders (statusCode, headers, resume) {
+      onResponseStart () {
       },
-      onData () {
+      onResponseData () {
 
       },
-      onComplete () {
+      onResponseEnd () {
 
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         t.equal(body.readableEnded, true)
         t.ok(err instanceof errors.HeadersTimeoutError)
       }
@@ -141,7 +141,7 @@ test('start headers timeout after async iterator request body', async (t) => {
       body,
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
         process.nextTick(() => {
           clock.tick(200)
         })
@@ -149,15 +149,15 @@ test('start headers timeout after async iterator request body', async (t) => {
           res()
         })
       },
-      onHeaders (statusCode, headers, resume) {
+      onResponseStart () {
       },
-      onData () {
+      onResponseData () {
 
       },
-      onComplete () {
+      onResponseEnd () {
 
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         t.ok(err instanceof errors.HeadersTimeoutError)
       }
     })
@@ -184,19 +184,19 @@ test('parser resume with no body timeout', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers, resume) {
-        setTimeout(resume, 2000)
-        return false
+      onResponseStart (controller) {
+        setTimeout(() => controller.resume(), 2000)
+        controller.pause()
       },
-      onData () {
+      onResponseData () {
 
       },
-      onComplete () {
+      onResponseEnd () {
         t.ok(true, 'pass')
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         t.ifError(err)
       }
     })

@@ -2,7 +2,7 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { describe, test, after, before } = require('node:test')
-const { EnvHttpProxyAgent, setGlobalDispatcher } = require('../index-fetch')
+const { EnvHttpProxyAgent, setGlobalDispatcher, fetch: undiciFetch } = require('../index-fetch')
 const http = require('node:http')
 const net = require('node:net')
 const { once } = require('node:events')
@@ -20,7 +20,7 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     process.env = { ...env }
   })
 
-  test('should work with global fetch from undici bundled with Node.js', async (t) => {
+  test('should work with undici fetch from index-fetch', async (t) => {
     const { strictEqual } = tspl(t, { plan: 3 })
 
     // Instead of using mocks, start a real server and a minimal proxy server
@@ -75,8 +75,7 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     process.env.http_proxy = proxyAddress
     setGlobalDispatcher(new EnvHttpProxyAgent())
 
-    // eslint-disable-next-line no-restricted-globals
-    const res = await fetch(serverAddress)
+    const res = await undiciFetch(serverAddress)
     strictEqual(await res.text(), 'Hello world')
   })
 })

@@ -32,50 +32,58 @@ test('getServerName', () => {
 test('assertRequestHandler', () => {
   assert.throws(() => util.assertRequestHandler(null), InvalidArgumentError, 'handler must be an object')
   assert.throws(() => util.assertRequestHandler({
-    onConnect: null
-  }), InvalidArgumentError, 'invalid onConnect method')
+    onRequestStart: null
+  }), InvalidArgumentError, 'invalid onRequestStart method')
   assert.throws(() => util.assertRequestHandler({
-    onConnect: () => {},
-    onError: null
-  }), InvalidArgumentError, 'invalid onError method')
+    onRequestStart: () => {},
+    onResponseError: null
+  }), InvalidArgumentError, 'invalid onResponseError method')
   assert.throws(() => util.assertRequestHandler({
-    onConnect: () => {},
-    onError: () => {},
+    onRequestStart: () => {},
+    onResponseError: () => {},
     onBodySent: null
   }), InvalidArgumentError, 'invalid onBodySent method')
   assert.throws(() => util.assertRequestHandler({
-    onConnect: () => {},
-    onError: () => {},
-    onBodySent: () => {},
-    onHeaders: null
-  }), InvalidArgumentError, 'invalid onHeaders method')
+    onRequestStart: () => {},
+    onResponseError: () => {},
+    onRequestSent: null
+  }), InvalidArgumentError, 'invalid onRequestSent method')
   assert.throws(() => util.assertRequestHandler({
-    onConnect: () => {},
-    onError: () => {},
+    onRequestStart: () => {},
+    onResponseError: () => {},
     onBodySent: () => {},
-    onHeaders: () => {},
-    onData: null
-  }), InvalidArgumentError, 'invalid onData method')
+    onRequestSent: () => {},
+    onResponseStart: null
+  }), InvalidArgumentError, 'invalid onResponseStart method')
   assert.throws(() => util.assertRequestHandler({
-    onConnect: () => {},
-    onError: () => {},
+    onRequestStart: () => {},
+    onResponseError: () => {},
     onBodySent: () => {},
-    onHeaders: () => {},
-    onData: () => {},
-    onComplete: null
-  }), InvalidArgumentError, 'invalid onComplete method')
+    onRequestSent: () => {},
+    onResponseStart: () => {},
+    onResponseData: null
+  }), InvalidArgumentError, 'invalid onResponseData method')
   assert.throws(() => util.assertRequestHandler({
-    onConnect: () => {},
-    onError: () => {},
+    onRequestStart: () => {},
+    onResponseError: () => {},
     onBodySent: () => {},
-    onUpgrade: 'null'
-  }, 'CONNECT'), InvalidArgumentError, 'invalid onUpgrade method')
+    onRequestSent: () => {},
+    onResponseStart: () => {},
+    onResponseData: () => {},
+    onResponseEnd: null
+  }), InvalidArgumentError, 'invalid onResponseEnd method')
   assert.throws(() => util.assertRequestHandler({
-    onConnect: () => {},
-    onError: () => {},
+    onRequestStart: () => {},
+    onResponseError: () => {},
     onBodySent: () => {},
-    onUpgrade: 'null'
-  }, 'CONNECT', () => {}), InvalidArgumentError, 'invalid onUpgrade method')
+    onRequestUpgrade: 'null'
+  }, 'CONNECT'), InvalidArgumentError, 'invalid onRequestUpgrade method')
+  assert.throws(() => util.assertRequestHandler({
+    onRequestStart: () => {},
+    onResponseError: () => {},
+    onBodySent: () => {},
+    onRequestUpgrade: 'null'
+  }, 'CONNECT', () => {}), InvalidArgumentError, 'invalid onRequestUpgrade method')
 })
 
 test('parseHeaders', () => {
