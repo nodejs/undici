@@ -49,12 +49,12 @@
    - Delete `lib/handler/wrap-handler.js` and `lib/handler/unwrap-handler.js` if no longer needed.
    - Remove references in `lib/handler/*` and `lib/core/*`.
 
-5. **Tests + expectations**
+5. **Tests + expectations** 🚧
    - Update/replace legacy handler tests to assert new handler API behavior.
    - Add migration/regression coverage for custom dispatchers using new handlers.
-   - Adjust WPT expectations only if behavior changes are intentional.
+   - Run broader suites (`npm run test:unit`/`test:fetch`) and adjust WPT expectations only if behavior changes are intentional.
 
-6. **Docs + migration notes**
+6. **Docs + migration notes** ✅
    - Update documentation to state legacy handler API is removed.
    - Add a migration note with example handler changes.
 

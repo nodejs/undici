@@ -212,6 +212,26 @@ Returns: `Boolean` - `false` if dispatcher is busy and further dispatch calls wo
 * **onResponseEnd** `(controller: DispatchController, trailers: Record<string, string | string[]>) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
 * **onResponseError** `(controller: DispatchController, error: Error) => void` - Invoked when an error has occurred. May not throw.
 
+#### Migration from legacy handler API
+
+If you were previously using `onConnect/onHeaders/onData/onComplete/onError`, switch to the new callbacks:
+
+- `onConnect(abort)` → `onRequestStart(controller)` and call `controller.abort(reason)`
+- `onHeaders(status, rawHeaders, resume, statusText)` → `onResponseStart(controller, status, headers, statusText)`
+- `onData(chunk)` → `onResponseData(controller, chunk)`
+- `onComplete(trailers)` → `onResponseEnd(controller, trailers)`
+- `onError(err)` → `onResponseError(controller, err)`
+- `onUpgrade(status, rawHeaders, socket)` → `onRequestUpgrade(controller, status, headers, socket)`
+
+To access raw header arrays (for preserving duplicates/casing), read them from the controller:
+
+- `controller.rawHeaders` for response headers
+- `controller.rawTrailers` for trailers
+
+Pause/resume now uses the controller:
+
+- Call `controller.pause()` and `controller.resume()` instead of returning `false` from handlers.
+
 #### Example 1 - Dispatch GET request
 
 ```js
