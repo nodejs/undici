@@ -41,11 +41,11 @@
    - Update all API entry points (`api-request`, `api-stream`, `api-pipeline`, `api-upgrade`, `api-connect`) to pass only new-style handlers.
    - Remove conditional wrapping logic and any legacy adaptation code.
 
-3. **Dispatcher integration**
+3. **Dispatcher integration** ✅
    - Ensure core dispatchers (`Client`, `Pool`, `Agent`, etc.) only accept/emit new handler API.
    - Remove `DispatcherBase` compatibility layers tied to legacy handler signatures.
 
-4. **Handler layer cleanup**
+4. **Handler layer cleanup** ✅
    - Delete `lib/handler/wrap-handler.js` and `lib/handler/unwrap-handler.js` if no longer needed.
    - Remove references in `lib/handler/*` and `lib/core/*`.
 
