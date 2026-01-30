@@ -30,6 +30,12 @@
      - `lib/handler/wrap-handler.js` (implementation)
      - `lib/handler/unwrap-handler.js` (implementation)
      - `test/issue-3934.js` (WrapHandler coverage)
+   - Legacy handler API usage in core pipeline:
+     - `lib/core/request.js` (invokes `onConnect/onHeaders/onData/onComplete/onError/onUpgrade`)
+     - `lib/dispatcher/client-h1.js` + `client-h2.js` (calls request `onConnect/onHeaders/onData/onComplete`)
+     - `lib/dispatcher/dispatcher-base.js` (expects legacy handler unless unwrapped)
+     - `lib/interceptor/cache.js` and `lib/web/fetch/index.js` (construct handlers with legacy callbacks)
+     - `lib/mock/mock-utils.js` (emits legacy callbacks during mock responses)
 
 2. **API surface migration**
    - Update all API entry points (`api-request`, `api-stream`, `api-pipeline`, `api-upgrade`, `api-connect`) to pass only new-style handlers.
