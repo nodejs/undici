@@ -6,7 +6,7 @@
 - Preserve backwards compatibility expectations via tests and documented migration.
 
 ## Phases
-1. **Inventory + constraints**
+1. **Inventory + constraints** ✅
    - Enumerate all `WrapHandler` and `unwrap` usages (APIs, handlers, interceptors, tests).
    - Identify legacy handler behaviors relied upon by core dispatchers (header casing, stack traces, event ordering).
    - Legacy behavior constraints observed in wrappers:
@@ -37,7 +37,7 @@
      - `lib/interceptor/cache.js` and `lib/web/fetch/index.js` (construct handlers with legacy callbacks)
      - `lib/mock/mock-utils.js` (emits legacy callbacks during mock responses)
 
-2. **API surface migration**
+2. **API surface migration** ✅
    - Update all API entry points (`api-request`, `api-stream`, `api-pipeline`, `api-upgrade`, `api-connect`) to pass only new-style handlers.
    - Remove conditional wrapping logic and any legacy adaptation code.
 
