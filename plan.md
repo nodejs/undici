@@ -9,6 +9,13 @@
 1. **Inventory + constraints**
    - Enumerate all `WrapHandler` and `unwrap` usages (APIs, handlers, interceptors, tests).
    - Identify legacy handler behaviors relied upon by core dispatchers (header casing, stack traces, event ordering).
+   - Legacy behavior constraints observed in wrappers:
+     - `WrapHandler` converts new handler callbacks to legacy `onConnect/onHeaders/onData/onComplete`.
+     - Headers/trailers are converted to raw arrays of `Buffer` pairs, preserving duplicate headers but not original casing.
+     - `onHeaders`/`onData` return `false` to pause; `resume()` uses controller from new API.
+     - `onError` validation differs: missing `onError` throws (`InvalidArgumentError`) in new API path.
+     - `UnwrapHandler` converts legacy callbacks to new `onRequestStart/onResponseStart/...` using `parseHeaders`.
+     - `UnwrapHandler` maintains pause/resume/abort semantics via `UnwrapController`.
    - Current usages (as of now):
      - `lib/api/api-request.js` (wrap handler)
      - `lib/api/api-stream.js` (wrap handler)
