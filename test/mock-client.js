@@ -60,9 +60,11 @@ describe('MockClient - dispatch', () => {
       path: '/foo',
       method: 'GET'
     }, {
-      onHeaders: (_statusCode, _headers, resume) => resume(),
-      onData: () => {},
-      onComplete: () => {}
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData () {},
+      onResponseEnd () {},
+      onResponseError () {}
     }))
   })
 
@@ -95,9 +97,11 @@ describe('MockClient - dispatch', () => {
       path: '/foo',
       method: 'GET'
     }, {
-      onHeaders: (_statusCode, _headers, resume) => { throw new Error('kaboom') },
-      onData: () => {},
-      onComplete: () => {}
+      onRequestStart () {},
+      onResponseStart () { throw new Error('kaboom') },
+      onResponseData () {},
+      onResponseEnd () {},
+      onResponseError () {}
     }), new Error('kaboom'))
   })
 })

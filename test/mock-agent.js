@@ -194,10 +194,11 @@ describe('MockAgent - dispatch', () => {
       path: '/foo',
       method: 'GET'
     }, {
-      onHeaders: (_statusCode, _headers, resume) => resume(),
-      onData: () => {},
-      onComplete: () => {},
-      onError: () => {}
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData () {},
+      onResponseEnd () {},
+      onResponseError () {}
     }))
   })
 
@@ -221,10 +222,11 @@ describe('MockAgent - dispatch', () => {
       path: '/foo',
       method: 'GET'
     }, {
-      onHeaders: (_statusCode, _headers, resume) => resume(),
-      onData: () => {},
-      onComplete: () => {},
-      onError: () => {}
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData () {},
+      onResponseEnd () {},
+      onResponseError () {}
     }))
   })
 })

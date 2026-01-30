@@ -100,9 +100,11 @@ describe('MockInterceptor - reply options callback', () => {
       method: 'GET',
       headers: { foo: 'bar' }
     }, {
-      onHeaders: () => { },
-      onData: () => { },
-      onComplete: () => { }
+      onRequestStart: () => {},
+      onResponseStart: () => {},
+      onResponseData: () => {},
+      onResponseEnd: () => {},
+      onResponseError: () => {}
     })
   })
 
@@ -140,9 +142,11 @@ describe('MockInterceptor - reply options callback', () => {
       method: 'GET',
       headers: { foo: 'bar' }
     }, {
-      onHeaders: () => { },
-      onData: () => { },
-      onComplete: () => { }
+      onRequestStart: () => {},
+      onResponseStart: () => {},
+      onResponseData: () => {},
+      onResponseEnd: () => {},
+      onResponseError: () => {}
     })
   })
 
@@ -186,36 +190,44 @@ describe('MockInterceptor - reply options callback', () => {
       path: '/test-return-undefined',
       method: 'GET'
     }, {
-      onHeaders: () => { },
-      onData: () => { },
-      onComplete: () => { }
+      onRequestStart: () => {},
+      onResponseStart: () => {},
+      onResponseData: () => {},
+      onResponseEnd: () => {},
+      onResponseError: () => {}
     }), new InvalidArgumentError('reply options callback must return an object'))
 
     t.assert.throws(() => mockPool.dispatch({
       path: '/test-return-null',
       method: 'GET'
     }, {
-      onHeaders: () => { },
-      onData: () => { },
-      onComplete: () => { }
+      onRequestStart: () => {},
+      onResponseStart: () => {},
+      onResponseData: () => {},
+      onResponseEnd: () => {},
+      onResponseError: () => {}
     }), new InvalidArgumentError('reply options callback must return an object'))
 
     t.assert.throws(() => mockPool.dispatch({
       path: '/test3',
       method: 'GET'
     }, {
-      onHeaders: () => { },
-      onData: () => { },
-      onComplete: () => { }
+      onRequestStart: () => {},
+      onResponseStart: () => {},
+      onResponseData: () => {},
+      onResponseEnd: () => {},
+      onResponseError: () => {}
     }), new InvalidArgumentError('responseOptions must be an object'))
 
     t.assert.throws(() => mockPool.dispatch({
       path: '/test4',
       method: 'GET'
     }, {
-      onHeaders: () => { },
-      onData: () => { },
-      onComplete: () => { }
+      onRequestStart: () => {},
+      onResponseStart: () => {},
+      onResponseData: () => {},
+      onResponseEnd: () => {},
+      onResponseError: () => {}
     }), new InvalidArgumentError('statusCode must be defined'))
   })
 })

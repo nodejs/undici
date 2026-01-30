@@ -366,7 +366,7 @@ test('backpressure algorithm', async (t) => {
   }
 
   const noopHandler = {
-    onError (err) {
+    onResponseError (_controller, err) {
       throw err
     }
   }
@@ -645,18 +645,18 @@ test('pool dispatch', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, headers) {
         t.strictEqual(statusCode, 200)
       },
-      onData (chunk) {
+      onResponseData (_controller, chunk) {
         buf += chunk
       },
-      onComplete () {
+      onResponseEnd () {
         t.strictEqual(buf, 'asd')
       },
-      onError () {
+      onResponseError () {
       }
     })
   })
@@ -792,17 +792,17 @@ test('pool dispatch error', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, headers) {
         t.strictEqual(statusCode, 200)
       },
-      onData (chunk) {
+      onResponseData (_controller, chunk) {
       },
-      onComplete () {
+      onResponseEnd () {
         t.ok(true, 'pass')
       },
-      onError () {
+      onResponseError () {
       }
     })
 
@@ -813,16 +813,16 @@ test('pool dispatch error', async (t) => {
         'transfer-encoding': 'fail'
       }
     }, {
-      onConnect () {
+      onRequestStart () {
         t.fail()
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, headers) {
         t.fail()
       },
-      onData (chunk) {
+      onResponseData (_controller, chunk) {
         t.fail()
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         t.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       }
     })
@@ -850,17 +850,17 @@ test('pool request abort in queue', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, headers) {
         t.strictEqual(statusCode, 200)
       },
-      onData (chunk) {
+      onResponseData (_controller, chunk) {
       },
-      onComplete () {
+      onResponseEnd () {
         t.ok(true, 'pass')
       },
-      onError () {
+      onResponseError () {
       }
     })
 
@@ -897,17 +897,17 @@ test('pool stream abort in queue', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, headers) {
         t.strictEqual(statusCode, 200)
       },
-      onData (chunk) {
+      onResponseData (_controller, chunk) {
       },
-      onComplete () {
+      onResponseEnd () {
         t.ok(true, 'pass')
       },
-      onError () {
+      onResponseError () {
       }
     })
 
@@ -944,17 +944,17 @@ test('pool pipeline abort in queue', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, headers) {
         t.strictEqual(statusCode, 200)
       },
-      onData (chunk) {
+      onResponseData (_controller, chunk) {
       },
-      onComplete () {
+      onResponseEnd () {
         t.ok(true, 'pass')
       },
-      onError () {
+      onResponseError () {
       }
     })
 
