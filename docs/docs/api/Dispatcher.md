@@ -236,21 +236,21 @@ client.dispatch({
     'x-foo': 'bar'
   }
 }, {
-  onConnect: () => {
+  onRequestStart: () => {
     console.log('Connected!')
   },
-  onError: (error) => {
+  onResponseError: (_controller, error) => {
     console.error(error)
   },
-  onHeaders: (statusCode, headers) => {
-    console.log(`onHeaders | statusCode: ${statusCode} | headers: ${headers}`)
+  onResponseStart: (_controller, statusCode, headers) => {
+    console.log(`onResponseStart | statusCode: ${statusCode} | headers: ${JSON.stringify(headers)}`)
   },
-  onData: (chunk) => {
-    console.log('onData: chunk received')
+  onResponseData: (_controller, chunk) => {
+    console.log('onResponseData: chunk received')
     data.push(chunk)
   },
-  onComplete: (trailers) => {
-    console.log(`onComplete | trailers: ${trailers}`)
+  onResponseEnd: (_controller, trailers) => {
+    console.log(`onResponseEnd | trailers: ${JSON.stringify(trailers)}`)
     const res = Buffer.concat(data).toString('utf8')
     console.log(`Data: ${res}`)
     client.close()
@@ -288,15 +288,15 @@ client.dispatch({
   method: 'GET',
   upgrade: 'websocket'
 }, {
-  onConnect: () => {
-    console.log('Undici Client - onConnect')
+  onRequestStart: () => {
+    console.log('Undici Client - onRequestStart')
   },
-  onError: (error) => {
-    console.log('onError') // shouldn't print
+  onResponseError: () => {
+    console.log('onResponseError') // shouldn't print
   },
-  onUpgrade: (statusCode, headers, socket) => {
-    console.log('Undici Client - onUpgrade')
-    console.log(`onUpgrade Headers: ${headers}`)
+  onRequestUpgrade: (_controller, statusCode, headers, socket) => {
+    console.log('Undici Client - onRequestUpgrade')
+    console.log(`onRequestUpgrade Headers: ${JSON.stringify(headers)}`)
     socket.on('data', buffer => {
       console.log(buffer.toString('utf8'))
     })
@@ -339,21 +339,21 @@ client.dispatch({
   },
   body: JSON.stringify({ message: 'Hello' })
 }, {
-  onConnect: () => {
+  onRequestStart: () => {
     console.log('Connected!')
   },
-  onError: (error) => {
+  onResponseError: (_controller, error) => {
     console.error(error)
   },
-  onHeaders: (statusCode, headers) => {
-    console.log(`onHeaders | statusCode: ${statusCode} | headers: ${headers}`)
+  onResponseStart: (_controller, statusCode, headers) => {
+    console.log(`onResponseStart | statusCode: ${statusCode} | headers: ${JSON.stringify(headers)}`)
   },
-  onData: (chunk) => {
-    console.log('onData: chunk received')
+  onResponseData: (_controller, chunk) => {
+    console.log('onResponseData: chunk received')
     data.push(chunk)
   },
-  onComplete: (trailers) => {
-    console.log(`onComplete | trailers: ${trailers}`)
+  onResponseEnd: (_controller, trailers) => {
+    console.log(`onResponseEnd | trailers: ${JSON.stringify(trailers)}`)
     const res = Buffer.concat(data).toString('utf8')
     console.log(`Response Data: ${res}`)
     client.close()
