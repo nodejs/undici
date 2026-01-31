@@ -2,10 +2,10 @@
 
 'use strict'
 
-const { test } = require('node:test')
+const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { fetch, Response, Request, FormData } = require('../..')
-const { Client, setGlobalDispatcher, Agent } = require('../..')
+const { Client, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('../..')
 const nodeFetch = require('../../index-fetch')
 const { once } = require('node:events')
 const { gzipSync } = require('node:zlib')
@@ -14,10 +14,15 @@ const { randomFillSync, createHash } = require('node:crypto')
 
 const { closeServerAsPromise } = require('../utils/node-http')
 
+const previousDispatcher = getGlobalDispatcher()
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 1,
   keepAliveMaxTimeout: 1
 }))
+
+after(() => {
+  setGlobalDispatcher(previousDispatcher)
+})
 
 test('function signature', (t) => {
   t.plan(2)
