@@ -12,7 +12,11 @@ test('Mocking works with both fetches', async (t) => {
   const body = JSON.stringify({ foo: 'bar' })
 
   mockAgent.disableNetConnect()
+  const previousDispatcher = undici.getGlobalDispatcher()
   undici.setGlobalDispatcher(mockAgent)
+  t.after(() => {
+    undici.setGlobalDispatcher(previousDispatcher)
+  })
   const pool = mockAgent.get('https://example.com')
 
   pool.intercept({

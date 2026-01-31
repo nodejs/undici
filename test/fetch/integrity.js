@@ -3,15 +3,20 @@
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { gzipSync } = require('node:zlib')
-const { fetch, setGlobalDispatcher, Agent } = require('../..')
+const { fetch, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('../..')
 const { once } = require('node:events')
 const { closeServerAsPromise } = require('../utils/node-http')
 const { runtimeFeatures } = require('../../lib/util/runtime-features')
 
+const previousDispatcher = getGlobalDispatcher()
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 1,
   keepAliveMaxTimeout: 1
 }))
+
+after(() => {
+  setGlobalDispatcher(previousDispatcher)
+})
 
 const skip = runtimeFeatures.has('crypto') === false
 

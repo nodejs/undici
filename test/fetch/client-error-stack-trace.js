@@ -1,16 +1,21 @@
 'use strict'
 
-const { test } = require('node:test')
+const { test, after } = require('node:test')
 const { sep, basename, join } = require('node:path')
-const { fetch, setGlobalDispatcher, Agent } = require('../..')
+const { fetch, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('../..')
 
 const projectFolder = basename(join(__dirname, '..', '..'))
 const { fetch: fetchIndex } = require('../../index-fetch')
 
+const previousDispatcher = getGlobalDispatcher()
 setGlobalDispatcher(new Agent({
   headersTimeout: 500,
   connectTimeout: 500
 }))
+
+after(() => {
+  setGlobalDispatcher(previousDispatcher)
+})
 
 test('FETCH: request errors and prints trimmed stack trace', async (t) => {
   try {
