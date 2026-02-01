@@ -18,7 +18,7 @@ test('markResourceTiming responseStatus is set', { skip: !isAtLeastv22 }, async 
   const server = createServer((req, res) => {
     res.statusCode = 200
     res.end('Hello World')
-  }).listen(3000)
+  }).listen(0)
 
   t.after(server.close.bind(server))
   await once(server, 'listening')
@@ -30,7 +30,7 @@ test('markResourceTiming responseStatus is set', { skip: !isAtLeastv22 }, async 
     })
   }).observe({ type: 'resource', buffered: true })
 
-  const response = await fetch('http://localhost:3000')
+  const response = await fetch(`http://localhost:${server.address().port}`)
   await response.text()
 
   await promise.promise
