@@ -23,7 +23,7 @@ test('transferred buffers and extractBody works', { skip: !ArrayBuffer.prototype
   await once(server, 'listening')
 
   {
-    const response = await fetch('http://localhost:3000', {
+    const response = await fetch(`http://localhost:${server.address().port}`, {
       method: 'POST',
       body: new TextEncoder().encode('test')
     })
@@ -32,7 +32,7 @@ test('transferred buffers and extractBody works', { skip: !ArrayBuffer.prototype
   }
 
   {
-    const response = await fetch('http://localhost:3000', {
+    const response = await fetch(`http://localhost:${server.address().port}`, {
       method: 'POST',
       body: Buffer.from('test')
     })
@@ -44,7 +44,7 @@ test('transferred buffers and extractBody works', { skip: !ArrayBuffer.prototype
     const buffer = new TextEncoder().encode('test')
     buffer.buffer.transfer()
 
-    const response = await fetch('http://localhost:3000', {
+    const response = await fetch(`http://localhost:${server.address().port}`, {
       method: 'POST',
       body: buffer
     })
