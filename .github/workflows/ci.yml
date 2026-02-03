@@ -59,11 +59,8 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['20', '22', '24', '25']
+        node-version: ['22', '24', '25']
         runs-on: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        exclude:
-          - node-version: '20'
-            runs-on: windows-latest
     uses: ./.github/workflows/nodejs.yml
     with:
       codecov: ${{ (matrix.node-version == '24' || matrix.node-version == '25') && matrix.runs-on == 'ubuntu-latest' }}
@@ -77,7 +74,7 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['24', '25']
+        node-version: ['22', '24', '25']
         runs-on: ['ubuntu-latest']
     uses: ./.github/workflows/nodejs.yml
     with:
@@ -92,7 +89,7 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['20', '22', '24', '25']
+        node-version: ['22', '24', '25']
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -178,7 +175,7 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['20', '22', '24', '25']
+        node-version: ['22', '24', '25']
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
