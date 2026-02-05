@@ -27,6 +27,29 @@ test('Receiving a frame with a payload length > 2^31-1 bytes', (t) => {
   })
 })
 
+test('Receiving a 64-bit payload length with a non-zero upper word', (t) => {
+  const server = new WebSocketServer({ port: 0 })
+
+  server.on('connection', (ws) => {
+    const socket = ws._socket
+
+    socket.write(Buffer.from([0x82, 0x7F, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01]))
+  })
+
+  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+  return new Promise((resolve, reject) => {
+    ws.onmessage = reject
+
+    ws.addEventListener('error', (event) => {
+      t.assert.ok(event.error instanceof Error)
+      ws.close()
+      server.close()
+      resolve()
+    })
+  })
+})
+
 test('Receiving an ArrayBuffer', (t) => {
   const server = new WebSocketServer({ port: 0 })
 
