@@ -93,6 +93,16 @@ export declare namespace Client {
      */
     maxConcurrentStreams?: number;
     /**
+     * @description Sets the HTTP/2 stream-level flow-control window size (SETTINGS_INITIAL_WINDOW_SIZE).
+     * @default 262144
+     */
+    initialWindowSize?: number;
+    /**
+     * @description Sets the HTTP/2 connection-level flow-control window size (ClientHttp2Session.setLocalWindowSize).
+     * @default 524288
+     */
+    connectionWindowSize?: number;
+    /**
      * @description Time interval between PING frames dispatch
      * @default 60000
      */

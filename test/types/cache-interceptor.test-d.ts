@@ -21,6 +21,16 @@ expectAssignable<CacheInterceptor.CacheOptions>({ store })
 expectAssignable<CacheInterceptor.CacheOptions>({ methods: [] })
 expectAssignable<CacheInterceptor.CacheOptions>({ store, methods: ['GET'] })
 
+// origins option type tests
+expectAssignable<CacheInterceptor.CacheOptions>({ origins: undefined })
+expectAssignable<CacheInterceptor.CacheOptions>({ origins: [] })
+expectAssignable<CacheInterceptor.CacheOptions>({ origins: ['http://localhost'] })
+expectAssignable<CacheInterceptor.CacheOptions>({ origins: [/localhost/] })
+expectAssignable<CacheInterceptor.CacheOptions>({ origins: ['http://example.com', /localhost/] })
+expectNotAssignable<CacheInterceptor.CacheOptions>({ origins: 'http://localhost' })
+expectNotAssignable<CacheInterceptor.CacheOptions>({ origins: [123] })
+expectNotAssignable<CacheInterceptor.CacheOptions>({ origins: [null] })
+
 expectAssignable<CacheInterceptor.CacheValue>({
   statusCode: 200,
   statusMessage: 'OK',

@@ -638,7 +638,7 @@
               "message": "promise_test: Unhandled rejection with value: object \"TypeError: fetch failed\""
             },
             {
-              "name": "Fetch http://web-platform.test:61273/fetch/api/resources/top.txt with no-cors mode",
+              "name": "Fetch http://web-platform.test:55268/fetch/api/resources/top.txt with no-cors mode",
               "success": false,
               "message": "assert_equals: Opaque filter: status is 0 expected 0 but got 200"
             }
@@ -1320,7 +1320,8 @@
             },
             {
               "name": "url referrer",
-              "success": true
+              "success": false,
+              "message": "assert_equals: request's referer should be: http://web-platform.test:8000/fetch/api/basic/foo expected \"http://web-platform.test:8000/fetch/api/basic/foo\" but got \"http://web-platform.test:8000/fetch/api/basic/request-referrer.any.html\""
             }
           ]
         },
@@ -2422,7 +2423,7 @@
               {
                 "name": "Initialize global state",
                 "success": false,
-                "message": "navigator is not defined"
+                "message": "Cannot read properties of undefined (reading 'getRegistration')"
               },
               {
                 "name": "frame fetches with a \"frame\" Request.destination",
@@ -2437,7 +2438,7 @@
               {
                 "name": "Initialize global state",
                 "success": false,
-                "message": "navigator is not defined"
+                "message": "Cannot read properties of undefined (reading 'getRegistration')"
               },
               {
                 "name": "iframe fetches with a \"iframe\" Request.destination",
@@ -2452,7 +2453,7 @@
               {
                 "name": "Initialize global state",
                 "success": false,
-                "message": "navigator is not defined"
+                "message": "Cannot read properties of undefined (reading 'getRegistration')"
               },
               {
                 "name": "Background image fetches with an \"image\" Request.destination",
@@ -2502,7 +2503,7 @@
               {
                 "name": "Initialize global state",
                 "success": false,
-                "message": "navigator is not defined"
+                "message": "Cannot read properties of undefined (reading 'getRegistration')"
               },
               {
                 "name": "HTMLLinkElement with rel=prefetch fetches with an empty string Request.destination",
@@ -2517,7 +2518,7 @@
               {
                 "name": "Initialize global state",
                 "success": false,
-                "message": "navigator is not defined"
+                "message": "Cannot read properties of undefined (reading 'getRegistration')"
               },
               {
                 "name": "DedicatedWorker fetches with a \"worker\" Request.destination",
@@ -2537,7 +2538,7 @@
               {
                 "name": "Initialize global state",
                 "success": false,
-                "message": "navigator is not defined"
+                "message": "Cannot read properties of undefined (reading 'getRegistration')"
               },
               {
                 "name": "HTMLImageElement fetches with an \"image\" Request.destination",
@@ -4021,7 +4022,8 @@
           "cases": [
             {
               "name": "Check request values when initialized from Request",
-              "success": true
+              "success": false,
+              "message": "assert_equals: Check referrer attribute expected \"http://web-platform.test:8000/\" but got \"about:client\""
             },
             {
               "name": "Check request values when initialized from Request and init values",
@@ -4314,17 +4316,17 @@
             {
               "name": "Request.isReloadNavigation is reset with non-empty RequestInit",
               "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: navigator is not defined\""
+              "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cannot read properties of undefined (reading 'getRegistration')\""
             },
             {
               "name": "Request.isHistoryNavigation is reset with non-empty RequestInit",
               "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: navigator is not defined\""
+              "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cannot read properties of undefined (reading 'getRegistration')\""
             },
             {
               "name": "Request.mode is reset with non-empty RequestInit when it's \"navigate\"",
               "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: navigator is not defined\""
+              "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cannot read properties of undefined (reading 'getRegistration')\""
             }
           ]
         },
@@ -4802,13 +4804,12 @@
             },
             {
               "name": "Consume response's body: from text with correct multipart type to formData",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"TypeError: Failed to parse body as FormData.\""
+              "success": true
             },
             {
               "name": "Consume response's body: from text with correct multipart type to formData with BOM",
               "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"TypeError: Failed to parse body as FormData.\""
+              "message": "assert_equals: Retrieve and verify response's body expected \"--boundary-0.16075435275547334\\r\\nContent-Disposition: form-data;name=\\\"name\\\"\\r\\n\\r\\n﻿quick﻿fox﻿\\r\\n--boundary-0.16075435275547334--\\r\\n\" but got \"--boundary-0.16075435275547334\\r\\nContent-Disposition: form-data;name=\\\"name\\\"\\r\\n\\r\\nquick﻿fox﻿\\r\\n--boundary-0.16075435275547334--\\r\\n\""
             },
             {
               "name": "Consume response's body: from text without correct multipart type to formData (error case)",
@@ -4841,8 +4842,7 @@
             },
             {
               "name": "Consume response's body: from blob with correct multipart type to formData",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"TypeError: Failed to parse body as FormData.\""
+              "success": true
             },
             {
               "name": "Consume response's body: from blob without correct multipart type to formData (error case)",
@@ -4867,7 +4867,7 @@
             {
               "name": "Consume response's body: from FormData to blob",
               "success": false,
-              "message": "assert_equals: Blob body type should be computed from the response Content-Type expected \"multipart/form-data; boundary=----formdata-undici-081851221061\" but got \"multipart/form-data;boundary=----formdata-undici-081851221061\""
+              "message": "assert_equals: Blob body type should be computed from the response Content-Type expected \"multipart/form-data; boundary=----formdata-undici-035234180410\" but got \"multipart/form-data;boundary=----formdata-undici-035234180410\""
             },
             {
               "name": "Consume response's body: from FormData to text",
@@ -4917,8 +4917,7 @@
             },
             {
               "name": "Consume response's body: from stream with correct multipart type to formData",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"TypeError: Failed to parse body as FormData.\""
+              "success": true
             },
             {
               "name": "Consume response's body: from stream without correct multipart type to formData (error case)",
@@ -4952,7 +4951,7 @@
             {
               "name": "Consume response's body: from multipart form data blob to formData",
               "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"TypeError: Failed to parse body as FormData.\""
+              "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: FileReader is not defined\""
             }
           ]
         },
@@ -9454,7 +9453,7 @@
             {
               "name": "referrer-no-referrer-service-worker",
               "success": false,
-              "message": "navigator is not defined"
+              "message": "Cannot read properties of undefined (reading 'getRegistration')"
             }
           ]
         },
@@ -9472,7 +9471,7 @@
             {
               "name": "referrer-origin-service-worker",
               "success": false,
-              "message": "navigator is not defined"
+              "message": "Cannot read properties of undefined (reading 'getRegistration')"
             }
           ]
         },
@@ -9482,7 +9481,7 @@
             {
               "name": "referrer-origin-when-cross-origin-service-worker",
               "success": false,
-              "message": "navigator is not defined"
+              "message": "Cannot read properties of undefined (reading 'getRegistration')"
             }
           ]
         },
@@ -9508,7 +9507,7 @@
             {
               "name": "referrer-unsafe-url-service-worker",
               "success": false,
-              "message": "navigator is not defined"
+              "message": "Cannot read properties of undefined (reading 'getRegistration')"
             }
           ]
         },
@@ -9523,8 +9522,17 @@
       },
       "redirect": {
         "redirect-back-to-original-origin.any.html": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "original => remote => original with mode: \"no-cors\"",
+              "success": true
+            },
+            {
+              "name": "original => remote => original with mode: \"cors\"",
+              "success": true
+            }
+          ]
         },
         "redirect-count.any.html": {
           "success": true,
@@ -11547,18 +11555,15 @@
             },
             {
               "name": "Consuming the body of a resource with bad zstd content with arrayBuffer() should reject",
-              "success": false,
-              "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+              "success": true
             },
             {
               "name": "Consuming the body of a resource with bad zstd content with blob() should reject",
-              "success": false,
-              "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+              "success": true
             },
             {
               "name": "Consuming the body of a resource with bad zstd content with bytes() should reject",
-              "success": false,
-              "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+              "success": true
             },
             {
               "name": "Consuming the body of a resource with bad zstd content with formData() should reject",
@@ -11566,13 +11571,11 @@
             },
             {
               "name": "Consuming the body of a resource with bad zstd content with json() should reject",
-              "success": false,
-              "message": "promise_rejects_js: function \"function() { throw e; }\" threw object \"SyntaxError: Unexpected token 'o', \"not actually zstd\" is not valid JSON\" (\"SyntaxError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
+              "success": true
             },
             {
               "name": "Consuming the body of a resource with bad zstd content with text() should reject",
-              "success": false,
-              "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+              "success": true
             }
           ]
         },
@@ -11591,13 +11594,11 @@
           "cases": [
             {
               "name": "large zstd data should be decompressed successfully",
-              "success": false,
-              "message": "assert_equals: uncompressed size should match expected 27000000 but got 2509"
+              "success": true
             },
             {
               "name": "large zstd data should be decompressed successfully with byte stream",
-              "success": false,
-              "message": "assert_equals: we should have read the whole thing expected 27000000 but got 2509"
+              "success": true
             }
           ]
         },
@@ -11606,13 +11607,11 @@
           "cases": [
             {
               "name": "fetched zstd data with content type text should be decompressed.",
-              "success": false,
-              "message": "assert_equals: expected 10500 but got 25"
+              "success": true
             },
             {
               "name": "fetched zstd data with content type octetstream should be decompressed.",
-              "success": false,
-              "message": "assert_equals: expected 10500 but got 25"
+              "success": true
             }
           ]
         },
@@ -12864,8 +12863,62 @@
         ]
       },
       "fetch.any.html": {
-        "success": false,
-        "cases": []
+        "success": true,
+        "cases": [
+          {
+            "name": "Same-origin fetch with a 'Cross-Origin-Resource-Policy: same-origin' response header.",
+            "success": true
+          },
+          {
+            "name": "Same-origin fetch with a 'Cross-Origin-Resource-Policy: same-site' response header.",
+            "success": true
+          },
+          {
+            "name": "Cross-origin cors fetch with a 'Cross-Origin-Resource-Policy: same-origin' response header.",
+            "success": true
+          },
+          {
+            "name": "Cross-origin cors fetch with a 'Cross-Origin-Resource-Policy: same-site' response header.",
+            "success": true
+          },
+          {
+            "name": "Cross-origin no-cors fetch with a 'Cross-Origin-Resource-Policy: same-origin' response header.",
+            "success": false,
+            "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+          },
+          {
+            "name": "Cross-origin no-cors fetch with a 'Cross-Origin-Resource-Policy: same-site' response header.",
+            "success": false,
+            "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+          },
+          {
+            "name": "Cross-scheme (HTTP to HTTPS) no-cors fetch to a same-site URL with a 'Cross-Origin-Resource-Policy: same-site' response header.",
+            "success": true
+          },
+          {
+            "name": "Cross-origin no-cors fetch to a same-site URL with a 'Cross-Origin-Resource-Policy: same-origin' response header.",
+            "success": true
+          },
+          {
+            "name": "Valid cross-origin no-cors fetch with a 'Cross-Origin-Resource-Policy: same-site' response header.",
+            "success": false,
+            "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+          },
+          {
+            "name": "Cross-origin no-cors fetch with a 'Cross-Origin-Resource-Policy: same-origin' response header after a redirection.",
+            "success": false,
+            "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+          },
+          {
+            "name": "Cross-origin no-cors fetch with a 'Cross-Origin-Resource-Policy: same-origin' response header after a cross-origin redirection.",
+            "success": true
+          },
+          {
+            "name": "Cross-origin no-cors fetch with a 'Cross-Origin-Resource-Policy: same-origin' redirect response header.",
+            "success": false,
+            "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+          }
+        ]
       },
       "fetch.https.any.html": {
         "success": true,
@@ -13676,9 +13729,89 @@
             "message": "assert_throws_js: function \"() => fetchLater()\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
           },
           {
-            "name": "fetchLater() throws TypeError on non-HTTPS URL.",
+            "name": "fetchLater() with same-origin (https) URL does not throw.",
             "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater('http://www.google.com')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
+            "message": "fetchLater is not defined"
+          },
+          {
+            "name": "fetchLater() with http://localhost URL does not throw.",
+            "success": false,
+            "message": "fetchLater is not defined"
+          },
+          {
+            "name": "fetchLater() with https://localhost URL does not throw.",
+            "success": false,
+            "message": "fetchLater is not defined"
+          },
+          {
+            "name": "fetchLater() with http://127.0.0.1 URL does not throw.",
+            "success": false,
+            "message": "fetchLater is not defined"
+          },
+          {
+            "name": "fetchLater() with https://127.0.0.1 URL does not throw.",
+            "success": false,
+            "message": "fetchLater is not defined"
+          },
+          {
+            "name": "fetchLater() with http://[::1] URL does not throw.",
+            "success": false,
+            "message": "fetchLater is not defined"
+          },
+          {
+            "name": "fetchLater() with https://[::1] URL does not throw.",
+            "success": false,
+            "message": "fetchLater is not defined"
+          },
+          {
+            "name": "fetchLater() with https://example.com URL does not throw.",
+            "success": false,
+            "message": "fetchLater is not defined"
+          },
+          {
+            "name": "fetchLater() throws SecurityError on non-trustworthy http URL.",
+            "success": false,
+            "message": "assert_throws_dom: should throw SecurityError for insecure http url http://example.com function \"() => fetchLater(httpUrl)\" threw object \"ReferenceError: fetchLater is not defined\" that is not a DOMException SecurityError: property \"code\" is equal to undefined, expected 18"
+          },
+          {
+            "name": "fetchLater() throws TypeError on file:// scheme.",
+            "success": false,
+            "message": "assert_throws_js: function \"() => fetchLater('file://tmp')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
+          },
+          {
+            "name": "fetchLater() throws TypeError on ftp:// scheme.",
+            "success": false,
+            "message": "assert_throws_js: function \"() => fetchLater('ftp://example.com')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
+          },
+          {
+            "name": "fetchLater() throws TypeError on ssh:// scheme.",
+            "success": false,
+            "message": "assert_throws_js: function \"() => fetchLater('ssh://example.com')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
+          },
+          {
+            "name": "fetchLater() throws TypeError on wss:// scheme.",
+            "success": false,
+            "message": "assert_throws_js: function \"() => fetchLater('wss://example.com')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
+          },
+          {
+            "name": "fetchLater() throws TypeError on about: scheme.",
+            "success": false,
+            "message": "assert_throws_js: function \"() => fetchLater('about:blank')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
+          },
+          {
+            "name": "fetchLater() throws TypeError on javascript: scheme.",
+            "success": false,
+            "message": "assert_throws_js: function \"() => fetchLater(`javascript:alert('');`)\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
+          },
+          {
+            "name": "fetchLater() throws TypeError on data: scheme.",
+            "success": false,
+            "message": "assert_throws_js: function \"() => fetchLater('data:text/plain,Hello')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
+          },
+          {
+            "name": "fetchLater() throws TypeError on blob: scheme.",
+            "success": false,
+            "message": "assert_throws_js: function \"() => fetchLater('blob:https://example.com/some-uuid')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
           },
           {
             "name": "fetchLater() throws RangeError on negative activateAfter.",
@@ -15123,7 +15256,7 @@
           {
             "name": "Response with Cache-Control: max-age=2592000, public and Pragma: no-cache should be cached",
             "success": false,
-            "message": "assert_equals: Responses should be identical, indicating caching expected \"Timestamp: 1756778464.9260645\" but got \"Timestamp: 1756778464.9230638\""
+            "message": "assert_equals: Responses should be identical, indicating caching expected \"Timestamp: 1768756436.8170867\" but got \"Timestamp: 1768756436.8148103\""
           }
         ]
       },
@@ -22838,8 +22971,207 @@
     },
     "origin": {
       "assorted.window.html": {
-        "success": false,
-        "cases": []
+        "success": true,
+        "cases": [
+          {
+            "name": "Origin header and 308 redirect",
+            "success": false,
+            "message": "assert_equals: expected \"null\" but got \"http://web-platform.test:8000\""
+          },
+          {
+            "name": "Origin header and GET navigation",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST navigation",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST same-origin navigation with Referrer-Policy no-referrer",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST same-origin fetch no-cors mode with Referrer-Policy no-referrer",
+            "success": false,
+            "message": "assert_equals: expected \"null\" but got \"\""
+          },
+          {
+            "name": "Origin header and POST same-origin fetch cors mode with Referrer-Policy no-referrer",
+            "success": false,
+            "message": "assert_equals: expected \"http://web-platform.test:8000\" but got \"\""
+          },
+          {
+            "name": "Origin header and GET same-origin fetch cors mode with Referrer-Policy no-referrer",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST cross-origin navigation with Referrer-Policy no-referrer",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST cross-origin fetch no-cors mode with Referrer-Policy no-referrer",
+            "success": false,
+            "message": "assert_equals: expected \"null\" but got \"\""
+          },
+          {
+            "name": "Origin header and POST cross-origin fetch cors mode with Referrer-Policy no-referrer",
+            "success": false,
+            "message": "assert_equals: expected \"http://web-platform.test:8000\" but got \"\""
+          },
+          {
+            "name": "Origin header and GET cross-origin fetch cors mode with Referrer-Policy no-referrer",
+            "success": false,
+            "message": "assert_equals: expected \"http://web-platform.test:8000\" but got \"no Origin header\""
+          },
+          {
+            "name": "Origin header and POST same-origin navigation with Referrer-Policy same-origin",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST same-origin fetch no-cors mode with Referrer-Policy same-origin",
+            "success": false,
+            "message": "assert_equals: expected \"http://web-platform.test:8000\" but got \"\""
+          },
+          {
+            "name": "Origin header and POST same-origin fetch cors mode with Referrer-Policy same-origin",
+            "success": false,
+            "message": "assert_equals: expected \"http://web-platform.test:8000\" but got \"\""
+          },
+          {
+            "name": "Origin header and GET same-origin fetch cors mode with Referrer-Policy same-origin",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST cross-origin navigation with Referrer-Policy same-origin",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST cross-origin fetch no-cors mode with Referrer-Policy same-origin",
+            "success": false,
+            "message": "assert_equals: expected \"null\" but got \"\""
+          },
+          {
+            "name": "Origin header and POST cross-origin fetch cors mode with Referrer-Policy same-origin",
+            "success": false,
+            "message": "assert_equals: expected \"http://web-platform.test:8000\" but got \"\""
+          },
+          {
+            "name": "Origin header and GET cross-origin fetch cors mode with Referrer-Policy same-origin",
+            "success": false,
+            "message": "assert_equals: expected \"http://web-platform.test:8000\" but got \"no Origin header\""
+          },
+          {
+            "name": "Origin header and POST same-origin navigation with Referrer-Policy origin-when-cross-origin",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST same-origin fetch no-cors mode with Referrer-Policy origin-when-cross-origin",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST same-origin fetch cors mode with Referrer-Policy origin-when-cross-origin",
+            "success": true
+          },
+          {
+            "name": "Origin header and GET same-origin fetch cors mode with Referrer-Policy origin-when-cross-origin",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST cross-origin navigation with Referrer-Policy origin-when-cross-origin",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST cross-origin fetch no-cors mode with Referrer-Policy origin-when-cross-origin",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST cross-origin fetch cors mode with Referrer-Policy origin-when-cross-origin",
+            "success": true
+          },
+          {
+            "name": "Origin header and GET cross-origin fetch cors mode with Referrer-Policy origin-when-cross-origin",
+            "success": false,
+            "message": "assert_equals: expected \"http://web-platform.test:8000\" but got \"no Origin header\""
+          },
+          {
+            "name": "Origin header and POST same-origin navigation with Referrer-Policy no-referrer-when-downgrade",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST same-origin fetch no-cors mode with Referrer-Policy no-referrer-when-downgrade",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST same-origin fetch cors mode with Referrer-Policy no-referrer-when-downgrade",
+            "success": true
+          },
+          {
+            "name": "Origin header and GET same-origin fetch cors mode with Referrer-Policy no-referrer-when-downgrade",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST cross-origin navigation with Referrer-Policy no-referrer-when-downgrade",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST cross-origin fetch no-cors mode with Referrer-Policy no-referrer-when-downgrade",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST cross-origin fetch cors mode with Referrer-Policy no-referrer-when-downgrade",
+            "success": true
+          },
+          {
+            "name": "Origin header and GET cross-origin fetch cors mode with Referrer-Policy no-referrer-when-downgrade",
+            "success": false,
+            "message": "assert_equals: expected \"http://web-platform.test:8000\" but got \"no Origin header\""
+          },
+          {
+            "name": "Origin header and POST same-origin navigation with Referrer-Policy unsafe-url",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST same-origin fetch no-cors mode with Referrer-Policy unsafe-url",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST same-origin fetch cors mode with Referrer-Policy unsafe-url",
+            "success": true
+          },
+          {
+            "name": "Origin header and GET same-origin fetch cors mode with Referrer-Policy unsafe-url",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST cross-origin navigation with Referrer-Policy unsafe-url",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Origin header and POST cross-origin fetch no-cors mode with Referrer-Policy unsafe-url",
+            "success": true
+          },
+          {
+            "name": "Origin header and POST cross-origin fetch cors mode with Referrer-Policy unsafe-url",
+            "success": true
+          },
+          {
+            "name": "Origin header and GET cross-origin fetch cors mode with Referrer-Policy unsafe-url",
+            "success": false,
+            "message": "assert_equals: expected \"http://web-platform.test:8000\" but got \"no Origin header\""
+          }
+        ]
       }
     },
     "private-network-access": {
@@ -22864,39 +23196,8 @@
         "cases": []
       },
       "fetch-from-treat-as-public.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "treat-as-public-address to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public-address to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public-address to local (same-origin): no preflight required.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public-address to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public-address to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public-address to public: no preflight required.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "fetch.tentative.https.window.html?include=baseline": {
         "success": false,
@@ -22943,839 +23244,72 @@
         "cases": []
       },
       "nested-worker.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "treat-as-public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "nested-worker.tentative.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "treat-as-public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "preflight-cache.https.tentative.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "redirect.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to private to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "local to private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private to local: no-cors success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local to private: no-cors success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private to local: failed first preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private to local: failed second preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private to local: no-cors success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local to private: failed first preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local to private: failed second preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local to private: no-cors failed first preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local to private: no-cors failed second preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local to private: no-cors success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local (same-origin) to private: failed second preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local (same-origin) to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local (same-origin) to private: no-cors failed second preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local (same-origin) to private: no-cors success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private to local: failed first preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private to local: failed second preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private to local: no-cors failed first preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private to local: no-cors failed second preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private to local: no-cors success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private to local (same-origin): failed first preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private to local (same-origin): success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private to local (same-origin): no-cors failed first preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private to local (same-origin): no-cors success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "service-worker-background-fetch.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "service-worker-fetch-document-treat-as-public.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "treat-as-public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local (same-origin): no preflight required.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "service-worker-fetch-document.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "service-worker-fetch.tentative.https.window.html?1-8": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "service-worker-fetch.tentative.https.window.html?9-last": {
-        "success": true,
-        "cases": [
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local (same-origin): no preflight required.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "service-worker-update.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "update public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "update public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "update public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "service-worker.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "treat-as-public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "shared-worker-blob-fetch.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local (same-origin): no preflight required.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "shared-worker-blob-fetch.tentative.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "local https to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private https to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public https to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "local https to local https: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private https to local https: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public https to local https: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "shared-worker-fetch.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local (same-origin): no preflight required.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "shared-worker-fetch.tentative.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "local https to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private https to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public https to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public https to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "shared-worker.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "treat-as-public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "shared-worker.tentative.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "treat-as-public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "websocket.tentative.https.window.html": {
         "success": false,
@@ -23810,294 +23344,28 @@
         "cases": []
       },
       "worker-blob-fetch.tentative.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "local https to local https: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private https to local https: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public https to private https: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public https to local https: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "worker-fetch.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "worker-fetch.tentative.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "local to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "local https to local https: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "private https to local https: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public https to private https: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public https to local https: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "worker.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "treat-as-public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "worker.tentative.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "treat-as-public to local: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failure.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "public to public: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "xhr-from-treat-as-public.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "treat-as-public to local: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to local (same-origin): no preflight required.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: failed preflight.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to private: success.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          },
-          {
-            "name": "treat-as-public to public: no preflight required.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "xhr.https.tentative.window.html?include=from-local": {
         "success": false,
@@ -24122,13 +23390,11 @@
         "cases": [
           {
             "name": "A simple blob range request.",
-            "success": false,
-            "message": "assert_equals: Content-Length is 12 expected \"13\" but got \"12\""
+            "success": true
           },
           {
             "name": "A blob range request with no type.",
-            "success": false,
-            "message": "assert_equals: Content-Length is 12 expected \"13\" but got \"12\""
+            "success": true
           },
           {
             "name": "A blob range request with no end.",
@@ -24137,33 +23403,27 @@
           },
           {
             "name": "A blob range request with no start.",
-            "success": false,
-            "message": "assert_equals: Content-Length is 7 expected \"8\" but got \"7\""
+            "success": true
           },
           {
             "name": "A simple blob range request with whitespace.",
-            "success": false,
-            "message": "assert_equals: Content-Length is 12 expected \"13\" but got \"12\""
+            "success": true
           },
           {
             "name": "Blob content with short content and a large range end",
-            "success": false,
-            "message": "assert_equals: Content-Length is 8 expected \"9\" but got \"8\""
+            "success": true
           },
           {
             "name": "Blob content with short content and a range end matching content length",
-            "success": false,
-            "message": "assert_equals: Content-Length is 8 expected \"9\" but got \"8\""
+            "success": true
           },
           {
             "name": "Blob range with whitespace before and after hyphen",
-            "success": false,
-            "message": "assert_equals: Content-Length is 5 expected \"6\" but got \"5\""
+            "success": true
           },
           {
             "name": "Blob range with whitespace after hyphen",
-            "success": false,
-            "message": "assert_equals: Content-Length is 4 expected \"5\" but got \"4\""
+            "success": true
           },
           {
             "name": "Blob range with whitespace around equals sign",
@@ -24706,7 +23966,7 @@
             {
               "name": "Only blocks dangling markup requests",
               "success": false,
-              "message": "navigator is not defined"
+              "message": "Cannot read properties of undefined (reading 'register')"
             }
           ]
         },
@@ -24873,7 +24133,7 @@
           {
             "name": "Second fetch returns same response",
             "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: navigator is not defined\""
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cannot read properties of undefined (reading 'register')\""
           }
         ]
       },
@@ -24883,7 +24143,7 @@
           {
             "name": "Second fetch returns same response",
             "success": false,
-            "message": "assert_equals: expected \"ohqqejvmbaayfsbxnlht\" but got \"xbssfkdevkjnzvyehxux\""
+            "message": "assert_equals: expected \"qoidijwtsfvgrbpjvqow\" but got \"pyimmkhbwsuwcvgrysyj\""
           }
         ]
       },
@@ -33822,7 +33082,8 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(1000, reason) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": true
+          "success": false,
+          "message": "assert_true: WebSocket connection should be opened expected true got false"
         }
       ]
     },
@@ -33841,8 +33102,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(1000, reason) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be opened expected true got false"
+          "success": true
         }
       ]
     },
@@ -33870,8 +33130,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(1000, reason) - event.code == 1000 and event.reason = 'Clean Close'",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -33899,8 +33158,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(1000) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be opened expected true got false"
+          "success": true
         }
       ]
     },
@@ -33928,8 +33186,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close() - return close code is 1005 - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -33957,8 +33214,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(1005) - see '7.1.5.  The WebSocket Connection Close Code' in http://www.ietf.org/rfc/rfc6455.txt",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -33986,8 +33242,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(2999, reason) - INVALID_ACCESS_ERR is thrown",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -34015,8 +33270,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(3000, reason) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34044,8 +33298,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(3000, reason) - verify return code is 3000 - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34073,8 +33326,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(4999, reason) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34102,8 +33354,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(code, 'reason more than 123 bytes') - SYNTAX_ERR is thrown",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -34131,8 +33382,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close should not emit until handshake completes - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34160,8 +33410,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(only reason) - INVALID_ACCESS_ERR is thrown",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -34189,8 +33438,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34218,8 +33466,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - readyState should be in CLOSING state just before onclose is called",
-          "success": false,
-          "message": "assert_true: open must be called expected true got false"
+          "success": true
         }
       ]
     },
@@ -34247,8 +33494,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(reason with unpaired surrogates) - connection should get closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be opened expected true got false"
+          "success": true
         }
       ]
     },
@@ -34276,8 +33522,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Server initiated Close - Client sends back a CLOSE - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34305,8 +33550,7 @@
       "cases": [
         {
           "name": "Close-undefined",
-          "success": false,
-          "message": "assert_true: open event must fire expected true got false"
+          "success": true
         }
       ]
     },
@@ -35025,8 +34269,7 @@
       "cases": [
         {
           "name": "Basic check",
-          "success": false,
-          "message": "assert_unreached: Reached unreachable code"
+          "success": true
         },
         {
           "name": "WebSocket blocked port test 0",
@@ -35386,8 +34629,7 @@
       "cases": [
         {
           "name": "Create WebSocket - wsocket.extensions should be set to '' after connection is established - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be closed expected true got false"
+          "success": true
         }
       ]
     },
@@ -35636,8 +34878,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Pass a valid URL and array of protocol strings - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -35665,8 +34906,7 @@
       "cases": [
         {
           "name": "Create WebSocket - wsocket.binaryType should be set to 'blob' after connection is established - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -35721,8 +34961,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Pass a valid URL and protocol string - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -35750,8 +34989,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Pass a valid URL and protocol string - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -35779,8 +35017,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Pass a valid URL and a protocol string - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -35808,8 +35045,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Pass a valid URL - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -35837,8 +35073,7 @@
       "cases": [
         {
           "name": "Send 0 byte data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -35866,8 +35101,7 @@
       "cases": [
         {
           "name": "Send 65K data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -35922,8 +35156,7 @@
       "cases": [
         {
           "name": "Send 65K binary data on a WebSocket - ArrayBuffer - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -35951,8 +35184,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBuffer - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -35982,7 +35214,7 @@
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Float16Array - Connection should be closed",
           "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "message": "Float16Array is not defined"
         }
       ]
     },
@@ -36010,8 +35242,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Float32Array - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36039,8 +35270,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Float64Array - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36068,8 +35298,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Int16Array with offset - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36097,8 +35326,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Int32Array - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36126,8 +35354,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Int8Array - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36155,8 +35382,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Uint16Array with offset and length - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36184,8 +35410,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Uint32Array with offset - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36213,8 +35438,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Uint8Array with offset and length - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36242,8 +35466,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Uint8Array with offset - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36271,8 +35494,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - Blob - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36300,8 +35522,7 @@
       "cases": [
         {
           "name": "Send data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: message should be received expected true got false"
+          "success": true
         }
       ]
     },
@@ -36329,8 +35550,7 @@
       "cases": [
         {
           "name": "Send null data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36358,8 +35578,7 @@
       "cases": [
         {
           "name": "Send paired surrogates data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36387,8 +35606,7 @@
       "cases": [
         {
           "name": "Send unicode data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36416,8 +35634,7 @@
       "cases": [
         {
           "name": "Send unpaired surrogates on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -36476,8 +35693,7 @@
       "cases": [
         {
           "name": "HTTP basic authentication should work with WebSockets",
-          "success": false,
-          "message": "assert_unreached: open should succeed Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -36506,8 +35722,7 @@
         "cases": [
           {
             "name": "001",
-            "success": false,
-            "message": "assert_unreached: close event should not fire Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -36535,8 +35750,7 @@
         "cases": [
           {
             "name": "002",
-            "success": false,
-            "message": "assert_unreached: close event should not fire Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -36564,8 +35778,7 @@
         "cases": [
           {
             "name": "004",
-            "success": false,
-            "message": "assert_unreached: close event should not fire Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -36593,8 +35806,7 @@
         "cases": [
           {
             "name": "005",
-            "success": false,
-            "message": "assert_unreached: close event should not fire Reached unreachable code"
+            "success": true
           }
         ]
       }
@@ -36623,8 +35835,7 @@
       "cases": [
         {
           "name": "Create WebSocket - set binaryType to something other than blob or arraybuffer - SYNTAX_ERR is returned - Connection should be closed",
-          "success": false,
-          "message": "assert_true: connection should be opened expected true got false"
+          "success": true
         }
       ]
     },
@@ -36654,7 +35865,7 @@
         {
           "name": "bufferedAmount should not be updated during a sync XHR",
           "success": false,
-          "message": "assert_unreached: open should succeed Reached unreachable code"
+          "message": "XMLHttpRequest is not defined"
         }
       ]
     },
@@ -36770,8 +35981,7 @@
         "cases": [
           {
             "name": "002",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -36799,8 +36009,7 @@
         "cases": [
           {
             "name": "003",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -36828,8 +36037,7 @@
         "cases": [
           {
             "name": "004",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       }
@@ -36918,7 +36126,7 @@
           {
             "name": "002",
             "success": false,
-            "message": "assert_unreached: error Reached unreachable code"
+            "message": "document is not defined"
           }
         ]
       },
@@ -37026,7 +36234,7 @@
           {
             "name": "Test that third-party cookies are accepted for WebSockets.",
             "success": false,
-            "message": "promise_test: Unhandled rejection with value: \"Unexpected error event\""
+            "message": "assert_not_equals: request should contain cookies. got disallowed value \"(none)\""
           }
         ]
       }
@@ -37145,23 +36353,19 @@
       "cases": [
         {
           "name": "Application data is 125 byte which means any 'Extended payload length' field isn't used at all.",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         },
         {
           "name": "Application data is 126 byte which starts to use the 16 bit 'Extended payload length' field.",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         },
         {
           "name": "Application data is 0xFFFF byte which means the upper bound of the 16 bit 'Extended payload length' field.",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         },
         {
           "name": "Application data is (0xFFFF + 1) byte which starts to use the 64 bit 'Extended payload length' field",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -37444,8 +36648,7 @@
           "cases": [
             {
               "name": "clean-close",
-              "success": false,
-              "message": "assert_equals: expected true but got false"
+              "success": true
             }
           ]
         },
@@ -37498,8 +36701,7 @@
             "cases": [
               {
                 "name": "bufferedAmount-arraybuffer",
-                "success": false,
-                "message": "assert_unreached: close event should not fire Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37527,8 +36729,7 @@
             "cases": [
               {
                 "name": "bufferedAmount-blob",
-                "success": false,
-                "message": "assert_unreached: close event should not fire Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37610,8 +36811,7 @@
             "cases": [
               {
                 "name": "bufferedAmount-getting",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37657,8 +36857,7 @@
             "cases": [
               {
                 "name": "bufferedAmount-large",
-                "success": false,
-                "message": "assert_unreached: close event should not fire Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37704,8 +36903,7 @@
             "cases": [
               {
                 "name": "bufferedAmount-unicode",
-                "success": false,
-                "message": "assert_unreached: close event should not fire Reached unreachable code"
+                "success": true
               }
             ]
           }
@@ -37784,8 +36982,7 @@
             "cases": [
               {
                 "name": "close-multiple",
-                "success": false,
-                "message": "assert_equals: expected 1 but got 2"
+                "success": true
               }
             ]
           },
@@ -37794,8 +36991,7 @@
             "cases": [
               {
                 "name": "close-multiple",
-                "success": false,
-                "message": "assert_equals: expected 1 but got 2"
+                "success": true
               }
             ]
           },
@@ -37804,8 +37000,7 @@
             "cases": [
               {
                 "name": "close-nested",
-                "success": false,
-                "message": "assert_equals: expected 1 but got 2"
+                "success": true
               }
             ]
           },
@@ -37814,8 +37009,7 @@
             "cases": [
               {
                 "name": "close-nested",
-                "success": false,
-                "message": "assert_equals: expected 1 but got 2"
+                "success": true
               }
             ]
           },
@@ -38629,7 +37823,8 @@
             "cases": [
               {
                 "name": "015",
-                "success": true
+                "success": false,
+                "message": "assert_true: expected true got false"
               }
             ]
           },
@@ -38657,8 +37852,7 @@
             "cases": [
               {
                 "name": "016",
-                "success": false,
-                "message": "assert_equals: expected 7 but got 1"
+                "success": true
               }
             ]
           },
@@ -38933,8 +38127,7 @@
             "cases": [
               {
                 "name": "006",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -38952,8 +38145,7 @@
             "cases": [
               {
                 "name": "007",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -38971,8 +38163,7 @@
             "cases": [
               {
                 "name": "008",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           }
@@ -39076,8 +38267,13 @@
             ]
           },
           "005.html?wss": {
-            "success": false,
-            "cases": []
+            "success": true,
+            "cases": [
+              {
+                "name": "005",
+                "success": true
+              }
+            ]
           },
           "006.html?default": {
             "success": true,
@@ -39103,8 +38299,7 @@
             "cases": [
               {
                 "name": "006",
-                "success": false,
-                "message": "assert_unreached: close event should not fire before message event Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -39132,8 +38327,7 @@
             "cases": [
               {
                 "name": "007",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -39151,8 +38345,7 @@
             "cases": [
               {
                 "name": "008",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -39180,8 +38373,7 @@
             "cases": [
               {
                 "name": "009",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -39229,8 +38421,7 @@
             "cases": [
               {
                 "name": "011",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -39258,8 +38449,7 @@
             "cases": [
               {
                 "name": "012",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           }
@@ -39419,8 +38609,7 @@
         "cases": [
           {
             "name": "001",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       }
@@ -39499,8 +38688,7 @@
         "cases": [
           {
             "name": "002",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -39518,8 +38706,7 @@
         "cases": [
           {
             "name": "003",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -39537,8 +38724,7 @@
         "cases": [
           {
             "name": "005",
-            "success": false,
-            "message": "assert_unreached: onclose should not be called before onopen Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -39556,8 +38742,7 @@
         "cases": [
           {
             "name": "006",
-            "success": false,
-            "message": "assert_true: Connection to /echo should close cleanly expected true got false"
+            "success": true
           }
         ]
       },
@@ -39674,56 +38859,313 @@
       "cases": [
         {
           "name": "sending 50 messages of size 65536 with backpressure applied should not hang",
-          "success": false,
-          "message": "assert_true: connection should have been opened expected true got false"
+          "success": true
         }
       ]
     },
     "stream": {
       "tentative": {
         "abort.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "abort before constructing should prevent connection",
+              "success": true
+            },
+            {
+              "name": "abort during handshake should work",
+              "success": false,
+              "message": "promise_rejects_dom: opened should reject function \"function() { throw e; }\" threw object \"WebSocketError: Socket never opened\" that is not a DOMException AbortError: property \"code\" is equal to 0, expected 20"
+            },
+            {
+              "name": "abort after connect should do nothing",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            }
+          ]
         },
         "abort.any.html?wss": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "abort before constructing should prevent connection",
+              "success": true
+            },
+            {
+              "name": "abort during handshake should work",
+              "success": false,
+              "message": "promise_rejects_dom: opened should reject function \"function() { throw e; }\" threw object \"WebSocketError: Socket never opened\" that is not a DOMException AbortError: property \"code\" is equal to 0, expected 20"
+            },
+            {
+              "name": "abort after connect should do nothing",
+              "success": true
+            }
+          ]
         },
         "backpressure-receive.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "backpressure should be applied to received messages",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            }
+          ]
         },
         "backpressure-receive.any.html?wss": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "backpressure should be applied to received messages",
+              "success": false,
+              "message": "assert_greater_than_equal: data send should have taken at least 2 seconds expected a number greater than or equal to 1.8 but got 0.03000044822692871"
+            }
+          ]
         },
         "backpressure-send.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "backpressure should be applied to sent messages",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            }
+          ]
         },
         "backpressure-send.any.html?wss": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "backpressure should be applied to sent messages",
+              "success": false,
+              "message": "assert_greater_than_equal: expected a number greater than or equal to 1800 but got 25.788400000000024"
+            }
+          ]
         },
         "close.any.html?default": {
           "success": false,
           "cases": []
         },
         "close.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "close code should be sent to server and reflected back",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "no close argument should send empty Close frame",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "unspecified close code should send empty Close frame",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "unspecified close code with empty reason should send empty Close frame",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "unspecified close code with non-empty reason should set code to 1000",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "close(true) should throw a TypeError",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "close() with an overlong reason should throw",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "close during handshake should work",
+              "success": true
+            },
+            {
+              "name": "close() with invalid code 999 should throw",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "close() with invalid code 1001 should throw",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "close() with invalid code 2999 should throw",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "close() with invalid code 5000 should throw",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "closing the writable should result in a clean close",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "writer close() promise should not resolve until handshake completes",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "incomplete closing handshake should be considered unclean close",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "aborting the writable should result in a clean close",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "aborting the writable with attributes not wrapped in a WebSocketError should be ignored",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "aborting the writable with a code should send that code",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "aborting the writable with a code and reason should use them",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "aborting the writable with a reason but no code should default the close code",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "aborting the writable with a DOMException not set code or reason",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "canceling the readable should result in a clean close",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "canceling the readable with attributes not wrapped in a WebSocketError should be ignored",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "canceling the readable with a code should send that code",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "canceling the readable with a code and reason should use them",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "canceling the readable with a reason but no code should default the close code",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "canceling the readable with a DOMException not set code or reason",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            }
+          ]
         },
         "close.any.html?wss": {
           "success": false,
           "cases": []
         },
         "constructor.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "constructing with no URL should throw",
+              "success": true
+            },
+            {
+              "name": "constructing with an invalid URL should throw",
+              "success": true
+            },
+            {
+              "name": "constructing with invalid options should throw",
+              "success": true
+            },
+            {
+              "name": "protocols should be required to be a list",
+              "success": true
+            },
+            {
+              "name": "constructing with a valid URL should work",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "setting a protocol in the constructor should work",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "connection failure should reject the promises",
+              "success": true
+            },
+            {
+              "name": "wss.opened should resolve to the right types",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            }
+          ]
         },
         "constructor.any.html?wss": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "constructing with no URL should throw",
+              "success": true
+            },
+            {
+              "name": "constructing with an invalid URL should throw",
+              "success": true
+            },
+            {
+              "name": "constructing with invalid options should throw",
+              "success": true
+            },
+            {
+              "name": "protocols should be required to be a list",
+              "success": true
+            },
+            {
+              "name": "constructing with a valid URL should work",
+              "success": true
+            },
+            {
+              "name": "setting a protocol in the constructor should work",
+              "success": true
+            },
+            {
+              "name": "connection failure should reject the promises",
+              "success": true
+            },
+            {
+              "name": "wss.opened should resolve to the right types",
+              "success": false,
+              "message": "assert_equals: extensions should be a string expected \"string\" but got \"object\""
+            }
+          ]
         },
         "remote-close.any.html?default": {
           "success": true,
@@ -39760,12 +39202,78 @@
           ]
         },
         "remote-close.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "clean close should be clean",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "close frame with no body should result in status code 1005",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: unclean close\""
+            },
+            {
+              "name": "reason should be passed through",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: unclean close\""
+            },
+            {
+              "name": "UTF-8 reason should work",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: unclean close\""
+            },
+            {
+              "name": "close with unwritten data should not be considered clean",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "remote code and reason should be used",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "abrupt close should give an error",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            }
+          ]
         },
         "remote-close.any.html?wss": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "clean close should be clean",
+              "success": true
+            },
+            {
+              "name": "close frame with no body should result in status code 1005",
+              "success": true
+            },
+            {
+              "name": "reason should be passed through",
+              "success": true
+            },
+            {
+              "name": "UTF-8 reason should work",
+              "success": true
+            },
+            {
+              "name": "close with unwritten data should not be considered clean",
+              "success": false,
+              "message": "assert_unreached: closed should reject Reached unreachable code"
+            },
+            {
+              "name": "remote code and reason should be used",
+              "success": true
+            },
+            {
+              "name": "abrupt close should give an error",
+              "success": true
+            }
+          ]
         },
         "websocket-error.any.html": {
           "success": true,
@@ -39844,12 +39352,70 @@
           ]
         },
         "write.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "a write that was incomplete at close time should reject",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "garbage collection after close with a pending write promise should not crash",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "writing a value that cannot be stringified should cause a rejection",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "writing a resizable ArrayBuffer should be rejected",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "writing a view on a shared buffer should be rejected",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            },
+            {
+              "name": "Garbage collecting a WebSocket stream doesn't crash while write promise is pending",
+              "success": false,
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+            }
+          ]
         },
         "write.any.html?wss": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "a write that was incomplete at close time should reject",
+              "success": false,
+              "message": "assert_unreached: closed promise should reject Reached unreachable code"
+            },
+            {
+              "name": "garbage collection after close with a pending write promise should not crash",
+              "success": false,
+              "message": "assert_unreached: closed promise should reject Reached unreachable code"
+            },
+            {
+              "name": "writing a value that cannot be stringified should cause a rejection",
+              "success": true
+            },
+            {
+              "name": "writing a resizable ArrayBuffer should be rejected",
+              "success": true
+            },
+            {
+              "name": "writing a view on a shared buffer should be rejected",
+              "success": true
+            },
+            {
+              "name": "Garbage collecting a WebSocket stream doesn't crash while write promise is pending",
+              "success": true
+            }
+          ]
         }
       }
     },

@@ -943,6 +943,127 @@ test('should behave like fetch() for compressed responses', async t => {
   await t.completed
 })
 
+// CVE fix: Limit the number of content-encodings to prevent resource exhaustion
+// Similar to urllib3 (GHSA-gm62-xv2j-4w53) and curl (CVE-2022-32206)
+const MAX_CONTENT_ENCODINGS = 5
+
+test(`should allow exactly ${MAX_CONTENT_ENCODINGS} content-encodings`, async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    // Use identity encodings (no actual compression) for simplicity
+    const encodings = Array(MAX_CONTENT_ENCODINGS).fill('identity').join(', ')
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': encodings
+    })
+    res.end('test')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  // With 5 identity encodings, the interceptor should pass through (identity is not in supportedEncodings)
+  t.equal(response.statusCode, 200)
+  t.ok(response.headers['content-encoding'], 'content-encoding header should be preserved for identity')
+  t.equal(await response.body.text(), 'test')
+
+  await t.completed
+})
+
+test(`should reject more than ${MAX_CONTENT_ENCODINGS} content-encodings`, async t => {
+  t = tspl(t, { plan: 1 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const encodings = Array(MAX_CONTENT_ENCODINGS + 1).fill('gzip').join(', ')
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': encodings
+    })
+    res.end('test')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  try {
+    const response = await client.request({
+      method: 'GET',
+      path: '/'
+    })
+    await response.body.text()
+    t.fail('Should have thrown an error')
+  } catch (err) {
+    t.ok(err.message.includes('content-encoding'), 'Error should mention content-encoding')
+  }
+
+  await t.completed
+})
+
+test('should reject excessive content-encoding chains', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const encodings = Array(100).fill('gzip').join(', ')
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': encodings
+    })
+    res.end('test')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  try {
+    const response = await client.request({
+      method: 'GET',
+      path: '/'
+    })
+    await response.body.text()
+    t.fail('Should have thrown an error')
+  } catch (err) {
+    t.ok(err.message.includes('content-encoding'), 'Error should mention content-encoding')
+  }
+
+  await t.completed
+})
+
 test('should work with global dispatcher for both fetch() and request()', async t => {
   t = tspl(t, { plan: 8 })
 

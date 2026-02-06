@@ -3,7 +3,7 @@
 const { randomFillSync } = require('node:crypto')
 const { setTimeout: sleep, setImmediate: nextTick } = require('node:timers/promises')
 const { test } = require('node:test')
-const { fetch, Request, Response, Agent, setGlobalDispatcher } = require('../..')
+const { fetch, Request, Response, Agent, setGlobalDispatcher, getGlobalDispatcher } = require('../..')
 const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
 
@@ -54,7 +54,11 @@ test('does not need the body to be consumed to continue', { timeout: 180_000 }, 
     keepAliveMaxTimeout: 10,
     keepAliveTimeoutThreshold: 10
   })
+  const previousDispatcher = getGlobalDispatcher()
   setGlobalDispatcher(agent)
+  t.after(() => {
+    setGlobalDispatcher(previousDispatcher)
+  })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200)
     res.end(blob)

@@ -202,7 +202,10 @@ describe('DispatchOptions#maxRedirections', () => {
       t.ok('request received')
       res.end('hello world')
     })
-    after(() => server.close())
+    after(() => {
+      server.closeAllConnections?.()
+      server.close()
+    })
     await new Promise((resolve) => server.listen(0, resolve))
 
     const res = await request({
@@ -241,7 +244,10 @@ describe('DispatchOptions#reset', () => {
       res.end('hello')
     })
 
-    after(() => server.close())
+    after(() => {
+      server.closeAllConnections?.()
+      server.close()
+    })
 
     await new Promise((resolve, reject) => {
       server.listen(0, (err) => {
@@ -268,7 +274,10 @@ describe('DispatchOptions#reset', () => {
       res.end('hello')
     })
 
-    after(() => server.close())
+    after(() => {
+      server.closeAllConnections?.()
+      server.close()
+    })
 
     await new Promise((resolve, reject) => {
       server.listen(0, (err) => {
@@ -295,7 +304,10 @@ describe('DispatchOptions#reset', () => {
       res.end('hello')
     })
 
-    after(() => server.close())
+    after(() => {
+      server.closeAllConnections?.()
+      server.close()
+    })
 
     await new Promise((resolve, reject) => {
       server.listen(0, (err) => {
@@ -329,7 +341,10 @@ describe('Should include headers from iterable objects', scope => {
     const headers = new globalThis.Headers()
     headers.set('hello', 'world')
 
-    after(() => server.close())
+    after(() => {
+      server.closeAllConnections?.()
+      server.close()
+    })
 
     await new Promise((resolve, reject) => {
       server.listen(0, (err) => {
@@ -360,7 +375,10 @@ describe('Should include headers from iterable objects', scope => {
     const headers = new Map()
     headers.set('hello', 'world')
 
-    after(() => server.close())
+    after(() => {
+      server.closeAllConnections?.()
+      server.close()
+    })
 
     await new Promise((resolve, reject) => {
       server.listen(0, (err) => {
@@ -394,7 +412,10 @@ describe('Should include headers from iterable objects', scope => {
       }
     }
 
-    after(() => server.close())
+    after(() => {
+      server.closeAllConnections?.()
+      server.close()
+    })
 
     await new Promise((resolve, reject) => {
       server.listen(0, (err) => {
@@ -424,7 +445,10 @@ describe('Should include headers from iterable objects', scope => {
       }
     }
 
-    after(() => server.close())
+    after(() => {
+      server.closeAllConnections?.()
+      server.close()
+    })
 
     await new Promise((resolve, reject) => {
       server.listen(0, (err) => {
@@ -443,4 +467,30 @@ describe('Should include headers from iterable objects', scope => {
       t.strictEqual(err.message, 'headers must be in key-value pair format')
     })
   })
+})
+
+test('request should include statusText in response', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, 'Custom Status Text', { 'content-type': 'text/plain' })
+    res.end('hello')
+  })
+
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
+
+  await new Promise((resolve) => server.listen(0, resolve))
+
+  const { statusText, body } = await request({
+    method: 'GET',
+    origin: `http://localhost:${server.address().port}`,
+    path: '/'
+  })
+
+  t.strictEqual(statusText, 'Custom Status Text')
+  await body.dump()
+  t.ok('request completed')
 })
