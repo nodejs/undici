@@ -1121,6 +1121,52 @@ describe('Deduplicate Interceptor', () => {
     strictEqual(body2, 'response')
   })
 
+  test('does not deduplicate non-safe methods when methods option uses defaults', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      await sleep(100)
+      res.end(`response ${requestsToOrigin}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'POST',
+        path: '/',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ token: 'a' })
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'POST',
+        path: '/',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ token: 'b' })
+      })
+    ])
+
+    strictEqual(requestsToOrigin, 2)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response 1')
+    strictEqual(body2, 'response 2')
+  })
+
   test('throws TypeError if excludeHeaderNames is not an array', () => {
     const { throws } = require('node:assert')
     throws(() => {
