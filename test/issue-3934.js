@@ -7,7 +7,7 @@ const assert = require('node:assert')
 const { Agent, RetryAgent, request } = require('..')
 
 // https://github.com/nodejs/undici/issues/3934
-test('WrapHandler works with multiple header values', async (t) => {
+test('request preserves multiple header values', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, async (_req, res) => {
     const headers = [
       ['set-cookie', 'a'],

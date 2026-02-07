@@ -85,19 +85,19 @@ test('abort', async (t) => {
       method: 'GET',
       path: '/'
     }, {
-      onConnect (abort) {
-        setImmediate(abort)
+      onRequestStart (controller) {
+        setImmediate(() => controller.abort())
       },
-      onHeaders () {
+      onResponseStart () {
         p.ok(0)
       },
-      onData () {
+      onResponseData () {
         p.ok(0)
       },
-      onComplete () {
+      onResponseEnd () {
         p.ok(0)
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.ok(err instanceof errors.RequestAbortedError)
       }
     })
@@ -129,23 +129,23 @@ test('abort pipelined', async (t) => {
       path: '/',
       blocking: false
     }, {
-      onConnect (abort) {
+      onRequestStart (controller) {
         // This request will be retried
         if (counter++ === 1) {
-          abort()
+          controller.abort()
         }
         p.ok(1)
       },
-      onHeaders () {
+      onResponseStart () {
         p.ok(0)
       },
-      onData () {
+      onResponseData () {
         p.ok(0)
       },
-      onComplete () {
+      onResponseEnd () {
         p.ok(0)
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.ok(err instanceof errors.RequestAbortedError)
       }
     })
@@ -155,19 +155,19 @@ test('abort pipelined', async (t) => {
       path: '/',
       blocking: false
     }, {
-      onConnect (abort) {
-        abort()
+      onRequestStart (controller) {
+        controller.abort()
       },
-      onHeaders () {
+      onResponseStart () {
         p.ok(0)
       },
-      onData () {
+      onResponseData () {
         p.ok(0)
       },
-      onComplete () {
+      onResponseEnd () {
         p.ok(0)
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.ok(err instanceof errors.RequestAbortedError)
       }
     })
@@ -196,19 +196,19 @@ test('propagate unallowed throws in request.onError', async (t) => {
       method: 'GET',
       path: '/'
     }, {
-      onConnect (abort) {
-        setImmediate(abort)
+      onRequestStart (controller) {
+        setImmediate(() => controller.abort())
       },
-      onHeaders () {
+      onResponseStart () {
         p.ok(0)
       },
-      onData () {
+      onResponseData () {
         p.ok(0)
       },
-      onComplete () {
+      onResponseEnd () {
         p.ok(0)
       },
-      onError () {
+      onResponseError () {
         throw new OnAbortError('error')
       }
     })

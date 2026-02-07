@@ -92,3 +92,7 @@ test/request-timeout.10mb.bin
 # Claude files
 CLAUDE.md
 .claude
+
+# Local tooling
+.githuman/
+.pi/

@@ -43,7 +43,7 @@ test('dispatch invalid opts', (t) => {
     method: 'GET',
     upgrade: 1
   }, {
-    onError (err) {
+    onResponseError (_controller, err) {
       p.ok(err instanceof errors.InvalidArgumentError)
       p.strictEqual(err.message, 'upgrade must be a string')
     }
@@ -54,7 +54,7 @@ test('dispatch invalid opts', (t) => {
     method: 'GET',
     headersTimeout: 'asd'
   }, {
-    onError (err) {
+    onResponseError (_controller, err) {
       p.ok(err instanceof errors.InvalidArgumentError)
       p.strictEqual(err.message, 'invalid headersTimeout')
     }
@@ -65,7 +65,7 @@ test('dispatch invalid opts', (t) => {
     method: 'GET',
     bodyTimeout: 'asd'
   }, {
-    onError (err) {
+    onResponseError (_controller, err) {
       p.ok(err instanceof errors.InvalidArgumentError)
       p.strictEqual(err.message, 'invalid bodyTimeout')
     }
@@ -77,14 +77,14 @@ test('dispatch invalid opts', (t) => {
     method: 'GET',
     bodyTimeout: 'asd'
   }, {
-    onError (err) {
+    onResponseError (_controller, err) {
       p.ok(err instanceof errors.InvalidArgumentError)
       p.strictEqual(err.message, 'invalid bodyTimeout')
     }
   })
 
   client.dispatch(null, {
-    onError (err) {
+    onResponseError (_controller, err) {
       p.ok(err instanceof errors.InvalidArgumentError)
       p.strictEqual(err.message, 'opts must be an object.')
     }
@@ -122,20 +122,21 @@ test('basic dispatch get', async (t) => {
       method: 'GET',
       headers: reqHeaders
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (controller, statusCode) {
+        const rawHeaders = controller.rawHeaders
         p.strictEqual(statusCode, 200)
-        p.strictEqual(Array.isArray(headers), true)
+        p.strictEqual(Array.isArray(rawHeaders), true)
       },
-      onData (buf) {
+      onResponseData (_controller, buf) {
         bufs.push(buf)
       },
-      onComplete (trailers) {
-        p.deepStrictEqual(trailers, [])
+      onResponseEnd (controller) {
+        p.deepStrictEqual(controller.rawTrailers, [])
         p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       },
-      onError () {
+      onResponseError () {
         p.ok(0)
       }
     })
@@ -176,28 +177,30 @@ test('trailers dispatch get', async (t) => {
       method: 'GET',
       headers: reqHeaders
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (controller, statusCode) {
+        const rawHeaders = controller.rawHeaders
         p.strictEqual(statusCode, 200)
-        p.strictEqual(Array.isArray(headers), true)
+        p.strictEqual(Array.isArray(rawHeaders), true)
         {
-          const contentTypeIdx = headers.findIndex(x => x.toString() === 'Content-Type')
-          p.strictEqual(headers[contentTypeIdx + 1].toString(), 'text/plain')
+          const contentTypeIdx = rawHeaders.findIndex(x => x.toString() === 'Content-Type')
+          p.strictEqual(rawHeaders[contentTypeIdx + 1].toString(), 'text/plain')
         }
       },
-      onData (buf) {
+      onResponseData (_controller, buf) {
         bufs.push(buf)
       },
-      onComplete (trailers) {
-        p.strictEqual(Array.isArray(trailers), true)
+      onResponseEnd (controller) {
+        const rawTrailers = controller.rawTrailers
+        p.strictEqual(Array.isArray(rawTrailers), true)
         {
-          const contentMD5Idx = trailers.findIndex(x => x.toString() === 'Content-MD5')
-          p.strictEqual(trailers[contentMD5Idx + 1].toString(), 'test')
+          const contentMD5Idx = rawTrailers.findIndex(x => x.toString() === 'Content-MD5')
+          p.strictEqual(rawTrailers[contentMD5Idx + 1].toString(), 'test')
         }
         p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       },
-      onError () {
+      onResponseError () {
         p.ok(0)
       }
     })
@@ -206,7 +209,7 @@ test('trailers dispatch get', async (t) => {
   await p.completed
 })
 
-test('dispatch onHeaders error', async (t) => {
+test('dispatch onResponseStart error', async (t) => {
   const p = tspl(t, { plan: 1 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -223,18 +226,18 @@ test('dispatch onHeaders error', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, _headers) {
         throw _err
       },
-      onData (buf) {
+      onResponseData (_controller, buf) {
         p.ok(0)
       },
-      onComplete (trailers) {
+      onResponseEnd (_controller, _trailers) {
         p.ok(0)
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.strictEqual(err, _err)
       }
     })
@@ -243,7 +246,7 @@ test('dispatch onHeaders error', async (t) => {
   await p.completed
 })
 
-test('dispatch onComplete error', async (t) => {
+test('dispatch onResponseEnd error', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -260,18 +263,18 @@ test('dispatch onComplete error', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, _headers) {
         p.ok(1)
       },
-      onData (buf) {
+      onResponseData (_controller, buf) {
         p.ok(0)
       },
-      onComplete (trailers) {
+      onResponseEnd (_controller, _trailers) {
         throw _err
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.strictEqual(err, _err)
       }
     })
@@ -280,7 +283,7 @@ test('dispatch onComplete error', async (t) => {
   await p.completed
 })
 
-test('dispatch onData error', async (t) => {
+test('dispatch onResponseData error', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -297,18 +300,18 @@ test('dispatch onData error', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, _headers) {
         p.ok(1)
       },
-      onData (buf) {
+      onResponseData (_controller, buf) {
         throw _err
       },
-      onComplete (trailers) {
+      onResponseEnd (_controller, _trailers) {
         p.ok(0)
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.strictEqual(err, _err)
       }
     })
@@ -317,7 +320,7 @@ test('dispatch onData error', async (t) => {
   await p.completed
 })
 
-test('dispatch onConnect error', async (t) => {
+test('dispatch onRequestStart error', async (t) => {
   const p = tspl(t, { plan: 1 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -334,19 +337,19 @@ test('dispatch onConnect error', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
         throw _err
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, _headers) {
         p.ok(0)
       },
-      onData (buf) {
+      onResponseData (_controller, buf) {
         p.ok(0)
       },
-      onComplete (trailers) {
+      onResponseEnd (_controller, _trailers) {
         p.ok(0)
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.strictEqual(err, _err)
       }
     })
@@ -355,7 +358,7 @@ test('dispatch onConnect error', async (t) => {
   await p.completed
 })
 
-test('connect call onUpgrade once', async (t) => {
+test('connect call onRequestUpgrade once', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (c) => {
@@ -385,12 +388,12 @@ test('connect call onUpgrade once', async (t) => {
       method: 'CONNECT',
       path: '/'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, _headers) {
         t.ok(true, 'should not throw')
       },
-      onUpgrade (statusCode, headers, socket) {
+      onRequestUpgrade (_controller, statusCode, _headers, socket) {
         p.strictEqual(count++, 0)
 
         socket.on('data', (d) => {
@@ -404,13 +407,13 @@ test('connect call onUpgrade once', async (t) => {
         socket.write('Body')
         socket.end()
       },
-      onData (buf) {
+      onResponseData (_controller, buf) {
         p.ok(0)
       },
-      onComplete (trailers) {
+      onResponseEnd (_controller, _trailers) {
         p.ok(0)
       },
-      onError () {
+      onResponseError () {
         p.ok(0)
       }
     })
@@ -419,7 +422,7 @@ test('connect call onUpgrade once', async (t) => {
   await p.completed
 })
 
-test('dispatch onHeaders missing', async (t) => {
+test('dispatch onResponseStart missing', async (t) => {
   const p = tspl(t, { plan: 1 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -435,15 +438,15 @@ test('dispatch onHeaders missing', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onData (buf) {
+      onResponseData (_controller, buf) {
         p.ok(0, 'should not throw')
       },
-      onComplete (trailers) {
+      onResponseEnd (_controller, _trailers) {
         p.ok(0, 'should not throw')
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       }
     })
@@ -452,7 +455,7 @@ test('dispatch onHeaders missing', async (t) => {
   await p.completed
 })
 
-test('dispatch onData missing', async (t) => {
+test('dispatch onResponseData missing', async (t) => {
   const p = tspl(t, { plan: 1 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -468,15 +471,15 @@ test('dispatch onData missing', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, _headers) {
         p.ok(0, 'should not throw')
       },
-      onComplete (trailers) {
+      onResponseEnd (_controller, _trailers) {
         p.ok(0, 'should not throw')
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       }
     })
@@ -485,7 +488,7 @@ test('dispatch onData missing', async (t) => {
   await p.completed
 })
 
-test('dispatch onComplete missing', async (t) => {
+test('dispatch onResponseEnd missing', async (t) => {
   const p = tspl(t, { plan: 1 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -501,15 +504,15 @@ test('dispatch onComplete missing', async (t) => {
       path: '/',
       method: 'GET'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, _headers) {
         p.ok(0)
       },
-      onData (buf) {
+      onResponseData (_controller, buf) {
         p.ok(0)
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
       }
     })
@@ -518,7 +521,7 @@ test('dispatch onComplete missing', async (t) => {
   await p.completed
 })
 
-test('dispatch onError missing', async (t) => {
+test('dispatch onResponseError missing', async (t) => {
   const p = tspl(t, { plan: 1 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -535,15 +538,15 @@ test('dispatch onError missing', async (t) => {
         path: '/',
         method: 'GET'
       }, {
-        onConnect () {
+        onRequestStart () {
         },
-        onHeaders (statusCode, headers) {
+        onResponseStart (_controller, statusCode, _headers) {
           p.ok(0)
         },
-        onData (buf) {
+        onResponseData (_controller, buf) {
           p.ok(0)
         },
-        onComplete (trailers) {
+        onResponseEnd (_controller, _trailers) {
           p.ok(0)
         }
       })
@@ -555,7 +558,7 @@ test('dispatch onError missing', async (t) => {
   await p.completed
 })
 
-test('dispatch CONNECT onUpgrade missing', async (t) => {
+test('dispatch CONNECT onRequestUpgrade missing', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -572,13 +575,13 @@ test('dispatch CONNECT onUpgrade missing', async (t) => {
       method: 'GET',
       upgrade: 'Websocket'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, _headers) {
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-        p.strictEqual(err.message, 'invalid onUpgrade method')
+        p.strictEqual(err.message, 'invalid onRequestUpgrade method')
       }
     })
   })
@@ -586,7 +589,7 @@ test('dispatch CONNECT onUpgrade missing', async (t) => {
   await p.completed
 })
 
-test('dispatch upgrade onUpgrade missing', async (t) => {
+test('dispatch upgrade onRequestUpgrade missing', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -603,13 +606,13 @@ test('dispatch upgrade onUpgrade missing', async (t) => {
       method: 'GET',
       upgrade: 'Websocket'
     }, {
-      onConnect () {
+      onRequestStart () {
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (_controller, statusCode, _headers) {
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
-        p.strictEqual(err.message, 'invalid onUpgrade method')
+        p.strictEqual(err.message, 'invalid onRequestUpgrade method')
       }
     })
   })
@@ -617,7 +620,7 @@ test('dispatch upgrade onUpgrade missing', async (t) => {
   await p.completed
 })
 
-test('dispatch pool onError missing', async (t) => {
+test('dispatch pool onResponseError missing', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -661,10 +664,10 @@ test('dispatch onBodySent not a function', async (t) => {
       method: 'GET'
     }, {
       onBodySent: '42',
-      onConnect () {},
-      onHeaders () {},
-      onData () {},
-      onError (err) {
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData () {},
+      onResponseError (_controller, err) {
         p.strictEqual(err.code, 'UND_ERR_INVALID_ARG')
         p.strictEqual(err.message, 'invalid onBodySent method')
       }
@@ -697,13 +700,13 @@ test('dispatch onBodySent buffer', async (t) => {
       onRequestSent () {
         p.ok(1)
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         throw err
       },
-      onConnect () {},
-      onHeaders () {},
-      onData () {},
-      onComplete () {
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData () {},
+      onResponseEnd () {
         p.ok(1)
       }
     })
@@ -738,13 +741,13 @@ test('dispatch onBodySent stream', async (t) => {
       onRequestSent () {
         p.ok(1)
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         throw err
       },
-      onConnect () {},
-      onHeaders () {},
-      onData () {},
-      onComplete () {
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData () {},
+      onResponseEnd () {
         p.strictEqual(currentChunk, chunks.length)
         p.strictEqual(sentBytes, toSendBytes)
         p.ok(1)
@@ -776,13 +779,13 @@ test('dispatch onBodySent async-iterable', (t, done) => {
         assert.strictEqual(chunks[currentChunk++], chunk)
         sentBytes += Buffer.byteLength(chunk)
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         throw err
       },
-      onConnect () {},
-      onHeaders () {},
-      onData () {},
-      onComplete () {
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData () {},
+      onResponseEnd () {
         assert.strictEqual(currentChunk, chunks.length)
         assert.strictEqual(sentBytes, toSendBytes)
         done()
@@ -809,15 +812,15 @@ test('dispatch onBodySent throws error', (t, done) => {
       onBodySent (chunk) {
         throw new Error('fail')
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         assert.ok(err instanceof Error)
         assert.strictEqual(err.message, 'fail')
         done()
       },
-      onConnect () {},
-      onHeaders () {},
-      onData () {},
-      onComplete () {}
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData () {},
+      onResponseEnd () {}
     })
   })
 })
@@ -842,8 +845,8 @@ test('dispatches in expected order', async (t) => {
       method: 'POST',
       body: 'body'
     }, {
-      onConnect () {
-        dispatches.push('onConnect')
+      onRequestStart () {
+        dispatches.push('onRequestStart')
       },
       onBodySent () {
         dispatches.push('onBodySent')
@@ -851,17 +854,17 @@ test('dispatches in expected order', async (t) => {
       onResponseStarted () {
         dispatches.push('onResponseStarted')
       },
-      onHeaders () {
-        dispatches.push('onHeaders')
+      onResponseStart () {
+        dispatches.push('onResponseStart')
       },
-      onData () {
-        dispatches.push('onData')
+      onResponseData () {
+        dispatches.push('onResponseData')
       },
-      onComplete () {
-        dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+      onResponseEnd () {
+        dispatches.push('onResponseEnd')
+        p.deepStrictEqual(dispatches, ['onRequestStart', 'onBodySent', 'onResponseStarted', 'onResponseStart', 'onResponseData', 'onResponseEnd'])
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.ifError(err)
       }
     })
@@ -899,8 +902,8 @@ test('dispatches in expected order for http2', async (t) => {
       method: 'POST',
       body: 'body'
     }, {
-      onConnect () {
-        dispatches.push('onConnect')
+      onRequestStart () {
+        dispatches.push('onRequestStart')
       },
       onBodySent () {
         dispatches.push('onBodySent')
@@ -908,17 +911,17 @@ test('dispatches in expected order for http2', async (t) => {
       onResponseStarted () {
         dispatches.push('onResponseStarted')
       },
-      onHeaders () {
-        dispatches.push('onHeaders')
+      onResponseStart () {
+        dispatches.push('onResponseStart')
       },
-      onData () {
-        dispatches.push('onData')
+      onResponseData () {
+        dispatches.push('onResponseData')
       },
-      onComplete () {
-        dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+      onResponseEnd () {
+        dispatches.push('onResponseEnd')
+        p.deepStrictEqual(dispatches, ['onRequestStart', 'onBodySent', 'onResponseStarted', 'onResponseStart', 'onResponseData', 'onResponseEnd'])
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.ifError(err)
       }
     })
@@ -957,8 +960,8 @@ test('Issue#3065 - fix bad destroy handling', async (t) => {
       method: 'POST',
       body: 'body'
     }, {
-      onConnect () {
-        dispatches.push('onConnect')
+      onRequestStart () {
+        dispatches.push('onRequestStart')
       },
       onBodySent () {
         dispatches.push('onBodySent')
@@ -966,17 +969,17 @@ test('Issue#3065 - fix bad destroy handling', async (t) => {
       onResponseStarted () {
         dispatches.push('onResponseStarted')
       },
-      onHeaders () {
-        dispatches.push('onHeaders')
+      onResponseStart () {
+        dispatches.push('onResponseStart')
       },
-      onData () {
-        dispatches.push('onData')
+      onResponseData () {
+        dispatches.push('onResponseData')
       },
-      onComplete () {
-        dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+      onResponseEnd () {
+        dispatches.push('onResponseEnd')
+        p.deepStrictEqual(dispatches, ['onRequestStart', 'onBodySent', 'onResponseStarted', 'onResponseStart', 'onResponseData', 'onResponseEnd'])
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.ifError(err)
       }
     })
@@ -987,8 +990,8 @@ test('Issue#3065 - fix bad destroy handling', async (t) => {
       method: 'POST',
       body: 'body'
     }, {
-      onConnect () {
-        dispatches2.push('onConnect')
+      onRequestStart () {
+        dispatches2.push('onRequestStart')
       },
       onBodySent () {
         dispatches2.push('onBodySent')
@@ -996,17 +999,17 @@ test('Issue#3065 - fix bad destroy handling', async (t) => {
       onResponseStarted () {
         dispatches2.push('onResponseStarted')
       },
-      onHeaders () {
-        dispatches2.push('onHeaders')
+      onResponseStart () {
+        dispatches2.push('onResponseStart')
       },
-      onData () {
-        dispatches2.push('onData')
+      onResponseData () {
+        dispatches2.push('onResponseData')
       },
-      onComplete () {
-        dispatches2.push('onComplete')
-        p.deepStrictEqual(dispatches2, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders', 'onData', 'onComplete'])
+      onResponseEnd () {
+        dispatches2.push('onResponseEnd')
+        p.deepStrictEqual(dispatches2, ['onRequestStart', 'onBodySent', 'onResponseStarted', 'onResponseStart', 'onResponseData', 'onResponseEnd'])
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.ifError(err)
       }
     })
@@ -1051,8 +1054,8 @@ test('Issue#3065 - fix bad destroy handling (h2)', async (t) => {
       method: 'POST',
       body: 'body'
     }, {
-      onConnect () {
-        dispatches.push('onConnect')
+      onRequestStart () {
+        dispatches.push('onRequestStart')
       },
       onBodySent () {
         dispatches.push('onBodySent')
@@ -1060,17 +1063,17 @@ test('Issue#3065 - fix bad destroy handling (h2)', async (t) => {
       onResponseStarted () {
         dispatches.push('onResponseStarted')
       },
-      onHeaders () {
-        dispatches.push('onHeaders1')
+      onResponseStart () {
+        dispatches.push('onResponseStart1')
       },
-      onData () {
-        dispatches.push('onData')
+      onResponseData () {
+        dispatches.push('onResponseData')
       },
-      onComplete () {
-        dispatches.push('onComplete')
-        p.deepStrictEqual(dispatches, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders1', 'onData', 'onComplete'])
+      onResponseEnd () {
+        dispatches.push('onResponseEnd')
+        p.deepStrictEqual(dispatches, ['onRequestStart', 'onBodySent', 'onResponseStarted', 'onResponseStart1', 'onResponseData', 'onResponseEnd'])
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.ifError(err)
       }
     })
@@ -1081,8 +1084,8 @@ test('Issue#3065 - fix bad destroy handling (h2)', async (t) => {
       method: 'POST',
       body: 'body'
     }, {
-      onConnect () {
-        dispatches2.push('onConnect')
+      onRequestStart () {
+        dispatches2.push('onRequestStart')
       },
       onBodySent () {
         dispatches2.push('onBodySent')
@@ -1090,17 +1093,17 @@ test('Issue#3065 - fix bad destroy handling (h2)', async (t) => {
       onResponseStarted () {
         dispatches2.push('onResponseStarted')
       },
-      onHeaders () {
-        dispatches2.push('onHeaders2')
+      onResponseStart () {
+        dispatches2.push('onResponseStart2')
       },
-      onData () {
-        dispatches2.push('onData')
+      onResponseData () {
+        dispatches2.push('onResponseData')
       },
-      onComplete () {
-        dispatches2.push('onComplete')
-        p.deepStrictEqual(dispatches2, ['onConnect', 'onBodySent', 'onResponseStarted', 'onHeaders2', 'onData', 'onComplete'])
+      onResponseEnd () {
+        dispatches2.push('onResponseEnd')
+        p.deepStrictEqual(dispatches2, ['onRequestStart', 'onBodySent', 'onResponseStarted', 'onResponseStart2', 'onResponseData', 'onResponseEnd'])
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         p.ifError(err)
       }
     })

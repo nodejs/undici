@@ -318,13 +318,13 @@ test('agent factory supports URL parameter', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   const noopHandler = {
-    onConnect () {},
-    onHeaders () {},
-    onData () {},
-    onComplete () {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {},
+    onResponseEnd () {
       server.close()
     },
-    onError (err) {
+    onResponseError (_controller, err) {
       throw err
     }
   }
@@ -356,13 +356,13 @@ test('agent factory supports string parameter', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   const noopHandler = {
-    onConnect () {},
-    onHeaders () {},
-    onData () {},
-    onComplete () {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {},
+    onResponseEnd () {
       server.close()
     },
-    onError (err) {
+    onResponseError (_controller, err) {
       throw err
     }
   }
@@ -709,13 +709,13 @@ test('dispatch validations', async t => {
   const dispatcher = new Agent()
 
   const noopHandler = {
-    onConnect () {},
-    onHeaders () {},
-    onData () {},
-    onComplete () {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {},
+    onResponseEnd () {
       server.close()
     },
-    onError (err) {
+    onResponseError (_controller, err) {
       throw err
     }
   }
@@ -730,7 +730,7 @@ test('dispatch validations', async t => {
   p.throws(() => dispatcher.dispatch('ASD', noopHandler), errors.InvalidArgumentError, 'throws on invalid opts argument type')
   p.throws(() => dispatcher.dispatch({}, noopHandler), errors.InvalidArgumentError, 'throws on invalid opts.origin argument')
   p.throws(() => dispatcher.dispatch({ origin: '' }, noopHandler), errors.InvalidArgumentError, 'throws on invalid opts.origin argument')
-  p.throws(() => dispatcher.dispatch({}, {}), errors.InvalidArgumentError, 'throws on invalid handler.onError')
+  p.throws(() => dispatcher.dispatch({}, {}), errors.InvalidArgumentError, 'throws on invalid handler.onResponseError')
 
   server.listen(0, () => {
     p.doesNotThrow(() => dispatcher.dispatch({
@@ -756,11 +756,11 @@ test('drain', async t => {
   })
 
   class Handler {
-    onConnect () {}
-    onHeaders () {}
-    onData () {}
-    onComplete () {}
-    onError () {
+    onRequestStart () {}
+    onResponseStart () {}
+    onResponseData () {}
+    onResponseEnd () {}
+    onResponseError () {
       p.fail()
     }
   }

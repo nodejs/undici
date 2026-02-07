@@ -33,28 +33,28 @@ describe('DecoratorHandler', () => {
         this.#handler = handler
       }
 
-      onConnect (abort, context) {
-        return this.#handler?.onConnect?.(abort, context)
+      onRequestStart (controller, context) {
+        return this.#handler?.onRequestStart?.(controller, context)
       }
 
-      onHeaders (statusCode, rawHeaders, resume, statusMessage) {
-        return this.#handler?.onHeaders?.(statusCode, rawHeaders, resume, statusMessage)
+      onResponseStart (controller, statusCode, headers, statusMessage) {
+        return this.#handler?.onResponseStart?.(controller, statusCode, headers, statusMessage)
       }
 
-      onUpgrade (statusCode, rawHeaders, socket) {
-        return this.#handler?.onUpgrade?.(statusCode, rawHeaders, socket)
+      onRequestUpgrade (controller, statusCode, headers, socket) {
+        return this.#handler?.onRequestUpgrade?.(controller, statusCode, headers, socket)
       }
 
-      onData (data) {
-        return this.#handler?.onData?.(data)
+      onResponseData (controller, data) {
+        return this.#handler?.onResponseData?.(controller, data)
       }
 
-      onComplete (trailers) {
-        return this.#handler?.onComplete?.(trailers)
+      onResponseEnd (controller, trailers) {
+        return this.#handler?.onResponseEnd?.(controller, trailers)
       }
 
-      onError (err) {
-        return this.#handler?.onError?.(err)
+      onResponseError (controller, err) {
+        return this.#handler?.onResponseError?.(controller, err)
       }
     }
     const Controller = class {
@@ -76,13 +76,14 @@ describe('DecoratorHandler', () => {
       }
     }
 
-    describe('#onConnect', () => {
-      test('should delegate onConnect-method', t => {
-        t = tspl(t, { plan: 2 })
+    describe('#onRequestStart', () => {
+      test('should delegate onRequestStart-method', t => {
+        t = tspl(t, { plan: 3 })
         const handler = new Handler(
           {
-            onConnect: (abort, ctx) => {
-              t.equal(typeof abort, 'function')
+            onRequestStart: (controller, ctx) => {
+              t.equal(typeof controller, 'object')
+              t.equal(typeof controller.abort, 'function')
               t.equal(typeof ctx, 'object')
             }
           })
@@ -90,22 +91,22 @@ describe('DecoratorHandler', () => {
         decorator.onRequestStart(new Controller(), {})
       })
 
-      test('should not throw if onConnect-method is not defined in the handler', t => {
+      test('should not throw if onRequestStart-method is not defined in the handler', t => {
         t = tspl(t, { plan: 1 })
         const decorator = new DecoratorHandler({})
         t.doesNotThrow(() => decorator.onRequestStart())
       })
     })
 
-    describe('#onHeaders', () => {
-      test('should delegate onHeaders-method', t => {
+    describe('#onResponseStart', () => {
+      test('should delegate onResponseStart-method', t => {
         t = tspl(t, { plan: 4 })
         const handler = new Handler(
           {
-            onHeaders: (statusCode, headers, resume, statusMessage) => {
-              t.equal(statusCode, '200')
-              t.equal(`${headers[0].toString('utf-8')}: ${headers[1].toString('utf-8')}`, 'content-type: application/json')
-              t.equal(typeof resume, 'function')
+            onResponseStart: (controller, statusCode, headers, statusMessage) => {
+              t.equal(statusCode, 200)
+              t.equal(headers['content-type'], 'application/json')
+              t.equal(typeof controller.resume, 'function')
               t.equal(statusMessage, 'OK')
             }
           })
@@ -115,7 +116,7 @@ describe('DecoratorHandler', () => {
         }, 'OK')
       })
 
-      test('should not throw if onHeaders-method is not defined in the handler', t => {
+      test('should not throw if onResponseStart-method is not defined in the handler', t => {
         t = tspl(t, { plan: 1 })
         const decorator = new DecoratorHandler({})
         t.doesNotThrow(() => decorator.onResponseStart(new Controller(), 200, {
@@ -124,14 +125,14 @@ describe('DecoratorHandler', () => {
       })
     })
 
-    describe('#onUpgrade', () => {
-      test('should delegate onUpgrade-method', t => {
+    describe('#onRequestUpgrade', () => {
+      test('should delegate onRequestUpgrade-method', t => {
         t = tspl(t, { plan: 3 })
         const handler = new Handler(
           {
-            onUpgrade: (statusCode, headers, socket) => {
+            onRequestUpgrade: (_controller, statusCode, headers, socket) => {
               t.equal(statusCode, 301)
-              t.equal(`${headers[0].toString('utf-8')}: ${headers[1].toString('utf-8')}`, 'content-type: application/json')
+              t.equal(headers['content-type'], 'application/json')
               t.equal(typeof socket, 'object')
             }
           })
@@ -141,7 +142,7 @@ describe('DecoratorHandler', () => {
         }, {})
       })
 
-      test('should not throw if onUpgrade-method is not defined in the handler', t => {
+      test('should not throw if onRequestUpgrade-method is not defined in the handler', t => {
         t = tspl(t, { plan: 1 })
         const decorator = new DecoratorHandler({})
         t.doesNotThrow(() => decorator.onRequestUpgrade(new Controller(), 301, {
@@ -150,12 +151,12 @@ describe('DecoratorHandler', () => {
       })
     })
 
-    describe('#onData', () => {
-      test('should delegate onData-method', t => {
+    describe('#onResponseData', () => {
+      test('should delegate onResponseData-method', t => {
         t = tspl(t, { plan: 1 })
         const handler = new Handler(
           {
-            onData: (chunk) => {
+            onResponseData: (_controller, chunk) => {
               t.equal('chunk', chunk)
             }
           })
@@ -163,39 +164,39 @@ describe('DecoratorHandler', () => {
         decorator.onResponseData(new Controller(), 'chunk')
       })
 
-      test('should not throw if onData-method is not defined in the handler', t => {
+      test('should not throw if onResponseData-method is not defined in the handler', t => {
         t = tspl(t, { plan: 1 })
         const decorator = new DecoratorHandler({})
         t.doesNotThrow(() => decorator.onResponseData(new Controller(), 'chunk'))
       })
     })
 
-    describe('#onComplete', () => {
-      test('should delegate onComplete-method', t => {
+    describe('#onResponseEnd', () => {
+      test('should delegate onResponseEnd-method', t => {
         t = tspl(t, { plan: 1 })
         const handler = new Handler(
           {
-            onComplete: (trailers) => {
-              t.equal(`${trailers[0].toString('utf-8')}: ${trailers[1].toString('utf-8')}`, 'x-trailer: trailer')
+            onResponseEnd: (_controller, trailers) => {
+              t.equal(trailers['x-trailer'], 'trailer')
             }
           })
         const decorator = new DecoratorHandler(handler)
         decorator.onResponseEnd(new Controller(), { 'x-trailer': 'trailer' })
       })
 
-      test('should not throw if onComplete-method is not defined in the handler', t => {
+      test('should not throw if onResponseEnd-method is not defined in the handler', t => {
         t = tspl(t, { plan: 1 })
         const decorator = new DecoratorHandler({})
         t.doesNotThrow(() => decorator.onResponseEnd(new Controller(), { 'x-trailer': 'trailer' }))
       })
     })
 
-    describe('#onError', () => {
-      test('should delegate onError-method', t => {
+    describe('#onResponseError', () => {
+      test('should delegate onResponseError-method', t => {
         t = tspl(t, { plan: 1 })
         const handler = new Handler(
           {
-            onError: (err) => {
+            onResponseError: (_controller, err) => {
               t.equal(err.message, 'Oops!')
             }
           })
@@ -203,10 +204,10 @@ describe('DecoratorHandler', () => {
         decorator.onResponseError(new Controller(), new Error('Oops!'))
       })
 
-      test('should throw if onError-method is not defined in the handler', t => {
+      test('should not throw if onResponseError-method is not defined in the handler', t => {
         t = tspl(t, { plan: 1 })
         const decorator = new DecoratorHandler({})
-        t.throws(() => decorator.onResponseError(new Controller(), new Error('Oops!')))
+        t.doesNotThrow(() => decorator.onResponseError(new Controller(), new Error('Oops!')))
       })
     })
   })
@@ -379,7 +380,7 @@ describe('DecoratorHandler', () => {
     })
 
     describe('#onResponseError', () => {
-      test('should delegate onError-method', t => {
+      test('should delegate onResponseError-method', t => {
         t = tspl(t, { plan: 2 })
         const handler = new Handler(
           {
@@ -392,7 +393,7 @@ describe('DecoratorHandler', () => {
         decorator.onResponseError(new Controller(), new Error('Oops!'))
       })
 
-      test('should throw if onError-method is not defined in the handler', t => {
+      test('should throw if onResponseError-method is not defined in the handler', t => {
         t = tspl(t, { plan: 1 })
         const decorator = new DecoratorHandler({
           // To hin and not wrap the instance

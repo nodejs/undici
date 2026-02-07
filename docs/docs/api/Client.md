@@ -281,4 +281,4 @@ console.log('requests completed')
 
 ### Event: `'error'`
 
-Invoked for users errors such as throwing in the `onError` handler.
+Invoked for user errors such as throwing in the `onResponseError` handler.
