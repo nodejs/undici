@@ -120,7 +120,7 @@
     "cross-env": "^10.0.0",
     "dns-packet": "^5.4.0",
     "esbuild": "^0.27.3",
-    "eslint": "^9.9.0",
+    "eslint": "^10.0.0",
     "fast-check": "^4.1.1",
     "husky": "^9.0.7",
     "jest": "^30.0.5",
