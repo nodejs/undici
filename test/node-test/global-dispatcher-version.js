@@ -42,6 +42,33 @@ test('setGlobalDispatcher does not break Node.js global fetch', () => {
   assert.strictEqual(result.stdout, 'ok')
 })
 
+test('setGlobalDispatcher mirrors a v1-compatible dispatcher on Node.js 22', () => {
+  const script = `
+    const { Agent, Dispatcher1Wrapper, setGlobalDispatcher } = require('./index.js')
+    const nodeMajor = Number(process.versions.node.split('.', 1)[0])
+
+    setGlobalDispatcher(new Agent())
+
+    if (nodeMajor !== 22) {
+      process.stdout.write('skipped')
+    } else {
+      const dispatcherV1 = globalThis[Symbol.for('undici.globalDispatcher.1')]
+
+      if (!(dispatcherV1 instanceof Dispatcher1Wrapper)) {
+        throw new Error('expected v1 global dispatcher to be a Dispatcher1Wrapper on Node.js 22')
+      }
+
+      process.stdout.write('mirrored')
+    }
+  `
+
+  const result = runNode(script)
+  assert.strictEqual(result.status, 0, result.stderr)
+
+  const expected = Number(process.versions.node.split('.', 1)[0]) === 22 ? 'mirrored' : 'skipped'
+  assert.strictEqual(result.stdout, expected)
+})
+
 test('Dispatcher1Wrapper bridges legacy handlers to a new Agent', () => {
   const script = `
     const { Agent, Dispatcher1Wrapper } = require('./index.js')
