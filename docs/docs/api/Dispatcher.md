@@ -232,6 +232,19 @@ Pause/resume now uses the controller:
 
 - Call `controller.pause()` and `controller.resume()` instead of returning `false` from handlers.
 
+#### Compatibility notes
+
+Undici now stores the global dispatcher under `Symbol.for('undici.globalDispatcher.2')`.
+This avoids conflicts with runtimes (such as Node.js built-in `fetch`) that still rely on the legacy dispatcher handler interface.
+
+If you need to expose a new dispatcher/agent to legacy v1 handler consumers (`onConnect/onHeaders/onData/onComplete/onError/onUpgrade`), use `Dispatcher1Wrapper`:
+
+```js
+import { Agent, Dispatcher1Wrapper } from 'undici'
+
+const legacyCompatibleDispatcher = new Dispatcher1Wrapper(new Agent())
+```
+
 #### Example 1 - Dispatch GET request
 
 ```js
