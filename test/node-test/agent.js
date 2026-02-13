@@ -152,6 +152,37 @@ test('Pool enforces maxIdle', async (t) => {
   await p.completed
 })
 
+test('maxIdle respects clientTtl', async (t) => {
+  const p = tspl(t, { plan: 1 })
+
+  const handler = (_req, res) => res.end('ok')
+  const server = http.createServer({ joinDuplicateHeaders: true }, handler)
+  server.listen(0)
+  await once(server, 'listening')
+
+  const host = `http://localhost:${server.address().port}`
+  const dispatcher = new Pool(host, {
+    maxIdle: 3,
+    clientTtl: 2000,
+    keepAliveTimeout: 1000
+  })
+
+  t.after(closeClientAndServerAsPromise(dispatcher, server))
+
+  await Promise.all([
+    request(host, { dispatcher }),
+    request(host, { dispatcher }),
+    request(host, { dispatcher }),
+    request(host, { dispatcher }),
+    request(host, { dispatcher })
+  ])
+
+  await new Promise(resolve => setTimeout(resolve, 1))
+  p.equal(dispatcher.stats.free, 5)
+
+  await p.completed
+})
+
 test('agent should call callback after closing internal pools', async (t) => {
   const p = tspl(t, { plan: 2 })
 
