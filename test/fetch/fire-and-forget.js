@@ -3,7 +3,7 @@
 const { randomFillSync } = require('node:crypto')
 const { setTimeout: sleep, setImmediate: nextTick } = require('node:timers/promises')
 const { test } = require('node:test')
-const { fetch, Request, Response, Agent, setGlobalDispatcher } = require('../..')
+const { fetch, Request, Response, Agent, setGlobalDispatcher, getGlobalDispatcher } = require('../..')
 const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
 
@@ -46,6 +46,42 @@ test('test finalizer cloned response', async () => {
   await response.arrayBuffer() // check consume body
 })
 
+// https://github.com/nodejs/undici/pull/4803
+test('should not call cancel() during GC (new Response)', async () => {
+  if (!hasGC) {
+    throw new Error('gc is not available. Run with \'--expose-gc\'.')
+  }
+
+  let response = new Response(new ReadableStream({
+    start () {},
+
+    pull (ctrl) {
+      ctrl.enqueue(new Uint8Array([72, 101, 108, 108, 111])) // Hello
+    },
+
+    cancel () {
+      throw new Error('should be unreachable')
+    }
+  }))
+
+  let cloned = response.clone()
+
+  const body = response.body
+
+  await nextTick()
+  cloned.body.cancel()
+
+  cloned = null
+  response = null
+
+  await nextTick()
+  // eslint-disable-next-line no-undef
+  gc()
+
+  await nextTick(); // handle 'uncaughtException' event
+  (function () {})(body) // save a reference without triggering linter warnings
+})
+
 test('does not need the body to be consumed to continue', { timeout: 180_000 }, async (t) => {
   if (!hasGC) {
     throw new Error('gc is not available. Run with \'--expose-gc\'.')
@@ -54,7 +90,11 @@ test('does not need the body to be consumed to continue', { timeout: 180_000 }, 
     keepAliveMaxTimeout: 10,
     keepAliveTimeoutThreshold: 10
   })
+  const previousDispatcher = getGlobalDispatcher()
   setGlobalDispatcher(agent)
+  t.after(() => {
+    setGlobalDispatcher(previousDispatcher)
+  })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200)
     res.end(blob)

@@ -468,3 +468,29 @@ describe('Should include headers from iterable objects', scope => {
     })
   })
 })
+
+test('request should include statusText in response', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, 'Custom Status Text', { 'content-type': 'text/plain' })
+    res.end('hello')
+  })
+
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
+
+  await new Promise((resolve) => server.listen(0, resolve))
+
+  const { statusText, body } = await request({
+    method: 'GET',
+    origin: `http://localhost:${server.address().port}`,
+    path: '/'
+  })
+
+  t.strictEqual(statusText, 'Custom Status Text')
+  await body.dump()
+  t.ok('request completed')
+})

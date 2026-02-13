@@ -3,7 +3,7 @@
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test, before, after, describe } = require('node:test')
-const { fetch } = require('../..')
+const { fetch, Client } = require('../..')
 
 describe('content-encoding handling', () => {
   const gzipDeflateText = Buffer.from('H4sIAAAAAAAAA6uY89nj7MmT1wM5zuuf8gxkYZCfx5IFACQ8u/wVAAAA', 'base64')
@@ -118,7 +118,11 @@ describe('content-encoding chain limit', () => {
   })
 
   test(`should allow exactly ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.after(() => client.close())
+
     const response = await fetch(`http://localhost:${server.address().port}`, {
+      dispatcher: client,
       keepalive: false,
       headers: { 'x-encoding-count': String(MAX_CONTENT_ENCODINGS) }
     })
@@ -129,8 +133,12 @@ describe('content-encoding chain limit', () => {
   })
 
   test(`should reject more than ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.after(() => client.close())
+
     await t.assert.rejects(
       fetch(`http://localhost:${server.address().port}`, {
+        dispatcher: client,
         keepalive: false,
         headers: { 'x-encoding-count': String(MAX_CONTENT_ENCODINGS + 1) }
       }),
@@ -142,8 +150,12 @@ describe('content-encoding chain limit', () => {
   })
 
   test('should reject excessive content-encoding chains', async (t) => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.after(() => client.close())
+
     await t.assert.rejects(
       fetch(`http://localhost:${server.address().port}`, {
+        dispatcher: client,
         keepalive: false,
         headers: { 'x-encoding-count': '100' }
       }),
