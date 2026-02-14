@@ -563,6 +563,12 @@ See [Dispatcher.upgrade](./docs/docs/api/Dispatcher.md#dispatcherupgradeoptions-
 Sets the global dispatcher used by Common API Methods. Global dispatcher is shared among compatible undici modules,
 including undici that is bundled internally with node.js.
 
+Undici stores this dispatcher under `Symbol.for('undici.globalDispatcher.2')`.
+
+On Node.js 22, `setGlobalDispatcher()` also mirrors the configured dispatcher to
+`Symbol.for('undici.globalDispatcher.1')` using `Dispatcher1Wrapper`, so Node.js built-in `fetch`
+can keep using the legacy handler contract while Undici uses the new handler API.
+
 ### `undici.getGlobalDispatcher()`
 
 Gets the global dispatcher used by Common API Methods.
