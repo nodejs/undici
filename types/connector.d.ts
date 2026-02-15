@@ -13,6 +13,7 @@ declare namespace buildConnector {
     port?: number;
     keepAlive?: boolean | null;
     keepAliveInitialDelay?: number | null;
+    typeOfService?: number | null;
   }
 
   export interface Options {
