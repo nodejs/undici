@@ -269,6 +269,8 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
+        # Node.js 22 is intentionally excluded here: --shared-builtin-undici/undici-path
+        # embedding is only validated for supported/current majors.
         node-version: ['24', '25']
         runs-on: ['ubuntu-latest']
     with:
