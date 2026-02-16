@@ -1304,6 +1304,10 @@ Header arguments such as `options.headers` in [`Client.dispatch`](/docs/docs/api
 * As an iterable that can encompass `Headers`, `Map`, or a custom iterator returning key-value pairs.
 Keys are lowercase and values are not modified.
 
+Undici validates header syntax at the protocol level (for example, invalid header names and invalid control characters in string values), but it does not sanitize untrusted application input. Validate and sanitize any user-provided header names and values before passing them to Undici to prevent header/body injection vulnerabilities.
+
+When using the array header format (`string[]`), Undici processes only indexed elements. Additional properties assigned to the array object are ignored.
+
 Response headers will derive a `host` from the `url` of the [Client](/docs/docs/api/Client.md#class-client) instance if no `host` header was previously specified.
 
 ### Example 1 - Object
