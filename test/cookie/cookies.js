@@ -255,7 +255,11 @@ test('Cookie Set', () => {
   } catch {
     error = true
   }
-  assert.ok(error)
+  assert.strictEqual(error, false)
+  assert.equal(
+    headers.get('Set-Cookie'),
+    'Space=Cat; Secure; HttpOnly; Max-Age=-1'
+  )
 
   headers = new Headers()
   setCookie(headers, {
