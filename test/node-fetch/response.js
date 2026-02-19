@@ -1,6 +1,5 @@
 'use strict'
 
-const assert = require('node:assert')
 const { describe, it, before, after } = require('node:test')
 const stream = require('node:stream')
 const { Response } = require('../../index.js')
@@ -17,7 +16,7 @@ describe('Response', () => {
     return local.stop()
   })
 
-  it('should have attributes conforming to Web IDL', () => {
+  it('should have attributes conforming to Web IDL', (t) => {
     const res = new Response()
     const enumerableProperties = []
     for (const property in res) {
@@ -40,7 +39,7 @@ describe('Response', () => {
       'headers',
       'clone'
     ]) {
-      assert.ok(enumerableProperties.includes(toCheck))
+      t.assert.ok(enumerableProperties.includes(toCheck))
     }
 
     for (const toCheck of [
@@ -54,41 +53,41 @@ describe('Response', () => {
       'statusText',
       'headers'
     ]) {
-      assert.throws(() => {
+      t.assert.throws(() => {
         res[toCheck] = 'abc'
       }, new TypeError(`Cannot set property ${toCheck} of #<Response> which has only a getter`))
     }
   })
 
-  it('should support empty options', async () => {
+  it('should support empty options', async (t) => {
     const res = new Response(stream.Readable.from('a=1'))
     const result = await res.text()
-    assert.strictEqual(result, 'a=1')
+    t.assert.strictEqual(result, 'a=1')
   })
 
-  it('should support parsing headers', () => {
+  it('should support parsing headers', (t) => {
     const res = new Response(null, {
       headers: {
         a: '1'
       }
     })
-    assert.strictEqual(res.headers.get('a'), '1')
+    t.assert.strictEqual(res.headers.get('a'), '1')
   })
 
-  it('should support text() method', async () => {
+  it('should support text() method', async (t) => {
     const res = new Response('a=1')
     const result = await res.text()
-    assert.strictEqual(result, 'a=1')
+    t.assert.strictEqual(result, 'a=1')
   })
 
-  it('should support json() method', async () => {
+  it('should support json() method', async (t) => {
     const res = new Response('{"a":1}')
     const result = await res.json()
-    assert.deepStrictEqual(result, { a: 1 })
+    t.assert.deepStrictEqual(result, { a: 1 })
   })
 
   if (Blob) {
-    it('should support blob() method', async () => {
+    it('should support blob() method', async (t) => {
       const res = new Response('a=1', {
         method: 'POST',
         headers: {
@@ -96,13 +95,13 @@ describe('Response', () => {
         }
       })
       const result = await res.blob()
-      assert.ok(result instanceof Blob)
-      assert.strictEqual(result.size, 3)
-      assert.strictEqual(result.type, 'text/plain')
+      t.assert.ok(result instanceof Blob)
+      t.assert.strictEqual(result.size, 3)
+      t.assert.strictEqual(result.type, 'text/plain')
     })
   }
 
-  it('should support clone() method', () => {
+  it('should support clone() method', (t) => {
     const body = stream.Readable.from('a=1')
     const res = new Response(body, {
       headers: {
@@ -112,59 +111,59 @@ describe('Response', () => {
       statusText: 'production'
     })
     const cl = res.clone()
-    assert.strictEqual(cl.headers.get('a'), '1')
-    assert.strictEqual(cl.type, 'default')
-    assert.strictEqual(cl.status, 346)
-    assert.strictEqual(cl.statusText, 'production')
-    assert.strictEqual(cl.ok, false)
+    t.assert.strictEqual(cl.headers.get('a'), '1')
+    t.assert.strictEqual(cl.type, 'default')
+    t.assert.strictEqual(cl.status, 346)
+    t.assert.strictEqual(cl.statusText, 'production')
+    t.assert.strictEqual(cl.ok, false)
     // Clone body shouldn't be the same body
-    assert.notStrictEqual(cl.body, body)
+    t.assert.notStrictEqual(cl.body, body)
     return Promise.all([cl.text(), res.text()]).then(results => {
-      assert.strictEqual(results[0], 'a=1')
-      assert.strictEqual(results[1], 'a=1')
+      t.assert.strictEqual(results[0], 'a=1')
+      t.assert.strictEqual(results[1], 'a=1')
     })
   })
 
-  it('should support stream as body', async () => {
+  it('should support stream as body', async (t) => {
     const body = stream.Readable.from('a=1')
     const res = new Response(body)
     const result = await res.text()
 
-    assert.strictEqual(result, 'a=1')
+    t.assert.strictEqual(result, 'a=1')
   })
 
-  it('should support string as body', async () => {
+  it('should support string as body', async (t) => {
     const res = new Response('a=1')
     const result = await res.text()
 
-    assert.strictEqual(result, 'a=1')
+    t.assert.strictEqual(result, 'a=1')
   })
 
-  it('should support buffer as body', async () => {
+  it('should support buffer as body', async (t) => {
     const res = new Response(Buffer.from('a=1'))
     const result = await res.text()
 
-    assert.strictEqual(result, 'a=1')
+    t.assert.strictEqual(result, 'a=1')
   })
 
-  it('should support ArrayBuffer as body', async () => {
+  it('should support ArrayBuffer as body', async (t) => {
     const encoder = new TextEncoder()
     const fullbuffer = encoder.encode('a=12345678901234').buffer
     const res = new Response(fullbuffer)
     new Uint8Array(fullbuffer)[0] = 0
 
     const result = await res.text()
-    assert.strictEqual(result, 'a=12345678901234')
+    t.assert.strictEqual(result, 'a=12345678901234')
   })
 
-  it('should support blob as body', async () => {
+  it('should support blob as body', async (t) => {
     const res = new Response(new Blob(['a=1']))
     const result = await res.text()
 
-    assert.strictEqual(result, 'a=1')
+    t.assert.strictEqual(result, 'a=1')
   })
 
-  it('should support Uint8Array as body', async () => {
+  it('should support Uint8Array as body', async (t) => {
     const encoder = new TextEncoder()
     const fullbuffer = encoder.encode('a=12345678901234').buffer
     const body = new Uint8Array(fullbuffer, 2, 9)
@@ -172,10 +171,10 @@ describe('Response', () => {
     body[0] = 0
 
     const result = await res.text()
-    assert.strictEqual(result, '123456789')
+    t.assert.strictEqual(result, '123456789')
   })
 
-  it('should support BigUint64Array as body', async () => {
+  it('should support BigUint64Array as body', async (t) => {
     const encoder = new TextEncoder()
     const fullbuffer = encoder.encode('a=12345678901234').buffer
     const body = new BigUint64Array(fullbuffer, 8, 1)
@@ -183,10 +182,10 @@ describe('Response', () => {
     body[0] = 0n
 
     const result = await res.text()
-    assert.strictEqual(result, '78901234')
+    t.assert.strictEqual(result, '78901234')
   })
 
-  it('should support DataView as body', async () => {
+  it('should support DataView as body', async (t) => {
     const encoder = new TextEncoder()
     const fullbuffer = encoder.encode('a=12345678901234').buffer
     const body = new Uint8Array(fullbuffer, 2, 9)
@@ -194,46 +193,46 @@ describe('Response', () => {
     body[0] = 0
 
     const result = await res.text()
-    assert.strictEqual(result, '123456789')
+    t.assert.strictEqual(result, '123456789')
   })
 
-  it('should default to null as body', () => {
+  it('should default to null as body', (t) => {
     const res = new Response()
-    assert.strictEqual(res.body, null)
+    t.assert.strictEqual(res.body, null)
 
-    return res.text().then(result => assert.strictEqual(result, ''))
+    return res.text().then(result => t.assert.strictEqual(result, ''))
   })
 
-  it('should default to 200 as status code', () => {
+  it('should default to 200 as status code', (t) => {
     const res = new Response(null)
-    assert.strictEqual(res.status, 200)
+    t.assert.strictEqual(res.status, 200)
   })
 
-  it('should default to empty string as url', () => {
+  it('should default to empty string as url', (t) => {
     const res = new Response()
-    assert.strictEqual(res.url, '')
+    t.assert.strictEqual(res.url, '')
   })
 
-  it('should support error() static method', () => {
+  it('should support error() static method', (t) => {
     const res = Response.error()
-    assert.ok(res instanceof Response)
-    assert.strictEqual(res.status, 0)
-    assert.strictEqual(res.statusText, '')
-    assert.strictEqual(res.type, 'error')
+    t.assert.ok(res instanceof Response)
+    t.assert.strictEqual(res.status, 0)
+    t.assert.strictEqual(res.statusText, '')
+    t.assert.strictEqual(res.type, 'error')
   })
 
-  it('should support undefined status', () => {
+  it('should support undefined status', (t) => {
     const res = new Response(null, { status: undefined })
-    assert.strictEqual(res.status, 200)
+    t.assert.strictEqual(res.status, 200)
   })
 
-  it('should support undefined statusText', () => {
+  it('should support undefined statusText', (t) => {
     const res = new Response(null, { statusText: undefined })
-    assert.strictEqual(res.statusText, '')
+    t.assert.strictEqual(res.statusText, '')
   })
 
-  it('should not set bodyUsed to undefined', () => {
+  it('should not set bodyUsed to undefined', (t) => {
     const res = new Response()
-    assert.strictEqual(res.bodyUsed, false)
+    t.assert.strictEqual(res.bodyUsed, false)
   })
 })
