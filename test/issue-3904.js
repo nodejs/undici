@@ -1,5 +1,4 @@
 const { describe, test, after } = require('node:test')
-const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const MemoryCacheStore = require('../lib/cache/memory-cache-store.js')
@@ -11,7 +10,7 @@ describe('Cache with cache-control: no-store request header', () => {
     'cache-control',
     'Cache-Control'
   ].forEach(headerName => {
-    test(`should not cache response for request with header: "${headerName}: no-store`, async () => {
+    test(`should not cache response for request with header: "${headerName}: no-store`, async (t) => {
       const store = new MemoryCacheStore()
       let requestCount = 0
       const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -44,13 +43,13 @@ describe('Cache with cache-control: no-store request header', () => {
 
       const res1 = await request(url, { headers: { [headerName]: 'no-store' } })
       const body1 = await res1.body.text()
-      assert.strictEqual(body1, 'Request count: 1')
-      assert.strictEqual(requestCount, 1)
+      t.assert.strictEqual(body1, 'Request count: 1')
+      t.assert.strictEqual(requestCount, 1)
 
       const res2 = await request(url)
       const body2 = await res2.body.text()
-      assert.strictEqual(body2, 'Request count: 2')
-      assert.strictEqual(requestCount, 2)
+      t.assert.strictEqual(body2, 'Request count: 2')
+      t.assert.strictEqual(requestCount, 2)
 
       await new Promise(resolve => server.close(resolve))
     })
