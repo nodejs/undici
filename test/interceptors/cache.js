@@ -34,7 +34,6 @@ describe('Cache Interceptor', () => {
      * @type {import('../../types/dispatcher').default.RequestOptions}
      */
     const request = {
-      origin: 'localhost',
       method: 'GET',
       path: '/'
     }
@@ -80,7 +79,6 @@ describe('Cache Interceptor', () => {
      * @type {import('../../types/dispatcher').default.RequestOptions}
      */
     const requestA = {
-      origin: 'localhost',
       method: 'GET',
       path: '/',
       headers: {
@@ -92,7 +90,6 @@ describe('Cache Interceptor', () => {
      * @type {import('../../types/dispatcher').default.RequestOptions}
      */
     const requestB = {
-      origin: 'localhost',
       method: 'GET',
       path: '/',
       headers: {
@@ -201,7 +198,6 @@ describe('Cache Interceptor', () => {
      * @type {import('../../types/dispatcher').default.RequestOptions}
      */
     const request = {
-      origin: 'localhost',
       method: 'GET',
       path: '/'
     }
@@ -279,7 +275,6 @@ describe('Cache Interceptor', () => {
      * @type {import('../../types/dispatcher').default.RequestOptions}
      */
     const request = {
-      origin: 'localhost',
       method: 'GET',
       path: '/'
     }
@@ -436,7 +431,6 @@ describe('Cache Interceptor', () => {
     strictEqual(revalidationRequests, 0)
 
     const request = {
-      origin: 'localhost',
       path: '/',
       method: 'GET'
     }
@@ -505,7 +499,6 @@ describe('Cache Interceptor', () => {
      * @type {import('../../types/dispatcher').default.RequestOptions}
      */
     const request = {
-      origin: 'localhost',
       method: 'GET',
       path: '/'
     }
@@ -552,7 +545,6 @@ describe('Cache Interceptor', () => {
 
     for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
       await client.request({
-        origin: 'localhost',
         method,
         path: '/'
       })
@@ -600,7 +592,6 @@ describe('Cache Interceptor', () => {
      * @type {import('../../types/dispatcher').default.RequestOptions}
      */
     const request = {
-      origin: 'localhost',
       method: 'GET',
       path: '/'
     }
@@ -646,7 +637,6 @@ describe('Cache Interceptor', () => {
     // Should hit the origin
     {
       const res = await client.request({
-        origin: 'localhost',
         path: '/',
         method: 'GET'
       })
@@ -657,7 +647,6 @@ describe('Cache Interceptor', () => {
     // Should hit the cache
     {
       const res = await client.request({
-        origin: 'localhost',
         path: '/',
         method: 'GET'
       })
@@ -703,7 +692,6 @@ describe('Cache Interceptor', () => {
      * @type {import('../../types/dispatcher').default.RequestOptions}
      */
     const request = {
-      origin: 'localhost',
       method: 'GET',
       path: '/'
     }
@@ -778,7 +766,6 @@ describe('Cache Interceptor', () => {
        * @type {import('../../types/dispatcher').default.RequestOptions}
        */
       const request = {
-        origin: 'localhost',
         method: 'GET',
         path: '/'
       }
@@ -847,7 +834,6 @@ describe('Cache Interceptor', () => {
        * @type {import('../../types/dispatcher').default.RequestOptions}
        */
       const request = {
-        origin: 'localhost',
         method: 'GET',
         path: '/'
       }
@@ -912,7 +898,6 @@ describe('Cache Interceptor', () => {
        * @type {import('../../types/dispatcher').default.RequestOptions}
        */
       const request = {
-        origin: 'localhost',
         method: 'GET',
         path: '/'
       }
@@ -973,7 +958,6 @@ describe('Cache Interceptor', () => {
 
       // Send initial request. This should reach the origin
       await client.request({
-        origin: 'localhost',
         method: 'GET',
         path: '/',
         headers: {
@@ -985,7 +969,6 @@ describe('Cache Interceptor', () => {
 
       // Send second request, a validation request should be sent
       await client.request({
-        origin: 'localhost',
         method: 'GET',
         path: '/',
         headers: {
@@ -997,7 +980,6 @@ describe('Cache Interceptor', () => {
 
       // Send third request w/o no-cache, this should be handled by the cache
       await client.request({
-        origin: 'localhost',
         method: 'GET',
         path: '/'
       })
@@ -1027,7 +1009,6 @@ describe('Cache Interceptor', () => {
       await once(server, 'listening')
 
       await client.request({
-        origin: 'localhost',
         method: 'GET',
         path: '/',
         headers: {
@@ -1056,7 +1037,6 @@ describe('Cache Interceptor', () => {
 
       // Send initial request. This should reach the origin
       await client.request({
-        origin: 'localhost',
         method: 'GET',
         path: '/'
       })
@@ -1064,7 +1044,6 @@ describe('Cache Interceptor', () => {
 
       // Send second request, this shouldn't reach the origin
       await client.request({
-        origin: 'localhost',
         method: 'GET',
         path: '/',
         headers: {
@@ -1076,7 +1055,6 @@ describe('Cache Interceptor', () => {
       // Send third request to an uncached resource, this should return a 504
       {
         const res = await client.request({
-          origin: 'localhost',
           method: 'GET',
           path: '/bla',
           headers: {
@@ -1089,7 +1067,6 @@ describe('Cache Interceptor', () => {
       // Send fourth request to an uncached resource w/ a , this should return a 504
       {
         const res = await client.request({
-          origin: 'localhost',
           method: 'GET',
           path: '/asd123',
           headers: {
@@ -1136,7 +1113,6 @@ describe('Cache Interceptor', () => {
       // Send first request. This will hit the origin and succeed
       {
         const response = await client.request({
-          origin: 'localhost',
           path: '/',
           method: 'GET'
         })
@@ -1149,7 +1125,6 @@ describe('Cache Interceptor', () => {
       //  cache and succeed
       {
         const response = await client.request({
-          origin: 'localhost',
           path: '/',
           method: 'GET'
         })
@@ -1164,7 +1139,6 @@ describe('Cache Interceptor', () => {
       // should return stale immediately and trigger background revalidation
       {
         const response = await client.request({
-          origin: 'localhost',
           path: '/',
           method: 'GET',
           headers: {
@@ -1183,7 +1157,6 @@ describe('Cache Interceptor', () => {
       // should return stale since previous revalidation failed and stale-if-error applies
       {
         const response = await client.request({
-          origin: 'localhost',
           path: '/',
           method: 'GET'
         })
@@ -1201,7 +1174,6 @@ describe('Cache Interceptor', () => {
       //  should see the error.
       {
         const response = await client.request({
-          origin: 'localhost',
           path: '/',
           method: 'GET',
           headers: {
