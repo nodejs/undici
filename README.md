@@ -24,24 +24,20 @@ npm i undici
 The benchmark is a simple getting data [example](https://github.com/nodejs/undici/blob/main/benchmarks/benchmark.js) using a
 50 TCP connections with a pipelining depth of 10 running on Node 22.11.0.
 
-```
-┌────────────────────────┬─────────┬────────────────────┬────────────┬─────────────────────────┐
-│  Tests                 │ Samples │ Result             │ Tolerance  │ Difference with slowest │
-├────────────────────────┼─────────┼────────────────────┼────────────┼─────────────────────────┤
-│  'axios'               │ 15      │ '5708.26 req/sec'  │ '± 2.91 %' │ '-'                     │
-│  'http - no keepalive' │ 10      │ '5809.80 req/sec'  │ '± 2.30 %' │ '+ 1.78 %'              │
-│  'request'             │ 30      │ '5828.80 req/sec'  │ '± 2.91 %' │ '+ 2.11 %'              │
-│  'undici - fetch'      │ 40      │ '5903.78 req/sec'  │ '± 2.87 %' │ '+ 3.43 %'              │
-│  'node-fetch'          │ 10      │ '5945.40 req/sec'  │ '± 2.13 %' │ '+ 4.15 %'              │
-│  'got'                 │ 35      │ '6511.45 req/sec'  │ '± 2.84 %' │ '+ 14.07 %'             │
-│  'http - keepalive'    │ 65      │ '9193.24 req/sec'  │ '± 2.92 %' │ '+ 61.05 %'             │
-│  'superagent'          │ 35      │ '9339.43 req/sec'  │ '± 2.95 %' │ '+ 63.61 %'             │
-│  'undici - pipeline'   │ 50      │ '13364.62 req/sec' │ '± 2.93 %' │ '+ 134.13 %'            │
-│  'undici - stream'     │ 95      │ '18245.36 req/sec' │ '± 2.99 %' │ '+ 219.63 %'            │
-│  'undici - request'    │ 50      │ '18340.17 req/sec' │ '± 2.84 %' │ '+ 221.29 %'            │
-│  'undici - dispatch'   │ 40      │ '22234.42 req/sec' │ '± 2.94 %' │ '+ 289.51 %'            │
-└────────────────────────┴─────────┴────────────────────┴────────────┴─────────────────────────┘
-```
+| Tests | Samples | Result | Tolerance | Difference with slowest |
+| ----- | ------: | ------ | --------- | ----------------------- |
+| axios               | 15 | 5708.26 req/sec | ± 2.91 % | - |
+| http - no keepalive | 10 | 5809.80 req/sec | ± 2.30 % | + 1.78 % |
+| request             | 30 | 5828.80 req/sec | ± 2.91 % | + 2.11 % |
+| undici - fetch      | 40 | 5903.78 req/sec | ± 2.87 % | + 3.43 % |
+| node-fetch          | 10 | 5945.40 req/sec | ± 2.13 % | + 4.15 % |
+| got                 | 35 | 6511.45 req/sec | ± 2.84 % | + 14.07 % |
+| http - keepalive    | 65 | 9193.24 req/sec | ± 2.92 % | + 61.05 % |
+| superagent          | 35 | 9339.43 req/sec | ± 2.95 % | + 63.61 % |
+| undici - pipeline   | 50 | 13364.62 req/sec | ± 2.93 % | + 134.13 % |
+| undici - stream     | 95 | 18245.36 req/sec | ± 2.99 % | + 219.63 % |
+| undici - request    | 50 | 18340.17 req/sec | ± 2.84 % | + 221.29 % |
+| undici - dispatch   | 40 | 22234.42 req/sec | ± 2.94 % | + 289.51 % |
 
 ## Undici vs. Fetch
 
