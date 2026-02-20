@@ -29,6 +29,11 @@ test('connect aborted after connect', async (t) => {
     pipelining: 3
   })
   after(() => client.close())
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   client.connect({
     path: '/',
