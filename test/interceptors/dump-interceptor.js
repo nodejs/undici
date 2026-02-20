@@ -491,7 +491,7 @@ test('Should abort if content length grater than max size', { skip }, async t =>
   })
 
   t.rejects(client.request(requestOptions), {
-    name: 'AbortError',
+    name: 'RequestAbortedError',
     message: 'Response size (2048) larger than maxSize (1024)'
   })
 
@@ -578,7 +578,7 @@ test('Should abort if content length grater than max size (dispatch opts)', { sk
       return await client.request(requestOptions).then(res => res.body.text())
     },
     {
-      name: 'AbortError',
+      name: 'RequestAbortedError',
       message: 'Response size (2048) larger than maxSize (100)'
     }
   )
