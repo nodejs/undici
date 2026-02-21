@@ -1167,6 +1167,121 @@ describe('Deduplicate Interceptor', () => {
     strictEqual(body2, 'response 2')
   })
 
+  test('does not deduplicate requests that arrive after body streaming starts', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      res.write('chunk-1')
+      await sleep(100)
+      res.end('chunk-2')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    const firstResponsePromise = client.request(request)
+
+    // Wait until the first response starts streaming body data.
+    await sleep(20)
+
+    const [res1, res2] = await Promise.all([
+      firstResponsePromise,
+      client.request(request)
+    ])
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(requestsToOrigin, 2)
+    strictEqual(body1, 'chunk-1chunk-2')
+    strictEqual(body2, 'chunk-1chunk-2')
+  })
+
+  test('errors paused waiting handlers when buffered data exceeds maxBufferSize', async () => {
+    let requestsToOrigin = 0
+    const chunk = Buffer.alloc(8 * 1024, 'a')
+    const totalChunks = 6
+
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+
+      for (let i = 0; i < totalChunks; i++) {
+        res.write(chunk)
+        await sleep(10)
+      }
+
+      res.end()
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate({ maxBufferSize: 16 * 1024 }))
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    const primaryResponsePromise = client.request(request)
+
+    const slowWaitingHandlerErrorPromise = new Promise((resolve, reject) => {
+      client.dispatch(request, {
+        onConnect () {},
+        onHeaders () {},
+        onData () {
+          // Pause the waiting handler immediately and never resume it.
+          return false
+        },
+        onComplete () {
+          reject(new Error('Expected paused waiting handler to fail'))
+        },
+        onError (err) {
+          resolve(err)
+        }
+      })
+    })
+
+    const primaryResponse = await primaryResponsePromise
+    const primaryBody = await primaryResponse.body.arrayBuffer()
+    const waitingHandlerErr = await slowWaitingHandlerErrorPromise
+
+    strictEqual(requestsToOrigin, 1)
+    strictEqual(primaryBody.byteLength, chunk.length * totalChunks)
+    strictEqual(waitingHandlerErr.code, 'UND_ERR_ABORTED')
+  })
+
+  test('throws TypeError if maxBufferSize is not a positive finite number', () => {
+    const { throws } = require('node:assert')
+    throws(() => {
+      interceptors.deduplicate({ maxBufferSize: 0 })
+    }, {
+      name: 'TypeError',
+      message: 'expected opts.maxBufferSize to be a positive finite number, got 0'
+    })
+  })
+
   test('throws TypeError if excludeHeaderNames is not an array', () => {
     const { throws } = require('node:assert')
     throws(() => {
