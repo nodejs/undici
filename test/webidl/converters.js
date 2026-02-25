@@ -121,6 +121,32 @@ describe('webidl.dictionaryConverter', () => {
     assert.deepStrictEqual(dict(obj), { key: 1 })
     assert.deepStrictEqual(dict(obj2), { key: 1 })
   })
+
+  test('keys are accessed in lexicographical order', () => {
+    const converter = webidl.dictionaryConverter([
+      {
+        converter: () => true,
+        key: 'zyx'
+      },
+      {
+        converter: () => true,
+        key: 'abc'
+      }
+    ])
+
+    const accessed = []
+
+    converter({
+      get abc () {
+        return accessed.push('abc')
+      },
+      get zyx () {
+        return accessed.push('zyx')
+      }
+    }, 'converter', 'converter')
+
+    assert.deepStrictEqual(accessed, ['abc', 'zyx'])
+  })
 })
 
 describe('buffer source converters', () => {
