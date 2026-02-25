@@ -15,7 +15,7 @@ const servername = 'agent1'
 const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
 const errorThreshold = parseInt(process.env.ERROR_THRESHOLD, 10) || 3
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
-const pipelining = parseInt(process.env.PIPELINING, 10) || 10
+const maxConcurrentStreams = parseInt(process.env.MULTIPLEXING, 10) || 10
 const parallelRequests = parseInt(process.env.PARALLEL, 10) || 100
 const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
 const bodyTimeout = parseInt(process.env.BODY_TIMEOUT, 10) || 0
@@ -61,7 +61,7 @@ const http2NativeClient = http2.connect(httpsBaseOptions.url, {
 const Class = connections > 1 ? Pool : Client
 const dispatcher = new Class(httpsBaseOptions.url, {
   allowH2: true,
-  pipelining,
+  maxConcurrentStreams,
   connections,
   connect: {
     rejectUnauthorized: false,
@@ -73,7 +73,7 @@ const dispatcher = new Class(httpsBaseOptions.url, {
 
 setGlobalDispatcher(new Agent({
   allowH2: true,
-  pipelining,
+  maxConcurrentStreams,
   connections,
   connect: {
     rejectUnauthorized: false,
