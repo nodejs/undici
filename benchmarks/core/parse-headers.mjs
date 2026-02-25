@@ -79,6 +79,16 @@ const headersIrregular = Array.from(
     .map((c) => Buffer.from(c.toUpperCase()))
 )
 
+// wellknownHeaderName[wellknownHeaderNames.length-1] is the worst case
+// but Via is more pathological, we need around 20 times to reach Via,
+// if we insert wellknownHeaderNames to the TST in order while it is only
+// 3 characters long
+const worstCaseIfInsertInOrderToTST = Object.entries({
+  Via: '1.1 vegur'
+})
+  .flat()
+  .map((c) => Buffer.from(c))
+
 // avoid JIT bias
 bench('noop', () => {})
 bench('noop', () => {})
@@ -96,6 +106,11 @@ group('parseHeaders', () => {
   bench('parseHeaders (irregular)', () => {
     for (let i = 0; i < headersIrregular.length; ++i) {
       parseHeaders(headersIrregular[i])
+    }
+  })
+  bench('worstCaseIfInsertInOrderToTST', () => {
+    for (let i = 0; i < 1e4; i++) {
+      parseHeaders(worstCaseIfInsertInOrderToTST)
     }
   })
 })
