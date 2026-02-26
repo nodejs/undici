@@ -2061,3 +2061,54 @@ test('#3951 - Should handle lookup errors correctly', async t => {
     origin: 'http://localhost'
   }), new Error('lookup error'))
 })
+
+test('Various (parameterized) header shapes should work with DNS interceptor', async t => {
+  const server = createServer({ joinDuplicateHeaders: true })
+  server.on('request', (req, res) => {
+    t.equal(req.headers.foo, 'bar')
+    t.equal(typeof req.headers['0'], 'undefined')
+    t.match(req.headers.host, /^localhost:\d+$/)
+    res.end('ok')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const origin = `http://localhost:${server.address().port}`
+
+  const cases = [
+    {
+      name: 'flat array',
+      headers: ['foo', 'bar']
+    },
+    {
+      name: 'record',
+      headers: { foo: 'bar' }
+    },
+    {
+      name: 'record with multi-value',
+      headers: { foo: ['bar'] }
+    },
+    {
+      name: 'iterable (map) object',
+      headers: new Map([['foo', 'bar']])
+    },
+    {
+      name: 'iterable (set) object',
+      headers: new Set([['foo', 'bar']])
+    }
+  ]
+
+  t = tspl(t, { plan: cases.length * 4 })
+
+  for (const c of cases) {
+    const agent = new Agent().compose(dns())
+    const r = await agent.request({ origin, path: '/', method: 'GET', headers: c.headers })
+    t.equal(r.statusCode, 200, c.name)
+    await r.body.text()
+    await agent.close()
+  }
+
+  server.close()
+  await once(server, 'close')
+})
