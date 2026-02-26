@@ -749,6 +749,49 @@ test('should redirect to relative URL according to RFC 7231', async t => {
   t.strictEqual(finalPath, '/absolute/b')
 })
 
+test('same-origin redirect preserves plain object headers with polluted Object.prototype[Symbol.iterator]', async (t) => {
+  const { strictEqual } = tspl(t, { plan: 2 })
+
+  const server = createServer((req, res) => {
+    if (req.url === '/redirect') {
+      res.writeHead(302, {
+        Location: '/final'
+      })
+      res.end()
+      return
+    }
+
+    strictEqual(req.headers['x-custom'], 'ok')
+    res.end('redirected')
+  }).listen(0)
+
+  const originalIterator = Object.prototype[Symbol.iterator]
+  // eslint-disable-next-line no-extend-native
+  Object.prototype[Symbol.iterator] = function * () {}
+
+  try {
+    await once(server, 'listening')
+
+    const res = await undici.request(`http://localhost:${server.address().port}/redirect`, {
+      dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 1 })),
+      headers: {
+        'X-Custom': 'ok'
+      }
+    })
+
+    const text = await res.body.text()
+    strictEqual(text, 'redirected')
+  } finally {
+    if (originalIterator === undefined) {
+      delete Object.prototype[Symbol.iterator]
+    } else {
+      // eslint-disable-next-line no-extend-native
+      Object.prototype[Symbol.iterator] = originalIterator
+    }
+    server.close()
+  }
+})
+
 test('Cross-origin redirects clear forbidden headers', async (t) => {
   const { strictEqual } = tspl(t, { plan: 6 })
 
