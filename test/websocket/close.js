@@ -6,6 +6,39 @@ const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 
 describe('Close', () => {
+  // https://github.com/nodejs/undici/issues/4742
+  test('Close on CONNECTING WebSocket should not revert readyState from CLOSED to CLOSING', async (t) => {
+    t = tspl(t, { plan: 4 })
+
+    const server = new WebSocketServer({ port: 0 })
+
+    after(() => server.close())
+
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+    // Immediately after creation, readyState should be CONNECTING
+    t.strictEqual(ws.readyState, WebSocket.CONNECTING)
+
+    ws.addEventListener('close', () => {
+      // During the close event, readyState should be CLOSED (3)
+      t.strictEqual(ws.readyState, WebSocket.CLOSED, 'readyState should be CLOSED during close event')
+
+      // After the close event handler returns, readyState should remain CLOSED (3)
+      // This was the bug: it was reverting to CLOSING (2)
+      queueMicrotask(() => {
+        t.strictEqual(ws.readyState, WebSocket.CLOSED, 'readyState should remain CLOSED after close event')
+      })
+    })
+
+    // Close immediately while still CONNECTING
+    ws.close()
+
+    // After close(), readyState should be CLOSING (2)
+    t.strictEqual(ws.readyState, WebSocket.CLOSING)
+
+    await t.completed
+  })
+
   test('Close with code', (t) => {
     return new Promise((resolve) => {
       const server = new WebSocketServer({ port: 0 })
