@@ -1671,6 +1671,35 @@ test('emit disconnect after destroy', async t => {
   await t.completed
 })
 
+test('emit idle', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    req.pipe(res)
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const url = new URL(`http://localhost:${server.address().port}`)
+    const client = new Client(url)
+
+    t.strictEqual(client[kConnected], false)
+    client[kConnect](() => {
+      t.strictEqual(client[kConnected], true)
+      let idle = false
+      client.on('idle', () => {
+        idle = true
+        t.ok(true, 'pass')
+      })
+      client.destroy(() => {
+        t.strictEqual(idle, true)
+      })
+    })
+  })
+
+  await t.completed
+})
+
 test('end response before request', async t => {
   t = tspl(t, { plan: 2 })
 
