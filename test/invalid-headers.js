@@ -51,7 +51,7 @@ test('invalid headers', (t) => {
     path: '/',
     method: 'GET',
     headers: {
-      connection: 'asd'
+      connection: 'invalid header with spaces'
     }
   }, (err, data) => {
     t.ok(err instanceof errors.InvalidArgumentError)
