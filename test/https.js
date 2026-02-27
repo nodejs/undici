@@ -25,6 +25,12 @@ test('https get with tls opts', async (t) => {
     })
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.ifError(err)
       t.strictEqual(statusCode, 200)
@@ -60,6 +66,12 @@ test('https get with tls opts ip', async (t) => {
       }
     })
     after(() => client.close())
+
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.ifError(err)
