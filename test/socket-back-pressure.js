@@ -37,6 +37,12 @@ test('socket back-pressure', async (t) => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   client.request({ path: '/', method: 'GET', opaque: 'asd' }, (err, data) => {
     t.ifError(err)
     data.body
