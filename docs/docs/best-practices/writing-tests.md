@@ -46,11 +46,7 @@ test('example with disconnect guard', async (t) => {
 ```
 
 The guard listens for `'disconnect'` events and calls `t.fail()` unless the
-client is already closing or destroyed. `client.close()` and `client.destroy()`
-both emit `'disconnect'` events, but those are expected — the guard skips them
-by checking `!client.closed && !client.destroyed`.
-
-Skip the guard for tests where a disconnect is expected behavior, such as:
+client is already closing or destroyed. Skip the guard for tests where a disconnect is expected behavior, such as:
 
 - Signal aborts (`signal.emit('abort')`, `ac.abort()`)
 - Server-side destruction (`res.destroy()`, `req.socket.destroy()`)
