@@ -22,6 +22,12 @@ test('basic get, async await support', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     try {
       const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
       t.strictEqual(statusCode, 200)
@@ -70,6 +76,12 @@ test('basic POST with string, async await support', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     try {
       const { statusCode, body } = await client.request({ path: '/', method: 'POST', body: expected })
       t.strictEqual(statusCode, 200)
@@ -100,6 +112,12 @@ test('basic POST with Buffer, async await support', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     try {
       const { statusCode, body } = await client.request({ path: '/', method: 'POST', body: expected })
       t.strictEqual(statusCode, 200)
@@ -129,6 +147,12 @@ test('basic POST with stream, async await support', async (t) => {
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
+
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     try {
       const { statusCode, body } = await client.request({
@@ -166,6 +190,12 @@ test('basic POST with async-iterator, async await support', async (t) => {
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
+
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     try {
       const { statusCode, body } = await client.request({
@@ -227,6 +257,12 @@ test('20 times GET with pipelining 10, async await support', async (t) => {
     })
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     for (let i = 0; i < num; i++) {
       makeRequest(i)
     }
@@ -274,6 +310,12 @@ test('pool, async await support', async (t) => {
   server.listen(0, async () => {
     const client = new Pool(`http://localhost:${server.address().port}`)
     after(() => client.close())
+
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     try {
       const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
