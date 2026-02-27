@@ -10,6 +10,7 @@ describe('content-encoding handling', () => {
   const zstdText = Buffer.from('KLUv/QBYaQAASGVsbG8sIFdvcmxkIQ==', 'base64')
 
   let server
+  let client
   before(async () => {
     server = createServer({
       noDelay: true
@@ -47,16 +48,19 @@ describe('content-encoding handling', () => {
       }
     })
     await once(server.listen(0), 'listening')
+    client = new Client(`http://localhost:${server.address().port}`)
   })
 
-  after(() => {
+  after(async () => {
+    await client.close()
     server.closeAllConnections?.()
     server.close()
+    await once(server, 'close')
   })
 
   test('content-encoding header', async (t) => {
     const response = await fetch(`http://localhost:${server.address().port}`, {
-      keepalive: false,
+      dispatcher: client,
       headers: { 'accept-encoding': 'deflate, gzip' }
     })
 
@@ -67,7 +71,7 @@ describe('content-encoding handling', () => {
 
   test('content-encoding header is case-iNsENsITIve', async (t) => {
     const response = await fetch(`http://localhost:${server.address().port}`, {
-      keepalive: false,
+      dispatcher: client,
       headers: { 'accept-encoding': 'DeFlAtE, GzIp' }
     })
 
@@ -80,7 +84,7 @@ describe('content-encoding handling', () => {
     { skip: typeof require('node:zlib').createZstdDecompress !== 'function' },
     async (t) => {
       const response = await fetch(`http://localhost:${server.address().port}`, {
-        keepalive: false,
+        dispatcher: client,
         headers: { 'accept-encoding': 'zstd' }
       })
 
