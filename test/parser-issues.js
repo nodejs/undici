@@ -4,6 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const net = require('node:net')
 const { Client, errors } = require('..')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('https://github.com/mcollina/undici/issues/268', async (t) => {
   t = tspl(t, { plan: 2 })
@@ -25,6 +26,8 @@ test('https://github.com/mcollina/undici/issues/268', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.destroy())
+
+    guardDisconnect(client, t)
 
     client.request({
       method: 'GET',

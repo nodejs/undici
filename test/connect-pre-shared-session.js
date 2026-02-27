@@ -6,6 +6,7 @@ const { Client } = require('..')
 const { createServer } = require('node:https')
 const pem = require('@metcoder95/https-pem')
 const tls = require('node:tls')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('custom session passed to client will be used in tls connect call', async (t) => {
   t = tspl(t, { plan: 6 })
@@ -30,6 +31,8 @@ test('custom session passed to client will be used in tls connect call', async (
       }
     })
     after(() => client.close())
+
+    guardDisconnect(client, t)
 
     const { statusCode, headers, body } = await client.request({
       path: '/',

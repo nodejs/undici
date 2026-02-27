@@ -6,6 +6,7 @@ const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('request timeout with slow readable body', async (t) => {
   t = tspl(t, { plan: 1 })
@@ -24,6 +25,8 @@ test('request timeout with slow readable body', async (t) => {
   await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 50 })
   after(() => client.close())
+
+  guardDisconnect(client, t)
 
   const body = new Readable({
     read () {

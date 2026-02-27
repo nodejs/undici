@@ -6,6 +6,7 @@ const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('socket close listener does not leak', async (t) => {
   t = tspl(t, { plan: 32 })
@@ -47,6 +48,8 @@ test('socket close listener does not leak', async (t) => {
   await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.destroy())
+
+  guardDisconnect(client, t)
 
   for (let n = 0; n < 16; ++n) {
     client.request({ path: '/', method: 'GET', body: makeBody() }, onRequest)

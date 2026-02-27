@@ -6,6 +6,7 @@ const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const net = require('node:net')
 const { once } = require('node:events')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('ignore informational response', async (t) => {
   t = tspl(t, { plan: 2 })
@@ -20,6 +21,8 @@ test('ignore informational response', async (t) => {
   await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
+
+  guardDisconnect(client, t)
 
   client.request({
     path: '/',
@@ -136,6 +139,8 @@ test('1xx response without timeouts', async t => {
     headersTimeout: 0
   })
   after(() => client.close())
+
+  guardDisconnect(client, t)
 
   client.request({
     path: '/',

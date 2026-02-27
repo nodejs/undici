@@ -6,6 +6,7 @@ const { Client } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 const EE = require('node:events')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('stream body without destroy', async (t) => {
   t = tspl(t, { plan: 2 })
@@ -50,6 +51,8 @@ test('IncomingMessage', async (t) => {
     const proxyClient = new Client(`http://localhost:${server.address().port}`)
     after(() => proxyClient.destroy())
 
+    guardDisconnect(proxyClient, t)
+
     const proxy = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       proxyClient.request({
         path: '/',
@@ -65,6 +68,8 @@ test('IncomingMessage', async (t) => {
     proxy.listen(0, () => {
       const client = new Client(`http://localhost:${proxy.address().port}`)
       after(() => client.destroy())
+
+      guardDisconnect(client, t)
 
       client.request({
         path: '/',

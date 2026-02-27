@@ -7,6 +7,7 @@ const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 const FakeTimers = require('@sinonjs/fake-timers')
 const timers = require('../lib/util/timers')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('refresh timeout on pause', async (t) => {
   t = tspl(t, { plan: 1 })
@@ -179,6 +180,8 @@ test('parser resume with no body timeout', async (t) => {
       bodyTimeout: 0
     })
     after(() => client.destroy())
+
+    guardDisconnect(client, t)
 
     client.dispatch({
       path: '/',

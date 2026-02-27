@@ -5,6 +5,7 @@ const { test, after } = require('node:test')
 const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('CRLF Injection in Nodejs ‘undici’ via host', async (t) => {
   t = tspl(t, { plan: 1 })
@@ -20,6 +21,8 @@ test('CRLF Injection in Nodejs ‘undici’ via host', async (t) => {
 
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
+
+  guardDisconnect(client, t)
 
   const unsanitizedContentTypeInput = '12 \r\n\r\naaa:aaa'
 

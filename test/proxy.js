@@ -5,6 +5,7 @@ const { test } = require('node:test')
 const { Client, Pool } = require('..')
 const { createServer } = require('node:http')
 const { createProxy } = require('proxy')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('connect through proxy', async (t) => {
   t = tspl(t, { plan: 3 })
@@ -22,6 +23,8 @@ test('connect through proxy', async (t) => {
   })
 
   const client = new Client(proxyUrl)
+
+  guardDisconnect(client, t)
 
   const response = await client.request({
     method: 'GET',
@@ -61,6 +64,8 @@ test('connect through proxy with auth', async (t) => {
   })
 
   const client = new Client(proxyUrl)
+
+  guardDisconnect(client, t)
 
   const response = await client.request({
     method: 'GET',
@@ -102,6 +107,8 @@ test('connect through proxy with auth but invalid credentials', async (t) => {
 
   const client = new Client(proxyUrl)
 
+  guardDisconnect(client, t)
+
   const response = await client.request({
     method: 'GET',
     path: serverUrl + '/hello?foo=bar',
@@ -133,6 +140,8 @@ test('connect through proxy (with pool)', async (t) => {
   })
 
   const pool = new Pool(proxyUrl)
+
+  guardDisconnect(pool, t)
 
   const response = await pool.request({
     method: 'GET',

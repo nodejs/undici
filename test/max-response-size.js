@@ -4,6 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after, describe } = require('node:test')
 const { Client, errors } = require('..')
 const { createServer } = require('node:http')
+const { guardDisconnect } = require('./guard-disconnect')
 
 describe('max response size', async (t) => {
   test('default max default size should allow all responses', async (t) => {
@@ -22,6 +23,8 @@ describe('max response size', async (t) => {
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, { maxResponseSize: -1 })
       after(() => client.close())
+
+      guardDisconnect(client, t)
 
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
         t.ifError(err)
@@ -55,6 +58,8 @@ describe('max response size', async (t) => {
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, { maxResponseSize: 0 })
       after(() => client.close())
+
+      guardDisconnect(client, t)
 
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
         t.ifError(err)

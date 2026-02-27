@@ -4,6 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client } = require('..')
 const { createServer } = require('node:http')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('response trailers missing is OK', async (t) => {
   t = tspl(t, { plan: 1 })
@@ -18,6 +19,9 @@ test('response trailers missing is OK', async (t) => {
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.destroy())
+
+    guardDisconnect(client, t)
+
     const { body } = await client.request({
       path: '/',
       method: 'GET',
@@ -46,6 +50,9 @@ test('response trailers missing w trailers is OK', async (t) => {
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.destroy())
+
+    guardDisconnect(client, t)
+
     const { body, trailers } = await client.request({
       path: '/',
       method: 'GET',

@@ -5,6 +5,7 @@ const { test, after } = require('node:test')
 const { Client } = require('..')
 const { createServer } = require('node:https')
 const pem = require('@metcoder95/https-pem')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('https get with tls opts', async (t) => {
   t = tspl(t, { plan: 6 })
@@ -24,6 +25,8 @@ test('https get with tls opts', async (t) => {
       }
     })
     after(() => client.close())
+
+    guardDisconnect(client, t)
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.ifError(err)
@@ -60,6 +63,8 @@ test('https get with tls opts ip', async (t) => {
       }
     })
     after(() => client.close())
+
+    guardDisconnect(client, t)
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.ifError(err)

@@ -6,6 +6,7 @@ const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('request invalid content-length', async (t) => {
   t = tspl(t, { plan: 7 })
@@ -209,6 +210,8 @@ test('request streaming no body data when content-length=0', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
+    guardDisconnect(client, t)
+
     client.request({
       path: '/',
       method: 'PUT',
@@ -277,6 +280,8 @@ test('request streaming with Readable.from(buf)', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
+
+    guardDisconnect(client, t)
 
     client.request({
       path: '/',

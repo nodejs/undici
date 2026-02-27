@@ -6,6 +6,7 @@ const { Client } = require('..')
 const { createServer } = require('node:http')
 const { kConnect } = require('../lib/core/symbols')
 const { kBusy, kPending, kRunning } = require('../lib/core/symbols')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('pipeline pipelining', async (t) => {
   t = tspl(t, { plan: 10 })
@@ -21,6 +22,8 @@ test('pipeline pipelining', async (t) => {
       pipelining: 2
     })
     after(() => client.close())
+
+    guardDisconnect(client, t)
 
     client[kConnect](() => {
       t.equal(client[kRunning], 0)

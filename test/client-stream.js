@@ -6,6 +6,7 @@ const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const { PassThrough, Writable, Readable } = require('node:stream')
 const EE = require('node:events')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('stream get', async (t) => {
   t = tspl(t, { plan: 9 })
@@ -22,11 +23,7 @@ test('stream get', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     const signal = new EE()
     client.stream({
@@ -70,11 +67,7 @@ test('stream promise get', async (t) => {
   server.listen(0, async () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     await client.stream({
       path: '/',
@@ -264,11 +257,7 @@ test('stream waits only for writable side', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     const pt = new PassThrough({ autoDestroy: false })
     client.stream({
@@ -336,11 +325,7 @@ test('stream destroy if not readable', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(client.destroy.bind(client))
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.stream({
       path: '/',
@@ -417,11 +402,7 @@ test('stream body without destroy', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(client.destroy.bind(client))
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.stream({
       path: '/',
@@ -545,11 +526,7 @@ test('stream abort after complete', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(client.destroy.bind(client))
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     const pt = new PassThrough()
     const signal = new EE()
@@ -610,11 +587,7 @@ test('trailers', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.stream({
       path: '/',
@@ -640,11 +613,7 @@ test('stream ignore 1xx', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     let buf = ''
     client.stream({
@@ -677,11 +646,7 @@ test('stream ignore 1xx and use onInfo', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     let buf = ''
     client.stream({
@@ -720,11 +685,7 @@ test('stream backpressure', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     let buf = ''
     client.stream({
@@ -786,11 +747,7 @@ test('stream needDrain', async (t) => {
     after(() => {
       client.destroy()
     })
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     const dst = new PassThrough()
     dst.pause()
@@ -847,11 +804,7 @@ test('stream legacy needDrain', async (t) => {
     after(() => {
       client.destroy()
     })
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     const dst = new PassThrough()
     dst.pause()

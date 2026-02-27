@@ -7,6 +7,7 @@ const { Client } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 const { wrapWithAsyncIterable } = require('./utils/async-iterators')
+const { guardDisconnect } = require('./guard-disconnect')
 
 describe('strictContentLength: false', () => {
   const emitWarningOriginal = process.emitWarning
@@ -163,6 +164,8 @@ describe('strictContentLength: false', () => {
       })
       after(() => client.close())
 
+      guardDisconnect(client, t)
+
       client.request({
         path: '/',
         method: 'PUT',
@@ -202,6 +205,8 @@ describe('strictContentLength: false', () => {
         strictContentLength: false
       })
       after(() => client.close())
+
+      guardDisconnect(client, t)
 
       client.request({
         path: '/',
@@ -243,6 +248,8 @@ describe('strictContentLength: false', () => {
       })
       after(() => client.close())
 
+      guardDisconnect(client, t)
+
       client.request({
         path: '/',
         method: 'PUT',
@@ -282,6 +289,8 @@ describe('strictContentLength: false', () => {
         strictContentLength: false
       })
       after(() => client.close())
+
+      guardDisconnect(client, t)
 
       client.request({
         path: '/',
@@ -323,6 +332,8 @@ describe('strictContentLength: false', () => {
       })
       after(() => client.close())
 
+      guardDisconnect(client, t)
+
       client.request({
         path: '/',
         method: 'PUT',
@@ -361,6 +372,8 @@ describe('strictContentLength: false', () => {
         strictContentLength: false
       })
       after(() => client.close())
+
+      guardDisconnect(client, t)
 
       client.request({
         path: '/',
