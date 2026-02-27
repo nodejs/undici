@@ -298,6 +298,106 @@ test('getUpstream returns undefined for closed/destroyed upstream', (t) => {
   p.strictEqual(result, undefined)
 })
 
+function createReusableBackend (name) {
+  const sockets = new Set()
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.end(name)
+  })
+
+  server.on('connection', (socket) => {
+    sockets.add(socket)
+    socket.on('close', () => sockets.delete(socket))
+  })
+
+  let port = 0
+
+  return {
+    get url () {
+      return `http://127.0.0.1:${port}`
+    },
+    async start () {
+      if (server.listening) {
+        return
+      }
+
+      await new Promise((resolve, reject) => {
+        server.listen(port, '127.0.0.1', (err) => {
+          if (err) {
+            reject(err)
+          } else {
+            port = server.address().port
+            resolve()
+          }
+        })
+      })
+    },
+    async stop () {
+      if (!server.listening) {
+        return
+      }
+
+      for (const socket of sockets) {
+        socket.destroy()
+      }
+
+      await new Promise((resolve) => server.close(resolve))
+    }
+  }
+}
+
+test('weighted round robin recovers with two upstreams after both hit minimum weight', async (t) => {
+  const backends = [createReusableBackend('A'), createReusableBackend('B')]
+  await Promise.all(backends.map((backend) => backend.start()))
+
+  t.after(async () => Promise.all(backends.map((backend) => backend.stop())))
+
+  const pool = new BalancedPool(backends.map((backend) => backend.url), {
+    connections: 1,
+    pipelining: 0,
+    connectTimeout: 200,
+    keepAliveTimeout: 1000,
+    keepAliveTimeoutThreshold: 100
+  })
+
+  t.after(() => pool.destroy())
+
+  async function requestBackend () {
+    try {
+      const { body } = await pool.request({
+        method: 'GET',
+        path: '/',
+        headersTimeout: 500,
+        bodyTimeout: 500
+      })
+      return await body.text()
+    } catch {
+      return 'ERR'
+    }
+  }
+
+  for (let i = 0; i < 12; i++) {
+    await requestBackend()
+  }
+
+  await Promise.all(backends.map((backend) => backend.stop()))
+
+  for (let i = 0; i < 24; i++) {
+    await requestBackend()
+  }
+
+  await backends[0].start()
+
+  const recoveredPhaseResults = []
+  for (let i = 0; i < 24; i++) {
+    recoveredPhaseResults.push(await requestBackend())
+  }
+
+  assert.ok(
+    recoveredPhaseResults.includes('A'),
+    `expected at least one request to recover through upstream A, received: ${recoveredPhaseResults.join(', ')}`
+  )
+})
+
 class TestServer {
   constructor ({ config: { server, socketHangup, downOnRequests, socketHangupOnRequests }, onRequest }) {
     this.config = {
