@@ -163,6 +163,12 @@ describe('strictContentLength: false', () => {
       })
       after(() => client.close())
 
+      client.on('disconnect', () => {
+        if (!client.closed && !client.destroyed) {
+          t.fail('unexpected disconnect')
+        }
+      })
+
       client.request({
         path: '/',
         method: 'PUT',
@@ -202,6 +208,12 @@ describe('strictContentLength: false', () => {
         strictContentLength: false
       })
       after(() => client.close())
+
+      client.on('disconnect', () => {
+        if (!client.closed && !client.destroyed) {
+          t.fail('unexpected disconnect')
+        }
+      })
 
       client.request({
         path: '/',
@@ -243,6 +255,12 @@ describe('strictContentLength: false', () => {
       })
       after(() => client.close())
 
+      client.on('disconnect', () => {
+        if (!client.closed && !client.destroyed) {
+          t.fail('unexpected disconnect')
+        }
+      })
+
       client.request({
         path: '/',
         method: 'PUT',
@@ -282,6 +300,12 @@ describe('strictContentLength: false', () => {
         strictContentLength: false
       })
       after(() => client.close())
+
+      client.on('disconnect', () => {
+        if (!client.closed && !client.destroyed) {
+          t.fail('unexpected disconnect')
+        }
+      })
 
       client.request({
         path: '/',
@@ -323,6 +347,12 @@ describe('strictContentLength: false', () => {
       })
       after(() => client.close())
 
+      client.on('disconnect', () => {
+        if (!client.closed && !client.destroyed) {
+          t.fail('unexpected disconnect')
+        }
+      })
+
       client.request({
         path: '/',
         method: 'PUT',
@@ -361,6 +391,12 @@ describe('strictContentLength: false', () => {
         strictContentLength: false
       })
       after(() => client.close())
+
+      client.on('disconnect', () => {
+        if (!client.closed && !client.destroyed) {
+          t.fail('unexpected disconnect')
+        }
+      })
 
       client.request({
         path: '/',

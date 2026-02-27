@@ -23,6 +23,12 @@ describe('max response size', async (t) => {
       const client = new Client(`http://localhost:${server.address().port}`, { maxResponseSize: -1 })
       after(() => client.close())
 
+      client.on('disconnect', () => {
+        if (!client.closed && !client.destroyed) {
+          t.fail('unexpected disconnect')
+        }
+      })
+
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
         t.ifError(err)
         t.strictEqual(statusCode, 200)
@@ -55,6 +61,12 @@ describe('max response size', async (t) => {
     server.listen(0, () => {
       const client = new Client(`http://localhost:${server.address().port}`, { maxResponseSize: 0 })
       after(() => client.close())
+
+      client.on('disconnect', () => {
+        if (!client.closed && !client.destroyed) {
+          t.fail('unexpected disconnect')
+        }
+      })
 
       client.request({ path: '/', method: 'GET' }, (err, { statusCode, body }) => {
         t.ifError(err)

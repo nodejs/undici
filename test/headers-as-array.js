@@ -20,6 +20,12 @@ test('handle headers as array', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     client.request({
       path: '/',
       method: 'GET',
@@ -45,6 +51,12 @@ test('handle multi-valued headers as array', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
+
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     client.request({
       path: '/',
@@ -72,6 +84,12 @@ test('handle headers with array', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     client.request({
       path: '/',
       method: 'GET',
@@ -98,6 +116,12 @@ test('handle multi-valued headers', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     client.request({
       path: '/',
       method: 'GET',
@@ -117,6 +141,12 @@ test('fail if headers array is odd', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
+
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     client.request({
       path: '/',
@@ -140,6 +170,12 @@ test('fail if headers is not an object or an array', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
+
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     client.request({
       path: '/',
