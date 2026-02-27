@@ -209,6 +209,12 @@ test('request streaming no body data when content-length=0', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     client.request({
       path: '/',
       method: 'PUT',
@@ -277,6 +283,12 @@ test('request streaming with Readable.from(buf)', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
+
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     client.request({
       path: '/',
