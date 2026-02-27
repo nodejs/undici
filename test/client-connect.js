@@ -7,6 +7,7 @@ const { Client, errors } = require('..')
 const http = require('node:http')
 const EE = require('node:events')
 const { kBusy } = require('../lib/core/symbols')
+const { guardDisconnect } = require('./guard-disconnect')
 
 // TODO: move to test/node-test/client-connect.js
 test('connect aborted after connect', async (t) => {
@@ -29,11 +30,7 @@ test('connect aborted after connect', async (t) => {
     pipelining: 3
   })
   after(() => client.close())
-  client.on('disconnect', () => {
-    if (!client.closed && !client.destroyed) {
-      t.fail('unexpected disconnect')
-    }
-  })
+  guardDisconnect(client, t)
 
   client.connect({
     path: '/',

@@ -4,6 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 const { createServer } = require('node:http')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('handle headers as array', async (t) => {
   t = tspl(t, { plan: 3 })
@@ -20,11 +21,7 @@ test('handle headers as array', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.request({
       path: '/',
@@ -52,11 +49,7 @@ test('handle multi-valued headers as array', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.request({
       path: '/',
@@ -84,11 +77,7 @@ test('handle headers with array', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.request({
       path: '/',
@@ -116,11 +105,7 @@ test('handle multi-valued headers', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.request({
       path: '/',
@@ -142,11 +127,7 @@ test('fail if headers array is odd', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.request({
       path: '/',
@@ -171,11 +152,7 @@ test('fail if headers is not an object or an array', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
 
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.request({
       path: '/',

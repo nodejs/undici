@@ -9,6 +9,7 @@ const { kConnect } = require('../lib/core/symbols')
 const EE = require('node:events')
 const { kBusy, kRunning, kSize } = require('../lib/core/symbols')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('20 times GET with pipelining 10', async (t) => {
   const num = 20
@@ -41,11 +42,7 @@ test('20 times GET with pipelining 10', async (t) => {
       pipelining: 10
     })
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     for (let i = 0; i < num; i++) {
       makeRequest(i)
@@ -103,11 +100,7 @@ test('A client should enqueue as much as twice its pipelining factor', async (t)
       pipelining: 2
     })
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     for (; sent < 2;) {
       t.ok(client[kSize] <= client.pipelining, 'client is not full')
@@ -158,11 +151,7 @@ test('pipeline 1 is 1 active request', async (t) => {
       pipelining: 1
     })
     after(() => client.destroy())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
     client.request({
       path: '/',
       method: 'GET'
@@ -216,11 +205,7 @@ test('pipelined chunked POST stream', async (t) => {
       pipelining: 2
     })
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.request({
       path: '/',
@@ -290,11 +275,7 @@ test('pipelined chunked POST iterator', async (t) => {
       pipelining: 2
     })
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     client.request({
       path: '/',
@@ -418,11 +399,7 @@ test('pipelining non-idempotent', async (t) => {
       pipelining: 2
     })
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
 
     let ended = false
     client.request({
@@ -469,11 +446,7 @@ function pipeliningNonIdempotentWithBody (bodyType) {
         pipelining: 2
       })
       after(() => client.close())
-      client.on('disconnect', () => {
-        if (!client.closed && !client.destroyed) {
-          t.fail('unexpected disconnect')
-        }
-      })
+      guardDisconnect(client, t)
 
       let ended = false
       let reading = false
@@ -782,11 +755,7 @@ test('pipelining blocked', async (t) => {
       pipelining: 10
     })
     after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+    guardDisconnect(client, t)
     client.request({
       path: '/',
       method: 'GET',
