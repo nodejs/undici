@@ -5,6 +5,7 @@ const { test, after } = require('node:test')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('handle a lot of headers', async (t) => {
   t = tspl(t, { plan: 3 })
@@ -25,11 +26,7 @@ test('handle a lot of headers', async (t) => {
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
 
-  client.on('disconnect', () => {
-    if (!client.closed && !client.destroyed) {
-      t.fail('unexpected disconnect')
-    }
-  })
+  guardDisconnect(client, t)
 
   client.request({
     path: '/',

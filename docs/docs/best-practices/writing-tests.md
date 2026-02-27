@@ -24,13 +24,14 @@ setGlobalDispatcher(agent)
 Undici's `Client` automatically reconnects after a socket error. This means
 a test can silently disconnect, reconnect, and still pass. Unfortunately, 
 this could mask bugs like unexpected parser errors or protocol violations.
-To catch these silent reconnections, add a disconnect guard after creating 
-a `Client`:
+To catch these silent reconnections, use the `guardDisconnect` helper from
+`test/guard-disconnect.js` after creating a `Client` (or `Pool`):
 
 ```js
 const { Client } = require('undici')
 const { test, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
+const { guardDisconnect } = require('./guard-disconnect')
 
 test('example with disconnect guard', async (t) => {
   t = tspl(t, { plan: 1 })
@@ -38,19 +39,16 @@ test('example with disconnect guard', async (t) => {
   const client = new Client('http://localhost:3000')
   after(() => client.close())
 
-  client.on('disconnect', () => {
-    if (!client.closed && !client.destroyed) {
-      t.fail('unexpected disconnect')
-    }
-  })
+  guardDisconnect(client, t)
 
   // ... test logic ...
 })
 ```
 
-`client.close()` and `client.destroy()` both emit `'disconnect'` events, but
-those are expected. The guard only fails when a disconnect happens during the
-active test (i.e., `!client.closed && !client.destroyed` is true).
+The guard listens for `'disconnect'` events and calls `t.fail()` unless the
+client is already closing or destroyed. `client.close()` and `client.destroy()`
+both emit `'disconnect'` events, but those are expected — the guard skips them
+by checking `!client.closed && !client.destroyed`.
 
 Skip the guard for tests where a disconnect is expected behavior, such as:
 
