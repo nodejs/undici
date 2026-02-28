@@ -67,6 +67,33 @@ test('handles uppercase HTTP_PROXY and HTTPS_PROXY', async (t) => {
   return dispatcher.close()
 })
 
+test('handles schema-less HTTP_PROXY by assuming http://', async (t) => {
+  t = tspl(t, { plan: 2 })
+  process.env.HTTP_PROXY = 'localhost:8080'
+  const dispatcher = new EnvHttpProxyAgent()
+  t.ok(dispatcher[kHttpProxyAgent] instanceof ProxyAgent)
+  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://localhost:8080/')
+  return dispatcher.close()
+})
+
+test('handles schema-less HTTPS_PROXY by assuming http://', async (t) => {
+  t = tspl(t, { plan: 2 })
+  process.env.HTTPS_PROXY = 'localhost:8443'
+  const dispatcher = new EnvHttpProxyAgent()
+  t.ok(dispatcher[kHttpsProxyAgent] instanceof ProxyAgent)
+  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://localhost:8443/')
+  return dispatcher.close()
+})
+
+test('preserves explicit https:// schema in proxy URL', async (t) => {
+  t = tspl(t, { plan: 2 })
+  process.env.HTTP_PROXY = 'https://secure-proxy.example.com:8080'
+  const dispatcher = new EnvHttpProxyAgent()
+  t.ok(dispatcher[kHttpProxyAgent] instanceof ProxyAgent)
+  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'https://secure-proxy.example.com:8080/')
+  return dispatcher.close()
+})
+
 test('accepts httpProxy and httpsProxy options', async (t) => {
   t = tspl(t, { plan: 6 })
   const opts = {
