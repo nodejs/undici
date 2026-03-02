@@ -99,14 +99,10 @@ describe('content-encoding chain limit', () => {
   // Similar to urllib3 (GHSA-gm62-xv2j-4w53) and curl (CVE-2022-32206)
   const MAX_CONTENT_ENCODINGS = 5
 
-  let server
-  before(async () => {
-    server = createServer({
-      noDelay: true
-    }, (req, res) => {
+  async function setupChainServer (t) {
+    const server = createServer({ noDelay: true }, (req, res) => {
       const encodingCount = parseInt(req.headers['x-encoding-count'] || '1', 10)
       const encodings = Array(encodingCount).fill('identity').join(', ')
-
       res.writeHead(200, {
         'Content-Encoding': encodings,
         'Content-Type': 'text/plain'
@@ -114,20 +110,21 @@ describe('content-encoding chain limit', () => {
       res.end('test')
     })
     await once(server.listen(0), 'listening')
-  })
-
-  after(() => {
-    server.closeAllConnections?.()
-    server.close()
-  })
-
-  test(`should allow exactly ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
+    t.after(async () => {
+      server.closeAllConnections?.()
+      server.close()
+      await once(server, 'close')
+    })
     const client = new Client(`http://localhost:${server.address().port}`)
     t.after(() => client.close())
+    return { server, client }
+  }
+
+  test(`should allow exactly ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
+    const { server, client } = await setupChainServer(t)
 
     const response = await fetch(`http://localhost:${server.address().port}`, {
       dispatcher: client,
-      keepalive: false,
       headers: { 'x-encoding-count': String(MAX_CONTENT_ENCODINGS) }
     })
 
@@ -137,13 +134,11 @@ describe('content-encoding chain limit', () => {
   })
 
   test(`should reject more than ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => client.close())
+    const { server, client } = await setupChainServer(t)
 
     await t.assert.rejects(
       fetch(`http://localhost:${server.address().port}`, {
         dispatcher: client,
-        keepalive: false,
         headers: { 'x-encoding-count': String(MAX_CONTENT_ENCODINGS + 1) }
       }),
       (err) => {
@@ -154,13 +149,11 @@ describe('content-encoding chain limit', () => {
   })
 
   test('should reject excessive content-encoding chains', async (t) => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => client.close())
+    const { server, client } = await setupChainServer(t)
 
     await t.assert.rejects(
       fetch(`http://localhost:${server.address().port}`, {
         dispatcher: client,
-        keepalive: false,
         headers: { 'x-encoding-count': '100' }
       }),
       (err) => {
