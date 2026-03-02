@@ -5,7 +5,6 @@ const { test, after } = require('node:test')
 const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
-const { guardDisconnect } = require('./guard-disconnect')
 
 test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, async (t) => {
   t = tspl(t, { plan: 2 })
@@ -40,7 +39,11 @@ test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, async (t
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
 
-  guardDisconnect(client, t)
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   client.request({
     path: '/',

@@ -5,7 +5,6 @@ const { test, after } = require('node:test')
 const { once } = require('node:events')
 const { Client } = require('..')
 const { createServer } = require('node:http')
-const { guardDisconnect } = require('./guard-disconnect')
 
 test('request post blob', async (t) => {
   t = tspl(t, { plan: 3 })
@@ -27,7 +26,11 @@ test('request post blob', async (t) => {
 
   const client = new Client(`http://localhost:${server.address().port}`)
   after(client.destroy.bind(client))
-  guardDisconnect(client, t)
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   client.request({
     path: '/',
@@ -64,7 +67,11 @@ test('request post arrayBuffer', async (t) => {
 
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.destroy())
-  guardDisconnect(client, t)
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   const buf = Buffer.from('asd')
   const dst = new ArrayBuffer(buf.byteLength)

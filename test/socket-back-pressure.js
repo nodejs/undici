@@ -6,7 +6,6 @@ const { Client } = require('..')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 const { test, after } = require('node:test')
-const { guardDisconnect } = require('./guard-disconnect')
 
 test('socket back-pressure', async (t) => {
   t = tspl(t, { plan: 3 })
@@ -38,7 +37,11 @@ test('socket back-pressure', async (t) => {
   })
   after(() => client.close())
 
-  guardDisconnect(client, t)
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   client.request({ path: '/', method: 'GET', opaque: 'asd' }, (err, data) => {
     t.ifError(err)
