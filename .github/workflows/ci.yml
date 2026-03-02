@@ -54,7 +54,7 @@ jobs:
         run: npm run lint
 
   test:
-    name: Test ${{ (matrix.node-version == '24' || matrix.node-version == '25') && matrix.runs-on == 'ubuntu-latest' && 'and Coverage ' || ''}}with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
+    name: Test ${{ matrix.node-version == '24' && matrix.runs-on == 'ubuntu-latest' && 'and Coverage ' || ''}}with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       max-parallel: 0
@@ -66,7 +66,8 @@ jobs:
             runs-on: windows-latest
     uses: ./.github/workflows/nodejs.yml
     with:
-      codecov: ${{ (matrix.node-version == '24' || matrix.node-version == '25') && matrix.runs-on == 'ubuntu-latest' }}
+      # Disable coverage on Node.js 25 until https://github.com/nodejs/node/issues/61971 is resolved.
+      codecov: ${{ matrix.node-version == '24' && matrix.runs-on == 'ubuntu-latest' }}
       node-version: ${{ matrix.node-version }}
       runs-on: ${{ matrix.runs-on }}
     secrets: inherit
