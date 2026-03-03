@@ -39,8 +39,7 @@ test('post abort signal', async (t) => {
     const ures = await request(`http://0.0.0.0:${server.address().port}`, { signal: ac.signal })
     ac.abort()
     try {
-      /* eslint-disable-next-line no-unused-vars */
-      for await (const chunk of ures.body) {
+      for await (const [] of ures.body) {
         // Do nothing...
       }
     } catch (err) {
@@ -64,8 +63,7 @@ test('post abort signal w/ reason', async (t) => {
     const ures = await request(`http://0.0.0.0:${server.address().port}`, { signal: ac.signal })
     ac.abort(_err)
     try {
-      /* eslint-disable-next-line no-unused-vars */
-      for await (const chunk of ures.body) {
+      for await (const [] of ures.body) {
         // Do nothing...
       }
     } catch (err) {
