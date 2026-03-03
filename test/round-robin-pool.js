@@ -43,6 +43,30 @@ test('throws when factory is not a function', (t) => {
   }
 })
 
+test('passes socketPath to custom connect function', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  const connectError = new Error('custom connect error')
+  const socketPath = '/var/run/test.sock'
+  const pool = new RoundRobinPool('http://localhost', {
+    socketPath,
+    connect (opts, cb) {
+      p.strictEqual(opts.socketPath, socketPath)
+      cb(connectError, null)
+    }
+  })
+  t.after(() => pool.close())
+
+  pool.request({
+    path: '/',
+    method: 'GET'
+  }, (err) => {
+    p.strictEqual(err, connectError)
+  })
+
+  await p.completed
+})
+
 test('basic get', async (t) => {
   t = tspl(t, { plan: 4 })
 
