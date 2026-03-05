@@ -148,6 +148,40 @@ const defaultDispatcher = new Agent({
 setGlobalDispatcher(defaultDispatcher) // Add these interceptors to all `fetch` and Undici `request` calls
 ```
 
+### Cache interceptor with `fetch`
+
+```js
+import { Agent, interceptors, setGlobalDispatcher, fetch } from 'undici'
+import { createServer } from 'node:http'
+
+const { cache } = interceptors
+
+const server = createServer((req, res) => {
+  // Cache this response for 60 seconds
+  res.setHeader('cache-control', 'public, max-age=60')
+  res.end(JSON.stringify({ now: Date.now() }))
+})
+
+await new Promise((resolve) => server.listen(0, resolve))
+const { port } = server.address()
+
+const dispatcher = new Agent().compose(cache())
+setGlobalDispatcher(dispatcher)
+
+// First request goes to the origin server
+const first = await fetch(`http://localhost:${port}`)
+const firstBody = await first.json()
+
+// Second request is served from cache if still fresh
+const second = await fetch(`http://localhost:${port}`)
+const secondBody = await second.json()
+
+console.log(firstBody.now === secondBody.now) // true
+
+await dispatcher.close()
+await new Promise((resolve) => server.close(resolve))
+```
+
 ## Connecting via Unix domain sockets (UDS)
 
 ### request() over UDS (per-call dispatcher)
