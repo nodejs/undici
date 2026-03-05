@@ -307,9 +307,7 @@ test('Socks5Client - connection refused', async (t) => {
   const client = new Socks5Client(socket)
 
   client.on('authenticated', () => {
-    client.connect('example.com', 80).catch(() => {
-      // Error is handled in the error event
-    })
+    client.connect('example.com', 80)
   })
 
   client.on('error', (err) => {

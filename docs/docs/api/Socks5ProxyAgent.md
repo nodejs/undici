@@ -213,6 +213,16 @@ Implements [`Dispatcher.dispatch(options, handlers)`](/docs/docs/api/Dispatcher.
 
 See [`Dispatcher.request(options [, callback])`](/docs/docs/api/Dispatcher.md#dispatcherrequestoptions-callback).
 
+## Debugging
+
+SOCKS5 proxy connections can be debugged using Node.js diagnostics:
+
+```sh
+NODE_DEBUG=undici:socks5 node script.js
+```
+
+This will output detailed information about the SOCKS5 handshake, authentication, and connection establishment.
+
 ## SOCKS5 Protocol Support
 
 The Socks5ProxyAgent supports the following SOCKS5 features:
