@@ -53,13 +53,13 @@ test('creates separate proxy agent for http and https when http_proxy and https_
   return dispatcher.close()
 })
 
-test('assumes http scheme for schema-less proxy env vars', async (t) => {
+test('assumes protocol-specific scheme for schema-less proxy env vars', async (t) => {
   t = tspl(t, { plan: 2 })
   process.env.http_proxy = 'localhost:8080'
   process.env.https_proxy = 'localhost:8443'
   const dispatcher = new EnvHttpProxyAgent()
   t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://localhost:8080/')
-  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://localhost:8443/')
+  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'https://localhost:8443/')
   return dispatcher.close()
 })
 
