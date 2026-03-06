@@ -9,8 +9,8 @@ expectAssignable<BalancedPool>(new BalancedPool(new URL('http://localhost'), {})
 expectAssignable<BalancedPool>(new BalancedPool('', { factory: () => new Dispatcher() }))
 expectAssignable<BalancedPool>(new BalancedPool('', { factory: (origin, opts) => new Client(origin, opts) }))
 expectAssignable<BalancedPool>(new BalancedPool('', { connections: 1 }))
-expectAssignable<BalancedPool>(new BalancedPool(['http://localhost:4242', 'http://www.nodejs.org']))
-expectAssignable<BalancedPool>(new BalancedPool([new URL('http://localhost:4242'), new URL('http://www.nodejs.org')], {}))
+expectAssignable<BalancedPool>(new BalancedPool(['http://localhost:4242', 'http://www.example.test']))
+expectAssignable<BalancedPool>(new BalancedPool([new URL('http://localhost:4242'), new URL('http://www.example.test')], {}))
 
 {
   const pool = new BalancedPool('', {})
@@ -20,12 +20,12 @@ expectAssignable<BalancedPool>(new BalancedPool([new URL('http://localhost:4242'
   expectAssignable<boolean>(pool.destroyed)
 
   // upstreams
-  expectAssignable<BalancedPool>(pool.addUpstream('http://www.nodejs.org'))
-  expectAssignable<BalancedPool>(pool.removeUpstream('http://www.nodejs.org'))
-  expectAssignable<BalancedPool>(pool.addUpstream(new URL('http://www.nodejs.org')))
-  expectAssignable<BalancedPool>(pool.removeUpstream(new URL('http://www.nodejs.org')))
-  expectAssignable<Pool | undefined>(pool.getUpstream('http://www.nodejs.org'))
-  expectAssignable<Pool | undefined>(pool.getUpstream(new URL('http://www.nodejs.org')))
+  expectAssignable<BalancedPool>(pool.addUpstream('http://www.example.test'))
+  expectAssignable<BalancedPool>(pool.removeUpstream('http://www.example.test'))
+  expectAssignable<BalancedPool>(pool.addUpstream(new URL('http://www.example.test')))
+  expectAssignable<BalancedPool>(pool.removeUpstream(new URL('http://www.example.test')))
+  expectAssignable<Pool | undefined>(pool.getUpstream('http://www.example.test'))
+  expectAssignable<Pool | undefined>(pool.getUpstream(new URL('http://www.example.test')))
   expectAssignable<string[]>(pool.upstreams)
 
   // request

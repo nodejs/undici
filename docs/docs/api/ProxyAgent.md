@@ -181,7 +181,7 @@ proxyServer.listen(8000, () => {
 // Define and use the ProxyAgent
 const proxyAgent = new ProxyAgent('http://localhost:8000');
 
-const response = await fetch('http://example.com', {
+const response = await fetch('http://example.example', {
   dispatcher: proxyAgent,
   method: 'GET',
 });
@@ -224,6 +224,6 @@ const proxyAgent = new ProxyAgent('http://localhost:8000');
 setGlobalDispatcher(proxyAgent);
 
 // Make requests without specifying the dispatcher
-const response = await fetch('http://example.com');
+const response = await fetch('http://example.example');
 console.log('Response status:', response.status);
 console.log('Response data:', await response.text());
