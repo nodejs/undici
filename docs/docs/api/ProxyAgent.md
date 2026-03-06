@@ -203,7 +203,7 @@ import { ProxyAgent, fetch } from 'undici';
 const proxyAgent = new ProxyAgent('https://secure.proxy.server');
 
 // Make a request to an HTTPS endpoint via the proxy
-const response = await fetch('https://secure.endpoint.com/api/data', {
+const response = await fetch('https://secure.endpoint.example/api/data', {
   dispatcher: proxyAgent,
   method: 'GET',
 });

@@ -191,11 +191,11 @@ agent.disableNetConnect();
 setGlobalDispatcher(agent);
 describe('Test', () => {
   it('200', async () => {
-    const mockAgent = agent.get('http://test.com');
+    const mockAgent = agent.get('http://test.example');
     // your test
   });
   it('200', async () => {
-    const mockAgent = agent.get('http://testing.com');
+    const mockAgent = agent.get('http://testing.example');
     // your test
   });
 });
@@ -409,16 +409,16 @@ import { MockAgent, setGlobalDispatcher, request } from 'undici'
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
-mockAgent.enableNetConnect('example-1.com')
-mockAgent.enableNetConnect('example-2.com:8080')
+mockAgent.enableNetConnect('example-1.test')
+mockAgent.enableNetConnect('example-2.test:8080')
 
-await request('http://example-1.com')
+await request('http://example-1.test')
 // A real request is made
 
-await request('http://example-2.com:8080')
+await request('http://example-2.test:8080')
 // A real request is made
 
-await request('http://example-3.com')
+await request('http://example-3.test')
 // Will throw
 ```
 
