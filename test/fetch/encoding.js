@@ -10,7 +10,6 @@ describe('content-encoding handling', () => {
   const zstdText = Buffer.from('KLUv/QBYaQAASGVsbG8sIFdvcmxkIQ==', 'base64')
 
   let server
-  let client
   before(async () => {
     server = createServer({
       noDelay: true
@@ -48,19 +47,16 @@ describe('content-encoding handling', () => {
       }
     })
     await once(server.listen(0), 'listening')
-    client = new Client(`http://localhost:${server.address().port}`)
   })
 
-  after(async () => {
-    await client.close()
+  after(() => {
     server.closeAllConnections?.()
     server.close()
-    await once(server, 'close')
   })
 
   test('content-encoding header', async (t) => {
     const response = await fetch(`http://localhost:${server.address().port}`, {
-      dispatcher: client,
+      keepalive: false,
       headers: { 'accept-encoding': 'deflate, gzip' }
     })
 
@@ -71,7 +67,7 @@ describe('content-encoding handling', () => {
 
   test('content-encoding header is case-iNsENsITIve', async (t) => {
     const response = await fetch(`http://localhost:${server.address().port}`, {
-      dispatcher: client,
+      keepalive: false,
       headers: { 'accept-encoding': 'DeFlAtE, GzIp' }
     })
 
@@ -84,7 +80,7 @@ describe('content-encoding handling', () => {
     { skip: typeof require('node:zlib').createZstdDecompress !== 'function' },
     async (t) => {
       const response = await fetch(`http://localhost:${server.address().port}`, {
-        dispatcher: client,
+        keepalive: false,
         headers: { 'accept-encoding': 'zstd' }
       })
 
@@ -99,32 +95,37 @@ describe('content-encoding chain limit', () => {
   // Similar to urllib3 (GHSA-gm62-xv2j-4w53) and curl (CVE-2022-32206)
   const MAX_CONTENT_ENCODINGS = 5
 
-  async function setupChainServer (t) {
-    const server = createServer({ noDelay: true }, (req, res) => {
+  let server
+  before(async () => {
+    server = createServer({
+      noDelay: true
+    }, (req, res) => {
+      res.socket.setNoDelay(true)
       const encodingCount = parseInt(req.headers['x-encoding-count'] || '1', 10)
       const encodings = Array(encodingCount).fill('identity').join(', ')
+
       res.writeHead(200, {
         'Content-Encoding': encodings,
         'Content-Type': 'text/plain'
       })
+      res.flushHeaders()
       res.end('test')
     })
     await once(server.listen(0), 'listening')
-    t.after(async () => {
-      server.closeAllConnections?.()
-      server.close()
-      await once(server, 'close')
-    })
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => client.close())
-    return { server, client }
-  }
+  })
+
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
 
   test(`should allow exactly ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
-    const { server, client } = await setupChainServer(t)
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.after(() => client.close())
 
     const response = await fetch(`http://localhost:${server.address().port}`, {
       dispatcher: client,
+      keepalive: false,
       headers: { 'x-encoding-count': String(MAX_CONTENT_ENCODINGS) }
     })
 
@@ -134,11 +135,13 @@ describe('content-encoding chain limit', () => {
   })
 
   test(`should reject more than ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
-    const { server, client } = await setupChainServer(t)
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.after(() => client.close())
 
     await t.assert.rejects(
       fetch(`http://localhost:${server.address().port}`, {
         dispatcher: client,
+        keepalive: false,
         headers: { 'x-encoding-count': String(MAX_CONTENT_ENCODINGS + 1) }
       }),
       (err) => {
@@ -149,11 +152,13 @@ describe('content-encoding chain limit', () => {
   })
 
   test('should reject excessive content-encoding chains', async (t) => {
-    const { server, client } = await setupChainServer(t)
+    const client = new Client(`http://localhost:${server.address().port}`)
+    t.after(() => client.close())
 
     await t.assert.rejects(
       fetch(`http://localhost:${server.address().port}`, {
         dispatcher: client,
+        keepalive: false,
         headers: { 'x-encoding-count': '100' }
       }),
       (err) => {
