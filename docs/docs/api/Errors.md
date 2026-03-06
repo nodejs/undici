@@ -38,9 +38,6 @@ The timeout errors below are controlled by dispatcher/client options:
 | `UND_ERR_BODY_TIMEOUT` | While reading the response body, no new data arrived before the body timeout elapsed. | [`bodyTimeout`](/docs/docs/api/Client.md#parameter-clientoptions) |
 | `UND_ERR_SOCKET` | A generic socket-level failure happened (including some timeout-related socket errors). | Inspect `error.socket` and adjust your dispatcher/client socket settings. |
 
-> **Note**: `UND_ERR_SOCKET_TIMEOUT` is not an Undici error code.
-> Socket timeout-like failures are reported as `UND_ERR_SOCKET`.
-
 ### Configuring timeouts for `fetch`
 
 If you are using `fetch` (including Node.js built-in `fetch`), configure timeouts
