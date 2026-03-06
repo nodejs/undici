@@ -25,6 +25,12 @@ test('request timeout with slow readable body', async (t) => {
   const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 50 })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const body = new Readable({
     read () {
       if (this._reading) {

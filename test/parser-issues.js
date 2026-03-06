@@ -26,6 +26,12 @@ test('https://github.com/mcollina/undici/issues/268', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.destroy())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     client.request({
       method: 'GET',
       path: '/nxt/_changes?feed=continuous&heartbeat=5000',

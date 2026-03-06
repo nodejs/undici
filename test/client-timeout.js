@@ -180,6 +180,12 @@ test('parser resume with no body timeout', async (t) => {
     })
     after(() => client.destroy())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     client.dispatch({
       path: '/',
       method: 'GET'

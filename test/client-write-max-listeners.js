@@ -48,6 +48,12 @@ test('socket close listener does not leak', async (t) => {
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.destroy())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   for (let n = 0; n < 16; ++n) {
     client.request({ path: '/', method: 'GET', body: makeBody() }, onRequest)
   }

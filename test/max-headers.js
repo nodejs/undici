@@ -25,6 +25,12 @@ test('handle a lot of headers', async (t) => {
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   client.request({
     path: '/',
     method: 'GET'

@@ -22,6 +22,12 @@ test('pipeline pipelining', async (t) => {
     })
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     client[kConnect](() => {
       t.equal(client[kRunning], 0)
       client.pipeline({

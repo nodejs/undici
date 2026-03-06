@@ -31,6 +31,12 @@ test('custom session passed to client will be used in tls connect call', async (
     })
     after(() => client.close())
 
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     const { statusCode, headers, body } = await client.request({
       path: '/',
       method: 'GET'
