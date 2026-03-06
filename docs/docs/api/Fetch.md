@@ -22,6 +22,20 @@ This API is implemented as per the standard, you can find documentation on [MDN]
 
 This API is implemented as per the standard, you can find documentation on [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Headers)
 
+### Forbidden headers
+
+Undici follows the Fetch specification rules for forbidden header names.
+This means some browser-controlled headers cannot be set manually in
+`fetch()` or `new Request()` calls.
+
+For example, setting a `connection` header will throw an error such as
+`InvalidArgumentError: invalid connection header`.
+
+If your code is migrating from another HTTP client, remove these headers
+and let Undici manage connection-level behavior.
+
+See the [Fetch standard's list of forbidden request-header names](https://fetch.spec.whatwg.org/#forbidden-request-header).
+
 # Body Mixins
 
 `Response` and `Request` body inherit body mixin methods. These methods include:
