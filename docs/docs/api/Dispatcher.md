@@ -962,7 +962,7 @@ It accepts the same arguments as the [`RedirectHandler` constructor](/docs/docs/
 const { Client, interceptors } = require("undici");
 const { redirect } = interceptors;
 
-const client = new Client("http://example.example").compose(
+const client = new Client("http://nodejs.example").compose(
   redirect({ maxRedirections: 3, throwOnMaxRedirects: true })
 );
 client.request({ path: "/" })
@@ -980,7 +980,7 @@ It accepts the same arguments as the [`RetryHandler` constructor](/docs/docs/api
 const { Client, interceptors } = require("undici");
 const { retry } = interceptors;
 
-const client = new Client("http://example.example").compose(
+const client = new Client("http://nodejs.example").compose(
   retry({
     maxRetries: 3,
     minTimeout: 1000,
@@ -1006,7 +1006,7 @@ The `dump` interceptor enables you to dump the response body from a request upon
 const { Client, interceptors } = require("undici");
 const { dump } = interceptors;
 
-const client = new Client("http://example.example").compose(
+const client = new Client("http://nodejs.example").compose(
   dump({
     maxSize: 1024,
   })
@@ -1132,7 +1132,7 @@ The `responseError` interceptor throws an error for responses with status code e
 const { Client, interceptors } = require("undici");
 const { responseError } = interceptors;
 
-const client = new Client("http://example.example").compose(
+const client = new Client("http://nodejs.example").compose(
   responseError()
 );
 
@@ -1160,7 +1160,7 @@ The `decompress` interceptor automatically decompresses response bodies that are
 const { Client, interceptors } = require("undici");
 const { decompress } = interceptors;
 
-const client = new Client("http://example.example").compose(
+const client = new Client("http://nodejs.example").compose(
   decompress()
 );
 
@@ -1177,7 +1177,7 @@ const response = await client.request({
 const { Client, interceptors } = require("undici");
 const { decompress } = interceptors;
 
-const client = new Client("http://example.example").compose(
+const client = new Client("http://nodejs.example").compose(
   decompress({
     skipErrorResponses: false, // Decompress 5xx responses
     skipStatusCodes: [204, 304, 201] // Skip these status codes
@@ -1231,12 +1231,12 @@ const { Client, interceptors } = require("undici");
 const { deduplicate, cache } = interceptors;
 
 // Deduplicate only
-const client = new Client("http://example.example").compose(
+const client = new Client("http://nodejs.example").compose(
   deduplicate()
 );
 
 // Deduplicate with caching
-const clientWithCache = new Client("http://example.example").compose(
+const clientWithCache = new Client("http://nodejs.example").compose(
   deduplicate(),
   cache()
 );

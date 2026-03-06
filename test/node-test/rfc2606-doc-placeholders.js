@@ -19,7 +19,8 @@ const disallowedHosts = [
   'example-2.com',
   'example-3.com',
   'mysite.com',
-  'secure.endpoint.com'
+  'secure.endpoint.com',
+  'example.example'
 ]
 
 test('docs examples use RFC2606-style placeholder domains', () => {

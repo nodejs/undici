@@ -397,7 +397,7 @@ setGlobalDispatcher(mockAgent)
 
 mockAgent.enableNetConnect()
 
-await request('http://example.example')
+await request('http://nodejs.example')
 // A real request is made
 ```
 
@@ -430,9 +430,9 @@ import { MockAgent, setGlobalDispatcher, request } from 'undici'
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
-mockAgent.enableNetConnect(new RegExp('example\.example'))
+mockAgent.enableNetConnect(new RegExp('nodejs\.example'))
 
-await request('http://example.example')
+await request('http://nodejs.example')
 // A real request is made
 ```
 
@@ -444,9 +444,9 @@ import { MockAgent, setGlobalDispatcher, request } from 'undici'
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 
-mockAgent.enableNetConnect((value) => value === 'example.example')
+mockAgent.enableNetConnect((value) => value === 'nodejs.example')
 
-await request('http://example.example')
+await request('http://nodejs.example')
 // A real request is made
 ```
 
@@ -465,7 +465,7 @@ const mockAgent = new MockAgent()
 
 mockAgent.disableNetConnect()
 
-await request('http://example.example')
+await request('http://nodejs.example')
 // Will throw
 ```
 
@@ -486,7 +486,7 @@ const agent = new MockAgent()
 agent.disableNetConnect()
 
 agent
-  .get('https://example.example')
+  .get('https://nodejs.example')
   .intercept({ method: 'GET', path: '/' })
   .reply(200)
 
@@ -509,7 +509,7 @@ const pendingInterceptors = agent.pendingInterceptors()
 //       headers: {},
 //       trailers: {}
 //     },
-//     origin: 'https://example.example'
+//     origin: 'https://nodejs.example'
 //   }
 // ]
 ```
@@ -529,7 +529,7 @@ const agent = new MockAgent()
 agent.disableNetConnect()
 
 agent
-  .get('https://example.example')
+  .get('https://nodejs.example')
   .intercept({ method: 'GET', path: '/' })
   .reply(200)
 
@@ -541,7 +541,7 @@ agent.assertNoPendingInterceptors()
 // ┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
 // │ (index) │ Method │        Origin         │ Path │ Status code │ Persistent │ Invocations │ Remaining │
 // ├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
-// │    0    │ 'GET'  │ 'https://example.example' │ '/'  │     200     │    '❌'    │      0      │     1     │
+// │    0    │ 'GET'  │ 'https://nodejs.example' │ '/'  │     200     │    '❌'    │      0      │     1     │
 // └─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
 ```
 
@@ -557,7 +557,7 @@ import { MockAgent, setGlobalDispatcher, request } from 'undici'
 const mockAgent = new MockAgent({ enableCallHistory: true })
 setGlobalDispatcher(mockAgent)
 
-await request('http://example.example', { query: { item: 1 }})
+await request('http://nodejs.example', { query: { item: 1 }})
 
 mockAgent.getCallHistory()?.firstCall()
 // Returns
@@ -565,12 +565,12 @@ mockAgent.getCallHistory()?.firstCall()
 //   body: undefined,
 //   headers: undefined,
 //   method: 'GET',
-//   origin: 'http://example.example',
-//   fullUrl: 'http://example.example/?item=1',
+//   origin: 'http://nodejs.example',
+//   fullUrl: 'http://nodejs.example/?item=1',
 //   path: '/',
 //   searchParams: { item: '1' },
 //   protocol: 'http:',
-//   host: 'example.example',
+//   host: 'nodejs.example',
 //   port: ''
 // }
 ```
