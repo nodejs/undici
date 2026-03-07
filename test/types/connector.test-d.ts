@@ -33,5 +33,6 @@ expectAssignable<buildConnector.Options>({
   hostname: 'example.com',
   port: '',
   localAddress: '127.0.0.1',
+  socketPath: '/var/run/undici.sock',
   httpSocket: new Socket()
 })

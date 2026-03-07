@@ -91,6 +91,30 @@ test('basic get', async (t) => {
   await t.completed
 })
 
+test('passes socketPath to custom connect function', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const connectError = new Error('custom connect error')
+  const socketPath = '/var/run/test.sock'
+  const client = new Client('http://localhost', {
+    socketPath,
+    connect (opts, cb) {
+      t.strictEqual(opts.socketPath, socketPath)
+      cb(connectError, null)
+    }
+  })
+  after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err) => {
+    t.strictEqual(err, connectError)
+  })
+
+  await t.completed
+})
+
 test('basic get with custom request.reset=true', async (t) => {
   t = tspl(t, { plan: 26 })
 
