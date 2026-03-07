@@ -155,7 +155,7 @@ test('serializePathWithQuery', () => {
     [{}, '']
   ]
 
-  const base = 'https://www.google.com'
+  const base = 'https://www.example.test'
 
   for (const [input, output] of tests) {
     const expected = `${base}${output ? `?${output}` : output}`

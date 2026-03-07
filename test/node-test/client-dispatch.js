@@ -1021,7 +1021,7 @@ test('Issue#3065 - fix bad destroy handling', async (t) => {
     })
 
     client.dispatch({
-      servername: 'google.com',
+      servername: 'example.test',
       path: '/',
       method: 'POST',
       body: 'body'
@@ -1115,7 +1115,7 @@ test('Issue#3065 - fix bad destroy handling (h2)', async (t) => {
     })
 
     client.dispatch({
-      servername: 'google.com',
+      servername: 'example.test',
       path: '/',
       method: 'POST',
       body: 'body'

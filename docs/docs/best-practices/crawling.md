@@ -29,7 +29,7 @@ const headers = {
   'User-Agent': 'AcmeCo Crawler - acme.co - contact@acme.co'
 }
 
-const res = await fetch('https://example.com', { headers })
+const res = await fetch('https://nodejs.test', { headers })
 ```
 
 ## Best Practices for Crawlers
