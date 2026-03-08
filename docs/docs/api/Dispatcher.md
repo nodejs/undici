@@ -1214,6 +1214,28 @@ The `cache` interceptor implements client-side response caching as described in
 - `cacheByDefault` - The default expiration time to cache responses by if they don't have an explicit expiration and cannot have an heuristic expiry computed. If this isn't present, responses neither with an explicit expiration nor heuristically cacheable will not be cached. Default `undefined`.
 - `type` - The [type of cache](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching#types_of_caches) for Undici to act as. Can be `shared` or `private`. Default `shared`. `private` implies privately cacheable responses will be cached and potentially shared with other users of your application.
 
+**Usage with `fetch`**
+
+```js
+const { Agent, cacheStores, interceptors, setGlobalDispatcher } = require('undici')
+
+const client = new Agent().compose(interceptors.cache({
+  store: new cacheStores.MemoryCacheStore({
+    maxSize: 100 * 1024 * 1024, // 100MB
+    maxCount: 1000,
+    maxEntrySize: 5 * 1024 * 1024 // 5MB
+  })
+}))
+
+setGlobalDispatcher(client)
+
+// First request goes to the network and is cached when cache headers allow it.
+const first = await fetch('https://example.com/data')
+
+// Second request can be served from cache according to RFC9111 rules.
+const second = await fetch('https://example.com/data')
+```
+
 ##### `Deduplicate Interceptor`
 
 The `deduplicate` interceptor deduplicates concurrent identical requests. When multiple identical requests are made while one is already in-flight, only one request is sent to the origin server, and all waiting handlers receive the same response. This reduces server load and improves performance.
