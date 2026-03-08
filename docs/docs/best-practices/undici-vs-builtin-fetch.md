@@ -30,9 +30,11 @@ adding undici to your dependencies:
 - You do not depend on features or bug fixes introduced in a version of undici
   newer than the one bundled with your Node.js release.
 - You want zero additional runtime dependencies.
+- You want cross-platform interoperability with browsers and other runtimes
+  (Deno, Bun, Cloudflare Workers, etc.) using the same Fetch API surface.
 
 This is common in applications that make straightforward HTTP requests or in
-libraries that target multiple JavaScript runtimes (browsers, Deno, Bun, etc.).
+libraries that target multiple JavaScript runtimes.
 
 ## When you SHOULD install undici
 
@@ -65,8 +67,11 @@ const { body } = await pool.request({ path: '/', method: 'GET' });
 
 ### Proxy support
 
-`ProxyAgent` and `EnvHttpProxyAgent` handle HTTP(S) proxying, which is not
-available through the built-in `fetch`:
+`ProxyAgent` and `EnvHttpProxyAgent` handle HTTP(S) proxying. Note that
+Node.js v22.21.0+ and v24.0.0+ support environment-variable-based proxy
+configuration for the built-in `fetch` via the `--use-env-proxy` flag (or
+`NODE_USE_ENV_PROXY=1`). However, undici's `ProxyAgent` still provides
+programmatic control through the dispatcher API:
 
 ```js
 import { ProxyAgent, fetch } from 'undici';
@@ -108,6 +113,7 @@ feature, you can install a newer version directly.
 | v18.x | ~5.x | `fetch` is experimental (behind `--experimental-fetch` in early v18) |
 | v20.x | ~6.x | `fetch` is stable |
 | v22.x | ~6.x / ~7.x | `fetch` is stable |
+| v24.x | ~7.x | `fetch` is stable; env-proxy support via `--use-env-proxy` |
 
 You can always check the exact bundled version at runtime with
 `process.versions.undici`.
