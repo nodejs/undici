@@ -23,6 +23,7 @@ declare namespace buildConnector {
     port: string
     servername?: string
     localAddress?: string | null
+    socketPath?: string | null
     httpSocket?: Socket
   }
 
