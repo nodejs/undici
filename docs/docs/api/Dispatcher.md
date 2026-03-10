@@ -1274,6 +1274,68 @@ All deduplicated requests receive the complete response including status code, h
 
 For observability, request deduplication events are published to the `undici:request:pending-requests` [diagnostic channel](/docs/docs/api/DiagnosticsChannel.md#undicirequestpending-requests).
 
+##### `Priority Interceptor`
+
+The `priority` interceptor allows you to control the order in which requests are dispatched based on an assigned priority level. Requests with higher priority are dispatched first. Requests are queued per origin and dispatched according to a configurable concurrency limit.
+
+**Options**
+
+- `concurrency` - The maximum number of concurrent requests per origin. Default: `1`.
+- `maxQueue` - The maximum number of queued requests per origin. If the queue is full, an error is thrown. Default: `128`.
+
+**Priority Levels**
+
+The following named priority values are available via `interceptors.priority.PRIORITIES`:
+
+| Name | Value |
+|---|---|
+| `HIGHEST` | `4` |
+| `HIGH` | `3` |
+| `MEDIUM` | `2` |
+| `LOW` | `1` |
+| `LOWEST` | `0` |
+
+Requests without a `priority` option (or with `priority: null`/`undefined`) bypass the queue entirely and are dispatched immediately.
+
+**Example - Basic Priority Interceptor**
+
+```js
+const { Client, interceptors } = require("undici");
+const { priority } = interceptors;
+const { PRIORITIES } = priority;
+
+const client = new Client("http://service.example").compose(
+  priority({ concurrency: 2 })
+);
+
+// High priority request dispatches before lower ones
+await client.request({
+  origin: "http://service.example",
+  method: "GET",
+  path: "/important",
+  priority: PRIORITIES.HIGH,
+});
+
+// Low priority request queued behind higher priority ones
+await client.request({
+  origin: "http://service.example",
+  method: "GET",
+  path: "/background",
+  priority: PRIORITIES.LOW,
+});
+```
+
+**Example - Queue Size Limit**
+
+```js
+const { Client, interceptors } = require("undici");
+const { priority } = interceptors;
+
+const client = new Client("http://service.example").compose(
+  priority({ concurrency: 1, maxQueue: 50 })
+);
+```
+
 ## Instance Events
 
 ### Event: `'connect'`

@@ -62,6 +62,28 @@ declare namespace Interceptors {
     excludeHeaderNames?: string[]
   }
 
+  // Priority interceptor
+  export type Priority = 0 | 1 | 2 | 3 | 4
+  export type PriorityInterceptorOpts = {
+    /**
+     * Maximum number of concurrent requests per origin.
+     * @default 1
+     */
+    concurrency?: number
+    /**
+     * Maximum number of queued requests per origin.
+     * @default 128
+     */
+    maxQueue?: number
+  }
+  export const PRIORITIES: {
+    HIGHEST: 4
+    HIGH: 3
+    MEDIUM: 2
+    LOW: 1
+    LOWEST: 0
+  }
+
   export function dump (opts?: DumpInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function retry (opts?: RetryInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function redirect (opts?: RedirectInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
@@ -70,4 +92,5 @@ declare namespace Interceptors {
   export function dns (opts?: DNSInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function cache (opts?: CacheInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function deduplicate (opts?: DeduplicateInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
+  export function priority (opts?: PriorityInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
 }
