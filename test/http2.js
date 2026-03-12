@@ -1389,7 +1389,7 @@ test('#3046 - GOAWAY Frame', async t => {
   t.strictEqual(response.headers['x-custom-h2'], 'hello')
   t.strictEqual(response.statusCode, 200)
 
-  t.rejects(response.body.text(), {
+  await t.rejects(response.body.text(), {
     message: 'HTTP/2: "GOAWAY" frame received with code 0',
     code: 'UND_ERR_SOCKET'
   })
@@ -1486,12 +1486,13 @@ test('#3803 - sending FormData bodies works', async (t) => {
   fd.set('a', 'b')
   fd.set('c', new Blob(['d']), 'e.fgh')
 
-  await client.request({
+  const { body } = await client.request({
     path: '/',
     method: 'POST',
     body: fd
   })
 
+  await body.dump()
   await assert.completed
 })
 

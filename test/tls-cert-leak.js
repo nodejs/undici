@@ -15,7 +15,8 @@ const hasGC = typeof global.gc !== 'undefined'
 // It simulates the error by using a server with a self-signed certificate.
 test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t) => {
   if (!hasGC) {
-    throw new Error('gc is not available. Run with \'--expose-gc\'.')
+    t.skip('gc is not available')
+    return
   }
 
   const { ok } = tspl(t, { plan: 1 })
