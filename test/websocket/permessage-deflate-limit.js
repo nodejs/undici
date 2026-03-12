@@ -1,6 +1,7 @@
 'use strict'
 
 const { test } = require('node:test')
+const assert = require('node:assert')
 const { once } = require('node:events')
 const http = require('node:http')
 const crypto = require('node:crypto')
@@ -75,7 +76,7 @@ test('Compressed message under limit decompresses successfully', async (t) => {
   const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
 
   const [event] = await once(client, 'message')
-  t.assert.strictEqual(event.data.size, 1024)
+  assert.strictEqual(event.data.size, 1024)
   client.close()
 })
 
@@ -109,7 +110,7 @@ test('Custom maxDecompressedMessageSize is enforced', async (t) => {
   await once(client, 'close')
 
   // The message should NOT have been received due to size limit
-  t.assert.strictEqual(messageReceived, false)
+  assert.strictEqual(messageReceived, false)
 })
 
 test('Message exactly at limit succeeds', async (t) => {
@@ -132,7 +133,7 @@ test('Message exactly at limit succeeds', async (t) => {
   })
 
   const [event] = await once(client, 'message')
-  t.assert.strictEqual(event.data.size, limit)
+  assert.strictEqual(event.data.size, limit)
   client.close()
 })
 
@@ -156,7 +157,7 @@ test('Message one byte over limit fails', async (t) => {
   })
 
   const [event] = await once(client, 'error')
-  t.assert.ok(event.error instanceof Error)
+  assert.ok(event.error instanceof Error)
 })
 
 test('Connection closes when limit exceeded', async (t) => {
@@ -179,7 +180,7 @@ test('Connection closes when limit exceeded', async (t) => {
 
   const [event] = await once(client, 'close')
   // Connection should be closed - code 1006 (abnormal) or 1009 (too big)
-  t.assert.ok(event.code === 1006 || event.code === 1009)
+  assert.ok(event.code === 1006 || event.code === 1009)
 })
 
 test('Non-compressed messages are not affected by decompression limit', async (t) => {
@@ -202,7 +203,7 @@ test('Non-compressed messages are not affected by decompression limit', async (t
 
   // Should succeed because compression is not used
   const [event] = await once(client, 'message')
-  t.assert.strictEqual(event.data.size, 2 * 1024 * 1024)
+  assert.strictEqual(event.data.size, 2 * 1024 * 1024)
   client.close()
 })
 
@@ -252,7 +253,7 @@ test('Decompression bomb is mitigated via raw WebSocket handshake', async (t) =>
   await once(client, 'close')
 
   // The message should NOT have been received due to size limit
-  t.assert.strictEqual(messageReceived, false)
+  assert.strictEqual(messageReceived, false)
 })
 
 test('Higher custom limit allows larger messages', async (t) => {
@@ -277,6 +278,6 @@ test('Higher custom limit allows larger messages', async (t) => {
   })
 
   const [event] = await once(client, 'message')
-  t.assert.strictEqual(event.data.size, dataSize)
+  assert.strictEqual(event.data.size, dataSize)
   client.close()
 })
