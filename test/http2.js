@@ -1443,7 +1443,6 @@ test('#3671 - Graceful close', async (t) => {
   await t.completed
 })
 
-
 test('#3803 - sending FormData bodies works', async (t) => {
   const assert = tspl(t, { plan: 4 })
 
@@ -1495,4 +1494,3 @@ test('#3803 - sending FormData bodies works', async (t) => {
   await body.dump()
   await assert.completed
 })
-
