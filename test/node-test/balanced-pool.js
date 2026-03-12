@@ -630,7 +630,7 @@ test('should not be vulnerable to __proto__ pollution via options', async (t) =>
     return stub
   }
 
-  new BalancedPool(['http://localhost/'], attackerOptions)
+  new BalancedPool(['http://localhost/'], attackerOptions) // eslint-disable-line no-new
 
   // Verify that the captured options do not have polluted prototype
   assert.strictEqual(capturedOpts.polluted, undefined, 'polluted property should not exist on options')
