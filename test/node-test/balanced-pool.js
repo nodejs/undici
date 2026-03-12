@@ -601,3 +601,39 @@ describe('weighted round robin', () => {
     })
   }
 })
+
+test('should not be vulnerable to __proto__ pollution via options', async (t) => {
+  const { EventEmitter } = require('node:events')
+
+  let capturedOpts
+
+  // Simulate attacker-controlled options with __proto__ property
+  const attackerOptions = JSON.parse(`
+    {
+      "__proto__": {
+        "polluted": "YES",
+        "connections": 1
+      }
+    }
+  `)
+
+  attackerOptions.factory = (origin, opts) => {
+    capturedOpts = opts
+
+    const stub = new EventEmitter()
+    stub.dispatch = () => true
+    stub.close = () => Promise.resolve()
+    stub.destroy = () => Promise.resolve()
+    stub.destroyed = false
+    stub.closed = false
+
+    return stub
+  }
+
+  new BalancedPool(['http://localhost/'], attackerOptions)
+
+  // Verify that the captured options do not have polluted prototype
+  assert.strictEqual(capturedOpts.polluted, undefined, 'polluted property should not exist on options')
+  assert.strictEqual(Object.getPrototypeOf(capturedOpts).polluted, undefined, 'prototype should not be polluted')
+  assert.strictEqual({}.polluted, undefined, 'global Object.prototype should not be polluted')
+})
