@@ -168,4 +168,10 @@ declare namespace Errors {
     name: 'Socks5ProxyError'
     code: string
   }
+
+  /** WebSocket decompressed message exceeded maximum size. */
+  export class MessageSizeExceededError extends UndiciError {
+    name: 'MessageSizeExceededError'
+    code: 'UND_ERR_WS_MESSAGE_SIZE_EXCEEDED'
+  }
 }
