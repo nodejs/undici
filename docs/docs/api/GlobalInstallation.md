@@ -15,15 +15,15 @@ import { install } from 'undici'
 install()
 
 // Now you can use fetch classes globally without importing
-const response = await fetch('https://api.example.com/data')
+const response = await fetch('https://api.example/data')
 const data = await response.json()
 
 // All classes are available globally:
 const headers = new Headers([['content-type', 'application/json']])
-const request = new Request('https://example.com')
+const request = new Request('https://www.example')
 const formData = new FormData()
-const ws = new WebSocket('wss://example.com')
-const eventSource = new EventSource('https://example.com/events')
+const ws = new WebSocket('wss://ws.example')
+const eventSource = new EventSource('https://events.example/stream')
 ```
 
 ## Installed Classes
@@ -65,7 +65,7 @@ if (typeof globalThis.fetch === 'undefined') {
 }
 
 // Now fetch is guaranteed to be available
-const response = await fetch('https://api.example.com')
+const response = await fetch('https://api.example')
 ```
 
 ## Example: Testing Environment
@@ -78,7 +78,7 @@ install()
 
 // Now all tests use undici's implementations
 test('fetch API test', async () => {
-  const response = await fetch('https://example.com')
+  const response = await fetch('https://www.example')
   expect(response).toBeInstanceOf(Response)
 })
 ```
