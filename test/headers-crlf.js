@@ -21,6 +21,12 @@ test('CRLF Injection in Nodejs ‘undici’ via host', async (t) => {
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const unsanitizedContentTypeInput = '12 \r\n\r\naaa:aaa'
 
   try {
