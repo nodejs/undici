@@ -1,5 +1,4 @@
 const { test, describe } = require('node:test')
-const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { request, Agent, Pool } = require('..')
 
@@ -33,7 +32,7 @@ describe('Agent should close inactive clients', () => {
       }
     })
     const { statusCode } = await request(`http://localhost:${server.address().port}`, { dispatcher: agent })
-    assert.equal(statusCode, 200)
+    t.assert.strictEqual(statusCode, 200)
 
     await p
   })
