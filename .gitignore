@@ -92,3 +92,6 @@ test/request-timeout.10mb.bin
 # Claude files
 CLAUDE.md
 .claude
+
+# Ignore .pi
+.pi
