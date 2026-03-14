@@ -18,12 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        uses: step-security/harden-runner@e3f713f2d8f53843e71c69a996d56f51aa9adfb9 # v2.14.1
         with:
           egress-policy: audit
 
       - name: Checkout Repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
@@ -54,7 +54,7 @@ jobs:
         run: npm run lint
 
   test:
-    name: Test ${{ (matrix.node-version == '24' || matrix.node-version == '25') && matrix.runs-on == 'ubuntu-latest' && 'and Coverage ' || ''}}with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
+    name: Test ${{ matrix.node-version == '24' && matrix.runs-on == 'ubuntu-latest' && 'and Coverage ' || ''}}with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       max-parallel: 0
@@ -63,7 +63,8 @@ jobs:
         runs-on: ['ubuntu-latest', 'windows-latest', 'macos-latest']
     uses: ./.github/workflows/nodejs.yml
     with:
-      codecov: ${{ (matrix.node-version == '24' || matrix.node-version == '25') && matrix.runs-on == 'ubuntu-latest' }}
+      # Disable coverage on Node.js 25 until https://github.com/nodejs/node/issues/61971 is resolved.
+      codecov: ${{ matrix.node-version == '24' && matrix.runs-on == 'ubuntu-latest' }}
       node-version: ${{ matrix.node-version }}
       runs-on: ${{ matrix.runs-on }}
     secrets: inherit
@@ -94,7 +95,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
@@ -180,7 +181,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
@@ -247,7 +248,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
@@ -282,7 +283,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 

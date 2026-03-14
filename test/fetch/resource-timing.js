@@ -2,7 +2,7 @@
 
 const { test } = require('node:test')
 const { createServer } = require('node:http')
-const { fetch } = require('../..')
+const { fetch, Agent } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 const {
@@ -133,6 +133,34 @@ test('redirect timing entries should be included when redirecting', (t, done) =>
     res.end('ok')
   }).listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}/redirect`)
+    t.assert.strictEqual('ok', await body.text())
+  })
+
+  t.after(closeServerAsPromise(server))
+})
+
+test('responseStart should be greater than 0 with composed interceptor', (t, done) => {
+  t.plan(4)
+  const obs = new PerformanceObserver(list => {
+    const [entry] = list.getEntries()
+
+    t.assert.ok(entry.requestStart > 0, `requestStart should be > 0, got ${entry.requestStart}`)
+    t.assert.ok(entry.responseStart > 0, `responseStart should be > 0, got ${entry.responseStart}`)
+    t.assert.ok(entry.responseStart >= entry.requestStart, 'responseStart should be >= requestStart')
+
+    obs.disconnect()
+    performance.clearResourceTimings()
+    done()
+  })
+
+  obs.observe({ entryTypes: ['resource'] })
+
+  const dispatcher = new Agent().compose((dispatch) => (opts, handler) => dispatch(opts, handler))
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.end('ok')
+  }).listen(0, async () => {
+    const body = await fetch(`http://localhost:${server.address().port}`, { dispatcher })
     t.assert.strictEqual('ok', await body.text())
   })
 

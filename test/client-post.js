@@ -26,6 +26,11 @@ test('request post blob', async (t) => {
 
   const client = new Client(`http://localhost:${server.address().port}`)
   after(client.destroy.bind(client))
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   client.request({
     path: '/',
@@ -62,6 +67,11 @@ test('request post arrayBuffer', async (t) => {
 
   const client = new Client(`http://localhost:${server.address().port}`)
   after(() => client.destroy())
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   const buf = Buffer.from('asd')
   const dst = new ArrayBuffer(buf.byteLength)

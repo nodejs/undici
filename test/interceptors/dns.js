@@ -11,7 +11,7 @@ const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
-const { interceptors, Agent } = require('../..')
+const { interceptors, Agent, request } = require('../..')
 const { dns } = interceptors
 
 test('Should validate options', t => {
@@ -2035,6 +2035,108 @@ test('#3937 - Handle host correctly', async t => {
 
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
+})
+
+test('#4444 - Should preserve tuple-style headers', async t => {
+  t = tspl(t, { plan: 5 })
+
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    t.equal(req.headers.foo, 'bar')
+    t.equal(req.headers['0'], undefined)
+
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Agent().compose([
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await request(`http://localhost:${server.address().port}`, {
+    dispatcher: client,
+    headers: [['foo', 'bar']]
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+})
+
+test('#4444 - Should preserve iterable headers', async t => {
+  t = tspl(t, { plan: 5 })
+
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    t.equal(req.headers.foo, 'bar')
+    t.equal(req.headers['0'], undefined)
+
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Agent().compose([
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '::1',
+            family: 6
+          },
+          {
+            address: '127.0.0.1',
+            family: 4
+          }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await request(`http://localhost:${server.address().port}`, {
+    dispatcher: client,
+    headers: new Map([['foo', 'bar']])
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
 })
 
 test('#3951 - Should handle lookup errors correctly', async t => {

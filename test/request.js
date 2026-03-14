@@ -432,6 +432,51 @@ describe('Should include headers from iterable objects', scope => {
     })
   })
 
+  test('Should include headers from plain objects with polluted Object.prototype[Symbol.iterator]', async t => {
+    t = tspl(t, { plan: 3 })
+
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      t.strictEqual('GET', req.method)
+      t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+      t.strictEqual(req.headers.hello, 'world')
+      res.statusCode = 200
+      res.end('hello')
+    })
+
+    const headers = {
+      hello: 'world'
+    }
+
+    const originalIterator = Object.prototype[Symbol.iterator]
+    // eslint-disable-next-line no-extend-native
+    Object.prototype[Symbol.iterator] = function * () {}
+
+    try {
+      await new Promise((resolve, reject) => {
+        server.listen(0, (err) => {
+          if (err != null) reject(err)
+          else resolve()
+        })
+      })
+
+      await request({
+        method: 'GET',
+        origin: `http://localhost:${server.address().port}`,
+        reset: true,
+        headers
+      })
+    } finally {
+      if (originalIterator === undefined) {
+        delete Object.prototype[Symbol.iterator]
+      } else {
+        // eslint-disable-next-line no-extend-native
+        Object.prototype[Symbol.iterator] = originalIterator
+      }
+      server.closeAllConnections?.()
+      server.close()
+    }
+  })
+
   test('Should throw error if headers iterable object does not yield key-value pairs', async t => {
     t = tspl(t, { plan: 2 })
 

@@ -10,6 +10,7 @@
   * [RoundRobinPool](/docs/api/RoundRobinPool.md "Undici API - RoundRobinPool")
   * [Agent](/docs/api/Agent.md "Undici API - Agent")
   * [ProxyAgent](/docs/api/ProxyAgent.md "Undici API - ProxyAgent")
+  * [Socks5Agent](/docs/api/Socks5Agent.md "Undici API - SOCKS5 Agent")
   * [RetryAgent](/docs/api/RetryAgent.md "Undici API - RetryAgent")
   * [Connector](/docs/api/Connector.md "Custom connector")
   * [Errors](/docs/api/Errors.md "Undici API - Errors")
@@ -39,6 +40,7 @@
 * Examples
   * [Undici Examples](/examples/ "Undici Examples")
 * Best Practices
+  * [Undici vs. Built-in Fetch](/docs/best-practices/undici-vs-builtin-fetch.md "When to install undici vs using Node.js built-in fetch")
   * [Proxy](/docs/best-practices/proxy.md "Connecting through a proxy")
   * [Client Certificate](/docs/best-practices/client-certificate.md "Connect using a client certificate")
   * [Writing Tests](/docs/best-practices/writing-tests.md "Using Undici inside tests")

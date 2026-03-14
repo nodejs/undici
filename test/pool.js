@@ -74,6 +74,30 @@ test('does not throw when connect is a function', async (t) => {
   t.doesNotThrow(() => new Pool('http://localhost', { connect: () => {} }))
 })
 
+test('passes socketPath to custom connect function', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const connectError = new Error('custom connect error')
+  const socketPath = '/var/run/test.sock'
+  const pool = new Pool('http://localhost', {
+    socketPath,
+    connect (opts, cb) {
+      t.strictEqual(opts.socketPath, socketPath)
+      cb(connectError, null)
+    }
+  })
+  after(() => pool.close())
+
+  pool.request({
+    path: '/',
+    method: 'GET'
+  }, (err) => {
+    t.strictEqual(err, connectError)
+  })
+
+  await t.completed
+})
+
 test('connect/disconnect event(s)', async (t) => {
   const clients = 2
 

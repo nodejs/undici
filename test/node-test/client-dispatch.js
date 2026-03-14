@@ -873,6 +873,45 @@ test('dispatches in expected order', async (t) => {
   await p.completed
 })
 
+test('onResponseStarted is called with interceptor', async (t) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.end('ended')
+  })
+  t.after(closeServerAsPromise(server))
+
+  const p = tspl(t, { plan: 2 })
+
+  server.listen(0, () => {
+    const pool = new Pool(`http://localhost:${server.address().port}`)
+    const client = pool.compose((dispatch) => (opts, handler) => dispatch(opts, handler))
+
+    t.after(() => { return pool.close() })
+
+    let responseStartedCalled = false
+
+    client.dispatch({
+      path: '/',
+      method: 'GET'
+    }, {
+      onRequestStart () {},
+      onResponseStarted () {
+        responseStartedCalled = true
+      },
+      onResponseStart () {},
+      onResponseData () {},
+      onResponseEnd () {
+        p.strictEqual(responseStartedCalled, true)
+        p.ok(true)
+      },
+      onResponseError (_controller, err) {
+        p.ifError(err)
+      }
+    })
+  })
+
+  await p.completed
+})
+
 test('dispatches in expected order for http2', async (t) => {
   const server = createSecureServer(pem)
   server.on('stream', (stream) => {
