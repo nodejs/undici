@@ -4,6 +4,7 @@ import buildConnector from './connector'
 import Dispatcher from './dispatcher'
 
 declare namespace DiagnosticsChannel {
+  type WebSocket = InstanceType<typeof import('./websocket').WebSocket>
   interface Request {
     origin?: string | URL;
     completed: boolean;
@@ -70,5 +71,49 @@ declare namespace DiagnosticsChannel {
     socket: Socket;
     connectParams: ConnectParams;
     connector: Connector;
+  }
+  export interface WebsocketCreatedMessage {
+    websocket: WebSocket;
+    url: string;
+  }
+  export interface WebsocketHandshakeRequestMessage {
+    websocket: WebSocket;
+    request: {
+      headers: Record<string, string>;
+    };
+  }
+  export interface WebsocketOpenMessage {
+    address: {
+      address: string;
+      family: string;
+      port: number;
+    };
+    protocol: string;
+    extensions: string;
+    websocket: WebSocket;
+    handshakeResponse: {
+      status: number;
+      statusText: string;
+      headers: Record<string, string>;
+    };
+  }
+  export interface WebsocketCloseMessage {
+    websocket: WebSocket;
+    code: number;
+    reason: string;
+  }
+  export interface WebsocketFrameMessage {
+    websocket: WebSocket;
+    opcode: number;
+    mask: boolean;
+    payloadData: Buffer;
+  }
+  export interface WebsocketFrameErrorMessage {
+    websocket: WebSocket;
+    error: Error;
+  }
+  export interface WebsocketSocketErrorMessage {
+    websocket?: WebSocket;
+    error: Error;
   }
 }
