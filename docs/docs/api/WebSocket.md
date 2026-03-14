@@ -20,7 +20,6 @@ When passing an object as the second argument, the following options are availab
 * **protocols** `string | string[]` (optional) - Subprotocol(s) to request the server use.
 * **dispatcher** `Dispatcher` (optional) - A custom [`Dispatcher`](/docs/docs/api/Dispatcher.md) to use for the connection.
 * **headers** `HeadersInit` (optional) - Custom headers to include in the WebSocket handshake request.
-* **maxDecompressedMessageSize** `number` (optional) - Maximum allowed size in bytes for decompressed messages when using the `permessage-deflate` extension. **Default:** `4194304` (4 MB).
 
 ### Example:
 
@@ -44,20 +43,6 @@ import { WebSocket } from 'undici'
 
 const ws = new WebSocket('wss://echo.websocket.events', ['echo', 'chat'])
 ```
-
-### Example with custom decompression limit:
-
-To protect against decompression bombs (small compressed payloads that expand to very large sizes), you can set a custom limit:
-
-```mjs
-import { WebSocket } from 'undici'
-
-const ws = new WebSocket('wss://echo.websocket.events', {
-  maxDecompressedMessageSize: 1 * 1024 * 1024
-})
-```
-
-> ⚠️ **Security Note**: The `maxDecompressedMessageSize` option protects against memory exhaustion attacks where a malicious server sends a small compressed payload that decompresses to an extremely large size. If you increase this limit significantly above the default, ensure your application can handle the increased memory usage.
 
 ## Read More
 
