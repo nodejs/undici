@@ -52,7 +52,8 @@ module.exports.interceptors = {
   dns: require('./lib/interceptor/dns'),
   cache: require('./lib/interceptor/cache'),
   decompress: require('./lib/interceptor/decompress'),
-  deduplicate: require('./lib/interceptor/deduplicate')
+  deduplicate: require('./lib/interceptor/deduplicate'),
+  priority: require('./lib/interceptor/priority')
 }
 
 module.exports.cacheStores = {

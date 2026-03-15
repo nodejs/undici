@@ -127,6 +127,8 @@ declare namespace Dispatcher {
     throwOnError?: boolean;
     /** For H2, it appends the expect: 100-continue header, and halts the request body until a 100-continue is received from the remote server */
     expectContinue?: boolean;
+    /** Priority of the request when used with the priority interceptor. Must be one of: HIGHEST (4), HIGH (3), MEDIUM (2), LOW (1), LOWEST (0). */
+    priority?: 0 | 1 | 2 | 3 | 4;
   }
   export interface ConnectOptions<TOpaque = null> {
     origin: string | URL;
