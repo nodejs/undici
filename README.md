@@ -19,6 +19,8 @@ Looking to contribute? Start by reading the [contributing guide](./CONTRIBUTING.
 npm i undici
 ```
 
+> Node.js already includes a built-in `fetch()` powered by undici. If you're deciding between built-in `fetch` and the `undici` package, see [Undici vs. Fetch](#undici-vs-fetch).
+
 ## Benchmarks
 
 The benchmark is a simple getting data [example](https://github.com/nodejs/undici/blob/main/benchmarks/benchmark.js) using a
@@ -116,7 +118,6 @@ const response = await fetch('https://api.example.com/data');
 - Building isomorphic code that runs in browsers and Node.js
 - Publishing to npm and want to maximize compatibility with JS runtimes
 - Simple HTTP requests without advanced configuration
-- You're publishing to npm and you want to maximize compatiblity
 - You don't depend on features from a specific version of undici
 
 #### Use Undici Module When:
