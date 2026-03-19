@@ -2091,4 +2091,196 @@ describe('Cache Interceptor', () => {
       equal(cached.deleteAt, expectedDeleteAt, `deleteAt (${cached.deleteAt}) should be staleAt + 300s (${expectedDeleteAt})`)
     })
   })
+
+  // https://www.rfc-editor.org/rfc/rfc9111.html#name-storing-responses-to-authen
+  describe('RFC 9111 §3.5 - Storing Responses to Authenticated Requests', () => {
+    test('caches response when request has Authorization and response has public directive', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.end('authenticated')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          authorization: 'Bearer token123'
+        }
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'authenticated')
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'authenticated')
+      }
+    })
+
+    test('caches response when request has Authorization and response has s-maxage directive', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=60')
+        res.end('authenticated')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          authorization: 'Bearer token123'
+        }
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'authenticated')
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'authenticated')
+      }
+    })
+
+    test('caches response when request has Authorization and response has must-revalidate directive', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'must-revalidate, max-age=60')
+        res.end('authenticated')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          authorization: 'Bearer token123'
+        }
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'authenticated')
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'authenticated')
+      }
+    })
+
+    test('does not cache response when request has Authorization and response only has max-age', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'max-age=60')
+        res.end('authenticated')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          authorization: 'Bearer token123'
+        }
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'authenticated')
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'authenticated')
+      }
+    })
+
+    test('does not cache response when request has Authorization and no cache directives', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.end('authenticated')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(() => client.close())
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          authorization: 'Bearer token123'
+        }
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'authenticated')
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'authenticated')
+      }
+    })
+  })
 })
