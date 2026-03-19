@@ -2464,7 +2464,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for path
 
   await t.assert.rejects(request(`${baseUrl}/wrong`, {
     method: 'GET'
-  }), new MockNotMatchedError(`Mock dispatch not matched for path '/wrong': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for path '/wrong': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin), 1 interceptor(s) remaining out of 1 defined`))
 })
 
 test('MockAgent - enableNetConnect should throw if dispatch not matched for method and the origin was not allowed by net connect', async (t) => {
@@ -2497,7 +2497,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for meth
 
   await t.assert.rejects(request(`${baseUrl}/foo`, {
     method: 'WRONG'
-  }), new MockNotMatchedError(`Mock dispatch not matched for method 'WRONG' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for method 'WRONG' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin), 1 interceptor(s) remaining out of 1 defined`))
 })
 
 test('MockAgent - enableNetConnect should throw if dispatch not matched for body and the origin was not allowed by net connect', async (t) => {
@@ -2532,7 +2532,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for body
   await t.assert.rejects(request(`${baseUrl}/foo`, {
     method: 'GET',
     body: 'wrong'
-  }), new MockNotMatchedError(`Mock dispatch not matched for body 'wrong' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for body 'wrong' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin), 1 interceptor(s) remaining out of 1 defined`))
 })
 
 test('MockAgent - enableNetConnect should throw if dispatch not matched for headers and the origin was not allowed by net connect', async (t) => {
@@ -2571,7 +2571,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for head
     headers: {
       'User-Agent': 'wrong'
     }
-  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"User-Agent":"wrong"}' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"User-Agent":"wrong"}' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect is not enabled for this origin), 1 interceptor(s) remaining out of 1 defined`))
 })
 
 test('MockAgent - disableNetConnect should throw if dispatch not found by net connect', async (t) => {
@@ -2606,12 +2606,10 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
 
   await t.assert.rejects(request(`${baseUrl}/foo`, {
     method: 'GET'
-  }), new MockNotMatchedError(`Mock dispatch not matched for path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled), 1 interceptor(s) remaining out of 1 defined`))
 })
 
 test('MockAgent - headers function interceptor', async (t) => {
-  t.plan(8)
-
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.assert.fail('should not be called')
     res.end('should not be called')
@@ -2647,12 +2645,12 @@ test('MockAgent - headers function interceptor', async (t) => {
     headers: {
       Authorization: 'Bearer foo'
     }
-  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"Authorization":"Bearer foo"}' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for headers '{"Authorization":"Bearer foo"}' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled), 1 interceptor(s) remaining out of 1 defined`))
 
   await t.assert.rejects(request(`${baseUrl}/foo`, {
     method: 'GET',
     headers: ['Authorization', 'Bearer foo']
-  }), new MockNotMatchedError(`Mock dispatch not matched for headers '["Authorization","Bearer foo"]' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled)`))
+  }), new MockNotMatchedError(`Mock dispatch not matched for headers '["Authorization","Bearer foo"]' on path '/foo': subsequent request to origin ${baseUrl} was not allowed (net.connect disabled), 1 interceptor(s) remaining out of 1 defined`))
 
   {
     const { statusCode } = await request(`${baseUrl}/foo`, {
@@ -2669,6 +2667,49 @@ test('MockAgent - headers function interceptor', async (t) => {
       method: 'GET'
     })
     t.assert.strictEqual(statusCode, 200)
+  }
+})
+
+test('MockAgent - should include intercept count in error when intercepts are exhausted', async (t) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    t.assert.fail('should not be called')
+    res.end('should not be called')
+  })
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/foo',
+    method: 'POST'
+  }).reply(200, 'foo')
+
+  mockAgent.disableNetConnect()
+
+  // First request consumes the only intercept
+  const { statusCode } = await request(`${baseUrl}/foo`, {
+    method: 'POST'
+  })
+  t.assert.strictEqual(statusCode, 200)
+
+  // Second request should fail with a message indicating intercept counts
+  try {
+    await request(`${baseUrl}/foo`, {
+      method: 'POST'
+    })
+    t.assert.fail('should have thrown')
+  } catch (err) {
+    t.assert.ok(err.message.includes('0 interceptor(s) remaining out of 1 defined'), `Error message should include interceptor counts, got: ${err.message}`)
   }
 })
 
