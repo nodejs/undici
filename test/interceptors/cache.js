@@ -7,6 +7,7 @@ const { equal, strictEqual, notEqual, fail } = require('node:assert')
 const { setTimeout: sleep } = require('node:timers/promises')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { Client, interceptors, cacheStores: { MemoryCacheStore } } = require('../../index')
+const { makeCacheKey } = require('../../lib/util/cache.js')
 
 describe('Cache Interceptor', () => {
   test('caches request', async () => {
@@ -1982,6 +1983,112 @@ describe('Cache Interceptor', () => {
         equal(requestsToOrigin, 2)
         strictEqual(await res.body.text(), 'not cached')
       }
+    })
+  })
+
+  describe('determineDeleteAt', () => {
+    test('max-age response has deleteAt proportional to freshness lifetime, not 1 year', async () => {
+      const clock = FakeTimers.install({ now: 1000 })
+      after(() => clock.uninstall())
+
+      const store = new MemoryCacheStore()
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.setHeader('date', new Date(clock.now).toUTCString())
+        res.sendDate = false
+        res.end('short-lived')
+      }).listen(0)
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
+        .compose(interceptors.cache({ store }))
+
+      const res = await client.request({ origin, method: 'GET', path: '/delete-at-maxage' })
+      strictEqual(await res.body.text(), 'short-lived')
+
+      const cached = store.get(makeCacheKey({ origin, method: 'GET', path: '/delete-at-maxage', headers: {} }))
+
+      notEqual(cached, undefined)
+      // deleteAt should be approximately 2x max-age (staleAt + freshnessLifetime),
+      // not 1 year out
+      const maxExpected = clock.now + (60 * 1000 * 3) // generous upper bound
+      equal(cached.deleteAt < maxExpected, true, `deleteAt (${cached.deleteAt}) should be well under 3x max-age (${maxExpected})`)
+      equal(cached.deleteAt > cached.staleAt, true, 'deleteAt should be greater than staleAt to allow revalidation')
+    })
+
+    test('immutable response has deleteAt of ~1 year', async () => {
+      const clock = FakeTimers.install({ now: 1000 })
+      after(() => clock.uninstall())
+
+      const store = new MemoryCacheStore()
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        res.setHeader('cache-control', 'public, immutable')
+        res.setHeader('date', new Date(clock.now).toUTCString())
+        res.sendDate = false
+        res.end('immutable-content')
+      }).listen(0)
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
+        .compose(interceptors.cache({ store }))
+
+      const res = await client.request({ origin, method: 'GET', path: '/delete-at-immutable' })
+      strictEqual(await res.body.text(), 'immutable-content')
+
+      const cached = store.get(makeCacheKey({ origin, method: 'GET', path: '/delete-at-immutable', headers: {} }))
+
+      notEqual(cached, undefined)
+      const oneYear = 31536000000
+      // deleteAt should be approximately 1 year out
+      equal(cached.deleteAt >= clock.now + oneYear - 1000, true, `deleteAt (${cached.deleteAt}) should be ~1 year out`)
+    })
+
+    test('stale-while-revalidate extends deleteAt beyond staleAt', async () => {
+      const clock = FakeTimers.install({ now: 1000 })
+      after(() => clock.uninstall())
+
+      const store = new MemoryCacheStore()
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        res.setHeader('cache-control', 'public, max-age=60, stale-while-revalidate=300')
+        res.setHeader('date', new Date(clock.now).toUTCString())
+        res.sendDate = false
+        res.end('swr-content')
+      }).listen(0)
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
+        .compose(interceptors.cache({ store }))
+
+      const res = await client.request({ origin, method: 'GET', path: '/delete-at-swr' })
+      strictEqual(await res.body.text(), 'swr-content')
+
+      const cached = store.get(makeCacheKey({ origin, method: 'GET', path: '/delete-at-swr', headers: {} }))
+
+      notEqual(cached, undefined)
+      // deleteAt should be staleAt + stale-while-revalidate (300s)
+      const expectedDeleteAt = cached.staleAt + (300 * 1000)
+      equal(cached.deleteAt, expectedDeleteAt, `deleteAt (${cached.deleteAt}) should be staleAt + 300s (${expectedDeleteAt})`)
     })
   })
 })
