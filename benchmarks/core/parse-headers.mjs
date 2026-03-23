@@ -87,7 +87,7 @@ bench('noop', () => {})
 bench('noop', () => {})
 bench('noop', () => {})
 
-group('parseHeaders', () => {
+group(() => {
   bench('parseHeaders', () => {
     for (let i = 0; i < headers.length; ++i) {
       parseHeaders(headers[i])
