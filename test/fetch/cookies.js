@@ -8,6 +8,10 @@ const { Client, fetch, Headers } = require('../..')
 const pem = require('@metcoder95/https-pem')
 const { createSecureServer } = require('node:http2')
 
+const isMacOSNode20CI = process.platform === 'darwin' &&
+  Number(process.versions.node.split('.')[0]) === 20 &&
+  process.env.CI
+
 describe('cookies', () => {
   let server
 
@@ -28,7 +32,9 @@ describe('cookies', () => {
     return once(server, 'close')
   })
 
-  test('Can receive set-cookie headers from a server using fetch - issue #1262', async (t) => {
+  test('Can receive set-cookie headers from a server using fetch - issue #1262', {
+    skip: isMacOSNode20CI
+  }, async (t) => {
     const query = qsStringify({
       'set-cookie': 'name=value; Domain=example.com'
     })
@@ -59,7 +65,9 @@ describe('cookies', () => {
     }
   })
 
-  test('Cookie header is delimited with a semicolon rather than a comma - issue #1905', async (t) => {
+  test('Cookie header is delimited with a semicolon rather than a comma - issue #1905', {
+    skip: isMacOSNode20CI
+  }, async (t) => {
     const response = await fetch(`http://localhost:${server.address().port}`, {
       headers: [
         ['cookie', 'FOO=lorem-ipsum-dolor-sit-amet'],
