@@ -53,6 +53,42 @@ function streamServerLogs (stream, target, onLine) {
   })
 }
 
+async function terminateProcess (proc, exitPromise) {
+  if (proc.exitCode != null) {
+    await exitPromise
+    return
+  }
+
+  if (process.platform === 'win32') {
+    try {
+      // SIGINT does not reliably terminate the Python WPT server tree on Windows.
+      await new Promise((resolve) => {
+        const killer = spawn('taskkill', ['/pid', String(proc.pid), '/T', '/F'], {
+          stdio: 'ignore'
+        })
+
+        killer.once('error', resolve)
+        killer.once('exit', resolve)
+      })
+    } catch {
+      proc.kill()
+    }
+  } else {
+    proc.kill('SIGINT')
+
+    const exited = await Promise.race([
+      exitPromise.then(() => true),
+      new Promise(resolve => setTimeout(resolve, 1_000, false))
+    ])
+
+    if (!exited && proc.exitCode == null) {
+      proc.kill('SIGKILL')
+    }
+  }
+
+  await exitPromise
+}
+
 async function runWithTestUtil (testFunction) {
   const { promise, resolve, reject } = createDeferredPromise()
   const { promise: readyPromise, resolve: resolveReady, reject: rejectReady } = createDeferredPromise()
@@ -140,21 +176,13 @@ async function runWithTestUtil (testFunction) {
       results = await testFunction()
     } finally {
       console.log('Killing WPT server')
-
-      if (!proc.killed) {
-        proc.kill('SIGINT')
-      }
+      await terminateProcess(proc, promise)
     }
 
-    await promise
     return results
   } catch (err) {
-    if (!proc.killed) {
-      proc.kill('SIGINT')
-    }
-
     try {
-      await promise
+      await terminateProcess(proc, promise)
     } catch {}
 
     throw err
