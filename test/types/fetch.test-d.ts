@@ -186,3 +186,15 @@ expectNotAssignable<RequestInit>({ duplex: 'not valid' })
 expectType<string[]>(headers.getSetCookie())
 
 expectType<Request>(new Request('https://example.com', request))
+
+expectAssignable<Response>(new (class extends Response {
+  override clone () {
+    return this
+  }
+})())
+
+expectAssignable<Request>(new (class extends Request {
+  override clone () {
+    return this
+  }
+})('https://example.com'))
