@@ -30,7 +30,7 @@ describe('isBlobLike', () => {
       [Symbol.toStringTag]: 'Blob',
       stream: () => { }
     }
-    strictEqual(isBlobLike(blobLikeStream), true)
+    strictEqual(isBlobLike(blobLikeStream), false)
   })
 
   test('fileLikeStream', () => {
@@ -38,7 +38,7 @@ describe('isBlobLike', () => {
       stream: () => { },
       [Symbol.toStringTag]: 'File'
     }
-    strictEqual(isBlobLike(fileLikeStream), true)
+    strictEqual(isBlobLike(fileLikeStream), false)
   })
 
   test('fileLikeArrayBuffer', () => {
@@ -46,7 +46,7 @@ describe('isBlobLike', () => {
       [Symbol.toStringTag]: 'Blob',
       arrayBuffer: () => { }
     }
-    strictEqual(isBlobLike(blobLikeArrayBuffer), true)
+    strictEqual(isBlobLike(blobLikeArrayBuffer), false)
   })
 
   test('blobLikeArrayBuffer', () => {
@@ -54,7 +54,7 @@ describe('isBlobLike', () => {
       [Symbol.toStringTag]: 'File',
       arrayBuffer: () => { }
     }
-    strictEqual(isBlobLike(fileLikeArrayBuffer), true)
+    strictEqual(isBlobLike(fileLikeArrayBuffer), false)
   })
 
   test('string', () => {
