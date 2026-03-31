@@ -5,6 +5,7 @@ const http = require('node:http')
 const { test, describe, after } = require('node:test')
 const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
 const FakeTimers = require('@sinonjs/fake-timers')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
 describe('EventSource - message', () => {
   test('Should not emit a message if only retry field was sent', (t, done) => {
@@ -202,7 +203,7 @@ describe('EventSource - message', () => {
   })
 
   test('Should not emit a custom type message if no data is provided', (t, done) => {
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install(fakeTimersOpts)
     after(() => clock.uninstall())
 
     t.plan(1)

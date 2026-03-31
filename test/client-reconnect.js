@@ -7,12 +7,13 @@ const { Client } = require('..')
 const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 const timers = require('../lib/util/timers')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
 test('multiple reconnect', async (t) => {
   t = tspl(t, { plan: 5 })
 
   let n = 0
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install(fakeTimersOpts)
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }

@@ -9,6 +9,7 @@ const { request, Client, interceptors } = require('../../index')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { setTimeout } = require('node:timers/promises')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
 /**
  * Wraps a MemoryCacheStore to simulate an async remote store:
@@ -49,7 +50,7 @@ class AsyncCacheStore {
 
 describe('cache interceptor with async store', () => {
   test('stale-while-revalidate 304 refreshes cache with async store', async () => {
-    const clock = FakeTimers.install({ now: 1 })
+    const clock = FakeTimers.install({ ...fakeTimersOpts, now: 1 })
     after(() => clock.uninstall())
 
     let count200 = 0
@@ -118,7 +119,7 @@ describe('cache interceptor with async store', () => {
   })
 
   test('stale-while-revalidate 200 refreshes cache with async store', async () => {
-    const clock = FakeTimers.install({ now: 1 })
+    const clock = FakeTimers.install({ ...fakeTimersOpts, now: 1 })
     after(() => clock.uninstall())
 
     let requestCount = 0
@@ -172,7 +173,7 @@ describe('cache interceptor with async store', () => {
   })
 
   test('null vary values are not sent in revalidation headers', async () => {
-    const clock = FakeTimers.install({ now: 1 })
+    const clock = FakeTimers.install({ ...fakeTimersOpts, now: 1 })
     after(() => clock.uninstall())
 
     let revalidationHeaders = null

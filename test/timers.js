@@ -3,8 +3,9 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { describe, test } = require('node:test')
 const FakeTimers = require('@sinonjs/fake-timers')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
-const clock = FakeTimers.install()
+const clock = FakeTimers.install(fakeTimersOpts)
 
 const timers = require('../lib/util/timers')
 const { eventLoopBlocker } = require('./utils/event-loop-blocker')

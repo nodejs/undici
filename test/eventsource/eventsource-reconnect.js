@@ -5,12 +5,13 @@ const http = require('node:http')
 const { test, describe, after } = require('node:test')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
 describe('EventSource - reconnect', () => {
   test('Should reconnect on connection closed by server', (t, done) => {
     t.plan(1)
 
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install(fakeTimersOpts)
     after(() => clock.uninstall())
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -43,7 +44,7 @@ describe('EventSource - reconnect', () => {
 
   test('Should reconnect on with reconnection timeout', (t, done) => {
     t.plan(2)
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install(fakeTimersOpts)
     after(() => clock.uninstall())
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -80,7 +81,7 @@ describe('EventSource - reconnect', () => {
 
   test('Should reconnect on with modified reconnection timeout', (t, done) => {
     t.plan(3)
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install(fakeTimersOpts)
     after(() => clock.uninstall())
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -119,7 +120,7 @@ describe('EventSource - reconnect', () => {
 
   test('Should reconnect and send lastEventId', async (t) => {
     t.plan(1)
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install(fakeTimersOpts)
     after(() => clock.uninstall())
 
     let requestCount = 0
