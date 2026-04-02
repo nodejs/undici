@@ -76,7 +76,7 @@ jobs:
 
       - name: ccache
         if: steps.release.outputs.result != ''
-        uses: hendrikmuhs/ccache-action@bfa03e1de4d7f7c3e80ad9109feedd05c4f5a716 #v1.2.19
+        uses: hendrikmuhs/ccache-action@33522472633dbd32578e909b315f5ee43ba878ce #v1.2.22
         with:
           key: node(external_undici)${{ inputs.node-version }}
 
