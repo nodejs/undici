@@ -621,7 +621,7 @@ including undici that is bundled internally with node.js.
 
 Undici stores this dispatcher under `Symbol.for('undici.globalDispatcher.2')`.
 
-On Node.js 22, `setGlobalDispatcher()` also mirrors the configured dispatcher to
+`setGlobalDispatcher()` also mirrors the configured dispatcher to
 `Symbol.for('undici.globalDispatcher.1')` using `Dispatcher1Wrapper`, so Node.js built-in `fetch`
 can keep using the legacy handler contract while Undici uses the new handler API.
 
