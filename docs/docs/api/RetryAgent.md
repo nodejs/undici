@@ -41,7 +41,7 @@ const agent = new RetryAgent(new Agent())
 
 const res = await agent.request({
   method: 'GET',
-  origin: 'http://example.com',
+  origin: 'http://service.example',
   path: '/',
 })
 console.log(res.statusCode)

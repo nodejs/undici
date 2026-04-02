@@ -119,7 +119,7 @@ import { Socks5ProxyAgent, request } from 'undici'
 
 const socks5Proxy = new Socks5ProxyAgent('socks5://localhost:1080')
 
-const response = await request('https://api.example.com/data', {
+const response = await request('https://api.service.example/data', {
   dispatcher: socks5Proxy,
   method: 'GET'
 })
@@ -158,9 +158,9 @@ const socks5Proxy = new Socks5ProxyAgent('socks5://localhost:1080', {
 
 // Multiple requests will reuse connections through the SOCKS5 tunnel
 const responses = await Promise.all([
-  request('http://api.example.com/endpoint1', { dispatcher: socks5Proxy }),
-  request('http://api.example.com/endpoint2', { dispatcher: socks5Proxy }),
-  request('http://api.example.com/endpoint3', { dispatcher: socks5Proxy })
+  request('http://api.service.example/endpoint1', { dispatcher: socks5Proxy }),
+  request('http://api.service.example/endpoint2', { dispatcher: socks5Proxy }),
+  request('http://api.service.example/endpoint3', { dispatcher: socks5Proxy })
 ])
 
 console.log('All requests completed through the same SOCKS5 proxy')

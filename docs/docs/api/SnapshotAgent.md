@@ -49,7 +49,7 @@ const agent = new SnapshotAgent({
 setGlobalDispatcher(agent)
 
 // Makes real requests and records them
-const response = await fetch('https://api.example.com/users')
+const response = await fetch('https://api.service.example/users')
 const users = await response.json()
 
 // Save recorded snapshots
@@ -69,7 +69,7 @@ const agent = new SnapshotAgent({
 setGlobalDispatcher(agent)
 
 // Uses recorded response instead of real request
-const response = await fetch('https://api.example.com/users')
+const response = await fetch('https://api.service.example/users')
 ```
 
 #### Update Mode (`'update'`)
@@ -85,7 +85,7 @@ const agent = new SnapshotAgent({
 setGlobalDispatcher(agent)
 
 // Uses snapshot if exists, otherwise makes real request and records it
-const response = await fetch('https://api.example.com/new-endpoint')
+const response = await fetch('https://api.service.example/new-endpoint')
 ```
 
 ## Instance Methods
@@ -161,7 +161,7 @@ const agent = new SnapshotAgent({
   snapshotPath: './snapshots.json',
   
   excludeUrls: [
-    'https://analytics.example.com',  // String match
+    'https://analytics.service.example',  // String match
     /\/api\/v\d+\/health/,           // Regex pattern
     'telemetry'                      // Substring match
   ]
@@ -195,10 +195,10 @@ Handle multiple responses for the same request (similar to nock):
 const agent = new SnapshotAgent({ mode: 'record', snapshotPath: './sequential.json' })
 
 // First call returns response A
-await fetch('https://api.example.com/random')
+await fetch('https://api.service.example/random')
 
 // Second call returns response B  
-await fetch('https://api.example.com/random')
+await fetch('https://api.service.example/random')
 
 await agent.saveSnapshots()
 
@@ -206,13 +206,13 @@ await agent.saveSnapshots()
 const playbackAgent = new SnapshotAgent({ mode: 'playback', snapshotPath: './sequential.json' })
 
 // Returns response A
-const first = await fetch('https://api.example.com/random')
+const first = await fetch('https://api.service.example/random')
 
 // Returns response B
-const second = await fetch('https://api.example.com/random')
+const second = await fetch('https://api.service.example/random')
 
 // Third call repeats the last response (B)
-const third = await fetch('https://api.example.com/random')
+const third = await fetch('https://api.service.example/random')
 ```
 
 ## Managing Snapshots
@@ -328,7 +328,7 @@ import { SnapshotAgent, request, setGlobalDispatcher } from 'undici'
 const agent = new SnapshotAgent({ mode: 'record', snapshotPath: './request-snapshots.json' })
 setGlobalDispatcher(agent)
 
-const { statusCode, headers, body } = await request('https://api.example.com/data')
+const { statusCode, headers, body } = await request('https://api.service.example/data')
 const data = await body.json()
 
 await agent.saveSnapshots()
@@ -354,7 +354,7 @@ test('API integration test', async (t) => {
   t.after(() => setGlobalDispatcher(originalDispatcher))
   
   // This will use recorded data
-  const response = await fetch('https://api.example.com/users')
+  const response = await fetch('https://api.service.example/users')
   const users = await response.json()
   
   assert(Array.isArray(users))
@@ -405,7 +405,7 @@ Snapshots are stored as JSON with the following structure:
     "snapshot": {
       "request": {
         "method": "GET",
-        "url": "https://api.example.com/users",
+        "url": "https://api.service.example/users",
         "headers": {
           "authorization": "Bearer token"
         },
@@ -494,7 +494,7 @@ const agent = new SnapshotAgent({
 
 ```javascript
 try {
-  const response = await fetch('https://api.example.com/nonexistent')
+  const response = await fetch('https://api.service.example/nonexistent')
 } catch (error) {
   if (error.message.includes('No snapshot found')) {
     // Handle missing snapshot
@@ -509,7 +509,7 @@ try {
 const agent = new SnapshotAgent({ mode: 'record', snapshotPath: './snapshots.json' })
 
 try {
-  const response = await fetch('https://nonexistent-api.example.com/data')
+  const response = await fetch('https://nonexistent-api.service.example/data')
 } catch (error) {
   // Network errors are not recorded as snapshots
   console.log('Network error:', error.message)
@@ -578,7 +578,7 @@ test('validate snapshot contents', async (t) => {
 **Manual MockAgent:**
 ```javascript
 const mockAgent = new MockAgent()
-const mockPool = mockAgent.get('https://api.example.com')
+const mockPool = mockAgent.get('https://api.service.example')
 
 mockPool.intercept({
   path: '/users',

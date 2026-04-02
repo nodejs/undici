@@ -127,7 +127,7 @@ mockPool.intercept({
   method: 'GET',
   headers: {
     'User-Agent': 'undici',
-    Host: 'example.com'
+    Host: 'service.example'
   }
 }).reply(200, ({ headers }) => ({ message: headers.get('message') }))
 
@@ -160,7 +160,7 @@ mockPool.intercept({
   method: 'GET',
   headers: {
     'User-Agent': 'undici',
-    Host: 'example.com'
+    Host: 'service.example'
   }
 }).reply(({ headers }) => ({ statusCode: 200, data: { message: headers.get('message') }})))
 
@@ -231,7 +231,7 @@ mockPool.intercept({
   body: 'form1=data1&form2=data2',
   headers: {
     'User-Agent': 'undici',
-    Host: 'example.com'
+    Host: 'service.example'
   }
 }).reply(200, { foo: 'bar' }, {
   headers: { 'content-type': 'application/json' },
@@ -249,7 +249,7 @@ const {
     headers: {
       foo: 'bar',
       'User-Agent': 'undici',
-      Host: 'example.com'
+      Host: 'service.example'
     }
   })
 
@@ -279,7 +279,7 @@ mockPool.intercept({
   body: (value) => value === 'form=data',
   headers: {
     'User-Agent': 'undici',
-    Host: /^example.com$/
+    Host: /^service.example$/
   }
 }).reply(200, 'foo')
 
@@ -292,7 +292,7 @@ const {
   headers: {
     foo: 'bar',
     'User-Agent': 'undici',
-    Host: 'example.com'
+    Host: 'service.example'
   }
 })
 

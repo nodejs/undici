@@ -33,7 +33,7 @@ const body = new FormData()
 body.set('name', 'some')
 body.set('someOtherProperty', '8000')
 
-await fetch('https://example.com', {
+await fetch('https://service.example', {
   method: 'POST',
   body
 })
@@ -48,7 +48,7 @@ const body = new FormData()
 body.set('name', 'some')
 body.set('someOtherProperty', '8000')
 
-await fetch('https://example.com', {
+await fetch('https://service.example', {
   method: 'POST',
   body
 })
@@ -68,7 +68,7 @@ const body = new FormData()
 body.set('name', 'some')
 body.set('someOtherProperty', '8000')
 
-await fetch('https://example.com', {
+await fetch('https://service.example', {
   method: 'POST',
   body
 })
@@ -86,7 +86,7 @@ import { fetch } from 'undici'
 
 const body = new FormData()
 
-await fetch('https://example.com', {
+await fetch('https://service.example', {
   method: 'POST',
   body
 })
@@ -97,7 +97,7 @@ import { FormData } from 'undici'
 
 const body = new FormData()
 
-await fetch('https://example.com', {
+await fetch('https://service.example', {
   method: 'POST',
   body
 })
@@ -135,7 +135,7 @@ provide lower-level control and significantly better performance than `fetch`:
 ```js
 import { request } from 'undici';
 
-const { statusCode, headers, body } = await request('https://example.com');
+const { statusCode, headers, body } = await request('https://service.example');
 const data = await body.json();
 ```
 
@@ -148,7 +148,7 @@ and concurrency limits:
 ```js
 import { Pool } from 'undici';
 
-const pool = new Pool('https://example.com', { connections: 10 });
+const pool = new Pool('https://service.example', { connections: 10 });
 const { body } = await pool.request({ path: '/', method: 'GET' });
 ```
 
@@ -163,8 +163,8 @@ programmatic control through the dispatcher API:
 ```js
 import { ProxyAgent, fetch } from 'undici';
 
-const proxyAgent = new ProxyAgent('https://my-proxy.example.com:8080');
-const response = await fetch('https://example.com', { dispatcher: proxyAgent });
+const proxyAgent = new ProxyAgent('https://my-proxy.service.example:8080');
+const response = await fetch('https://service.example', { dispatcher: proxyAgent });
 ```
 
 ### Testing and mocking
@@ -178,7 +178,7 @@ import { MockAgent, setGlobalDispatcher, fetch } from 'undici';
 const mockAgent = new MockAgent();
 setGlobalDispatcher(mockAgent);
 
-const pool = mockAgent.get('https://example.com');
+const pool = mockAgent.get('https://service.example');
 pool.intercept({ path: '/api' }).reply(200, { message: 'mocked' });
 ```
 

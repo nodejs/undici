@@ -1265,10 +1265,10 @@ const client = new Agent().compose(interceptors.cache({
 setGlobalDispatcher(client)
 
 // First request goes to the network and is cached when cache headers allow it.
-const first = await fetch('https://example.com/data')
+const first = await fetch('https://service.example/data')
 
 // Second request can be served from cache according to RFC9111 rules.
-const second = await fetch('https://example.com/data')
+const second = await fetch('https://service.example/data')
 ```
 
 ##### `Deduplicate Interceptor`
@@ -1375,7 +1375,7 @@ Response headers will derive a `host` from the `url` of the [Client](/docs/docs/
   'content-length': '123',
   'content-type': 'text/plain',
   connection: 'keep-alive',
-  host: 'mysite.com',
+  host: 'mysite.example',
   accept: '*/*'
 }
 ```
@@ -1387,7 +1387,7 @@ Response headers will derive a `host` from the `url` of the [Client](/docs/docs/
   'content-length', '123',
   'content-type', 'text/plain',
   'connection', 'keep-alive',
-  'host', 'mysite.com',
+  'host', 'mysite.example',
   'accept', '*/*'
 ]
 ```
@@ -1399,7 +1399,7 @@ new Headers({
   'content-length': '123',
   'content-type': 'text/plain',
   connection: 'keep-alive',
-  host: 'mysite.com',
+  host: 'mysite.example',
   accept: '*/*'
 })
 ```
@@ -1409,7 +1409,7 @@ new Map([
   ['content-length', '123'],
   ['content-type', 'text/plain'],
   ['connection', 'keep-alive'],
-  ['host', 'mysite.com'],
+  ['host', 'mysite.example'],
   ['accept', '*/*']
 ])
 ```
@@ -1420,7 +1420,7 @@ or
     yield ['content-length', '123']
     yield ['content-type', 'text/plain']
     yield ['connection', 'keep-alive']
-    yield ['host', 'mysite.com']
+    yield ['host', 'mysite.example']
     yield ['accept', '*/*']
   }
 }

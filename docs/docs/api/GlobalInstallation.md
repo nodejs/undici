@@ -15,15 +15,15 @@ import { install } from 'undici'
 install()
 
 // Now you can use fetch classes globally without importing
-const response = await fetch('https://api.example.com/data')
+const response = await fetch('https://api.service.example/data')
 const data = await response.json()
 
 // All classes are available globally:
 const headers = new Headers([['content-type', 'application/json']])
-const request = new Request('https://example.com')
+const request = new Request('https://service.example')
 const formData = new FormData()
-const ws = new WebSocket('wss://example.com')
-const eventSource = new EventSource('https://example.com/events')
+const ws = new WebSocket('wss://service.example')
+const eventSource = new EventSource('https://service.example/events')
 ```
 
 ## Installed Classes
@@ -53,7 +53,7 @@ These two patterns are safe:
 ```js
 // Built-in globals from Node.js
 const body = new FormData()
-await fetch('https://example.com', {
+await fetch('https://service.example', {
   method: 'POST',
   body
 })
@@ -66,7 +66,7 @@ import { install } from 'undici'
 install()
 
 const body = new FormData()
-await fetch('https://example.com', {
+await fetch('https://service.example', {
   method: 'POST',
   body
 })
@@ -81,7 +81,7 @@ If you do not want to install globals, import both from `undici` instead:
 import { fetch, FormData } from 'undici'
 
 const body = new FormData()
-await fetch('https://example.com', {
+await fetch('https://service.example', {
   method: 'POST',
   body
 })
@@ -113,7 +113,7 @@ if (typeof globalThis.fetch === 'undefined') {
 }
 
 // Now fetch is guaranteed to be available
-const response = await fetch('https://api.example.com')
+const response = await fetch('https://api.service.example')
 ```
 
 ## Example: Testing Environment
@@ -126,7 +126,7 @@ install()
 
 // Now all tests use undici's implementations
 test('fetch API test', async () => {
-  const response = await fetch('https://example.com')
+  const response = await fetch('https://service.example')
   expect(response).toBeInstanceOf(Response)
 })
 ```
