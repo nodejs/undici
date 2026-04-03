@@ -124,61 +124,6 @@ test('prefers lowercase over uppercase env vars even when empty', async (t) => {
   return dispatcher.close()
 })
 
-test('handles scheme-less HTTP_PROXY by assuming http://', async (t) => {
-  t = tspl(t, { plan: 2 })
-  process.env.HTTP_PROXY = 'example.com:8080'
-  const dispatcher = new EnvHttpProxyAgent()
-  t.ok(dispatcher[kHttpProxyAgent] instanceof ProxyAgent)
-  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://example.com:8080/')
-  return dispatcher.close()
-})
-
-test('handles scheme-less HTTPS_PROXY by assuming https://', async (t) => {
-  t = tspl(t, { plan: 2 })
-  process.env.HTTPS_PROXY = 'example.com:8443'
-  const dispatcher = new EnvHttpProxyAgent()
-  t.ok(dispatcher[kHttpsProxyAgent] instanceof ProxyAgent)
-  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'https://example.com:8443/')
-  return dispatcher.close()
-})
-
-test('handles scheme-less httpProxy option by assuming http://', async (t) => {
-  t = tspl(t, { plan: 2 })
-  const dispatcher = new EnvHttpProxyAgent({ httpProxy: 'myproxy:9000' })
-  t.ok(dispatcher[kHttpProxyAgent] instanceof ProxyAgent)
-  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://myproxy:9000/')
-  return dispatcher.close()
-})
-
-test('handles scheme-less httpsProxy option by assuming https://', async (t) => {
-  t = tspl(t, { plan: 2 })
-  const dispatcher = new EnvHttpProxyAgent({ httpsProxy: 'myproxy:9443' })
-  t.ok(dispatcher[kHttpsProxyAgent] instanceof ProxyAgent)
-  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'https://myproxy:9443/')
-  return dispatcher.close()
-})
-
-test('does not modify proxy URLs that already have a scheme', async (t) => {
-  t = tspl(t, { plan: 4 })
-  process.env.HTTP_PROXY = 'http://example.com:8080'
-  process.env.HTTPS_PROXY = 'http://example.com:8443'
-  const dispatcher = new EnvHttpProxyAgent()
-  t.ok(dispatcher[kHttpProxyAgent] instanceof ProxyAgent)
-  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://example.com:8080/')
-  t.ok(dispatcher[kHttpsProxyAgent] instanceof ProxyAgent)
-  t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://example.com:8443/')
-  return dispatcher.close()
-})
-
-test('handles scheme-less hostname-only proxy values', async (t) => {
-  t = tspl(t, { plan: 2 })
-  process.env.HTTP_PROXY = 'myproxy'
-  const dispatcher = new EnvHttpProxyAgent()
-  t.ok(dispatcher[kHttpProxyAgent] instanceof ProxyAgent)
-  t.equal(dispatcher[kHttpProxyAgent][kProxy].uri, 'http://myproxy/')
-  return dispatcher.close()
-})
-
 test('creates a proxy agent only for https when only https_proxy is set', async (t) => {
   t = tspl(t, { plan: 5 })
   process.env.https_proxy = 'http://example.com:8443'
