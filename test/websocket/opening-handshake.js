@@ -246,6 +246,52 @@ test('WebSocket falls back to HTTP/1.1 upgrade when H2 extended CONNECT is unava
   await planner.completed
 })
 
+test('WebSocket falls back to HTTP/1.1 upgrade when H2 CONNECT support is omitted', async (t) => {
+  const planner = tspl(t, { plan: 4 })
+  const server = createSecureServer({ cert, key, allowHTTP1: true })
+  const wsServer = new WebSocketServer({ server })
+
+  server.on('stream', () => planner.fail('should not attempt websocket over HTTP/2'))
+  server.on('upgrade', (req) => {
+    planner.equal(req.httpVersion, '1.1')
+  })
+
+  wsServer.on('connection', (ws, req) => {
+    planner.equal(req.httpVersion, '1.1')
+    ws.send('hello')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const dispatcher = new EnvHttpProxyAgent({
+    noProxy: '*',
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+  const ws = new WebSocket(`wss://localhost:${server.address().port}`, { dispatcher })
+
+  t.after(async () => {
+    ws.onerror = null
+    ws.close()
+    await dispatcher.close()
+    await new Promise((resolve) => server.close(resolve))
+    await new Promise((resolve) => wsServer.close(resolve))
+  })
+
+  ws.onerror = ({ error }) => planner.fail(error)
+  ws.addEventListener('open', () => {
+    planner.ok(true)
+  })
+  ws.addEventListener('message', (evt) => {
+    planner.equal(evt.data, 'hello')
+    ws.close()
+  })
+
+  await planner.completed
+})
+
 test('Multiple protocols are joined by a comma', (t) => {
   return new Promise((resolve, reject) => {
     const server = new WebSocketServer({ port: 0 })
