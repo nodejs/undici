@@ -1310,6 +1310,60 @@ All deduplicated requests receive the complete response including status code, h
 
 For observability, request deduplication events are published to the `undici:request:pending-requests` [diagnostic channel](/docs/docs/api/DiagnosticsChannel.md#undicirequestpending-requests).
 
+##### `file`
+
+The `file` interceptor allows a dispatcher to serve `file:` URLs.
+
+By default, Undici `fetch()` does not read `file:` URLs. This interceptor is an explicit opt-in mechanism that lets applications define their own policy.
+
+**Security model**
+
+- Deny by default.
+- You must provide an `allow()` policy callback.
+- No reliance on Node's process permission model.
+
+**Options**
+
+- `allow({ path, url, method, opts })` - Policy callback. Must return `true` to allow access. Default denies all paths.
+- `resolvePath(url)` - Converts a `file:` URL into a filesystem path. Default: `node:url.fileURLToPath`.
+- `read(path)` - Reads file content. Default: `node:fs/promises.readFile`.
+- `contentType({ path, url, method, opts })` - Optional callback to set a `content-type` header.
+
+**Example - Enable file URLs for a specific directory with `fetch`**
+
+```js
+const { Agent, fetch, interceptors } = require('undici')
+
+const root = '/srv/static'
+
+const dispatcher = new Agent().compose(interceptors.file({
+  allow: ({ path }) => path.startsWith(root)
+}))
+
+const response = await fetch(new URL('file:///srv/static/readme.txt'), {
+  dispatcher
+})
+
+console.log(await response.text())
+```
+
+**Example - Custom content type resolver**
+
+```js
+const nodePath = require('node:path')
+const { Agent, request, interceptors } = require('undici')
+
+const dispatcher = new Agent().compose(interceptors.file({
+  allow: ({ path }) => path.endsWith('.json'),
+  contentType: ({ path }) => {
+    if (nodePath.extname(path) === '.json') return 'application/json'
+  }
+}))
+
+const { body } = await request('file:///tmp/data.json', { dispatcher })
+console.log(await body.text())
+```
+
 ## Instance Events
 
 ### Event: `'connect'`

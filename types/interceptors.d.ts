@@ -16,6 +16,12 @@ declare namespace Interceptors {
 
   export type ResponseErrorInterceptorOpts = { throwOnError: boolean }
   export type CacheInterceptorOpts = CacheHandler.CacheOptions
+  export type FileInterceptorOpts = {
+    allow?: (opts: { path: string, url: URL, method: string, opts: Dispatcher.DispatchOptions }) => boolean | Promise<boolean>
+    resolvePath?: (url: URL) => string
+    read?: (path: string) => Promise<Buffer | Uint8Array | string>
+    contentType?: (opts: { path: string, url: URL, method: string, opts: Dispatcher.DispatchOptions }) => string | Promise<string | undefined> | undefined
+  }
 
   // DNS interceptor
   export type DNSInterceptorRecord = { address: string, ttl: number, family: 4 | 6 }
@@ -77,4 +83,5 @@ declare namespace Interceptors {
   export function dns (opts?: DNSInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function cache (opts?: CacheInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function deduplicate (opts?: DeduplicateInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
+  export function file (opts?: FileInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
 }
