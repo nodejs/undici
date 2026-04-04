@@ -31,6 +31,7 @@ const SERVER_READY_CHECKS = [
   ['wss', (line) => line.includes('wss on port') && line.includes('Listen on:')],
   ['h2', (line) => line.includes('h2 on port 9000') && line.includes('Starting http2 server')]
 ]
+const SERVER_READY_CHECK_NAMES = new Set(SERVER_READY_CHECKS.map(([name]) => name))
 
 function streamServerLogs (stream, target, onLine) {
   let buffer = ''
@@ -173,10 +174,7 @@ async function runWithTestUtil (testFunction) {
   const readinessTimeout = setTimeout(() => {
     if (!readySettled) {
       readySettled = true
-      const missing = SERVER_READY_CHECKS
-        .map(([name]) => name)
-        .filter((name) => !readyChecks.has(name))
-        .join(', ')
+      const missing = [...SERVER_READY_CHECK_NAMES.difference(readyChecks)].join(', ')
       rejectReady(new Error(`Timed out waiting for WPT server readiness. Missing: ${missing}`))
     }
   }, 30_000)
