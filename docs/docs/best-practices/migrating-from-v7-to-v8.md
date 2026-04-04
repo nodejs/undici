@@ -19,7 +19,7 @@ If you are still on Node.js 20 or an older Node.js 22 release, upgrade Node.js
 first:
 
 ```bash
-node -p "process.version"
+node -v
 ```
 
 If that command prints a version lower than `v22.19.0`, upgrade Node.js before
