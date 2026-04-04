@@ -3,11 +3,6 @@
 const { test, beforeEach, afterEach } = require('node:test')
 const { MockAgent, setGlobalDispatcher } = require('..')
 const PendingInterceptorsFormatter = require('../lib/mock/pending-interceptors-formatter')
-const util = require('../lib/core/util')
-
-// Since Node.js v21 `console.table` rows are aligned to the left
-// https://github.com/nodejs/node/pull/50135
-const tableRowsAlignedToLeft = util.nodeMajor >= 21 || (util.nodeMajor === 20 && util.nodeMinor >= 11)
 
 // `console.table` treats emoji as two character widths for cell width determination
 const Y = process.versions.icu ? '✅' : 'Y '
@@ -51,23 +46,13 @@ test('1 pending interceptor', t => {
     mockAgentWithOneInterceptor().assertNoPendingInterceptors({ pendingInterceptorsFormatter })
     t.assert.fail('Should have thrown')
   } catch (err) {
-    t.assert.deepStrictEqual(err.message, tableRowsAlignedToLeft
-      ? `
+    t.assert.deepStrictEqual(err.message, `
 1 interceptor is pending:
 
 ┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
 │ (index) │ Method │ Origin                │ Path │ Status code │ Persistent │ Invocations │ Remaining │
 ├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
 │ 0       │ 'GET'  │ 'https://example.com' │ '/'  │ 200         │ '${N}'       │ 0           │ 1         │
-└─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
-`.trim()
-      : `
-1 interceptor is pending:
-
-┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
-│ (index) │ Method │        Origin         │ Path │ Status code │ Persistent │ Invocations │ Remaining │
-├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
-│    0    │ 'GET'  │ 'https://example.com' │ '/'  │     200     │    '${N}'    │      0      │     1     │
 └─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
 `.trim())
   }
@@ -84,8 +69,7 @@ test('2 pending interceptors', t => {
   try {
     withTwoInterceptors.assertNoPendingInterceptors({ pendingInterceptorsFormatter })
   } catch (err) {
-    t.assert.deepStrictEqual(err.message, tableRowsAlignedToLeft
-      ? `
+    t.assert.deepStrictEqual(err.message, `
 2 interceptors are pending:
 
 ┌─────────┬────────┬──────────────────────────┬──────────────┬─────────────┬────────────┬─────────────┬───────────┐
@@ -93,16 +77,6 @@ test('2 pending interceptors', t => {
 ├─────────┼────────┼──────────────────────────┼──────────────┼─────────────┼────────────┼─────────────┼───────────┤
 │ 0       │ 'GET'  │ 'https://example.com'    │ '/'          │ 200         │ '${N}'       │ 0           │ 1         │
 │ 1       │ 'GET'  │ 'https://localhost:9999' │ '/some/path' │ 204         │ '${N}'       │ 0           │ 1         │
-└─────────┴────────┴──────────────────────────┴──────────────┴─────────────┴────────────┴─────────────┴───────────┘
-`.trim()
-      : `
-2 interceptors are pending:
-
-┌─────────┬────────┬──────────────────────────┬──────────────┬─────────────┬────────────┬─────────────┬───────────┐
-│ (index) │ Method │          Origin          │     Path     │ Status code │ Persistent │ Invocations │ Remaining │
-├─────────┼────────┼──────────────────────────┼──────────────┼─────────────┼────────────┼─────────────┼───────────┤
-│    0    │ 'GET'  │  'https://example.com'   │     '/'      │     200     │    '${N}'    │      0      │     1     │
-│    1    │ 'GET'  │ 'https://localhost:9999' │ '/some/path' │     204     │    '${N}'    │      0      │     1     │
 └─────────┴────────┴──────────────────────────┴──────────────┴─────────────┴────────────┴─────────────┴───────────┘
 `.trim())
   }
@@ -160,8 +134,7 @@ test('Variations of persist(), times(), and pending status', async t => {
     agent.assertNoPendingInterceptors({ pendingInterceptorsFormatter })
     t.assert.fail('Should have thrown')
   } catch (err) {
-    t.assert.deepStrictEqual(err.message, tableRowsAlignedToLeft
-      ? `
+    t.assert.deepStrictEqual(err.message, `
 4 interceptors are pending:
 
 ┌─────────┬────────┬──────────────────────────┬──────────────────────┬─────────────┬────────────┬─────────────┬───────────┐
@@ -171,18 +144,6 @@ test('Variations of persist(), times(), and pending status', async t => {
 │ 1       │ 'GET'  │ 'https://localhost:9999' │ '/persistent/unused' │ 200         │ '${Y}'       │ 0           │ Infinity  │
 │ 2       │ 'GET'  │ 'https://localhost:9999' │ '/times/partial'     │ 200         │ '${N}'       │ 1           │ 4         │
 │ 3       │ 'GET'  │ 'https://localhost:9999' │ '/times/unused'      │ 200         │ '${N}'       │ 0           │ 2         │
-└─────────┴────────┴──────────────────────────┴──────────────────────┴─────────────┴────────────┴─────────────┴───────────┘
-`.trim()
-      : `
-4 interceptors are pending:
-
-┌─────────┬────────┬──────────────────────────┬──────────────────────┬─────────────┬────────────┬─────────────┬───────────┐
-│ (index) │ Method │          Origin          │         Path         │ Status code │ Persistent │ Invocations │ Remaining │
-├─────────┼────────┼──────────────────────────┼──────────────────────┼─────────────┼────────────┼─────────────┼───────────┤
-│    0    │ 'GET'  │  'https://example.com'   │         '/'          │     200     │    '${N}'    │      0      │     1     │
-│    1    │ 'GET'  │ 'https://localhost:9999' │ '/persistent/unused' │     200     │    '${Y}'    │      0      │ Infinity  │
-│    2    │ 'GET'  │ 'https://localhost:9999' │   '/times/partial'   │     200     │    '${N}'    │      1      │     4     │
-│    3    │ 'GET'  │ 'https://localhost:9999' │   '/times/unused'    │     200     │    '${N}'    │      0      │     2     │
 └─────────┴────────┴──────────────────────────┴──────────────────────┴─────────────┴────────────┴─────────────┴───────────┘
 `.trim())
   }
@@ -225,23 +186,13 @@ test('defaults to rendering output with terminal color when process.env.CI is un
     mockAgentWithOneInterceptor().assertNoPendingInterceptors()
     t.assert.fail('Should have thrown')
   } catch (err) {
-    t.assert.deepStrictEqual(err.message, tableRowsAlignedToLeft
-      ? `
+    t.assert.deepStrictEqual(err.message, `
 1 interceptor is pending:
 
 ┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
 │ (index) │ Method │ Origin                │ Path │ Status code │ Persistent │ Invocations │ Remaining │
 ├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
 │ 0       │ \u001b[32m'GET'\u001b[39m  │ \u001b[32m'https://example.com'\u001b[39m │ \u001b[32m'/'\u001b[39m  │ \u001b[33m200\u001b[39m         │ \u001b[32m'${N}'\u001b[39m       │ \u001b[33m0\u001b[39m           │ \u001b[33m1\u001b[39m         │
-└─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
-`.trim()
-      : `
-1 interceptor is pending:
-
-┌─────────┬────────┬───────────────────────┬──────┬─────────────┬────────────┬─────────────┬───────────┐
-│ (index) │ Method │        Origin         │ Path │ Status code │ Persistent │ Invocations │ Remaining │
-├─────────┼────────┼───────────────────────┼──────┼─────────────┼────────────┼─────────────┼───────────┤
-│    0    │ \u001b[32m'GET'\u001b[39m  │ \u001b[32m'https://example.com'\u001b[39m │ \u001b[32m'/'\u001b[39m  │     \u001b[33m200\u001b[39m     │    \u001b[32m'${N}'\u001b[39m    │      \u001b[33m0\u001b[39m      │     \u001b[33m1\u001b[39m     │
 └─────────┴────────┴───────────────────────┴──────┴─────────────┴────────────┴─────────────┴───────────┘
 `.trim())
 
