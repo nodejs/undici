@@ -76,18 +76,16 @@ describe('content-encoding handling', () => {
     t.assert.strictEqual(await response.text(), 'Hello, World!')
   })
 
-  test('should decompress zstandard response',
-    { skip: typeof require('node:zlib').createZstdDecompress !== 'function' },
-    async (t) => {
-      const response = await fetch(`http://localhost:${server.address().port}`, {
-        keepalive: false,
-        headers: { 'accept-encoding': 'zstd' }
-      })
-
-      t.assert.strictEqual(response.headers.get('content-encoding'), 'zstd')
-      t.assert.strictEqual(response.headers.get('content-type'), 'text/plain')
-      t.assert.strictEqual(await response.text(), 'Hello, World!')
+  test('should decompress zstandard response', async (t) => {
+    const response = await fetch(`http://localhost:${server.address().port}`, {
+      keepalive: false,
+      headers: { 'accept-encoding': 'zstd' }
     })
+
+    t.assert.strictEqual(response.headers.get('content-encoding'), 'zstd')
+    t.assert.strictEqual(response.headers.get('content-type'), 'text/plain')
+    t.assert.strictEqual(await response.text(), 'Hello, World!')
+  })
 })
 
 describe('content-encoding chain limit', () => {
