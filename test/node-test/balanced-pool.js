@@ -1,8 +1,10 @@
 'use strict'
 
+const dns = require('node:dns')
 const { describe, test } = require('node:test')
 const assert = require('node:assert/strict')
 const { BalancedPool, Pool, Client, errors } = require('../..')
+const buildConnector = require('../../lib/core/connect')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
 const { tspl } = require('@matteo.collina/tspl')
@@ -296,6 +298,68 @@ test('getUpstream returns undefined for closed/destroyed upstream', (t) => {
 
   const result = pool.getUpstream(upstream)
   p.strictEqual(result, undefined)
+})
+
+test('should balance hostname upstreams across resolved dns records', async (t) => {
+  const p = tspl(t, { plan: 13 })
+
+  const hostnames = []
+  const hosts = []
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    hosts.push(req.headers.host)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.after(server.close.bind(server))
+
+  await promisify(server.listen).call(server, 0)
+
+  const originalLookup = dns.lookup
+  dns.lookup = function lookup (hostname, options, callback) {
+    if (hostname !== 'service.local') {
+      return originalLookup.call(this, hostname, options, callback)
+    }
+
+    queueMicrotask(() => {
+      callback(null, [
+        { address: '127.0.0.1', family: 4 },
+        { address: '127.0.0.2', family: 4 }
+      ])
+    })
+  }
+  t.after(() => {
+    dns.lookup = originalLookup
+  })
+
+  const connect = buildConnector({})
+  const client = new BalancedPool(`http://service.local:${server.address().port}`, {
+    connections: 2,
+    pipelining: 1,
+    connect (opts, callback) {
+      hostnames.push(opts.hostname)
+      connect({ ...opts, hostname: '127.0.0.1' }, callback)
+    }
+  })
+  t.after(client.destroy.bind(client))
+
+  const responses = await Promise.all([
+    client.request({ path: '/', method: 'GET' }),
+    client.request({ path: '/', method: 'GET' })
+  ])
+
+  for (const { statusCode, headers, body } of responses) {
+    p.strictEqual(statusCode, 200)
+    p.strictEqual(headers['content-type'], 'text/plain')
+    p.strictEqual(await body.text(), 'hello')
+  }
+
+  p.deepStrictEqual(client.upstreams, [`http://service.local:${server.address().port}`])
+  p.strictEqual(hosts.length, 2)
+  p.strictEqual(hosts[0], `service.local:${server.address().port}`)
+  p.strictEqual(hosts[1], `service.local:${server.address().port}`)
+  p.strictEqual(hostnames.length, 2)
+  p.ok(hostnames.includes('127.0.0.1'))
+  p.ok(hostnames.includes('127.0.0.2'))
 })
 
 class TestServer {
