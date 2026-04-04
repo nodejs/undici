@@ -90,25 +90,27 @@ globalThis.Window = Object.getPrototypeOf(globalThis).constructor
 setGlobalOrigin(globalThis.location)
 
 function setupGlobalTestharnessCallbacks () {
-  globalThis.add_result_callback(({ message, name, stack, status }) => {
-    const data = JSON.stringify({ name, status, message, stack })
-    process.stdout.write(data + '\n')
+  const cases = []
+
+  globalThis.add_result_callback(({ index, message, name, stack, status }) => {
+    cases.push({ index, name, status, message, stack })
   })
 
-  globalThis.add_completion_callback((tests, harnessStatus) => {
-    process.stdout.write('#$#$#' + JSON.stringify({ tests, harnessStatus }) + '\n')
-    process.stdout._flush?.()
+  globalThis.add_completion_callback((_tests, harnessStatus) => {
+    process.stdout.end('#$#$#' + JSON.stringify({ tests: cases, harnessStatus }) + '\n', () => {
+      process.stdout._flush?.()
 
-    if (process.platform === 'win32') {
-      // https://github.com/nodejs/node/issues/56645#issuecomment-3077594952
-      setTimeout(() => {
+      if (process.platform === 'win32') {
+        // https://github.com/nodejs/node/issues/56645#issuecomment-3077594952
+        setTimeout(() => {
+          // eslint-disable-next-line n/no-process-exit
+          process.exit(harnessStatus.status === 0 ? 0 : 1)
+        }, 50)
+      } else {
         // eslint-disable-next-line n/no-process-exit
         process.exit(harnessStatus.status === 0 ? 0 : 1)
-      }, 50)
-    } else {
-      // eslint-disable-next-line n/no-process-exit
-      process.exit(harnessStatus.status === 0 ? 0 : 1)
-    }
+      }
+    })
   })
 }
 

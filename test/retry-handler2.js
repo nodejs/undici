@@ -186,22 +186,22 @@ test('Should retry status code without throwing an error | throwOnError: false',
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
           t.strictEqual(counter, 2)
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -282,22 +282,22 @@ test('Should account for network and response errors | throwOnError: false', asy
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
           t.strictEqual(counter, 2)
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -358,21 +358,21 @@ test('Issue #3288 - request with body (asynciterable) should fail, without throw
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.ok(true, 'pass')
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           const data = Buffer.concat(chunks).toString('utf-8')
           t.strictEqual(data, '{"message": "failed"}')
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -438,21 +438,21 @@ test('Should use retry-after header for retries | throwOnError: false', async t 
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -526,21 +526,21 @@ test('Should use retry-after header for retries (date) | throwOnError: false', a
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -611,21 +611,21 @@ test('Should retry with defaults | throwOnError: false', async t => {
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -708,22 +708,22 @@ test('Should handle 206 partial content | throwOnError: false', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, _resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abcdef')
           t.strictEqual(counter, 1)
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -796,20 +796,20 @@ test('Should handle 206 partial content - bad-etag | throwOnError: false', async
           return client.dispatch(...args)
         },
         handler: {
-          onConnect () {
+          onRequestStart () {
             t.ok(true, 'pass')
           },
-          onHeaders (_status, _rawHeaders, _resume, _statusMessage) {
+          onResponseStart (_controller, _status, _headers, _statusMessage) {
             return true
           },
-          onData (chunk) {
+          onResponseData (_controller, chunk) {
             chunks.push(chunk)
             return true
           },
-          onComplete () {
+          onResponseEnd () {
             t.ifError('should not complete')
           },
-          onError (err) {
+          onResponseError (_controller, err) {
             t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
             t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
             t.strictEqual(err.message, 'ETag mismatch')
@@ -1090,21 +1090,21 @@ test('should not error if request is not meant to be retried | throwOnError: fal
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 400)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'Bad request')
         },
-        onError (err) {
+        onResponseError (_controller, err) {
           t.fail(err)
         }
       }
@@ -1260,22 +1260,22 @@ test('Issue#2986 - Handle custom 206 | throwOnError: false', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abcdef')
           t.strictEqual(counter, 1)
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -1361,22 +1361,22 @@ test('Issue#3128 - Support if-match | throwOnError: false', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abcdef')
           t.strictEqual(counter, 1)
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -1462,22 +1462,22 @@ test('Issue#3128 - Should ignore weak etags | throwOnError: false', async t => {
         return client.dispatch(...args)
       },
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abcdef')
           t.strictEqual(counter, 1)
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -1563,22 +1563,22 @@ test('Weak etags are ignored on range-requests | throwOnError: false', async t =
         return client.dispatch(...args)
       },
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abcdef')
           t.strictEqual(counter, 1)
         },
-        onError () {
+        onResponseError () {
           t.fail()
         }
       }
@@ -1659,21 +1659,21 @@ test('Should throw RequestRetryError when Content-Range mismatch | throwOnError:
         return client.dispatch(...args)
       },
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, _resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.ifError('should not complete')
         },
-        onError (err) {
+        onResponseError (_controller, err) {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'abc')
           t.strictEqual(err.code, 'UND_ERR_REQ_RETRY')
           t.strictEqual(err.message, 'Content-Range mismatch')
@@ -1749,21 +1749,21 @@ test('Should use retry-after header for retries (date) but date format is wrong 
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
-        onConnect () {
+        onRequestStart () {
           t.ok(true, 'pass')
         },
-        onHeaders (status, _rawHeaders, resume, _statusMessage) {
+        onResponseStart (_controller, status, _headers, _statusMessage) {
           t.strictEqual(status, 200)
           return true
         },
-        onData (chunk) {
+        onResponseData (_controller, chunk) {
           chunks.push(chunk)
           return true
         },
-        onComplete () {
+        onResponseEnd () {
           t.strictEqual(Buffer.concat(chunks).toString('utf-8'), 'hello world!')
         },
-        onError (err) {
+        onResponseError (_controller, err) {
           t.ifError(err)
         }
       }

@@ -1248,16 +1248,16 @@ describe('Deduplicate Interceptor', () => {
 
     const slowWaitingHandlerErrorPromise = new Promise((resolve, reject) => {
       client.dispatch(request, {
-        onConnect () {},
-        onHeaders () {},
-        onData () {
+        onRequestStart () {},
+        onResponseStart () {},
+        onResponseData (controller) {
           // Pause the waiting handler immediately and never resume it.
-          return false
+          controller.pause()
         },
-        onComplete () {
+        onResponseEnd () {
           reject(new Error('Expected paused waiting handler to fail'))
         },
-        onError (err) {
+        onResponseError (_controller, err) {
           resolve(err)
         }
       })

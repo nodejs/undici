@@ -7,7 +7,7 @@ const { tspl } = require('@matteo.collina/tspl')
 
 test('validations', async t => {
   let client
-  const p = tspl(t, { plan: 10 })
+  const p = tspl(t, { plan: 12 })
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
@@ -50,6 +50,18 @@ test('validations', async t => {
       })
 
       client.request({ path: '/', method: 'POST', body: { hello: 'world' } }, (err, res) => {
+        p.equal(err.code, 'UND_ERR_INVALID_ARG')
+        p.equal(err.message, 'body must be a string, a Buffer, a Readable stream, an iterable, or an async iterable')
+      })
+
+      client.request({
+        path: '/',
+        method: 'POST',
+        body: {
+          [Symbol.toStringTag]: 'Blob',
+          arrayBuffer: () => {}
+        }
+      }, (err, res) => {
         p.equal(err.code, 'UND_ERR_INVALID_ARG')
         p.equal(err.message, 'body must be a string, a Buffer, a Readable stream, an iterable, or an async iterable')
       })

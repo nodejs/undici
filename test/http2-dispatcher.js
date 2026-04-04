@@ -511,19 +511,13 @@ test('Should send http2 PING frames', async t => {
     method: 'PUT',
     body: 'hello'
   }, {
-    onConnect () {
-
-    },
-    onHeaders () {
-      return true
-    },
-    onData () {
-      return true
-    },
-    onComplete (trailers) {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {},
+    onResponseEnd (_controller, trailers) {
       t.strictEqual(trailers['x-trailer'], 'hello')
     },
-    onError (err) {
+    onResponseError (_controller, err) {
       t.ifError(err)
     }
   })
@@ -588,19 +582,13 @@ test('Should not send http2 PING frames if interval === 0', async t => {
     method: 'PUT',
     body: 'hello'
   }, {
-    onConnect () {
-
-    },
-    onHeaders () {
-      return true
-    },
-    onData () {
-      return true
-    },
-    onComplete (trailers) {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {},
+    onResponseEnd (_controller, trailers) {
       t.strictEqual(trailers['x-trailer'], 'hello')
     },
-    onError (err) {
+    onResponseError (_controller, err) {
       t.ifError(err)
     }
   })
@@ -666,19 +654,13 @@ test('Should not send http2 PING frames after connection is closed', async t => 
     method: 'PUT',
     body: 'hello'
   }, {
-    onConnect () {
-
-    },
-    onHeaders () {
-      return true
-    },
-    onData () {
-      return true
-    },
-    onComplete (trailers) {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {},
+    onResponseEnd (_controller, trailers) {
       t.strictEqual(trailers['x-trailer'], 'hello')
     },
-    onError (err) {
+    onResponseError (_controller, err) {
       t.ifError(err)
     }
   })

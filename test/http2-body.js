@@ -111,29 +111,30 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
       body: expectedBody
     },
     {
-      onConnect () {
+      onRequestStart () {
         t.ok(true, 'pass')
       },
-      onError (err) {
+      onResponseError (_controller, err) {
         t.ifError(err)
       },
-      onHeaders (statusCode, headers) {
+      onResponseStart (controller, statusCode) {
+        const rawHeaders = controller.rawHeaders
         t.strictEqual(statusCode, 200)
-        t.strictEqual(headers[0].toString('utf-8'), 'content-type')
+        t.strictEqual(rawHeaders[0].toString('utf-8'), 'content-type')
         t.strictEqual(
-          headers[1].toString('utf-8'),
+          rawHeaders[1].toString('utf-8'),
           'text/plain; charset=utf-8'
         )
-        t.strictEqual(headers[2].toString('utf-8'), 'x-custom-h2')
-        t.strictEqual(headers[3].toString('utf-8'), 'foo')
+        t.strictEqual(rawHeaders[2].toString('utf-8'), 'x-custom-h2')
+        t.strictEqual(rawHeaders[3].toString('utf-8'), 'foo')
       },
-      onData (chunk) {
+      onResponseData (_controller, chunk) {
         response.push(chunk)
       },
       onBodySent (body) {
         t.strictEqual(body.toString('utf-8'), expectedBody)
       },
-      onComplete () {
+      onResponseEnd () {
         t.strictEqual(Buffer.concat(response).toString('utf-8'), 'hello h2!')
         t.strictEqual(
           Buffer.concat(requestBody).toString('utf-8'),

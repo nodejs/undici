@@ -19,6 +19,78 @@ const CA_CERT_PATH = join(import.meta.dirname, 'runner/certs/cacert.pem')
 
 const log = debuglog('UNDICI_WPT')
 
+const SERVER_READY_CHECKS = [
+  ['http-default', (line) => line.includes('http on port 8000') && line.includes('Starting http server')],
+  ['http-alt', (line) => /\bhttp on port (?!8000\b)\d+\].*Starting http server/.test(line)],
+  ['http-local', (line) => line.includes('http-local on port') && line.includes('Starting http server')],
+  ['http-public', (line) => line.includes('http-public on port') && line.includes('Starting http server')],
+  ['https-8443', (line) => line.includes('https on port 8443') && line.includes('Starting https server')],
+  ['https-8444', (line) => line.includes('https on port 8444') && line.includes('Starting https server')],
+  ['https-local', (line) => line.includes('https-local on port') && line.includes('Starting https server')],
+  ['https-public', (line) => line.includes('https-public on port') && line.includes('Starting https server')],
+  ['ws', (line) => line.includes('ws on port') && line.includes('Listen on:')],
+  ['wss', (line) => line.includes('wss on port') && line.includes('Listen on:')],
+  ['h2', (line) => line.includes('h2 on port 9000') && line.includes('Starting http2 server')]
+]
+
+function streamServerLogs (stream, target, onLine) {
+  let buffer = ''
+
+  stream.setEncoding('utf8')
+  stream.on('data', (chunk) => {
+    target.write(chunk)
+    buffer += chunk
+
+    let endIndex
+    while ((endIndex = buffer.indexOf('\n')) !== -1) {
+      onLine(buffer.slice(0, endIndex))
+      buffer = buffer.slice(endIndex + 1)
+    }
+  })
+
+  stream.on('end', () => {
+    if (buffer.length > 0) {
+      onLine(buffer)
+    }
+  })
+}
+
+async function terminateProcess (proc, exitPromise) {
+  if (proc.exitCode != null) {
+    await exitPromise
+    return
+  }
+
+  if (process.platform === 'win32') {
+    try {
+      // SIGINT does not reliably terminate the Python WPT server tree on Windows.
+      await new Promise((resolve) => {
+        const killer = spawn('taskkill', ['/pid', String(proc.pid), '/T', '/F'], {
+          stdio: 'ignore'
+        })
+
+        killer.once('error', resolve)
+        killer.once('exit', resolve)
+      })
+    } catch {
+      proc.kill()
+    }
+  } else {
+    proc.kill('SIGINT')
+
+    const exited = await Promise.race([
+      exitPromise.then(() => true),
+      new Promise(resolve => setTimeout(resolve, 1_000, false))
+    ])
+
+    if (!exited && proc.exitCode == null) {
+      proc.kill('SIGKILL')
+    }
+  }
+
+  await exitPromise
+}
+
 async function ensureWPTCheckout () {
   if (existsSync(WPT_SCRIPT_PATH)) {
     return
@@ -50,54 +122,112 @@ async function ensureWPTCheckout () {
 
 async function runWithTestUtil (testFunction) {
   const { promise, resolve, reject } = createDeferredPromise()
+  const { promise: readyPromise, resolve: resolveReady, reject: rejectReady } = createDeferredPromise()
+  const readyChecks = new Set()
+  const serverUrl = 'http://web-platform.test:8000/'
+  let serverResponding = false
+  let readySettled = false
+
+  const maybeResolveReady = () => {
+    if (!readySettled && serverResponding && readyChecks.size === SERVER_READY_CHECKS.length) {
+      readySettled = true
+      resolveReady()
+    }
+  }
+
+  const onServerLine = (line) => {
+    for (const [name, matches] of SERVER_READY_CHECKS) {
+      if (!readyChecks.has(name) && matches(line)) {
+        readyChecks.add(name)
+        maybeResolveReady()
+      }
+    }
+  }
 
   console.log('Starting WPT server...')
   const proc = spawn('python3', [WPT_SCRIPT_PATH, 'serve', '--config', '../runner/config.json'], {
     cwd: WPT_DIR,
-    stdio: 'inherit'
+    stdio: ['ignore', 'pipe', 'pipe']
   })
 
-  proc.once('exit', () => resolve())
-  proc.once('error', (err) => reject(err))
+  streamServerLogs(proc.stdout, process.stdout, onServerLine)
+  streamServerLogs(proc.stderr, process.stderr, onServerLine)
 
-  const serverUrl = 'http://web-platform.test:8000/'
-
-  // Wait for server to be ready
-  while (true) {
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    try {
-      const req = await fetch(serverUrl) // eslint-disable-line no-restricted-globals
-      await req.body?.cancel()
-      if (req.status === 200) {
-        break
-      }
-    } catch (err) {
-      // Server not ready yet
+  proc.once('exit', (code, signal) => {
+    if (!readySettled) {
+      readySettled = true
+      rejectReady(new Error(`WPT server exited before it was ready (code: ${code}, signal: ${signal ?? 'none'})`))
     }
-  }
 
-  console.log(`✅ WPT server started at ${serverUrl}`)
+    resolve()
+  })
 
-  let results
+  proc.once('error', (err) => {
+    if (!readySettled) {
+      readySettled = true
+      rejectReady(err)
+    }
+
+    reject(err)
+  })
+
+  const readinessTimeout = setTimeout(() => {
+    if (!readySettled) {
+      readySettled = true
+      const missing = SERVER_READY_CHECKS
+        .map(([name]) => name)
+        .filter((name) => !readyChecks.has(name))
+        .join(', ')
+      rejectReady(new Error(`Timed out waiting for WPT server readiness. Missing: ${missing}`))
+    }
+  }, 30_000)
 
   try {
-    results = await testFunction()
-  } finally {
-    console.log('Killing WPT server')
+    while (!serverResponding && !proc.killed && proc.exitCode == null) {
+      await new Promise(resolve => setTimeout(resolve, 100))
 
-    if (!proc.killed) {
-      proc.kill('SIGINT')
+      try {
+        const req = await fetch(serverUrl) // eslint-disable-line no-restricted-globals
+        await req.body?.cancel()
+        if (req.status === 200) {
+          serverResponding = true
+          maybeResolveReady()
+        }
+      } catch {
+        // Server not ready yet
+      }
     }
-  }
 
-  await promise
-  return results
+    await readyPromise
+    console.log(`✅ WPT server started at ${serverUrl}`)
+
+    let results
+
+    try {
+      results = await testFunction()
+    } finally {
+      console.log('Killing WPT server')
+      await terminateProcess(proc, promise)
+    }
+
+    return results
+  } catch (err) {
+    try {
+      await terminateProcess(proc, promise)
+    } catch {}
+
+    throw err
+  } finally {
+    clearTimeout(readinessTimeout)
+  }
 }
 
 function runSingleTest (url, options, expectation, timeout = 10000) {
   const startTime = Date.now()
   const { promise, resolve, reject } = createDeferredPromise()
+  // NODE_EXTRA_CA_CERTS is required for HTTPS/WSS pages, but it causes the
+  // WebSocket-over-HTTP/2 WPT variants to exit without emitting harness output.
+  const useExtraCACerts = !(url.pathname.startsWith('/websockets/') && url.searchParams.get('wpt_flags')?.includes('h2'))
 
   const proc = spawn('node', [
     '--expose-gc',
@@ -109,7 +239,7 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
     env: {
       ...process.env,
       NO_COLOR: '1',
-      NODE_EXTRA_CA_CERTS: CA_CERT_PATH
+      ...(useExtraCACerts ? { NODE_EXTRA_CA_CERTS: CA_CERT_PATH } : {})
     }
   })
 
@@ -138,12 +268,12 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
           const { tests, harnessStatus: _harnessStatus } = JSON.parse(message)
           harnessStatus = _harnessStatus
           cases.push(...tests)
-        } catch (e) {
+        } catch {
           console.error('Failed to parse:', message)
         }
         stdoutOutput = stdoutOutput.slice(endIndex + 1)
       } else {
-        break // Wait for more data
+        break
       }
     }
   })
@@ -165,7 +295,7 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
     }
   })
 
-  proc.once('exit', () => {
+  proc.once('close', () => {
     clearTimeout(timer)
     const duration = Date.now() - startTime
 

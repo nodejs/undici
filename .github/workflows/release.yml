@@ -36,7 +36,10 @@ jobs:
               repo
             })
 
-            const previousRelease = releases.find((r) => r.tag_name.startsWith('v7'))
+            const currentMajor = versionTag.match(/^v\d+/)?.[0]
+            const previousRelease = releases.find((r) => {
+              return r.tag_name !== versionTag && r.tag_name.startsWith(`${currentMajor}.`)
+            })
 
             if (versionTag !== previousRelease?.tag_name) {
               return versionTag

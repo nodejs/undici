@@ -59,21 +59,29 @@ jobs:
             const req = await fetch('https://nodejs.org/download${{ inputs.node-download-server-path }}/index.json')
             const releases = await req.json()
 
-            const latest = releases.find((r) => r.version.startsWith('v${{ inputs.node-version }}'))
-            return latest.version
+            const latest = releases.find((r) => r.version.startsWith('v${{ inputs.node-version }}.'))
+            return latest?.version || ''
+
+      - name: Skip until Node.js ${{ inputs.node-version }} is released
+        if: steps.release.outputs.result == ''
+        run: echo 'No matching Node.js ${{ inputs.node-version }} release is available yet; skipping shared builtin embedding checks.'
 
       - name: Download and extract source for Node.js ${{ steps.release.outputs.result }}
+        if: steps.release.outputs.result != ''
         run: curl https://nodejs.org/download${{ inputs.node-download-server-path }}/${{ steps.release.outputs.result }}/node-${{ steps.release.outputs.result }}.tar.xz | tar xfJ -
 
       - name: Install ninja
+        if: steps.release.outputs.result != ''
         run: sudo apt-get install ninja-build
 
       - name: ccache
-        uses: hendrikmuhs/ccache-action@bfa03e1de4d7f7c3e80ad9109feedd05c4f5a716 #v1.2.19
+        if: steps.release.outputs.result != ''
+        uses: hendrikmuhs/ccache-action@33522472633dbd32578e909b315f5ee43ba878ce #v1.2.22
         with:
           key: node(external_undici)${{ inputs.node-version }}
 
       - name: Build node ${{ steps.release.outputs.result }} with --shared-builtin-undici/undici-path
+        if: steps.release.outputs.result != ''
         working-directory: ./node-${{ steps.release.outputs.result }}
         run: |
           export CC="ccache gcc"
@@ -85,6 +93,7 @@ jobs:
           echo "$(pwd)/final/bin" >> $GITHUB_PATH
 
       - name: Print version information
+        if: steps.release.outputs.result != ''
         run: |
           echo OS: $(node -p "os.version()")
           echo Node.js: $(node --version)
@@ -95,6 +104,7 @@ jobs:
           echo Node.js built-in undici version: $(node -p "process.versions.undici") # undefined for external Undici
 
       - name: Run tests
+        if: steps.release.outputs.result != ''
         working-directory: ./node-${{ steps.release.outputs.result }}
         run: tools/test.py -p dots --flaky-tests=dontcare
 

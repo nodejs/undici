@@ -127,19 +127,16 @@ test('Should ignore late http2 data after request completion', async (t) => {
     method: 'GET',
     headers: {}
   }, {
-    onConnect () {},
-    onHeaders () {
-      return true
-    },
-    onData () {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {
       onDataCalls++
-      return true
     },
-    onComplete (trailers) {
+    onResponseEnd (_controller, trailers) {
       onCompleteCalls++
       t.strictEqual(trailers['x-trailer'], 'hello')
     },
-    onError (err) {
+    onResponseError (_controller, err) {
       t.ifError(err)
     }
   })

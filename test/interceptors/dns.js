@@ -14,6 +14,23 @@ const pem = require('@metcoder95/https-pem')
 const { interceptors, Agent, request } = require('../..')
 const { dns } = interceptors
 
+// Helper to check if IPv6 is available for localhost
+// This is called synchronously at test definition time
+function hasIPv6LocalhostSync () {
+  let ipv6Available = false
+  try {
+    const addresses = lookup.sync('localhost', { all: true, family: 6 })
+    ipv6Available = addresses != null && addresses.length > 0 && addresses.some(addr => addr.family === 6)
+  } catch (err) {
+    // If lookup fails, assume IPv6 is not available
+    ipv6Available = false
+  }
+  return ipv6Available
+}
+
+// Check IPv6 availability once at module load time
+const ipv6Available = hasIPv6LocalhostSync()
+
 test('Should validate options', t => {
   t = tspl(t, { plan: 11 })
 
@@ -419,7 +436,7 @@ test('Should throw when on dual-stack disabled (4)', async t => {
   await t.completed
 })
 
-test('Should throw when on dual-stack disabled (6)', async t => {
+test('Should throw when on dual-stack disabled (6)', { skip: !ipv6Available }, async t => {
   t = tspl(t, { plan: 2 })
 
   let counter = 0
@@ -534,7 +551,7 @@ test('Should automatically resolve IPs (dual stack disabled - 4)', async t => {
   t.equal(await response2.body.text(), 'hello world!')
 })
 
-test('Should automatically resolve IPs (dual stack disabled - 6)', async t => {
+test('Should automatically resolve IPs (dual stack disabled - 6)', { skip: !ipv6Available }, async t => {
   t = tspl(t, { plan: 6 })
 
   let counter = 0
@@ -709,7 +726,7 @@ test('Should we handle TTL (4)', async t => {
   t.equal(lookupCounter, 2)
 })
 
-test('Should we handle TTL (6)', async t => {
+test('Should we handle TTL (6)', { skip: !ipv6Available }, async t => {
   t = tspl(t, { plan: 10 })
 
   const clock = FakeTimers.install()

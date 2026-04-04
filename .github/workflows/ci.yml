@@ -59,11 +59,8 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['20', '22', '24', '25']
+        node-version: ['22', '24', '25']
         runs-on: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        exclude:
-          - node-version: '20'
-            runs-on: windows-latest
     uses: ./.github/workflows/nodejs.yml
     with:
       # Disable coverage on Node.js 25 until https://github.com/nodejs/node/issues/61971 is resolved.
@@ -78,7 +75,7 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['24', '25']
+        node-version: ['22', '24', '25']
         runs-on: ['ubuntu-latest']
     uses: ./.github/workflows/nodejs.yml
     with:
@@ -93,7 +90,7 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['20', '22', '24', '25']
+        node-version: ['22', '24', '25']
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -134,7 +131,7 @@ jobs:
         run: sudo apt-get install ninja-build
 
       - name: ccache
-        uses: hendrikmuhs/ccache-action@bfa03e1de4d7f7c3e80ad9109feedd05c4f5a716 #v1.2.19
+        uses: hendrikmuhs/ccache-action@33522472633dbd32578e909b315f5ee43ba878ce #v1.2.22
         with:
           key: node${{ matrix.node-version }}
 
@@ -179,7 +176,7 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['20', '22', '24', '25']
+        node-version: ['22', '24', '25']
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -220,7 +217,7 @@ jobs:
         run: sudo apt-get install ninja-build
 
       - name: ccache
-        uses: hendrikmuhs/ccache-action@bfa03e1de4d7f7c3e80ad9109feedd05c4f5a716 #v1.2.19
+        uses: hendrikmuhs/ccache-action@33522472633dbd32578e909b315f5ee43ba878ce #v1.2.22
         with:
           key: node${{ matrix.node-version }}
 
@@ -273,7 +270,11 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['24', '25']
+        # Node.js 20 and 22 are intentionally excluded here because
+        # --shared-builtin-undici/undici-path still hits upstream Node.js issues there.
+        # Keep validating supported/current majors, and start exercising 26
+        # automatically once a release is available.
+        node-version: ['24', '25', '26']
         runs-on: ['ubuntu-latest']
     with:
       node-version: ${{ matrix.node-version }}

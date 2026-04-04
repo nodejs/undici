@@ -7,7 +7,7 @@ function createAssertingDispatcher (t, expectedPath) {
   return {
     dispatch (opts, handler) {
       t.assert.strictEqual(opts.path, expectedPath)
-      handler.onError(new Error('stop'))
+      handler.onResponseError(null, new Error('stop'))
       return true
     }
   }

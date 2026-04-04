@@ -6,8 +6,9 @@ const { once } = require('node:events')
 const { equal, strictEqual, notEqual, fail } = require('node:assert')
 const { setTimeout: sleep } = require('node:timers/promises')
 const FakeTimers = require('@sinonjs/fake-timers')
-const { Client, interceptors, cacheStores: { MemoryCacheStore } } = require('../../index')
+const { Client, interceptors, cacheStores: { MemoryCacheStore, SqliteCacheStore } } = require('../../index')
 const { makeCacheKey } = require('../../lib/util/cache.js')
+const { runtimeFeatures } = require('../../lib/util/runtime-features.js')
 
 describe('Cache Interceptor', () => {
   test('caches request', async () => {
@@ -2021,6 +2022,82 @@ describe('Cache Interceptor', () => {
       const maxExpected = clock.now + (60 * 1000 * 3) // generous upper bound
       equal(cached.deleteAt < maxExpected, true, `deleteAt (${cached.deleteAt}) should be well under 3x max-age (${maxExpected})`)
       equal(cached.deleteAt > cached.staleAt, true, 'deleteAt should be greater than staleAt to allow revalidation')
+    })
+
+    test('sqlite store keeps short-lived entries past Date header precision loss so they can revalidate', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
+      const clock = FakeTimers.install({ now: 1000, shouldClearNativeTimers: true })
+      const store = new SqliteCacheStore()
+      let requestsToOrigin = 0
+      let revalidationHeaders
+
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        requestsToOrigin++
+
+        if (requestsToOrigin === 2) {
+          revalidationHeaders = req.headers
+
+          if (req.headers['if-none-match'] !== '"abcd"' || typeof req.headers['if-modified-since'] !== 'string') {
+            res.statusCode = 412
+            res.end('expected conditional revalidation')
+            return
+          }
+
+          res.statusCode = 304
+          res.end()
+          return
+        }
+
+        res.setHeader('cache-control', 'max-age=2, must-revalidate')
+        // Deliberately round the response date down to the previous second.
+        res.setHeader('date', new Date(0).toUTCString())
+        res.setHeader('etag', '"abcd"')
+        res.sendDate = false
+        res.end('short-lived')
+      }).listen(0)
+
+      after(async () => {
+        server.close()
+        store.close()
+        await client.close()
+        clock.uninstall()
+      })
+
+      await once(server, 'listening')
+
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
+        .compose(interceptors.cache({ store, type: 'private' }))
+
+      const request = {
+        origin,
+        method: 'GET',
+        path: '/date-header-precision'
+      }
+
+      {
+        const res = await client.request(request)
+        strictEqual(await res.body.text(), 'short-lived')
+        equal(requestsToOrigin, 1)
+      }
+
+      {
+        const res = await client.request(request)
+        strictEqual(await res.body.text(), 'short-lived')
+        equal(requestsToOrigin, 1)
+      }
+
+      clock.tick(3001)
+
+      const cached = store.get(makeCacheKey({ ...request, headers: {} }))
+      notEqual(cached, undefined, 'entry should remain available long enough to be revalidated')
+
+      {
+        const res = await client.request(request)
+        strictEqual(await res.body.text(), 'short-lived')
+        equal(requestsToOrigin, 2)
+        strictEqual(revalidationHeaders['if-none-match'], '"abcd"')
+        strictEqual(typeof revalidationHeaders['if-modified-since'], 'string')
+      }
     })
 
     test('immutable response has deleteAt of ~1 year', async () => {
