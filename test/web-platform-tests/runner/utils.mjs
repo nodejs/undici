@@ -15,9 +15,3 @@ export function sanitizeUnpairedSurrogates (str) {
 function codeUnitStr (char) {
   return 'U+' + char.charCodeAt(0).toString(16)
 }
-
-/**
- * @type {import('../../../lib/util/promise')['createDeferredPromise']}
- */
-export const createDeferredPromise =
-  Promise.withResolvers?.bind(Promise) ?? (await import('../../../lib/util/promise.js')).createDeferredPromise

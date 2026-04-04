@@ -5,12 +5,10 @@ const { fetch } = require('../..')
 const { createServer } = require('node:http')
 const { closeServerAsPromise } = require('../utils/node-http')
 const { once } = require('node:events')
-const { createDeferredPromise } = require('../../lib/util/promise')
-
 test('abort the request on the other side if the stream is canceled', async (t) => {
   t.plan(1)
 
-  const promise = createDeferredPromise()
+  const promise = Promise.withResolvers()
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200)

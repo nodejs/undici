@@ -6,8 +6,7 @@ import { join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { debuglog } from 'node:util'
 import {
-  sanitizeUnpairedSurrogates,
-  createDeferredPromise
+  sanitizeUnpairedSurrogates
 } from './runner/utils.mjs'
 import * as jsondiffpatch from 'jsondiffpatch'
 
@@ -121,8 +120,8 @@ async function ensureWPTCheckout () {
 }
 
 async function runWithTestUtil (testFunction) {
-  const { promise, resolve, reject } = createDeferredPromise()
-  const { promise: readyPromise, resolve: resolveReady, reject: rejectReady } = createDeferredPromise()
+  const { promise, resolve, reject } = Promise.withResolvers()
+  const { promise: readyPromise, resolve: resolveReady, reject: rejectReady } = Promise.withResolvers()
   const readyChecks = new Set()
   const serverUrl = 'http://web-platform.test:8000/'
   let serverResponding = false
@@ -224,7 +223,7 @@ async function runWithTestUtil (testFunction) {
 
 function runSingleTest (url, options, expectation, timeout = 10000) {
   const startTime = Date.now()
-  const { promise, resolve, reject } = createDeferredPromise()
+  const { promise, resolve, reject } = Promise.withResolvers()
   // NODE_EXTRA_CA_CERTS is required for HTTPS/WSS pages, but it causes the
   // WebSocket-over-HTTP/2 WPT variants to exit without emitting harness output.
   const useExtraCACerts = !(url.pathname.startsWith('/websockets/') && url.searchParams.get('wpt_flags')?.includes('h2'))
