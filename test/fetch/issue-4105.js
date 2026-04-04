@@ -5,10 +5,9 @@ const { createServer } = require('node:http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
 const { PerformanceObserver } = require('node:perf_hooks')
-const isAtLeastv22 = process.versions.node.split('.').map(Number)[0] >= 22
 
 // https://github.com/nodejs/undici/issues/4105
-test('markResourceTiming responseStatus is set', { skip: !isAtLeastv22 }, async (t) => {
+test('markResourceTiming responseStatus is set', async (t) => {
   t.plan(1)
 
   const promise = Promise.withResolvers()
