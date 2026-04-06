@@ -63,8 +63,7 @@ jobs:
         runs-on: ['ubuntu-latest', 'windows-latest', 'macos-latest']
     uses: ./.github/workflows/nodejs.yml
     with:
-      # Disable coverage on Node.js 25 until https://github.com/nodejs/node/issues/61971 is resolved.
-      codecov: ${{ matrix.node-version == '24' && matrix.runs-on == 'ubuntu-latest' }}
+      codecov: ${{ (matrix.node-version == '24' || matrix.node-version == '25') && matrix.runs-on == 'ubuntu-latest' }}
       node-version: ${{ matrix.node-version }}
       runs-on: ${{ matrix.runs-on }}
     secrets: inherit
