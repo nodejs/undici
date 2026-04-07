@@ -19,6 +19,10 @@ const { tspl } = require('@matteo.collina/tspl')
 const { WebSocketServer } = require('ws')
 const { key, cert } = require('@metcoder95/https-pem')
 
+// Self-signed certs require this since native WebSocket uses the
+// bundled dispatcher which has no rejectUnauthorized override.
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
 // Importing undici sets the global dispatcher — this is what triggers the bug.
 require('../..')
 
