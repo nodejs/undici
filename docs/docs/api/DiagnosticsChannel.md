@@ -203,6 +203,32 @@ The `handshakeResponse` object contains the HTTP response that established the W
 
 This information is particularly useful for debugging and monitoring WebSocket connections, as it provides access to the initial HTTP handshake response that established the WebSocket connection.
 
+## `undici:websocket:created`
+
+This message is published when a `WebSocket` instance is created, before the opening handshake is sent.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:created').subscribe(({ websocket, url }) => {
+  console.log(websocket) // the WebSocket instance
+  console.log(url) // serialized websocket URL
+})
+```
+
+## `undici:websocket:handshakeRequest`
+
+This message is published when the HTTP upgrade request is about to be sent.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:handshakeRequest').subscribe(({ websocket, request }) => {
+  console.log(websocket) // the WebSocket instance
+  console.log(request.headers) // handshake request headers assembled so far
+})
+```
+
 ## `undici:websocket:close`
 
 This message is published after the connection has closed.
@@ -226,6 +252,47 @@ import diagnosticsChannel from 'diagnostics_channel'
 
 diagnosticsChannel.channel('undici:websocket:socket_error').subscribe((error) => {
   console.log(error)
+})
+```
+
+## `undici:websocket:frameSent`
+
+This message is published after a WebSocket frame is written to the socket.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:frameSent').subscribe(({ websocket, opcode, payloadData }) => {
+  console.log(websocket) // the WebSocket instance
+  console.log(opcode) // RFC 6455 opcode
+  console.log(payloadData) // unmasked payload bytes
+})
+```
+
+## `undici:websocket:frameReceived`
+
+This message is published after a WebSocket frame is parsed from the socket.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:frameReceived').subscribe(({ websocket, opcode, payloadData }) => {
+  console.log(websocket) // the WebSocket instance
+  console.log(opcode) // RFC 6455 opcode
+  console.log(payloadData) // payload bytes as received
+})
+```
+
+## `undici:websocket:frameError`
+
+This message is published when Undici rejects an invalid incoming WebSocket frame.
+
+```js
+import diagnosticsChannel from 'diagnostics_channel'
+
+diagnosticsChannel.channel('undici:websocket:frameError').subscribe(({ websocket, error }) => {
+  console.log(websocket) // the WebSocket instance
+  console.log(error.message)
 })
 ```
 

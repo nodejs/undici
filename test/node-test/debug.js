@@ -12,7 +12,7 @@ const isNode23Plus = process.versions.node.split('.')[0] >= 23
 const isCITGM = !!process.env.CITGM
 
 test('debug#websocket', { skip: !process.versions.icu || isCITGM || isNode23Plus }, async t => {
-  const assert = tspl(t, { plan: 6 })
+  const assert = tspl(t, { plan: 10 })
   const child = spawn(
     process.execPath,
     [
@@ -26,10 +26,13 @@ test('debug#websocket', { skip: !process.versions.icu || isCITGM || isNode23Plus
   )
   const chunks = []
   const assertions = [
+    /(WEBSOCKET [0-9]+:) (created websocket for)/,
+    /(WEBSOCKET [0-9]+:) (sending opening handshake for)/,
     /(WEBSOCKET [0-9]+:) (connecting to)/,
     /(WEBSOCKET [0-9]+:) (connected to)/,
     /(WEBSOCKET [0-9]+:) (sending request)/,
     /(WEBSOCKET [0-9]+:) (connection opened)/,
+    /(WEBSOCKET [0-9]+:) (frame received opcode=8 bytes=9)/,
     /(WEBSOCKET [0-9]+:) (closed connection to)/,
     /^$/
   ]
@@ -41,7 +44,7 @@ test('debug#websocket', { skip: !process.versions.icu || isCITGM || isNode23Plus
   child.stderr.on('end', () => {
     const lines = extractLines(chunks)
     assert.strictEqual(lines.length, assertions.length)
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = 0; i < lines.length; i++) {
       assert.match(lines[i], assertions[i])
     }
   })
