@@ -2,39 +2,31 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { tick: fastTimersTick } = require('../lib/util/timers')
 const { fetch, Agent, RetryAgent } = require('..')
 
-test('https://github.com/nodejs/undici/issues/3356', { skip: process.env.CITGM }, async (t) => {
+test('https://github.com/nodejs/undici/issues/3356', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  let shouldRetry = true
+  let callCount = 0
   const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
-    if (shouldRetry) {
-      shouldRetry = false
+    res.flushHeaders()
+    res.write('h')
 
-      res.flushHeaders()
-      res.write('h')
-      setTimeout(() => { res.end('ello world!') }, 100)
+    if (callCount++ === 0) {
+      res.write('ahahaha')
+      // never end the response
     } else {
-      res.end('hello world!')
+      t.fail('should not be called twice')
     }
   })
 
-  server.listen(0)
+  await once(server.listen(0), 'listening')
 
-  await once(server, 'listening')
-
-  after(async () => {
-    server.close()
-
-    await once(server, 'close')
-  })
+  after(() => once(server.close(), 'close'))
 
   const agent = new RetryAgent(new Agent({ bodyTimeout: 50 }), {
     errorCodes: ['UND_ERR_BODY_TIMEOUT']
@@ -44,18 +36,61 @@ test('https://github.com/nodejs/undici/issues/3356', { skip: process.env.CITGM }
     dispatcher: agent
   })
 
-  fastTimersTick()
-
-  await sleep(500)
+  t.equal(response.status, 200)
 
   try {
-    t.equal(response.status, 200)
-    // consume response
     await response.text()
+    t.fail('should have thrown')
   } catch (err) {
     t.equal(err.name, 'TypeError')
-    t.equal(err.cause.code, 'UND_ERR_REQ_RETRY')
+    t.equal(err.cause.code, 'UND_ERR_BODY_TIMEOUT')
   }
+
+  await t.completed
+})
+
+test('https://github.com/nodejs/undici/issues/3356', { skip: true }, async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  let callCount = 0
+  const server = createServer({ joinDuplicateHeaders: true })
+  server.on('request', (req, res) => {
+    if (callCount++ === 0) {
+      res.writeHead(206, {
+        'content-type': 'text/plain',
+        'content-range': 'bytes 0-12/12'
+      })
+      res.flushHeaders()
+      res.write('h')
+
+      // never end the response
+    } else if (callCount === 1) {
+      console.log(req.headers['accept-ranges'])
+      res.writeHead(206, {
+        'content-type': 'text/plain',
+        'content-range': 'bytes 1-12/12'
+      })
+      res.flushHeaders()
+      res.write('ello world!')
+      res.end()
+    }
+  })
+
+  await once(server.listen(0), 'listening')
+
+  after(() => once(server.close(), 'close'))
+
+  const agent = new RetryAgent(new Agent({ bodyTimeout: 50 }), {
+    errorCodes: ['UND_ERR_BODY_TIMEOUT']
+  })
+
+  const response = await fetch(`http://localhost:${server.address().port}`, {
+    dispatcher: agent
+  })
+
+  t.equal(response.status, 206)
+
+  t.equal(await response.text(), 'hello world!')
 
   await t.completed
 })
