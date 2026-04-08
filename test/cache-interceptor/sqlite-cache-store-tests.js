@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const { notEqual, strictEqual, deepStrictEqual } = require('node:assert')
 const { rm } = require('node:fs/promises')
 const { cacheStoreTests, writeBody, compareGetResults } = require('./cache-store-test-utils.js')
 const { runtimeFeatures } = require('../../lib/util/runtime-features.js')
@@ -53,26 +52,26 @@ test('SqliteCacheStore works nicely with multiple stores', { skip: runtimeFeatur
 
   {
     const writable = storeA.createWriteStream(key, value)
-    notEqual(writable, undefined)
+    t.assert.notEqual(writable, undefined)
     writeBody(writable, body)
   }
 
   // Make sure we got the expected response from store a
   {
     const result = storeA.get(structuredClone(key))
-    notEqual(result, undefined)
-    await compareGetResults(result, value, body)
+    t.assert.notEqual(result, undefined)
+    await compareGetResults(t, result, value, body)
   }
 
   // Make sure we got the expected response from store b
   {
     const result = storeB.get(structuredClone(key))
-    notEqual(result, undefined)
-    await compareGetResults(result, value, body)
+    t.assert.notEqual(result, undefined)
+    await compareGetResults(t, result, value, body)
   }
 })
 
-test('SqliteCacheStore maxEntries', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
+test('SqliteCacheStore maxEntries', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
 
   const store = new SqliteCacheStore({
@@ -105,14 +104,14 @@ test('SqliteCacheStore maxEntries', { skip: runtimeFeatures.has('sqlite') === fa
     const body = ['asd', '123']
 
     const writable = store.createWriteStream(key, value)
-    notEqual(writable, undefined)
+    t.assert.notEqual(writable, undefined)
     writeBody(writable, body)
   }
 
-  strictEqual(store.size <= 11, true)
+  t.assert.strictEqual(store.size <= 11, true)
 })
 
-test('SqliteCacheStore two writes', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
+test('SqliteCacheStore two writes', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
 
   const store = new SqliteCacheStore({
@@ -145,18 +144,18 @@ test('SqliteCacheStore two writes', { skip: runtimeFeatures.has('sqlite') === fa
 
   {
     const writable = store.createWriteStream(key, value)
-    notEqual(writable, undefined)
+    t.assert.notEqual(writable, undefined)
     writeBody(writable, body)
   }
 
   {
     const writable = store.createWriteStream(key, value)
-    notEqual(writable, undefined)
+    t.assert.notEqual(writable, undefined)
     writeBody(writable, body)
   }
 })
 
-test('SqliteCacheStore write & read', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
+test('SqliteCacheStore write & read', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
 
   const store = new SqliteCacheStore({
@@ -191,5 +190,5 @@ test('SqliteCacheStore write & read', { skip: runtimeFeatures.has('sqlite') === 
 
   store.set(key, value)
 
-  deepStrictEqual(store.get(key), value)
+  t.assert.deepStrictEqual(store.get(key), value)
 })
