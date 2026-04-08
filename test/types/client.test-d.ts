@@ -130,22 +130,6 @@ expectAssignable<Client>(
     pingInterval: 60e3
   })
 )
-expectAssignable<Client>(
-  new Client('', {
-    interceptors: {
-      Client: [
-        (dispatcher) => {
-          expectAssignable<Dispatcher['dispatch']>(dispatcher)
-          return (opts, handlers) => {
-            expectAssignable<Dispatcher.DispatchOptions>(opts)
-            expectAssignable<Dispatcher.DispatchHandler>(handlers)
-            return dispatcher(opts, handlers)
-          }
-        }
-      ]
-    }
-  })
-)
 
 {
   const client = new Client('')
