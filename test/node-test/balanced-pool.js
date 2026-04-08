@@ -1,11 +1,14 @@
 'use strict'
 
+const dns = require('node:dns')
 const { describe, test } = require('node:test')
 const assert = require('node:assert/strict')
 const { BalancedPool, Pool, Client, errors } = require('../..')
+const buildConnector = require('../../lib/core/connect')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
 const { tspl } = require('@matteo.collina/tspl')
+const { kNeedDrain, kGetDispatcher } = require('../../lib/dispatcher/pool-base')
 
 test('throws when factory is not a function', (t) => {
   const p = tspl(t, { plan: 2 })
@@ -296,6 +299,194 @@ test('getUpstream returns undefined for closed/destroyed upstream', (t) => {
 
   const result = pool.getUpstream(upstream)
   p.strictEqual(result, undefined)
+})
+
+test('should balance hostname upstreams across resolved dns records', async (t) => {
+  const p = tspl(t, { plan: 13 })
+
+  const hostnames = []
+  const hosts = []
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    hosts.push(req.headers.host)
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  t.after(server.close.bind(server))
+
+  await promisify(server.listen).call(server, 0)
+
+  const originalLookup = dns.lookup
+  dns.lookup = function lookup (hostname, options, callback) {
+    if (hostname !== 'service.local') {
+      return originalLookup.call(this, hostname, options, callback)
+    }
+
+    queueMicrotask(() => {
+      callback(null, [
+        { address: '127.0.0.1', family: 4 },
+        { address: '127.0.0.2', family: 4 }
+      ])
+    })
+  }
+  t.after(() => {
+    dns.lookup = originalLookup
+  })
+
+  const connect = buildConnector({})
+  const client = new BalancedPool(`http://service.local:${server.address().port}`, {
+    connections: 2,
+    pipelining: 1,
+    connect (opts, callback) {
+      hostnames.push(opts.hostname)
+      connect({ ...opts, hostname: '127.0.0.1' }, callback)
+    }
+  })
+  t.after(client.destroy.bind(client))
+
+  const responses = await Promise.all([
+    client.request({ path: '/', method: 'GET' }),
+    client.request({ path: '/', method: 'GET' })
+  ])
+
+  for (const { statusCode, headers, body } of responses) {
+    p.strictEqual(statusCode, 200)
+    p.strictEqual(headers['content-type'], 'text/plain')
+    p.strictEqual(await body.text(), 'hello')
+  }
+
+  p.deepStrictEqual(client.upstreams, [`http://service.local:${server.address().port}`])
+  p.strictEqual(hosts.length, 2)
+  p.strictEqual(hosts[0], `service.local:${server.address().port}`)
+  p.strictEqual(hosts[1], `service.local:${server.address().port}`)
+  p.strictEqual(hostnames.length, 2)
+  p.ok(hostnames.includes('127.0.0.1'))
+  p.ok(hostnames.includes('127.0.0.2'))
+})
+
+test('should propagate dns lookup errors for hostname upstreams', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  const originalLookup = dns.lookup
+  dns.lookup = function lookup (hostname, options, callback) {
+    if (hostname !== 'service.local') {
+      return originalLookup.call(this, hostname, options, callback)
+    }
+
+    queueMicrotask(() => {
+      callback(new Error('lookup failed'))
+    })
+  }
+  t.after(() => {
+    dns.lookup = originalLookup
+  })
+
+  const client = new BalancedPool('http://service.local:1')
+  t.after(client.destroy.bind(client))
+
+  try {
+    await client.request({ path: '/', method: 'GET' })
+  } catch (err) {
+    p.strictEqual(err.message, 'lookup failed')
+    p.strictEqual(err.code, undefined)
+  }
+})
+
+test('should ignore duplicate dns records for hostname upstreams', async (t) => {
+  const p = tspl(t, { plan: 7 })
+
+  const hostnames = []
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.end('ok')
+  })
+  t.after(server.close.bind(server))
+
+  await promisify(server.listen).call(server, 0)
+
+  const originalLookup = dns.lookup
+  dns.lookup = function lookup (hostname, options, callback) {
+    if (hostname !== 'service.local') {
+      return originalLookup.call(this, hostname, options, callback)
+    }
+
+    queueMicrotask(() => {
+      callback(null, [
+        { address: '127.0.0.1', family: 4 },
+        { address: '127.0.0.1', family: 4 },
+        { address: '127.0.0.2', family: 4 }
+      ])
+    })
+  }
+  t.after(() => {
+    dns.lookup = originalLookup
+  })
+
+  const connect = buildConnector({})
+  const client = new BalancedPool(`http://service.local:${server.address().port}`, {
+    connections: 3,
+    pipelining: 1,
+    connect (opts, callback) {
+      hostnames.push(opts.hostname)
+      connect({ ...opts, hostname: '127.0.0.1' }, callback)
+    }
+  })
+  t.after(client.destroy.bind(client))
+
+  const responses = await Promise.all([
+    client.request({ path: '/', method: 'GET' }),
+    client.request({ path: '/', method: 'GET' }),
+    client.request({ path: '/', method: 'GET' })
+  ])
+
+  for (const response of responses) {
+    p.strictEqual(await response.body.text(), 'ok')
+  }
+
+  p.strictEqual(hostnames.length, 3)
+  p.strictEqual(hostnames[0], '127.0.0.1')
+  p.strictEqual(hostnames[1], '127.0.0.2')
+  p.strictEqual(hostnames[2], '127.0.0.1')
+})
+
+test('should fail when dns lookup returns no records for hostname upstreams', async (t) => {
+  const p = tspl(t, { plan: 1 })
+
+  const originalLookup = dns.lookup
+  dns.lookup = function lookup (hostname, options, callback) {
+    if (hostname !== 'service.local') {
+      return originalLookup.call(this, hostname, options, callback)
+    }
+
+    queueMicrotask(() => {
+      callback(null, [])
+    })
+  }
+  t.after(() => {
+    dns.lookup = originalLookup
+  })
+
+  const client = new BalancedPool('http://service.local:1')
+  t.after(client.destroy.bind(client))
+
+  await assert.rejects(client.request({ path: '/', method: 'GET' }), {
+    message: 'No DNS entries found for service.local'
+  })
+  p.ok(true)
+})
+
+test('should return no dispatcher when all upstreams become busy', () => {
+  const pool = new BalancedPool()
+  const upstream = pool.addUpstream('http://localhost:3001').getUpstream('http://localhost:3001')
+
+  let accesses = 0
+  Object.defineProperty(upstream, kNeedDrain, {
+    configurable: true,
+    get () {
+      accesses++
+      return accesses > 1
+    }
+  })
+
+  assert.strictEqual(pool[kGetDispatcher](), undefined)
 })
 
 class TestServer {

@@ -20,6 +20,11 @@ Extends: [`PoolOptions`](/docs/docs/api/Pool.md#parameter-pooloptions)
 * **factory** `(origin: URL, opts: Object) => Dispatcher` - Default: `(origin, opts) => new Pool(origin, opts)`
 
 The `PoolOptions` are passed to each of the `Pool` instances being created.
+
+When an upstream hostname resolves to multiple DNS records, `BalancedPool`
+resolves the hostname lazily at connect time and rotates new connections across
+the resolved addresses. Requests continue to use the original hostname for
+`Host` headers and TLS `servername`.
 ## Instance Properties
 
 ### `BalancedPool.upstreams`
