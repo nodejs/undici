@@ -500,6 +500,28 @@ for (const factory of [
     await t.completed
   })
 
+  test('should stop following redirects once async iterable request bodies are disturbed', async t => {
+    t = tspl(t, { plan: 3 })
+
+    const server = await startRedirectingServer()
+
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/301`, {
+      method: 'PUT',
+      body: (async function * () {
+        yield 'REQUEST'
+      })(),
+      maxRedirections: 10
+    })
+
+    const body = await bodyStream.text()
+
+    t.strictEqual(statusCode, 301)
+    t.strictEqual(headers.location, `http://${server}/301/2`)
+    t.strictEqual(body.length, 0)
+
+    await t.completed
+  })
+
   test('should not follow redirects when using Readable request bodies', async t => {
     t = tspl(t, { plan: 3 })
 
