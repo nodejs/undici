@@ -20,6 +20,35 @@ test('isStream', () => {
   assert.ok(util.isStream(ee) === false)
 })
 
+test('addAbortListener supports AbortSignal', async () => {
+  const ac = new AbortController()
+  let calls = 0
+
+  util.addAbortListener(ac.signal, () => {
+    calls++
+  })
+
+  ac.abort()
+  await new Promise((resolve) => setImmediate(resolve))
+
+  assert.equal(calls, 1)
+})
+
+test('addAbortListener removes native AbortSignal listener', async () => {
+  const ac = new AbortController()
+  let calls = 0
+
+  const remove = util.addAbortListener(ac.signal, () => {
+    calls++
+  })
+
+  remove()
+  ac.abort()
+  await new Promise((resolve) => setImmediate(resolve))
+
+  assert.equal(calls, 0)
+})
+
 test('getServerName', () => {
   assert.equal(util.getServerName('1.1.1.1'), '')
   assert.equal(util.getServerName('1.1.1.1:443'), '')
