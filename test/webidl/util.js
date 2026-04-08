@@ -1,23 +1,22 @@
 'use strict'
 
 const { test } = require('node:test')
-const assert = require('node:assert')
 const { webidl } = require('../../lib/web/webidl')
 
-test('webidl.util.Type(V)', () => {
+test('webidl.util.Type(V)', (t) => {
   const Type = webidl.util.Type
   const Types = webidl.util.Types
 
-  assert.equal(Type(undefined), Types.UNDEFINED)
-  assert.equal(Type(null), Types.NULL)
-  assert.equal(Type(true), Types.BOOLEAN)
-  assert.equal(Type('string'), Types.STRING)
-  assert.equal(Type(Symbol('symbol')), Types.SYMBOL)
-  assert.equal(Type(1.23), Types.NUMBER)
-  assert.equal(Type(1n), Types.BIGINT)
-  assert.equal(Type({ a: 'b' }), Types.OBJECT)
-  assert.equal(Type(function () {}), Types.OBJECT)
-  assert.equal(Type([1, 2, 3]), Types.OBJECT)
+  t.assert.strictEqual(Type(undefined), Types.UNDEFINED)
+  t.assert.strictEqual(Type(null), Types.NULL)
+  t.assert.strictEqual(Type(true), Types.BOOLEAN)
+  t.assert.strictEqual(Type('string'), Types.STRING)
+  t.assert.strictEqual(Type(Symbol('symbol')), Types.SYMBOL)
+  t.assert.strictEqual(Type(1.23), Types.NUMBER)
+  t.assert.strictEqual(Type(1n), Types.BIGINT)
+  t.assert.strictEqual(Type({ a: 'b' }), Types.OBJECT)
+  t.assert.strictEqual(Type(function () {}), Types.OBJECT)
+  t.assert.strictEqual(Type([1, 2, 3]), Types.OBJECT)
 })
 
 test('webidl.util.Stringify(V)', (t) => {
@@ -56,73 +55,73 @@ test('webidl.util.Stringify(V)', (t) => {
   ]
 
   for (const [value, expected] of pairs) {
-    assert.deepStrictEqual(webidl.util.Stringify(value), expected)
+    t.assert.deepStrictEqual(webidl.util.Stringify(value), expected)
   }
 })
 
-test('webidl.util.ConvertToInt(V)', () => {
+test('webidl.util.ConvertToInt(V)', (t) => {
   const ConvertToInt = webidl.util.ConvertToInt
 
-  assert.equal(ConvertToInt(63, 64, 'signed'), 63, 'odd int')
-  assert.equal(ConvertToInt(64.49, 64, 'signed'), 64)
-  assert.equal(ConvertToInt(64.51, 64, 'signed'), 64)
+  t.assert.strictEqual(ConvertToInt(63, 64, 'signed'), 63, 'odd int')
+  t.assert.strictEqual(ConvertToInt(64.49, 64, 'signed'), 64)
+  t.assert.strictEqual(ConvertToInt(64.51, 64, 'signed'), 64)
 
   const max = 2 ** 53
-  assert.equal(ConvertToInt(max + 1, 64, 'signed'), max, 'signed pos')
-  assert.equal(ConvertToInt(-max - 1, 64, 'signed'), -max, 'signed neg')
+  t.assert.strictEqual(ConvertToInt(max + 1, 64, 'signed'), max, 'signed pos')
+  t.assert.strictEqual(ConvertToInt(-max - 1, 64, 'signed'), -max, 'signed neg')
 
-  assert.equal(ConvertToInt(max + 1, 64, 'unsigned'), max + 1, 'unsigned pos')
-  assert.equal(ConvertToInt(-max - 1, 64, 'unsigned'), -max - 1, 'unsigned neg')
+  t.assert.strictEqual(ConvertToInt(max + 1, 64, 'unsigned'), max + 1, 'unsigned pos')
+  t.assert.strictEqual(ConvertToInt(-max - 1, 64, 'unsigned'), -max - 1, 'unsigned neg')
 
   for (const signedness of ['signed', 'unsigned']) {
-    assert.equal(ConvertToInt(Infinity, 64, signedness), 0)
-    assert.equal(ConvertToInt(-Infinity, 64, signedness), 0)
-    assert.equal(ConvertToInt(NaN, 64, signedness), 0)
+    t.assert.strictEqual(ConvertToInt(Infinity, 64, signedness), 0)
+    t.assert.strictEqual(ConvertToInt(-Infinity, 64, signedness), 0)
+    t.assert.strictEqual(ConvertToInt(NaN, 64, signedness), 0)
   }
 
   for (const signedness of ['signed', 'unsigned']) {
-    assert.throws(() => {
+    t.assert.throws(() => {
       ConvertToInt(NaN, 64, signedness, webidl.attributes.EnforceRange)
     }, TypeError)
 
-    assert.throws(() => {
+    t.assert.throws(() => {
       ConvertToInt(Infinity, 64, signedness, webidl.attributes.EnforceRange)
     }, TypeError)
 
-    assert.throws(() => {
+    t.assert.throws(() => {
       ConvertToInt(-Infinity, 64, signedness, webidl.attributes.EnforceRange)
     }, TypeError)
 
-    assert.throws(() => {
+    t.assert.throws(() => {
       ConvertToInt(2 ** 53 + 1, 32, 'signed', webidl.attributes.EnforceRange)
     }, TypeError)
 
-    assert.throws(() => {
+    t.assert.throws(() => {
       ConvertToInt(-(2 ** 53 + 1), 32, 'unsigned', webidl.attributes.EnforceRange)
     }, TypeError)
 
-    assert.equal(
+    t.assert.strictEqual(
       ConvertToInt(65.5, 64, signedness, webidl.attributes.EnforceRange),
       65
     )
   }
 
   for (const signedness of ['signed', 'unsigned']) {
-    assert.equal(
+    t.assert.strictEqual(
       ConvertToInt(63.49, 64, signedness, webidl.attributes.Clamp),
       64
     )
 
-    assert.equal(
+    t.assert.strictEqual(
       ConvertToInt(63.51, 64, signedness, webidl.attributes.Clamp),
       64
     )
 
-    assert.equal(
+    t.assert.strictEqual(
       ConvertToInt(-0, 64, signedness, webidl.attributes.Clamp),
       0
     )
   }
 
-  assert.equal(ConvertToInt(111, 2, 'signed'), -1)
+  t.assert.strictEqual(ConvertToInt(111, 2, 'signed'), -1)
 })

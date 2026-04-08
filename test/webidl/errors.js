@@ -1,7 +1,6 @@
 'use strict'
 
 const { test, describe } = require('node:test')
-const assert = require('node:assert')
 const { Headers, MessageEvent } = require('../..')
 
 test('ByteString', (t) => {
@@ -15,7 +14,7 @@ test('ByteString', (t) => {
     'append',
     'has'
   ]) {
-    assert.throws(
+    t.assert.throws(
       () => new Headers()[method](name, value),
       new TypeError(`Headers.${method}: name is a symbol, which cannot be converted to a ByteString.`)
     )
@@ -23,8 +22,8 @@ test('ByteString', (t) => {
 })
 
 describe('dictionary converters', () => {
-  test('error message retains property name', () => {
-    assert.throws(
+  test('error message retains property name', (t) => {
+    t.assert.throws(
       () => new MessageEvent('message', { source: 1 }),
       new TypeError('MessageEvent constructor: Expected eventInitDict.source ("1") to be an instance of MessagePort.')
     )
@@ -32,15 +31,15 @@ describe('dictionary converters', () => {
 })
 
 describe('sequence converters', () => {
-  test('retains index', () => {
+  test('retains index', (t) => {
     const { port1 } = new MessageChannel()
 
-    assert.throws(
+    t.assert.throws(
       () => new MessageEvent('type', { ports: [{}] }),
       new TypeError('MessageEvent constructor: Expected eventInitDict.ports[0] ("{}") to be an instance of MessagePort.')
     )
 
-    assert.throws(
+    t.assert.throws(
       () => new MessageEvent('type', { ports: [port1, {}] }),
       new TypeError('MessageEvent constructor: Expected eventInitDict.ports[1] ("{}") to be an instance of MessagePort.')
     )
