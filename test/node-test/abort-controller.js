@@ -1,7 +1,6 @@
 'use strict'
 
 const { test } = require('node:test')
-const { AbortController: NPMAbortController } = require('abort-controller')
 const { Client, errors } = require('../..')
 const { createServer } = require('node:http')
 const { createReadStream } = require('node:fs')
@@ -10,16 +9,10 @@ const { tspl } = require('@matteo.collina/tspl')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 const controllers = [{
-  AbortControllerImpl: NPMAbortController,
-  controllerName: 'npm-abortcontroller-shim'
+  AbortControllerImpl: global.AbortController,
+  controllerName: 'native-abortcontroller'
 }]
 
-if (global.AbortController) {
-  controllers.push({
-    AbortControllerImpl: global.AbortController,
-    controllerName: 'native-abortcontroller'
-  })
-}
 for (const { AbortControllerImpl, controllerName } of controllers) {
   test(`Abort ${controllerName} before creating request`, async (t) => {
     const p = tspl(t, { plan: 1 })

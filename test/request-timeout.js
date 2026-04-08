@@ -9,7 +9,6 @@ const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('node:http')
 const EventEmitter = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
-const { AbortController } = require('abort-controller')
 const {
   pipeline,
   Readable,
@@ -210,7 +209,7 @@ test('With EE signal', async (t) => {
   await t.completed
 })
 
-test('With abort-controller signal', async (t) => {
+test('With AbortController signal', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const clock = FakeTimers.install({
@@ -282,7 +281,7 @@ test('Abort before timeout (EE)', async (t) => {
   await t.completed
 })
 
-test('Abort before timeout (abort-controller)', async (t) => {
+test('Abort before timeout (AbortController)', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const clock = FakeTimers.install({
@@ -309,7 +308,7 @@ test('Abort before timeout (abort-controller)', async (t) => {
     after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
-      t.ok(err instanceof errors.RequestAbortedError)
+      t.ok(err instanceof DOMException)
       clock.tick(100)
       fastTimersTick(100)
     })
