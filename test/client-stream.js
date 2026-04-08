@@ -157,6 +157,38 @@ test('stream GET destroy res', async (t) => {
   await t.completed
 })
 
+test('stream GET destroy res without error', async (t) => {
+  t = tspl(t, { plan: 1 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.write('hello')
+    setImmediate(() => {
+      res.end(' world')
+    })
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.close())
+
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      const pt = new PassThrough()
+      pt.on('data', () => {
+        pt.destroy()
+      })
+      return pt
+    }, (err) => {
+      t.strictEqual(err.code, 'ERR_STREAM_PREMATURE_CLOSE')
+    })
+  })
+
+  await t.completed
+})
+
 test('stream GET remote destroy', async (t) => {
   t = tspl(t, { plan: 4 })
 
@@ -277,6 +309,33 @@ test('stream waits only for writable side', async (t) => {
     }, () => pt, (err) => {
       t.ifError(err)
       t.strictEqual(pt.destroyed, false)
+    })
+  })
+
+  await t.completed
+})
+
+test('stream accepts already finished writable', async (t) => {
+  t = tspl(t, { plan: 1 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.end()
+  })
+  after(() => server.close())
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.close())
+
+    client.stream({
+      path: '/',
+      method: 'GET'
+    }, () => {
+      const pt = new PassThrough({ autoDestroy: false })
+      pt.end()
+      return pt
+    }, (err) => {
+      t.ifError(err)
     })
   })
 
