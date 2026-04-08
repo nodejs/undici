@@ -140,6 +140,32 @@ test('Connect to h2c server over a unix domain socket', { skip: process.platform
   })
 })
 
+test('Should pass custom connect function to Client', async t => {
+  const planner = tspl(t, { plan: 3 })
+
+  const connectError = new Error('custom connect error')
+  const socketPath = '/var/run/test.sock'
+  const client = new H2CClient('http://localhost', {
+    socketPath,
+    connect (opts, cb) {
+      planner.strictEqual(opts.socketPath, socketPath)
+      planner.strictEqual(opts.allowH2, true)
+      cb(connectError, null)
+    }
+  })
+
+  t.after(() => client.close())
+
+  client.request({
+    path: '/',
+    method: 'GET'
+  }, (err) => {
+    planner.strictEqual(err, connectError)
+  })
+
+  await planner.completed
+})
+
 test('Should throw if bad useH2c has been passed', async t => {
   t = tspl(t, { plan: 1 })
 
