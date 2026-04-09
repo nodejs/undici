@@ -79,7 +79,7 @@ export declare namespace Client {
     autoSelectFamilyAttemptTimeout?: number;
     /**
      * @description Enables support for H2 if the server has assigned bigger priority to it through ALPN negotiation.
-     * @default false
+     * @default true
      */
     allowH2?: boolean;
     /**
