@@ -3,10 +3,11 @@
 const { createServer } = require('node:http')
 const { describe, test, after } = require('node:test')
 const { once } = require('node:events')
-const { strictEqual } = require('node:assert')
+const { strictEqual, notStrictEqual } = require('node:assert')
 const { setTimeout: sleep } = require('node:timers/promises')
 const diagnosticsChannel = require('node:diagnostics_channel')
 const { Client, interceptors } = require('../../index')
+const { makeDeduplicationKey } = require('../../lib/util/cache')
 
 describe('Deduplicate Interceptor', () => {
   test('deduplicates concurrent requests for the same resource', async () => {
@@ -1290,5 +1291,63 @@ describe('Deduplicate Interceptor', () => {
       name: 'TypeError',
       message: 'expected opts.excludeHeaderNames to be an array, got string'
     })
+  })
+
+  test('makeDeduplicationKey does not collide when header values contain delimiters', () => {
+    // Regression test for https://github.com/nodejs/undici/issues/5012
+    // Previously, headers {a:"x:b=y"} and {a:"x", b:"y"} produced the same key
+    const key1 = makeDeduplicationKey({
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: { a: 'x:b=y' }
+    })
+
+    const key2 = makeDeduplicationKey({
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: { a: 'x', b: 'y' }
+    })
+
+    notStrictEqual(key1, key2)
+  })
+
+  test('makeDeduplicationKey produces same key for identical headers', () => {
+    const key1 = makeDeduplicationKey({
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: { b: '2', a: '1' }
+    })
+
+    const key2 = makeDeduplicationKey({
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: { a: '1', b: '2' }
+    })
+
+    strictEqual(key1, key2)
+  })
+
+  test('makeDeduplicationKey respects excludeHeaders', () => {
+    const excludeHeaders = new Set(['x-request-id'])
+
+    const key1 = makeDeduplicationKey({
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: { accept: 'text/html', 'x-request-id': '111' }
+    }, excludeHeaders)
+
+    const key2 = makeDeduplicationKey({
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: { accept: 'text/html', 'x-request-id': '222' }
+    }, excludeHeaders)
+
+    strictEqual(key1, key2)
   })
 })
