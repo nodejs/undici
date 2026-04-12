@@ -2,6 +2,8 @@
 
 const { test } = require('node:test')
 const { once } = require('node:events')
+const { randomFillSync } = require('node:crypto')
+const { deflateRawSync } = require('node:zlib')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { WebSocketServer } = require('ws')
 const { WebSocket, Agent } = require('../..')
@@ -109,6 +111,56 @@ test('Messages at exactly the limit succeed', async (t) => {
   const [event] = await once(client, 'message')
   t.assert.strictEqual(event.data.size, limit, 'Message at exactly the limit should succeed')
   client.close()
+})
+
+test('Compressed frame payload over wire-size limit is rejected', async (t) => {
+  const limit = 64 * 1024
+  const server = new WebSocketServer({
+    port: 0,
+    perMessageDeflate: true
+  })
+
+  t.after(() => server.close())
+  await once(server, 'listening')
+
+  let payload = null
+  for (let i = 0; i < 10; i++) {
+    const candidate = randomFillSync(Buffer.alloc(limit))
+    if (deflateRawSync(candidate).length > limit) {
+      payload = candidate
+      break
+    }
+  }
+
+  t.assert.ok(payload, 'Expected incompressible payload with compressed wire size over the limit')
+
+  let messageReceived = false
+
+  server.on('connection', (ws) => {
+    ws.send(payload, { binary: true, compress: true })
+  })
+
+  const agent = new Agent({
+    webSocket: {
+      maxPayloadSize: limit
+    }
+  })
+
+  t.after(() => agent.close())
+
+  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+
+  client.addEventListener('message', () => {
+    messageReceived = true
+  })
+
+  const closePromise = once(client, 'close')
+  const timeoutPromise = sleep(5000)
+
+  await Promise.race([closePromise, timeoutPromise])
+
+  t.assert.strictEqual(messageReceived, false, 'Compressed frame over wire-size limit should be rejected')
+  t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
 })
 
 test('Messages over the limit are rejected', async (t) => {
