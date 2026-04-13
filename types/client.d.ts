@@ -126,6 +126,13 @@ export declare namespace Client {
      * @default 131072
      */
     maxFragments?: number;
+    /**
+     * Maximum allowed payload size in bytes for WebSocket messages.
+     * Applied to uncompressed messages, compressed frame payloads, and decompressed (permessage-deflate) messages.
+     * Set to 0 to disable the limit.
+     * @default 134217728 (128 MB)
+     */
+    maxPayloadSize?: number;
   }
 }
 
