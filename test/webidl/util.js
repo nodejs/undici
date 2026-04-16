@@ -125,4 +125,23 @@ test('webidl.util.ConvertToInt(V)', () => {
   }
 
   assert.equal(ConvertToInt(111, 2, 'signed'), -1)
+
+  // https://webidl.spec.whatwg.org/#abstract-opdef-converttoint
+  // For N-bit signed integers, lowerBound is -2^(N-1) and the modulo wrap
+  // threshold (step 11) is 2^(N-1).
+  assert.equal(ConvertToInt(128, 8, 'signed'), -128, '8-bit signed wrap at 128')
+  assert.equal(ConvertToInt(200, 8, 'signed'), -56, '8-bit signed wrap at 200')
+  assert.equal(
+    ConvertToInt(-128, 8, 'signed', webidl.attributes.EnforceRange),
+    -128,
+    '8-bit signed EnforceRange lower bound'
+  )
+  assert.throws(() => {
+    ConvertToInt(-129, 8, 'signed', webidl.attributes.EnforceRange)
+  }, TypeError, '8-bit signed EnforceRange below lower bound throws')
+  assert.equal(
+    ConvertToInt(-(2 ** 31), 32, 'signed', webidl.attributes.EnforceRange),
+    -(2 ** 31),
+    '32-bit signed EnforceRange lower bound'
+  )
 })
