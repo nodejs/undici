@@ -48,19 +48,31 @@ test('parseAddress - Domain', async (t) => {
 })
 
 test('parseIPv6', async (t) => {
-  const p = tspl(t, { plan: 3 })
+  const p = tspl(t, { plan: 9 })
 
   // Test full IPv6
   const buffer1 = parseIPv6('2001:0db8:0000:0042:0000:8a2e:0370:7334')
   p.equal(buffer1.length, 16, 'should return 16-byte buffer')
+  p.equal(buffer1.toString('hex'), '20010db80000004200008a2e03707334', 'should parse full IPv6 correctly')
 
-  // Test compressed IPv6
+  // Test compressed IPv6 (zero-fill gap must land in the middle, not after `db8`)
   const buffer2 = parseIPv6('2001:db8::1')
   p.equal(buffer2.length, 16, 'should return 16-byte buffer for compressed')
+  p.equal(buffer2.toString('hex'), '20010db8000000000000000000000001', 'should expand :: correctly for 2001:db8::1')
 
   // Test loopback
   const buffer3 = parseIPv6('::1')
   p.equal(buffer3.length, 16, 'should return 16-byte buffer for loopback')
+  p.equal(buffer3.toString('hex'), '00000000000000000000000000000001', 'should expand ::1 correctly')
+
+  // Test :: in the middle with short groups on both sides
+  p.equal(parseIPv6('1::2').toString('hex'), '00010000000000000000000000000002', 'should expand 1::2 correctly')
+
+  // Test link-local with single group after ::
+  p.equal(parseIPv6('fe80::1').toString('hex'), 'fe800000000000000000000000000001', 'should expand fe80::1 correctly')
+
+  // Test trailing ::
+  p.equal(parseIPv6('fe80::').toString('hex'), 'fe800000000000000000000000000000', 'should expand fe80:: correctly')
 
   await p.completed
 })
