@@ -6,9 +6,12 @@ const { tspl } = require('@matteo.collina/tspl')
 
 const connectH2 = require('../lib/dispatcher/client-h2')
 const Request = require('../lib/core/request')
+const { setTimeout: sleep } = require('node:timers/promises')
+
 const {
   kUrl,
   kSocket,
+  kError,
   kMaxConcurrentStreams,
   kHTTP2InitialWindowSize,
   kHTTP2ConnectionWindowSize,
@@ -157,6 +160,98 @@ test('Should ignore late http2 data after request completion', async (t) => {
   t.strictEqual(onCompleteCalls, 1)
   t.strictEqual(onDataCalls, 0)
   t.ok(resumeCalls >= 1)
+
+  await t.completed
+})
+
+test('Should set kError on socket when PING fails', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const http2 = require('node:http2')
+  const originalConnect = http2.connect
+
+  class FakeSocket extends EventEmitter {
+    constructor () {
+      super()
+      this.destroyed = false
+    }
+
+    destroy () {
+      this.destroyed = true
+      return this
+    }
+
+    ref () {}
+    unref () {}
+  }
+
+  class FakeSession extends EventEmitter {
+    constructor () {
+      super()
+      this.closed = false
+      this.destroyed = false
+    }
+
+    request () { return new EventEmitter() }
+
+    close () {
+      this.closed = true
+    }
+
+    destroy () {
+      this.destroyed = true
+    }
+
+    ref () {}
+    unref () {}
+    ping (cb) {
+      cb(new Error('ping timeout'), null)
+    }
+  }
+
+  const session = new FakeSession()
+
+  http2.connect = function () {
+    return session
+  }
+
+  after(() => {
+    http2.connect = originalConnect
+  })
+
+  const socket = new FakeSocket()
+
+  const client = {
+    [kUrl]: new URL('https://localhost'),
+    [kSocket]: null,
+    [kMaxConcurrentStreams]: 100,
+    [kHTTP2InitialWindowSize]: null,
+    [kHTTP2ConnectionWindowSize]: null,
+    [kBodyTimeout]: 30_000,
+    [kStrictContentLength]: true,
+    [kQueue]: [],
+    [kRunningIdx]: 0,
+    [kPendingIdx]: 0,
+    [kRunning]: 0,
+    [kPingInterval]: 100,
+    [kOnError] (err) {
+      t.ok(err.message.includes('PING'), 'error should be a PING error')
+    },
+    [kResume] () {},
+    emit () {},
+    destroyed: false
+  }
+
+  connectH2(client, socket)
+
+  // Wait for the ping interval to fire
+  await sleep(200)
+
+  // With the bug, kError would be set on client instead of socket
+  t.ok(socket[kError] != null, 'kError should be set on the socket')
+
+  // Clean up the interval
+  session.closed = true
 
   await t.completed
 })
