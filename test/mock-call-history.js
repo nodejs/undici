@@ -409,7 +409,24 @@ describe('MockCallHistory - filterCalls with options', () => {
 
     const filtered = mockCallHistoryHello.filterCalls({ path: '/', port: '4000' }, { operator: 'AND' })
 
-    t.assert.strictEqual(filtered.length, 2)
+    t.assert.strictEqual(filtered.length, 1)
+  })
+
+  test('should use "AND" operator narrowing through every criterion', t => {
+    t.plan(2)
+
+    const mockCallHistoryHello = new MockCallHistory('hello')
+
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000', method: 'GET' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000', method: 'POST' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:5000', method: 'GET' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/foo', origin: 'http://localhost:4000', method: 'GET' })
+
+    const andFiltered = mockCallHistoryHello.filterCalls({ path: '/', port: '4000', method: 'GET' }, { operator: 'AND' })
+    t.assert.strictEqual(andFiltered.length, 1)
+
+    const orFiltered = mockCallHistoryHello.filterCalls({ path: '/', port: '4000', method: 'GET' }, { operator: 'OR' })
+    t.assert.strictEqual(orFiltered.length, 4)
   })
 
   test('should use "AND" operator with a lot of filters', t => {
