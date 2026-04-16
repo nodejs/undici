@@ -3,6 +3,7 @@
 const { test } = require('node:test')
 const { notEqual, strictEqual, deepStrictEqual } = require('node:assert')
 const { rm } = require('node:fs/promises')
+const FakeTimers = require('@sinonjs/fake-timers')
 const { cacheStoreTests, writeBody, compareGetResults } = require('./cache-store-test-utils.js')
 const { runtimeFeatures } = require('../../lib/util/runtime-features.js')
 
@@ -154,6 +155,80 @@ test('SqliteCacheStore two writes', { skip: runtimeFeatures.has('sqlite') === fa
     notEqual(writable, undefined)
     writeBody(writable, body)
   }
+})
+
+test('SqliteCacheStore skips expired entry to find non-expired match', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
+  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true
+  })
+  t.after(() => clock.uninstall())
+
+  const store = new SqliteCacheStore({
+    maxCount: 100
+  })
+
+  const keyA = {
+    origin: 'localhost',
+    path: '/',
+    method: 'GET',
+    headers: { 'x-vary': 'a' }
+  }
+
+  const valueA = {
+    statusCode: 200,
+    statusMessage: '',
+    headers: { foo: 'bar' },
+    vary: { 'x-vary': 'a' },
+    cacheControlDirectives: {},
+    cachedAt: Date.now(),
+    staleAt: Date.now() + 1000,
+    deleteAt: Date.now() + 1000
+  }
+
+  const bodyA = [Buffer.from('first')]
+
+  {
+    const writable = store.createWriteStream(keyA, valueA)
+    notEqual(writable, undefined)
+    writeBody(writable, bodyA)
+  }
+
+  // Advance past valueA's deleteAt
+  clock.tick(2000)
+
+  const keyB = {
+    origin: 'localhost',
+    path: '/',
+    method: 'GET',
+    headers: { 'x-vary': 'b' }
+  }
+
+  const valueB = {
+    statusCode: 200,
+    statusMessage: '',
+    headers: { foo: 'baz' },
+    vary: { 'x-vary': 'b' },
+    cacheControlDirectives: {},
+    cachedAt: Date.now(),
+    staleAt: Date.now() + 10000,
+    deleteAt: Date.now() + 10000
+  }
+
+  const bodyB = [Buffer.from('second')]
+
+  {
+    const writable = store.createWriteStream(keyB, valueB)
+    notEqual(writable, undefined)
+    writeBody(writable, bodyB)
+  }
+
+  // The expired entry (valueA) is sorted first by deleteAt ASC; the
+  // store must skip it and still return the matching valueB.
+  const result = store.get(structuredClone(keyB))
+  notEqual(result, undefined)
+  await compareGetResults(result, valueB, bodyB)
 })
 
 test('SqliteCacheStore write & read', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
