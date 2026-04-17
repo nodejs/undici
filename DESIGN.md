@@ -13,6 +13,15 @@ It assumes the current context around:
 
 The current `#http1-only` key suffix works as a short-term fix, but it encodes routing state into a string key that other internals can accidentally depend on.
 
+## Implementation status
+
+This branch implements the first substantial slice of the design:
+- `Agent` now keeps separate default and HTTP/1-only dispatcher registries
+- `Agent` exposes internal symbol-based query/mutation helpers for those registries
+- `MockAgent` uses those helpers instead of sharing `Agent`'s raw pool map
+
+The remaining design goal is to continue reducing coupling around mock dispatcher lifecycle and diagnostics.
+
 As an incremental starting step, `MockAgent.get(origin)` can eagerly register both protocol buckets for string origins and make them share the same interceptor list. That removes the lazy repair currently needed during dispatch, while keeping behaviour correct for native `fetch()`.
 
 That step is still transitional. The longer-term goal is to make `Agent` explicitly protocol-aware without exposing its pool registry shape to `MockAgent` or any other internal consumer.
