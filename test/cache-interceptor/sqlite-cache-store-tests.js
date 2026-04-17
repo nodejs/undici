@@ -156,6 +156,44 @@ test('SqliteCacheStore two writes', { skip: runtimeFeatures.has('sqlite') === fa
   }
 })
 
+test('SqliteCacheStore prune evicts oldest entries first', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
+  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+
+  const maxCount = 10
+  const store = new SqliteCacheStore({ maxCount })
+
+  const baseTime = Date.now()
+
+  for (let i = 0; i < 20; i++) {
+    const key = {
+      origin: 'localhost',
+      path: '/' + i,
+      method: 'GET',
+      headers: {}
+    }
+
+    const value = {
+      statusCode: 200,
+      statusMessage: '',
+      headers: { foo: 'bar' },
+      cachedAt: baseTime + i * 1000,
+      staleAt: baseTime + i * 1000 + 60_000,
+      deleteAt: baseTime + i * 1000 + 120_000,
+      body: Buffer.from('x')
+    }
+
+    store.set(key, value)
+  }
+
+  // The most recently cached entry must still be present;
+  // the oldest entry must have been evicted.
+  const newest = store.get({ origin: 'localhost', path: '/19', method: 'GET', headers: {} })
+  notEqual(newest, undefined)
+
+  const oldest = store.get({ origin: 'localhost', path: '/0', method: 'GET', headers: {} })
+  strictEqual(oldest, undefined)
+})
+
 test('SqliteCacheStore write & read', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
 
