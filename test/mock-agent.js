@@ -5,7 +5,7 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
-const { kClients, kConnected } = require('../lib/core/symbols')
+const { kClients, kConnected, kGetDispatcherEntry, kHttp1OnlyClients } = require('../lib/core/symbols')
 const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/errors')
 const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
@@ -172,21 +172,24 @@ describe('MockAgent - get', () => {
     t.assert.strictEqual(mockPool1, mockPool2)
   })
 
-  test('should register both protocol buckets for string origins', (t) => {
-    t.plan(5)
+  test('should register protocol-specific dispatchers without exposing agent pools', (t) => {
+    t.plan(6)
 
     const baseUrl = 'http://localhost:9999'
-    const mockAgent = new MockAgent()
+    const agent = new Agent()
+    const mockAgent = new MockAgent({ agent })
     after(() => mockAgent.close())
 
     const mockPool = mockAgent.get(baseUrl)
-    const http1OnlyPool = mockAgent[kClients].get(Agent.getOriginKey(baseUrl, false)).dispatcher
+    const defaultPool = agent[kGetDispatcherEntry](baseUrl).dispatcher
+    const http1OnlyPool = agent[kGetDispatcherEntry](baseUrl, { allowH2: false }).dispatcher
 
-    t.assert.strictEqual(mockAgent[kClients].size, 2)
+    t.assert.strictEqual(mockAgent[kClients].size, 1)
     t.assert.ok(http1OnlyPool instanceof MockPool)
     t.assert.notStrictEqual(http1OnlyPool, mockPool)
-    t.assert.strictEqual(mockAgent[kClients].get(baseUrl).dispatcher, mockPool)
+    t.assert.strictEqual(defaultPool, mockPool)
     t.assert.strictEqual(http1OnlyPool[kDispatches], mockPool[kDispatches])
+    t.assert.strictEqual(agent[kHttp1OnlyClients].size, 1)
   })
 })
 
@@ -260,7 +263,7 @@ test('MockAgent - .close should clean up registered pools', async (t) => {
   t.assert.ok(mockPool instanceof MockPool)
 
   t.assert.strictEqual(mockPool[kConnected], 1)
-  t.assert.strictEqual(mockAgent[kClients].size, 2)
+  t.assert.strictEqual(mockAgent[kClients].size, 1)
   await mockAgent.close()
   t.assert.strictEqual(mockPool[kConnected], 0)
   t.assert.strictEqual(mockAgent[kClients].size, 0)
@@ -278,14 +281,14 @@ test('MockAgent - .close should clean up registered clients', async (t) => {
   t.assert.ok(mockClient instanceof MockClient)
 
   t.assert.strictEqual(mockClient[kConnected], 1)
-  t.assert.strictEqual(mockAgent[kClients].size, 2)
+  t.assert.strictEqual(mockAgent[kClients].size, 1)
   await mockAgent.close()
   t.assert.strictEqual(mockClient[kConnected], 0)
   t.assert.strictEqual(mockAgent[kClients].size, 0)
 })
 
-test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
-  t.plan(1)
+test('MockAgent - [kClients] should not expose encapsulated agent pools', async (t) => {
+  t.plan(3)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
@@ -312,8 +315,10 @@ test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
     method: 'GET'
   }).reply(200, 'hello')
 
-  // The MockAgent should encapsulate the input agent clients
-  t.assert.strictEqual(mockAgent[kClients].size, agent[kClients].size)
+  // The MockAgent should not expose the encapsulated agent pool registry
+  t.assert.notStrictEqual(mockAgent[kClients], agent[kClients])
+  t.assert.strictEqual(mockAgent[kClients].size, 1)
+  t.assert.strictEqual(agent[kClients].size, 1)
 })
 
 test('MockAgent - basic intercept with MockAgent.request', async (t) => {
