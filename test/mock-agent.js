@@ -9,7 +9,7 @@ const { kClients, kConnected } = require('../lib/core/symbols')
 const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/errors')
 const MockClient = require('../lib/mock/mock-client')
 const MockPool = require('../lib/mock/mock-pool')
-const { kAgent, kMockAgentIsCallHistoryEnabled } = require('../lib/mock/mock-symbols')
+const { kAgent, kDispatches, kMockAgentIsCallHistoryEnabled } = require('../lib/mock/mock-symbols')
 const Dispatcher = require('../lib/dispatcher/dispatcher')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 const { fetch } = require('..')
@@ -171,6 +171,23 @@ describe('MockAgent - get', () => {
     const mockPool2 = mockAgent.get(baseUrl)
     t.assert.strictEqual(mockPool1, mockPool2)
   })
+
+  test('should register both protocol buckets for string origins', (t) => {
+    t.plan(5)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    const http1OnlyPool = mockAgent[kClients].get(Agent.getOriginKey(baseUrl, false)).dispatcher
+
+    t.assert.strictEqual(mockAgent[kClients].size, 2)
+    t.assert.ok(http1OnlyPool instanceof MockPool)
+    t.assert.notStrictEqual(http1OnlyPool, mockPool)
+    t.assert.strictEqual(mockAgent[kClients].get(baseUrl).dispatcher, mockPool)
+    t.assert.strictEqual(http1OnlyPool[kDispatches], mockPool[kDispatches])
+  })
 })
 
 describe('MockAgent - dispatch', () => {
@@ -243,7 +260,7 @@ test('MockAgent - .close should clean up registered pools', async (t) => {
   t.assert.ok(mockPool instanceof MockPool)
 
   t.assert.strictEqual(mockPool[kConnected], 1)
-  t.assert.strictEqual(mockAgent[kClients].size, 1)
+  t.assert.strictEqual(mockAgent[kClients].size, 2)
   await mockAgent.close()
   t.assert.strictEqual(mockPool[kConnected], 0)
   t.assert.strictEqual(mockAgent[kClients].size, 0)
@@ -261,7 +278,7 @@ test('MockAgent - .close should clean up registered clients', async (t) => {
   t.assert.ok(mockClient instanceof MockClient)
 
   t.assert.strictEqual(mockClient[kConnected], 1)
-  t.assert.strictEqual(mockAgent[kClients].size, 1)
+  t.assert.strictEqual(mockAgent[kClients].size, 2)
   await mockAgent.close()
   t.assert.strictEqual(mockClient[kConnected], 0)
   t.assert.strictEqual(mockAgent[kClients].size, 0)
