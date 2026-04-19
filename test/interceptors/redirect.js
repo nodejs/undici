@@ -466,6 +466,43 @@ for (const factory of [
     await t.completed
   })
 
+  test('should throw when max redirections is reached and throwOnMaxRedirect is set as interceptor default', async t => {
+    t = tspl(t, { plan: 1 })
+
+    const server = await startRedirectingServer()
+
+    const dispatcher = new undici.Agent().compose(
+      redirect({ maxRedirections: 2, throwOnMaxRedirect: true })
+    )
+    after(() => dispatcher.close())
+
+    try {
+      await undici.request(`http://${server}/300`, { dispatcher })
+      t.fail('Did not throw')
+    } catch (error) {
+      t.strictEqual(error.message, 'max redirects')
+    }
+
+    await t.completed
+  })
+
+  test('should not allow invalid throwOnMaxRedirect arguments', async t => {
+    t = tspl(t, { plan: 1 })
+
+    try {
+      await request(t, 'localhost', undefined, 'http://localhost', {
+        method: 'GET',
+        maxRedirections: 1,
+        throwOnMaxRedirect: 'INVALID'
+      })
+      t.fail('Did not throw')
+    } catch (err) {
+      t.strictEqual(err.message, 'throwOnMaxRedirect must be a boolean')
+    }
+
+    await t.completed
+  })
+
   test('when a Location response header is NOT present', async t => {
     t = tspl(t, { plan: 6 * 3 })
 
