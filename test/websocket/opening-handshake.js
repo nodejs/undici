@@ -147,14 +147,9 @@ test('WebSocket connecting to server that isn\'t a Websocket server (h2 - suppor
   const cleaner = setupListener()
   ws.onmessage = ws.onopen = () => planner.fail('should not open')
 
-  t.after(() => {
-    cleaner()
-    dispatcher.close()
-    ws.close()
-    h2Server.close()
-  })
-
   await planner.completed
+  cleaner()
+  await new Promise((resolve) => h2Server.close(resolve))
 
   function setupListener () {
     ws.addEventListener('error', listener)
