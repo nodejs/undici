@@ -278,7 +278,6 @@ test('Dispatcher#Upgrade', async t => {
     },
     allowH2: true
   })
-  after(() => client.close().then(() => { server.close() }))
 
   const { socket } = await client.upgrade({ path: '/', protocol: 'websocket' })
 
@@ -286,7 +285,77 @@ test('Dispatcher#Upgrade', async t => {
   t.ok(socket.writable)
   t.strictEqual(socket.closed, false)
 
-  after(() => socket.end())
+  await t.completed
+
+  socket.on('error', () => {})
+  socket.end()
+  await once(socket, 'close')
+  await client.close()
+  await new Promise((resolve) => server.close(resolve))
+})
+
+test('Dispatcher#Upgrade rejects if stream closes before response headers', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createSecureServer({ ...(await pem.generate({ opts: { keySize: 2048 } })), settings: { enableConnectProtocol: true } })
+
+  server.on('stream', (stream) => {
+    stream.close()
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+  after(() => client.close().then(() => { server.close() }))
+
+  const err = await Promise.race([
+    client.upgrade({ path: '/', protocol: 'websocket' }).then(
+      () => new Error('upgrade unexpectedly resolved'),
+      err => err
+    ),
+    sleep(1_000).then(() => new Error('upgrade hung waiting for response headers'))
+  ])
+
+  t.ok(err instanceof errors.InformationalError, err.message)
+  t.match(err.message, /HTTP\/2:/)
+
+  await t.completed
+})
+
+test('Dispatcher#Connect rejects if stream closes before response headers', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', (stream) => {
+    stream.close()
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+  after(() => client.close().then(() => { server.close() }))
+
+  const err = await Promise.race([
+    client.connect({ path: '/' }).then(
+      () => new Error('connect unexpectedly resolved'),
+      err => err
+    ),
+    sleep(1_000).then(() => new Error('connect hung waiting for response headers'))
+  ])
+
+  t.ok(err instanceof errors.InformationalError, err.message)
+  t.match(err.message, /HTTP\/2:/)
 
   await t.completed
 })
