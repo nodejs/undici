@@ -55,3 +55,52 @@ test('Should handle http2 stream timeout', async t => {
 
   await t.completed
 })
+
+test('Should not double-decrement open streams counter on stream timeout', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', (stream, headers) => {
+    stream.respond({ ':status': 200 })
+    // Keep stream open past the body timeout
+    setTimeout(() => {
+      try { stream.end('hello h2!') } catch {}
+    }, 1000)
+  })
+
+  after(() => server.close())
+  await once(server.listen(0, '127.0.0.1'), 'listening')
+
+  const client = new Client(`https://127.0.0.1:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true,
+    bodyTimeout: 50
+  })
+  after(() => client.close())
+
+  const res = await client.request({
+    path: '/',
+    method: 'GET'
+  })
+
+  try {
+    await res.body.text()
+  } catch {}
+
+  // Allow time for the 'close' event to fire on the stream
+  await new Promise(resolve => setTimeout(resolve, 200))
+
+  // Reach into the internals to verify the open-streams counter didn't go negative
+  const sessionSymbol = Object.getOwnPropertySymbols(client)
+    .find(s => s.description === 'http2Session')
+  const session = client[sessionSymbol]
+  const openStreamsSymbol = Object.getOwnPropertySymbols(session)
+    .find(s => s.description === 'open streams')
+
+  t.strictEqual(session[openStreamsSymbol], 0)
+
+  await t.completed
+})
