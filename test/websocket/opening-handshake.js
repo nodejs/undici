@@ -122,7 +122,12 @@ test('WebSocket on H2', { skip: crypto == null }, async (t) => {
 
 test('WebSocket connecting to server that isn\'t a Websocket server (h2 - supports extended CONNECT protocol)', async (t) => {
   const planner = tspl(t, { plan: 6 })
+  const sessions = new Set()
   const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
+    .on('session', (session) => {
+      sessions.add(session)
+      session.on('close', () => sessions.delete(session))
+    })
     .on('stream', (stream, headers) => {
       planner.equal(headers[':method'], 'CONNECT')
       planner.equal(headers[':protocol'], 'websocket')
@@ -145,11 +150,23 @@ test('WebSocket connecting to server that isn\'t a Websocket server (h2 - suppor
   })
   const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher, protocols: ['chat'] })
   const cleaner = setupListener()
+
+  t.after(async () => {
+    cleaner()
+    ws.onerror = null
+    ws.close()
+
+    for (const session of sessions) {
+      session.close()
+    }
+
+    await new Promise((resolve) => h2Server.close(resolve))
+    await dispatcher.close()
+  })
+
   ws.onmessage = ws.onopen = () => planner.fail('should not open')
 
   await planner.completed
-  cleaner()
-  await new Promise((resolve) => h2Server.close(resolve))
 
   function setupListener () {
     ws.addEventListener('error', listener)
