@@ -10,7 +10,7 @@ const { tspl } = require('@matteo.collina/tspl')
 
 const pem = require('@metcoder95/https-pem')
 
-const { Client } = require('..')
+const { Client, errors } = require('..')
 
 test('Dispatcher#Stream', async t => {
   t = tspl(t, { plan: 4 })
@@ -254,7 +254,10 @@ test('Dispatcher#Upgrade - Should throw on non-websocket upgrade', async t => {
 test('Dispatcher#Upgrade', async t => {
   t = tspl(t, { plan: 3 })
 
-  const server = createSecureServer({ ...(await pem.generate({ opts: { keySize: 2048 } })), settings: { enableConnectProtocol: true } })
+  const server = createSecureServer({
+    ...(await pem.generate({ opts: { keySize: 2048 } })),
+    settings: { enableConnectProtocol: true }
+  })
 
   server.on('stream', (stream, headers) => {
     stream.on('error', err => {
@@ -284,6 +287,49 @@ test('Dispatcher#Upgrade', async t => {
   t.strictEqual(socket.closed, false)
 
   after(() => socket.end())
+
+  await t.completed
+})
+
+test('Dispatcher#Upgrade rejects websocket upgrade on non-200 HTTP/2 response', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createSecureServer({
+    ...(await pem.generate({ opts: { keySize: 2048 } })),
+    settings: { enableConnectProtocol: true }
+  })
+
+  server.on('stream', (stream, headers) => {
+    stream.on('error', () => {})
+
+    if (headers[':method'] === 'CONNECT' && headers[':protocol'] === 'websocket') {
+      stream.respond({ ':status': 404 })
+      stream.end('not found')
+      return
+    }
+
+    stream.respond({ ':status': 200 })
+    stream.end()
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+  after(() => client.close().then(() => { server.close() }))
+
+  try {
+    await client.upgrade({ path: '/', protocol: 'websocket' })
+    t.fail('client.upgrade() should reject')
+  } catch (err) {
+    t.ok(err instanceof errors.SocketError)
+    t.strictEqual(err.code, 'UND_ERR_SOCKET')
+    t.strictEqual(err.message, 'bad upgrade')
+  }
 
   await t.completed
 })
