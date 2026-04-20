@@ -9,9 +9,10 @@ const { once } = require('node:events')
 const pem = require('@metcoder95/https-pem')
 
 const { Client } = require('..')
+const { kHTTP2Session } = require('../lib/core/symbols')
 
 test('Should handle http2 stream timeout', async t => {
-  t = tspl(t, { plan: 1 })
+  t = tspl(t, { plan: 2 })
 
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const stream = createReadStream(__filename)
@@ -52,6 +53,12 @@ test('Should handle http2 stream timeout', async t => {
   await t.rejects(res.body.text(), {
     message: 'HTTP/2: "stream timeout after 50"'
   })
+
+  const session = client[kHTTP2Session]
+  const kOpenStreams = Object.getOwnPropertySymbols(session)
+    .find((symbol) => symbol.description === 'open streams')
+
+  t.strictEqual(session[kOpenStreams], 0)
 
   await t.completed
 })
