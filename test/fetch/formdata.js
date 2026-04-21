@@ -383,3 +383,26 @@ test('.formData() with multipart/form-data body that ends with --\r\n', async (t
 
   await request.formData()
 })
+
+test('.formData() rejects malformed multipart header line ending with bare CR', async (t) => {
+  const boundary = '----formdata-undici-bare-cr-0000000000'
+  const body = Buffer.concat([
+    Buffer.from('--' + boundary + '\r\n'),
+    Buffer.from('Content-Disposition: form-data; name="x"'),
+    Buffer.from([0x0d]), // bare CR (no LF)
+    Buffer.from('Content-Type: text/plain\r\n'),
+    Buffer.from('\r\n'),
+    Buffer.from('hello\r\n'),
+    Buffer.from('--' + boundary + '--\r\n')
+  ])
+
+  const request = new Request('http://localhost', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'multipart/form-data; boundary=' + boundary
+    },
+    body
+  })
+
+  await t.assert.rejects(request.formData(), TypeError)
+})

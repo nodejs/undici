@@ -2132,6 +2132,8 @@ describe('Cache Interceptor', () => {
       const oneYear = 31536000000
       // deleteAt should be approximately 1 year out
       equal(cached.deleteAt >= clock.now + oneYear - 1000, true, `deleteAt (${cached.deleteAt}) should be ~1 year out`)
+      // staleAt should also be approximately 1 year out (not ~8.7 hours)
+      equal(cached.staleAt >= clock.now + oneYear - 1000, true, `staleAt (${cached.staleAt}) should be ~1 year out`)
     })
 
     test('stale-while-revalidate extends deleteAt beyond staleAt', async () => {

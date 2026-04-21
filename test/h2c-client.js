@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
-const { H2CClient, Client } = require('..')
+const { H2CClient, Client, Agent, Pool, request } = require('..')
 
 test('Should throw if no h2c origin', async t => {
   const planner = tspl(t, { plan: 1 })
@@ -179,4 +179,64 @@ test('Should throw if bad useH2c has been passed', async t => {
   })
 
   await t.completed
+})
+
+test('Pool with useH2c and connections > 1 should not raise HTTPParserError', async t => {
+  const planner = tspl(t, { plan: 6 })
+
+  const server = createServer((req, res) => {
+    res.writeHead(200)
+    res.end('Hello, world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+  const url = `http://localhost:${server.address().port}`
+  const pool = new Pool(url, { useH2c: true, connections: 2 })
+
+  t.after(() => pool.close())
+  t.after(() => server.close())
+
+  const responses = await Promise.all([
+    pool.request({ path: '/test1', method: 'GET' }),
+    pool.request({ path: '/test2', method: 'GET' }),
+    pool.request({ path: '/test3', method: 'GET' })
+  ])
+
+  for (const response of responses) {
+    planner.equal(response.statusCode, 200)
+    planner.equal(await response.body.text(), 'Hello, world!')
+  }
+
+  await planner.completed
+})
+
+test('Agent with useH2c and connections > 1 should not raise HTTPParserError', async t => {
+  const planner = tspl(t, { plan: 6 })
+
+  const server = createServer((req, res) => {
+    res.writeHead(200)
+    res.end('Hello, world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+  const port = server.address().port
+  const agent = new Agent({ useH2c: true, connections: 2 })
+
+  t.after(() => agent.close())
+  t.after(() => server.close())
+
+  const responses = await Promise.all([
+    request(`http://localhost:${port}/test1`, { dispatcher: agent }),
+    request(`http://localhost:${port}/test2`, { dispatcher: agent }),
+    request(`http://localhost:${port}/test3`, { dispatcher: agent })
+  ])
+
+  for (const response of responses) {
+    planner.equal(response.statusCode, 200)
+    planner.equal(await response.body.text(), 'Hello, world!')
+  }
+
+  await planner.completed
 })

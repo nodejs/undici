@@ -5,7 +5,7 @@ const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 
 test('invalid headers', (t) => {
-  t = tspl(t, { plan: 10 })
+  t = tspl(t, { plan: 13 })
 
   const client = new Client('http://localhost:3000')
   after(() => client.close())
@@ -14,6 +14,36 @@ test('invalid headers', (t) => {
     method: 'GET',
     headers: {
       'content-length': 'asd'
+    }
+  }, (err, data) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'content-length': '1.1'
+    }
+  }, (err, data) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'content-length': '10abc'
+    }
+  }, (err, data) => {
+    t.ok(err instanceof errors.InvalidArgumentError)
+  })
+
+  client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'content-length': '-1'
     }
   }, (err, data) => {
     t.ok(err instanceof errors.InvalidArgumentError)

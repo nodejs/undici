@@ -422,6 +422,88 @@ test('use proxy-agent to connect through proxy with basic auth in URL', async (t
   proxyAgent.close()
 })
 
+test('use proxy-agent to connect through proxy with username-only auth in URL', async (t) => {
+  t = tspl(t, { plan: 6 })
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = new URL(`http://user:@localhost:${proxy.address().port}`)
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const parsedOrigin = new URL(serverUrl)
+
+  proxy.authenticate = function (req) {
+    t.ok(true, 'authentication should be called')
+    return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:').toString('base64')}`
+  }
+  proxy.on('connect', () => {
+    t.fail('proxy tunnel should not be established')
+  })
+
+  server.on('request', (req, res) => {
+    t.strictEqual(req.url, '/hello?foo=bar')
+    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    res.setHeader('content-type', 'application/json')
+    res.end(JSON.stringify({ hello: 'world' }))
+  })
+
+  const {
+    statusCode,
+    headers,
+    body
+  } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
+  const json = await body.json()
+
+  t.strictEqual(statusCode, 200)
+  t.deepStrictEqual(json, { hello: 'world' })
+  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
+test('use proxy-agent to connect through proxy with username-only auth in URL without colon', async (t) => {
+  t = tspl(t, { plan: 6 })
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = new URL(`http://user@localhost:${proxy.address().port}`)
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const parsedOrigin = new URL(serverUrl)
+
+  proxy.authenticate = function (req) {
+    t.ok(true, 'authentication should be called')
+    return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:').toString('base64')}`
+  }
+  proxy.on('connect', () => {
+    t.fail('proxy tunnel should not be established')
+  })
+
+  server.on('request', (req, res) => {
+    t.strictEqual(req.url, '/hello?foo=bar')
+    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    res.setHeader('content-type', 'application/json')
+    res.end(JSON.stringify({ hello: 'world' }))
+  })
+
+  const {
+    statusCode,
+    headers,
+    body
+  } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
+  const json = await body.json()
+
+  t.strictEqual(statusCode, 200)
+  t.deepStrictEqual(json, { hello: 'world' })
+  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 test('use proxy-agent to connect through proxy with basic auth in URL with tunneling enabled', async (t) => {
   t = tspl(t, { plan: 7 })
   const server = await buildServer()
@@ -435,6 +517,47 @@ test('use proxy-agent to connect through proxy with basic auth in URL with tunne
   proxy.authenticate = function (req, fn) {
     t.ok(true, 'authentication should be called')
     return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:pass').toString('base64')}`
+  }
+  proxy.on('connect', () => {
+    t.ok(true, 'proxy should be called')
+  })
+
+  server.on('request', (req, res) => {
+    t.strictEqual(req.url, '/hello?foo=bar')
+    t.strictEqual(req.headers.host, parsedOrigin.host, 'should not use proxyUrl as host')
+    res.setHeader('content-type', 'application/json')
+    res.end(JSON.stringify({ hello: 'world' }))
+  })
+
+  const {
+    statusCode,
+    headers,
+    body
+  } = await request(serverUrl + '/hello?foo=bar', { dispatcher: proxyAgent })
+  const json = await body.json()
+
+  t.strictEqual(statusCode, 200)
+  t.deepStrictEqual(json, { hello: 'world' })
+  t.strictEqual(headers.connection, 'keep-alive', 'should remain the connection open')
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
+test('use proxy-agent to connect through proxy with username-only auth in URL with tunneling enabled', async (t) => {
+  t = tspl(t, { plan: 7 })
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = new URL(`http://user:@localhost:${proxy.address().port}`)
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
+  const parsedOrigin = new URL(serverUrl)
+
+  proxy.authenticate = function (req) {
+    t.ok(true, 'authentication should be called')
+    return req.headers['proxy-authorization'] === `Basic ${Buffer.from('user:').toString('base64')}`
   }
   proxy.on('connect', () => {
     t.ok(true, 'proxy should be called')
