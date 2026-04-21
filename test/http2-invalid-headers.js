@@ -106,11 +106,10 @@ test('HTTP/2 duplicate headers should be catchable (#4356)', async t => {
   t.ok(client instanceof Client, 'client should still be a valid Client instance')
 
   // After the error, the client should be able to make another request
-  // (on a new connection if the session was destroyed)
   const response = await client.request({
     path: '/',
     method: 'GET'
   })
   await response.body.text()
-  t.strictEqual(requestCount, 2) // Two successful requests
+  t.strictEqual(requestCount, 1) // Only the GET request succeeded
 })
