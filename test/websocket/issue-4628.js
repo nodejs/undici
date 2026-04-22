@@ -1,16 +1,14 @@
 'use strict'
 
 const assert = require('node:assert')
+const { once } = require('node:events')
 const { test } = require('node:test')
 const { WebSocket } = require('../..')
 
-test('closing before connection is established should only fire error and close events once', (t) => {
-  t.plan(2)
-
-  t.after(() => assert.deepStrictEqual(events, ['error', 'close']))
-
+test('closing before connection is established should only fire error and close events once', async (t) => {
   const events = []
   const ws = new WebSocket('wss://example.com/')
+  const closeEvent = once(ws, 'close')
 
   ws.onopen = t.assert.fail
 
@@ -25,4 +23,8 @@ test('closing before connection is established should only fire error and close 
   })
 
   ws.close()
+
+  await closeEvent
+
+  assert.deepStrictEqual(events, ['error', 'close'])
 })

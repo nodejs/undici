@@ -56,6 +56,12 @@ test('close() during CONNECTING fires error and close asynchronously', async (t)
   t.assert.strictEqual(closeSeen, false)
   closeReturned = true
 
+  await Promise.resolve()
+
+  t.assert.strictEqual(ws.readyState, WebSocket.CLOSING)
+  t.assert.strictEqual(errorSeen, false)
+  t.assert.strictEqual(closeSeen, false)
+
   await closeEvent
 
   t.assert.strictEqual(ws.readyState, WebSocket.CLOSED)
