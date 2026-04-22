@@ -95,12 +95,16 @@ test('Should reject request if not h2c supported', async t => {
   await once(server, 'listening')
   const client = new H2CClient(`http://localhost:${server.address().port}/`)
 
-  t.after(() => client.close())
+  t.after(() => client.destroy())
   t.after(() => server.close())
 
-  planner.rejects(
+  await planner.rejects(
     client.request({ path: '/', method: 'GET' }),
-    'SocketError: other side closed'
+    {
+      name: 'SocketError',
+      code: 'UND_ERR_SOCKET',
+      message: 'other side closed'
+    }
   )
 })
 
