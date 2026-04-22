@@ -106,6 +106,18 @@ test('Should reject request if not h2c supported', async t => {
       message: 'other side closed'
     }
   )
+
+  let closeTimer = null
+  try {
+    await Promise.race([
+      client.close(),
+      new Promise((resolve, reject) => {
+        closeTimer = setTimeout(() => reject(new Error('client.close() did not resolve')), 1000)
+      })
+    ])
+  } finally {
+    clearTimeout(closeTimer)
+  }
 })
 
 test('Connect to h2c server over a unix domain socket', { skip: process.platform === 'win32' }, async t => {
