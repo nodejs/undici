@@ -7,11 +7,10 @@ const { once } = require('node:events')
 const { request, Client, interceptors } = require('../../index')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { setTimeout } = require('node:timers/promises')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
 test('revalidates the request when the response is stale', async () => {
-  const clock = FakeTimers.install({
-    now: 1
-  })
+  const clock = FakeTimers.install({ ...fakeTimersOpts, now: 1 })
   after(() => clock.uninstall())
 
   let count = 0
@@ -75,9 +74,7 @@ describe('revalidates the request, handles 304s during stale-while-revalidate', 
   }
 
   async function revalidateTest (useEtag = false) {
-    const clock = FakeTimers.install({
-      now: 1
-    })
+    const clock = FakeTimers.install({ ...fakeTimersOpts, now: 1 })
     after(() => clock.uninstall())
 
     let count200 = 0

@@ -5,6 +5,7 @@ const { test, after } = require('node:test')
 const { Client, errors } = require('..')
 const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
 test('timeout with pipelining 1', async (t) => {
   t = tspl(t, { plan: 9 })
@@ -64,7 +65,7 @@ test('Disable socket timeout', async (t) => {
   t = tspl(t, { plan: 2 })
 
   const server = createServer({ joinDuplicateHeaders: true })
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install(fakeTimersOpts)
   after(clock.uninstall.bind(clock))
 
   server.once('request', (req, res) => {

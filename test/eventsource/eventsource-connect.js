@@ -5,6 +5,7 @@ const http = require('node:http')
 const { test, describe, after } = require('node:test')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 const { randomInt } = require('node:crypto')
 
 describe('EventSource - sending correct request headers', () => {
@@ -176,7 +177,7 @@ describe('EventSource - received response must have content-type to be text/even
   })
 
   test('should try to connect again if server is unreachable', async (t) => {
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install(fakeTimersOpts)
 
     after(() => clock.uninstall())
     const reconnectionTime = defaultReconnectionTime
@@ -209,7 +210,7 @@ describe('EventSource - received response must have content-type to be text/even
 
   test('should try to connect again if server is unreachable, configure reconnectionTime', async (t) => {
     const reconnectionTime = 1000
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install(fakeTimersOpts)
     after(() => clock.uninstall())
 
     const domain = 'bad.n' + randomInt(1e10).toString(36) + '.proxy'

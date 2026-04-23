@@ -8,6 +8,7 @@ const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('node:net')
 const http = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
 test('keep-alive header', async (t) => {
   t = tspl(t, { plan: 2 })
@@ -46,7 +47,7 @@ test('keep-alive header', async (t) => {
 test('keep-alive header 0', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install(fakeTimersOpts)
   after(() => clock.uninstall())
 
   const server = createServer((socket) => {
@@ -151,7 +152,7 @@ test('keep-alive not timeout', async (t) => {
   t = tspl(t, { plan: 2 })
 
   const clock = FakeTimers.install({
-    apis: ['setTimeout']
+    ...fakeTimersOpts
   })
   after(() => clock.uninstall())
 
@@ -193,7 +194,7 @@ test('keep-alive threshold', async (t) => {
   t = tspl(t, { plan: 2 })
 
   const clock = FakeTimers.install({
-    apis: ['setTimeout']
+    ...fakeTimersOpts
   })
   after(() => clock.uninstall())
 
@@ -236,7 +237,7 @@ test('keep-alive max keepalive', async (t) => {
   t = tspl(t, { plan: 2 })
 
   const clock = FakeTimers.install({
-    apis: ['setTimeout']
+    ...fakeTimersOpts
   })
   after(() => clock.uninstall())
 

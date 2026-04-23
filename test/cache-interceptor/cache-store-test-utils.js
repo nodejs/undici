@@ -5,6 +5,7 @@ const { describe, test, after } = require('node:test')
 const { Readable } = require('node:stream')
 const { once } = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
 /**
  * @typedef {import('../../types/cache-interceptor.d.ts').default.CacheStore} CacheStore
@@ -109,9 +110,7 @@ function cacheStoreTests (CacheStore, options) {
     })
 
     test('returns stale response before deleteAt', options, async () => {
-      const clock = FakeTimers.install({
-        shouldClearNativeTimers: true
-      })
+      const clock = FakeTimers.install({ ...fakeTimersOpts, shouldClearNativeTimers: true })
 
       after(() => clock.uninstall())
 
@@ -167,9 +166,7 @@ function cacheStoreTests (CacheStore, options) {
     })
 
     test('a stale request is overwritten', options, async () => {
-      const clock = FakeTimers.install({
-        shouldClearNativeTimers: true
-      })
+      const clock = FakeTimers.install({ ...fakeTimersOpts, shouldClearNativeTimers: true })
 
       after(() => clock.uninstall())
 

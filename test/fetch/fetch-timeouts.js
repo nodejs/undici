@@ -7,6 +7,7 @@ const timers = require('../../lib/util/timers')
 const { createServer } = require('node:http')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { closeServerAsPromise } = require('../utils/node-http')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
 test('Fetch very long request, timeout overridden so no error', (t, done) => {
   const minutes = 6
@@ -14,7 +15,7 @@ test('Fetch very long request, timeout overridden so no error', (t, done) => {
 
   t.plan(1)
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install(fakeTimersOpts)
   t.after(clock.uninstall.bind(clock))
 
   const orgTimers = { ...timers }

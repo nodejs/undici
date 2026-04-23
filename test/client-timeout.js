@@ -7,6 +7,7 @@ const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 const FakeTimers = require('@sinonjs/fake-timers')
 const timers = require('../lib/util/timers')
+const fakeTimersOpts = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'hrtime', 'performance', ...(typeof Intl !== 'undefined' ? ['Intl'] : [])] }
 
 test('refresh timeout on pause', async (t) => {
   t = tspl(t, { plan: 1 })
@@ -52,7 +53,7 @@ test('refresh timeout on pause', async (t) => {
 test('start headers timeout after request body', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({ ...fakeTimersOpts, shouldClearNativeTimers: true })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
@@ -110,7 +111,7 @@ test('start headers timeout after request body', async (t) => {
 test('start headers timeout after async iterator request body', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({ ...fakeTimersOpts, shouldClearNativeTimers: true })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
