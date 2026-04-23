@@ -26,7 +26,7 @@ WASM_LDFLAGS += ' -Wl,-error-limit=0 -Wl,-O3 -Wl,--lto-O3 -Wl,--strip-all'
 WASM_LDFLAGS += ' -Wl,--allow-undefined -Wl,--export-dynamic -Wl,--export-table'
 WASM_LDFLAGS += ' -Wl,--export=malloc -Wl,--export=free -Wl,--no-entry'
 
-const WASM_OPT_FLAGS = '-O4 --converge --strip-debug --strip-dwarf --strip-producers'
+const WASM_OPT_FLAGS = '-O4 --converge --enable-bulk-memory --strip-debug --strip-dwarf --strip-producers'
 
 const writeWasmChunk = (path, dest) => {
   const base64 = readFileSync(join(WASM_OUT, path)).toString('base64')
