@@ -545,7 +545,7 @@ test('Should handle h2 request without body', async t => {
 })
 
 test('Should clear h2 request stream references before completing a response', async t => {
-  t = tspl(t, { plan: 4 })
+  t = tspl(t, { plan: 6 })
 
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
@@ -570,6 +570,7 @@ test('Should clear h2 request stream references before completing a response', a
 
   let requestStreamIdSymbol = null
   let requestStreamSymbol = null
+  let requestStreamCleanupSymbol = null
 
   client.dispatch({
     path: '/',
@@ -581,9 +582,11 @@ test('Should clear h2 request stream references before completing a response', a
       const symbols = Object.getOwnPropertySymbols(request)
       requestStreamIdSymbol = symbols.find((symbol) => symbol.description === 'request stream id')
       requestStreamSymbol = symbols.find((symbol) => symbol.description === 'request stream')
+      requestStreamCleanupSymbol = symbols.find((symbol) => symbol.description === 'request stream cleanup')
 
       t.ok(requestStreamIdSymbol)
       t.ok(requestStreamSymbol)
+      t.ok(requestStreamCleanupSymbol)
     },
     onResponseData () {
       return true
@@ -593,6 +596,7 @@ test('Should clear h2 request stream references before completing a response', a
 
       t.strictEqual(request[requestStreamIdSymbol], null)
       t.strictEqual(request[requestStreamSymbol], null)
+      t.strictEqual(request[requestStreamCleanupSymbol], null)
     },
     onResponseError (_controller, err) {
       t.ifError(err)
