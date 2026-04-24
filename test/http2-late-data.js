@@ -162,7 +162,7 @@ test('Should ignore late http2 data after request completion', async (t) => {
 })
 
 test('Should remove request-owned http2 stream listeners after completion', async (t) => {
-  t = tspl(t, { plan: 5 })
+  t = tspl(t, { plan: 7 })
 
   const http2 = require('node:http2')
   const originalConnect = http2.connect
@@ -271,12 +271,14 @@ test('Should remove request-owned http2 stream listeners after completion', asyn
   client[kQueue].push(request)
 
   t.ok(context.write(request))
+  t.equal(stream.listenerCount('aborted'), 1)
   t.equal(stream.listenerCount('timeout'), 1)
   t.equal(stream.listenerCount('trailers'), 1)
 
   stream.emit('response', { ':status': 200 })
   stream.emit('end')
 
+  t.equal(stream.listenerCount('aborted'), 0)
   t.equal(stream.listenerCount('timeout'), 0)
   t.equal(stream.listenerCount('trailers'), 0)
 
