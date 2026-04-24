@@ -231,3 +231,59 @@ test('SqliteCacheStore write & read', { skip: runtimeFeatures.has('sqlite') === 
 
   deepStrictEqual(store.get(key), value)
 })
+
+test('SqliteCacheStore ignores expired Vary variants when a later one is still valid', { skip: runtimeFeatures.has('sqlite') === false }, () => {
+  const store = new SqliteCacheStore()
+  const now = Date.now()
+  const baseKey = {
+    origin: 'localhost',
+    path: '/',
+    method: 'GET'
+  }
+
+  store.set({
+    ...baseKey,
+    headers: {
+      'accept-encoding': 'gzip'
+    }
+  }, {
+    statusCode: 200,
+    statusMessage: '',
+    headers: {},
+    vary: {
+      'accept-encoding': 'gzip'
+    },
+    cachedAt: now - 2000,
+    staleAt: now - 1000,
+    deleteAt: now - 1,
+    body: Buffer.from('expired gzip')
+  })
+
+  store.set({
+    ...baseKey,
+    headers: {
+      'accept-encoding': 'br'
+    }
+  }, {
+    statusCode: 200,
+    statusMessage: '',
+    headers: {},
+    vary: {
+      'accept-encoding': 'br'
+    },
+    cachedAt: now,
+    staleAt: now + 1000,
+    deleteAt: now + 2000,
+    body: Buffer.from('valid br')
+  })
+
+  const result = store.get({
+    ...baseKey,
+    headers: {
+      'accept-encoding': 'br'
+    }
+  })
+
+  notEqual(result, undefined)
+  strictEqual(result.body.toString(), 'valid br')
+})
