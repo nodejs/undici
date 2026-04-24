@@ -6,7 +6,7 @@ const { readFileSync } = require('node:fs')
 const { join } = require('node:path')
 const https = require('node:https')
 const crypto = require('node:crypto')
-const { Client, Pool } = require('..')
+const { Client, Pool, buildConnector } = require('..')
 const { kSocket } = require('../lib/core/symbols')
 
 const options = {
@@ -176,6 +176,76 @@ describe('A pool should be able to reuse TLS sessions between clients', () => {
       t.ok(true, 'pass')
     })
 
+    await t.completed
+  })
+})
+
+describe('A connector should enforce maxCachedSessions across hostnames', () => {
+  test('Prepare request', async t => {
+    t = tspl(t, { plan: 4 })
+
+    const tlsOptions = {
+      ...options,
+      minVersion: 'TLSv1.2',
+      maxVersion: 'TLSv1.2'
+    }
+
+    const serverA = https.createServer(tlsOptions, (req, res) => {
+      res.end('a')
+    })
+    const serverB = https.createServer(tlsOptions, (req, res) => {
+      res.end('b')
+    })
+
+    await Promise.all([
+      new Promise((resolve) => serverA.listen(0, resolve)),
+      new Promise((resolve) => serverB.listen(0, resolve))
+    ])
+
+    after(() => {
+      serverA.close()
+      serverB.close()
+    })
+
+    const connector = buildConnector({
+      ca,
+      lookup (hostname, options, callback) {
+        if (options?.all) {
+          callback(null, [{ address: '127.0.0.1', family: 4 }])
+        } else {
+          callback(null, '127.0.0.1', 4)
+        }
+      },
+      maxCachedSessions: 1,
+      minVersion: 'TLSv1.2',
+      maxVersion: 'TLSv1.2',
+      rejectUnauthorized: false
+    })
+
+    async function connectOnce ({ hostname, port }) {
+      const { promise, resolve, reject } = Promise.withResolvers()
+
+      connector({ hostname, protocol: 'https:', port }, (err, socket) => {
+        if (err) {
+          reject(err)
+          return
+        }
+
+        const reused = socket.isSessionReused()
+
+        socket.on('error', reject)
+        socket.on('end', () => resolve(reused))
+        socket.resume()
+        socket.write(`GET / HTTP/1.1\r\nHost: ${hostname}\r\nConnection: close\r\n\r\n`)
+      })
+
+      return promise
+    }
+
+    t.strictEqual(await connectOnce({ hostname: 'a.test', port: serverA.address().port }), false)
+    t.strictEqual(await connectOnce({ hostname: 'a.test', port: serverA.address().port }), true)
+    t.strictEqual(await connectOnce({ hostname: 'b.test', port: serverB.address().port }), false)
+    t.strictEqual(await connectOnce({ hostname: 'a.test', port: serverA.address().port }), false)
     await t.completed
   })
 })
