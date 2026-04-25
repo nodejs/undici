@@ -62,12 +62,15 @@ added: v4.8.2
     * `origin` {URL} The proxy origin.
     * `opts` {Object} The resolved options for the dispatcher.
     * Returns: {Dispatcher}
-  * `proxyTunnel` {boolean} Forces tunneling through the proxy. When `false`,
-    requests where both the proxy and the endpoint use the insecure `http:`
-    protocol are sent directly to the proxy with the absolute request URI rather
-    than through a `CONNECT` tunnel, matching `curl` behavior. Secure
-    connections always use a tunnel regardless of this option. **Default:**
-    `true`.
+  * `proxyTunnel` {boolean} Forces tunneling through the proxy. By default,
+    Undici automatically detects when proxy tunneling is required. If either the
+    proxy or the target endpoint uses a secure protocol, Undici establishes a
+    tunnel via `CONNECT`. For plain HTTP proxy to plain HTTP endpoint
+    connections, Undici forwards requests directly to the proxy and prefixes the
+    request path with the target origin. Set `proxyTunnel` to `true` to force
+    tunneling for those unsecured HTTP-to-HTTP connections as well. Currently,
+    there is no way to facilitate HTTP/1.1 IP tunneling as described in
+    [RFC 9484](https://www.rfc-editor.org/rfc/rfc9484.html#name-http-11-request).
 
 Throws an {InvalidArgumentError} when no proxy URI is provided, when
 `clientFactory` is not a function, or when both `auth` and `token` are supplied.
