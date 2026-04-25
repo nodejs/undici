@@ -4,6 +4,8 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, describe, after, beforeEach } = require('node:test')
 const { EnvHttpProxyAgent, ProxyAgent, Agent, fetch, MockAgent } = require('..')
 const { kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent, kClosed, kDestroyed, kProxy } = require('../lib/core/symbols')
+const { createServer } = require('node:http')
+const { createProxy } = require('proxy')
 
 const env = { ...process.env }
 
@@ -158,6 +160,54 @@ test('destroys all agents', async (t) => {
   t.ok(dispatcher[kHttpsProxyAgent][kDestroyed])
 })
 
+test('defaults to non-tunneled HTTP proxying for HTTP endpoints - #5093', async (t) => {
+  t = tspl(t, { plan: 3 })
+
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  process.env.http_proxy = `http://localhost:${proxy.address().port}`
+
+  const dispatcher = new EnvHttpProxyAgent()
+  const serverUrl = `http://localhost:${server.address().port}`
+
+  try {
+    proxy.on('connect', () => {
+      t.fail('should not tunnel plain HTTP over an HTTP proxy by default')
+    })
+
+    proxy.on('request', (req) => {
+      t.strictEqual(req.url, `${serverUrl}/`)
+    })
+
+    server.on('request', (req, res) => {
+      t.strictEqual(req.url, '/')
+      res.end('ok')
+    })
+
+    const response = await fetch(serverUrl, { dispatcher })
+    t.strictEqual(await response.text(), 'ok')
+  } finally {
+    await new Promise((resolve) => proxy.close(resolve))
+    await new Promise((resolve) => server.close(resolve))
+    await dispatcher.close()
+  }
+})
+
+function buildServer () {
+  return new Promise((resolve) => {
+    const server = createServer({ joinDuplicateHeaders: true })
+    server.listen(0, () => resolve(server))
+  })
+}
+
+function buildProxy () {
+  return new Promise((resolve) => {
+    const server = createProxy(createServer({ joinDuplicateHeaders: true }))
+    server.listen(0, () => resolve(server))
+  })
+}
+
 const createEnvHttpProxyAgentWithMocks = (plan = 1, opts = {}) => {
   const factory = (origin) => {
     const mockAgent = new MockAgent()
@@ -171,7 +221,7 @@ const createEnvHttpProxyAgentWithMocks = (plan = 1, opts = {}) => {
   }
   process.env.http_proxy = 'http://localhost:8080'
   process.env.https_proxy = 'http://localhost:8443'
-  const dispatcher = new EnvHttpProxyAgent({ ...opts, factory })
+  const dispatcher = new EnvHttpProxyAgent({ proxyTunnel: true, ...opts, factory })
   const agentSymbols = [kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent]
   agentSymbols.forEach((agentSymbol) => {
     const originalDispatch = dispatcher[agentSymbol].dispatch
