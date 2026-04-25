@@ -129,3 +129,69 @@ test('split header value', async (t) => {
 
   await t.completed
 })
+
+test('refreshes wasm input view after reallocating parser buffer', async (t) => {
+  t = tspl(t, { plan: 4 })
+
+  const smallBody = Buffer.from('ok')
+  const largeBody = Buffer.alloc(8192, 'a')
+  const responses = [
+    Buffer.concat([
+      Buffer.from(`HTTP/1.1 200 OK\r\nContent-Length: ${smallBody.length}\r\n\r\n`),
+      smallBody
+    ]),
+    Buffer.concat([
+      Buffer.from(`HTTP/1.1 200 OK\r\nContent-Length: ${largeBody.length}\r\n\r\n`),
+      largeBody
+    ])
+  ]
+
+  const server = net.createServer(socket => {
+    let responsesSent = 0
+
+    socket.on('data', () => {
+      socket.write(responses[responsesSent++])
+    })
+  })
+  after(() => server.close())
+
+  await new Promise(resolve => server.listen(0, resolve))
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
+
+  function request () {
+    return new Promise((resolve, reject) => {
+      client.request({
+        method: 'GET',
+        path: '/'
+      }, (err, { statusCode, body } = {}) => {
+        if (err) {
+          reject(err)
+          return
+        }
+
+        const bufs = []
+
+        body.on('data', buf => {
+          bufs.push(buf)
+        })
+        body.on('end', () => {
+          resolve({
+            statusCode,
+            body: Buffer.concat(bufs)
+          })
+        })
+        body.on('error', reject)
+      })
+    })
+  }
+
+  const smallResponse = await request()
+  t.strictEqual(smallResponse.statusCode, 200)
+  t.strictEqual(smallResponse.body.toString(), smallBody.toString())
+
+  const largeResponse = await request()
+  t.strictEqual(largeResponse.statusCode, 200)
+  t.strictEqual(largeResponse.body.toString(), largeBody.toString())
+})
