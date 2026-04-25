@@ -287,3 +287,51 @@ test('SqliteCacheStore ignores expired Vary variants when a later one is still v
   notEqual(result, undefined)
   strictEqual(result.body.toString(), 'valid br')
 })
+
+test('SqliteCacheStore updates vary when overwriting an existing row', { skip: runtimeFeatures.has('sqlite') === false }, () => {
+  const store = new SqliteCacheStore()
+  const now = Date.now()
+  const baseKey = {
+    origin: 'localhost',
+    path: '/',
+    method: 'GET'
+  }
+
+  store.set({
+    ...baseKey,
+    headers: {}
+  }, {
+    statusCode: 200,
+    statusMessage: '',
+    headers: {},
+    cachedAt: now,
+    staleAt: now + 1000,
+    deleteAt: now + 2000,
+    body: Buffer.from('initial')
+  })
+
+  store.set({
+    ...baseKey,
+    headers: {
+      'accept-language': 'en'
+    }
+  }, {
+    statusCode: 200,
+    statusMessage: '',
+    headers: {},
+    vary: {
+      'accept-language': 'en'
+    },
+    cachedAt: now,
+    staleAt: now + 1000,
+    deleteAt: now + 2000,
+    body: Buffer.from('updated')
+  })
+
+  strictEqual(store.get({
+    ...baseKey,
+    headers: {
+      'accept-language': 'fr'
+    }
+  }), undefined)
+})
