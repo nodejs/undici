@@ -168,6 +168,8 @@ test('#5089 - Handle GOAWAY Gracefully', async (t) => {
   })
 
   server.on('stream', (stream) => {
+    stream.on('error', () => {})
+
     const count = sessionCounts.get(stream.session) + 1
     sessionCounts.set(stream.session, count)
 

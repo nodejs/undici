@@ -23,64 +23,64 @@ const {
   kPingInterval
 } = require('../lib/core/symbols')
 
+class FakeSocket extends EventEmitter {
+  constructor () {
+    super()
+    this.destroyed = false
+  }
+
+  destroy () {
+    this.destroyed = true
+    return this
+  }
+
+  ref () {}
+  unref () {}
+}
+
+class FakeStream extends EventEmitter {
+  setTimeout () {}
+  pause () {}
+  resume () {}
+  close () {}
+  write () { return true }
+  end () {}
+  cork () {}
+  uncork () {}
+}
+
+class FakeSession extends EventEmitter {
+  constructor (stream) {
+    super()
+    this.stream = stream
+    this.closed = false
+    this.destroyed = false
+  }
+
+  request () {
+    return this.stream
+  }
+
+  close () {
+    this.closed = true
+  }
+
+  destroy () {
+    this.destroyed = true
+  }
+
+  ref () {}
+  unref () {}
+  ping (_, cb) {
+    cb(null, 0)
+  }
+}
+
 test('Should ignore late http2 data after request completion', async (t) => {
   t = tspl(t, { plan: 6 })
 
   const http2 = require('node:http2')
   const originalConnect = http2.connect
-
-  class FakeSocket extends EventEmitter {
-    constructor () {
-      super()
-      this.destroyed = false
-    }
-
-    destroy () {
-      this.destroyed = true
-      return this
-    }
-
-    ref () {}
-    unref () {}
-  }
-
-  class FakeStream extends EventEmitter {
-    setTimeout () {}
-    pause () {}
-    resume () {}
-    close () {}
-    write () { return true }
-    end () {}
-    cork () {}
-    uncork () {}
-  }
-
-  class FakeSession extends EventEmitter {
-    constructor (stream) {
-      super()
-      this.stream = stream
-      this.closed = false
-      this.destroyed = false
-    }
-
-    request () {
-      return this.stream
-    }
-
-    close () {
-      this.closed = true
-    }
-
-    destroy () {
-      this.destroyed = true
-    }
-
-    ref () {}
-    unref () {}
-    ping (_, cb) {
-      cb(null, 0)
-    }
-  }
 
   const stream = new FakeStream()
   const session = new FakeSession(stream)
@@ -166,59 +166,6 @@ test('Should remove request-owned http2 stream listeners after completion', asyn
 
   const http2 = require('node:http2')
   const originalConnect = http2.connect
-
-  class FakeSocket extends EventEmitter {
-    constructor () {
-      super()
-      this.destroyed = false
-    }
-
-    destroy () {
-      this.destroyed = true
-      return this
-    }
-
-    ref () {}
-    unref () {}
-  }
-
-  class FakeStream extends EventEmitter {
-    setTimeout () {}
-    pause () {}
-    resume () {}
-    close () {}
-    write () { return true }
-    end () {}
-    cork () {}
-    uncork () {}
-  }
-
-  class FakeSession extends EventEmitter {
-    constructor (stream) {
-      super()
-      this.stream = stream
-      this.closed = false
-      this.destroyed = false
-    }
-
-    request () {
-      return this.stream
-    }
-
-    close () {
-      this.closed = true
-    }
-
-    destroy () {
-      this.destroyed = true
-    }
-
-    ref () {}
-    unref () {}
-    ping (_, cb) {
-      cb(null, 0)
-    }
-  }
 
   const stream = new FakeStream()
   const session = new FakeSession(stream)
