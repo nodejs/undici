@@ -901,7 +901,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl })
   const parsedOrigin = new URL(serverUrl)
   setGlobalDispatcher(proxyAgent)
 
@@ -985,7 +985,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
-  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl })
   setGlobalDispatcher(proxyAgent)
 
   after(() => setGlobalDispatcher(defaultDispatcher))
@@ -1095,7 +1095,7 @@ test('should throw when proxy does not return 200', async (t) => {
     return false
   }
 
-  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl })
   try {
     await request(serverUrl, { dispatcher: proxyAgent })
     t.fail()
