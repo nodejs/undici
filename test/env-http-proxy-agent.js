@@ -171,7 +171,11 @@ const createEnvHttpProxyAgentWithMocks = (plan = 1, opts = {}) => {
   }
   process.env.http_proxy = 'http://localhost:8080'
   process.env.https_proxy = 'http://localhost:8443'
-  const dispatcher = new EnvHttpProxyAgent({ ...opts, factory })
+  // Force proxyTunnel: true so that all requests go through the mock pool.
+  // With auto-detect (proxyTunnel: undefined), HTTP requests via HTTP proxy
+  // use Http1ProxyWrapper which creates a real Client to the proxy, bypassing
+  // the MockAgent. These tests are about no_proxy routing logic, not tunneling.
+  const dispatcher = new EnvHttpProxyAgent({ ...opts, factory, proxyTunnel: true })
   const agentSymbols = [kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent]
   agentSymbols.forEach((agentSymbol) => {
     const originalDispatch = dispatcher[agentSymbol].dispatch

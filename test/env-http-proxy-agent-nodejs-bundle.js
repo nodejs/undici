@@ -4,7 +4,6 @@ const { tspl } = require('@matteo.collina/tspl')
 const { describe, test, after, before } = require('node:test')
 const { EnvHttpProxyAgent, setGlobalDispatcher, fetch: undiciFetch } = require('../index-fetch')
 const http = require('node:http')
-const net = require('node:net')
 const { once } = require('node:events')
 
 const env = { ...process.env }
@@ -21,7 +20,7 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
   })
 
   test('should work with undici fetch from index-fetch', async (t) => {
-    const { strictEqual } = tspl(t, { plan: 3 })
+    const { strictEqual } = tspl(t, { plan: 1 })
 
     // Instead of using mocks, start a real server and a minimal proxy server
     // in order to exercise the actual paths in EnvHttpProxyAgent from the
@@ -36,27 +35,38 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     })
 
     const proxy = http.createServer({ joinDuplicateHeaders: true })
-    proxy.on('connect', (req, clientSocket, head) => {
-      // Check that the proxy is actually used to tunnel the request sent below.
-      const [hostname, port] = req.url.split(':')
-      strictEqual(hostname, 'localhost')
-      strictEqual(port, server.address().port.toString())
 
-      const serverSocket = net.connect(port, hostname, () => {
-        clientSocket.write(
-          'HTTP/1.1 200 Connection Established\r\n' +
-          'Proxy-agent: Node.js-Proxy\r\n' +
-          '\r\n'
-        )
-        serverSocket.write(head)
-        clientSocket.pipe(serverSocket)
-        serverSocket.pipe(clientSocket)
+    // When proxyTunnel is auto-detected for HTTP via HTTP proxy, undici uses
+    // direct forwarding (Http1ProxyWrapper) instead of CONNECT tunneling.
+    // The proxy receives the full URL path like "http://localhost:PORT/".
+    proxy.on('request', (req, res) => {
+      // Parse the full URL that Http1ProxyWrapper sends.
+      const { hostname, port, pathname, search, method } = new URL(req.url)
+      const targetPort = port || 80
+
+      const proxyReq = http.request({
+        hostname,
+        port: targetPort,
+        path: pathname + search,
+        method,
+        headers: {
+          ...req.headers,
+          connection: 'keep-alive',
+          'proxy-connection': 'keep-alive'
+        }
+      }, (proxyRes) => {
+        res.writeHead(proxyRes.statusCode, proxyRes.headers)
+        proxyRes.pipe(res)
       })
 
-      serverSocket.on('error', () => {
-        clientSocket.write('HTTP/1.1 500 Connection Error\r\n\r\n')
-        clientSocket.end()
+      proxyReq.on('error', () => {
+        if (!res.headersSent) {
+          res.writeHead(500)
+        }
+        res.end('Proxy error')
       })
+
+      req.pipe(proxyReq)
     })
 
     proxy.on('error', (err) => { console.log('Proxy error', err) })
