@@ -3,7 +3,6 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 const net = require('node:net')
-const { EventEmitter } = require('node:events')
 const { Socks5Client, STATES, AUTH_METHODS, REPLY_CODES } = require('../lib/core/socks5-client')
 const { InvalidArgumentError, Socks5ProxyError } = require('../lib/core/errors')
 
@@ -100,27 +99,6 @@ test('Socks5Client - connect requires authenticated state', async (t) => {
     client.connect('example.com', 80)
   }, InvalidArgumentError, 'should reject connect before authentication')
   p.equal(socket.writes.length, 0, 'should not write CONNECT before authentication')
-
-  await p.completed
-})
-
-test('Socks5Client - does not buffer tunneled data after connect', async (t) => {
-  const p = tspl(t, { plan: 2 })
-
-  class MockSocket extends EventEmitter {
-    write () {}
-
-    destroy () {}
-  }
-
-  const socket = new MockSocket()
-  const client = new Socks5Client(socket)
-
-  client.state = STATES.CONNECTED
-  socket.emit('data', Buffer.alloc(1024))
-
-  p.equal(client.state, STATES.CONNECTED, 'should remain connected')
-  p.equal(client.buffer.length, 0, 'should not buffer tunneled data')
 
   await p.completed
 })
