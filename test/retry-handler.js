@@ -525,10 +525,9 @@ test('Should handle 206 partial content', async t => {
     if (x === 0) {
       t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
-      res.write('abc')
-      setTimeout(() => {
+      res.write('abc', () => {
         res.destroy()
-      }, 1e2)
+      })
     } else if (x === 1) {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
       res.setHeader('content-range', 'bytes 3-6/6')
@@ -1066,10 +1065,9 @@ test('Issue#2986 - Handle custom 206', async t => {
     if (x === 0) {
       t.deepStrictEqual(req.headers.range, 'bytes=0-3')
       res.setHeader('etag', 'asd')
-      res.write('abc')
-      setTimeout(() => {
+      res.write('abc', () => {
         res.destroy()
-      }, 1e2)
+      })
     } else if (x === 1) {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
       res.setHeader('content-range', 'bytes 3-6/6')
@@ -1163,10 +1161,9 @@ test('Should resume 206 response with unknown complete length Content-Range', as
     if (x === 0) {
       t.deepStrictEqual(req.headers.range, 'bytes=0-3')
       res.setHeader('etag', 'asd')
-      res.write('abc')
-      setTimeout(() => {
+      res.write('abc', () => {
         res.destroy()
-      }, 1e2)
+      })
     } else if (x === 1) {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
       res.setHeader('content-range', 'bytes 3-5/*')
