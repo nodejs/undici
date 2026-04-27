@@ -30,9 +30,13 @@ class DummySocket extends EventEmitter {
 }
 
 test('parser reuses WeakRef when replacing timeout callbacks', async (t) => {
+  const OriginalWeakRef = global.WeakRef
+  t.after(() => {
+    global.WeakRef = OriginalWeakRef
+  })
+
   t = tspl(t, { plan: 1 })
 
-  const OriginalWeakRef = global.WeakRef
   let weakRefCount = 0
 
   global.WeakRef = class CountingWeakRef extends OriginalWeakRef {
@@ -42,27 +46,23 @@ test('parser reuses WeakRef when replacing timeout callbacks', async (t) => {
     }
   }
 
-  try {
-    const socket = new DummySocket()
-    const client = {
-      [kMaxHeadersSize]: 1024,
-      [kMaxResponseSize]: 1024,
-      [kQueue]: [],
-      [kRunningIdx]: 0
-    }
-
-    await connectH1(client, socket)
-    const parser = socket[kParser]
-
-    parser.setTimeout(200, 0)
-    parser.setTimeout(300, 0)
-    parser.setTimeout(400, 1)
-    parser.destroy()
-
-    t.strictEqual(weakRefCount, 1)
-  } finally {
-    global.WeakRef = OriginalWeakRef
+  const socket = new DummySocket()
+  const client = {
+    [kMaxHeadersSize]: 1024,
+    [kMaxResponseSize]: 1024,
+    [kQueue]: [],
+    [kRunningIdx]: 0
   }
+
+  await connectH1(client, socket)
+  const parser = socket[kParser]
+
+  parser.setTimeout(200, 0)
+  parser.setTimeout(300, 0)
+  parser.setTimeout(400, 1)
+  parser.destroy()
+
+  t.strictEqual(weakRefCount, 1)
 })
 
 test('refresh timeout on pause', async (t) => {
