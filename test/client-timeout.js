@@ -3,10 +3,67 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
+const EventEmitter = require('node:events')
 const { createServer } = require('node:http')
 const { Readable } = require('node:stream')
 const FakeTimers = require('@sinonjs/fake-timers')
 const timers = require('../lib/util/timers')
+const connectH1 = require('../lib/dispatcher/client-h1')
+const {
+  kMaxHeadersSize,
+  kMaxResponseSize,
+  kParser,
+  kQueue,
+  kRunningIdx
+} = require('../lib/core/symbols')
+
+class DummySocket extends EventEmitter {
+  constructor () {
+    super()
+    this.destroyed = false
+    this.errored = null
+  }
+
+  read () {
+    return null
+  }
+}
+
+test('parser reuses WeakRef when replacing timeout callbacks', async (t) => {
+  const OriginalWeakRef = global.WeakRef
+  t.after(() => {
+    global.WeakRef = OriginalWeakRef
+  })
+
+  t = tspl(t, { plan: 1 })
+
+  let weakRefCount = 0
+
+  global.WeakRef = class CountingWeakRef extends OriginalWeakRef {
+    constructor (target) {
+      weakRefCount++
+      super(target)
+    }
+  }
+
+  const socket = new DummySocket()
+  const client = {
+    [kMaxHeadersSize]: 1024,
+    [kMaxResponseSize]: 1024,
+    [kQueue]: [],
+    [kRunningIdx]: 0
+  }
+
+  await connectH1(client, socket)
+  const parser = socket[kParser]
+
+  parser.setTimeout(200, 0)
+  parser.setTimeout(300, 0)
+  parser.setTimeout(400, 1)
+  parser.destroy()
+
+  t.strictEqual(weakRefCount, 1)
+})
 
 test('refresh timeout on pause', async (t) => {
   t = tspl(t, { plan: 1 })
