@@ -175,7 +175,7 @@ test('Socks5Client - username/password authentication', async (t) => {
 })
 
 test('Socks5Client - connect command', async (t) => {
-  const p = tspl(t, { plan: 8 })
+  const p = tspl(t, { plan: 10 })
 
   const targetHost = 'example.com'
   const targetPort = 80
@@ -237,6 +237,8 @@ test('Socks5Client - connect command', async (t) => {
   client.on('connected', (info) => {
     p.equal(info.address, '127.0.0.1', 'should return bound address')
     p.equal(info.port, 80, 'should return bound port')
+    p.equal(client.buffer.length, 0, 'should clear SOCKS5 protocol buffer after connect')
+    p.equal(socket.listenerCount('data'), 0, 'should stop parsing socket data after connect')
   })
 
   await client.handshake()

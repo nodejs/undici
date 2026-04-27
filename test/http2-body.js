@@ -71,7 +71,7 @@ test('Should handle h2 request without body', async t => {
 })
 
 test('Should handle h2 request with body (string or buffer) - dispatch', async t => {
-  t = tspl(t, { plan: 9 })
+  t = tspl(t, { plan: 7 })
 
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
@@ -121,13 +121,8 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
       onResponseStart (controller, statusCode) {
         const rawHeaders = controller.rawHeaders
         t.strictEqual(statusCode, 200)
-        t.strictEqual(rawHeaders[0].toString('utf-8'), 'content-type')
-        t.strictEqual(
-          rawHeaders[1].toString('utf-8'),
-          'text/plain; charset=utf-8'
-        )
-        t.strictEqual(rawHeaders[2].toString('utf-8'), 'x-custom-h2')
-        t.strictEqual(rawHeaders[3].toString('utf-8'), 'foo')
+        t.strictEqual(rawHeaders['content-type'], 'text/plain; charset=utf-8')
+        t.strictEqual(rawHeaders['x-custom-h2'], 'foo')
       },
       onResponseData (_controller, chunk) {
         response.push(chunk)
@@ -144,6 +139,56 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
       }
     }
   )
+
+  await t.completed
+})
+
+test('Should handle h2 request raw response headers', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', (stream, headers) => {
+    stream.respond({
+      'content-type': 'text/plain; charset=utf-8',
+      'x-custom-h2': headers['x-my-header'],
+      ':status': 200
+    })
+
+    stream.end('hello h2!')
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+  after(() => client.close())
+
+  const { statusCode, headers, body } = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: {
+      'x-my-header': 'foo'
+    },
+    responseHeaders: 'raw'
+  })
+
+  await body.dump()
+
+  const rawHeaders = Object.create(null)
+  for (let i = 0; i < headers.length; i += 2) {
+    rawHeaders[headers[i]] = headers[i + 1]
+  }
+
+  t.strictEqual(statusCode, 200)
+  t.strictEqual(Array.isArray(headers), true)
+  t.strictEqual(rawHeaders['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(rawHeaders['x-custom-h2'], 'foo')
 
   await t.completed
 })
