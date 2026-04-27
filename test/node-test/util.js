@@ -159,8 +159,11 @@ test('parseHeaders decodes array header values as latin1', () => {
 })
 
 test('parseRawHeaders', () => {
+  assert.deepEqual(util.parseRawHeaders(), [])
+  assert.deepEqual(util.parseRawHeaders(null), [])
   assert.deepEqual(util.parseRawHeaders(['key', 'value', Buffer.from('key'), Buffer.from('value')]), ['key', 'value', 'key', 'value'])
   assert.deepEqual(util.parseRawHeaders(['content-length', 'value', 'content-disposition', 'form-data; name="fieldName"']), ['content-length', 'value', 'content-disposition', 'form-data; name="fieldName"'])
+  assert.deepEqual(util.parseRawHeaders({ key: 'value', 'set-cookie': ['a=1', 'b=2'] }), ['key', 'value', 'set-cookie', 'a=1', 'set-cookie', 'b=2'])
 })
 
 test('parseRawHeaders decodes values as latin1, not utf8', () => {
