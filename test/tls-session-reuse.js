@@ -8,6 +8,7 @@ const https = require('node:https')
 const crypto = require('node:crypto')
 const { Client, Pool, buildConnector } = require('..')
 const { kSocket } = require('../lib/core/symbols')
+const { createDeferredPromise } = require('../lib/util/promise')
 
 const options = {
   key: readFileSync(join(__dirname, 'fixtures', 'key.pem'), 'utf8'),
@@ -223,7 +224,7 @@ describe('A connector should enforce maxCachedSessions across hostnames', () => 
     })
 
     async function connectOnce ({ hostname, port }) {
-      const { promise, resolve, reject } = Promise.withResolvers()
+      const { promise, resolve, reject } = Promise.withResolvers?.() ?? createDeferredPromise()
 
       connector({ hostname, protocol: 'https:', port }, (err, socket) => {
         if (err) {
