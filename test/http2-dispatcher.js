@@ -295,6 +295,73 @@ test('Dispatcher#Upgrade', async t => {
   await new Promise((resolve) => server.close(resolve))
 })
 
+test('Dispatcher#Upgrade resumes queued requests after successful WebSocket upgrade', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let postReachedServer = false
+
+  const server = createSecureServer({
+    ...(await pem.generate({ opts: { keySize: 2048 } })),
+    settings: { enableConnectProtocol: true }
+  })
+
+  server.on('stream', (stream, headers) => {
+    stream.on('error', err => {
+      t.fail(err)
+    })
+
+    if (headers[':method'] === 'CONNECT' && headers[':protocol'] === 'websocket') {
+      stream.respond({ ':status': 200 })
+      return
+    }
+
+    if (headers[':method'] === 'POST') {
+      postReachedServer = true
+      stream.resume()
+      stream.respond({ ':status': 200 })
+      stream.end('ok')
+      return
+    }
+
+    stream.close()
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  let upgradeSocket
+
+  try {
+    const upgrade = client.upgrade({ path: '/', protocol: 'websocket' })
+    const post = client.request({ method: 'POST', path: '/', body: 'hello' })
+
+    const { socket } = await upgrade
+    upgradeSocket = socket
+    t.strictEqual(socket.closed, false)
+
+    const response = await Promise.race([
+      post,
+      sleep(1_000).then(() => null)
+    ])
+
+    t.ok(postReachedServer)
+    t.strictEqual(response?.statusCode, 200)
+  } finally {
+    upgradeSocket?.on('error', () => {})
+    upgradeSocket?.end()
+    await client.close()
+    await new Promise((resolve) => server.close(resolve))
+  }
+
+  await t.completed
+})
+
 test('Dispatcher#Upgrade rejects if stream closes before response headers', async t => {
   t = tspl(t, { plan: 2 })
 
