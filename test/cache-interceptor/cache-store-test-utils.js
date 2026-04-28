@@ -108,6 +108,45 @@ function cacheStoreTests (CacheStore, options) {
       }
     })
 
+    test('caches streamed body at maxEntrySize boundary', options, async () => {
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+       */
+      const key = {
+        origin: 'localhost',
+        path: '/',
+        method: 'GET',
+        headers: {}
+      }
+
+      /**
+       * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+       */
+      const value = {
+        statusCode: 200,
+        statusMessage: '',
+        headers: { foo: 'bar' },
+        cacheControlDirectives: {},
+        cachedAt: Date.now(),
+        staleAt: Date.now() + 10000,
+        deleteAt: Date.now() + 20000
+      }
+
+      const body = [Buffer.from('asd'), Buffer.from('123')]
+      const store = new CacheStore({ maxEntrySize: 6 })
+      const writable = store.createWriteStream(key, value)
+
+      notEqual(writable, undefined)
+
+      const finished = once(writable, 'finish')
+      writeBody(writable, body)
+      await finished
+
+      const result = await store.get(structuredClone(key))
+      notEqual(result, undefined)
+      await compareGetResults(result, value, body)
+    })
+
     test('returns stale response before deleteAt', options, async () => {
       const clock = FakeTimers.install({
         shouldClearNativeTimers: true
