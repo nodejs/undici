@@ -75,9 +75,8 @@ test('SqliteCacheStore works nicely with multiple stores', { skip: runtimeFeatur
 test('SqliteCacheStore maxEntries', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
 
-  const store = new SqliteCacheStore({
-    maxCount: 10
-  })
+  const maxCount = 10
+  const store = new SqliteCacheStore({ maxCount })
 
   for (let i = 0; i < 20; i++) {
     /**
@@ -109,7 +108,43 @@ test('SqliteCacheStore maxEntries', { skip: runtimeFeatures.has('sqlite') === fa
     writeBody(writable, body)
   }
 
-  strictEqual(store.size <= 11, true)
+  strictEqual(store.size <= maxCount, true)
+})
+
+test('SqliteCacheStore enforces maxCount after insert', { skip: runtimeFeatures.has('sqlite') === false }, () => {
+  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+
+  const store = new SqliteCacheStore({ maxCount: 1 })
+
+  store.set(
+    { origin: 'localhost', path: '/a', method: 'GET', headers: {} },
+    {
+      statusCode: 200,
+      statusMessage: '',
+      headers: {},
+      cachedAt: Date.now(),
+      staleAt: Date.now() + 10_000,
+      deleteAt: Date.now() + 20_000,
+      body: Buffer.from('a')
+    }
+  )
+
+  store.set(
+    { origin: 'localhost', path: '/b', method: 'GET', headers: {} },
+    {
+      statusCode: 200,
+      statusMessage: '',
+      headers: {},
+      cachedAt: Date.now() + 1,
+      staleAt: Date.now() + 10_001,
+      deleteAt: Date.now() + 20_001,
+      body: Buffer.from('b')
+    }
+  )
+
+  strictEqual(store.size, 1)
+  strictEqual(store.get({ origin: 'localhost', path: '/a', method: 'GET', headers: {} }), undefined)
+  notEqual(store.get({ origin: 'localhost', path: '/b', method: 'GET', headers: {} }), undefined)
 })
 
 test('SqliteCacheStore two writes', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
