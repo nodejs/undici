@@ -51,7 +51,7 @@ test('Socks5Client - handshake flow', async (t) => {
   p.equal(client.state, STATES.INITIAL, 'should start in INITIAL state')
 
   client.on('authenticated', () => {
-    p.equal(client.state, STATES.HANDSHAKING, 'should be in HANDSHAKING state after auth')
+    p.equal(client.state, STATES.AUTHENTICATED, 'should be in AUTHENTICATED state after auth')
     p.ok(true, 'should emit authenticated event')
   })
 
@@ -59,7 +59,7 @@ test('Socks5Client - handshake flow', async (t) => {
 
   // Wait for the authenticated event
   await new Promise((resolve) => {
-    if (client.state !== STATES.HANDSHAKING) {
+    if (client.state === STATES.AUTHENTICATED) {
       resolve()
     } else {
       client.once('authenticated', resolve)
@@ -68,6 +68,37 @@ test('Socks5Client - handshake flow', async (t) => {
 
   socket.destroy()
   server.close()
+
+  await p.completed
+})
+
+test('Socks5Client - connect requires authenticated state', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  class MockSocket {
+    constructor () {
+      this.destroyed = false
+      this.writes = []
+    }
+
+    on () {}
+
+    write (chunk) {
+      this.writes.push(chunk)
+    }
+
+    destroy () {
+      this.destroyed = true
+    }
+  }
+
+  const socket = new MockSocket()
+  const client = new Socks5Client(socket)
+
+  p.throws(() => {
+    client.connect('example.com', 80)
+  }, InvalidArgumentError, 'should reject connect before authentication')
+  p.equal(socket.writes.length, 0, 'should not write CONNECT before authentication')
 
   await p.completed
 })
@@ -144,7 +175,7 @@ test('Socks5Client - username/password authentication', async (t) => {
 })
 
 test('Socks5Client - connect command', async (t) => {
-  const p = tspl(t, { plan: 8 })
+  const p = tspl(t, { plan: 10 })
 
   const targetHost = 'example.com'
   const targetPort = 80
@@ -206,6 +237,8 @@ test('Socks5Client - connect command', async (t) => {
   client.on('connected', (info) => {
     p.equal(info.address, '127.0.0.1', 'should return bound address')
     p.equal(info.port, 80, 'should return bound port')
+    p.equal(client.buffer.length, 0, 'should clear SOCKS5 protocol buffer after connect')
+    p.equal(socket.listenerCount('data'), 0, 'should stop parsing socket data after connect')
   })
 
   await client.handshake()

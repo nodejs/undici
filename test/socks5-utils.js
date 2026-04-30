@@ -48,7 +48,7 @@ test('parseAddress - Domain', async (t) => {
 })
 
 test('parseIPv6', async (t) => {
-  const p = tspl(t, { plan: 9 })
+  const p = tspl(t, { plan: 10 })
 
   // Test full IPv6
   const buffer1 = parseIPv6('2001:0db8:0000:0042:0000:8a2e:0370:7334')
@@ -73,6 +73,9 @@ test('parseIPv6', async (t) => {
 
   // Test trailing ::
   p.equal(parseIPv6('fe80::').toString('hex'), 'fe800000000000000000000000000000', 'should expand fe80:: correctly')
+
+  // Test IPv4-mapped IPv6
+  p.equal(parseIPv6('::ffff:192.0.2.128').toString('hex'), '00000000000000000000ffffc0000280', 'should encode embedded IPv4 tail correctly')
 
   await p.completed
 })

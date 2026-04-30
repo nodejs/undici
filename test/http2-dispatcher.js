@@ -11,6 +11,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
 const { Client, errors } = require('..')
+const { kQueue, kRunningIdx } = require('../lib/core/symbols')
 
 test('Dispatcher#Stream', async t => {
   t = tspl(t, { plan: 4 })
@@ -539,6 +540,68 @@ test('Should handle h2 request without body', async t => {
   t.strictEqual(Buffer.concat(responseBody).toString('utf-8'), 'hello h2!')
   t.strictEqual(requestChunks.length, 0)
   t.strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
+
+  await t.completed
+})
+
+test('Should clear h2 request stream references before completing a response', async t => {
+  t = tspl(t, { plan: 6 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', (stream) => {
+    stream.respond({ ':status': 200 }, { waitForTrailers: true })
+    stream.on('wantTrailers', () => {
+      stream.sendTrailers({ 'x-trailer': 'done' })
+    })
+    stream.end('hello h2!')
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+  after(() => client.close())
+
+  let requestStreamIdSymbol = null
+  let requestStreamSymbol = null
+  let requestStreamCleanupSymbol = null
+
+  client.dispatch({
+    path: '/',
+    method: 'GET'
+  }, {
+    onRequestStart () {},
+    onResponseStart () {
+      const request = client[kQueue][client[kRunningIdx]]
+      const symbols = Object.getOwnPropertySymbols(request)
+      requestStreamIdSymbol = symbols.find((symbol) => symbol.description === 'request stream id')
+      requestStreamSymbol = symbols.find((symbol) => symbol.description === 'request stream')
+      requestStreamCleanupSymbol = symbols.find((symbol) => symbol.description === 'request stream cleanup')
+
+      t.ok(requestStreamIdSymbol)
+      t.ok(requestStreamSymbol)
+      t.ok(requestStreamCleanupSymbol)
+    },
+    onResponseData () {
+      return true
+    },
+    onResponseEnd () {
+      const request = client[kQueue][client[kRunningIdx]]
+
+      t.strictEqual(request[requestStreamIdSymbol], null)
+      t.strictEqual(request[requestStreamSymbol], null)
+      t.strictEqual(request[requestStreamCleanupSymbol], null)
+    },
+    onResponseError (_controller, err) {
+      t.ifError(err)
+    }
+  })
 
   await t.completed
 })
