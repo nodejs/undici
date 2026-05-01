@@ -25,6 +25,24 @@ test('Should throw if pipelining greather than concurrent streams', async t => {
   await planner.completed
 })
 
+test('Should throw if bad maxConcurrentStreams has been passed', async t => {
+  const planner = tspl(t, { plan: 3 })
+
+  planner.throws(() => new H2CClient('http://localhost/', { maxConcurrentStreams: {} }), {
+    message: 'maxConcurrentStreams must be a positive integer, greater than 0'
+  })
+
+  planner.throws(() => new H2CClient('http://localhost/', { maxConcurrentStreams: 0 }), {
+    message: 'maxConcurrentStreams must be a positive integer, greater than 0'
+  })
+
+  planner.throws(() => new H2CClient('http://localhost/', { maxConcurrentStreams: 1.5 }), {
+    message: 'maxConcurrentStreams must be a positive integer, greater than 0'
+  })
+
+  await planner.completed
+})
+
 test('Should support h2c connection', async t => {
   const planner = tspl(t, { plan: 6 })
   let authority = ''
