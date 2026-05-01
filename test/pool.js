@@ -689,6 +689,64 @@ test('pool replaces stale client when connections limit is reached', async (t) =
   t.strictEqual(statusCode, 200)
 })
 
+test('pool does not report backpressure after removing a stale client when another client is available', async (t) => {
+  t = tspl(t, { plan: 4 })
+
+  let created = 0
+  let acceptedBySecondClient = 0
+
+  class FakeClient extends EventEmitter {
+    constructor () {
+      super()
+      this.id = ++created
+      this.closed = false
+      this.destroyed = false
+    }
+
+    dispatch () {
+      if (this.id === 1) {
+        this.emit('connect', new URL('http://notahost'), [this])
+        return false
+      }
+
+      acceptedBySecondClient++
+      return true
+    }
+
+    close (cb) {
+      this.closed = true
+      if (cb) {
+        cb()
+      }
+    }
+
+    destroy () {
+      this.destroyed = true
+    }
+  }
+
+  const pool = new Pool('http://notahost', {
+    connections: 2,
+    clientTtl: 1,
+    factory: () => new FakeClient()
+  })
+  after(() => pool.destroy())
+
+  const handler = {
+    onResponseError (_controller, err) {
+      throw err
+    }
+  }
+
+  t.strictEqual(pool.dispatch({ path: '/', method: 'GET' }, handler), true)
+  t.strictEqual(created, 2)
+
+  await new Promise(resolve => setTimeout(resolve, 10))
+
+  t.strictEqual(pool.dispatch({ path: '/', method: 'GET' }, handler), true)
+  t.strictEqual(acceptedBySecondClient, 1)
+})
+
 test('pool dispatch', async (t) => {
   t = tspl(t, { plan: 2 })
 
