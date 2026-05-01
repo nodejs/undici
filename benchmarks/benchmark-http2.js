@@ -91,21 +91,23 @@ class SimpleRequest {
     }).on('finish', resolve)
   }
 
-  onConnect (abort) { }
+  onRequestStart (controller, ctx) { }
 
-  onHeaders (statusCode, headers, resume) {
-    this.dst.on('drain', resume)
+  onResponseStart (controller, statusCode, headers, statusMessage) {
+    this.dst.on('drain', () => controller.resume())
   }
 
-  onData (chunk) {
-    return this.dst.write(chunk)
+  onResponseData (controller, chunk) {
+    if (!this.dst.write(chunk)) {
+      controller.pause()
+    }
   }
 
-  onComplete () {
+  onResponseEnd (controller, trailers) {
     this.dst.end()
   }
 
-  onError (err) {
+  onResponseError (controller, err) {
     throw err
   }
 }
