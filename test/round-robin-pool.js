@@ -382,3 +382,48 @@ test('verifies round-robin kGetDispatcher cycling algorithm', async (t) => {
 
   await t.completed
 })
+
+test('does not crash when multiple clients are evicted by TTL in one dispatch', (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  const { EventEmitter } = require('node:events')
+  const { kNeedDrain, kAddClient, kGetDispatcher } = require('../lib/dispatcher/pool-base')
+
+  class FakeClient extends EventEmitter {
+    constructor () {
+      super()
+      this.closed = false
+      this.destroyed = false
+      this[kNeedDrain] = false
+    }
+
+    close (cb) {
+      this.closed = true
+      if (cb) cb()
+    }
+
+    destroy (err, cb) { if (cb) cb() }
+    dispatch () { return true }
+  }
+
+  const pool = new RoundRobinPool('http://localhost', {
+    connections: 10,
+    clientTtl: 1,
+    factory: () => new FakeClient()
+  })
+
+  // Seed two clients with stale TTLs so the round-robin loop tries to evict
+  // both in a single dispatch. Before the fix, the stale `clientsLength`
+  // caused the loop to index past the shrinking array and crash with
+  // "Cannot read properties of undefined (reading 'ttl')".
+  const c1 = new FakeClient()
+  const c2 = new FakeClient()
+  pool[kAddClient](c1)
+  pool[kAddClient](c2)
+  c1.ttl = Date.now() - 1000
+  c2.ttl = Date.now() - 1000
+
+  const dispatcher = pool[kGetDispatcher]()
+  p.ok(dispatcher, 'dispatch returned a client without crashing')
+  p.ok(dispatcher instanceof FakeClient)
+})
