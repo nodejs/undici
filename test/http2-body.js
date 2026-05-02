@@ -70,6 +70,50 @@ test('Should handle h2 request without body', async t => {
   await t.completed
 })
 
+test('Should send content-length: 0 for empty h2 requests with payload-expecting methods', async t => {
+  const assert = tspl(t, { plan: 18 })
+  const methods = ['PUT', 'POST', 'PATCH', 'QUERY', 'PROPFIND', 'PROPPATCH']
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', (stream, headers) => {
+    assert.strictEqual(headers['content-length'], '0')
+    assert.ok(methods.includes(headers[':method']))
+
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.after(async () => {
+    server.close()
+    await client.close()
+  })
+
+  for (const method of methods) {
+    const response = await client.request({
+      path: '/',
+      method,
+      body: ''
+    })
+
+    assert.strictEqual(response.statusCode, 200)
+
+    response.body.resume()
+    await once(response.body, 'end')
+  }
+
+  await assert.completed
+})
+
 test('Should handle h2 request with body (string or buffer) - dispatch', async t => {
   t = tspl(t, { plan: 7 })
 
