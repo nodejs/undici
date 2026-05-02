@@ -84,6 +84,28 @@ test('Socks5ProxyAgent - uses custom connector for proxy connection', async (t) 
   await p.completed
 })
 
+test('Socks5ProxyAgent - dispatch returns boolean backpressure signal', async (t) => {
+  const p = tspl(t, { plan: 1 })
+  const proxyWrapper = new Socks5ProxyAgent('socks5://localhost:9999')
+
+  const ret = proxyWrapper.dispatch({
+    origin: 'http://example.com',
+    path: '/',
+    method: 'GET'
+  }, {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {},
+    onResponseEnd () {},
+    onResponseError () {}
+  })
+
+  p.equal(typeof ret, 'boolean')
+
+  await proxyWrapper.destroy()
+  await p.completed
+})
+
 test('Socks5ProxyAgent - basic HTTP connection', async (t) => {
   const p = tspl(t, { plan: 2 })
 
