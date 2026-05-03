@@ -1,13 +1,12 @@
 'use strict'
 
 const { test, after } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
 const diagnosticsChannel = require('node:diagnostics_channel')
 const { Client } = require('../../..')
 const { createServer } = require('node:http')
 
 test('Diagnostics channel - get', (t) => {
-  const assert = tspl(t, { plan: 36 })
+  t.plan(36)
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.setHeader('trailer', 'foo')
@@ -28,50 +27,50 @@ test('Diagnostics channel - get', (t) => {
   let _req
   diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
     _req = request
-    assert.equal(request.origin, `http://localhost:${server.address().port}`)
-    assert.equal(request.completed, false)
-    assert.equal(request.method, 'GET')
-    assert.equal(request.path, '/')
-    assert.deepStrictEqual(request.headers, ['bar', 'bar'])
+    t.assert.strictEqual(request.origin, `http://localhost:${server.address().port}`)
+    t.assert.strictEqual(request.completed, false)
+    t.assert.strictEqual(request.method, 'GET')
+    t.assert.strictEqual(request.path, '/')
+    t.assert.deepStrictEqual(request.headers, ['bar', 'bar'])
     request.addHeader('hello', 'world')
-    assert.deepStrictEqual(request.headers, ['bar', 'bar', 'hello', 'world'])
+    t.assert.deepStrictEqual(request.headers, ['bar', 'bar', 'hello', 'world'])
   })
 
   let _connector
   diagnosticsChannel.channel('undici:client:beforeConnect').subscribe(({ connectParams, connector }) => {
     _connector = connector
 
-    assert.equal(typeof _connector, 'function')
-    assert.equal(Object.keys(connectParams).length, 7)
+    t.assert.strictEqual(typeof _connector, 'function')
+    t.assert.strictEqual(Object.keys(connectParams).length, 7)
 
     const { host, hostname, protocol, port, servername } = connectParams
 
-    assert.equal(host, `localhost:${server.address().port}`)
-    assert.equal(hostname, 'localhost')
-    assert.equal(port, String(server.address().port))
-    assert.equal(protocol, 'http:')
-    assert.equal(servername, null)
+    t.assert.strictEqual(host, `localhost:${server.address().port}`)
+    t.assert.strictEqual(hostname, 'localhost')
+    t.assert.strictEqual(port, String(server.address().port))
+    t.assert.strictEqual(protocol, 'http:')
+    t.assert.strictEqual(servername, null)
   })
 
   let _socket
   diagnosticsChannel.channel('undici:client:connected').subscribe(({ connectParams, socket, connector }) => {
     _socket = socket
 
-    assert.equal(_connector, connector)
-    assert.equal(Object.keys(connectParams).length, 7)
+    t.assert.strictEqual(_connector, connector)
+    t.assert.strictEqual(Object.keys(connectParams).length, 7)
 
     const { host, hostname, protocol, port, servername } = connectParams
 
-    assert.equal(host, `localhost:${server.address().port}`)
-    assert.equal(hostname, 'localhost')
-    assert.equal(port, String(server.address().port))
-    assert.equal(protocol, 'http:')
-    assert.equal(servername, null)
+    t.assert.strictEqual(host, `localhost:${server.address().port}`)
+    t.assert.strictEqual(hostname, 'localhost')
+    t.assert.strictEqual(port, String(server.address().port))
+    t.assert.strictEqual(protocol, 'http:')
+    t.assert.strictEqual(servername, null)
   })
 
   diagnosticsChannel.channel('undici:client:sendHeaders').subscribe(({ request, headers, socket }) => {
-    assert.equal(_req, request)
-    assert.equal(_socket, socket)
+    t.assert.strictEqual(_req, request)
+    t.assert.strictEqual(_socket, socket)
 
     const expectedHeaders = [
       'GET / HTTP/1.1',
@@ -81,12 +80,12 @@ test('Diagnostics channel - get', (t) => {
       'hello: world'
     ]
 
-    assert.deepStrictEqual(headers, expectedHeaders.join('\r\n') + '\r\n')
+    t.assert.deepStrictEqual(headers, expectedHeaders.join('\r\n') + '\r\n')
   })
 
   diagnosticsChannel.channel('undici:request:headers').subscribe(({ request, response }) => {
-    assert.equal(_req, request)
-    assert.equal(response.statusCode, 200)
+    t.assert.strictEqual(_req, request)
+    t.assert.strictEqual(response.statusCode, 200)
     const expectedHeaders = [
       Buffer.from('Content-Type'),
       Buffer.from('text/plain'),
@@ -101,17 +100,17 @@ test('Diagnostics channel - get', (t) => {
       Buffer.from('Transfer-Encoding'),
       Buffer.from('chunked')
     ]
-    assert.deepStrictEqual(response.headers, expectedHeaders)
-    assert.equal(response.statusText, 'OK')
+    t.assert.deepStrictEqual(response.headers, expectedHeaders)
+    t.assert.strictEqual(response.statusText, 'OK')
   })
 
   let bodySent = false
   diagnosticsChannel.channel('undici:request:bodySent').subscribe(({ request }) => {
-    assert.equal(_req, request)
+    t.assert.strictEqual(_req, request)
     bodySent = true
   })
   diagnosticsChannel.channel('undici:request:bodyChunkSent').subscribe(() => {
-    assert.fail('should not emit undici:request:bodyChunkSent for GET requests')
+    t.assert.fail('should not emit undici:request:bodyChunkSent for GET requests')
   })
 
   let endEmitted = false
@@ -119,21 +118,21 @@ test('Diagnostics channel - get', (t) => {
   return new Promise((resolve) => {
     const respChunks = []
     diagnosticsChannel.channel('undici:request:bodyChunkReceived').subscribe(({ request, chunk }) => {
-      assert.equal(_req, request)
+      t.assert.strictEqual(_req, request)
       respChunks.push(chunk)
     })
 
     diagnosticsChannel.channel('undici:request:trailers').subscribe(({ request, trailers }) => {
-      assert.equal(bodySent, true)
-      assert.equal(request.completed, true)
-      assert.equal(_req, request)
+      t.assert.strictEqual(bodySent, true)
+      t.assert.strictEqual(request.completed, true)
+      t.assert.strictEqual(_req, request)
       // This event is emitted after the last chunk has been added to the body stream,
       // not when it was consumed by the application
-      assert.equal(endEmitted, false)
-      assert.deepStrictEqual(trailers, [Buffer.from('foo'), Buffer.from('oof')])
+      t.assert.strictEqual(endEmitted, false)
+      t.assert.deepStrictEqual(trailers, [Buffer.from('foo'), Buffer.from('oof')])
 
       const respData = Buffer.concat(respChunks)
-      assert.deepStrictEqual(respData, Buffer.from('hello'))
+      t.assert.deepStrictEqual(respData, Buffer.from('hello'))
 
       resolve()
     })
@@ -148,7 +147,7 @@ test('Diagnostics channel - get', (t) => {
         method: 'GET',
         headers: reqHeaders
       }, (err, data) => {
-        assert.ok(!err)
+        t.assert.ok(!err)
         client.close()
 
         data.body.on('end', function () {

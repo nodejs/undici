@@ -1,6 +1,5 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
 const diagnosticsChannel = require('node:diagnostics_channel')
@@ -12,8 +11,8 @@ test('Diagnostics channel - get support H2', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
-    t.strictEqual(headers['x-my-header'], 'foo')
-    t.strictEqual(headers[':method'], 'GET')
+    t.assert.strictEqual(headers['x-my-header'], 'foo')
+    t.assert.strictEqual(headers[':method'], 'GET')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -26,10 +25,10 @@ test('Diagnostics channel - get support H2', async t => {
   await once(server, 'listening')
 
   diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
-    t.strictEqual(request.origin, `https://localhost:${server.address().port}`)
-    t.strictEqual(request.completed, false)
-    t.strictEqual(request.method, 'GET')
-    t.strictEqual(request.path, '/')
+    t.assert.strictEqual(request.origin, `https://localhost:${server.address().port}`)
+    t.assert.strictEqual(request.completed, false)
+    t.assert.strictEqual(request.method, 'GET')
+    t.assert.strictEqual(request.path, '/')
   })
 
   let _socket
@@ -38,7 +37,7 @@ test('Diagnostics channel - get support H2', async t => {
   })
 
   diagnosticsChannel.channel('undici:client:sendHeaders').subscribe(({ headers, socket }) => {
-    t.strictEqual(_socket, socket)
+    t.assert.strictEqual(_socket, socket)
     const expectedHeaders = [
       'x-my-header: foo',
       `:authority: localhost:${server.address().port}`,
@@ -46,7 +45,7 @@ test('Diagnostics channel - get support H2', async t => {
       ':path: /',
       ':scheme: https'
     ]
-    t.strictEqual(headers, expectedHeaders.join('\r\n') + '\r\n')
+    t.assert.strictEqual(headers, expectedHeaders.join('\r\n') + '\r\n')
   })
 
   const client = new Client(`https://localhost:${server.address().port}`, {
@@ -56,7 +55,7 @@ test('Diagnostics channel - get support H2', async t => {
     allowH2: true
   })
 
-  t = tspl(t, { plan: 24 })
+  t.plan(24)
   after(() => server.close())
   after(() => client.close())
 
@@ -74,10 +73,10 @@ test('Diagnostics channel - get support H2', async t => {
   })
 
   await once(response.body, 'end')
-  t.strictEqual(response.statusCode, 200)
-  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.strictEqual(response.headers['x-custom-h2'], 'hello')
-  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.assert.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.assert.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 
   // request again
   body = []
@@ -94,8 +93,8 @@ test('Diagnostics channel - get support H2', async t => {
   })
 
   await once(response.body, 'end')
-  t.strictEqual(response.statusCode, 200)
-  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.strictEqual(response.headers['x-custom-h2'], 'hello')
-  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.assert.strictEqual(response.headers['x-custom-h2'], 'hello')
+  t.assert.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 })
