@@ -29,7 +29,7 @@ jobs:
 
       # Setup node, install deps, and build undici prior to building node with `--shared-builtin-undici/undici-path` and testing
       - name: Setup Node.js lts/*
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 'lts/*'
 
