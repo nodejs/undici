@@ -303,4 +303,15 @@ expectAssignable<Client>(
   expectType<number>(client.stats.pending)
   expectType<number>(client.stats.running)
   expectType<number>(client.stats.size)
+
+  // opaque
+  expectType<Promise<Dispatcher.ConnectData<number>>>(
+    client.connect({ opaque: 123, path: '' })
+  )
+  expectType<Promise<Dispatcher.ConnectData<null>>>(
+    client.connect({ path: '' })
+  )
+  expectType<Promise<Dispatcher.ConnectData<{ foo: string }>>>(
+    client.connect({ opaque: { foo: 'bar' }, path: '' })
+  )
 }

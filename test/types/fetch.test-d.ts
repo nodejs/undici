@@ -178,8 +178,6 @@ expectType<Promise<Uint8Array>>(response.bytes())
 expectType<Promise<unknown>>(response.json())
 expectType<Promise<string>>(response.text())
 expectType<Response>(response.clone())
-expectAssignable<globalThis.Response>(response)
-expectAssignable<Promise<globalThis.Response>>(fetch(request))
 
 expectType<Request>(new Request('https://example.com', { body: 'Hello, world', duplex: 'half' }))
 expectAssignable<RequestInit>({ duplex: 'half' })

@@ -22,15 +22,33 @@ async function assertPath (t, url, expectedPath) {
   })
 }
 
+async function assertCredentialsRejected (t, url) {
+  const dispatcher = createAssertingDispatcher(t, '/test?a=b')
+
+  await t.assert.rejects(fetch(url, { dispatcher }), (err) => {
+    t.assert.strictEqual(err.name, 'TypeError')
+    t.assert.match(err.message, /includes credentials/)
+    return true
+  })
+}
+
 // https://github.com/nodejs/undici/issues/4897
 test('fetch path extraction does not match hostnames inside scheme', async (t) => {
   const hosts = ['h', 't', 'p', 'ht', 'tp', 'tt']
 
   for (const scheme of ['http', 'https']) {
-    for (const host of hosts) {
-      await t.test(`${scheme}://${host}/test?a=b#frag`, async (t) => {
-        await assertPath(t, `${scheme}://${host}/test?a=b#frag`, '/test?a=b')
-      })
+    for (const userinfo of ['', 'user:pass@']) {
+      for (const host of hosts) {
+        await t.test(`${scheme}://${userinfo}${host}/test?a=b#frag`, async (t) => {
+          const url = `${scheme}://${userinfo}${host}/test?a=b#frag`
+
+          if (userinfo) {
+            await assertCredentialsRejected(t, url)
+          } else {
+            await assertPath(t, url, '/test?a=b')
+          }
+        })
+      }
     }
   }
 })
