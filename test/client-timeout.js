@@ -109,11 +109,19 @@ test('refresh timeout on pause', async (t) => {
 test('start headers timeout after request body', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout', 'Date']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
+  Object.assign(timers, {
+    setTimeout,
+    clearTimeout,
+    setFastTimeout: setTimeout,
+    clearFastTimeout: clearTimeout
+  })
   after(() => {
     Object.assign(timers, orgTimers)
   })
@@ -136,14 +144,13 @@ test('start headers timeout after request body', async (t) => {
       method: 'GET'
     }, {
       onRequestStart () {
-        process.nextTick(() => {
-          clock.tick(200)
-        })
         queueMicrotask(() => {
           body.push(null)
-          body.on('end', () => {
-            clock.tick(200)
-          })
+        })
+      },
+      onRequestSent () {
+        queueMicrotask(() => {
+          clock.tick(200)
         })
       },
       onResponseStart () {
@@ -167,11 +174,19 @@ test('start headers timeout after request body', async (t) => {
 test('start headers timeout after async iterator request body', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const clock = FakeTimers.install({ shouldClearNativeTimers: true })
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout', 'Date']
+  })
   after(() => clock.uninstall())
 
   const orgTimers = { ...timers }
-  Object.assign(timers, { setTimeout, clearTimeout })
+  Object.assign(timers, {
+    setTimeout,
+    clearTimeout,
+    setFastTimeout: setTimeout,
+    clearFastTimeout: clearTimeout
+  })
   after(() => {
     Object.assign(timers, orgTimers)
   })
@@ -189,9 +204,6 @@ test('start headers timeout after async iterator request body', async (t) => {
     let res
     const body = (async function * () {
       await new Promise((resolve) => { res = resolve })
-      process.nextTick(() => {
-        clock.tick(200)
-      })
     })()
     client.dispatch({
       path: '/',
@@ -199,11 +211,13 @@ test('start headers timeout after async iterator request body', async (t) => {
       method: 'GET'
     }, {
       onRequestStart () {
-        process.nextTick(() => {
-          clock.tick(200)
-        })
         queueMicrotask(() => {
           res()
+        })
+      },
+      onRequestSent () {
+        queueMicrotask(() => {
+          clock.tick(200)
         })
       },
       onResponseStart () {
