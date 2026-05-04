@@ -3,9 +3,12 @@
 const { describe, test } = require('node:test')
 const assert = require('node:assert/strict')
 const { BalancedPool, Pool, Client, errors } = require('../..')
+const { EventEmitter } = require('node:events')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
 const { tspl } = require('@matteo.collina/tspl')
+const { kUrl } = require('../../lib/core/symbols')
+const { kGetDispatcher } = require('../../lib/dispatcher/pool-base')
 
 test('throws when factory is not a function', (t) => {
   const p = tspl(t, { plan: 2 })
@@ -46,6 +49,56 @@ test('add/remove upstreams', (t) => {
 
   pool.removeUpstream(upstream01)
   p.deepStrictEqual(pool.upstreams, [])
+})
+
+test('does not select dispatcher twice when selected dispatcher backpressures', (t) => {
+  class FakeDispatcher extends EventEmitter {
+    constructor (origin) {
+      super()
+      this[kUrl] = new URL(origin)
+    }
+
+    dispatch () {
+      return false
+    }
+
+    close () {
+      this.closed = true
+      return Promise.resolve()
+    }
+
+    destroy () {
+      this.destroyed = true
+      return Promise.resolve()
+    }
+  }
+
+  class CountingBalancedPool extends BalancedPool {
+    constructor (...args) {
+      super(...args)
+      this.calls = 0
+    }
+
+    [kGetDispatcher] () {
+      this.calls++
+      return super[kGetDispatcher]()
+    }
+  }
+
+  const pool = new CountingBalancedPool([
+    'http://localhost:1',
+    'http://localhost:2'
+  ], {
+    factory: (origin) => new FakeDispatcher(origin)
+  })
+  t.after(() => pool.close())
+
+  const ret = pool.dispatch({}, {
+    onResponseError () {}
+  })
+
+  assert.strictEqual(ret, true)
+  assert.strictEqual(pool.calls, 1)
 })
 
 test('basic get', async (t) => {
