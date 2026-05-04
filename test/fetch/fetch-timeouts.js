@@ -14,7 +14,10 @@ test('Fetch very long request, timeout overridden so no error', (t, done) => {
 
   t.plan(1)
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install({
+    shouldClearNativeTimers: true,
+    toFake: ['setTimeout', 'clearTimeout']
+  })
   t.after(clock.uninstall.bind(clock))
 
   const orgTimers = { ...timers }
