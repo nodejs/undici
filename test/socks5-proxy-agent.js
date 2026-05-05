@@ -50,37 +50,36 @@ test('Socks5ProxyAgent - uses custom connector for proxy connection', async (t) 
 
   const socksServer = new TestSocks5Server()
   const socksAddress = await socksServer.listen()
-  let proxyWrapper
   let connectorCalled = false
 
-  try {
-    proxyWrapper = new Socks5ProxyAgent(`socks5://localhost:${socksAddress.port}`, {
-      connect (opts, callback) {
-        connectorCalled = true
-        const socket = net.connect({
-          host: opts.hostname,
-          port: opts.port
-        })
-        socket.once('connect', () => callback(null, socket))
-        socket.once('error', callback)
-        return socket
-      }
-    })
+  const proxyWrapper = new Socks5ProxyAgent(`socks5://localhost:${socksAddress.port}`, {
+    connect (opts, callback) {
+      connectorCalled = true
+      const socket = net.connect({
+        host: opts.hostname,
+        port: opts.port
+      })
+      socket.once('connect', () => callback(null, socket))
+      socket.once('error', callback)
+      return socket
+    }
+  })
 
-    const response = await request(`http://localhost:${serverPort}/test`, {
-      dispatcher: proxyWrapper
-    })
+  const response = await request(`http://localhost:${serverPort}/test`, {
+    dispatcher: proxyWrapper
+  })
 
-    p.equal(response.statusCode, 200, 'should get 200 status code')
-    p.deepEqual(await response.body.json(), { ok: true }, 'should get correct response body')
-    p.equal(connectorCalled, true, 'should use custom connector for proxy connection')
-  } finally {
+  p.equal(response.statusCode, 200, 'should get 200 status code')
+  p.deepEqual(await response.body.json(), { ok: true }, 'should get correct response body')
+  p.equal(connectorCalled, true, 'should use custom connector for proxy connection')
+
+  t.after(async () => {
     if (proxyWrapper) {
       await proxyWrapper.close()
     }
     await socksServer.close()
     server.close()
-  }
+  })
 
   await p.completed
 })
