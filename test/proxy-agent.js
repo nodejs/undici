@@ -144,6 +144,8 @@ test('ProxyAgent forwards connectTimeout to the proxy connector', async (t) => {
     }
   })
 
+  after(() => proxyAgent.close())
+
   try {
     net.connect = function (options) {
       return new net.Socket(options)
@@ -177,7 +179,6 @@ test('ProxyAgent forwards connectTimeout to the proxy connector', async (t) => {
     if (socket && !socket.destroyed) {
       socket.destroy()
     }
-    await proxyAgent.close()
   }
 })
 

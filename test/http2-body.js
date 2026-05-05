@@ -3,9 +3,10 @@
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { createSecureServer } = require('node:http2')
+const { createSecureServer, constants } = require('node:http2')
 const { createReadStream, readFileSync } = require('node:fs')
 const { once } = require('node:events')
+const { Readable } = require('node:stream')
 
 const pem = require('@metcoder95/https-pem')
 
@@ -68,6 +69,104 @@ test('Should handle h2 request without body', async t => {
   t.strictEqual(Buffer.concat(requestChunks).toString('utf-8'), expectedBody)
 
   await t.completed
+})
+
+test('Should send content-length: 0 for empty h2 requests with payload-expecting methods', async t => {
+  const assert = tspl(t, { plan: 18 })
+  const methods = ['PUT', 'POST', 'PATCH', 'QUERY', 'PROPFIND', 'PROPPATCH']
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', (stream, headers) => {
+    assert.strictEqual(headers['content-length'], '0')
+    assert.ok(methods.includes(headers[':method']))
+
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.after(async () => {
+    server.close()
+    await client.close()
+  })
+
+  for (const method of methods) {
+    const response = await client.request({
+      path: '/',
+      method,
+      body: ''
+    })
+
+    assert.strictEqual(response.statusCode, 200)
+
+    response.body.resume()
+    await once(response.body, 'end')
+  }
+
+  await assert.completed
+})
+
+test('Should end h2 zero-length request bodies with headers', async t => {
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const requests = new Map()
+
+  server.on('stream', (stream, headers, flags) => {
+    requests.set(headers[':path'], { headers, flags })
+    stream.respond({ ':status': 200 })
+    stream.end()
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: { rejectUnauthorized: false }
+  })
+  after(() => client.close())
+
+  const cases = [
+    {
+      path: '/buffer',
+      body: Buffer.alloc(0),
+      headers: { 'content-length': '0' }
+    },
+    {
+      path: '/blob',
+      body: new Blob([])
+    },
+    {
+      path: '/stream',
+      body: Readable.from([]),
+      headers: { 'content-length': '0' }
+    }
+  ]
+
+  for (const { path, body, headers } of cases) {
+    const response = await client.request({
+      path,
+      method: 'POST',
+      headers,
+      body
+    })
+
+    await response.body.text()
+  }
+
+  for (const { path } of cases) {
+    const request = requests.get(path)
+    assert.ok(request, `received ${path}`)
+    assert.strictEqual(request.headers['content-length'], '0')
+    assert.ok(request.flags & constants.NGHTTP2_FLAG_END_STREAM)
+  }
 })
 
 test('Should handle h2 request with body (string or buffer) - dispatch', async t => {

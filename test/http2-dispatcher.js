@@ -239,8 +239,8 @@ test('Dispatcher#Upgrade - Should throw on non-websocket upgrade', async t => {
       allowH2: true
     })
 
-    after(() => server.close())
     after(() => client.close())
+    after(() => server.close())
 
     try {
       await client.upgrade({ path: '/', protocol: 'any' })
@@ -334,6 +334,8 @@ test('Dispatcher#Upgrade resumes queued requests after successful WebSocket upgr
     },
     allowH2: true
   })
+  after(() => client.close())
+  after(() => server.close())
 
   let upgradeSocket
 
@@ -355,8 +357,6 @@ test('Dispatcher#Upgrade resumes queued requests after successful WebSocket upgr
   } finally {
     upgradeSocket?.on('error', () => {})
     upgradeSocket?.end()
-    await client.close()
-    await new Promise((resolve) => server.close(resolve))
   }
 
   await t.completed

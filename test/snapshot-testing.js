@@ -895,6 +895,48 @@ describe('SnapshotAgent - Request Matching', () => {
       'Should return original recorded response with original query params')
   })
 
+  it('normalizeQuery function for partial query matching', async (t) => {
+    const server = createTestServer((req, res) => {
+      res.writeHead(200, { 'content-type': 'application/json' })
+      res.end(JSON.stringify({ url: req.url }))
+    })
+
+    const { origin } = await setupServer(server)
+    const snapshotPath = createSnapshotPath('normalize-query')
+
+    setupCleanup(t, { server, snapshotPath })
+
+    // Strip the volatile '_cb' cache-buster param before matching
+    const normalizeQuery = (params) => {
+      const copy = new URLSearchParams(params)
+      copy.delete('_cb')
+      return copy.toString()
+    }
+
+    const agent = new SnapshotAgent({ mode: 'record', snapshotPath, normalizeQuery })
+    const originalDispatcher = getGlobalDispatcher()
+    setupCleanup(t, { agent, originalDispatcher })
+    setGlobalDispatcher(agent)
+
+    await request(`${origin}/api/data?filter=active&_cb=111`)
+    await agent.saveSnapshots()
+
+    // Playback with a different cache-buster — should still match
+    const playbackAgent = new SnapshotAgent({ mode: 'playback', snapshotPath, normalizeQuery })
+    setupCleanup(t, { agent: playbackAgent })
+    setGlobalDispatcher(playbackAgent)
+
+    const response = await request(`${origin}/api/data?filter=active&_cb=999`)
+    assert.strictEqual(response.statusCode, 200, 'Should match snapshot despite different cache-buster')
+
+    // Different filter value — should NOT match
+    await assert.rejects(
+      () => request(`${origin}/api/data?filter=inactive&_cb=111`),
+      /No snapshot found/,
+      'Should not match snapshot with different filter value'
+    )
+  })
+
   it('body matching control', async (t) => {
     const server = createTestServer((req, res) => {
       let body = ''
@@ -951,6 +993,67 @@ describe('SnapshotAgent - Request Matching', () => {
     const responseBody = await response.body.json()
     assert.strictEqual(responseBody.received, 'original-data',
       'Should return recorded response with original body')
+  })
+
+  it('normalizeBody function for partial body matching', async (t) => {
+    const server = createTestServer((req, res) => {
+      let body = ''
+      req.on('data', chunk => { body += chunk })
+      req.on('end', () => {
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(JSON.stringify({ received: body }))
+      })
+    })
+
+    const { origin } = await setupServer(server)
+    const snapshotPath = createSnapshotPath('body-matching-fn')
+
+    setupCleanup(t, { server, snapshotPath })
+
+    // Normalize body by stripping the timestamp before hashing
+    const normalizeBody = (body) => {
+      if (!body) return ''
+      const parsed = JSON.parse(String(body))
+      delete parsed.timestamp
+      return JSON.stringify(parsed)
+    }
+
+    const agent = new SnapshotAgent({ mode: 'record', snapshotPath, normalizeBody })
+    const originalDispatcher = getGlobalDispatcher()
+    setupCleanup(t, { agent, originalDispatcher })
+    setGlobalDispatcher(agent)
+
+    await request(`${origin}/api/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'create', timestamp: '2024-01-01T00:00:00Z' }),
+      headers: { 'content-type': 'application/json' }
+    })
+
+    await agent.saveSnapshots()
+
+    // Playback with a different timestamp — should still match
+    const playbackAgent = new SnapshotAgent({ mode: 'playback', snapshotPath, normalizeBody })
+    setupCleanup(t, { agent: playbackAgent })
+    setGlobalDispatcher(playbackAgent)
+
+    const response = await request(`${origin}/api/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'create', timestamp: '2025-06-15T12:00:00Z' }),
+      headers: { 'content-type': 'application/json' }
+    })
+
+    assert.strictEqual(response.statusCode, 200, 'Should match snapshot despite different timestamp')
+
+    // Different action — should NOT match
+    await assert.rejects(
+      () => request(`${origin}/api/submit`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'delete', timestamp: '2024-01-01T00:00:00Z' }),
+        headers: { 'content-type': 'application/json' }
+      }),
+      /No snapshot found/,
+      'Should not match snapshot with different action'
+    )
   })
 })
 

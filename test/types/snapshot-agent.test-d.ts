@@ -1,4 +1,5 @@
-import { expectAssignable, expectType } from 'tsd'
+import { Buffer } from 'node:buffer'
+import { expectAssignable, expectNotAssignable, expectType } from 'tsd'
 import { Agent, Dispatcher, MockAgent, SnapshotAgent, setGlobalDispatcher } from '../..'
 import { SnapshotRecorder } from '../../types/snapshot-agent'
 
@@ -27,7 +28,9 @@ expectAssignable<SnapshotAgent>(new SnapshotAgent({
   ignoreHeaders: ['authorization', 'x-api-key'],
   excludeHeaders: ['set-cookie', 'authorization'],
   matchBody: true,
+  normalizeBody: (body: string | Buffer | null | undefined) => String(body ?? ''),
   matchQuery: false,
+  normalizeQuery: (query: URLSearchParams) => query.toString(),
   caseSensitive: false
 }))
 
@@ -42,7 +45,9 @@ expectAssignable<SnapshotAgent>(new SnapshotAgent({
   ignoreHeaders: ['user-agent'],
   excludeHeaders: ['cookie'],
   matchBody: false,
+  normalizeBody: (body: string | Buffer | null | undefined) => String(body ?? ''),
   matchQuery: true,
+  normalizeQuery: (query: URLSearchParams) => query.toString(),
   caseSensitive: true,
   connections: 5, // MockAgent option
   enableCallHistory: true // MockAgent option
@@ -124,7 +129,9 @@ expectAssignable<Dispatcher>(new SnapshotAgent())
     ignoreHeaders: ['user-agent'],
     excludeHeaders: ['authorization', 'cookie'],
     matchBody: true,
+    normalizeBody: (body: string | Buffer | null | undefined) => String(body ?? ''),
     matchQuery: true,
+    normalizeQuery: (query: URLSearchParams) => query.toString(),
     caseSensitive: false
   })
 
@@ -151,7 +158,9 @@ expectAssignable<SnapshotRecorder.Options>({
 })
 expectAssignable<SnapshotRecorder.Options>({
   matchBody: false,
+  normalizeBody: (body: string | Buffer | null | undefined) => String(body ?? ''),
   matchQuery: true,
+  normalizeQuery: (query: URLSearchParams) => query.toString(),
   caseSensitive: true
 })
 
@@ -388,14 +397,18 @@ expectAssignable<SnapshotAgent.Options>({
 // Test boolean configuration options
 expectAssignable<SnapshotAgent.Options>({
   matchBody: true,
+  normalizeBody: (body: string | Buffer | null | undefined) => String(body ?? ''),
   matchQuery: false,
+  normalizeQuery: (query: URLSearchParams) => query.toString(),
   caseSensitive: true,
   autoFlush: false
 })
 
 expectAssignable<SnapshotRecorder.Options>({
   matchBody: false,
+  normalizeBody: (body: string | Buffer | null | undefined) => String(body ?? ''),
   matchQuery: true,
+  normalizeQuery: (query: URLSearchParams) => query.toString(),
   caseSensitive: false,
   autoFlush: true
 })
@@ -422,4 +435,23 @@ expectAssignable<SnapshotAgent.Options>({
   shouldRecord: (requestOpts) => requestOpts.method === 'GET',
   shouldPlayback: (requestOpts) => requestOpts.path !== '/forbidden',
   excludeUrls: ['secret', /admin/]
+})
+
+// Test exact declared types for normalizeBody and normalizeQuery
+expectAssignable<SnapshotRecorder.Options>({
+  normalizeBody: (body: string | Buffer | null | undefined) => String(body ?? ''),
+  normalizeQuery: (query: URLSearchParams) => query.toString()
+})
+
+expectAssignable<SnapshotAgent.Options>({
+  normalizeBody: (body: string | Buffer | null | undefined) => String(body ?? ''),
+  normalizeQuery: (query: URLSearchParams) => query.toString()
+})
+
+// normalizeBody and normalizeQuery must return string
+expectNotAssignable<SnapshotRecorder.Options>({
+  normalizeBody: (body: string | Buffer | null | undefined) => body
+})
+expectNotAssignable<SnapshotRecorder.Options>({
+  normalizeQuery: (query: URLSearchParams) => query
 })
