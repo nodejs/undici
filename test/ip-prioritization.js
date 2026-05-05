@@ -1,6 +1,6 @@
 'use strict'
 
-const { test } = require('node:test')
+const { test, after } = require('node:test')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -14,6 +14,7 @@ test('HTTP/1.1 Request Prioritization', async (t) => {
 
   server.listen(0)
   await once(server, 'listening')
+  after(() => server.close())
 
   const client = new Client(`http://localhost:${server.address().port}`, {
     connect: (opts, cb) => {
@@ -30,21 +31,17 @@ test('HTTP/1.1 Request Prioritization', async (t) => {
       return socket
     }
   })
+  after(() => client.close())
 
-  try {
-    await client.request({
-      path: '/',
-      method: 'GET',
-      typeOfService: 42
-    })
+  await client.request({
+    path: '/',
+    method: 'GET',
+    typeOfService: 42
+  })
 
-    // Check if priority was set
-    if (priority !== 42) {
-      throw new Error(`Expected priority 42, got ${priority}`)
-    }
-  } finally {
-    await client.close()
-    server.close()
+  // Check if priority was set
+  if (priority !== 42) {
+    throw new Error(`Expected priority 42, got ${priority}`)
   }
 })
 

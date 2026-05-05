@@ -828,6 +828,8 @@ test('same-origin redirect preserves plain object headers with polluted Object.p
     res.end('redirected')
   }).listen(0)
 
+  after(() => server.close())
+
   const originalIterator = Object.prototype[Symbol.iterator]
   // eslint-disable-next-line no-extend-native
   Object.prototype[Symbol.iterator] = function * () {}
@@ -851,7 +853,6 @@ test('same-origin redirect preserves plain object headers with polluted Object.p
       // eslint-disable-next-line no-extend-native
       Object.prototype[Symbol.iterator] = originalIterator
     }
-    server.close()
   }
 })
 
