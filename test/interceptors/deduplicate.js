@@ -1193,20 +1193,18 @@ describe('Deduplicate Interceptor', () => {
       path: '/'
     }
 
-    const firstResponsePromise = client.request(request)
+    const res1 = await client.request(request)
 
-    // Wait until the first response starts streaming body data.
-    await sleep(20)
+    // Wait for the first chunk of body data to actually arrive on the client side
+    // so that responseDataStarted is guaranteed to be true.
+    await once(res1.body, 'readable')
 
-    const [res1, res2] = await Promise.all([
-      firstResponsePromise,
-      client.request(request)
-    ])
+    // Now send the second request — deduplication must be skipped because
+    // body streaming has already started on the primary handler.
+    const res2 = await client.request(request)
 
-    const [body1, body2] = await Promise.all([
-      res1.body.text(),
-      res2.body.text()
-    ])
+    const body1 = await res1.body.text()
+    const body2 = await res2.body.text()
 
     strictEqual(requestsToOrigin, 2)
     strictEqual(body1, 'chunk-1chunk-2')
