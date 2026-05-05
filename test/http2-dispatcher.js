@@ -239,8 +239,8 @@ test('Dispatcher#Upgrade - Should throw on non-websocket upgrade', async t => {
       allowH2: true
     })
 
-    after(() => server.close())
     after(() => client.close())
+    after(() => server.close())
 
     try {
       await client.upgrade({ path: '/', protocol: 'any' })
@@ -304,7 +304,6 @@ test('Dispatcher#Upgrade resumes queued requests after successful WebSocket upgr
     ...(await pem.generate({ opts: { keySize: 2048 } })),
     settings: { enableConnectProtocol: true }
   })
-  after(() => server.close())
 
   server.on('stream', (stream, headers) => {
     stream.on('error', err => {
@@ -336,6 +335,7 @@ test('Dispatcher#Upgrade resumes queued requests after successful WebSocket upgr
     allowH2: true
   })
   after(() => client.close())
+  after(() => server.close())
 
   let upgradeSocket
 

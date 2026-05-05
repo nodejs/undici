@@ -14,7 +14,6 @@ test('HTTP/1.1 Request Prioritization', async (t) => {
 
   server.listen(0)
   await once(server, 'listening')
-  after(() => server.close())
 
   const client = new Client(`http://localhost:${server.address().port}`, {
     connect: (opts, cb) => {
@@ -32,6 +31,7 @@ test('HTTP/1.1 Request Prioritization', async (t) => {
     }
   })
   after(() => client.close())
+  after(() => server.close())
 
   await client.request({
     path: '/',

@@ -103,7 +103,6 @@ test('Pool clients are removed on connectionError event', async (t) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.end('ok')
   })
-  after(() => server.close())
 
   await new Promise(resolve => server.listen(0, resolve))
   const port = server.address().port
@@ -112,6 +111,7 @@ test('Pool clients are removed on connectionError event', async (t) => {
     connections: 3 // Small pool to make testing easier
   })
   after(() => pool.close())
+  after(() => server.close())
 
   // Make an initial successful request to create a client
   await pool.request({
