@@ -179,7 +179,7 @@ async function runWithTestUtil (testFunction) {
         .join(', ')
       rejectReady(new Error(`Timed out waiting for WPT server readiness. Missing: ${missing}`))
     }
-  }, 30_000)
+  }, process.platform === 'win32' ? 60_000 : 30_000)
 
   try {
     while (!serverResponding && !proc.killed && proc.exitCode == null) {
