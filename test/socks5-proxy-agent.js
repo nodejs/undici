@@ -1,5 +1,6 @@
 'use strict'
 
+const net = require('node:net')
 const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 const { request } = require('..')
@@ -30,6 +31,55 @@ test('Socks5ProxyAgent - constructor validation', async (t) => {
     // eslint-disable-next-line no-new
     new Socks5ProxyAgent('socks://localhost:1080')
   }, 'should accept socks:// URLs for compatibility')
+
+  await p.completed
+})
+
+test('Socks5ProxyAgent - uses custom connector for proxy connection', async (t) => {
+  const p = tspl(t, { plan: 3 })
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({ ok: true }))
+  })
+
+  await new Promise((resolve) => {
+    server.listen(0, resolve)
+  })
+  const serverPort = server.address().port
+
+  const socksServer = new TestSocks5Server()
+  const socksAddress = await socksServer.listen()
+  let connectorCalled = false
+
+  const proxyWrapper = new Socks5ProxyAgent(`socks5://localhost:${socksAddress.port}`, {
+    connect (opts, callback) {
+      connectorCalled = true
+      const socket = net.connect({
+        host: opts.hostname,
+        port: opts.port
+      })
+      socket.once('connect', () => callback(null, socket))
+      socket.once('error', callback)
+      return socket
+    }
+  })
+
+  const response = await request(`http://localhost:${serverPort}/test`, {
+    dispatcher: proxyWrapper
+  })
+
+  p.equal(response.statusCode, 200, 'should get 200 status code')
+  p.deepEqual(await response.body.json(), { ok: true }, 'should get correct response body')
+  p.equal(connectorCalled, true, 'should use custom connector for proxy connection')
+
+  t.after(async () => {
+    if (proxyWrapper) {
+      await proxyWrapper.close()
+    }
+    await socksServer.close()
+    server.close()
+  })
 
   await p.completed
 })
