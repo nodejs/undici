@@ -1,7 +1,7 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
-const { test, after, describe } = require('node:test')
+const { test, describe } = require('node:test')
 const { Client, Pool, errors } = require('..')
 const net = require('node:net')
 const assert = require('node:assert')
@@ -32,52 +32,51 @@ net.connect = function (options) {
   return new net.Socket(options)
 }
 
-test('connect-timeout', { skip }, async t => {
-  t = tspl(t, { plan: 3 })
+async function assertConnectTimeout (dispatcher, t) {
+  const tt = tspl(t, { plan: 3 })
 
+  await new Promise((resolve, reject) => {
+    // Connection timeouts use FastTimers, which have a deliberately low
+    // resolution, and Windows adds an extra setImmediate before timing out.
+    const timeout = setTimeout(() => {
+      dispatcher.destroy()
+      reject(new Error('connect-timeout callback did not fire'))
+    }, 5e3)
+
+    dispatcher.request({
+      path: '/',
+      method: 'GET'
+    }, (err) => {
+      try {
+        tt.ok(err instanceof errors.ConnectTimeoutError)
+        tt.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
+        tt.strictEqual(err.message, 'Connect Timeout Error (attempted address: localhost:9000, timeout: 1000ms)')
+        clearTimeout(timeout)
+        resolve()
+      } catch (error) {
+        clearTimeout(timeout)
+        reject(error)
+      }
+    })
+  })
+
+  await tt.completed
+}
+
+test('connect-timeout (Client)', { skip }, async t => {
   const client = new Client('http://localhost:9000', {
     connectTimeout: 1e3
   })
-  after(() => client.close())
+  t.after(() => client.close().catch(() => {}))
 
-  const timeout = setTimeout(() => {
-    t.fail()
-  }, 5e3)
-
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err) => {
-    t.ok(err instanceof errors.ConnectTimeoutError)
-    t.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
-    t.strictEqual(err.message, 'Connect Timeout Error (attempted address: localhost:9000, timeout: 1000ms)')
-    clearTimeout(timeout)
-  })
-
-  await t.completed
+  await assertConnectTimeout(client, t)
 })
 
-test('connect-timeout', { skip }, async t => {
-  t = tspl(t, { plan: 3 })
-
+test('connect-timeout (Pool)', { skip }, async t => {
   const client = new Pool('http://localhost:9000', {
     connectTimeout: 1e3
   })
-  after(() => client.close())
+  t.after(() => client.close().catch(() => {}))
 
-  const timeout = setTimeout(() => {
-    t.fail()
-  }, 5e3)
-
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err) => {
-    t.ok(err instanceof errors.ConnectTimeoutError)
-    t.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
-    t.strictEqual(err.message, 'Connect Timeout Error (attempted address: localhost:9000, timeout: 1000ms)')
-    clearTimeout(timeout)
-  })
-
-  await t.completed
+  await assertConnectTimeout(client, t)
 })
