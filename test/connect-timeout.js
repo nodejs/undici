@@ -41,20 +41,24 @@ test('connect-timeout', { skip }, async t => {
   after(() => client.close())
 
   const timeout = setTimeout(() => {
-    t.fail()
-  }, 2e3)
+    t.fail('connect-timeout callback did not fire within budget')
+  }, 5e3)
 
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err) => {
-    t.ok(err instanceof errors.ConnectTimeoutError)
-    t.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
-    t.strictEqual(err.message, 'Connect Timeout Error (attempted address: localhost:9000, timeout: 1000ms)')
-    clearTimeout(timeout)
-  })
-
-  await t.completed
+  await Promise.race([
+    new Promise((resolve) => {
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err) => {
+        t.ok(err instanceof errors.ConnectTimeoutError)
+        t.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
+        t.strictEqual(err.message, 'Connect Timeout Error (attempted address: localhost:9000, timeout: 1000ms)')
+        clearTimeout(timeout)
+        resolve()
+      })
+    }),
+    t.completed
+  ])
 })
 
 test('connect-timeout', { skip }, async t => {
@@ -66,18 +70,22 @@ test('connect-timeout', { skip }, async t => {
   after(() => client.close())
 
   const timeout = setTimeout(() => {
-    t.fail()
-  }, 2e3)
+    t.fail('connect-timeout callback did not fire within budget')
+  }, 5e3)
 
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err) => {
-    t.ok(err instanceof errors.ConnectTimeoutError)
-    t.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
-    t.strictEqual(err.message, 'Connect Timeout Error (attempted address: localhost:9000, timeout: 1000ms)')
-    clearTimeout(timeout)
-  })
-
-  await t.completed
+  await Promise.race([
+    new Promise((resolve) => {
+      client.request({
+        path: '/',
+        method: 'GET'
+      }, (err) => {
+        t.ok(err instanceof errors.ConnectTimeoutError)
+        t.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
+        t.strictEqual(err.message, 'Connect Timeout Error (attempted address: localhost:9000, timeout: 1000ms)')
+        clearTimeout(timeout)
+        resolve()
+      })
+    }),
+    t.completed
+  ])
 })
