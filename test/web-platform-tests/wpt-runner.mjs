@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process'
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { debuglog } from 'node:util'
 import {
   sanitizeUnpairedSurrogates
@@ -17,6 +18,7 @@ const EXPECTATION_PATH = join(import.meta.dirname, 'expectation.json')
 const CA_CERT_PATH = join(import.meta.dirname, 'runner/certs/cacert.pem')
 
 const log = debuglog('UNDICI_WPT')
+const WPT_SERVER_URL = 'http://web-platform.test:8000'
 
 const SERVER_READY_CHECKS = [
   ['http-default', (line) => line.includes('http on port 8000') && line.includes('Starting http server')],
@@ -119,11 +121,10 @@ async function ensureWPTCheckout () {
   }
 }
 
-async function runWithTestUtil (testFunction) {
+async function startWPTServer () {
   const { promise, resolve, reject } = Promise.withResolvers()
   const { promise: readyPromise, resolve: resolveReady, reject: rejectReady } = Promise.withResolvers()
   const readyChecks = new Set()
-  const serverUrl = 'http://web-platform.test:8000/'
   let serverResponding = false
   let readySettled = false
 
@@ -143,7 +144,6 @@ async function runWithTestUtil (testFunction) {
     }
   }
 
-  console.log('Starting WPT server...')
   const proc = spawn('python3', [WPT_SCRIPT_PATH, 'serve', '--config', '../runner/config.json'], {
     cwd: WPT_DIR,
     stdio: ['ignore', 'pipe', 'pipe']
@@ -186,7 +186,7 @@ async function runWithTestUtil (testFunction) {
       await new Promise(resolve => setTimeout(resolve, 100))
 
       try {
-        const req = await fetch(serverUrl) // eslint-disable-line no-restricted-globals
+        const req = await fetch(WPT_SERVER_URL) // eslint-disable-line no-restricted-globals
         await req.body?.cancel()
         if (req.status === 200) {
           serverResponding = true
@@ -198,27 +198,50 @@ async function runWithTestUtil (testFunction) {
     }
 
     await readyPromise
-    console.log(`✅ WPT server started at ${serverUrl}`)
-
-    let results
-
-    try {
-      results = await testFunction()
-    } finally {
-      console.log('Killing WPT server')
-      await terminateProcess(proc, promise)
-    }
-
-    return results
+    return { proc, exitPromise: promise, readinessTimeout }
   } catch (err) {
+    clearTimeout(readinessTimeout)
+
     try {
       await terminateProcess(proc, promise)
     } catch {}
 
     throw err
-  } finally {
-    clearTimeout(readinessTimeout)
   }
+}
+
+async function runWithTestUtil (testFunction) {
+  const maxRetries = 3
+  let lastError
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    console.log(`Starting WPT server (attempt ${attempt}/${maxRetries})...`)
+
+    try {
+      const { proc, exitPromise, readinessTimeout } = await startWPTServer()
+
+      console.log(`✅ WPT server started at ${WPT_SERVER_URL}`)
+
+      try {
+        const results = await testFunction()
+        return results
+      } finally {
+        clearTimeout(readinessTimeout)
+        console.log('Killing WPT server')
+        await terminateProcess(proc, exitPromise)
+      }
+    } catch (err) {
+      lastError = err
+
+      if (attempt < maxRetries) {
+        console.log(`⚠️ WPT server failed to start: ${err.message}`)
+        console.log('Retrying in 2 seconds...')
+        await sleep(2_000)
+      }
+    }
+  }
+
+  throw lastError
 }
 
 function runSingleTest (url, options, expectation, timeout = 10000) {
@@ -380,7 +403,7 @@ function discoverTestsToRun (filter, expectation) {
           if (!key.endsWith('.html') && !key.endsWith('.js')) continue
 
           const testPath = path || `${prefix}/${key}`
-          const url = new URL(testPath, 'http://web-platform.test:8000')
+          const url = new URL(testPath, WPT_SERVER_URL)
 
           if (url.pathname.includes('.worker.') ||
               url.pathname.includes('serviceworker') ||

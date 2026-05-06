@@ -102,13 +102,30 @@ const dispatcher = new Class(httpBaseOptions.url, {
   ...dest
 })
 
-setGlobalDispatcher(new Agent({
+const globalDispatcher = new Agent({
   pipelining,
   connections,
   connect: {
     rejectUnauthorized: false
   }
-}))
+})
+
+setGlobalDispatcher(globalDispatcher)
+
+async function cleanup () {
+  httpNoKeepAliveOptions.agent.destroy()
+  httpKeepAliveOptions.agent.destroy()
+  axiosAgent.destroy()
+  fetchAgent.destroy()
+  gotAgent.destroy()
+  requestAgent.destroy()
+  superagentAgent.destroy()
+
+  await Promise.allSettled([
+    dispatcher.destroy(),
+    globalDispatcher.destroy()
+  ])
+}
 
 class SimpleRequest {
   constructor (resolve) {
@@ -317,8 +334,16 @@ async function main () {
   // https://github.com/ladjs/superagent/issues/1540#issue-561464561
   superagent = _superagent.agent().use((req) => req.agent(superagentAgent))
 
+  // cronometro runs each benchmark in a worker, so attach cleanup to every
+  // test before the worker exits.
+  const tests = Object.fromEntries(
+    Object.entries(experiments).map(([name, test]) => {
+      return [name, { test, after: cleanup }]
+    })
+  )
+
   cronometro(
-    experiments,
+    tests,
     {
       iterations,
       errorThreshold,
@@ -330,7 +355,7 @@ async function main () {
       }
 
       printResults(results)
-      dispatcher.destroy()
+      cleanup()
     }
   )
 }

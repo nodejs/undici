@@ -447,6 +447,11 @@ describe('Should include headers from iterable objects', scope => {
       hello: 'world'
     }
 
+    after(() => {
+      server.closeAllConnections?.()
+      server.close()
+    })
+
     const originalIterator = Object.prototype[Symbol.iterator]
     // eslint-disable-next-line no-extend-native
     Object.prototype[Symbol.iterator] = function * () {}
@@ -472,8 +477,6 @@ describe('Should include headers from iterable objects', scope => {
         // eslint-disable-next-line no-extend-native
         Object.prototype[Symbol.iterator] = originalIterator
       }
-      server.closeAllConnections?.()
-      server.close()
     }
   })
 

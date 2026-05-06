@@ -25,6 +25,24 @@ test('Should throw if pipelining greather than concurrent streams', async t => {
   await planner.completed
 })
 
+test('Should throw if bad maxConcurrentStreams has been passed', async t => {
+  const planner = tspl(t, { plan: 3 })
+
+  planner.throws(() => new H2CClient('http://localhost/', { maxConcurrentStreams: {} }), {
+    message: 'maxConcurrentStreams must be a positive integer, greater than 0'
+  })
+
+  planner.throws(() => new H2CClient('http://localhost/', { maxConcurrentStreams: 0 }), {
+    message: 'maxConcurrentStreams must be a positive integer, greater than 0'
+  })
+
+  planner.throws(() => new H2CClient('http://localhost/', { maxConcurrentStreams: 1.5 }), {
+    message: 'maxConcurrentStreams must be a positive integer, greater than 0'
+  })
+
+  await planner.completed
+})
+
 test('Should support h2c connection', async t => {
   const planner = tspl(t, { plan: 6 })
   let authority = ''
@@ -81,6 +99,56 @@ test('Should support h2c connection with body', async t => {
   planner.equal(response.statusCode, 200)
   planner.equal(await response.body.text(), 'Hello, world!')
   planner.equal(Buffer.concat(bodyChunks).toString(), 'Hello, world!')
+})
+
+test('Should queue h2c requests above the remote max concurrent streams setting', async t => {
+  const planner = tspl(t, { plan: 3 })
+  let activeStreams = 0
+  let maxActiveStreams = 0
+  const paths = []
+
+  const server = createServer({
+    settings: {
+      maxConcurrentStreams: 1
+    }
+  })
+
+  server.on('stream', (stream, headers) => {
+    activeStreams++
+    maxActiveStreams = Math.max(maxActiveStreams, activeStreams)
+    paths.push(headers[':path'])
+
+    stream.respond({ ':status': 200 })
+    setTimeout(() => {
+      activeStreams--
+      stream.end('Hello, world!')
+    }, 50)
+  })
+
+  server.listen()
+  await once(server, 'listening')
+  const client = new H2CClient(`http://localhost:${server.address().port}/`, {
+    maxConcurrentStreams: 10,
+    pipelining: 10
+  })
+
+  t.after(() => client.close())
+  t.after(() => server.close())
+
+  const responses = await Promise.all(Array.from({ length: 5 }, async (_, i) => {
+    const response = await client.request({ path: `/${i}`, method: 'GET' })
+    return {
+      statusCode: response.statusCode,
+      body: await response.body.text()
+    }
+  }))
+
+  planner.strictEqual(maxActiveStreams, 1)
+  planner.deepStrictEqual(paths, ['/0', '/1', '/2', '/3', '/4'])
+  planner.deepStrictEqual(responses, Array.from({ length: 5 }, () => ({
+    statusCode: 200,
+    body: 'Hello, world!'
+  })))
 })
 
 test('Should reject request if not h2c supported', async t => {

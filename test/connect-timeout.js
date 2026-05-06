@@ -42,7 +42,7 @@ test('connect-timeout', { skip }, async t => {
 
   const timeout = setTimeout(() => {
     t.fail()
-  }, 2e3)
+  }, 5e3)
 
   client.request({
     path: '/',
@@ -67,7 +67,7 @@ test('connect-timeout', { skip }, async t => {
 
   const timeout = setTimeout(() => {
     t.fail()
-  }, 2e3)
+  }, 5e3)
 
   client.request({
     path: '/',

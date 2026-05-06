@@ -1,4 +1,4 @@
-import { IncomingHttpHeaders } from 'node:http'
+import { IncomingHttpHeaders, OutgoingHttpHeaders } from 'node:http'
 import { Duplex, Readable, Writable } from 'node:stream'
 import { expectAssignable, expectType } from 'tsd'
 import { Dispatcher, Headers } from '../..'
@@ -14,6 +14,12 @@ expectAssignable<Dispatcher>(new Dispatcher())
     authorization: undefined,
     'content-type': 'application/json'
   } satisfies IncomingHttpHeaders
+
+  const nodeCoreOutgoingHeaders = {
+    'content-length': 42,
+    'content-type': 'application/json',
+    'set-cookie': ['a=1', 'b=2']
+  } satisfies OutgoingHttpHeaders
 
   const headerInstanceHeaders = new Headers({ hello: 'world' })
   const mapHeaders = new Map([['hello', 'world']])
@@ -34,6 +40,8 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: ['hello', 'world'] }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: {} }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: nodeCoreHeaders }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: nodeCoreOutgoingHeaders }, {}))
+  expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: { 'content-length': 42 } }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: null, reset: true }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: undefined, reset: true }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: recordHeadersString, reset: true }, {}))
@@ -63,6 +71,7 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: ['hello', 'world'] }))
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: {} }))
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: nodeCoreHeaders }))
+  expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: nodeCoreOutgoingHeaders }))
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: null }))
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: undefined }))
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '', headers: recordHeadersString }))
@@ -182,6 +191,7 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: ['hello', 'world'] }))
   expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: {} }))
   expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: nodeCoreHeaders }))
+  expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: nodeCoreOutgoingHeaders }))
   expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: null }))
   expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: undefined }))
   expectAssignable<Promise<Dispatcher.UpgradeData>>(dispatcher.upgrade({ path: '', method: 'GET', headers: recordHeadersString }))

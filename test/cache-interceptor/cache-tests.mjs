@@ -154,7 +154,7 @@ for (let i = 0; i < testEnvironments.length; i++) {
       stdout.push(chunk)
     })
 
-    cacheTestsWorkerProcess.stderr.on('error', chunk => {
+    cacheTestsWorkerProcess.stderr.on('data', chunk => {
       stdout.push(chunk)
     })
 
@@ -171,7 +171,9 @@ let exitCode = 0
 
 // Print the results of all the results in the order that they exist
 for (const [code, stdout] of await Promise.all(results)) {
-  exitCode = code
+  if (code !== 0) {
+    exitCode = code
+  }
 
   for (const line of stdout) {
     process.stdout.write(line)

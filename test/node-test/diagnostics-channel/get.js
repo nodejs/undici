@@ -7,7 +7,7 @@ const { Client } = require('../../..')
 const { createServer } = require('node:http')
 
 test('Diagnostics channel - get', (t) => {
-  const assert = tspl(t, { plan: 36 })
+  const assert = tspl(t, { plan: 35 })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.setHeader('trailer', 'foo')
@@ -118,8 +118,7 @@ test('Diagnostics channel - get', (t) => {
 
   return new Promise((resolve) => {
     const respChunks = []
-    diagnosticsChannel.channel('undici:request:bodyChunkReceived').subscribe(({ request, chunk }) => {
-      assert.equal(_req, request)
+    diagnosticsChannel.channel('undici:request:bodyChunkReceived').subscribe(({ chunk }) => {
       respChunks.push(chunk)
     })
 

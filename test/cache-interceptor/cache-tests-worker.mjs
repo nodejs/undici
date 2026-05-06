@@ -2,6 +2,8 @@
 
 import { styleText } from 'node:util'
 import { exit } from 'node:process'
+import net from 'node:net'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { getResults, runTests as runTestSuite } from '../fixtures/cache-tests/test-engine/client/runner.mjs'
 import { determineTestResult, testLookup } from '../fixtures/cache-tests/test-engine/lib/results.mjs'
 import tests from '../fixtures/cache-tests/tests/index.mjs'
@@ -27,6 +29,9 @@ if (environment.cacheStore) {
 
 // Start the test server
 await import('../fixtures/cache-tests/test-engine/server/server.mjs')
+// TODO: Remove when server.mjs waits for the server to listen.
+// https://github.com/http-tests/cache-tests/issues/161
+await waitForServer(process.env.BASE_URL)
 
 // Output the testing setup
 console.log('TEST ENVIRONMENT')
@@ -84,6 +89,57 @@ async function makeCacheStore (type) {
   }
 
   return new Store()
+}
+
+/**
+ * @param {string} baseUrl
+ * @returns {Promise<void>}
+ */
+async function waitForServer (baseUrl) {
+  const { hostname, port, protocol } = new URL(baseUrl)
+  const deadline = Date.now() + 30_000
+
+  while (Date.now() < deadline) {
+    if (await canConnect(hostname, Number(port), protocol)) {
+      return
+    }
+
+    await sleep(250)
+  }
+
+  throw new Error(`cache test server did not start listening at ${baseUrl}`)
+}
+
+/**
+ * @param {string} host
+ * @param {number} port
+ * @param {string} protocol
+ * @returns {Promise<boolean>}
+ */
+function canConnect (host, port, protocol) {
+  const { promise, resolve } = Promise.withResolvers()
+  const socket = net.connect({ host, port })
+
+  socket.once('connect', () => {
+    socket.end()
+    resolve(true)
+  })
+
+  socket.once('error', () => {
+    resolve(false)
+  })
+
+  socket.setTimeout(1_000, () => {
+    socket.destroy()
+    resolve(false)
+  })
+
+  if (protocol !== 'http:' && protocol !== 'https:') {
+    socket.destroy()
+    resolve(false)
+  }
+
+  return promise
 }
 
 /**

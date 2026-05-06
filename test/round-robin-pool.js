@@ -96,6 +96,43 @@ test('basic get', async (t) => {
   await t.completed
 })
 
+test('replaces stale client when connections limit is reached', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer((req, res) => {
+    res.end('ok')
+  })
+  after(() => server.close())
+
+  await new Promise(resolve => server.listen(0, resolve))
+
+  const pool = new RoundRobinPool(`http://localhost:${server.address().port}`, {
+    connections: 1,
+    clientTtl: 1
+  })
+  after(() => pool.destroy())
+
+  async function request () {
+    const { statusCode, body } = await pool.request({
+      path: '/',
+      method: 'GET'
+    })
+    await body.text()
+    return statusCode
+  }
+
+  t.strictEqual(await request(), 200)
+  await new Promise(resolve => setTimeout(resolve, 20))
+
+  const statusCode = await Promise.race([
+    request(),
+    new Promise((_resolve, reject) => {
+      setTimeout(() => reject(new Error('second request hung')), 1000)
+    })
+  ])
+  t.strictEqual(statusCode, 200)
+})
+
 test('connect/disconnect event(s)', async (t) => {
   const clients = 2
 
