@@ -5,7 +5,6 @@ const { resolve: pathResolve } = require('node:path')
 const { test, after, beforeEach } = require('node:test')
 const { createReadStream, writeFileSync, unlinkSync } = require('node:fs')
 const { Client, errors } = require('..')
-const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('node:http')
 const EventEmitter = require('node:events')
 const FakeTimers = require('@sinonjs/fake-timers')
@@ -24,6 +23,12 @@ const {
 beforeEach(() => {
   resetFastTimers()
 })
+
+function tickOnConnect (client, tick) {
+  client.once('connect', () => {
+    process.nextTick(tick)
+  })
+}
 
 test('request timeout', async (t) => {
   t = tspl(t, { plan: 1 })
@@ -89,6 +94,11 @@ test('body timeout', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, { bodyTimeout: 50 })
     after(() => client.destroy())
 
+    tickOnConnect(client, () => {
+      clock.tick(50)
+      fastTimersTick(50)
+    })
+
     client.request({ path: '/', method: 'GET' }, (err, { body }) => {
       t.ifError(err)
       body.on('data', () => {
@@ -98,9 +108,6 @@ test('body timeout', async (t) => {
         t.ok(err instanceof errors.BodyTimeoutError)
       })
     })
-
-    clock.tick(50)
-    fastTimersTick(50)
   })
 
   await t.completed
@@ -128,12 +135,14 @@ test('overridden request timeout', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 500 })
     after(() => client.destroy())
 
+    tickOnConnect(client, () => {
+      clock.tick(50)
+      fastTimersTick(50)
+    })
+
     client.request({ path: '/', method: 'GET', headersTimeout: 50 }, (err, response) => {
       t.ok(err instanceof errors.HeadersTimeoutError)
     })
-
-    clock.tick(50)
-    fastTimersTick(50)
   })
 
   await t.completed
@@ -157,6 +166,11 @@ test('overridden body timeout', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`, { bodyTimeout: 500 })
     after(() => client.destroy())
 
+    tickOnConnect(client, () => {
+      fastTimersTick()
+      fastTimersTick()
+    })
+
     client.request({ path: '/', method: 'GET', bodyTimeout: 50 }, (err, { body }) => {
       t.ifError(err)
       body.on('data', () => {
@@ -166,9 +180,6 @@ test('overridden body timeout', async (t) => {
         t.ok(err instanceof errors.BodyTimeoutError)
       })
     })
-
-    fastTimersTick()
-    fastTimersTick()
   })
 
   await t.completed
@@ -199,12 +210,14 @@ test('With EE signal', async (t) => {
     const ee = new EventEmitter()
     after(() => client.destroy())
 
+    tickOnConnect(client, () => {
+      clock.tick(50)
+      fastTimersTick(50)
+    })
+
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
       t.ok(err instanceof errors.HeadersTimeoutError)
     })
-
-    clock.tick(50)
-    fastTimersTick(50)
   })
 
   await t.completed
@@ -235,12 +248,14 @@ test('With abort-controller signal', async (t) => {
     const abortController = new AbortController()
     after(() => client.destroy())
 
+    tickOnConnect(client, () => {
+      clock.tick(50)
+      fastTimersTick(50)
+    })
+
     client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
       t.ok(err instanceof errors.HeadersTimeoutError)
     })
-
-    clock.tick(50)
-    fastTimersTick(50)
   })
 
   await t.completed
@@ -383,12 +398,14 @@ test('Global option', async (t) => {
     })
     after(() => client.destroy())
 
+    tickOnConnect(client, () => {
+      clock.tick(50)
+      fastTimersTick(50)
+    })
+
     client.request({ path: '/', method: 'GET' }, (err, response) => {
       t.ok(err instanceof errors.HeadersTimeoutError)
     })
-
-    clock.tick(50)
-    fastTimersTick(50)
   })
 
   await t.completed
@@ -418,12 +435,14 @@ test('Request options overrides global option', async (t) => {
     })
     after(() => client.destroy())
 
+    tickOnConnect(client, () => {
+      clock.tick(50)
+      fastTimersTick(50)
+    })
+
     client.request({ path: '/', method: 'GET' }, (err, response) => {
       t.ok(err instanceof errors.HeadersTimeoutError)
     })
-
-    clock.tick(50)
-    fastTimersTick(50)
   })
 
   await t.completed
@@ -473,19 +492,17 @@ test('client.close should wait for the timeout', async (t) => {
     })
     after(() => client.destroy())
 
+    tickOnConnect(client, () => {
+      clock.tick(100)
+      fastTimersTick(100)
+    })
+
     client.request({ path: '/', method: 'GET' }, (err, response) => {
       t.ok(err instanceof errors.HeadersTimeoutError)
     })
 
     client.close((err) => {
       t.ifError(err)
-    })
-
-    client.on('connect', () => {
-      process.nextTick(() => {
-        clock.tick(100)
-        fastTimersTick(100)
-      })
     })
   })
 
@@ -826,20 +843,20 @@ test('client.close should not deadlock', async (t) => {
     })
     after(() => client.destroy())
 
-    client[kConnect](() => {
-      client.request({
-        path: '/',
-        method: 'GET'
-      }, (err, response) => {
-        t.ok(err instanceof errors.HeadersTimeoutError)
-      })
-
-      client.close((err) => {
-        t.ifError(err)
-      })
-
+    tickOnConnect(client, () => {
       clock.tick(100)
       fastTimersTick(100)
+    })
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, response) => {
+      t.ok(err instanceof errors.HeadersTimeoutError)
+    })
+
+    client.close((err) => {
+      t.ifError(err)
     })
   })
   await t.completed
