@@ -6,8 +6,6 @@ const { test } = require('node:test')
 const { Agent, Request, fetch } = require('../..')
 
 test('issue #2828, RequestInit dispatcher options overrides Request input dispatcher', async (t) => {
-  t.plan(2)
-
   class CustomAgentA extends Agent {
     dispatch (options, handler) {
       options.headers['x-my-header-a'] = 'hello'
@@ -23,13 +21,17 @@ test('issue #2828, RequestInit dispatcher options overrides Request input dispat
   }
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    t.assert.strictEqual(req.headers['x-my-header-a'], undefined)
-    t.assert.strictEqual(req.headers['x-my-header-b'], 'world')
     res.end()
   }).listen(0)
 
   t.after(server.close.bind(server))
   await once(server, 'listening')
+
+  const receivedHeaders = new Promise((resolve) => {
+    server.on('request', (req) => {
+      resolve(req.headers)
+    })
+  })
 
   const request = new Request(`http://localhost:${server.address().port}`, {
     dispatcher: new CustomAgentA()
@@ -38,4 +40,8 @@ test('issue #2828, RequestInit dispatcher options overrides Request input dispat
   await fetch(request, {
     dispatcher: new CustomAgentB()
   })
+
+  const headers = await receivedHeaders
+  t.assert.strictEqual(headers['x-my-header-a'], undefined)
+  t.assert.strictEqual(headers['x-my-header-b'], 'world')
 })
