@@ -38,34 +38,40 @@ test('no-slash/one-slash pathname should be included in req.path', async (t) => 
     pathname: `localhost:${pathServer.address().port}`
   })
   t.strictEqual(noSlashPathname.statusCode, 200)
+  await noSlashPathname.body.dump()
   const noSlashPath = await request({
     method: 'GET',
     origin: `http://localhost:${requestedServer.address().port}`,
     path: `localhost:${pathServer.address().port}`
   })
   t.strictEqual(noSlashPath.statusCode, 200)
+  await noSlashPath.body.dump()
   const noSlashPath2Arg = await request(
     `http://localhost:${requestedServer.address().port}`,
     { path: `localhost:${pathServer.address().port}` }
   )
   t.strictEqual(noSlashPath2Arg.statusCode, 200)
+  await noSlashPath2Arg.body.dump()
   const oneSlashPathname = await request({
     method: 'GET',
     origin: `http://localhost:${requestedServer.address().port}`,
     pathname: `/localhost:${pathServer.address().port}`
   })
   t.strictEqual(oneSlashPathname.statusCode, 200)
+  await oneSlashPathname.body.dump()
   const oneSlashPath = await request({
     method: 'GET',
     origin: `http://localhost:${requestedServer.address().port}`,
     path: `/localhost:${pathServer.address().port}`
   })
   t.strictEqual(oneSlashPath.statusCode, 200)
+  await oneSlashPath.body.dump()
   const oneSlashPath2Arg = await request(
     `http://localhost:${requestedServer.address().port}`,
     { path: `/localhost:${pathServer.address().port}` }
   )
   t.strictEqual(oneSlashPath2Arg.statusCode, 200)
+  await oneSlashPath2Arg.body.dump()
   t.end()
 })
 
@@ -102,17 +108,20 @@ test('protocol-relative URL as pathname should be included in req.path', async (
     pathname: `//localhost:${pathServer.address().port}`
   })
   t.strictEqual(noSlashPathname.statusCode, 200)
+  await noSlashPathname.body.dump()
   const noSlashPath = await request({
     method: 'GET',
     origin: `http://localhost:${requestedServer.address().port}`,
     path: `//localhost:${pathServer.address().port}`
   })
   t.strictEqual(noSlashPath.statusCode, 200)
+  await noSlashPath.body.dump()
   const noSlashPath2Arg = await request(
     `http://localhost:${requestedServer.address().port}`,
     { path: `//localhost:${pathServer.address().port}` }
   )
   t.strictEqual(noSlashPath2Arg.statusCode, 200)
+  await noSlashPath2Arg.body.dump()
   t.end()
 })
 
@@ -149,17 +158,20 @@ test('Absolute URL as pathname should be included in req.path', async (t) => {
     pathname: `http://localhost:${pathServer.address().port}`
   })
   t.strictEqual(noSlashPathname.statusCode, 200)
+  await noSlashPathname.body.dump()
   const noSlashPath = await request({
     method: 'GET',
     origin: `http://localhost:${requestedServer.address().port}`,
     path: `http://localhost:${pathServer.address().port}`
   })
   t.strictEqual(noSlashPath.statusCode, 200)
+  await noSlashPath.body.dump()
   const noSlashPath2Arg = await request(
     `http://localhost:${requestedServer.address().port}`,
     { path: `http://localhost:${pathServer.address().port}` }
   )
   t.strictEqual(noSlashPath2Arg.statusCode, 200)
+  await noSlashPath2Arg.body.dump()
   t.end()
 })
 
@@ -256,11 +268,12 @@ describe('DispatchOptions#reset', () => {
       })
     })
 
-    await request({
+    const { body } = await request({
       method: 'GET',
       origin: `http://localhost:${server.address().port}`,
       reset: true
     })
+    await body.dump()
   })
 
   test('Should include "connection:keep-alive" if reset false', async t => {
@@ -286,11 +299,12 @@ describe('DispatchOptions#reset', () => {
       })
     })
 
-    await request({
+    const { body } = await request({
       method: 'GET',
       origin: `http://localhost:${server.address().port}`,
       reset: false
     })
+    await body.dump()
   })
 
   test('Should react to manual set of "connection:close" header', async t => {
@@ -316,13 +330,14 @@ describe('DispatchOptions#reset', () => {
       })
     })
 
-    await request({
+    const { body } = await request({
       method: 'GET',
       origin: `http://localhost:${server.address().port}`,
       headers: {
         connection: 'close'
       }
     })
+    await body.dump()
   })
 })
 
@@ -353,12 +368,13 @@ describe('Should include headers from iterable objects', scope => {
       })
     })
 
-    await request({
+    const { body } = await request({
       method: 'GET',
       origin: `http://localhost:${server.address().port}`,
       reset: true,
       headers
     })
+    await body.dump()
   })
 
   test('Should include headers built with Map', async t => {
@@ -387,12 +403,13 @@ describe('Should include headers from iterable objects', scope => {
       })
     })
 
-    await request({
+    const { body } = await request({
       method: 'GET',
       origin: `http://localhost:${server.address().port}`,
       reset: true,
       headers
     })
+    await body.dump()
   })
 
   test('Should include headers built with custom iterable object', async t => {
@@ -424,12 +441,13 @@ describe('Should include headers from iterable objects', scope => {
       })
     })
 
-    await request({
+    const { body } = await request({
       method: 'GET',
       origin: `http://localhost:${server.address().port}`,
       reset: true,
       headers
     })
+    await body.dump()
   })
 
   test('Should include headers from plain objects with polluted Object.prototype[Symbol.iterator]', async t => {
@@ -464,12 +482,13 @@ describe('Should include headers from iterable objects', scope => {
         })
       })
 
-      await request({
+      const { body } = await request({
         method: 'GET',
         origin: `http://localhost:${server.address().port}`,
         reset: true,
         headers
       })
+      await body.dump()
     } finally {
       if (originalIterator === undefined) {
         delete Object.prototype[Symbol.iterator]
