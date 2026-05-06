@@ -220,7 +220,9 @@ test('Limit can be disabled by setting maxPayloadSize to 0', async (t) => {
   t.after(() => server.close())
   await once(server, 'listening')
 
-  const dataSize = 100 * 1024 * 1024 // 100 MB
+  // Keep this comfortably above the smaller limits used elsewhere in this file,
+  // while avoiding the 100 MB transfer that can be slow on CI.
+  const dataSize = 2 * 1024 * 1024 // 2 MB
 
   server.on('connection', (ws) => {
     ws.send(Buffer.alloc(dataSize, 0x41), { binary: true })
@@ -236,19 +238,16 @@ test('Limit can be disabled by setting maxPayloadSize to 0', async (t) => {
   t.after(() => agent.close())
 
   const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const timeout = Symbol('timeout')
 
-  // Use Promise.race with timeout since large message takes time
-  const messagePromise = once(client, 'message')
-  const timeoutPromise = sleep(10000)
+  const result = await Promise.race([
+    once(client, 'message'),
+    sleep(10000, timeout)
+  ])
 
-  const result = await Promise.race([messagePromise, timeoutPromise])
-
-  if (result) {
-    t.assert.strictEqual(result[0].data.size, dataSize, 'Large message should be received when limit is disabled')
-    client.close()
-  } else {
-    t.fail('Test timed out waiting for large message')
-  }
+  t.assert.notStrictEqual(result, timeout, 'Test timed out waiting for large message')
+  t.assert.strictEqual(result[0].data.size, dataSize, 'Large message should be received when limit is disabled')
+  client.close()
 })
 
 test('Fragmented compressed payload over total limit is rejected', async (t) => {
