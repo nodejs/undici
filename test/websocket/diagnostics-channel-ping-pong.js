@@ -11,31 +11,48 @@ test('diagnostics channel - undici:websocket:[ping/pong]', async (t) => {
 
   const server = new WebSocketServer({ port: 0 })
   const { port } = server.address()
-  const ws = new WebSocket(`ws://localhost:${port}`, 'chat')
-
-  server.on('connection', (ws) => {
-    ws.ping('Ping')
-    ws.pong('Pong')
-    ws.close()
-  })
+  const pingChannel = dc.channel('undici:websocket:ping')
+  const pongChannel = dc.channel('undici:websocket:pong')
 
   const pingListener = ({ websocket, payload }) => {
+    // Diagnostics channels are process-global, so ignore events from other
+    // WebSocket instances.
+    if (websocket !== ws) {
+      return
+    }
+
     t.assert.strictEqual(websocket, ws)
     t.assert.deepStrictEqual(payload, Buffer.from('Ping'))
   }
 
   const pongListener = ({ websocket, payload }) => {
+    // Diagnostics channels are process-global, so ignore events from other
+    // WebSocket instances.
+    if (websocket !== ws) {
+      return
+    }
+
     t.assert.strictEqual(websocket, ws)
     t.assert.deepStrictEqual(payload, Buffer.from('Pong'))
   }
 
-  dc.channel('undici:websocket:ping').subscribe(pingListener)
-  dc.channel('undici:websocket:pong').subscribe(pongListener)
+  pingChannel.subscribe(pingListener)
+  pongChannel.subscribe(pongListener)
+
+  // The listeners and server handler must be in place before creating the
+  // WebSocket, because the constructor starts the connection immediately.
+  server.on('connection', (websocket) => {
+    websocket.ping('Ping')
+    websocket.pong('Pong')
+    websocket.close()
+  })
+
+  const ws = new WebSocket(`ws://localhost:${port}`, 'chat')
 
   t.after(() => {
     server.close()
-    dc.channel('undici:websocket:ping').unsubscribe(pingListener)
-    dc.channel('undici:websocket:pong').unsubscribe(pongListener)
+    pingChannel.unsubscribe(pingListener)
+    pongChannel.unsubscribe(pongListener)
   })
 
   await once(ws, 'close')
