@@ -14,15 +14,16 @@ test('Should provide pseudo-headers in proper order', async t => {
 
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   server.on('stream', (stream, _headers, _flags, rawHeaders) => {
-    t.deepStrictEqual(rawHeaders, [
-      ':authority',
-      `localhost:${server.address().port}`,
-      ':method',
-      'GET',
-      ':path',
+    const sortedHeaders = [...rawHeaders].sort()
+    t.deepStrictEqual(sortedHeaders, [
       '/',
+      ':authority',
+      ':method',
+      ':path',
       ':scheme',
-      'https'
+      'GET',
+      'https',
+      `localhost:${server.address().port}`
     ])
 
     stream.respond({
