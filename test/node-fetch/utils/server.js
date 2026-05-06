@@ -25,6 +25,9 @@ module.exports = class TestServer {
   }
 
   async stop () {
+    // Destroy all active connections before closing
+    // This prevents 'close' from hanging on platforms like Windows
+    this.server.closeAllConnections()
     this.server.close()
     return once(this.server, 'close')
   }
