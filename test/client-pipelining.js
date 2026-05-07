@@ -27,7 +27,7 @@ test('20 times GET with pipelining 10', async (t) => {
 
   // needed to check for a warning on the maxListeners on the socket
   function onWarning (warning) {
-    if (!/ExperimentalWarning/.test(warning)) {
+    if (warning.name === 'MaxListenersExceededWarning') {
       t.fail()
     }
   }

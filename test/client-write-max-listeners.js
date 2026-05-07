@@ -33,7 +33,7 @@ test('socket close listener does not leak', async (t) => {
   }
 
   function onWarning (warning) {
-    if (!/ExperimentalWarning/.test(warning)) {
+    if (warning.name === 'MaxListenersExceededWarning') {
       t.fail()
     }
   }
