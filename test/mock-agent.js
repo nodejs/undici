@@ -3,7 +3,7 @@
 const { test, after, describe } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
+const { request, setGlobalDispatcher, MockAgent, Agent, FormData } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
 const { InvalidArgumentError, ClientDestroyedError } = require('../lib/core/errors')
@@ -3005,6 +3005,49 @@ test('MockAgent - Sending ReadableStream body', async (t) => {
   })
 
   t.assert.deepStrictEqual(await response.text(), 'test')
+})
+
+// https://github.com/nodejs/undici/issues/5241
+test('MockAgent - fetch FormData boundary in header matches body when net-connect passes through', async (t) => {
+  t.plan(2)
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const chunks = []
+    req.on('data', (c) => chunks.push(c))
+    req.on('end', () => {
+      const body = Buffer.concat(chunks).toString('utf8')
+      const headerMatch = /boundary=(.+)$/.exec(req.headers['content-type'] || '')
+      const bodyMatch = /^--([^\r\n]+)/.exec(body)
+      res.setHeader('content-type', 'application/json')
+      res.end(JSON.stringify({
+        headerBoundary: headerMatch && headerMatch[1],
+        bodyBoundary: bodyMatch && bodyMatch[1]
+      }))
+    })
+  })
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const mockAgent = new MockAgent()
+  mockAgent.enableNetConnect(`localhost:${server.address().port}`)
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const formData = new FormData()
+  formData.append('file', new Blob([Buffer.from('hello world')], { type: 'txt' }), 'document.txt')
+
+  const response = await fetch(`http://localhost:${server.address().port}/`, {
+    method: 'POST',
+    body: formData
+  })
+  const { headerBoundary, bodyBoundary } = await response.json()
+
+  t.assert.ok(headerBoundary, 'content-type header should carry a boundary')
+  t.assert.strictEqual(bodyBoundary, headerBoundary)
 })
 
 // https://github.com/nodejs/undici/issues/2616
