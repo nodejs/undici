@@ -166,15 +166,16 @@ test('close should still reconnect', async (t) => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.destroy())
 
+    client.once('connect', () => {
+      client[kSocket].destroy()
+    })
+
     t.ok(makeRequest())
     t.ok(!makeRequest())
 
     client.close((err) => {
       t.ifError(err)
       t.strictEqual(client.closed, true)
-    })
-    client.once('connect', () => {
-      client[kSocket].destroy()
     })
 
     function makeRequest () {
