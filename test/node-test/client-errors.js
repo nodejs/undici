@@ -122,43 +122,57 @@ test('GET errors and reconnect with pipelining 3', async (t) => {
   await p.completed
 })
 
+function installErrorAndReconnectServer (server, p, contentLength) {
+  let sawPost = false
+  let sawGet = false
+
+  server.on('request', (req, res) => {
+    if (req.method === 'GET') {
+      if (sawGet) {
+        req.socket?.destroy()
+        return
+      }
+
+      sawGet = true
+      p.strictEqual('/', req.url)
+      p.strictEqual('GET', req.method)
+      res.setHeader('content-type', 'text/plain')
+      res.end('hello')
+      return
+    }
+
+    if (sawPost) {
+      // Node.js 26 can surface additional POST attempts around the queued GET.
+      // Tear them down and keep the test focused on the reconnect behavior.
+      req.resume()
+      req.socket?.destroy()
+      return
+    }
+
+    sawPost = true
+    p.strictEqual('/', req.url)
+    p.strictEqual('POST', req.method)
+    p.strictEqual(req.headers['content-length'], contentLength)
+
+    const bufs = []
+    req.on('data', (buf) => {
+      bufs.push(buf)
+    })
+
+    req.on('aborted', () => {
+      // we will abruptly close the connection here
+      // but this will still end
+      p.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
+    })
+  })
+}
+
 function errorAndPipelining (type) {
   test(`POST with a ${type} that errors and pipelining 1 should reconnect`, async (t) => {
     const p = tspl(t, { plan: 12 })
 
     const server = createServer({ joinDuplicateHeaders: true })
-    server.once('request', (req, res) => {
-      p.strictEqual('/', req.url)
-      p.strictEqual('POST', req.method)
-      p.strictEqual('42', req.headers['content-length'])
-
-      const bufs = []
-      req.on('data', (buf) => {
-        bufs.push(buf)
-      })
-
-      req.on('aborted', () => {
-        // we will abruptly close the connection here
-        // but this will still end
-        p.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
-      })
-
-      server.on('request', function onRequest (req, res) {
-        if (req.method === 'POST') {
-          // Node.js 26 can surface a retried POST attempt before the queued GET.
-          // Tear it down immediately and keep waiting for the follow-up GET.
-          req.resume()
-          req.socket?.destroy()
-          return
-        }
-
-        server.removeListener('request', onRequest)
-        p.strictEqual('/', req.url)
-        p.strictEqual('GET', req.method)
-        res.setHeader('content-type', 'text/plain')
-        res.end('hello')
-      })
-    })
+    installErrorAndReconnectServer(server, p, '42')
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
@@ -211,38 +225,7 @@ function errorAndChunkedEncodingPipelining (type) {
     const p = tspl(t, { plan: 12 })
 
     const server = createServer({ joinDuplicateHeaders: true })
-    server.once('request', (req, res) => {
-      p.strictEqual('/', req.url)
-      p.strictEqual('POST', req.method)
-      p.strictEqual(req.headers['content-length'], undefined)
-
-      const bufs = []
-      req.on('data', (buf) => {
-        bufs.push(buf)
-      })
-
-      req.on('aborted', () => {
-        // we will abruptly close the connection here
-        // but this will still end
-        p.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
-      })
-
-      server.on('request', function onRequest (req, res) {
-        if (req.method === 'POST') {
-          // Node.js 26 can surface a retried POST attempt before the queued GET.
-          // Tear it down immediately and keep waiting for the follow-up GET.
-          req.resume()
-          req.socket?.destroy()
-          return
-        }
-
-        server.removeListener('request', onRequest)
-        p.strictEqual('/', req.url)
-        p.strictEqual('GET', req.method)
-        res.setHeader('content-type', 'text/plain')
-        res.end('hello')
-      })
-    })
+    installErrorAndReconnectServer(server, p, undefined)
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
