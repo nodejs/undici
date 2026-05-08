@@ -5,6 +5,7 @@ import os from 'node:os'
 import process from 'node:process'
 import { glob } from 'glob'
 import githubReporter from '@reporters/github'
+import { resolve } from 'node:path'
 
 // Match borp's workaround.
 delete process.env.NODE_TEST_CONTEXT
@@ -88,6 +89,13 @@ const watchdog = setTimeout(() => {
   // eslint-disable-next-line n/no-process-exit
   process.exit(1)
 }, hardTimeout)
+
+const childHooksPath = resolve(cwd, 'scripts/node-test-child-hooks.cjs')
+const childNodeOptions = `--require=${childHooksPath}`
+process.env.NODE_OPTIONS = process.env.NODE_OPTIONS
+  ? `${process.env.NODE_OPTIONS} ${childNodeOptions}`
+  : childNodeOptions
+console.error(`[node-test-ci] NODE_OPTIONS=${process.env.NODE_OPTIONS}`)
 
 const files = await glob(pattern, {
   cwd,
