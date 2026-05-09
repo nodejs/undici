@@ -3,7 +3,16 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const net = require('node:net')
-const { Client, errors } = require('..')
+const { Client, errors, fetch } = require('..')
+
+const truncatedChunkedResponse = Buffer.from(
+  'HTTP/1.1 200 OK\r\n' +
+  'Transfer-Encoding: chunked\r\n' +
+  'Connection: close\r\n' +
+  '\r\n' +
+  '3\r\n' +
+  'hel\r\n'
+)
 
 test('https://github.com/mcollina/undici/issues/268', async (t) => {
   t = tspl(t, { plan: 2 })
@@ -194,4 +203,58 @@ test('refreshes wasm input view after reallocating parser buffer', async (t) => 
   const largeResponse = await request()
   t.strictEqual(largeResponse.statusCode, 200)
   t.strictEqual(largeResponse.body.toString(), largeBody.toString())
+})
+
+test('truncated chunked responses terminated by EOF error the response body', async (t) => {
+  t = tspl(t, { plan: 3 })
+
+  const server = net.createServer((socket) => {
+    socket.end(truncatedChunkedResponse)
+  })
+  after(() => server.close())
+
+  await new Promise(resolve => server.listen(0, resolve))
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  after(() => client.destroy())
+
+  client.request({
+    method: 'GET',
+    path: '/'
+  }, (err, { body } = {}) => {
+    t.ifError(err)
+    body
+      .on('end', () => {
+        t.fail('expected the truncated chunked body to fail')
+      })
+      .on('error', (err) => {
+        t.strictEqual(err.name, 'HTTPParserError')
+        t.strictEqual(err.message, 'Response does not match the HTTP/1.1 protocol (Invalid EOF state)')
+      })
+      .resume()
+  })
+
+  await t.completed
+})
+
+test('fetch rejects truncated chunked responses terminated by EOF', async (t) => {
+  t = tspl(t, { plan: 3 })
+
+  const server = net.createServer((socket) => {
+    socket.end(truncatedChunkedResponse)
+  })
+  after(() => server.close())
+
+  await new Promise(resolve => server.listen(0, resolve))
+
+  const res = await fetch(`http://localhost:${server.address().port}`)
+  t.strictEqual(res.status, 200)
+
+  try {
+    await res.text()
+    t.fail('expected fetch to reject the truncated chunked body')
+  } catch (err) {
+    t.strictEqual(err.name, 'TypeError')
+    t.strictEqual(err.cause?.message, 'Response does not match the HTTP/1.1 protocol (Invalid EOF state)')
+  }
 })
