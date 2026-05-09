@@ -65,14 +65,7 @@ test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', asy
     message: /stream timeout/
   })
 
-  let streamCountTimeout
-  await Promise.race([
-    streamCountReached,
-    new Promise(resolve => {
-      streamCountTimeout = setTimeout(resolve, 1000)
-    })
-  ])
-  clearTimeout(streamCountTimeout)
+  await streamCountReached
 
   // Verify that all 3 retries actually reached the server
   t.equal(streamCount, 3, 'server should have received all 3 request attempts')
