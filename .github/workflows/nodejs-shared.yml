@@ -90,6 +90,9 @@ jobs:
           ./configure --shared-builtin-undici/undici-path ${{ github.workspace }}/undici/loader.js --ninja --prefix=./final
           make
           make install
+          if make -qp | grep -q '^build-ffi-tests:'; then
+            make build-ffi-tests
+          fi
           echo "$(pwd)/final/bin" >> $GITHUB_PATH
 
       - name: Print version information
@@ -107,4 +110,3 @@ jobs:
         if: steps.release.outputs.result != ''
         working-directory: ./node-${{ steps.release.outputs.result }}
         run: tools/test.py -p dots --flaky-tests=dontcare
-
