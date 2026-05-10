@@ -22,8 +22,16 @@ test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', asy
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   let streamCount = 0
+  let resolveStreamCount
+  const streamCountReached = new Promise(resolve => {
+    resolveStreamCount = resolve
+  })
+
   server.on('stream', (stream) => {
     streamCount++
+    if (streamCount === 3) {
+      resolveStreamCount()
+    }
     // Never respond — simulates a perpetual stream timeout
   })
 
@@ -56,6 +64,8 @@ test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', asy
     code: 'UND_ERR_INFO',
     message: /stream timeout/
   })
+
+  await streamCountReached
 
   // Verify that all 3 retries actually reached the server
   t.equal(streamCount, 3, 'server should have received all 3 request attempts')
